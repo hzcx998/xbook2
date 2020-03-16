@@ -1,0 +1,25 @@
+-> Task -> VMSpace <-
+<-
+-> Work queue <-
+-> Clock driver <-
+-> CharDevice <-
+-> BlockDevice -> Ramdisk Driver <-
+-> Ide Driver  |- Ide disks are 2
+<-
+<-
+-> File System -> BOFS >>>sync disk for 1 count.
+list drives
+drive: tmp
+drive: rdb
+drive: root
+drive: hdb
+<-
+>>>sync disk for 15 count.
+load file sucess!
+<-
+ |- task root:/init pid 0 fork task root:/init_fork pid 7
+I am parent, my pid is 0 my child is 7.
+I am child, my pid is 7.
+
+> Panic:  !- # segment fault!
+ÿ

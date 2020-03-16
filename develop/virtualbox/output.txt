@@ -1,0 +1,21 @@
+
+ram memory size:1fff0000 bytes 511 MB
+vendor:GenuineIntel brand:Intel(R) Core(TM) i5-8300H CPU @ 2.30GHz 
+Total: 536805376-511MB, Free: 533131264-508MB, Used: 3674112-3MB
+Time:23:53:18 Date:2020/3/9
+weekday:1-Monday yearday:70
+Ide disks are 2
+init mouse done!
+video: 1024*768*16, phy:e0000000 vir:f8101000
+device:rda
+device:hda
+device:hdb
+hdb is data disk, don't make fs on it!
+list drives
+drive: sys
+drive: root
+ready load file to fs.
+load file sucess!
+dir etc exist!
+config file exist!
+open: path /dev/gtty, file isn't exist and without O_CR!

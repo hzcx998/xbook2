@@ -1,0 +1,67 @@
+PHONY := __build
+__build:
+
+obj-y		:=
+subdir-y	:=
+
+PREPARE		:=
+
+include makefile
+
+subdir-y	+= $(patsubst %/,%,$(filter %/, $(obj-y)))
+subdir_objs	:= $(foreach f,$(subdir-y),$(f)/built-in.o)
+
+cur_objs	:= $(filter-out %/, $(obj-y))
+
+x_objs		:= $(cur_objs) $(subdir_objs)
+
+dep_files	:= $(foreach f,$(x_objs) ,.$(f).d)
+dep_files	:= $(wildcard $(dep_files))
+
+ifneq ($(strip $(dep_files)),)
+include $(dep_files)
+endif
+
+x_builtin	:= built-in.o
+
+PHONY		+= $(subdir-y) clean xclean
+
+__build : $(x_builtin) $(PREPARE)
+
+$(x_builtin) : $(x_objs)
+	@echo [LD] $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
+ifneq ($(strip $(x_objs)),)
+	@$(LD) $(LDFLAGS) -r -o $@ $^
+else
+	@echo "" | $(CC) $(CFLAGS) -o $@ -xc -c -
+endif
+
+
+$(subdir-y):
+ifneq ($(strip $(MAKECMDGOALS)),clean)
+	$(MAKE) -C $@ -f $(TOPDIR)/Makefile.build
+else
+	$(MAKE) -C $@ -f $(TOPDIR)/Makefile.build clean
+endif
+$(sort $(subdir_objs)) : $(subdir-y) ;
+
+dep_file = .$@.d
+
+%.o : %.c
+	@echo [CC] $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
+	@$(CC) $(CFLAGS) -Wp,-MP,-MD,$(dep_file) -c -o $@ $<
+
+%.o : %.S
+	@echo [AS] $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
+	@$(CC) $(CFLAGS) -Wp,-MP,-MD,$(dep_file) -c -o $@ $<
+
+%.o : %.asm
+	@echo [NASM] $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
+	#@$(NASM) $(NASM_FLAGS) -M -f elf $< > $(dep_file)
+	@$(NASM) $(NASM_FLAGS) -f elf -o $@ $<
+
+clean: $(subdir-y) xclean
+	@echo [RM] $(patsubst $(TOPDIR)/%,%,$(CURDIR))
+	@$(RM) *.o .*.d
+
+.PHONY : $(PHONY)
