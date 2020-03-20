@@ -1,0 +1,17 @@
+obj-y	+= entry.o
+obj-y	+= arch.o
+obj-y	+= x86.o
+obj-y	+= segment.o
+obj-y	+= tss.o
+obj-y	+= gate.o
+obj-y	+= intrhandler.o
+obj-y	+= interrupt.o
+obj-y	+= pic.o
+obj-y	+= atomic.o
+obj-y	+= ards.o
+obj-y	+= pmem.o
+obj-y	+= page.o
+obj-y	+= bootmem.o
+obj-y	+= cmos.o
+obj-y	+= pit.o
+

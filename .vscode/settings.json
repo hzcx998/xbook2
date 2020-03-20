@@ -1,0 +1,25 @@
+{
+    "C_Cpp.errorSquiggles": "Disabled",
+    "files.associations": {
+        "*.C": "c",
+        "debug.h": "c",
+        "interrupt.h": "c",
+        "page.h": "c",
+        "general.h": "c",
+        "arch.h": "c",
+        "pmem.h": "c",
+        "assert.h": "c",
+        "gate.h": "c",
+        "config.h": "c",
+        "memcache.h": "c",
+        "bitops.h": "c",
+        "math.h": "c",
+        "clock.h": "c",
+        "types.h": "c",
+        "softirq.h": "c",
+        "atomic.h": "c",
+        "instruction.h": "c",
+        "hwinfo.h": "c",
+        "time.h": "c"
+    }
+}
