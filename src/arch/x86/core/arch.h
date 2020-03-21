@@ -8,5 +8,7 @@
 #include "page.h"
 #include "pmem.h"
 #include "time.h"
+#include "ioremap.h"
+#include "task.h"
 
 #endif  /* _X86_ARCH_H */

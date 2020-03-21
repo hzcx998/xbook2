@@ -4,6 +4,8 @@
 #include <xbook/softirq.h>
 #include <xbook/debug.h>
 #include <xbook/softirq.h>
+#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <arch/interrupt.h>
 
 volatile clock_t systicks;
@@ -186,19 +188,19 @@ void timer_softirq_handler(softirq_action_t *action)
  */
 void sched_softirq_handler(softirq_action_t *action)
 {
-	#if 0
-    struct Task *current = CurrentTask();
+    //printk("s");
+	#if 1
+    task_t *current = current_task;
 
 	/* 检测内核栈是否溢出 */
-	ASSERT(current->stackMagic == TASK_STACK_MAGIC);
+	ASSERT(current->stack_magic == TASK_STACK_MAGIC);
 	/* 更新任务调度 */
-	current->elapsedTicks++;
+	current->elapsed_ticks++;
 	
     /* 需要进行调度的时候才会去调度 */
 	if (current->ticks <= 0) {
-		ScheduleInClock();
+		schedule_in_intr();
 	} else {
-		
 		current->ticks--;
 	}
     #endif
@@ -325,6 +327,4 @@ void init_clock()
 
     enable_intr();
     printk("waiting...\n");
-    
-    while (1);
 }

@@ -20,6 +20,8 @@
         "atomic.h": "c",
         "instruction.h": "c",
         "hwinfo.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "task.h": "c",
+        "tss.h": "c"
     }
 }

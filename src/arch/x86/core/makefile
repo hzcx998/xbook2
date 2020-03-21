@@ -14,4 +14,4 @@ obj-y	+= page.o
 obj-y	+= bootmem.o
 obj-y	+= cmos.o
 obj-y	+= pit.o
-
+obj-y	+= ioremap.o

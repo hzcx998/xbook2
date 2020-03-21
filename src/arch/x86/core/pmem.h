@@ -40,6 +40,11 @@
 /* 非连续内存起始地址, 4MB+128MB*/
 #define HIGH_MEM_ADDR               (TOP_MEM_ADDR - (HIGH_MEM_SIZE + NULL_MEM_SIZE) + 1)
 
+#define __VMAREA_BASE   HIGH_MEM_ADDR
+#define __VMAREA_END    NULL_MEM_ADDR
+
+
+
 /* mem_node 内存节点，用于管理每一段物理内存（以页为单位） */
 typedef struct {
     unsigned int count;         /* 内存节点占用的页数 */

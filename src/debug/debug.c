@@ -5,6 +5,20 @@
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
 
+char *printk_msg[] = {
+    "emege: ",
+    "alter: ",
+    "crit: ",
+    "error: ",
+    "waring: ",
+    "notice: ",
+    "info: ",
+    "debug: ",
+    0,
+};
+
+int printk_level = DEFAULT_LOG_LEVEL;
+
 #if CONFIG_DEBUG_METHOD == 1 
 extern void init_console_debug();
 extern void console_putchar(char ch);
@@ -67,10 +81,26 @@ int console_print(const char *fmt, ...)
     int count = i;
     char *p = buf;
 
-    while (count-- > 0) {
-        console_putchar(*p++);
-    }
+    
+    char show = 1;
 
+    /* 如果显示指明调试等级 */
+    if (*p == '<') {
+        /* 有完整的调试等级 */
+        if (*(p + 1) > '0' && *(p + 1) <= '7' && *(p + 2) == '>') {
+            int level = *(p + 1) - '0'; /* 获取等级 */
+            if (level > printk_level) /* 如果等级过低，就不显示 */ 
+                show = 0;
+            
+            /* move print start ptr */
+            p += 3;
+            count -= 3;
+        }
+    }
+    if (show)
+        while (count-- > 0)
+            console_putchar(*p++);
+    
 	return i;
 }
 
@@ -91,10 +121,36 @@ int serial_print(const char *fmt, ...)
 
     int count = i;
     char *p = buf;
-    while (count-- > 0) {
-        serial_putchar(*p++);
-    }
     
+    int level = -1;
+    char show = 1;
+
+    /* 如果显示指明调试等级 */
+    if (*p == '<') {
+        /* 有完整的调试等级 */
+        if (*(p + 1) > '0' && *(p + 1) <= '7' && *(p + 2) == '>') {
+            level = *(p + 1) - '0'; /* 获取等级 */
+            if (level > printk_level) /* 如果等级过低，就不显示 */ 
+                show = 0;
+            
+            /* move print start ptr */
+            p += 3;
+            count -= 3;
+        }
+    }
+    if (show) {
+        /* print level first */
+        if (level >= 0) {
+            char *q = printk_msg[level];
+            while (*q)
+                serial_putchar(*q++);
+        }
+
+        while (count-- > 0)
+            serial_putchar(*p++);
+    
+    }
+        
 	return i;
 }
 #endif /* CONFIG_SERIAL_DEBUG */

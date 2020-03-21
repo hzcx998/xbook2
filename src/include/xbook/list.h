@@ -1,6 +1,7 @@
 #ifndef _xBOOK_LIST_H
 #define _xBOOK_LIST_H
 
+#include "stddef.h"
 /* 
  * 链表数据结构，在看了Linux的链表结构之后，觉得他那个比较通用，
  * 而且也比较清晰，所以我打算移植一个过来。本文件里面的都是内联函数，
