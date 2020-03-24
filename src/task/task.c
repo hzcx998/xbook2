@@ -687,6 +687,6 @@ void init_tasks()
     kthread_start("test", 1, taskA, "NULL");
     kthread_start("test2", 1, taskB, "NULL");
     kthread_start("test3", 1, taskC, "NULL");
-    kthread_start("test4", 1, taskD, "NULL");
+    //kthread_start("test4", 1, taskD, "NULL");
     
 }
