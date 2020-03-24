@@ -37,9 +37,9 @@ unsigned int get_memory_size_from_hardware()
 				totalSize = ards->baseLow+ards->lengthLow;
 			}
 		}
-		printk("base %8x length %8x type:%d\n",ards->baseLow, ards->lengthLow, ards->type);
+		//printk("base %8x length %8x type:%d\n",ards->baseLow, ards->lengthLow, ards->type);
 		ards++;
 	}
-    printk("memory total:%x byte %d MB\n", totalSize, totalSize / (1024*1024));
+    printk(KERN_INFO "memory total:%x byte %d MB\n", totalSize, totalSize / (1024*1024));
 	return totalSize;
 }

@@ -1,5 +1,7 @@
 #include <arch/interrupt.h>
 #include <xbook/task.h>
+#include <xbook/schedule.h>
+#include <xbook/debug.h>
 
 extern list_t task_global_list;
 
@@ -30,7 +32,7 @@ static int notify_parent(int parent_pid)
             //SysKill(parent->pid, SIGCHLD);
             //printk("send SIGCHLD to parent %s-%d\n", parent->name, parent->pid);
             /* 将父进程唤醒 */
-            task_unblock(parent);
+            //task_unblock(parent);
             
             ret = 0;    /* 有父进程在等待 */
             /* 唤醒后就退出查询，因为只有1个父亲，不能有多个父亲吧（偷笑） */
@@ -46,7 +48,7 @@ static int notify_parent(int parent_pid)
 static void adope_self(task_t *cur)
 {
     /* 父进程id */
-    cur->parent_pid = 1;
+    cur->parent_pid = 0;
     /* 过继给init之后还要提醒一下init才可以 */
     notify_parent(cur->parent_pid);
 }
@@ -64,15 +66,16 @@ void kthread_exit(task_t *task)
     adope_self(task);
     
     /* 操作链表时关闭中断，结束后恢复之前状态 */
-    unsigned long flags;
+    /*unsigned long flags;
     save_intr(flags);
-
+    */
     /* 如果在就绪队列中，就从就绪队列中删除 */
-    if (is_task_in_priority_queue(task)) {
+    /*if (is_task_in_priority_queue(task)) {
         list_del_init(&task->list);
-    }
-    restore_intr(flags);
+    }*/
+    //restore_intr(flags);
 
+    printk("task %s will exit!\n", task->name);
     /* 调度出去，僵尸状态，等待父进程收尸 */
     task_block(TASK_ZOMBIE);
 }

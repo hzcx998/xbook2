@@ -3,19 +3,11 @@
 
 #include "config.h"
 
-/* 32位操作系统 */
-
-#ifdef CONFIG_32BIT 
-typedef unsigned int size_t;
-typedef unsigned int dma_addr_t;
+typedef unsigned long size_t;
+typedef unsigned long dma_addr_t;
 
 typedef int wchar_t;
-#endif 
 
-#ifdef CONFIG_64BIT 
-
-
-#endif
 /*
  *这里是define类型的
  */

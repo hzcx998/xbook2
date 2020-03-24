@@ -6,6 +6,7 @@
 #include <xbook/config.h>
 #include <xbook/bitmap.h>
 #include <xbook/list.h>
+#include <xbook/const.h>
 
 /*
 当内存对象大小小于1024时，储存在一个页中。

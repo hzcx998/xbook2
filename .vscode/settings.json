@@ -22,6 +22,11 @@
         "hwinfo.h": "c",
         "time.h": "c",
         "task.h": "c",
-        "tss.h": "c"
+        "tss.h": "c",
+        "kernel.h": "c",
+        "device.h": "c",
+        "spinlock.h": "c",
+        "synclock.h": "c",
+        "semaphore.h": "c"
     }
 }

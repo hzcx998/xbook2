@@ -82,13 +82,14 @@ int console_print(const char *fmt, ...)
     char *p = buf;
 
     
+    int level = -1;
     char show = 1;
 
     /* 如果显示指明调试等级 */
     if (*p == '<') {
         /* 有完整的调试等级 */
         if (*(p + 1) > '0' && *(p + 1) <= '7' && *(p + 2) == '>') {
-            int level = *(p + 1) - '0'; /* 获取等级 */
+            level = *(p + 1) - '0'; /* 获取等级 */
             if (level > printk_level) /* 如果等级过低，就不显示 */ 
                 show = 0;
             
@@ -97,10 +98,18 @@ int console_print(const char *fmt, ...)
             count -= 3;
         }
     }
-    if (show)
+    if (show) {
+        /* print level first */
+        if (level >= 0) {
+            char *q = printk_msg[level];
+            while (*q)
+                console_putchar(*q++);
+        }
+
         while (count-- > 0)
             console_putchar(*p++);
     
+    }
 	return i;
 }
 

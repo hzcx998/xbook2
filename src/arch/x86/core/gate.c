@@ -1,6 +1,7 @@
 #include "segment.h"
 #include "gate.h"
 #include "interrupt.h"
+#include "pic.h"
 
 /* 
  * Interrupt descriptor table

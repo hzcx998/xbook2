@@ -1,9 +1,9 @@
 [section .text]
 [bits 32]
 
-; void switch_to(struct Task *prev, struct Task *next);
-global switch_to
-switch_to:
+; void __switch_to(unsigned long prev, unsigned long next);
+global __switch_to
+__switch_to:
 	push esi
 	push edi
 	push ebx 

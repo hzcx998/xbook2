@@ -20,7 +20,7 @@ char* strncpy(char* dst, char* src, int n) ;
 char *strncat(char *dst, const char *src, int n);
 int strmet(const char *src, char *buf, char ch);
 char *strstr(const char *dest, const char *src);
-unsigned int strspn(const char *s, const char *accept);
+size_t strspn(const char *s, const char *accept);
 const char *strpbrk(const char *str1, const char *str2);
 int strcoll(const char *str1, const char *str2);
 char* strcpy(char* dst, const char* src);

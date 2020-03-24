@@ -57,7 +57,7 @@ int register_irq(unsigned long irq,
     unsigned long flags,
     char *irqname,
     char *devname,
-    unsigned int data)
+    unsigned long data)
 {
     irq_description_t *irq_desc = get_irq_description(irq);
     if (!irq_desc) 
@@ -102,10 +102,7 @@ int register_irq(unsigned long irq,
 
             /* 现在action指向最后一个，把当前的行为追加到最后面 */
             p->next = action;
-            
         }
-        
-
     } else {
         /* 不是共享中断，就没有下一个行为 */
         irq_desc->action = action;

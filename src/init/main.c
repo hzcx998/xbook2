@@ -9,7 +9,7 @@
 
 int kernel_main(void)
 {
-    printk("welcome to kernel main!\n");
+    printk(KERN_INFO "welcom to xbook kernel.\n");
     /* init memory cache for kernel */
     init_mem_caches();
     init_vmarea();
@@ -21,11 +21,9 @@ int kernel_main(void)
     init_tasks();
     /* init clock */
     init_clock();
-
     /* init unit drivers */
     init_unit();
 
-    printk("ready to pause!\n");
     kernel_pause();
     return 0;
 }

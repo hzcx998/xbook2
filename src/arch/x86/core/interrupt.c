@@ -13,7 +13,7 @@ char* intr_name_table[MAX_INTERRUPT_NR];
  */
 void intr_general_handler(unsigned int esp) 
 {
-		// 中断栈
+	// 中断栈
 	trap_frame_t *frame = (trap_frame_t *)((unsigned int )esp);
 
 	// 0x2f是从片8259A上的最后一个irq引脚，保留

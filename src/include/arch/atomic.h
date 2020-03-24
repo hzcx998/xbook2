@@ -73,6 +73,6 @@ static inline void atomic_clear_mask(atomic_t *atomic, int mask)
    __atomic_and(&atomic->value, ~mask);
 }
 
-#define ATOMIC_XCHG(v, new) (XCHG(&((v)->value), new))
+#define atomic_xchg(v, new) (xchg(&((v)->value), new))
 
 #endif   /* _ARCH_ATOMIC_H */

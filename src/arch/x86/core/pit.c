@@ -127,8 +127,6 @@ enum CtrlModeBits {
  */ 
 void __init_pit_clock()
 {
-    printk("count value:%x low %x high %x\n", COUNTER0_VALUE, COUNTER0_VALUE & 0xff, (COUNTER0_VALUE >> 8));
-
 	//初始化时钟
 	__out8(PIT_CTRL, PIT_MODE_2 | PIT_MODE_MSB_LSB | 
             PIT_MODE_COUNTER_0 | PIT_MODE_BINARY);

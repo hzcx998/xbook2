@@ -1,25 +1,27 @@
 #include <arch/interrupt.h>
 #include <arch/page.h>
 #include <arch/general.h>
+#include <arch/cpu.h>
 #include <xbook/task.h>
 #include <xbook/memops.h>
 #include <xbook/string.h>
 #include <xbook/assert.h>
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
-
-//extern void UpdateTssInfo(task_t *task);
+#include <xbook/spinlock.h>
+#include <xbook/mutexlock.h>
+#include <xbook/semaphore.h>
+#include <xbook/synclock.h>
+#include <xbook/fifobuf.h>
+#include <xbook/fifoio.h>
+#include <xbook/rwlock.h>
 
 static pid_t next_pid;
 
 /* 初始化链表头 */
 
-// 就绪队列链表
 // 全局队列链表，用来查找所有存在的任务
 LIST_HEAD(task_global_list);
-
-/* 优先级队列链表 */
-list_t task_priority_queue[MAX_PRIORITY_NR];
 
 /* idle任务 */
 task_t *task_idle;
@@ -44,6 +46,7 @@ static pid_t new_pid()
     return next_pid++;
 }
 
+#if 0
 /**  
  * roll_back_pid - 回滚一个pid
  */
@@ -51,6 +54,7 @@ static void roll_back_pid()
 {
     --next_pid;
 }
+#endif
 
 /**
  * task_create_page_storage - 创建页储存   
@@ -66,7 +70,7 @@ unsigned long *task_create_page_storage()
     }
     memset(page, 0, PAGE_SIZE);
 
-    __task_vmm_init_page(page);
+    task_vmm_init_page(page);
     return page;
 }
 
@@ -87,7 +91,7 @@ static void make_task_stack(task_t *task, task_func_t function, void *arg)
     task_local_stack_t *local_stack = (task_local_stack_t *)task->kstack;
 
     // 在do_task_func中去改变执行流，从而可以传递一个参数
-    __init_task_lock_stack(local_stack, do_task_func, function, arg);
+    init_task_lock_stack(local_stack, do_task_func, function, arg);
 }
 
 /**
@@ -131,8 +135,25 @@ static void task_init(task_t *task, char *name, int priority)
     // set kernel stack as the top of task mem struct
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KSTACK_SIZE);
 
+    /* no priority queue */
+    task->prio_queue = NULL;
+
+    task->next = NULL;
+    
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;
+}
+
+/**
+ * task_global_list_add - 把任务添加到全局队列
+ * @task: 任务
+ */
+void task_global_list_add(task_t *task)
+{
+    // 保证不存在于链表中
+    ASSERT(!list_find(&task->global_list, &task_global_list));
+    // 添加到全局队列
+    list_add_tail(&task->global_list, &task_global_list);
 }
 
 /**
@@ -153,74 +174,6 @@ task_t *find_task_by_pid(pid_t pid)
     }
     restore_intr(flags);
     return NULL;
-}
-
-/**
- * task_priority_queue_add_tail - 把任务添加到特权级队列末尾
- * @task: 任务
- *  
- */
-void task_priority_queue_add_tail(task_t *task)
-{
-    /* 添加到相应的优先级队列 */
-    ASSERT(!list_find(&task->list, &task_priority_queue[task->priority]));
-    // 添加到就绪队列
-    list_add_tail(&task->list, &task_priority_queue[task->priority]);
-}
-
-/**
- * task_priority_queue_add_head - 把任务添加到特权级队列头部
- * @task: 任务
- * 
- */
-void task_priority_queue_add_head(task_t *task)
-{
-    /* 添加到相应的优先级队列 */
-    ASSERT(!list_find(&task->list, &task_priority_queue[task->priority]));
-    // 添加到就绪队列
-    list_add(&task->list, &task_priority_queue[task->priority]);
-}
-
-/**
- * task_global_list_add - 把任务添加到全局队列
- * @task: 任务
- */
-void task_global_list_add(task_t *task)
-{
-    // 保证不存在于链表中
-    ASSERT(!list_find(&task->global_list, &task_global_list));
-    // 添加到全局队列
-    list_add_tail(&task->global_list, &task_global_list);
-}
-
-/**
- * is_task_in_priority_queue - 把任务添加到全局队列
- * @task: 任务
- */
-int is_task_in_priority_queue(task_t *task)
-{
-    int i;
-    for (i = 0; i < MAX_PRIORITY_NR; i++) {
-        if (list_find(&task->list, &task_priority_queue[i])) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-
-/**
- * is_all_priority_queue_empty - 判断优先级队列是否为空
- */
-int is_all_priority_queue_empty()
-{
-    int i;
-    for (i = 0; i < MAX_PRIORITY_NR; i++) {
-        if (!list_empty(&task_priority_queue[i])) {
-            return 0;
-        }
-    }
-    return 1;
 }
 
 /**
@@ -288,7 +241,7 @@ void task_activate(task_t *task)
     task->state = TASK_RUNNING;
     /* 激活任务的页目录表 */
     if (task->vmm)
-        task_vmm_active(task);
+        task_vmm_active(task->vmm);
 }
 
 /**
@@ -319,6 +272,7 @@ void task_block(task_state_t state)
     // 恢复之前的状态
     restore_intr(flags);
 }
+
 /**
  * task_unblock - 解除任务阻塞
  * @task: 要解除的任务
@@ -336,19 +290,18 @@ void task_unblock(task_t *task)
     // 先关闭中断，并且保存中断状态
     unsigned long flags;
     save_intr(flags);
-    // 没有就绪才能够唤醒，并且就绪
-    if (task->state != TASK_READY) {
-        // 保证没有在就绪队列中
-        ASSERT(!is_task_in_priority_queue(task));
-        // 已经就绪是不能再次就绪的
-        if (is_task_in_priority_queue(task)) {
-            panic("TaskUnblock: task has already in ready list!\n");
-        }
-        // 处于就绪状态
-        task->state = TASK_READY;
-        // 把任务放在最前面，让它快速得到调度
-        task_priority_queue_add_head(task);
+
+    // 保证没有在就绪队列中
+    ASSERT(!is_task_in_priority_queue(task));
+    // 已经就绪是不能再次就绪的
+    if (is_task_in_priority_queue(task)) {
+        panic("TaskUnblock: task has already in ready list!\n");
     }
+    // 处于就绪状态
+    task->state = TASK_READY;
+    // 把任务放在最前面，让它快速得到调度
+    task_priority_queue_add_head(task);
+
     restore_intr(flags);
 }
 
@@ -365,25 +318,108 @@ void print_task()
     }
 }
 
+DEFINE_MUTEX_LOCK(pmutex);
+
+DEFINE_SEMAPHORE(psema, 1);
+
+DEFINE_SPIN_LOCK(pspin);
+
+DEFINE_SYNC_LOCK(psync);
+
+DEFINE_FIFO_IO(fifo_io, NULL, 0);
+DEFINE_FIFO_BUF(fifo_buf, NULL, 0);
+
+//#define PRINT_MUTEX
+//#define PRINT_SEMA
+//#define PRINT_SPIN
+//#define PRINT_SYNC
+//#define PRINT_FIFO
+#define PRINT_RW_LOCK
+
+fifo_buf_t *kfifo;
+
+fifo_io_t *iofifo;
+
+//rwlock_t rwlock;
+DEFINE_RWLOCK_WR_FIRST(rwlock);
+
+DEFINE_RWLOCK_RD_FIRST(rdfirst);
+DEFINE_RWLOCK_WR_FIRST(wrfirst);
+DEFINE_RWLOCK_RW_FAIR(rwfair);
+
+int rwlock_int = 0;
+
+#define FREQ 0X1000
+
 int testA = 0, testB = 0;
 void taskA(void *arg)
 {
     //char *par = arg;
     int i = 0;
+    int data = 0;
     while (1) {
         i++;
         testA++;
-        if (i%0xf0000 == 0) {
-            
-            //lockPrintk("<abcdefghabcdef> ");
+        if (i%FREQ == 0) {
+            /* 写者 */
+            #ifdef PRINT_RW_LOCK
+            rwlock_wrlock(&rwlock);
+            rwlock_int++;
+            rwlock_wrunlock(&rwlock);            
+            #endif
 
+            #ifdef PRINT_FIFO
+            data++;
+            // fifo_buf_put(kfifo, (const unsigned char *  )"hello, first!", 13);
+
+            fifo_io_put(iofifo, data);
+            #endif
+
+            #ifdef PRINT_SYNC
+            sync_lock(&psync);
+            #endif
+            
+            #ifdef PRINT_SPIN
+            spin_lock(&pspin);
+            #endif
+            
+            #ifdef PRINT_SEMA
+            semaphore_down(&psema);
+            #endif
+            
+            #ifdef PRINT_MUTEX
+            mutex_lock(&pmutex);
+            #endif
+            //printk("<abcdefghabcdefabcdefghabcdefabcdefghabcdefabcdefghabcdefabcdefghabcdefabcdefghabcdef>\n");
+            #ifdef PRINT_MUTEX
+            mutex_unlock(&pmutex);
+            #endif
+
+            #ifdef PRINT_SEMA
+            semaphore_up(&psema);
+            
+            #endif
+            
+            #ifdef PRINT_SPIN
+            spin_unlock(&pspin);
+            #endif
+            
+            #ifdef PRINT_SYNC
+            sync_unlock(&psync);
+            #endif
+            
             //lockPrintk(par);
             
-            //printk("A:%x ", testA);
+            //printk("A:%8x ", testA);
         }
-
+        #ifdef PRINT_FIFO
+            
+        if (i%100 == 0)
+            printk("\navali:%x\n", fifo_io_len(iofifo));
+        #endif
+        /*
         if (i > 0xf000000)
-            kthread_exit(current_task);
+            kthread_exit(current_task);*/
     }
 }
 
@@ -392,21 +428,187 @@ void taskB(void *arg)
     //char *par = arg;
     int i = 0;
     // log("hello\n");
+    unsigned char buffer[16];
+    int len;
     while (1) {
         i++;
         testB++;
-        if (i%0xf0000 == 0) {
+        if (i%FREQ == 0) {
+            /* 读者 */
+            #ifdef PRINT_RW_LOCK
+            rwlock_rdlock(&rwlock);
+            printk("B:%x\n", rwlock_int);
+            rwlock_rdunlock(&rwlock);            
+            #endif
             
-            //lockPrintk("[12345678123456] ");
+            #ifdef PRINT_FIFO
+            
+            /*memset(buffer, 0, 16);
+            len = fifo_buf_get(kfifo, buffer, 13);
+            printk("get buffer:%s len:%d\n", buffer, len);
+            */
+            unsigned char data = fifo_io_get(iofifo);
+            printk("<%d>", data);
+            #endif
+
+            #ifdef PRINT_SYNC
+            sync_lock(&psync);
+            #endif
+            
+            #ifdef PRINT_SPIN
+            spin_lock(&pspin);
+            #endif
+            
+            #ifdef PRINT_SEMA
+            semaphore_down(&psema);
+            #endif
+            
+            #ifdef PRINT_MUTEX
+            mutex_lock(&pmutex);
+            #endif
+            //printk("[123456781234561234567812345612345678123456123456781234561234567812345612345678123456]\n");
+            #ifdef PRINT_MUTEX
+            mutex_unlock(&pmutex);
+            #endif
+            
+            #ifdef PRINT_SEMA
+            semaphore_up(&psema);
+            #endif
+            
+            #ifdef PRINT_SPIN
+            spin_unlock(&pspin);
+            #endif
+            
+            #ifdef PRINT_SYNC
+            sync_unlock(&psync);
+            #endif
             
             //SysMSleep(3000);
-            //printk("B:%x ", testB);
+            //printk("B:%8x ", testB);
         }
-
-        if (i > 0xf00000)
-            kthread_exit(current_task);
+        #ifdef PRINT_FIFO
+            
+        if (i%100 == 0)
+            printk("\nlen:%x\n", fifo_io_len(iofifo));
+        #endif
+        /*
+        if (i > 0xf000000)
+            kthread_exit(current_task);*/
     }
 }
+
+void taskC(void *arg)
+{
+    //char *par = arg;
+    int i = 0;
+    // log("hello\n");
+    while (1) {
+        i++;
+        if (i%FREQ == 0) {
+            
+            /* 读者 */
+            #ifdef PRINT_RW_LOCK
+            rwlock_rdlock(&rwlock);
+            printk("C:%x\n", rwlock_int);
+            rwlock_rdunlock(&rwlock);            
+            #endif
+
+            #ifdef PRINT_SYNC
+            sync_lock(&psync);
+            #endif
+            
+            #ifdef PRINT_SPIN
+            spin_lock(&pspin);
+            #endif
+            
+            #ifdef PRINT_SEMA
+            semaphore_down(&psema);
+            #endif
+            
+            #ifdef PRINT_MUTEX
+            mutex_lock(&pmutex);
+            #endif
+            //printk("[~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+]\n");
+            #ifdef PRINT_MUTEX
+            mutex_unlock(&pmutex);
+            #endif
+
+            #ifdef PRINT_SEMA
+            semaphore_up(&psema);
+            #endif
+            
+            #ifdef PRINT_SPIN
+            spin_unlock(&pspin);
+            #endif
+            
+            #ifdef PRINT_SYNC
+            sync_unlock(&psync);
+            #endif
+            
+            //SysMSleep(3000);
+            //printk("B:%8x ", testB);
+        }
+        /*
+        if (i > 0xf000000)
+            kthread_exit(current_task);*/
+    }
+}
+
+void taskD(void *arg)
+{
+    //char *par = arg;
+    int i = 0;
+    // log("hello\n");
+    while (1) {
+        i++;
+        if (i%FREQ == 0) {
+            /* 写者 */
+            #ifdef PRINT_RW_LOCK
+            rwlock_wrlock(&rwlock);
+            rwlock_int++;
+            rwlock_wrunlock(&rwlock);            
+            #endif
+
+            #ifdef PRINT_SYNC
+            sync_lock(&psync);
+            #endif
+            
+            #ifdef PRINT_SPIN
+            spin_lock(&pspin);
+            #endif
+            
+            #ifdef PRINT_SEMA
+            semaphore_down(&psema);
+            #endif
+            
+            #ifdef PRINT_MUTEX
+            mutex_lock(&pmutex);
+            #endif
+            //printk("[------------------------------------------------------------------------------------]\n");
+            #ifdef PRINT_MUTEX
+            mutex_unlock(&pmutex);
+            #endif
+
+            #ifdef PRINT_SEMA
+            semaphore_up(&psema);
+            #endif
+            
+            #ifdef PRINT_SPIN
+            spin_unlock(&pspin);
+            #endif
+            #ifdef PRINT_SYNC
+            sync_unlock(&psync);
+            #endif
+            
+            //SysMSleep(3000);
+            //printk("B:%8x ", testB);
+        }
+        /*
+        if (i > 0xf000000)
+            kthread_exit(current_task);*/
+    }
+}
+
 
 void dump_task(task_t *task)
 {
@@ -426,21 +628,36 @@ void kernel_pause()
     /* 设置特权级为最低，变成阻塞，当没有其它任务运行时，就会唤醒它 */
     task_idle->state = TASK_BLOCKED;
     task_idle->priority = TASK_PRIO_IDLE;
-    /* 然后设置成最低特权级 */
-    task_priority_queue_add_head(task_idle);
+    
     /* 调度到其它任务，直到又重新被调度 */
     schedule();
 
-    printk("wake up idle");
+    printk("run idle");
+    int i = 0;
+
     /* idle线程 */
 	while (1) {
+        i++;
 		/* 进程默认处于阻塞状态，如果被唤醒就会执行后面的操作，
 		知道再次被阻塞 */
-		
+		//printk("*%d",i);
         /* 打开中断 */
 		enable_intr();
 		/* 执行cpu停机 */
-		__cpu_idle();
+		//cpu_idle();
+        if (i % 0x500000 == 0) {
+            printk("idle\n");
+            //kthread_start("test", 1, taskA, "NULL");
+        }
+        if (i % 0xf00000 == 0) {
+            printk("kthread a\n");
+            kthread_start("test", 1, taskA, "NULL");
+        }
+
+        if (i % 0xf00000 == 0) {
+            printk("kthread b\n");
+            kthread_start("test2", 1, taskB, "NULL");
+        }
 	};
 }
 
@@ -449,20 +666,27 @@ void kernel_pause()
  */
 void init_tasks()
 {
-
-    /* 初始化特权队列 */
-    int i;
-    for (i = 0; i < MAX_PRIORITY_NR; i++) {
-        INIT_LIST_HEAD(&task_priority_queue[i]);
-    }
+    init_schedule();
 
     next_pid = 0;
     
     make_main_task();
-   
+    
+    /*kfifo = fifo_buf_alloc(128);
+    if (kfifo == NULL)
+        printk(KERN_ERR "alloc fifo buf failed!\n");
+    */
+    iofifo = fifo_io_alloc(128);
+    if (iofifo == NULL)
+        printk(KERN_ERR "alloc fifo buf failed!\n");
+    
+    //rwlock_init(&rwlock, RWLOCK_RW_FAIR);
+
     /* 有可能做测试阻塞main线程，那么就没有线程，
     在切换任务的时候就会出错，所以这里创建一个测试线程 */
     kthread_start("test", 1, taskA, "NULL");
     kthread_start("test2", 1, taskB, "NULL");
-
+    kthread_start("test3", 1, taskC, "NULL");
+    kthread_start("test4", 1, taskD, "NULL");
+    
 }

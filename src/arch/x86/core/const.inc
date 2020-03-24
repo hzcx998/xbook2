@@ -62,9 +62,8 @@ irq_entry%1:		 ; 每个中断处理程序都要压入中断向量号,所以一�
    ; 如果是从片上进入的中断,除了往从片上发送EOI外,还要往主片上发送EOI 
 
     push %1			 ; 不管idt_table中的目标程序是否需要参数,都一律压入中断向量号,调试时很方便
-   
+    
     push esp        ; 把中断栈指针传递进去  
-    call [intr_handler_table + %1*4]       ; 调用idt_table中的C版本中断处理函数
     ; 调用DoIRQ，通过传入的参数获取irq值
     call do_irq
     add esp, 4

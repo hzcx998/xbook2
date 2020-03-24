@@ -72,7 +72,7 @@ int register_irq(unsigned long irq,
     unsigned long flags,
     char *irqname,
     char *devname,
-    unsigned int data);
+    unsigned long data);
 int unregister_irq(unsigned long irq, void *data);
 
 int handle_irq(unsigned long irq, trap_frame_t *frame);

@@ -6,15 +6,16 @@
 ** Use VBoxManage or the VirtualBox Manager GUI to make changes.
 -->
 <VirtualBox xmlns="http://www.virtualbox.org/" version="1.15-windows">
-  <Machine uuid="{faf7315a-3be0-4232-8d1d-004191843504}" name="xbook-II" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2020-03-19T14:33:42Z">
+  <Machine uuid="{faf7315a-3be0-4232-8d1d-004191843504}" name="xbook-II" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2020-03-23T15:05:36Z">
     <MediaRegistry>
       <FloppyImages>
         <Image uuid="{b706b399-2c69-47d8-b828-9c457f8482ca}" location="D:/Developmemts/github/xbook2/develop/image/a.img"/>
       </FloppyImages>
     </MediaRegistry>
     <ExtraData>
+      <ExtraDataItem name="GUI/InformationWindowGeometry" value="690,351,634,347"/>
       <ExtraDataItem name="GUI/LastCloseAction" value="PowerOff"/>
-      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="640,262,720,445"/>
+      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="794,320,720,445"/>
     </ExtraData>
     <Hardware>
       <CPU>
@@ -25,7 +26,7 @@
       <Memory RAMSize="256"/>
       <Paravirt provider="Default"/>
       <Display VRAMSize="9"/>
-      <VideoCapture file="." fps="25"/>
+      <VideoCapture screens="1" file="." fps="25"/>
       <RemoteDisplay enabled="false"/>
       <USB>
         <Controllers>
@@ -37,9 +38,12 @@
           <NAT/>
         </Adapter>
       </Network>
+      <UART>
+        <Port slot="0" enabled="true" IOBase="0x3f8" IRQ="4" path="D:\Developmemts\github\xbook2\develop\virtualbox\output.txt" hostMode="RawFile"/>
+      </UART>
       <AudioAdapter driver="DirectSound" enabled="true" enabledIn="false"/>
       <GuestProperties>
-        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="zh_CN" timestamp="1584628422802375000" flags=""/>
+        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="zh_CN" timestamp="1584937309488670800" flags=""/>
       </GuestProperties>
     </Hardware>
     <StorageControllers>

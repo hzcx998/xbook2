@@ -1,0 +1,118 @@
+#ifndef _XBOOK_SEMAPHORE_H
+#define _XBOOK_SEMAPHORE_H
+
+#include <arch/atomic.h>
+#include <xbook/waitqueue.h>
+#include <xbook/schedule.h>
+#include <xbook/task.h>
+
+/**
+ * 当前这种信号量的值可以是很多，不仅仅局限于二元（0,1）
+ */
+
+typedef struct semaphor {
+	atomic_t counter;			// 统计资源的原子变量
+	wait_queue_t waiter;	// 在此信号量上等待的进程
+} semaphore_t;
+
+#define SEMAPHORE_INIT(sema, value) \
+    { .counter = ATOMIC_INIT(value) \
+    , .waiter = WAIT_QUEUE_INIT((sema).waiter) \
+    }
+
+#define DEFINE_SEMAPHORE(semaname, value) \
+    semaphore_t semaname = SEMAPHORE_INIT(semaname, value)
+
+/**
+ * semaphore_Init - 信号量初始化
+ * @sema: 信号量
+ * @value: 初始值
+ */
+static inline void semaphore_init(semaphore_t *sema, int value)
+{
+	/* 设置成初始值 */
+	atomic_set(&sema->counter, value);
+	/* 初始化等待队列 */
+	wait_queue_init(&sema->waiter, NULL);
+}
+
+/**
+ * __semaphore_down - 执行具体的down操作
+ * @sema: 信号量
+ */
+static inline void __semaphore_down(semaphore_t *sema)
+{
+	/* 申请一个等待者 */
+	wait_queue_t waiter;
+	task_t *current = current_task;
+
+	/* 把当前进程设置成一个等待者 */
+	wait_queue_init(&waiter, current);
+	
+	/* 把自己添加到信号量的等待队列中，等待被唤醒 */
+	list_add_tail(&waiter.wait_list, &sema->waiter.wait_list);
+
+    /* 状态设置成阻塞 */
+	SET_TASK_STATUS(current, TASK_BLOCKED);
+	/* 调度到其它任务 */
+	schedule();
+}
+
+/**
+ * semaphore_down - 信号量down
+ * @sema: 信号量
+ */
+static inline void semaphore_down(semaphore_t *sema)
+{
+    
+    unsigned long flags;
+    save_intr(flags);
+
+	/* 如果计数器大于0，就说明资源没有被占用 */
+	if (atomic_get(&sema->counter) > 0) {
+		/* 计数器减1，说明现在信号量被获取一次了 */
+		atomic_dec(&sema->counter);
+    } else {
+        /* 如果信号量为0，说明不能被获取，那么就把当前进程阻塞 */
+		__semaphore_down(sema);
+	}
+    restore_intr(flags);
+}
+
+/**
+ * __semaphore_down - 执行具体的up操作
+ * @sema: 信号量
+ */
+static inline void __semaphore_up(semaphore_t *sema)
+{
+	/* 从等待队列获取一个等待者 */
+	wait_queue_t *waiter = list_first_owner(&sema->waiter.wait_list, wait_queue_t, wait_list);
+	
+	/* 让等待者的链表从信号量的链表中脱去 */
+	list_del(&waiter->wait_list);
+    
+	/* 设置任务为就绪状态 */
+	waiter->task->state = TASK_READY;
+    task_priority_queue_add_head(waiter->task);
+}
+
+/**
+ * semaphore_up - 信号量up
+ * @sema: 信号量
+ */
+static inline void semaphore_up(semaphore_t *sema)
+{
+    unsigned long flags;
+    save_intr(flags);
+	/* 如果等待队列为空，说明没有等待的任务，就只释放信号量 */
+	if (list_empty(&sema->waiter.wait_list)) {
+		/* 使信号量递增 */
+		atomic_inc(&sema->counter);
+ 	} else {
+ 		/* 有等待任务，就唤醒一个 */
+		__semaphore_up(sema);
+	}
+    restore_intr(flags);
+}
+
+#endif   /*_BOOK_semaphore__H*/

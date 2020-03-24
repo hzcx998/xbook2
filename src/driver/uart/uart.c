@@ -374,7 +374,7 @@ static device_ops_t ops = {
 static driver_info_t drvinfo = {
     .name = DRV_NAME,
     .version = DRV_VERSION,
-    .owner = "jason",
+    .owner = "jason hu",
 };
 
 static int uart_init()
@@ -388,17 +388,13 @@ static int uart_init()
             printk("alloc device for uart failed!\n");
         uart_device[i].dev->ops = &ops;
         uart_device[i].dev->drvinfo = &drvinfo;
-        char devname[DEVICE_NAME_LEN] = {0};
-        /* com1,com2,com3,com4*/
-        sprintf(devname, "%s%d", "com", i + 1);
-        
+
+        dev_make_name(devname, "com", i + 1);
+
         if (register_device(uart_device[i].dev, devname, DEVTP_CHAR, &uart_device[i]))
             printk("register device for uart failed!\n");
         
     }
-    printk("hello, uart!\n");
-    
-    dump_devices();
     return 0;
 }
 
@@ -410,12 +406,6 @@ static void uart_exit()
             printk("unregister device for uart failed!\n");
         dev_free(uart_device[i].dev);
     }
-	
-    printk("bye, uart!\n");
 }
 
-unit_t uart_unit = {
-    .name = "uart",
-    .login = uart_init,
-    .logout = uart_exit,
-};
+EXPORT_UNIT(uart_unit, "uart", uart_init, uart_exit);

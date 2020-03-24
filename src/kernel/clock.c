@@ -178,7 +178,7 @@ void timer_softirq_handler(softirq_action_t *action)
 
 	/* 更新定时器 */
 	//UpdateTimerSystem();
-    //printk("s");
+    
 }
 
 /* sched_softirq_handler - 调度程序软中断处理
@@ -245,7 +245,7 @@ unsigned long SysTime(struct tm *tm)
  */
 void print_ktime()
 {
-	printk("Time:%d:%d:%d Date:%d/%d/%d\n", \
+	printk(KERN_INFO "time:%d:%d:%d date:%d/%d/%d\n", \
 		ktime.hour, ktime.minute, ktime.second,\
 		ktime.year, ktime.month, ktime.day);
 	
@@ -257,7 +257,7 @@ void print_ktime()
 	week_day[4] = "Thursday";
 	week_day[5] = "Friday";
 	week_day[6] = "Saturday";
-	printk("week_day:%d-%s year_day:%d\n", ktime.week_day, week_day[ktime.week_day], ktime.year_day);
+	printk(KERN_INFO "week day:%d %s year day:%d\n", ktime.week_day, week_day[ktime.week_day], ktime.year_day);
 }
 
 
@@ -268,7 +268,7 @@ int clock_handler(unsigned long irq, unsigned long data)
 {
     /* 改变ticks计数 */
 	systicks++;
-	
+	//printk("s");
 	/* 激活定时器软中断 */
 	active_softirq(TIMER_SOFTIRQ);
 
@@ -326,5 +326,4 @@ void init_clock()
         printk("register failed!\n");
 
     enable_intr();
-    printk("waiting...\n");
 }

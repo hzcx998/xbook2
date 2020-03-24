@@ -36,6 +36,8 @@ mouse: enabled=0
 # in the DLX Linux example I'm enabling keyboard_mapping so that paste 
 # will work.  Cut&Paste is currently implemented on win32 and X windows only.
 
+com1: enabled=1, mode=file, dev="../develop/bochs/output.txt"
+
 #keyboard: enabled=1, map=/usr/bochs/share/bochs/keymaps/x11-pc-us.map
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-fr.map
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-de.map

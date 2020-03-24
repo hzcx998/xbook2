@@ -72,5 +72,9 @@ static inline unsigned long *__current_task_addr()
         if (vmm->page_storage) {                            \
             update_tss_info(__current_task_addr());         \
         }                                                   \
-    } while (0);
+    } while (0)
+
+/* task switch func */
+void __switch_to(unsigned long prev, unsigned long next);
+
 #endif	/* _X86_TASK_H */

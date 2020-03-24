@@ -15,3 +15,4 @@ obj-y	+= bootmem.o
 obj-y	+= cmos.o
 obj-y	+= pit.o
 obj-y	+= ioremap.o
+obj-y	+= switch_task.o

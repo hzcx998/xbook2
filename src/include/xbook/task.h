@@ -4,6 +4,7 @@
 #include <xbook/types.h>
 #include <xbook/list.h>
 #include <arch/page.h>
+#include <arch/task.h>
 
 /* task state */
 typedef enum task_state {
@@ -16,14 +17,6 @@ typedef enum task_state {
     TASK_DIED,              /* 进程处于死亡状态，资源已经被回收 */
 } task_state_t;
 
-/*任务优先级 */
-enum task_priority {
-    TASK_PRIO_BEST = 0,     /* 最佳优先级 */
-    TASK_PRIO_RT,           /* 实时优先级 */
-    TASK_PRIO_USER,         /* 用户优先级 */
-    TASK_PRIO_IDLE,         /* IDLE优先级 */
-};
-
 #define MAX_TASK_NAMELEN 32
 
 /* 栈魔数，用于检测内核栈是否向下越界 */
@@ -32,20 +25,22 @@ enum task_priority {
 /* 栈中保存的最大参数个数 */
 #define MAX_STACK_ARGC 16
 
-/* 优先级队列数量 */
-#define MAX_PRIORITY_NR  4
-
 /* 内核栈大小为8kb */
 #define TASK_KSTACK_SIZE    8192
+
+typedef struct priority_queue {
+    list_t list;            /* 任务链表 */
+    unsigned long length;   /* 队列长度 */
+    unsigned int priority;  /* 优先级 */
+} priority_queue_t;
 
 typedef struct vmm {
     void *page_storage;        /* 虚拟内存管理的结构 */                   
     
 } vmm_t;
 
-
 typedef struct task {
-    unsigned char *kstack;                // 内核栈
+    unsigned char *kstack;                // kernel stack, must be first member
     pid_t pid;                      // 自己的进程id
     pid_t parent_pid;                // 父进程id
     task_state_t state;          /* 任务的状态 */
@@ -58,6 +53,8 @@ typedef struct task {
     vmm_t *vmm;                     /* 虚拟内存管理 */
     list_t list;               // 处于所在队列的链表
     list_t global_list;         // 全局任务队列，用来查找所有存在的任务
+    priority_queue_t *prio_queue;   /* 所在的优先级队列 */
+    struct task *next;  /* 指向下一个任务的指针 */
     unsigned int stack_magic;         /* 任务的魔数 */
 } task_t;
 
@@ -65,7 +62,9 @@ typedef struct task {
         (task)->state = stat
 
 /* 获取当前地址位置 */
-#define current_task   (task_t *)__current_task_addr()
+#define __current_task()   (task_t *)(current_task_addr)()
+
+#define current_task   __current_task()
 
 void init_tasks();
 void kernel_pause();
@@ -77,22 +76,17 @@ task_t *kthread_start(char *name, int priority, task_func_t func, void *arg);
 void kthread_exit(task_t *task);
 
 task_t *find_task_by_id(pid_t pid);
-
-void task_priority_queue_add_tail(task_t *task);
-void task_priority_queue_add_head(task_t *task);
 void task_gloabl_list_add(task_t *task);
-
-int is_task_in_priority_queue(task_t *task);
-int is_all_priority_queue_empty();
 
 void task_activate(task_t *task);
 void page_dir_active(task_t *task);
 
 unsigned long *create_vmm_frame();
-#define task_vmm_active(task) __task_vmm_active((task)->vmm)
 
 void task_block(task_state_t state);
 void task_unblock(task_t *task);
 
+#define task_sleep() task_block(TASK_BLOCKED) 
+#define task_wakeup(task) task_unblock(task) 
 
 #endif   /* _XBOOK_TASK_H */

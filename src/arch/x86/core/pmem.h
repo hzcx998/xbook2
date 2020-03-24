@@ -4,10 +4,6 @@
 #include "atomic.h"
 #include <xbook/memcache.h>
 
-#define KB  1024
-#define MB  (1024*KB)
-#define GB  (1024*MB)
-
 // 0MB~1MB是体系结构相关的内存分布
 #define BIOS_MEM_ADDR               0X000000000
 #define BIOS_MEM_SIZE               0X000100000     // 1MB

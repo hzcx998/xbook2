@@ -179,7 +179,7 @@ static int mem_group_init(mem_cache_t *cache,
 		unsigned int pages = DIV_ROUND_UP(cache->object_count * cache->object_size, PAGE_SIZE); 
 		group->objects = mem_cache_alloc_pages(pages);
 		if (group->objects == NULL) {
-			printk("alloc page for mem objects failed\n");
+			printk(KERN_ERR "alloc page for mem objects failed\n");
 			return -1;
 		}
 		int i;
@@ -208,17 +208,17 @@ static int create_mem_group(mem_cache_t *cache, flags_t flags)
 {
 	mem_group_t *group;
 
-    printk("cache %s need a new group %x!\n", cache->name, cache->object_size);
+    //printk("cache %s need a new group %x!\n", cache->name, cache->object_size);
 
 	/* 为内存组分配一个页 */
 	group = mem_cache_alloc_pages(1);
 	if (group == NULL) {
-		printk("alloc page for mem group failed!\n");
+		printk(KERN_ERR "alloc page for mem group failed!\n");
 		return -1;
 	}
 
 	if (mem_group_init(cache, group, flags)) {
-		printk("init mem group failed!\n");
+		printk(KERN_ERR "init mem group failed!\n");
 		goto free_group;
 	}
 	
@@ -283,7 +283,7 @@ static void *__mem_cache_alloc_object(mem_cache_t *cache, mem_group_t *group)
 	// 分配失败
 	if (idx == -1) {
 		/* 没有可用对象了 */
-		printk("bitmap scan failed!\n");
+		printk(KERN_EMERG "bitmap scan failed!\n");
 		
 		return NULL;
 	}
@@ -399,7 +399,7 @@ void *kmalloc(size_t size)
 {
 	// 如果越界了就返回空
 	if (size > MAX_MEM_CACHE_SIZE) {
-		printk("kmalloc size %d too big!", size);
+		printk(KERN_NOTICE "kmalloc size %d too big!", size);
 		return NULL;
 	}
 	
@@ -443,7 +443,7 @@ static void __mem_cache_free_object(mem_cache_t *cache, void *object)
 
 	// 如果查询失败，就返回，代表没有进行释放
 	if (group == NULL) 
-		panic("group get from page bad!\n");
+		panic(KERN_EMERG "group get from page bad!\n");
 
 	//printk("get object group %x\n", group);
 
@@ -454,7 +454,7 @@ static void __mem_cache_free_object(mem_cache_t *cache, void *object)
 	
 	// 检测index是否正确
 	if (index < 0 || index > group->map.byte_length*8)
-		panic("map index bad range!\n");
+		panic(KERN_EMERG "map index bad range!\n");
 	
 	// 把位图设置为0，就说明它没有使用了
 	bitmap_set(&group->map, index, 0);

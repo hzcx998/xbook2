@@ -4,6 +4,7 @@
 #include <xbook/debug.h>
 #include <xbook/math.h>
 #include <xbook/memops.h>
+#include <xbook/const.h>
 
 extern unsigned int get_memory_size_from_hardware();
 
@@ -161,7 +162,7 @@ int init_pmem()
         panic("boot mem alloc for mem node table failed!\n");
     }
     
-    printk("mem node table at %x size:%x %d MB\n", (unsigned int )mem_node_table, mem_node_table_size, mem_node_table_size/MB);
+    //printk(KERN_DEBUG "mem node table at %x size:%x %d MB\n", (unsigned int )mem_node_table, mem_node_table_size, mem_node_table_size/MB);
     
     memset(mem_node_table, 0, mem_node_table_size);
 
