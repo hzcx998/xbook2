@@ -52,28 +52,6 @@ static inline unsigned long *__current_task_addr()
     return (unsigned long *)((esp - PAGE_SIZE) & ~(PAGE_SIZE - 1));
 }
 
-/* set task vmm page */
-#define __task_vmm_init_page(page)                         \
-    do {                                                    \
-        memcpy(((unsigned char *)page + 2048),              \
-                (void *)(PAGE_DIR_VIR_ADDR + 2048), 2048);  \
-        unsigned long paddr = __pa((void *)page);           \
-        page[1023] = paddr | PG_P_1 | PG_US_S | PG_RW_W;    \
-    } while (0)
-    
-/* active task vmm */
-#define __task_vmm_active(vmm)                              \
-    do {                                                    \
-        unsigned long paddr = PAGE_DIR_PHY_ADDR;            \
-        if ((vmm)->page_storage != NULL) {                  \
-            paddr = __pa((void *)(vmm)->page_storage);      \
-        }                                                   \
-        write_cr3(paddr);                                   \
-        if (vmm->page_storage) {                            \
-            update_tss_info(__current_task_addr());         \
-        }                                                   \
-    } while (0)
-
 /* task switch func */
 void __switch_to(unsigned long prev, unsigned long next);
 

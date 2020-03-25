@@ -323,10 +323,20 @@ end:
     return 0;
 }
 
+/* 复制一份内核页，并清空用户态数据 */
+unsigned long *__copy_kernel_page_dir()
+{
+    unsigned long page = __alloc_pages(1);
+    unsigned int *vaddr = (unsigned int *)__va(page);
+    
+    memset(vaddr, 0, PAGE_SIZE);
+    memcpy((void *)((unsigned char *)vaddr + PAGE_SIZE / 2), 
+        (void *)((unsigned char *)PAGE_DIR_VIR_ADDR + PAGE_SIZE / 2), 
+        PAGE_SIZE / 2);
 
-
-
-
+    vaddr[1023] = page | PG_P_1 | PG_US_S | PG_RW_W;
+    return (unsigned long *)vaddr;
+}
 
 /*
  * mem_self_mapping - 内存自映射

@@ -27,6 +27,7 @@
         "device.h": "c",
         "spinlock.h": "c",
         "synclock.h": "c",
-        "semaphore.h": "c"
+        "semaphore.h": "c",
+        "rawblock.h": "c"
     }
 }

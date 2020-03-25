@@ -35,4 +35,9 @@ static inline void *p2v(unsigned long address)
 #define get_free_page_nr                    __get_free_page_nr
 #define get_total_page_nr                   __get_total_page_nr
 
+
+#define copy_kernel_page_storge             __copy_kernel_page_dir
+#define page_dir_active                     __page_dir_active
+
+
 #endif  /* _ARCH_PAGE_H */

@@ -124,4 +124,19 @@ unsigned long __addr_v2p(unsigned long vaddr);
 
 int mem_self_mapping(unsigned int start, unsigned int end);
 
+unsigned long *__copy_kernel_page_dir();
+
+/* active page dir */
+#define __page_dir_active(page, on) \
+    do { \
+        unsigned long paddr = PAGE_DIR_PHY_ADDR; \
+        if ((on)) { \
+            paddr = page; \
+        } \
+        write_cr3(paddr); \
+        if ((on)) { \
+            update_tss_info(__current_task_addr()); \
+        }                                                   \
+    } while (0)
+
 #endif  /*_X86_MM_PAGE_H */

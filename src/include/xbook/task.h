@@ -1,10 +1,11 @@
 #ifndef _XBOOK_TASK_H
 #define _XBOOK_TASK_H
 
-#include <xbook/types.h>
-#include <xbook/list.h>
 #include <arch/page.h>
 #include <arch/task.h>
+#include <xbook/types.h>
+#include <xbook/list.h>
+#include <xbook/vmm.h>
 
 /* task state */
 typedef enum task_state {
@@ -33,11 +34,6 @@ typedef struct priority_queue {
     unsigned long length;   /* 队列长度 */
     unsigned int priority;  /* 优先级 */
 } priority_queue_t;
-
-typedef struct vmm {
-    void *page_storage;        /* 虚拟内存管理的结构 */                   
-    
-} vmm_t;
 
 typedef struct task {
     unsigned char *kstack;                // kernel stack, must be first member
@@ -69,24 +65,26 @@ typedef struct task {
 void init_tasks();
 void kernel_pause();
 
+void task_init(task_t *task, char *name, int priority);
 void dump_task(task_t *task);
 
+void make_task_stack(task_t *task, task_func_t function, void *arg);
 task_t *kthread_start(char *name, int priority, task_func_t func, void *arg);
 
 void kthread_exit(task_t *task);
 
 task_t *find_task_by_id(pid_t pid);
-void task_gloabl_list_add(task_t *task);
+void task_global_list_add(task_t *task);
 
 void task_activate(task_t *task);
-void page_dir_active(task_t *task);
-
-unsigned long *create_vmm_frame();
 
 void task_block(task_state_t state);
 void task_unblock(task_t *task);
 
 #define task_sleep() task_block(TASK_BLOCKED) 
 #define task_wakeup(task) task_unblock(task) 
+
+task_t *process_create(char *name, char **argv);
+
 
 #endif   /* _XBOOK_TASK_H */

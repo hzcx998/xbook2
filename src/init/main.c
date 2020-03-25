@@ -6,6 +6,7 @@
 #include <xbook/vmarea.h>
 #include <xbook/task.h>
 #include <xbook/unit.h>
+#include <xbook/rawblock.h>
 
 int kernel_main(void)
 {
@@ -23,6 +24,13 @@ int kernel_main(void)
     init_clock();
     /* init unit drivers */
     init_unit();
+
+    /* init raw block */
+    init_raw_block();
+
+    printk("process create.\n");
+    char *argv[3] = {"test", "arg2", 0};
+    process_create("test", argv);
 
     kernel_pause();
     return 0;

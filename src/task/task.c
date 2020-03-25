@@ -15,6 +15,7 @@
 #include <xbook/fifobuf.h>
 #include <xbook/fifoio.h>
 #include <xbook/rwlock.h>
+#include <xbook/vmm.h>
 
 static pid_t next_pid;
 
@@ -57,30 +58,12 @@ static void roll_back_pid()
 #endif
 
 /**
- * task_create_page_storage - 创建页储存   
- */
-unsigned long *task_create_page_storage()
-{
-    // 分配一个页来当作页目录
-    unsigned long *page = kmalloc(PAGE_SIZE);
-
-    if (!page) {
-        printk("kmalloc for task_create_page_storage failed!\n");
-        return NULL;
-    }
-    memset(page, 0, PAGE_SIZE);
-
-    task_vmm_init_page(page);
-    return page;
-}
-
-/**
  * make_task_stack - 创建一个线程
  * @task: 线程结构体
  * @function: 要去执行的函数
  * @arg: 参数
  */
-static void make_task_stack(task_t *task, task_func_t function, void *arg)
+void make_task_stack(task_t *task, task_func_t function, void *arg)
 {
     /* 预留中断栈 */
     task->kstack -= sizeof(trap_frame_t);
@@ -100,7 +83,7 @@ static void make_task_stack(task_t *task, task_func_t function, void *arg)
  * @name: 线程的名字
  * @priority: 线程优先级
  */
-static void task_init(task_t *task, char *name, int priority)
+void task_init(task_t *task, char *name, int priority)
 {
     memset(task, 0, sizeof(task_t));
     // 复制名字
@@ -121,12 +104,8 @@ static void task_init(task_t *task, char *name, int priority)
     task->elapsed_ticks = 0;
     
     /* init with NULL */
-    task->vmm = kmalloc(sizeof(vmm_t));
-    if (task->vmm == NULL) {
-        panic("error: task_init: kmalloc for vmm failed!\n");
-    }
-    task->vmm->page_storage = NULL;
-
+    task->vmm = NULL;
+    
     /* get a new pid */
     task->pid = new_pid();
     task->parent_pid = -1;
@@ -240,8 +219,8 @@ void task_activate(task_t *task)
     /* 设置为运行状态 */
     task->state = TASK_RUNNING;
     /* 激活任务的页目录表 */
-    if (task->vmm)
-        task_vmm_active(task->vmm);
+
+    vmm_active(task->vmm);
 }
 
 /**
@@ -334,7 +313,7 @@ DEFINE_FIFO_BUF(fifo_buf, NULL, 0);
 //#define PRINT_SPIN
 //#define PRINT_SYNC
 //#define PRINT_FIFO
-#define PRINT_RW_LOCK
+//#define PRINT_RW_LOCK
 
 fifo_buf_t *kfifo;
 
@@ -342,10 +321,6 @@ fifo_io_t *iofifo;
 
 //rwlock_t rwlock;
 DEFINE_RWLOCK_WR_FIRST(rwlock);
-
-DEFINE_RWLOCK_RD_FIRST(rdfirst);
-DEFINE_RWLOCK_WR_FIRST(wrfirst);
-DEFINE_RWLOCK_RW_FAIR(rwfair);
 
 int rwlock_int = 0;
 
@@ -684,9 +659,9 @@ void init_tasks()
 
     /* 有可能做测试阻塞main线程，那么就没有线程，
     在切换任务的时候就会出错，所以这里创建一个测试线程 */
-    kthread_start("test", 1, taskA, "NULL");
+    /*kthread_start("test", 1, taskA, "NULL");
     kthread_start("test2", 1, taskB, "NULL");
     kthread_start("test3", 1, taskC, "NULL");
-    //kthread_start("test4", 1, taskD, "NULL");
+    *///kthread_start("test4", 1, taskD, "NULL");
     
 }
