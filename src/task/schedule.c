@@ -64,44 +64,12 @@ task_t *get_next_task(task_t *task)
     return next;
 }    
 
-/**
- * schedule_in_intr - 任务调度
- * 
- * 当需要从一个任务调度到另一个任务时，使用这个函数来执行操作
- * 
- * 把自己放入队列末尾。
- * 从优先级最高的队列中选取一个任务来执行。
- * 
- * 在时钟中断产生时的调度
- */
-void schedule_in_intr()
-{
-    task_t *task = current_task;
-
-    task_t *next = get_next_task(task);
-    
-    /* 如果任务一样就不切换 */
-    /* 3.激活任务的内存环境 */
-    task_activate(next);
-
-    /*if (task == next) {
-        printk("task same\n");
-        
-        return;
-    }*/
-    /* 4.切换到该任务运行 */
-    switch_to(task, next);
-}
 
 /**
  * Schedule - 任务调度
  * 
- * 当需要从一个任务调度到另一个任务时，使用这个函数来执行操作
- * 
  * 把自己放入队列末尾。
  * 从优先级最高的队列中选取一个任务来执行。
- * 
- * 其它情况下的调度
  */
 void schedule()
 {
@@ -116,12 +84,6 @@ void schedule()
     
     /* 3.激活任务的内存环境 */
     task_activate(next);
-    
-    /*if (task == next) {
-        printk("task same\n");
-        
-        return;
-    }*/
     /* 4.切换到该任务运行 */
     switch_to(task, next);
 }

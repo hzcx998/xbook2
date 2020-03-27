@@ -25,7 +25,7 @@ int do_usrmsg(umsg_t *msg)
     if (!msg)
         return -1;
     dev_t devno;
-    usrmsg_dump(msg);
+    //usrmsg_dump(msg);
     switch (msg->type)
     {
     case UMSG_OPEN:
@@ -34,7 +34,7 @@ int do_usrmsg(umsg_t *msg)
             msg->retval = -2;
             return -1;
         }
-        printk(KERN_DEBUG "usrmsg open\n");
+        //printk(KERN_DEBUG "usrmsg open\n");
         msg->retval = dev_open(devno, (flags_t) msg->arg1); 
         break;
     case UMSG_CLOSE:

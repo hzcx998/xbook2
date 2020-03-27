@@ -87,7 +87,7 @@ void __page_link(unsigned long va, unsigned long pa, unsigned long prot)
             /* we can goto free some pages and try it again,
              but now we just stop! */
         }
-        printk(KERN_DEBUG "page_link -> new page table %x\n", page_table);
+        //printk(KERN_DEBUG "page_link -> new page table %x\n", page_table);
 
         /* add page table to page dir */
         *pde = (page_table | prot | PG_P_1);
@@ -117,7 +117,7 @@ void __page_unlink(unsigned long vaddr)
 
 	// 如果页表项存在物理页
 	if (*pte & PG_P_1) {
-		printk(KERN_DEBUG "unlink vaddr:%x pte:%x\n", vaddr, *pte);
+		//printk(KERN_DEBUG "unlink vaddr:%x pte:%x\n", vaddr, *pte);
 		
         // 清除页表项的存在位，相当于删除物理页
 		*pte &= ~PG_P_1;
@@ -162,7 +162,7 @@ int __map_pages(unsigned long start, unsigned long len, unsigned long prot)
         return -1;
     }
 	unsigned long end = first + len;
-	printk(KERN_DEBUG "map_pages -> start%x->%x len %x\n", first, pages, len);
+	//printk(KERN_DEBUG "map_pages -> start%x->%x len %x\n", first, pages, len);
     while (first < end)
 	{
         // 对单个页进行链接
@@ -263,7 +263,7 @@ int __map_pages_safe(void *start, unsigned long len, unsigned long prot)
                 return -1;
             }
             __page_link(vaddr, page_addr, attr);
-            printk("info: map_pages_safe -> start%x->%x\n", vaddr, page_addr);
+            //printk("info: map_pages_safe -> start%x->%x\n", vaddr, page_addr);
         }
         vaddr += PAGE_SIZE;
         page_idx++;
@@ -493,7 +493,7 @@ void do_page_fault(trap_frame_t *frame)
     unsigned long addr = 0x00;
 
     addr = read_cr2(); /* cr2 saved the fault addr */
-    printk(KERN_DEBUG "page fault addr:%x\n", addr);
+    //printk(KERN_DEBUG "page fault addr:%x\n", addr);
     
     /* in kernel page fault */
     if (!(frame->error_code & PG_ERR_USER)) {
@@ -529,7 +529,7 @@ void do_page_fault(trap_frame_t *frame)
                 (addr + 32 >= frame->esp)) {
                 /* 向下扩展栈 */
                 do_expand_stack(space, addr);
-                printk(KERN_DEBUG "expand stack at %x\n", addr);
+                //printk(KERN_DEBUG "expand stack at %x\n", addr);
             } else {    /* 不是可拓展栈 */
                 /* 发出信号退出 */
                 panic("send a signal SIGSEGV because addr below space!"); 
@@ -547,7 +547,7 @@ void do_page_fault(trap_frame_t *frame)
     }
     /* 处理缺页 */
     handle_no_page(addr, space->page_prot);
-    printk(KERN_DEBUG "handle_no_page at %x success!\n", addr);
+    //printk(KERN_DEBUG "handle_no_page at %x success!\n", addr);
    
     /* 执行完缺页故障处理后，会到达这里表示成功！ */
 }

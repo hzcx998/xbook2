@@ -31,7 +31,7 @@ int kernel_main(void)
     printk("process create.\n");
     char *argv[3] = {"test", "arg2", 0};
     process_create("test", argv);
-
+    
     kernel_pause();
     return 0;
 }

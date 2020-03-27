@@ -26,7 +26,6 @@ static int load_data_from(raw_block_t *rb, void *buffer, unsigned long offset, u
     return 0;
 }
 
-
 /**
  * load_segment - 加载段
  * @rb: 文件描述符
@@ -316,13 +315,6 @@ void process_execute(int argc, char **argv)
         printk(KERN_ERR "process_execute: read elf header failed!\n");
         return;
     }
-    /*
-    unsigned char *p = (unsigned char *)&elf_header;
-    int i;
-    for (i = 0; i < sizeof(struct Elf32_Ehdr); i++) {
-        printk("%x ", p[i]);
-    }
-    */
 
     /* 检验elf头，看它是否为一个elf格式的程序 */
     if (memcmp(elf_header.e_ident, "\177ELF\1\1\1", 7) || \
@@ -336,16 +328,14 @@ void process_execute(int argc, char **argv)
         printk(KERN_ERR "process_execute: it is not a elf format file!\n", name);
         return;
     }
+    
     task_t *cur = current_task;
     /* 加载镜像 */
     if (load_image(cur->vmm, &elf_header, rb)) {
         printk(KERN_ERR "process_execute: load_image failed!\n");
         return;
     }
-
-    unsigned long flags;
-    save_intr(flags);
-
+    
     /* 构建中断栈框 */
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
@@ -367,11 +357,10 @@ void process_execute(int argc, char **argv)
 
     /* 修改进程相关的task成员 */
 
-    /* 进行善后处理 */    
-    restore_intr(flags);
     printk(KERN_DEBUG "switch to user!\n");
     /* 切换到进程执行 */
     dump_trap_frame(frame);
+    
     switch_to_user(frame);
 }
 
@@ -385,7 +374,7 @@ void process_execute(int argc, char **argv)
 void process_start(void *arg)
 {
     printk("process start!\n");
-    
+    //printk("arg addr %x\n", arg);
     /* 参数转换 */
     char **argv = (char **)arg;
     
@@ -435,8 +424,6 @@ task_t *process_create(char *name, char **argv)
     }
     vmm_init(task->vmm);
     
-    /* 把参数进行额外的保存 */
-
     // 创建一个线程
     make_task_stack(task, process_start, (void *)argv);
 

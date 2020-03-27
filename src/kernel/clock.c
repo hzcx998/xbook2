@@ -201,7 +201,7 @@ void sched_softirq_handler(softirq_action_t *action)
 	
     /* 需要进行调度的时候才会去调度 */
 	if (current->ticks <= 0) {
-		schedule_in_intr();
+		schedule();
 	} else {
 		current->ticks--;
 	}
