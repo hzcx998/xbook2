@@ -12,13 +12,11 @@ tss_t *get_tss()
 	return &tss;
 }
 
-#if 1
-void update_tss_info(unsigned long *task_addr)
+void update_tss_info(unsigned long task_addr)
 {
 	// 更新tss.esp0的值为任务的内核栈顶
-	tss.esp0 = (unsigned int)(task_addr + TASK_KSTACK_SIZE);
+	tss.esp0 = (unsigned long)(task_addr + TASK_KSTACK_SIZE);
 }
-#endif
 
 void init_tss()
 {

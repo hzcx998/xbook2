@@ -175,7 +175,7 @@ typedef struct {
 最大文件大小依据MAX_MEM_CACHE_SIZE而定
  */
 raw_block_info_t rbi_table[MAX_RBI_NR] = {
-    {"test", 0, 10, 4743},
+    {"test", 0, 20, 10240},
     {"test2", 10, 1, 13},
 };
 

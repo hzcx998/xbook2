@@ -2,6 +2,7 @@
 #include "gate.h"
 #include "interrupt.h"
 #include "pic.h"
+#include <xbook/kernel.h>
 
 /* 
  * Interrupt descriptor table
@@ -11,7 +12,7 @@ struct gate_descriptor *idt;
 // 总共支持的中断数
 #define MAX_IDT_NR (IDT_LIMIT/8)      
 
-#define SYSCALL_INTERRUPT_NR 0x80
+#define KERN_USRMSG_NR 0x40
 
 extern void exception_entry0x00();
 extern void exception_entry0x01();
@@ -63,7 +64,7 @@ extern void irq_entry0x2d();
 extern void irq_entry0x2e();
 extern void irq_entry0x2f();
 
-extern void syscall_handler();
+extern void kern_usrmsg_handler();
 
 static void set_gate_descriptor(struct gate_descriptor *descriptor, intr_handler_t offset,
 		unsigned int selector, unsigned int attributes, unsigned char privilege)
@@ -144,10 +145,8 @@ static void init_interrupt_descriptor()
 	set_gate_descriptor(&idt[0x2e], irq_entry0x2e, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL0); 
 	set_gate_descriptor(&idt[0x2f], irq_entry0x2f, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL0); 
 	
-	/*
-	 系统调用的中断入口
-	 */
-	set_gate_descriptor(&idt[SYSCALL_INTERRUPT_NR], syscall_handler, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL3);
+	/* 内核态用户消息处理中断 */
+	set_gate_descriptor(&idt[KERN_USRMSG_NR], kern_usrmsg_handler, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL3);
 	
 	load_idtr(IDT_LIMIT, IDT_VADDR);
 

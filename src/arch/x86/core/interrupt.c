@@ -65,12 +65,17 @@ void intr_general_handler(unsigned int esp)
         return;
     }
     #endif
+	/* 如果是页故障，就处理它 */
+	if (frame->vec_no == EP_PAGE_FAULT) {
+		do_page_fault(frame);
+		return;
+	}
     /* 原始处理方式 */
 
 	printk("! Exception messag start.\n");
 	printk("name: %s \n", intr_name_table[frame->vec_no]);
 
-	printk("vec: %x\n", 
+	printk("vec: %d\n", 
 			frame->vec_no);
 	//Panic("expection");
 	printk("edi: %x esi: %x ebp: %x esp: %x\n", 
@@ -199,11 +204,8 @@ void __unregister_irq_handler(unsigned char irq)
 
 void dump_trap_frame(trap_frame_t *frame)
 {
-#ifdef _DEBUG_GATE
-    printk(PART_TIP "----Trap Frame----\n");
-    printk(PART_TIP "vector:%d edi:%x esi:%x ebp:%x esp dummy:%x ebx:%x edx:%x ecx:%x eax:%x\n",
-        frame->edi, frame->esi, frame->ebp, frame->espDummy, frame->ebx, frame->edx, frame->ecx, frame->eax);
-    printk(PART_TIP "gs:%x fs:%x es:%x ds:%x error code:%x eip:%x cs:%x eflags:%x esp:%x ss:%x\n",
+    printk(KERN_DEBUG "vector:%d edi:%x esi:%x ebp:%x esp dummy:%x ebx:%x edx:%x ecx:%x eax:%x\n",
+        frame->vec_no, frame->edi, frame->esi, frame->ebp, frame->esp_dummy, frame->ebx, frame->edx, frame->ecx, frame->eax);
+    printk(KERN_DEBUG "gs:%x fs:%x es:%x ds:%x error code:%x eip:%x cs:%x eflags:%x esp:%x ss:%x\n",
         frame->gs, frame->fs, frame->es, frame->ds, frame->error_code, frame->eip, frame->cs, frame->eflags, frame->esp, frame->ss);
-#endif 
 }

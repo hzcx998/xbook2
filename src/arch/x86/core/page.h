@@ -1,6 +1,8 @@
 #ifndef _X86_PAGE_H
 #define _X86_PAGE_H
 
+#include "interrupt.h"
+
 // 页目录类型
 typedef unsigned int pde_t;
 // 页表类型
@@ -102,7 +104,7 @@ static inline pte_t *get_pte_ptr(unsigned int vaddr)
 unsigned long __alloc_pages(unsigned long count);
 int __free_pages(unsigned long page);
 
-void __page_link(void *va, void *pa, unsigned long prot);
+void __page_link(unsigned long va, unsigned long pa, unsigned long prot);
 void __page_unlink(unsigned long vaddr);
 
 int __map_pages(unsigned long start, unsigned long len, unsigned long prot);
@@ -138,5 +140,8 @@ unsigned long *__copy_kernel_page_dir();
             update_tss_info(__current_task_addr()); \
         }                                                   \
     } while (0)
+
+void do_page_fault(trap_frame_t *frame);
+
 
 #endif  /*_X86_MM_PAGE_H */

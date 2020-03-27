@@ -3,6 +3,13 @@
 
 #include "general.h"
 
+/* protect flags */
+#define PROT_NONE        0x0       /* page can not be accessed */
+#define PROT_READ        0x1       /* page can be read */
+#define PROT_WRITE       0x2       /* page can be written */
+#define PROT_EXEC        0x4       /* page can be executed */
+#define PROT_KERN        0x8       /* page in kernel */
+#define PROT_USER        0x10      /* page in user */
 
 static inline unsigned long v2p(void *address)
 {
@@ -34,7 +41,6 @@ static inline void *p2v(unsigned long address)
 
 #define get_free_page_nr                    __get_free_page_nr
 #define get_total_page_nr                   __get_total_page_nr
-
 
 #define copy_kernel_page_storge             __copy_kernel_page_dir
 #define page_dir_active                     __page_dir_active

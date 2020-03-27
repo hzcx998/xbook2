@@ -5,6 +5,8 @@
 #include <xbook/math.h>
 #include <xbook/memops.h>
 #include <xbook/assert.h>
+#include <xbook/task.h>
+#include <xbook/vmspace.h>
 
 extern mem_node_t *mem_node_table;
 extern unsigned int mem_node_count;
@@ -56,7 +58,7 @@ int __free_pages(unsigned long page)
  * 
  * 把虚拟地址和物理地址连接起来，这样就能访问物理地址了
  */
-void __page_link(void *va, void *pa, unsigned long prot)
+void __page_link(unsigned long va, unsigned long pa, unsigned long prot)
 {
     unsigned long vaddr = (unsigned long )va;
     unsigned long paddr = (unsigned long )pa;
@@ -85,7 +87,7 @@ void __page_link(void *va, void *pa, unsigned long prot)
             /* we can goto free some pages and try it again,
              but now we just stop! */
         }
-        printk("info: page_link -> new page table %x\n", page_table);
+        printk(KERN_DEBUG "page_link -> new page table %x\n", page_table);
 
         /* add page table to page dir */
         *pde = (page_table | prot | PG_P_1);
@@ -115,7 +117,7 @@ void __page_unlink(unsigned long vaddr)
 
 	// 如果页表项存在物理页
 	if (*pte & PG_P_1) {
-		printk("unlink vaddr:%x pte:%x\n", vaddr, *pte);
+		printk(KERN_DEBUG "unlink vaddr:%x pte:%x\n", vaddr, *pte);
 		
         // 清除页表项的存在位，相当于删除物理页
 		*pte &= ~PG_P_1;
@@ -132,10 +134,23 @@ void __page_unlink(unsigned long vaddr)
  */
 int __map_pages(unsigned long start, unsigned long len, unsigned long prot)
 {
-    unsigned long first = start;
+    unsigned long first = start & PAGE_MASK;    /* 页地址对齐 */
     // 长度和页对齐
     len = PAGE_ALIGN(len);
 
+    /* set page attr */
+    unsigned long attr = 0;
+    
+    if (prot & PROT_USER)
+        attr |= PG_US_U;
+    else
+        attr |= PG_US_S;
+    
+    if (prot & PROT_WRITE)
+        attr |= PG_RW_W;
+    else
+        attr |= PG_RW_W;
+    
 	/* 判断长度是否超过剩余内存大小 */
     //printk("len %d pages %d\n", len, len / PAGE_SIZE);
 
@@ -143,15 +158,15 @@ int __map_pages(unsigned long start, unsigned long len, unsigned long prot)
 	unsigned long pages = __alloc_pages(len / PAGE_SIZE);
 
 	if (!pages) {
-        printk("waring: map_pages -> map without free pages!\n");
+        printk(KERN_ERR "map_pages -> map without free pages!\n");
         return -1;
     }
 	unsigned long end = first + len;
-	printk("info: map_pages -> start%x->%x len %x\n", first, pages, len);
+	printk(KERN_DEBUG "map_pages -> start%x->%x len %x\n", first, pages, len);
     while (first < end)
 	{
         // 对单个页进行链接
-		__page_link((void *)first, (void *)pages, prot);
+		__page_link(first, pages, attr);
 		first += PAGE_SIZE;
         pages += PAGE_SIZE;
 	}
@@ -188,7 +203,7 @@ int __unmap_pages(void *vaddr, unsigned long len)
 	len = PAGE_ALIGN(len);
 	
 	/* 判断长度是否超过剩余内存大小 */
-	unsigned long paddr, start = (unsigned long)vaddr;
+	unsigned long paddr, start = (unsigned long)vaddr & PAGE_MASK;    /* 页地址对齐 */
 
     unsigned long end = start + len;
 	
@@ -217,11 +232,25 @@ int __unmap_pages(void *vaddr, unsigned long len)
  */
 int __map_pages_safe(void *start, unsigned long len, unsigned long prot)
 {
-    unsigned long vaddr = (unsigned long )start;
+    unsigned long vaddr = (unsigned long )start & PAGE_MASK;    /* 页地址对齐 */
     len = PAGE_ALIGN(len);
     unsigned long pages = DIV_ROUND_UP(len, PAGE_SIZE);
     unsigned long page_idx = 0;
     unsigned long page_addr;
+    
+    /* set page attr */
+    unsigned long attr = 0;
+    
+    if (prot & PROT_USER)
+        attr |= PG_US_U;
+    else
+        attr |= PG_US_S;
+    
+    if (prot & PROT_WRITE)
+        attr |= PG_RW_W;
+    else
+        attr |= PG_RW_W;
+
     while (page_idx < pages) {
         /* get page dir and page table */
         pde_t *pde = get_pde_ptr(vaddr);
@@ -233,7 +262,7 @@ int __map_pages_safe(void *start, unsigned long len, unsigned long prot)
                 printk("error: user_map_vaddr -> map pages failed!\n");
                 return -1;
             }
-            __page_link((void *)vaddr, (void *)page_addr, prot);
+            __page_link(vaddr, page_addr, attr);
             printk("info: map_pages_safe -> start%x->%x\n", vaddr, page_addr);
         }
         vaddr += PAGE_SIZE;
@@ -262,7 +291,7 @@ static int is_page_table_empty(pte_t *page_table)
  */
 int __unmap_pages_safe(void *start, unsigned long len)
 {
-    unsigned long vaddr = (unsigned long )start;
+    unsigned long vaddr = (unsigned long )start & PAGE_MASK;    /* 页地址对齐 */
     len = PAGE_ALIGN(len);
     unsigned long pages = DIV_ROUND_UP(len, PAGE_SIZE);
 
@@ -411,4 +440,114 @@ int mem_self_mapping(unsigned int start, unsigned int end)
 
 	/* ----映射完毕---- */
 	return 0;
+}
+
+static inline void do_vmarea_fault(unsigned long addr)
+{
+    /* 如果是在vmarea区域中，就进行页复制，不是的话，就发出段信号。 */
+    panic("do_vmarea_fault: at %x not support now!\n", addr);
+}
+
+static inline void do_expand_stack(vmspace_t *space, unsigned long addr)
+{
+	/* 地址和页向下对齐 */
+    addr &= PAGE_MASK;
+	/* 修改为新的空间开始 */
+	space->start = addr;
+}
+
+
+static inline void do_protection_fault(vmspace_t * space, unsigned long addr, int write)
+{
+	/* 没有写标志，说明该段内存不支持内存写入，就直接返回吧 */
+	if (write) {
+		printk(KERN_DEBUG "have write protection\n");
+	} else {
+		printk(KERN_DEBUG "no write protection\n");
+	}
+    //ForceSignal(SIGSEGV, SysGetPid());
+	printk(KERN_DEBUG "send SIGSEGV because page protection!");
+    panic(KERN_ERR "page protection fault!\n");
+}
+
+static inline int handle_no_page(unsigned long addr, unsigned long prot)
+{
+    /* 映射一个物理页 */
+	return __map_pages(addr, PAGE_SIZE, prot);
+}
+
+/**
+ * do_page_fault - 处理页故障
+ * 
+ * 错误码的内容 
+ * bit 0: 0 no page found, 1 protection fault
+ * bit 1: 0 read, 1 write
+ * bit 2: 0 kernel, 1 user
+ * 
+ * 如果是来自内核的页故障，就会打印信息并停机。
+ * 如果是来自用户的页故障，就会根据地址来做处理。
+ */
+void do_page_fault(trap_frame_t *frame)
+{
+    task_t *cur = current_task;
+    unsigned long addr = 0x00;
+
+    addr = read_cr2(); /* cr2 saved the fault addr */
+    printk(KERN_DEBUG "page fault addr:%x\n", addr);
+    
+    /* in kernel page fault */
+    if (!(frame->error_code & PG_ERR_USER)) {
+        printk(KERN_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
+        printk(KERN_EMERG "page fault at %x.\n", addr);
+        dump_trap_frame(frame);
+        panic("halt...");
+    }
+    /* 如果故障地址位于内核中， */
+    if (addr >= USER_VMM_SIZE) {
+        /* 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
+        printk(KERN_DEBUG "user access unmaped vmware area .\n");
+        do_vmarea_fault(addr);
+        return;
+    }
+    /* 故障地址在用户空间 */
+    vmspace_t *space = vmspace_find(cur->vmm, addr);
+    /* 没找到空间，说明是一个未知区域 */
+    if (space == NULL) {    
+        /* 故障源是用户 */
+    
+        printk(KERN_DEBUG "user access user unknown space .\n");
+        /* 发出信号退出 */
+        panic("send a signal SIGSEGV because unknown space!");
+        return; 
+    }
+    /* 找到空间，判断空间类型，根据不同的空间，进行不同的处理。 */
+    if (space->start > addr) { /* 故障地址在空间前，说明是栈向下拓展，那么尝试拓展栈。 */
+        if (frame->error_code & PG_ERR_USER) { /* 故障源是用户 */
+            /* 可拓展栈：有栈标志，在可拓展限定内， */
+            if ((space->flags & VMS_MAP_STACK) &&
+                ((space->end - space->start) < MAX_VMS_STACK_SIZE) &&
+                (addr + 32 >= frame->esp)) {
+                /* 向下扩展栈 */
+                do_expand_stack(space, addr);
+                printk(KERN_DEBUG "expand stack at %x\n", addr);
+            } else {    /* 不是可拓展栈 */
+                /* 发出信号退出 */
+                panic("send a signal SIGSEGV because addr below space!"); 
+                return;           
+            }    
+        }
+    }
+    /* 故障地址在空间里面，情况如下：
+    1.读写保护故障（R/W）
+    2.缺少物理页和虚拟地址的映射。（堆的向上拓展或者栈的向下拓展）
+     */
+    if (frame->error_code & PG_ERR_PROTECT) {
+        do_protection_fault(space, addr, frame->error_code & PG_ERR_WRITE);
+        return;
+    }
+    /* 处理缺页 */
+    handle_no_page(addr, space->page_prot);
+    printk(KERN_DEBUG "handle_no_page at %x success!\n", addr);
+   
+    /* 执行完缺页故障处理后，会到达这里表示成功！ */
 }

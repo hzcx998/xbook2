@@ -28,6 +28,8 @@
         "spinlock.h": "c",
         "synclock.h": "c",
         "semaphore.h": "c",
-        "rawblock.h": "c"
+        "rawblock.h": "c",
+        "usrmsg.h": "c",
+        "devno.h": "c"
     }
 }

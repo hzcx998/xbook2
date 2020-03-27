@@ -2,6 +2,7 @@
 #define _XBOOK_KERNEL_H
 
 #include <arch/page.h>
+#include <sys/usrmsg.h>
 
 #define KERN_EMERG      "<0>"      /* system is unuseable */
 #define KERN_ALTER      "<1>"      /* action must be taken immediatgely */
@@ -14,5 +15,6 @@
 
 #define KERN_VADDR      PAGE_OFFSET
 
+int do_usrmsg(umsg_t *msg);
 
 #endif   /* _XBOOK_KERNEL_H */

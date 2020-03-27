@@ -4,6 +4,8 @@
 #include <xbook/stddef.h>
 #include <xbook/memops.h>
 #include "tss.h"
+#include "interrupt.h"
+#include "page.h"
 
 /* task local stack struct */
 typedef struct task_local_stack {
@@ -35,7 +37,7 @@ typedef struct task_local_stack {
  * 
  * 通过esp来计算出任务结构体
  */
-static inline unsigned long *__current_task_addr()
+static inline unsigned long __current_task_addr()
 {
     unsigned long esp;
     // 获取esp的值
@@ -49,10 +51,17 @@ static inline unsigned long *__current_task_addr()
         8k对齐却不能直接这么做，需要减4k后，再这么做。
         由于，任务的地址都是位于高端地址，所以减4k不会为负。
      */
-    return (unsigned long *)((esp - PAGE_SIZE) & ~(PAGE_SIZE - 1));
+    return (unsigned long )((esp - PAGE_SIZE) & ~(PAGE_SIZE - 1));
 }
 
 /* task switch func */
 void __switch_to(unsigned long prev, unsigned long next);
+
+/* task switch from kernel mode to user mode */
+void __switch_to_user(trap_frame_t *frame);
+
+void __user_trap_frame_init(trap_frame_t *frame);
+
+#define __user_entry_point(frame, entry) (frame)->eip = entry
 
 #endif	/* _X86_TASK_H */

@@ -2,11 +2,15 @@
 #define _XBOOK_VMM_H
 
 #include <arch/page.h>
-#include "vmspace.h"
+
+#define USER_VMM_SIZE       PAGE_OFFSET
+#define USER_STACK_TOP      USER_VMM_SIZE
+#define VMM_UNMAPPED_BASE    (USER_VMM_SIZE / 2)
+
 /* 进程空间虚拟内存管理 */
 typedef struct vmm {
     void *page_storage;                     /* 虚拟内存管理的结构 */                   
-    vmspace_t *vmspace_head;                /* 虚拟空间头 */
+    void *vmspace_head;                     /* 虚拟空间头,设置成空类型，使用时转换类型 */
 
     unsigned long code_start, code_end;     /* 代码空间范围 */
     unsigned long data_start, data_end;     /* 数据空间范围 */

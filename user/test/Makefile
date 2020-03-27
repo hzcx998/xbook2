@@ -7,8 +7,11 @@ LD 			= ld
 DD 			= dd
 
 #The file path
-#LIB_H_DIR = ../../library/libc/include
-#LIB_A_DIR = ../../library/libc/
+DIR_LIBARY = ../../libary
+
+# base lib
+DIR_BASELIB = $(DIR_LIBARY)/base
+DIR_BASELIB_INCLUDE = $(DIR_BASELIB)/include
 
 BIN = a.out
 
@@ -27,15 +30,18 @@ HD_VHD = $(IMG_DIR)$(DISK_VHD)
 HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 
 #flags
-ASM_FLAGS	= -f elf
-C_FLAGS	= -c -fno-builtin -Wall -Wunused -m32
+ASM_FLAGS	= -f elf \
+			-I $(DIR_BASELIB_INCLUDE)
+			
+C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
+			-I $(DIR_BASELIB_INCLUDE)
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 
 OBJS =  _start.o \
 		main.o \
 
-LD_OBJS = 
+LIB_OBJS = $(DIR_BASELIB)/baselib.a
 
 #First read here
 .PHONY: all
@@ -46,8 +52,8 @@ all: compile link disk
 compile: $(OBJS)
 
 link: $(BIN)
-$(BIN): $(OBJS) $(LD_OBJS)
-	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(LD_OBJS)
+$(BIN): $(OBJS) $(LIB_OBJS)
+	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIB_OBJS)
 
 disk: img vhd vmdk
 

@@ -11,6 +11,7 @@
 #define MINOR(dev) ((dev) & MINORMASK)
 
 /* 设备号 */
+#define NONE_MAJOR          0   /* 第一个设备号不使用 */
 #define CONSOLE_MAJOR       1
 #define COM_MAJOR           2
 #define IDE_MAJOR           10

@@ -188,12 +188,14 @@ void timer_softirq_handler(softirq_action_t *action)
  */
 void sched_softirq_handler(softirq_action_t *action)
 {
-    //printk("s");
-	#if 1
+    #if 1
     task_t *current = current_task;
-
+   
 	/* 检测内核栈是否溢出 */
-	ASSERT(current->stack_magic == TASK_STACK_MAGIC);
+	//ASSERT(current->stack_magic == TASK_STACK_MAGIC);
+    if (current->stack_magic != TASK_STACK_MAGIC)
+        dump_task(current);
+
 	/* 更新任务调度 */
 	current->elapsed_ticks++;
 	
@@ -260,12 +262,14 @@ void print_ktime()
 	printk(KERN_INFO "week day:%d %s year day:%d\n", ktime.week_day, week_day[ktime.week_day], ktime.year_day);
 }
 
-
 /**
  * clock_handler - 时钟中断处理函数
  */
 int clock_handler(unsigned long irq, unsigned long data)
 {
+    
+    //printk("<%x>", current_task);
+	
     /* 改变ticks计数 */
 	systicks++;
 	//printk("s");

@@ -246,9 +246,7 @@ static int console_write(device_t *device, off_t off, void *buffer, size_t count
 {
     /* 获取控制台 */
     struct console_driver *local = (struct console_driver *)dev_get_local(device);
-    
     char *buf = (char *)buffer;
-
 	while (count > 0 && *buf) {
 		/* 输出字符到控制台 */
         console_outchar(local, *buf);

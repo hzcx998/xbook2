@@ -49,10 +49,18 @@ typedef struct device_ops {
 
 #define SIZEOF_DEVICE sizeof(device_t)
 
+#define MAX_DEVICE_CACHE_NR     24
+
+typedef struct {
+    dev_t devno;                /* device id */
+    char *name; /* device name */
+} device_cache_t;
+
 int search_device(char *name);
 void dump_devices();
 device_t *get_device_by_name(char *name);
 device_t *get_device_by_id(dev_t devno);
+dev_t get_devno_by_name(char *name);
 
 void dump_device(device_t *device);
 

@@ -58,7 +58,7 @@ typedef struct task {
         (task)->state = stat
 
 /* 获取当前地址位置 */
-#define __current_task()   (task_t *)(current_task_addr)()
+#define __current_task()   ((task_t *)(current_task_addr)())
 
 #define current_task   __current_task()
 

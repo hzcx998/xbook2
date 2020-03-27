@@ -59,16 +59,12 @@ INTERRUPT_ENTRY 0x2d,NO_ERROR_CODE	;fpu浮点单元异常
 INTERRUPT_ENTRY 0x2e,NO_ERROR_CODE	;硬盘
 INTERRUPT_ENTRY 0x2f,NO_ERROR_CODE	;保留
 
-
 ;系统调用中断
 [bits 32]
 [section .text]
-;导入系统调用表
-;extern syscallTable	
-;extern SyscallCheck
-
-global syscall_handler
-syscall_handler:
+extern do_usrmsg ; 位于src/kernel/usrmsg.c中
+global kern_usrmsg_handler
+kern_usrmsg_handler:
 	;1 保存上下文环境
    	push 0			    ; 压入0, 使栈中格式统一
 
@@ -83,48 +79,31 @@ syscall_handler:
 	mov ds, dx
 	mov es, dx
     
-   	push 0x80			; 此位置压入0x80也是为了保持统一的栈格式
-    
-    push eax        ; 保存eax
-
-    ;2 系统调用号检测
-    push eax
-    ;call SyscallCheck
-    add esp, 4
-
-    cmp eax, 0      ; 如果返回值是0，说明系统调用号出错，就不执行系统调用
-    je .DoSignal
-
-    pop eax         ; 恢复eax
-
-    ;3 为系统调用子功能传入参数
+   	push 0x40			; 此位置压入0x40也是为了保持统一的栈格式
+    ;2 传递参数给消息处理
     push esp                ; 传入栈指针，可以用来获取所有陷阱栈框寄存器
-    push edi                ; 系统调用中第4个参数
-    push esi                ; 系统调用中第3个参数
-  	push ecx			    ; 系统调用中第2个参数
-   	push ebx			    ; 系统调用中第1个参数
-    
-	;4 调用子功能处理函数
-   	;call [syscallTable + eax*4]	    ; 编译器会在栈中根据C函数声明匹配正确数量的参数
-   	add esp, 20			    ; 跨过上面的5个参数
+    push ebx			    ; 用户消息中消息参数
+	;调用用户消息处理
+   	call do_usrmsg
+    add esp, 8			    ; 跨过上面的2个参数
 
-	;5 将call调用后的返回值存入待当前内核栈中eax的位置
-    mov [esp + 8*4], eax	
+	;3 将call调用后的返回值存入待当前内核栈中eax的位置
+    mov [esp + 8*4], eax
    
-    ; 需要完成系统调用后再进行信号处理，因为处理过程可能会影响到寄存器的值
-    ;6 signal
-.DoSignal:
+    ; 处理完用户消息后再进行信号处理，因为处理过程可能会影响到寄存器的值
+    ;4 signal
+.do_signal:
     push esp         ; 把中断栈指针传递进去
-    ;call DoSignal
+    ;call do_signal
     add esp, 4
 
    jmp intr_exit		    ; intr_exit返回,恢复上下文
 
 ; 跳转到用户态执行的切换
-global switch_to_user
+global __switch_to_user
 global intr_exit
 
-switch_to_user:
+__switch_to_user:
     mov esp, [esp + 4]  ; process stack
 intr_exit:
 ; 以下是恢复上下文环境

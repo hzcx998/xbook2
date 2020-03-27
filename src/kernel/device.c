@@ -5,6 +5,9 @@
 /* 设备链表 */
 LIST_HEAD(device_list_head);
 
+/* 设备缓存表，用于通过设备名找到设备号 */
+device_cache_t device_cache_table[MAX_DEVICE_CACHE_NR] = {{0, 0},};
+
 /*
 构建一个散列表，用来把设备号和结构进行对应，可以提高
 对设备的搜索速度
@@ -26,6 +29,39 @@ int search_device(char *name)
         }
     }
     return 0;
+}
+
+/**
+ * get_devno_by_name - 获取设备号
+ * @name: 设备名
+ * 
+ * 返回设备结构体
+ */
+dev_t get_devno_by_name(char *name)
+{
+    /* 先到高速缓存中寻找 */
+    device_cache_t *cache = &device_cache_table[0];
+    for (cache = &device_cache_table[0]; cache < device_cache_table + MAX_DEVICE_CACHE_NR; cache++) {
+        if (cache->devno && !strcmp(cache->name, name)) {   /* find */
+            return cache->devno;
+        }
+    }
+    /* 没找到，就到链表中查找 */
+    device_t *device;
+    list_for_each_owner(device, &device_list_head, list) {
+        /* 如果名字相等就说明找到 */
+        if (!strcmp(device->name, name)) {
+            /* 添加到高速缓存 */
+            for (cache = &device_cache_table[0]; cache < device_cache_table + MAX_DEVICE_CACHE_NR; cache++) {
+                if (!cache->devno) {   /* find a free solt */
+                    cache->devno = device->devno;
+                    cache->name = device->name;
+                    return cache->devno;
+                }
+            }
+        }
+    }
+    return 0;   /* not find the devno */
 }
 
 /**
@@ -177,9 +213,9 @@ int dev_write(dev_t devno, off_t off, void *buffer, size_t count)
     /* 没有打开设备就直接返回 */
     if (!atomic_get(&device->references))
         return -1;
-    if (device->ops->write != NULL)
+    if (device->ops->write != NULL) {
         retval = (*device->ops->write)(device, off, buffer, count);
-
+    }
     return retval;
 }
 

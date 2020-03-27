@@ -7,7 +7,7 @@ int __ioremap(unsigned long paddr, unsigned long vaddr, size_t size)
     unsigned long end = vaddr + size;
     while (vaddr < end) {
         /* 添加页面 */
-        __page_link((void *)vaddr, (void *)paddr, PG_RW_W | PG_US_S);
+        __page_link(vaddr, paddr, PG_RW_W | PG_US_S);
         vaddr += PAGE_SIZE;
         paddr += PAGE_SIZE;
     }
