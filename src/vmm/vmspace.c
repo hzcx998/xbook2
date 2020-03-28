@@ -89,6 +89,11 @@ static unsigned long vmspace_get_unmaped(vmm_t *vmm, unsigned len)
 int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long len,
     unsigned long prot, unsigned long flags)
 {
+    if (vmm == NULL || !prot) {
+        printk(KERN_ERR "do_vmspace_map: failed!\n");
+        return -1;
+    }
+        
     // printk(KERN_DEBUG "do_vmspace_map: %x, %x, %x, %x\n", addr, len, prot, flags);
     /* 让长度和页大小PAGE_SIZE对齐  */
     len = PAGE_ALIGN(len);

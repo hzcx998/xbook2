@@ -60,6 +60,12 @@ task_t *get_next_task(task_t *task)
     return next;
 }
 
+void set_next_task(task_t *next)
+{
+    task_current = next;
+    current_trap_frame = (trap_frame_t *)task_current->kstack;
+    task_activate(task_current);
+}
 /**
  * Schedule - 任务调度
  * 
@@ -71,14 +77,16 @@ void schedule()
     task_t *cur = current_task;
     task_t *next = get_next_task(cur);
     printk(KERN_INFO "> switch from %d-%x to %d-%x\n", cur->pid, cur, next->pid, next);
-    /* 3.激活任务的内存环境 */
-    task_current = next;    /* 更新当前任务 */
-    current_trap_frame = (trap_frame_t *) task_current->kstack; /* 切换到下一个任务的中断栈 */
-    
-    task_activate(task_current);
-    
+    set_next_task(next);
     //task_current->state = TASK_RUNNING; /* 设置成运行状态 */
     //update_tss_info((unsigned long )task_current);  /* 更新内核栈指针 */
+}
+
+void launch_task()
+{
+    set_next_task(task_priority_queue_fetch_first());
+    printk("launch: %s, %d\n", current_task->name, current_task->pid);
+    switch_to_user(current_trap_frame);
 }
 
 #ifdef CONFIG_PREEMPT

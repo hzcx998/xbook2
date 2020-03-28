@@ -109,8 +109,6 @@ void task_init(task_t *task, char *name, int priority)
 
     /* no priority queue */
     task->prio_queue = NULL;
-
-    task->next = NULL;
     
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;

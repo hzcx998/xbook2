@@ -61,7 +61,7 @@ static int load_segment(raw_block_t *rb, unsigned long offset, unsigned long fil
     } else {
         occupy_pages = 1;
     }
-
+    
     /* 映射虚拟空间 */  
     int ret = (int)vmspace_mmap(vaddr_page, occupy_pages * PAGE_SIZE, 
             PROT_USER | PROT_WRITE, VMS_MAP_FIXED);
@@ -88,7 +88,7 @@ static int load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb
     Elf32_Off prog_header_off = elf_header->e_phoff;
     Elf32_Half prog_header_size = elf_header->e_phentsize;
     
-    //printk(PART_TIP "prog offset %x size %d\n", prog_header_off, prog_header_size);
+    //printk(KERN_DEBUG "prog offset %x size %d\n", prog_header_off, prog_header_size);
     
     /* 遍历所有程序头 */
     unsigned long grog_idx = 0;
@@ -98,8 +98,8 @@ static int load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb
         /* 读取程序头 */
         if (load_data_from(rb, (void *)&prog_header, prog_header_off, prog_header_size)) {
             return -1;
-        }
-        /*printk(PART_TIP "read prog header off %x vaddr %x filesz %x memsz %x\n", 
+        }/*
+        printk(KERN_DEBUG "read prog header off %x vaddr %x filesz %x memsz %x\n", 
             prog_header.p_offset, prog_header.p_vaddr, prog_header.p_filesz, prog_header.p_memsz);
         */
         /* 如果是可加载的段就加载到内存中 */
@@ -295,7 +295,7 @@ static void user_heap_init(task_t *cur)
     cur->vmm->heap_end = cur->vmm->heap_start;
 }
 
-void process_execute(int argc, char **argv)
+void process_execute(task_t *cur, int argc, char **argv)
 {
     /* 没有参数或者参数错误 */
     if (argc < 1 || argv == NULL)
@@ -329,27 +329,26 @@ void process_execute(int argc, char **argv)
         return;
     }
     
-    task_t *cur = current_task;
+    /* 切换到进程页空间 */
+    write_cr3(v2p(cur->vmm->page_storage));
+
     /* 加载镜像 */
     if (load_image(cur->vmm, &elf_header, rb)) {
         printk(KERN_ERR "process_execute: load_image failed!\n");
         return;
     }
-    unsigned long flags;
-    save_intr(flags);
 
     /* 构建中断栈框 */
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
     
-    /* 初始化用户中断栈框 */
-    user_trap_frame_init(frame);
-
     /* 初始化用户栈 */
     if(user_stack_arg_init(cur, frame, argc, argv)){
         /* !!!需要取消已经加载镜像虚拟地址映射 */
         return;
     }
+    /* 切换回内核页空间 */
+    write_cr3(PAGE_DIR_PHY_ADDR);
 
     /* 初始化用户堆 */
     user_heap_init(cur);
@@ -357,49 +356,9 @@ void process_execute(int argc, char **argv)
     /* 设置执行入口 */
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
     
-    /* 修改进程相关的task成员 */
-    restore_intr(flags);
     //printk(KERN_DEBUG "switch to user!\n");
     /* 切换到进程执行 */
-    //dump_trap_frame(frame);
-    //restore_intr(flags);
-    switch_to_user(frame);
-}
-
-/**
- * process_start - 进程开始执行的地方
- * @arg: 进程的参数
- * 
- * 当进程开始运行的时候，就会先执行该函数，然后在该函数里面
- * 该函数运行在[内核态]，是进入用户态的一个重要通道
- */
-void process_start(void *arg)
-{
-    printk("process start!\n");
-    //printk("arg addr %x\n", arg);
-    /* 参数转换 */
-    char **argv = (char **)arg;
-    
-    int i = 0;
-    char *p;
-
-    while (argv[i]) {
-        p = argv[i];
-
-        printk("%s ", p);
-        
-        i++;
-    }
-    /* 加载镜像到进程空间，构建堆栈，然后跳转到程序入口执行进程空间代码 */
-    process_execute(i, argv);
-    
-    while (1)
-    {
-        /* code */
-    }
-    
-    /* 如果执行失败，那么就退出线程运行 */
-    kthread_exit(current_task);
+    dump_trap_frame(frame);
 }
 
 int proc_vmm_init(task_t *task)
@@ -411,6 +370,22 @@ int proc_vmm_init(task_t *task)
     }
     vmm_init(task->vmm);
     return 0;
+}
+
+
+/**
+ * make_proc_stack - 创建一个线程
+ * @task: 线程结构体
+ * @function: 要去执行的函数
+ * @arg: 参数
+ */
+void make_proc_stack(task_t *task)
+{
+    /* 预留中断栈 */
+    task->kstack -= sizeof(trap_frame_t);
+    trap_frame_t *frame = (trap_frame_t *) task->kstack;
+    /* 默认内核线程使用内核段 */
+    user_trap_frame_init(frame);
 }
 
 /**
@@ -434,17 +409,21 @@ task_t *process_create(char *name, char **argv)
         kfree(task);
         return NULL;
     }
-    // 创建一个线程
-    make_task_stack(task, process_start, (void *)argv);
+    /* 创建进程栈 */
+    make_proc_stack(task);
+    current_task = task;    /* 指向当前任务 */
 
-    /* 操作链表时关闭中断，结束后恢复之前状态 */
-    unsigned long flags;
-    save_intr(flags);
+    int argc = 0;
+    char *p;
+    while (argv[argc]) {
+        p = argv[argc];
+        printk("%s ", p);
+        argc++;
+    }
+    process_execute(task, argc, argv);
 
     task_global_list_add(task);
     task_priority_queue_add_tail(task);
-    
-    restore_intr(flags);
-    printk("create done!\n");
+
     return task;
 }

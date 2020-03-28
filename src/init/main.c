@@ -55,8 +55,6 @@ void ktask3_main(void *arg)
         ticks++;
         printk("C:%x\n", ticks);
         delay(1);
-        // sched_preempt();
-        //preempt();
     }
     
 }
@@ -75,23 +73,11 @@ int kernel_main(void)
     
     init_tasks();
     init_clock();
-
+    /*
     task_t *ktask = kthread_start("ktask", TASK_PRIO_RT, ktask_main, NULL);
     task_t *ktask2 = kthread_start("ktask2", TASK_PRIO_RT, ktask2_main, NULL);
     task_t *ktask3 = kthread_start("ktask3", TASK_PRIO_RT, ktask3_main, NULL);
-    task_current = task_priority_queue_fetch_first();
-    task_current->state = TASK_RUNNING;
-    printk("get task=%s pid=%d\n", task_current->name, task_current->pid);
-    update_tss_info((unsigned long )task_current);
-    current_trap_frame = (trap_frame_t *)task_current->kstack;
-    //disable_intr();
-    /* init clock */
-    
-    printk(">>> switch to task!\n");
-    
-    switch_to_user((trap_frame_t *)task_current->kstack);
-
-    while (1);
+    */
     /* init unit drivers */
     init_unit();
 
@@ -101,6 +87,9 @@ int kernel_main(void)
     printk("process create.\n");
     char *argv[3] = {"test", "arg2", 0};
     process_create("test", argv);
+    
+    launch_task();
+    while (1);
     /*char *argv1[3] = {"test", "arg3", 0};
     process_create("test", argv1);
     */

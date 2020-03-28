@@ -31,6 +31,7 @@ extern priority_queue_t priority_queue[];
 
 void schedule();
 void init_schedule();
+void launch_task();
 
 #ifdef CONFIG_PREEMPT
 void schedule_preempt(task_t *robber);

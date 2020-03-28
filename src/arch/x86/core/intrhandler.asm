@@ -129,9 +129,9 @@ irq_entry0x20:		 ; 每个中断处理程序都要压入中断向量号,所以一
     out 0x20, al
 
     ; if intr reenter, just ignore it.
-    inc dword [reenter]
-    cmp dword [reenter], 0
-    jne intr_reenter
+    ;inc dword [reenter]
+    ;cmp dword [reenter], 0
+    ;ja intr_reenter
 
     ; kernel stack is below trap stack
     ; after push registers, esp is point to kernel stack.
@@ -139,12 +139,12 @@ irq_entry0x20:		 ; 每个中断处理程序都要压入中断向量号,所以一
     ; ----------
     ; kernel stack
     ;mov esp, [current_trap_frame] ; 切换到内核栈，内核栈位于中断栈下面
-    sti
+    ;sti
     push esp        ; 把中断栈指针传递进去  
     ; 调用DoIRQ，通过传入的参数获取irq值
     call clock_handler
     add esp, 4
-    cli
+    ;cli
     
     ; 重新指向中断栈,才能切换任务
     mov esp, [current_trap_frame]  

@@ -493,7 +493,7 @@ void do_page_fault(trap_frame_t *frame)
     unsigned long addr = 0x00;
 
     addr = read_cr2(); /* cr2 saved the fault addr */
-    //printk(KERN_DEBUG "page fault addr:%x\n", addr);
+    printk(KERN_DEBUG "page fault addr:%x\n", addr);
     
     /* in kernel page fault */
     if (!(frame->error_code & PG_ERR_USER)) {

@@ -87,7 +87,7 @@ int do_usrmsg(umsg_t *msg)
         break;
     case UMSG_FORK:
         printk("in UMSG_FORK");
-        break;
+        
         do_usrmsg_fork(msg);
         printk("task %s-%d will return!\n", current_task->name, current_task->pid);
         break;

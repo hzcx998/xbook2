@@ -50,7 +50,6 @@ typedef struct task {
     list_t list;               // 处于所在队列的链表
     list_t global_list;         // 全局任务队列，用来查找所有存在的任务
     priority_queue_t *prio_queue;   /* 所在的优先级队列 */
-    struct task *next;  /* 指向下一个任务的指针 */
     unsigned int stack_magic;         /* 任务的魔数 */
 } task_t;
 

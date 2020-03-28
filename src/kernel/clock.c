@@ -267,12 +267,12 @@ extern trap_frame_t *current_trap_frame;
  */
 int clock_handler(unsigned long irq, unsigned long data)
 {
-    
+    //
     //printk("<%x>", current_task);
 	
     /* 改变ticks计数 */
 	systicks++;
-	printk("[%x]", systicks);
+	//printk("[%x]", systicks);
     //schedule();
     task_t *current = current_task;
    

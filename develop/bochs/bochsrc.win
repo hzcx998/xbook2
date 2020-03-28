@@ -3,6 +3,7 @@
 # environment.
 ###############################################################
 
+cpu: model=pentium,count=1, ips=9000000
 # how much memory the emulated machine will have
 megs: 512
 
