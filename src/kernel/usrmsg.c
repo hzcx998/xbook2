@@ -2,9 +2,8 @@
 #include <xbook/kernel.h>
 #include <xbook/debug.h>
 #include <xbook/device.h>
-
-
-
+#include <xbook/process.h>
+#include <xbook/clock.h>
 
 void usrmsg_dump(umsg_t *msg)
 {
@@ -70,7 +69,7 @@ int do_usrmsg(umsg_t *msg)
         }
         msg->retval = dev_ioctl(devno, (unsigned int) msg->arg1, (unsigned long) msg->arg2);
         break;
-    case UMSG_PUTC:        
+    case UMSG_PUTC:
         devno = get_devno_by_name((char *)msg->arg0);
         if (!devno) {   /* not found a devno */
             msg->retval = -2;
@@ -86,8 +85,18 @@ int do_usrmsg(umsg_t *msg)
         }
         msg->retval = dev_getc(devno, (unsigned long *) msg->arg1);
         break;
+    case UMSG_FORK:
+        printk("in UMSG_FORK");
+        break;
+        do_usrmsg_fork(msg);
+        printk("task %s-%d will return!\n", current_task->name, current_task->pid);
+        break;
+    case UMSG_MSLEEP:
+        kern_msleep((unsigned long )msg->arg0);
+        break;
     default:
         break;
     }
+    // printk(">return\n");
     return 0;
 }

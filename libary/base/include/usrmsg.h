@@ -10,6 +10,7 @@ enum {
     UMSG_IOCTL,           /* device ioctl */
     UMSG_GETC,            /* device getc */
     UMSG_PUTC,            /* device putc */
+    UMSG_FORK,            /* process fork */
 };
 
 /* user message 用户消息 */

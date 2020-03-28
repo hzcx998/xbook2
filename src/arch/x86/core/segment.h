@@ -41,6 +41,8 @@
 #define	INDEX_TSS 3
 #define	INDEX_USER_C 4
 #define	INDEX_USER_RW 5
+#define	INDEX_SERVE_C 6
+#define	INDEX_SERVE_RW 7
 
 //选择子...
 //内核代码，数据，栈，视频
@@ -56,6 +58,13 @@
 
 //TSS
 #define KERNEL_TSS_SEL ((INDEX_TSS << 3) + (SA_TIG << 2) + SA_RPL0)
+
+
+//用户代码，数据，栈
+#define SERVE_CODE_SEL ((INDEX_SERVE_C << 3) + (SA_TIG << 2) + SA_RPL1)
+#define SERVE_DATA_SEL ((INDEX_SERVE_RW << 3) + (SA_TIG << 2) + SA_RPL1)
+#define SERVE_STACK_SEL SERVE_DATA_SEL 
+
 
 /* GDT 的虚拟地址 */
 #define GDT_VADDR			0x80200000

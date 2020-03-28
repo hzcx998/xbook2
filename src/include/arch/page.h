@@ -45,5 +45,6 @@ static inline void *p2v(unsigned long address)
 #define copy_kernel_page_storge             __copy_kernel_page_dir
 #define page_dir_active                     __page_dir_active
 
+#define sched_preempt                       __sched_preempt
 
 #endif  /* _ARCH_PAGE_H */

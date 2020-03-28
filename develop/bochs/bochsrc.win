@@ -40,7 +40,7 @@ keyboard: user_shortcut=ctrl-alt
 
 com1: enabled=1, mode=file, dev="../develop/bochs/output.txt"
 
-#keyboard: enabled=1, map=D:/DevApp/Bochs-2.6.11keymaps/x11-pc-us.map
+#keyboard: enabled=1, map=D:/DevApp/Bochs-2.6.11/keymaps/x11-pc-us.map
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-fr.map
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-de.map
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-es.map

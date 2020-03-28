@@ -136,9 +136,7 @@ unsigned long *__copy_kernel_page_dir();
             paddr = page; \
         } \
         write_cr3(paddr); \
-        if ((on)) { \
-            update_tss_info(__current_task_addr()); \
-        }                                                   \
+        update_tss_info(current_task); \
     } while (0)
 
 void do_page_fault(trap_frame_t *frame);

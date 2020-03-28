@@ -36,13 +36,22 @@ int main(int argc, char *argv[])
     umsg_set_arg1(msg, 'A');
     umsg(msg);
     
+    /*
     umsg_set_type(msg, UMSG_CLOSE);
     umsg_set_arg0(msg, "con0");
-    umsg(msg);
+    umsg(msg);*/
     
     umsg_set_type(msg, UMSG_PUTC);
     umsg_set_arg0(msg, "con0");
     umsg_set_arg1(msg, 'B');
+    umsg(msg);
+    
+    umsg_set_type(msg, UMSG_FORK);
+    umsg(msg);
+    
+    umsg_set_type(msg, UMSG_PUTC);
+    umsg_set_arg0(msg, "con0");
+    umsg_set_arg1(msg, 'C');
     umsg(msg);
     
     while (1);

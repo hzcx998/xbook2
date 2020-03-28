@@ -2,18 +2,415 @@ hello, xbook!
 
 info: memory total:1fff0000 byte 511 MB
 info: welcom to xbook kernel.
-info: time:9:13:10 date:2020/3/28
-info: week day:6 Saturday year day:89
-info: found 2 hard disks.
-debug: raw block name:test
-debug: raw block name:test2
-process create.
-process start!
-test arg2 debug: task test space: addr 1000 page 1
-debug: task test space: addr 2000 page 1
-debug: task test arg space: start 7ffff000 end 80000000
-debug: task test stack space: start 7fffe000 end 7ffff000
-debug: stack 7ffff000 argc 2 argv 7fffffe8
-debug: switch to user!
-debug: vector:0 edi:0 esi:0 ebp:0 esp dummy:0 ebx:7fffffe8 edx:0 ecx:2 eax:0
-debug: gs:2b fs:2b es:2b ds:2b error code:0 eip:1000 cs:23 eflags:202 esp:7ffff000 ss:2b
+info: time:9:43:44 date:2020/3/29
+info: week day:0 Sunday year day:90
+get task=ktask pid=0
+>>> switch to task!
+[1]ktask_main running...
+A:1
+[2][3][4]info: > switch from 0-81282000 to 1-81284000
+ktask2_main running...
+B:1001
+[5][6][7][8]info: > switch from 1-81284000 to 2-81286000
+ktask3_main running...
+C:1001
+[9][a][b][c]info: > switch from 2-81286000 to 0-81282000
+[d][e][f][10]info: > switch from 0-81282000 to 1-81284000
+[11][12][13][14]info: > switch from 1-81284000 to 2-81286000
+[15][16][17][18]info: > switch from 2-81286000 to 0-81282000
+[19][1a][1b][1c]info: > switch from 0-81282000 to 1-81284000
+[1d]B:1002
+[1e][1f][20]info: > switch from 1-81284000 to 2-81286000
+[21]C:1002
+[22][23][24]info: > switch from 2-81286000 to 0-81282000
+[25][26][27][28]info: > switch from 0-81282000 to 1-81284000
+[29][2a][2b][2c]info: > switch from 1-81284000 to 2-81286000
+[2d][2e][2f][30]info: > switch from 2-81286000 to 0-81282000
+[31][32][33]A:2
+[34]info: > switch from 0-81282000 to 1-81284000
+[35][36]B:1003
+[37][38]info: > switch from 1-81284000 to 2-81286000
+[39][3a]C:1003
+[3b][3c]info: > switch from 2-81286000 to 0-81282000
+[3d][3e][3f][40]info: > switch from 0-81282000 to 1-81284000
+[41][42][43][44]info: > switch from 1-81284000 to 2-81286000
+[45][46][47][48]info: > switch from 2-81286000 to 0-81282000
+[49][4a][4b][4c]info: > switch from 0-81282000 to 1-81284000
+[4d][4e]B:1004
+[4f][50]info: > switch from 1-81284000 to 2-81286000
+[51][52]C:1004
+[53][54]info: > switch from 2-81286000 to 0-81282000
+[55][56][57][58]info: > switch from 0-81282000 to 1-81284000
+[59][5a][5b][5c]info: > switch from 1-81284000 to 2-81286000
+[5d][5e][5f][60]info: > switch from 2-81286000 to 0-81282000
+[61][62][63][64]info: > switch from 0-81282000 to 1-81284000
+[65][66][67]B:1005
+[68]info: > switch from 1-81284000 to 2-81286000
+[69][6a][6b]C:1005
+[6c]info: > switch from 2-81286000 to 0-81282000
+A:3
+[6d][6e][6f][70]info: > switch from 0-81282000 to 1-81284000
+[71][72][73][74]info: > switch from 1-81284000 to 2-81286000
+[75][76][77][78]info: > switch from 2-81286000 to 0-81282000
+[79][7a][7b][7c]info: > switch from 0-81282000 to 1-81284000
+[7d][7e][7f][80]info: > switch from 1-81284000 to 2-81286000
+[81][82][83][84]info: > switch from 2-81286000 to 0-81282000
+[85][86][87][88]info: > switch from 0-81282000 to 1-81284000
+B:1006
+[89][8a][8b][8c]info: > switch from 1-81284000 to 2-81286000
+C:1006
+[8d][8e][8f][90]info: > switch from 2-81286000 to 0-81282000
+[91][92][93][94]info: > switch from 0-81282000 to 1-81284000
+[95][96][97][98]info: > switch from 1-81284000 to 2-81286000
+[99][9a][9b][9c]info: > switch from 2-81286000 to 0-81282000
+[9d][9e]A:4
+[9f][a0]info: > switch from 0-81282000 to 1-81284000
+[a1]B:1007
+[a2][a3][a4]info: > switch from 1-81284000 to 2-81286000
+[a5]C:1007
+[a6][a7][a8]info: > switch from 2-81286000 to 0-81282000
+[a9][aa][ab][ac]info: > switch from 0-81282000 to 1-81284000
+[ad][ae][af][b0]info: > switch from 1-81284000 to 2-81286000
+[b1][b2][b3][b4]info: > switch from 2-81286000 to 0-81282000
+[b5][b6][b7][b8]info: > switch from 0-81282000 to 1-81284000
+[b9][ba]B:1008
+[bb][bc]info: > switch from 1-81284000 to 2-81286000
+[bd][be]C:1008
+[bf][c0]info: > switch from 2-81286000 to 0-81282000
+[c1][c2][c3][c4]info: > switch from 0-81282000 to 1-81284000
+[c5][c6][c7][c8]info: > switch from 1-81284000 to 2-81286000
+[c9][ca][cb][cc]info: > switch from 2-81286000 to 0-81282000
+[cd][ce][cf]A:5
+[d0]info: > switch from 0-81282000 to 1-81284000
+[d1][d2]B:1009
+[d3][d4]info: > switch from 1-81284000 to 2-81286000
+[d5][d6]C:1009[d7]
+[d8]info: > switch from 2-81286000 to 0-81282000
+[d9][da][db][dc]info: > switch from 0-81282000 to 1-81284000
+[dd][de][df][e0]info: > switch from 1-81284000 to 2-81286000
+[e1][e2][e3][e4]info: > switch from 2-81286000 to 0-81282000
+[e5][e6][e7][e8]info: > switch from 0-81282000 to 1-81284000
+[e9][ea][eb]B:100a
+[ec]info: > switch from 1-81284000 to 2-81286000
+[ed][ee][ef]C:100a
+[f0]info: > switch from 2-81286000 to 0-81282000
+[f1][f2][f3][f4]info: > switch from 0-81282000 to 1-81284000
+[f5][f6][f7][f8]info: > switch from 1-81284000 to 2-81286000
+[f9][fa][fb][fc]info: > switch from 2-81286000 to 0-81282000
+[fd][fe][ff][100]info: > switch from 0-81282000 to 1-81284000
+[101][102][103][104]info: > switch from 1-81284000 to 2-81286000
+[105][106][107][108]info: > switch from 2-81286000 to 0-81282000
+[109]A:6
+[10a][10b][10c]info: > switch from 0-81282000 to 1-81284000
+B:100b
+[10d][10e][10f][110]info: > switch from 1-81284000 to 2-81286000
+C:100b
+[111][112][113][114]info: > switch from 2-81286000 to 0-81282000
+[115][116][117][118]info: > switch from 0-81282000 to 1-81284000
+[119][11a][11b][11c]info: > switch from 1-81284000 to 2-81286000
+[11d][11e][11f][120]info: > switch from 2-81286000 to 0-81282000
+[121][122][123][124]info: > switch from 0-81282000 to 1-81284000
+[125]B:100c
+[126][127][128]info: > switch from 1-81284000 to 2-81286000
+[129]C:100c
+[12a][12b][12c]info: > switch from 2-81286000 to 0-81282000
+[12d][12e][12f][130]info: > switch from 0-81282000 to 1-81284000
+[131][132][133][134]info: > switch from 1-81284000 to 2-81286000
+[135][136][137][138]info: > switch from 2-81286000 to 0-81282000
+[139][13a]A:7[13b]
+[13c]info: > switch from 0-81282000 to 1-81284000
+[13d][13e]B:100d
+[13f][140]info: > switch from 1-81284000 to 2-81286000
+[141][142]C:100d
+[143][144]info: > switch from 2-81286000 to 0-81282000
+[145][146][147][148]info: > switch from 0-81282000 to 1-81284000
+[149][14a][14b][14c]info: > switch from 1-81284000 to 2-81286000
+[14d][14e][14f][150]info: > switch from 2-81286000 to 0-81282000
+[151][152][153][154]info: > switch from 0-81282000 to 1-81284000
+[155][156][157]B:100e
+[158]info: > switch from 1-81284000 to 2-81286000
+[159][15a][15b]C:100e
+[15c]info: > switch from 2-81286000 to 0-81282000
+[15d][15e][15f][160]info: > switch from 0-81282000 to 1-81284000
+[161][162][163][164]info: > switch from 1-81284000 to 2-81286000
+[165][166][167][168]info: > switch from 2-81286000 to 0-81282000
+[169][16a][16b][16c]info: > switch from 0-81282000 to 1-81284000
+[16d][16e][16f][170]info: > switch from 1-81284000 to 2-81286000
+[171][172][173][174]info: > switch from 2-81286000 to 0-81282000
+A:8[175]
+[176][177][178]info: > switch from 0-81282000 to 1-81284000
+B:100f
+[179][17a][17b][17c]info: > switch from 1-81284000 to 2-81286000
+C:100f
+[17d][17e][17f][180]info: > switch from 2-81286000 to 0-81282000
+[181][182][183][184]info: > switch from 0-81282000 to 1-81284000
+[185][186][187][188]info: > switch from 1-81284000 to 2-81286000
+[189][18a][18b][18c]info: > switch from 2-81286000 to 0-81282000
+[18d][18e][18f][190]info: > switch from 0-81282000 to 1-81284000
+[191]B:1010
+[192][193][194]info: > switch from 1-81284000 to 2-81286000
+[195]C:1010
+[196][197][198]info: > switch from 2-81286000 to 0-81282000
+[199][19a][19b][19c]info: > switch from 0-81282000 to 1-81284000
+[19d][19e][19f][1a0]info: > switch from 1-81284000 to 2-81286000
+[1a1][1a2][1a3][1a4]info: > switch from 2-81286000 to 0-81282000
+[1a5][1a6]A:9
+[1a7][1a8]info: > switch from 0-81282000 to 1-81284000
+[1a9][1aa]B:1011
+[1ab][1ac]info: > switch from 1-81284000 to 2-81286000
+[1ad][1ae]C:1011
+[1af][1b0]info: > switch from 2-81286000 to 0-81282000
+[1b1][1b2][1b3][1b4]info: > switch from 0-81282000 to 1-81284000
+[1b5][1b6][1b7][1b8]info: > switch from 1-81284000 to 2-81286000
+[1b9][1ba][1bb][1bc]info: > switch from 2-81286000 to 0-81282000
+[1bd][1be][1bf][1c0]info: > switch from 0-81282000 to 1-81284000
+[1c1][1c2][1c3]B:1012
+[1c4]info: > switch from 1-81284000 to 2-81286000
+[1c5][1c6][1c7]C:1012
+[1c8]info: > switch from 2-81286000 to 0-81282000
+[1c9][1ca][1cb][1cc]info: > switch from 0-81282000 to 1-81284000
+[1cd][1ce][1cf][1d0]info: > switch from 1-81284000 to 2-81286000
+[1d1][1d2][1d3][1d4]info: > switch from 2-81286000 to 0-81282000
+[1d5][1d6][1d7][1d8]info: > switch from 0-81282000 to 1-81284000
+[1d9][1da][1db]B:1013
+[1dc]info: > switch from 1-81284000 to 2-81286000
+[1dd][1de][1df]C:10[1e0]info: > switch from 2-81286000 to 0-81282000
+A:a
+[1e1][1e2][1e3][1e4]info: > switch from 0-81282000 to 1-81284000
+[1e5][1e6][1e7][1e8]info: > switch from 1-81284000 to 2-81286000
+13
+[1e9][1ea][1eb][1ec]info: > switch from 2-81286000 to 0-81282000
+[1ed][1ee][1ef][1f0]info: > switch from 0-81282000 to 1-81284000
+[1f1][1f2][1f3][1f4]info: > switch from 1-81284000 to 2-81286000
+[1f5][1f6][1f7][1f8]info: > switch from 2-81286000 to 0-81282000
+[1f9][1fa][1fb][1fc]info: > switch from 0-81282000 to 1-81284000
+[1fd]B:1014
+[1fe][1ff][200]info: > switch from 1-81284000 to 2-81286000
+[201]C:1014
+[202][203][204]info: > switch from 2-81286000 to 0-81282000
+[205][206][207][208]info: > switch from 0-81282000 to 1-81284000
+[209][20a][20b][20c]info: > switch from 1-81284000 to 2-81286000
+[20d][20e][20f][210]info: > switch from 2-81286000 to 0-81282000
+[211][212]A:b
+[213][214]info: > switch from 0-81282000 to 1-81284000
+[215][216]B:1015
+[217][218]info: > switch from 1-81284000 to 2-81286000
+[219][21a]C:1015
+[21b][21c]info: > switch from 2-81286000 to 0-81282000
+[21d][21e][21f][220]info: > switch from 0-81282000 to 1-81284000
+[221][222][223][224]info: > switch from 1-81284000 to 2-81286000
+[225][226][227][228]info: > switch from 2-81286000 to 0-81282000
+[229][22a][22b][22c]info: > switch from 0-81282000 to 1-81284000
+[22d][22e]B:1016
+[22f][230]info: > switch from 1-81284000 to 2-81286000
+[231][232]C:1016
+[233][234]info: > switch from 2-81286000 to 0-81282000
+[235][236][237][238]info: > switch from 0-81282000 to 1-81284000
+[239][23a][23b][23c]info: > switch from 1-81284000 to 2-81286000
+[23d][23e][23f][240]info: > switch from 2-81286000 to 0-81282000
+[241][242][243]A:c
+[244]info: > switch from 0-81282000 to 1-81284000
+[245][246][247]B:1017
+[248]info: > switch from 1-81284000 to 2-81286000
+[249][24a][24b]C:1017
+[24c]info: > switch from 2-81286000 to 0-81282000
+[24d][24e][24f][250]info: > switch from 0-81282000 to 1-81284000
+[251][252][253][254]info: > switch from 1-81284000 to 2-81286000
+[255][256][257][258]info: > switch from 2-81286000 to 0-81282000
+[259][25a][25b][25c]info: > switch from 0-81282000 to 1-81284000
+[25d][25e][25f][260]info: > switch from 1-81284000 to 2-81286000
+[261][262][263][264]info: > switch from 2-81286000 to 0-81282000
+[265][266][267][268]info: > switch from 0-81282000 to 1-81284000
+B:1018[269]
+[26a][26b][26c]info: > switch from 1-81284000 to 2-81286000
+[26d]C:1018
+[26e][26f][270]info: > switch from 2-81286000 to 0-81282000
+[271][272][273][274]info: > switch from 0-81282000 to 1-81284000
+[275][276][277][278]info: > switch from 1-81284000 to 2-81286000
+[279][27a][27b][27c]info: > switch from 2-81286000 to 0-81282000
+[27d]A:d
+[27e][27f][280]info: > switch from 0-81282000 to 1-81284000
+[281]B:1019
+[282][283][284]info: > switch from 1-81284000 to 2-81286000
+[285]C:1019
+[286][287][288]info: > switch from 2-81286000 to 0-81282000
+[289][28a][28b][28c]info: > switch from 0-81282000 to 1-81284000
+[28d][28e][28f][290]info: > switch from 1-81284000 to 2-81286000
+[291][292][293][294]info: > switch from 2-81286000 to 0-81282000
+[295][296][297][298]info: > switch from 0-81282000 to 1-81284000
+[299][29a]B:101a
+[29b][29c]info: > switch from 1-81284000 to 2-81286000
+[29d][29e]C:101a
+[29f][2a0]info: > switch from 2-81286000 to 0-81282000
+[2a1][2a2][2a3][2a4]info: > switch from 0-81282000 to 1-81284000
+[2a5][2a6][2a7][2a8]info: > switch from 1-81284000 to 2-81286000
+[2a9][2aa][2ab][2ac]info: > switch from 2-81286000 to 0-81282000
+[2ad][2ae][2af]A:e
+[2b0]info: > switch from 0-81282000 to 1-81284000
+[2b1][2b2][2b3]B:101b
+[2b4]info: > switch from 1-81284000 to 2-81286000
+[2b5][2b6][2b7]C:101b
+[2b8]info: > switch from 2-81286000 to 0-81282000
+[2b9][2ba][2bb][2bc]info: > switch from 0-81282000 to 1-81284000
+[2bd][2be][2bf][2c0]info: > switch from 1-81284000 to 2-81286000
+[2c1][2c2][2c3][2c4]info: > switch from 2-81286000 to 0-81282000
+[2c5][2c6][2c7][2c8]info: > switch from 0-81282000 to 1-81284000
+[2c9][2ca][2cb][2cc]info: > switch from 1-81284000 to 2-81286000
+[2cd][2ce][2cf][2d0]info: > switch from 2-81286000 to 0-81282000
+[2d1][2d2][2d3][2d4]info: > switch from 0-81282000 to 1-81284000
+B:101c
+[2d5][2d6][2d7][2d8]info: > switch from 1-81284000 to 2-81286000
+C:101c
+[2d9][2da][2db][2dc]info: > switch from 2-81286000 to 0-81282000
+[2dd][2de][2df][2e0]info: > switch from 0-81282000 to 1-81284000
+[2e1][2e2][2e3][2e4]info: > switch from 1-81284000 to 2-81286000
+[2e5][2e6][2e7][2e8]info: > switch from 2-81286000 to 0-81282000
+[2e9]A:f
+[2ea][2eb][2ec]info: > switch from 0-81282000 to 1-81284000
+[2ed]B:101d
+[2ee][2ef][2f0]info: > switch from 1-81284000 to 2-81286000
+[2f1]C:101d
+[2f2][2f3][2f4]info: > switch from 2-81286000 to 0-81282000
+[2f5][2f6][2f7][2f8]info: > switch from 0-81282000 to 1-81284000
+[2f9][2fa][2fb][2fc]info: > switch from 1-81284000 to 2-81286000
+[2fd][2fe][2ff][300]info: > switch from 2-81286000 to 0-81282000
+[301][302][303][304]info: > switch from 0-81282000 to 1-81284000
+[305][306]B:101e
+[307][308]info: > switch from 1-81284000 to 2-81286000
+[309][30a]C:101e
+[30b][30c]info: > switch from 2-81286000 to 0-81282000
+[30d][30e][30f][310]info: > switch from 0-81282000 to 1-81284000
+[311][312][313][314]info: > switch from 1-81284000 to 2-81286000
+[315][316][317][318]info: > switch from 2-81286000 to 0-81282000
+[319][31a]A:10
+[31b][31c]info: > switch from 0-81282000 to 1-81284000
+[31d][31e][31f]B:101f
+[320]info: > switch from 1-81284000 to 2-81286000
+[321][322][323]C:101f
+[324]info: > switch from 2-81286000 to 0-81282000
+[325][326][327][328]info: > switch from 0-81282000 to 1-81284000
+[329][32a][32b][32c]info: > switch from 1-81284000 to 2-81286000
+[32d][32e][32f][330]info: > switch from 2-81286000 to 0-81282000
+[331][332][333][334]info: > switch from 0-81282000 to 1-81284000
+[335][336][337]B:10[338]info: > switch from 1-81284000 to 2-81286000
+[339][33a][33b][33c]info: > switch from 2-81286000 to 0-81282000
+[33d][33e][33f][340]info: > switch from 0-81282000 to 1-81284000
+20
+[341][342][343][344]info: > switch from 1-81284000 to 2-81286000
+C:1020
+[345][346][347][348]info: > switch from 2-81286000 to 0-81282000
+[349][34a][34b][34c]info: > switch from 0-81282000 to 1-81284000
+[34d][34e][34f][350]info: > switch from 1-81284000 to 2-81286000
+[351][352][353][354]info: > switch from 2-81286000 to 0-81282000
+A:11
+[355][356][357][358]info: > switch from 0-81282000 to 1-81284000
+[359]B:1021
+[35a][35b][35c]info: > switch from 1-81284000 to 2-81286000
+[35d]C:1021
+[35e][35f][360]info: > switch from 2-81286000 to 0-81282000
+[361][362][363][364]info: > switch from 0-81282000 to 1-81284000
+[365][366][367][368]info: > switch from 1-81284000 to 2-81286000
+[369][36a][36b][36c]info: > switch from 2-81286000 to 0-81282000
+[36d][36e][36f][370]info: > switch from 0-81282000 to 1-81284000
+[371][372]B:1022
+[373][374]info: > switch from 1-81284000 to 2-81286000
+[375][376]C:1022
+[377][378]info: > switch from 2-81286000 to 0-81282000
+[379][37a][37b][37c]info: > switch from 0-81282000 to 1-81284000
+[37d][37e][37f][380]info: > switch from 1-81284000 to 2-81286000
+[381][382][383][384]info: > switch from 2-81286000 to 0-81282000
+[385][386]A:12
+[387][388]info: > switch from 0-81282000 to 1-81284000
+[389][38a]B:1023
+[38b][38c]info: > switch from 1-81284000 to 2-81286000
+[38d][38e]C:1[38f]023
+[390]info: > switch from 2-81286000 to 0-81282000
+[391][392][393][394]info: > switch from 0-81282000 to 1-81284000
+[395][396][397][398]info: > switch from 1-81284000 to 2-81286000
+[399][39a][39b][39c]info: > switch from 2-81286000 to 0-81282000
+[39d][39e][39f][3a0]info: > switch from 0-81282000 to 1-81284000
+[3a1][3a2][3a3]B:1024
+[3a4]info: > switch from 1-81284000 to 2-81286000
+[3a5][3a6][3a7]C:1024
+[3a8]info: > switch from 2-81286000 to 0-81282000
+[3a9][3aa][3ab][3ac]info: > switch from 0-81282000 to 1-81284000
+[3ad][3ae][3af][3b0]info: > switch from 1-81284000 to 2-81286000
+[3b1][3b2][3b3][3b4]info: > switch from 2-81286000 to 0-81282000
+[3b5][3b6][3b7]A:13
+[3b8]info: > switch from 0-81282000 to 1-81284000
+[3b9][3ba][3bb][3bc]info: > switch from 1-81284000 to 2-81286000
+[3bd][3be][3bf][3c0]info: > switch from 2-81286000 to 0-81282000
+[3c1][3c2][3c3][3c4]info: > switch from 0-81282000 to 1-81284000
+B[3c5]:1025
+[3c6][3c7][3c8]info: > switch from 1-81284000 to 2-81286000
+[3c9]C:1025
+[3ca][3cb][3cc]info: > switch from 2-81286000 to 0-81282000
+[3cd][3ce][3cf][3d0]info: > switch from 0-81282000 to 1-81284000
+[3d1][3d2][3d3][3d4]info: > switch from 1-81284000 to 2-81286000
+[3d5][3d6][3d7][3d8]info: > switch from 2-81286000 to 0-81282000
+[3d9][3da][3db][3dc]info: > switch from 0-81282000 to 1-81284000
+[3dd]B:1026
+[3de][3df][3e0]info: > switch from 1-81284000 to 2-81286000
+[3e1]C:1026
+[3e2][3e3][3e4]info: > switch from 2-81286000 to 0-81282000
+[3e5][3e6][3e7][3e8]info: > switch from 0-81282000 to 1-81284000
+[3e9][3ea][3eb][3ec]info: > switch from 1-81284000 to 2-81286000
+[3ed][3ee][3ef][3f0]info: > switch from 2-81286000 to 0-81282000
+[3f1]A:14
+[3f2][3f3][3f4]info: > switch from 0-81282000 to 1-81284000
+[3f5][3f6]B:1027
+[3f7][3f8]info: > switch from 1-81284000 to 2-81286000
+[3f9][3fa]C:1027
+[3fb][3fc]info: > switch from 2-81286000 to 0-81282000
+[3fd][3fe][3ff][400]info: > switch from 0-81282000 to 1-81284000
+[401][402][403][404]info: > switch from 1-81284000 to 2-81286000
+[405][406][407][408]info: > switch from 2-81286000 to 0-81282000
+[409][40a][40b][40c]info: > switch from 0-81282000 to 1-81284000
+[40d][40e][40f]B:1028
+[410]info: > switch from 1-81284000 to 2-81286000
+[411][412][413]C:1028
+[414]info: > switch from 2-81286000 to 0-81282000
+[415][416][417][418]info: > switch from 0-81282000 to 1-81284000
+[419][41a][41b][41c]info: > switch from 1-81284000 to 2-81286000
+[41d][41e][41f][420]info: > switch from 2-81286000 to 0-81282000
+[421][422][423]A:15
+[424]info: > switch from 0-81282000 to 1-81284000
+[425][426][427][428]info: > switch from 1-81284000 to 2-81286000
+[429][42a][42b][42c]info: > switch from 2-81286000 to 0-81282000
+[42d][42e][42f][430]info: > switch from 0-81282000 to 1-81284000
+B:1029
+[431][432][433][434]info: > switch from 1-81284000 to 2-81286000
+C:1029
+[435][436][437][438]info: > switch from 2-81286000 to 0-81282000
+[439][43a][43b][43c]info: > switch from 0-81282000 to 1-81284000
+[43d][43e][43f][440]info: > switch from 1-81284000 to 2-81286000
+[441][442][443][444]info: > switch from 2-81286000 to 0-81282000
+[445][446][447][448]info: > switch from 0-81282000 to 1-81284000
+[449]B:102a
+[44a][44b][44c]info: > switch from 1-81284000 to 2-81286000
+[44d]C:102a
+[44e][44f][450]info: > switch from 2-81286000 to 0-81282000
+[451][452][453][454]info: > switch from 0-81282000 to 1-81284000
+[455][456][457][458]info: > switch from 1-81284000 to 2-81286000
+[459][45a][45b][45c]info: > switch from 2-81286000 to 0-81282000
+[45d]A:16
+[45e][45f][460]info: > switch from 0-81282000 to 1-81284000
+[461][462]B:102b
+[463][464]info: > switch from 1-81284000 to 2-81286000
+[465][466]C:102b
+[467][468]info: > switch from 2-81286000 to 0-81282000
+[469][46a][46b][46c]info: > switch from 0-81282000 to 1-81284000
+[46d][46e][46f][470]info: > switch from 1-81284000 to 2-81286000
+[471][472][473][474]info: > switch from 2-81286000 to 0-81282000
+[475][476][477][478]info: > switch from 0-81282000 to 1-81284000
+[479][47a][47b]B:102c
+[47c]info: > switch from 1-81284000 to 2-81286000
+[47d][47e][47f]C:102c
+[480]info: > switch from 2-81286000 to 0-81282000
+[481][482][483][484]info: > switch from 0-81282000 to 1-81284000
+[485][486][487][488]info: > switch from 1-81284000 to 2-81286000
+[489][48a][48b][48c]info: > switch from 2-81286000 to 0-81282000
+[48d][48e]A:17
+[48f][490]info: > switch from 0-81282000 to 1-81284000
+[491][492][493][494]info: > switch from 1-81284000 to 2-81286000
+[495][496][497]

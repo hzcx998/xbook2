@@ -3,9 +3,9 @@
 
 #include <arch/page.h>
 #include <arch/task.h>
-#include <xbook/types.h>
-#include <xbook/list.h>
-#include <xbook/vmm.h>
+#include "types.h"
+#include "list.h"
+#include "vmm.h"
 
 /* task state */
 typedef enum task_state {
@@ -27,7 +27,7 @@ typedef enum task_state {
 #define MAX_STACK_ARGC 16
 
 /* 内核栈大小为8kb */
-#define TASK_KSTACK_SIZE    8192
+#define TASK_KSTACK_SIZE    4096
 
 typedef struct priority_queue {
     list_t list;            /* 任务链表 */
@@ -46,7 +46,7 @@ typedef struct task {
     unsigned long elapsed_ticks;         /* 任务执行总共占用的时间片数 */
     int exit_state;                     // 退出时的状态
     char name[MAX_TASK_NAMELEN];
-    vmm_t *vmm;                     /* 虚拟内存管理 */
+    struct vmm *vmm;                     /* 虚拟内存管理 */
     list_t list;               // 处于所在队列的链表
     list_t global_list;         // 全局任务队列，用来查找所有存在的任务
     priority_queue_t *prio_queue;   /* 所在的优先级队列 */
@@ -57,10 +57,13 @@ typedef struct task {
 #define SET_TASK_STATUS(task, stat) \
         (task)->state = stat
 
+extern task_t *task_current;   /* 当前任务指针 */
+
 /* 获取当前地址位置 */
 #define __current_task()   ((task_t *)(current_task_addr)())
 
-#define current_task   __current_task()
+//#define current_task   __current_task()
+#define current_task    task_current
 
 void init_tasks();
 void kernel_pause();
@@ -86,5 +89,7 @@ void task_unblock(task_t *task);
 
 task_t *process_create(char *name, char **argv);
 
+pid_t fork_pid();
+void print_task();
 
 #endif   /* _XBOOK_TASK_H */

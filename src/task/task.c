@@ -26,18 +26,8 @@ LIST_HEAD(task_global_list);
 
 /* idle任务 */
 task_t *task_idle;
-/**
- * do_task_func - 执行内核线程
- * @function: 要执行的线程
- * @arg: 参数
- * 
- * 改变当前的执行流，去执行我们选择的内核线程
- */
-static void do_task_func(task_func_t *function, void *arg)
-{
-    enable_intr();  /* enable interrupt to make sure func will do */
-    function(arg);  /* call func(arg) */
-}
+
+task_t *task_current;   /* 当前任务指针 */
 
 /**  
  * new_pid - 分配一个pid
@@ -45,6 +35,11 @@ static void do_task_func(task_func_t *function, void *arg)
 static pid_t new_pid()
 {
     return next_pid++;
+}
+
+pid_t fork_pid()
+{
+    return new_pid();
 }
 
 #if 0
@@ -67,14 +62,12 @@ void make_task_stack(task_t *task, task_func_t function, void *arg)
 {
     /* 预留中断栈 */
     task->kstack -= sizeof(trap_frame_t);
+    trap_frame_t *frame = (trap_frame_t *) task->kstack;
+    /* 默认内核线程使用内核段 */
+    __ktask_trap_frame_init(frame);
 
-    /* 预留线程栈 */
-    task->kstack -= sizeof(task_local_stack_t);
-    /* 填写本地栈信息 */
-    task_local_stack_t *local_stack = (task_local_stack_t *)task->kstack;
-
-    // 在do_task_func中去改变执行流，从而可以传递一个参数
-    init_task_lock_stack(local_stack, do_task_func, function, arg);
+    frame->eip = (unsigned long )function;
+    frame->esp = (unsigned long)kmalloc(PAGE_SIZE) + PAGE_SIZE;/* 任务栈 */
 }
 
 /**
@@ -196,8 +189,9 @@ task_t *kthread_start(char *name, int priority, task_func_t func, void *arg)
 static void make_main_task()
 {
     // 当前运行的就是主线程
-    task_idle = current_task;
-    
+    task_idle = KERNEL_STATCK_BOTTOM;
+    task_current = task_idle;
+
     /* 最开始设置为最佳优先级，这样才可以往后面运行。直到运行到最后，就变成IDLE优先级 */
     task_init(task_idle, "idle", TASK_PRIO_BEST);
 
@@ -626,15 +620,16 @@ void kernel_pause()
         }
         if (i % 0xf00000 == 0) {
             printk("kthread a\n");
-            kthread_start("test", 1, taskA, "NULL");
+            //kthread_start("test", 1, taskA, "NULL");
         }
 
         if (i % 0xf00000 == 0) {
             printk("kthread b\n");
-            kthread_start("test2", 1, taskB, "NULL");
+            //kthread_start("test2", 1, taskB, "NULL");
         }
 	};
 }
+
 
 /**
  * init_tasks - 初始化多任务环境
@@ -645,15 +640,12 @@ void init_tasks()
 
     next_pid = 0;
     
-    make_main_task();
+    //make_main_task();
     
     /*kfifo = fifo_buf_alloc(128);
     if (kfifo == NULL)
         printk(KERN_ERR "alloc fifo buf failed!\n");
     */
-    iofifo = fifo_io_alloc(128);
-    if (iofifo == NULL)
-        printk(KERN_ERR "alloc fifo buf failed!\n");
     
     //rwlock_init(&rwlock, RWLOCK_RW_FAIR);
 

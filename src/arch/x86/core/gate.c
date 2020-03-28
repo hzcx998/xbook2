@@ -12,6 +12,7 @@ struct gate_descriptor *idt;
 // 总共支持的中断数
 #define MAX_IDT_NR (IDT_LIMIT/8)      
 
+/* 用户消息int软中断号，用于从用户态切换到内核态执行操作 */
 #define KERN_USRMSG_NR 0x40
 
 extern void exception_entry0x00();
@@ -147,7 +148,7 @@ static void init_interrupt_descriptor()
 	
 	/* 内核态用户消息处理中断 */
 	set_gate_descriptor(&idt[KERN_USRMSG_NR], kern_usrmsg_handler, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL3);
-	
+
 	load_idtr(IDT_LIMIT, IDT_VADDR);
 
 }

@@ -30,6 +30,10 @@
         "semaphore.h": "c",
         "rawblock.h": "c",
         "usrmsg.h": "c",
-        "devno.h": "c"
+        "devno.h": "c",
+        "schedule.h": "c",
+        "memops.h": "c",
+        "process.h": "c",
+        "string.h": "c"
     }
 }

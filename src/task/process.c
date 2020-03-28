@@ -335,7 +335,9 @@ void process_execute(int argc, char **argv)
         printk(KERN_ERR "process_execute: load_image failed!\n");
         return;
     }
-    
+    unsigned long flags;
+    save_intr(flags);
+
     /* 构建中断栈框 */
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
@@ -354,13 +356,13 @@ void process_execute(int argc, char **argv)
     
     /* 设置执行入口 */
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
-
-    /* 修改进程相关的task成员 */
-
-    printk(KERN_DEBUG "switch to user!\n");
-    /* 切换到进程执行 */
-    dump_trap_frame(frame);
     
+    /* 修改进程相关的task成员 */
+    restore_intr(flags);
+    //printk(KERN_DEBUG "switch to user!\n");
+    /* 切换到进程执行 */
+    //dump_trap_frame(frame);
+    //restore_intr(flags);
     switch_to_user(frame);
 }
 
@@ -400,7 +402,19 @@ void process_start(void *arg)
     kthread_exit(current_task);
 }
 
+int proc_vmm_init(task_t *task)
+{
+    /* 进程才需要虚拟内存单元 */
+    task->vmm = vmm_alloc();
+    if (task->vmm == NULL) {
+        return -1;
+    }
+    vmm_init(task->vmm);
+    return 0;
+}
+
 /**
+ * 
  * process_create - 创建一个进程
  * @name: 进程名字
  * @arg: 线程参数
@@ -412,18 +426,14 @@ task_t *process_create(char *name, char **argv)
     
     if (!task)
         return NULL;
-    
+    printk(KERN_DEBUG "new task at %x\n", task);
     // 初始化线程
     task_init(task, name, TASK_PRIO_USER);
     
-    /* 进程才需要虚拟内存单元 */
-    task->vmm = vmm_alloc();
-    if (task->vmm == NULL) {
+    if (proc_vmm_init(task)) {
         kfree(task);
         return NULL;
     }
-    vmm_init(task->vmm);
-    
     // 创建一个线程
     make_task_stack(task, process_start, (void *)argv);
 

@@ -7,7 +7,61 @@
 #include <xbook/task.h>
 #include <xbook/unit.h>
 #include <xbook/rawblock.h>
+#include <xbook/schedule.h>
 
+
+void delay(int t)
+{
+    int i, j;
+    for (i = 0; i < 100 * t; i++) {
+        for (j = 0; j < 1000; j++);
+    }
+        
+}
+void ktask_main(void *arg)
+{
+    printk("ktask_main running...\n");
+
+    int ticks = 0;
+    while (1)
+    {
+        ticks++;
+        printk("A:%x\n", ticks);
+        delay(2);
+    }
+    
+}
+
+void ktask2_main(void *arg)
+{
+    printk("ktask2_main running...\n");
+
+    int ticks = 0X1000;
+    while (1)
+    {
+        ticks++;
+        printk("B:%x\n", ticks);
+        delay(1);
+    }
+    
+}
+void ktask3_main(void *arg)
+{
+    printk("ktask3_main running...\n");
+
+    int ticks = 0X1000;
+    while (1)
+    {
+        ticks++;
+        printk("C:%x\n", ticks);
+        delay(1);
+        // sched_preempt();
+        //preempt();
+    }
+    
+}
+
+extern trap_frame_t * current_trap_frame;
 int kernel_main(void)
 {
     printk(KERN_INFO "welcom to xbook kernel.\n");
@@ -20,8 +74,24 @@ int kernel_main(void)
     init_softirq();
     
     init_tasks();
-    /* init clock */
     init_clock();
+
+    task_t *ktask = kthread_start("ktask", TASK_PRIO_RT, ktask_main, NULL);
+    task_t *ktask2 = kthread_start("ktask2", TASK_PRIO_RT, ktask2_main, NULL);
+    task_t *ktask3 = kthread_start("ktask3", TASK_PRIO_RT, ktask3_main, NULL);
+    task_current = task_priority_queue_fetch_first();
+    task_current->state = TASK_RUNNING;
+    printk("get task=%s pid=%d\n", task_current->name, task_current->pid);
+    update_tss_info((unsigned long )task_current);
+    current_trap_frame = (trap_frame_t *)task_current->kstack;
+    //disable_intr();
+    /* init clock */
+    
+    printk(">>> switch to task!\n");
+    
+    switch_to_user((trap_frame_t *)task_current->kstack);
+
+    while (1);
     /* init unit drivers */
     init_unit();
 
@@ -31,7 +101,9 @@ int kernel_main(void)
     printk("process create.\n");
     char *argv[3] = {"test", "arg2", 0};
     process_create("test", argv);
-    
+    /*char *argv1[3] = {"test", "arg3", 0};
+    process_create("test", argv1);
+    */
     kernel_pause();
     return 0;
 }

@@ -4,7 +4,11 @@
 ;intr_handler_table是C中注册的中断处理程序数组
 extern intr_handler_table		 
 extern do_irq		 
-extern do_softirq		 
+extern do_softirq	
+
+extern current_trap_frame
+extern reenter
+
 ;extern DoSignal
 
 [bits 32]
@@ -42,7 +46,7 @@ EXCEPTION_ENTRY 0x1c,NO_ERROR_CODE
 EXCEPTION_ENTRY 0x1d,ERROR_CODE
 EXCEPTION_ENTRY 0x1e,ERROR_CODE
 EXCEPTION_ENTRY 0x1f,NO_ERROR_CODE 
-INTERRUPT_ENTRY 0x20,NO_ERROR_CODE	;时钟中断对应的入口
+;INTERRUPT_ENTRY 0x20,NO_ERROR_CODE	;时钟中断对应的入口
 INTERRUPT_ENTRY 0x21,NO_ERROR_CODE	;键盘中断对应的入口
 INTERRUPT_ENTRY 0x22,NO_ERROR_CODE	;级联用的
 INTERRUPT_ENTRY 0x23,NO_ERROR_CODE	;串口2对应的入口
@@ -58,6 +62,7 @@ INTERRUPT_ENTRY 0x2c,NO_ERROR_CODE	;ps/2鼠标
 INTERRUPT_ENTRY 0x2d,NO_ERROR_CODE	;fpu浮点单元异常
 INTERRUPT_ENTRY 0x2e,NO_ERROR_CODE	;硬盘
 INTERRUPT_ENTRY 0x2f,NO_ERROR_CODE	;保留
+
 
 ;系统调用中断
 [bits 32]
@@ -89,7 +94,7 @@ kern_usrmsg_handler:
 
 	;3 将call调用后的返回值存入待当前内核栈中eax的位置
     mov [esp + 8*4], eax
-   
+    
     ; 处理完用户消息后再进行信号处理，因为处理过程可能会影响到寄存器的值
     ;4 signal
 .do_signal:
@@ -99,13 +104,61 @@ kern_usrmsg_handler:
 
    jmp intr_exit		    ; intr_exit返回,恢复上下文
 
-; 跳转到用户态执行的切换
-global __switch_to_user
-global intr_exit
+extern clock_handler
+global irq_entry0x20
+irq_entry0x20:		 ; 每个中断处理程序都要压入中断向量号,所以一个中断类型一个中断处理程序，自己知道自己的中断向量号是多少
 
-__switch_to_user:
-    mov esp, [esp + 4]  ; process stack
+    push 0				 ; 中断若有错误码会压在eip后面 
+; 以下是保存上下文环境
+    push ds
+    push es
+    push fs
+    push gs
+    pushad			 ; PUSHAD指令压入32位寄存器,其入栈顺序是: EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI
+
+    mov dx,ss
+	mov ds, dx
+	mov es, dx
+    mov fs, dx
+	mov gs, dx
+    push 0			 ; 不管idt_table中的目标程序是否需要参数,都一律压入中断向量号,调试时很方便
+    
+    inc dword [es: 0x800b8000]
+
+    mov al, 0x20
+    out 0x20, al
+
+    ; if intr reenter, just ignore it.
+    inc dword [reenter]
+    cmp dword [reenter], 0
+    jne intr_reenter
+
+    ; kernel stack is below trap stack
+    ; after push registers, esp is point to kernel stack.
+    ; trap stack
+    ; ----------
+    ; kernel stack
+    ;mov esp, [current_trap_frame] ; 切换到内核栈，内核栈位于中断栈下面
+    sti
+    push esp        ; 把中断栈指针传递进去  
+    ; 调用DoIRQ，通过传入的参数获取irq值
+    call clock_handler
+    add esp, 4
+    cli
+    
+    ; 重新指向中断栈,才能切换任务
+    mov esp, [current_trap_frame]  
+
+    jmp intr_exit
+
+
+global intr_exit
+global intr_exit2
+
 intr_exit:
+intr_reenter:
+    dec dword [reenter]
+intr_exit2:
 ; 以下是恢复上下文环境
     add esp, 4			   ; 跳过中断号
     popad
@@ -114,4 +167,19 @@ intr_exit:
     pop es
     pop ds
     add esp, 4			   ; 跳过error_code
+    iretd
+
+; 跳转到用户态执行的切换
+global __switch_to_user
+__switch_to_user:
+    mov esp, [esp + 4]  ; process stack
+; 以下是恢复上下文环境
+    add esp, 4			   ; 跳过中断号
+    popad
+    pop gs
+    pop fs
+    pop es
+    pop ds
+    add esp, 4			   ; 跳过error_code
+    sti ; enable intr
     iretd

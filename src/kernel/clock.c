@@ -7,11 +7,12 @@
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 #include <arch/interrupt.h>
+#include <arch/cpu.h>
 
 volatile clock_t systicks;
 
 ktime_t ktime;
-
+int reenter;
 /* 每月对应的天数，2月的会在闰年是加1 */
 const char month_day[] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
 
@@ -142,19 +143,17 @@ static void sleep_by_ticks(unsigned long sleep_ticks)
 
 	/* 如果最新ticks和开始ticks差值小于要休眠的ticks，就继续休眠 */
 	while (systicks - start_ticks < sleep_ticks) {
-		/* 让出cpu占用，相当于休眠 */
-		//TaskYield();
-        
-        //CpuNop();
+        cpu_lazy(); /* 执行空转 */
 	}
 }
 
 /**
- 
- * sys_msleep - 以毫秒为单位进行休眠
+ * kern_msleep - 以毫秒为单位进行休眠
  */
-void sys_msleep(unsigned long msecond)
+void kern_msleep(unsigned long msecond)
 {
+    if (!msecond)   /* 如果是0就直接返回 */
+        return;
 	/* 把毫秒转换成ticks */
 	unsigned long sleep_ticks = DIV_ROUND_UP(msecond, MS_PER_TICKS);
 	ASSERT(sleep_ticks > 0);
@@ -188,7 +187,8 @@ void timer_softirq_handler(softirq_action_t *action)
  */
 void sched_softirq_handler(softirq_action_t *action)
 {
-    #if 1
+   
+    #if 0
     task_t *current = current_task;
    
 	/* 检测内核栈是否溢出 */
@@ -261,7 +261,7 @@ void print_ktime()
 	week_day[6] = "Saturday";
 	printk(KERN_INFO "week day:%d %s year day:%d\n", ktime.week_day, week_day[ktime.week_day], ktime.year_day);
 }
-
+extern trap_frame_t *current_trap_frame;
 /**
  * clock_handler - 时钟中断处理函数
  */
@@ -272,12 +272,35 @@ int clock_handler(unsigned long irq, unsigned long data)
 	
     /* 改变ticks计数 */
 	systicks++;
-	//printk("s");
+	printk("[%x]", systicks);
+    //schedule();
+    task_t *current = current_task;
+   
+	/* 检测内核栈是否溢出 */
+	//ASSERT(current->stack_magic == TASK_STACK_MAGIC);
+    if (current->stack_magic != TASK_STACK_MAGIC)
+        dump_task(current);
+
+	/* 更新任务调度 */
+	current->elapsed_ticks++;
+	
+    /* 需要进行调度的时候才会去调度 */
+	if (current->ticks <= 0) {
+		schedule();
+	} else {
+		current->ticks--;
+	}
+    /*int i;
+    for (i = 0; i < 0x100000; i++) {
+
+    }*/
 	/* 激活定时器软中断 */
-	active_softirq(TIMER_SOFTIRQ);
+	//active_softirq(TIMER_SOFTIRQ);
 
 	/* 激活调度器软中断 */
-	active_softirq(SCHED_SOFTIRQ);
+	//active_softirq(SCHED_SOFTIRQ);
+    /*update_tss_info((unsigned long )task_current);
+    current_trap_frame = (trap_frame_t *)task_current->kstack;*/
     return 0;
 }
 
@@ -316,9 +339,9 @@ void init_clock()
 
 	/* 初始化定时器 */
 	//InitTimer();
-
     systicks = 0;
-    
+    reenter = -1;
+
     /* 初始化时钟硬件 */
     init_clock_hardware();
 	/* 注册定时器软中断处理 */
@@ -329,5 +352,5 @@ void init_clock()
 	if (register_irq(IRQ0_CLOCK, &clock_handler, IRQF_DISABLED, "clockirq", "kclock", 0))
         printk("register failed!\n");
 
-    enable_intr();
+    //enable_intr();
 }

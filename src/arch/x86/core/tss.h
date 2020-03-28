@@ -2,10 +2,11 @@
 #define _X86_TSS_H
 
 #include <xbook/stdint.h>
+#include <xbook/task.h>
 
 /* 内核栈 */
 #define KERNEL_STATCK_TOP		0x8009f000
-#define KERNEL_STATCK_BOTTOM	(KERNEL_STATCK_TOP - (PAGE_SIZE * 2))
+#define KERNEL_STATCK_BOTTOM	(KERNEL_STATCK_TOP - (TASK_KSTACK_SIZE))
 
 /* 任务状态 */
 typedef struct tss 

@@ -28,7 +28,7 @@ exception_entry%1:		 ; 每个中断处理程序都要压入中断向量号,所�
 	mov es, dx
 
     push %1			 ; 不管idt_table中的目标程序是否需要参数,都一律压入中断向量号,调试时很方便
-   
+    
     push esp         ; 把中断栈指针传递进去
     call [intr_handler_table + %1*4]       ; 调用idt_table中的C版本中断处理函数
     add esp, 4
@@ -43,6 +43,7 @@ exception_entry%1:		 ; 每个中断处理程序都要压入中断向量号,所�
 %endmacro
 
 ;中断的汇编处理部分函数宏定义
+; 中断处理过程中会关闭中断。
 %macro INTERRUPT_ENTRY 2
 global irq_entry%1
 irq_entry%1:		 ; 每个中断处理程序都要压入中断向量号,所以一个中断类型一个中断处理程序，自己知道自己的中断向量号是多少
@@ -69,13 +70,12 @@ irq_entry%1:		 ; 每个中断处理程序都要压入中断向量号,所以一�
     add esp, 4
     
     ; softirq
-    call do_softirq
+    ;call do_softirq
 
     ; signal
-    push esp         ; 把中断栈指针传递进去
+    ;push esp         ; 把中断栈指针传递进去
     ;call DoSignal
-    add esp, 4
-
+    ;add esp, 4
     jmp intr_exit
 
 %endmacro

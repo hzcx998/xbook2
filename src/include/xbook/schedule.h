@@ -7,7 +7,7 @@
 #include "assert.h"
 #include "debug.h"
 
-#define CONFIG_PREEMPT
+//#define CONFIG_PREEMPT
 
 /*任务优先级 */
 enum task_priority {
@@ -29,10 +29,7 @@ extern priority_queue_t priority_queue[];
 
 #define is_task_in_priority_queue(task) (task->prio_queue == NULL ? 0 : 1) 
 
-
 void schedule();
-void schedule_in_intr();
-
 void init_schedule();
 
 #ifdef CONFIG_PREEMPT
@@ -102,5 +99,7 @@ static inline void task_priority_queue_add_head(task_t *task)
 #endif
     }  
 }
+
+task_t *task_priority_queue_fetch_first();
 
 #endif   /* _XBOOK_SCHEDULE_H */

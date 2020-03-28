@@ -38,6 +38,10 @@ void init_segment_descriptor()
 	set_segment_descriptor(gdt + INDEX_USER_C, 0xffffffff, 0x00000000, DA_CR | DA_DPL3 | DA_32 | DA_G);
 	set_segment_descriptor(gdt + INDEX_USER_RW, 0xffffffff, 0x00000000, DA_DRW | DA_DPL3 | DA_32 | DA_G);
 
+	// 服务代码段和数据段
+	set_segment_descriptor(gdt + INDEX_SERVE_C, 0xffffffff, 0x00000000, DA_CR | DA_DPL1 | DA_32 | DA_G);
+	set_segment_descriptor(gdt + INDEX_SERVE_RW, 0xffffffff, 0x00000000, DA_DRW | DA_DPL1 | DA_32 | DA_G);
+	
     /* load new gdtr */
 	load_gdtr(GDT_LIMIT, GDT_VADDR);
 }

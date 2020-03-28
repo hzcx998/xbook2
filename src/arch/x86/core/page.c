@@ -506,6 +506,7 @@ void do_page_fault(trap_frame_t *frame)
     if (addr >= USER_VMM_SIZE) {
         /* 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
         printk(KERN_DEBUG "user access unmaped vmware area .\n");
+        dump_trap_frame(frame);
         do_vmarea_fault(addr);
         return;
     }
