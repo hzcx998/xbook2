@@ -195,7 +195,7 @@ unsigned long __addr_v2p(unsigned long vaddr)
  * 
  * 和map_pages配合使用，同使用于非连续内存
  */
-int __unmap_pages(void *vaddr, unsigned long len)
+int __unmap_pages(unsigned long vaddr, unsigned long len)
 {
 	if (!len)
 		return -1;
@@ -230,7 +230,7 @@ int __unmap_pages(void *vaddr, unsigned long len)
  * 每次映射单个页，效率较低，不过比较安全
  * 用于进程地址空间
  */
-int __map_pages_safe(void *start, unsigned long len, unsigned long prot)
+int __map_pages_safe(unsigned long start, unsigned long len, unsigned long prot)
 {
     unsigned long vaddr = (unsigned long )start & PAGE_MASK;    /* 页地址对齐 */
     len = PAGE_ALIGN(len);
@@ -289,7 +289,7 @@ static int is_page_table_empty(pte_t *page_table)
  * 每次释放单个页，可以释放所有资源。
  * 用于进程地址释放
  */
-int __unmap_pages_safe(void *start, unsigned long len)
+int __unmap_pages_safe(unsigned long start, unsigned long len)
 {
     unsigned long vaddr = (unsigned long )start & PAGE_MASK;    /* 页地址对齐 */
     len = PAGE_ALIGN(len);
@@ -305,10 +305,10 @@ int __unmap_pages_safe(void *start, unsigned long len)
         if ((*pde & PG_P_1)) {  /* page table exist */
             /* when page tabel entry nr < 1024, continue free */
             while ((pte_idx = PTE_IDX(vaddr)) < 1024) {
-                printk("info: unmap_pages_safe -> pte idx %d\n", pte_idx);
+                //printk("info: unmap_pages_safe -> pte idx %d\n", pte_idx);
                 pte = get_pte_ptr(vaddr); /* get pte from vaddr  */
                 if (*pte & PG_P_1) {
-                    printk("info: unmap_pages_safe -> start%x->%x\n", vaddr, *pte & PAGE_ADDR_MASK);
+                    //printk("info: unmap_pages_safe -> start%x->%x\n", vaddr, *pte & PAGE_ADDR_MASK);
                     /* free physic page */
                     __free_pages(*pte & PAGE_ADDR_MASK);
 
@@ -320,7 +320,7 @@ int __unmap_pages_safe(void *start, unsigned long len)
                 if (!pages) { /* no page left  */
                     /* check page table */
                     if (is_page_table_empty((pte_t *)((unsigned long)pte & PAGE_ADDR_MASK))) {
-                        printk("info: unmap_pages_safe -> del page table %x\n", *pde & PAGE_ADDR_MASK);
+                        //printk("info: unmap_pages_safe -> del page table %x\n", *pde & PAGE_ADDR_MASK);
 
                         /* free page table */
                         __free_pages(*pde & PAGE_ADDR_MASK);            
@@ -333,7 +333,7 @@ int __unmap_pages_safe(void *start, unsigned long len)
                     break;
             }
 
-            printk("info: unmap_pages_safe -> del page table %x\n", *pde & PAGE_ADDR_MASK);
+            //printk("info: unmap_pages_safe -> del page table %x\n", *pde & PAGE_ADDR_MASK);
 
             /* free page table */
             __free_pages(*pde & PAGE_ADDR_MASK);

@@ -23,9 +23,11 @@ typedef struct vmm {
     unsigned long env_start, env_end;       /* 环境空间范围 */
 } vmm_t;
 
-#define vmm_alloc() (vmm_t *)kmalloc(sizeof(vmm_t)); 
+#define vmm_alloc() (vmm_t *)kmalloc(sizeof(vmm_t)) 
+#define vmm_free(vmm) kfree(vmm) 
 
 void vmm_init(vmm_t *vmm);
+int vmm_exit(vmm_t *vmm);
 
 /* 如果vmm为空，那么就加载内核页，如果不为空，就夹在vmm的页 */
 #define vmm_active(vmm) \

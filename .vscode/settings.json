@@ -34,6 +34,7 @@
         "schedule.h": "c",
         "memops.h": "c",
         "process.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "vmm.h": "c"
     }
 }

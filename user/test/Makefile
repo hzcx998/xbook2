@@ -5,6 +5,7 @@ NASM 		= nasm
 CC			= gcc
 LD 			= ld
 DD 			= dd
+OBJDUMP		= objdump
 
 #The file path
 DIR_LIBARY = ../../libary
@@ -14,7 +15,7 @@ DIR_BASELIB = $(DIR_LIBARY)/base
 DIR_BASELIB_INCLUDE = $(DIR_BASELIB)/include
 
 BIN = a.out
-
+BIN_DIS = out.disasm
 BIN_OFF = 0 
 BIN_CNTS = 10
 
@@ -44,9 +45,9 @@ OBJS =  _start.o \
 LIB_OBJS = $(DIR_BASELIB)/baselib.a
 
 #First read here
-.PHONY: all
+.PHONY: all dis
 
-all: compile link disk
+all: compile link disk 
 
 #Compile files
 compile: $(OBJS)
@@ -54,6 +55,10 @@ compile: $(OBJS)
 link: $(BIN)
 $(BIN): $(OBJS) $(LIB_OBJS)
 	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIB_OBJS)
+
+
+dis: $(BIN)
+	$(OBJDUMP) -M intel -D $(BIN) > $(BIN_DIS)
 
 disk: img vhd vmdk
 

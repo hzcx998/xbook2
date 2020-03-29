@@ -140,17 +140,22 @@ static void sleep_by_ticks(unsigned long sleep_ticks)
 {
 	/* 获取起始ticks，后面进行差值运算 */
 	unsigned long start_ticks = systicks;
-
+    
+    unsigned long flags;
+    save_intr(flags);
+    enable_intr(); // 要等待时钟ticks，必须打开中断
+    
 	/* 如果最新ticks和开始ticks差值小于要休眠的ticks，就继续休眠 */
 	while (systicks - start_ticks < sleep_ticks) {
         cpu_lazy(); /* 执行空转 */
 	}
+    restore_intr(flags);
 }
 
 /**
- * kern_msleep - 以毫秒为单位进行休眠
+ * clock_msleep - 以毫秒为单位进行休眠
  */
-void kern_msleep(unsigned long msecond)
+void clock_msleep(unsigned long msecond)
 {
     if (!msecond)   /* 如果是0就直接返回 */
         return;
@@ -272,10 +277,10 @@ int clock_handler(unsigned long irq, unsigned long data)
 	
     /* 改变ticks计数 */
 	systicks++;
-	//printk("[%x]", systicks);
-    //schedule();
+	//schedule();
     task_t *current = current_task;
-   
+    printk("[%d]", current->ticks);
+    
 	/* 检测内核栈是否溢出 */
 	//ASSERT(current->stack_magic == TASK_STACK_MAGIC);
     if (current->stack_magic != TASK_STACK_MAGIC)

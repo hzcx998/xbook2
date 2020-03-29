@@ -108,10 +108,10 @@ void __page_link(unsigned long va, unsigned long pa, unsigned long prot);
 void __page_unlink(unsigned long vaddr);
 
 int __map_pages(unsigned long start, unsigned long len, unsigned long prot);
-int __unmap_pages(void *vaddr, unsigned long len);
+int __unmap_pages(unsigned long vaddr, unsigned long len);
 
-int __map_pages_safe(void *start, unsigned long len, unsigned long prot);
-int __unmap_pages_safe(void *start, unsigned long len);
+int __map_pages_safe(unsigned long start, unsigned long len, unsigned long prot);
+int __unmap_pages_safe(unsigned long start, unsigned long len);
 
 // 该地址是2GB虚拟地址的偏移
 #define PAGE_OFFSET             0X80000000
@@ -136,7 +136,7 @@ unsigned long *__copy_kernel_page_dir();
             paddr = page; \
         } \
         write_cr3(paddr); \
-        update_tss_info(current_task); \
+        update_tss_info((unsigned long )current_task); \
     } while (0)
 
 void do_page_fault(trap_frame_t *frame);

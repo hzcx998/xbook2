@@ -51,7 +51,7 @@ void update_ktime();
 
 void print_ktime();
 void get_ktime(ktime_t *time);
-void kern_msleep(unsigned long msecond);
+void clock_msleep(unsigned long msecond);
 
 static inline unsigned long ktime2data()
 {

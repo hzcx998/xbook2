@@ -11,6 +11,10 @@ enum {
     UMSG_GETC,            /* device getc */
     UMSG_PUTC,            /* device putc */
     UMSG_FORK,            /* process fork */
+    UMSG_EXEC,            /* execute */
+    UMSG_EXIT,            /* process exit */
+    UMSG_WAIT,            /* process wait */
+    UMSG_MSLEEP,          /* sleep with milli second */
 };
 
 /* user message 用户消息 */

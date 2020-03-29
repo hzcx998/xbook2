@@ -76,7 +76,7 @@ void schedule()
 {
     task_t *cur = current_task;
     task_t *next = get_next_task(cur);
-    printk(KERN_INFO "> switch from %d-%x to %d-%x\n", cur->pid, cur, next->pid, next);
+    printk(KERN_INFO "> switch from %d-%x to %d-%x eip=%x\n", cur->pid, cur, next->pid, next, current_trap_frame->eip);
     set_next_task(next);
     //task_current->state = TASK_RUNNING; /* 设置成运行状态 */
     //update_tss_info((unsigned long )task_current);  /* 更新内核栈指针 */

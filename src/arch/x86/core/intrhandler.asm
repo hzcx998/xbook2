@@ -85,13 +85,14 @@ kern_usrmsg_handler:
 	mov es, dx
     
    	push 0x40			; 此位置压入0x40也是为了保持统一的栈格式
+
     ;2 传递参数给消息处理
     push esp                ; 传入栈指针，可以用来获取所有陷阱栈框寄存器
     push ebx			    ; 用户消息中消息参数
 	;调用用户消息处理
    	call do_usrmsg
     add esp, 8			    ; 跨过上面的2个参数
-
+    
 	;3 将call调用后的返回值存入待当前内核栈中eax的位置
     mov [esp + 8*4], eax
     

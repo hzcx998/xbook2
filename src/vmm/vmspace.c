@@ -230,10 +230,10 @@ int do_vmspace_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
     }
 
     /* 取消空间后需要取消虚拟地址映射 */
-
-   return 0;
+    unmap_pages_safe(addr, len);
+    printk("unmap done!\n");
+    return 0;
 }
-
 
 /**
  * vmspace_mmap - 内存映射

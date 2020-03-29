@@ -120,7 +120,7 @@ static int copy_vm_vmspace(task_t *child, task_t *parent)
         p = p->next;
     }
     /* 打印子进程space */
-#if 0
+#if 1
     p = child->vmm->vmspace_head;
     while (p != NULL) {
         printk(KERN_DEBUG "[child] space %x start %x end %x flags %x\n",
@@ -169,16 +169,17 @@ static int copy_task(task_t *child, task_t *parent)
 }
 
 /**
- * do_usrmsg_fork - 执行进程分支
+ * proc_fork - 执行进程分支
  * 
  * 如果失败，应该回滚回收之前分配的内存
  * 创建一个和自己一样的进程
  * 返回-1则失败，返回0表示子进程自己，返回>0表示父进程
  */
-int do_usrmsg_fork(umsg_t *msg)
+int proc_fork(long *retval)
 {
+   
     /* 保存之前状态并关闭中断 */
-    msg->retval = 0; /* 默认返回0，表示是子进程 */
+    *retval = 0; /* 默认返回0，表示是子进程 */
     
     /* 把当前任务当做父进程 */
     task_t *parent = current_task;
@@ -188,7 +189,7 @@ int do_usrmsg_fork(umsg_t *msg)
     task_t *child = kmalloc(TASK_KSTACK_SIZE);
     if (child == NULL) {
         printk(KERN_ERR "do_usrmsg_fork: kmalloc for child task failed!\n");
-        msg->retval = -1;
+        *retval = -1;
         return -1;
     }
     /* 当前中断处于关闭中，并且父进程有页目录表 */
@@ -198,18 +199,21 @@ int do_usrmsg_fork(umsg_t *msg)
     if (copy_task(child, parent)) {
         printk(KERN_ERR "do_usrmsg_fork: copy task failed!\n");
         kfree(child);
-        msg->retval = -1;
+        *retval = -1;
         return -1;
     }
+    unsigned long flags;
+    save_intr(flags);
     /* 把子进程添加到就绪队列和全局链表 */
     task_global_list_add(child);
     task_priority_queue_add_tail(child); /* 放到队首 */
+    restore_intr(flags);
     
     printk(KERN_DEBUG "task %s pid %d fork task %s pid %d\n", 
         parent->name, parent->pid, child->name, child->pid);
     
     /* 父进程消息返回进程pid */
-    msg->retval = child->pid;
+    *retval = child->pid;
 
     /* fork成功 */
     return 0;

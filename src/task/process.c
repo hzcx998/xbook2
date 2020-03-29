@@ -372,6 +372,17 @@ int proc_vmm_init(task_t *task)
     return 0;
 }
 
+int proc_vmm_exit(task_t *task)
+{
+    if (task->vmm == NULL)
+        return -1;
+    vmm_exit(task->vmm);
+    vmm_free(task->vmm);
+    
+    task->vmm = NULL;
+    printk("vmm exit done!\n");
+    return 0;
+}
 
 /**
  * make_proc_stack - 创建一个线程
@@ -421,9 +432,11 @@ task_t *process_create(char *name, char **argv)
         argc++;
     }
     process_execute(task, argc, argv);
-
+    unsigned long flags;
+    save_intr(flags);
     task_global_list_add(task);
     task_priority_queue_add_tail(task);
-
+    restore_intr(flags);
+    
     return task;
 }

@@ -16,6 +16,8 @@ void usrmsg_dump(umsg_t *msg)
  * do_usrmsg - 用户消息处理
  * @msg: 消息
  * 
+ * 执行过程中，默认中断是关闭的。
+ * 
  * 具体错误消息放在msg->retval里面
  * return: 执行操作，成功返回0，失败返回-1
  */
@@ -87,12 +89,19 @@ int do_usrmsg(umsg_t *msg)
         break;
     case UMSG_FORK:
         printk("in UMSG_FORK");
-        
-        do_usrmsg_fork(msg);
+        proc_fork((long *)&msg->retval);
         printk("task %s-%d will return!\n", current_task->name, current_task->pid);
         break;
+    case UMSG_EXIT:
+        printk("in UMSG_EXIT");
+        proc_exit((int )msg->arg0);
+        break;
+    case UMSG_WAIT:
+        printk("in UMSG_WAIT");
+        msg->retval = proc_wait((int *)&msg->arg0);
+        break;
     case UMSG_MSLEEP:
-        kern_msleep((unsigned long )msg->arg0);
+        clock_msleep((unsigned long )msg->arg0);
         break;
     default:
         break;

@@ -92,17 +92,17 @@ void task_init(task_t *task, char *name, int priority)
 
     task->priority = priority;
     task->timeslice = 3;  /* 时间片大小默认值 */
-    task->ticks = task->timeslice;
-    
-    task->elapsed_ticks = 0;
+    task->ticks = task->timeslice;  /* timeslice -> ticks */
+    task->block_ticks = 0;
+    task->elapsed_ticks = 0;    /* 总运行时间 */
     
     /* init with NULL */
     task->vmm = NULL;
     
     /* get a new pid */
     task->pid = new_pid();
-    task->parent_pid = -1;
-    task->exit_state = -1;
+    task->parent_pid = -1;  /* no parent */
+    task->exit_status = 0;  /* no status */
 
     // set kernel stack as the top of task mem struct
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KSTACK_SIZE);
@@ -112,6 +112,13 @@ void task_init(task_t *task, char *name, int priority)
     
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;
+}
+
+void task_free(task_t *task)
+{
+    /* remove from global list */
+    list_del(&task->global_list);
+    kfree(task);
 }
 
 /**
@@ -187,7 +194,7 @@ task_t *kthread_start(char *name, int priority, task_func_t func, void *arg)
 static void make_main_task()
 {
     // 当前运行的就是主线程
-    task_idle = KERNEL_STATCK_BOTTOM;
+    task_idle = (task_t *)KERNEL_STATCK_BOTTOM;
     task_current = task_idle;
 
     /* 最开始设置为最佳优先级，这样才可以往后面运行。直到运行到最后，就变成IDLE优先级 */
@@ -214,19 +221,21 @@ void task_activate(task_t *task)
 
     vmm_active(task->vmm);
 }
-
+ 
 /**
  * task_block - 把任务阻塞
  */
 void task_block(task_state_t state)
 {
     /*
-    state有4种状态，分别是TASK_BLOCKED, TASK_WAITING, TASK_STOPPED, TASK_ZOMBIE
+    state有5种状态，分别是TASK_BLOCKED, TASK_WAITING, TASK_STOPPED, 
+    TASK_ZOMBIE,TASK_HANGING
     它们不能被调度
     */
     ASSERT ((state == TASK_BLOCKED) || 
             (state == TASK_WAITING) || 
             (state == TASK_STOPPED) ||
+            (state == TASK_HANGING) ||
             (state == TASK_ZOMBIE));
     // 先关闭中断，并且保存中断状态
     unsigned long flags;
@@ -236,12 +245,20 @@ void task_block(task_state_t state)
     task_t *current = current_task;
     //printk(PART_TIP "task %s blocked with status %d\n", current->name, state);
     current->state = state;
-    
-    // 调度到其它任务
-    schedule();
-
-    // 恢复之前的状态
+    current->block_ticks = current->ticks; /* 保存阻塞时的ticks */
+    current->ticks = 0; /* 置ticks0，下次发生中断就切换 */
     restore_intr(flags);
+
+    /* need enable intr when looping. to make sure kernel will run. */
+    enable_intr();
+
+    /* 备份中断栈，修改中断栈，恢复终端栈 */
+
+    /* 不是运行状态就等待，被唤醒时是ready状态，就会往后面运行 */
+    while (current->state != TASK_RUNNING) {
+        cpu_lazy();
+    }
+    printk("task %s block end\n", current->name);
 }
 
 /**
@@ -271,9 +288,16 @@ void task_unblock(task_t *task)
     // 处于就绪状态
     task->state = TASK_READY;
     // 把任务放在最前面，让它快速得到调度
-    task_priority_queue_add_head(task);
-
+    task_priority_queue_add_tail(task);
+    // printk("block ticks:%d ", task->block_ticks);
+    if (task->block_ticks <= 0) {    /* 如果ticks为0，那么就获取时间片值 */
+        task->ticks = task->timeslice; 
+    } else {
+        task->ticks = task->block_ticks;
+    }
     restore_intr(flags);
+    /* 由于现在状态变成就绪，并且在队列里面，所以下次切换任务时就会切换到任务，并且往后面运行 */
+    printk(KERN_DEBUG "task %s pid=%d was unblocked!\n", task->name, task->pid);
 }
 
 /**
@@ -582,7 +606,7 @@ void dump_task(task_t *task)
     printk("----Task----\n");
     printk("name:%s pid:%d parent pid:%d state:%d\n", task->name, task->pid, task->parent_pid, task->state);
     printk("vmm->vm_frame:%x priority:%d ticks:%d elapsed ticks:%d\n", task->vmm->page_storage, task->priority, task->ticks, task->elapsed_ticks);
-    printk("exit code:%d stack magic:%d\n", task->exit_state, task->stack_magic);
+    printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
 
 /**
