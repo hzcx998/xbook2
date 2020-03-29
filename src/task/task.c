@@ -107,8 +107,11 @@ void task_init(task_t *task, char *name, int priority)
     // set kernel stack as the top of task mem struct
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KSTACK_SIZE);
 
+    task->block_frame = kmalloc(sizeof(trap_frame_t));
+    printk("#### block frame:%x\n", task->block_frame);
     /* no priority queue */
     task->prio_queue = NULL;
+    task->flags = 0;
     
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;
@@ -196,7 +199,7 @@ static void make_main_task()
     // 当前运行的就是主线程
     task_idle = (task_t *)KERNEL_STATCK_BOTTOM;
     task_current = task_idle;
-
+    
     /* 最开始设置为最佳优先级，这样才可以往后面运行。直到运行到最后，就变成IDLE优先级 */
     task_init(task_idle, "idle", TASK_PRIO_BEST);
 
@@ -221,7 +224,7 @@ void task_activate(task_t *task)
 
     vmm_active(task->vmm);
 }
- 
+extern void make_tmp_kstack();
 /**
  * task_block - 把任务阻塞
  */
@@ -248,17 +251,22 @@ void task_block(task_state_t state)
     current->block_ticks = current->ticks; /* 保存阻塞时的ticks */
     current->ticks = 0; /* 置ticks0，下次发生中断就切换 */
     restore_intr(flags);
-
+    
+    /* 构建一个block的中断栈 */
+    __kernel_trap_frame_init(current->block_frame);
+    /* 当任务调度回来时，使用这个块栈作为中断栈 */
+    task_current->flags = 1; /* 下次中断时使用阻塞中断栈 */
     /* need enable intr when looping. to make sure kernel will run. */
-    enable_intr();
-
-    /* 备份中断栈，修改中断栈，恢复终端栈 */
-
-    /* 不是运行状态就等待，被唤醒时是ready状态，就会往后面运行 */
-    while (current->state != TASK_RUNNING) {
-        cpu_lazy();
-    }
-    printk("task %s block end\n", current->name);
+    /* 涉及参数：任务状态，内核栈指针，阻塞中断栈 */
+    printk("==> task block %d\n", current->pid);
+    /* 切换内核栈 */
+    make_tmp_kstack();
+    disable_intr(); /* 不允许中断 */
+    task_current->flags = 0; /* 不是处于block阻塞中 */
+    /* 设置中断栈指针指向任务默认的中断栈 */
+    current_trap_frame = (trap_frame_t *)task_current->kstack;
+    
+    printk("task %d block end\n", current->pid);
 }
 
 /**

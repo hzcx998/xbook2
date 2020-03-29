@@ -110,10 +110,10 @@ pid_t proc_wait(int *status)
     task_t *parent = current_task;  /* 当前进程是父进程 */
     pid_t child_pid;
     while (1) {
-        
         printk(KERN_DEBUG "proc wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
         /* 先处理挂起的任务 */
         if ((child_pid = wait_one_hangging_child(parent, status)) >= 0) {
+            printk("proc wait exit\n");
             return child_pid;
         }
         printk(KERN_DEBUG "proc wait: find proc.\n");

@@ -26,6 +26,7 @@ int do_usrmsg(umsg_t *msg)
     if (!msg)
         return -1;
     dev_t devno;
+    trap_frame_t frame = {0, };
     //usrmsg_dump(msg);
     switch (msg->type)
     {
@@ -97,8 +98,17 @@ int do_usrmsg(umsg_t *msg)
         proc_exit((int )msg->arg0);
         break;
     case UMSG_WAIT:
+        //memcpy(&frame, current_trap_frame, sizeof(trap_frame_t));
         printk("in UMSG_WAIT");
         msg->retval = proc_wait((int *)&msg->arg0);
+        printk("child %d exit status:%d\n", (int)msg->retval, (int)msg->arg0);
+        //dump_trap_frame(&frame);
+        
+        //printk("esp:%x\n", get_esp());
+        //memcpy(current_task->kstack, &frame, sizeof(trap_frame_t));
+        
+        //dump_trap_frame((trap_frame_t *)current_task->kstack);
+
         break;
     case UMSG_MSLEEP:
         clock_msleep((unsigned long )msg->arg0);

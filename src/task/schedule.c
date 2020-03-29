@@ -62,8 +62,25 @@ task_t *get_next_task(task_t *task)
 
 void set_next_task(task_t *next)
 {
+    wmb();
     task_current = next;
-    current_trap_frame = (trap_frame_t *)task_current->kstack;
+
+    /* 如果不是阻塞时产生的临时栈，就指向默认中断栈，不然就指向临时栈。
+    为什么需要这么做呢？
+    因为时钟中断结束时，会把当前任务的默认栈当做中断栈退出。而这是切换任务的
+    唯一方式，因此，如果我们想在非中断状态下实现任务切换，就需要模拟这个机制。
+    如果我们模拟过程中使用了这个默认的栈，那么模拟结束后，返回的时候，会发现
+    这个栈的内容以经被改变了，会出错。因此，引入了一个临时的栈，这样，就可以
+    在中断执行过程中或者从用户态切换到内核态之中使用模拟中断执行退出机制，在
+    中断中，或者是用户消息中，提前进行任务切换。不过，这个还是基于时钟中断机
+    制，但是，他可以发生在用户消息之中。
+    简单说，就是为了解决用户消息需要阻塞进程，而进场恢复后中断栈不一致的问题。
+     */
+    if (!task_current->flags) 
+        current_trap_frame = (trap_frame_t *)task_current->kstack;
+    else 
+        current_trap_frame = task_current->block_frame;
+
     task_activate(task_current);
 }
 /**
@@ -76,8 +93,10 @@ void schedule()
 {
     task_t *cur = current_task;
     task_t *next = get_next_task(cur);
-    printk(KERN_INFO "> switch from %d-%x to %d-%x eip=%x\n", cur->pid, cur, next->pid, next, current_trap_frame->eip);
     set_next_task(next);
+    //printk(KERN_INFO "> switch from %d-%x to %d-%x addr=%x eip=%x\n", cur->pid, cur, next->pid, next, current_trap_frame, current_trap_frame->eip);
+    //dump_trap_frame(current_trap_frame);
+    
     //task_current->state = TASK_RUNNING; /* 设置成运行状态 */
     //update_tss_info((unsigned long )task_current);  /* 更新内核栈指针 */
 }

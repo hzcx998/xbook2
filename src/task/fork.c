@@ -24,6 +24,7 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     child->global_list.next = child->global_list.prev = NULL;
     /* 设置内核栈位置 */
     child->kstack = (unsigned char *)((unsigned char *)child + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
+    task_current->block_frame = kmalloc(sizeof(trap_frame_t));
     /* 复制名字，在后面追加fork表明是一个fork的进程，用于测试 */
     //strcat(child->name, "_fork");
     dump_trap_frame((trap_frame_t *)child->kstack);

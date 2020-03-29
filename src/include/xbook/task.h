@@ -40,10 +40,12 @@ typedef struct priority_queue {
 } priority_queue_t;
 
 typedef struct task {
+    trap_frame_t *block_frame;  /* 阻塞时使用的中断栈 */
     unsigned char *kstack;                // kernel stack, must be first member
+    task_state_t state;          /* 任务的状态 */
     pid_t pid;                      // 自己的进程id
     pid_t parent_pid;                // 父进程id
-    task_state_t state;          /* 任务的状态 */
+    unsigned long flags;    
     unsigned long priority;              /* 任务所在的优先级队列 */
     unsigned long ticks;                 /* 运行的ticks，当前剩余的timeslice */
     unsigned long block_ticks;                 /* 阻塞时的ticks数 */
@@ -55,6 +57,7 @@ typedef struct task {
     list_t list;               // 处于所在队列的链表
     list_t global_list;         // 全局任务队列，用来查找所有存在的任务
     priority_queue_t *prio_queue;   /* 所在的优先级队列 */
+    
     unsigned int stack_magic;         /* 任务的魔数 */
 } task_t;
 
@@ -69,6 +72,9 @@ extern list_t task_global_list;
 
 //#define current_task   __current_task()
 #define current_task    task_current
+
+extern trap_frame_t *current_trap_frame;
+
 
 void init_tasks();
 void kernel_pause();

@@ -63,7 +63,7 @@ INTERRUPT_ENTRY 0x2d,NO_ERROR_CODE	;fpu浮点单元异常
 INTERRUPT_ENTRY 0x2e,NO_ERROR_CODE	;硬盘
 INTERRUPT_ENTRY 0x2f,NO_ERROR_CODE	;保留
 
-
+extern dump_value
 ;系统调用中断
 [bits 32]
 [section .text]
@@ -85,7 +85,7 @@ kern_usrmsg_handler:
 	mov es, dx
     
    	push 0x40			; 此位置压入0x40也是为了保持统一的栈格式
-
+    
     ;2 传递参数给消息处理
     push esp                ; 传入栈指针，可以用来获取所有陷阱栈框寄存器
     push ebx			    ; 用户消息中消息参数
@@ -99,11 +99,11 @@ kern_usrmsg_handler:
     ; 处理完用户消息后再进行信号处理，因为处理过程可能会影响到寄存器的值
     ;4 signal
 .do_signal:
-    push esp         ; 把中断栈指针传递进去
+    ;push esp         ; 把中断栈指针传递进去
     ;call do_signal
-    add esp, 4
+    ;add esp, 4
 
-   jmp intr_exit		    ; intr_exit返回,恢复上下文
+   jmp intr_exit2		    ; intr_exit返回,恢复上下文
 
 extern clock_handler
 global irq_entry0x20

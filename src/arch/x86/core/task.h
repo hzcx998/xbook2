@@ -71,6 +71,7 @@ void __switch_to_user(trap_frame_t *frame);
 
 void __user_trap_frame_init(trap_frame_t *frame);
 void __ktask_trap_frame_init(trap_frame_t *frame);
+void __kernel_trap_frame_init(trap_frame_t *frame);
 
 #define __user_entry_point(frame, entry) (frame)->eip = entry
 

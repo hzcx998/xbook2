@@ -164,6 +164,11 @@ int serial_print(const char *fmt, ...)
 }
 #endif /* CONFIG_SERIAL_DEBUG */
 
+void dump_value(unsigned long val)
+{
+    printk("dump_value: %x\n", val);
+}
+
 /**
  * init_kernel_debug
  * 

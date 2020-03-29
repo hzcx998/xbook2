@@ -84,9 +84,11 @@ int main(int argc, char *argv[])
     int pid = fork();
     if (pid > 0) {
         log("parent!");
-        int status;
+        /*int status;
         int pid2 = wait(&status);
-
+        */
+        
+        msleep(3000);
         log("parent~\n");
         
     } else {
