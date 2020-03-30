@@ -10,9 +10,8 @@ extern task_t *task_idle;
 /* 优先级队列 */
 priority_queue_t priority_queue[MAX_PRIORITY_NR];
 
-/* 最高级的队列 */
+/* 最高等级的队列 */
 priority_queue_t *highest_prio_queue;
-
 
 trap_frame_t *current_trap_frame;
 
@@ -38,19 +37,14 @@ task_t *task_priority_queue_fetch_first()
 task_t *get_next_task(task_t *task)
 {
     //printk("cur %s-%d ->", task->name, task->pid);
-    /* 1.插入到就绪队列 */
+    /* 1.如果是时间片到了就插入到就绪队列，准备下次调度，如果是其他状态就不插入就绪队列 */
     if (task->state == TASK_RUNNING) {
         /* 时间片到了，加入就绪队列 */
         task_priority_queue_add_tail(task);
         // 更新信息
         task->ticks = task->timeslice;
         task->state = TASK_READY;
-    } else {
-        /* 如果是需要某些事件后才能继续运行，不用加入队列，当前线程不在就绪队列中。*/            
-        //printk("$%d ", task->priority);
-        //printk(KERN_EMERG "$ %s state=%d without ready!\n", task->name, task->state);
     }
-
     /* 2.从就绪队列中获取一个任务 */
     /* 一定能够找到一个任务，因为最后的是idle任务 */
     task_t *next;

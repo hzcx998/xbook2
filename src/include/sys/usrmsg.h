@@ -14,7 +14,7 @@ enum {
     UMSG_EXEC,            /* execute */
     UMSG_EXIT,            /* process exit */
     UMSG_WAIT,            /* process wait */
-    UMSG_MSLEEP,          /* sleep with milli second */
+    UMSG_EXECRAW,          /* process execute raw block */
 };
 
 /* user message 用户消息 */

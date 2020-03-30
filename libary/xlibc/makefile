@@ -8,31 +8,30 @@ RM			= rm
 DIR_INCLUDE 	= ./include
 DIR_CODE 		= 	./code
 
+# depens lib: base lib
+DIR_CODE_BASE_LIB 		= ../base/include
+
 # flags
 ARFLAGS := -r
 C_FLAGS	:=  -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
-			-fno-stack-protector -I $(DIR_INCLUDE) -c -std=c99
-NASM_FLAGS	:= -I $(DIR_INCLUDE)
+			-fno-stack-protector -I $(DIR_INCLUDE) -I $(DIR_CODE_BASE_LIB) -c -std=c99
+NASM_FLAGS	:= -I $(DIR_INCLUDE) -I $(DIR_CODE_BASE_LIB)
 
-# arch 
-ARCH_X86 := usrmsg_x86.o
-ARCH_X64 := usrmsg_x64.o
-
-ARCH_OBJS	:=  $(DIR_CODE)/$(ARCH_X86)
-
-C_OBJS		:= $(DIR_CODE)/xbook.o
+C_OBJS		:= 	$(DIR_CODE)/string.o \
+				$(DIR_CODE)/vsprintf.o \
+				$(DIR_CODE)/printf.o
 
 # out file
-LIBNAME = baselib.a
+LIBNAME = xlibc.a
 			
 # objects
-OBJS = $(ARCH_OBJS) $(C_OBJS)
+OBJS = $(C_OBJS)
 
 # all need to do
 all: $(LIBNAME) 
 
 # make a libary file
-$(LIBNAME): $(OBJS) 
+$(LIBNAME): $(OBJS)
 	@echo [AR] making libary file $(LIBNAME)
 	@$(AR) $(ARFLAGS) $(LIBNAME) $(OBJS)
 

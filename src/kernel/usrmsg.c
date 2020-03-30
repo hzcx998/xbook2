@@ -25,69 +25,53 @@ int do_usrmsg(umsg_t *msg)
 {
     if (!msg)
         return -1;
-    dev_t devno;
-    trap_frame_t frame = {0, };
-    //usrmsg_dump(msg);
-    printk("@ umsg start---------->");
+    
+    /*   retval: do_usrmsg retval
+    msg->retval: do real function retval */
+    int retval = 0; 
+    //printk("@ umsg start---------->");
     switch (msg->type)
     {
-    case UMSG_OPEN:
-        devno = get_devno_by_name((char *)msg->arg0);
-        if (!devno) {   /* not found a devno */
-            msg->retval = -2;
-            return -1;
+    case UMSG_OPEN: /* return 0 is error, > 0 is sucees */
+        msg->retval = get_devno_by_name((char *)msg->arg0);
+        if (!msg->retval) {   /* not found a devno */
+            retval = -1;
+            break;
         }
-        //printk(KERN_DEBUG "usrmsg open\n");
-        msg->retval = dev_open(devno, (flags_t) msg->arg1); 
+        retval = dev_open(msg->retval, (flags_t) msg->arg1); 
+        if (retval == -1)
+            msg->retval = 0;
+
         break;
     case UMSG_CLOSE:
-        devno = get_devno_by_name((char *)msg->arg0);
-        if (!devno) {   /* not found a devno */
-            msg->retval = -2;
-            return -1;
-        }
-        msg->retval = dev_close(devno); 
+        msg->retval = dev_close((dev_t) msg->arg0);
+        if (msg->retval == -1)
+            retval = -1;
         break;
     case UMSG_READ:
-        devno = get_devno_by_name((char *)msg->arg0);
-        if (!devno) {   /* not found a devno */
-            msg->retval = -2;
-            return -1;
-        }
-        
-        msg->retval = dev_read(devno, (off_t) msg->arg1, (void *) msg->arg2, (size_t) msg->arg3);
+        msg->retval = dev_read((dev_t) msg->arg0, (off_t) msg->arg1, (void *) msg->arg2, (size_t) msg->arg3);
+        if (msg->retval == -1)
+            retval = -1;
         break;
     case UMSG_WRITE:
-        devno = get_devno_by_name((char *)msg->arg0);
-        if (!devno) {   /* not found a devno */
-            msg->retval = -2;
-            return -1;
-        }
-        msg->retval = dev_write(devno, (off_t) msg->arg1, (void *) msg->arg2, (size_t) msg->arg3);
+        msg->retval = dev_write((dev_t) msg->arg0, (off_t) msg->arg1, (void *) msg->arg2, (size_t) msg->arg3);
+        if (msg->retval == -1)
+            retval = -1;
         break;
     case UMSG_IOCTL:
-        devno = get_devno_by_name((char *)msg->arg0);
-        if (!devno) {   /* not found a devno */
-            msg->retval = -2;
-            return -1;
-        }
-        msg->retval = dev_ioctl(devno, (unsigned int) msg->arg1, (unsigned long) msg->arg2);
+        msg->retval = dev_ioctl((dev_t) msg->arg0, (unsigned int) msg->arg1, (unsigned long) msg->arg2);
+        if (msg->retval == -1)
+            retval = -1;
         break;
     case UMSG_PUTC:
-        devno = get_devno_by_name((char *)msg->arg0);
-        if (!devno) {   /* not found a devno */
-            msg->retval = -2;
-            return -1;
-        }
-        msg->retval = dev_putc(devno, (unsigned long) msg->arg1);
+        msg->retval = dev_putc((dev_t) msg->arg0, (unsigned long) msg->arg1);
+        if (msg->retval == -1)
+            retval = -1;
         break;
     case UMSG_GETC:
-        devno = get_devno_by_name((char *)msg->arg0);
-        if (!devno) {   /* not found a devno */
-            msg->retval = -2;
-            return -1;
-        }
-        msg->retval = dev_getc(devno, (unsigned long *) msg->arg1);
+        msg->retval = dev_getc((dev_t) msg->arg0, (unsigned long *) msg->arg1);
+        if (msg->retval == -1)
+            retval = -1;
         break;
     case UMSG_FORK:
         printk("in UMSG_FORK");
@@ -104,19 +88,16 @@ int do_usrmsg(umsg_t *msg)
         printk("in UMSG_WAIT");
         msg->retval = proc_wait((int *)&msg->arg0);
         printk("child %d exit status:%d\n", (int)msg->retval, (int)msg->arg0);
-        //dump_trap_frame(&frame);
-        
-        //printk("esp:%x\n", get_esp());
-        //memcpy(current_task->kstack, &frame, sizeof(trap_frame_t));
-        
-        //dump_trap_frame((trap_frame_t *)current_task->kstack);
-
+        break;
+    case UMSG_EXECRAW:
+        printk("in UMSG_EXECRAW");
+        proc_exec((char *)msg->arg0, (char **)msg->arg1);
         break;
     default:
         break;
     }
     
-    printk("@ umsg end---------->");
+    //printk("@ umsg end---------->");
     // printk(">return\n");
-    return 0;
+    return retval;
 }

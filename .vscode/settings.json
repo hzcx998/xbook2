@@ -35,6 +35,9 @@
         "memops.h": "c",
         "process.h": "c",
         "string.h": "c",
-        "vmm.h": "c"
+        "vmm.h": "c",
+        "xbook.h": "c",
+        "stdint.h": "c",
+        "conio.h": "c"
     }
 }

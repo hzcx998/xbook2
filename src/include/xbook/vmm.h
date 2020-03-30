@@ -28,6 +28,7 @@ typedef struct vmm {
 
 void vmm_init(vmm_t *vmm);
 int vmm_exit(vmm_t *vmm);
+int vmm_release_space(vmm_t *vmm);
 
 /* 如果vmm为空，那么就加载内核页，如果不为空，就夹在vmm的页 */
 #define vmm_active(vmm) \

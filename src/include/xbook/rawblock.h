@@ -40,6 +40,11 @@ void raw_block_seek(raw_block_t *block, unsigned long pos, unsigned char seek);
 long raw_block_read(raw_block_t *block, void *buffer, unsigned long size);
 long raw_block_write(raw_block_t *block, void *buffer, unsigned long size);
 
+int raw_block_read_off(raw_block_t *rb, void *buffer, unsigned long offset, unsigned long size);
+int raw_block_write_off(raw_block_t *rb, void *buffer, unsigned long offset, unsigned long size);
+
+
+
 void init_raw_block();
 
 

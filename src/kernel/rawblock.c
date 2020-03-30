@@ -162,6 +162,39 @@ long raw_block_write(raw_block_t *block, void *buffer, unsigned long size)
     return len; /* return read byte */
 }
 
+/**
+ * raw_block_read_off - 从某个偏移位置读取数据
+ * @rb: 原始块
+ * @buffer: 读取到的buffer
+ * @offset: 偏移
+ * @size: 要读取的数据数量
+ */
+int raw_block_read_off(raw_block_t *rb, void *buffer, unsigned long offset, unsigned long size)
+{
+    raw_block_seek(rb, offset, RB_SEEK_SET);
+    if (!raw_block_read(rb, buffer, size)) {
+        printk(KERN_ERR "raw_block_read_off: read %d failed!\n", size);
+        return -1;
+    }
+    return 0;
+}
+
+/**
+ * raw_block_write_off - 往某个偏移位置写入数据
+ * @rb: 原始块
+ * @buffer: 读取到的buffer
+ * @offset: 偏移
+ * @size: 要读取的数据数量
+ */
+int raw_block_write_off(raw_block_t *rb, void *buffer, unsigned long offset, unsigned long size)
+{
+    raw_block_seek(rb, offset, RB_SEEK_SET);
+    if (!raw_block_write(rb, buffer, size)) {
+        printk(KERN_ERR "raw_block_write_off: write %d failed!\n", size);
+        return -1;
+    }
+    return 0;
+}
 typedef struct {
     char *name;
     unsigned long off;
@@ -175,8 +208,8 @@ typedef struct {
 最大文件大小依据MAX_MEM_CACHE_SIZE而定
  */
 raw_block_info_t rbi_table[MAX_RBI_NR] = {
-    {"test", 0, 20, 10240},
-    {"test2", 10, 1, 13},
+    {"test", 0, 100, 1024*50},
+    {"bin", 200, 100, 1024*50},
 };
 
 void init_raw_block()

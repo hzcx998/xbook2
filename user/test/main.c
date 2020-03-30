@@ -1,4 +1,5 @@
-#include <usrmsg.h>
+#include <xbook.h>
+#include <string.h>
 
 int func(int n)
 {   
@@ -7,34 +8,6 @@ int func(int n)
     else 
         return n * func(n - 1); 
 }
-
-int fork()
-{
-    define_umsg(msg);
-    umsg_set_type(msg, UMSG_FORK);
-    umsg(msg);
-    return umsg_get_retval(msg, int);
-}
-
-void exit(int status)
-{
-    define_umsg(msg);
-    umsg_set_type(msg, UMSG_EXIT);
-    umsg_set_arg0(msg, status);
-    umsg(msg);
-}
-
-int wait(int *status)
-{
-    define_umsg(msg);
-    umsg_set_type(msg, UMSG_WAIT);
-    umsg_set_arg0(msg, 0);
-    umsg(msg);
-    if (status) /* not null */
-        *status = umsg_get_arg0(msg, int);
-    return umsg_get_retval(msg, int);
-}
-
 
 int __strlen(char *s)
 {
@@ -46,39 +19,31 @@ int __strlen(char *s)
     return n;
 }
 
+x_dev_t dev;
 void log(char *str)
 {
-    define_umsg(msg);
-    umsg_set_type(msg, UMSG_WRITE);
-    umsg_set_arg0(msg, "con0");
-    umsg_set_arg1(msg, 0);
-    umsg_set_arg2(msg, str);
-    umsg_set_arg3(msg, __strlen(str));
-    umsg(msg);
+    x_write(dev, 0, str, strlen(str));
 }
 
 int main(int argc, char *argv[])
 {
-    int i;
+    /*nt i;
     char *p;
     for (i = 0; i < argc; i++) {
         p = (char *)argv[i];
         while (*p++);
-    }
+    }*/
     
     //func(1000);
-    define_umsg(msg);
-    umsg_set_type(msg, UMSG_OPEN);
-    umsg_set_arg0(msg, "con0");
-    umsg(msg);
-
+    dev = x_open("con0", 0);
+    //printf("hello, printf %d %s %x\n", 123, "haha", 456);
     log("hello, xbook!");
     
-    int pid = fork();
-    if (pid > 0) {
+    int pid = x_fork();
+    /*if (pid > 0) {
         log("parent!");
         int status;
-        int pid2 = wait(&status);
+        int pid2 = x_wait(&status);
         
         //msleep(3000);
         log("parent~\n");
@@ -88,26 +53,27 @@ int main(int argc, char *argv[])
         
         log("child~\n");
     }
-
-    pid = fork();
+    
+    pid = x_fork();*/
     if (pid > 0) {
         log("parent!");
         int status;
-        int pid2 = wait(&status);
+        int pid2 = x_wait(&status);
         
         //msleep(3000);
         log("parent~\n");
     } else {
-        log("child!");
-        exit(456);
-        
-        log("child~\n");
+        char *_argv[3] = {"bin", "abc", 0};
+        //x_close(dev);
+        x_execraw(_argv[0], _argv);
     }
-    pid = fork();
+
+    x_close(dev);
+    /*pid = x_fork();
     if (pid > 0) {
         log("parent!");
         int status;
-        int pid2 = wait(&status);
+        int pid2 = x_wait(&status);
         
         //msleep(3000);
         log("parent~\n");
@@ -118,9 +84,9 @@ int main(int argc, char *argv[])
         log("child~\n");
     }
     log("end~\n");
-    
-    exit(-1);
 
+    exit(-1);
+    */
     while (1) {
         /* 等待子进程 */
     }

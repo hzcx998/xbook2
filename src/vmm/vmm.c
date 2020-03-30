@@ -13,7 +13,7 @@ void vmm_init(vmm_t *vmm)
     
 }
 
-int vmm_exit(vmm_t *vmm)
+int vmm_release_space(vmm_t *vmm)
 {
     if (vmm == NULL)
         return -1; 
@@ -32,6 +32,16 @@ int vmm_exit(vmm_t *vmm)
     }
     
     vmm->vmspace_head = NULL;
+    return 0;
+}
+
+int vmm_exit(vmm_t *vmm)
+{
+    if (vmm == NULL)
+        return -1; 
+    if (vmm_release_space(vmm)) {
+        return -1;
+    }
     free_page(v2p(vmm->page_storage));
     return 0;
 }

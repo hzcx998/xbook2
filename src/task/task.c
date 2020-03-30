@@ -191,27 +191,6 @@ task_t *kthread_start(char *name, int priority, task_func_t func, void *arg)
 }
 
 /**
- * make_main_task - 为内核主线程设定身份
- * 
- * 内核主线程就是从boot到现在的执行流。到最后会演变成idle
- * 在这里，我们需要给与它一个身份，他才可以进行多线程调度
- */
-static void make_main_task()
-{
-    // 当前运行的就是主线程
-    task_idle = (task_t *)KERNEL_STATCK_BOTTOM;
-    task_current = task_idle;
-    
-    /* 最开始设置为最佳优先级，这样才可以往后面运行。直到运行到最后，就变成IDLE优先级 */
-    task_init(task_idle, "idle", TASK_PRIO_BEST);
-
-    /* 设置为运行中 */
-    task_idle->state = TASK_RUNNING;
-
-    task_global_list_add(task_idle);
-}
-
-/**
  * task_activate - 激活任务
  * @task: 要激活的任务
  */
@@ -658,7 +637,6 @@ void kernel_pause()
 	};
 }
 
-
 /**
  * init_tasks - 初始化多任务环境
  */
@@ -667,8 +645,6 @@ void init_tasks()
     init_schedule();
 
     next_pid = 0;
-    
-    //make_main_task();
     
     /*kfifo = fifo_buf_alloc(128);
     if (kfifo == NULL)

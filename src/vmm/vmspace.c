@@ -150,7 +150,7 @@ int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long len,
 
     //printk(KERN_DEBUG "map virtual from %x to %x\n", space->start, space->end);
     /* 创建空间后，需要做虚拟地址映射 */
-    map_pages(addr, len, prot);
+    map_pages_safe(addr, len, prot);
 
     return addr;
 }

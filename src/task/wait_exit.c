@@ -179,11 +179,11 @@ void proc_exit(int status)
             printk("parent waiting...\n");
             task_unblock(parent); /* 唤醒父进程 */
             task_block(TASK_HANGING);   /* 把自己挂起 */
-        } else { /* 没有找到父进程 */
+        } else { /* 父进程没有 */
             printk("parent not waiting, zombie!\n");
             task_block(TASK_ZOMBIE);   /* 变成僵尸进程 */
         }
-    } else { 
+    } else {
         /* 没有父进程，变成不可被收养的孤儿+僵尸进程 */
         printk("no parent!\n");
         task_block(TASK_ZOMBIE); 

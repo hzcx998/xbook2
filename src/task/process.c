@@ -10,23 +10,6 @@
 #include <arch/interrupt.h>
 
 /**
- * load_data_from - 从文件读取数据
- * @rb: 文件描述符
- * @buffer: 读取到的buffer
- * @offset: 偏移
- * @size: 要读取的数据数量
- */
-static int load_data_from(raw_block_t *rb, void *buffer, unsigned long offset, unsigned long size)
-{
-    raw_block_seek(rb, offset, RB_SEEK_SET);
-    if (!raw_block_read(rb, buffer, size)) {
-        printk(KERN_ERR "load_data_from: read %d failed!\n", size);
-        return -1;
-    }
-    return 0;
-}
-
-/**
  * load_segment - 加载段
  * @rb: 文件描述符
  * @offset: 
@@ -72,16 +55,16 @@ static int load_segment(raw_block_t *rb, unsigned long offset, unsigned long fil
     printk(KERN_DEBUG "task %s space: addr %x page %d\n",(current_task)->name, vaddr_page, occupy_pages);
     
     /* 读取数据到内存中 */
-    if (load_data_from(rb, (void *)vaddr, offset, file_sz)) {
+    if (raw_block_read_off(rb, (void *)vaddr, offset, file_sz)) {
         return -1;
     }
     return 0;
 }
 
 /**
- * load_image - 加载文件镜像
+ * proc_load_image - 加载文件镜像
  */
-static int load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb)
+int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb)
 {
     struct Elf32_Phdr prog_header;
     /* 获取程序头起始偏移 */
@@ -96,7 +79,7 @@ static int load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb
         memset(&prog_header, 0, prog_header_size);
 
         /* 读取程序头 */
-        if (load_data_from(rb, (void *)&prog_header, prog_header_off, prog_header_size)) {
+        if (raw_block_read_off(rb, (void *)&prog_header, prog_header_off, prog_header_size)) {
             return -1;
         }/*
         printk(KERN_DEBUG "read prog header off %x vaddr %x filesz %x memsz %x\n", 
@@ -147,10 +130,10 @@ static int load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb
 }
 
 /**
- * user_stack_arg_init - 初始化用户栈和参数
+ * proc_stack_init - 初始化用户栈和参数
  * 
  */
-static int user_stack_arg_init(task_t *task, trap_frame_t *frame, 
+int proc_stack_init(task_t *task, trap_frame_t *frame, 
         int argc, char **argv)
 {
     
@@ -174,7 +157,7 @@ static int user_stack_arg_init(task_t *task, trap_frame_t *frame,
         return -1;
     }
 
-    unsigned long arg_start; 
+    unsigned long arg_start = 0; 
 
     /* 填写参数到参数区域种 */
     unsigned long arg_pos = vmm->arg_end;
@@ -255,13 +238,16 @@ static int user_stack_arg_init(task_t *task, trap_frame_t *frame,
         char** _argv = (char **) top;
         _argv[0] = NULL; /* 第一个参数就是空 */
     }
-    /* 记录栈顶 */
-    frame->esp = (unsigned long)vmm->stack_end;
+    
     /* 记录参数个数 */
     frame->ecx = *(unsigned long *)arg_start;
     /* 记录参数个数 */
     frame->ebx = *(unsigned long *)(arg_start + sizeof(unsigned long));
     
+   
+     /* 记录栈顶 */
+    frame->esp = (unsigned long)vmm->stack_end;
+
     printk(KERN_DEBUG "task %s arg space: start %x end %x\n",
         (current_task)->name, vmm->arg_start, vmm->arg_end);
     printk(KERN_DEBUG "task %s stack space: start %x end %x\n",
@@ -282,17 +268,17 @@ static int user_stack_arg_init(task_t *task, trap_frame_t *frame,
 }
 
 /**
- * user_heap_init - 用户堆的初始化
+ * proc_heap_init - 用户堆的初始化
  * 默认是没有堆空间的，只有堆的信息记录，需要在使用中拓展
  */
-static void user_heap_init(task_t *cur)
+void proc_heap_init(task_t *task)
 {
     /* brk默认在数据的后面 */
-    cur->vmm->heap_start = cur->vmm->data_end;
+    task->vmm->heap_start = task->vmm->data_end;
     
     /* 页对齐 */
-    cur->vmm->heap_start = PAGE_ALIGN(cur->vmm->heap_start);
-    cur->vmm->heap_end = cur->vmm->heap_start;
+    task->vmm->heap_start = PAGE_ALIGN(task->vmm->heap_start);
+    task->vmm->heap_end = task->vmm->heap_start;
 }
 
 void process_execute(task_t *cur, int argc, char **argv)
@@ -311,7 +297,7 @@ void process_execute(task_t *cur, int argc, char **argv)
     struct Elf32_Ehdr elf_header;
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
     
-    if (load_data_from(rb, &elf_header, 0, sizeof(struct Elf32_Ehdr))) {
+    if (raw_block_read_off(rb, &elf_header, 0, sizeof(struct Elf32_Ehdr))) {
         printk(KERN_ERR "process_execute: read elf header failed!\n");
         return;
     }
@@ -333,8 +319,8 @@ void process_execute(task_t *cur, int argc, char **argv)
     write_cr3(v2p(cur->vmm->page_storage));
 
     /* 加载镜像 */
-    if (load_image(cur->vmm, &elf_header, rb)) {
-        printk(KERN_ERR "process_execute: load_image failed!\n");
+    if (proc_load_image(cur->vmm, &elf_header, rb)) {
+        printk(KERN_ERR "process_execute: proc_load_image failed!\n");
         return;
     }
 
@@ -342,21 +328,22 @@ void process_execute(task_t *cur, int argc, char **argv)
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
     
+    printk(KERN_DEBUG "switch to user!\n");
     /* 初始化用户栈 */
-    if(user_stack_arg_init(cur, frame, argc, argv)){
+    if(proc_stack_init(cur, frame, argc, argv)){
         /* !!!需要取消已经加载镜像虚拟地址映射 */
         return;
     }
+    
     /* 切换回内核页空间 */
     write_cr3(PAGE_DIR_PHY_ADDR);
 
     /* 初始化用户堆 */
-    user_heap_init(cur);
+    proc_heap_init(cur);
     
     /* 设置执行入口 */
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
     
-    //printk(KERN_DEBUG "switch to user!\n");
     /* 切换到进程执行 */
     dump_trap_frame(frame);
 }
