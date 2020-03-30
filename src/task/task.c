@@ -109,6 +109,8 @@ void task_init(task_t *task, char *name, int priority)
 
     task->block_frame = kmalloc(sizeof(trap_frame_t));
     printk("#### block frame:%x\n", task->block_frame);
+    if (task->block_frame == NULL)
+        panic(KERN_EMERG "alloc block frame failed!\n");
     /* no priority queue */
     task->prio_queue = NULL;
     task->flags = 0;
@@ -225,6 +227,7 @@ void task_activate(task_t *task)
     vmm_active(task->vmm);
 }
 extern void make_tmp_kstack();
+
 /**
  * task_block - 把任务阻塞
  */
@@ -240,33 +243,28 @@ void task_block(task_state_t state)
             (state == TASK_STOPPED) ||
             (state == TASK_HANGING) ||
             (state == TASK_ZOMBIE));
-    // 先关闭中断，并且保存中断状态
-    unsigned long flags;
-    save_intr(flags);
-
+    // 不允许破坏进程环境
+    disable_intr();
     // 改变状态
     task_t *current = current_task;
     //printk(PART_TIP "task %s blocked with status %d\n", current->name, state);
     current->state = state;
     current->block_ticks = current->ticks; /* 保存阻塞时的ticks */
     current->ticks = 0; /* 置ticks0，下次发生中断就切换 */
-    restore_intr(flags);
     
     /* 构建一个block的中断栈 */
     __kernel_trap_frame_init(current->block_frame);
     /* 当任务调度回来时，使用这个块栈作为中断栈 */
     task_current->flags = 1; /* 下次中断时使用阻塞中断栈 */
-    /* need enable intr when looping. to make sure kernel will run. */
-    /* 涉及参数：任务状态，内核栈指针，阻塞中断栈 */
-    printk("==> task block %d\n", current->pid);
+
     /* 切换内核栈 */
     make_tmp_kstack();
     disable_intr(); /* 不允许中断 */
     task_current->flags = 0; /* 不是处于block阻塞中 */
     /* 设置中断栈指针指向任务默认的中断栈 */
     current_trap_frame = (trap_frame_t *)task_current->kstack;
-    
-    printk("task %d block end\n", current->pid);
+    //enable_intr(); /* 允许中断 */
+    //printk("task %d block end\n", current->pid);
 }
 
 /**

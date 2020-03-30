@@ -28,6 +28,7 @@ int do_usrmsg(umsg_t *msg)
     dev_t devno;
     trap_frame_t frame = {0, };
     //usrmsg_dump(msg);
+    printk("@ umsg start---------->");
     switch (msg->type)
     {
     case UMSG_OPEN:
@@ -90,6 +91,7 @@ int do_usrmsg(umsg_t *msg)
         break;
     case UMSG_FORK:
         printk("in UMSG_FORK");
+        //dump_trap_frame(current_trap_frame);
         proc_fork((long *)&msg->retval);
         printk("task %s-%d will return!\n", current_task->name, current_task->pid);
         break;
@@ -110,12 +112,11 @@ int do_usrmsg(umsg_t *msg)
         //dump_trap_frame((trap_frame_t *)current_task->kstack);
 
         break;
-    case UMSG_MSLEEP:
-        clock_msleep((unsigned long )msg->arg0);
-        break;
     default:
         break;
     }
+    
+    printk("@ umsg end---------->");
     // printk(">return\n");
     return 0;
 }

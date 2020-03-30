@@ -12,7 +12,6 @@
 volatile clock_t systicks;
 
 ktime_t ktime;
-int reenter;
 /* 每月对应的天数，2月的会在闰年是加1 */
 const char month_day[] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
 
@@ -132,40 +131,6 @@ void update_ktime()
 	}
 }
 
-/**
- * sleep_by_ticks - 休眠ticks时间
- * @sleep_ticks: 要休眠多少个ticks
- */
-static void sleep_by_ticks(unsigned long sleep_ticks)
-{
-	/* 获取起始ticks，后面进行差值运算 */
-	unsigned long start_ticks = systicks;
-    
-    unsigned long flags;
-    save_intr(flags);
-    enable_intr(); // 要等待时钟ticks，必须打开中断
-    
-	/* 如果最新ticks和开始ticks差值小于要休眠的ticks，就继续休眠 */
-	while (systicks - start_ticks < sleep_ticks) {
-        cpu_lazy(); /* 执行空转 */
-	}
-    restore_intr(flags);
-}
-
-/**
- * clock_msleep - 以毫秒为单位进行休眠
- */
-void clock_msleep(unsigned long msecond)
-{
-    if (!msecond)   /* 如果是0就直接返回 */
-        return;
-	/* 把毫秒转换成ticks */
-	unsigned long sleep_ticks = DIV_ROUND_UP(msecond, MS_PER_TICKS);
-	ASSERT(sleep_ticks > 0);
-	/* 进行休眠 */
-	sleep_by_ticks(sleep_ticks);
-}
-
 /* 定时器软中断处理 */
 void timer_softirq_handler(softirq_action_t *action)
 {
@@ -182,7 +147,6 @@ void timer_softirq_handler(softirq_action_t *action)
 
 	/* 更新定时器 */
 	//UpdateTimerSystem();
-    
 }
 
 /* sched_softirq_handler - 调度程序软中断处理
@@ -192,7 +156,7 @@ void timer_softirq_handler(softirq_action_t *action)
  */
 void sched_softirq_handler(softirq_action_t *action)
 {
-   
+    
     #if 0
     task_t *current = current_task;
    
@@ -267,6 +231,7 @@ void print_ktime()
 	printk(KERN_INFO "week day:%d %s year day:%d\n", ktime.week_day, week_day[ktime.week_day], ktime.year_day);
 }
 extern trap_frame_t *current_trap_frame;
+extern int need_sched;
 /**
  * clock_handler - 时钟中断处理函数
  */
@@ -279,7 +244,7 @@ int clock_handler(unsigned long irq, unsigned long data)
 	systicks++;
 	//schedule();
     task_t *current = current_task;
-    printk("[%d]", current->ticks);
+    //printk("[%d]", current->ticks);
     
 	/* 检测内核栈是否溢出 */
 	//ASSERT(current->stack_magic == TASK_STACK_MAGIC);
@@ -295,6 +260,8 @@ int clock_handler(unsigned long irq, unsigned long data)
 	} else {
 		current->ticks--;
 	}
+    //printk("[%d]", need_sched);
+    
     /*int i;
     for (i = 0; i < 0x100000; i++) {
 
@@ -345,7 +312,6 @@ void init_clock()
 	/* 初始化定时器 */
 	//InitTimer();
     systicks = 0;
-    reenter = -1;
 
     /* 初始化时钟硬件 */
     init_clock_hardware();

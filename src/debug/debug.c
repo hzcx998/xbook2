@@ -166,7 +166,7 @@ int serial_print(const char *fmt, ...)
 
 void dump_value(unsigned long val)
 {
-    printk("dump_value: %x\n", val);
+    printk("dump_value: %d\n", val);
 }
 
 /**

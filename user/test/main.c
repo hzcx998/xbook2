@@ -57,14 +57,6 @@ void log(char *str)
     umsg(msg);
 }
 
-void msleep(int msecond)
-{
-    define_umsg(msg);
-    umsg_set_type(msg, UMSG_MSLEEP);
-    umsg_set_arg0(msg, msecond);
-    umsg(msg);
-}
-
 int main(int argc, char *argv[])
 {
     int i;
@@ -73,6 +65,7 @@ int main(int argc, char *argv[])
         p = (char *)argv[i];
         while (*p++);
     }
+    
     //func(1000);
     define_umsg(msg);
     umsg_set_type(msg, UMSG_OPEN);
@@ -84,20 +77,53 @@ int main(int argc, char *argv[])
     int pid = fork();
     if (pid > 0) {
         log("parent!");
-        /*int status;
+        int status;
         int pid2 = wait(&status);
-        */
         
-        msleep(3000);
+        //msleep(3000);
         log("parent~\n");
-        
     } else {
         log("child!");
         exit(123);
         
         log("child~\n");
     }
+
+    pid = fork();
+    if (pid > 0) {
+        log("parent!");
+        int status;
+        int pid2 = wait(&status);
+        
+        //msleep(3000);
+        log("parent~\n");
+    } else {
+        log("child!");
+        exit(456);
+        
+        log("child~\n");
+    }
+    pid = fork();
+    if (pid > 0) {
+        log("parent!");
+        int status;
+        int pid2 = wait(&status);
+        
+        //msleep(3000);
+        log("parent~\n");
+    } else {
+        log("child!");
+        exit(789);
+        
+        log("child~\n");
+    }
+    log("end~\n");
     
-    while (1);
+    exit(-1);
+
+    while (1) {
+        /* 等待子进程 */
+    }
+
     return 0;
 }

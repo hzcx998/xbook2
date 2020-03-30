@@ -104,7 +104,7 @@ task_t *process_create(char *name, char **argv);
 
 pid_t fork_pid();
 void print_task();
-
+void task_yeild();
 
 
 #endif   /* _XBOOK_TASK_H */

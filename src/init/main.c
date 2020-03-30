@@ -9,15 +9,14 @@
 #include <xbook/rawblock.h>
 #include <xbook/schedule.h>
 
-
 void delay(int t)
 {
     int i, j;
     for (i = 0; i < 100 * t; i++) {
         for (j = 0; j < 1000; j++);
     }
-        
 }
+
 void ktask_main(void *arg)
 {
     printk("ktask_main running...\n");
@@ -73,10 +72,10 @@ int kernel_main(void)
     
     init_tasks();
     init_clock();
-    /*
-    task_t *ktask = kthread_start("ktask", TASK_PRIO_RT, ktask_main, NULL);
-    task_t *ktask2 = kthread_start("ktask2", TASK_PRIO_RT, ktask2_main, NULL);
-    task_t *ktask3 = kthread_start("ktask3", TASK_PRIO_RT, ktask3_main, NULL);
+    
+    task_t *ktask = kthread_start("idle", TASK_PRIO_IDLE, ktask_main, NULL);
+    /*task_t *ktask2 = kthread_start("ktask2", TASK_PRIO_USER, ktask2_main, NULL);
+    task_t *ktask3 = kthread_start("ktask3", TASK_PRIO_USER, ktask3_main, NULL);
     */
     /* init unit drivers */
     init_unit();
@@ -87,7 +86,8 @@ int kernel_main(void)
     printk("process create.\n");
     char *argv[3] = {"test", "arg2", 0};
     process_create("test", argv);
-    
+    //task_t *ktask = kthread_start("ktask", TASK_PRIO_USER, ktask_main, NULL);
+   
     launch_task();
     while (1);
     /*char *argv1[3] = {"test", "arg3", 0};

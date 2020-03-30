@@ -79,20 +79,19 @@ kern_usrmsg_handler:
    	push gs
    	pushad			    ; PUSHAD指令压入32位寄存器，其入栈顺序是:
 				    	; EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI 
-    
     mov dx,ss
 	mov ds, dx
 	mov es, dx
     
    	push 0x40			; 此位置压入0x40也是为了保持统一的栈格式
-    
+   
     ;2 传递参数给消息处理
     push esp                ; 传入栈指针，可以用来获取所有陷阱栈框寄存器
     push ebx			    ; 用户消息中消息参数
 	;调用用户消息处理
    	call do_usrmsg
     add esp, 8			    ; 跨过上面的2个参数
-    
+
 	;3 将call调用后的返回值存入待当前内核栈中eax的位置
     mov [esp + 8*4], eax
     
@@ -102,8 +101,10 @@ kern_usrmsg_handler:
     ;push esp         ; 把中断栈指针传递进去
     ;call do_signal
     ;add esp, 4
+    
+    jmp intr_exit		    ; intr_exit返回,恢复上下文
 
-   jmp intr_exit2		    ; intr_exit返回,恢复上下文
+extern need_sched
 
 extern clock_handler
 global irq_entry0x20
@@ -126,54 +127,37 @@ irq_entry0x20:		 ; 每个中断处理程序都要压入中断向量号,所以一
     
     inc dword [es: 0x800b8000]
 
-    mov al, 0x20
-    out 0x20, al
-
-    ; if intr reenter, just ignore it.
-    ;inc dword [reenter]
-    ;cmp dword [reenter], 0
-    ;ja intr_reenter
-
     ; kernel stack is below trap stack
     ; after push registers, esp is point to kernel stack.
     ; trap stack
     ; ----------
     ; kernel stack
-    ;mov esp, [current_trap_frame] ; 切换到内核栈，内核栈位于中断栈下面
-    ;sti
+    
     push esp        ; 把中断栈指针传递进去  
     ; 调用DoIRQ，通过传入的参数获取irq值
     call clock_handler
     add esp, 4
-    ;cli
+
+    mov al, 0x20
+    out 0x20, al
     
+    cmp dword [need_sched], 1 ; if (need_sched != 1)
+    jne intr_exit       ; jmp intr_exit;
+    
+    dec dword [need_sched]  ; need_sched--; 
     ; 重新指向中断栈,才能切换任务
-    mov esp, [current_trap_frame]  
+    mov esp, [current_trap_frame]
 
     jmp intr_exit
 
-
 global intr_exit
-global intr_exit2
-
-intr_exit:
-intr_reenter:
-    dec dword [reenter]
-intr_exit2:
-; 以下是恢复上下文环境
-    add esp, 4			   ; 跳过中断号
-    popad
-    pop gs
-    pop fs
-    pop es
-    pop ds
-    add esp, 4			   ; 跳过error_code
-    iretd
 
 ; 跳转到用户态执行的切换
 global __switch_to_user
 __switch_to_user:
     mov esp, [esp + 4]  ; process stack
+    
+intr_exit:
 ; 以下是恢复上下文环境
     add esp, 4			   ; 跳过中断号
     popad
@@ -182,5 +166,4 @@ __switch_to_user:
     pop es
     pop ds
     add esp, 4			   ; 跳过error_code
-    sti ; enable intr
     iretd

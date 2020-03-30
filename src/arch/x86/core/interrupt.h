@@ -103,7 +103,7 @@ typedef struct trap_frame {
     /* 以下由cpu从低特权级进入高特权级时压入 */
     unsigned int esp;
     unsigned int ss;
-} trap_frame_t;
+} __attribute__((packed)) trap_frame_t;
 
 //中断处理函数的类型
 typedef void* intr_handler_t;

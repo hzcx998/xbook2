@@ -2,32 +2,28 @@ hello, xbook!
 
 info: memory total:1fff0000 byte 511 MB
 info: welcom to xbook kernel.
-info: time:11:14:32 date:2020/3/29
-info: week day:0 Sunday year day:90
+info: time:2:26:9 date:2020/3/30
+info: week day:1 Monday year day:91
+#### block frame:81382030
 info: found 2 hard disks.
 debug: raw block name:test
 debug: raw block name:test2
 process create.
-debug: new task at 81282000
-test arg2 create process!
-load image ready!
-debug: prog offset 34 size 32
-debug: read prog header off 1000 vaddr 1000 filesz 1ad memsz 1ad
-debug: task test space: addr 1000 page 1
-debug: read prog header off 11b0 vaddr 21b0 filesz 50 memsz 50
+debug: new task at 81284000
+#### block frame:813820b0
+test arg2 debug: task test space: addr 1000 page 1
 debug: task test space: addr 2000 page 1
-load image done!
 debug: task test arg space: start 7ffff000 end 80000000
 debug: task test stack space: start 7fffe000 end 7ffff000
 debug: stack 7ffff000 argc 2 argv 7fffffe8
 debug: vector:0 edi:0 esi:0 ebp:0 esp dummy:0 ebx:7fffffe8 edx:0 ecx:2 eax:0
 debug: gs:2b fs:2b es:2b ds:2b error code:0 eip:1000 cs:23 eflags:202 esp:7ffff000 ss:2b
-create done!
-launch: test, 0
+launch: test, 1
 debug: page fault addr:10
+task name=test pid=1
 emege: a memory problem had occured in kernel, please check your code! :(
 emege: page fault at 10.
-debug: vector:14 edi:0 esi:0 ebp:81282f78 esp dummy:81282f30 ebx:7fffffe8 edx:f ecx:2 eax:0
-debug: gs:2b fs:2b es:10 ds:10 error code:0 eip:8010c80a cs:8 eflags:10046 esp:f ss:0
+debug: vector:14 edi:0 esi:0 ebp:81284f30 esp dummy:81284ee8 ebx:7fffffe8 edx:f ecx:2 eax:0
+debug: gs:10 fs:10 es:10 ds:10 error code:0 eip:8010cdfa cs:8 eflags:10046 esp:f ss:0
 
 panic: halt...

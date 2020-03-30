@@ -13,7 +13,11 @@ priority_queue_t priority_queue[MAX_PRIORITY_NR];
 /* 最高级的队列 */
 priority_queue_t *highest_prio_queue;
 
+
 trap_frame_t *current_trap_frame;
+
+/* 需要调度标志 */
+int need_sched;
 
 task_t *task_priority_queue_fetch_first()
 {
@@ -47,12 +51,6 @@ task_t *get_next_task(task_t *task)
         //printk(KERN_EMERG "$ %s state=%d without ready!\n", task->name, task->state);
     }
 
-    /* 队列为空，那么就尝试唤醒idle */
-    /*if (is_all_priority_queue_empty()) {
-        // 唤醒mian(idle)
-        task_unblock(task_idle);
-    }*/
-    
     /* 2.从就绪队列中获取一个任务 */
     /* 一定能够找到一个任务，因为最后的是idle任务 */
     task_t *next;
@@ -62,7 +60,6 @@ task_t *get_next_task(task_t *task)
 
 void set_next_task(task_t *next)
 {
-    wmb();
     task_current = next;
 
     /* 如果不是阻塞时产生的临时栈，就指向默认中断栈，不然就指向临时栈。
@@ -83,6 +80,7 @@ void set_next_task(task_t *next)
 
     task_activate(task_current);
 }
+
 /**
  * Schedule - 任务调度
  * 
@@ -94,15 +92,14 @@ void schedule()
     task_t *cur = current_task;
     task_t *next = get_next_task(cur);
     set_next_task(next);
+    need_sched = 1; /* 需要进行调度 */
     //printk(KERN_INFO "> switch from %d-%x to %d-%x addr=%x eip=%x\n", cur->pid, cur, next->pid, next, current_trap_frame, current_trap_frame->eip);
     //dump_trap_frame(current_trap_frame);
-    
-    //task_current->state = TASK_RUNNING; /* 设置成运行状态 */
-    //update_tss_info((unsigned long )task_current);  /* 更新内核栈指针 */
 }
 
 void launch_task()
 {
+    /* 启动第一个任务 */
     set_next_task(task_priority_queue_fetch_first());
     printk("launch: %s, %d\n", current_task->name, current_task->pid);
     switch_to_user(current_trap_frame);
@@ -167,4 +164,5 @@ void init_schedule()
     /* 指向最高级的队列 */
     highest_prio_queue = &priority_queue[0];
     current_trap_frame = NULL;
+    need_sched = 0;
 }
