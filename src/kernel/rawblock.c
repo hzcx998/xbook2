@@ -221,7 +221,7 @@ void init_raw_block()
     int n;
     for (n = 0; n < MAX_RBI_NR; n++) {
         rbi = &rbi_table[n];
-        printk(KERN_DEBUG "raw block name:%s\n", rbi->name);
+        printk(KERN_INFO "raw block name:%s\n", rbi->name);
         raw_block_t *rb = raw_block_alloc(DEV_HD0, rbi->name);
         if (rb == NULL)
             panic(KERN_EMERG "raw block alloc for %s failed!\n", rbi->name);

@@ -47,6 +47,33 @@ int main(int argc, char *argv[])
     log("hello, xbook!");
     strlen("hello, xlibc!|n");
     printf("nice to meet you!");
+
+    unsigned long heap = x_heap(0);
+    printf("heap addr:%x\n", heap);
+
+    x_heap(heap + 4096);
+    printf("heap addr:%x\n", heap);
+    unsigned char *buf = (unsigned char *) heap;
+    memset(buf, 0, 4096);
+
+    heap = x_heap(0);
+    x_heap(heap + 4096 * 10);
+    printf("heap addr:%x\n", heap);
+    buf = (unsigned char *) heap;
+    memset(buf, 0, 4096 * 10);
+
+    heap = x_heap(heap);
+    printf("heap addr:%x\n", heap);
+
+    heap = x_heap(0);
+    printf("heap addr:%x\n", heap);
+
+    x_heap(heap + 4096 * 100);
+    printf("heap addr:%x\n", heap);
+    buf = (unsigned char *) heap;
+    memset(buf, 0, 4096 * 100);
+
+    //x_exit(0);
     int pid = x_fork();
     /*if (pid > 0) {
         log("parent!");

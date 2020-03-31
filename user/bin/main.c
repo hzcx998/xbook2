@@ -45,10 +45,32 @@ int main(int argc, char *argv[])
 
     func(1);
 
-    
     x_putc(dev, '!');
     x_putc(dev, '@');
-    
+     unsigned long heap = x_heap(0);
+    printf("heap addr:%x\n", heap);
+
+    x_heap(heap + 4096);
+    printf("heap addr:%x\n", heap);
+    unsigned char *buf = (unsigned char *) heap;
+    memset(buf, 0, 4096);
+
+    heap = x_heap(0);
+    x_heap(heap + 4096 * 10);
+    printf("heap addr:%x\n", heap);
+    buf = (unsigned char *) heap;
+    memset(buf, 0, 4096 * 10);
+
+    heap = x_heap(0);
+    printf("heap addr:%x\n", heap);
+
+    x_heap(heap + 4096 * 1000);
+    printf("heap addr:%x\n", heap);
+    buf = (unsigned char *) heap;
+    memset(buf, 0, 4096 * 1000);
+    heap = x_heap(0);
+    printf("heap addr:%x\n", heap);
+
     int pid = x_fork();
     if (pid > 0) {
         log("bin-parent!\n");

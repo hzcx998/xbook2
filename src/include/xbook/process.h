@@ -16,5 +16,5 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb);
 int proc_fork(long *retval);
 void proc_exit(int status);
 pid_t proc_wait(int *status);
-int proc_exec(char *name, char **argv);
+int proc_exec_raw(char *name, char **argv);
 #endif /* _XBOOK_PROCESS_H */

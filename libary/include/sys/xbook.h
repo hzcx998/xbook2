@@ -27,5 +27,7 @@ int x_ioctl(x_dev_t devno, unsigned int cmd, unsigned long arg);
 int x_getc(x_dev_t devno, unsigned long *data);
 int x_putc(x_dev_t devno, unsigned long data);
 
+/* memory operations */
+unsigned long x_heap(unsigned long heap);
 
 #endif  /* _SYS_XBOOK_H */

@@ -27,7 +27,7 @@ int wait_one_hangging_child(task_t *parent, int *status)
                 pid_t child_pid = child->pid;
                 /* 销毁子进程的PCB */
                 task_free(child);
-                printk(KERN_NOTICE "find a hanging proc %d \n", child_pid);
+                //printk(KERN_NOTICE "find a hanging proc %d \n", child_pid);
                 return child_pid;
             }
         }
@@ -50,7 +50,7 @@ int deal_zombie_child(task_t *parent)
                 task_free(child);
                 zombie++;
                 
-                printk(KERN_NOTICE "find a zombie proc %d \n", child->pid);
+                //printk(KERN_NOTICE "find a zombie proc %d \n", child->pid);
             }
         }
     }
@@ -112,11 +112,11 @@ pid_t proc_wait(int *status)
     //unsigned long flags;
     
     while (1) {
-        printk(KERN_DEBUG "proc wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
+        //printk(KERN_DEBUG "proc wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
         //save_intr(flags);
         /* 先处理挂起的任务 */
         if ((child_pid = wait_one_hangging_child(parent, status)) >= 0) {
-            printk("proc wait exit\n");
+            //printk("proc wait exit\n");
             //restore_intr(flags);
             return child_pid;
         }
@@ -125,18 +125,18 @@ pid_t proc_wait(int *status)
 
         /* 查看是否有子进程 */
         if (!find_child_proc(parent)) {
-            printk("no children!\n");
+            //printk("no children!\n");
             //restore_intr(flags);
             return -1; /* no child, return -1 */
         }
-        printk(KERN_DEBUG "proc wait: find proc.\n");
+        //printk(KERN_DEBUG "proc wait: find proc.\n");
         
-        printk(KERN_DEBUG "proc wait: no child exit, waiting...\n");
+        //printk(KERN_DEBUG "proc wait: no child exit, waiting...\n");
         
         //restore_intr(flags);
         /* WATING for children to exit */
         task_block(TASK_WAITING);
-        printk(KERN_DEBUG "proc wait: child unblocked me.\n");
+        //printk(KERN_DEBUG "proc wait: child unblocked me.\n");
     }
 }
 
@@ -164,7 +164,8 @@ void proc_exit(int status)
     
     /*if (cur->parent_pid == -1 || parent == NULL)
         panic("proc_exit: proc %s PID=%d exit with parent pid -1!\n", cur->name, cur->pid);
-    */printk(KERN_DEBUG "proc exit name=%s pid=%d ppid=%d prio=%d\n", cur->name, cur->pid, cur->parent_pid, cur->priority);
+    */
+    //printk(KERN_DEBUG "proc exit name=%s pid=%d ppid=%d prio=%d\n", cur->name, cur->pid, cur->parent_pid, cur->priority);
     /* 处理zombie子进程 */
     deal_zombie_child(cur);
     /* 过继子进程给init进程 */
@@ -176,16 +177,16 @@ void proc_exit(int status)
     if (parent) {
         /* 查看父进程状态 */
         if (parent->state == TASK_WAITING) {
-            printk("parent waiting...\n");
+            //printk("parent waiting...\n");
             task_unblock(parent); /* 唤醒父进程 */
             task_block(TASK_HANGING);   /* 把自己挂起 */
         } else { /* 父进程没有 */
-            printk("parent not waiting, zombie!\n");
+            //printk("parent not waiting, zombie!\n");
             task_block(TASK_ZOMBIE);   /* 变成僵尸进程 */
         }
     } else {
         /* 没有父进程，变成不可被收养的孤儿+僵尸进程 */
-        printk("no parent!\n");
+        //printk("no parent!\n");
         task_block(TASK_ZOMBIE); 
     }
 }

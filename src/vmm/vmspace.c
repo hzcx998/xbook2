@@ -150,7 +150,7 @@ int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long len,
 
     //printk(KERN_DEBUG "map virtual from %x to %x\n", space->start, space->end);
     /* 创建空间后，需要做虚拟地址映射 */
-    map_pages_safe(addr, len, prot);
+    map_pages_safe(addr, len, prot); 
 
     return addr;
 }
@@ -192,8 +192,8 @@ int do_vmspace_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
     }
         
     /* 保证地址是在空间范围内
-        在DoBrk中，我们要执行DoUmmap。如果是第一次执行，那么DoUmmap就会失败而退出，
-        那么我们DoBrk就不会成功，因此，在这里，我们返回-2，而在DoBrk中判断返回-1才失败。
+        在do_heap中，我们要执行DoUmmap。如果是第一次执行，那么DoUmmap就会失败而退出，
+        那么我们do_heap就不会成功，因此，在这里，我们返回-2，而在do_heap中判断返回-1才失败。
         在其它情况下，我们判断不是0就说明DoMap失败，这是一个特例
      */
      if (addr < space->start || addr + len > space->end) {
@@ -229,9 +229,11 @@ int do_vmspace_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
         vmspace_remove(vmm, space_new, space);
     }
 
-    /* 取消空间后需要取消虚拟地址映射 */
+    /* 取消空间后需要取消虚拟地址映射
+    不过由于我们的机制是，进程运行期间只增空间，不减空间。
+    只有退出时才减少，因此，这里不取消虚拟地址映射。
     unmap_pages_safe(addr, len);
-    printk("unmap done!\n");
+     */
     return 0;
 }
 
@@ -258,3 +260,137 @@ int vmspace_unmmap(uint32_t addr, uint32_t len)
     task_t *current = current_task;
     return do_vmspace_unmap(current->vmm, addr, len);
 }
+
+
+/**
+ * do_vmspace_heap - 添加新的堆空间
+ * @addr: 地址
+ * @len: 长度 
+ * 
+ * 把地址和长度范围内的空间纳入堆的管理。
+ */
+static unsigned long do_vmspace_heap(vmm_t *vmm, unsigned long addr, unsigned long len)
+{
+    /* 页对齐后检查长度，如果为0就返回 */
+    len = PAGE_ALIGN(len);
+    if (!len) 
+        return addr;
+    
+    //printk(KERN_DEBUG "do_vmspace_heap: addr %x len %x\n", addr, len);
+    vmspace_t *space;
+    unsigned long flags, ret;
+    
+    /* 先清除旧的空间，再进行新的映射 */
+    ret = do_vmspace_unmap(vmm, addr, len);
+    /* 如果返回值是-1，就说明取消映射失败 */
+    if (ret == -1)
+        return ret;
+
+    /* 检测映射空间的数量是否超过最大数量 */
+
+    flags = VMS_MAP_HEAP;
+
+    /* 查看是否可以和原来的空间进行合并 */
+    if (addr) {
+        /* 查找一个比自己小的临近空间 */
+        space = vmspace_find(vmm, addr - 1);
+        /* 如果空间的结束和当前地址一样，并且flags也是一样的，就说明他们可以合并 */
+        if (space && space->end == addr && space->flags == flags) {
+            /*printk(KERN_DEBUG "do_vmspace_heap: space can merge. old space [%x-%x], new space [%x-%x]\n", 
+                space->start, space->end, addr, addr + len);*/
+            space->end = addr + len;
+            goto the_end;
+        }
+    }
+
+    /* 创建一个space，用来保存新的地址空间 */
+    space = vmspace_alloc();
+    if (space == NULL)
+        return -1;
+    vmspace_init(space, addr, addr + len, PROT_USER | PROT_WRITE | PROT_EXEC, flags);
+    
+    vmspace_insert(vmm, space);
+    /*printk(KERN_DEBUG "do_vmspace_heap: insert space sucess! space [%x-%x]\n", 
+        space->start, space->end);*/
+the_end:
+    return addr;
+}
+
+/**
+ * vmspace_heap - 设置堆的结束值
+ * @heap: 堆值
+ * 
+ * 返回扩展的前一个地址
+ * 如果heap为0，就返回当前heap
+ * 如果大于vmm->heap_end，就向后扩展
+ * 小于就向前缩小
+ */
+unsigned long vmspace_heap(unsigned long heap)
+{
+    unsigned long ret;
+    unsigned long old_heap, new_heap;
+    vmm_t *vmm = current_task->vmm;
+    
+    /*printk(KERN_DEBUG "vmspace_heap: vmm heap start %x end %x new %x\n", 
+        vmm->heap_start, vmm->heap_end, heap);*/
+
+    /* 如果堆比开始位置都小就退出 */
+    if (heap < vmm->heap_start) {
+        //printk(KERN_DEBUG "vmspace_heap: new heap too low!\n");
+        goto the_end;
+    }
+    
+    /* 使断点值和页对齐 */
+    new_heap = PAGE_ALIGN(heap);
+    old_heap = PAGE_ALIGN(vmm->heap_end);
+
+    /* 如果新旧堆值在同一个页内，就设置新的堆值然后返回 */
+    if (new_heap == old_heap) {
+        //printk(KERN_DEBUG "vmspace_heap: both in a page!\n");
+        goto set_heap; 
+    }
+    
+    /* 如果heap小于当前vmm的heap_end，就说明是收缩内存 */
+    if (heap <= vmm->heap_end) {
+        //printk(KERN_DEBUG "vmspace_heap: shrink mm.\n");
+        
+        /* 收缩地址就取消映射，如果成功就去设置新的断点值 */
+        if (!do_vmspace_unmap(vmm, new_heap, old_heap - new_heap))
+            goto set_heap;
+        printk(KERN_ERR "vmspace_heap: do_vmspace_unmap failed!\n");
+        goto the_end;
+    }
+    
+    /* 检查是否超过堆的空间限制 */
+    if (heap > vmm->heap_start + MAX_VMS_HEAP_SIZE)
+        goto the_end;
+
+    /* 检查是否和已经存在的空间发生重叠 */
+    if (vmspace_find_intersection(vmm, old_heap, new_heap + PAGE_SIZE)) {
+        printk(KERN_ERR "vmspace_heap: space intersection!\n");
+        goto the_end;
+    }
+    
+    /* 检查是否有足够的内存可以进行扩展堆 */
+
+    /* 堆新的断点进行空间映射 */
+    if (do_vmspace_heap(vmm, old_heap, new_heap - old_heap) != old_heap) {
+        printk(KERN_ERR "vmspace_heap: do_heap failed! addr %x len %x\n",
+            old_heap, new_heap - old_heap);
+        goto the_end;
+    }
+     
+set_heap:
+    /*printk(KERN_DEBUG "vmspace_heap: set new heap %x old is %x\n",
+        heap, vmm->heap_end);*/
+
+    vmm->heap_end = heap; /* 记录新的堆值 */
+        
+the_end:
+    /* 获取mm中的heap值 */    
+    ret = vmm->heap_end;
+    //printk(KERN_DEBUG "ret heap is %x\n", ret);
+    return ret;
+}
+
+

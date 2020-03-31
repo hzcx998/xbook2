@@ -28,7 +28,7 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     *task_current->block_frame = *parent->block_frame;
     /* 复制名字，在后面追加fork表明是一个fork的进程，用于测试 */
     //strcat(child->name, "_fork");
-    dump_trap_frame((trap_frame_t *)child->kstack);
+    //dump_trap_frame((trap_frame_t *)child->kstack);
     return 0;
 }
 /* 复制进程虚拟内存的映射 */
@@ -64,7 +64,7 @@ static int copy_vm_mapping(task_t *child, task_t *parent)
             // 分配一个物理页
             paddr = alloc_page();
             if (!paddr) {
-                printk(KERN_ERR "copy_vm_mapping: GetFreePage for vaddr failed!\n");
+                printk(KERN_ERR "copy_vm_mapping: alloc_page for vaddr failed!\n");
         
                 /* 激活父进程并返回 */
                 vmm_active(parent->vmm);
@@ -122,7 +122,7 @@ static int copy_vm_vmspace(task_t *child, task_t *parent)
         p = p->next;
     }
     /* 打印子进程space */
-#if 1
+#if 0
     p = child->vmm->vmspace_head;
     while (p != NULL) {
         printk(KERN_DEBUG "[child] space %x start %x end %x flags %x\n",
@@ -187,8 +187,8 @@ int proc_fork(long *retval)
     
     /* 把当前任务当做父进程 */
     task_t *parent = current_task;
-    printk(KERN_DEBUG "parent %s pid=%d prio=%d is forking now.\n", 
-        parent->name, parent->pid, parent->priority);
+    /*printk(KERN_DEBUG "parent %s pid=%d prio=%d is forking now.\n", 
+        parent->name, parent->pid, parent->priority);*/
     /* 为子进程分配空间 */
     task_t *child = kmalloc(TASK_KSTACK_SIZE);
     if (child == NULL) {
@@ -210,10 +210,10 @@ int proc_fork(long *retval)
     /* 把子进程添加到就绪队列和全局链表 */
     task_global_list_add(child);
     task_priority_queue_add_tail(child); /* 放到队首 */
-    
+    /*
     printk(KERN_DEBUG "task %s pid %d fork task %s pid %d\n", 
         parent->name, parent->pid, child->name, child->pid);
-    
+    */
     /* 父进程消息返回进程pid */
     *retval = child->pid;
     //restore_intr(flags);

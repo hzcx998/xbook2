@@ -69,5 +69,4 @@ void __kernel_trap_frame_init(trap_frame_t *frame)
 
     /* 为了能让程序首次运行，这里需要设置eflags的值 */
     frame->eflags = (EFLAGS_MBS | EFLAGS_IF_1 | EFLAGS_IOPL_1);
-    printk("$ 4");
 }

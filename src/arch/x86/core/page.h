@@ -139,7 +139,7 @@ unsigned long *__copy_kernel_page_dir();
         update_tss_info((unsigned long )current_task); \
     } while (0)
 
-void do_page_fault(trap_frame_t *frame);
+int do_page_fault(trap_frame_t *frame);
 
 
 #endif  /*_X86_MM_PAGE_H */

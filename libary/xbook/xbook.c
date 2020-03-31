@@ -217,3 +217,24 @@ int x_putc(x_dev_t devno, unsigned long data)
     umsg_set_arg1(msg, data);
     return umsg(msg);
 }
+
+/**
+ * x_heap() - memory heap operate
+ * 
+ * @heap: heap value
+ * 
+ * if heap = 0, return current heap value.
+ * if heap > old heap, expand heap up.
+ * if heap < old heap, shrink heap down.
+ * if heap = old heap, do nothing.
+ * 
+ * @return: return value depends on heap value. 
+ */
+unsigned long x_heap(unsigned long heap)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_HEAP);
+    umsg_set_arg0(msg, heap);
+    umsg(msg);
+    return umsg_get_retval(msg, unsigned long);
+}

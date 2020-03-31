@@ -8,7 +8,7 @@
  * 只有在退出进程的时候才释放所有资源。这样也在一定程度上提高了效率，
  * 但是占用的内存变大，是空间换取时间的做法。
  */
-int proc_exec(char *name, char **argv)
+int proc_exec_raw(char *name, char **argv)
 {
     /* 没有参数或者参数错误 */
     if (argv == NULL)
@@ -84,8 +84,6 @@ int proc_exec(char *name, char **argv)
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
     
     //dump_trap_frame(frame);
-
-    printk("ready switch!\n");
     /* 切换到进程执行 */
     switch_to_user(frame);
     return 0;   /* 不会执行到这儿 */

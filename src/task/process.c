@@ -49,10 +49,10 @@ static int load_segment(raw_block_t *rb, unsigned long offset, unsigned long fil
     int ret = (int)vmspace_mmap(vaddr_page, occupy_pages * PAGE_SIZE, 
             PROT_USER | PROT_WRITE, VMS_MAP_FIXED);
     if (ret < 0) {
-        printk(KERN_ERR "load_segment: SysMmap failed!\n");
+        printk(KERN_ERR "load_segment: vmspace_mmap failed!\n");
         return -1;
     }
-    printk(KERN_DEBUG "task %s space: addr %x page %d\n",(current_task)->name, vaddr_page, occupy_pages);
+    //printk(KERN_DEBUG "task %s space: addr %x page %d\n",(current_task)->name, vaddr_page, occupy_pages);
     
     /* 读取数据到内存中 */
     if (raw_block_read_off(rb, (void *)vaddr, offset, file_sz)) {
@@ -223,7 +223,6 @@ int proc_build_arg(unsigned long arg_top, char *argv[], char **dest_argv[])
  */
 int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
 {
-    
     vmm_t *vmm = task->vmm;
     /* 记录栈和参数信息到vmm里面 */
     vmm->arg_end = USER_STACK_TOP; /* 栈占用1个页 */
@@ -248,103 +247,20 @@ int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
     int argc = 0;
     char **new_argv = NULL;
     argc = proc_build_arg(vmm->arg_end, argv, &new_argv);
-    #if 0 
-    unsigned long arg_start = 0; 
-
-    /* 填写参数到参数区域种 */
-    unsigned long arg_pos = vmm->arg_end;
-    int i;
-    /* 构建参数，用栈的方式传递参数，不用寄存器保存参数，再传递给main */
-    if (argc != 0) {
-        // 预留字符串的空间
-        for (i = 0; i < argc; i++) {
-            arg_pos -= (strlen(argv[i]) + 1);
-        }        
-        // 对齐
-        arg_pos -= arg_pos % sizeof(unsigned long);
-
-        // 预留argv[]，多留一个，拿来储存指向参数0（NULL）的指针
-        arg_pos -= (argc + 1) * sizeof(char*);
-        // 预留argv
-        arg_pos -= sizeof(char**);
-        // 预留argc
-        arg_pos -= sizeof(unsigned long);
-        /* 开始地址为参数存放的地址 */
-        arg_start = arg_pos;
-
-        /* 在下面把参数写入到栈中，可以直接在main函数中使用 */
-        unsigned long top = arg_pos;
-        /* 从下往上填写 */
-        // argc
-        *(unsigned long *)top = argc;
-        top += sizeof(unsigned long);
-
-        // argv
-        *(unsigned long *)top = top + sizeof(char **);
-        top += sizeof(char **);
-
-        // 指向指针数组
-
-        // argv[]
-        char** _argv = (char **) top;
-
-        // 指向参数值
-        char* p = (char *) top + sizeof(char *) * (argc + 1);
-
-        /* 把每一个参数值的首地址给指针数组 */
-        for (i = 0; i < argc; i++) {
-            /* 首地址 */
-            _argv[i] = p;
-            /* 复制参数值字符串 */
-            strcpy(p, argv[i]);
-            /* 指向下一个字符串 */
-            p += (strlen(p) + 1);
-        }
-        _argv[i] = NULL;    /*  在最后加一个空参数 */
-    } else {
-        /* 把参数设置为空 */
-
-        // 预留argv[]，只留一个，拿来储存指向参数0（NULL）的指针
-        arg_pos -= 1 * sizeof(char*);
-        // 预留argv
-        arg_pos -= sizeof(char**);
-        // 预留argc
-        arg_pos -= sizeof(unsigned long);
-
-        arg_start = arg_pos;
-        
-        /* 在下面把参数写入到栈中，可以直接在main函数中使用 */
-        
-        unsigned long top = arg_pos;
-        
-        // argc
-        *(unsigned long *)top = 0;
-        top += sizeof(unsigned long);
-
-        // argv
-        *(unsigned long *)top = top + sizeof(char **);
-        top += sizeof(char **);
-
-        // 指向指针数组
-        // argv[]
-        char** _argv = (char **) top;
-        _argv[0] = NULL; /* 第一个参数就是空 */
-    }
-    #endif
-
     /* 记录参数个数 */
     frame->ecx = argc;
     /* 记录参数个数 */
     frame->ebx = (unsigned int) new_argv;
      /* 记录栈顶 */
     frame->esp = (unsigned long) vmm->stack_end;
-
+#if 0 /* stack info */
     printk(KERN_DEBUG "task %s arg space: start %x end %x\n",
         (current_task)->name, vmm->arg_start, vmm->arg_end);
     printk(KERN_DEBUG "task %s stack space: start %x end %x\n",
         (current_task)->name, vmm->stack_start, vmm->stack_end);
     
     printk(KERN_DEBUG "stack %x argc %d argv %x\n", frame->esp, frame->ecx, frame->ebx);
+#endif
 #if 0 /* print args */
     int i = 0;
     while (new_argv[i]) {
@@ -371,13 +287,9 @@ void proc_heap_init(task_t *task)
     task->vmm->heap_end = task->vmm->heap_start;
 }
 
-void process_execute(task_t *cur, int argc, char **argv)
+static void process_setup(task_t *cur, char *name, char **argv)
 {
-    /* 没有参数或者参数错误 */
-    if (argc < 1 || argv == NULL)
-        return;
     /* 对文件信息进行检测 */
-    char *name = argv[0];
     raw_block_t *rb = raw_block_get_by_name(name);
     if (rb == NULL) {
         printk(KERN_ERR "get raw block failed!\n");
@@ -388,7 +300,7 @@ void process_execute(task_t *cur, int argc, char **argv)
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
     
     if (raw_block_read_off(rb, &elf_header, 0, sizeof(struct Elf32_Ehdr))) {
-        printk(KERN_ERR "process_execute: read elf header failed!\n");
+        printk(KERN_ERR "process_setup: read elf header failed!\n");
         return;
     }
 
@@ -401,7 +313,7 @@ void process_execute(task_t *cur, int argc, char **argv)
         elf_header.e_phentsize != sizeof(struct Elf32_Phdr)) {
         
         /* 头文件检测出错 */
-        printk(KERN_ERR "process_execute: it is not a elf format file!\n", name);
+        printk(KERN_ERR "process_setup: it is not a elf format file!\n", name);
         return;
     }
     
@@ -410,7 +322,7 @@ void process_execute(task_t *cur, int argc, char **argv)
 
     /* 加载镜像 */
     if (proc_load_image(cur->vmm, &elf_header, rb)) {
-        printk(KERN_ERR "process_execute: proc_load_image failed!\n");
+        printk(KERN_ERR "process_setup: proc_load_image failed!\n");
         return;
     }
 
@@ -418,7 +330,6 @@ void process_execute(task_t *cur, int argc, char **argv)
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
     
-    printk(KERN_DEBUG "switch to user!\n");
     /* 初始化用户栈 */
     if(proc_stack_init(cur, frame, argv)){
         /* !!!需要取消已经加载镜像虚拟地址映射 */
@@ -435,7 +346,7 @@ void process_execute(task_t *cur, int argc, char **argv)
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
     
     /* 切换到进程执行 */
-    dump_trap_frame(frame);
+    //dump_trap_frame(frame);
 }
 
 int proc_vmm_init(task_t *task)
@@ -457,7 +368,6 @@ int proc_vmm_exit(task_t *task)
     vmm_free(task->vmm);
     
     task->vmm = NULL;
-    printk("vmm exit done!\n");
     return 0;
 }
 
@@ -489,7 +399,6 @@ task_t *process_create(char *name, char **argv)
     
     if (!task)
         return NULL;
-    printk(KERN_DEBUG "new task at %x\n", task);
     // 初始化线程
     task_init(task, name, TASK_PRIO_USER);
     
@@ -500,15 +409,15 @@ task_t *process_create(char *name, char **argv)
     /* 创建进程栈 */
     make_proc_stack(task);
     current_task = task;    /* 指向当前任务 */
-
+    /*
     int argc = 0;
     char *p;
     while (argv[argc]) {
         p = argv[argc];
         printk("%s ", p);
         argc++;
-    }
-    process_execute(task, argc, argv);
+    }*/
+    process_setup(task, name, argv);
     unsigned long flags;
     save_intr(flags);
     task_global_list_add(task);

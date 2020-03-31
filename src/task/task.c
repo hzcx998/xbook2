@@ -108,7 +108,6 @@ void task_init(task_t *task, char *name, int priority)
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KSTACK_SIZE);
 
     task->block_frame = kmalloc(sizeof(trap_frame_t));
-    printk("#### block frame:%x\n", task->block_frame);
     if (task->block_frame == NULL)
         panic(KERN_EMERG "alloc block frame failed!\n");
     /* no priority queue */
@@ -282,7 +281,7 @@ void task_unblock(task_t *task)
     }
     restore_intr(flags);
     /* 由于现在状态变成就绪，并且在队列里面，所以下次切换任务时就会切换到任务，并且往后面运行 */
-    printk(KERN_DEBUG "task %s pid=%d was unblocked!\n", task->name, task->pid);
+    //printk(KERN_DEBUG "task %s pid=%d was unblocked!\n", task->name, task->pid);
 }
 
 /**

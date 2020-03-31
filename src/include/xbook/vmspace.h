@@ -12,6 +12,9 @@
 
 #define MAX_VMS_STACK_SIZE  (16 * MB)   /* 最大栈拓展大小 */
 
+/* 最大可扩展的堆的大小,默认512MB */
+#define MAX_VMS_HEAP_SIZE    (512 * MB)
+
 /* 虚拟内存地址空间描述 */
 typedef struct vmspace {
     unsigned long start;    /* 空间开始地址 */
@@ -91,7 +94,7 @@ static inline vmspace_t *vmspace_find_intersection(vmm_t *vmm,
     return space;
 }
 
-
+unsigned long vmspace_heap(unsigned long heap);
 
 
 #endif /* _XBOOK_VMSPACE_H */

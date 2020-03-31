@@ -2,19 +2,20 @@
 #define _SYS_USRMSG_H
 
 enum {
-    UMSG_NONE = 0,        /* none message */
-    UMSG_OPEN,            /* device open */
-    UMSG_CLOSE,           /* device close */
-    UMSG_READ,            /* device close */
-    UMSG_WRITE,           /* device read */
-    UMSG_IOCTL,           /* device ioctl */
-    UMSG_GETC,            /* device getc */
-    UMSG_PUTC,            /* device putc */
-    UMSG_FORK,            /* process fork */
-    UMSG_EXEC,            /* execute */
-    UMSG_EXIT,            /* process exit */
-    UMSG_WAIT,            /* process wait */
-    UMSG_EXECRAW,          /* process execute raw block */
+    UMSG_NONE = 0,          /* none message */
+    UMSG_OPEN,              /* device open */
+    UMSG_CLOSE,             /* device close */
+    UMSG_READ,              /* device close */
+    UMSG_WRITE,             /* device read */
+    UMSG_IOCTL,             /* device ioctl */
+    UMSG_GETC,              /* device getc */
+    UMSG_PUTC,              /* device putc */
+    UMSG_FORK,              /* process fork */
+    UMSG_EXEC,              /* process execute file*/
+    UMSG_EXIT,              /* process exit */
+    UMSG_WAIT,              /* process wait */
+    UMSG_EXECRAW,           /* process execute raw block */
+    UMSG_HEAP,              /* memory heap */
 };
 
 /* user message 用户消息 */

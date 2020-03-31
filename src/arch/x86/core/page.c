@@ -149,8 +149,8 @@ int __map_pages(unsigned long start, unsigned long len, unsigned long prot)
     if (prot & PROT_WRITE)
         attr |= PG_RW_W;
     else
-        attr |= PG_RW_W;
-    
+        attr |= PG_RW_R;
+
 	/* 判断长度是否超过剩余内存大小 */
     //printk("len %d pages %d\n", len, len / PAGE_SIZE);
 
@@ -442,6 +442,36 @@ int mem_self_mapping(unsigned int start, unsigned int end)
 	return 0;
 }
 
+static inline int handle_no_page(unsigned long addr, unsigned long prot)
+{
+    /* 映射一个物理页 */
+	return __map_pages(addr, PAGE_SIZE, prot);
+}
+
+/**
+ * make_page_writable - 让pte有写属性
+ * @addr: 要设置的虚拟地址
+ */
+static int make_page_writable(unsigned long addr)
+{
+	if (addr > USER_VMM_SIZE)
+		return -1;
+
+	pde_t *pde = get_pde_ptr(addr);
+	pte_t *pte = get_pte_ptr(addr);
+	
+	/* 虚拟地址的pde和pte都要存在才能去设置属性 */
+	if (!(*pde & PG_P_1))
+		return -1;
+
+	if (!(*pte & PG_P_1))
+		return -1;
+	
+	/* 标记写属性 */
+	*pte |= PG_RW_W;
+	return 0;
+}
+
 static inline void do_vmarea_fault(unsigned long addr)
 {
     /* 如果是在vmarea区域中，就进行页复制，不是的话，就发出段信号。 */
@@ -457,23 +487,32 @@ static inline void do_expand_stack(vmspace_t *space, unsigned long addr)
 }
 
 
-static inline void do_protection_fault(vmspace_t * space, unsigned long addr, int write)
+static inline int do_protection_fault(vmspace_t * space, unsigned long addr, int write)
 {
 	/* 没有写标志，说明该段内存不支持内存写入，就直接返回吧 */
 	if (write) {
-		printk(KERN_DEBUG "have write protection\n");
+		printk(KERN_DEBUG "have write protection.\n");
+		/* 只有设置写属性正确才能返回 */
+		int ret = make_page_writable(addr);
+		if (ret) {
+            panic(KERN_DEBUG "do_protection_fault: send SIGSEGV because page not writable!");        
+            return -1;
+        }
+			
+		/* 虽然写入的写标志，但是还是会出现缺页故障，在此则处理一下缺页 */
+		if (handle_no_page(addr, space->page_prot)) {
+            panic(KERN_DEBUG "do_protection_fault: send SIGSEGV because hand no page failed!");
+			return -1; 
+        }
+
+		return 0;
 	} else {
 		printk(KERN_DEBUG "no write protection\n");
 	}
     //ForceSignal(SIGSEGV, SysGetPid());
-	printk(KERN_DEBUG "send SIGSEGV because page protection!");
+	printk(KERN_DEBUG "do_protection_fault: send SIGSEGV because page protection!");
     panic(KERN_ERR "page protection fault!\n");
-}
-
-static inline int handle_no_page(unsigned long addr, unsigned long prot)
-{
-    /* 映射一个物理页 */
-	return __map_pages(addr, PAGE_SIZE, prot);
+    return -1;
 }
 
 /**
@@ -487,14 +526,13 @@ static inline int handle_no_page(unsigned long addr, unsigned long prot)
  * 如果是来自内核的页故障，就会打印信息并停机。
  * 如果是来自用户的页故障，就会根据地址来做处理。
  */
-void do_page_fault(trap_frame_t *frame)
+int do_page_fault(trap_frame_t *frame)
 {
     task_t *cur = current_task;
     unsigned long addr = 0x00;
 
     addr = read_cr2(); /* cr2 saved the fault addr */
-    printk(KERN_DEBUG "page fault addr:%x\n", addr);
-    
+    //printk(KERN_DEBUG "page fault addr:%x\n", addr);
     
     /* in kernel page fault */
     if (!(frame->error_code & PG_ERR_USER)) {
@@ -510,7 +548,7 @@ void do_page_fault(trap_frame_t *frame)
         printk(KERN_DEBUG "user access unmaped vmware area .\n");
         dump_trap_frame(frame);
         do_vmarea_fault(addr);
-        return;
+        return -1;
     }
     /* 故障地址在用户空间 */
     vmspace_t *space = vmspace_find(cur->vmm, addr);
@@ -521,7 +559,7 @@ void do_page_fault(trap_frame_t *frame)
         printk(KERN_DEBUG "user access user unknown space .\n");
         /* 发出信号退出 */
         panic("send a signal SIGSEGV because unknown space!");
-        return; 
+        return -1;
     }
     /* 找到空间，判断空间类型，根据不同的空间，进行不同的处理。 */
     if (space->start > addr) { /* 故障地址在空间前，说明是栈向下拓展，那么尝试拓展栈。 */
@@ -535,8 +573,8 @@ void do_page_fault(trap_frame_t *frame)
                 //printk(KERN_DEBUG "expand stack at %x\n", addr);
             } else {    /* 不是可拓展栈 */
                 /* 发出信号退出 */
-                panic("send a signal SIGSEGV because addr below space!"); 
-                return;           
+                panic("send a signal SIGSEGV because addr %x without space!", addr); 
+                return -1;  
             }    
         }
     }
@@ -545,12 +583,12 @@ void do_page_fault(trap_frame_t *frame)
     2.缺少物理页和虚拟地址的映射。（堆的向上拓展或者栈的向下拓展）
      */
     if (frame->error_code & PG_ERR_PROTECT) {
-        do_protection_fault(space, addr, frame->error_code & PG_ERR_WRITE);
-        return;
+        return do_protection_fault(space, addr, frame->error_code & PG_ERR_WRITE);
     }
     /* 处理缺页 */
     handle_no_page(addr, space->page_prot);
     //printk(KERN_DEBUG "handle_no_page at %x success!\n", addr);
-   
+    
     /* 执行完缺页故障处理后，会到达这里表示成功！ */
+    return 0;
 }

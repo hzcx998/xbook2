@@ -95,7 +95,8 @@ void launch_task()
 {
     /* 启动第一个任务 */
     set_next_task(task_priority_queue_fetch_first());
-    printk("launch: %s, %d\n", current_task->name, current_task->pid);
+    printk(KERN_INFO "launch: name=%s, pid=%d ppid=%d\n", current_task->name,
+        current_task->pid, current_task->parent_pid);
     switch_to_user(current_trap_frame);
 }
 

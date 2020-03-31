@@ -19,13 +19,13 @@ void delay(int t)
 
 void ktask_main(void *arg)
 {
-    printk("ktask_main running...\n");
+    //printk("ktask_main running...\n");
 
     int ticks = 0;
     while (1)
     {
         ticks++;
-        printk("A:%x\n", ticks);
+        //printk("A:%x\n", ticks);
         delay(2);
     }
     
@@ -73,21 +73,19 @@ int kernel_main(void)
     init_tasks();
     init_clock();
     
-    task_t *ktask = kthread_start("idle", TASK_PRIO_IDLE, ktask_main, NULL);
+    kthread_start("idle", TASK_PRIO_IDLE, ktask_main, NULL);
     /*task_t *ktask2 = kthread_start("ktask2", TASK_PRIO_USER, ktask2_main, NULL);
     task_t *ktask3 = kthread_start("ktask3", TASK_PRIO_USER, ktask3_main, NULL);
     */
+    
     /* init unit drivers */
     init_unit();
 
     /* init raw block */
     init_raw_block();
 
-    printk("process create.\n");
     char *argv[3] = {"test", "arg2", 0};
     process_create("test", argv);
-    //task_t *ktask = kthread_start("ktask", TASK_PRIO_USER, ktask_main, NULL);
-   
     launch_task();
     while (1);
     /*char *argv1[3] = {"test", "arg3", 0};

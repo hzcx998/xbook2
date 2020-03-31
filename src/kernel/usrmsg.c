@@ -4,8 +4,9 @@
 #include <xbook/device.h>
 #include <xbook/process.h>
 #include <xbook/clock.h>
+#include <xbook/vmspace.h>
 
-void usrmsg_dump(umsg_t *msg)
+void dump_usrmsg(umsg_t *msg)
 {
     printk(KERN_DEBUG "    > usrmsg: %x\n", msg);
     printk(KERN_DEBUG "type=%d arg0=%x arg1=%x arg2=%x arg3=%x arg4=%x\n",
@@ -28,8 +29,7 @@ int do_usrmsg(umsg_t *msg)
     
     /*   retval: do_usrmsg retval
     msg->retval: do real function retval */
-    int retval = 0; 
-    //printk("@ umsg start---------->");
+    int retval = 0;
     switch (msg->type)
     {
     case UMSG_OPEN: /* return 0 is error, > 0 is sucees */
@@ -74,30 +74,27 @@ int do_usrmsg(umsg_t *msg)
             retval = -1;
         break;
     case UMSG_FORK:
-        printk("in UMSG_FORK");
-        //dump_trap_frame(current_trap_frame);
-        proc_fork((long *)&msg->retval);
-        printk("task %s-%d will return!\n", current_task->name, current_task->pid);
+        retval = proc_fork((long *)&msg->retval);
         break;
     case UMSG_EXIT:
-        printk("in UMSG_EXIT");
         proc_exit((int )msg->arg0);
         break;
     case UMSG_WAIT:
-        //memcpy(&frame, current_trap_frame, sizeof(trap_frame_t));
-        printk("in UMSG_WAIT");
         msg->retval = proc_wait((int *)&msg->arg0);
-        printk("child %d exit status:%d\n", (int)msg->retval, (int)msg->arg0);
+        if (msg->retval == -1)
+            retval = -1;
+        //printk("child %d exit status:%d\n", (int)msg->retval, (int)msg->arg0);
         break;
     case UMSG_EXECRAW:
-        printk("in UMSG_EXECRAW");
-        proc_exec((char *)msg->arg0, (char **)msg->arg1);
+        msg->retval = proc_exec_raw((char *)msg->arg0, (char **)msg->arg1);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_HEAP:
+        msg->retval = vmspace_heap((unsigned long) msg->arg0);
         break;
     default:
         break;
     }
-    
-    //printk("@ umsg end---------->");
-    // printk(">return\n");
     return retval;
 }
