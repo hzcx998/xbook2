@@ -129,12 +129,99 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb)
     return 0;
 }
 
+int proc_build_arg(unsigned long arg_top, char *argv[], char **dest_argv[])
+{
+    int argc = 0;
+    /* 填写参数到参数区域 */
+    unsigned long arg_pos = arg_top;
+    
+    if (argv != NULL) {
+        while (argv[argc]) {
+            argc++;
+        }
+        /* 构建参数，用栈的方式传递参数，不用寄存器保存参数，再传递给main */
+        if (argc != 0) {
+            int i;
+            // 预留字符串的空间
+            for (i = 0; i < argc; i++) {
+                arg_pos -= (strlen(argv[i]) + 1);
+            }        
+            // 对齐
+            arg_pos -= arg_pos % sizeof(unsigned long);
+
+            // 预留argv[]，多留一个，拿来储存指向参数0（NULL）的指针
+            arg_pos -= (argc + 1) * sizeof(char*);
+            // 预留argv
+            arg_pos -= sizeof(char**);
+            // 预留argc
+            arg_pos -= sizeof(unsigned long);
+            
+            /* 在下面把参数写入到栈中，可以直接在main函数中使用 */
+            unsigned long top = arg_pos;
+            /* 从下往上填写 */
+            // argc
+            *(unsigned long *)top = argc;
+            top += sizeof(unsigned long);
+
+            // argv
+            *(unsigned long *)top = top + sizeof(char **);
+            *dest_argv = (char **)(top + sizeof(char **));
+            top += sizeof(char **);
+
+            // 指向指针数组
+
+            // argv[]
+            char** _argv = (char **) top;
+
+            // 指向参数值
+            char* p = (char *) top + sizeof(char *) * (argc + 1);
+
+            /* 把每一个参数值的首地址给指针数组 */
+            for (i = 0; i < argc; i++) {
+                /* 首地址 */
+                _argv[i] = p;
+                /* 复制参数值字符串 */
+                strcpy(p, argv[i]);
+                /* 指向下一个字符串 */
+                p += (strlen(p) + 1);
+            }
+            _argv[i] = NULL;    /*  在最后加一个空参数 */
+            return argc;
+        }
+    }
+
+    // 预留argv[]，只留一个，拿来储存指向参数0（NULL）的指针
+    arg_pos -= 1 * sizeof(char*);
+    // 预留argv
+    arg_pos -= sizeof(char**);
+    // 预留argc
+    arg_pos -= sizeof(unsigned long);
+
+    /* 在下面把参数写入到栈中，可以直接在main函数中使用 */
+    
+    unsigned long top = arg_pos;
+    
+    // argc
+    *(unsigned long *)top = 0;
+    top += sizeof(unsigned long);
+
+    // argv
+    *(unsigned long *)top = top + sizeof(char **);
+    *dest_argv = (char **)(top + sizeof(char **));
+    top += sizeof(char **);
+
+    // 指向指针数组
+    // argv[]
+    char** _argv = (char **) top;
+    _argv[0] = NULL; /* 第一个参数就是空 */
+    return argc;
+}
+
 /**
  * proc_stack_init - 初始化用户栈和参数
  * 
  */
-int proc_stack_init(task_t *task, trap_frame_t *frame, 
-        int argc, char **argv)
+int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
 {
     
     vmm_t *vmm = task->vmm;
@@ -150,13 +237,18 @@ int proc_stack_init(task_t *task, trap_frame_t *frame,
         VMS_MAP_FIXED) == ((void *)-1)) {
         return -1;
     }
-
+    memset((void *) vmm->arg_start, 0, vmm->arg_end - vmm->arg_start);
     /* 固定位置，初始化时需要一个固定位置，向下拓展时才动态。 */
     if (vmspace_mmap(vmm->stack_start, vmm->stack_end - vmm->stack_start , PROT_USER | PROT_WRITE,
         VMS_MAP_FIXED | VMS_MAP_STACK) == ((void *)-1)) {
         return -1;
     }
-
+    memset((void *) vmm->stack_start, 0, vmm->stack_end - vmm->stack_start);
+    
+    int argc = 0;
+    char **new_argv = NULL;
+    argc = proc_build_arg(vmm->arg_end, argv, &new_argv);
+    #if 0 
     unsigned long arg_start = 0; 
 
     /* 填写参数到参数区域种 */
@@ -238,15 +330,14 @@ int proc_stack_init(task_t *task, trap_frame_t *frame,
         char** _argv = (char **) top;
         _argv[0] = NULL; /* 第一个参数就是空 */
     }
-    
+    #endif
+
     /* 记录参数个数 */
-    frame->ecx = *(unsigned long *)arg_start;
+    frame->ecx = argc;
     /* 记录参数个数 */
-    frame->ebx = *(unsigned long *)(arg_start + sizeof(unsigned long));
-    
-   
+    frame->ebx = (unsigned int) new_argv;
      /* 记录栈顶 */
-    frame->esp = (unsigned long)vmm->stack_end;
+    frame->esp = (unsigned long) vmm->stack_end;
 
     printk(KERN_DEBUG "task %s arg space: start %x end %x\n",
         (current_task)->name, vmm->arg_start, vmm->arg_end);
@@ -255,8 +346,7 @@ int proc_stack_init(task_t *task, trap_frame_t *frame,
     
     printk(KERN_DEBUG "stack %x argc %d argv %x\n", frame->esp, frame->ecx, frame->ebx);
 #if 0 /* print args */
-    char **new_argv = (char **)frame->ebx;
-    i = 0;
+    int i = 0;
     while (new_argv[i]) {
         printk("[%x %x]", new_argv[i], new_argv[i][0]);
         
@@ -330,7 +420,7 @@ void process_execute(task_t *cur, int argc, char **argv)
     
     printk(KERN_DEBUG "switch to user!\n");
     /* 初始化用户栈 */
-    if(proc_stack_init(cur, frame, argc, argv)){
+    if(proc_stack_init(cur, frame, argv)){
         /* !!!需要取消已经加载镜像虚拟地址映射 */
         return;
     }

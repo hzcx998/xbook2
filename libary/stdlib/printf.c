@@ -2,7 +2,7 @@
 #include <vsprintf.h>
 #include <string.h>
 #include <conio.h>
-#include <xbook.h>
+#include <sys/xbook.h>
 
 /** 
  * printf - 格式化打印输出
@@ -19,4 +19,9 @@ int printf(const char *fmt, ...)
     /* 输出到控制台 */
     x_write(0x100000, 0, buf, strlen(buf));
 	return 0;
+}
+
+void logger(char *str)
+{
+	x_write(0x100000, 0, str, strlen(str));
 }

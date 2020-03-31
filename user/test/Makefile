@@ -10,13 +10,9 @@ OBJDUMP		= objdump
 #The file path
 DIR_LIBARY = ../../libary
 
-# base lib
-DIR_BASELIB = $(DIR_LIBARY)/base
-DIR_BASELIB_INCLUDE = $(DIR_BASELIB)/include
 
-# xlibc lib
-DIR_XLIBC = $(DIR_LIBARY)/xlibc
-DIR_XLIBC_INCLUDE = $(DIR_XLIBC)/include
+# xlib lib
+DIR_LIB_INCLUDE = $(DIR_LIBARY)/include
 
 
 BIN = a.out
@@ -37,20 +33,16 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 
 #flags
 ASM_FLAGS	= -f elf \
-			-I $(DIR_BASELIB_INCLUDE) \
-			-I $(DIR_XLIBC_INCLUDE)
-			
+			-I $(DIR_LIB_INCLUDE)
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
-			-I $(DIR_BASELIB_INCLUDE) \
-			-I $(DIR_XLIBC_INCLUDE)
+			-I $(DIR_LIB_INCLUDE)
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 
 OBJS =  _start.o \
 		main.o \
 
-LIB_OBJS = 	$(DIR_BASELIB)/baselib.a  \
-			$(DIR_XLIBC)/xlibc.a
+XLIB_FILE = $(DIR_LIBARY)/xlib.a
 
 #First read here
 .PHONY: all dis
@@ -61,8 +53,8 @@ all: compile link disk
 compile: $(OBJS)
 
 link: $(BIN)
-$(BIN): $(OBJS) $(LIB_OBJS)
-	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIB_OBJS)
+$(BIN): $(OBJS) $(XLIB_FILE)
+	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(XLIB_FILE)
 
 
 dis: $(BIN)

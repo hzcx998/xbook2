@@ -1,5 +1,6 @@
-#include <xbook.h>
+#include <sys/xbook.h>
 #include <string.h>
+#include <conio.h>
 
 int func(int n)
 {   
@@ -33,12 +34,19 @@ int main(int argc, char *argv[])
         p = (char *)argv[i];
         while (*p++);
     }*/
-    
-    //func(1000);
     dev = x_open("con0", 0);
+     
+    int i = 0;
+    while (i < argc)
+    {
+        printf("\n-%s ", argv[i]);    
+        i++;
+    }
+    //func(1000);
     //printf("hello, printf %d %s %x\n", 123, "haha", 456);
     log("hello, xbook!");
-    
+    strlen("hello, xlibc!|n");
+    printf("nice to meet you!");
     int pid = x_fork();
     /*if (pid > 0) {
         log("parent!");
@@ -62,10 +70,11 @@ int main(int argc, char *argv[])
         
         //msleep(3000);
         log("parent~\n");
+        x_exit(0);
     } else {
         char *_argv[3] = {"bin", "abc", 0};
         //x_close(dev);
-        x_execraw(_argv[0], _argv);
+        x_execraw("bin", _argv);
     }
 
     x_close(dev);

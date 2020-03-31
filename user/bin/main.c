@@ -1,5 +1,7 @@
-#include <xbook.h>
-#include <ioctl.h>
+#include <sys/xbook.h>
+#include <sys/ioctl.h>
+#include <conio.h>
+#include <string.h>
 
 int func(int n)
 {   
@@ -27,14 +29,23 @@ void log(char *str)
 
 int main(int argc, char *argv[])
 {
+    
     dev = x_open("con0", 0);
-
-    log("hello, exec!");
+    //x_ioctl(dev, CONIO_CLEAN, 0);
+    
+    int i = 0;
+    while (i < argc)
+    {
+        printf("\n-%s ", argv[i]);    
+        i++;
+    }
+    
+    log("in bin\n");
+    printf("hello, printf! %d %s %x\n", 123, "xbook", 0xff1234cd);
 
     func(1);
 
-    x_ioctl(dev, CONIO_CLEAN, 0);
-
+    
     x_putc(dev, '!');
     x_putc(dev, '@');
     
