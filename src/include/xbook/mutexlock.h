@@ -79,11 +79,11 @@ static inline void mutex_lock(mutexlock_t *mutex)
         task_t *task = current_task;
         
         list_add_tail(&task->list, &mutex->wait_list);
-
+        /*
         SET_TASK_STATUS(task, TASK_BLOCKED);
         enable_intr();
-        schedule();
-        
+        schedule();*/
+        task_block(TASK_BLOCKED);
     } while (1);
 }
 

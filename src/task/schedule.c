@@ -93,6 +93,9 @@ void schedule()
 
 void launch_task()
 {
+    char *argv[3] = {"init", "arg2", 0};
+    process_create("init", argv);
+    
     /* 启动第一个任务 */
     set_next_task(task_priority_queue_fetch_first());
     printk(KERN_INFO "launch: name=%s, pid=%d ppid=%d\n", current_task->name,

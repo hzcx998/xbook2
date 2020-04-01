@@ -75,7 +75,7 @@ int raw_block_tmp_add(raw_block_t *block, unsigned char *buf, unsigned long size
 
     /* 复制数据 */
     memcpy(block->vaddr, buf, size);
-    
+
     return 0;
 }
 
@@ -251,7 +251,7 @@ typedef struct {
 最大文件大小依据MAX_MEM_CACHE_SIZE而定
  */
 raw_block_info_t rbi_table[MAX_RBI_NR] = {
-    {"test", 0, 100, 1024*50},
+    {"init", 0, 100, 1024*50},
     {"bin", 200, 100, 1024*50},
 };
 

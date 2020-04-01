@@ -593,47 +593,15 @@ void dump_task(task_t *task)
     printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
 
-/**
- * kernel_pause - 内核进入暂停
- * 
- * 在初始化的最后调用，当前任务演变成idle任务，等待随时调动
- */
-void kernel_pause()
+void serve_idle(void *arg)
 {
-    /* 设置特权级为最低，变成阻塞，当没有其它任务运行时，就会唤醒它 */
-    task_idle->state = TASK_BLOCKED;
-    task_idle->priority = TASK_PRIO_IDLE;
+    //printk("ktask_main running...\n");
+    while (1)
+    {
+        enable_intr();
+        cpu_idle();
+    }
     
-    /* 调度到其它任务，直到又重新被调度 */
-    schedule();
-
-    printk("run idle");
-    int i = 0;
-
-    /* idle线程 */
-	while (1) {
-        i++;
-		/* 进程默认处于阻塞状态，如果被唤醒就会执行后面的操作，
-		知道再次被阻塞 */
-		//printk("*%d",i);
-        /* 打开中断 */
-		enable_intr();
-		/* 执行cpu停机 */
-		//cpu_idle();
-        if (i % 0x500000 == 0) {
-            printk("idle\n");
-            //kthread_start("test", 1, taskA, "NULL");
-        }
-        if (i % 0xf00000 == 0) {
-            printk("kthread a\n");
-            //kthread_start("test", 1, taskA, "NULL");
-        }
-
-        if (i % 0xf00000 == 0) {
-            printk("kthread b\n");
-            //kthread_start("test2", 1, taskB, "NULL");
-        }
-	};
 }
 
 /**
@@ -644,19 +612,12 @@ void init_tasks()
     init_schedule();
 
     next_pid = 0;
-    
-    /*kfifo = fifo_buf_alloc(128);
-    if (kfifo == NULL)
-        printk(KERN_ERR "alloc fifo buf failed!\n");
-    */
-    
-    //rwlock_init(&rwlock, RWLOCK_RW_FAIR);
-
     /* 有可能做测试阻塞main线程，那么就没有线程，
     在切换任务的时候就会出错，所以这里创建一个测试线程 */
     /*kthread_start("test", 1, taskA, "NULL");
     kthread_start("test2", 1, taskB, "NULL");
     kthread_start("test3", 1, taskC, "NULL");
     *///kthread_start("test4", 1, taskD, "NULL");
-    
+    /* idle 哨兵服务，pid是0 */
+    kthread_start("idle", TASK_PRIO_IDLE, serve_idle, NULL);
 }

@@ -53,9 +53,11 @@ static inline void __semaphore_down(semaphore_t *sema)
 	list_add_tail(&waiter.wait_list, &sema->waiter.wait_list);
 
     /* 状态设置成阻塞 */
-	SET_TASK_STATUS(current, TASK_BLOCKED);
+	//SET_TASK_STATUS(current, TASK_BLOCKED);
 	/* 调度到其它任务 */
-	schedule();
+	//schedule();
+	
+	task_block(TASK_BLOCKED);
 }
 
 /**
