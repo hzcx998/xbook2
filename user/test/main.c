@@ -43,11 +43,8 @@ int main(int argc, char *argv[])
         i++;
     }
     //func(1000);
-    //printf("hello, printf %d %s %x\n", 123, "haha", 456);
-    log("hello, xbook!");
-    strlen("hello, xlibc!|n");
     printf("nice to meet you!");
-
+/*
     unsigned long heap = x_heap(0);
     printf("heap addr:%x\n", heap);
 
@@ -72,7 +69,7 @@ int main(int argc, char *argv[])
     printf("heap addr:%x\n", heap);
     buf = (unsigned char *) heap;
     memset(buf, 0, 4096 * 100);
-
+    */
     //x_exit(0);
     int pid = x_fork();
     /*if (pid > 0) {
@@ -88,23 +85,44 @@ int main(int argc, char *argv[])
         
         log("child~\n");
     }
-    
     pid = x_fork();*/
     if (pid > 0) {
-        log("parent!");
+        printf("I am parent, my child is %d.\n", pid);
         int status;
         int pid2 = x_wait(&status);
+        printf("I am parent, my child exit with %d.\n", status);
         
-        //msleep(3000);
-        log("parent~\n");
-        x_exit(0);
     } else {
-        char *_argv[3] = {"bin", "abc", 0};
-        //x_close(dev);
-        x_execraw("bin", _argv);
-    }
+        printf("I am child, I will load data.\n");
+        unsigned long heap = x_heap(0);
+        printf("heap addr %x.\n", heap);
 
-    x_close(dev);
+        x_heap(heap + 40 * 1024); // 40 kb 内存
+
+        unsigned char *buf = (unsigned char *) heap;
+        memset(buf, 0, 40 * 1024);
+        printf("alloc data at %x for 20 kb.\n", buf);
+
+        x_dev_t dev_disk = x_open("hd0", 0);
+        if (!dev_disk) 
+            x_exit(-1);
+
+        if (x_read(dev_disk, 200, buf, 50)) {
+            printf("read disk failed!\n");
+            x_exit(-1);
+        }
+        printf("load data success.\n");
+        x_file_t file = {buf, 22*1024};
+        int i;
+        for (i = 0; i < 32; i++) {
+            printf("%x ", buf[i]);
+        }
+        char *_argv[4] = {"bin", "abc", "123", 0};
+        //x_close(dev);
+        x_execfile("bin", &file, _argv);
+    }
+    
+    //x_close(dev);
     /*pid = x_fork();
     if (pid > 0) {
         log("parent!");

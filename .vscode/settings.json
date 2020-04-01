@@ -39,6 +39,7 @@
         "xbook.h": "c",
         "stdint.h": "c",
         "conio.h": "c",
-        "vmspace.h": "c"
+        "vmspace.h": "c",
+        "xfile.h": "c"
     }
 }

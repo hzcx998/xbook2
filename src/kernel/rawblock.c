@@ -46,6 +46,49 @@ int raw_block_init(raw_block_t *block, unsigned long off, unsigned long count,
     return 0;
 }
 
+/**
+ * raw_block_tmp_add - 添加一个临时原始块
+ * 
+ * @buf: 数据缓冲区
+ * @size: 数据大小
+ * 
+ * 一般用于proc_exec_file中
+ * 
+ */
+int raw_block_tmp_add(raw_block_t *block, unsigned char *buf, unsigned long size)
+{
+    block->offset = 0;
+    block->count = 0;
+    block->memsz = size;
+    block->pos = 0;
+    block->vaddr = NULL;
+    /* 根据缓冲区大小创建一个新的缓冲区，并把数据复制进去 */
+    if (block->memsz <= MAX_MEM_CACHE_SIZE) { /* 分配一个小块内存 */
+        block->vaddr = kmalloc(block->memsz);
+    } else { /* 添加一个新的高速缓存 */
+        printk(KERN_NOTICE "raw_block_tmp_add: need a large buffer!\n");
+        return -1;
+    }
+
+    if (block->vaddr == NULL)
+        return -1;
+
+    /* 复制数据 */
+    memcpy(block->vaddr, buf, size);
+    
+    return 0;
+}
+
+void raw_block_tmp_del(raw_block_t *block)
+{
+    if (block->memsz <= MAX_MEM_CACHE_SIZE) {
+        kfree(block->vaddr);
+    } else {
+        printk(KERN_NOTICE "raw_block_tmp_del: free a large buffer!\n");
+    }
+}
+
+
 raw_block_t *raw_block_get_by_name(char *name)
 {
     raw_block_t *rb;

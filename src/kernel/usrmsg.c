@@ -90,6 +90,11 @@ int do_usrmsg(umsg_t *msg)
         if (msg->retval == -1)
             retval = -1;
         break;
+    case UMSG_EXECFILE:
+        msg->retval = proc_exec_file((char *) msg->arg0, (x_file_t *) msg->arg1, (char **) msg->arg2);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
     case UMSG_HEAP:
         msg->retval = vmspace_heap((unsigned long) msg->arg0);
         break;

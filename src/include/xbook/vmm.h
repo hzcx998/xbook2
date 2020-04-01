@@ -14,7 +14,6 @@ typedef struct vmm {
 
     unsigned long code_start, code_end;     /* 代码空间范围 */
     unsigned long data_start, data_end;     /* 数据空间范围 */
-    unsigned long bss_start, bss_end;       /* 未初始化数据空间范围 */
     unsigned long heap_start, heap_end;     /* 堆空间范围 */
     unsigned long map_start, map_end;       /* 映射空间范围 */
     unsigned long share_start, share_end;   /* 映射空间范围 */

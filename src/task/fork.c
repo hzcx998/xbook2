@@ -31,6 +31,30 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     //dump_trap_frame((trap_frame_t *)child->kstack);
     return 0;
 }
+
+/* 复制vm结构的内容 */
+static int copy_vm_struct(task_t *child, task_t *parent)
+{
+    /* 由于初始化vmm时已经初始化了page_storege，因此这里不复制，只复制空间的范围 */
+    child->vmm->code_start = parent->vmm->code_start;
+    child->vmm->data_start = parent->vmm->data_start;
+    child->vmm->heap_start = parent->vmm->heap_start;
+    child->vmm->map_start = parent->vmm->map_start;
+    child->vmm->share_start = parent->vmm->share_start;
+    child->vmm->stack_start = parent->vmm->stack_start;
+    child->vmm->arg_start = parent->vmm->arg_start;
+    child->vmm->env_start = parent->vmm->env_start;
+    child->vmm->code_end = parent->vmm->code_end;
+    child->vmm->data_end = parent->vmm->data_end;
+    child->vmm->heap_end = parent->vmm->heap_end;
+    child->vmm->map_end = parent->vmm->map_end;
+    child->vmm->share_end = parent->vmm->share_end;
+    child->vmm->stack_end = parent->vmm->stack_end;
+    child->vmm->arg_end = parent->vmm->arg_end;
+    child->vmm->env_end = parent->vmm->env_end;
+    return 0;
+}
+
 /* 复制进程虚拟内存的映射 */
 static int copy_vm_mapping(task_t *child, task_t *parent)
 {
@@ -135,6 +159,10 @@ static int copy_vm_vmspace(task_t *child, task_t *parent)
 
 static int copy_vm(task_t *child, task_t *parent)
 {
+    /* 复制vmm管理器结构 */
+    if (copy_vm_struct(child, parent))
+        return -1;
+
     /* 复制页表内容，因为所有的东西都在里面 */
     if (copy_vm_mapping(child, parent))
         return -1;
@@ -166,7 +194,7 @@ static int copy_task(task_t *child, task_t *parent)
     /* 3.复制页表和虚拟内存空间 */
     if (copy_vm(child, parent))
         return -1;
-
+    // printk(KERN_DEBUG "child heap is [%x,%x]\n", child->vmm->heap_start, child->vmm->heap_end);
     return 0;
 }
 

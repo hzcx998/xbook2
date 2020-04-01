@@ -43,7 +43,8 @@ long raw_block_write(raw_block_t *block, void *buffer, unsigned long size);
 int raw_block_read_off(raw_block_t *rb, void *buffer, unsigned long offset, unsigned long size);
 int raw_block_write_off(raw_block_t *rb, void *buffer, unsigned long offset, unsigned long size);
 
-
+int raw_block_tmp_add(raw_block_t *block, unsigned char *buf, unsigned long size);
+void raw_block_tmp_del(raw_block_t *block);
 
 void init_raw_block();
 

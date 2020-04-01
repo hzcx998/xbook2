@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
         printf("\n-%s ", argv[i]);    
         i++;
     }
-    
+    /*
     log("in bin\n");
     printf("hello, printf! %d %s %x\n", 123, "xbook", 0xff1234cd);
 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     memset(buf, 0, 4096 * 1000);
     heap = x_heap(0);
     printf("heap addr:%x\n", heap);
-
+    */
     int pid = x_fork();
     if (pid > 0) {
         log("bin-parent!\n");

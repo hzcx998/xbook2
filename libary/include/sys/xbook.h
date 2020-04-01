@@ -4,6 +4,7 @@
 /* xbook kernel base lib, based on usrmsg */
 
 #include "usrmsg.h"
+#include "xfile.h"
 
 /* the name begin with x_ mean xbook basic func for other lib */
 typedef unsigned int x_dev_t;  
@@ -16,7 +17,7 @@ int x_fork();
 void x_exit(int status);
 int x_wait(int *status);
 int x_execraw(char *name, char *argv[]);
-
+int x_execfile(char *name, x_file_t *file, char *argv[]);
 /* device operations */
 
 x_dev_t x_open(char *name, unsigned long flags);

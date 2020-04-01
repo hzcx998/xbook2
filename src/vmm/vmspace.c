@@ -324,6 +324,7 @@ the_end:
  * 如果heap为0，就返回当前heap
  * 如果大于vmm->heap_end，就向后扩展
  * 小于就向前缩小
+ * 总是返回当前heap最新值
  */
 unsigned long vmspace_heap(unsigned long heap)
 {

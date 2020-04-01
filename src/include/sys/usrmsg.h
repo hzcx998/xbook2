@@ -11,7 +11,7 @@ enum {
     UMSG_GETC,              /* device getc */
     UMSG_PUTC,              /* device putc */
     UMSG_FORK,              /* process fork */
-    UMSG_EXEC,              /* process execute file*/
+    UMSG_EXECFILE,          /* process execute file*/
     UMSG_EXIT,              /* process exit */
     UMSG_WAIT,              /* process wait */
     UMSG_EXECRAW,           /* process execute raw block */

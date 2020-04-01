@@ -79,6 +79,28 @@ int x_execraw(char *name, char *argv[])
 }
 
 /**
+ * x_execfile() - execute file
+ * 
+ * @name: file name
+ * @file: file info
+ * @argv: arguments array
+ * 
+ * execute file in process, replaces the current process with the
+ * file image and runs the process corresponding to the file.
+ * 
+ * @return: -1 is failed, no success return, if success, run the new process. 
+ */
+int x_execfile(char *name, x_file_t *file, char *argv[])
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_EXECFILE);
+    umsg_set_arg0(msg, name);
+    umsg_set_arg1(msg, file);
+    umsg_set_arg2(msg, argv);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}
+/**
  * x_open() - open a device
  * 
  * @name: device name
@@ -228,7 +250,7 @@ int x_putc(x_dev_t devno, unsigned long data)
  * if heap < old heap, shrink heap down.
  * if heap = old heap, do nothing.
  * 
- * @return: return value depends on heap value. 
+ * @return: always return newest heap value
  */
 unsigned long x_heap(unsigned long heap)
 {
