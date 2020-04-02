@@ -5,6 +5,7 @@
 #include <xbook/process.h>
 #include <xbook/clock.h>
 #include <xbook/vmspace.h>
+#include <xbook/sharemem.h>
 
 void dump_usrmsg(umsg_t *msg)
 {
@@ -41,7 +42,6 @@ int do_usrmsg(umsg_t *msg)
         retval = dev_open(msg->retval, (flags_t) msg->arg1); 
         if (retval == -1)
             msg->retval = 0;
-
         break;
     case UMSG_CLOSE:
         msg->retval = dev_close((dev_t) msg->arg0);
@@ -97,6 +97,26 @@ int do_usrmsg(umsg_t *msg)
         break;
     case UMSG_HEAP:
         msg->retval = vmspace_heap((unsigned long) msg->arg0);
+        break;
+    case UMSG_SHMGET:
+        msg->retval = share_mem_get((char *) msg->arg0, (unsigned long) msg->arg1, (unsigned long) msg->arg2);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_SHMPUT:
+        msg->retval = share_mem_put((int ) msg->arg0);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_SHMMAP:
+        msg->retval = (unsigned long) share_mem_map((int ) msg->arg0, (void *) msg->arg1);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_SHMUNMAP:
+        msg->retval = share_mem_unmap((const void *) msg->arg0);
+        if (msg->retval == -1)
+            retval = -1;
         break;
     default:
         break;

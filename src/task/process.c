@@ -46,7 +46,7 @@ static int load_segment(raw_block_t *rb, unsigned long offset, unsigned long fil
     }
     
     /* 映射虚拟空间 */  
-    int ret = (int)vmspace_mmap(vaddr_page, occupy_pages * PAGE_SIZE, 
+    int ret = (int)vmspace_mmap(vaddr_page, 0, occupy_pages * PAGE_SIZE, 
             PROT_USER | PROT_WRITE, VMS_MAP_FIXED);
     if (ret < 0) {
         printk(KERN_ERR "load_segment: vmspace_mmap failed!\n");
@@ -232,13 +232,13 @@ int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
     vmm->stack_start = vmm->stack_end - PAGE_SIZE * 1; /* 参数占用4个页 */
 
     /* 固定位置 */
-    if (vmspace_mmap(vmm->arg_start, vmm->arg_end - vmm->arg_start, PROT_USER | PROT_WRITE,
+    if (vmspace_mmap(vmm->arg_start, 0, vmm->arg_end - vmm->arg_start, PROT_USER | PROT_WRITE,
         VMS_MAP_FIXED) == ((void *)-1)) {
         return -1;
     }
     memset((void *) vmm->arg_start, 0, vmm->arg_end - vmm->arg_start);
     /* 固定位置，初始化时需要一个固定位置，向下拓展时才动态。 */
-    if (vmspace_mmap(vmm->stack_start, vmm->stack_end - vmm->stack_start , PROT_USER | PROT_WRITE,
+    if (vmspace_mmap(vmm->stack_start, 0, vmm->stack_end - vmm->stack_start , PROT_USER | PROT_WRITE,
         VMS_MAP_FIXED | VMS_MAP_STACK) == ((void *)-1)) {
         return -1;
     }
@@ -279,12 +279,24 @@ int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
  */
 void proc_heap_init(task_t *task)
 {
-    /* brk默认在数据的后面 */
+    /* heap默认在数据的后面 */
     task->vmm->heap_start = task->vmm->data_end;
     
     /* 页对齐 */
     task->vmm->heap_start = PAGE_ALIGN(task->vmm->heap_start);
     task->vmm->heap_end = task->vmm->heap_start;
+}
+
+/**
+ * proc_map_space_init - 用户映射空间的初始化
+ * 
+ * 默认没有任何映射，不过得先给映射一个起始地址
+ */
+void proc_map_space_init(task_t *task)
+{
+    /* map默认在堆的末尾+10个页的位置 */
+    task->vmm->map_start = task->vmm->heap_start + MAX_VMS_HEAP_SIZE + PAGE_SIZE * 10;
+    task->vmm->map_end = task->vmm->map_start + MAX_VMS_MAP_SIZE;
 }
 
 static void process_setup(task_t *cur, char *name, char **argv)
@@ -342,6 +354,9 @@ static void process_setup(task_t *cur, char *name, char **argv)
     /* 初始化用户堆 */
     proc_heap_init(cur);
     
+    /* 初始化用户映射区域 */
+    proc_map_space_init(cur);
+
     /* 设置执行入口 */
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
     
@@ -365,9 +380,17 @@ int proc_vmm_exit(task_t *task)
     if (task->vmm == NULL)
         return -1;
     vmm_exit(task->vmm);
+    return 0;
+}
+
+int proc_destroy(task_t *task)
+{
+    if (task->vmm == NULL)
+        return -1;
+    free_page(v2p(task->vmm->page_storage));
     vmm_free(task->vmm);
-    
     task->vmm = NULL;
+    task_free(task);
     return 0;
 }
 

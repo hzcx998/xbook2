@@ -111,7 +111,11 @@ int __map_pages(unsigned long start, unsigned long len, unsigned long prot);
 int __unmap_pages(unsigned long vaddr, unsigned long len);
 
 int __map_pages_safe(unsigned long start, unsigned long len, unsigned long prot);
-int __unmap_pages_safe(unsigned long start, unsigned long len);
+int __unmap_pages_safe(unsigned long start, unsigned long len, char fixed);
+
+int __map_pages_fixed(unsigned long start, unsigned long addr, 
+    unsigned long len, unsigned long prot);
+
 
 // 该地址是2GB虚拟地址的偏移
 #define PAGE_OFFSET             0X80000000

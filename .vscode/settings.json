@@ -41,6 +41,7 @@
         "conio.h": "c",
         "vmspace.h": "c",
         "xfile.h": "c",
-        "sharemem.h": "c"
+        "sharemem.h": "c",
+        "shm.h": "c"
     }
 }

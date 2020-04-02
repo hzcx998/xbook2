@@ -1,4 +1,5 @@
 #include <sys/xbook.h>
+#include <sys/shm.h>
 #include <string.h>
 #include <conio.h>
 
@@ -88,12 +89,37 @@ int main(int argc, char *argv[])
     pid = x_fork();*/
     if (pid > 0) {
         printf("I am parent, my child is %d.\n", pid);
+
+        int shmid = x_shmget("shm_test", 4096, SHM_CREAT);
+        if (shmid < 0) {
+            printf("test: parent: get shm failed!");
+            return -1;
+        }
+        
+        printf("test: parent: get shm %d.", shmid);
+        unsigned char *shmaddr = x_shmmap(shmid, NULL);
+        if (shmaddr == (void *)-1) {
+            printf("test: parent: map shm failed!");
+            return -1;
+        }
+        
+        printf("# test: parent: map shm %x.\n", shmaddr);
+        int i;
+        for (i = 0; i < 4096; i++) {
+            shmaddr[i] = i % 255;
+        }
+        for (i = 0; i < 16; i++) {
+            printf("%x ", shmaddr[i]);
+        }
+        x_shmunmap(shmaddr);
+
         int status;
         int pid2 = x_wait(&status);
         printf("I am parent, my child exit with %d.\n", status);
         
     } else {
         printf("I am child, I will load data.\n");
+        
         unsigned long heap = x_heap(0);
         printf("heap addr %x.\n", heap);
 
@@ -113,7 +139,7 @@ int main(int argc, char *argv[])
         }
         printf("load data success.\n");
         x_file_t file = {buf, 22*1024};
-        int i;
+        //int i;
         for (i = 0; i < 32; i++) {
             printf("%x ", buf[i]);
         }

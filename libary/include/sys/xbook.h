@@ -31,4 +31,10 @@ int x_putc(x_dev_t devno, unsigned long data);
 /* memory operations */
 unsigned long x_heap(unsigned long heap);
 
+/* IPC */
+int x_shmget(char *name, x_size_t size, unsigned long flags);
+int x_shmput(int shmid);
+void *x_shmmap(int shmid, const void *shmaddr);
+int x_shmunmap(const void *shmaddr);
+
 #endif  /* _SYS_XBOOK_H */

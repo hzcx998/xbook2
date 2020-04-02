@@ -3,6 +3,7 @@
 #include <xbook/debug.h>
 #include <xbook/string.h>
 #include <xbook/memops.h>
+#include <xbook/vmspace.h>
 #include <sys/shm.h>
 
 /* debug shm : 1 enable, 0 disable */
@@ -53,6 +54,27 @@ static share_mem_t *share_mem_find_by_id(int shmid)
         shm = &share_mem_table[i];
         /* id相同并且正在使用，才找到 */
         if (shm->id == shmid && shm->name[0] != '\0') { 
+            return shm;
+        }
+    }
+    return NULL;
+}
+
+/**
+ * share_mem_find_by_id - 通过id查找共享内存
+ * @id: 共享内存的id
+ * 
+ * @return: 如果共享内存已经在共享内存表中，就返回共享内存指针，
+ *          没有则返回NULL
+ */
+static share_mem_t *share_mem_find_by_addr(unsigned long addr)
+{
+    share_mem_t *shm;
+    int i;
+    for (i = 0; i < MAX_SHARE_MEM_NR; i++) {
+        shm = &share_mem_table[i];
+        /* id相同并且正在使用，才找到 */
+        if (shm->name[0] != '\0' && shm->page_addr == addr) { 
             return shm;
         }
     }
@@ -134,7 +156,6 @@ int share_mem_get(char *name, unsigned long size, unsigned long flags)
         return -1;
     if (size > 0 && PAGE_ALIGN(size) >= MAX_SHARE_MEM_SIZE)
         return -1;
-    
     char craete_new = 0; /* 是否需要创建一个新的共享内存 */
     share_mem_t *shm;
     /* 有创建标志 */
@@ -142,14 +163,15 @@ int share_mem_get(char *name, unsigned long size, unsigned long flags)
         if (flags & SHM_EXCL) { /* 必须不存在才行 */
             craete_new = 1; /* 需要创建一个新的共享内存 */
         }
+        
         shm = share_mem_find_by_name(name);
         if (shm) {  /* 共享内存已经存在 */
             if (craete_new) /* 必须创建一个新的，不能是已经存在的，故错误 */
                 return -1;
-            
             /* 已经存在，那么就返回已经存在的共享内存的id */
             return shm->id;
         } else { /* 不存在则创建一个新的 */
+            
             shm = share_mem_alloc(name, size, flags);
             return shm->id; /* 返回共享内存id */
         }
@@ -158,18 +180,91 @@ int share_mem_get(char *name, unsigned long size, unsigned long flags)
     return -1;
 }
 
+/**
+ * share_mem_map - 将共享内存映射到进程空间
+ * @shmid: 共享内存的id
+ * @shmaddr: 共享内存的地址
+ *          若该参数为NULL，则在进程空间自动选择一个闲的地址来映射，
+ *          不为空，那么久在进程空间映射为该地址
+ * 
+ * 把共享内存的物理地址映射到当前进程的进程空间，
+ * 需要用到的映射是虚拟地址和物理地址直接映射，不需要分配物理页，
+ * 因为已经在分配共享内存时分配了物理页。
+ * 
+ * @return: 成功返回映射在进程空间的地址，失败返回-1
+ */
+void *share_mem_map(int shmid, void *shmaddr)
+{
+    share_mem_t *shm;
+    shm = share_mem_find_by_id(shmid);
+    if (shm == NULL)    /* not found share mem */
+        return (void *) -1;
+    task_t *cur = current_task;
+
+    unsigned long addr;
+    unsigned long len = shm->npages * PAGE_SIZE;
+    /* 现在已经找到了共享内存，需要将它映射到当前进程的空间 */
+    if (shmaddr == NULL) {  /* 自动选择一个映射地址 */
+        addr = vmspace_get_unmaped(cur->vmm, shm->npages * PAGE_SIZE);
+        if (addr == -1) /* 已经没有空闲的空间 */
+            return (void *) -1;
+    } else {
+        addr = (unsigned long) shmaddr;
+        if (addr < cur->vmm->map_start || 
+            addr + len >= cur->vmm->map_end) /* 指定地址不在映射范围内 */
+            return (void *) -1;
+        /* 如果有空间和它相交，就返回错误 */
+        if (vmspace_find_intersection(cur->vmm, addr, addr + len))
+            return (void *) -1;
+    }
+    /* 把虚拟地址和物理地址进行映射，物理地址是共享的。由于已经确切获取了一个地址，
+    所以这里就用固定映射，因为是共享内存，所以使用共享的方式。 */
+    shmaddr = vmspace_mmap(addr, shm->page_addr, shm->npages * PAGE_SIZE,
+        PROT_USER | PROT_WRITE, VMS_MAP_FIXED | VMS_MAP_SHARED);
+    if (shmaddr != (void *) -1)
+        shm->links++;
+        
+    return shmaddr;
+}
 
 /**
- * share_mem_get - 获取一个共享内存
+ * share_mem_unmap - 取消共享内存映射在进程空间中的映射
+ * @shmaddr: 共享内存地址
  * 
- * @name: 共享内存名
- * @size: 共享内存大小
- * @flags: 获取标志
- *         SHM_CREAT: 如果共享内存不存在，则创建一个新的共享内存，否则就打开
- *         SHM_EXCL:  和CREAT一起使用，则要求创建一个新的共享内存，若已存在，就返回-1。
- *                    相当于在CREAT上面加了一个必须不存在的限定。
+ * @return: 成功返回0，失败返回-1
+ */
+int share_mem_unmap(const void *shmaddr)
+{
+    if (!shmaddr) {
+        return -1;
+    }
+    task_t *cur = current_task;
+
+    unsigned long addr = (unsigned long) shmaddr;
+    vmspace_t *sp = vmspace_find(cur->vmm, addr);
+    if (sp == NULL) /* 没有找到对应的空间 */
+        return -1;
+    if (sp->start != addr)  /* 找到空间后，但还要是一样的起始地址才可以 */
+        return -1;
+    
+    addr = addr_v2p(addr); /* 通过用户虚拟地址获取物理地址 */
+    share_mem_t *shm = share_mem_find_by_addr(addr);
+    /* 取消虚拟空间映射 */
+    int retval = do_vmspace_unmap(cur->vmm, sp->start, sp->end - sp->start);
+    if (!retval) {  /* 减少链接数 */
+        if (shm)
+            shm->links--;
+    }
+    
+    return retval;
+}
+
+/**
+ * share_mem_put - 释放一个共享内存
  * 
- * @return: 成功返回共享区域id，失败返回-1
+ * @shmid: 共享内存id
+ * 
+ * @return: 成功返回0，失败返回-1
  */
 int share_mem_put(int shmid)
 {
@@ -177,9 +272,13 @@ int share_mem_put(int shmid)
     shm = share_mem_find_by_id(shmid);
 
     if (shm) {  /* 共享内存存在 */
+#if DEBUG_SHM == 1
+        printk(KERN_INFO "shm links %d.\n", shm->links);
+#endif
         share_mem_free(shm);
         return 0;
     }
+
     /* 没有找到共享区域 */
     return -1;
 }
@@ -192,14 +291,16 @@ void init_share_mem()
     share_mem_table = (share_mem_t *)kmalloc(sizeof(share_mem_t) * MAX_SHARE_MEM_NR);
     if (share_mem_table == NULL) /* must be ok! */
         panic(KERN_EMERG "init_share_mem: alloc mem for share_mem_table failed! :(\n");
-    printk(KERN_DEBUG "init_share_mem: alloc mem table at %x\n", share_mem_table);   
+    //printk(KERN_DEBUG "init_share_mem: alloc mem table at %x\n", share_mem_table);   
     int i;
     for (i = 0; i < MAX_SHARE_MEM_NR; i++) {
         share_mem_table[i].id = 1 + i + i * 2; /* 共享内存id */
         share_mem_table[i].page_addr = 0;
         share_mem_table[i].npages = 0;
+        share_mem_table[i].links = 0;   
         memset(share_mem_table[i].name, 0, SHARE_MEM_NAME_LEN);
     }
+#if 0
     int shmid = share_mem_get("test", 1, SHM_CREAT);
     if (shmid == -1)
         printk(KERN_ERR "get shm failed!\n");
@@ -236,5 +337,6 @@ void init_share_mem()
     if (share_mem_put(shmid)) {
         printk(KERN_ERR "put shm failed!\n");    
     }
-    spin(":)");
+#endif 
+    // spin(":)");
 }

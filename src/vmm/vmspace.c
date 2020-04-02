@@ -2,6 +2,19 @@
 #include <xbook/task.h>
 #include <xbook/debug.h>
 
+void dump_vmspace(vmm_t *vmm)
+{
+    if (vmm == NULL)
+        return;
+    
+    vmspace_t *space = vmm->vmspace_head;
+    while (space != NULL) {
+        printk(KERN_INFO "space: start=%x end=%x prot=%x flags:%x\n", 
+            space->start, space->end, space->page_prot, space->flags);
+        space = space->next;
+    }
+}
+
 /* 虚拟空间的插入。*/
 void vmspace_insert(vmm_t *vmm, vmspace_t *space)
 {
@@ -21,6 +34,7 @@ void vmspace_insert(vmm_t *vmm, vmspace_t *space)
     else    /* 如果前一个是空，说明插入到队首 */
         vmm->vmspace_head = (void *)space;
     space->vmm = vmm; /* 绑定空间的虚拟内存管理 */
+
     /* 合并相邻的空间 */
     /* merge prev and space */
     if (prev != NULL && prev->end == space->start) {
@@ -44,16 +58,16 @@ void vmspace_insert(vmm_t *vmm, vmspace_t *space)
 
 
 /**
- * GetUnmappedVMSpace - 获取一个没有映射的空闲空间
+ * vmspace_get_unmaped - 获取一个没有映射的空闲空间
  * @mm: 内存管理器
  * @len: 要获取的长度
  * 
  * 查找一个没有映射的空间并返回其地址
  */
-static unsigned long vmspace_get_unmaped(vmm_t *vmm, unsigned len)
+unsigned long vmspace_get_unmaped(vmm_t *vmm, unsigned len)
 {
     /* 地址指向没有映射的空间的最开始处 */
-    unsigned long addr = VMM_UNMAPPED_BASE;
+    unsigned long addr = vmm->map_start;
 
     // 根据地址获取一个space
     vmspace_t *space = vmspace_find(vmm, addr);
@@ -64,6 +78,10 @@ static unsigned long vmspace_get_unmaped(vmm_t *vmm, unsigned len)
         if (USER_VMM_SIZE - len < addr)
             return -1;
 
+        /* 如果超过可映射胡最大范围，也退出 */
+        if (addr + len >= vmm->map_end)
+            return -1;
+    
         /* 如果要查找的区域在链表中间就直接返回地址 */
         if (addr + len <= space->start)
             return addr;
@@ -79,21 +97,22 @@ static unsigned long vmspace_get_unmaped(vmm_t *vmm, unsigned len)
 
 /** 
  * do_vmspace_map - 映射地址
- * @addr: 地址
+ * @addr: 虚拟地址
+ * @paddr: 虚拟地址
  * @len: 长度
  * @prot: 页保护
  * @flags: 空间的标志
  * 
  * 做地址映射，进程才可以读写空间
  */
-int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long len,
-    unsigned long prot, unsigned long flags)
+int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long paddr, 
+    unsigned long len, unsigned long prot, unsigned long flags)
 {
     if (vmm == NULL || !prot) {
         printk(KERN_ERR "do_vmspace_map: failed!\n");
         return -1;
     }
-        
+    
     // printk(KERN_DEBUG "do_vmspace_map: %x, %x, %x, %x\n", addr, len, prot, flags);
     /* 让长度和页大小PAGE_SIZE对齐  */
     len = PAGE_ALIGN(len);
@@ -150,8 +169,13 @@ int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long len,
 
     //printk(KERN_DEBUG "map virtual from %x to %x\n", space->start, space->end);
     /* 创建空间后，需要做虚拟地址映射 */
-    map_pages_safe(addr, len, prot); 
-
+    if (flags & VMS_MAP_SHARED) { /* 如果是共享映射，就映射成共享的地址 */
+        //printk(KERN_DEBUG "do_vmspace_map: shared at %x:%x %x\n", addr, paddr, len);
+        map_pages_fixed(addr, paddr, len, prot);
+    } else {
+        map_pages_safe(addr, len, prot); 
+    }
+    
     return addr;
 }
 
@@ -184,27 +208,32 @@ int do_vmspace_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
         
     /* 找到addr < space->end 的空间 */
     vmspace_t* prev = NULL;
-    vmspace_t* space = vmspace_find_prev(vmm, addr, prev);
+    vmspace_t* space = vmspace_find_prev(vmm, addr, &prev);
     /* 没找到空间就返回 */
     if (space == NULL) {      
         printk(KERN_ERR "do_vmspace_unmap: not found the space!\n");
         return -1;
     }
-        
+    
     /* 保证地址是在空间范围内
-        在do_heap中，我们要执行DoUmmap。如果是第一次执行，那么DoUmmap就会失败而退出，
-        那么我们do_heap就不会成功，因此，在这里，我们返回-2，而在do_heap中判断返回-1才失败。
-        在其它情况下，我们判断不是0就说明DoMap失败，这是一个特例
+        在do_vmspace_heap中，我们要执行do_vmspace_unmap。如果是第一次执行，那么do_vmspace_unmap就会失败而退出，
+        那么我们do_vmspace_heap就不会成功，因此，在这里，我们返回-2，而在do_vmspace_heap中判断返回-1才失败。
+        在其它情况下，我们判断不是0就说明do_vmspace_map失败，这是一个特例
      */
-     if (addr < space->start || addr + len > space->end) {
-        //printk(KERN_ERR "do_vmspace_unmap: addr out of space!\n");
-        //printk(KERN_ERR "do_vmspace_unmap: space start %x end %x\n", space->start, space->end);
+    if (addr < space->start || addr + len > space->end) {
+        /*printk(KERN_NOTICE "do_vmspace_unmap: addr out of space!\n");
+        printk(KERN_NOTICE "do_vmspace_unmap: space start %x end %x\n", addr, addr + len);
+        printk(KERN_NOTICE "do_vmspace_unmap: space start %x end %x\n", space->start, space->end);*/
+
         return -2;
     }
-        
+    
+    unmap_pages_safe(addr, len, space->flags & VMS_MAP_SHARED);
+
     /* 分配一个新的空间，有可能要unmap的空间会分成2个空间，例如：
     [start, addr, addr+len, end] => [start, addr], [addr+len, end]
      */
+
     vmspace_t* space_new = vmspace_alloc();
     if (!space_new) {        
         printk(KERN_ERR "do_vmspace_unmap: kmalloc for space_new failed!\n");
@@ -228,26 +257,21 @@ int do_vmspace_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
     if (space_new->start == space_new->end) {
         vmspace_remove(vmm, space_new, space);
     }
-
-    /* 取消空间后需要取消虚拟地址映射
-    不过由于我们的机制是，进程运行期间只增空间，不减空间。
-    只有退出时才减少，因此，这里不取消虚拟地址映射。
-    unmap_pages_safe(addr, len);
-     */
     return 0;
 }
 
 /**
  * vmspace_mmap - 内存映射
- * @addr: 地址
+ * @addr: 虚拟地址
+ * @paddr: 物理地址
  * @len: 长度
  * @prot: 页保护
  * @flags: 空间的标志
  */
-void *vmspace_mmap(uint32_t addr, uint32_t len, uint32_t prot, uint32_t flags)
+void *vmspace_mmap(uint32_t addr, uint32_t paddr, uint32_t len, uint32_t prot, uint32_t flags)
 {
     task_t *current = current_task;
-    return (void *)do_vmspace_map(current->vmm, addr, len, prot, flags);
+    return (void *)do_vmspace_map(current->vmm, addr, paddr, len, prot, flags);
 }
 
 /**
@@ -352,7 +376,7 @@ unsigned long vmspace_heap(unsigned long heap)
     }
     
     /* 如果heap小于当前vmm的heap_end，就说明是收缩内存 */
-    if (heap <= vmm->heap_end) {
+    if (heap <= vmm->heap_end && heap >= vmm->heap_start) {
         //printk(KERN_DEBUG "vmspace_heap: shrink mm.\n");
         
         /* 收缩地址就取消映射，如果成功就去设置新的断点值 */

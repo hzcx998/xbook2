@@ -173,6 +173,55 @@ int __map_pages(unsigned long start, unsigned long len, unsigned long prot)
 	return 0;
 }
 
+
+/**
+ * __map_pages_fixed - 映射固定页面
+ * @start: 起始虚拟地址
+ * @addr: 物理地址
+ * @len: 映射长度
+ * @prot: 映射的属性
+ * 
+ * 固定的物理地址和虚拟地址映射
+ * 
+ * @return: 成功返回0，失败返回-1
+ */
+int __map_pages_fixed(unsigned long start, unsigned long addr, unsigned long len, unsigned long prot)
+{
+    unsigned long first = start & PAGE_MASK;    /* 页地址对齐 */
+    // 长度和页对齐
+    len = PAGE_ALIGN(len);
+
+    /* set page attr */
+    unsigned long attr = 0;
+    
+    if (prot & PROT_USER)
+        attr |= PG_US_U;
+    else
+        attr |= PG_US_S;
+    
+    if (prot & PROT_WRITE)
+        attr |= PG_RW_W;
+    else
+        attr |= PG_RW_R;
+
+	/* 判断长度是否超过剩余内存大小 */
+    //printk("len %d pages %d\n", len, len / PAGE_SIZE);
+
+	/* 获取物理页地址 */
+	unsigned long pages = addr;
+    
+    unsigned long end = first + len;
+	//printk(KERN_DEBUG "map_pages -> start%x->%x len %x\n", first, pages, len);
+    while (first < end)
+	{
+        // 对单个页进行链接
+		__page_link(first, pages, attr);
+		first += PAGE_SIZE;
+        pages += PAGE_SIZE;
+	}
+	return 0;
+}
+
 /**
  * __addr_v2p - 虚拟地址转换为物理地址
  * 
@@ -284,12 +333,18 @@ static int is_page_table_empty(pte_t *page_table)
 
 /**
  * __unmap_pages_safe - 安全地取消映射页
+ * @start: 起始地址
+ * @len: 范围长度
+ * @fixed: 是否为固定页，0不是，1是。
  * 
- * 如果页已经映射，就不覆盖，直接跳过
- * 每次释放单个页，可以释放所有资源。
- * 用于进程地址释放
+ * 如果页已经映射，就不覆盖，直接跳过，每次释放单个页，可以释放所有资源。
+ * 用于进程地址释放。
+ * fixed用于判断是否是固定页，固定页的意思是，映射的时候，虚拟地址和一个显示的指出物理地址
+ * 进行映射。非固定页就是，映射的时候只指定了虚拟地址，而物理地址是随机分配的。
+ * 
+ * @return: 成功返回0，失败返回-1
  */
-int __unmap_pages_safe(unsigned long start, unsigned long len)
+int __unmap_pages_safe(unsigned long start, unsigned long len, char fixed)
 {
     unsigned long vaddr = (unsigned long )start & PAGE_MASK;    /* 页地址对齐 */
     len = PAGE_ALIGN(len);
@@ -299,7 +354,9 @@ int __unmap_pages_safe(unsigned long start, unsigned long len)
     
     pde_t *pde;
     pte_t *pte;
-    
+    /*if (fixed)
+        printk(KERN_NOTICE "__unmap_pages_safe: fixed %d %x!\n", current_task->pid, start);
+    */
     while (pages > 0) {
         pde = get_pde_ptr(vaddr); /* get pde from vaddr  */
         if ((*pde & PG_P_1)) {  /* page table exist */
@@ -309,8 +366,9 @@ int __unmap_pages_safe(unsigned long start, unsigned long len)
                 pte = get_pte_ptr(vaddr); /* get pte from vaddr  */
                 if (*pte & PG_P_1) {
                     //printk("info: unmap_pages_safe -> start%x->%x\n", vaddr, *pte & PAGE_ADDR_MASK);
-                    /* free physic page */
-                    __free_pages(*pte & PAGE_ADDR_MASK);
+                    /* free physic page if not fixed */
+                    if (!fixed)
+                        __free_pages(*pte & PAGE_ADDR_MASK);
 
                     /* del page entry */
                     *pte &= ~PG_P_1;
@@ -335,7 +393,7 @@ int __unmap_pages_safe(unsigned long start, unsigned long len)
 
             //printk("info: unmap_pages_safe -> del page table %x\n", *pde & PAGE_ADDR_MASK);
 
-            /* free page table */
+            /* free page dir table */
             __free_pages(*pde & PAGE_ADDR_MASK);
 
             /* del page entry */

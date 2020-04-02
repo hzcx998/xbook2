@@ -260,3 +260,90 @@ unsigned long x_heap(unsigned long heap)
     umsg(msg);
     return umsg_get_retval(msg, unsigned long);
 }
+
+/**
+ * x_shmget() - get a share memory
+ * 
+ * @name: shm name
+ * @size: shm size
+ * @flags: shm flags
+ *         SHM_CREAT: create a new shm or open a shm.
+ *          if ok, return shmid, or not return -1
+ *         SHM_EXCL: only create a new shm.
+ *          this should use with SHM_CREAT, to make sure
+ *          that the shm not exist. example: SHM_CREAT|SHM_EXCL
+ * 
+ * get a share memory area from kernel
+ *  
+ * @return: return shmid >= 0 is success, -1 means failed!
+ */
+int x_shmget(char *name, x_size_t size, unsigned long flags)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_SHMGET);
+    umsg_set_arg0(msg, name);
+    umsg_set_arg1(msg, size);
+    umsg_set_arg2(msg, flags);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}
+
+/**
+ * x_shmput() - put a share memory
+ * 
+ * @shmid: share memory id
+ * 
+ * put(free) a share memory area from kernel
+ *  
+ * @return: 0 is success, -1 is failed!
+ */
+int x_shmput(int shmid)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_SHMPUT);
+    umsg_set_arg0(msg, shmid);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}
+
+/**
+ * x_shmmap() - map a share memory
+ * 
+ * @shmid: share memory id
+ * @shmaddr: process addr.
+ *      this can be a fixed addr or null addr.
+ *      if fixed addr, map this addr with share memory.
+ *      if null addr, auto select a addr map with share memory.
+ * 
+ * map shmaddr with share memory addr, you can use shmaddr to access share memory.
+ *  
+ * @return: not -1 is success, -1 is failed!
+ */
+void *x_shmmap(int shmid, const void *shmaddr)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_SHMMAP);
+    umsg_set_arg0(msg, shmid);
+    umsg_set_arg1(msg, shmaddr);
+    umsg(msg);
+    return umsg_get_retval(msg, void *);
+}
+
+/**
+ * x_shmunmap() - unmap a share memory
+ * 
+ * @shmaddr: process addr.
+ *    
+ * unmap shmaddr with share memory addr, after that you can't use
+ * shmaddr to access share memory.
+ *  
+ * @return: 0 is success, -1 is failed!
+ */
+int x_shmunmap(const void *shmaddr)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_SHMUNMAP);
+    umsg_set_arg0(msg, shmaddr);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}

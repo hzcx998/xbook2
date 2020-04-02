@@ -94,6 +94,9 @@ int proc_exec_raw(char *name, char **argv)
 
     /* 初始化用户堆 */
     proc_heap_init(cur);
+
+    /* 初始化用户映射区域 */
+    proc_map_space_init(cur);
     
     /* 设置执行入口 */
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
@@ -202,6 +205,8 @@ int proc_exec_file(char *name, x_file_t *file, char **argv)
 
     /* 初始化用户堆 */
     proc_heap_init(cur);
+    /* 初始化用户映射区域 */
+    proc_map_space_init(cur);
     
     /* 设置执行入口 */
     user_entry_point(frame, (unsigned long)elf_header.e_entry);

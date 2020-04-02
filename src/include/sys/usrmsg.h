@@ -16,6 +16,10 @@ enum {
     UMSG_WAIT,              /* process wait */
     UMSG_EXECRAW,           /* process execute raw block */
     UMSG_HEAP,              /* memory heap */
+    UMSG_SHMGET,            /* get memory share */
+    UMSG_SHMPUT,            /* put memory share */
+    UMSG_SHMMAP,            /* map memory share */
+    UMSG_SHMUNMAP,          /* unmap memory share */
 };
 
 /* user message 用户消息 */

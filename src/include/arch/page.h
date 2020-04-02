@@ -33,8 +33,10 @@ static inline void *p2v(unsigned long address)
 #define map_pages(start, len, prot)         __map_pages(start, len, prot)
 #define unmap_pages(va, len)                __unmap_pages(va, len)
 
+#define map_pages_fixed(start, addr, len, prot) __map_pages_fixed(start, addr, len, prot)
+
 #define map_pages_safe(start, len, prot)    __map_pages_safe(start, len, prot);
-#define unmap_pages_safe(start, len)        __unmap_pages_safe(start, len);
+#define unmap_pages_safe(start, len, fixed) __unmap_pages_safe(start, len, fixed);
 
 #define addr2page(addr)                     __page2mem_node(addr);
 #define page2addr(page)                     __mem_node2page(page);
@@ -46,5 +48,7 @@ static inline void *p2v(unsigned long address)
 #define page_dir_active                     __page_dir_active
 
 #define sched_preempt                       __sched_preempt
+
+#define addr_v2p(addr)                      __addr_v2p(addr)
 
 #endif  /* _ARCH_PAGE_H */

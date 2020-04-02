@@ -26,7 +26,7 @@ int wait_one_hangging_child(task_t *parent, int *status)
                 *status = child->exit_status;
                 pid_t child_pid = child->pid;
                 /* 销毁子进程的PCB */
-                task_free(child);
+                proc_destroy(child);
                 //printk(KERN_NOTICE "find a hanging proc %d \n", child_pid);
                 return child_pid;
             }
@@ -47,7 +47,7 @@ int deal_zombie_child(task_t *parent)
         if (child->parent_pid == parent->pid) { /* find a child process */
             if (child->state == TASK_ZOMBIE) { /* child is zombie, destroy it  */
                 /* 销毁子进程的PCB */
-                task_free(child);
+                proc_destroy(child);
                 zombie++;
                 
                 //printk(KERN_NOTICE "find a zombie proc %d \n", child->pid);

@@ -9,11 +9,15 @@
 #define VMS_MAP_FIXED       0x10       /* 映射固定位置 */
 #define VMS_MAP_STACK       0x20       /* 映射成栈，会动态变化 */
 #define VMS_MAP_HEAP        0x40       /* 映射成堆，会动态变化 */
+#define VMS_MAP_SHARED      0x80       /* 映射成共享内存 */
 
 #define MAX_VMS_STACK_SIZE  (16 * MB)   /* 最大栈拓展大小 */
 
 /* 最大可扩展的堆的大小,默认512MB */
 #define MAX_VMS_HEAP_SIZE    (512 * MB)
+
+/* 最大可扩展的堆的大小,默认128MB */
+#define MAX_VMS_MAP_SIZE    (128 * MB)
 
 /* 虚拟内存地址空间描述 */
 typedef struct vmspace {
@@ -28,11 +32,17 @@ typedef struct vmspace {
 #define vmspace_alloc() kmalloc(sizeof(vmspace_t))
 #define vmspace_free    kfree
 
+
+void dump_vmspace(vmm_t *vmm);
+void vmspace_insert(vmm_t *vmm, vmspace_t *space);
 int do_vmspace_unmap(vmm_t *vmm, unsigned long addr, unsigned long len);
-int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long len,
-    unsigned long prot, unsigned long flags);
-void *vmspace_mmap(uint32_t addr, uint32_t len, uint32_t prot, uint32_t flags);
+int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long paddr, 
+    unsigned long len, unsigned long prot, unsigned long flags);
+void *vmspace_mmap(uint32_t addr, uint32_t paddr, uint32_t len, uint32_t prot,
+    uint32_t flags);
 int vmspace_unmmap(uint32_t addr, uint32_t len);
+unsigned long vmspace_heap(unsigned long heap);
+unsigned long vmspace_get_unmaped(vmm_t *vmm, unsigned len);
 
 /**
  * vmspace_init - 初始化虚拟空间
@@ -48,8 +58,6 @@ static inline void vmspace_init(vmspace_t *space, unsigned long start,
     space->vmm = NULL;
     space->next = NULL;
 }
-
-void vmspace_insert(vmm_t *vmm, vmspace_t *space);
 
 static inline void vmspace_remove(vmm_t *vmm, vmspace_t *space, vmspace_t *prev)
 {
@@ -71,20 +79,27 @@ static inline vmspace_t *vmspace_find(vmm_t *vmm, unsigned long addr)
     return NULL;
 }
 
-static inline vmspace_t *vmspace_find_prev(vmm_t *vmm, unsigned long addr, vmspace_t *prev)
+static inline vmspace_t *vmspace_find_prev(vmm_t *vmm, unsigned long addr, vmspace_t **prev)
 {
-    prev = NULL;    /* prev save prev space ptr, set NULL first */
+    *prev = NULL;    /* prev save prev space ptr, set NULL first */
     vmspace_t *space = vmm->vmspace_head;
     while (space != NULL) {
         if (addr < space->end)  /* 地址小于某个控件结束位置就返回该空间 */
             return space;
-        prev = space;   /* save prev */
+        *prev = space;   /* save prev */
         space = space->next;
     }
     return NULL;
 }
 
-/* 如果一个空间的开始地址和另一个空间的结束地址位于同一个空间范围，说明二者相交 */
+/**
+ * vmspace_find_intersection - 查找在指定范围内是否有空间和它相交
+ * @vmm: 虚拟内存管理器
+ * @start: 起始地址
+ * @end: 结束地址
+ * 
+ * @return: 如果有空间和传入的区域相交，返回对应的空间，没有则返回NULL
+ */
 static inline vmspace_t *vmspace_find_intersection(vmm_t *vmm,
     unsigned long start, unsigned long end)
 {
@@ -94,7 +109,6 @@ static inline vmspace_t *vmspace_find_intersection(vmm_t *vmm,
     return space;
 }
 
-unsigned long vmspace_heap(unsigned long heap);
 
 
 #endif /* _XBOOK_VMSPACE_H */
