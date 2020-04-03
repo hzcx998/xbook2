@@ -6,6 +6,7 @@
 #include <xbook/clock.h>
 #include <xbook/vmspace.h>
 #include <xbook/sharemem.h>
+#include <xbook/msgqueue.h>
 
 void dump_usrmsg(umsg_t *msg)
 {
@@ -115,6 +116,28 @@ int do_usrmsg(umsg_t *msg)
         break;
     case UMSG_SHMUNMAP:
         msg->retval = share_mem_unmap((const void *) msg->arg0);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_MSGGET:
+        msg->retval = msg_queue_get((char *) msg->arg0, (int) msg->arg1);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_MSGPUT:
+        msg->retval = msg_queue_put((int ) msg->arg0);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_MSGSND:
+        msg->retval = msg_queue_send((int ) msg->arg0, (void *) msg->arg1,
+            (size_t) msg->arg2, (int) msg->arg3);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_MSGRCV:
+        msg->retval = msg_queue_recv((int ) msg->arg0, (void *) msg->arg1,
+            (size_t) msg->arg2, (long) msg->arg3, (int) msg->arg4);
         if (msg->retval == -1)
             retval = -1;
         break;

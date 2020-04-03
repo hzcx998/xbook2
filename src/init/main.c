@@ -9,6 +9,7 @@
 #include <xbook/rawblock.h>
 #include <xbook/schedule.h>
 #include <xbook/sharemem.h>
+#include <xbook/msgqueue.h>
 
 int kernel_main(void)
 {
@@ -21,12 +22,13 @@ int kernel_main(void)
     /* init softirq */
     init_softirq();
     
+    /* init ipc */
     init_share_mem();
-
+    init_msg_queue();
 
     init_tasks();
     init_clock();
-
+    
     /* init unit drivers */
     init_unit();
 

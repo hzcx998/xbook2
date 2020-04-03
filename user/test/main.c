@@ -1,5 +1,5 @@
 #include <sys/xbook.h>
-#include <sys/shm.h>
+#include <sys/ipc.h>
 #include <string.h>
 #include <conio.h>
 
@@ -9,16 +9,6 @@ int func(int n)
         return 1; 
     else 
         return n * func(n - 1); 
-}
-
-int __strlen(char *s)
-{
-    int n = 0;
-    while (*s) {
-        n++;
-        s++;
-    }
-    return n;
 }
 
 x_dev_t dev;
@@ -89,8 +79,49 @@ int main(int argc, char *argv[])
     pid = x_fork();*/
     if (pid > 0) {
         printf("I am parent, my child is %d.\n", pid);
+#if 0 /* MSG */
+        int msgid = x_msgget("usr_test", IPC_CREAT);
+        if (msgid < 0) {
+            printf("test: parent: get msg failed!");
+            return -1;
+        }
+        printf("test: parent: get msg %d.", msgid);
+        
+        unsigned long heap = x_heap(0);
+        x_heap(heap + 1024 + sizeof(x_msgbuf_t));
 
-        int shmid = x_shmget("shm_test", 4096, SHM_CREAT);
+        x_msgbuf_t 
+        *msgbuf = (x_msgbuf_t *) heap;
+        while (1)
+        {
+            int j, k;
+            for (j = 0; j < 1000; j++) {
+                for (k = 0; k < 10000; k++);
+            }
+            msgbuf->type = 100;
+            memset(msgbuf->text, 0x1f, 1024);
+            int i;
+            for (i = 0; i < 16; i++) {
+                msgbuf->text[i] = i;
+            }
+            if (x_msgsnd(msgid, msgbuf, 1024, 0)) {
+                printf("test: parent: snd msg failed!");
+            }
+        }
+        printf("test: parent: snd msg ok!");
+#endif /* MSG */
+        /*msgbuf->type = 0;
+        memset(msgbuf->text, 0, 1024);
+        int read = x_msgrcv(msgid, msgbuf, 1024, 10, IPC_EXCEPT);
+        printf("test: parent: rcv msg %d type=%d!", read, msgbuf->type);
+        for (i = 0; i < 16; i++) {
+            printf("%x ", msgbuf->text[i]);
+        }
+        
+        printf("test: parent: rcv msg ok!");*/
+        
+#if 1
+        int shmid = x_shmget("shm_test", 4096, IPC_CREAT);
         if (shmid < 0) {
             printf("test: parent: get shm failed!");
             return -1;
@@ -112,7 +143,7 @@ int main(int argc, char *argv[])
             printf("%x ", shmaddr[i]);
         }
         x_shmunmap(shmaddr);
-
+#endif
         int status;
         int pid2 = x_wait(&status);
         printf("I am parent, my child exit with %d.\n", status);

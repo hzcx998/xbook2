@@ -1,5 +1,5 @@
-#ifndef _XBOOK_wait_queue_H
-#define _XBOOK_wait_queue_H
+#ifndef _XBOOK_WAIT_QUEUE_H
+#define _XBOOK_WAIT_QUEUE_H
 
 #include <xbook/list.h>
 #include <xbook/task.h>
@@ -97,5 +97,4 @@ static inline void wait_queue_wakeup(wait_queue_t *wait_queue)
     restore_intr(flags);
 }
 
-
-#endif   /*_BOOK_wait_queue_H*/
+#endif   /* _XBOOK_WAIT_QUEUE_H */

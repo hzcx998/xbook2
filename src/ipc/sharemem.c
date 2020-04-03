@@ -4,17 +4,16 @@
 #include <xbook/string.h>
 #include <xbook/memops.h>
 #include <xbook/vmspace.h>
-#include <sys/shm.h>
+#include <xbook/semaphore.h>
+#include <sys/ipc.h>
 
 /* debug shm : 1 enable, 0 disable */
 #define DEBUG_SHM 0
 
 share_mem_t *share_mem_table;
 
-/* 通过某种机制来获取到一个共享内存的使用，如果多个进程需要获取到同一个
-共享内存，那么就需要有一个共同的标识，而名字是最为合适的。 
-共享内存大小总是以页为单位对齐的。
-*/
+/* 保护共享内存的分配与释放 */
+DEFINE_SEMAPHORE(share_mem_mutex, 1);
 
 /**
  * share_mem_find_by_name - 通过名字查找共享内存
@@ -85,13 +84,12 @@ static share_mem_t *share_mem_find_by_addr(unsigned long addr)
  * share_mem_alloc - 分配一个共享内存
  * @name: 名字
  * @size: 大小
- * @flags: 标志
  * 
  * 从共享内存表中分配一个共享内存
  * 
  * @return: 成功返回共享内存结构的地址，失败返回NULL
  */
-share_mem_t *share_mem_alloc(char *name, unsigned long size, unsigned long flags)
+share_mem_t *share_mem_alloc(char *name, unsigned long size)
 {
     share_mem_t *shm;
     int i;
@@ -143,8 +141,8 @@ int share_mem_free(share_mem_t *shm)
  * @name: 共享内存名
  * @size: 共享内存大小
  * @flags: 获取标志
- *         SHM_CREAT: 如果共享内存不存在，则创建一个新的共享内存，否则就打开
- *         SHM_EXCL:  和CREAT一起使用，则要求创建一个新的共享内存，若已存在，就返回-1。
+ *         IPC_CREAT: 如果共享内存不存在，则创建一个新的共享内存，否则就打开
+ *         IPC_EXCL:  和CREAT一起使用，则要求创建一个新的共享内存，若已存在，就返回-1。
  *                    相当于在CREAT上面加了一个必须不存在的限定。
  * 
  * @return: 成功返回共享区域id，失败返回-1
@@ -157,27 +155,33 @@ int share_mem_get(char *name, unsigned long size, unsigned long flags)
     if (size > 0 && PAGE_ALIGN(size) >= MAX_SHARE_MEM_SIZE)
         return -1;
     char craete_new = 0; /* 是否需要创建一个新的共享内存 */
+    int retval = -1;
     share_mem_t *shm;
+    semaphore_down(&share_mem_mutex);
     /* 有创建标志 */
-    if (flags & SHM_CREAT) { /* 创建一个新的共享区域 */
-        if (flags & SHM_EXCL) { /* 必须不存在才行 */
+    if (flags & IPC_CREAT) { /* 创建一个新的共享区域 */
+        if (flags & IPC_EXCL) { /* 必须不存在才行 */
             craete_new = 1; /* 需要创建一个新的共享内存 */
         }
         
         shm = share_mem_find_by_name(name);
         if (shm) {  /* 共享内存已经存在 */
             if (craete_new) /* 必须创建一个新的，不能是已经存在的，故错误 */
-                return -1;
+                goto err;
             /* 已经存在，那么就返回已经存在的共享内存的id */
-            return shm->id;
+            retval = shm->id;
         } else { /* 不存在则创建一个新的 */
             
-            shm = share_mem_alloc(name, size, flags);
-            return shm->id; /* 返回共享内存id */
+            shm = share_mem_alloc(name, size);
+            if (shm == NULL)
+                goto err;
+            retval = shm->id; /* 返回共享内存id */
         }
     }
+err:
+    semaphore_up(&share_mem_mutex);
     /* 没有创建标志，直接返回错误 */
-    return -1;
+    return retval;
 }
 
 /**
@@ -196,11 +200,14 @@ int share_mem_get(char *name, unsigned long size, unsigned long flags)
 void *share_mem_map(int shmid, void *shmaddr)
 {
     share_mem_t *shm;
+    semaphore_down(&share_mem_mutex);
     shm = share_mem_find_by_id(shmid);
-    if (shm == NULL)    /* not found share mem */
+    semaphore_up(&share_mem_mutex);
+    if (shm == NULL) { /* not found share mem */
         return (void *) -1;
+    }   
     task_t *cur = current_task;
-
+    
     unsigned long addr;
     unsigned long len = shm->npages * PAGE_SIZE;
     /* 现在已经找到了共享内存，需要将它映射到当前进程的空间 */
@@ -222,7 +229,7 @@ void *share_mem_map(int shmid, void *shmaddr)
     shmaddr = vmspace_mmap(addr, shm->page_addr, shm->npages * PAGE_SIZE,
         PROT_USER | PROT_WRITE, VMS_MAP_FIXED | VMS_MAP_SHARED);
     if (shmaddr != (void *) -1)
-        shm->links++;
+        atomic_inc(&shm->links);
         
     return shmaddr;
 }
@@ -248,12 +255,14 @@ int share_mem_unmap(const void *shmaddr)
         return -1;
     
     addr = addr_v2p(addr); /* 通过用户虚拟地址获取物理地址 */
+    semaphore_down(&share_mem_mutex);
     share_mem_t *shm = share_mem_find_by_addr(addr);
+    semaphore_up(&share_mem_mutex);
     /* 取消虚拟空间映射 */
     int retval = do_vmspace_unmap(cur->vmm, sp->start, sp->end - sp->start);
     if (!retval) {  /* 减少链接数 */
         if (shm)
-            shm->links--;
+            atomic_dec(&shm->links);
     }
     
     return retval;
@@ -269,16 +278,18 @@ int share_mem_unmap(const void *shmaddr)
 int share_mem_put(int shmid)
 {
     share_mem_t *shm;
+    semaphore_down(&share_mem_mutex);
     shm = share_mem_find_by_id(shmid);
-
+    
     if (shm) {  /* 共享内存存在 */
 #if DEBUG_SHM == 1
-        printk(KERN_INFO "shm links %d.\n", shm->links);
+        printk(KERN_INFO "shm links %d.\n", atomic_get(&shm->links));
 #endif
         share_mem_free(shm);
+        semaphore_up(&share_mem_mutex);
         return 0;
     }
-
+    semaphore_up(&share_mem_mutex);
     /* 没有找到共享区域 */
     return -1;
 }
@@ -297,7 +308,7 @@ void init_share_mem()
         share_mem_table[i].id = 1 + i + i * 2; /* 共享内存id */
         share_mem_table[i].page_addr = 0;
         share_mem_table[i].npages = 0;
-        share_mem_table[i].links = 0;   
+        atomic_set(&share_mem_table[i].links, 0);
         memset(share_mem_table[i].name, 0, SHARE_MEM_NAME_LEN);
     }
 #if 0

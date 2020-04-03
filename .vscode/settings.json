@@ -42,6 +42,8 @@
         "vmspace.h": "c",
         "xfile.h": "c",
         "sharemem.h": "c",
-        "shm.h": "c"
+        "shm.h": "c",
+        "ipc.h": "c",
+        "const.h": "c"
     }
 }

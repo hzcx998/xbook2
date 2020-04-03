@@ -5,6 +5,8 @@
 #define	MAX(a,b)	((a) > (b) ? (a) : (b))
 #define	MIN(a,b)	((a) < (b) ? (a) : (b))
 
+#define	ABS(a)	((a) > 0 ? (a) : (-a))
+
 /* 除后上入 */
 #define DIV_ROUND_UP(X, STEP) ((X + STEP - 1) / (STEP))
 

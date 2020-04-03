@@ -36,5 +36,9 @@ int x_shmget(char *name, x_size_t size, unsigned long flags);
 int x_shmput(int shmid);
 void *x_shmmap(int shmid, const void *shmaddr);
 int x_shmunmap(const void *shmaddr);
+int x_msgget(char *name, int flags);
+int x_msgput(int msgid);
+int x_msgsnd(int msgid, const void *msgbuf, x_size_t msgsz, int msgflg);
+int x_msgrcv(int msgid, const void *msgbuf, x_size_t msgsz, long msgtype, int msgflg);
 
 #endif  /* _SYS_XBOOK_H */

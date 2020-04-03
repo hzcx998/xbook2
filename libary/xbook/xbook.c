@@ -347,3 +347,109 @@ int x_shmunmap(const void *shmaddr)
     umsg(msg);
     return umsg_get_retval(msg, int);
 }
+
+
+/**
+ * x_msgget() - get a message queue
+ * 
+ * @name: msg name
+ * @flags: msg flags
+ *         IPC_CREAT: create a new msgq or open a msgq.
+ *          if ok, return msgid, or not return -1
+ *         IPC_EXCL: only create a new msgq.
+ *          this should use with IPC_CREAT, to make sure
+ *          that the msgq not exist. example: IPC_CREAT|IPC_EXCL
+ * 
+ * get a message queue from kernel
+ *  
+ * @return: return msgid >= 0 is success, -1 means failed!
+ */
+int x_msgget(char *name, int flags)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_MSGGET);
+    umsg_set_arg0(msg, name);
+    umsg_set_arg1(msg, flags);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}
+
+/**
+ * x_msgput() - put a message queue
+ * 
+ * @msgid: message queue id
+ * 
+ * put(free) a message queue from kernel
+ *  
+ * @return: 0 is success, -1 is failed!
+ */
+int x_msgput(int msgid)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_MSGPUT);
+    umsg_set_arg0(msg, msgid);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}
+
+/**
+ * x_msgsnd() - send a message to message queue
+ * 
+ * @msgid: message queue id
+ * @msgbuf: the message buffer addr, this is a special struct,
+ * 			the first member must be 'long msgtype'! you can 
+ * 			use x_msgbuf_t for general work.
+ * @msgsz:  the message buf size, not include msgtype in msgbuf
+ * 			struct. msgsz = sizeof(msgbuf) - sizeof(long)
+ * @msgflg: message send flags.
+ * 			IPC_NOWAIT: if message queue fulled, process won't block, return -1
+ * 
+ * send a message to message queue(msgid)
+ * 
+ * @return: 0 is success, -1 is failed!
+ */
+int x_msgsnd(int msgid, const void *msgbuf, x_size_t msgsz, int msgflg)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_MSGSND);
+    umsg_set_arg0(msg, msgid);
+    umsg_set_arg1(msg, msgbuf);
+	umsg_set_arg2(msg, msgsz);
+	umsg_set_arg3(msg, msgflg);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}
+/**
+ * x_msgrcv() - receive a message from message queue
+ * 
+ * @msgid: message queue id
+ * @msgbuf: the message buffer addr, this is a special struct,
+ * 			the first member must be 'long msgtype'! you can 
+ * 			use x_msgbuf_t for general work.
+ * @msgsz:  the message buf size, not include msgtype in msgbuf
+ * 			struct. msgsz = sizeof(msgbuf) - sizeof(long)
+ * @msgtype: message type for receving priority
+ *          =0：get first message in queue.
+ *          >0：get first message in queue which message->msgtype = msgtype
+ *          <0：get first message in queue which message->msgtype <= abs(msgtype)
+ * @msgflg: message send flags.
+ * 			IPC_NOWAIT: if message queue fulled, process won't block, return -1
+ * 			IPC_NOERROR：the message longer than msgsz are truncated.
+ * 			IPC_EXCEPT：if msgtype > 0, receive a message that message->msgtype <= abs(msgtype)
+ * 
+ * receive a message from message queue(msgid)
+ * 
+ * @return: return the bytes read, -1 is failed!
+ */
+int x_msgrcv(int msgid, const void *msgbuf, x_size_t msgsz, long msgtype, int msgflg)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_MSGRCV);
+    umsg_set_arg0(msg, msgid);
+    umsg_set_arg1(msg, msgbuf);
+	umsg_set_arg2(msg, msgsz);
+	umsg_set_arg3(msg, msgtype);
+	umsg_set_arg4(msg, msgflg);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}
