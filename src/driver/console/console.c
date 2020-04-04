@@ -253,6 +253,9 @@ static int console_write(device_t *device, off_t off, void *buffer, size_t count
 		buf++;
 		count--;
 	}
+    /* 临时输出到内核输出 */
+    buf = (char *)buffer;
+    printk(KERN_INFO "con: %s", buf);
     return 0;
 }
 

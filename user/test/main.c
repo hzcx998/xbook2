@@ -12,9 +12,35 @@ int func(int n)
 }
 
 x_dev_t dev;
-void log(char *str)
+
+
+void test_sem()
 {
-    x_write(dev, 0, str, strlen(str));
+    int semid = x_semget("sem_test", 1, IPC_CREAT);
+    if (semid < 0) {
+        printf("test: parent: get sem failed!");
+        return -1;
+    }
+    printf("test: parent: get sem %d.\n", semid);
+    semid = x_semget("sem_test2", 1, IPC_CREAT);
+    if (semid < 0) {
+        printf("test: parent: get sem failed!");
+        return -1;
+    }
+    printf("test: parent: get sem %d.\n", semid);
+    x_semput(semid);
+    semid = x_semget("sem_test", 1, IPC_CREAT | IPC_EXCL);
+    if (semid < 0) {
+        printf("test: parent: get sem failed!");
+        return -1;
+    }
+    printf("test: parent: get sem %d.\n", semid);
+    while (1)
+    {
+        x_semdown(semid, 0);
+        printf("test: 1234567123456712345671234567123456712345671234567.\n");
+        x_semup(semid);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -79,6 +105,8 @@ int main(int argc, char *argv[])
     pid = x_fork();*/
     if (pid > 0) {
         printf("I am parent, my child is %d.\n", pid);
+        test_sem();
+        
 #if 0 /* MSG */
         int msgid = x_msgget("usr_test", IPC_CREAT);
         if (msgid < 0) {
@@ -120,7 +148,7 @@ int main(int argc, char *argv[])
         
         printf("test: parent: rcv msg ok!");*/
         
-#if 1
+#if 0
         int shmid = x_shmget("shm_test", 4096, IPC_CREAT);
         if (shmid < 0) {
             printf("test: parent: get shm failed!");

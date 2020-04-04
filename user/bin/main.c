@@ -12,21 +12,23 @@ int func(int n)
         return n * func(n - 1); 
 }
 
-int __strlen(char *s)
+void test_sem()
 {
-    int n = 0;
-    while (*s) {
-        n++;
-        s++;
+    int semid = x_semget("sem_test", 0, IPC_CREAT);
+    if (semid < 0) {
+        printf("bin: get sem failed!");
+        return -1;
     }
-    return n;
+    printf("bin: get sem %d.\n", semid);
+    while (1)
+    {
+        x_semdown(semid, 0);
+        printf("bin: abcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcd.\n");
+        x_semup(semid);
+    }
 }
 
 x_dev_t dev;
-void log(char *str)
-{
-    x_write(dev, 0, str, __strlen(str));
-}
 
 int main(int argc, char *argv[])
 {
@@ -40,7 +42,9 @@ int main(int argc, char *argv[])
         printf("\n-%s ", argv[i]);    
         i++;
     }
-#if 1 /* SHM */
+    test_sem();
+    
+#if 0 /* SHM */
     int shmid = x_shmget("shm_test", 0, IPC_CREAT);
     if (shmid < 0) {
         printf("bin: child: get shm failed!");
@@ -133,11 +137,11 @@ int main(int argc, char *argv[])
 #endif  /* HEAP */
     int pid = x_fork();
     if (pid > 0) {
-        log("bin-parent!\n");
+        printf("bin-parent!\n");
         //x_close(dev);
         x_exit(12345);
     } else {
-        log("bin-child!\n");
+        printf("bin-child!\n");
         x_close(dev);
         x_exit(0x12345);
     }

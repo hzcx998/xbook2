@@ -82,6 +82,29 @@ static inline void semaphore_down(semaphore_t *sema)
 }
 
 /**
+ * semaphore_try_down - 尝试执行信号量down
+ * @sema: 信号量
+ */
+static inline int semaphore_try_down(semaphore_t *sema)
+{
+    
+    unsigned long flags;
+    save_intr(flags);
+
+	/* 如果计数器大于0，就说明资源没有被占用 */
+	if (atomic_get(&sema->counter) > 0) {
+		/* 计数器减1，说明现在信号量被获取一次了 */
+		atomic_dec(&sema->counter);
+    } else {	
+		/* 不能获取的话，就不被阻塞，直接返回 */
+		restore_intr(flags);
+		return -1;
+	}
+    restore_intr(flags);
+	return 0;
+}
+
+/**
  * __semaphore_down - 执行具体的up操作
  * @sema: 信号量
  */

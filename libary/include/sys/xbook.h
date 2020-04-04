@@ -40,5 +40,9 @@ int x_msgget(char *name, int flags);
 int x_msgput(int msgid);
 int x_msgsnd(int msgid, const void *msgbuf, x_size_t msgsz, int msgflg);
 int x_msgrcv(int msgid, const void *msgbuf, x_size_t msgsz, long msgtype, int msgflg);
+int x_semget(char *name, int value, int flags);
+int x_semput(int semid);
+int x_semdown(int semid, int semflg);
+int x_semup(int semid);
 
 #endif  /* _SYS_XBOOK_H */

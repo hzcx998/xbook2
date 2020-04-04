@@ -10,6 +10,7 @@
 #include <xbook/schedule.h>
 #include <xbook/sharemem.h>
 #include <xbook/msgqueue.h>
+#include <xbook/sem.h>
 
 int kernel_main(void)
 {
@@ -25,7 +26,8 @@ int kernel_main(void)
     /* init ipc */
     init_share_mem();
     init_msg_queue();
-
+    init_sem();
+    
     init_tasks();
     init_clock();
     

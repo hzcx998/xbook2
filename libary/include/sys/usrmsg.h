@@ -24,6 +24,10 @@ enum {
     UMSG_MSGPUT,            /* put message queue */
     UMSG_MSGSND,            /* send message to queue */
     UMSG_MSGRCV,            /* receive message form queue */
+    UMSG_SEMGET,            /* get semaphore */
+    UMSG_SEMPUT,            /* put semaphore */
+    UMSG_SEMDOWN,           /* down semaphore */
+    UMSG_SEMUP,             /* up semaphore */
 };
 
 /* user message 用户消息 */

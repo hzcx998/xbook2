@@ -453,3 +453,84 @@ int x_msgrcv(int msgid, const void *msgbuf, x_size_t msgsz, long msgtype, int ms
     umsg(msg);
     return umsg_get_retval(msg, int);
 }
+
+/**
+ * x_semget() - get a semaphore
+ * 
+ * @name: sem name
+ * @flags: sem flags
+ *         IPC_CREAT: create a new semq or open a semq.
+ *          if ok, return semid, or not return -1
+ *         IPC_EXCL: only create a new semq.
+ *          this should use with IPC_CREAT, to make sure
+ *          that the semq not exist. example: IPC_CREAT|IPC_EXCL
+ * 
+ * get a semaphore from kernel
+ *  
+ * @return: return semid >= 0 is success, -1 means failed!
+ */
+int x_semget(char *name, int value, int flags)
+{
+    define_umsg(sem);
+    umsg_set_type(sem, UMSG_SEMGET);
+    umsg_set_arg0(sem, name);
+    umsg_set_arg1(sem, value);
+    umsg_set_arg2(sem, flags);
+    umsg(sem);
+    return umsg_get_retval(sem, int);
+}
+
+/**
+ * x_semput() - put a semaphore
+ * 
+ * @semid: semaphore id
+ * 
+ * put(free) a semaphore from kernel
+ *  
+ * @return: 0 is success, -1 is failed!
+ */
+int x_semput(int semid)
+{
+    define_umsg(sem);
+    umsg_set_type(sem, UMSG_SEMPUT);
+    umsg_set_arg0(sem, semid);
+    umsg(sem);
+    return umsg_get_retval(sem, int);
+}
+
+/**
+ * x_semdown() - down a semaphore
+ * 
+ * @semid: semaphore id
+ * @semflg: message send flags.
+ * 			IPC_NOWAIT: if try down semaphore failed, process won't block,
+ *          return -1
+ * 
+ * to avoid mutex or make sync.
+ * 
+ * @return: 0 is success, -1 is failed!
+ */
+int x_semdown(int semid, int semflg)
+{
+    define_umsg(sem);
+    umsg_set_type(sem, UMSG_SEMDOWN);
+    umsg_set_arg0(sem, semid);
+    umsg_set_arg1(sem, semflg);
+    umsg(sem);
+    return umsg_get_retval(sem, int);
+}
+/**
+ * x_semup() - up a semaphore
+ * 
+ * @semid: semaphore id
+ * 
+ * @return: 0 is success, -1 is failed!
+ */
+int x_semup(int semid)
+{
+    define_umsg(sem);
+    umsg_set_type(sem, UMSG_SEMUP);
+    umsg_set_arg0(sem, semid);
+    umsg(sem);
+    return umsg_get_retval(sem, int);
+}
