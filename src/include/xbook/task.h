@@ -19,6 +19,20 @@ typedef enum task_state {
     TASK_DIED,              /* 进程处于死亡状态，资源已经被回收 */
 } task_state_t;
 
+typedef struct thread_stack {
+    uint32_t ebp;
+    uint32_t ebx;
+    uint32_t edi;
+    uint32_t esi;
+
+    /* 首次运行指向kthread_func_t，其它时候指向switch_to的返回地址 */
+    void (*eip) (task_func_t *func, void *arg);
+
+    uint32_t unused;
+    task_func_t *function;   // 线程要调用的函数
+    void *arg;  // 线程携带的参数
+} thread_stack_t;
+
 #define MAX_TASK_NAMELEN 32
 
 /* 栈魔数，用于检测内核栈是否向下越界 */
@@ -40,7 +54,6 @@ typedef struct priority_queue {
 } priority_queue_t;
 
 typedef struct task {
-    trap_frame_t *block_frame;  /* 阻塞时使用的中断栈 */
     unsigned char *kstack;                // kernel stack, must be first member
     task_state_t state;          /* 任务的状态 */
     pid_t pid;                      // 自己的进程id
@@ -106,5 +119,8 @@ pid_t fork_pid();
 void print_task();
 void task_yeild();
 
+void kernel_pause();
+
+void dump_task_kstack(thread_stack_t *kstack);
 
 #endif   /* _XBOOK_TASK_H */

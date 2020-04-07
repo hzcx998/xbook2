@@ -157,7 +157,7 @@ void timer_softirq_handler(softirq_action_t *action)
 void sched_softirq_handler(softirq_action_t *action)
 {
     
-    #if 0
+    #if 1
     task_t *current = current_task;
    
 	/* 检测内核栈是否溢出 */
@@ -237,31 +237,13 @@ extern int need_sched;
  */
 int clock_handler(unsigned long irq, unsigned long data)
 {
-    //
     //printk("<%x>", current_task);
 	
     /* 改变ticks计数 */
 	systicks++;
-	//schedule();
-    task_t *current = current_task;
-    //printk("[%d]", current->ticks);
-    
-	/* 检测内核栈是否溢出 */
-	//ASSERT(current->stack_magic == TASK_STACK_MAGIC);
-    if (current->stack_magic != TASK_STACK_MAGIC)
-        dump_task(current);
-
-	/* 更新任务调度 */
-	current->elapsed_ticks++;
-	
-    /* 需要进行调度的时候才会去调度 */
-	if (current->ticks <= 0) {
-		schedule();
-	} else {
-		current->ticks--;
-	}
+    // printk("[%d]", systicks);
     //printk("[%d]", need_sched);
-    
+    //printk("clock over!");
     /*int i;
     for (i = 0; i < 0x100000; i++) {
 
@@ -270,7 +252,7 @@ int clock_handler(unsigned long irq, unsigned long data)
 	//active_softirq(TIMER_SOFTIRQ);
 
 	/* 激活调度器软中断 */
-	//active_softirq(SCHED_SOFTIRQ);
+	active_softirq(SCHED_SOFTIRQ);
     /*update_tss_info((unsigned long )task_current);
     current_trap_frame = (trap_frame_t *)task_current->kstack;*/
     return 0;
@@ -323,5 +305,4 @@ void init_clock()
 	if (register_irq(IRQ0_CLOCK, &clock_handler, IRQF_DISABLED, "clockirq", "kclock", 0))
         printk("register failed!\n");
 
-    //enable_intr();
 }

@@ -54,11 +54,11 @@ int proc_exec_raw(char *name, char **argv)
         printk(KERN_ERR "proc_exec_raw: it is not a elf format file!\n", name);
         return -1;
     }
-    /*int argc = 0;
+    int argc = 0;
     while (argv[argc]) {
         printk("arg: %s", argv[argc]);
         argc++;
-    }*/
+    }
     /* 由于需要重载镜像数据，而传递的参数是在用户数据中，因此需要先保存
     参数，然后再重载镜像 */
     char *tmp_arg = kmalloc(PAGE_SIZE);
@@ -84,6 +84,8 @@ int proc_exec_raw(char *name, char **argv)
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
     
+    proc_make_trap_frame(cur);
+
     /* 初始化用户栈 */
     if(proc_stack_init(cur, frame, new_argv)){
         /* !!!需要取消已经加载镜像虚拟地址映射 */
@@ -193,6 +195,8 @@ int proc_exec_file(char *name, x_file_t *file, char **argv)
     /* 构建中断栈框 */
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
+    
+    proc_make_trap_frame(cur);
     
     /* 初始化用户栈 */
     if(proc_stack_init(cur, frame, new_argv)){

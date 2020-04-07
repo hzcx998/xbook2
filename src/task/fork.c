@@ -24,8 +24,6 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     child->global_list.next = child->global_list.prev = NULL;
     /* 设置内核栈位置 */
     child->kstack = (unsigned char *)((unsigned char *)child + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
-    task_current->block_frame = kmalloc(sizeof(trap_frame_t));
-    *task_current->block_frame = *parent->block_frame;
     /* 复制名字，在后面追加fork表明是一个fork的进程，用于测试 */
     //strcat(child->name, "_fork");
     //dump_trap_frame((trap_frame_t *)child->kstack);
@@ -67,8 +65,8 @@ static int copy_vm_mapping(task_t *child, task_t *parent)
     /* 获取父目录的虚拟空间 */
     vmspace_t *space = parent->vmm->vmspace_head;
     
-    uint32_t prog_vaddr = 0;
-    uint32_t paddr;
+    unsigned long prog_vaddr = 0;
+    unsigned long paddr;
     
     /* 当空间不为空时就一直获取 */
     while (space != NULL) {
@@ -174,6 +172,73 @@ static int copy_vm(task_t *child, task_t *parent)
     return 0;
 }
 
+static int bulid_child_stack(task_t *child)
+{
+    /* 1.让子进程返回0 */
+
+    /* 获取中断栈框 */
+    trap_frame_t *frame = (trap_frame_t *)(
+            (unsigned long)child + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
+    /*
+	printk("edi: %x esi: %x ebp: %x esp: %x\n", 
+			frame->edi, frame->esi, frame->ebp, frame->esp);
+	printk("ebx: %x edx: %x ecx: %x eax: %x\n", 
+			frame->ebx, frame->edx, frame->ecx, frame->eax);
+	printk("gs: %x fs: %x es: %x ds: %x\n", 
+			frame->gs, frame->fs, frame->es, frame->ds);
+	printk("err: %x eip: %x cs: %x eflags: %x\n", 
+			frame->errorCode, frame->eip, frame->cs, frame->eflags);
+	printk("esp: %x ss: %x\n", 
+			frame->esp, frame->ss);
+	*/
+
+    //printk(PART_TIP "task at %x fram at %x\n", child, frame);
+    /* 设置eax为0，就相当于设置了子任务的返回值为0 */
+    frame->eax = 0;
+
+    /* 线程栈我们需要的数据只有5个，即ebp，ebx，edi，esi，eip */
+    thread_stack_t *thread_stack = (thread_stack_t *)\
+        ((unsigned long *)frame - 5);
+
+    /* 把SwitchTo的返回地址设置成InterruptExit，直接从中断返回 */
+    //thread_stack->eip = (unsigned long)&InterruptExit;
+    thread_stack->eip = intr_exit;
+    
+    //printk(PART_TIP "thread_stack eip %x\n", thread_stack->eip);
+    /* 下面的赋值只是用来使线程栈构建更清晰，下面2行的赋值其实不必要，
+    因为在进入InterruptExit之后会进行一系列pop把寄存器覆盖掉 */
+    thread_stack->ebp = thread_stack->ebx = \
+    thread_stack->esi = thread_stack->edi = 0;
+    
+    /* 把构建的线程栈的栈顶最为switch_to恢复数据时的栈顶 */
+    child->kstack = (uint8_t *)&thread_stack->ebp;
+    //printk(PART_TIP "kstack %x\n", child->kstack);
+    
+    /* 2.为SwitchTo构建线程环境，在中断栈框下面 */
+    //unsigned long *retAddrInthread_stack = (unsigned long *)frame - 1;
+
+    /* 这3行只是为了梳理线程栈中的关系，不一定要写出来 */
+    /* unsigned long *esiInInthread_stack = (unsigned long *)frame - 2;
+    unsigned long *ediInInthread_stack = (unsigned long *)frame - 3;
+    unsigned long *ebxInInthread_stack = (unsigned long *)frame - 4; */
+    /* ebp在线程栈中的地址便是当时esp（0级栈的栈顶），也就是esp
+    为 "(unsigned long *)frame - 5"*/
+    //unsigned long *ebpInInthread_stack = (unsigned long *)frame - 5;
+
+    /* 把SwitchTo的返回地址设置成InterruptExit，直接从中断返回 */
+    // *retAddrInthread_stack = (unsigned long)&InterruptExit;
+
+    /* 下面的赋值只是用来使线程栈构建更清晰，下面2行的赋值其实不必要，
+    因为在进入InterruptExit之后会进行一系列pop把寄存器覆盖掉 */
+    /* *ebpInInthread_stack = *ebxInInthread_stack = \
+    *ediInInthread_stack = *esiInInthread_stack = 0;*/
+
+    /* 把构建的线程栈的栈顶最为SwitchTo恢复数据时的栈顶 */
+    //child->kstack = (uint8_t *)ebpInInthread_stack;
+
+    return 0;
+}
+
 /**
  * copy_task - 拷贝父进程的资源给子进程
  */
@@ -194,6 +259,9 @@ static int copy_task(task_t *child, task_t *parent)
     /* 3.复制页表和虚拟内存空间 */
     if (copy_vm(child, parent))
         return -1;
+    
+    
+    bulid_child_stack(child);
     // printk(KERN_DEBUG "child heap is [%x,%x]\n", child->vmm->heap_start, child->vmm->heap_end);
     return 0;
 }

@@ -64,7 +64,6 @@ void active_softirq(unsigned long softirq)
     }
 }
 
-
 /**
  * handle_softirq - 处理软中断
  */

@@ -56,22 +56,6 @@ void set_next_task(task_t *next)
 {
     task_current = next;
 
-    /* 如果不是阻塞时产生的临时栈，就指向默认中断栈，不然就指向临时栈。
-    为什么需要这么做呢？
-    因为时钟中断结束时，会把当前任务的默认栈当做中断栈退出。而这是切换任务的
-    唯一方式，因此，如果我们想在非中断状态下实现任务切换，就需要模拟这个机制。
-    如果我们模拟过程中使用了这个默认的栈，那么模拟结束后，返回的时候，会发现
-    这个栈的内容以经被改变了，会出错。因此，引入了一个临时的栈，这样，就可以
-    在中断执行过程中或者从用户态切换到内核态之中使用模拟中断执行退出机制，在
-    中断中，或者是用户消息中，提前进行任务切换。不过，这个还是基于时钟中断机
-    制，但是，他可以发生在用户消息之中。
-    简单说，就是为了解决用户消息需要阻塞进程，而进场恢复后中断栈不一致的问题。
-     */
-    if (!task_current->flags) 
-        current_trap_frame = (trap_frame_t *)task_current->kstack;
-    else 
-        current_trap_frame = task_current->block_frame;
-
     task_activate(task_current);
 }
 
@@ -86,21 +70,12 @@ void schedule()
     task_t *cur = current_task;
     task_t *next = get_next_task(cur);
     set_next_task(next);
-    need_sched = 1; /* 需要进行调度 */
-    //printk(KERN_INFO "> switch from %d-%x to %d-%x addr=%x eip=%x\n", cur->pid, cur, next->pid, next, current_trap_frame, current_trap_frame->eip);
-    //dump_trap_frame(current_trap_frame);
-}
-
-void launch_task()
-{
-    char *argv[3] = {"init", "arg2", 0};
-    process_create("init", argv);
-    
-    /* 启动第一个任务 */
-    set_next_task(task_priority_queue_fetch_first());
-    printk(KERN_INFO "launch: name=%s, pid=%d ppid=%d\n", current_task->name,
-        current_task->pid, current_task->parent_pid);
-    switch_to_user(current_trap_frame);
+    /*printk(KERN_INFO "> switch from %s-%d-%x to %s-%d-%x\n",
+        cur->name, cur->pid, cur, next->name, next->pid, next);
+    */
+    /*dump_task_kstack(next->kstack);
+    dump_task(next);*/
+    switch_to(cur, next);
 }
 
 #ifdef CONFIG_PREEMPT

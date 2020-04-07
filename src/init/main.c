@@ -31,14 +31,16 @@ int kernel_main(void)
     init_tasks();
     init_clock();
     
+    enable_intr(); /* 打开中断 */
+    
     /* init unit drivers */
     init_unit();
 
     /* init raw block */
     init_raw_block();
 
-    /* launch multitask schedule */
-    launch_task();
-    return 0;
+    kernel_pause();
+
+    return 0;    
 }
 

@@ -29,6 +29,19 @@ task_t *task_idle;
 
 task_t *task_current;   /* 当前任务指针 */
 
+/**
+ * KernelThread - 执行内核线程
+ * @function: 要执行的线程
+ * @arg: 参数
+ * 
+ * 改变当前的执行流，去执行我们选择的内核线程
+ */
+static void kernel_thread(task_func_t *function, void *arg)
+{
+    enable_intr();  /* 在启动前需要打开中断，避免启动后不能产生时钟中断调度 */
+    function(arg);
+}
+
 /**  
  * new_pid - 分配一个pid
  */
@@ -52,6 +65,13 @@ static void roll_back_pid()
 }
 #endif
 
+void dump_task_kstack(thread_stack_t *kstack)
+{
+    kstack->eip;
+    printk(KERN_INFO "eip:%x func:%x arg:%x ebp:%x ebx:%x esi:%x edi:%x\n", 
+    kstack->eip, kstack->function, kstack->arg, kstack->ebp, kstack->ebx, kstack->esi, kstack->edi);
+}
+
 /**
  * make_task_stack - 创建一个线程
  * @task: 线程结构体
@@ -62,12 +82,18 @@ void make_task_stack(task_t *task, task_func_t function, void *arg)
 {
     /* 预留中断栈 */
     task->kstack -= sizeof(trap_frame_t);
-    trap_frame_t *frame = (trap_frame_t *) task->kstack;
-    /* 默认内核线程使用内核段 */
-    __ktask_trap_frame_init(frame);
+    /* 预留线程栈 */
+    task->kstack -= sizeof(thread_stack_t);
+    thread_stack_t *thread_stack = (thread_stack_t *)task->kstack;
 
-    frame->eip = (unsigned long )function;
-    frame->esp = (unsigned long)kmalloc(PAGE_SIZE) + PAGE_SIZE;/* 任务栈 */
+    /* 填写线程栈信息 */
+    // 在kernel_thread中去改变执行流，从而可以传递一个参数
+    thread_stack->eip = kernel_thread;
+    thread_stack->function = function;
+    thread_stack->arg = arg;
+    thread_stack->ebp = thread_stack->ebx = \
+    thread_stack->esi = thread_stack->edi = 0;
+
 }
 
 /**
@@ -107,9 +133,6 @@ void task_init(task_t *task, char *name, int priority)
     // set kernel stack as the top of task mem struct
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KSTACK_SIZE);
 
-    task->block_frame = kmalloc(sizeof(trap_frame_t));
-    if (task->block_frame == NULL)
-        panic(KERN_EMERG "alloc block frame failed!\n");
     /* no priority queue */
     task->prio_queue = NULL;
     task->flags = 0;
@@ -186,6 +209,11 @@ task_t *kthread_start(char *name, int priority, task_func_t func, void *arg)
     task_priority_queue_add_tail(task);
     
     restore_intr(flags);
+    /*
+    asm volatile ("movl %0, %%esp; \
+    pop %%ebp; pop %%ebx; pop %%edi; pop %%esi; \
+    ret": : "g" (task->kstack) : "memory");*/
+
     return task;
 }
 
@@ -200,11 +228,9 @@ void task_activate(task_t *task)
     
     /* 设置为运行状态 */
     task->state = TASK_RUNNING;
-    /* 激活任务的页目录表 */
-
+    /* 激活任务虚拟内存 */
     vmm_active(task->vmm);
 }
-extern void make_tmp_kstack();
 
 /**
  * task_block - 把任务阻塞
@@ -212,8 +238,7 @@ extern void make_tmp_kstack();
 void task_block(task_state_t state)
 {
     /*
-    state有5种状态，分别是TASK_BLOCKED, TASK_WAITING, TASK_STOPPED, 
-    TASK_ZOMBIE,TASK_HANGING
+    state有4种状态，分别是TASK_BLOCKED, TASK_WAITING, TASK_STOPPED, TASK_ZOMBIE
     它们不能被调度
     */
     ASSERT ((state == TASK_BLOCKED) || 
@@ -221,28 +246,19 @@ void task_block(task_state_t state)
             (state == TASK_STOPPED) ||
             (state == TASK_HANGING) ||
             (state == TASK_ZOMBIE));
-    // 不允许破坏进程环境
-    disable_intr();
+    // 先关闭中断，并且保存中断状态
+    unsigned long flags;
+    save_intr(flags);
+
     // 改变状态
     task_t *current = current_task;
     //printk(PART_TIP "task %s blocked with status %d\n", current->name, state);
     current->state = state;
-    current->block_ticks = current->ticks; /* 保存阻塞时的ticks */
-    current->ticks = 0; /* 置ticks0，下次发生中断就切换 */
     
-    /* 构建一个block的中断栈 */
-    __kernel_trap_frame_init(current->block_frame);
-    /* 当任务调度回来时，使用这个块栈作为中断栈 */
-    task_current->flags = 1; /* 下次中断时使用阻塞中断栈 */
-
-    /* 切换内核栈 */
-    make_tmp_kstack();
-    disable_intr(); /* 不允许中断 */
-    task_current->flags = 0; /* 不是处于block阻塞中 */
-    /* 设置中断栈指针指向任务默认的中断栈 */
-    current_trap_frame = (trap_frame_t *)task_current->kstack;
-    //enable_intr(); /* 允许中断 */
-    //printk("task %d block end\n", current->pid);
+    // 调度到其它任务
+    schedule();
+    // 恢复之前的状态
+    restore_intr(flags);
 }
 
 /**
@@ -251,6 +267,10 @@ void task_block(task_state_t state)
  */
 void task_unblock(task_t *task)
 {
+    // 先关闭中断，并且保存中断状态
+    unsigned long flags;
+    save_intr(flags);
+
     /*
     state有2种状态，分别是TASK_BLOCKED, TASK_WAITING
     只有它们能被唤醒, TASK_ZOMBIE只能阻塞，不能被唤醒
@@ -259,29 +279,41 @@ void task_unblock(task_t *task)
         (task->state == TASK_WAITING) ||
         (task->state == TASK_STOPPED));
     
-    // 先关闭中断，并且保存中断状态
-    unsigned long flags;
-    save_intr(flags);
-
-    // 保证没有在就绪队列中
-    ASSERT(!is_task_in_priority_queue(task));
-    // 已经就绪是不能再次就绪的
-    if (is_task_in_priority_queue(task)) {
-        panic("TaskUnblock: task has already in ready list!\n");
+    if (task->state != TASK_READY) {
+        // 保证没有在就绪队列中
+        ASSERT(!is_task_in_priority_queue(task));
+        // 已经就绪是不能再次就绪的
+        if (is_task_in_priority_queue(task)) {
+            panic("TaskUnblock: task has already in ready list!\n");
+        }
+        // 处于就绪状态
+        task->state = TASK_READY;
+        // 把任务放在最前面，让它快速得到调度
+        task_priority_queue_add_head(task);
     }
-    // 处于就绪状态
-    task->state = TASK_READY;
-    // 把任务放在最前面，让它快速得到调度
-    task_priority_queue_add_tail(task);
-    // printk("block ticks:%d ", task->block_ticks);
-    if (task->block_ticks <= 0) {    /* 如果ticks为0，那么就获取时间片值 */
-        task->ticks = task->timeslice; 
-    } else {
-        task->ticks = task->block_ticks;
-    }
+    
     restore_intr(flags);
     /* 由于现在状态变成就绪，并且在队列里面，所以下次切换任务时就会切换到任务，并且往后面运行 */
-    //printk(KERN_DEBUG "task %s pid=%d was unblocked!\n", task->name, task->pid);
+}
+
+/**
+ * create_idle_thread - 为内核主线程设定身份
+ * 
+ * 内核主线程就是从boot到现在的执行流。到最后会演变成idle
+ * 在这里，我们需要给与它一个身份，他才可以进行多线程调度
+ */
+static void create_idle_thread()
+{
+    // 当前运行的就是主线程
+    task_idle = (task_t *) KERNEL_STATCK_BOTTOM;
+    task_current = task_idle;   /* 设置当前任务 */
+
+    /* 最开始设置为最佳优先级，这样才可以往后面运行。直到运行到最后，就变成IDLE优先级 */
+    task_init(task_idle, "idle", TASK_PRIO_BEST);
+
+    /* 设置为运行中 */
+    task_idle->state = TASK_RUNNING;
+    task_global_list_add(task_idle); /* 添加到全局任务 */
 }
 
 /**
@@ -292,7 +324,7 @@ void print_task()
     printk("\n----Task----\n");
     task_t *task;
     list_for_each_owner(task, &task_global_list, global_list) {
-        printk("name %s pid %d ppid %d status %d\n", 
+        printk("name %s pid %d ppid %d state %d\n", 
             task->name, task->pid, task->parent_pid,  task->state);
     }
 }
@@ -314,6 +346,7 @@ DEFINE_FIFO_BUF(fifo_buf, NULL, 0);
 //#define PRINT_SYNC
 //#define PRINT_FIFO
 //#define PRINT_RW_LOCK
+#define PRINT_TEST 0
 
 fifo_buf_t *kfifo;
 
@@ -324,7 +357,7 @@ DEFINE_RWLOCK_WR_FIRST(rwlock);
 
 int rwlock_int = 0;
 
-#define FREQ 0X1000
+#define FREQ 0X10000
 
 int testA = 0, testB = 0;
 void taskA(void *arg)
@@ -365,7 +398,12 @@ void taskA(void *arg)
             #ifdef PRINT_MUTEX
             mutex_lock(&pmutex);
             #endif
-            //printk("<abcdefghabcdefabcdefghabcdefabcdefghabcdefabcdefghabcdefabcdefghabcdefabcdefghabcdef>\n");
+            #ifndef PRINT_RW_LOCK
+
+#if PRINT_TEST == 1
+            printk("<abcdefghabcdefabcdefghabcdefabcdefghabcdefabcdefghabcdefabcdefghabcdefabcdefghabcdef>\n");
+#endif
+            #endif
             #ifdef PRINT_MUTEX
             mutex_unlock(&pmutex);
             #endif
@@ -441,7 +479,11 @@ void taskB(void *arg)
             #ifdef PRINT_MUTEX
             mutex_lock(&pmutex);
             #endif
-            //printk("[123456781234561234567812345612345678123456123456781234561234567812345612345678123456]\n");
+            #ifndef PRINT_RW_LOCK
+#if PRINT_TEST == 1
+            printk("[123456781234561234567812345612345678123456123456781234561234567812345612345678123456]\n");
+#endif
+            #endif
             #ifdef PRINT_MUTEX
             mutex_unlock(&pmutex);
             #endif
@@ -503,7 +545,11 @@ void taskC(void *arg)
             #ifdef PRINT_MUTEX
             mutex_lock(&pmutex);
             #endif
-            //printk("[~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+]\n");
+            #ifndef PRINT_RW_LOCK
+#if PRINT_TEST == 1
+            printk("[~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+~!@#$^&*()_+]\n");
+#endif
+            #endif
             #ifdef PRINT_MUTEX
             mutex_unlock(&pmutex);
             #endif
@@ -589,7 +635,7 @@ void dump_task(task_t *task)
 {
     printk("----Task----\n");
     printk("name:%s pid:%d parent pid:%d state:%d\n", task->name, task->pid, task->parent_pid, task->state);
-    printk("vmm->vm_frame:%x priority:%d ticks:%d elapsed ticks:%d\n", task->vmm->page_storage, task->priority, task->ticks, task->elapsed_ticks);
+    //printk("vmm->vm_frame:%x priority:%d ticks:%d elapsed ticks:%d\n", task->vmm->page_storage, task->priority, task->ticks, task->elapsed_ticks);
     printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
 
@@ -604,6 +650,37 @@ void serve_idle(void *arg)
     
 }
 
+char *init_argv[3] = {"init", 0};
+
+/**
+ * kernel_pause - 内核“暂停”运行。
+ * 
+ * 在初始化的最后调用，当前任务演变成idle任务，等待随时调动
+ */
+void kernel_pause()
+{
+    
+	/* 加载init进程 */
+    process_create("init", init_argv);
+
+    /* 优先级降级 */
+    task_idle->state = TASK_BLOCKED;
+    task_idle->priority = TASK_PRIO_IDLE;
+    /* 然后设置成最低特权级 */
+    task_priority_queue_add_tail(task_idle);
+    schedule(); /* 调度到其它任务，直到又重新被调度 */
+
+    /* idle线程 */
+	while (1) {
+		/* 进程默认处于阻塞状态，如果被唤醒就会执行后面的操作，
+		直到再次被阻塞 */
+		
+        /* 打开中断 */
+		//enable_intr();
+		/* 执行cpu停机 */
+		cpu_idle();
+	};
+}
 /**
  * init_tasks - 初始化多任务环境
  */
@@ -612,12 +689,15 @@ void init_tasks()
     init_schedule();
 
     next_pid = 0;
+
+    create_idle_thread();
+
     /* 有可能做测试阻塞main线程，那么就没有线程，
     在切换任务的时候就会出错，所以这里创建一个测试线程 */
-    /*kthread_start("test", 1, taskA, "NULL");
-    kthread_start("test2", 1, taskB, "NULL");
-    kthread_start("test3", 1, taskC, "NULL");
-    *///kthread_start("test4", 1, taskD, "NULL");
+    /*kthread_start("test", TASK_PRIO_RT, taskA, "NULL");
+    kthread_start("test2", TASK_PRIO_RT, taskB, "NULL");
+    kthread_start("test3", TASK_PRIO_RT, taskC, "NULL");*/
+    //kthread_start("test4", 1, taskD, "NULL");
     /* idle 哨兵服务，pid是0 */
-    kthread_start("idle", TASK_PRIO_IDLE, serve_idle, NULL);
+    //kthread_start("idle", TASK_PRIO_IDLE, serve_idle, NULL);
 }

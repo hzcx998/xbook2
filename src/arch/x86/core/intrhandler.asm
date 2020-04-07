@@ -46,7 +46,7 @@ EXCEPTION_ENTRY 0x1c,NO_ERROR_CODE
 EXCEPTION_ENTRY 0x1d,ERROR_CODE
 EXCEPTION_ENTRY 0x1e,ERROR_CODE
 EXCEPTION_ENTRY 0x1f,NO_ERROR_CODE 
-;INTERRUPT_ENTRY 0x20,NO_ERROR_CODE	;时钟中断对应的入口
+INTERRUPT_ENTRY 0x20,NO_ERROR_CODE	;时钟中断对应的入口
 INTERRUPT_ENTRY 0x21,NO_ERROR_CODE	;键盘中断对应的入口
 INTERRUPT_ENTRY 0x22,NO_ERROR_CODE	;级联用的
 INTERRUPT_ENTRY 0x23,NO_ERROR_CODE	;串口2对应的入口
@@ -103,52 +103,6 @@ kern_usrmsg_handler:
     ;add esp, 4
     
     jmp intr_exit		    ; intr_exit返回,恢复上下文
-
-extern need_sched
-
-extern clock_handler
-global irq_entry0x20
-irq_entry0x20:		 ; 每个中断处理程序都要压入中断向量号,所以一个中断类型一个中断处理程序，自己知道自己的中断向量号是多少
-
-    push 0				 ; 中断若有错误码会压在eip后面 
-; 以下是保存上下文环境
-    push ds
-    push es
-    push fs
-    push gs
-    pushad			 ; PUSHAD指令压入32位寄存器,其入栈顺序是: EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI
-
-    mov dx,ss
-	mov ds, dx
-	mov es, dx
-    mov fs, dx
-	mov gs, dx
-    push 0			 ; 不管idt_table中的目标程序是否需要参数,都一律压入中断向量号,调试时很方便
-    
-    inc dword [es: 0x800b8000]
-
-    ; kernel stack is below trap stack
-    ; after push registers, esp is point to kernel stack.
-    ; trap stack
-    ; ----------
-    ; kernel stack
-    
-    push esp        ; 把中断栈指针传递进去  
-    ; 调用DoIRQ，通过传入的参数获取irq值
-    call clock_handler
-    add esp, 4
-
-    mov al, 0x20
-    out 0x20, al
-    
-    cmp dword [need_sched], 1 ; if (need_sched != 1)
-    jne intr_exit       ; jmp intr_exit;
-    
-    dec dword [need_sched]  ; need_sched--; 
-    ; 重新指向中断栈,才能切换任务
-    mov esp, [current_trap_frame]
-
-    jmp intr_exit
 
 global intr_exit
 

@@ -397,7 +397,7 @@ void init_msg_queue()
         semaphore_init(&msg_queue_table[i].mutex, 1); /* 初始化为1，表示有没有持有锁 */ 
         memset(msg_queue_table[i].name, 0, MSGQ_NAME_LEN);
     }
-
+#if 0
     int msgid = msg_queue_get("test", IPC_CREAT);
     if (msgid < 0) {
         printk(KERN_DEBUG "get msgq failed!\n");
@@ -411,4 +411,5 @@ void init_msg_queue()
     if (msg_queue_put(msgid) < 0) {
         printk(KERN_DEBUG "put msgq %d failed!\n", msgid);
     }
+#endif
 }

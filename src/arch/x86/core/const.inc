@@ -70,7 +70,7 @@ irq_entry%1:		 ; 每个中断处理程序都要压入中断向量号,所以一�
     add esp, 4
     
     ; softirq
-    ;call do_softirq
+    call do_softirq
 
     ; signal
     ;push esp         ; 把中断栈指针传递进去

@@ -191,7 +191,7 @@ int sem_down(int semid, int semflg)
     semaphore_down(&sem_mutex);
     sem = sem_find_by_id(semid);
     semaphore_up(&sem_mutex);
-    if (sem == NULL) { /* not found share mem */
+    if (sem == NULL) { /* not found sem */
         return -1;
     }
     if (semflg & IPC_NOWAIT) { /* 尝试down */
@@ -215,7 +215,7 @@ int sem_up(int semid)
     semaphore_down(&sem_mutex);
     sem = sem_find_by_id(semid);
     semaphore_up(&sem_mutex);
-    if (sem == NULL) { /* not found share mem */
+    if (sem == NULL) { /* not found sem */
         return -1;
     }
     semaphore_up(&sem->sema);
@@ -237,7 +237,7 @@ void init_sem()
         semaphore_init(&sem_table[i].sema, 0);
         memset(sem_table[i].name, 0, SEM_NAME_LEN);
     }
-#if 1
+#if 0
     int semid = sem_get("test", 1, IPC_CREAT);
     if (semid == -1)
         printk(KERN_ERR "get sem failed!\n");

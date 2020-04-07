@@ -29,7 +29,7 @@ int do_usrmsg(umsg_t *msg)
 {
     if (!msg)
         return -1;
-    
+    enable_intr();
     /*   retval: do_usrmsg retval
     msg->retval: do real function retval */
     int retval = 0;
@@ -165,5 +165,6 @@ int do_usrmsg(umsg_t *msg)
     default:
         break;
     }
+    disable_intr();
     return retval;
 }

@@ -12,19 +12,37 @@ int func(int n)
         return n * func(n - 1); 
 }
 
+void delay(int t)
+{
+    int i, j;
+    for (i = 0; i < 100 * t; i++) {
+        for (j = 0; j < 100; j++) {
+            
+        }    
+    }
+}
+
+#define SEM_LOCK 0
+
 void test_sem()
 {
     int semid = x_semget("sem_test", 0, IPC_CREAT);
     if (semid < 0) {
         printf("bin: get sem failed!");
-        return -1;
+        return;
     }
     printf("bin: get sem %d.\n", semid);
     while (1)
     {
+        
+        //delay(1);
+#if SEM_LOCK == 1        
         x_semdown(semid, 0);
+#endif
         printf("bin: abcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcd.\n");
+#if SEM_LOCK == 1        
         x_semup(semid);
+#endif  
     }
 }
 

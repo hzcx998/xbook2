@@ -2,17 +2,6 @@ hello, xbook!
 
 info: memory total:1fff0000 byte 511 MB
 info: welcom to xbook kernel.
-info: time:5:27:47 date:2020/3/31
-info: week day:2 Tuesday year day:92
-info: found 2 hard disks.
-info: raw block name:test
-info: raw block name:bin
-info: launch: name=test, pid=1 ppid=-1
-debug: page fault addr:10
-task name=test pid=1
-emege: a memory problem had occured in kernel, please check your code! :(
-emege: page fault at 10.
-debug: vector:14 edi:0 esi:0 ebp:81284f78 esp dummy:81284f30 ebx:7fffffe8 edx:f ecx:2 eax:0
-debug: gs:2b fs:2b es:10 ds:10 error code:0 eip:8010cc9a cs:8 eflags:10046 esp:f ss:0
-
-panic: halt...
+debug: init_msg_queue: alloc mem table at 81483000
+info: time:5:9:23 date:2020/4/7
+info: week day:2 Tuesday year day:99

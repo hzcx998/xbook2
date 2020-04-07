@@ -5,7 +5,7 @@
 
 /*
 debug methods：
-1 -> console in text mode
+1 -> in text mode, in os.
 2 -> serial send to host machine console
 */
 #define CONFIG_DEBUG_METHOD 2

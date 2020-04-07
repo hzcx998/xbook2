@@ -13,35 +13,51 @@ int func(int n)
 
 x_dev_t dev;
 
+void delay(int t)
+{
+    int i, j;
+    for (i = 0; i < 100 * t; i++) {
+        for (j = 0; j < 100; j++) {
+            
+        }    
+    }
+}
+#define SEM_LOCK 0
 
 void test_sem()
 {
     int semid = x_semget("sem_test", 1, IPC_CREAT);
     if (semid < 0) {
         printf("test: parent: get sem failed!");
-        return -1;
+        return;
     }
     printf("test: parent: get sem %d.\n", semid);
-    semid = x_semget("sem_test2", 1, IPC_CREAT);
+    /*semid = x_semget("sem_test2", 1, IPC_CREAT);
     if (semid < 0) {
         printf("test: parent: get sem failed!");
-        return -1;
+        return;
     }
-    printf("test: parent: get sem %d.\n", semid);
-    x_semput(semid);
+    printf("test: parent: get sem %d.\n", semid);*/
+    /*x_semput(semid);
     semid = x_semget("sem_test", 1, IPC_CREAT | IPC_EXCL);
     if (semid < 0) {
         printf("test: parent: get sem failed!");
-        return -1;
-    }
+        return;
+    }*/
     printf("test: parent: get sem %d.\n", semid);
     while (1)
     {
+        //delay(1);
+#if SEM_LOCK == 1        
         x_semdown(semid, 0);
+#endif
         printf("test: 1234567123456712345671234567123456712345671234567.\n");
+#if SEM_LOCK == 1        
         x_semup(semid);
+#endif  
     }
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -57,6 +73,7 @@ int main(int argc, char *argv[])
     while (i < argc)
     {
         printf("\n-%s ", argv[i]);    
+        
         i++;
     }
     //func(1000);
