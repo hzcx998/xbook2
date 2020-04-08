@@ -67,7 +67,6 @@ static void roll_back_pid()
 
 void dump_task_kstack(thread_stack_t *kstack)
 {
-    kstack->eip;
     printk(KERN_INFO "eip:%x func:%x arg:%x ebp:%x ebx:%x esi:%x edi:%x\n", 
     kstack->eip, kstack->function, kstack->arg, kstack->ebp, kstack->ebx, kstack->esi, kstack->edi);
 }
@@ -119,7 +118,6 @@ void task_init(task_t *task, char *name, int priority)
     task->priority = priority;
     task->timeslice = 3;  /* 时间片大小默认值 */
     task->ticks = task->timeslice;  /* timeslice -> ticks */
-    task->block_ticks = 0;
     task->elapsed_ticks = 0;    /* 总运行时间 */
     
     /* init with NULL */
@@ -209,11 +207,6 @@ task_t *kthread_start(char *name, int priority, task_func_t func, void *arg)
     task_priority_queue_add_tail(task);
     
     restore_intr(flags);
-    /*
-    asm volatile ("movl %0, %%esp; \
-    pop %%ebp; pop %%ebx; pop %%edi; pop %%esi; \
-    ret": : "g" (task->kstack) : "memory");*/
-
     return task;
 }
 
@@ -662,12 +655,14 @@ void kernel_pause()
     
 	/* 加载init进程 */
     process_create("init", init_argv);
-
+    unsigned long flags;
+    save_intr(flags);
     /* 优先级降级 */
     task_idle->state = TASK_BLOCKED;
     task_idle->priority = TASK_PRIO_IDLE;
     /* 然后设置成最低特权级 */
     task_priority_queue_add_tail(task_idle);
+    restore_intr(flags);
     schedule(); /* 调度到其它任务，直到又重新被调度 */
 
     /* idle线程 */

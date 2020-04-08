@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
         printf("\n-%s ", argv[i]);    
         i++;
     }
-    test_sem();
+    //test_sem();
     
 #if 0 /* SHM */
     int shmid = x_shmget("shm_test", 0, IPC_CREAT);
@@ -109,13 +109,18 @@ int main(int argc, char *argv[])
     x_msgbuf_t *msgbuf = (x_msgbuf_t *) heap;
     while (1)
     {
+        int j, k;
+        for (j = 0; j < 1000; j++) {
+            for (k = 0; k < 10000; k++);
+        }
         msgbuf->type = 0;
         memset(msgbuf->text, 0, 1024);
         int read = x_msgrcv(msgid, msgbuf, 1024, 100, 0);
-        printf("BIN: parent: rcv msg %d type=%d!", read, msgbuf->type);
+        printf("BIN: parent: rcv msg %d type=%d!\n", read, msgbuf->type);
         for (i = 0; i < 16; i++) {
             printf("%x ", msgbuf->text[i]);
         }
+        printf("\n");
     }
     
     printf("BIN: parent: rcv msg ok!");

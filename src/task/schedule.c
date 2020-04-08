@@ -13,11 +13,6 @@ priority_queue_t priority_queue[MAX_PRIORITY_NR];
 /* 最高等级的队列 */
 priority_queue_t *highest_prio_queue;
 
-trap_frame_t *current_trap_frame;
-
-/* 需要调度标志 */
-int need_sched;
-
 task_t *task_priority_queue_fetch_first()
 {
     task_t *task;
@@ -86,10 +81,6 @@ void schedule()
  */
 void schedule_preempt(task_t *robber)
 {
-    /* close intr */
-    /*unsigned long flags;
-    save_intr(flags);*/
-    
     task_t *cur = current_task;
     
     /* 自己不能抢占自己 */
@@ -104,24 +95,18 @@ void schedule_preempt(task_t *robber)
     
     /* 最高优先级指针已经在抢占前指向了抢占者的优先级，这里就不用调整了 */
 
-    /* 抢占者需要从就绪队列中删除 */
+    /* 抢占者在抢占前已经加入就绪队列，因此需要从就绪队列中删除 */
     --highest_prio_queue->length;   /* sub a task */
     robber->prio_queue = NULL;
     list_del_init(&robber->list);
-
-    /* 当最高优先级的长度为0，就降低最高优先级到长度不为0的优先级 */
+ 
+    /* 删除一个任务后，需要调整最高优先级 */
     ADJUST_HIGHEST_PRIO(highest_prio_queue);
     
-    
-    /* 3.激活任务的内存环境 */
-    task_activate(robber);
-    task_current = robber;
-    
-    /* 4.切换到该任务运行 */
+    set_next_task(robber);
+
+    /* 切换到该任务运行 */
     switch_to(cur, robber);
-    
-    //restore_intr(flags);
-    
 }
 #endif
 
@@ -136,6 +121,4 @@ void init_schedule()
     }
     /* 指向最高级的队列 */
     highest_prio_queue = &priority_queue[0];
-    current_trap_frame = NULL;
-    need_sched = 0;
 }

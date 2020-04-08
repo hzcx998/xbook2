@@ -61,7 +61,6 @@ typedef struct task {
     unsigned long flags;    
     unsigned long priority;              /* 任务所在的优先级队列 */
     unsigned long ticks;                 /* 运行的ticks，当前剩余的timeslice */
-    unsigned long block_ticks;                 /* 阻塞时的ticks数 */
     unsigned long timeslice;             /* 时间片，可以动态调整 */
     unsigned long elapsed_ticks;         /* 任务执行总共占用的时间片数 */
     int exit_status;                     // 退出时的状态

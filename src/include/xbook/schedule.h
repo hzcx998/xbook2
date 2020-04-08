@@ -7,7 +7,7 @@
 #include "assert.h"
 #include "debug.h"
 
-//#define CONFIG_PREEMPT
+#define CONFIG_PREEMPT
 
 /*任务优先级 */
 enum task_priority {

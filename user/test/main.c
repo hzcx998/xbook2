@@ -58,7 +58,6 @@ void test_sem()
     }
 }
 
-
 int main(int argc, char *argv[])
 {
     /*nt i;
@@ -122,8 +121,8 @@ int main(int argc, char *argv[])
     pid = x_fork();*/
     if (pid > 0) {
         printf("I am parent, my child is %d.\n", pid);
-        test_sem();
-        
+        //test_sem();
+       
 #if 0 /* MSG */
         int msgid = x_msgget("usr_test", IPC_CREAT);
         if (msgid < 0) {
@@ -139,10 +138,12 @@ int main(int argc, char *argv[])
         *msgbuf = (x_msgbuf_t *) heap;
         while (1)
         {
+            /*
             int j, k;
             for (j = 0; j < 1000; j++) {
                 for (k = 0; k < 10000; k++);
             }
+            */
             msgbuf->type = 100;
             memset(msgbuf->text, 0x1f, 1024);
             int i;

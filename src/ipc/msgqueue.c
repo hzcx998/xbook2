@@ -218,7 +218,9 @@ int msg_queue_send(int msgid, void *msgbuf, size_t size, int msgflg)
     semaphore_down(&msgq->mutex);
     if (size > msgq->msgsz) {
         size = msgq->msgsz; /* 截断消息 */
+#if DEBUG_MSGQ == 1
         printk(KERN_NOTICE "msg_queue_send: message too long, truncated!\n");
+#endif
     }
 
     /* 如果消息队列已经满了，就根据标志来判断进行什么样的操作 */
@@ -228,8 +230,9 @@ int msg_queue_send(int msgid, void *msgbuf, size_t size, int msgflg)
             printk(KERN_DEBUG "msg_queue_send: message queue full, no wait!\n");
             return -1;
         }
-        
+#if DEBUG_MSGQ == 1
         printk(KERN_NOTICE ">>> sender wait.\n\n");
+#endif        
         /* 没有不等待标志，就阻塞 */
         wait_queue_add(&msgq->senders, current_task);
         semaphore_up(&msgq->mutex);
@@ -255,11 +258,9 @@ int msg_queue_send(int msgid, void *msgbuf, size_t size, int msgflg)
     /* 发送完后，检测是否有等待接收中的任务，并将它唤醒 */
     wait_queue_wakeup(&msgq->receivers);
     semaphore_up(&msgq->mutex);
-    int i;
-    for (i = 0; i < 16; i++) {
-        printk("%x ", msg->buf[i]);
-    }
+#if DEBUG_MSGQ == 1    
     printk(KERN_DEBUG "msg_queue_send: send msg type=%d len:%d ok!\n", msg->type, msg->length);
+#endif
     return 0;
 }
 
@@ -304,7 +305,9 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
             
             return -1;
         }
+#if DEBUG_MSGQ == 1
         printk(KERN_NOTICE "<<< receiver wait.\n");
+#endif
         /* 没有不等待标志，就阻塞 */
         wait_queue_add(&msgq->receivers, current_task);
         semaphore_up(&msgq->mutex);
@@ -363,13 +366,9 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
     long *msg_header = (long *) msgbuf;
     *msg_header = msg->type;
     memcpy((void *)(msg_header + 1), msg->buf, len);
-    
-    int i;
-    for (i = 0; i < 16; i++) {
-        printk("%x ", msg->buf[i]);
-    }
+#if DEBUG_MSGQ == 1    
     printk(KERN_DEBUG "msg_queue_recv: recv msg type=%d len:%d ok!\n", msg->type, msg->length);
-    
+#endif
     /* 释放消息 */
     kfree(msg);
     /* 接收完后，检测是否有等待发送中的任务，并将它唤醒 */

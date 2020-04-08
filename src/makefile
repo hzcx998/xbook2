@@ -181,7 +181,7 @@ endif
 #	b.使用声霸卡：-soundhw sb16
 # 控制台串口调试： -serial stdio 
 QEMU_ARGUMENT = -m 256M \
-		-name "XBook Development Platform for x86" \
+		-name "Xbook Development Platform for x86" \
 		-fda $(FLAPPY_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 		-serial stdio
 		

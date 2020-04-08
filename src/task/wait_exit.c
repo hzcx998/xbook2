@@ -109,15 +109,15 @@ pid_t proc_wait(int *status)
 {
     task_t *parent = current_task;  /* 当前进程是父进程 */
     pid_t child_pid;
-    //unsigned long flags;
+    unsigned long flags;
     
     while (1) {
         //printk(KERN_DEBUG "proc wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
-        //save_intr(flags);
+        save_intr(flags);
         /* 先处理挂起的任务 */
         if ((child_pid = wait_one_hangging_child(parent, status)) >= 0) {
             //printk("proc wait exit\n");
-            //restore_intr(flags);
+            restore_intr(flags);
             return child_pid;
         }
         /* 处理zombie子进程 */
@@ -126,14 +126,14 @@ pid_t proc_wait(int *status)
         /* 查看是否有子进程 */
         if (!find_child_proc(parent)) {
             //printk("no children!\n");
-            //restore_intr(flags);
+            restore_intr(flags);
             return -1; /* no child, return -1 */
         }
         //printk(KERN_DEBUG "proc wait: find proc.\n");
         
         //printk(KERN_DEBUG "proc wait: no child exit, waiting...\n");
         
-        //restore_intr(flags);
+        restore_intr(flags);
         /* WATING for children to exit */
         task_block(TASK_WAITING);
         //printk(KERN_DEBUG "proc wait: child unblocked me.\n");
@@ -155,9 +155,9 @@ pid_t proc_wait(int *status)
  */
 void proc_exit(int status)
 {
-    /*unsigned long flags;
+    unsigned long flags;
     save_intr(flags);
-*/
+
     task_t *cur = current_task;  /* 当前进程是父进程 */
     cur->exit_status = status;
     task_t *parent = find_task_by_pid(cur->parent_pid); 
@@ -170,10 +170,10 @@ void proc_exit(int status)
     deal_zombie_child(cur);
     /* 过继子进程给init进程 */
     adopt_children_to_init(cur);
-
+    
     /* 释放占用的资源 */
     proc_vmm_exit(cur); /* 内存资源退出 */
-    //restore_intr(flags);
+    restore_intr(flags);
     if (parent) {
         /* 查看父进程状态 */
         if (parent->state == TASK_WAITING) {

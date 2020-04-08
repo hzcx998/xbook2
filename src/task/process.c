@@ -348,7 +348,6 @@ void proc_make_trap_frame(task_t *task)
 void proc_entry(void* arg)
 {
     char **argv = (char **) arg;
-    //process_setup(current_task, "init", argv);    
     proc_exec_raw(argv[0], argv);
 }
 

@@ -233,6 +233,8 @@ static void console_outchar(console_driver_t *console, char ch)
 
     flush(console);
 }
+/* 把控制台的信息输出内核调试输出 */
+#define CON_TO_KERN   0
 
 /**
  * console_write - 控制台写入数据
@@ -253,9 +255,11 @@ static int console_write(device_t *device, off_t off, void *buffer, size_t count
 		buf++;
 		count--;
 	}
+#if CON_TO_KERN == 1
     /* 临时输出到内核输出 */
     buf = (char *)buffer;
     printk(KERN_INFO "con: %s", buf);
+#endif
     return 0;
 }
 

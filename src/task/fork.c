@@ -275,8 +275,7 @@ static int copy_task(task_t *child, task_t *parent)
  */
 int proc_fork(long *retval)
 {
-    /*unsigned long flags;
-    save_intr(flags);
+    /*
     */
     /* 保存之前状态并关闭中断 */
     *retval = 0; /* 默认返回0，表示是子进程 */
@@ -302,7 +301,8 @@ int proc_fork(long *retval)
         *retval = -1;
         return -1;
     }
-   
+    unsigned long flags;
+    save_intr(flags);
     /* 把子进程添加到就绪队列和全局链表 */
     task_global_list_add(child);
     task_priority_queue_add_tail(child); /* 放到队首 */
@@ -312,7 +312,7 @@ int proc_fork(long *retval)
     */
     /* 父进程消息返回进程pid */
     *retval = child->pid;
-    //restore_intr(flags);
+    restore_intr(flags);
     
     /* fork成功 */
     return 0;
