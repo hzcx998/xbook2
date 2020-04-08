@@ -5,15 +5,10 @@
 extern intr_handler_table		 
 extern do_irq		 
 extern do_softirq	
-
-extern current_trap_frame
-extern reenter
-
-;extern DoSignal
+extern do_trigger
 
 [bits 32]
 [section .text]
-
 EXCEPTION_ENTRY 0x00,NO_ERROR_CODE
 EXCEPTION_ENTRY 0x01,NO_ERROR_CODE
 EXCEPTION_ENTRY 0x02,NO_ERROR_CODE

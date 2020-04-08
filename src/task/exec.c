@@ -101,6 +101,9 @@ int proc_exec_raw(char *name, char **argv)
     /* 初始化用户映射区域 */
     proc_map_space_init(cur);
     
+    /* 初始化触发器 */
+    trigger_init(cur->triggers);
+    
     /* 设置执行入口 */
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
     

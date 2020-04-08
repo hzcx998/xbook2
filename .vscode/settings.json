@@ -44,6 +44,7 @@
         "sharemem.h": "c",
         "shm.h": "c",
         "ipc.h": "c",
-        "const.h": "c"
+        "const.h": "c",
+        "trigger.h": "c"
     }
 }

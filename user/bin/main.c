@@ -62,6 +62,9 @@ int main(int argc, char *argv[])
     }
     //test_sem();
     
+    int a = 0;
+    int b = a/0;
+    
 #if 0 /* SHM */
     int shmid = x_shmget("shm_test", 0, IPC_CREAT);
     if (shmid < 0) {

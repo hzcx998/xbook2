@@ -33,11 +33,11 @@ exception_entry%1:		 ; 每个中断处理程序都要压入中断向量号,所�
     call [intr_handler_table + %1*4]       ; 调用idt_table中的C版本中断处理函数
     add esp, 4
     
-    ; signal
+    ; trigger
     push esp         ; 把中断栈指针传递进去
-    ;call DoSignal
+    call do_trigger
     add esp, 4
-
+    
     jmp intr_exit
 
 %endmacro
@@ -72,10 +72,10 @@ irq_entry%1:		 ; 每个中断处理程序都要压入中断向量号,所以一�
     ; softirq
     call do_softirq
 
-    ; signal
-    ;push esp         ; 把中断栈指针传递进去
-    ;call DoSignal
-    ;add esp, 4
+    ; trigger
+    push esp         ; 把中断栈指针传递进去
+    call do_trigger
+    add esp, 4
     jmp intr_exit
 
 %endmacro

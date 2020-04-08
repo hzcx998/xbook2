@@ -6,6 +6,7 @@
 #include "types.h"
 #include "list.h"
 #include "vmm.h"
+#include "trigger.h"
 
 /* task state */
 typedef enum task_state {
@@ -54,23 +55,23 @@ typedef struct priority_queue {
 } priority_queue_t;
 
 typedef struct task {
-    unsigned char *kstack;                // kernel stack, must be first member
-    task_state_t state;          /* 任务的状态 */
-    pid_t pid;                      // 自己的进程id
-    pid_t parent_pid;                // 父进程id
-    unsigned long flags;    
-    unsigned long priority;              /* 任务所在的优先级队列 */
-    unsigned long ticks;                 /* 运行的ticks，当前剩余的timeslice */
-    unsigned long timeslice;             /* 时间片，可以动态调整 */
-    unsigned long elapsed_ticks;         /* 任务执行总共占用的时间片数 */
-    int exit_status;                     // 退出时的状态
-    char name[MAX_TASK_NAMELEN];
-    struct vmm *vmm;                     /* 虚拟内存管理 */
-    list_t list;               // 处于所在队列的链表
-    list_t global_list;         // 全局任务队列，用来查找所有存在的任务
-    priority_queue_t *prio_queue;   /* 所在的优先级队列 */
-    
-    unsigned int stack_magic;         /* 任务的魔数 */
+    unsigned char *kstack;              // kernel stack, must be first member
+    task_state_t state;                 /* 任务的状态 */
+    pid_t pid;                          // 自己的进程id
+    pid_t parent_pid;                   // 父进程id
+    unsigned long flags;                /* 标志 */
+    unsigned long priority;             /* 任务所在的优先级队列 */
+    unsigned long ticks;                /* 运行的ticks，当前剩余的timeslice */
+    unsigned long timeslice;            /* 时间片，可以动态调整 */
+    unsigned long elapsed_ticks;        /* 任务执行总共占用的时间片数 */
+    int exit_status;                    // 退出时的状态
+    char name[MAX_TASK_NAMELEN];        /* 任务的名字 */
+    struct vmm *vmm;                    /* 进程虚拟内存管理 */
+    list_t list;                        // 处于所在队列的链表
+    list_t global_list;                 // 全局任务队列，用来查找所有存在的任务
+    priority_queue_t *prio_queue;       /* 所在的优先级队列 */
+    triggers_t *triggers;               /* 触发器, 内核线程没有触发器 */
+    unsigned int stack_magic;           /* 任务的魔数 */
 } task_t;
 
 #define SET_TASK_STATUS(task, stat) \
@@ -86,7 +87,6 @@ extern list_t task_global_list;
 #define current_task    task_current
 
 extern trap_frame_t *current_trap_frame;
-
 
 void init_tasks();
 void kernel_pause();

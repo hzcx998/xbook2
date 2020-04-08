@@ -318,6 +318,15 @@ int proc_vmm_exit(task_t *task)
     return 0;
 }
 
+int proc_trigger_init(task_t *task)
+{
+    task->triggers = kmalloc(sizeof(triggers_t));
+    if (task->triggers == NULL)
+        return -1;
+    trigger_init(task->triggers);
+    return 0;
+}
+
 int proc_destroy(task_t *task)
 {
     if (task->vmm == NULL)
@@ -368,6 +377,12 @@ task_t *process_create(char *name, char **argv)
     task_init(task, name, TASK_PRIO_USER);
     
     if (proc_vmm_init(task)) {
+        kfree(task);
+        return NULL;
+    }
+    
+    if (proc_trigger_init(task)) {
+        proc_vmm_exit(task);
         kfree(task);
         return NULL;
     }

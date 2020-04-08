@@ -24,6 +24,7 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     child->global_list.next = child->global_list.prev = NULL;
     /* 设置内核栈位置 */
     child->kstack = (unsigned char *)((unsigned char *)child + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
+    
     /* 复制名字，在后面追加fork表明是一个fork的进程，用于测试 */
     //strcat(child->name, "_fork");
     //dump_trap_frame((trap_frame_t *)child->kstack);
@@ -172,6 +173,15 @@ static int copy_vm(task_t *child, task_t *parent)
     return 0;
 }
 
+static int copy_trigger(task_t *child, task_t *parent)
+{
+    child->triggers = kmalloc(sizeof(triggers_t));
+    if (child->triggers == NULL)
+        return -1;
+    /* 复制触发器结构 */
+    *child->triggers = *parent->triggers;
+    return 0;
+}
 static int bulid_child_stack(task_t *child)
 {
     /* 1.让子进程返回0 */
@@ -260,6 +270,9 @@ static int copy_task(task_t *child, task_t *parent)
     if (copy_vm(child, parent))
         return -1;
     
+    /* 4.复制触发器 */
+    if (copy_trigger(child, parent))
+        return -1;
     
     bulid_child_stack(child);
     // printk(KERN_DEBUG "child heap is [%x,%x]\n", child->vmm->heap_start, child->vmm->heap_end);

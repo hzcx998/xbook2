@@ -135,6 +135,9 @@ void task_init(task_t *task, char *name, int priority)
     task->prio_queue = NULL;
     task->flags = 0;
     
+    /* no triger */
+    task->triggers = NULL;
+    
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;
 }
