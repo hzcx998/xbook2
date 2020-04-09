@@ -3,5 +3,10 @@ hello, xbook!
 info: memory total:1fff0000 byte 511 MB
 info: welcom to xbook kernel.
 debug: init_msg_queue: alloc mem table at 81483000
-info: time:5:9:23 date:2020/4/7
-info: week day:2 Tuesday year day:99
+info: time:4:19:15 date:2020/4/9
+info: week day:4 Thursday year day:101
+info: found 2 hard disks.
+info: raw block name:init
+info: raw block name:bin
+
+panic: send a signal SIGSEGV because addr 0 without space!

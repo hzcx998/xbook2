@@ -142,6 +142,9 @@ int trigger_handler(int trig, trighandler_t handler)
     triggers_t *trigger = current_task->triggers;
     if (trigger == NULL)
         return -1;
+#if DEBUG_TRIGGER == 1
+    printk(KERN_DEBUG "trigger_handler: trig=%d handler=%x\n", trig, handler);
+#endif
     trig_action_t ta = {handler, TA_ONCE};
     unsigned long flags;
     save_intr(flags);
@@ -179,11 +182,19 @@ int trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
         trigger_get_action(trigger, trig, &ta);
         oldact->handler = ta.handler;
         oldact->flags = ta.flags;
+#if DEBUG_TRIGGER == 1
+    printk(KERN_DEBUG "trigger_action: old trig=%d handler=%x flags=%x\n",
+        trig, oldact->handler, oldact->flags);
+#endif
     }
     if (act) {
         ta.handler = act->handler;
         ta.flags = act->flags;
         trigger_set_action(trigger, trig, &ta);
+#if DEBUG_TRIGGER == 1
+    printk(KERN_DEBUG "trigger_action: new trig=%d handler=%x flags=%x\n",
+        trig, act->handler, act->flags);
+#endif
     }
     restore_intr(flags);
     return 0;
@@ -226,11 +237,13 @@ int do_trigger(trap_frame_t *frame)
     if (!(trigger->flags & TRIG_LEFT))
         return -1;
 #if DEBUG_TRIGGER == 1
-    printk(KERN_DEBUG "do_trigger: start.\n");
+    printk(KERN_DEBUG "do_trigger: pid=%d start.\n", cur->pid);
 #endif
     trig_action_t *ta;
     /* 查看每一个触发器，看是否激活 */
     int trig;
+    unsigned long flags;
+    save_intr(flags);
     for (trig = 1; trig <= TRIGMAX; trig++) {
         /* 如果触发器激活了，就处理 */
         if (trigger->set & (1 << trig)) {
@@ -241,16 +254,20 @@ int do_trigger(trap_frame_t *frame)
             trigdelset(&trigger->set, trig);
             trigger->touchers[trig - 1] = -1;   /* clean toucher */
             trigger_calc_left(trigger);
-            ta = &trigger->actions[trig];
-            if (ta->handler == TRIG_IGN) /* ignore trigger */
-                continue;
+            ta = &trigger->actions[trig - 1];
+            if (ta->handler == TRIG_IGN) { /* ignore trigger */
+#if DEBUG_TRIGGER == 1
+                printk(KERN_DEBUG "do_trigger: ignore trigger=%d\n", trig);
+#endif
+                continue;   
+            }
             if (ta->handler == TRIG_DFL) {   /* default trigger */
                 /* init process do nothing. */
                 if (cur->pid == INIT_PROC_PID)
                     continue;
                 /* do default thing through different trigger */
                 switch (trig)
-                {    
+                {
                 case TRIGUSR0: /* user0 */
                 case TRIGUSR1: /* user1 */
                 case TRIGRESUM: /* 在设置恢复触发器的时候就唤醒任务了 */
@@ -263,6 +280,7 @@ int do_trigger(trap_frame_t *frame)
                 printk(KERN_DEBUG "do_trigger: stop trigger=%d\n", trig);
 #endif
                     cur->exit_status = trig;
+                    
                     task_block(TASK_STOPPED);   /* 停止运行 */
                     continue;
                 case TRIGDBG: /* debug */
@@ -292,9 +310,10 @@ int do_trigger(trap_frame_t *frame)
 #endif
             /* 捕捉用户态程序 */
             // handle_trigger(frame, trig);
-            return 1;
+            break;  /* 捕捉一个触发器后，立即返回 */
         }
     }
+    restore_intr(flags);
     return 0;
 }
 

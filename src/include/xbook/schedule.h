@@ -24,8 +24,7 @@ extern priority_queue_t priority_queue[];
 #define MAX_PRIORITY_NR  4
 
 #define ADJUST_HIGHEST_PRIO(highest) \
-    while (!(highest->length) && (highest->priority < MAX_PRIORITY_NR - 1)) \
-        highest++
+    while (!(highest->length) && (highest->priority < MAX_PRIORITY_NR - 1)) highest++
 
 #define is_task_in_priority_queue(task) (task->prio_queue == NULL ? 0 : 1) 
 
@@ -36,6 +35,7 @@ void launch_task();
 #ifdef CONFIG_PREEMPT
 void schedule_preempt(task_t *robber);
 #endif
+extern int can_preempt;
 
 /**
  * is_all_priority_queue_empty - 判断优先级队列是否为空
@@ -66,9 +66,9 @@ static inline void task_priority_queue_add_tail(task_t *task)
     task->prio_queue->length++;    /* 长度+1 */
 
     /* 如果有更高的优先级，那么就把最高优先级指向它 */
-    if (task->prio_queue->priority < highest_prio_queue->priority) {
+    if (task->priority < highest_prio_queue->priority) {
         //printk("b tp:%d hp:%d", task->priority, highest_prio_queue->priority);
-        
+
         highest_prio_queue = task->prio_queue;
 #ifdef CONFIG_PREEMPT
         /* 抢占当前任务 */
@@ -92,7 +92,7 @@ static inline void task_priority_queue_add_head(task_t *task)
     task->prio_queue->length++;    /* 长度+1 */
 
     /* 如果有更高的优先级，那么就把最高优先级指向它 */
-    if (task->prio_queue->priority < highest_prio_queue->priority) {
+    if (task->priority < highest_prio_queue->priority) {
         highest_prio_queue = task->prio_queue;
 #ifdef CONFIG_PREEMPT        
         /* 抢占当前任务 */
@@ -102,5 +102,7 @@ static inline void task_priority_queue_add_head(task_t *task)
 }
 
 task_t *task_priority_queue_fetch_first();
+
+void print_priority_queue(int prio);
 
 #endif   /* _XBOOK_SCHEDULE_H */

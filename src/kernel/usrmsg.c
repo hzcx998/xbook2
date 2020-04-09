@@ -8,6 +8,7 @@
 #include <xbook/sharemem.h>
 #include <xbook/msgqueue.h>
 #include <xbook/sem.h>
+#include <xbook/trigger.h>
 
 void dump_usrmsg(umsg_t *msg)
 {
@@ -161,6 +162,32 @@ int do_usrmsg(umsg_t *msg)
         msg->retval = sem_up((int ) msg->arg0);
         if (msg->retval == -1)
             retval = -1;
+        break;
+    case UMSG_TRIGGER:
+        msg->retval = trigger_handler((int ) msg->arg0, (trighandler_t ) msg->arg1);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_TRIGACT:
+        msg->retval = trigger_action((int ) msg->arg0, (trig_action_t *) msg->arg1, (trig_action_t *) msg->arg2);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_TRIGON:
+        msg->retval = trigger_active((int ) msg->arg0, (pid_t ) msg->arg1);
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_TRIGPAUSE:
+        msg->retval = trigger_pause();
+        if (msg->retval == -1)
+            retval = -1;
+        break;
+    case UMSG_GETPID:
+        msg->retval = task_get_pid();
+        break;
+    case UMSG_GETPPID:
+        msg->retval = task_get_ppid();
         break;
     default:
         break;

@@ -28,6 +28,12 @@ enum {
     UMSG_SEMPUT,            /* put semaphore */
     UMSG_SEMDOWN,           /* down semaphore */
     UMSG_SEMUP,             /* up semaphore */
+    UMSG_TRIGGER,           /* set trigger handler */
+    UMSG_TRIGACT,           /* set trigger action */
+    UMSG_TRIGON,            /* active trigger */
+    UMSG_TRIGPAUSE,         /* pause until a trigger catched */
+    UMSG_GETPID,            /* get process id */
+    UMSG_GETPPID,           /* get parent process id */
 };
 
 /* user message 用户消息 */

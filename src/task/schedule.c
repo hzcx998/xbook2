@@ -13,10 +13,14 @@ priority_queue_t priority_queue[MAX_PRIORITY_NR];
 /* 最高等级的队列 */
 priority_queue_t *highest_prio_queue;
 
+int can_preempt;
+
 task_t *task_priority_queue_fetch_first()
 {
     task_t *task;
+    //printk(KERN_NOTICE "highest prio=%d\n", highest_prio_queue->priority);
     
+    //highest_prio_queue = &priority_queue[0];
     /* 当最高优先级的长度为0，就降低最高优先级到长度不为0的优先级，直到到达最低的优先级 */
     ADJUST_HIGHEST_PRIO(highest_prio_queue);
     /* get first task */
@@ -50,7 +54,6 @@ task_t *get_next_task(task_t *task)
 void set_next_task(task_t *next)
 {
     task_current = next;
-
     task_activate(task_current);
 }
 
@@ -62,11 +65,16 @@ void set_next_task(task_t *next)
  */
 void schedule()
 {
+    unsigned long flags;
+    save_intr(flags);
     task_t *cur = current_task;
     task_t *next = get_next_task(cur);
+    
     set_next_task(next);
-    /*printk(KERN_INFO "> switch from %s-%d-%x to %s-%d-%x\n",
-        cur->name, cur->pid, cur, next->name, next->pid, next);
+    restore_intr(flags);
+    /*
+    printk(KERN_INFO "> switch from %s-%d-%x-%d to %s-%d-%x-%d\n",
+        cur->name, cur->pid, cur, cur->priority, next->name, next->pid, next, next->priority);
     */
     /*dump_task_kstack(next->kstack);
     dump_task(next);*/
@@ -83,10 +91,13 @@ void schedule_preempt(task_t *robber)
 {
     task_t *cur = current_task;
     
-    /* 自己不能抢占自己 */
-    if (cur == robber)
+    if (!can_preempt)
         return;
 
+    /* 自己不能抢占自己 */
+    if (cur == robber)
+        return; 
+    //printk("task preempt!!!\n\n");
     /* 当前任务一顶是在运行中，当前任务被其它任务抢占
     把当前任务放到自己的优先级队列的首部，保留原有时间片
      */
@@ -110,6 +121,19 @@ void schedule_preempt(task_t *robber)
 }
 #endif
 
+void print_priority_queue(int prio)
+{
+    if (prio < 0 || prio >= MAX_PRIORITY_NR) {
+        return;
+    }
+    printk("print_priority_queue: list\n");
+    priority_queue_t *queue = &priority_queue[prio];
+    task_t *task;
+    list_for_each_owner (task, &queue->list, list) {
+        printk("task=%s pid=%d prio=%d vmm=%x\n", task->name, task->pid, task->priority, task->vmm);
+    }
+}
+
 void init_schedule()
 {
     /* 初始化特权队列 */
@@ -121,4 +145,5 @@ void init_schedule()
     }
     /* 指向最高级的队列 */
     highest_prio_queue = &priority_queue[0];
+    can_preempt = 0; /* 还不能抢占 */
 }

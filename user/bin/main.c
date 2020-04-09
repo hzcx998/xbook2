@@ -61,10 +61,37 @@ int main(int argc, char *argv[])
         i++;
     }
     //test_sem();
+    x_trigger(TRIGHSOFT, TRIG_IGN);
+    x_trigger(TRIGUSR0, TRIG_IGN);
+    x_trigger(TRIGLSOFT, TRIG_IGN);
+    x_trigger(TRIGUSR1, TRIG_IGN);
+
+    x_triggeron(TRIGLSOFT, x_getpid());
     
+    x_triggeron(TRIGUSR1, x_getpid());
+
+    trig_action_t act = {TRIG_IGN, 0};
+    trig_action_t oldact;
+
+    x_trigger_action(TRIGUSR0, &act, &oldact);
+    printf("bin: handler=%x flags=%x\n", act.handler, act.flags);
+    printf("bin: old handler=%x flags=%x\n", oldact.handler, oldact.flags);
+    
+    x_trigger_action(TRIGLSOFT, &oldact, &act);
+    
+    printf("bin: handler=%x flags=%x\n", act.handler, act.flags);
+    printf("bin: old handler=%x flags=%x\n", oldact.handler, oldact.flags);
+    
+    x_trigger(TRIGUSR0, TRIG_IGN);
+    x_trigger(TRIGLSOFT, TRIG_IGN);
+    
+    x_triggeron(TRIGPAUSE, x_getpid());
+    //x_triggeron(TRIGHSOFT, x_getpid());
+
+    /*
     int a = 0;
     int b = a/0;
-    
+    */
 #if 0 /* SHM */
     int shmid = x_shmget("shm_test", 0, IPC_CREAT);
     if (shmid < 0) {

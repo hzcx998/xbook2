@@ -165,7 +165,9 @@ void proc_exit(int status)
     /*if (cur->parent_pid == -1 || parent == NULL)
         panic("proc_exit: proc %s PID=%d exit with parent pid -1!\n", cur->name, cur->pid);
     */
-    //printk(KERN_DEBUG "proc exit name=%s pid=%d ppid=%d prio=%d\n", cur->name, cur->pid, cur->parent_pid, cur->priority);
+    printk(KERN_DEBUG "proc exit name=%s pid=%d ppid=%d prio=%d status=%d\n",
+        cur->name, cur->pid, cur->parent_pid, cur->priority, cur->exit_status);
+    
     /* 处理zombie子进程 */
     deal_zombie_child(cur);
     /* 过继子进程给init进程 */
@@ -173,20 +175,23 @@ void proc_exit(int status)
     
     /* 释放占用的资源 */
     proc_vmm_exit(cur); /* 内存资源退出 */
-    restore_intr(flags);
+    
     if (parent) {
         /* 查看父进程状态 */
         if (parent->state == TASK_WAITING) {
+            restore_intr(flags);
             //printk("parent waiting...\n");
             task_unblock(parent); /* 唤醒父进程 */
             task_block(TASK_HANGING);   /* 把自己挂起 */
         } else { /* 父进程没有 */
+            restore_intr(flags);
             //printk("parent not waiting, zombie!\n");
             task_block(TASK_ZOMBIE);   /* 变成僵尸进程 */
         }
     } else {
         /* 没有父进程，变成不可被收养的孤儿+僵尸进程 */
         //printk("no parent!\n");
+        restore_intr(flags);
         task_block(TASK_ZOMBIE); 
     }
 }

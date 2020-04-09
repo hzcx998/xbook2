@@ -26,6 +26,14 @@ void dump_vmm(vmm_t *vmm)
 }
 
 
+void vmm_active(vmm_t *vmm)
+{
+    if (vmm == NULL) {
+        page_dir_active(0, 0);
+    } else {   
+        page_dir_active(v2p(vmm->page_storage), 1);
+    }
+}
 /**
  * vmm_release_space - 释放掉进程空间管理
  * @vmm: 虚拟内存管理

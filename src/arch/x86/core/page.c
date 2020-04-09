@@ -650,3 +650,12 @@ int do_page_fault(trap_frame_t *frame)
     /* 执行完缺页故障处理后，会到达这里表示成功！ */
     return 0;
 }
+void __page_dir_active(unsigned int page, int on)
+{
+    unsigned long paddr = PAGE_DIR_PHY_ADDR;
+    if (on) {
+        paddr = page;
+    }
+    write_cr3(paddr);
+    update_tss_info((unsigned long )current_task);
+}

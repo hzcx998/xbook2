@@ -224,6 +224,7 @@ void task_activate(task_t *task)
     
     /* 设置为运行状态 */
     task->state = TASK_RUNNING;
+    //printk("vmm:%x\n", task->vmm);
     /* 激活任务虚拟内存 */
     vmm_active(task->vmm);
 }
@@ -310,6 +311,22 @@ static void create_idle_thread()
     /* 设置为运行中 */
     task_idle->state = TASK_RUNNING;
     task_global_list_add(task_idle); /* 添加到全局任务 */
+}
+
+/**
+ * task_get_pid - 获取任务id
+ */
+pid_t task_get_pid()
+{
+    return current_task->pid;
+}
+
+/**
+ * task_get_ppid - 获取任务父进程id
+ */
+pid_t task_get_ppid()
+{
+    return current_task->parent_pid;
 }
 
 /**
@@ -655,27 +672,34 @@ char *init_argv[3] = {"init", 0};
  */
 void kernel_pause()
 {
-    
-	/* 加载init进程 */
+    /* 加载init进程 */
     process_create("init", init_argv);
-    unsigned long flags;
+    
+    /* 降级期间不允许产生中断 */
+	unsigned long flags;
     save_intr(flags);
-    /* 优先级降级 */
-    task_idle->state = TASK_BLOCKED;
+    /* 当前任务降级，这样，其它任务才能运行到 */
     task_idle->priority = TASK_PRIO_IDLE;
-    /* 然后设置成最低特权级 */
-    task_priority_queue_add_tail(task_idle);
+    /* 允许任务抢占 */
+    can_preempt = 1;
     restore_intr(flags);
-    schedule(); /* 调度到其它任务，直到又重新被调度 */
+    /* 调度到更高优先级的任务允许 */
+    schedule();
+    //printk(">>> switch back\n");
+    /* 当没有任务运行时，就会继续执行这个地方 */
 
+    
+    /* 打开中断 */
+    enable_intr();
+
+    // trigger_force(TRIGRESUM, 2);
+	
     /* idle线程 */
 	while (1) {
 		/* 进程默认处于阻塞状态，如果被唤醒就会执行后面的操作，
 		直到再次被阻塞 */
-		
-        /* 打开中断 */
-		//enable_intr();
-		/* 执行cpu停机 */
+		//printk("\nidle\n");
+        /* 执行cpu停机 */
 		cpu_idle();
 	};
 }

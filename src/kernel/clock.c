@@ -161,10 +161,10 @@ void sched_softirq_handler(softirq_action_t *action)
     task_t *current = current_task;
    
 	/* 检测内核栈是否溢出 */
-	//ASSERT(current->stack_magic == TASK_STACK_MAGIC);
-    if (current->stack_magic != TASK_STACK_MAGIC)
+    ASSERT(current->stack_magic == TASK_STACK_MAGIC);
+    /*if (current->stack_magic != TASK_STACK_MAGIC)
         dump_task(current);
-
+    */
 	/* 更新任务调度 */
 	current->elapsed_ticks++;
 	

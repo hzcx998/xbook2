@@ -11,5 +11,6 @@ typedef unsigned long dev_t;
 typedef unsigned long blksize_t;
 typedef unsigned long blkcnt_t;
 typedef unsigned long clock_t;
+typedef unsigned long size_t;
 
 #endif  /* _XLIBC_TYPES_H */

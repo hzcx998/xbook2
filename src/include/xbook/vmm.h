@@ -31,8 +31,6 @@ int vmm_release_space(vmm_t *vmm);
 
 void dump_vmm(vmm_t *vmm);
 
-/* 如果vmm为空，那么就加载内核页，如果不为空，就夹在vmm的页 */
-#define vmm_active(vmm) \
-    page_dir_active(v2p((vmm)->page_storage), (vmm) == NULL ? 0 : 1)
+void vmm_active(vmm_t *vmm);
 
 #endif  /* _XBOOK_VMM_H */

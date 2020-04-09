@@ -122,4 +122,7 @@ void kernel_pause();
 
 void dump_task_kstack(thread_stack_t *kstack);
 
+pid_t task_get_pid();
+pid_t task_get_ppid();
+
 #endif   /* _XBOOK_TASK_H */

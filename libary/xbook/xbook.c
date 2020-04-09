@@ -147,7 +147,7 @@ int x_close(x_dev_t devno)
  * 
  * @return: 0 is sucess, -1 is failed 
  */
-int x_write(x_dev_t devno, x_off_t off, void *buf, x_size_t size)
+int x_write(x_dev_t devno, off_t off, void *buf, size_t size)
 {
     define_umsg(msg);
     umsg_set_type(msg, UMSG_WRITE);
@@ -168,7 +168,7 @@ int x_write(x_dev_t devno, x_off_t off, void *buf, x_size_t size)
  * 
  * @return: 0 is sucess, -1 is failed 
  */
-int x_read(x_dev_t devno, x_off_t off, void *buf, x_size_t size)
+int x_read(x_dev_t devno, off_t off, void *buf, size_t size)
 {
     define_umsg(msg);
     umsg_set_type(msg, UMSG_READ);
@@ -277,7 +277,7 @@ unsigned long x_heap(unsigned long heap)
  *  
  * @return: return shmid >= 0 is success, -1 means failed!
  */
-int x_shmget(char *name, x_size_t size, unsigned long flags)
+int x_shmget(char *name, size_t size, unsigned long flags)
 {
     define_umsg(msg);
     umsg_set_type(msg, UMSG_SHMGET);
@@ -408,7 +408,7 @@ int x_msgput(int msgid)
  * 
  * @return: 0 is success, -1 is failed!
  */
-int x_msgsnd(int msgid, const void *msgbuf, x_size_t msgsz, int msgflg)
+int x_msgsnd(int msgid, const void *msgbuf, size_t msgsz, int msgflg)
 {
     define_umsg(msg);
     umsg_set_type(msg, UMSG_MSGSND);
@@ -441,7 +441,7 @@ int x_msgsnd(int msgid, const void *msgbuf, x_size_t msgsz, int msgflg)
  * 
  * @return: return the bytes read, -1 is failed!
  */
-int x_msgrcv(int msgid, const void *msgbuf, x_size_t msgsz, long msgtype, int msgflg)
+int x_msgrcv(int msgid, const void *msgbuf, size_t msgsz, long msgtype, int msgflg)
 {
     define_umsg(msg);
     umsg_set_type(msg, UMSG_MSGRCV);
@@ -471,13 +471,13 @@ int x_msgrcv(int msgid, const void *msgbuf, x_size_t msgsz, long msgtype, int ms
  */
 int x_semget(char *name, int value, int flags)
 {
-    define_umsg(sem);
-    umsg_set_type(sem, UMSG_SEMGET);
-    umsg_set_arg0(sem, name);
-    umsg_set_arg1(sem, value);
-    umsg_set_arg2(sem, flags);
-    umsg(sem);
-    return umsg_get_retval(sem, int);
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_SEMGET);
+    umsg_set_arg0(msg, name);
+    umsg_set_arg1(msg, value);
+    umsg_set_arg2(msg, flags);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
 }
 
 /**
@@ -491,11 +491,11 @@ int x_semget(char *name, int value, int flags)
  */
 int x_semput(int semid)
 {
-    define_umsg(sem);
-    umsg_set_type(sem, UMSG_SEMPUT);
-    umsg_set_arg0(sem, semid);
-    umsg(sem);
-    return umsg_get_retval(sem, int);
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_SEMPUT);
+    umsg_set_arg0(msg, semid);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
 }
 
 /**
@@ -512,13 +512,14 @@ int x_semput(int semid)
  */
 int x_semdown(int semid, int semflg)
 {
-    define_umsg(sem);
-    umsg_set_type(sem, UMSG_SEMDOWN);
-    umsg_set_arg0(sem, semid);
-    umsg_set_arg1(sem, semflg);
-    umsg(sem);
-    return umsg_get_retval(sem, int);
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_SEMDOWN);
+    umsg_set_arg0(msg, semid);
+    umsg_set_arg1(msg, semflg);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
 }
+
 /**
  * x_semup() - up a semaphore
  * 
@@ -528,9 +529,97 @@ int x_semdown(int semid, int semflg)
  */
 int x_semup(int semid)
 {
-    define_umsg(sem);
-    umsg_set_type(sem, UMSG_SEMUP);
-    umsg_set_arg0(sem, semid);
-    umsg(sem);
-    return umsg_get_retval(sem, int);
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_SEMUP);
+    umsg_set_arg0(msg, semid);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}
+
+/**
+ * x_trigger() - set trigger handler
+ * 
+ * @trig: trigger
+ * @handler: handler
+ * 
+ * @return: 0 is success, -1 is failed!
+ */
+int x_trigger(int trig, trighandler_t handler)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_TRIGGER);
+    umsg_set_arg0(msg, trig);
+    umsg_set_arg1(msg, handler);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}
+
+/**
+ * x_trigger_action() - set trigger action
+ * 
+ * @trig: trigger
+ * @act: new action
+ * @oldact: old action
+ * 
+ * @return: 0 is success, -1 is failed!
+ */
+int x_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_TRIGACT);
+    umsg_set_arg0(msg, trig);
+    umsg_set_arg1(msg, act);
+    umsg_set_arg2(msg, oldact);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}
+
+/**
+ * x_triggeron() - trigger on
+ * 
+ * @trig: trigger
+ * @pid: process id
+ * 
+ * active a trigger
+ * 
+ * @return: 0 is success, -1 is failed!
+ */
+int x_triggeron(int trig, pid_t pid)
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_TRIGON);
+    umsg_set_arg0(msg, trig);
+    umsg_set_arg1(msg, pid);
+    umsg(msg);
+    return umsg_get_retval(msg, int);
+}
+
+/**
+ * x_getpid() - get pid
+ * 
+ * get task pid
+ * 
+ * @return: pid
+ */
+pid_t x_getpid()
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_GETPID);
+    umsg(msg);
+    return umsg_get_retval(msg, pid_t);
+}
+
+/**
+ * x_getppid() - get parent pid
+ * 
+ * get task parent pid
+ * 
+ * @return: pid
+ */
+pid_t x_getppid()
+{
+    define_umsg(msg);
+    umsg_set_type(msg, UMSG_GETPPID);
+    umsg(msg);
+    return umsg_get_retval(msg, pid_t);
 }

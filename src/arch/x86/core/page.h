@@ -133,15 +133,7 @@ int mem_self_mapping(unsigned int start, unsigned int end);
 unsigned long *__copy_kernel_page_dir();
 
 /* active page dir */
-#define __page_dir_active(page, on) \
-    do { \
-        unsigned long paddr = PAGE_DIR_PHY_ADDR; \
-        if ((on)) { \
-            paddr = page; \
-        } \
-        write_cr3(paddr); \
-        update_tss_info((unsigned long )current_task); \
-    } while (0)
+void __page_dir_active(unsigned int page, int on);
 
 int do_page_fault(trap_frame_t *frame);
 
