@@ -4,6 +4,6 @@
 typedef struct {
     unsigned char *file;
     unsigned long size;
-} x_file_t;
+} xfile_t;
 
 #endif   /* _SYS_XFILE_H */

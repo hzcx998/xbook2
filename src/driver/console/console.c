@@ -346,8 +346,7 @@ static int console_ioctl(device_t *device, unsigned int cmd, unsigned long arg)
 
 
 static device_ops_t ops = {
-	.ioctl = console_ioctl, 
-	.putc = console_putc,
+	.ioctl = console_ioctl,
     .write = console_write,
 };
 

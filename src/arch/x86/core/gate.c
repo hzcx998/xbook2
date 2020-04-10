@@ -65,7 +65,7 @@ extern void irq_entry0x2d();
 extern void irq_entry0x2e();
 extern void irq_entry0x2f();
 
-extern void kern_usrmsg_handler();
+extern void syscall_handler();
 
 static void set_gate_descriptor(struct gate_descriptor *descriptor, intr_handler_t offset,
 		unsigned int selector, unsigned int attributes, unsigned char privilege)
@@ -146,8 +146,8 @@ static void init_interrupt_descriptor()
 	set_gate_descriptor(&idt[0x2e], irq_entry0x2e, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL0); 
 	set_gate_descriptor(&idt[0x2f], irq_entry0x2f, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL0); 
 	
-	/* 内核态用户消息处理中断 */
-	set_gate_descriptor(&idt[KERN_USRMSG_NR], kern_usrmsg_handler, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL3);
+	/* 系统调用处理中断 */
+	set_gate_descriptor(&idt[KERN_USRMSG_NR], syscall_handler, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL3);
 
 	load_idtr(IDT_LIMIT, IDT_VADDR);
 

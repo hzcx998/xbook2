@@ -386,7 +386,7 @@ void init_msg_queue()
     msg_queue_table = (msg_queue_t *)kmalloc(sizeof(msg_queue_t) * MSGQ_MAX_NR);
     if (msg_queue_table == NULL) /* must be ok! */
         panic(KERN_EMERG "init_msg_queue: alloc mem for msg_queue_table failed! :(\n");
-    printk(KERN_DEBUG "init_msg_queue: alloc mem table at %x\n", msg_queue_table);   
+    //printk(KERN_DEBUG "init_msg_queue: alloc mem table at %x\n", msg_queue_table);   
     int i;
     for (i = 0; i < MSGQ_MAX_NR; i++) {
         msg_queue_table[i].id = 1 + i + i * 2;

@@ -138,6 +138,9 @@ void task_init(task_t *task, char *name, int priority)
     /* no triger */
     task->triggers = NULL;
     
+    /* no resource */
+    task->res = NULL;
+    
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;
 }

@@ -1,5 +1,5 @@
 extern main
-extern x_exit	
+extern exit	
 
 [bits 32]
 [section .text]
@@ -10,5 +10,5 @@ _start:
 	push ecx
 	call main 
 	push eax
-	call x_exit
+	call exit
 	jmp $

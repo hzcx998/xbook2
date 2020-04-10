@@ -182,6 +182,20 @@ static int copy_trigger(task_t *child, task_t *parent)
     *child->triggers = *parent->triggers;
     return 0;
 }
+
+static int copy_res(task_t *child, task_t *parent)
+{
+    child->res = kmalloc(sizeof(triggers_t));
+    if (child->res == NULL)
+        return -1;
+    /* 复制触发器结构 */
+    *child->res = *parent->res;
+    /* 更新资源引用 */
+    //dump_resource(parent->res);
+    resource_copy(child->res);
+    return 0;
+}
+
 static int bulid_child_stack(task_t *child)
 {
     /* 1.让子进程返回0 */
@@ -274,6 +288,10 @@ static int copy_task(task_t *child, task_t *parent)
     if (copy_trigger(child, parent))
         return -1;
     
+    /* 5.复制资源 */
+    if (copy_res(child, parent))
+        return -1;
+    
     bulid_child_stack(child);
     // printk(KERN_DEBUG "child heap is [%x,%x]\n", child->vmm->heap_start, child->vmm->heap_end);
     return 0;
@@ -286,13 +304,8 @@ static int copy_task(task_t *child, task_t *parent)
  * 创建一个和自己一样的进程
  * 返回-1则失败，返回0表示子进程自己，返回>0表示父进程
  */
-int proc_fork(long *retval)
+int proc_fork()
 {
-    /*
-    */
-    /* 保存之前状态并关闭中断 */
-    *retval = 0; /* 默认返回0，表示是子进程 */
-    
     /* 把当前任务当做父进程 */
     task_t *parent = current_task;
     /*printk(KERN_DEBUG "parent %s pid=%d prio=%d is forking now.\n", 
@@ -301,7 +314,6 @@ int proc_fork(long *retval)
     task_t *child = kmalloc(TASK_KSTACK_SIZE);
     if (child == NULL) {
         printk(KERN_ERR "do_usrmsg_fork: kmalloc for child task failed!\n");
-        *retval = -1;
         return -1;
     }
     /* 当前中断处于关闭中，并且父进程有页目录表 */
@@ -311,7 +323,6 @@ int proc_fork(long *retval)
     if (copy_task(child, parent)) {
         printk(KERN_ERR "do_usrmsg_fork: copy task failed!\n");
         kfree(child);
-        *retval = -1;
         return -1;
     }
     unsigned long flags;
@@ -323,10 +334,8 @@ int proc_fork(long *retval)
     printk(KERN_DEBUG "task %s pid %d fork task %s pid %d\n", 
         parent->name, parent->pid, child->name, child->pid);
     */
-    /* 父进程消息返回进程pid */
-    *retval = child->pid;
     restore_intr(flags);
     
-    /* fork成功 */
-    return 0;
+    /* 父进程返回子进程pid */
+    return child->pid;
 }

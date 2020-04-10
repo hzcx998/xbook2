@@ -7,6 +7,7 @@
 #include "list.h"
 #include "vmm.h"
 #include "trigger.h"
+#include "resource.h"
 
 /* task state */
 typedef enum task_state {
@@ -71,6 +72,7 @@ typedef struct task {
     list_t global_list;                 // 全局任务队列，用来查找所有存在的任务
     priority_queue_t *prio_queue;       /* 所在的优先级队列 */
     triggers_t *triggers;               /* 触发器, 内核线程没有触发器 */
+    resource_t *res;                    /* 设备资源 */
     unsigned int stack_magic;           /* 任务的魔数 */
 } task_t;
 

@@ -7,6 +7,7 @@ RM			= rm
 # dir
 DIR_INCLUDE 	= ./include
 DIR_XBOOK 		= 	./xbook
+DIR_XCORE 		= 	./xcore
 DIR_STDLIB 		= 	./stdlib
 
 # flags
@@ -18,6 +19,11 @@ NASM_FLAGS	:= -I $(DIR_INCLUDE) -f elf
 XBOOK_OBJS	:=	$(DIR_XBOOK)/usrmsg_x86.o \
 				$(DIR_XBOOK)/xbook.o \
 				
+XCORE_OBJS	:=	$(DIR_XCORE)/syscall.o \
+				$(DIR_XCORE)/proc.o \
+				$(DIR_XCORE)/vmm.o \
+				$(DIR_XCORE)/res.o \
+
 STDLIB_OBJS	:= 	$(DIR_STDLIB)/string.o \
 				$(DIR_STDLIB)/vsprintf.o \
 				$(DIR_STDLIB)/printf.o \
@@ -26,7 +32,7 @@ STDLIB_OBJS	:= 	$(DIR_STDLIB)/string.o \
 LIBNAME = xlib.a
 			
 # objects
-OBJS = $(XBOOK_OBJS) $(STDLIB_OBJS)
+OBJS = $(XCORE_OBJS) $(STDLIB_OBJS)
 
 # all need to do
 all: $(LIBNAME) 

@@ -26,6 +26,8 @@ exception_entry%1:		 ; 每个中断处理程序都要压入中断向量号,所�
     mov dx,ss
 	mov ds, dx
 	mov es, dx
+    mov fs, dx
+	mov gs, dx
 
     push %1			 ; 不管idt_table中的目标程序是否需要参数,都一律压入中断向量号,调试时很方便
     
@@ -59,7 +61,9 @@ irq_entry%1:		 ; 每个中断处理程序都要压入中断向量号,所以一�
     mov dx,ss
 	mov ds, dx
 	mov es, dx
-
+    mov fs, dx
+	mov gs, dx
+    
    ; 如果是从片上进入的中断,除了往从片上发送EOI外,还要往主片上发送EOI 
 
     push %1			 ; 不管idt_table中的目标程序是否需要参数,都一律压入中断向量号,调试时很方便

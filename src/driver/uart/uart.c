@@ -365,8 +365,6 @@ static int uart_init_sub(struct uart_driver *local, uint8_t id)
 
 static device_ops_t ops = {
     .ioctl  = uart_ioctl,
-    .putc   = uart_putc,
-    .getc   = uart_getc,
     .read   = uart_read,
     .write  = uart_write,
 };

@@ -7,6 +7,7 @@
 #include <xbook/math.h>
 #include <xbook/vmspace.h>
 #include <xbook/string.h>
+#include <xbook/resource.h>
 #include <arch/interrupt.h>
 
 /**
@@ -327,6 +328,47 @@ int proc_trigger_init(task_t *task)
     return 0;
 }
 
+int proc_trigger_exit(task_t *task)
+{
+    if (task->triggers == NULL)
+        return -1;
+    kfree(task->triggers);
+    task->triggers = NULL;
+    return 0;
+}
+
+int proc_res_init(task_t *task)
+{
+    task->res = kmalloc(sizeof(resource_t));
+    if (task->res == NULL)
+        return -1;
+    resource_init(task->res);
+    return 0;
+}
+int proc_res_exit(task_t *task)
+{
+    if (task->res == NULL)
+        return -1;
+
+    /* 释放资源中的设备资源 */
+    resource_release(task->res);
+
+    kfree(task->res);
+    task->res = NULL;
+    return 0;
+}
+
+int proc_release(task_t *task)
+{
+    if (proc_vmm_exit(task))
+        return -1;
+    if (proc_trigger_exit(task))
+        return -1;
+    if (proc_res_exit(task))
+        return -1;
+    return 0;
+}
+
 int proc_destroy(task_t *task)
 {
     if (task->vmm == NULL)
@@ -386,6 +428,14 @@ task_t *process_create(char *name, char **argv)
         kfree(task);
         return NULL;
     }
+
+    if (proc_res_init(task)) {
+        proc_trigger_exit(task);
+        proc_vmm_exit(task);
+        kfree(task);
+        return NULL;
+    }
+
     /* 创建进程栈 */
     make_task_stack(task, proc_entry, argv);
     //current_task = task;    /* 指向当前任务 */

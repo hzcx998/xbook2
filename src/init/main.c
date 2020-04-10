@@ -11,6 +11,7 @@
 #include <xbook/sharemem.h>
 #include <xbook/msgqueue.h>
 #include <xbook/sem.h>
+#include <xbook/syscall.h>
 
 int kernel_main(void)
 {
@@ -28,6 +29,8 @@ int kernel_main(void)
     init_msg_queue();
     init_sem();
     
+    init_syscall();
+
     init_tasks();
     init_clock();
     

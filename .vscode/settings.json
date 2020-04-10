@@ -45,6 +45,9 @@
         "shm.h": "c",
         "ipc.h": "c",
         "const.h": "c",
-        "trigger.h": "c"
+        "trigger.h": "c",
+        "syscall.h": "c",
+        "xcore.h": "c",
+        "resource.h": "c"
     }
 }

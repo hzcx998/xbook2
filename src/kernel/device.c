@@ -2,6 +2,8 @@
 #include <xbook/device.h>
 #include <xbook/string.h>
 
+#define DEBUG_LOCAL 1
+
 /* 设备链表 */
 LIST_HEAD(device_list_head);
 
@@ -302,6 +304,44 @@ int dev_open(dev_t devno, flags_t flags)
     return retval;
 }
 
+
+/**
+ * dev_grow - 设备生长
+ * @devno: 设备id号
+ * 
+ * 增加一个对设备的引用
+ * 
+ */
+int dev_grow(dev_t devno)
+{
+    device_t *device;
+    
+    /* 检测是否是坏设备 */
+    if (is_bad_device(devno)) {
+        printk("bad devno\n");
+        return -1;
+    }
+    
+    device = get_device_by_id(devno);
+
+    if (device == NULL) {
+        printk("get null device by id\n");
+        return -1;
+    }
+        
+    /* 如果传入的ID和注册的不一致就直接返回(用于检测没有注册但是使用) */
+    if (devno != device->devno) {
+        printk("different devno\n");
+        return -1;
+    }
+    //printk(KERN_DEBUG "dev_grow: dev=%x ref=%d\n", devno, atomic_get(&device->references));
+    /* 增加引用 */
+    if (atomic_get(&device->references) >= 0)
+        atomic_inc(&device->references);
+    
+    return 0;
+}
+
 /**
  * dev_close - 关闭设备
  */
@@ -329,9 +369,10 @@ int dev_close(dev_t devno)
         atomic_dec(&device->references);
     else 
         return -1;  /* 引用计数有错误 */
-
-    //printk(">>> close ref %d\n", atomic_get(&device->references));
-    
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "dev_close: devno=%x ref=%d\n", 
+        devno, atomic_get(&device->references));
+#endif    
     /* 是最后一次引用才关闭 */
     if (atomic_get(&device->references) == 0) {
         if (device->ops->close != NULL)

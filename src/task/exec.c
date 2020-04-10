@@ -1,6 +1,7 @@
 #include <xbook/process.h>
 #include <xbook/string.h>
 #include <sys/xfile.h>
+#include <arch/interrupt.h>
 
 /**
  * exec使用新的镜像以及堆栈替换原有的内容。
@@ -104,6 +105,8 @@ int proc_exec_raw(char *name, char **argv)
     /* 初始化触发器 */
     trigger_init(cur->triggers);
     
+    /* 执行程序的时候需要继承原有进程的资源，因此不在这里初始化资源 */
+
     /* 设置执行入口 */
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
     
@@ -134,7 +137,7 @@ free_tmp_arg:
  * 
  * @return: 失败返回-1，成功不返回
  */
-int proc_exec_file(char *name, x_file_t *file, char **argv)
+int proc_exec_file(char *name, xfile_t *file, char **argv)
 {
     /* 没有参数或者参数错误 */
     task_t *cur = current_task;
@@ -172,8 +175,8 @@ int proc_exec_file(char *name, x_file_t *file, char **argv)
     while (argv[argc]) {
         printk("arg: %s", argv[argc]);
         argc++;
-    }
-    */
+    }*/
+    
     /* 由于需要重载镜像数据，而传递的参数是在用户数据中，因此需要先保存
     参数，然后再重载镜像 */
     char *tmp_arg = kmalloc(PAGE_SIZE);
@@ -195,7 +198,8 @@ int proc_exec_file(char *name, x_file_t *file, char **argv)
         printk(KERN_ERR "proc_exec_file: load_image failed!\n");
         goto free_tmp_arg;
     }
-    
+    unsigned long flags;
+    save_intr(flags);
     /* 构建中断栈框 */
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
@@ -208,14 +212,16 @@ int proc_exec_file(char *name, x_file_t *file, char **argv)
         goto free_loaded_image;
     }
 
-    raw_block_tmp_del(&rb);  /* 删除临时原始块 */
-    kfree(tmp_arg); /* 不需要了，释放掉 */
-
     /* 初始化用户堆 */
     proc_heap_init(cur);
     /* 初始化用户映射区域 */
     proc_map_space_init(cur);
     
+    /* 初始化触发器 */
+    trigger_init(cur->triggers);
+    
+    /* 执行程序的时候需要继承原有进程的资源，因此不在这里初始化资源 */
+
     /* 设置执行入口 */
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
     
@@ -223,6 +229,10 @@ int proc_exec_file(char *name, x_file_t *file, char **argv)
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
     
+    raw_block_tmp_del(&rb);  /* 删除临时原始块 */
+    kfree(tmp_arg); /* 不需要了，释放掉 */
+
+    restore_intr(flags);
     //dump_trap_frame(frame);
     /* 切换到进程执行 */
     switch_to_user(frame);

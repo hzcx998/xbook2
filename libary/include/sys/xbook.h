@@ -16,11 +16,10 @@ int x_fork();
 void x_exit(int status);
 int x_wait(int *status);
 int x_execraw(char *name, char *argv[]);
-
 pid_t x_getpid();
 pid_t x_getppid();
-
 int x_execfile(char *name, x_file_t *file, char *argv[]);
+
 x_dev_t x_open(char *name, unsigned long flags);
 int x_close(x_dev_t devno);
 int x_read(x_dev_t devno, off_t off, void *buf, size_t size);
@@ -45,6 +44,7 @@ int x_semget(char *name, int value, int flags);
 int x_semput(int semid);
 int x_semdown(int semid, int semflg);
 int x_semup(int semid);
+  
 int x_trigger(int trig, trighandler_t handler);
 int x_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact);
 int x_triggeron(int trig, pid_t pid);

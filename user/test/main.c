@@ -1,4 +1,4 @@
-#include <sys/xbook.h>
+#include <sys/xcore.h>
 #include <sys/ipc.h>
 #include <string.h>
 #include <conio.h>
@@ -10,7 +10,7 @@ int func(int n)
     else 
         return n * func(n - 1); 
 }
-
+#if 0
 x_dev_t dev;
 
 void delay(int t)
@@ -57,15 +57,77 @@ void test_sem()
 #endif  
     }
 }
-
+#endif
 int main(int argc, char *argv[])
 {
+
+    func(100);
+
+    int con = getres("con0", 0);
+    if (con < 0)
+        return -1;
+    con = getres("con0", 0);
+    if (con < 0)
+        return -1;
+
+    writeres(con, 0, "hello, console!\n", 16);
+    printf("hello, printf!\n");
+    ctlres(con, 123, 456);
+
+    // putres(con);
+    char buf[10];
+    readres(con, 0, buf, 10);
+    
+    int pid = fork();
+    if (pid > 0) {
+        int status;
+        pid = wait(&status);
+        printf("child %d exit with status=%d.\n", pid, status);
+        
+    } else {
+        printf("I am child, I will load data.\n");
+        
+        unsigned long heap_pos = heap(0);
+        printf("heap addr %x.\n", heap_pos);
+
+        heap(heap_pos + 40 * 1024); // 40 kb 内存
+
+        unsigned char *buf = (unsigned char *) heap_pos;
+        memset(buf, 0, 40 * 1024);
+        printf("alloc data at %x for 20 kb.\n", buf);
+
+        int hd0 = getres("hd0", 0);
+        if (hd0 < 0) 
+            exit(-1);
+
+        /* 200 */
+        if (readres(hd0, 200, buf, 50)) {
+            printf("read disk failed!\n");
+            exit(-1);
+        }
+        printf("load data success.\n");
+        xfile_t file = {buf, 22*1024};
+        int i;
+        for (i = 0; i < 32; i++) {
+            printf("%x ", buf[i]);
+        }
+        printf("ready run.\n");
+        putres(hd0);
+
+        char *_argv[4] = {"bin", "abc", "123", 0};
+        //x_close(dev);
+        execfile("bin", &file, _argv);
+        //execraw("bin", _argv);
+    }
+
+    return 0;
     /*nt i;
     char *p;
     for (i = 0; i < argc; i++) {
         p = (char *)argv[i];
         while (*p++);
     }*/
+#if 0
     dev = x_open("con0", 0);
      
     int i = 0;
@@ -78,34 +140,33 @@ int main(int argc, char *argv[])
     //func(1000);
     printf("nice to meet you!");
 
-
 /*
-    unsigned long heap = x_heap(0);
+    unsigned long heap = heap(0);
     printf("heap addr:%x\n", heap);
 
-    x_heap(heap + 4096);
+    heap(heap + 4096);
     printf("heap addr:%x\n", heap);
     unsigned char *buf = (unsigned char *) heap;
     memset(buf, 0, 4096);
 
-    heap = x_heap(0);
-    x_heap(heap + 4096 * 10);
+    heap = heap(0);
+    heap(heap + 4096 * 10);
     printf("heap addr:%x\n", heap);
     buf = (unsigned char *) heap;
     memset(buf, 0, 4096 * 10);
 
-    heap = x_heap(heap);
+    heap = heap(heap);
     printf("heap addr:%x\n", heap);
 
-    heap = x_heap(0);
+    heap = heap(0);
     printf("heap addr:%x\n", heap);
 
-    x_heap(heap + 4096 * 100);
+    heap(heap + 4096 * 100);
     printf("heap addr:%x\n", heap);
     buf = (unsigned char *) heap;
     memset(buf, 0, 4096 * 100);
     */
-    //x_exit(0);
+    //exit(0);
     int pid = x_fork();
     /*if (pid > 0) {
         log("parent!");
@@ -133,8 +194,8 @@ int main(int argc, char *argv[])
         }
         printf("test: parent: get msg %d.", msgid);
         
-        unsigned long heap = x_heap(0);
-        x_heap(heap + 1024 + sizeof(x_msgbuf_t));
+        unsigned long heap = heap(0);
+        heap(heap + 1024 + sizeof(x_msgbuf_t));
 
         x_msgbuf_t 
         *msgbuf = (x_msgbuf_t *) heap;
@@ -199,10 +260,10 @@ int main(int argc, char *argv[])
     } else {
         printf("I am child, I will load data.\n");
         
-        unsigned long heap = x_heap(0);
+        unsigned long heap = heap(0);
         printf("heap addr %x.\n", heap);
 
-        x_heap(heap + 40 * 1024); // 40 kb 内存
+        heap(heap + 40 * 1024); // 40 kb 内存
 
         unsigned char *buf = (unsigned char *) heap;
         memset(buf, 0, 40 * 1024);
@@ -210,11 +271,11 @@ int main(int argc, char *argv[])
 
         x_dev_t dev_disk = x_open("hd0", 0);
         if (!dev_disk) 
-            x_exit(-1);
+            exit(-1);
 
-        if (x_read(dev_disk, 200, buf, 50)) {
+        if (readres(dev_disk, 200, buf, 50)) {
             printf("read disk failed!\n");
-            x_exit(-1);
+            exit(-1);
         }
         printf("load data success.\n");
         x_file_t file = {buf, 22*1024};
@@ -251,4 +312,5 @@ int main(int argc, char *argv[])
     }
 
     return 0;
+#endif
 }

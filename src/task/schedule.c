@@ -21,15 +21,14 @@ task_t *task_priority_queue_fetch_first()
     //printk(KERN_NOTICE "highest prio=%d\n", highest_prio_queue->priority);
     
     //highest_prio_queue = &priority_queue[0];
-    /* 当最高优先级的长度为0，就降低最高优先级到长度不为0的优先级，直到到达最低的优先级 */
+    /* 从最高优先级开始寻找一个最近的有任务的低优先级 */
     ADJUST_HIGHEST_PRIO(highest_prio_queue);
     /* get first task */
     task = list_first_owner(&highest_prio_queue->list, task_t, list);
     --highest_prio_queue->length;   /* sub a task */
     task->prio_queue = NULL;
     list_del_init(&task->list);
-    /* 当最高优先级的长度为0，就降低最高优先级到长度不为0的优先级 */
-    ADJUST_HIGHEST_PRIO(highest_prio_queue);
+
     return task;
 }
 
@@ -97,22 +96,18 @@ void schedule_preempt(task_t *robber)
     /* 自己不能抢占自己 */
     if (cur == robber)
         return; 
-    //printk("task preempt!!!\n\n");
+    printk(KERN_DEBUG "schedule_preempt: task %d preempt %d!\n",
+        robber->pid,cur->pid);
     /* 当前任务一顶是在运行中，当前任务被其它任务抢占
     把当前任务放到自己的优先级队列的首部，保留原有时间片
      */
     cur->state = TASK_READY;
     task_priority_queue_add_tail(cur);
     
-    /* 最高优先级指针已经在抢占前指向了抢占者的优先级，这里就不用调整了 */
-
     /* 抢占者在抢占前已经加入就绪队列，因此需要从就绪队列中删除 */
     --highest_prio_queue->length;   /* sub a task */
     robber->prio_queue = NULL;
     list_del_init(&robber->list);
- 
-    /* 删除一个任务后，需要调整最高优先级 */
-    ADJUST_HIGHEST_PRIO(highest_prio_queue);
     
     set_next_task(robber);
 

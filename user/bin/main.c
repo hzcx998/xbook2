@@ -1,9 +1,18 @@
-#include <sys/xbook.h>
+#include <sys/xcore.h>
 #include <sys/ioctl.h>
 #include <sys/ipc.h>
 #include <conio.h>
 #include <string.h>
 
+int main(int argc, char *argv[])
+{
+    printf("hello, bin!\n");
+    putres(1);
+    
+    return 0;   
+}
+
+#if 0
 int func(int n)
 {   
     if (n == 0 || n == 1)
@@ -200,3 +209,4 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
+#endif

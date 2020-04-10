@@ -76,6 +76,7 @@ int dev_write(dev_t devno, off_t off, void *buffer, size_t count);
 int dev_read(dev_t devno, off_t off, void *buffer, size_t count);
 int dev_getc(dev_t devno, unsigned long *ch);
 int dev_putc(dev_t devno, unsigned long ch);
+int dev_grow(dev_t devno);
 
 static inline void dev_init(device_t *dev, dev_t devno)
 {
