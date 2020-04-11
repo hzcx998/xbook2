@@ -49,12 +49,38 @@ res = getres(IPC_TRIG, "lsoft", 0)
 ctlres(res, SHM_ACTIVE, 0)
 putres(res)
 
+ipcid = getipc(name, flags, arg)
+putipc(ipcid)
+ctlipc(ipcid, cmd, arg)
+
+ctlipc(semid, SEM_DOWN, IPC_NOWAIT or 0);
+ctlipc(semid, SEM_UP, 0);
+
+ctlipc(semid, SHM_MAP, shmaddr);
+ctlipc(semid, SHM_UNMAP, shmaddr);
+
+writeres(res, 0, shmaddr, 0);
+writeres(res, 0, 0, shmaddr);
+
+readres(res, 0, shmaddr, 0);
+
+writeres(res, IPC_NOWAIT or 0, 0, 0);
+readres(res, 0, 0, 0);
+
+readres(res, shmaddr, 0, 0);
+
+writeres(res, msgflg, buf, size_t msgsz);
+readres(res, msgflg, msgtype + msgbuf , size_t msgsz);
+
 设备：
 res = getres(DEV_CHR, "con0", DEV_RD | DEV_WR)
 resbuf.off = 0;
 resbuf.buf = 0;
 writeres(res, &resbuf, 32);
 putres(res);
+
+
+
 
 内核其它资源：
 

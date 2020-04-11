@@ -57,16 +57,161 @@ void test_sem()
 #endif  
     }
 }
+
 #endif
+void shmtest1()
+{
+    
+    /* 共享内存 */
+    int shmid = getres("test", RES_IPC | IPC_SHM | IPC_CREAT, 4095);
+    if (shmid < 0)
+        exit(-1);
+
+    printf("get shm id %d\n", shmid);
+    unsigned long shmaddr;
+    if (writeres(shmid, 0, NULL, (size_t )&shmaddr))
+        printf("1: shm map failed!\n");
+
+    printf("shm map at %x\n", shmaddr);
+    
+    memset(shmaddr, 1, 4096);
+
+    char *mapv = (char *)shmaddr;
+    //memset(mapv, 0, 4096);
+    if (writeres(shmid, 0, (void *)0x20100000, 0))
+        printf("2: shm map failed!\n");
+    mapv = (char *)0x20100000;
+
+    printf("shm map at %x\n", 0x20100000);
+    
+    if (readres(shmid, 0, shmaddr, 0))
+        return -1;
+    printf("shm unmap at %x.\n", shmaddr);
+    if (readres(shmid, 0, mapv, 0))
+        return -1;
+    printf("shm unmap at %x.\n", mapv);
+}
+void shmtest2()
+{ 
+    /* 共享内存 */
+    int shmid2 = getres("test", RES_IPC | IPC_SHM | IPC_CREAT, 4095);
+    if (shmid2 < 0)
+        exit(-1);
+
+    printf("get shm id %d\n", shmid2);
+    unsigned long shmaddr2;
+    if (writeres(shmid2, 0, NULL, (size_t )&shmaddr2))
+        printf("1: shm map failed!\n");
+
+    printf("shm map at %x\n", shmaddr2);
+    
+    int *shmdata = (int *)shmaddr2;
+    int j;
+    for (j = 0; j < 16; j++) {
+        printf("%x ", shmdata[j]);
+    }
+    readres(shmid2, 0, shmaddr2, 0);
+}
+
+void semtest1()
+{
+    int semid = getres("sem_test", RES_IPC | IPC_SEM | IPC_CREAT, 1);
+    if (semid < 0)
+        exit(-1);
+    printf("get sem id %d\n", semid);
+    while (1)
+    {
+        writeres(semid, 0, NULL, 0);
+        printf("test1: 1234567123456712345671234567123456712345671234567-%d\n", semid);
+        printf("test2: 1234567123456712345671234567123456712345671234567-%d\n", semid);
+        printf("test3: 1234567123456712345671234567123456712345671234567-%d\n", semid);
+        printf("test4: 1234567123456712345671234567123456712345671234567-%d\n", semid);
+        printf("test5: 1234567123456712345671234567123456712345671234567-%d\n", semid);
+        readres(semid, 0, NULL, 0);
+    }
+    
+}
+
+void msgtest()
+{
+#if 1 /* MSG */
+    int msgid = getres("msg_test", RES_IPC | IPC_MSG | IPC_CREAT, 0);
+    if (msgid < 0) {
+        printf("test: parent: get msg failed!");
+        return;
+    }
+    printf("test: parent: get msg %d.", msgid);
+    
+    unsigned long hp = heap(0);
+    heap(hp + 1024 + sizeof(x_msgbuf_t));
+
+    x_msgbuf_t *msgbuf = (x_msgbuf_t *) hp;
+    while (1)
+    {
+        
+        int j, k;
+        for (j = 0; j < 1000; j++) {
+            for (k = 0; k < 10000; k++);
+        }
+        
+        msgbuf->type = 100;
+        memset(msgbuf->text, 0x1f, 1024);
+        int i;
+        for (i = 0; i < 16; i++) {
+            msgbuf->text[i] = i;
+        }
+        if (writeres(msgid, 0, msgbuf, 1024)) {
+            printf("test: parent: snd msg failed!\n");
+        }
+    }
+    printf("test: parent: snd msg ok!");
+#endif /* MSG */
+}
+
+void msgtest2()
+{
+    
+    int msgid = getres("msg_test", RES_IPC | IPC_MSG | IPC_CREAT, 0);
+    if (msgid < 0) {
+        printf("test: parent: get msg failed!");
+        return;
+    }
+    printf("test: child: get msg %d.\n", msgid);
+    
+    unsigned long hp = heap(0);
+    heap(hp + 1024 + sizeof(x_msgbuf_t));
+
+    x_msgbuf_t *msgbuf = (x_msgbuf_t *) hp;
+    while (1)
+    {
+        int i;
+        /*
+        int i, j, k;
+        for (j = 0; j < 1000; j++) {
+            for (k = 0; k < 10000; k++);
+        }*/
+        msgbuf->type = 100; /* 读取消息的类型 */
+        memset(msgbuf->text, 0, 1024);
+        int read = readres(msgid, 0, msgbuf, 1024);
+        printf("test: child: rcv msg %d type=%d!\n", read, msgbuf->type);
+        for (i = 0; i < 16; i++) {
+            printf("%x ", msgbuf->text[i]);
+        }
+        printf("\n");
+    }
+    
+    printf("test: child: rcv msg ok!");
+
+}
 int main(int argc, char *argv[])
 {
 
     func(100);
 
-    int con = getres("con0", 0);
+    int con = getres("con0", RES_DEV, 0);
     if (con < 0)
         return -1;
-    con = getres("con0", 0);
+    con = getres("con0", RES_DEV, 0);
     if (con < 0)
         return -1;
 
@@ -77,9 +222,13 @@ int main(int argc, char *argv[])
     // putres(con);
     char buf[10];
     readres(con, 0, buf, 10);
-    
+    //
     int pid = fork();
     if (pid > 0) {
+        shmtest1();
+        //semtest1();
+        //msgtest();
+
         int status;
         pid = wait(&status);
         printf("child %d exit with status=%d.\n", pid, status);
@@ -87,6 +236,9 @@ int main(int argc, char *argv[])
     } else {
         printf("I am child, I will load data.\n");
         
+        //msgtest2();
+        //shmtest2();
+
         unsigned long heap_pos = heap(0);
         printf("heap addr %x.\n", heap_pos);
 
@@ -96,7 +248,7 @@ int main(int argc, char *argv[])
         memset(buf, 0, 40 * 1024);
         printf("alloc data at %x for 20 kb.\n", buf);
 
-        int hd0 = getres("hd0", 0);
+        int hd0 = getres("hd0", RES_DEV, 0);
         if (hd0 < 0) 
             exit(-1);
 
@@ -186,39 +338,6 @@ int main(int argc, char *argv[])
         printf("I am parent, my child is %d.\n", pid);
         //test_sem();
        
-#if 0 /* MSG */
-        int msgid = x_msgget("usr_test", IPC_CREAT);
-        if (msgid < 0) {
-            printf("test: parent: get msg failed!");
-            return -1;
-        }
-        printf("test: parent: get msg %d.", msgid);
-        
-        unsigned long heap = heap(0);
-        heap(heap + 1024 + sizeof(x_msgbuf_t));
-
-        x_msgbuf_t 
-        *msgbuf = (x_msgbuf_t *) heap;
-        while (1)
-        {
-            /*
-            int j, k;
-            for (j = 0; j < 1000; j++) {
-                for (k = 0; k < 10000; k++);
-            }
-            */
-            msgbuf->type = 100;
-            memset(msgbuf->text, 0x1f, 1024);
-            int i;
-            for (i = 0; i < 16; i++) {
-                msgbuf->text[i] = i;
-            }
-            if (x_msgsnd(msgid, msgbuf, 1024, 0)) {
-                printf("test: parent: snd msg failed!");
-            }
-        }
-        printf("test: parent: snd msg ok!");
-#endif /* MSG */
         /*msgbuf->type = 0;
         memset(msgbuf->text, 0, 1024);
         int read = x_msgrcv(msgid, msgbuf, 1024, 10, IPC_EXCEPT);

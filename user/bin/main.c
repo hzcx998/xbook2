@@ -4,9 +4,88 @@
 #include <conio.h>
 #include <string.h>
 
+void semtest1()
+{
+    int semid = getres("sem_test", RES_IPC | IPC_SEM | IPC_CREAT, 1);
+    if (semid < 0)
+        exit(-1);
+    printf("get sem id %d\n", semid);
+    while (1)
+    {
+        writeres(semid, 0, NULL, 0);
+        printf("bin1:  abcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcdefg-%d\n", semid);
+        printf("bin2:  abcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcdefg-%d\n", semid);
+        printf("bin3:  abcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcdefg-%d\n", semid);
+        printf("bin4:  abcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcdefg-%d\n", semid);
+        printf("bin5:  abcdefgabcdefgabcdefgabcdefgabcdefgabcdefgabcdefg-%d\n", semid);
+        readres(semid, 0, NULL, 0);
+    }
+}
+
+void msgtest()
+{
+    
+    int msgid = getres("msg_test", RES_IPC | IPC_MSG | IPC_CREAT, 0);
+    if (msgid < 0) {
+        printf("test: parent: get msg failed!");
+        return;
+    }
+    printf("bin: parent: get msg %d.\n", msgid);
+    
+    unsigned long hp = heap(0);
+    heap(hp + 1024 + sizeof(x_msgbuf_t));
+
+    x_msgbuf_t *msgbuf = (x_msgbuf_t *) hp;
+    while (1)
+    {
+        int i;
+        /*
+        int i, j, k;
+        for (j = 0; j < 1000; j++) {
+            for (k = 0; k < 10000; k++);
+        }*/
+        msgbuf->type = 100; /* 读取消息的类型 */
+        memset(msgbuf->text, 0, 1024);
+        int read = readres(msgid, 0, msgbuf, 1024);
+        printf("bin: parent: rcv msg %d type=%d!\n", read, msgbuf->type);
+        for (i = 0; i < 16; i++) {
+            printf("%x ", msgbuf->text[i]);
+        }
+        printf("\n");
+    }
+    
+    printf("bin: parent: rcv msg ok!");
+
+}
+
+void shmtest2()
+{ 
+    /* 共享内存 */
+    int shmid2 = getres("test", RES_IPC | IPC_SHM | IPC_CREAT, 4095);
+    if (shmid2 < 0)
+        exit(-1);
+
+    printf("get shm id %d\n", shmid2);
+    unsigned long shmaddr2;
+    if (writeres(shmid2, 0, NULL, (size_t )&shmaddr2))
+        printf("1: shm map failed!\n");
+
+    printf("shm map at %x\n", shmaddr2);
+    
+    int *shmdata = (int *)shmaddr2;
+    int j;
+    for (j = 0; j < 16; j++) {
+        printf("%x ", shmdata[j]);
+    }
+    readres(shmid2, 0, shmaddr2, 0);
+}
 int main(int argc, char *argv[])
 {
     printf("hello, bin!\n");
+    
+    shmtest2();
+    //semtest1();
+    //msgtest();
     putres(1);
     
     return 0;   
@@ -134,36 +213,6 @@ int main(int argc, char *argv[])
         printf("bin: child: get new shm failed!");
         return -1;
     }*/
-#if 0 /* MSG */
-    int msgid = x_msgget("usr_test", IPC_CREAT);
-    if (msgid < 0) {
-        printf("BIN: parent: get msg failed!");
-        return -1;
-    }
-    printf("BIN: parent: get msg %d.", msgid);
-    
-    unsigned long heap = x_heap(0);
-    x_heap(heap + 1024 + sizeof(x_msgbuf_t));
-
-    x_msgbuf_t *msgbuf = (x_msgbuf_t *) heap;
-    while (1)
-    {
-        int j, k;
-        for (j = 0; j < 1000; j++) {
-            for (k = 0; k < 10000; k++);
-        }
-        msgbuf->type = 0;
-        memset(msgbuf->text, 0, 1024);
-        int read = x_msgrcv(msgid, msgbuf, 1024, 100, 0);
-        printf("BIN: parent: rcv msg %d type=%d!\n", read, msgbuf->type);
-        for (i = 0; i < 16; i++) {
-            printf("%x ", msgbuf->text[i]);
-        }
-        printf("\n");
-    }
-    
-    printf("BIN: parent: rcv msg ok!");
-#endif /* MSG */
 #if 0 /* HEAP */
     
     log("in bin\n");

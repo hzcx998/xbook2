@@ -48,6 +48,7 @@
         "trigger.h": "c",
         "syscall.h": "c",
         "xcore.h": "c",
-        "resource.h": "c"
+        "resource.h": "c",
+        "res.h": "c"
     }
 }

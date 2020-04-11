@@ -82,6 +82,8 @@ syscall_handler:
     
    	push 0x40			; 此位置压入0x40也是为了保持统一的栈格式
     
+    sti
+
     ;2 为系统调用子功能传入参数
     push esp                ; 传入栈指针，可以用来获取所有陷阱栈框寄存器
     push edi                ; 系统调用中第4个参数
@@ -95,7 +97,8 @@ syscall_handler:
 
 	;4 将call调用后的返回值存入待当前内核栈中eax的位置
     mov [esp + 8*4], eax	
-    
+    cli
+       
     ; 处理完用户消息后再进行触发器处理，因为处理过程可能会影响到寄存器的值
     ;5 signal
 

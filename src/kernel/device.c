@@ -2,7 +2,7 @@
 #include <xbook/device.h>
 #include <xbook/string.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 /* 设备链表 */
 LIST_HEAD(device_list_head);

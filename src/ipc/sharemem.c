@@ -8,7 +8,7 @@
 #include <sys/ipc.h>
 
 /* debug shm : 1 enable, 0 disable */
-#define DEBUG_SHM 0
+#define DEBUG_SHM 1
 
 share_mem_t *share_mem_table;
 
@@ -230,7 +230,9 @@ void *share_mem_map(int shmid, void *shmaddr)
         PROT_USER | PROT_WRITE, VMS_MAP_FIXED | VMS_MAP_SHARED);
     if (shmaddr != (void *) -1)
         atomic_inc(&shm->links);
-        
+#if DEBUG_SHM == 1
+            printk(KERN_DEBUG "share_mem_map: map at %x\n", shmaddr);
+#endif
     return shmaddr;
 }
 
@@ -264,7 +266,9 @@ int share_mem_unmap(const void *shmaddr)
         if (shm)
             atomic_dec(&shm->links);
     }
-    
+#if DEBUG_SHM == 1
+            printk(KERN_DEBUG "share_mem_unmap: unmap at %x\n", shmaddr);
+#endif
     return retval;
 }
 

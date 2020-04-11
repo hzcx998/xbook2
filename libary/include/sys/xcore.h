@@ -4,6 +4,7 @@
 #include "xfile.h"
 #include "types.h"
 #include "trigger.h"
+#include "res.h"
 
 /* process */
 pid_t fork();
@@ -18,10 +19,10 @@ pid_t getppid();
 unsigned long heap(unsigned long heap);
 
 /* device resource */
-int ctlres(int res, unsigned int cmd, unsigned long arg);
-int readres(int res, off_t off, void *buffer, size_t size);
 int writeres(int res, off_t off, void *buffer, size_t size);
+int readres(int res, off_t off, void *buffer, size_t size);
+int getres(char *name, unsigned long flags, unsigned long arg);
 int putres(int res);
-int getres(char *name, unsigned long flags);
+int ctlres(int res, unsigned int cmd, unsigned long arg);
 
 #endif  /* _SYS_XCORE_H */

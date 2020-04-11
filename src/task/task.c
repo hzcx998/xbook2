@@ -380,7 +380,6 @@ void taskA(void *arg)
 {
     //char *par = arg;
     int i = 0;
-    int data = 0;
     while (1) {
         i++;
         testA++;
@@ -457,8 +456,6 @@ void taskB(void *arg)
     //char *par = arg;
     int i = 0;
     // log("hello\n");
-    unsigned char buffer[16];
-    int len;
     while (1) {
         i++;
         testB++;

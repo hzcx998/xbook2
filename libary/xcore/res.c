@@ -11,9 +11,9 @@
  * 
  * @return: res idx in table, -1 is failed. 
  */
-int getres(char *name, unsigned long flags)
+int getres(char *name, unsigned long flags, unsigned long arg)
 {
-    return syscall2(int, SYS_GETRES, name, flags);
+    return syscall3(int, SYS_GETRES, name, flags, arg);
 }
 
 /**
