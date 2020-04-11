@@ -26,7 +26,7 @@ typedef void (*trighandler_t) (int);
 
 /* 检测是否是错误的触发器 */
 #define IS_BAD_TRIGGER(trig) \
-    (trig < 1 || trig > TRIGUSR1)
+    (trig < 1 || trig > TRIGMAX)
   
 #define TA_ONCE          (1 << 0)    /* 只执行一次 */
 

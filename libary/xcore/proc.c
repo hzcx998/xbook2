@@ -89,3 +89,17 @@ pid_t getppid()
     return syscall0(pid_t, SYS_GETPPID); /* return a pid (int type) */
 }
 
+int trigger(int trig, trighandler_t handler)
+{
+    return syscall2(int, SYS_TRIGGER, trig, handler);
+}
+
+int trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
+{
+    return syscall3(int, SYS_TRIGGERACT, trig, act, oldact);
+}
+
+int triggeron(int trig, pid_t pid)
+{
+    return syscall2(int, SYS_TRIGGERON, trig, pid);
+}

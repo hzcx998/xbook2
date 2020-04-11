@@ -553,13 +553,15 @@ static inline int do_protection_fault(vmspace_t * space, unsigned long addr, int
 		/* 只有设置写属性正确才能返回 */
 		int ret = make_page_writable(addr);
 		if (ret) {
-            panic(KERN_DEBUG "do_protection_fault: send SIGSEGV because page not writable!");        
+            printk(KERN_ALTER "do_protection_fault: touch TRIGHW trigger because page not writable!");    
+            trigger_force(TRIGHW, current_task->pid);    
             return -1;
         }
 			
 		/* 虽然写入的写标志，但是还是会出现缺页故障，在此则处理一下缺页 */
 		if (handle_no_page(addr, space->page_prot)) {
-            panic(KERN_DEBUG "do_protection_fault: send SIGSEGV because hand no page failed!");
+            printk(KERN_ALTER "do_protection_fault: touch TRIGHW trigger because hand no page failed!");
+            trigger_force(TRIGHW, current_task->pid);
 			return -1; 
         }
 
@@ -568,8 +570,9 @@ static inline int do_protection_fault(vmspace_t * space, unsigned long addr, int
 		printk(KERN_DEBUG "no write protection\n");
 	}
     //ForceSignal(SIGSEGV, SysGetPid());
-	printk(KERN_DEBUG "do_protection_fault: send SIGSEGV because page protection!");
-    panic(KERN_ERR "page protection fault!\n");
+	printk(KERN_ALTER "do_protection_fault: touch TRIGHW trigger because page protection!");
+    trigger_force(TRIGHW, current_task->pid);
+    //panic(KERN_ERR "page protection fault!\n");
     return -1;
 }
 
@@ -614,9 +617,10 @@ int do_page_fault(trap_frame_t *frame)
     if (space == NULL) {    
         /* 故障源是用户 */
     
-        printk(KERN_DEBUG "user access user unknown space .\n");
+        printk(KERN_ALTER "do_page_fault: user access user unknown space .\n");
+        trigger_force(TRIGHW, cur->pid);
         /* 发出信号退出 */
-        panic("send a signal SIGSEGV because unknown space!");
+        //panic("send a signal SIGSEGV because unknown space!");
         return -1;
     }
     /* 找到空间，判断空间类型，根据不同的空间，进行不同的处理。 */
@@ -630,8 +634,10 @@ int do_page_fault(trap_frame_t *frame)
                 do_expand_stack(space, addr);
                 //printk(KERN_DEBUG "expand stack at %x\n", addr);
             } else {    /* 不是可拓展栈 */
+                printk(KERN_ALTER "do_page_fault: touch TRIGHW trigger because unknown space!");
+                trigger_force(TRIGHW, cur->pid);
                 /* 发出信号退出 */
-                panic("send a signal SIGSEGV because addr %x without space!", addr); 
+                //panic("send a signal SIGSEGV because addr %x without space!", addr); 
                 return -1;  
             }    
         }

@@ -79,6 +79,31 @@ void shmtest2()
     }
     readres(shmid2, 0, shmaddr2, 0);
 }
+void trigger_test()
+{
+    int a = 0;
+    int b = a / 0;
+
+    char *addr = (char *)0;
+    *addr = 0;
+
+
+
+
+    trigger(TRIGHW, TRIG_IGN);
+    trigger(TRIGLSOFT, TRIG_IGN);
+
+    trig_action_t act = {TRIG_IGN, 0};
+    trig_action_t oldact;
+    
+    trigger_action(TRIGUSR0, &act, &oldact);
+    printf("oldact: handler=%x flags=%x\n", oldact.handler, oldact.flags);
+    printf("act: handler=%x flags=%x\n", act.handler, act.flags);
+    
+    triggeron(TRIGLSOFT, getpid());
+    triggeron(TRIGHW, getpid());
+    
+}
 int main(int argc, char *argv[])
 {
     printf("hello, bin!\n");
@@ -87,6 +112,7 @@ int main(int argc, char *argv[])
     //semtest1();
     //msgtest();
     putres(1);
+    trigger_test();
     
     return 0;   
 }

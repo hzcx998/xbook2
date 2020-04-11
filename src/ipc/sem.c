@@ -6,7 +6,7 @@
 #include <sys/ipc.h>
 
 /* debug sem : 1 enable, 0 disable */
-#define DEBUG_SEM 1
+#define DEBUG_SEM 0
 
 sem_t *sem_table;
 

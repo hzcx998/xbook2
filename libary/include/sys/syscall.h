@@ -10,6 +10,9 @@ enum {
     SYS_COEXIST,
     SYS_GETPID,
     SYS_GETPPID,
+    SYS_TRIGGER,
+    SYS_TRIGGERON,
+    SYS_TRIGGERACT,
     SYS_PROC_RESERVED = 20,             /* 预留20个接口给进程管理 */
     SYS_HEAP,
     SYS_VMM_RESERVED = 30,              /* 预留10个接口给内存管理 */

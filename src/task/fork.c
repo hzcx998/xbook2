@@ -303,7 +303,7 @@ static int copy_task(task_t *child, task_t *parent)
  * 创建一个和自己一样的进程
  * 返回-1则失败，返回0表示子进程自己，返回>0表示父进程
  */
-int proc_fork()
+int sys_fork()
 {
     /* 把当前任务当做父进程 */
     task_t *parent = current_task;

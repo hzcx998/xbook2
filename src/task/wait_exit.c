@@ -4,7 +4,7 @@
 #include <xbook/task.h>
 #include <xbook/process.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 /*
 僵尸进程：当进程P调用exit时，其父进程没有wait，那么它就变成一个僵尸进程。
@@ -94,7 +94,7 @@ void adopt_children_to_init(task_t *parent)
 }
 
 /**
- * proc_wait - 进程等待 
+ * sys_wait - 进程等待 
  * @status: 存放子进程退出时的状态 
  * 
  * 等待流程：
@@ -107,7 +107,7 @@ void adopt_children_to_init(task_t *parent)
  * 
  * 返回子进程的pid，无则返回-1
  */
-pid_t proc_wait(int *status)
+pid_t sys_wait(int *status)
 {
     task_t *parent = current_task;  /* 当前进程是父进程 */
     pid_t child_pid;
@@ -115,13 +115,13 @@ pid_t proc_wait(int *status)
     
     while (1) {
 #if DEBUG_LOCAL == 1
-        printk(KERN_DEBUG "proc wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
+        printk(KERN_DEBUG "sys_wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
 #endif    
         save_intr(flags);
         /* 先处理挂起的任务 */
         if ((child_pid = wait_one_hangging_child(parent, status)) >= 0) {
 #if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "proc_wait: handle a hangging child %d.\n", child_pid);
+            printk(KERN_DEBUG "sys_wait: handle a hangging child %d.\n", child_pid);
 #endif    
             restore_intr(flags);
             return child_pid;
@@ -132,7 +132,7 @@ pid_t proc_wait(int *status)
         /* 查看是否有子进程 */
         if (!find_child_proc(parent)) {
 #if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "proc_wait: no children!\n");
+            printk(KERN_DEBUG "sys_wait: no children!\n");
 #endif    
             //printk("no children!\n");
             restore_intr(flags);
@@ -142,7 +142,7 @@ pid_t proc_wait(int *status)
         
         //printk(KERN_DEBUG "proc wait: no child exit, waiting...\n");
 #if DEBUG_LOCAL == 1
-        printk(KERN_DEBUG "proc wait: no child exit, waiting...\n");
+        printk(KERN_DEBUG "sys_wait: no child exit, waiting...\n");
 #endif   
         restore_intr(flags);
         /* WATING for children to exit */
@@ -152,7 +152,7 @@ pid_t proc_wait(int *status)
 }
 
 /**
- * proc_exit - 进程退出
+ * sys_exit - 进程退出
  * @status: 退出状态
  * 
  * 退出流程：
@@ -164,7 +164,7 @@ pid_t proc_wait(int *status)
  *      是等待状态->解除对父进程的阻塞。->自己变成挂起状态，等待父进程来销毁。END
  *      不是等待状态->把自己设置成僵尸状态，等待父进程退出。END
  */
-void proc_exit(int status)
+void sys_exit(int status)
 {
     unsigned long flags;
     save_intr(flags);
@@ -174,10 +174,10 @@ void proc_exit(int status)
     task_t *parent = find_task_by_pid(cur->parent_pid); 
     
     /*if (cur->parent_pid == -1 || parent == NULL)
-        panic("proc_exit: proc %s PID=%d exit with parent pid -1!\n", cur->name, cur->pid);
+        panic("sys_exit: proc %s PID=%d exit with parent pid -1!\n", cur->name, cur->pid);
     */
 #if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "proc_exit: name=%s pid=%d ppid=%d prio=%d status=%d\n",
+    printk(KERN_DEBUG "sys_exit: name=%s pid=%d ppid=%d prio=%d status=%d\n",
         cur->name, cur->pid, cur->parent_pid, cur->priority, cur->exit_status);
 #endif    
     /* 处理zombie子进程 */
@@ -188,7 +188,7 @@ void proc_exit(int status)
     /* 释放占用的资源 */
     proc_release(cur); /* 释放资源 */
 #if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "proc_exit: release all.\n");
+    printk(KERN_DEBUG "sys_exit: release all.\n");
 #endif    
 
     if (parent) {
@@ -196,7 +196,7 @@ void proc_exit(int status)
         if (parent->state == TASK_WAITING) {
             restore_intr(flags);
 #if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "proc_exit: parent waiting...\n");
+            printk(KERN_DEBUG "sys_exit: parent waiting...\n");
 #endif    
 
             //printk("parent waiting...\n");
@@ -205,7 +205,7 @@ void proc_exit(int status)
         } else { /* 父进程没有 */
             restore_intr(flags);
 #if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "proc_exit: parent not waiting, zombie!\n");
+            printk(KERN_DEBUG "sys_exit: parent not waiting, zombie!\n");
 #endif    
             //printk("parent not waiting, zombie!\n");
             task_block(TASK_ZOMBIE);   /* 变成僵尸进程 */
@@ -213,7 +213,7 @@ void proc_exit(int status)
     } else {
         /* 没有父进程，变成不可被收养的孤儿+僵尸进程 */
 #if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "proc_exit: no parent! zombie!\n");
+            printk(KERN_DEBUG "sys_exit: no parent! zombie!\n");
 #endif    
         //printk("no parent!\n");
         restore_intr(flags);

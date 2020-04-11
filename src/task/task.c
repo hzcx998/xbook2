@@ -317,17 +317,17 @@ static void create_idle_thread()
 }
 
 /**
- * task_get_pid - 获取任务id
+ * sys_get_pid - 获取任务id
  */
-pid_t task_get_pid()
+pid_t sys_get_pid()
 {
     return current_task->pid;
 }
 
 /**
- * task_get_ppid - 获取任务父进程id
+ * sys_get_ppid - 获取任务父进程id
  */
-pid_t task_get_ppid()
+pid_t sys_get_ppid()
 {
     return current_task->parent_pid;
 }

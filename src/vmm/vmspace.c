@@ -341,7 +341,7 @@ the_end:
 }
 
 /**
- * vmspace_heap - 设置堆的结束值
+ * sys_vmspace_heap - 设置堆的结束值
  * @heap: 堆值
  * 
  * 返回扩展的前一个地址
@@ -350,18 +350,18 @@ the_end:
  * 小于就向前缩小
  * 总是返回当前heap最新值
  */
-unsigned long vmspace_heap(unsigned long heap)
+unsigned long sys_vmspace_heap(unsigned long heap)
 {
     unsigned long ret;
     unsigned long old_heap, new_heap;
     vmm_t *vmm = current_task->vmm;
     
-    /*printk(KERN_DEBUG "vmspace_heap: vmm heap start %x end %x new %x\n", 
+    /*printk(KERN_DEBUG "sys_vmspace_heap: vmm heap start %x end %x new %x\n", 
         vmm->heap_start, vmm->heap_end, heap);*/
 
     /* 如果堆比开始位置都小就退出 */
     if (heap < vmm->heap_start) {
-        //printk(KERN_DEBUG "vmspace_heap: new heap too low!\n");
+        //printk(KERN_DEBUG "sys_vmspace_heap: new heap too low!\n");
         goto the_end;
     }
     
@@ -371,18 +371,18 @@ unsigned long vmspace_heap(unsigned long heap)
 
     /* 如果新旧堆值在同一个页内，就设置新的堆值然后返回 */
     if (new_heap == old_heap) {
-        //printk(KERN_DEBUG "vmspace_heap: both in a page!\n");
+        //printk(KERN_DEBUG "sys_vmspace_heap: both in a page!\n");
         goto set_heap; 
     }
     
     /* 如果heap小于当前vmm的heap_end，就说明是收缩内存 */
     if (heap <= vmm->heap_end && heap >= vmm->heap_start) {
-        //printk(KERN_DEBUG "vmspace_heap: shrink mm.\n");
+        //printk(KERN_DEBUG "sys_vmspace_heap: shrink mm.\n");
         
         /* 收缩地址就取消映射，如果成功就去设置新的断点值 */
         if (!do_vmspace_unmap(vmm, new_heap, old_heap - new_heap))
             goto set_heap;
-        printk(KERN_ERR "vmspace_heap: do_vmspace_unmap failed!\n");
+        printk(KERN_ERR "sys_vmspace_heap: do_vmspace_unmap failed!\n");
         goto the_end;
     }
     
@@ -392,7 +392,7 @@ unsigned long vmspace_heap(unsigned long heap)
 
     /* 检查是否和已经存在的空间发生重叠 */
     if (vmspace_find_intersection(vmm, old_heap, new_heap + PAGE_SIZE)) {
-        printk(KERN_ERR "vmspace_heap: space intersection!\n");
+        printk(KERN_ERR "sys_vmspace_heap: space intersection!\n");
         goto the_end;
     }
     
@@ -400,13 +400,13 @@ unsigned long vmspace_heap(unsigned long heap)
 
     /* 堆新的断点进行空间映射 */
     if (do_vmspace_heap(vmm, old_heap, new_heap - old_heap) != old_heap) {
-        printk(KERN_ERR "vmspace_heap: do_heap failed! addr %x len %x\n",
+        printk(KERN_ERR "sys_vmspace_heap: do_heap failed! addr %x len %x\n",
             old_heap, new_heap - old_heap);
         goto the_end;
     }
      
 set_heap:
-    /*printk(KERN_DEBUG "vmspace_heap: set new heap %x old is %x\n",
+    /*printk(KERN_DEBUG "sys_vmspace_heap: set new heap %x old is %x\n",
         heap, vmm->heap_end);*/
 
     vmm->heap_end = heap; /* 记录新的堆值 */

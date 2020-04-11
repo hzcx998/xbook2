@@ -14,14 +14,14 @@
 
 
 /**
- * proc_exec_raw - 执行原始进程
+ * sys_exec_raw - 执行原始进程
  * 
  * @name: 名字
  * @argv: 参数
  * 
  * @return: 失败返回-1，成功不返回
  */
-int proc_exec_raw(char *name, char **argv)
+int sys_exec_raw(char *name, char **argv)
 {
     /* 没有参数或者参数错误 */
     /*if (argv == NULL)
@@ -31,7 +31,7 @@ int proc_exec_raw(char *name, char **argv)
     /* 对原始块名进行检测 */
     raw_block_t *rb = raw_block_get_by_name(name);
     if (rb == NULL) {
-        printk(KERN_ERR "proc_exec_raw: get raw block failed!\n");
+        printk(KERN_ERR "sys_exec_raw: get raw block failed!\n");
         return -1;
     }
     /* 读取文件头 */
@@ -39,7 +39,7 @@ int proc_exec_raw(char *name, char **argv)
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
     
     if (raw_block_read_off(rb, &elf_header, 0, sizeof(struct Elf32_Ehdr))) {
-        printk(KERN_ERR "proc_exec_raw: read elf header failed!\n");
+        printk(KERN_ERR "sys_exec_raw: read elf header failed!\n");
         return -1;
     }
 
@@ -52,7 +52,7 @@ int proc_exec_raw(char *name, char **argv)
         elf_header.e_phentsize != sizeof(struct Elf32_Phdr)) {
         
         /* 头文件检测出错 */
-        printk(KERN_ERR "proc_exec_raw: it is not a elf format file!\n", name);
+        printk(KERN_ERR "sys_exec_raw: it is not a elf format file!\n", name);
         return -1;
     }
     /*
@@ -65,7 +65,7 @@ int proc_exec_raw(char *name, char **argv)
     参数，然后再重载镜像 */
     char *tmp_arg = kmalloc(PAGE_SIZE);
     if (tmp_arg == NULL) {
-        printk(KERN_ERR "proc_exec_raw: it is not a elf format file!\n", name);
+        printk(KERN_ERR "sys_exec_raw: it is not a elf format file!\n", name);
         return -1;
     }
     char **new_argv = NULL;
@@ -79,7 +79,7 @@ int proc_exec_raw(char *name, char **argv)
     vmm_release_space(cur->vmm);
     /* 加载镜像 */
     if (proc_load_image(cur->vmm, &elf_header, rb)) {
-        printk(KERN_ERR "proc_exec_raw: load_image failed!\n");
+        printk(KERN_ERR "sys_exec_raw: load_image failed!\n");
         goto free_tmp_arg;
     }
     /* 构建中断栈框 */
@@ -120,14 +120,14 @@ int proc_exec_raw(char *name, char **argv)
     /* 不会继续往后执行 */
 free_loaded_image:
     /* 释放已经加载的镜像，不过由于已经替换了新的镜像，回不去了，就直接exit吧。 */
-    proc_exit(-1);
+    sys_exit(-1);
 free_tmp_arg:
     kfree(tmp_arg);
     return -1;
 }
 
 /**
- * proc_exec_file - 通过文件信息执行进程
+ * sys_exec_file - 通过文件信息执行进程
  * 
  * @name: 进程的名字
  * @file: 进程的文件镜像信息
@@ -137,7 +137,7 @@ free_tmp_arg:
  * 
  * @return: 失败返回-1，成功不返回
  */
-int proc_exec_file(char *name, xfile_t *file, char **argv)
+int sys_exec_file(char *name, xfile_t *file, char **argv)
 {
     /* 没有参数或者参数错误 */
     task_t *cur = current_task;
@@ -145,7 +145,7 @@ int proc_exec_file(char *name, xfile_t *file, char **argv)
     /* 根据文件信息创建临时原始块 */
     raw_block_t rb;
     if (raw_block_tmp_add(&rb, file->file, file->size)) {
-        printk(KERN_ERR "proc_exec_file: raw_block_tmp_add failed!\n");
+        printk(KERN_ERR "sys_exec_file: raw_block_tmp_add failed!\n");
         return -1;
     }
     
@@ -154,7 +154,7 @@ int proc_exec_file(char *name, xfile_t *file, char **argv)
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
     
     if (raw_block_read_off(&rb, &elf_header, 0, sizeof(struct Elf32_Ehdr))) {
-        printk(KERN_ERR "proc_exec_file: read elf header failed!\n");
+        printk(KERN_ERR "sys_exec_file: read elf header failed!\n");
         goto free_tmp_rb;
     }
 
@@ -167,7 +167,7 @@ int proc_exec_file(char *name, xfile_t *file, char **argv)
         elf_header.e_phentsize != sizeof(struct Elf32_Phdr)) {
         
         /* 头文件检测出错 */
-        printk(KERN_ERR "proc_exec_file: it is not a elf format file!\n", name);
+        printk(KERN_ERR "sys_exec_file: it is not a elf format file!\n", name);
         goto free_tmp_rb;
     }
     /*
@@ -181,7 +181,7 @@ int proc_exec_file(char *name, xfile_t *file, char **argv)
     参数，然后再重载镜像 */
     char *tmp_arg = kmalloc(PAGE_SIZE);
     if (tmp_arg == NULL) {
-        printk(KERN_ERR "proc_exec_file: it is not a elf format file!\n", name);
+        printk(KERN_ERR "sys_exec_file: it is not a elf format file!\n", name);
         goto free_tmp_rb;
     }
     char **new_argv = NULL;
@@ -195,7 +195,7 @@ int proc_exec_file(char *name, xfile_t *file, char **argv)
     vmm_release_space(cur->vmm);
     /* 加载镜像 */
     if (proc_load_image(cur->vmm, &elf_header, &rb)) {
-        printk(KERN_ERR "proc_exec_file: load_image failed!\n");
+        printk(KERN_ERR "sys_exec_file: load_image failed!\n");
         goto free_tmp_arg;
     }
     unsigned long flags;
@@ -239,7 +239,7 @@ int proc_exec_file(char *name, xfile_t *file, char **argv)
     /* 不会继续往后执行 */
 free_loaded_image:
     /* 释放已经加载的镜像，不过由于已经替换了新的镜像，回不去了，就直接exit吧。 */
-    proc_exit(-1);
+    sys_exit(-1);
 free_tmp_arg:
     kfree(tmp_arg);
 free_tmp_rb:

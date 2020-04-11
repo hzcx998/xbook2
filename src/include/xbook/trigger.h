@@ -16,9 +16,9 @@ typedef struct {
 
 void trigger_init(triggers_t *triggers);
 int trigger_force(int trig, pid_t pid);
-int trigger_active(int trig, pid_t pid);
-int trigger_handler(int trig, trighandler_t handler);
-int trigger_action(int trig, trig_action_t *act, trig_action_t *oldact);
+int sys_trigger_active(int trig, pid_t pid);
+int sys_trigger_handler(int trig, trighandler_t handler);
+int sys_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact);
 int trigger_pause();
 
 /**
@@ -26,7 +26,7 @@ int trigger_pause();
  */
 static inline void trigger_calc_left(triggers_t *trigger)
 {
-    if (trigger->set)
+    if (trigger->set > 1)
         trigger->flags |= TRIG_LEFT;
     else 
         trigger->flags &= ~TRIG_LEFT;

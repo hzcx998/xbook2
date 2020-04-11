@@ -203,6 +203,24 @@ void msgtest2()
     printf("test: child: rcv msg ok!");
 
 }
+void trigger_test()
+{
+
+    trigger(TRIGHW, TRIG_IGN);
+    trigger(TRIGLSOFT, TRIG_IGN);
+
+    trig_action_t act = {TRIG_IGN, 0};
+    trig_action_t oldact;
+    
+    trigger_action(TRIGUSR0, &act, &oldact);
+    printf("oldact: handler=%x flags=%x\n", oldact.handler, oldact.flags);
+    printf("act: handler=%x flags=%x\n", act.handler, act.flags);
+    
+    triggeron(TRIGLSOFT, getpid());
+    triggeron(TRIGHW, getpid());
+    
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -218,6 +236,9 @@ int main(int argc, char *argv[])
     writeres(con, 0, "hello, console!\n", 16);
     printf("hello, printf!\n");
     ctlres(con, 123, 456);
+
+    trigger_test();
+
 
     // putres(con);
     char buf[10];

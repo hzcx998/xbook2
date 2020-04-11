@@ -23,14 +23,14 @@ int do_active_trigger(pid_t pid, int trig, pid_t toucher)
     if (task->triggers == NULL)
         return -1;
     triggers_t *trigger = task->triggers;
+
+    /* 保护触发器集的操作 */
+    unsigned long flags;
+    save_intr(flags);
 #if DEBUG_TRIGGER == 1 
     printk(KERN_DEBUG "do_active_trigger: toucher=%d pid=%d tirgger:%d\n",
         toucher, pid, trig);
 #endif
-    /* 保护触发器集的操作 */
-    unsigned long flags;
-    save_intr(flags);
-
     switch (trig)
     {
     /* 重软件和硬件触发器都会让进程退出，所以这里需要唤醒停止中的进程，
@@ -117,7 +117,7 @@ int trigger_force(int trig, pid_t pid)
  * 
  * @return: 成功返回0，失败返回-1
  */
-int trigger_active(int trig, pid_t pid)
+int sys_trigger_active(int trig, pid_t pid)
 {
 #if DEBUG_TRIGGER == 1
     printk(KERN_DEBUG "trigger_active: start.\n");
@@ -133,11 +133,11 @@ int trigger_active(int trig, pid_t pid)
  * 
  * @return: 成功返回0，失败返回-1
 */
-int trigger_handler(int trig, trighandler_t handler)
+int sys_trigger_handler(int trig, trighandler_t handler)
 {
     if (IS_BAD_TRIGGER(trig))
         return -1;
-    if (trig < TRIGLSOFT) /* 只有轻软件和用户触发器才能设置处理方式 */
+    if (trig == TRIGHSOFT || trig == TRIGPAUSE) /* 重软件和暂停不能够捕捉和忽略 */
         return -1;
     triggers_t *trigger = current_task->triggers;
     if (trigger == NULL)
@@ -166,11 +166,11 @@ int trigger_handler(int trig, trighandler_t handler)
  * 
  * @return: 成功返回0，失败返回-1
 */
-int trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
+int sys_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
 {
     if (IS_BAD_TRIGGER(trig))
         return -1;
-    if (trig < TRIGLSOFT) /* 只有轻软件和用户触发器才能设置处理方式 */
+    if (trig == TRIGHSOFT || trig == TRIGPAUSE) /* 重软件和暂停不能够捕捉和忽略 */
         return -1;
     triggers_t *trigger = current_task->triggers;
     if (trigger == NULL)
@@ -236,14 +236,15 @@ int do_trigger(trap_frame_t *frame)
     /* 没有触发器需要处理 */
     if (!(trigger->flags & TRIG_LEFT))
         return -1;
-#if DEBUG_TRIGGER == 1
-    printk(KERN_DEBUG "do_trigger: pid=%d start.\n", cur->pid);
-#endif
+
     trig_action_t *ta;
     /* 查看每一个触发器，看是否激活 */
     int trig;
     unsigned long flags;
     save_intr(flags);
+#if DEBUG_TRIGGER == 1
+    printk(KERN_DEBUG "do_trigger: pid=%d start.\n", cur->pid);
+#endif
     for (trig = 1; trig <= TRIGMAX; trig++) {
         /* 如果触发器激活了，就处理 */
         if (trigger->set & (1 << trig)) {
@@ -251,10 +252,17 @@ int do_trigger(trap_frame_t *frame)
                 printk(KERN_DEBUG "do_trigger: trigger=%d\n", trig);
 #endif
             /* 处理后置0 */
+#if DEBUG_TRIGGER == 1
+            printk(KERN_DEBUG "do_trigger: before set=%x flags=%x\n", trigger->set, trigger->flags);
+#endif
             trigdelset(&trigger->set, trig);
             trigger->touchers[trig - 1] = -1;   /* clean toucher */
             trigger_calc_left(trigger);
+            
             ta = &trigger->actions[trig - 1];
+#if DEBUG_TRIGGER == 1
+            printk(KERN_DEBUG "do_trigger: after set=%x flags=%x\n", trigger->set, trigger->flags);
+#endif
             if (ta->handler == TRIG_IGN) { /* ignore trigger */
 #if DEBUG_TRIGGER == 1
                 printk(KERN_DEBUG "do_trigger: ignore trigger=%d\n", trig);
@@ -263,8 +271,13 @@ int do_trigger(trap_frame_t *frame)
             }
             if (ta->handler == TRIG_DFL) {   /* default trigger */
                 /* init process do nothing. */
-                if (cur->pid == INIT_PROC_PID)
+                if (cur->pid == INIT_PROC_PID) {
+#if DEBUG_TRIGGER == 1
+                printk(KERN_DEBUG "do_trigger: trigger is invailed for init process :)\n");
+#endif
                     continue;
+                }
+                    
                 /* do default thing through different trigger */
                 switch (trig)
                 {
@@ -299,7 +312,7 @@ int do_trigger(trap_frame_t *frame)
                     trigaddset(&trigger->set, trig);
                     trigger_calc_left(trigger);
                     cur->exit_status = trig;
-                    proc_exit(trig); /* 退出后不会往后面运行 */
+                    sys_exit(trig); /* 退出后不会往后面运行 */
                     continue;
                 default:
                     break;
@@ -314,6 +327,9 @@ int do_trigger(trap_frame_t *frame)
         }
     }
     restore_intr(flags);
+#if DEBUG_TRIGGER == 1
+    printk(KERN_DEBUG "do_trigger: scan done.\n");
+#endif
     return 0;
 }
 

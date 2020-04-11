@@ -97,15 +97,14 @@ syscall_handler:
 
 	;4 将call调用后的返回值存入待当前内核栈中eax的位置
     mov [esp + 8*4], eax	
-    cli
-       
+     
     ; 处理完用户消息后再进行触发器处理，因为处理过程可能会影响到寄存器的值
     ;5 signal
 
     push esp         ; 把中断栈指针传递进去
     call do_trigger
     add esp, 4
-    
+    cli
     jmp intr_exit		    ; intr_exit返回,恢复上下文
 
 global intr_exit

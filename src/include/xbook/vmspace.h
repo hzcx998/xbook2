@@ -41,7 +41,7 @@ int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
 void *vmspace_mmap(uint32_t addr, uint32_t paddr, uint32_t len, uint32_t prot,
     uint32_t flags);
 int vmspace_unmmap(uint32_t addr, uint32_t len);
-unsigned long vmspace_heap(unsigned long heap);
+unsigned long sys_vmspace_heap(unsigned long heap);
 unsigned long vmspace_get_unmaped(vmm_t *vmm, unsigned len);
 
 /**

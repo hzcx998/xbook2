@@ -8,7 +8,7 @@
 #include <sys/ipc.h>
 
 /* debug shm : 1 enable, 0 disable */
-#define DEBUG_SHM 1
+#define DEBUG_SHM 0
 
 share_mem_t *share_mem_table;
 

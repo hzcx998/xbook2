@@ -5,7 +5,7 @@
 #include <sys/ipc.h>
 
 /* debug msgq : 1 enable, 0 disable */
-#define DEBUG_MSGQ 1
+#define DEBUG_MSGQ 0
 
 /* 消息队列表 */ 
 msg_queue_t *msg_queue_table;

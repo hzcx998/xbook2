@@ -25,4 +25,8 @@ int getres(char *name, unsigned long flags, unsigned long arg);
 int putres(int res);
 int ctlres(int res, unsigned int cmd, unsigned long arg);
 
+int trigger(int trig, trighandler_t handler);
+int trigger_action(int trig, trig_action_t *act, trig_action_t *oldact);
+int triggeron(int trig, pid_t pid);
+
 #endif  /* _SYS_XCORE_H */

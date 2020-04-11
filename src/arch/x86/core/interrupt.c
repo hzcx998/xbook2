@@ -3,6 +3,8 @@
 #include <xbook/debug.h>
 #include <xbook/trigger.h>
 
+#define DEBUG_LOCAL	1
+
 // 中断处理函数组成的数组
 intr_handler_t intr_handler_table[MAX_INTERRUPT_NR];
 
@@ -25,8 +27,8 @@ void intr_general_handler(unsigned int esp)
 	/* 支持信号后的处理 */
     switch (frame->vec_no) {
     case EP_PAGE_FAULT:
-        /* 后面处理 */
-        break;
+        do_page_fault(frame); /* 执行页故障处理 */
+		return;
     case EP_DIVIDE:
     case EP_DEVICE_NOT_AVAILABLE:
     case EP_COPROCESSOR_SEGMENT_OVERRUN:
@@ -43,10 +45,16 @@ void intr_general_handler(unsigned int esp)
     case EP_INVALID_OPCODE:
 	case EP_INTERRUPT:
     case EP_DOUBLE_FAULT:
+#if DEBUG_LOCAL == 1
+		printk(KERN_ALTER "intr_general_handler: touch TRIGHW trigger because a expection occur!\n");
+#endif
 		trigger_force(TRIGHW, current_task->pid);
 		return;
 	case EP_DEBUG:
     case EP_BREAKPOINT:
+#if DEBUG_LOCAL == 1
+		printk(KERN_NOTICE "intr_general_handler: touch TRIGDBG trigger because a debug occur!\n");
+#endif
 		trigger_force(TRIGDBG, current_task->pid);
         return;
     default:
