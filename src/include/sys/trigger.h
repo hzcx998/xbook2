@@ -28,7 +28,7 @@ typedef void (*trighandler_t) (int);
 #define IS_BAD_TRIGGER(trig) \
     (trig < 1 || trig > TRIGMAX)
   
-#define TA_ONCE          (1 << 0)    /* 只执行一次 */
+#define TA_ONCSHOT          (1 << 0)    /* 只执行一次 */
 
 /* 触发器行为 */
 typedef struct {

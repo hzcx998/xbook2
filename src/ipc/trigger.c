@@ -2,6 +2,7 @@
 #include <xbook/task.h>
 #include <xbook/process.h>
 #include <xbook/debug.h>
+#include <xbook/syscall.h>
 #include <arch/interrupt.h>
 
 /* 调试触发器：0不调试，1要调试 */
@@ -145,7 +146,7 @@ int sys_trigger_handler(int trig, trighandler_t handler)
 #if DEBUG_TRIGGER == 1
     printk(KERN_DEBUG "trigger_handler: trig=%d handler=%x\n", trig, handler);
 #endif
-    trig_action_t ta = {handler, TA_ONCE};
+    trig_action_t ta = {handler, TA_ONCSHOT}; /* 默认只会捕捉一次 */
     unsigned long flags;
     save_intr(flags);
     if (handler > 0) {
@@ -201,25 +202,61 @@ int sys_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
 }
 
 /**
- * trigger_pause - 等待一个触发器被捕捉后才返回
+ * sys_trigger_return - 执行完用户信号后返回
+ * @frame: 栈
  * 
- * @return: 触发器被捕捉后，返回1，没有被捕捉就返回0
  */
-int trigger_pause()
+int sys_trigger_return(unsigned int ebx, unsigned int ecx, unsigned int esi, unsigned int edi, trap_frame_t *frame)
 {
-    triggers_t *trigger = current_task->triggers;
-    if (trigger == NULL)
-        return -1;   
-    unsigned long flags;
-    save_intr(flags);
-    if (trigger->flags & TRIG_CATCHED) {
-        restore_intr(flags);
-        return 1;
+    //printk("arg is %x %x %x %x %x\n", ebx, ecx, esi, edi, frame);
+
+    //printk("usr esp - 4:%x esp:%x\n", *(uint32_t *)(frame->esp - 4), *(uint32_t *)frame->esp);
+    
+    /* 原本trigger_frame是在用户栈esp-trigger_frameSize这个位置，但是由于调用了用户处理程序后，
+    函数会把返回地址弹出，也就是esp+4，所以，需要通过esp-4才能获取到trigger_frame */
+    trigger_frame_t *trigger_frame = (trigger_frame_t *)(frame->esp - 4);
+
+    /* 还原之前的中断栈 */
+    memcpy(frame, &trigger_frame->trap_frame, sizeof(trap_frame_t));
+    
+    printk(KERN_DEBUG "sys_trigger_return: ret val %d.\n", frame->eax);
+
+    /* 信号已经被捕捉处理了 */
+    if (current_task->triggers)
+        current_task->triggers->flags |= TRIG_CATCHED;
+
+    /* 会修改eax的值，返回eax的值 */
+    return frame->eax;
+}
+
+/**
+ * handle_trigger - 处理触发器
+ * @frame: 中断栈框
+ * @trig: 触发器
+ * 
+ * 处理用户可捕捉的触发器
+ * 
+ * 成功返回0，失败返回-1
+ */
+static int handle_trigger(trap_frame_t *frame, int trig)
+{
+    /* 获取触发器行为 */
+    trig_action_t *act = &current_task->triggers->actions[trig - 1];
+
+    /* 处理自定义函数 */
+    printk(KERN_DEBUG "handle_trigger: handle trig=%d.\n", trig);
+    
+    /* 构建用户触发器栈框，返回时就可以处理用户自定义函数 */
+    build_trigger_frame(trig, act, frame);
+    
+    /* 执行完信号后需要把触发器行为设置为默认的行为 */
+    if (act->flags & TA_ONCSHOT) {
+        act->handler = TRIG_DFL;
     }
-    task_block(TASK_BLOCKED);
-    char catched = trigger->flags & TRIG_CATCHED;
-    restore_intr(flags);
-    return catched;
+    
+    printk(KERN_DEBUG "handle_trigger: will return into user!\n");
+
+    return 0;
 }
 
 /**
@@ -322,7 +359,7 @@ int do_trigger(trap_frame_t *frame)
             printk(KERN_DEBUG "do_trigger: handle user or light software trigger=%d\n", trig);
 #endif
             /* 捕捉用户态程序 */
-            // handle_trigger(frame, trig);
+            handle_trigger(frame, trig);
             break;  /* 捕捉一个触发器后，立即返回 */
         }
     }

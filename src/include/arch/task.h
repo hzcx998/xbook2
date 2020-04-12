@@ -17,5 +17,4 @@
 /* 从内核态切换到用户态 */
 #define switch_to_user(frame)      __switch_to_user(frame)
 
-
 #endif  /* _ARCH_TASK_H */

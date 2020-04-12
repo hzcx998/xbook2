@@ -2,6 +2,7 @@
 #include "registers.h"
 #include <xbook/debug.h>
 #include <xbook/trigger.h>
+#include <xbook/task.h>
 
 #define DEBUG_LOCAL	1
 

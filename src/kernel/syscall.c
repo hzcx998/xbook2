@@ -22,6 +22,7 @@ void init_syscall()
     syscall_table[SYS_TRIGGER] = sys_trigger_handler;
     syscall_table[SYS_TRIGGERON] = sys_trigger_active;
     syscall_table[SYS_TRIGGERACT] = sys_trigger_action;
+    syscall_table[SYS_TRIGRET] = sys_trigger_return;
     
     /* 内存管理 */
     syscall_table[SYS_HEAP] = sys_vmspace_heap;

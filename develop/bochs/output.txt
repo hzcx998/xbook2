@@ -2,11 +2,51 @@ hello, xbook!
 
 info: memory total:1fff0000 byte 511 MB
 info: welcom to xbook kernel.
-debug: init_msg_queue: alloc mem table at 81483000
-info: time:4:19:15 date:2020/4/9
-info: week day:4 Thursday year day:101
+info: time:11:42:25 date:2020/4/12
+info: week day:0 Sunday year day:104
 info: found 2 hard disks.
 info: raw block name:init
 info: raw block name:bin
-
-panic: send a signal SIGSEGV because addr 0 without space!
+debug: trigger_handler: trig=1 handler=1
+debug: trigger_handler: trig=6 handler=1
+debug: trigger_action: old trig=7 handler=0 flags=0
+debug: trigger_action: new trig=7 handler=1 flags=0
+debug: trigger_active: start.
+debug: do_active_trigger: toucher=1 pid=1 tirgger:6
+debug: do_active_trigger: write trigger set.
+debug: do_trigger: pid=1 start.
+debug: do_trigger: trigger=6
+debug: do_trigger: before set=41 flags=1
+debug: do_trigger: after set=1 flags=0
+debug: do_trigger: ignore trigger=6
+debug: do_trigger: scan done.
+debug: trigger_active: start.
+debug: do_active_trigger: toucher=1 pid=1 tirgger:1
+debug: do_active_trigger: may wakeup stoped task.
+debug: do_active_trigger: write trigger set.
+debug: do_trigger: pid=1 start.
+debug: do_trigger: trigger=1
+debug: do_trigger: before set=3 flags=1
+debug: do_trigger: after set=1 flags=0
+debug: do_trigger: ignore trigger=1
+debug: do_trigger: scan done.
+debug: sys_wait: name=init pid=1 wait child.
+debug: sys_wait: no child exit, waiting...
+alter: intr_general_handler: touch TRIGHW trigger because a expection occur!
+debug: trigger_force: start.
+debug: do_active_trigger: toucher=2 pid=2 tirgger:1
+debug: do_active_trigger: may wakeup stoped task.
+debug: do_active_trigger: write trigger set.
+debug: do_trigger: pid=2 start.
+debug: do_trigger: trigger=1
+debug: do_trigger: before set=3 flags=1
+debug: do_trigger: after set=1 flags=0
+debug: do_trigger: heavy software or hardware trigger=1
+debug: sys_exit: name=bin pid=2 ppid=1 prio=2 status=1
+debug: sys_exit: release all.
+debug: sys_exit: parent waiting...
+debug: sys_wait: name=init pid=1 wait child.
+debug: sys_wait: handle a hangging child 2.
+debug: sys_exit: name=init pid=1 ppid=-1 prio=2 status=0
+debug: sys_exit: release all.
+debug: sys_exit: no parent! zombie!

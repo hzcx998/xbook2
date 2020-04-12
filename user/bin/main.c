@@ -79,27 +79,43 @@ void shmtest2()
     }
     readres(shmid2, 0, shmaddr2, 0);
 }
+int handle_count = 0;
+void trigger_handler(int trig)
+{
+    printf("bin: trigger %d handled.\n", trig);
+    handle_count++;
+    if (handle_count > 10)
+        triggeron(TRIGHSOFT, getpid());
+}
+
 void trigger_test()
 {
+
+    /*
     int a = 0;
     int b = a / 0;
 
     char *addr = (char *)0;
     *addr = 0;
+    */
 
-
-
-
-    trigger(TRIGHW, TRIG_IGN);
+    trigger(TRIGHW, trigger_handler);
     trigger(TRIGLSOFT, TRIG_IGN);
 
-    trig_action_t act = {TRIG_IGN, 0};
+    trig_action_t act = {trigger_handler, 0};
     trig_action_t oldact;
     
-    trigger_action(TRIGUSR0, &act, &oldact);
+    trigger_action(TRIGHW, &act, &oldact);
     printf("oldact: handler=%x flags=%x\n", oldact.handler, oldact.flags);
     printf("act: handler=%x flags=%x\n", act.handler, act.flags);
     
+    char *addr = (char *)0;
+    *addr = 0;
+    
+    int a = 0;
+    int b = a / 0;
+
+    triggeron(TRIGUSR0, getpid());
     triggeron(TRIGLSOFT, getpid());
     triggeron(TRIGHW, getpid());
     
@@ -108,11 +124,12 @@ int main(int argc, char *argv[])
 {
     printf("hello, bin!\n");
     
+    trigger_test();
+    
     shmtest2();
     //semtest1();
     //msgtest();
     putres(1);
-    trigger_test();
     
     return 0;   
 }
