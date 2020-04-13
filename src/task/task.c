@@ -237,6 +237,10 @@ void task_activate(task_t *task)
  */
 void task_block(task_state_t state)
 {
+    // 先关闭中断，并且保存中断状态
+    unsigned long flags;
+    save_intr(flags);
+
     /*
     state有4种状态，分别是TASK_BLOCKED, TASK_WAITING, TASK_STOPPED, TASK_ZOMBIE
     它们不能被调度
@@ -246,10 +250,7 @@ void task_block(task_state_t state)
             (state == TASK_STOPPED) ||
             (state == TASK_HANGING) ||
             (state == TASK_ZOMBIE));
-    // 先关闭中断，并且保存中断状态
-    unsigned long flags;
-    save_intr(flags);
-
+    
     // 改变状态
     task_t *current = current_task;
     //printk(PART_TIP "task %s blocked with status %d\n", current->name, state);
@@ -270,9 +271,15 @@ void task_unblock(task_t *task)
     // 先关闭中断，并且保存中断状态
     unsigned long flags;
     save_intr(flags);
-
+#if 1
+    if (!((task->state == TASK_BLOCKED) || 
+        (task->state == TASK_WAITING) ||
+        (task->state == TASK_STOPPED))) {
+        panic("task_unblock: task name=%s pid=%d state=%d\n", task->name, task->pid, task->state);
+    }
+#endif    
     /*
-    state有2种状态，分别是TASK_BLOCKED, TASK_WAITING
+    state有3种状态，分别是TASK_BLOCKED, TASK_WAITING
     只有它们能被唤醒, TASK_ZOMBIE只能阻塞，不能被唤醒
     */
     ASSERT((task->state == TASK_BLOCKED) || 

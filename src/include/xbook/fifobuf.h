@@ -27,7 +27,7 @@ typedef struct fifo_buf {
 void fifo_buf_init(fifo_buf_t *fifo, unsigned char *buffer,
         unsigned int size);
 fifo_buf_t *fifo_buf_alloc(unsigned int size);
-void kfifo_free(fifo_buf_t *fifo);
+void fifo_buf_free(fifo_buf_t *fifo);
 
 unsigned int __fifo_buf_get(fifo_buf_t *fifo, 
         const unsigned char *buffer, unsigned int len);

@@ -634,7 +634,7 @@ int do_page_fault(trap_frame_t *frame)
                 do_expand_stack(space, addr);
                 //printk(KERN_DEBUG "expand stack at %x\n", addr);
             } else {    /* 不是可拓展栈 */
-                printk(KERN_ALTER "do_page_fault: touch TRIGHW trigger because unknown space!");
+                printk(KERN_ALTER "do_page_fault: touch TRIGHW trigger because unknown space!\n");
                 trigger_force(TRIGHW, cur->pid);
                 /* 发出信号退出 */
                 //panic("send a signal SIGSEGV because addr %x without space!", addr); 

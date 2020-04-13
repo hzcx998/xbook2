@@ -49,6 +49,8 @@
         "syscall.h": "c",
         "xcore.h": "c",
         "resource.h": "c",
-        "res.h": "c"
+        "res.h": "c",
+        "msgqueue.h": "c",
+        "sem.h": "c"
     }
 }

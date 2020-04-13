@@ -5,11 +5,12 @@
 #include <xbook/sharemem.h>
 #include <xbook/sem.h>
 #include <xbook/msgqueue.h>
+#include <xbook/pipe.h>
 #include <sys/res.h>
 #include <sys/ipc.h>
 
 /* debug: 1 enable, 0 disable */
-#define DEBUG_RES 0
+#define DEBUG_LOCAL 0
 
 res_item_t *res_to_item(int res)
 {
@@ -69,20 +70,20 @@ int __getres_device(char *name, unsigned long resflg)
     if (!handle) {   /* not found a devno */
         return -1;
     }
-    #if DEBUG_RES == 1
+    #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "__getres_device: get devno %x\n", handle);
     #endif
     if (dev_open(handle, resflg & RES_LOCAL_MASK)) {
         return -1;
     }
-    #if DEBUG_RES == 1
+    #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "__getres_device: open done, ready install res.\n");
     #endif
     
     /* 打开资源成功，安装到进程中 */
     int res = install_res(resflg & RES_GLOBAL_MASK, handle);
     if (res == -1) { /* 失败后要关闭设备 */  
-        #if DEBUG_RES == 1
+        #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "__getres_device: install res failed!\n");
         #endif
         dev_close(handle);
@@ -103,8 +104,8 @@ int __getres_ipc(char *name, unsigned long resflg, unsigned long arg)
         resflg = (resflg & (RES_LOCAL_MASK | RES_MASTER_MASK)) | IPC_SHM;
         /* 打开资源成功，安装到进程中 */
         res = install_res(resflg, handle);
-        if (res == -1) { /* 失败后要关闭设备 */  
-            #if DEBUG_RES == 1
+        if (res == -1) { /* 失败后要释放资源 */  
+            #if DEBUG_LOCAL == 1
                 printk(KERN_DEBUG "__getres_ipc: install res failed!\n");
             #endif
             share_mem_put(handle);
@@ -118,8 +119,8 @@ int __getres_ipc(char *name, unsigned long resflg, unsigned long arg)
         resflg = (resflg & (RES_LOCAL_MASK | RES_MASTER_MASK)) | IPC_SEM;
         /* 打开资源成功，安装到进程中 */
         res = install_res(resflg, handle);
-        if (res == -1) { /* 失败后要关闭设备 */  
-            #if DEBUG_RES == 1
+        if (res == -1) { /* 失败后要释放资源 */  
+            #if DEBUG_LOCAL == 1
                 printk(KERN_DEBUG "__getres_ipc: install res failed!\n");
             #endif
             sem_put(handle);
@@ -133,11 +134,29 @@ int __getres_ipc(char *name, unsigned long resflg, unsigned long arg)
         resflg = (resflg & (RES_LOCAL_MASK | RES_MASTER_MASK)) | IPC_MSG;
         /* 打开资源成功，安装到进程中 */
         res = install_res(resflg, handle);
-        if (res == -1) { /* 失败后要关闭设备 */  
-            #if DEBUG_RES == 1
+        if (res == -1) { /* 失败后要释放资源 */  
+            #if DEBUG_LOCAL == 1
                 printk(KERN_DEBUG "__getres_ipc: install res failed!\n");
             #endif
             msg_queue_put(handle);
+            return -1;
+        }
+    } else if (resflg & IPC_PIPE) { /* 管道 */
+#if DEBUG_LOCAL == 1
+        printk(KERN_DEBUG "__getres_ipc: pipe resuource.\n");
+#endif        
+        handle = pipe_get(name, resflg & RES_LOCAL_MASK);
+        if (handle == -1)
+            return -1;
+        /* 消除从类型中的其它类型 */
+        resflg = (resflg & (RES_LOCAL_MASK | RES_MASTER_MASK)) | IPC_PIPE;
+        /* 打开资源成功，安装到进程中 */
+        res = install_res(resflg, handle);
+        if (res == -1) { /* 失败后要释放资源 */  
+            #if DEBUG_LOCAL == 1
+            printk(KERN_DEBUG "__getres_ipc: install res failed!\n");
+            #endif
+            pipe_put(handle);
             return -1;
         }
     }
@@ -167,6 +186,10 @@ int __writeres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
         if (msg_queue_send(item->handle, buffer, count, off))
             return -1;
         break;
+    case IPC_PIPE:
+        if (pipe_write(item->handle, buffer, count, off))
+            return -1;
+        break;
     default:
         return -1;
     }
@@ -191,6 +214,9 @@ int __readres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
     case IPC_MSG:
         read_bytes = msg_queue_recv(item->handle, buffer, count, *msgtype, off);
         return read_bytes;
+    case IPC_PIPE:
+        read_bytes = pipe_read(item->handle, buffer, count, off);
+        return read_bytes;
     default:
         return -1;
     }
@@ -207,7 +233,7 @@ int __readres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
  */
 int sys_getres(char *resname, unsigned long resflg, unsigned long arg)
 {
-    #if DEBUG_RES == 1
+    #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "sys_getres: resname=%s resflg=%x\n", resname, resflg);
     #endif
     int res = -1;
@@ -220,7 +246,7 @@ int sys_getres(char *resname, unsigned long resflg, unsigned long arg)
         resflg = (resflg & (RES_LOCAL_MASK | RES_SLAVER_MASK)) | RES_IPC;
         res = __getres_ipc(resname, resflg, arg);
     }
-#if DEBUG_RES == 1
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "sys_getres: install res success.\n");
 #endif
     return res;
@@ -233,7 +259,7 @@ int sys_getres(char *resname, unsigned long resflg, unsigned long arg)
  */
 int sys_putres(int res)
 {
-#if DEBUG_RES == 1
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "sys_putres: res index %d\n", res);
 #endif    
     res_item_t *item = res_to_item(res);
@@ -248,29 +274,19 @@ int sys_putres(int res)
         }
         break;
     case RES_IPC:
-        /* 根据从类型进行不同的操作 */
         switch (item->flags & RES_SLAVER_MASK)
         {
-        case IPC_SHM:
-            if (share_mem_put(item->handle))
-                return -1;
-            break;
-        case IPC_SEM:
-            if (sem_put(item->handle))
-                return -1;
-            break;
-        case IPC_MSG:
-            if (msg_queue_put(item->handle))
-                return -1;
+        case IPC_PIPE: /* 管道在释放时需要释放管道 */
+            pipe_put(item->handle);
             break;
         default:
-            return -1;
+            break;
         }
         break;
     default:
         return -1;  /* error type */
     }
-#if DEBUG_RES == 1
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "sys_putres: uninstall res, the handle %x.\n", item->handle);
 #endif    
     uninstall_res(res);
@@ -289,17 +305,18 @@ int sys_putres(int res)
  */
 int sys_readres(int res, off_t off, void *buffer, size_t count)
 {
-    #if DEBUG_RES == 2
+    #if DEBUG_LOCAL == 2
     printk(KERN_DEBUG "sys_readres: res index %d buffer=%x count=%d.\n",
         res, buffer, count);
     #endif   
     res_item_t *item = res_to_item(res);
     if (item == NULL)
         return -1;
+    int retval = 0;
     switch (item->flags & RES_MASTER_MASK)
     {
     case RES_DEV:
-        #if DEBUG_RES == 2
+        #if DEBUG_LOCAL == 2
             printk(KERN_DEBUG "sys_readres: devno=%x.\n", item->handle);
         #endif   
         if (dev_read(item->handle, off, buffer, count)) {
@@ -307,16 +324,16 @@ int sys_readres(int res, off_t off, void *buffer, size_t count)
         }
         break;
     case RES_IPC:
-        if (__readres_ipc(item, off, buffer, count))
-            return -1;
+        /* 返回读取资源的信息 */
+        retval = __readres_ipc(item, off, buffer, count);
         break;
     default:
         return -1;  /* error type */
     }
-    #if DEBUG_RES == 2
+    #if DEBUG_LOCAL == 2
     printk(KERN_DEBUG "sys_readres: read done!\n");
     #endif    
-    return 0;
+    return retval;
 }
 
 /**
@@ -330,20 +347,20 @@ int sys_readres(int res, off_t off, void *buffer, size_t count)
  */
 int sys_writeres(int res, off_t off, void *buffer, size_t count)
 {
-    #if DEBUG_RES == 2
+    #if DEBUG_LOCAL == 2
     printk(KERN_DEBUG "sys_writeres: res index %d buffer=%x count=%d.\n",
         res, buffer, count);
     #endif    
     res_item_t *item = res_to_item(res);
     if (item == NULL)
         return -1;
-    #if DEBUG_RES == 2
+    #if DEBUG_LOCAL == 2
     printk(KERN_DEBUG "sys_writeres: devno=%x.\n", item->handle);
     #endif    
     switch (item->flags & RES_MASTER_MASK)
     {
     case RES_DEV:
-        #if DEBUG_RES == 2
+        #if DEBUG_LOCAL == 2
             printk(KERN_DEBUG "sys_writeres: devno=%x.\n", item->handle);
         #endif   
         if (dev_write(item->handle, off, buffer, count)) {
@@ -357,7 +374,7 @@ int sys_writeres(int res, off_t off, void *buffer, size_t count)
     default:
         return -1;  /* error type */
     }
-    #if DEBUG_RES == 2
+    #if DEBUG_LOCAL == 2
     printk(KERN_DEBUG "sys_writeres: write done!\n");
     #endif    
     return 0;
@@ -373,34 +390,59 @@ int sys_writeres(int res, off_t off, void *buffer, size_t count)
  */
 int sys_ctlres(int res, unsigned int cmd, unsigned long arg)
 {
-#if DEBUG_RES == 1
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "sys_ctlres: res index %d cmd=%d arg=%x.\n",
         res, cmd, arg);
 #endif  
     res_item_t *item = res_to_item(res);
     if (item == NULL)
         return -1;
-#if DEBUG_RES == 1
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "sys_ctlres: devno=%x.\n", item->handle);
 #endif  
+    int retval = 0;
     switch (item->flags & RES_MASTER_MASK)
     {
     case RES_DEV:
-        #if DEBUG_RES == 2
+        #if DEBUG_LOCAL == 2
             printk(KERN_DEBUG "sys_ctlres: devno=%x.\n", item->handle);
         #endif   
-        if (dev_ioctl(item->handle, cmd, arg)) {
-            return -1;
-        }
+        if (dev_ioctl(item->handle, cmd, arg))
+            retval = -1;
+        
         break;
     case RES_IPC:
+        if (cmd == IPC_DEL) { /* 命令是删除IPC */
+            /* 根据从类型进行不同的操作 */
+            switch (item->flags & RES_SLAVER_MASK)
+            {
+            case IPC_SHM:
+                share_mem_put(item->handle);
+                break;
+            case IPC_SEM:
+                sem_put(item->handle);
+                break;
+            case IPC_MSG:
+                msg_queue_put(item->handle);
+                break;
+            default:
+                retval = -1;
+                break;
+            }
+            if (!retval) /* 如果删除成功，就需要卸载资源 */
+                uninstall_res(res);
+        } else {
+            retval = -1;
+        }
+        break;
     default:
-        return -1;  /* error type */
+        retval = -1;
+        break;
     }
-#if DEBUG_RES == 1
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "sys_ctlres: control done!\n");
 #endif  
-    return 0;
+    return retval;
 }
 
 /**
@@ -425,8 +467,7 @@ void resource_copy(resource_t *dst, resource_t *src)
                 dev_grow(item->handle);
                 break;
             case RES_IPC:
-                /* 不复制ipc资源 */
-                /* code */
+                /* 不复制ipc资源和表项 */
                 break;
             default:
                 break;
@@ -448,35 +489,30 @@ void resource_release(resource_t *res)
     for (i = 0; i < RES_NR; i++) {
         item = &res->table[i];
         if (item->flags) {      
-#if DEBUG_RES == 1
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "resource_release: index=%d handle=%x flags=%x.\n", i, item->handle, item->flags);
 #endif
             switch (item->flags & RES_MASTER_MASK)
             {
             case RES_DEV:
-                /* 设备增长 */
+                /* 设备关闭 */
                 dev_close(res->table[i].handle);
                 break;
             case RES_IPC:
-                /* 根据从类型进行不同的操作 */
+                /* 管道在释放时需要释放 */
                 switch (item->flags & RES_SLAVER_MASK)
                 {
-                case IPC_SHM:
-                    share_mem_put(item->handle);
-                    break;
-                case IPC_SEM:
-                    sem_put(item->handle);
-                    break;
-                case IPC_MSG:
-                    msg_queue_put(item->handle);
+                case IPC_PIPE:
+                    pipe_put(item->handle);
                     break;
                 default:
                     break;
-                }
+                } 
                 break;
             default:
-                break;
+                continue;
             }
+            uninstall_res(i); /* 卸载资源 */
         }
     }
 }

@@ -6,7 +6,7 @@
 #include <arch/interrupt.h>
 
 /* 调试触发器：0不调试，1要调试 */
-#define DEBUG_TRIGGER   1
+#define DEBUG_TRIGGER   0
 
 /**
  * do_active_trigger - 激活任务的某个触发器
@@ -202,7 +202,7 @@ int sys_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
 }
 
 /**
- * sys_trigger_return - 执行完用户信号后返回
+ * sys_trigger_return - 执行完可捕捉触发器后返回
  * @frame: 栈
  * 
  */
@@ -220,10 +220,6 @@ int sys_trigger_return(unsigned int ebx, unsigned int ecx, unsigned int esi, uns
     memcpy(frame, &trigger_frame->trap_frame, sizeof(trap_frame_t));
     
     printk(KERN_DEBUG "sys_trigger_return: ret val %d.\n", frame->eax);
-
-    /* 信号已经被捕捉处理了 */
-    if (current_task->triggers)
-        current_task->triggers->flags |= TRIG_CATCHED;
 
     /* 会修改eax的值，返回eax的值 */
     return frame->eax;

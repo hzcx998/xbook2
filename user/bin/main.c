@@ -120,10 +120,36 @@ void trigger_test()
     triggeron(TRIGHW, getpid());
     
 }
+
+void pipe_test_read()
+{
+    int pip = getres("pipe_test", RES_IPC | IPC_PIPE | IPC_CREAT | IPC_READER, 0);
+    if (pip < 0)
+        return;
+    char buf[8192];
+    memset(buf, 0, 8192);
+    //while (1) {
+        int i, j;
+        for (i = 0; i < 300; i++)
+            for (j = 0; j < 100000; j++);
+            
+        int read = readres(pip, IPC_NOSYNC, buf, 4096);
+
+        printf("child read pipe done! %d bytes.\n", read);
+        for (i = 0; i < 32; i++) {
+            printf("%c ", buf[i]);
+        }
+        printf("\n");
+        
+    //}
+    putres(pip);
+}
+
 int main(int argc, char *argv[])
 {
     printf("hello, bin!\n");
     
+    pipe_test_read();
     trigger_test();
     
     shmtest2();

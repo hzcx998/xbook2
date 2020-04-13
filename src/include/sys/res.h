@@ -3,8 +3,8 @@
 
 
 /* 资源类型 */
-#define RES_DEV    0x1000000
-#define RES_IPC    0x2000000
+#define RES_DEV    0x1000000            /* device resource */
+#define RES_IPC    0x2000000            /* ipc resource */
 
 
 

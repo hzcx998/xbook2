@@ -5,3 +5,4 @@ obj-y		+=	process.o
 obj-y		+=	fork.o
 obj-y		+=	wait_exit.o
 obj-y		+=	exec.o
+obj-y		+=	trigger.o

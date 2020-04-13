@@ -12,6 +12,7 @@
 #include <xbook/msgqueue.h>
 #include <xbook/sem.h>
 #include <xbook/syscall.h>
+#include <xbook/pipe.h>
 
 int kernel_main(void)
 {
@@ -28,13 +29,15 @@ int kernel_main(void)
     init_share_mem();
     init_msg_queue();
     init_sem();
-    
+    init_pipe();
+
     init_syscall();
 
     init_tasks();
     init_clock();
     
-    enable_intr(); /* 打开中断 */
+    /* enable interrupt */
+    enable_intr();
     
     /* init unit drivers */
     init_unit();

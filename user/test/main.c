@@ -221,6 +221,51 @@ void trigger_test()
     
 }
 
+void pipe_test_write()
+{
+    int pip = getres("pipe_test", RES_IPC | IPC_PIPE | IPC_CREAT | IPC_WRITER, 0);
+    if (pip < 0)
+        return;
+    //char *str = "hello, pipe!\n";
+    char buf[8192];
+    memset(buf, 0, 8192);
+
+    //while (1)
+    //{
+        strcpy(buf, "hello, big pipe!\n");
+        writeres(pip, IPC_NOSYNC, buf, 4096);
+    //}
+    
+    printf("parent write pipe done!");
+    //wait(NULL);
+    putres(pip);
+}
+
+void pipe_test_read()
+{
+    int pip = getres("pipe_test", RES_IPC | IPC_PIPE | IPC_CREAT | IPC_READER, 0);
+    if (pip < 0)
+        return;
+    char buf[8192];
+    memset(buf, 0, 8192);
+    while (1) {
+        int i, j;
+        for (i = 0; i < 300; i++)
+            for (j = 0; j < 100000; j++);
+            
+        int read = readres(pip, 0, buf, 4096);
+
+        printf("child read pipe done! %d bytes.\n", read);
+        for (i = 0; i < 32; i++) {
+            printf("%c ", buf[i]);
+        }
+        printf("\n");
+        
+    }
+    putres(pip);
+}
+
+
 int main(int argc, char *argv[])
 {
 
@@ -237,7 +282,7 @@ int main(int argc, char *argv[])
     printf("hello, printf!\n");
     ctlres(con, 123, 456);
 
-    trigger_test();
+    //trigger_test();
 
 
     // putres(con);
@@ -246,20 +291,23 @@ int main(int argc, char *argv[])
     //
     int pid = fork();
     if (pid > 0) {
-        shmtest1();
+        //shmtest1();
         //semtest1();
         //msgtest();
+        pipe_test_write();
 
         int status;
         pid = wait(&status);
         printf("child %d exit with status=%d.\n", pid, status);
-        
+
     } else {
         printf("I am child, I will load data.\n");
         
         //msgtest2();
         //shmtest2();
-
+        /*pipe_test_read();
+        exit(123);
+        */
         unsigned long heap_pos = heap(0);
         printf("heap addr %x.\n", heap_pos);
 

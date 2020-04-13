@@ -45,7 +45,7 @@ fifo_buf_t *fifo_buf_alloc(unsigned int size)
     return fifo;
 }
 
-void kfifo_free(fifo_buf_t *fifo)
+void fifo_buf_free(fifo_buf_t *fifo)
 {
     kfree(fifo->buffer);
     kfree(fifo);

@@ -6,6 +6,7 @@
  * 
  * @name: res name
  * @flags: res flags 
+ * @arg: res arg 
  * 
  * getres a device, if didn't getres, can't operate the device. 
  * 

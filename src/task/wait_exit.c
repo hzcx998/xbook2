@@ -25,11 +25,16 @@ int wait_one_hangging_child(task_t *parent, int *status)
     list_for_each_owner (child, &task_global_list, global_list) {
         if (child->parent_pid == parent->pid) { /* find a child process */
             if (child->state == TASK_HANGING) { /* child is hanging, destroy it  */
-                *status = child->exit_status;
                 pid_t child_pid = child->pid;
+#if DEBUG_LOCAL == 1
+                printk(KERN_NOTICE "wait_one_hangging_child: find a hanging proc %d \n", child_pid);
+#endif              
+                /* 状态是可以为空的，不为空才写入子进程退出状态 */
+                if (status != NULL)
+                    *status = child->exit_status;
+                
                 /* 销毁子进程的PCB */
                 proc_destroy(child);
-                //printk(KERN_NOTICE "find a hanging proc %d \n", child_pid);
                 return child_pid;
             }
         }
@@ -48,11 +53,14 @@ int deal_zombie_child(task_t *parent)
     list_for_each_owner_safe (child, next, &task_global_list, global_list) {
         if (child->parent_pid == parent->pid) { /* find a child process */
             if (child->state == TASK_ZOMBIE) { /* child is zombie, destroy it  */
+#if DEBUG_LOCAL == 1
+                printk(KERN_NOTICE "find a zombie proc %d \n", child->pid);
+#endif
                 /* 销毁子进程的PCB */
                 proc_destroy(child);
                 zombie++;
                 
-                //printk(KERN_NOTICE "find a zombie proc %d \n", child->pid);
+                
             }
         }
     }
