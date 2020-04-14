@@ -6,31 +6,28 @@ RM			= rm
 
 # dir
 DIR_INCLUDE 	= ./include
-DIR_XCORE 		= 	./xcore
-DIR_STDLIB 		= 	./stdlib
+# other lib
+DIR_XCORE 	= ../xcore/include
 
 # flags
-ARFLAGS := -r
+ARFLAGS := -cr
 C_FLAGS	:=  -c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
-			-fno-stack-protector -I $(DIR_INCLUDE) -std=c99
-NASM_FLAGS	:= -I $(DIR_INCLUDE) -f elf 
-
-XCORE_OBJS	:=	$(DIR_XCORE)/syscall.o \
-				$(DIR_XCORE)/proc.o \
-				$(DIR_XCORE)/vmm.o \
-				$(DIR_XCORE)/res.o \
-
-STDLIB_OBJS	:= 	$(DIR_STDLIB)/string.o \
-				$(DIR_STDLIB)/vsprintf.o \
-				$(DIR_STDLIB)/printf.o \
-				$(DIR_STDLIB)/trigger.o \
-				
-# out file
-LIBNAME = xlib.a
-			
+			-fno-stack-protector -std=c99 \
+			-I $(DIR_INCLUDE) \
+			-I $(DIR_XCORE) 
+NASM_FLAGS	:= -f elf \
+			-I $(DIR_INCLUDE) \
+			-I $(DIR_XCORE)
+							
 # objects
-OBJS = $(XCORE_OBJS) $(STDLIB_OBJS)
+OBJS	:= 	string.o \
+			vsprintf.o \
+			printf.o \
+			trigger.o \
 
+# out file
+LIBNAME = stdlib.a
+	
 # all need to do
 all: $(LIBNAME) 
 

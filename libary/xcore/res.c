@@ -1,5 +1,5 @@
-#include <sys/syscall.h>
-#include <sys/xcore.h>
+#include <xcore/syscall.h>
+#include <xcore/xcore.h>
 
 /**
  * getres() - get device resource

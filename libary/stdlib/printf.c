@@ -2,7 +2,7 @@
 #include <vsprintf.h>
 #include <string.h>
 #include <conio.h>
-#include <sys/xcore.h>
+#include <xcore/xcore.h>
 
 /** 
  * printf - 格式化打印输出

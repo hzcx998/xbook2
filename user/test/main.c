@@ -1,5 +1,5 @@
-#include <sys/xcore.h>
-#include <sys/ipc.h>
+#include <xcore/xcore.h>
+#include <xcore/ipc.h>
 #include <string.h>
 #include <conio.h>
 

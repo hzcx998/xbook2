@@ -2,245 +2,76 @@ hello, xbook!
 
 info: memory total:1fff0000 byte 511 MB
 info: welcom to xbook kernel.
-info: time:8:7:12 date:2020/4/13
+info: time:6:57:30 date:2020/4/13
 info: week day:1 Monday year day:105
 info: found 2 hard disks.
 info: raw block name:init
 info: raw block name:bin
-debug: trigger_handler: trig=1 handler=1
-debug: trigger_handler: trig=6 handler=1
-debug: trigger_action: old trig=7 handler=0 flags=0
-debug: trigger_action: new trig=7 handler=1 flags=0
-debug: trigger_active: start.
-debug: do_active_trigger: toucher=1 pid=1 tirgger:6
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=1 start.
-debug: do_trigger: trigger=6
-debug: do_trigger: before set=41 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: ignore trigger=6
-debug: do_trigger: scan done.
-debug: trigger_active: start.
-debug: do_active_trigger: toucher=1 pid=1 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=1 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: ignore trigger=1
-debug: do_trigger: scan done.
+debug: pipe_alloc: pipe id=1
+debug: pipe_write: reader not ready.
+debug: pipe_write: id=1 buffer=7fffcf8c size=4096 flags=80
+debug: pipe_write: will write 4096 bytes.
+debug: pipe_write: actually write 4096 bytes.
+debug: pipe_put: writer closed, free pipe=1.
+debug: pipe_put: both pipe reader and writer closed, free pipe=1.
+debug: pipe_free: pipe id=1
 debug: sys_wait: name=init pid=1 wait child.
 debug: sys_wait: no child exit, waiting...
-debug: trigger_handler: trig=1 handler=130b
-debug: trigger_handler: trig=6 handler=1
-debug: trigger_action: old trig=1 handler=130b flags=1
-debug: trigger_action: new trig=1 handler=130b flags=0
-alter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: handle user or light software trigger=1
+debug: pipe_alloc: pipe id=1
+debug: pipe_read: writer not ready.
+debug: pipe_read: don't need sync for reader.
+debug: pipe_put: reader closed, free pipe=1.
+debug: pipe_put: both pipe reader and writer closed, free pipe=1.
+debug: pipe_free: pipe id=1
+alter: do_page_fault: touch TRIGHW trigger because unknown space!
 debug: handle_trigger: handle trig=1.
 debug: handle_trigger: will return into user!
-debug: do_trigger: scan done.
 debug: sys_trigger_return: ret val 0.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: handle user or light software trigger=1
+alter: do_page_fault: touch TRIGHW trigger because unknown space!
 debug: handle_trigger: handle trig=1.
 debug: handle_trigger: will return into user!
-debug: do_trigger: scan done.
 debug: sys_trigger_return: ret val 0.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: handle user or light software trigger=1
+alter: do_page_fault: touch TRIGHW trigger because unknown space!
 debug: handle_trigger: handle trig=1.
 debug: handle_trigger: will return into user!
-debug: do_trigger: scan done.
 debug: sys_trigger_return: ret val 0.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: handle user or light software trigger=1
+alter: do_page_fault: touch TRIGHW trigger because unknown space!
 debug: handle_trigger: handle trig=1.
 debug: handle_trigger: will return into user!
-debug: do_trigger: scan done.
 debug: sys_trigger_return: ret val 0.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: handle user or light software trigger=1
+alter: do_page_fault: touch TRIGHW trigger because unknown space!
 debug: handle_trigger: handle trig=1.
 debug: handle_trigger: will return into user!
-debug: do_trigger: scan done.
 debug: sys_trigger_return: ret val 0.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: handle user or light software trigger=1
+alter: do_page_fault: touch TRIGHW trigger because unknown space!
 debug: handle_trigger: handle trig=1.
 debug: handle_trigger: will return into user!
-debug: do_trigger: scan done.
 debug: sys_trigger_return: ret val 0.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: handle user or light software trigger=1
+alter: do_page_fault: touch TRIGHW trigger because unknown space!
 debug: handle_trigger: handle trig=1.
 debug: handle_trigger: will return into user!
-debug: do_trigger: scan done.
 debug: sys_trigger_return: ret val 0.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: handle user or light software trigger=1
+alter: do_page_fault: touch TRIGHW trigger because unknown space!
 debug: handle_trigger: handle trig=1.
 debug: handle_trigger: will return into user!
-debug: do_trigger: scan done.
 debug: sys_trigger_return: ret val 0.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: handle user or light software trigger=1
+alter: do_page_fault: touch TRIGHW trigger because unknown space!
 debug: handle_trigger: handle trig=1.
 debug: handle_trigger: will return into user!
-debug: do_trigger: scan done.
 debug: sys_trigger_return: ret val 0.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: handle user or light software trigger=1
+alter: do_page_fault: touch TRIGHW trigger because unknown space!
 debug: handle_trigger: handle trig=1.
 debug: handle_trigger: will return into user!
-debug: do_trigger: scan done.
 debug: sys_trigger_return: ret val 0.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: handle user or light software trigger=1
+alter: do_page_fault: touch TRIGHW trigger because unknown space!
 debug: handle_trigger: handle trig=1.
 debug: handle_trigger: will return into user!
-debug: do_trigger: scan done.
-debug: trigger_active: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:5
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=5
-debug: do_trigger: before set=21 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: heavy software or hardware trigger=5
 debug: sys_exit: name=bin pid=2 ppid=1 prio=2 status=5
 debug: sys_exit: release all.
 debug: sys_exit: parent waiting...
 debug: sys_wait: name=init pid=1 wait child.
+notice: wait_one_hangging_child: find a hanging proc 2 
 debug: sys_wait: handle a hangging child 2.
-debug: sys_exit: name=init pid=1 ppid=-1 prio=2 status=0
-debug: sys_exit: release all.
-debug: sys_exit: no parent! zombie!
-hello, xbook!
-
-info: memory total:1fff0000 byte 511 MB
-info: welcom to xbook kernel.
-info: time:8:7:59 date:2020/4/13
-info: week day:1 Monday year day:105
-info: found 2 hard disks.
-info: raw block name:init
-info: raw block name:bin
-debug: trigger_handler: trig=1 handler=1
-debug: trigger_handler: trig=6 handler=1
-debug: trigger_action: old trig=7 handler=0 flags=0
-debug: trigger_action: new trig=7 handler=1 flags=0
-debug: trigger_active: start.
-debug: do_active_trigger: toucher=1 pid=1 tirgger:6
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=1 start.
-debug: do_trigger: trigger=6
-debug: do_trigger: before set=41 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: ignore trigger=6
-debug: do_trigger: scan done.
-debug: trigger_active: start.
-debug: do_active_trigger: toucher=1 pid=1 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=1 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: ignore trigger=1
-debug: do_trigger: scan done.
-debug: syalter: do_page_fault: touch TRIGHW trigger because unknown space!debug: trigger_force: start.
-debug: do_active_trigger: toucher=2 pid=2 tirgger:1
-debug: do_active_trigger: may wakeup stoped task.
-debug: do_active_trigger: write trigger set.
-debug: do_trigger: pid=2 start.
-debug: do_trigger: trigger=1
-debug: do_trigger: before set=3 flags=1
-debug: do_trigger: after set=1 flags=0
-debug: do_trigger: heavy software or hardware trigger=1
-debug: sys_exit: name=init pid=2 ppid=1 prio=2 status=1
-debug: sys_exit: release all.
-debug: sys_exit: parent not waiting, zombie!
-s_wait: name=init pid=1 wait child.
-debug: sys_wait: no children!
 debug: sys_exit: name=init pid=1 ppid=-1 prio=2 status=0
 debug: sys_exit: release all.
 debug: sys_exit: no parent! zombie!

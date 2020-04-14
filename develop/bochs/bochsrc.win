@@ -3,13 +3,13 @@
 # environment.
 ###############################################################
 
-cpu: model=pentium,count=1, ips=9000000
+cpu: model=pentium,count=1, ips=10000000
 # how much memory the emulated machine will have
 megs: 512
 
 # filename of ROM images
-romimage: file=E:/code/Bochs-2.6.11/BIOS-bochs-latest
-vgaromimage: file=E:/code/Bochs-2.6.11/VGABIOS-lgpl-latest
+romimage: file=$BXSHARE/BIOS-bochs-latest
+vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 
 # what disk images will be used 
 floppya: 1_44=../develop/image/a.img, status=inserted
@@ -36,12 +36,12 @@ mouse: enabled=0, toggle=ctrl+f10
 # will work.  Cut&Paste is currently implemented on win32 and X windows only.
 
 keyboard: type=mf, serial_delay=250
-keyboard: keymap=E:/code/Bochs-2.6.11/keymaps/x11-pc-us.map
+keyboard: keymap=$BXSHARE/keymaps/x11-pc-us.map
 keyboard: user_shortcut=ctrl-alt
 
 com1: enabled=1, mode=file, dev="../develop/bochs/output.txt"
 
-#keyboard: enabled=1, map=D:/DevApp/Bochs-2.6.11/keymaps/x11-pc-us.map
+#keyboard: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-fr.map
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-de.map
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-es.map

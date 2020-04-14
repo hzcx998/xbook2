@@ -1,6 +1,6 @@
-#include <sys/xcore.h>
-#include <sys/ioctl.h>
-#include <sys/ipc.h>
+#include <xcore/xcore.h>
+#include <xcore/ioctl.h>
+#include <xcore/ipc.h>
 #include <conio.h>
 #include <string.h>
 

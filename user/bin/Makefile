@@ -10,8 +10,9 @@ OBJDUMP		= objdump
 #The file path
 DIR_LIBARY = ../../libary
 
-# xlib lib
-DIR_LIB_INCLUDE = $(DIR_LIBARY)/include
+# libarys
+DIR_STDLIB = $(DIR_LIBARY)/stdlib
+DIR_XCORE = $(DIR_LIBARY)/xcore
 
 BIN = a.out
 BIN_DIS = out.disasm
@@ -31,17 +32,20 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 
 #flags
 ASM_FLAGS	= -f elf \
-			-I $(DIR_LIB_INCLUDE)
+			-I $(DIR_STDLIB)/include \
+			-I $(DIR_XCORE)/include 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
-			-I $(DIR_LIB_INCLUDE)
+			-I $(DIR_STDLIB)/include \
+			-I $(DIR_XCORE)/include  
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 
 OBJS =  _start.o \
 		main.o \
 
-XLIB_FILE = $(DIR_LIBARY)/xlib.a
-		
+LIB_FILE := $(DIR_STDLIB)/stdlib.a \
+			$(DIR_XCORE)/xcore.a \
+			
 #First read here
 .PHONY: all dis
 
@@ -51,8 +55,8 @@ all: compile link disk
 compile: $(OBJS)
 
 link: $(BIN)
-$(BIN): $(OBJS) $(XLIB_FILE)
-	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(XLIB_FILE)
+$(BIN): $(OBJS) $(LIB_FILE)
+	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIB_FILE)
 
 
 dis: $(BIN)

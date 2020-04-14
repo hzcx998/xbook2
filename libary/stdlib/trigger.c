@@ -1,4 +1,4 @@
-#include <sys/trigger.h>
+#include <xcore/trigger.h>
 
 /**
  * trigaddset - 触发器集添加一个触发器

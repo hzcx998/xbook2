@@ -7,8 +7,8 @@
 megs: 256
 
 # filename of ROM images
-romimage: file=/usr/bochs/share/bochs/BIOS-bochs-latest
-vgaromimage: file=/usr/bochs/share/bochs/VGABIOS-lgpl-latest
+romimage: file=$bxshare/BIOS-bochs-latest
+vgaromimage: file=$bxshare/VGABIOS-lgpl-latest
 
 #cpu: count=1, ips=10000000
 
@@ -38,8 +38,4 @@ mouse: enabled=0
 
 com1: enabled=1, mode=file, dev="../develop/bochs/output.txt"
 
-#keyboard: enabled=1, map=/usr/bochs/share/bochs/keymaps/x11-pc-us.map
-#keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-fr.map
-#keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-de.map
-#keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-es.map
-
+keyboard: enabled=1, map=$bxshare/keymaps/x11-pc-us.map

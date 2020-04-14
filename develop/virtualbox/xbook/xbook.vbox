@@ -6,8 +6,12 @@
 ** Use VBoxManage or the VirtualBox Manager GUI to make changes.
 -->
 <VirtualBox xmlns="http://www.virtualbox.org/" version="1.15-windows">
-  <Machine uuid="{faf7315a-3be0-4232-8d1d-004191843504}" name="xbook-II" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2020-03-23T16:01:47Z">
+  <Machine uuid="{faf7315a-3be0-4232-8d1d-004191843504}" name="xbook" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2020-04-13T14:36:07Z">
     <MediaRegistry>
+      <HardDisks>
+        <HardDisk uuid="{8c389410-2fcb-414a-9418-eac5ab386079}" location="D:/Developmemts/github/xbook2/develop/image/c.vhd" format="VHD" type="Normal"/>
+        <HardDisk uuid="{97112f5b-b67a-4673-90ba-c5f5df358377}" location="D:/Developmemts/github/xbook2/develop/image/d.vhd" format="VHD" type="Normal"/>
+      </HardDisks>
       <FloppyImages>
         <Image uuid="{b706b399-2c69-47d8-b828-9c457f8482ca}" location="D:/Developmemts/github/xbook2/develop/image/a.img"/>
       </FloppyImages>
@@ -15,7 +19,7 @@
     <ExtraData>
       <ExtraDataItem name="GUI/InformationWindowGeometry" value="690,351,634,347"/>
       <ExtraDataItem name="GUI/LastCloseAction" value="PowerOff"/>
-      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="794,320,720,445"/>
+      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="197,344,720,445"/>
     </ExtraData>
     <Hardware>
       <CPU>
@@ -43,13 +47,21 @@
       </UART>
       <AudioAdapter driver="DirectSound" enabled="true" enabledIn="false"/>
       <GuestProperties>
-        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="zh_CN" timestamp="1584937309488670800" flags=""/>
+        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="zh_CN" timestamp="1586788333600044100" flags=""/>
       </GuestProperties>
     </Hardware>
     <StorageControllers>
       <StorageController name="Floppy" type="I82078" PortCount="1" useHostIOCache="true" Bootable="true">
         <AttachedDevice type="Floppy" hotpluggable="false" port="0" device="0">
           <Image uuid="{b706b399-2c69-47d8-b828-9c457f8482ca}"/>
+        </AttachedDevice>
+      </StorageController>
+      <StorageController name="IDE" type="PIIX4" PortCount="2" useHostIOCache="true" Bootable="true">
+        <AttachedDevice type="HardDisk" hotpluggable="false" port="0" device="0">
+          <Image uuid="{8c389410-2fcb-414a-9418-eac5ab386079}"/>
+        </AttachedDevice>
+        <AttachedDevice type="HardDisk" hotpluggable="false" port="0" device="1">
+          <Image uuid="{97112f5b-b67a-4673-90ba-c5f5df358377}"/>
         </AttachedDevice>
       </StorageController>
     </StorageControllers>
