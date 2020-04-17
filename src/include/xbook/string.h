@@ -25,5 +25,20 @@ const char *strpbrk(const char *str1, const char *str2);
 int strcoll(const char *str1, const char *str2);
 char* strcpy(char* dst, const char* src);
 
+/* 字符的最大长度 */
+#define  STRING_MAX_LEN  256
+
+typedef struct _string {
+    unsigned int length;
+    unsigned int max_length;
+    char *text;
+} string_t;
+
+void string_init(string_t *string);
+int string_new(string_t *string, char *text, unsigned int maxlen);
+void string_copy(string_t *string, char *text);
+void string_empty(string_t *string);
+void string_del(string_t *string);
+
 #endif  /* _XBOOK_STRING_H */
 

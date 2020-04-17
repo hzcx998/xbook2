@@ -166,7 +166,32 @@ int serial_print(const char *fmt, ...)
 
 void dump_value(unsigned long val)
 {
-    printk("dump_value: %d\n", val);
+    printk(KERN_DEBUG "dump_value: %d\n", val);
+}
+
+void dump_buffer(void *buffer, unsigned long len, char factor)
+{
+    printk(KERN_DEBUG "dump_buffer: addr=%x len=%d factor=%d\n", buffer, len, factor);
+    int i;
+    if (factor == 1) {
+        unsigned char *buf = (unsigned char *)buffer;
+        for (i = 0; i < len; i++) {
+            printk("%x ", buf[i]);
+        }
+        printk("\n");    
+    } else if (factor == 2) {
+        unsigned short *buf = (unsigned short *)buffer;
+        for (i = 0; i < len / factor; i++) {
+            printk("%x ", buf[i]);
+        }
+        printk("\n");    
+    } else if (factor == 4) {
+        unsigned int *buf = (unsigned int *)buffer;
+        for (i = 0; i < len / factor; i++) {
+            printk("%x ", buf[i]);
+        }
+        printk("\n");
+    }    
 }
 
 /**

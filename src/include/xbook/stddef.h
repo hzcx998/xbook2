@@ -4,6 +4,7 @@
 #include "config.h"
 
 typedef unsigned long size_t;
+typedef long ssize_t;
 typedef unsigned long dma_addr_t;
 
 typedef int wchar_t;

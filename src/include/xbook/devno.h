@@ -19,7 +19,6 @@
 
 #define NULL_MAJOR          0xfff   /* 最后一个设备号 */
 
-
 #define CONSOLE_MINORS       8
 #define COM_MINORS           2
 #define IDE_MINORS           4

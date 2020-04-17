@@ -13,6 +13,7 @@
 #include <xbook/sem.h>
 #include <xbook/syscall.h>
 #include <xbook/pipe.h>
+#include <xbook/driver.h>
 
 int kernel_main(void)
 {
@@ -40,8 +41,10 @@ int kernel_main(void)
     enable_intr();
     
     /* init unit drivers */
-    init_unit();
+    //init_unit();
 
+    init_driver_arch();
+    spin("driver arch test.");
     /* init raw block */
     init_raw_block();
 

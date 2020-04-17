@@ -20,6 +20,8 @@ static list_t free_vmarea_list;
 /**
  * alloc_vaddr - 分配一块空闲的虚拟地址
  * @size: 请求的大小
+ * 
+ * @return: 失败返回0，成功返回内核虚拟地址
  */
 unsigned long alloc_vaddr(size_t size)
 {
@@ -51,6 +53,9 @@ unsigned long alloc_vaddr(size_t size)
  */
 unsigned long free_vaddr(unsigned long vaddr, size_t size)
 {
+    if (!size)
+        return -1;
+    size = PAGE_ALIGN(size);
 	long pages = size / PAGE_SIZE;
 
 	/* 扫描获取请求的页数 */

@@ -15,6 +15,9 @@
 
 #define ALIGN_WITH(x, y) ((x + (y - 1)) & (~(y - 1)))
 
+/* 数组大小除以单个数组就是数组成员数量 */
+#define ARRAY_SIZE(array)   (sizeof(array) / sizeof(array[0]))
+
 /* 判断一个数是否为2的次幂 */
 #define is_power_of_2(n) (n != 0 && ((n & (n - 1)) == 0)) 
 

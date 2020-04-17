@@ -6,3 +6,4 @@ obj-y		+= 	device.o
 obj-y		+= 	rawblock.o
 obj-y		+= 	syscall.o
 obj-y		+= 	resource.o
+obj-y		+= 	driver.o
