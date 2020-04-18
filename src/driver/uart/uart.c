@@ -48,7 +48,7 @@ Divisor = 115200 / BaudRate
 #define SERIAL_IRQ_4    IRQ4
 #define SERIAL_IRQ_3    IRQ3
 
-/* 串口调试端口的索引 */
+/* 串试端口的索引 */
 #define SERIAL_DEGUB_IDX    0
 
 enum FifoControlRegisterBits {
@@ -141,7 +141,6 @@ struct uart_driver {
     uint16_t scratch_reg;       /* 刮伤寄存器 */
 
     uint8_t id;           /* 串口id，对应着哪个串口 */
-
 };
 
 /* 4个串口 */

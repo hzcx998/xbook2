@@ -5,7 +5,7 @@
 #include <xbook/assert.h>
 #include <xbook/mdl.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 /* 驱动链表头 */
 LIST_HEAD(driver_list_head);
@@ -51,12 +51,15 @@ static void print_drivers()
 static driver_object_t *io_search_driver_by_name(char *drvname)
 {
     driver_object_t *drvobj;
+    spin_lock(&driver_lock);
     /* 遍历所有的驱动 */
     list_for_each_owner (drvobj, &driver_list_head, list) {
         if (!strcmp(drvobj->name.text, drvname)) {
+            spin_unlock(&driver_lock);
             return drvobj;
         }
     }
+    spin_unlock(&driver_lock);
     return NULL;
 }
 
@@ -70,13 +73,17 @@ device_object_t *device_handle_table_search_by_name(char *name)
 {
     device_object_t *devobj;
     int i;
+    spin_lock(&driver_lock);
     for (i = 0; i < DEVICE_HANDLE_NR; i++) {
         devobj = device_handle_table[i];
         if (devobj != NULL) {
-            if (!strcmp(devobj->name.text, name))
+            if (!strcmp(devobj->name.text, name)) {
+                spin_unlock(&driver_lock);
                 return devobj;
+            }
         }
     }
+    spin_unlock(&driver_lock);
     return NULL;
 }
 
@@ -89,14 +96,18 @@ device_object_t *device_handle_table_search_by_name(char *name)
 int device_handle_table_insert(device_object_t *devobj)
 {
     device_object_t **_devobj;
+    spin_lock(&devobj->device_lock);
     int i;
     for (i = 0; i < DEVICE_HANDLE_NR; i++) {
         _devobj = &device_handle_table[i];
         if (*_devobj == NULL) {  /* 表项如果空闲，就插入 */
             *_devobj = devobj;
+            spin_unlock(&devobj->device_lock);
             return i;
         }
     }
+    
+    spin_unlock(&devobj->device_lock);
     return -1;
 }
 
@@ -109,6 +120,7 @@ int device_handle_table_insert(device_object_t *devobj)
 int device_handle_table_remove(device_object_t *devobj)
 {
     device_object_t **_devobj;
+    spin_lock(&devobj->device_lock);
     int i;
     for (i = 0; i < DEVICE_HANDLE_NR; i++) {
         _devobj = &device_handle_table[i];
@@ -116,10 +128,14 @@ int device_handle_table_remove(device_object_t *devobj)
             if (!strcmp((*_devobj)->name.text, devobj->name.text) &&
                 (*_devobj)->type == devobj->type) {
                 *_devobj = NULL; /* 设置为NULL，表示删除 */
+                
+                spin_unlock(&devobj->device_lock);
                 return 0;
             }
         }
     }
+
+    spin_unlock(&devobj->device_lock);
     return -1;
 }
 
@@ -133,23 +149,26 @@ device_object_t *io_search_device_by_name(char *name)
 {
     driver_object_t *drvobj;
     device_object_t *devobj;
+          
+    spin_lock(&driver_lock);
 
     /* 先到表里面查找，没有找到就去驱动链表查找 */
     devobj = device_handle_table_search_by_name(name);
-    if (devobj)
+    if (devobj) {
+        spin_unlock(&driver_lock);
         return devobj;
-
-    unsigned long flags;        
-    spin_lock_irqsave(&driver_lock, flags);
+    }
+        
     /* 遍历所有的驱动 */
     list_for_each_owner (drvobj, &driver_list_head, list) {
         list_for_each_owner (devobj, &drvobj->device_list, list) {
             if (!strcmp(devobj->name.text, name)) {
+                spin_unlock(&driver_lock);
                 return devobj;
             }
         }
     }
-    spin_unlock_irqrestore(&driver_lock, flags);
+    spin_unlock(&driver_lock);
     return NULL;
 }
 
@@ -216,10 +235,10 @@ int driver_object_create(driver_func_t vine)
 int driver_object_delete(driver_object_t *driver)
 {
     iostatus_t status = IO_SUCCESS;
-    
+#if DEBUG_LOCAL == 1    
     printk(KERN_DEBUG "driver_object_delete: driver %s delete start.\n",
         driver->name.text);
-
+#endif
     unsigned long flags;        
     spin_lock_irqsave(&driver_lock, flags);
     /* 执行驱动进入部分 */
@@ -238,9 +257,9 @@ int driver_object_delete(driver_object_t *driver)
 
     /* 释放掉驱动对象 */
     kfree(driver);
-
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "driver_object_delete: driver delete done.\n");
-
+#endif
 
     return status;
 }
@@ -283,6 +302,12 @@ iostatus_t io_create_device(
         return IO_FAILED;
     }
     devobj->driver = driver; /* 绑定驱动 */
+    spinlock_init(&devobj->device_lock);    /* 初始化设备锁 */
+    /* 初始化设备队列 */
+    devobj->device_queue.busy = false;
+    spinlock_init(&devobj->device_queue.lock);
+    INIT_LIST_HEAD(&devobj->device_queue.list_head);
+
     spin_lock(&driver->device_lock);
     /* 设备创建好后，添加到驱动链表上 */
     ASSERT(!list_find(&devobj->list, &driver->device_list));
@@ -291,6 +316,9 @@ iostatus_t io_create_device(
     
     /* 把设备地址保存到device里面 */
     *device = devobj;
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "io_create_device: create device done.\n");
+#endif
     return IO_SUCCESS;
 }
 
@@ -323,8 +351,9 @@ void io_delete_device(
     string_del(&devobj->name); /* 释放名字 */
     /* 释放设备对象 */
     kfree(devobj);
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "io_delete_device: delete done!\n");
-    
+#endif    
 }
 
 io_request_t *io_request_alloc()
@@ -345,6 +374,8 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
     iostatus_t status= IO_SUCCESS;
 
     driver_dispatch_t func = NULL;
+    spin_lock(&device->device_lock);
+
     /* 选择操作函数 */
     if (ioreq->flags & IOREQ_OPEN_OPERATION) {
         func = device->driver->dispatch_function[IOREQ_OPEN];
@@ -386,6 +417,7 @@ io_request_t *io_build_sync_request(
         ioreq->io_status.infomation = 0;
         ioreq->io_status.status = IO_FAILED;
     }
+    INIT_LIST_HEAD(&ioreq->list);
     ioreq->system_buffer = NULL;
     ioreq->user_buffer = buffer; /* 指向用户地址 */
     ioreq->mdl_address = NULL;
@@ -394,7 +426,7 @@ io_request_t *io_build_sync_request(
             /* 分配一个内存缓冲区 */
             if (length >= MAX_MEM_CACHE_SIZE) {
                 length = MAX_MEM_CACHE_SIZE; /* 调整大小 */
-                printk(KERN_NOTICE "io_build_sync_request: length too big!\n");
+                printk(KERN_WARING "io_build_sync_request: length too big!\n");
             }
             ioreq->system_buffer = kmalloc(length);
             if (ioreq->system_buffer == NULL) {
@@ -402,7 +434,9 @@ io_request_t *io_build_sync_request(
                 return NULL;
             }
             ioreq->flags |= IOREQ_BUFFERED_IO;
+#if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "io_build_sync_request: system buffer.\n");
+#endif
         } else if (devobj->flags & DO_DIRECT_IO) {
             ioreq->mdl_address = mdl_alloc(buffer, length, FALSE, ioreq);
             if (ioreq->mdl_address == NULL) {
@@ -410,10 +444,13 @@ io_request_t *io_build_sync_request(
                 return NULL;    
             }
             /* 分配内存描述列表 */
+#if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "io_build_sync_request: direct buffer.\n");
-
+#endif
         } else {    /* 直接使用用户地址 */
+#if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "io_build_sync_request: user buffer.\n");
+#endif
         }
     }
     unsigned long flags;
@@ -458,7 +495,7 @@ io_request_t *io_build_sync_request(
 void io_complete_request(io_request_t *ioreq)
 {
     ioreq->flags |= IOREQ_COMPLETION; /* 添加完成标志 */
-
+    spin_unlock(&ioreq->devobj->device_lock);    
 }
 
 static int io_complete_check(io_request_t *ioreq, iostatus_t status)
@@ -492,12 +529,13 @@ handle_t device_open(char *devname, unsigned int flags)
         printk(KERN_ERR "device_open: device %s not found!\n", devname);
         return -1;
     }
-        
     handle_t handle = device_handle_table_insert(devobj);
     if (handle == -1) {
         printk(KERN_ERR "device_open: insert device handle tabel failed!\n");
         return -1;  /* 插入句柄表失败 */    
     }
+    spin_lock(&devobj->device_lock);
+
     /* 增加引用 */
     if (atomic_get(&devobj->reference) >= 0)
         atomic_inc(&devobj->reference);
@@ -518,12 +556,16 @@ handle_t device_open(char *devname, unsigned int flags)
         }
         ioreq->parame.open.devname = devname;
         ioreq->parame.open.flags = flags;
-        
+        spin_unlock(&devobj->device_lock);
+
         status = io_call_dirver(devobj, ioreq);
+
+        spin_lock(&devobj->device_lock);
     }
 
     if (!io_complete_check(ioreq, status)) {
         io_request_free((ioreq));
+        spin_unlock(&devobj->device_lock);
         return handle;
     }
     
@@ -534,6 +576,8 @@ rollback_ref:
     atomic_dec(&devobj->reference);
 rollback_handle:
     device_handle_table_remove(devobj);
+    spin_unlock(&devobj->device_lock);
+    
     return -1;
 }
 
@@ -564,7 +608,8 @@ int device_close(handle_t handle)
             devobj->name.text);
         return -1;
     }
-
+    spin_lock(&devobj->device_lock);
+    
     /* 减少引用 */
     if (atomic_get(&devobj->reference) >= 0)
         atomic_dec(&devobj->reference);
@@ -582,11 +627,14 @@ int device_close(handle_t handle)
             printk(KERN_ERR "device_close: alloc io request packet failed!\n", atomic_get(&devobj->reference));
             goto rollback_ref;
         }
+        spin_unlock(&devobj->device_lock);
         status = io_call_dirver(devobj, ioreq);
+        spin_lock(&devobj->device_lock);
     }
 
     if (!io_complete_check(ioreq, status)) {
         io_request_free((ioreq));
+        spin_unlock(&devobj->device_lock);
         return 0;
     }
     printk(KERN_ERR "device_close: do dispatch failed!\n");
@@ -596,6 +644,7 @@ rollback_ref:
     atomic_inc(&devobj->reference);
 scrollback_handle:
     device_handle_table_insert(devobj);
+    spin_unlock(&devobj->device_lock);
     return -1;
 }
 
@@ -622,7 +671,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         /* 应该激活一个触发器，让调用者停止运行 */
         return -1;
     }
-
+    
     iostatus_t status = IO_SUCCESS;
     io_request_t *ioreq = NULL;
     ioreq = io_build_sync_request(IOREQ_READ, devobj, buffer, length, offset, NULL);
@@ -649,7 +698,6 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
             ioreq->mdl_address = NULL;
         }
         io_request_free((ioreq));
-        
         return len;
     }
 
@@ -766,7 +814,7 @@ int io_uninstall_driver(char *drvname)
     if (!drvobj)
         return -1;
     if (driver_object_delete(drvobj)) {
-        printk(KERN_DEBUG "io_uninstall_driver: delete driver %s failed!\n", drvname);
+        printk(KERN_ERR "io_uninstall_driver: delete driver %s failed!\n", drvname);
     }
     return 0;
 }
@@ -781,7 +829,6 @@ void dump_device_object(device_object_t *device)
 /* 初始化驱动架构 */
 void init_driver_arch()
 {
-    printk(KERN_DEBUG "init_driver_arch: start.\n");
     driver_func_t vine;
     
     int i;
@@ -799,34 +846,45 @@ void init_driver_arch()
         device_handle_table[i] = NULL;
     }
     
-    handle_t handle = device_open("com", 123);
+    handle_t handle = device_open("com0", 123);
     printk(KERN_DEBUG "init_driver_arch: open device handle=%d\n", handle);
     if (handle >= 0)
         dump_device_object(GET_DEVICE_BY_HANDLE(handle));
+    handle_t handle1 = device_open("com1", 123);
+    printk(KERN_DEBUG "init_driver_arch: open device handle=%d\n", handle);
+    if (handle1 >= 0)
+        dump_device_object(GET_DEVICE_BY_HANDLE(handle1));
     
+    #if 0
     char *big_buf = kmalloc(0x20000);
     if (big_buf == NULL)
         panic("init_driver_arch: kmalloc for big buf failed!\n");    
     
     //char buf[12];
-    ssize_t read = device_read(handle, big_buf, 0x20000, 0);
+    ssize_t read = device_read(handle, big_buf, 1, 0);
     printk(KERN_DEBUG "init_driver_arch: read %d bytes.\n", read);
     if (read > 0)
         dump_buffer(big_buf, 32, 1);
-
+    
     memset(big_buf, 0x5a, 0x20000);
-    ssize_t write = device_write(handle, big_buf, 0x20000, 0);
+    ssize_t write = device_write(handle, "hello, com0", 10, 0);
     printk(KERN_DEBUG "init_driver_arch: write %d bytes.\n", write);
     
     ssize_t devctl = device_devctl(handle, DEVCTL_CODE_TEST, 0x1234abcd);
-
+    
+    #endif
+    while (1)
+    {
+        device_write(handle, "hello, com0\n", 12, 0);
+        device_write(handle1, "hello, com1\n", 12, 0);
+        
+    }
+    
+    
     iostatus_t status;
     status = device_close(handle);
     printk(KERN_DEBUG "init_driver_arch: close devce ihandle=%d status=%d\n", handle, status);
-    /*
     io_uninstall_driver("uart-serial");
     
     print_drivers();
-    */
-    printk(KERN_DEBUG "init_driver_arch: end.\n");
 }

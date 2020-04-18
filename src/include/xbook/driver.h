@@ -134,14 +134,22 @@ typedef struct _io_status_block {
 /* 输入输出请求 */
 typedef struct _io_request 
 {
+    list_t list;                        /* 队列链表 */
     unsigned int flags;                 /* 标志 */
-    struct _mdl *mdl_address;                  /* 内存描述列表地址 */
+    struct _mdl *mdl_address;           /* 内存描述列表地址 */
     void *system_buffer;                /* 系统缓冲区 */
     void *user_buffer;                  /* 用户缓冲区 */
     struct _device_object *devobj;      /* 设备对象 */
     io_parame_t parame;                 /* 参数 */
-    io_status_block_t io_status;        /* 状态块 */         
+    io_status_block_t io_status;        /* 状态块 */
+    
 } io_request_t;
+
+typedef struct _device_queue {
+    list_t list_head;   /* 队列列表 */
+    spinlock_t lock;    /* 维护队列的锁 */
+    bool busy;          /* 队列是否繁忙 */
+} device_queue_t;
 
 /* 设备对象 */
 typedef struct _device_object
@@ -154,7 +162,9 @@ typedef struct _device_object
     atomic_t reference;                 /* 引用计数，管理设备打开情况 */
     io_request_t *cur_ioreq;            /* 当前正在处理的io请求 */
     string_t name;                      /* 名字 */
+    spinlock_t device_lock;             /* 设备锁，维护设备操作 */
     unsigned long reserved;             /* 预留 */
+    device_queue_t device_queue;        /* 设备队列 */
 } device_object_t;
 
 /* 派遣函数定义 */ 
