@@ -264,20 +264,6 @@ static int console_write(device_t *device, off_t off, void *buffer, size_t count
 }
 
 /**
- * console_putc - 往控制台设备输出一个字符
- * @device: 设备
- * @ch: 字符
- */
-static int console_putc(device_t *device, unsigned long ch)
-{
-    /* 获取控制台 */
-    struct console_driver *local = (struct console_driver *)dev_get_local(device);
-    
-    console_outchar(local, ch);
-    return 0;
-}
-
-/**
  * console_gotoxy - 光标移动到一个指定位置
  * @xy: 位置，x是高16位，y是低16位
  */

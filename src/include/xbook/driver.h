@@ -30,8 +30,10 @@
 0~15位：命令（0-0x7FFF系统保留，0x8000-0xffff用户自定义）
 16~31位：设备类型
  */
+#ifndef DEVCTL_CODE
 #define DEVCTL_CODE(type, cmd) \
         ((unsigned int) ((((type) & 0xffff) << 16) | ((cmd) & 0xffff)))
+#endif
 
 /* io请求函数表 */
 enum _io_request_function {

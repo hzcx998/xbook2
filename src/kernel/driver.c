@@ -4,6 +4,7 @@
 #include <xbook/debug.h>
 #include <xbook/assert.h>
 #include <xbook/mdl.h>
+#include <sys/ioctl.h>
 
 #define DEBUG_LOCAL 0
 
@@ -13,6 +14,7 @@ LIST_HEAD(driver_list_head);
 /* 驱动藤蔓表 */
 driver_func_t driver_vine_table[] = {
     serial_driver_vine,
+    console_driver_vine,
 };
 
 /* 打开的设备表 */
@@ -854,6 +856,10 @@ void init_driver_arch()
     printk(KERN_DEBUG "init_driver_arch: open device handle=%d\n", handle);
     if (handle1 >= 0)
         dump_device_object(GET_DEVICE_BY_HANDLE(handle1));
+    handle_t con0 = device_open("con0", 0);
+    printk(KERN_DEBUG "init_driver_arch: open device handle=%d\n", con0);
+    if (handle >= 0)
+        dump_device_object(GET_DEVICE_BY_HANDLE(con0));
     
     #if 0
     char *big_buf = kmalloc(0x20000);
@@ -873,13 +879,20 @@ void init_driver_arch()
     ssize_t devctl = device_devctl(handle, DEVCTL_CODE_TEST, 0x1234abcd);
     
     #endif
-    while (1)
-    {
-        device_write(handle, "hello, com0\n", 12, 0);
-        device_write(handle1, "hello, com1\n", 12, 0);
-        
-    }
+
+    device_write(handle, "hello, com0\n", 12, 0);
+    device_write(handle1, "hello, com1\n", 12, 0);
+    device_devctl(con0, CODE_CON_SETPOS, 10 * 80 + 0);
+    device_devctl(con0, CODE_CON_SETCOLOR, 0x5);
     
+    device_write(con0, "hello, con0!\nsecond line.\nabc\n", 32, 0);
+    device_devctl(con0, CODE_CON_SETPOS, 10 * 80 + 0);
+
+    char buf[32] = {0, };
+    device_read(con0, buf, 32, 0);
+    printk(KERN_DEBUG "read buffer:%s\n", buf);
+    
+    printk(KERN_DEBUG "get pos:%d color:%d\n", device_devctl(con0, CODE_CON_GETPOS, 0), device_devctl(con0, CODE_CON_GETCOLOR, 0));
     
     iostatus_t status;
     status = device_close(handle);

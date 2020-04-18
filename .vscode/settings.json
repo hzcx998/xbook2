@@ -54,6 +54,7 @@
         "sem.h": "c",
         "vsprintf.h": "c",
         "vmarea.h": "c",
-        "io.h": "c"
+        "io.h": "c",
+        "vine.h": "c"
     }
 }
