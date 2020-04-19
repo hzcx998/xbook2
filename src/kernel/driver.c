@@ -399,7 +399,6 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
     default:
         break;
     }
-
     /* 选择操作函数 */
     if (ioreq->flags & IOREQ_OPEN_OPERATION) {
         func = device->driver->dispatch_function[IOREQ_OPEN];
