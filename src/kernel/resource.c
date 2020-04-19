@@ -6,11 +6,12 @@
 #include <xbook/sem.h>
 #include <xbook/msgqueue.h>
 #include <xbook/pipe.h>
+#include <xbook/driver.h>
 #include <sys/res.h>
 #include <sys/ipc.h>
 
 /* debug: 1 enable, 0 disable */
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 res_item_t *res_to_item(int res)
 {
@@ -66,14 +67,11 @@ int uninstall_res(int idx)
 
 int __getres_device(char *name, unsigned long resflg)
 {
-    dev_t handle = get_devno_by_name(name);
-    if (!handle) {   /* not found a devno */
-        return -1;
-    }
-    #if DEBUG_LOCAL == 1
-        printk(KERN_DEBUG "__getres_device: get devno %x\n", handle);
-    #endif
-    if (dev_open(handle, resflg & RES_LOCAL_MASK)) {
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "__getres_device: get name %s\n", name);
+#endif    
+    handle_t handle;
+    if ((handle = device_open(name, resflg & RES_LOCAL_MASK)) < 0) {
         return -1;
     }
     #if DEBUG_LOCAL == 1
@@ -86,7 +84,7 @@ int __getres_device(char *name, unsigned long resflg)
         #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "__getres_device: install res failed!\n");
         #endif
-        dev_close(handle);
+        device_close(handle);
         return -1;
     }
     return res;
@@ -269,7 +267,7 @@ int sys_putres(int res)
     switch (item->flags & RES_MASTER_MASK)
     {
     case RES_DEV:
-        if (dev_close(item->handle)) {
+        if (device_close(item->handle) < 0) {
             return -1;
         }
         break;
@@ -301,7 +299,7 @@ int sys_putres(int res)
  * @buffer: 缓冲区
  * @count: 数据量
  * 
- * @return: 成功返回0，失败返回-1
+ * @return: 成功返回读取的数据量，失败返回-1
  */
 int sys_readres(int res, off_t off, void *buffer, size_t count)
 {
@@ -319,9 +317,7 @@ int sys_readres(int res, off_t off, void *buffer, size_t count)
         #if DEBUG_LOCAL == 2
             printk(KERN_DEBUG "sys_readres: devno=%x.\n", item->handle);
         #endif   
-        if (dev_read(item->handle, off, buffer, count)) {
-            return -1;
-        }
+        retval = device_read(item->handle, buffer, count, off);
         break;
     case RES_IPC:
         /* 返回读取资源的信息 */
@@ -343,7 +339,7 @@ int sys_readres(int res, off_t off, void *buffer, size_t count)
  * @buffer: 缓冲区
  * @count: 数据量，磁盘是扇区数
  * 
- * @return: 成功返回0，失败返回-1
+ * @return: 成功返回读取的数据量，失败返回-1
  */
 int sys_writeres(int res, off_t off, void *buffer, size_t count)
 {
@@ -357,19 +353,17 @@ int sys_writeres(int res, off_t off, void *buffer, size_t count)
     #if DEBUG_LOCAL == 2
     printk(KERN_DEBUG "sys_writeres: devno=%x.\n", item->handle);
     #endif    
+    int retval = 0;
     switch (item->flags & RES_MASTER_MASK)
     {
     case RES_DEV:
         #if DEBUG_LOCAL == 2
             printk(KERN_DEBUG "sys_writeres: devno=%x.\n", item->handle);
         #endif   
-        if (dev_write(item->handle, off, buffer, count)) {
-            return -1;
-        }
+        retval = device_write(item->handle, buffer, count, off);
         break;
     case RES_IPC:
-        if (__writeres_ipc(item, off, buffer, count))
-            return -1;
+        retval = __writeres_ipc(item, off, buffer, count);
         break;
     default:
         return -1;  /* error type */
@@ -377,7 +371,7 @@ int sys_writeres(int res, off_t off, void *buffer, size_t count)
     #if DEBUG_LOCAL == 2
     printk(KERN_DEBUG "sys_writeres: write done!\n");
     #endif    
-    return 0;
+    return retval;
 }
 
 /**
@@ -386,7 +380,7 @@ int sys_writeres(int res, off_t off, void *buffer, size_t count)
  * @buffer: 缓冲区
  * @count: 数据量，磁盘是扇区数
  * 
- * @return: 成功返回0，失败返回-1
+ * @return: 成功返回信息，失败返回-1
  */
 int sys_ctlres(int res, unsigned int cmd, unsigned long arg)
 {
@@ -407,9 +401,7 @@ int sys_ctlres(int res, unsigned int cmd, unsigned long arg)
         #if DEBUG_LOCAL == 2
             printk(KERN_DEBUG "sys_ctlres: devno=%x.\n", item->handle);
         #endif   
-        if (dev_ioctl(item->handle, cmd, arg))
-            retval = -1;
-        
+        retval = device_devctl(item->handle, cmd, arg);
         break;
     case RES_IPC:
         if (cmd == IPC_DEL) { /* 命令是删除IPC */
@@ -464,7 +456,7 @@ void resource_copy(resource_t *dst, resource_t *src)
             case RES_DEV:
                 dst->table[i] = *item;  /* 复制项 */
                 /* 设备增长 */
-                dev_grow(item->handle);
+                device_grow(item->handle);
                 break;
             case RES_IPC:
                 /* 不复制ipc资源和表项 */
@@ -496,7 +488,7 @@ void resource_release(resource_t *res)
             {
             case RES_DEV:
                 /* 设备关闭 */
-                dev_close(res->table[i].handle);
+                device_close(res->table[i].handle);
                 break;
             case RES_IPC:
                 /* 管道在释放时需要释放 */

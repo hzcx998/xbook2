@@ -2,16 +2,17 @@
 #include <xbook/string.h>
 #include <xbook/math.h>
 #include <xbook/debug.h>
+#include <xbook/driver.h>
 
 LIST_HEAD(raw_block_list);
 
-raw_block_t *raw_block_alloc(dev_t devno, char *name)
+raw_block_t *raw_block_alloc(handle_t handle, char *name)
 {
     raw_block_t *block = kmalloc(sizeof(raw_block_t));
     if (block == NULL)
         return NULL;
 
-    block->devno = devno;
+    block->handle = handle;
     memset(block->name, 0, RAW_BLOCK_NAME_LEN);
     strcpy(block->name, name);
 
@@ -107,14 +108,15 @@ int raw_block_upload(raw_block_t *block)
     
     /* 小于1个块 */
     if (count < RB_BLOCK_NR) {
-        if (dev_read(block->devno, off, block->vaddr, count)) 
+        printk(KERN_DEBUG "raw_block_upload: count=%d\n", count);
+        if (device_read(block->handle, block->vaddr, count * SECTOR_SIZE, off) < 0) 
             return -1;
     } else {
         /* 处理小于DATA_BLOCK个块 */
         int chunk = count & 0xff;   /* 取256以下的数据数量 */
         unsigned char *p = block->vaddr;
         while (count > 0) {
-            if (dev_read(block->devno, off, p, chunk))
+            if (device_read(block->handle, p, chunk * SECTOR_SIZE, off) < 0)
                 return -1;
             
             off += chunk;
@@ -135,14 +137,14 @@ int raw_block_download(raw_block_t *block)
     
     /* 小于1个块 */
     if (count < RB_BLOCK_NR) {
-        if (dev_write(block->devno, off, block->vaddr, count)) 
+        if (device_write(block->handle, block->vaddr, count * SECTOR_SIZE, off) < 0) 
             return -1;
     } else {
         /* 处理小于DATA_BLOCK个块 */
         int chunk = count & 0xff;   /* 取256以下的数据数量 */
         unsigned char *p = block->vaddr;
         while (count > 0) {
-            if (dev_write(block->devno, off, p, chunk))
+            if (device_write(block->handle, p, chunk  * SECTOR_SIZE, off) < 0)
                 return -1;
             
             off += chunk;
@@ -257,15 +259,17 @@ raw_block_info_t rbi_table[MAX_RBI_NR] = {
 
 void init_raw_block()
 {
-    dev_open(DEV_HD0, 0);
-
+    handle_t rbdev = device_open(RB_DEVICE, 0);
+    if (rbdev < 0)
+        panic("init_raw_block: open raw block device failed!\n");
+        
     raw_block_info_t *rbi;
     /* 构建原始块信息 */
     int n;
     for (n = 0; n < MAX_RBI_NR; n++) {
         rbi = &rbi_table[n];
         printk(KERN_INFO "raw block name:%s\n", rbi->name);
-        raw_block_t *rb = raw_block_alloc(DEV_HD0, rbi->name);
+        raw_block_t *rb = raw_block_alloc(rbdev, rbi->name);
         if (rb == NULL)
             panic(KERN_EMERG "raw block alloc for %s failed!\n", rbi->name);
         if (raw_block_init(rb, rbi->off, rbi->cnt, rbi->size))

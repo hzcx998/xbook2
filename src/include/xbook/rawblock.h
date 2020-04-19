@@ -1,7 +1,7 @@
 #ifndef _XBOOK_RAW_BLOCK_H
 #define _XBOOK_RAW_BLOCK_H
 
-#include "device.h"
+#include "driver.h"
 #include "list.h"
 
 #define RAW_BLOCK_NAME_LEN 24
@@ -12,9 +12,11 @@
 
 #define RB_BLOCK_NR 256
 
+#define RB_DEVICE   "ide0"
+
 typedef struct raw_block {
     list_t list;                /* 所有块构成一个链表 */
-    dev_t devno;                /* 设备号 */
+    dev_t handle;                /* 设备号 */
     
     unsigned long offset;       /* 设备中的偏移 */
     unsigned long count;        /* 占用块的数量 */
@@ -26,7 +28,7 @@ typedef struct raw_block {
     char name[RAW_BLOCK_NAME_LEN]; /* 块名字标识 */
 } raw_block_t;
 
-raw_block_t *raw_block_alloc(dev_t devno, char *name);
+raw_block_t *raw_block_alloc(handle_t handle, char *name);
 void raw_block_free(raw_block_t *block);
 raw_block_t *raw_block_get_by_name(char *name);
 

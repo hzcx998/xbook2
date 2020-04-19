@@ -53,12 +53,16 @@ static int load_segment(raw_block_t *rb, unsigned long offset, unsigned long fil
         printk(KERN_ERR "load_segment: vmspace_mmap failed!\n");
         return -1;
     }
+    /* 清空内存 */
+    //memset((void *) vaddr_page, 0, occupy_pages * PAGE_SIZE);
+
     //printk(KERN_DEBUG "task %s space: addr %x page %d\n",(current_task)->name, vaddr_page, occupy_pages);
-    
+
     /* 读取数据到内存中 */
     if (raw_block_read_off(rb, (void *)vaddr, offset, file_sz)) {
         return -1;
     }
+
     return 0;
 }
 
@@ -82,8 +86,9 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb)
         /* 读取程序头 */
         if (raw_block_read_off(rb, (void *)&prog_header, prog_header_off, prog_header_size)) {
             return -1;
-        }/*
-        printk(KERN_DEBUG "read prog header off %x vaddr %x filesz %x memsz %x\n", 
+        }
+        /*
+        printk(KERN_DEBUG "proc_load_image: read prog header off %x vaddr %x filesz %x memsz %x\n", 
             prog_header.p_offset, prog_header.p_vaddr, prog_header.p_filesz, prog_header.p_memsz);
         */
         /* 如果是可加载的段就加载到内存中 */
@@ -254,6 +259,7 @@ int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
     frame->ebx = (unsigned int) new_argv;
      /* 记录栈顶 */
     frame->esp = (unsigned long) vmm->stack_end;
+    frame->ebp = frame->esp;
 #if 0 /* stack info */
     printk(KERN_DEBUG "task %s arg space: start %x end %x\n",
         (current_task)->name, vmm->arg_start, vmm->arg_end);

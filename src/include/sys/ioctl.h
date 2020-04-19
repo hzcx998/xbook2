@@ -34,4 +34,9 @@ enum ioctl_ide {
 #define CODE_CON_SETPOS     DEVCTL_CODE('c', 5)
 #define CODE_CON_GETPOS     DEVCTL_CODE('c', 6)
 
+#define CODE_DISK_GETSIZE   DEVCTL_CODE('d', 1)
+#define CODE_DISK_CLEAR     DEVCTL_CODE('d', 2)
+
+
+
 #endif   /* _SYS_IOCTL_H */

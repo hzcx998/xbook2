@@ -35,6 +35,9 @@ BXRC_LINUX 		= $(BOCHS_DIR)bochsrc.linux
 # virtual box 虚拟机名称
 VBOX_NAME	= "xbook"
 
+# vmware 虚拟机文件地址
+VMWARE_VMX	= "D:\VMpc\vmware-xbook2\xbook2.vmx"
+
 #----tools----
 TOOLS_DIR = ../tools/
 
@@ -113,7 +116,7 @@ NASM_FLAGS	:= $(INCLUDE_PATH)
 KERNEL_ELF =  kernel.elf
 KERNEL_ELF_DISASM =  kernel.elf.disasm
 
-PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg clean dis
+PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg vbox clean dis
 PHONY	+= $(SRCDIRS)
 
 export NASM NASM_FLAGS CC LD CFLAGS LDFLAGS TOPDIR

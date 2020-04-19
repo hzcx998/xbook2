@@ -181,11 +181,11 @@ void pipe_test_write()
     char buf[8192];
     memset(buf, 0, 8192);
 
-    //while (1)
-    //{
+    while (1)
+    {
         strcpy(buf, "hello, big pipe!\n");
-        writeres(pip, IPC_NOSYNC, buf, 4096);
-    //}
+        writeres(pip, 0, buf, 4096);
+    }
     
     printf("parent write pipe done!");
     //wait(NULL);
@@ -219,7 +219,6 @@ void pipe_test_read()
 
 int main(int argc, char *argv[])
 {
-
     func(100);
 
     int con = getres("con0", RES_DEV, 0);
@@ -245,7 +244,7 @@ int main(int argc, char *argv[])
         //shmtest1();
         //semtest1();
         //msgtest();
-        pipe_test_write();
+        //pipe_test_write();
 
         int status;
         pid = wait(&status);
@@ -268,17 +267,18 @@ int main(int argc, char *argv[])
         memset(buf, 0, 40 * 1024);
         printf("alloc data at %x for 20 kb.\n", buf);
 
-        int hd0 = getres("hd0", RES_DEV, 0);
+        int hd0 = getres("ide0", RES_DEV, 0);
         if (hd0 < 0) 
             exit(-1);
 
         /* 200 */
-        if (readres(hd0, 200, buf, 50)) {
+        if (readres(hd0, 200, buf, 50 * 512) < 0) {
             printf("read disk failed!\n");
             exit(-1);
         }
         printf("load data success.\n");
-        xfile_t file = {buf, 22*1024};
+
+        xfile_t file = {buf, 25*1024};
         int i;
         for (i = 0; i < 32; i++) {
             printf("%x ", buf[i]);

@@ -36,7 +36,7 @@ int putres(int res)
  * 
  * @res: res index in table
  * @buffer: data buffer
- * @size: sectors for disk device, bytes for char device
+ * @size: buffer length (bytes)
  * 
  * @return: 0 is sucess, -1 is failed 
  */
@@ -50,7 +50,7 @@ int writeres(int res, off_t off, void *buffer, size_t size)
  * 
  * @res: res index in table
  * @buffer: data buffer
- * @size: sectors for disk device, bytes for char device
+ * @size: buffer length (bytes)
  * 
  * @return: 0 is sucess, -1 is failed 
  */

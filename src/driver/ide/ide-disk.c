@@ -1,31 +1,28 @@
-#include <xbook/unit.h>
 #include <xbook/debug.h>
 #include <xbook/kernel.h>
-#include <xbook/device.h>
 #include <xbook/const.h>
 #include <xbook/math.h>
 #include <xbook/softirq.h>
+#include <xbook/vine.h>
+#include <xbook/driver.h>
+#include <xbook/vsprintf.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
-
 #include <sys/ioctl.h>
 
 /* 配置开始 */
-//#define _DEBUG_IDE_INFO
-//#define _DEBUG_IDE
-//#define _DEBUG_TEST
+#define DEBUG_LOCAL 0
 
 /* 配置结束 */
 
-#define DRV_NAME "ide disk"
+#define DRV_NAME "ide-disk"
 #define DRV_VERSION "0.1"
+
+#define DEV_NAME "ide"
 
 /* IDE设备最多的磁盘数量 */
 #define MAX_IDE_DISK_NR			4
-
-/* IDE设备1个块的大小 */
-#define IDE_BLOCK_SIZE			(SECTOR_SIZE * 2)
 
 /* IDE磁盘数在BIOS阶段可以储存到这个地址，直接从里面或取就可以了 */
 #define IDE_DISK_NR_ADDR		(KERN_VADDR + 0x0475)
@@ -115,17 +112,18 @@
 
 /* IDE通道结构体 */
 struct ide_channel {
-   	unsigned short base;  // I/O Base.
+   	unsigned short base;    // I/O Base.
 	char irqno;		 	// 本通道所用的中断号
-   	struct ide_driver *devices;	// 通道上面的设备
-	char who;		/* 通道上主磁盘在活动还是从磁盘在活动 */
-	char what;		/* 执行的是什么操作 */
+   	struct _device_extension *ext;	// 通道上面的设备
+	char who;		    /* 通道上主磁盘在活动还是从磁盘在活动 */
+	char what;		    /* 执行的是什么操作 */
 } channels[2];
 
-/* IDE块设备结构体 */
-static struct ide_driver {
-    device_t *dev;
-	struct ide_channel *channel;		/* 所在的通道 */
+typedef struct _device_extension {
+    string_t device_name;           /* 设备名字 */
+    device_object_t *device_object; /* 设备对象 */
+
+    struct ide_channel *channel;		/* 所在的通道 */
 	struct ide_identy *info;	/* 磁盘信息 */
 	unsigned char reserved;	// disk exist
 	unsigned char drive;	// 0 (Master Drive) or 1 (Slave Drive).
@@ -138,7 +136,7 @@ static struct ide_driver {
 	/* 状态信息 */
 	unsigned int read_sectors;	// 读取了多少扇区
 	unsigned int write_sectors;	// 写入了多少扇区
-}devices[MAX_IDE_DISK_NR];		/* 最多有4块磁盘 */
+} device_extension_t;
 
 /* 磁盘信息结构体 */
 struct ide_identy {
@@ -444,9 +442,6 @@ struct ide_identy {
 	unsigned short Integrity_word;
 }__attribute__((packed));
 
-/* 扫描到的磁盘数 */
-static unsigned char disk_foud;
-
 /**
  * ide_print_error - 打印错误
  * @dev: 设备
@@ -454,7 +449,7 @@ static unsigned char disk_foud;
  * 
  * 根据错误码打印对应的错误
  */
-static unsigned char ide_print_error(struct ide_driver *dev, unsigned char err)
+static unsigned char ide_print_error(device_extension_t *ext, unsigned char err)
 {
    	if (err == 0)
       	return err;
@@ -462,7 +457,7 @@ static unsigned char ide_print_error(struct ide_driver *dev, unsigned char err)
    	printk("IDE:");
    	if (err == 1) {printk("- Device Fault\n     ");}
    	else if (err == 2) {	/* 其它错误 */
-		unsigned char state = in8(ATA_REG_ERROR(dev->channel));
+		unsigned char state = in8(ATA_REG_ERROR(ext->channel));
 		if (state & ATA_ERROR_AMNF)	{printk("- No Address Mark Found\n     ");}
 		if (state & ATA_ERROR_TK0NF){printk("- No Media or Media Error\n     ");}
 		if (state & ATA_ERROR_ABRT)	{printk("- Command Aborted\n     ");      	}
@@ -479,66 +474,60 @@ static unsigned char ide_print_error(struct ide_driver *dev, unsigned char err)
 		printk("- Time Out\n     ");
 	}
 	printk("- [%s %s]\n",
-		(const char *[]){"Primary", "Secondary"}[dev->channel - channels], // Use the channel as an index into the array
-		(const char *[]){"Master", "Slave"}[dev->drive] // Same as above, using the drive
+		(const char *[]){"Primary", "Secondary"}[ext->channel - channels], // Use the channel as an index into the array
+		(const char *[]){"Master", "Slave"}[ext->drive] // Same as above, using the drive
 		);
 
    return err;
 }
-#ifdef _DEBUG_IDE
+#if DEBUG_LOCAL == 1
 static void dump_ide_channel(struct ide_channel *channel)
 {
-	printk("[Ide Channel]\n");
-
-	printk("self:%x base:%x irq:%d\n", channel, channel->base, channel->irqno);
+	printk(KERN_DEBUG "dump_ide_channel: ext:%x base:%x irq:%d\n", channel, channel->base, channel->irqno);
 }
 
-static void dump_ide_device(struct ide_driver *dev)
+static void dump_ide_extension(device_extension_t *ext)
 {
-	printk("[Ide Device]\n");
+    printk(KERN_DEBUG "dump_ide_extension:  ======================= start\n");
+	printk(KERN_DEBUG "ext:%x channel:%x drive:%d type:%s \n",
+	 	ext, ext->channel, ext->drive,
+		ext->type == IDE_ATA ? "ATA" : "ATAPI");
 
-	printk("self:%x channel:%x drive:%d type:%s \n",
-	 	dev, dev->channel, dev->drive,
-		dev->type == IDE_ATA ? "ATA" : "ATAPI");
-
-	printk("capabilities:%x command_sets:%x signature:%x\n",
-		dev->capabilities, dev->command_sets, dev->signature);
+	printk(KERN_DEBUG "capabilities:%x command_sets:%x signature:%x\n",
+		ext->capabilities, ext->command_sets, ext->signature);
 	
-	if (dev->info->cmdSet1 & 0x0400) {
-		printk("Total Sector(LBA 48):");
+	if (ext->info->cmdSet1 & 0x0400) {
+		printk(KERN_DEBUG "Total Sector(LBA 48):");
 	} else {
-		printk("Total Sector(LBA 28):");
+		printk(KERN_DEBUG "Total Sector(LBA 28):");
 	}
-	printk("%d\n", dev->size);
-
-	#ifdef _DEBUG_IDE_INFO
-	
-	printk("Serial Number:");
+	printk("%d\n", ext->size);
+    
+	printk(KERN_DEBUG "Serial Number:");
 	
 	int i;
 	for (i = 0; i < 10; i++) {
-		printk("%c%c", (dev->info->Serial_Number[i] >> 8) & 0xff,
-			dev->info->Serial_Number[i] & 0xff);
+		printk("%c%c", (ext->info->Serial_Number[i] >> 8) & 0xff,
+			ext->info->Serial_Number[i] & 0xff);
 	}
-
-	printk("\n" "Fireware Version:");
+    printk("\n");
+	printk(KERN_DEBUG "Fireware Version:");
 	for (i = 0; i < 4; i++) {
-		printk("%c%c", (dev->info->Firmware_Version[i] >> 8) & 0xff,
-			dev->info->Firmware_Version[i] & 0xff);
+		printk("%c%c", (ext->info->Firmware_Version[i] >> 8) & 0xff,
+			ext->info->Firmware_Version[i] & 0xff);
 	}
-
-	printk("\n" "Model Number:");
+    printk("\n");
+	printk(KERN_DEBUG "Model Number:");
 	for (i = 0; i < 20; i++) {
-		printk("%c%c", (dev->info->Model_Number[i] >> 8) & 0xff,
-			dev->info->Model_Number[i] & 0xff);
+		printk("%c%c", (ext->info->Model_Number[i] >> 8) & 0xff,
+			ext->info->Model_Number[i] & 0xff);
 	}
-	
-	printk("\n" "LBA supported:%s ",(dev->info->Capabilities0 & 0x0200) ? "Yes" : "No");
-	printk("LBA48 supported:%s\n",((dev->info->cmdSet1 & 0x0400) ? "Yes" : "No"));
-	
-	#endif
+    printk("\n");
+	printk(KERN_DEBUG "LBA supported:%s ",(ext->info->Capabilities0 & 0x0200) ? "Yes" : "No");
+	printk(KERN_DEBUG "LBA48 supported:%s\n",((ext->info->cmdSet1 & 0x0400) ? "Yes" : "No"));
+    printk(KERN_DEBUG "dump_ide_extension: ======================= end \n");
 }
-#endif  /* _DEBUG_IDE */
+#endif
 
 /**
  * read_from_sector - 硬盘读入count个扇区的数据到buf
@@ -546,7 +535,7 @@ static void dump_ide_device(struct ide_driver *dev)
  * @buf: 缓冲区
  * @count: 扇区数 
  */
-static void read_from_sector(struct ide_driver* dev, void* buf, unsigned int count) {
+static void read_from_sector(device_extension_t *ext, void* buf, unsigned int count) {
 	unsigned int size_in_byte;
 	if (count == 0) {
 	/* 因为sec_cnt是8位变量,由主调函数将其赋值时,若为256则会将最高位的1丢掉变为0 */
@@ -554,7 +543,7 @@ static void read_from_sector(struct ide_driver* dev, void* buf, unsigned int cou
 	} else { 
 		size_in_byte = count * SECTOR_SIZE; 
 	}
-	io_read(ATA_REG_DATA(dev->channel), buf, size_in_byte);
+	io_read(ATA_REG_DATA(ext->channel), buf, size_in_byte);
 }
 
 /**
@@ -563,7 +552,7 @@ static void read_from_sector(struct ide_driver* dev, void* buf, unsigned int cou
  * @buf: 缓冲区
  * @count: 扇区数 
  */
-static void write_to_sector(struct ide_driver* dev, void* buf, unsigned int count)
+static void write_to_sector(device_extension_t *ext, void* buf, unsigned int count)
 {
    unsigned int size_in_byte;
 	if (count == 0) {
@@ -572,7 +561,7 @@ static void write_to_sector(struct ide_driver* dev, void* buf, unsigned int coun
 	} else { 
 		size_in_byte = count * 512; 
 	}
-   	io_write(ATA_REG_DATA(dev->channel), buf, size_in_byte);
+   	io_write(ATA_REG_DATA(ext->channel), buf, size_in_byte);
 }
 
 /**
@@ -598,8 +587,8 @@ static void send_cmd(struct ide_channel* channel, unsigned char cmd)
  * 2表示状态出错
  * 5表示超时
  */
-static unsigned char busy_wait(struct ide_driver* dev) {
-	struct ide_channel* channel = dev->channel;
+static unsigned char busy_wait(device_extension_t *ext) {
+	struct ide_channel* channel = ext->channel;
 	/* 等待1秒
 	1000 * 1000 纳秒
 	*/
@@ -682,7 +671,7 @@ static int ide_polling(struct ide_channel* channel, unsigned int advanced_check)
  * 
  * 根据lba选择寻址模式，并生成IO地址包
  */
-static void select_addr_mode(struct ide_driver *dev,
+static void select_addr_mode(device_extension_t *ext,
 	unsigned int lba,
 	unsigned char *mode,
 	unsigned char *head,
@@ -690,7 +679,7 @@ static void select_addr_mode(struct ide_driver *dev,
 {
 	unsigned short cyl;
    	unsigned char sect;
-	if (lba >= 0x10000000 && dev->capabilities & 0x200) { // Sure Drive should support LBA in this case, or you are
+	if (lba >= 0x10000000 && ext->capabilities & 0x200) { // Sure Drive should support LBA in this case, or you are
 								// giving a wrong LBA.
 		// LBA48:
 		*mode  = 2;
@@ -701,7 +690,7 @@ static void select_addr_mode(struct ide_driver *dev,
 		io[4] = 0; // LBA28 is integer, so 32-bits are enough to access 2TB.
 		io[5] = 0; // LBA28 is integer, so 32-bits are enough to access 2TB.
 		*head      = 0; // Lower 4-bits of HDDEVSEL are not used here.
-	} else if (dev->capabilities & 0x200)  { // Drive supports LBA?
+	} else if (ext->capabilities & 0x200)  { // Drive supports LBA?
 		// LBA28:
 		*mode  = 1;
 		io[0] = (lba & 0x00000FF) >> 0;
@@ -731,14 +720,14 @@ static void select_addr_mode(struct ide_driver *dev,
  * @dev: 设备
  * @mode: 操作模式，0表示CHS模式，非0表示LBA模式
  */
-static void select_disk(struct ide_driver* dev,
+static void select_disk(device_extension_t *ext,
 	unsigned char mode, 
 	unsigned char head)
 {
-   	out8(ATA_REG_DEVICE(dev->channel),
-	   ATA_MKDEV_REG(mode == 0 ? 0 : 1, dev->drive, head));
+   	out8(ATA_REG_DEVICE(ext->channel),
+	   ATA_MKDEV_REG(mode == 0 ? 0 : 1, ext->drive, head));
 
-	dev->channel->who = dev->drive;	/* 通道上当前的磁盘 */
+	ext->channel->who = ext->drive;	/* 通道上当前的磁盘 */
 }
 
 /**
@@ -750,12 +739,12 @@ static void select_disk(struct ide_driver* dev,
  * 
  * 向硬盘控制器写入起始扇区地址及要读写的扇区数
  */
-static void select_sector(struct ide_driver* dev,
+static void select_sector(device_extension_t *ext,
 	unsigned char mode,
 	unsigned char *lbaIO,
 	sector_t count)
 {
-  	struct ide_channel* channel = dev->channel;
+  	struct ide_channel* channel = ext->channel;
 
 	/* 如果是LBA48就要写入24高端字节 */
 	if (mode == 2) {
@@ -850,10 +839,10 @@ static void driver_soft_rest(struct ide_channel *channel)
  * rest_driver - 重置驱动器
  * @dev: 设备
  */
-static void rest_driver(struct ide_driver *dev)
+static void rest_driver(device_extension_t *ext)
 {
 
-	driver_soft_rest(dev->channel);
+	driver_soft_rest(ext->channel);
 }
 /**
  * pio_data_transfer - PIO数据传输
@@ -865,7 +854,7 @@ static void rest_driver(struct ide_driver *dev)
  * 
  * 传输成功返回0，失败返回非0
  */
-static int pio_data_transfer(struct ide_driver *dev,
+static int pio_data_transfer(device_extension_t *ext,
 	unsigned char rw,
 	unsigned char mode,
 	unsigned char *buf,
@@ -874,39 +863,39 @@ static int pio_data_transfer(struct ide_driver *dev,
 	short i;
 	unsigned char error;
 	if (rw == IDE_READ) {	
-		#ifdef _DEBUG_IDE
-			printk("PIO read->");
-		#endif
+#if DEBUG_LOCAL == 1
+        printk("PIO read->");
+#endif
 		for (i = 0; i < count; i++) {
 			/* 醒来后开始执行下面代码*/
-			if ((error = busy_wait(dev))) {     //  若失败
+			if ((error = busy_wait(ext))) {     //  若失败
 				/* 重置磁盘驱动并返回 */
-				rest_driver(dev);
+				rest_driver(ext);
 				return error;
 			}
-			read_from_sector(dev, buf, 1);
+			read_from_sector(ext, buf, 1);
 			buf += SECTOR_SIZE;
 		}
 	} else {
-		#ifdef _DEBUG_IDE
-			printk("PIO write->");
-		#endif
+#if DEBUG_LOCAL == 1
+        printk("PIO write->");
+#endif
 		for (i = 0; i < count; i++) {
 			/* 等待硬盘控制器请求数据 */
-			if ((error = busy_wait(dev))) {     //  若失败
+			if ((error = busy_wait(ext))) {     //  若失败
 				/* 重置磁盘驱动并返回 */
-				rest_driver(dev);
+				rest_driver(ext);
 				return error;
 			}
 			/* 把数据写入端口，完成1个扇区后会产生一次中断 */
-			write_to_sector(dev, buf, 1);
+			write_to_sector(ext, buf, 1);
 			buf += SECTOR_SIZE;
             //printk("write success! ");
 		}
 		/* 刷新写缓冲区 */
-		out8(ATA_REG_CMD(dev->channel), mode > 1 ?
+		out8(ATA_REG_CMD(ext->channel), mode > 1 ?
 			ATA_CMD_CACHE_FLUSH_EXT : ATA_CMD_CACHE_FLUSH);
-		ide_polling(dev->channel, 0);
+		ide_polling(ext->channel, 0);
 	}
 	return 0;
 }
@@ -921,7 +910,7 @@ static int pio_data_transfer(struct ide_driver *dev,
  * 
  * 传输成功返回0，失败返回非0
  */
-static int ata_type_transfer(struct ide_driver *dev,
+static int ata_type_transfer(device_extension_t *ext,
 	unsigned char rw,
 	unsigned int lba,
 	unsigned int count,
@@ -934,7 +923,7 @@ static int ata_type_transfer(struct ide_driver *dev,
 
 	unsigned char lbaIO[6];	/* 由于最大是48位，所以这里数组的长度为6 */
 
-	struct ide_channel *channel = dev->channel;
+	struct ide_channel *channel = ext->channel;
 
    	unsigned char head, err;
 
@@ -964,16 +953,16 @@ static int ata_type_transfer(struct ide_driver *dev,
 
 		/* 选择寻址模式 */
 		// (I) Select one from LBA28, LBA48 or CHS;
-		select_addr_mode(dev, lba + done, &mode, &head, lbaIO);
+		select_addr_mode(ext, lba + done, &mode, &head, lbaIO);
 
 		/* 等待驱动不繁忙 */
 		// (III) Wait if the drive is busy;
 		while (in8(ATA_REG_STATUS(channel)) & ATA_STATUS_BUSY) cpu_lazy();// Wait if busy.
 		/* 从控制器中选择设备 */
-		select_disk(dev, mode, head);
+		select_disk(ext, mode, head);
 
 		/* 填写参数，扇区和扇区数 */
-		select_sector(dev, mode, lbaIO, count);
+		select_sector(ext, mode, lbaIO, count);
 
 		/* 等待磁盘控制器处于准备状态 */
 		while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY)) cpu_lazy();
@@ -981,12 +970,12 @@ static int ata_type_transfer(struct ide_driver *dev,
 		/* 选择并发送命令 */
 		select_cmd(rw, mode, dma, &cmd);
 
-		#ifdef _DEBUG_IDE	
+#if DEBUG_LOCAL == 1
 			printk("lba mode %d num %d io %d %d %d %d %d %d->",
 				mode, lba, lbaIO[0], lbaIO[1], lbaIO[2], lbaIO[3], lbaIO[4], lbaIO[5]);
 			printk("rw %d dma %d cmd %x head %d\n",
 				rw, dma, cmd, head);
-		#endif
+#endif
 		/* 等待磁盘控制器处于准备状态 */
 		while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY)) cpu_lazy();
 
@@ -1002,7 +991,7 @@ static int ata_type_transfer(struct ide_driver *dev,
 			}
 		} else {
 			/* PIO模式数据传输 */
-			if ((err = pio_data_transfer(dev, rw, mode, _buf, todo))) {
+			if ((err = pio_data_transfer(ext, rw, mode, _buf, todo))) {
 				return err;
 			}
 			_buf += todo * SECTOR_SIZE;
@@ -1023,30 +1012,27 @@ static int ata_type_transfer(struct ide_driver *dev,
  * 
  * 数据读取磁盘，成功返回0，失败返回-1
  */
-static int ide_read_sector(struct ide_driver *dev,
+static int ide_read_sector(device_extension_t *ext,
 	unsigned int lba,
 	void *buf,
 	unsigned int count)
 {
 	unsigned char error;
 	/* 检查设备是否正确 */
-	if (dev < devices || dev >= &devices[3] || dev->reserved == 0) {
-		printk("device error!\n");
-        return -1;
-	} else if (lba + count > dev->size && dev->type == IDE_ATA) {
-        printk("out of range!\n");
+	if (lba + count > ext->size && ext->type == IDE_ATA) {
+        printk(KERN_ERR "ide_read_sector: out of range!\n");
 		return -1;
 	} else {
 
 		/* 进行磁盘访问 */
 
 		/*如果类型是ATA*/
-        error = ata_type_transfer(dev, IDE_READ, lba, count, buf);
+        error = ata_type_transfer(ext, IDE_READ, lba, count, buf);
 		/*如果类型是ATAPI*/
 		
 		/* 打印驱动错误信息 */
-		if(ide_print_error(dev, error)) {
-			printk("ide read error!\n");
+		if(ide_print_error(ext, error)) {
+			printk(KERN_ERR "ide_read_sector: ide read error!\n");
             return -1;
 		}
 	}
@@ -1062,26 +1048,24 @@ static int ide_read_sector(struct ide_driver *dev,
  * 
  * 把数据写入磁盘，成功返回0，失败返回-1
  */
-static int ide_write_sector(struct ide_driver *dev,
+static int ide_write_sector(
+    device_extension_t *ext,
 	unsigned int lba,
 	void *buf,
-	unsigned int count)
-{
+	unsigned int count
+) {
 	unsigned char error;
-	/* 检查设备是否正确 */
-	if (dev < devices || dev >= &devices[3] || dev->reserved == 0) {
-		return -1;
-	} else if (lba + count > dev->size && dev->type == IDE_ATA) {
+	if (lba + count > ext->size && ext->type == IDE_ATA) {
 		return -1;
 	} else {
 		/* 进行磁盘访问，如果出错，就 */
 		
 		/*如果类型是ATA*/
-			error = ata_type_transfer(dev, IDE_WRITE, lba, count, buf);
+			error = ata_type_transfer(ext, IDE_WRITE, lba, count, buf);
 		/*如果类型是ATAPI*/
 
 		/* 打印驱动错误信息 */
-		if(ide_print_error(dev, error)) {
+		if(ide_print_error(ext, error)) {
 			return -1;
 		}
 	}
@@ -1095,10 +1079,10 @@ static int ide_write_sector(struct ide_driver *dev,
  * 
  * 当count为0时，表示清空整个磁盘，不为0时就清空对于的扇区数
  */
-static int ide_clean_disk(struct ide_driver *dev, sector_t count)
+static int ide_clean_disk(device_extension_t *ext, sector_t count)
 {
 	if (count == 0)
-		count = dev->size;
+		count = ext->size;
 
 	sector_t todo, done = 0;
 
@@ -1111,7 +1095,7 @@ static int ide_clean_disk(struct ide_driver *dev, sector_t count)
 
 	memset(buffer, 0, SECTOR_SIZE *10);
 
-	printk("IDE clean: count%d\n", count);
+	printk(KERN_DEBUG "ide_clean_disk: count%d\n", count);
 	while (done < count) {
 		/* 获取要去操作的扇区数这里用10作为分界 */
 		if ((done + 10) <= count) {
@@ -1119,162 +1103,87 @@ static int ide_clean_disk(struct ide_driver *dev, sector_t count)
 		} else {
 			todo = count - done;
 		}
-		//printk("ide clean: done %d todo %d\n", done, todo);
-		ide_write_sector(dev, done, buffer, todo);
+		//printk(KERN_DEBUG "ide_clean_disk: done %d todo %d\n", done, todo);
+		ide_write_sector(ext, done, buffer, todo);
 		done += 10;
 	}
 	return 0;
 }
 
-/**
- * 编写设备操作接口
- */
-
-/**
- * ide_ioctl - 硬盘的IO控制
- * @device: 设备项
- * @cmd: 命令
- * @arg1: 参数1
- * @arg2: 参数2
- * 
- * 成功返回0，失败返回-1
- */
-static int ide_ioctl(device_t *device, unsigned int cmd, unsigned long arg)
+iostatus_t ide_devctl(device_object_t *device, io_request_t *ioreq)
 {
-	int retval = 0;
-	struct ide_driver *dev = (struct ide_driver *)dev_get_local(device);
-	
-	switch (cmd)
-	{
-	case IDEIO_RINSE:	/* 执行清空磁盘命令 */
-		if (ide_clean_disk(dev, arg)) {
-			retval = -1;
-		}
-		break;
-    case IDEIO_GETCNTS:	/* 获取扇区数 */
-        *((sector_t *)arg) = dev->size;
-		break;
-	default:
-		/* 失败 */
-		retval = -1;
-		break;
-	}
+    unsigned int ctlcode = ioreq->parame.devctl.code;
+    unsigned long arg = ioreq->parame.devctl.arg;
+    device_extension_t *ext = device->device_extension;
 
-	return retval;
-}
-
-/**
- * ide_read - 读取数据
- * @device: 设备
- * @lba: 逻辑扇区地址
- * @buffer: 缓冲区
- * @count: 扇区数
- * 
- * @return: 成功返回0，失败返回-1
- */
-static int ide_read(device_t *device, off_t off, void *buffer, size_t count)
-{
-	/* 获取IDE设备 */
-	struct ide_driver *dev = (struct ide_driver *)dev_get_local(device);
-	return ide_read_sector(dev, off, buffer, count);
-}
-
-/**
- * ide_write - 写入数据
- * @device: 设备
- * @lba: 逻辑扇区地址
- * @buffer: 缓冲区
- * @count: 扇区数
- * 
- * @return: 成功返回0，失败返回-1
- */
-static int ide_write(device_t *device, off_t off, void *buffer, size_t count)
-{
-	/* 获取IDE设备 */
-	struct ide_driver *dev = (struct ide_driver *)dev_get_local(device);
-	
-	return ide_write_sector(dev, off, buffer, count);
-}
-
-/**
- * 块设备操作的结构体
- */
-static device_ops_t ops = {
-	.ioctl  = ide_ioctl,
-	.read   = ide_read,
-	.write  = ide_write,
-};
-
-static driver_info_t drvinfo = {
-    .name = DRV_NAME,
-    .version = DRV_VERSION,
-    .owner = "jason hu",
-};
-
-/**
- * ide_add_device - 创建块设备
- * @dev: 要创建的设备
- * @major: 主设备号
- * @diskIdx: 磁盘的索引
- */
-static int ide_add_device(struct ide_driver *dev, int major, int idx)
-{
-    /* register device */
-    dev->dev = dev_alloc(MKDEV(IDE_MAJOR, idx));
-    if (dev->dev == NULL) {
-        printk(KERN_ERR "alloc dev for ide failed!\n");
-        return -1;
+    iostatus_t status = IO_SUCCESS;
+    int infomation = 0;
+    switch (ctlcode)
+    {
+    case CODE_DISK_GETSIZE:
+        infomation = ext->size;
+        break;
+    case CODE_DISK_CLEAR:
+        ide_clean_disk(device->device_extension, arg);
+        break;
+    default:
+        infomation = -1;
+        status = IO_FAILED;
+        break;
     }
-
-    dev->dev->ops = &ops;
-    dev->dev->drvinfo = &drvinfo;
-
-    dev_make_name(devname, "hd", idx);
-    if (register_device(dev->dev, devname, DEVTP_BLOCK, dev)) {
-        printk(KERN_ERR "register dev for ide failed!\n");
-        dev_free(dev->dev);
-        return -1;
-    }
-    return 0;
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = infomation;
+    io_complete_request(ioreq);
+    return status;
 }
 
-/**
- * ide_del_device - 删除一个块设备
- * @dev: 要删除的块设备
- */
-static void ide_del_device(struct ide_driver *dev)
+iostatus_t ide_read(device_object_t *device, io_request_t *ioreq)
 {
-	if (dev->dev) {
-        unregister_device(dev->dev);
-        dev_free(dev->dev);
+    long len;
+    iostatus_t status = IO_SUCCESS;
+    sector_t sectors = DIV_ROUND_UP(ioreq->parame.read.length, SECTOR_SIZE);
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "ide_read: buf=%x sectors=%d off=%x\n", 
+        ioreq->system_buffer, sectors, ioreq->parame.read.offset);
+#endif    
+    len = ide_read_sector(device->device_extension, ioreq->parame.read.offset,
+        ioreq->system_buffer, sectors);
+    if (!len) { /* 执行成功 */
+        len = sectors * SECTOR_SIZE;
+    } else {
+        status = IO_FAILED;
     }
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = len;
+    
+    io_complete_request(ioreq);
+
+    return status;
 }
 
-/* 硬盘的任务协助 */
-static task_assist_t ide_assist;
-
-/**
- * ide_assist_handler - 任务协助处理函数
- * @data: 传递的数据
- */
-static void ide_assist_handler(unsigned long data)
+iostatus_t ide_write(device_object_t *device, io_request_t *ioreq)
 {
-	struct ide_channel *channel = (struct ide_channel *)data;
+    long len;
+    iostatus_t status = IO_SUCCESS;
+    sector_t sectors = DIV_ROUND_UP(ioreq->parame.write.length, SECTOR_SIZE);
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "ide_write: buf=%x sectors=%d off=%x\n", 
+        ioreq->system_buffer, sectors, ioreq->parame.write.offset);
+#endif    
 
-	struct ide_driver *dev = channel->devices + channel->who;
+    len = ide_write_sector(device->device_extension, ioreq->parame.write.offset,
+        ioreq->system_buffer, sectors);
+    if (!len) { /* 执行成功 */
+        len = sectors * SECTOR_SIZE;
+    } else {
+        status = IO_FAILED;
+    }
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = len;
+    
+    io_complete_request(ioreq);
 
-	/* 获取状态，做出错判断 */
-	if (in8(ATA_REG_STATUS(channel)) & ATA_STATUS_ERR) {
-		/* 尝试重置驱动 */
-		rest_driver(dev);
-	}
-
-	/* 可以在这里面做一些统计信息 */
-	if (channel->what == IDE_READ) {
-		dev->read_sectors++;
-	} else if (channel->what == IDE_WRITE) {
-		dev->write_sectors++;
-	}
+    return status;
 }
 
 /**
@@ -1284,25 +1193,21 @@ static void ide_assist_handler(unsigned long data)
  */
 static int ide_handler(unsigned long irq, unsigned long data)
 {
-    //ide_assist.data = data;
-	/* 调度协助 */
-	//task_assist_schedule(&ide_assist);
-    
     struct ide_channel *channel = (struct ide_channel *)data;
-	struct ide_driver *dev = channel->devices + channel->who;
+	device_extension_t *ext = channel->ext + channel->who;
 
     
 	/* 获取状态，做出错判断 */
 	if (in8(ATA_REG_STATUS(channel)) & ATA_STATUS_ERR) {
 		/* 尝试重置驱动 */
-		rest_driver(dev);
+		rest_driver(ext);
 	}
 
 	/* 可以在这里面做一些统计信息 */
 	if (channel->what == IDE_READ) {
-		dev->read_sectors++;
+		ext->read_sectors++;
 	} else if (channel->what == IDE_WRITE) {
-		dev->write_sectors++;
+		ext->write_sectors++;
 	}
     return 0;
 }
@@ -1313,218 +1218,180 @@ static int ide_handler(unsigned long irq, unsigned long data)
  * 
  * 根据磁盘数初始化对应的磁盘的信息
  */
-static void ide_probe(char disks)
+static void ide_probe(device_extension_t *ext, int id)
 {
 	/* 初始化，并获取信息 */
-	int channel_cnt = DIV_ROUND_UP(disks, 2);	   // 一个ide通道上有两个硬盘,根据硬盘数量反推有几个ide通道
+	int channelno = id / 2;	   // 一个ide通道上有两个硬盘,根据硬盘数量反推有几个ide通道
+	int diskno = id % 2;
 	struct ide_channel* channel;
-	int channelno = 0, devno = 0; 
 	char err;
+    
+    channel = &channels[channelno];
+    /* 为每个ide通道初始化端口基址及中断向量 */
+    switch (channelno) {
+    case 0:
+        channel->base	 = ATA_PRIMARY_PORT;	   // ide0通道的起始端口号是0x1f0
+        channel->irqno	 = IRQ14_HARDDISK;	   // 从片8259a上倒数第二的中断引脚,温盘,也就是ide0通道的的中断向量号
+        break;
+    case 1:
+        channel->base	 = ATA_SECONDARY_PORT;	   // ide1通道的起始端口号是0x170
+        channel->irqno	 = IRQ14_HARDDISK + 1;	   // 从8259A上的最后一个中断引脚,我们用来响应ide1通道上的硬盘中断
+        break;
+    }
+    channel->who = 0;	// 初始化为0
+    channel->what = 0;
 
-	int left_disks = disks;
+    if (diskno == 0) {  /* 通道上第一个磁盘的时候才注册中断 */
+        /* 注册中断 */
+        register_irq(channel->irqno, ide_handler, IRQF_DISABLED, "harddisk", DEV_NAME, (unsigned long)channel);
+    }
+    
+#if DEBUG_LOCAL == 1
+    dump_ide_channel(channel);
+#endif
 
-   	/* 处理每个通道上的硬盘 */
-   	while (channelno < channel_cnt) {
-      	channel = &channels[channelno];
-		/* 为每个ide通道初始化端口基址及中断向量 */
-		switch (channelno) {
-		case 0:
-			channel->base	 = ATA_PRIMARY_PORT;	   // ide0通道的起始端口号是0x1f0
-			channel->irqno	 = IRQ14;	   // 从片8259a上倒数第二的中断引脚,温盘,也就是ide0通道的的中断向量号
-			break;
-		case 1:
-			channel->base	 = ATA_SECONDARY_PORT;	   // ide1通道的起始端口号是0x170
-			channel->irqno	 = IRQ15;	   // 从8259A上的最后一个中断引脚,我们用来响应ide1通道上的硬盘中断
-			break;
-		}
-		channel->who = 0;	// 初始化为0
-		channel->what = 0;
-		//SynclockInit(&channel->lock);	
+    channel->ext = ext;
 
-		/* 初始化任务协助 */
-		task_assist_init(&ide_assist, ide_assist_handler, 0);
+    /* 填写设备信息 */
+    ext->channel = channel;
+    ext->drive = diskno;
+    ext->type = IDE_ATA;
+
+    ext->info = kmalloc(SECTOR_SIZE);
+    if (ext->info == NULL) {
+        printk("kmalloc for ide device info failed!\n");
+        return;
+    }
         
-		/* 注册中断 */
-		register_irq(channel->irqno, ide_handler, IRQF_DISABLED, "ATA", "ide", (unsigned long)channel);
-		#ifdef _DEBUG_IDE_INFO	
-		dump_ide_channel(channel);
-		#endif
+    /* 重置驱动器 */
+    rest_driver(ext);
+
+    /* 获取磁盘的磁盘信息 */
+    select_disk(ext, 0, 0);
         
-		/* 分别获取两个硬盘的参数及分区信息 */
-		while (devno < 2 && left_disks) {
-			/* 选择一个设备 */
-			if (channelno == ATA_SECONDARY) {
-				channel->devices = &devices[2];
-			} else {
-				channel->devices = &devices[0];
-			}
-			
-			/* 填写设备信息 */
-			struct ide_driver* dev = &channel->devices[devno];
-			dev->channel = channel;
-			dev->drive = devno;
-			dev->type = IDE_ATA;
+    //等待硬盘准备好
+    while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY)) cpu_lazy();
 
-			dev->info = kmalloc(SECTOR_SIZE);
-			if (dev->info == NULL) {
-				printk("kmalloc for ide device info failed!\n");
-				continue;
-			}
-            
-            /* 重置驱动器 */
-            rest_driver(dev);
+    send_cmd(channel, ATA_CMD_IDENTIFY);
+    
+    err = ide_polling(channel, 1);
+    if (err) {
+        ide_print_error(ext, err);
+        return;
+    }
+    
+    /* 读取到缓冲区中 */
+    read_from_sector(ext, ext->info, 1);
 
-            /* 获取磁盘的磁盘信息 */
-			select_disk(dev, 0, 0);
-			
-			//等待硬盘准备好
-			while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY)) cpu_lazy();
+    /* 根据信息设定一些基本数据 */
+    ext->command_sets = (int)((ext->info->cmdSet1 << 16) + ext->info->cmdSet0);
 
-			send_cmd(channel, ATA_CMD_IDENTIFY);
-			
-			err = ide_polling(channel, 1);
-			if (err) {
-				ide_print_error(dev, err);
-				continue;
-			}
-			
-			/* 读取到缓冲区中 */
-			read_from_sector(dev, dev->info, 1);
+    /* 根据模式设置读取扇区大小 */
+    if (ext->command_sets & (1 << 26)) {
+        ext->size = ((int)ext->info->lba48Sectors[1] << 16) + \
+            (int)ext->info->lba48Sectors[0];
 
-			/* 根据信息设定一些基本数据 */
-			dev->command_sets = (int)((dev->info->cmdSet1 << 16) + dev->info->cmdSet0);
+    } else {
+        ext->size = ((int)ext->info->lba28Sectors[1] << 16) + 
+            (int)ext->info->lba28Sectors[0];
 
-			/* 根据模式设置读取扇区大小 */
-			if (dev->command_sets & (1 << 26)) {
-				dev->size = ((int)dev->info->lba48Sectors[1] << 16) + \
-					(int)dev->info->lba48Sectors[0];
+    }
 
-            } else {
-				dev->size = ((int)dev->info->lba28Sectors[1] << 16) + 
-					(int)dev->info->lba28Sectors[0];
-
-            }
-
-			dev->capabilities = dev->info->Capabilities0;
-			dev->signature = dev->info->General_Config;
-			dev->reserved = 1;	/* 设备存在 */
-			#ifdef _DEBUG_IDE_INFO
-			dump_ide_device(dev);
-			#endif
-			devno++; 
-			left_disks--;
-		}
-		devno = 0;			  	   // 将硬盘驱动器号置0,为下一个channel的两个硬盘初始化。
-		channelno++;				   // 下一个channel
-	}
+    ext->capabilities = ext->info->Capabilities0;
+    ext->signature = ext->info->General_Config;
+    ext->reserved = 1;	/* 设备存在 */
+#if DEBUG_LOCAL == 1
+    dump_ide_extension(ext);
+#endif
 }
 
-
-/**
- * ide_init - 初始化IDE硬盘驱动
- */
-static int ide_init()
+static iostatus_t ide_enter(driver_object_t *driver)
 {
-	/* 获取已经配置了的硬盘数量
+    iostatus_t status;
+    
+    device_object_t *devobj;
+    device_extension_t *devext;
+
+    int id;
+    char devname[DEVICE_NAME_LEN] = {0};
+
+    /* 获取已经配置了的硬盘数量
 	这种方法的设备检测需要磁盘安装顺序不能有错误，
 	可以用轮训的方式来改变这种情况。 
 	 */
-	disk_foud = *((unsigned char *)IDE_DISK_NR_ADDR);
-	printk(KERN_INFO "found %d hard disks.\n", disk_foud);
+	unsigned char disk_foud = *((unsigned char *)IDE_DISK_NR_ADDR);
+	printk(KERN_INFO "ide_enter: found %d hard disks.\n", disk_foud);
 
 	/* 有磁盘才初始化磁盘 */
-	if (disk_foud > 0) {
-        /* 驱动本身的初始化 */
-		ide_probe(disk_foud);
-    
-		int status;
-		/* 块设备的初始化 */
-		int i;
-		for (i = 0; i < disk_foud; i++) {
-			status = ide_add_device(&devices[i], IDE_MAJOR, i);
-			if (status < 0) {
-				return status;
-			}
-		}	
+	if (disk_foud > 0) {    
+        for (id = 0; id < disk_foud; id++) {
+            sprintf(devname, "%s%d", DEV_NAME, id);
+            /* 初始化一些其它内容 */
+            status = io_create_device(driver, sizeof(device_extension_t), devname, DEVICE_TYPE_DISK, &devobj);
+
+            if (status != IO_SUCCESS) {
+                printk(KERN_ERR "ide_enter: create device failed!\n");
+                return status;
+            }
+            /* buffered io mode */
+            devobj->flags = DO_BUFFERED_IO;
+
+            devext = (device_extension_t *)devobj->device_extension;
+            string_new(&devext->device_name, devname, DEVICE_NAME_LEN);
+            devext->device_object = devobj;
+    #if DEBUG_LOCAL == 1
+            printk(KERN_DEBUG "ide_enter: device extension: device name=%s object=%x\n",
+                devext->device_name.text, devext->device_object);
+    #endif
+            /* 填写设备扩展信息 */
+            ide_probe(devext, id);
+        }
 	}
 
-#if 0   /* for test */
-	//ide_clean_disk(&devices[0], 0);
-
-    dev_open(DEV_HD0, 0);
-
-	logger("test start!\n");
-	char *buf = kmalloc(SECTOR_SIZE*10);
-	if (!buf)
-		panic("error!");
-
-    int read = dev_read(DEV_HD0, 0, buf, 10);
-	if (read == -1)
-		printk("block read error!\n");
-
-	printk("%x-%x-%x-%x\n",
-	 buf[0], buf[511], buf[512],buf[512*2-1]);
-
-	memset(buf, 0x5a, SECTOR_SIZE*10);
-
-	int write = dev_write(DEV_HD0, 0, buf, 10);
-	if (write == -1)
-		printk("block write error!\n");
-	
-    memset(buf, 0, SECTOR_SIZE*10);
-
-    ide_read_sector(&devices[0],0,buf, 5);
-
-	printk("%x-%x-%x-%x-%x-%x\n",
-	 buf[0], buf[511], buf[512+511],buf[512*2], buf[4096],buf[10*512-1]);
-	/*
-	ide_read_sector(&devices[0],2,5,buf);
-
-	printk("%x-%x-%x-%x-%x-%x\n",
-	 buf[0], buf[511], buf[512+511],buf[512*2], buf[4096],buf[10*512-1]);
-	*/
-	memset(buf,0xfa,SECTOR_SIZE * 5);
-	
-	ide_write_sector(&devices[0],10,buf,5);
-	
-	memset(buf,1,SECTOR_SIZE * 5);
-	
-	ide_read_sector(&devices[0],10,buf,5);
-
-	printk("%x-%x-%x-%x-%x-%x\n",
-	 buf[0], buf[511], buf[512+511],buf[512*2], buf[4096],buf[10*512-1]);
-
-	printk("read %d write %d\n", devices[0].read_sectors, devices[0].write_sectors);	
-#endif
-    return 0;
+    return IO_SUCCESS;
 }
 
-/**
- * ide_exit - 退出驱动
- */
-static void ide_exit()
+static iostatus_t ide_exit(driver_object_t *driver)
 {
-	/* 删除内核设备信息 */
-	int i, j;
-	for (i = 0; i < disk_foud; i++) {
-		ide_del_device(&devices[i]);
-	}
-	
-	/* 删除设备信息 */
-	int channel_cnt = DIV_ROUND_UP(disk_foud, 2);	   // 一个ide通道上有两个硬盘,根据硬盘数量反推有几个ide通道
-	int disks = disk_foud;
-	struct ide_channel *channel;
-	for (i = 0; i < channel_cnt; i++) {
-		channel = &channels[i];
-		/* 注销中断 */
-		unregister_irq(channel->irqno, channel);
-		j = 0;
-		/* 释放分配的资源 */
-		while (j < 2 && disks > 0) {
-			kfree(channel->devices[j].info);
-			disks--;
-		}
-	}
+    /* 遍历所有对象 */
+    device_object_t *devobj, *next;
+    device_extension_t *ext;
+    /* 由于涉及到要释放devobj，所以需要使用safe版本 */
+    list_for_each_owner_safe (devobj, next, &driver->device_list, list) {
+        ext = devobj->device_extension;
+        /* 释放分配的信息缓冲区 */
+        if (ext->info) {
+            kfree(ext->info);
+        }
+        if (ext->drive == 0) {  /* 通道上第一个磁盘的时候才注销中断 */
+            /* 注销中断 */
+    		unregister_irq(ext->channel->irqno, ext->channel);
+        }
+        
+        io_delete_device(devobj);   /* 删除每一个设备 */
+    }
+
+    string_del(&driver->name); /* 删除驱动名 */
+    return IO_SUCCESS;
 }
 
-EXPORT_UNIT(ide_unit, "ide", ide_init, ide_exit);
+iostatus_t ide_driver_vine(driver_object_t *driver)
+{
+    iostatus_t status = IO_SUCCESS;
+    
+    /* 绑定驱动信息 */
+    driver->driver_enter = ide_enter;
+    driver->driver_exit = ide_exit;
+
+    driver->dispatch_function[IOREQ_READ] = ide_read;
+    driver->dispatch_function[IOREQ_WRITE] = ide_write;
+    driver->dispatch_function[IOREQ_DEVCTL] = ide_devctl;
+    
+    /* 初始化驱动名字 */
+    string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "ide_driver_vine: driver name=%s\n",
+        driver->name.text);
+#endif
+    return status;
+}

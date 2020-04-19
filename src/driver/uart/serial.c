@@ -222,7 +222,7 @@ iostatus_t serial_read(device_object_t *device, io_request_t *ioreq)
 
 iostatus_t serial_write(device_object_t *device, io_request_t *ioreq)
 {
-    unsigned long len = ioreq->parame.read.length;
+    unsigned long len = ioreq->parame.write.length;
     
     uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
     int i = len;

@@ -10,10 +10,10 @@
 
 #define DEV_NAME "con"
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 /* 把控制台的信息输出内核调试输出 */
-#define CON_TO_DEBUGER   0
+#define CON_TO_DEBUGER   1
 
 
 #define DISPLAY_VRAM 0x800b8000
@@ -336,7 +336,7 @@ iostatus_t console_read(device_object_t *device, io_request_t *ioreq)
 
 iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
 {
-    unsigned long len = ioreq->parame.read.length;
+    unsigned long len = ioreq->parame.write.length;
     
     uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
     int i = len;
@@ -350,8 +350,8 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
     }
 #if CON_TO_DEBUGER == 1
     /* 临时输出到内核输出 */
-    buf = (char *)buffer;
-    printk(KERN_INFO "con: %s", buf);
+    buf = (uint8_t *)ioreq->system_buffer;
+    printk("%s", buf);
 #endif
 
     ioreq->io_status.status = IO_SUCCESS;

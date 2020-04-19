@@ -44,7 +44,6 @@ int kernel_main(void)
     //init_unit();
 
     init_driver_arch();
-    spin("driver arch test.");
     /* init raw block */
     init_raw_block();
 

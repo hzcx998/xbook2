@@ -667,7 +667,6 @@ void serve_idle(void *arg)
         enable_intr();
         cpu_idle();
     }
-    
 }
 
 char *init_argv[3] = {"init", 0};

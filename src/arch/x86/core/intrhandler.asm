@@ -108,12 +108,6 @@ syscall_handler:
     jmp intr_exit		    ; intr_exit返回,恢复上下文
 
 global intr_exit
-
-; 跳转到用户态执行的切换
-global __switch_to_user
-__switch_to_user:
-    mov esp, [esp + 4]  ; process stack
-    
 intr_exit:
 ; 以下是恢复上下文环境
     add esp, 4			   ; 跳过中断号

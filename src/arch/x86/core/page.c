@@ -618,6 +618,7 @@ int do_page_fault(trap_frame_t *frame)
         /* 故障源是用户 */
     
         printk(KERN_ALTER "do_page_fault: user access user unknown space .\n");
+        printk(KERN_ALTER "page fault addr:%x\n", addr);
         trigger_force(TRIGHW, cur->pid);
         /* 发出信号退出 */
         //panic("send a signal SIGSEGV because unknown space!");
@@ -635,6 +636,7 @@ int do_page_fault(trap_frame_t *frame)
                 //printk(KERN_DEBUG "expand stack at %x\n", addr);
             } else {    /* 不是可拓展栈 */
                 printk(KERN_ALTER "do_page_fault: touch TRIGHW trigger because unknown space!\n");
+                printk(KERN_ALTER "page fault addr:%x\n", addr);
                 trigger_force(TRIGHW, cur->pid);
                 /* 发出信号退出 */
                 //panic("send a signal SIGSEGV because addr %x without space!", addr); 

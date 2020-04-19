@@ -114,7 +114,7 @@ int sys_exec_raw(char *name, char **argv)
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
 
-    //dump_trap_frame(frame);
+    dump_trap_frame(frame);
     /* 切换到进程执行 */
     switch_to_user(frame);
     /* 不会继续往后执行 */
@@ -141,13 +141,17 @@ int sys_exec_file(char *name, xfile_t *file, char **argv)
 {
     /* 没有参数或者参数错误 */
     task_t *cur = current_task;
-
+    
+    unsigned long flags;
+    save_intr(flags);
     /* 根据文件信息创建临时原始块 */
     raw_block_t rb;
     if (raw_block_tmp_add(&rb, file->file, file->size)) {
         printk(KERN_ERR "sys_exec_file: raw_block_tmp_add failed!\n");
+        restore_intr(flags);
         return -1;
     }
+    restore_intr(flags);
     
     /* 读取文件头 */
     struct Elf32_Ehdr elf_header;
@@ -190,16 +194,16 @@ int sys_exec_file(char *name, xfile_t *file, char **argv)
     /* 备份进程名 */
     char tmp_name[MAX_TASK_NAMELEN] = {0};
     strcpy(tmp_name, name);
-
+    
     /* 释放虚拟空间地址管理，后面映射时重新加载镜像 */
     vmm_release_space(cur->vmm);
+
     /* 加载镜像 */
     if (proc_load_image(cur->vmm, &elf_header, &rb)) {
         printk(KERN_ERR "sys_exec_file: load_image failed!\n");
         goto free_tmp_arg;
     }
-    unsigned long flags;
-    save_intr(flags);
+
     /* 构建中断栈框 */
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
@@ -211,6 +215,7 @@ int sys_exec_file(char *name, xfile_t *file, char **argv)
         /* !!!需要取消已经加载镜像虚拟地址映射 */
         goto free_loaded_image;
     }
+    kfree(tmp_arg); /* 不需要了，释放掉 */
 
     /* 初始化用户堆 */
     proc_heap_init(cur);
@@ -230,12 +235,11 @@ int sys_exec_file(char *name, xfile_t *file, char **argv)
     strcpy(cur->name, tmp_name);
     
     raw_block_tmp_del(&rb);  /* 删除临时原始块 */
-    kfree(tmp_arg); /* 不需要了，释放掉 */
-
-    restore_intr(flags);
+    
     //dump_trap_frame(frame);
     /* 切换到进程执行 */
     switch_to_user(frame);
+    
     /* 不会继续往后执行 */
 free_loaded_image:
     /* 释放已经加载的镜像，不过由于已经替换了新的镜像，回不去了，就直接exit吧。 */

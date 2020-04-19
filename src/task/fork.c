@@ -317,15 +317,15 @@ int sys_fork()
     }
     /* 当前中断处于关闭中，并且父进程有页目录表 */
     ASSERT(parent->vmm != NULL);
-    
+    unsigned long flags;
+    save_intr(flags);
     /* 复制进程 */
     if (copy_task(child, parent)) {
         printk(KERN_ERR "do_usrmsg_fork: copy task failed!\n");
         kfree(child);
         return -1;
     }
-    unsigned long flags;
-    save_intr(flags);
+    
     /* 把子进程添加到就绪队列和全局链表 */
     task_global_list_add(child);
     task_priority_queue_add_tail(child); /* 放到队首 */
