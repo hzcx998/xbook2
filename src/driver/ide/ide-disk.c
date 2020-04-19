@@ -6,6 +6,7 @@
 #include <xbook/vine.h>
 #include <xbook/driver.h>
 #include <xbook/vsprintf.h>
+#include <xbook/clock.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
@@ -1153,6 +1154,8 @@ iostatus_t ide_read(device_object_t *device, io_request_t *ioreq)
     } else {
         status = IO_FAILED;
     }
+    loop_delay(1);
+
     ioreq->io_status.status = status;
     ioreq->io_status.infomation = len;
     

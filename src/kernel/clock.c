@@ -15,6 +15,13 @@ ktime_t ktime;
 /* 每月对应的天数，2月的会在闰年是加1 */
 const char month_day[] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
 
+void loop_delay(int t)
+{
+    long i, j;
+    for (i = 0; i < 100 * t; i++)
+        for (j = 0; j < 10000; j++);
+}
+
 /**
  * is_leap - 判断是否是闰年 
  * @year: 传入的年份 

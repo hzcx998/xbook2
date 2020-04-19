@@ -312,7 +312,9 @@ iostatus_t io_create_device(
         return IO_FAILED;
     }
     devobj->driver = driver; /* 绑定驱动 */
-    spinlock_init(&devobj->device_lock);    /* 初始化设备锁 */
+    spinlock_init(&devobj->lock.spinlock);    /* 初始化设备锁-自旋锁 */
+    mutexlock_init(&devobj->lock.mutexlock);  /* 初始化设备锁-互斥锁 */
+    
     /* 初始化设备队列 */
     devobj->device_queue.busy = false;
     spinlock_init(&devobj->device_queue.lock);
@@ -383,7 +385,20 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
     iostatus_t status= IO_SUCCESS;
 
     driver_dispatch_t func = NULL;
-    spin_lock(&device->device_lock);
+
+    /* 根据设备类型选择不同的锁 */
+    switch (device->type)
+    {
+    case DEVICE_TYPE_SERIAL_PORT:
+    case DEVICE_TYPE_SCREEN:
+        spin_lock(&device->lock.spinlock);
+        break;
+    case DEVICE_TYPE_DISK:
+        mutex_lock(&device->lock.mutexlock);
+        break;
+    default:
+        break;
+    }
 
     /* 选择操作函数 */
     if (ioreq->flags & IOREQ_OPEN_OPERATION) {
@@ -504,7 +519,19 @@ io_request_t *io_build_sync_request(
 void io_complete_request(io_request_t *ioreq)
 {
     ioreq->flags |= IOREQ_COMPLETION; /* 添加完成标志 */
-    spin_unlock(&ioreq->devobj->device_lock);    
+    /* 根据设备类型选择不同的锁 */
+    switch (ioreq->devobj->type)
+    {
+    case DEVICE_TYPE_SERIAL_PORT:
+    case DEVICE_TYPE_SCREEN:
+        spin_unlock(&ioreq->devobj->lock.spinlock);
+        break;
+    case DEVICE_TYPE_DISK:
+        mutex_unlock(&ioreq->devobj->lock.mutexlock);
+        break;
+    default:
+        break;
+    }
 }
 
 static int io_complete_check(io_request_t *ioreq, iostatus_t status)

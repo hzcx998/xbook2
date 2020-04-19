@@ -236,8 +236,6 @@ int main(int argc, char *argv[])
 
 
     // putres(con);
-    char buf[10];
-    readres(con, 0, buf, 10);
     //
     int pid = fork();
     if (pid > 0) {
@@ -245,13 +243,28 @@ int main(int argc, char *argv[])
         //semtest1();
         //msgtest();
         //pipe_test_write();
-
+        char dbuf[512];
+        int hd0 = getres("ide0", RES_DEV, 0);
+        if (hd0 < 0) 
+            exit(-1);
+        while (1) {
+            //printf("hello, parent=========================================================>!\n");
+            readres(hd0, 0, dbuf, 512);
+        }
         int status;
         pid = wait(&status);
         printf("child %d exit with status=%d.\n", pid, status);
 
     } else {
         printf("I am child, I will load data.\n");
+        int hd0 = getres("ide0", RES_DEV, 0);
+        if (hd0 < 0) 
+            exit(-1);
+        char dbuf[512];
+        while (1) {
+            //printf("hello, child---------------------------------------------------------->!\n");
+            readres(hd0, 0, dbuf, 512);
+        }
         
         //msgtest2();
         //shmtest2();
@@ -267,9 +280,7 @@ int main(int argc, char *argv[])
         memset(buf, 0, 40 * 1024);
         printf("alloc data at %x for 20 kb.\n", buf);
 
-        int hd0 = getres("ide0", RES_DEV, 0);
-        if (hd0 < 0) 
-            exit(-1);
+        
 
         /* 200 */
         if (readres(hd0, 200, buf, 50 * 512) < 0) {

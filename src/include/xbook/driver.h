@@ -5,6 +5,7 @@
 #include <arch/atomic.h>
 #include "string.h"
 #include "spinlock.h"
+#include "mutexlock.h"
 
 #define DRIVER_NAME_LEN 32
 
@@ -164,7 +165,10 @@ typedef struct _device_object
     atomic_t reference;                 /* 引用计数，管理设备打开情况 */
     io_request_t *cur_ioreq;            /* 当前正在处理的io请求 */
     string_t name;                      /* 名字 */
-    spinlock_t device_lock;             /* 设备锁，维护设备操作 */
+    struct {
+        spinlock_t spinlock;            /* 设备自旋锁 */
+        mutexlock_t mutexlock;          /* 设备互斥锁 */
+    } lock;
     unsigned long reserved;             /* 预留 */
     device_queue_t device_queue;        /* 设备队列 */
 } device_object_t;

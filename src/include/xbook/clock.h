@@ -53,6 +53,8 @@ void print_ktime();
 void get_ktime(ktime_t *time);
 void clock_msleep(unsigned long msecond);
 
+void loop_delay(int t);
+
 static inline unsigned long ktime2data()
 {
 	unsigned short date = KTIME_DATE(ktime.year, ktime.month, ktime.day);
