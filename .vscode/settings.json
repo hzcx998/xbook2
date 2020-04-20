@@ -55,6 +55,9 @@
         "vsprintf.h": "c",
         "vmarea.h": "c",
         "io.h": "c",
-        "vine.h": "c"
+        "vine.h": "c",
+        "pci.h": "c",
+        "byteorder.h": "c",
+        "cpu.h": "c"
     }
 }

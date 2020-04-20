@@ -216,6 +216,13 @@ void pipe_test_read()
     putres(pip);
 }
 
+void dump_buffer(unsigned char *buf, int len)
+{
+    int i;
+    for (i = 0; i < len; i++) {
+        printf("%x ", buf[i]);
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -231,10 +238,6 @@ int main(int argc, char *argv[])
     writeres(con, 0, "hello, console!\n", 16);
     printf("hello, printf!\n");
     ctlres(con, 123, 456);
-
-    //trigger_test();
-
-
     // putres(con);
     //
     int pid = fork();
@@ -243,13 +246,24 @@ int main(int argc, char *argv[])
         //semtest1();
         //msgtest();
         //pipe_test_write();
-        char dbuf[512];
-        int hd0 = getres("ide0", RES_DEV, 0);
-        if (hd0 < 0) 
+        unsigned char dbuf[512];
+        int hd0 = getres("rtl8139", RES_DEV, 0);
+        if (hd0 < 0) {
+            printf("parent: open rtl8139 failed!\n");
             exit(-1);
+        }
+            
+        int len;
         while (1) {
             //printf("hello, parent=========================================================>!\n");
-            readres(hd0, 0, dbuf, 512);
+            len = readres(hd0, 0, dbuf, 512);
+            if (len > 0) {
+                printf("\nparent: %d ", len);
+                dump_buffer(dbuf, 16);
+            }
+            
+            memset(dbuf, 0, 512);
+            writeres(hd0, 0, dbuf, 512);
         }
         int status;
         pid = wait(&status);
@@ -257,13 +271,24 @@ int main(int argc, char *argv[])
 
     } else {
         printf("I am child, I will load data.\n");
-        int hd0 = getres("ide0", RES_DEV, 0);
-        if (hd0 < 0) 
+        int hd0 = getres("rtl8139", RES_DEV, 0);
+        if (hd0 < 0) {
+            printf("child: open rtl8139 failed!\n");
             exit(-1);
-        char dbuf[512];
+        }
+        unsigned char dbuf[512];
+        int len;
         while (1) {
+            
             //printf("hello, child---------------------------------------------------------->!\n");
-            readres(hd0, 0, dbuf, 512);
+            len = readres(hd0, 0, dbuf, 512);
+            if (len > 0) {
+                printf("\nchild: %d ", len);
+                dump_buffer(dbuf, 16);
+            }
+
+            memset(dbuf, 0, 512);
+            writeres(hd0, 0, dbuf, 512);
         }
         
         //msgtest2();

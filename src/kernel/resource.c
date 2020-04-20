@@ -11,7 +11,7 @@
 #include <sys/ipc.h>
 
 /* debug: 1 enable, 0 disable */
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 res_item_t *res_to_item(int res)
 {

@@ -5,6 +5,8 @@
 #include <arch/interrupt.h>
 #include <arch/task.h>
 
+#define DEBUG_LOCAL 0
+
 extern task_t *task_idle;
 
 /* 优先级队列 */
@@ -96,8 +98,10 @@ void schedule_preempt(task_t *robber)
     /* 自己不能抢占自己 */
     if (cur == robber)
         return; 
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "schedule_preempt: task %d preempt %d!\n",
         robber->pid,cur->pid);
+#endif    
     /* 当前任务一顶是在运行中，当前任务被其它任务抢占
     把当前任务放到自己的优先级队列的首部，保留原有时间片
      */

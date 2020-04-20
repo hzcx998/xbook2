@@ -14,6 +14,7 @@
 #include <xbook/syscall.h>
 #include <xbook/pipe.h>
 #include <xbook/driver.h>
+#include <arch/pci.h>
 
 int kernel_main(void)
 {
@@ -33,6 +34,8 @@ int kernel_main(void)
     init_pipe();
 
     init_syscall();
+
+    init_pci();
 
     init_tasks();
     init_clock();

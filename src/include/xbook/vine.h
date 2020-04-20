@@ -7,5 +7,6 @@
 extern iostatus_t serial_driver_vine(driver_object_t *driver);
 extern iostatus_t console_driver_vine(driver_object_t *driver);
 extern iostatus_t ide_driver_vine(driver_object_t *driver);
+extern iostatus_t rtl8139_driver_vine(driver_object_t *driver);
 
 #endif  /* _XBOOK_VINE_H */

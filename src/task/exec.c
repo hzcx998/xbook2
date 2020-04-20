@@ -114,7 +114,7 @@ int sys_exec_raw(char *name, char **argv)
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
 
-    dump_trap_frame(frame);
+    //dump_trap_frame(frame);
     /* 切换到进程执行 */
     switch_to_user(frame);
     /* 不会继续往后执行 */

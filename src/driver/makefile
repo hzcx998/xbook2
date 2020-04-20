@@ -1,4 +1,5 @@
 obj-y	+= ide/
 obj-y	+= uart/
 obj-y	+= console/
-
+obj-y	+= net/
+obj-y	+= pci/

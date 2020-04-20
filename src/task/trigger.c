@@ -6,7 +6,7 @@
 #include <arch/interrupt.h>
 
 /* 调试触发器：0不调试，1要调试 */
-#define DEBUG_LOCAL   0
+#define DEBUG_LOCAL   1
 
 /**
  * do_active_trigger - 激活任务的某个触发器

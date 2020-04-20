@@ -98,9 +98,12 @@ enum _io_request_flags {
 };
 
 enum _device_object_flags {
-    DO_BUFFERED_IO              = (1 << 0),
-    DO_DIRECT_IO                = (1 << 1),
+    DO_BUFFERED_IO              = (1 << 0),     /* 缓冲区IO */
+    DO_DIRECT_IO                = (1 << 1),     /* 直接内存IO */
+    DO_DISPENSE                 = (1 << 2),     /* 分发位 */
 };
+
+#define IO_NOWAIT   0x01
 
 typedef struct _drver_extension 
 {
@@ -148,11 +151,25 @@ typedef struct _io_request
     
 } io_request_t;
 
+#define DEVICE_QUEUE_ENTRY_NR 12
+
+/* 设备队列管理 */
 typedef struct _device_queue {
     list_t list_head;   /* 队列列表 */
     spinlock_t lock;    /* 维护队列的锁 */
-    bool busy;          /* 队列是否繁忙 */
+    wait_queue_t wait_queue;    /* 等待队列 */
+    char entry_count;           /* 队列项数[0-DEVICE_QUEUE_ENTRY_NR] */
 } device_queue_t;
+
+/* 设备队列项 */
+typedef struct _device_queue_entry {
+    list_t list;                        /* 链表 */
+    unsigned char *buf;                 /* 缓冲区 */
+    int length;                         /* 数据长度 */
+} device_queue_entry_t;
+
+/* 设备可分发设备（网卡）可以被DEVICE_QUEUE_NR个进程同时打开使用 */
+#define DEVICE_QUEUE_NR 12
 
 /* 设备对象 */
 typedef struct _device_object
@@ -170,7 +187,7 @@ typedef struct _device_object
         mutexlock_t mutexlock;          /* 设备互斥锁 */
     } lock;
     unsigned long reserved;             /* 预留 */
-    device_queue_t device_queue;        /* 设备队列 */
+    device_queue_t device_queue[DEVICE_QUEUE_NR];        /* 设备队列，用于分发数据包到打开设备的进程 */
 } device_object_t;
 
 /* 派遣函数定义 */ 
@@ -229,6 +246,9 @@ io_request_t *io_request_alloc();
 iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq);
 
 void io_complete_request(io_request_t *ioreq);
+
+int io_device_queue_get(device_object_t *devobj, unsigned char *buf, int buflen, int flags);
+int io_device_queue_put(device_object_t *devobj, unsigned char *buf, int len);
 
 handle_t device_open(char *devname, unsigned int flags);
 int device_close(handle_t handle);
