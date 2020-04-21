@@ -370,22 +370,22 @@ iostatus_t console_devctl(device_object_t *device, io_request_t *ioreq)
     int infomation = 0;
     switch (ctlcode)
     {
-    case CODE_CON_SCROLL:
+    case CONIO_SCROLL:
         console_scroll(device->device_extension, arg);
         break;
-    case CODE_CON_CLEAR:
+    case CONIO_CLEAR:
         console_clean(device->device_extension);
         break;
-    case CODE_CON_SETCOLOR:
+    case CONIO_SETCOLOR:
         console_set_color(device->device_extension, arg);
         break;
-    case CODE_CON_GETCOLOR:
+    case CONIO_GETCOLOR:
         infomation = console_get_color(device->device_extension);
         break;
-    case CODE_CON_SETPOS:
+    case CONIO_SETPOS:
         console_setpos(device->device_extension, arg);
         break;
-    case CODE_CON_GETPOS:
+    case CONIO_GETPOS:
         infomation = console_getpos(device->device_extension);
         break;
     default:

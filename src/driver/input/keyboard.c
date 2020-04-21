@@ -769,16 +769,33 @@ static int keyboard_handler(unsigned long irq, unsigned long data)
 
     /* 把数据放到io队列 */
     fifo_io_put(&ext->fifoio, scan_code);
+    return 0;
 }
 
 iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *ext = device->device_extension;
-    
-    iostatus_t status = IO_SUCCESS;
-    /* 直接返回读取的数据 */
-    ioreq->io_status.infomation = ext->keycode;
 
+    iostatus_t status = IO_SUCCESS;
+    
+    /* 直接返回读取的数据 */
+    ioreq->io_status.infomation = ioreq->parame.read.length;
+    switch (ioreq->parame.read.length)
+    {
+    case 1:
+        *(unsigned char *)ioreq->system_buffer = ext->keycode;
+        break;
+    case 2:
+        *(unsigned short *)ioreq->system_buffer = ext->keycode;
+        break;
+    case 4:
+        *(unsigned int *)ioreq->system_buffer = ext->keycode;
+        break;
+    default:
+        status = IO_FAILED;
+        break;
+    }
+    
     if (!ext->keycode)
         status = IO_FAILED;
 
@@ -836,7 +853,6 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
     
     device_object_t *devobj;
     device_extension_t *devext;
-    char irq;
 
     /* 初始化一些其它内容 */
     status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_KEYBOARD, &devobj);
@@ -846,7 +862,7 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
         return status;
     }
     /* buffered io mode */
-    devobj->flags = 0;
+    devobj->flags = DO_BUFFERED_IO;
     devext = (device_extension_t *)devobj->device_extension;
     devext->device_object = devobj;
 #if DEBUG_LOCAL == 1

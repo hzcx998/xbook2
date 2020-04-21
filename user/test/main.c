@@ -1,5 +1,6 @@
 #include <xcore/xcore.h>
 #include <xcore/ipc.h>
+#include <xcore/ioctl.h>
 #include <string.h>
 #include <conio.h>
 
@@ -257,16 +258,26 @@ int main(int argc, char *argv[])
         int len;
 
         int key;
-        int kbd = getres("kbd", RES_DEV, 0);
+        int kbd = getres("tty0", RES_DEV, 0);
         if (kbd < 0) {
             printf("parent: open kbd failed!\n");
             exit(-1);
         }
 
+        ctlres(kbd, TTYIO_CLEAR, 0);
+        
+        int tty1 = getres("tty1", RES_DEV, 0);
+        if (tty1 < 0) {
+            printf("parent: open tty1 failed!\n");
+            exit(-1);
+        }
+        ctlres(tty1, TTYIO_VISITOR, 0);
+        putres(tty1);
         while (1) {
-            key = readres(kbd, 0, NULL, 0);
-            if (key > 0)
-                printf("key: %c\n", key);
+            if (readres(kbd, 0, &key, sizeof(key)) > 0)
+                printf("tty0: %c\n", key);
+            if (readres(tty1, 0, &key, sizeof(key)) > 0)
+                printf("tty1: %c\n", key);
                 
 #if 1
             //printf("hello, parent=========================================================>!\n");

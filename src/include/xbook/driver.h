@@ -64,6 +64,7 @@ typedef enum _device_type {
     DEVICE_TYPE_UNKNOWN,                 /* 未知设备 */
     DEVICE_TYPE_VIDEO,                   /* 视频设备 */
     DEVICE_TYPE_VIRTUAL_DISK,            /* 虚拟磁盘设备 */
+    DEVICE_TYPE_VIRTUAL_CHAR,            /* 虚拟字符设备 */
     DEVICE_TYPE_WAVE_IN,                 /* 声音输入设备 */
     DEVICE_TYPE_WAVE_OUT,                /* 声音输出设备 */
     DEVICE_TYPE_8042_PORT,               /* 8042端口设备 */

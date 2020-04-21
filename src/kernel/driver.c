@@ -12,13 +12,16 @@
 /* 驱动链表头 */
 LIST_HEAD(driver_list_head);
 
-/* 驱动藤蔓表 */
+/* 驱动藤蔓表：
+虚拟设备必须在物理设备初始化完成后
+ */
 driver_func_t driver_vine_table[] = {
     serial_driver_vine,                 /* serial */
     console_driver_vine,                /* console */
     ide_driver_vine,                    /* harddisk */
     rtl8139_driver_vine,                /* net */
     keyboard_driver_vine,               /* keyboard */
+    tty_driver_vine,                    /* virtual: tty */
 };
 
 /* 打开的设备表 */
@@ -538,7 +541,7 @@ void io_complete_request(io_request_t *ioreq)
 {
     if (ioreq->io_status.status == IO_FAILED)
         ioreq->io_status.infomation = -1;
-
+    
     ioreq->flags |= IOREQ_COMPLETION; /* 添加完成标志 */
     /* 根据设备类型选择不同的锁 */
     switch (ioreq->devobj->type)
@@ -833,7 +836,7 @@ int device_close(handle_t handle)
         /* 应该激活一个触发器，让调用者停止运行 */
         return -1;
     }
-   
+    
     /* 减少引用 */
     if (atomic_get(&devobj->reference) >= 0) {
         atomic_dec(&devobj->reference);
@@ -1045,7 +1048,7 @@ ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset)
  * @size: 数据长度
  * @offset: 偏移位置
  * 
- * @return: 成功写入读取的数据量，失败返回-1
+ * @return: 成功返回信息数，失败返回-1
  */
 ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg)
 {
@@ -1109,8 +1112,13 @@ void dump_device_object(device_object_t *device)
 void init_driver_arch()
 {
     driver_func_t vine;
-    
     int i;
+    /* 初始化设备句柄表，要在初始化驱动前，因为驱动中可能有虚拟驱动调用物理设备 */
+    for (i = 0; i < DEVICE_HANDLE_NR; i++) {
+        device_handle_table[i] = NULL;
+    }
+
+   
     for (i = 0; i < ARRAY_SIZE(driver_vine_table); i++) {
         vine = driver_vine_table[i];
         if (driver_object_create(vine))
@@ -1120,10 +1128,6 @@ void init_driver_arch()
     /* 输出所有驱动以及设备 */
     //print_drivers();
     
-    /* 初始化设备句柄表 */
-    for (i = 0; i < DEVICE_HANDLE_NR; i++) {
-        device_handle_table[i] = NULL;
-    }
 #if 0
     handle_t net0 = device_open("rtl8139", 0);
     if (net0 < 0)

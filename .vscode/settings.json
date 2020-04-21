@@ -58,6 +58,7 @@
         "vine.h": "c",
         "pci.h": "c",
         "byteorder.h": "c",
-        "cpu.h": "c"
+        "cpu.h": "c",
+        "driver.h": "c"
     }
 }
