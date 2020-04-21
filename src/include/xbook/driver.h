@@ -103,8 +103,6 @@ enum _device_object_flags {
     DO_DISPENSE                 = (1 << 2),     /* 分发位 */
 };
 
-#define IO_NOWAIT   0x01
-
 typedef struct _drver_extension 
 {
     unsigned long unused;

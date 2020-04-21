@@ -18,6 +18,7 @@ driver_func_t driver_vine_table[] = {
     console_driver_vine,                /* console */
     ide_driver_vine,                    /* harddisk */
     rtl8139_driver_vine,                /* net */
+    keyboard_driver_vine,               /* keyboard */
 };
 
 /* 打开的设备表 */
@@ -408,6 +409,7 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
     {
     case DEVICE_TYPE_SERIAL_PORT:
     case DEVICE_TYPE_SCREEN:
+    case DEVICE_TYPE_KEYBOARD:
         spin_lock(&device->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
@@ -543,6 +545,7 @@ void io_complete_request(io_request_t *ioreq)
     {
     case DEVICE_TYPE_SERIAL_PORT:
     case DEVICE_TYPE_SCREEN:
+    case DEVICE_TYPE_KEYBOARD:
         spin_unlock(&ioreq->devobj->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
@@ -618,7 +621,6 @@ void io_device_queue_remove(device_object_t *devobj)
             break;
         }
     }
-
 }
 
 int io_device_queue_put(device_object_t *devobj, unsigned char *buf, int len)
@@ -632,16 +634,16 @@ int io_device_queue_put(device_object_t *devobj, unsigned char *buf, int len)
     for (i = 0; i < DEVICE_QUEUE_NR; i++) {
         queue = &devobj->device_queue[i];
         if (queue->wait_queue.task != NULL) { /* 分发到所有已注册的设备 */ 
+            if (queue->entry_count > DEVICE_QUEUE_ENTRY_NR) { /* 超过队列项数，就先丢弃数据包 */
+#if DEBUG_LOCLA == 1
+                printk(KERN_NOTICE "io_device_queue_put: device queue full!\n");   
+#endif
+                continue;   /* 给其它进程分发 */
+            }
             device_queue_entry_t *entry = kmalloc(sizeof(device_queue_entry_t) + len);
             if (entry == NULL)
                 return -1;
             spin_lock(&queue->lock);
-            if (queue->entry_count > DEVICE_QUEUE_ENTRY_NR) { /* 超过队列项数，就先丢弃数据包 */
-                printk(KERN_NOTICE "io_device_queue_put: device queue full!\n");
-                kfree(entry);
-                spin_unlock(&queue->lock);    
-                return -1;
-            }
             list_add_tail(&entry->list, &queue->list_head);
             queue->entry_count++;
             entry->buf = (unsigned char *) (entry + 1);
@@ -654,7 +656,7 @@ int io_device_queue_put(device_object_t *devobj, unsigned char *buf, int len)
                 queue->wait_queue.task->pid, len);
 #endif
         }
-    }        
+    }    
     return 0;
 }
 
@@ -662,7 +664,7 @@ int io_device_queue_get(device_object_t *devobj, unsigned char *buf, int buflen,
 {
     if (!(devobj->flags & DO_DISPENSE)) /* 没有可分发标志就返回 */
         return -1; 
-        
+    
     device_queue_t *queue;
     int i;
     /* 先检查是否已经在设备队列中 */
@@ -671,18 +673,11 @@ int io_device_queue_get(device_object_t *devobj, unsigned char *buf, int buflen,
         if (queue->wait_queue.task == current_task) {   /* 如果是当前任务 */
             spin_lock(&queue->lock);
             if (!queue->entry_count) {  /* 没有数据包 */
-                if (flags & IO_NOWAIT) {        
-                    spin_unlock(&queue->lock);
-                    return -1;
-                } else {
-                    spin_unlock(&queue->lock);
-                    wait_queue_add(&queue->wait_queue, current_task);
-                    task_block(TASK_BLOCKED);
-                    //while (list_empty(&queue->list_head));
-                    spin_lock(&queue->lock);
-                }
+                spin_unlock(&queue->lock);
+                wait_queue_add(&queue->wait_queue, current_task);
+                task_block(TASK_BLOCKED);
+                spin_lock(&queue->lock);
             }
-            
             device_queue_entry_t *entry;
             entry = list_first_owner(&queue->list_head, device_queue_entry_t, list);
             list_del(&entry->list);
@@ -695,6 +690,7 @@ int io_device_queue_get(device_object_t *devobj, unsigned char *buf, int buflen,
             printk(KERN_DEBUG "io_device_queue_get: pid=%d len=%d.\n",
                 queue->wait_queue.task->pid, len);
 #endif            
+            
             return len;
         }
     }
@@ -705,7 +701,7 @@ int io_device_queue_fast_read(device_object_t *devobj, unsigned char *buf, int b
 {
     if (!(devobj->flags & DO_DISPENSE)) /* 没有可分发标志就返回 */
         return -1;
-        
+          
     device_queue_t *queue;
     int i;
     /* 先检查是否已经在设备队列中 */
@@ -716,6 +712,7 @@ int io_device_queue_fast_read(device_object_t *devobj, unsigned char *buf, int b
             /* 是当前进程才进行读取 */
             if (!queue->entry_count) {
                 spin_unlock(&queue->lock);
+                
                 return -1;       /* 是空队列就直接返回，仍然需要继续读取 */
             }
             /* 摘取一个数据包 */
@@ -729,7 +726,7 @@ int io_device_queue_fast_read(device_object_t *devobj, unsigned char *buf, int b
             spin_unlock(&queue->lock);
 #if DEBUG_LOCLA == 1
             printk(KERN_DEBUG "io_device_queue_fast_read: pid=%d fast read ok.\n", current_task->pid);
-#endif
+#endif        
             return len;   /* 已经读取一个数据包 */
         }
     }
@@ -931,7 +928,7 @@ int device_grow(handle_t handle)
  */
 ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
 {
-    if (IS_BAD_DEVICE_HANDLE(handle) || buffer == NULL || !length)
+    if (IS_BAD_DEVICE_HANDLE(handle))
         return -1;
     
     device_object_t *devobj;
@@ -1000,7 +997,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
  */
 ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset)
 {
-    if (IS_BAD_DEVICE_HANDLE(handle) || buffer == NULL || !length)
+    if (IS_BAD_DEVICE_HANDLE(handle))
         return -1;
     
     device_object_t *devobj;

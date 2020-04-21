@@ -246,25 +246,39 @@ int main(int argc, char *argv[])
         //semtest1();
         //msgtest();
         //pipe_test_write();
+        
         unsigned char dbuf[512];
         int hd0 = getres("rtl8139", RES_DEV, 0);
         if (hd0 < 0) {
             printf("parent: open rtl8139 failed!\n");
             exit(-1);
         }
-            
+        int ticks = 0;
         int len;
+
+        int key;
+        int kbd = getres("kbd", RES_DEV, 0);
+        if (kbd < 0) {
+            printf("parent: open kbd failed!\n");
+            exit(-1);
+        }
+
         while (1) {
+            key = readres(kbd, 0, NULL, 0);
+            if (key > 0)
+                printf("key: %c\n", key);
+                
+#if 1
             //printf("hello, parent=========================================================>!\n");
             len = readres(hd0, 0, dbuf, 512);
             if (len > 0) {
                 printf("\nparent: %d ", len);
                 dump_buffer(dbuf, 16);
             }
-            
-            memset(dbuf, 0, 512);
-            writeres(hd0, 0, dbuf, 512);
+#endif
         }
+        //putres(hd0);
+
         int status;
         pid = wait(&status);
         printf("child %d exit with status=%d.\n", pid, status);
