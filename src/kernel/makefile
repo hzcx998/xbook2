@@ -7,3 +7,6 @@ obj-y		+= 	rawblock.o
 obj-y		+= 	syscall.o
 obj-y		+= 	resource.o
 obj-y		+= 	driver.o
+obj-y		+= 	timer.o
+obj-y		+= 	alarm.o
+obj-y		+= 	ktime.o

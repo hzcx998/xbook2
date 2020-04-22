@@ -6,6 +6,7 @@
 #include <xbook/mdl.h>
 #include <xbook/clock.h>
 #include <sys/ioctl.h>
+#include <arch/pci.h>
 
 #define DEBUG_LOCAL 0   
 
@@ -1118,7 +1119,10 @@ void init_driver_arch()
         device_handle_table[i] = NULL;
     }
 
-   
+    /* 初始化总线系统 */
+    init_pci();
+
+    /* 初始化驱动程序 */
     for (i = 0; i < ARRAY_SIZE(driver_vine_table); i++) {
         vine = driver_vine_table[i];
         if (driver_object_create(vine))

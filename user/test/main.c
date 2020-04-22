@@ -225,6 +225,15 @@ void dump_buffer(unsigned char *buf, int len)
     }
 }
 
+void trigger_handler(int trig)
+{
+    //printf("user: handle trigger %d\n", trig);
+}
+
+void alarm_handler(int trig)
+{
+    printf("user: alarm at %d\n", trig);
+}
 int main(int argc, char *argv[])
 {
     func(100);
@@ -239,6 +248,7 @@ int main(int argc, char *argv[])
     writeres(con, 0, "hello, console!\n", 16);
     printf("hello, printf!\n");
     ctlres(con, 123, 456);
+
     // putres(con);
     //
     int pid = fork();
@@ -273,6 +283,17 @@ int main(int argc, char *argv[])
         }
         ctlres(tty1, TTYIO_VISITOR, 0);
         putres(tty1);
+
+        
+        ktime_t ktm;
+        ktime(&ktm);
+        printf("year: %4d/%02d/%2d %2d:%d:%d\n", ktm.year, ktm.month, ktm.day,
+        ktm.hour, ktm.minute, ktm.second);
+        
+
+        sleep(1);
+        triggeron(TRIGUSR0, pid);  /* 激活触发器 */
+        
         while (1) {
             if (readres(kbd, 0, &key, sizeof(key)) > 0)
                 printf("tty0: %c\n", key);
@@ -301,6 +322,13 @@ int main(int argc, char *argv[])
             printf("child: open rtl8139 failed!\n");
             exit(-1);
         }
+        trigger(TRIGUSR0, trigger_handler);
+        printf("I am child, sleep 3 second.\n");
+        printf("I am child, sleep 3 second over left %d second.\n", sleep(3));
+        
+        trigger(TRIGALARM, alarm_handler);
+        alarm(2);
+
         unsigned char dbuf[512];
         int len;
         while (1) {
@@ -329,9 +357,7 @@ int main(int argc, char *argv[])
         unsigned char *buf = (unsigned char *) heap_pos;
         memset(buf, 0, 40 * 1024);
         printf("alloc data at %x for 20 kb.\n", buf);
-
         
-
         /* 200 */
         if (readres(hd0, 200, buf, 50 * 512) < 0) {
             printf("read disk failed!\n");
@@ -339,7 +365,7 @@ int main(int argc, char *argv[])
         }
         printf("load data success.\n");
 
-        xfile_t file = {buf, 25*1024};
+        kfile_t file = {buf, 25*1024};
         int i;
         for (i = 0; i < 32; i++) {
             printf("%x ", buf[i]);

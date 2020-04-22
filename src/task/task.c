@@ -141,6 +141,12 @@ void task_init(task_t *task, char *name, int priority)
     /* no resource */
     task->res = NULL;
     
+    /* no timer */
+    task->sleep_timer = NULL;
+    
+    /* set alarm */
+    alarm_init(&task->alarm);
+
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;
 }
@@ -669,14 +675,14 @@ void serve_idle(void *arg)
     }
 }
 
-char *init_argv[3] = {"init", 0};
+static char *init_argv[3] = {"init", 0};
 
 /**
- * kernel_pause - 内核“暂停”运行。
+ * start_user - 开启用户进程
  * 
  * 在初始化的最后调用，当前任务演变成idle任务，等待随时调动
  */
-void kernel_pause()
+void start_user()
 {
     /* 加载init进程 */
     process_create("init", init_argv);
@@ -686,25 +692,19 @@ void kernel_pause()
     save_intr(flags);
     /* 当前任务降级，这样，其它任务才能运行到 */
     task_idle->priority = TASK_PRIO_IDLE;
-    /* 允许任务抢占 */
-    can_preempt = 1;
+    
     restore_intr(flags);
     /* 调度到更高优先级的任务允许 */
     schedule();
-    //printk(">>> switch back\n");
     /* 当没有任务运行时，就会继续执行这个地方 */
-
     
-    /* 打开中断 */
+    /* 其它进程可能在终端关闭状态阻塞，那么切换回来后就需要打开中才行 */
     enable_intr();
 
-    // trigger_force(TRIGRESUM, 2);
-	
     /* idle线程 */
 	while (1) {
 		/* 进程默认处于阻塞状态，如果被唤醒就会执行后面的操作，
 		直到再次被阻塞 */
-		//printk("\nidle\n");
         /* 执行cpu停机 */
 		cpu_idle();
 	};

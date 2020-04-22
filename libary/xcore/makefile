@@ -22,9 +22,10 @@ NASM_FLAGS	:= -f elf \
 			-I $(DIR_STDLIB)
 
 OBJS	:=	syscall.o \
-				proc.o \
-				vmm.o \
-				res.o \
+			proc.o \
+			vmm.o \
+			res.o \
+			time.o \
 
 # out file
 LIBNAME = xcore.a

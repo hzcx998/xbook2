@@ -2,124 +2,21 @@ hello, xbook!
 
 info: memory total:1fff0000 byte 511 MB
 info: welcom to xbook kernel.
-info: time:8:46:4 date:2020/4/20
-info: week day:1 Monday year day:112
+info: time:6:37:13 date:2020/4/22
+info: week day:3 Wednesday year day:114
 info: ide_enter: found 2 hard disks.
-info: io system info-> drivers
-info: driver: name=uart-serial
-info:         device: name=com0
-info:         device: name=com1
-info:         device: name=com2
-info:         device: name=com3
-info:         device: count=4
-info: driver: name=vga-console
-info:         device: name=con0
-info:         device: name=con1
-info:         device: name=con2
-info:         device: name=con3
-info:         device: name=con4
-info:         device: name=con5
-info:         device: name=con6
-info:         device: name=con7
-info:         device: count=8
-info: driver: name=ide-disk
-info:         device: name=ide0
-info:         device: name=ide1
-info:         device: count=2
-info: io system info-> drivers
-info: driver: name=uart-serial
-info:         device: name=com0
-info:         device: name=com1
-info:         device: name=com2
-info:         device: name=com3
-info:         device: count=4
-info: driver: name=vga-console
-info:         device: name=con0
-info:         device: name=con1
-info:         device: name=con2
-info:         device: name=con3
-info:         device: name=con4
-info:         device: name=con5
-info:         device: name=con6
-info:         device: name=con7
-info:         device: count=8
-info: driver: name=ide-disk
-info:         device: name=ide0
-info:         device: name=ide1
-info:         device: count=2
-debug: device_open: add ref
-debug: device_open: io_complete_check
-debug: device_open: io_complete_check done
+debug: RTL8139 init failed: not find pci device.
+error: init_driver_arch: create one driver failed!
 info: raw block name:init
 debug: raw_block_upload: count=100
 info: raw block name:bin
 debug: raw_block_upload: count=100
-debug: vector:0 edi:0 esi:0 ebp:7ffff000 esp dummy:0 ebx:7ffffff0 edx:0 ecx:1 eax:0
-debug: gs:2b fs:2b es:2b ds:2b error code:0 eip:1000 cs:23 eflags:202 esp:7ffff000 ss:2b
-debug: sys_getres: resname=con0 resflg=1000000
-debug: __getres_device: get name con0
-debug: device_open: add ref
-debug: device_open: io_complete_check
-debug: device_open: io_complete_check done
-debug: __getres_device: open done, ready install res.
-debug: sys_getres: install res success.
-debug: sys_getres: resname=con0 resflg=1000000
-debug: __getres_device: get name con0
-debug: device_open: add ref
-debug: __getres_device: open done, ready install res.
-debug: sys_getres: install res success.
-hello, console!
-hello, printf!
-debug: sys_ctlres: res index 1 cmd=123 arg=1c8.
-debug: sys_ctlres: devno=1.
-error: device_devctl: do dispatch failed!
-debug: sys_ctlres: control done!
-I am child, I will load data.
-heap addr 6000.
-alloc data at 6000 for debug: sys_wait: name=init pid=1 wait child.
-debug: sys_wait: no child exit, waiting...
-20 kb.
-debug: sys_getres: resname=ide0 resflg=1000000
-debug: __getres_device: get name ide0
-debug: device_open: add ref
-debug: __getres_device: open done, ready install res.
-debug: sys_getres: install res success.
-load data success.
-7f 45 4c 46 1 1 1 0 0 0 0 0 0 0 0 0 2 0 3 0 1 0 0 0 0 10 0 0 34 0 0 0 ready run.
-debug: sys_putres: res index 2
-debug: sys_putres: uninstall res, the handle 0.
-hello, bin!
-@oldact: handler=130b flags=1
-act: handler=130b flags=0
-alter: do_page_fault: touch TRIGHW trigger because unknown space!
-alter: page fault addr:0
-bin: trigger 1 handled.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!
-alter: page fault addr:0
-bin: trigger 1 handled.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!
-alter: page fault addr:0
-bin: trigger 1 handled.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!
-alter: page fault addr:0
-bin: trigger 1 handled.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!
-alter: page fault addr:0
-bin: trigger 1 handled.
-alter: do_page_fault: touch TRIGHW trigger because unknown space!
-alter: page fault addr:0
-bin: trigger 1 handled.
-debug: sys_exit: name=bin pid=2 ppid=1 prio=2 status=5
-debug: resource_release: index=0 handle=1 flags=1000000.
-debug: resource_release: index=1 handle=1 flags=1000000.
+error: device_open: device rtl8139 not found!
+debug: sys_exit: name=init pid=3 ppid=2 prio=2 status=-1
 debug: sys_exit: release all.
-debug: sys_exit: parent waiting...
-debug: sys_wait: name=init pid=1 wait child.
-notice: wait_one_hangging_child: find a hanging proc 2 
-debug: sys_wait: handle a hangging child 2.
-child 2 exit with status=5.
-debug: sys_exit: name=init pid=1 ppid=-1 prio=2 status=0
-debug: resource_release: index=0 handle=1 flags=1000000.
-debug: resource_release: index=1 handle=1 flags=1000000.
+debug: sys_exit: parent not waiting, zombie!
+error: device_open: device rtl8139 not found!
+debug: sys_exit: name=init pid=2 ppid=-1 prio=2 status=-1
+notice: find a zombie proc 3 
 debug: sys_exit: release all.
 debug: sys_exit: no parent! zombie!

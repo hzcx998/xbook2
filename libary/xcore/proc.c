@@ -74,7 +74,7 @@ int execraw(char *name, char *argv[])
  * 
  * @return: -1 is failed, no success return, if success, run the new process. 
  */
-int execfile(char *name, xfile_t *file, char *argv[])
+int execfile(char *name, kfile_t *file, char *argv[])
 {
     return syscall3(int, SYS_EXECF, name, file, argv);
 }
@@ -103,3 +103,15 @@ int triggeron(int trig, pid_t pid)
 {
     return syscall2(int, SYS_TRIGGERON, trig, pid);
 }
+
+/**
+ * sleep - task sleep
+ * @second: sleep time
+ * 
+ * @return: return left time before wakeup
+ */
+unsigned long sleep(unsigned long second)
+{
+    return syscall1(int, SYS_SLEEP, second);
+}
+

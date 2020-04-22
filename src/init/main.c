@@ -14,7 +14,7 @@
 #include <xbook/syscall.h>
 #include <xbook/pipe.h>
 #include <xbook/driver.h>
-#include <arch/pci.h>
+#include <xbook/ktime.h>
 
 int kernel_main(void)
 {
@@ -34,8 +34,7 @@ int kernel_main(void)
     init_pipe();
 
     init_syscall();
-
-    init_pci();
+    init_ktime();
 
     init_tasks();
     init_clock();
@@ -43,14 +42,11 @@ int kernel_main(void)
     /* enable interrupt */
     enable_intr();
     
-    /* init unit drivers */
-    //init_unit();
-
     init_driver_arch();
     /* init raw block */
     init_raw_block();
 
-    kernel_pause();
+    start_user();
 
     return 0;    
 }

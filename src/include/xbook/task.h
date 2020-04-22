@@ -8,6 +8,8 @@
 #include "vmm.h"
 #include "trigger.h"
 #include "resource.h"
+#include "timer.h"
+#include "alarm.h"
 
 /* task state */
 typedef enum task_state {
@@ -73,11 +75,10 @@ typedef struct task {
     priority_queue_t *prio_queue;       /* 所在的优先级队列 */
     triggers_t *triggers;               /* 触发器, 内核线程没有触发器 */
     resource_t *res;                    /* 设备资源 */
+    timer_t *sleep_timer;               /* 休眠时的定时器 */
+    alarm_t alarm;                      /* 闹钟 */
     unsigned int stack_magic;           /* 任务的魔数 */
 } task_t;
-
-#define SET_TASK_STATUS(task, stat) \
-        (task)->state = stat
 
 extern task_t *task_current;   /* 当前任务指针 */
 extern list_t task_global_list;
@@ -87,6 +88,10 @@ extern list_t task_global_list;
 
 //#define current_task   __current_task()
 #define current_task    task_current
+
+
+#define set_current_state(stat) \
+        current_task->state = (stat)
 
 extern trap_frame_t *current_trap_frame;
 
@@ -118,13 +123,13 @@ task_t *process_create(char *name, char **argv);
 
 pid_t fork_pid();
 void print_task();
-void task_yeild();
 
-void kernel_pause();
+void start_user();
 
 void dump_task_kstack(thread_stack_t *kstack);
 
 pid_t sys_get_pid();
 pid_t sys_get_ppid();
+unsigned long sys_sleep(unsigned long second);
 
 #endif   /* _XBOOK_TASK_H */

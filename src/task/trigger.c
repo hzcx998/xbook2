@@ -38,9 +38,17 @@ int do_active_trigger(pid_t pid, int trig, pid_t toucher)
     以保证进程能够执行到 */
     case TRIGHSOFT:
     case TRIGHW:
+        /* 如果是重软件或者硬件触发器，就需要唤醒休眠的任务，因为需要立即执行或者终止运行 */
+        if (task->state == TASK_BLOCKED ||
+        task->state == TASK_WAITING) { /* 处于阻塞或者等待状态就唤醒 */
+#if DEBUG_LOCAL == 1
+            printk(KERN_DEBUG "do_active_trigger: wakeup blocked or waiting task=%s.\n", task->name);
+#endif
+            task_wakeup(task);
+        }
     case TRIGRESUM: /* 恢复进程运行 */
 #if DEBUG_LOCAL == 1
-        printk(KERN_DEBUG "do_active_trigger: may wakeup stoped task.\n");
+        printk(KERN_DEBUG "do_active_trigger: may wakeup not ready task.\n");
 #endif        
         if (task->state == TASK_STOPPED) { /* 处于停止状态就resume */
 #if DEBUG_LOCAL == 1
@@ -67,16 +75,7 @@ int do_active_trigger(pid_t pid, int trig, pid_t toucher)
 out:
     restore_intr(flags);
     trigger_calc_left(trigger);
-    /* 激活触发器后，如果需要唤醒任务就唤醒 */
-    if ((task->state == TASK_BLOCKED ||
-        task->state == TASK_WAITING ||
-        task->state == TASK_STOPPED) && 
-        trigger->set > 0) {
-#if DEBUG_LOCAL == 1
-        printk(KERN_DEBUG "do_active_trigger: wakeup blocked, waiting, stopped task=%s.\n", task->name);
-#endif
-        task_wakeup(task);
-    }
+
     return 0;
 }
 
@@ -219,7 +218,7 @@ int sys_trigger_return(unsigned int ebx, unsigned int ecx, unsigned int esi, uns
     /* 还原之前的中断栈 */
     memcpy(frame, &trigger_frame->trap_frame, sizeof(trap_frame_t));
 #if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "sys_trigger_return: ret val %d.\n", frame->eax);
+    printk(KERN_DEBUG "sys_trigger_return: ret val 0x%x.\n", frame->eax);
 #endif
     /* 会修改eax的值，返回eax的值 */
     return frame->eax;

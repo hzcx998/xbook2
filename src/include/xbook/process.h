@@ -4,7 +4,7 @@
 #include "task.h"
 #include "elf32.h"
 #include "rawblock.h"
-#include <sys/xfile.h>
+#include <sys/kfile.h>
 
 task_t *process_create(char *name, char **argv);
 int proc_destroy(task_t *task);
@@ -22,6 +22,6 @@ int sys_fork();
 void sys_exit(int status);
 pid_t sys_wait(int *status);
 int sys_exec_raw(char *name, char **argv);
-int sys_exec_file(char *name, xfile_t *file, char **argv);
+int sys_exec_file(char *name, kfile_t *file, char **argv);
 
 #endif /* _XBOOK_PROCESS_H */

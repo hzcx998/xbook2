@@ -1,6 +1,5 @@
 #include <xbook/process.h>
 #include <xbook/string.h>
-#include <sys/xfile.h>
 #include <arch/interrupt.h>
 
 /**
@@ -137,7 +136,7 @@ free_tmp_arg:
  * 
  * @return: 失败返回-1，成功不返回
  */
-int sys_exec_file(char *name, xfile_t *file, char **argv)
+int sys_exec_file(char *name, kfile_t *file, char **argv)
 {
     /* 没有参数或者参数错误 */
     task_t *cur = current_task;

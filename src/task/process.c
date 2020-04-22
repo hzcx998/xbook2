@@ -372,6 +372,10 @@ int proc_release(task_t *task)
         return -1;
     if (proc_res_exit(task))
         return -1;
+
+    /* 取消定时器 */
+    timer_cancel(task->sleep_timer);
+    
     return 0;
 }
 

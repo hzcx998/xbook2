@@ -17,7 +17,8 @@ typedef void (*trighandler_t) (int);
 #define TRIGLSOFT       6   /* light software trigger，轻软件触发器 */
 #define TRIGUSR0        7  /* user trigger 0，用户自定义触发器 */
 #define TRIGUSR1        8  /* user trigger 1，用户自定义触发器 */
-#define TRIGMAX         TRIGUSR1  /* 最大的触发器 */
+#define TRIGALARM       9  /* user alarm trigger 用户闹钟触发器 */
+#define TRIGMAX         TRIGALARM  /* 最大的触发器 */
 
 /* 信号处理函数 */
 #define TRIG_ERR     ((trighandler_t) -1)       /* 错误触发器 */

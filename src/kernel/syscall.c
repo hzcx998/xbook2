@@ -3,7 +3,8 @@
 #include <xbook/vmspace.h>
 #include <xbook/resource.h>
 #include <xbook/trigger.h>
-
+#include <xbook/alarm.h>
+#include <xbook/ktime.h>
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -24,6 +25,8 @@ void init_syscall()
     syscall_table[SYS_TRIGGERACT] = sys_trigger_action;
     syscall_table[SYS_TRIGRET] = sys_trigger_return;
     
+    syscall_table[SYS_SLEEP] = sys_sleep;
+    
     /* 内存管理 */
     syscall_table[SYS_HEAP] = sys_vmspace_heap;
     
@@ -33,4 +36,7 @@ void init_syscall()
     syscall_table[SYS_READRES] = sys_readres;
     syscall_table[SYS_WRITERES] = sys_writeres;
     syscall_table[SYS_CTLRES] = sys_ctlres;
+    
+    syscall_table[SYS_ALARM] = sys_alarm;
+    syscall_table[SYS_KTIME] = sys_get_ktime;
 }

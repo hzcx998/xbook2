@@ -99,8 +99,7 @@ syscall_handler:
     mov [esp + 8*4], eax	
      
     ; 处理完用户消息后再进行触发器处理，因为处理过程可能会影响到寄存器的值
-    ;5 signal
-
+    ;5
     push esp         ; 把中断栈指针传递进去
     call do_trigger
     add esp, 4

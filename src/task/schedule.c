@@ -15,8 +15,6 @@ priority_queue_t priority_queue[MAX_PRIORITY_NR];
 /* 最高等级的队列 */
 priority_queue_t *highest_prio_queue;
 
-int can_preempt;
-
 task_t *task_priority_queue_fetch_first()
 {
     task_t *task;
@@ -73,52 +71,14 @@ void schedule()
     
     set_next_task(next);
     restore_intr(flags);
-    /*
-    printk(KERN_INFO "> switch from %s-%d-%x-%d to %s-%d-%x-%d\n",
+#if DEBUG_LOCAL == 1 
+    printk(KERN_INFO "schedule: switch from %s-%d-%x-%d to %s-%d-%x-%d\n",
         cur->name, cur->pid, cur, cur->priority, next->name, next->pid, next, next->priority);
-    */
+#endif
     /*dump_task_kstack(next->kstack);
     dump_task(next);*/
     switch_to(cur, next);
 }
-
-#ifdef CONFIG_PREEMPT
-/**
- * 抢占时机：
- * 1.创建一个新任务
- * 2.任务被唤醒，并且优先级更高
- */
-void schedule_preempt(task_t *robber)
-{
-    task_t *cur = current_task;
-    
-    if (!can_preempt)
-        return;
-
-    /* 自己不能抢占自己 */
-    if (cur == robber)
-        return; 
-#if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "schedule_preempt: task %d preempt %d!\n",
-        robber->pid,cur->pid);
-#endif    
-    /* 当前任务一顶是在运行中，当前任务被其它任务抢占
-    把当前任务放到自己的优先级队列的首部，保留原有时间片
-     */
-    cur->state = TASK_READY;
-    task_priority_queue_add_tail(cur);
-    
-    /* 抢占者在抢占前已经加入就绪队列，因此需要从就绪队列中删除 */
-    --highest_prio_queue->length;   /* sub a task */
-    robber->prio_queue = NULL;
-    list_del_init(&robber->list);
-    
-    set_next_task(robber);
-
-    /* 切换到该任务运行 */
-    switch_to(cur, robber);
-}
-#endif
 
 void print_priority_queue(int prio)
 {
@@ -144,5 +104,4 @@ void init_schedule()
     }
     /* 指向最高级的队列 */
     highest_prio_queue = &priority_queue[0];
-    can_preempt = 0; /* 还不能抢占 */
 }

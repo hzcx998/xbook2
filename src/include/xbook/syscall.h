@@ -59,6 +59,7 @@ enum {
     SYS_TRIGGERON,
     SYS_TRIGGERACT,
     SYS_TRIGRET,
+    SYS_SLEEP,
     SYS_PROC_RESERVED = 20,             /* 预留20个接口给进程管理 */
     SYS_HEAP,
     SYS_VMM_RESERVED = 30,              /* 预留10个接口给内存管理 */
@@ -68,6 +69,8 @@ enum {
     SYS_WRITERES,
     SYS_CTLRES,
     SYS_RES_RESERVED = 40,              /* 预留10个接口给资源管理 */
+    SYS_ALARM,
+    SYS_KTIME,
     SYS_TIME_RESERVED = 60,             /* 预留20个接口给时间管理 */
     SYSCALL_NR,
 };

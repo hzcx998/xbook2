@@ -59,6 +59,8 @@
         "pci.h": "c",
         "byteorder.h": "c",
         "cpu.h": "c",
-        "driver.h": "c"
+        "driver.h": "c",
+        "ktime.h": "c",
+        "kfile.h": "c"
     }
 }

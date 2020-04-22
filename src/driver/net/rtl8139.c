@@ -1,5 +1,101 @@
 
 /*
+
+	8139too.c: A RealTek RTL-8139 Fast Ethernet driver for Linux.
+
+	Maintained by Jeff Garzik <jgarzik@pobox.com>
+	Copyright 2000-2002 Jeff Garzik
+
+	Much code comes from Donald Becker's rtl8139.c driver,
+	versions 1.13 and older.  This driver was originally based
+	on rtl8139.c version 1.07.  Header of rtl8139.c version 1.13:
+
+	-----<snip>-----
+
+        	Written 1997-2001 by Donald Becker.
+		This software may be used and distributed according to the
+		terms of the GNU General Public License (GPL), incorporated
+		herein by reference.  Drivers based on or derived from this
+		code fall under the GPL and must retain the authorship,
+		copyright and license notice.  This file is not a complete
+		program and may only be used when the entire operating
+		system is licensed under the GPL.
+
+		This driver is for boards based on the RTL8129 and RTL8139
+		PCI ethernet chips.
+
+		The author may be reached as becker@scyld.com, or C/O Scyld
+		Computing Corporation 410 Severn Ave., Suite 210 Annapolis
+		MD 21403
+
+		Support and updates available at
+		http://www.scyld.com/network/rtl8139.html
+
+		Twister-tuning table provided by Kinston
+		<shangh@realtek.com.tw>.
+
+	-----<snip>-----
+
+	This software may be used and distributed according to the terms
+	of the GNU General Public License, incorporated herein by reference.
+
+	Contributors:
+
+		Donald Becker - he wrote the original driver, kudos to him!
+		(but please don't e-mail him for support, this isn't his driver)
+
+		Tigran Aivazian - bug fixes, skbuff free cleanup
+
+		Martin Mares - suggestions for PCI cleanup
+
+		David S. Miller - PCI DMA and softnet updates
+
+		Ernst Gill - fixes ported from BSD driver
+
+		Daniel Kobras - identified specific locations of
+			posted MMIO write bugginess
+
+		Gerard Sharp - bug fix, testing and feedback
+
+		David Ford - Rx ring wrap fix
+
+		Dan DeMaggio - swapped RTL8139 cards with me, and allowed me
+		to find and fix a crucial bug on older chipsets.
+
+		Donald Becker/Chris Butterworth/Marcus Westergren -
+		Noticed various Rx packet size-related buglets.
+
+		Santiago Garcia Mantinan - testing and feedback
+
+		Jens David - 2.2.x kernel backports
+
+		Martin Dennett - incredibly helpful insight on undocumented
+		features of the 8139 chips
+
+		Jean-Jacques Michel - bug fix
+
+		Tobias Ringström - Rx interrupt status checking suggestion
+
+		Andrew Morton - Clear blocked signals, avoid
+		buffer overrun setting current->comm.
+
+		Kalle Olavi Niemitalo - Wake-on-LAN ioctls
+
+		Robert Kuebel - Save kernel thread from dying on any signal.
+
+    -----<snip>-----
+    This was transplanted to BookOS by Jason Hu.
+    2020.4.22   
+    www.book-os.org
+
+	Submitting bug reports:
+
+		"rtl8139-diag -mmmaaavvveefN" output
+		enable RTL8139_DEBUG below, and look at 'dmesg' or kernel log
+
+*/
+
+/*
 主要流程:
 1.从PCI获取网卡信息
 2.初始化网卡配置空间以及中断
@@ -51,7 +147,6 @@
 
 /* 接收缓冲区的总长度 */
 #define RX_BUF_TOT_LEN	(RX_BUF_LEN + RX_BUF_PAD + RX_BUF_WRAP_PAD)
-
 
 /* Number of Tx descriptor registers. */
 #define NUM_TX_DESC	4

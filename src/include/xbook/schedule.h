@@ -7,8 +7,6 @@
 #include "assert.h"
 #include "debug.h"
 
-#define CONFIG_PREEMPT
-
 /*任务优先级 */
 enum task_priority {
     TASK_PRIO_BEST = 0,     /* 最佳优先级 */
@@ -31,11 +29,6 @@ extern priority_queue_t priority_queue[];
 void schedule();
 void init_schedule();
 void launch_task();
-
-#ifdef CONFIG_PREEMPT
-void schedule_preempt(task_t *robber);
-#endif
-extern int can_preempt;
 
 /**
  * is_all_priority_queue_empty - 判断优先级队列是否为空
@@ -70,10 +63,6 @@ static inline void task_priority_queue_add_tail(task_t *task)
         //printk("b tp:%d hp:%d", task->priority, highest_prio_queue->priority);
 
         highest_prio_queue = task->prio_queue;
-#ifdef CONFIG_PREEMPT
-        /* 抢占当前任务 */
-        schedule_preempt(task);
-#endif
     }
 }
 
@@ -94,10 +83,7 @@ static inline void task_priority_queue_add_head(task_t *task)
     /* 如果有更高的优先级，那么就把最高优先级指向它 */
     if (task->priority < highest_prio_queue->priority) {
         highest_prio_queue = task->prio_queue;
-#ifdef CONFIG_PREEMPT        
-        /* 抢占当前任务 */
-        schedule_preempt(task);
-#endif
+
     }  
 }
 

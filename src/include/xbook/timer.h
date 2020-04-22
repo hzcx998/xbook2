@@ -1,0 +1,48 @@
+#ifndef _XBOOK_TIMER_H
+#define _XBOOK_TIMER_H
+
+#include "list.h"
+#include "memcache.h"
+
+typedef void (*timer_callback_t) (unsigned long); 
+
+/* 定时器 */
+typedef struct timer_struct {
+    list_t list;                /* 定时器链表 */
+    long timeout;      /* 超时计数器 */
+    unsigned long arg;          /* 参数 */
+    timer_callback_t callback;    /* 回调函数 */
+} timer_t;
+
+#define TIMER_INIT(timer, _timeout, _arg, _callback) \
+    { .list = LIST_HEAD_INIT((timer).list) \
+    , .timeout = (_timeout) \
+    , .arg = (_arg) \
+    , .callback = (_callback) \
+    }
+
+#define DEFINE_TIMER(timer_name, timeout, arg, callback) \
+    timer_t timer_name = TIMER_INIT(timer_name, timeout, arg, callback)
+
+#define timer_alloc()       kmalloc(sizeof(timer_t))
+#define timer_free(timer)   kfree(timer)
+
+static inline void timer_init(
+    timer_t *timer,
+    unsigned long timeout,
+    unsigned long arg,
+    timer_callback_t callback
+){
+    INIT_LIST_HEAD(&timer->list);
+    timer->timeout = timeout;
+    timer->arg = arg;
+    timer->callback = callback;
+}
+
+void timer_add(timer_t *timer);
+void timer_del(timer_t *timer);
+void timer_mod(timer_t *timer, unsigned long timeout);
+int timer_cancel(timer_t *timer);
+void update_timers();
+
+#endif   /* _XBOOK_TIMER_H */
