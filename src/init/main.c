@@ -5,7 +5,6 @@
 #include <xbook/clock.h>
 #include <xbook/vmarea.h>
 #include <xbook/task.h>
-#include <xbook/unit.h>
 #include <xbook/rawblock.h>
 #include <xbook/schedule.h>
 #include <xbook/sharemem.h>

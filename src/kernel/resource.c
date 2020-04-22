@@ -1,5 +1,4 @@
 #include <xbook/resource.h>
-#include <xbook/device.h>
 #include <xbook/task.h>
 #include <xbook/debug.h>
 #include <xbook/sharemem.h>

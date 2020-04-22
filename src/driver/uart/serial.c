@@ -1,6 +1,4 @@
-#include <xbook/unit.h>
 #include <xbook/debug.h>
-#include <xbook/device.h>
 #include <xbook/bitops.h>
 #include <xbook/vsprintf.h>
 #include <xbook/vine.h>

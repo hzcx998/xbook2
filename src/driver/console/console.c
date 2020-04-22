@@ -1,14 +1,20 @@
 #include <xbook/debug.h>
-#include <xbook/device.h>
-#include <xbook/unit.h>
-#include <arch/interrupt.h>
+#include <xbook/vsprintf.h>
+#include <xbook/vine.h>
+#include <xbook/driver.h>
 #include <arch/io.h>
 #include <sys/ioctl.h>
 
-#define DRV_NAME "console"
+#define DRV_NAME "vga-console"
 #define DRV_VERSION "0.1"
 
-//#define DEBUG_CONSOLE
+#define DEV_NAME "con"
+
+#define DEBUG_LOCAL 0
+
+/* 把控制台的信息输出内核调试输出 */
+#define CON_TO_DEBUGER   0
+
 
 #define DISPLAY_VRAM 0x800b8000
 
@@ -23,7 +29,9 @@
 
 #define COLOR_DEFAULT	(MAKE_COLOR(TEXT_BLACK, TEXT_WHITE))
 
-#define MAX_CONSOLE_NR	    CONSOLE_MINORS
+/* 8个控制台 */
+#define MAX_CONSOLE_NR	    8
+
 
 /*
 颜色生成方法
@@ -49,18 +57,15 @@ MAKE_COLOR(BLACK, RED) | BRIGHT | FLASH
 
 #define SCREEN_SIZE (80 * 25)
 
-/* 控制台结构 */
-typedef struct console_driver {
+typedef struct _device_extension {
+    string_t device_name;           /* 设备名字 */
+    device_object_t *device_object; /* 设备对象 */
+
     unsigned int original_addr;          /* 控制台对应的显存的位置 */
     unsigned int screen_size;       /* 控制台占用的显存大小 */
     unsigned char color;                /* 字符的颜色 */
     int x, y;                  /* 偏移坐标位置 */
-    /* 字符设备 */
-    device_t *dev;
-} console_driver_t;
-
-/* 控制台表 */
-console_driver_t console_device[MAX_CONSOLE_NR];
+} device_extension_t;
 
 #if 1
 static unsigned short get_cursor()
@@ -78,8 +83,6 @@ static unsigned short get_cursor()
 
 static void set_cursor(unsigned short cursor)
 {
-	//设置光标位置 0-2000
-
 	//执行前保存flags状态，然后关闭中断
 	unsigned long flags;
     save_intr(flags);
@@ -109,37 +112,37 @@ static void set_video_start_addr(unsigned short addr)
  * flush - 刷新光标和起始位置
  * @console: 控制台
  */
-static void flush(console_driver_t *console)
+static void flush(device_extension_t *ext)
 {
     /* 计算光标位置，并设置 */
-    set_cursor(console->original_addr + console->y * SCREEN_WIDTH + console->x);
-    set_video_start_addr(console->original_addr);
+    set_cursor(ext->original_addr + ext->y * SCREEN_WIDTH + ext->x);
+    set_video_start_addr(ext->original_addr);
 }
 
 /**
  * console_clean - 清除控制台
  * @console: 控制台
  */
-static void console_clean(console_driver_t *console)
+static void console_clean(device_extension_t *ext)
 {
     /* 指向显存 */
-    unsigned char *vram = (unsigned char *)(V_MEM_BASE + console->original_addr * 2);
+    unsigned char *vram = (unsigned char *)(V_MEM_BASE + ext->original_addr * 2);
 	int i;
-	for(i = 0; i < console->screen_size * 2; i += 2){
+	for(i = 0; i < ext->screen_size * 2; i += 2){
 		*vram++ = '\0';  /* 所有字符都置0 */
         *vram++ = COLOR_DEFAULT;  /* 颜色设置为黑白 */
 	}
-    console->x = 0;
-    console->y = 0;
-    flush(console);
+    ext->x = 0;
+    ext->y = 0;
+    flush(ext);
 }
 
 #ifdef DEBUG_CONSOLE
-static void dump_console(console_driver_t *console)
+static void dump_console(device_extension_t *ext)
 {
     printk(PART_TIP "----Console----\n");
     printk(PART_TIP "origin:%d size:%d x:%d y:%d color:%x dev:%x\n",
-        console->original_addr, console->screen_size, console->x, console->x, console->color, console->dev);
+        ext->original_addr, ext->screen_size, ext->x, ext->x, ext->color, ext->dev);
 }
 #endif /* DEBUG_CONSOLE */
 
@@ -151,9 +154,9 @@ static void dump_console(console_driver_t *console)
  *             - SCREEN_DOWN: 向下滚动
  * 
  */
-static void console_scroll(console_driver_t *console, int direction)
+static void console_scroll(device_extension_t *ext, int direction)
 {
-    unsigned char *vram = (unsigned char *)(V_MEM_BASE + console->original_addr * 2);
+    unsigned char *vram = (unsigned char *)(V_MEM_BASE + ext->original_addr * 2);
     int i;
                 
 	if(direction == SCREEN_UP){
@@ -177,251 +180,308 @@ static void console_scroll(console_driver_t *console, int direction)
             vram[i] = '\0';
             vram[i + 1] = COLOR_DEFAULT;
         }
-        console->y--;
+        ext->y--;
 	}
-	flush(console);
+	flush(ext);
 }
 
 /**
- * console_outchar - 控制台上输出一个字符
+ * vga_outchar - 控制台上输出一个字符
  * @console: 控制台
  * @ch: 字符
  */
-static void console_outchar(console_driver_t *console, char ch)
+static void vga_outchar(device_extension_t *ext, unsigned char ch)
 {
 	unsigned char *vram = (unsigned char *)(V_MEM_BASE + 
-        (console->original_addr + console->y * SCREEN_WIDTH + console->x) *2) ;
-	switch(ch){
-		case '\n':
-            // 如果是回车，那还是要把回车写进去
-            *vram++ = '\0';
-            *vram = COLOR_DEFAULT;
-            console->x = 0;
-            console->y++;
-            
-			break;
-		case '\b':
-            if (console->x >= 0 && console->y >= 0) {
-                console->x--;
-                /* 调整为上一行尾 */
-                if (console->x < 0) {
-                    console->x = SCREEN_WIDTH - 1;
-                    console->y--;
-                    /* 对y进行修复 */
-                    if (console->y < 0)
-                        console->y = 0;
-                }
-                *(vram-2) = '\0';
-				*(vram-1) = COLOR_DEFAULT;
+        (ext->original_addr + ext->y * SCREEN_WIDTH + ext->x) *2) ;
+	switch (ch) {
+    case '\n':
+        // 如果是回车，那还是要把回车写进去
+        *vram++ = '\0';
+        *vram = COLOR_DEFAULT;
+        ext->x = 0;
+        ext->y++;
+        
+        break;
+    case '\b':
+        if (ext->x >= 0 && ext->y >= 0) {
+            ext->x--;
+            /* 调整为上一行尾 */
+            if (ext->x < 0) {
+                ext->x = SCREEN_WIDTH - 1;
+                ext->y--;
+                /* 对y进行修复 */
+                if (ext->y < 0)
+                    ext->y = 0;
             }
-			break;
-		default: 
-            *vram++ = ch;
-			*vram = console->color;
+            *(vram-2) = '\0';
+            *(vram-1) = COLOR_DEFAULT;
+        }
+        break;
+    default: 
+        *vram++ = ch;
+        *vram = ext->color;
 
-			console->x++;
-            if (console->x > SCREEN_WIDTH - 1) {
-                console->x = 0;
-                console->y++;
-            }
-			break;
+        ext->x++;
+        if (ext->x > SCREEN_WIDTH - 1) {
+            ext->x = 0;
+            ext->y++;
+        }
+        break;
 	}
     /* 滚屏 */
-    while (console->y > SCREEN_HEIGHT - 1) {
-        console_scroll(console, SCREEN_DOWN);
+    while (ext->y > SCREEN_HEIGHT - 1) {
+        console_scroll(ext, SCREEN_DOWN);
     }
 
-    flush(console);
+    flush(ext);
 }
-/* 把控制台的信息输出内核调试输出 */
-#define CON_TO_KERN   0
+
 
 /**
- * console_write - 控制台写入数据
- * @device: 设备
- * @off: 偏移（未使用）
- * @buf: 缓冲区
- * @count: 字节数量
- * 
+ * vga_inchar - 控制台上读取一个字符
+ * @console: 控制台
+ * @ch: 字符
  */
-static int console_write(device_t *device, off_t off, void *buffer, size_t count)
+static void vga_inchar(device_extension_t *ext, unsigned char *ch)
 {
-    /* 获取控制台 */
-    struct console_driver *local = (struct console_driver *)dev_get_local(device);
-    char *buf = (char *)buffer;
-	while (count > 0 && *buf) {
-		/* 输出字符到控制台 */
-        console_outchar(local, *buf);
-		buf++;
-		count--;
-	}
-#if CON_TO_KERN == 1
-    /* 临时输出到内核输出 */
-    buf = (char *)buffer;
-    printk(KERN_INFO "con: %s", buf);
-#endif
-    return 0;
+    unsigned char *vram = (unsigned char *)(V_MEM_BASE + 
+        (ext->original_addr + ext->y * SCREEN_WIDTH + ext->x) *2) ;
+    *ch =  *vram;
+    ext->x++;
+    if (ext->x > SCREEN_WIDTH - 1) {
+        ext->x = 0;
+        ext->y++;
+    }
+    /* 滚屏 */
+    while (ext->y > SCREEN_HEIGHT - 1) {
+        console_scroll(ext, SCREEN_DOWN);
+    }
+
+    flush(ext);
 }
 
 /**
- * console_gotoxy - 光标移动到一个指定位置
- * @xy: 位置，x是高16位，y是低16位
+ * console_setpos - 光标移动到一个指定位置
+ * @pos: 位置，x是高16位，y是低16位
  */
-static void console_gotoxy(console_driver_t *console, unsigned int xy)
+static void console_setpos(device_extension_t *ext, unsigned int pos)
 {
-    console->x = (xy >> 16) & 0xffff;
-    console->y = xy & 0xffff;
+    ext->x = pos % SCREEN_WIDTH;
+    ext->y = pos / SCREEN_WIDTH;
 
     /* fix pos */
-    if (console->x < 0)
-        console->x = 0;
-    if (console->x >= SCREEN_WIDTH)
-        console->x = SCREEN_WIDTH - 1;
-    if (console->y < 0)
-        console->y = 0;
-    if (console->y >= SCREEN_HEIGHT)
-        console->y = SCREEN_HEIGHT - 1;
-    flush(console);    
+    if (ext->x < 0)
+        ext->x = 0;
+    if (ext->x >= SCREEN_WIDTH)
+        ext->x = SCREEN_WIDTH - 1;
+    if (ext->y < 0)
+        ext->y = 0;
+    if (ext->y >= SCREEN_HEIGHT)
+        ext->y = SCREEN_HEIGHT - 1;
+    flush(ext);    
+}
+
+/**
+ * console_setpos - 光标移动到一个指定位置
+ * @pos: 位置，x是高16位，y是低16位
+ */
+static int console_getpos(device_extension_t *ext)
+{
+    return ext->y * SCREEN_WIDTH + ext->x;    
 }
 
 /**
  * console_set_color - 设置控制台字符颜色
  * @color: 颜色
  */
-static void console_set_color(console_driver_t *console, unsigned char color)
+static void console_set_color(device_extension_t *ext, unsigned char color)
 {
-	console->color = color;
+	ext->color = color;
 }
 
 /**
- * console_ioctl - 控制台的IO控制
- * @device: 设备
- * @cmd: 命令
- * @arg: 参数
- * 
- * 成功返回0，失败返回-1
+ * console_get_color - 获取控制台字符颜色
+ * @return: 返回控制台颜色
  */
-static int console_ioctl(device_t *device, unsigned int cmd, unsigned long arg)
+static unsigned char console_get_color(device_extension_t *ext)
 {
-    /* 获取控制台 */
-    struct console_driver *local = (struct console_driver *)dev_get_local(device);
+	return ext->color;
+}
+
+iostatus_t console_read(device_object_t *device, io_request_t *ioreq)
+{
+    unsigned long len = ioreq->parame.read.length;
     
-	int retval = 0;
-	switch (cmd)
-	{
-    case CONIO_SETCOLOR:
-        console_set_color(local, arg);
-        break;
+    uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
+    int i = len;
+    
+    while (i > 0) {
+        vga_inchar(device->device_extension, buf);
+        i--;
+        buf++;
+    }
+#if DEBUG_LOCAL == 1    
+    buf = (uint8_t *)ioreq->system_buffer; 
+    printk(KERN_DEBUG "console_read: %s\n", buf);
+#endif
+    ioreq->io_status.status = IO_SUCCESS;
+    ioreq->io_status.infomation = len;
+    
+    /* 调用完成请求 */
+    io_complete_request(ioreq);
+
+    return IO_SUCCESS;
+}
+
+iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
+{
+    unsigned long len = ioreq->parame.write.length;
+    
+    uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
+    int i = len;
+#if DEBUG_LOCAL == 1    
+    printk(KERN_DEBUG "console_write: %s\n", buf);
+#endif
+    while (i > 0) {
+        vga_outchar(device->device_extension, *buf);
+        i--;
+        buf++;
+    }
+#if CON_TO_DEBUGER == 1
+    /* 临时输出到内核输出 */
+    buf = (uint8_t *)ioreq->system_buffer;
+    printk("%s", buf);
+#endif
+
+    ioreq->io_status.status = IO_SUCCESS;
+    ioreq->io_status.infomation = len;
+    /* 调用完成请求 */
+    io_complete_request(ioreq);
+    return IO_SUCCESS;
+}
+
+iostatus_t console_devctl(device_object_t *device, io_request_t *ioreq)
+{
+    unsigned int ctlcode = ioreq->parame.devctl.code;
+    unsigned long arg = ioreq->parame.devctl.arg;
+    
+    iostatus_t status = IO_SUCCESS;
+    int infomation = 0;
+    switch (ctlcode)
+    {
     case CONIO_SCROLL:
-        console_scroll(local, arg);
+        console_scroll(device->device_extension, arg);
         break;
-    case CONIO_CLEAN:
-        console_clean(local);
+    case CONIO_CLEAR:
+        console_clean(device->device_extension);
         break;
-    case CONIO_SETCURSOR:
-        console_gotoxy(local, arg);
+    case CONIO_SETCOLOR:
+        console_set_color(device->device_extension, arg);
         break;
-	default:
-		/* 失败 */
-		retval = -1;
-		break;
-	}
-
-	return retval;
+    case CONIO_GETCOLOR:
+        infomation = console_get_color(device->device_extension);
+        break;
+    case CONIO_SETPOS:
+        console_setpos(device->device_extension, arg);
+        break;
+    case CONIO_GETPOS:
+        infomation = console_getpos(device->device_extension);
+        break;
+    default:
+        status = IO_FAILED;
+        break;
+    }
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = infomation;
+    io_complete_request(ioreq);
+    return status;
 }
 
-
-static device_ops_t ops = {
-	.ioctl = console_ioctl,
-    .write = console_write,
-};
-
-static driver_info_t drvinfo = {
-    .name = DRV_NAME,
-    .version = DRV_VERSION,
-    .owner = "jason hu",
-};
-
-static void __console_init(console_driver_t *console, int id)
+static iostatus_t console_enter(driver_object_t *driver)
 {
-
-    /* 设置屏幕大小 */
-    console->screen_size = SCREEN_SIZE;
-
-	/* 控制台起始地址 */
-    console->original_addr      = id * SCREEN_SIZE;
+    iostatus_t status;
     
-    /* 设置默认颜色 */
-    console->color = COLOR_DEFAULT;
+    device_object_t *devobj;
+    device_extension_t *devext;
 
-    /* 默认在左上角 */
-    if (id == 0) {
-        /* 继承现有位置 */
-        unsigned short cursor = get_cursor();
-        console->x = cursor % SCREEN_WIDTH;
-        console->y = cursor / SCREEN_WIDTH;
-    } else {
-        /* 默认左上角位置 */
-        console->x = 0;
-        console->y = 0;
+    int id;
+    char devname[DEVICE_NAME_LEN] = {0};
+
+    for (id = 0; id < MAX_CONSOLE_NR; id++) {
+        sprintf(devname, "%s%d", DEV_NAME, id);
+        /* 初始化一些其它内容 */
+        status = io_create_device(driver, sizeof(device_extension_t), devname, DEVICE_TYPE_SCREEN, &devobj);
+
+        if (status != IO_SUCCESS) {
+            printk(KERN_ERR "console_enter: create device failed!\n");
+            return status;
+        }
+        /* buffered io mode */
+        devobj->flags = DO_BUFFERED_IO;
+
+        devext = (device_extension_t *)devobj->device_extension;
+        string_new(&devext->device_name, devname, DEVICE_NAME_LEN);
+        devext->device_object = devobj;
+#if DEBUG_LOCAL == 1
+        printk(KERN_DEBUG "console_enter: device extension: device name=%s object=%x\n",
+            devext->device_name.text, devext->device_object);
+#endif
+        /* 设置屏幕大小 */
+        devext->screen_size = SCREEN_SIZE;
+
+        /* 控制台起始地址 */
+        devext->original_addr      = id * SCREEN_SIZE;
+        
+        /* 设置默认颜色 */
+        devext->color = COLOR_DEFAULT;
+
+        /* 默认在左上角 */
+        if (id == 0) {
+            /* 继承现有位置 */
+            unsigned short cursor = get_cursor();
+            devext->x = cursor % SCREEN_WIDTH;
+            devext->y = cursor / SCREEN_WIDTH;
+        } else {
+            /* 默认左上角位置 */
+            devext->x = 0;
+            devext->y = 0;
+        }
     }
+
+    return IO_SUCCESS;
 }
 
-/**
- * ConsoleInitScreen - 初始化控制台屏幕
- * @tty: 控制台所属的终端
- */
-static int console_init_one(console_driver_t *console, int id)
+static iostatus_t console_exit(driver_object_t *driver)
 {
-    /* 初始化控制台信息 */
-    __console_init(console, id);
-
-    /* register device */
-    console->dev = dev_alloc(MKDEV(CONSOLE_MAJOR, id));
-    if (console->dev == NULL) {
-        printk(KERN_ERR "alloc dev for console failed!\n");
-        return -1;
+    /* 遍历所有对象 */
+    device_object_t *devobj, *next;
+    /* 由于涉及到要释放devobj，所以需要使用safe版本 */
+    list_for_each_owner_safe (devobj, next, &driver->device_list, list) {
+        io_delete_device(devobj);   /* 删除每一个设备 */
     }
 
-    console->dev->ops = &ops;
-    console->dev->drvinfo = &drvinfo;
-
-    dev_make_name(devname, "con", id);
-    if (register_device(console->dev, devname, DEVTP_CHAR, console)) {
-        printk(KERN_ERR "register dev for console failed!\n");
-        dev_free(console->dev);
-        return -1;
-    }
-	return 0;
+    string_del(&driver->name); /* 删除驱动名 */
+    return IO_SUCCESS;
 }
 
-/**
- * console_init - 初始化控制台驱动
- */
-static int console_init()
+iostatus_t console_driver_vine(driver_object_t *driver)
 {
+    iostatus_t status = IO_SUCCESS;
     
-   	int i;
-    /* 初始化所有控制台 */
-    for (i = 0; i < MAX_CONSOLE_NR; i++) {
-        if (console_init_one(&console_device[i], i))
-            return -1;
-    }
-    return 0;
+    /* 绑定驱动信息 */
+    driver->driver_enter = console_enter;
+    driver->driver_exit = console_exit;
+
+    driver->dispatch_function[IOREQ_READ] = console_read;
+    driver->dispatch_function[IOREQ_WRITE] = console_write;
+    driver->dispatch_function[IOREQ_DEVCTL] = console_devctl;
+    
+    /* 初始化驱动名字 */
+    string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "console_driver_vine: driver name=%s\n",
+        driver->name.text);
+#endif
+    return status;
 }
-
-
-/**
- * console_exit - 退出驱动
- */
-static void console_exit()
-{
-   	int i;
-    /* 初始化所有控制台 */
-    for (i = 0; i < MAX_CONSOLE_NR; i++) {
-        unregister_device(console_device[i].dev);
-        dev_free(console_device[i].dev);
-    }
-}
-
-EXPORT_UNIT(console_unit, "console", console_init, console_exit);

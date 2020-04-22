@@ -22,7 +22,9 @@ driver_func_t driver_vine_table[] = {
     ide_driver_vine,                    /* harddisk */
     rtl8139_driver_vine,                /* net */
     keyboard_driver_vine,               /* keyboard */
-    tty_driver_vine,                    /* virtual: tty */
+    ramdisk_driver_vine,                /* ramdisk */
+    tty_driver_vine,                    /* filter: tty */
+    
 };
 
 /* 打开的设备表 */
@@ -1131,7 +1133,21 @@ void init_driver_arch()
     
     /* 输出所有驱动以及设备 */
     //print_drivers();
-    
+#if 0    
+    handle_t ramd = device_open("ramdisk", 0);
+    if (ramd < 0)
+        panic(KERN_DEBUG "open ramdisk failed!\n");
+
+    char *buffer = kmalloc(PAGE_SIZE);
+    memset(buffer, 0xff, PAGE_SIZE);
+    printk(KERN_DEBUG "write len=%d\n", device_write(ramd, buffer, PAGE_SIZE, 1));
+    memset(buffer, 0, PAGE_SIZE);
+    printk(KERN_DEBUG "read len=%d\n", device_read(ramd, buffer, PAGE_SIZE, 0));
+    printk(KERN_DEBUG "%x %x: %x %x\n", buffer[0], buffer[511], buffer[512], buffer[1023]);
+
+    device_devctl(ramd, DISKIO_CLEAR, 0);
+    printk(KERN_DEBUG "disk sectors=%d\n", device_devctl(ramd, DISKIO_GETSIZE, 0));
+#endif
 #if 0
     handle_t net0 = device_open("rtl8139", 0);
     if (net0 < 0)
