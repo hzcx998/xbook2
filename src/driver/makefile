@@ -5,3 +5,4 @@ obj-y	+= net/
 obj-y	+= pci/
 obj-y	+= input/
 obj-y	+= tty/
+obj-y	+= filter/

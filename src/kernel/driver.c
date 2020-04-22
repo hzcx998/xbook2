@@ -24,7 +24,7 @@ driver_func_t driver_vine_table[] = {
     keyboard_driver_vine,               /* keyboard */
     ramdisk_driver_vine,                /* ramdisk */
     tty_driver_vine,                    /* filter: tty */
-    
+    null_driver_vine,                   /* filter: null */
 };
 
 /* 打开的设备表 */
@@ -1133,6 +1133,19 @@ void init_driver_arch()
     
     /* 输出所有驱动以及设备 */
     //print_drivers();
+#if 0    
+    handle_t null = device_open("null", 0);
+    if (null < 0)
+        panic(KERN_DEBUG "open null failed!\n");
+    
+    char *buffer = kmalloc(PAGE_SIZE);
+    memset(buffer, 0xff, PAGE_SIZE);
+    printk(KERN_DEBUG "write len=%d\n", device_write(null, buffer, PAGE_SIZE, 0));
+    memset(buffer, 0, PAGE_SIZE);
+    printk(KERN_DEBUG "read len=%d\n", device_read(null, buffer, PAGE_SIZE, 0));
+    printk(KERN_DEBUG "%x %x: %x %x\n", buffer[0], buffer[511], buffer[512], buffer[1023]);
+
+#endif
 #if 0    
     handle_t ramd = device_open("ramdisk", 0);
     if (ramd < 0)
