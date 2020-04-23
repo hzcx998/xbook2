@@ -4,6 +4,8 @@
 #include <xbook/debug.h>
 #include <xbook/trigger.h>
 
+#define DEBUG_LOCAL 0
+
 unsigned long sys_alarm(unsigned long second)
 {
     task_t *cur = current_task;
@@ -17,7 +19,9 @@ unsigned long sys_alarm(unsigned long second)
         cur->alarm.flags = 1;       /* 定时器生效 */
         cur->alarm.second = second; /* 设定秒数 */
         cur->alarm.ticks = HZ;      /* 设置ticks数 */
+#if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "sys_alarm: alarm seconds %d ticks %d\n", second, cur->alarm.ticks);
+#endif    
     }
     return old_second; /* 返回上次剩余时间 */
 }
@@ -36,7 +40,9 @@ void update_alarms()
                 task->alarm.ticks = HZ; 
                 /* 如果时间结束，那么就发送SIGALRM信号 */
                 if (!task->alarm.second) {
+#if DEBUG_LOCAL == 1
                     printk(KERN_DEBUG "update_alarms: task %d do alarm.\n", task->pid);
+#endif
                     sys_trigger_active(TRIGALARM, task->pid);
                     task->alarm.flags = 0;
                 }

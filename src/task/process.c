@@ -427,7 +427,7 @@ task_t *process_create(char *name, char **argv)
         return NULL;
     // 初始化线程
     task_init(task, name, TASK_PRIO_USER);
-    
+    task->pid = INIT_PROC_PID;  /* 修改pid为INIT进程pid */
     if (proc_vmm_init(task)) {
         kfree(task);
         return NULL;

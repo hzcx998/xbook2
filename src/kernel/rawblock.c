@@ -4,6 +4,8 @@
 #include <xbook/debug.h>
 #include <xbook/driver.h>
 
+#define DEBUG_LOCAL 0
+
 LIST_HEAD(raw_block_list);
 
 raw_block_t *raw_block_alloc(handle_t handle, char *name)
@@ -108,7 +110,9 @@ int raw_block_upload(raw_block_t *block)
     
     /* 小于1个块 */
     if (count < RB_BLOCK_NR) {
+#if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "raw_block_upload: count=%d\n", count);
+#endif
         if (device_read(block->handle, block->vaddr, count * SECTOR_SIZE, off) < 0) 
             return -1;
     } else {

@@ -106,9 +106,16 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
         /* 前台任务 */
         if (extension->hold_pid == current_task->pid) {
             ioreq->io_status.infomation = device_read(extension->kbd,
-                ioreq->system_buffer, ioreq->parame.write.length, ioreq->parame.write.offset);
+                ioreq->user_buffer, 4, ioreq->parame.read.offset); /* read all */
             if (ioreq->io_status.infomation == -1) {
                 status = IO_FAILED;
+            } else {
+                /* 过滤弹起码 */
+                unsigned int key = *(unsigned int *) ioreq->user_buffer;
+                //printk("code:%x\n", key);
+                if (key & 0x40000) {    /* 弹起码标志 */
+                    status = IO_FAILED; /* 不捕捉 */
+                }
             }
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
             trigger_force(TRIGHW, current_task->pid);
@@ -129,14 +136,9 @@ iostatus_t tty_write(device_object_t *device, io_request_t *ioreq)
     device_extension_t *extension = device->device_extension;
     iostatus_t status = IO_SUCCESS;
 
-    /* 前台任务 */
-    if (extension->hold_pid == current_task->pid) {
-        ioreq->io_status.infomation = device_write(extension->con,
-            ioreq->system_buffer, ioreq->parame.write.length, ioreq->parame.write.offset);
-    } else {    /* 不是前台任务就触发任务的硬件触发器 */
-        trigger_force(TRIGHW, current_task->pid);
-        status = IO_FAILED;
-    }
+    ioreq->io_status.infomation = device_write(extension->con,
+        ioreq->user_buffer, ioreq->parame.write.length, ioreq->parame.write.offset);
+    
     ioreq->io_status.status = status;
     /* 调用完成请求 */
     io_complete_request(ioreq);
@@ -204,8 +206,8 @@ static iostatus_t tty_enter(driver_object_t *driver)
             kfree(public);
             return status;
         }
-        /* buffered io mode */
-        devobj->flags = DO_BUFFERED_IO;
+        /* neither io mode */
+        devobj->flags = 0;
         extension = (device_extension_t *)devobj->device_extension;
         extension->device_object = devobj;
 #if DEBUG_LOCAL == 1

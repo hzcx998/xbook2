@@ -60,3 +60,6 @@ dkms.conf
 
 # Image dir
 develop/image
+
+# dir
+recycle

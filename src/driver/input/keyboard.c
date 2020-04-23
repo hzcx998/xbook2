@@ -150,17 +150,18 @@ or in the list below */
 #define KBD_ENTER		(0x03 + KBD_FLAG_EXT)	/* Enter	*/
 #define KBD_BACKSPACE	(0x04 + KBD_FLAG_EXT)	/* BackSpace	*/
 
-#define KBD_GUI_L		(0x05 + KBD_FLAG_EXT)	/* L GUI	*/
-#define KBD_GUI_R		(0x06 + KBD_FLAG_EXT)	/* R GUI	*/
-#define KBD_APPS		(0x07 + KBD_FLAG_EXT)	/* APPS	*/
 
 /* Shift, Ctrl, Alt */
-#define KBD_SHIFT_L		(0x08 + KBD_FLAG_EXT)	/* L Shift	*/
-#define KBD_SHIFT_R		(0x09 + KBD_FLAG_EXT)	/* R Shift	*/
-#define KBD_CTRL_L		(0x0A + KBD_FLAG_EXT)	/* L Ctrl	*/
-#define KBD_CTRL_R		(0x0B + KBD_FLAG_EXT)	/* R Ctrl	*/
-#define KBD_ALT_L		(0x0C + KBD_FLAG_EXT)	/* L Alt	*/
-#define KBD_ALT_R		(0x0D + KBD_FLAG_EXT)	/* R Alt	*/
+#define KBD_SHIFT_L		(0x05 + KBD_FLAG_EXT)	/* L Shift	*/
+#define KBD_SHIFT_R		(0x06 + KBD_FLAG_EXT)	/* R Shift	*/
+#define KBD_CTRL_L		(0x07 + KBD_FLAG_EXT)	/* L Ctrl	*/
+#define KBD_CTRL_R		(0x08 + KBD_FLAG_EXT)	/* R Ctrl	*/
+#define KBD_ALT_L		(0x09 + KBD_FLAG_EXT)	/* L Alt	*/
+#define KBD_ALT_R		(0x0a + KBD_FLAG_EXT)	/* R Alt	*/
+
+#define KBD_GUI_L		(0x0b + KBD_FLAG_EXT)	/* L GUI	*/
+#define KBD_GUI_R		(0x0c + KBD_FLAG_EXT)	/* R GUI	*/
+#define KBD_APPS		(0x0d + KBD_FLAG_EXT)	/* APPS	*/
 
 /* Lock keys */
 #define KBD_CAPS_LOCK	(0x0E + KBD_FLAG_EXT)	/* Caps Lock	*/
@@ -267,8 +268,8 @@ static unsigned int keymap[MAX_SCAN_CODE_NR * KEYMAP_COLS] = {
 /* 0x0B - '0'		*/	'0',		')',		0,
 /* 0x0C - '-'		*/	'-',		'_',		0,
 /* 0x0D - '='		*/	'=',		'+',		0,
-/* 0x0E - BS		*/	KBD_BACKSPACE,	KBD_BACKSPACE,	0,
-/* 0x0F - TAB		*/	KBD_TAB,		KBD_TAB,		0,
+/* 0x0E - BS		*/	'\b',	    '\b',	    0,
+/* 0x0F - TAB		*/	'\t',		'\t',		0,
 /* 0x10 - 'q'		*/	'q',		'Q',		0,
 /* 0x11 - 'w'		*/	'w',		'W',		0,
 /* 0x12 - 'e'		*/	'e',		'E',		0,
@@ -281,8 +282,8 @@ static unsigned int keymap[MAX_SCAN_CODE_NR * KEYMAP_COLS] = {
 /* 0x19 - 'p'		*/	'p',		'P',		0,
 /* 0x1A - '['		*/	'[',		'{',		0,
 /* 0x1B - ']'		*/	']',		'}',		0,
-/* 0x1C - CR/LF		*/	KBD_ENTER,		KBD_ENTER,		KBD_PAD_ENTER,
-/* 0x1D - l. Ctrl	*/	KBD_CTRL_L,		KBD_CTRL_L,		KBD_CTRL_R,
+/* 0x1C - CR/LF		*/	'\n',		'\n',		KBD_PAD_ENTER,
+/* 0x1D - l. Ctrl	*/	KBD_CTRL_L, KBD_CTRL_L,	KBD_CTRL_R,
 /* 0x1E - 'a'		*/	'a',		'A',		0,
 /* 0x1F - 's'		*/	's',		'S',		0,
 /* 0x20 - 'd'		*/	'd',		'D',		0,
@@ -783,13 +784,13 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
     switch (ioreq->parame.read.length)
     {
     case 1:
-        *(unsigned char *)ioreq->system_buffer = ext->keycode;
+        *(unsigned char *)ioreq->user_buffer = ext->keycode;
         break;
     case 2:
-        *(unsigned short *)ioreq->system_buffer = ext->keycode;
+        *(unsigned short *)ioreq->user_buffer = ext->keycode;
         break;
     case 4:
-        *(unsigned int *)ioreq->system_buffer = ext->keycode;
+        *(unsigned int *)ioreq->user_buffer = ext->keycode;
         break;
     default:
         status = IO_FAILED;
@@ -861,8 +862,8 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
         printk(KERN_ERR "keyboard_enter: create device failed!\n");
         return status;
     }
-    /* buffered io mode */
-    devobj->flags = DO_BUFFERED_IO;
+    /* neither io mode */
+    devobj->flags = 0;
     devext = (device_extension_t *)devobj->device_extension;
     devext->device_object = devobj;
 #if DEBUG_LOCAL == 1

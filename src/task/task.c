@@ -720,6 +720,7 @@ void init_tasks()
 
     create_idle_thread();
 
+    new_pid(); /* 跳过pid1，预留给INIT进程 */
     /* 有可能做测试阻塞main线程，那么就没有线程，
     在切换任务的时候就会出错，所以这里创建一个测试线程 */
     /*kthread_start("test", TASK_PRIO_RT, taskA, "NULL");
