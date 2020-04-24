@@ -366,27 +366,36 @@ int proc_res_exit(task_t *task)
 
 int proc_release(task_t *task)
 {
-    if (proc_vmm_exit(task))
-        return -1;
-    if (proc_trigger_exit(task))
-        return -1;
-    if (proc_res_exit(task))
-        return -1;
+    /* 主线程才释放进程资源 */
+    if (TASK_IS_MAIN_THREAD(task)) {
+        if (proc_vmm_exit(task))
+            return -1;
+        if (proc_trigger_exit(task))
+            return -1;
+        if (proc_res_exit(task))
+            return -1;
+    }
 
     /* 取消定时器 */
     timer_cancel(task->sleep_timer);
-    
     return 0;
 }
 
 int proc_destroy(task_t *task)
 {
-    if (task->vmm == NULL)
+    /* 主线程才释放进程资源 */
+    if (TASK_IS_MAIN_THREAD(task)) {
+        printk(KERN_DEBUG "proc_destroy: main thread.\n");
+        if (task->vmm == NULL)
         return -1;
-    free_page(v2p(task->vmm->page_storage));
-    vmm_free(task->vmm);
-    task->vmm = NULL;
-    task_free(task);
+        free_page(v2p(task->vmm->page_storage));
+        vmm_free(task->vmm);
+        task->vmm = NULL;    
+    } else {
+        printk(KERN_DEBUG "proc_destroy: subset thread.\n");
+    }
+    task_free(task);    /* 子线程只释放结构体 */
+    printk(KERN_DEBUG "proc_destroy: done!\n");
     return 0;
 }
 

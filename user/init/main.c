@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     res_open(TTY_NAME, RES_DEV, 0);
     res_ioctl(RES_STDINNO, TTYIO_CLEAR, 0);
     printf("init: say, hello!\n");
-    test();
+    
     int pid = fork();
     if (pid < 0) {
         printf("init: fork failed! exit now!\n");
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     } else {
         /* execute a process */
         //printf("init-child: pid is %d, my parent pid is %d.\n", getpid(), getppid());
-
+        test();
         /* open disk */
         int ide0 = res_open(DISK_NAME, RES_DEV, 0);
         if (ide0 < 0) {
@@ -113,18 +113,22 @@ void test()
 
     unsigned char *stack_top;
     uthread_attr_t attr;
-    uthread_attr_init(&attr);
-    uthread_attr_setstacksize(&attr, 4096);
-    /* get heap start addr */
-    stack_top = heap(0);
-    /* expand heap */
-    heap(stack_top + attr.stacksize);
-    memset(stack_top, 0, attr.stacksize);
-    uthread_attr_setstackaddr(&attr, stack_top);
-    
-    uthread_t tid = uthread_create(NULL, thread_test, "hello, world!");
-    printf("init: create thread %d\n", tid);
-    
+    int i;
+    for (i = 0; i < 10; i++) {
+        uthread_attr_init(&attr);
+        uthread_attr_setstacksize(&attr, 4096);
+        /* get heap start addr */
+        stack_top = heap(0);
+        /* expand heap */
+        heap(stack_top + attr.stacksize);
+        memset(stack_top, 0, attr.stacksize);
+        uthread_attr_setstackaddr(&attr, stack_top);
+        uthread_attr_setdetachstate(&attr, UTHREAD_CREATE_DETACHED);
+        
+        uthread_t tid = uthread_create(&attr, thread_test, "hello, world!");
+        printf("init: create thread %d\n", tid);
+
+    }    
     while (1)
     {
         /* code */

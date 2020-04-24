@@ -103,8 +103,14 @@ task_t *uthread_start(task_func_t *func, void *arg,
     
     // 初始化线程
     task_init(task, "uthread", TASK_PRIO_USER);
-    task->tgid = parent->pid;   /* 线程组id指向父进程的pid */
-    task->parent_pid = parent->pid; /* 父进程是创建者进程 */
+
+    if (parent->tgid == parent->pid) {  /* 父进程是主线程 */
+        task->tgid = parent->pid;   /* 线程组id指向父进程的pid */
+        task->parent_pid = parent->pid; /* 父进程是创建者进程 */
+    } else {    /* 父进程不是主线程，是子线程 */
+        task->tgid = parent->tgid;   /* 线程组指向父进程的tpid */
+        task->parent_pid = parent->tgid; /* 父进程是主线程 */
+    }
 
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "uthread_start: pid=%x tgid=%x parent pid=%d\n",
@@ -166,5 +172,5 @@ uthread_t sys_thread_create(
 void sys_thread_exit(void *retval)
 {
     printk(KERN_DEBUG "sys_thread_exit: exit with %x\n", retval);
-    
+    uthread_exit(retval);
 }

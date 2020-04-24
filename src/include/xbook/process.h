@@ -33,5 +33,6 @@ uthread_t sys_thread_create(
     void *thread_entry
 );
 void sys_thread_exit(void *retval);
+void uthread_exit(void *status);
 
 #endif /* _XBOOK_PROCESS_H */

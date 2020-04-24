@@ -104,6 +104,10 @@ extern list_t task_global_list;
         ((trap_frame_t *) (((unsigned char *) (task) + \
         TASK_KSTACK_SIZE) - sizeof(trap_frame_t)))
 
+/* 判断任务是否为主线程 */
+#define TASK_IS_MAIN_THREAD(task) \
+        ((task)->pid == (task)->tgid)
+
 void init_tasks();
 void kernel_pause();
 

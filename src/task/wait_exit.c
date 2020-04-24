@@ -16,13 +16,32 @@
 */
 
 /**
+ * thread_release - 释放线程资源
+ * @task: 任务
+ * 
+ * 线程资源比较少，主要是任务结构体（需要交给父进程处理），
+ * 自己要处理的很少很少。。。
+ * 
+ * @return: 释放成功返回0，释放失败返回-1
+ */
+int thread_release(task_t *task)
+{
+    /* 取消定时器 */
+    timer_cancel(task->sleep_timer);
+    
+    return 0;
+}
+
+
+/**
  * wait_one_hangging_child - 处理一个挂起子进程
  * 
  */
 int wait_one_hangging_child(task_t *parent, int *status)
 {
-    task_t *child;
-    list_for_each_owner (child, &task_global_list, global_list) {
+    task_t *child, *next;
+    /* 可能删除列表元素，需要用safe */
+    list_for_each_owner_safe (child, next, &task_global_list, global_list) {
         if (child->parent_pid == parent->pid) { /* find a child process */
             if (child->state == TASK_HANGING) { /* child is hanging, destroy it  */
                 pid_t child_pid = child->pid;
@@ -32,7 +51,6 @@ int wait_one_hangging_child(task_t *parent, int *status)
                 /* 状态是可以为空的，不为空才写入子进程退出状态 */
                 if (status != NULL)
                     *status = child->exit_status;
-                list_del(&child->global_list);  /* 把子进程从系统中删除 */
                 /* 销毁子进程的PCB */
                 proc_destroy(child);
                 return child_pid;
@@ -56,8 +74,6 @@ int deal_zombie_child(task_t *parent)
 #if DEBUG_LOCAL == 1
                 printk(KERN_NOTICE "find a zombie proc %d \n", child->pid);
 #endif
-                list_del(&child->global_list);  /* 把子进程从系统中删除 */
-                
                 /* 销毁子进程的PCB */
                 proc_destroy(child);
                 zombie++;
@@ -239,15 +255,13 @@ void kthread_exit(int status)
     task_t *cur = current_task;  /* 当前进程是父进程 */
     cur->exit_status = status;
 
+    /* 释放内核资源 */
+    thread_release(cur);
+
     /* 内核线程没有实际的父进程，因此把自己过继给init进程 */
     cur->parent_pid = INIT_PROC_PID;
 
-    /* 释放内核资源 */
-
-    /* 取消定时器 */
-    timer_cancel(cur->sleep_timer);
-    
-    task_t *parent = find_task_by_pid(INIT_PROC_PID); 
+    task_t *parent = find_task_by_pid(cur->parent_pid); 
     if (parent) {
         /* 查看父进程状态 */
         if (parent->state == TASK_WAITING) {
@@ -278,7 +292,7 @@ void kthread_exit(int status)
     }
 }
 
-void uthread_exit(int status)
+void uthread_exit(void *status)
 {
     unsigned long flags;
     save_intr(flags);
@@ -287,19 +301,24 @@ void uthread_exit(int status)
     
     /* 检测是用户进程还是线程退出 */
     if (cur->pid == cur->tgid) { /* 主线程退出 */
-        sys_exit(status);
+        sys_exit((int) status);
     }
-    /* 子线程退出 */
-    
-    cur->exit_status = status;
 
-    task_t *parent = find_task_by_pid(INIT_PROC_PID); 
+    cur->exit_status = (int)status;
     
     /* 释放内核资源 */
+    thread_release(cur);
 
-    /* 取消定时器 */
-    timer_cancel(cur->sleep_timer);
+    /* 子线程退出 */
+    if (cur->flags & TASK_FLAG_DETACH) {    /* 不需要同步等待，"自己释放资源"(让init来释放) */
+        cur->parent_pid = INIT_PROC_PID;    /* 过继给init进程 */
+        printk(KERN_DEBUG "uthread_exit: detached.\n");
+    } else {    /* 需要同步释放 */
+
+    }
     
+    task_t *parent = find_task_by_pid(cur->parent_pid); 
+
     if (parent) {
         /* 查看父进程状态 */
         if (parent->state == TASK_WAITING) {
