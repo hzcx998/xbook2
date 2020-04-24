@@ -308,8 +308,5 @@ void init_pci()
 	/*scan all pci buses*/
 	pci_scan_buses();
 
-#if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "init_pci: device connected number is %d.\n",
-        pic_get_device_connected());
-#endif
+    printk(KERN_INFO "init_pci: pci type device found %d.\n", pic_get_device_connected());
 }

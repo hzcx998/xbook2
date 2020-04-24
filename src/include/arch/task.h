@@ -17,4 +17,11 @@
 /* 从内核态切换到用户态 */
 #define switch_to_user(frame)      __switch_to_user(frame)
 
+#define build_user_thread_frame(frame, arg, func, thread_entry, stack_top) \
+        __build_user_thread_frame(frame, (void *)arg, (void *) func, \
+        (void *) thread_entry, (void *) stack_top)
+
+#define build_trigger_frame(trig, act, frame) __build_trigger_frame(trig, act, frame);
+
+
 #endif  /* _ARCH_TASK_H */

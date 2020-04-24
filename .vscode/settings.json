@@ -62,6 +62,8 @@
         "driver.h": "c",
         "ktime.h": "c",
         "kfile.h": "c",
-        "proc.h": "c"
+        "proc.h": "c",
+        "uthread.h": "c",
+        "stddef.h": "c"
     }
 }

@@ -315,6 +315,7 @@ int do_trigger(trap_frame_t *frame)
                 {
                 case TRIGUSR0: /* user0 */
                 case TRIGUSR1: /* user1 */
+                case TRIGALARM: /* alarm */
                 case TRIGRESUM: /* 在设置恢复触发器的时候就唤醒任务了 */
 #if DEBUG_LOCAL == 1
                 printk(KERN_DEBUG "do_trigger: user or resume.\n");

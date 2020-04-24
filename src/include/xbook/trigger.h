@@ -28,7 +28,6 @@ int sys_trigger_active(int trig, pid_t pid);
 int sys_trigger_handler(int trig, trighandler_t handler);
 int sys_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact);
 int sys_trigger_return(unsigned int ebx, unsigned int ecx, unsigned int esi, unsigned int edi, trap_frame_t *frame);
-void build_trigger_frame(int trig, trig_action_t *ta, trap_frame_t *frame);
 
 /**
  * trigger_calc_left - 计算是否还有信号需要处理

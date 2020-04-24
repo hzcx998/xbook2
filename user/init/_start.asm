@@ -1,5 +1,6 @@
 extern main
 extern exit	
+extern thread_exit	
 
 [bits 32]
 [section .text]

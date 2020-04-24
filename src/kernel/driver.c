@@ -705,9 +705,7 @@ int io_device_queue_get(device_object_t *devobj, unsigned char *buf, int buflen,
 
 int io_device_queue_fast_read(device_object_t *devobj, unsigned char *buf, int buflen)
 {
-    if (!(devobj->flags & DO_DISPENSE)) /* 没有可分发标志就返回 */
-        return -1;
-          
+    
     device_queue_t *queue;
     int i;
     /* 先检查是否已经在设备队列中 */
@@ -739,6 +737,38 @@ int io_device_queue_fast_read(device_object_t *devobj, unsigned char *buf, int b
     return -1; /* 不在队列中 */
 }
 
+iostatus_t io_device_increase_reference(device_object_t *devobj)
+{
+    /* 增加引用 */
+    if (atomic_get(&devobj->reference) >= 0) {
+        atomic_inc(&devobj->reference);
+        /* 如果有分发标志才添加到设备队列 */
+        if (devobj->flags & DO_DISPENSE) {
+            io_device_queue_insert(devobj);
+        }
+    } else {
+        printk(KERN_ERR "device_open: reference %d error!\n", atomic_get(&devobj->reference));
+        return IO_FAILED;
+    }
+    return IO_SUCCESS;
+}
+
+iostatus_t io_device_decrease_reference(device_object_t *devobj)
+{
+    /* 减少引用 */
+    if (atomic_get(&devobj->reference) >= 0) {
+        atomic_dec(&devobj->reference);
+        /* 如果有分发标志，才把当前进程的设备队列链从设备中删除 */
+        if (devobj->flags & DO_DISPENSE) {
+            io_device_queue_remove(devobj);
+        }
+    } else {
+        printk(KERN_ERR "device_close: reference %d error!\n", atomic_get(&devobj->reference));
+        return IO_FAILED;    
+    }
+    return IO_SUCCESS;
+}
+
 /**
  * device_open - 打开设备操作
  * @devname: 设备名
@@ -758,20 +788,13 @@ handle_t device_open(char *devname, unsigned int flags)
         printk(KERN_ERR "device_open: device %s not found!\n", devname);
         return -1;
     }
+    iostatus_t status = IO_SUCCESS;
     
-    /* 增加引用 */
-    if (atomic_get(&devobj->reference) >= 0) {
-        atomic_inc(&devobj->reference);
-        /* 如果有分发标志才添加到设备队列 */
-        if (devobj->flags & DO_DISPENSE) {
-            io_device_queue_insert(devobj);
-        }
-    } else {
-        printk(KERN_ERR "device_open: reference %d error!\n", atomic_get(&devobj->reference));
+    status = io_device_increase_reference(devobj);
+    if (status == IO_FAILED) {
         return -1;
     }
 
-    iostatus_t status = IO_SUCCESS;
     io_request_t *ioreq = NULL;
     
     /* 引用计数为1，才真正打开 */
@@ -811,10 +834,8 @@ rollback_ref:
 #if DEBUG_LOCAL == 1
     printk(KERN_ERR "device_open: do dispatch failed!\n");
 #endif
-    
-    atomic_dec(&devobj->reference);
-    if (devobj->flags & DO_DISPENSE)
-        io_device_queue_remove(devobj);
+    io_device_decrease_reference(devobj);
+
     return -1;
 }
 
@@ -840,18 +861,11 @@ int device_close(handle_t handle)
         return -1;
     }
     
-    /* 减少引用 */
-    if (atomic_get(&devobj->reference) >= 0) {
-        atomic_dec(&devobj->reference);
-        /* 如果有分发标志，才把当前进程的设备队列链从设备中删除 */
-        if (devobj->flags & DO_DISPENSE) {
-            io_device_queue_remove(devobj);
-        }
-    } else {
-        printk(KERN_ERR "device_close: reference %d error!\n", atomic_get(&devobj->reference));
-        return -1;    
-    }
     iostatus_t status = IO_SUCCESS;
+    status = io_device_decrease_reference(devobj);
+    if (status == IO_FAILED) {
+        return -1;
+    }
     io_request_t *ioreq = NULL;
 
     if (!atomic_get(&devobj->reference)) { /* 最后一次关闭才关闭 */    
@@ -888,9 +902,7 @@ rollback_ref:
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "device_close: do dispatch failed!\n");
 #endif
-    atomic_inc(&devobj->reference);
-    if (devobj->flags & DO_DISPENSE)
-        io_device_queue_insert(devobj);
+    io_device_increase_reference(devobj);
     return -1;
 }
 
@@ -915,12 +927,8 @@ int device_grow(handle_t handle)
         /* 应该激活一个触发器，让调用者停止运行 */
         return -1;
     }
-    
-    /* 增加引用 */
-    if (atomic_get(&devobj->reference) >= 0) {
-        atomic_inc(&devobj->reference);
+    if (io_device_increase_reference(devobj) == IO_SUCCESS)
         return 0;
-    }
     return -1;
 }
 /**
@@ -948,11 +956,15 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
     }
     
     int len;
-    /* 如果在设备队列中已经有数据包，那就获取，没有了才会去读取 */
-    len = io_device_queue_fast_read(devobj, buffer, length);
-    if (len > 0)
-        return len; /* 读取成功，直接返回读取的数据量 */
 
+    /* 是分发设备读取就尝试进入分发读取 */
+    if ((devobj->flags & DO_DISPENSE)) {
+        /* 如果在设备队列中已经有数据包，那就获取，没有了才会去读取 */
+        len = io_device_queue_fast_read(devobj, buffer, length);
+        if (len > 0)
+            return len; /* 读取成功，直接返回读取的数据量 */
+    }     
+    
     iostatus_t status = IO_SUCCESS;
     io_request_t *ioreq = NULL;
     ioreq = io_build_sync_request(IOREQ_READ, devobj, buffer, length, offset, NULL);

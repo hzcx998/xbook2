@@ -74,8 +74,10 @@ void __kernel_trap_frame_init(trap_frame_t *frame)
 }
 
 
-void build_trigger_frame(int trig, trig_action_t *ta, trap_frame_t *frame)
+void __build_trigger_frame(int trig, void *_act, trap_frame_t *frame)
 {
+    trig_action_t *act = (trig_action_t *)_act;
+
     /* 获取信号栈框，在用户的esp栈下面 */
     trigger_frame_t *trigger_frame = (trigger_frame_t *)((frame->esp - sizeof(trigger_frame_t)) & -8UL);
 
@@ -101,7 +103,7 @@ void build_trigger_frame(int trig, trig_action_t *ta, trap_frame_t *frame)
     *(short *)(trigger_frame->ret_code + 5) = 0x40cd;      /* int对应的指令是0xcd，系统调用中断号是0x40 */
     
     /* 设置中断栈的eip成为用户设定的处理函数 */
-    frame->eip = (unsigned long)ta->handler;
+    frame->eip = (unsigned long)act->handler;
 
     /* 设置运行时的栈 */
     frame->esp = (unsigned long)trigger_frame;
@@ -111,3 +113,13 @@ void build_trigger_frame(int trig, trig_action_t *ta, trap_frame_t *frame)
     frame->ss = USER_STACK_SEL;
     frame->cs = USER_CODE_SEL;
 }
+
+void __build_user_thread_frame(trap_frame_t *frame, void *arg, void *func,
+    void *thread_entry, void *stack_top)
+{
+    frame->ebx = (unsigned long) arg;     /* 参数 */
+    frame->ecx = (unsigned long) func;    /* 线程例程入口 */
+    frame->eip = (unsigned long) thread_entry;
+    frame->esp = (unsigned long) stack_top;
+}
+    

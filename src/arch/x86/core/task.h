@@ -73,6 +73,11 @@ void __user_trap_frame_init(trap_frame_t *frame);
 void __ktask_trap_frame_init(trap_frame_t *frame);
 void __kernel_trap_frame_init(trap_frame_t *frame);
 
+void __build_user_thread_frame(trap_frame_t *frame, void *arg, void *func,
+    void *thread_entry, void *stack_top);
+
+void __build_trigger_frame(int trig, void *act, trap_frame_t *frame);
+
 #define __user_entry_point(frame, entry) (frame)->eip = entry
 
 void intr_exit();

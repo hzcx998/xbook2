@@ -2,6 +2,7 @@
 #include <arch/page.h>
 #include <arch/general.h>
 #include <arch/cpu.h>
+#include <arch/task.h>
 #include <xbook/task.h>
 #include <xbook/memops.h>
 #include <xbook/string.h>
@@ -77,7 +78,7 @@ void dump_task_kstack(thread_stack_t *kstack)
  * @function: 要去执行的函数
  * @arg: 参数
  */
-void make_task_stack(task_t *task, task_func_t function, void *arg)
+void make_task_stack(task_t *task, task_func_t *function, void *arg)
 {
     /* 预留中断栈 */
     task->kstack -= sizeof(trap_frame_t);
@@ -125,6 +126,7 @@ void task_init(task_t *task, char *name, int priority)
     
     /* get a new pid */
     task->pid = new_pid();
+    task->tgid = task->pid; /* 默认都是主线程，需要的时候修改 */
     task->parent_pid = -1;  /* no parent */
     task->exit_status = 0;  /* no status */
 
@@ -147,6 +149,8 @@ void task_init(task_t *task, char *name, int priority)
     /* set alarm */
     alarm_init(&task->alarm);
 
+    /* set errno for user thread */
+    task->errno = 0;
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;
 }
@@ -196,7 +200,7 @@ task_t *find_task_by_pid(pid_t pid)
  * @func: 线程入口
  * @arg: 线程参数
  */
-task_t *kthread_start(char *name, int priority, task_func_t func, void *arg)
+task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg)
 {
     // 创建一个新的线程结构体
     task_t *task = (task_t *) kmalloc(TASK_KSTACK_SIZE);
@@ -334,7 +338,12 @@ static void create_idle_thread()
  */
 pid_t sys_get_pid()
 {
-    return current_task->pid;
+    /* 
+    当调用者为进程时，tgid=pid
+    当调用者为线程时，tgid=master process pid
+    也就是说，线程返回的是主线程（进程）的pid
+     */
+    return current_task->tgid;
 }
 
 /**
@@ -343,6 +352,15 @@ pid_t sys_get_pid()
 pid_t sys_get_ppid()
 {
     return current_task->parent_pid;
+}
+
+/**
+ * sys_get_tid - 获取线程id
+ */
+pid_t sys_get_tid()
+{
+    /* 由于最小粒度是线程，所以，pid->线程id。 */
+    return current_task->pid;
 }
 
 /**
@@ -664,17 +682,6 @@ void dump_task(task_t *task)
     //printk("vmm->vm_frame:%x priority:%d ticks:%d elapsed ticks:%d\n", task->vmm->page_storage, task->priority, task->ticks, task->elapsed_ticks);
     printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
-
-void serve_idle(void *arg)
-{
-    //printk("ktask_main running...\n");
-    while (1)
-    {
-        enable_intr();
-        cpu_idle();
-    }
-}
-
 static char *init_argv[3] = {"init", 0};
 
 /**
@@ -709,6 +716,21 @@ void start_user()
 		cpu_idle();
 	};
 }
+#if 0   /* kthread test */
+void kthread_test(void *arg)
+{
+    printk(KERN_DEBUG "kthread_test: start...\n");
+    int i = 0;
+    while (1)
+    {
+        printk(KERN_DEBUG "kthread_test: sleep %d\n", i);
+        sys_sleep(1);
+        i++;
+        if (i > 3)
+            kthread_exit(0);
+    }
+}
+#endif
 /**
  * init_tasks - 初始化多任务环境
  */
@@ -721,12 +743,12 @@ void init_tasks()
     create_idle_thread();
 
     new_pid(); /* 跳过pid1，预留给INIT进程 */
+
     /* 有可能做测试阻塞main线程，那么就没有线程，
     在切换任务的时候就会出错，所以这里创建一个测试线程 */
     /*kthread_start("test", TASK_PRIO_RT, taskA, "NULL");
     kthread_start("test2", TASK_PRIO_RT, taskB, "NULL");
     kthread_start("test3", TASK_PRIO_RT, taskC, "NULL");*/
     //kthread_start("test4", 1, taskD, "NULL");
-    /* idle 哨兵服务，pid是0 */
-    //kthread_start("idle", TASK_PRIO_IDLE, serve_idle, NULL);
+    //kthread_start("test", TASK_PRIO_USER, kthread_test, NULL);
 }

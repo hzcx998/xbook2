@@ -51,6 +51,12 @@ typedef struct thread_stack {
 /* init 进程的pid */
 #define INIT_PROC_PID       1
 
+enum task_flags {
+    TASK_FLAG_DETACH        = (1 << 0),     /* 任务分离标志，表示自己释放资源，仅对用户线程使用 */
+};
+
+
+
 typedef struct priority_queue {
     list_t list;            /* 任务链表 */
     unsigned long length;   /* 队列长度 */
@@ -61,7 +67,8 @@ typedef struct task {
     unsigned char *kstack;              // kernel stack, must be first member
     task_state_t state;                 /* 任务的状态 */
     pid_t pid;                          // 自己的进程id
-    pid_t parent_pid;                   // 父进程id
+    pid_t parent_pid;                   // 父进程id：
+    pid_t tgid;                         /* 线程组id：线程属于哪个进程，和pid一样，就说明是主线程，不然就是子线程 */
     unsigned long flags;                /* 标志 */
     unsigned long priority;             /* 任务所在的优先级队列 */
     unsigned long ticks;                /* 运行的ticks，当前剩余的timeslice */
@@ -77,6 +84,8 @@ typedef struct task {
     resource_t *res;                    /* 设备资源 */
     timer_t *sleep_timer;               /* 休眠时的定时器 */
     alarm_t alarm;                      /* 闹钟 */
+    long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
+
     unsigned int stack_magic;           /* 任务的魔数 */
 } task_t;
 
@@ -86,14 +95,14 @@ extern list_t task_global_list;
 /* 获取当前地址位置 */
 #define __current_task()   ((task_t *)(current_task_addr)())
 
-//#define current_task   __current_task()
 #define current_task    task_current
-
 
 #define set_current_state(stat) \
         current_task->state = (stat)
 
-extern trap_frame_t *current_trap_frame;
+#define GET_TASK_TRAP_FRAME(task) \
+        ((trap_frame_t *) (((unsigned char *) (task) + \
+        TASK_KSTACK_SIZE) - sizeof(trap_frame_t)))
 
 void init_tasks();
 void kernel_pause();
@@ -103,10 +112,9 @@ void task_free(task_t *task);
 
 void dump_task(task_t *task);
 
-void make_task_stack(task_t *task, task_func_t function, void *arg);
-task_t *kthread_start(char *name, int priority, task_func_t func, void *arg);
-
-void kthread_exit(task_t *task);
+void make_task_stack(task_t *task, task_func_t *function, void *arg);
+task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg);
+void kthread_exit(int status);
 
 task_t *find_task_by_pid(pid_t pid);
 void task_global_list_add(task_t *task);
@@ -130,6 +138,8 @@ void dump_task_kstack(thread_stack_t *kstack);
 
 pid_t sys_get_pid();
 pid_t sys_get_ppid();
+pid_t sys_get_tid();
+
 unsigned long sys_sleep(unsigned long second);
 
 #endif   /* _XBOOK_TASK_H */

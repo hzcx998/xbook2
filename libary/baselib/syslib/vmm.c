@@ -13,7 +13,17 @@
  * 
  * @return: always return newest heap value
  */
-unsigned long heap(unsigned long heap)
+void *heap(void *heap)
 {
-    return syscall1(unsigned long, SYS_HEAP, heap);
+    return syscall1(void *, SYS_HEAP, heap);
+}
+
+void *malloc(size_t size)
+{
+    return NULL;
+}
+
+void free(void *ptr)
+{
+
 }

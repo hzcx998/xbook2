@@ -89,6 +89,10 @@ pid_t getppid()
     return syscall0(pid_t, SYS_GETPPID); /* return a pid (int type) */
 }
 
+pid_t gettid()
+{
+    return syscall0(pid_t, SYS_GETTID); /* return a pid (int type) */
+}
 /**
  * sleep - task sleep
  * @second: sleep time
@@ -99,4 +103,3 @@ unsigned long sleep(unsigned long second)
 {
     return syscall1(int, SYS_SLEEP, second);
 }
-

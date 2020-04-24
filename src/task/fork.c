@@ -225,7 +225,7 @@ static int bulid_child_stack(task_t *child)
 
     /* 把SwitchTo的返回地址设置成InterruptExit，直接从中断返回 */
     //thread_stack->eip = (unsigned long)&InterruptExit;
-    thread_stack->eip = intr_exit;
+    thread_stack->eip = (void *)intr_exit;
     
     //printk(PART_TIP "thread_stack eip %x\n", thread_stack->eip);
     /* 下面的赋值只是用来使线程栈构建更清晰，下面2行的赋值其实不必要，

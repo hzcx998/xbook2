@@ -30,7 +30,9 @@ SYSLIB_OBJS = 	$(SYSLIB_DIR)/proc.o \
 				$(SYSLIB_DIR)/syscall.o \
 				$(SYSLIB_DIR)/time.o \
 				$(SYSLIB_DIR)/trigger.o \
-				$(SYSLIB_DIR)/vmm.o
+				$(SYSLIB_DIR)/vmm.o \
+				$(SYSLIB_DIR)/uthread.o \
+				$(SYSLIB_DIR)/uthread_entry.o
 
 # objects
 OBJS	:= 	$(ANSI_OBJS) $(STDIO_OBJS) $(SYSLIB_OBJS)

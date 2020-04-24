@@ -27,6 +27,10 @@ void init_syscall()
     
     syscall_table[SYS_SLEEP] = sys_sleep;
     
+    syscall_table[SYS_THREAD_CREATE] = sys_thread_create;
+    syscall_table[SYS_THREAD_EXIT] = sys_thread_exit;
+    
+    syscall_table[SYS_GETTID] = sys_get_tid;
     /* 内存管理 */
     syscall_table[SYS_HEAP] = sys_vmspace_heap;
     
