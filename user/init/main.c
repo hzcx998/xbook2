@@ -9,9 +9,10 @@
 #define DISK_NAME   "ide0"
 
 /* login arg */
-#define LOGIN_SECTORS   100
-#define LOGIN_SIZE      (LOGIN_SECTORS*512)
-#define LOGIN_NAME      "login"
+#define BIN_OFFSET      200
+#define BIN_SECTORS     100
+#define BIN_SIZE        (BIN_SECTORS*512)
+#define BIN_NAME        "login"
 
 int main(int argc, char *argv[])
 {
@@ -49,20 +50,20 @@ int main(int argc, char *argv[])
         unsigned long heap_pos = heap(0);
         //printf("init-child: heap addr %x.\n", heap_pos);
 
-        heap(heap_pos + LOGIN_SIZE); // 40 kb memory
+        heap(heap_pos + BIN_SIZE); // 40 kb memory
 
         unsigned char *buf = (unsigned char *) heap_pos;
-        memset(buf, 0, LOGIN_SIZE);
+        memset(buf, 0, BIN_SIZE);
        // printf("init-child: alloc data at %x for 40 kb.\n", buf);
         
         /* read disk sector for file: offset=200, sectors=50 */
-        if (res_read(ide0, 200, buf, LOGIN_SIZE) < 0) {
+        if (res_read(ide0, BIN_OFFSET, buf, BIN_SIZE) < 0) {
             printf("init-child: read disk sectors failed! exit now\n");
             return -1;
         }
         //printf("init-child: load data success.\n");
         
-        kfile_t file = {buf, LOGIN_SIZE};
+        kfile_t file = {buf, BIN_SIZE};
         /*int i;
         for (i = 0; i < 32; i++) {
             printf("%x ", buf[i]);
@@ -70,8 +71,8 @@ int main(int argc, char *argv[])
         //printf("\ninit-child: free resource.\n");
         res_close(ide0); /* close ide0 */
 
-        char *_argv[4] = {LOGIN_NAME, "xbook", "1234", 0};
-        exit(execfile(LOGIN_NAME, &file, _argv));
+        char *_argv[4] = {BIN_NAME, "xbook", "1234", 0};
+        exit(execfile(BIN_NAME, &file, _argv));
     }
     return 0;
 }

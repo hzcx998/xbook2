@@ -2,20 +2,10 @@ hello, xbook!
 
 info: memory total:10000000 byte 256 MB
 info: welcom to xbook kernel.
-info: time:10:26:16 date:2020/4/21
-info: week day:2 Tuesday year day:113
+info: time:17:20:50 date:2020/4/24
+info: week day:5 Friday year day:116
 info: ide_enter: found 1 hard disks.
 debug: RTL8139 init failed: not find pci device.
 error: init_driver_arch: create one driver failed!
 info: raw block name:init
-debug: raw_block_upload: count=100
 info: raw block name:bin
-debug: raw_block_upload: count=100
-error: device_open: device rtl8139 not found!
-debug: sys_exit: name=init pid=1 ppid=-1 prio=2 status=-1
-debug: sys_exit: release all.
-debug: sys_exit: no parent! zombie!
-error: device_open: device rtl8139 not found!
-debug: sys_exit: name=init pid=2 ppid=1 prio=2 status=-1
-debug: sys_exit: release all.
-debug: sys_exit: parent not waiting, zombie!
