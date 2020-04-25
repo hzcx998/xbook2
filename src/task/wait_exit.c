@@ -154,15 +154,19 @@ void close_child_thread(task_t *parent)
     list_for_each_owner_safe (child, next, &task_global_list, global_list) {
         /* 查找一个子线程，位于同一个线程组，但不是自己 */
         if (parent->tgid == child->tgid && parent->pid != child->pid) {
+#if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "close_child_thread: task=%s pid=%d tgid=%d ppid=%d state=%d\n",
                 child->name, child->pid, child->tgid, child->parent_pid, child->state);
+#endif
             /* 如果线程处于就绪状态，那么就从就绪队列删除 */
             if (child->state == TASK_READY) {
                 /* 从优先级队列移除 */
                 list_del_init(&child->list);
                 child->prio_queue->length--;
                 child->prio_queue = NULL;
-                printk(KERN_DEBUG "close_child_thread: del from ready list.\n");
+#if DEBUG_LOCAL == 1
+                printk(KERN_DEBUG "close_child_thread: remove from on ready list.\n");
+#endif
             }
             thread_release(child);  /* 释放线程资源 */
             /* 销毁进程 */

@@ -7,30 +7,6 @@
 
 /* 用户线程 */
 
-/*
-typedef sturct __xthread_attr {
-
-
-} xthread_attr_t;
-
-
-void *thread_routine(void *arg)
-{
-
-
-    return (void *) 0;
-}
-
-xthraed_t tid = xthread_start(thread_routine, arg, xthread_attr);
-
-retval = xthread_exit((void *) 123);
-
-retval = xthread_join(tig, (void *) status);
-
-tid = sys_uthread_start(routine, arg);
-sys_uthread_exit(tid);
-*/
-
 /**
  * uthread_entry - 用户线程内核的入口
  * @arg: 参数
@@ -44,38 +20,6 @@ void uthread_entry(void *arg)
     trap_frame_t *frame = GET_TASK_TRAP_FRAME(current_task);
     switch_to_user(frame);
 }
-
-#if 0
-/**
- * uthread_entry - 用户线程内核的入口
- * @arg: 参数
- * 
- * 构建c语言函数栈。
- * 
- * void *thread_start(* arg) {
- *  ...
- * }
- * 堆栈看起来是这样的：
- * 
- * esp + 8: arg 参数
- * esp + 4: caller addr 调用者返回地址
- * esp    : free stack top 可用栈顶
- */
-void *uthread_entry(void *arg) 
-{
-    printk(KERN_DEBUG "uthread_entry: ready into user thread.\n");
-    
-    /* 获取当前任务的中断栈框 */
-    trap_frame_t *frame = GET_TASK_TRAP_FRAME(current_task);   
-    frame->esp -= sizeof(unsigned int); /* 预留参数（4字节） */
-    unsigned int *stack_top = (unsigned int *)frame->esp;
-    *stack_top = (unsigned int *)arg;   /* 往堆栈写入参数 */
-    frame->esp -= sizeof(unsigned int); /* 预留调用者返回地址 */
-    
-    printk(KERN_DEBUG "uthread_entry: esp=%x eip=%x arg=%x stack=%x\n", frame->esp, frame->eip, arg, *stack_top);
-    switch_to_user(frame);
-}
-#endif
 
 /**
  * uthread_start - 开始一个用户线程
@@ -189,7 +133,9 @@ void uthread_exit(void *status)
 
     /* 子线程退出 */
     if (cur->flags & TASK_FLAG_DETACH) {    /* 不需要同步等待，"自己释放资源"(让init来释放) */
+#if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "uthread_exit: detached.\n");
+#endif        
         /* 有可能启动时是joinable的，但是执行过程中变成detach状态，
         因此，可能存在父进程join等待，所以，这里就需要检测任务状态 */
         if (cur->flags &  THREAD_FLAG_JOINED) {    /* 处于join状态 */
@@ -208,10 +154,13 @@ void uthread_exit(void *status)
         /* 过继给init进程，实现线程"自己释放资源"(init隐藏释放) */
         cur->parent_pid = INIT_PROC_PID;   
     } else {    /* 需要同步释放 */
+#if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "uthread_exit: joinable.\n");
+#endif    
     }
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "uthread_exit: pid=%d tgid=%d ppid=%d.\n", cur->pid, cur->tgid, cur->parent_pid);
-
+#endif
     task_t *parent = find_task_by_pid(cur->parent_pid); 
     if (parent) {
         /* 查看父进程状态 */
@@ -245,7 +194,9 @@ void uthread_exit(void *status)
 
 void sys_thread_exit(void *retval)
 {
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "sys_thread_exit: exit with %x\n", retval);
+#endif    
     uthread_exit(retval);
 }
 
@@ -259,12 +210,8 @@ int sys_thread_detach(uthread_t thread)
     task_t *task = find_task_by_pid(thread);
     if (task == NULL)   /* not found */
         return -1;
-    /* 线程才可以分离 */
-    //if (!TASK_IS_MAIN_THREAD(task)) {    /* 不是主线程才能进行分离 */
     task->flags |= TASK_FLAG_DETACH; /* 分离标志 */
     return 0;
-    //}
-    return -1;
 }
 
 
@@ -332,9 +279,9 @@ int uthread_join(uthread_t thread, void **thread_return)
         if (!(waiter->flags & THREAD_FLAG_JOINING)) {
             break;
         }
-
+#if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "uthread_join: waiting...\n");
-        
+#endif        
         /* WATING for thread to exit */
         task_block(TASK_WAITING);
         
@@ -348,7 +295,6 @@ int uthread_join(uthread_t thread, void **thread_return)
 #endif
     }
 
-    
     restore_intr(flags);
     return 0;
 }
