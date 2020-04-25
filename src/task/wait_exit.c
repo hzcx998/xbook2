@@ -3,6 +3,7 @@
 #include <xbook/debug.h>
 #include <xbook/task.h>
 #include <xbook/process.h>
+#include <sys/wait.h>
 
 #define DEBUG_LOCAL 1
 
@@ -28,16 +29,15 @@ int thread_release(task_t *task)
 {
     /* 取消定时器 */
     timer_cancel(task->sleep_timer);
-    
+    task->sleep_timer = NULL;
     return 0;
 }
 
-
 /**
- * wait_one_hangging_child - 处理一个挂起子进程
+ * wait_any_hangging_child - 处理一个挂起子进程
  * 
  */
-int wait_one_hangging_child(task_t *parent, int *status)
+int wait_any_hangging_child(task_t *parent, int *status)
 {
     task_t *child, *next;
     /* 可能删除列表元素，需要用safe */
@@ -46,7 +46,7 @@ int wait_one_hangging_child(task_t *parent, int *status)
             if (child->state == TASK_HANGING) { /* child is hanging, destroy it  */
                 pid_t child_pid = child->pid;
 #if DEBUG_LOCAL == 1
-                printk(KERN_NOTICE "wait_one_hangging_child: find a hanging proc %d \n", child_pid);
+                printk(KERN_NOTICE "wait_any_hangging_child: find a hanging proc %d \n", child_pid);
 #endif              
                 /* 状态是可以为空的，不为空才写入子进程退出状态 */
                 if (status != NULL)
@@ -59,6 +59,34 @@ int wait_one_hangging_child(task_t *parent, int *status)
     }
     return -1;
 }
+
+
+/**
+ * wait_one_hangging_child - 处理一个挂起子进程
+ * 
+ */
+int wait_one_hangging_child(task_t *parent, pid_t pid, int *status)
+{
+    task_t *child, *next;
+    /* 可能删除列表元素，需要用safe */
+    list_for_each_owner_safe (child, next, &task_global_list, global_list) {
+        if (child->parent_pid == parent->pid && child->pid == pid) { /* find a child process we ordered */
+            if (child->state == TASK_HANGING) { /* child is hanging, destroy it  */
+#if DEBUG_LOCAL == 1
+                printk(KERN_NOTICE "wait_one_hangging_child: find a hanging proc %d \n", pid);
+#endif              
+                /* 状态是可以为空的，不为空才写入子进程退出状态 */
+                if (status != NULL)
+                    *status = child->exit_status;
+                /* 销毁子进程的PCB */
+                proc_destroy(child);
+                return pid;
+            }
+        }
+    }
+    return -1;
+}
+
 
 /**
  * deal_zombie_child - 处理僵尸子进程
@@ -119,9 +147,37 @@ void adopt_children_to_init(task_t *parent)
     }
 }
 
+void close_child_thread(task_t *parent)
+{
+    /* 查找所有的子进程 */
+    task_t *child, *next;
+    list_for_each_owner_safe (child, next, &task_global_list, global_list) {
+        /* 查找一个子线程，位于同一个线程组，但不是自己 */
+        if (parent->tgid == child->tgid && parent->pid != child->pid) {
+            printk(KERN_DEBUG "close_child_thread: task=%s pid=%d tgid=%d ppid=%d state=%d\n",
+                child->name, child->pid, child->tgid, child->parent_pid, child->state);
+            /* 如果线程处于就绪状态，那么就从就绪队列删除 */
+            if (child->state == TASK_READY) {
+                /* 从优先级队列移除 */
+                list_del_init(&child->list);
+                child->prio_queue->length--;
+                child->prio_queue = NULL;
+                printk(KERN_DEBUG "close_child_thread: del from ready list.\n");
+            }
+            thread_release(child);  /* 释放线程资源 */
+            /* 销毁进程 */
+            task_free(child);   /* 释放任务 */
+        }
+    }
+}
+
 /**
- * sys_wait - 进程等待 
+ * sys_waitpid - 进程等待
+ * @pid: 指定的进程id:
+ *      为-1时，等待任意子进程，>0时等待指定的子进程
  * @status: 存放子进程退出时的状态 
+ * @options: 选项参数：
+ *          WNOHANG: 如果没有子进程退出，就不阻塞等待，返回0
  * 
  * 等待流程：
  * 
@@ -133,7 +189,7 @@ void adopt_children_to_init(task_t *parent)
  * 
  * 返回子进程的pid，无则返回-1
  */
-pid_t sys_wait(int *status)
+pid_t sys_waitpid(pid_t pid, int *status, int options)
 {
     task_t *parent = current_task;  /* 当前进程是父进程 */
     pid_t child_pid;
@@ -141,24 +197,42 @@ pid_t sys_wait(int *status)
     
     while (1) {
 #if DEBUG_LOCAL == 1
-        printk(KERN_DEBUG "sys_wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
+        //printk(KERN_DEBUG "sys_wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
 #endif    
         save_intr(flags);
-        /* 先处理挂起的任务 */
-        if ((child_pid = wait_one_hangging_child(parent, status)) >= 0) {
+        if (pid == -1) {    /* 任意子进程 */            
+            /* 先处理挂起的任务 */
+            if ((child_pid = wait_any_hangging_child(parent, status)) >= 0) {
 #if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "sys_wait: handle a hangging child %d.\n", child_pid);
+                printk(KERN_DEBUG "sys_wait: handle a hangging child %d.\n", child_pid);
 #endif    
-            restore_intr(flags);
-            return child_pid;
+                restore_intr(flags);
+                return child_pid;
+            }
+        } else {    /* 指定子进程 */
+            /* 先处理挂起的任务 */
+            if ((child_pid = wait_one_hangging_child(parent, pid, status)) >= 0) {
+#if DEBUG_LOCAL == 1
+                printk(KERN_DEBUG "sys_wait: handle a hangging child %d.\n", child_pid);
+#endif    
+                restore_intr(flags);
+                return child_pid;
+            }
         }
+        
         /* 处理zombie子进程 */
         deal_zombie_child(parent);
+
+        /* 现在肯定没有子进程处于退出状态 */
+        if (options & WNOHANG) {    /* 有不挂起标志 */
+            restore_intr(flags);
+            return 0;   /* 不阻塞等待，返回0 */
+        }
 
         /* 查看是否有子进程 */
         if (!find_child_proc(parent)) {
 #if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "sys_wait: no children!\n");
+            //printk(KERN_DEBUG "sys_wait: no children!\n");
 #endif    
             //printk("no children!\n");
             restore_intr(flags);
@@ -196,6 +270,9 @@ void sys_exit(int status)
     save_intr(flags);
 
     task_t *cur = current_task;  /* 当前进程是父进程 */
+    if (!TASK_IS_MAIN_THREAD(cur))  /* 不是主线程就调用线程退出 */
+        sys_thread_exit((void *) status);
+
     cur->exit_status = status;
     task_t *parent = find_task_by_pid(cur->parent_pid); 
     
@@ -208,6 +285,10 @@ void sys_exit(int status)
 #endif    
     /* 处理zombie子进程 */
     deal_zombie_child(cur);
+
+    /* 关闭子线程 */
+    close_child_thread(cur);
+
     /* 过继子进程给init进程 */
     adopt_children_to_init(cur);
     
@@ -291,62 +372,3 @@ void kthread_exit(int status)
         task_block(TASK_ZOMBIE); 
     }
 }
-
-void uthread_exit(void *status)
-{
-    unsigned long flags;
-    save_intr(flags);
-
-    task_t *cur = current_task;  /* 当前进程是父进程 */
-    
-    /* 检测是用户进程还是线程退出 */
-    if (cur->pid == cur->tgid) { /* 主线程退出 */
-        sys_exit((int) status);
-    }
-
-    cur->exit_status = (int)status;
-    
-    /* 释放内核资源 */
-    thread_release(cur);
-
-    /* 子线程退出 */
-    if (cur->flags & TASK_FLAG_DETACH) {    /* 不需要同步等待，"自己释放资源"(让init来释放) */
-        cur->parent_pid = INIT_PROC_PID;    /* 过继给init进程 */
-        printk(KERN_DEBUG "uthread_exit: detached.\n");
-    } else {    /* 需要同步释放 */
-
-    }
-    
-    task_t *parent = find_task_by_pid(cur->parent_pid); 
-
-    if (parent) {
-        /* 查看父进程状态 */
-        if (parent->state == TASK_WAITING) {
-            restore_intr(flags);
-#if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "sys_exit: parent waiting...\n");
-#endif    
-
-            //printk("parent waiting...\n");
-            task_unblock(parent); /* 唤醒父进程 */
-            task_block(TASK_HANGING);   /* 把自己挂起 */
-        } else { /* 父进程没有 */
-            restore_intr(flags);
-#if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "sys_exit: parent not waiting, zombie!\n");
-#endif    
-            //printk("parent not waiting, zombie!\n");
-            task_block(TASK_ZOMBIE);   /* 变成僵尸进程 */
-        }
-    } else {
-        /* 没有父进程，变成不可被收养的孤儿+僵尸进程 */
-#if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "sys_exit: no parent! zombie!\n");
-#endif    
-        //printk("no parent!\n");
-        restore_intr(flags);
-        task_block(TASK_ZOMBIE); 
-    }
-}
-
-

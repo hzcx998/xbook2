@@ -43,7 +43,27 @@ pid_t fork()
  */
 int wait(int *status)
 {
-    return syscall1(int, SYS_WAIT, status);
+    return syscall3(int, SYS_WAITPID, -1, status, 0);
+}
+
+/**
+ * waitpid() - wait process pid
+ * 
+ * @pid: wait a pid
+ * @status: [out] child process's exit status.
+ *          notice that this is a ptr!
+ * @option: WNOHANG: if no child exit, do not block and return 0
+ * 
+ * wait one child process to exit and fetch it's exit status.
+ * 
+ * @return: child pid, there are 3 case:
+ *          if pid = -1: no child
+ *          if pid = 0: exit without hanging
+ *          if pid > 0: exited child's pid 
+ */
+int waitpid(pid_t pid, int *status, int options)
+{
+    return syscall3(int, SYS_WAITPID, pid, status, options);
 }
 
 /**

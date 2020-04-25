@@ -26,6 +26,9 @@ uthread_t uthread_create(
     void *arg
 );
 void uthread_exit(void *retval);
+int uthread_join(uthread_t thread, void **thread_return);
+int uthread_detach(uthread_t thread);
+uthread_t uthread_self(void);
 
 /* attr */
 int uthread_attr_init(uthread_attr_t *attr);

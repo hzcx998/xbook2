@@ -46,6 +46,21 @@ void __uthread_exit(void *retval)
     uthread_exit(retval);
 }
 
+int uthread_detach(uthread_t thread)
+{
+    return syscall1(int, SYS_THREAD_DETACH, thread);    
+}
+
+int uthread_join(uthread_t thread, void **thread_return)
+{
+    return syscall2(int, SYS_THREAD_JOIN, thread, thread_return);        
+}
+
+uthread_t uthread_self(void)
+{
+    return (uthread_t) gettid();
+}
+
 int uthread_attr_getdetachstate(const uthread_attr_t *attr, int *detachstate)
 {
     *detachstate = attr->detachstate; 

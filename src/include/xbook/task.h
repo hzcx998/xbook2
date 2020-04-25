@@ -53,6 +53,8 @@ typedef struct thread_stack {
 
 enum task_flags {
     TASK_FLAG_DETACH        = (1 << 0),     /* 任务分离标志，表示自己释放资源，仅对用户线程使用 */
+    THREAD_FLAG_JOINED      = (1 << 1),     /* 线程被其它线程等待中 */
+    THREAD_FLAG_JOINING     = (1 << 2),     /* 线程正在等待其它线程 */
 };
 
 

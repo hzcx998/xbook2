@@ -14,6 +14,7 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
 
     /* 单独修改内容 */
     child->pid = fork_pid();
+    child->tgid = child->pid;      /* 生成的进程是主线程 */
     child->elapsed_ticks = 0;
     child->state = TASK_READY;
     child->ticks = child->timeslice;

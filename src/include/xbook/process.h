@@ -20,9 +20,12 @@ void proc_make_trap_frame(task_t *task);
 int proc_release(task_t *task);
 int proc_trigger_init(task_t *task);
 
+int wait_one_hangging_child(task_t *parent, pid_t pid, int *status);
+int thread_release(task_t *task);
+
 int sys_fork();
 void sys_exit(int status);
-pid_t sys_wait(int *status);
+pid_t sys_waitpid(pid_t pid, int *status, int options);
 int sys_exec_raw(char *name, char **argv);
 int sys_exec_file(char *name, kfile_t *file, char **argv);
 
@@ -33,6 +36,7 @@ uthread_t sys_thread_create(
     void *thread_entry
 );
 void sys_thread_exit(void *retval);
-void uthread_exit(void *status);
+int sys_thread_detach(uthread_t thread);
+int sys_thread_join(uthread_t thread, void **thread_return);
 
 #endif /* _XBOOK_PROCESS_H */

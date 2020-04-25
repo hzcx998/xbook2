@@ -52,7 +52,7 @@ enum {
     SYS_FORK,
     SYS_EXECR,
     SYS_EXECF,
-    SYS_WAIT,
+    SYS_WAITPID,
     SYS_COEXIST,
     SYS_GETPID,
     SYS_GETPPID,
@@ -65,7 +65,7 @@ enum {
     SYS_THREAD_EXIT,
     SYS_THREAD_JOIN,
     SYS_THREAD_CANCEL,
-    SYS_THREAD_DECADE,
+    SYS_THREAD_DETACH,
     SYS_GETTID,
     SYS_PROC_RESERVED = 20,             /* 预留20个接口给进程管理 */
     SYS_HEAP,

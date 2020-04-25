@@ -35,13 +35,10 @@ void timer_mod(timer_t *timer, unsigned long timeout)
 int timer_cancel(timer_t *timer)
 {
     int retval = -1;
-    unsigned long flags;
-    save_intr(flags);
     if (timer) {
         timer_del(timer);
         retval = 0;
     }
-    restore_intr(flags);
     return retval;
 }
 
