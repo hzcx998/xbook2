@@ -120,6 +120,15 @@ extern list_t task_global_list;
 #define TASK_IS_MAIN_THREAD(task) \
         ((task)->pid == (task)->tgid)
 
+/* 判断任务是否为主线程 */
+#define IN_SAME_THREAD_GROUP(a, b) \
+        ((a)->tgid == (b)->tgid)
+
+/* 判断任务是否为单线程 */
+#define IN_SINGAL_THREAD(task) \
+        (((task)->uthread && (atomic_get(&(task)->uthread->thread_count) == 0))  || \
+        (task)->uthread == NULL)
+
 void init_tasks();
 void kernel_pause();
 

@@ -8,7 +8,7 @@
 #include <sys/uthread.h>
 
 task_t *process_create(char *name, char **argv);
-int proc_destroy(task_t *task);
+int proc_destroy(task_t *task, int thread);
 int proc_vmm_init(task_t *task);
 int proc_vmm_exit(task_t *task);
 int proc_build_arg(unsigned long arg_top, char *argv[], char **dest_argv[]);
@@ -21,8 +21,7 @@ int proc_release(task_t *task);
 int proc_trigger_init(task_t *task);
 int proc_uthread_init(task_t *task);
 
-int wait_one_hangging_child(task_t *parent, pid_t pid, int *status);
-int thread_release(task_t *task);
+int thread_release_resource(task_t *task);
 
 int sys_fork();
 void sys_exit(int status);

@@ -391,20 +391,28 @@ int proc_release(task_t *task)
         return -1;
     if (proc_uthread_exit(task))
         return -1;
-
-    if (thread_release(task))
+    if (thread_release_resource(task))
         return -1;
 
     return 0;
 }
 
-int proc_destroy(task_t *task)
+/**
+ * proc_destroy - 进程销毁
+ * @task: 任务
+ * @thread: 是否为线程：1是，0不是。
+ * 
+ * 不是线程才会释放页目录表，vmm等资源。
+ */
+int proc_destroy(task_t *task, int thread)
 {
     if (task->vmm == NULL)
-    return -1;
-    free_page(v2p(task->vmm->page_storage));
-    vmm_free(task->vmm);
-    task->vmm = NULL;
+        return -1;
+    if (!thread) {
+        free_page(v2p(task->vmm->page_storage));
+        vmm_free(task->vmm);
+        task->vmm = NULL;    
+    }
     task_free(task);    /* 子线程只释放结构体 */
     return 0;
 }

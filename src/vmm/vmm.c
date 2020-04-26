@@ -66,8 +66,6 @@ int vmm_exit(vmm_t *vmm)
         return -1; 
     if (vmm->vmspace_head == NULL)
         return -1;
-    /*dump_vmm(vmm);
-    dump_vmspace(vmm);*/
     /* 取消虚拟空间的地址映射 */
     vmspace_t *space = (vmspace_t *)vmm->vmspace_head;
     while (space != NULL) {
@@ -79,6 +77,5 @@ int vmm_exit(vmm_t *vmm)
     if (vmm_release_space(vmm)) {
         return -1;
     }
-    free_page(v2p(vmm->page_storage));
     return 0;
 }

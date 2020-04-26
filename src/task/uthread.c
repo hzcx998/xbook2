@@ -32,6 +32,51 @@ void uthread_entry(void *arg)
     switch_to_user(frame);
 }
 
+
+/**
+ * thread_release_resource - 释放线程资源
+ * @task: 任务
+ * 
+ * 线程资源比较少，主要是任务结构体（需要交给父进程处理），
+ * 自己要处理的很少很少。。。
+ * 
+ * @return: 释放成功返回0，释放失败返回-1
+ */
+int thread_release_resource(task_t *task)
+{
+    /* 取消定时器 */
+    timer_cancel(task->sleep_timer);
+    task->sleep_timer = NULL;
+    return 0;
+}
+
+/**
+ * wait_one_hangging_thread - 处理一个挂起线程
+ * 
+ */
+int wait_one_hangging_thread(task_t *parent, pid_t pid, int *status)
+{
+    task_t *child, *next;
+    /* 可能删除列表元素，需要用safe */
+    list_for_each_owner_safe (child, next, &task_global_list, global_list) {
+        if (child->pid == pid) { /* find a child process we ordered */
+            if (child->state == TASK_HANGING) { /* child is hanging, destroy it  */
+#if DEBUG_LOCAL == 1
+                printk(KERN_NOTICE "wait_one_hangging_thread: pid=%d find a hanging thread %d \n",
+                    parent->pid, pid);
+#endif              
+                /* 状态是可以为空的，不为空才写入子进程退出状态 */
+                if (status != NULL)
+                    *status = child->exit_status;
+                /* 销毁子进程的PCB */
+                proc_destroy(child, 1);
+                return pid;
+            }
+        }
+    }
+    return -1;
+}
+
 /**
  * uthread_start - 开始一个用户线程
  * @func: 线程入口
@@ -110,14 +155,17 @@ task_t *uthread_start(task_func_t *func, void *arg,
     atomic_inc(&task->uthread->thread_count);   /* 增加一个线程 */
     if (atomic_get(&task->uthread->thread_count) > UTHREAD_MAX_NR) { /* 超过最大线程数量，就不能创建 */
 #if DEBUG_LOCAL == 1
-    printk(KERN_NOTICE "uthread_start: pid=%d tgid=%d the number of thread out of range!\n",
-        parent->pid, parent->tgid);
+        printk(KERN_NOTICE "uthread_start: pid=%d tgid=%d the number of thread out of range!\n",
+            parent->pid, parent->tgid);
 #endif
         atomic_dec(&task->uthread->thread_count);
         kfree(task);
         restore_intr(flags);
         return NULL;
     }
+#if DEBUG_LOCAL == 1
+    printk(KERN_NOTICE "uthread_start: thread count %d\n", atomic_get(&task->uthread->thread_count));
+#endif
 
     task_global_list_add(task);
     task_priority_queue_add_tail(task);
@@ -151,20 +199,22 @@ void uthread_exit(void *status)
     task_t *cur = current_task;
 
     /* 减少线程数量 */
-    atomic_dec(&cur->uthread->thread_count);   /* 增加一个线程 */
+    atomic_dec(&cur->uthread->thread_count);   
     if (atomic_get(&cur->uthread->thread_count) == 0) { /* 没有线程，就直接退出整个进程 */
+        /* 恢复原来的线程数量，在释放PCB时，根据thread_count判断是进程退出还是线程退出 */
+        //atomic_inc(&cur->uthread->thread_count);
         /* 退出整个进程 */
         printk(KERN_DEBUG "uthread_exit: pid=%d no other threads, exit process!\n", cur->pid);
         sys_exit((int) status);
     }
-
+    
     cur->exit_status = (int)status;
 
     /* 释放内核资源 */
-    thread_release(cur);
+    thread_release_resource(cur);
 
     /* 子线程退出 */
-    if (cur->flags & TASK_FLAG_DETACH) {    /* 不需要同步等待，"自己释放资源"(让init来释放) */
+    if (cur->flags & TASK_FLAG_DETACH) {    /* 不需要同步等待，"自己释放资源" */
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "uthread_exit: pid=%d detached.\n", cur->pid);
 #endif        
@@ -183,8 +233,10 @@ void uthread_exit(void *status)
                 }
             }
         }
-        /* 过继给init进程，实现线程"自己释放资源"(init隐式释放) */
-        cur->parent_pid = INIT_PROC_PID;   
+        /* 过继给主线程 */
+        //cur->parent_pid = cur->tgid;
+        cur->parent_pid = INIT_PROC_PID;
+
     } else {    /* 需要同步释放 */
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "uthread_exit: pid=%d joinable.\n", cur->pid);
@@ -239,7 +291,24 @@ int sys_thread_detach(uthread_t thread)
     task_t *task = find_task_by_pid(thread);
     if (task == NULL)   /* not found */
         return -1;
+    printk(KERN_DEBUG "sys_thread_detach: thread=%s pid=%d tgid=%d ppid=%d set detach.\n",
+        task->name, task->pid, task->tgid, task->parent_pid);
     task->flags |= TASK_FLAG_DETACH; /* 分离标志 */
+    /* 有可能启动时是joinable的，但是执行过程中变成detach状态，
+    因此，可能存在父进程join等待，所以，这里就需要检测任务状态 */
+    if (task->flags & THREAD_FLAG_JOINED) {    /* 处于join状态 */
+        /* 父进程指向join中的进程 */
+        task_t *parent = find_task_by_pid(task->parent_pid);
+        if (parent != NULL && parent->state == TASK_WAITING) {  /* 如果父进程在等待中 */
+            if (parent->tgid == task->tgid) {    /* 父进程和自己属于同一个线程组 */
+                printk(KERN_DEBUG "uthread_exit: pid=%d parent %s pid=%d joining, wakeup it.\n",
+                    task->pid, parent->name, parent->pid);
+                parent->flags &= ~THREAD_FLAG_JOINING;  /* 去掉等待中标志 */
+                /* 唤醒父进程 */
+                task_unblock(parent);
+            }
+        }
+    }
     return 0;
 }
 
@@ -295,7 +364,7 @@ int uthread_join(uthread_t thread, void **thread_return)
     /* 当线程没有退出的时候就一直等待 */
     do {
         status = 0;
-        pid = wait_one_hangging_child(waiter, find->pid, &status);
+        pid = wait_one_hangging_thread(waiter, find->pid, &status);
         
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "uthread_join: pid=%d wait pid=%d status=%x\n",
