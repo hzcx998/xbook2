@@ -19,6 +19,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb);
 void proc_make_trap_frame(task_t *task);
 int proc_release(task_t *task);
 int proc_trigger_init(task_t *task);
+int proc_uthread_init(task_t *task);
 
 int wait_one_hangging_child(task_t *parent, pid_t pid, int *status);
 int thread_release(task_t *task);

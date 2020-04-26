@@ -20,7 +20,6 @@ typedef enum task_state {
     TASK_STOPPED,           /* 进程处于停止运行状态 */
     TASK_HANGING,           /* 进程处于挂起，等待父进程来回收  */
     TASK_ZOMBIE,            /* 进程处于僵尸状态，父进程没有等待它 */
-    TASK_DIED,              /* 进程处于死亡状态，资源已经被回收 */
 } task_state_t;
 
 typedef struct thread_stack {
@@ -65,6 +64,17 @@ typedef struct priority_queue {
     unsigned int priority;  /* 优先级 */
 } priority_queue_t;
 
+/* 一个进程最多32个线程 */
+#define UTHREAD_MAX_NR      32
+
+/* 用户线程描述 */
+typedef struct uthread_desc {
+    atomic_t thread_count;      /* 线程数 */
+
+} uthread_desc_t;
+
+
+
 typedef struct task {
     unsigned char *kstack;              // kernel stack, must be first member
     task_state_t state;                 /* 任务的状态 */
@@ -87,7 +97,7 @@ typedef struct task {
     timer_t *sleep_timer;               /* 休眠时的定时器 */
     alarm_t alarm;                      /* 闹钟 */
     long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
-
+    uthread_desc_t *uthread;                 /* 用户线程管理 */
     unsigned int stack_magic;           /* 任务的魔数 */
 } task_t;
 
@@ -147,5 +157,8 @@ pid_t sys_get_ppid();
 pid_t sys_get_tid();
 
 unsigned long sys_sleep(unsigned long second);
+
+void uthread_desc_init(uthread_desc_t *uthread);
+void uthread_desc_exit(uthread_desc_t *uthread);
 
 #endif   /* _XBOOK_TASK_H */

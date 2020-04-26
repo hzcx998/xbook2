@@ -107,12 +107,17 @@ void thread_exit(void *arg)
 
 void *thread_test2(void *arg)
 {
-    printf("hello, deep %d!\n%s\n", uthread_self(), arg);
+    printf("thread_test2: hello, deep %d!\n%s\n", uthread_self(), arg);
+    uthread_detach(uthread_self());
+    
     /*
     trigger(TRIGALARM, alarm_handle);
     alarm(1);*/
     //triggeron(TRIGALARM, getpid());
     sleep(1);
+    printf("thread_test2: %d sleep done!\n", uthread_self());
+    exit(456);
+    //exit(uthread_self());
     //exit(123);
     //uthread_detach(uthread_self());
     //sleep(1);
@@ -129,19 +134,20 @@ void *thread_test2(void *arg)
 
 void *thread_test(void *arg)
 {
-    printf("hello, uthread %d!\n%s\n", gettid(), arg);
+    printf("thread_test: hello, uthread %d!\n%s\n", gettid(), arg);
     /*
     trigger(TRIGALARM, alarm_handle);
     alarm(1);*/
     //triggeron(TRIGALARM, getpid());
-    sleep(1);
-
+    uthread_detach(uthread_self());
 
     uthread_t tid = uthread_create(NULL, thread_test2, "hello, test!");
-    printf("init: create thread %d\n", tid);
-    void *status;
-    uthread_join(tid, NULL);
-
+    printf("thread_test: create thread %d\n", tid);
+    //uthread_join(tid, NULL);
+    sleep(1);
+    //exit(uthread_self());
+    printf("thread_test: %d sleep done!\n", uthread_self());
+    
     //exit(123);
     //uthread_detach(uthread_self());
     //sleep(1);
@@ -151,7 +157,7 @@ void *thread_test(void *arg)
     uthread_t pid = (uthread_t ) arg;
     uthread_join(pid, status);
     printf("thread: join done! status=%d", status);*/
-    return (void *)123;
+    return (void *)uthread_self();
 }
 
 void test()
@@ -160,8 +166,8 @@ void test()
 
     unsigned char *stack_top;
     uthread_attr_t attr;
-    /*int i;
-    for (i = 0; i < 10; i++) {*/
+    int i;
+    for (i = 0; i < 10; i++) {
     uthread_attr_init(&attr);
     uthread_attr_setstacksize(&attr, 4096);
     /* get heap start addr */
@@ -176,9 +182,9 @@ void test()
     printf("init: create thread %d\n", tid);
     uthread_t tid2 = uthread_create(NULL, thread_test, "hello, THREAD2!");
     printf("init: create thread %d\n", tid2);
-    
-    //sleep(3);
-    
+    }
+    sleep(3);
+    #if 0
     //sleep(2);
     void *retval = 0;
     uthread_detach(tid);
@@ -186,9 +192,12 @@ void test()
     printf("init: %d uthread_join %d status %x done!\n", getpid(), tid, retval);
     uthread_join(tid2, &retval);
     printf("init: %d uthread_join %d status %x done!\n", getpid(), tid2, retval);
+    #endif
+    //exit(uthread_self());
+    sleep(1);
+    printf("init: will return!\n");
+    uthread_exit((void *)uthread_self());
     
-    sleep(3);
-    //uthread_exit((void *)25);
     //}    
     while (1)
     {

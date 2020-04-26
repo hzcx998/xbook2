@@ -16,8 +16,12 @@ static void sleep_task_timeout(unsigned long arg)
 #if DEBUG_LOCAL == 1 
     printk(KERN_DEBUG "sleep_task_timeout: wakeup\n");
 #endif    
+    task_t *task = (task_t *)arg;
+    /* 需要在触发的时候就置空，避免还未唤醒的时候，进程退出，检测定时器
+    指针还指向定时器，但是定时器在早已从定时器链表删除。 */
+    task->sleep_timer = NULL;       
     /* 超时后唤醒休眠的任务 */
-    task_wakeup((task_t *)arg);
+    task_wakeup(task);
 }
 
 unsigned long task_sleep_by_ticks(clock_t ticks)

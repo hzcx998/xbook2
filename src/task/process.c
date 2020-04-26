@@ -364,6 +364,23 @@ int proc_res_exit(task_t *task)
     return 0;
 }
 
+
+int proc_uthread_init(task_t *task)
+{
+    task->uthread = kmalloc(sizeof(uthread_t));
+    if (task->uthread == NULL)
+        return -1;
+    uthread_desc_init(task->uthread);
+    return 0;
+}
+
+int proc_uthread_exit(task_t *task)
+{
+    uthread_desc_exit(task->uthread);
+    task->uthread = NULL;
+    return 0;
+}
+
 int proc_release(task_t *task)
 {
     if (proc_vmm_exit(task))
@@ -371,6 +388,8 @@ int proc_release(task_t *task)
     if (proc_trigger_exit(task))
         return -1;
     if (proc_res_exit(task))
+        return -1;
+    if (proc_uthread_exit(task))
         return -1;
 
     if (thread_release(task))
@@ -381,14 +400,12 @@ int proc_release(task_t *task)
 
 int proc_destroy(task_t *task)
 {
-    printk(KERN_DEBUG "proc_destroy: main thread.\n");
     if (task->vmm == NULL)
     return -1;
     free_page(v2p(task->vmm->page_storage));
     vmm_free(task->vmm);
     task->vmm = NULL;
     task_free(task);    /* 子线程只释放结构体 */
-    printk(KERN_DEBUG "proc_destroy: done!\n");
     return 0;
 }
 
