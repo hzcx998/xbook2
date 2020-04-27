@@ -62,8 +62,8 @@ LOADER_CNTS = 8
  
 KERNEL_OFF = 10
 
-# assume 512 kb 
-KERNEL_CNTS = 1024	
+# assume 512 kb, now just 256kb 
+KERNEL_CNTS = 512	
 
 #----dir----
 #arch

@@ -9,7 +9,8 @@
 #include <sys/time.h>
 
 #define TTY_NAME    "tty0"
-#define DISK_NAME   "ide0"
+//#define DISK_NAME   "ide0"
+#define DISK_NAME   "vfloppy"
 
 /* login arg */
 #define BIN_OFFSET      200

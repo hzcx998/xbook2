@@ -10,7 +10,8 @@
 
 #define INPUT_BUF_LEN   80
 
-#define DISK_NAME   "ide0"
+//#define DISK_NAME   "ide0"
+#define DISK_NAME   "vfloppy"
 
 /* bosh arg */
 #define BIN_OFFSET      400

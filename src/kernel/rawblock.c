@@ -292,5 +292,5 @@ void init_raw_block()
         }
         #endif
     }
-    
+
 }

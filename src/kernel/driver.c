@@ -19,10 +19,11 @@ LIST_HEAD(driver_list_head);
 driver_func_t driver_vine_table[] = {
     serial_driver_vine,                 /* serial */
     console_driver_vine,                /* console */
-    ide_driver_vine,                    /* harddisk */
+    //ide_driver_vine,                  /* harddisk */
     rtl8139_driver_vine,                /* net */
     keyboard_driver_vine,               /* keyboard */
     ramdisk_driver_vine,                /* ramdisk */
+    vfloppy_driver_vine,                /* vfloppy */
     tty_driver_vine,                    /* filter: tty */
     null_driver_vine,                   /* filter: null */
 };
@@ -1143,6 +1144,8 @@ void init_driver_arch()
             printk(KERN_ERR "init_driver_arch: create one driver failed!\n");
     }
     
+    
+
     /* 输出所有驱动以及设备 */
     //print_drivers();
 #if 0    
@@ -1159,7 +1162,7 @@ void init_driver_arch()
 
 #endif
 #if 0    
-    handle_t ramd = device_open("ramdisk", 0);
+    handle_t ramd = device_open("vfloppy", 0);
     if (ramd < 0)
         panic(KERN_DEBUG "open ramdisk failed!\n");
 

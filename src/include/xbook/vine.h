@@ -12,5 +12,6 @@ extern iostatus_t keyboard_driver_vine(driver_object_t *driver);
 extern iostatus_t tty_driver_vine(driver_object_t *driver);
 extern iostatus_t ramdisk_driver_vine(driver_object_t *driver);
 extern iostatus_t null_driver_vine(driver_object_t *driver);
+extern iostatus_t vfloppy_driver_vine(driver_object_t *driver);
 
 #endif  /* _XBOOK_VINE_H */
