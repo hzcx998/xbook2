@@ -203,15 +203,15 @@ static int copy_res(task_t *child, task_t *parent)
 }
 
 /**
- * copy_uthread_desc - 复制线程描述结构
+ * copy_pthread_desc - 复制线程描述结构
  * 
  */
-static int copy_uthread_desc(task_t *child, task_t *parent)
+static int copy_pthread_desc(task_t *child, task_t *parent)
 {
     /* 父进程是单线程就没有线程描述 */
-    if (parent->uthread != NULL) { 
+    if (parent->pthread != NULL) { 
         /* 由于复制后，只有一个线程，所以这里就直接初始化一个新的，而不是复制 */
-        if (proc_uthread_init(child))
+        if (proc_pthread_init(child))
             return -1;
     }
     return 0;
@@ -315,7 +315,7 @@ static int copy_task(task_t *child, task_t *parent)
         return -1;
     
     /* 6.复制线程描述 */
-    if (copy_uthread_desc(child, parent))
+    if (copy_pthread_desc(child, parent))
         return -1;
 
     bulid_child_stack(child);

@@ -3,6 +3,7 @@
 #include <xbook/debug.h>
 #include <xbook/task.h>
 #include <xbook/process.h>
+#include <xbook/pthread.h>
 #include <sys/wait.h>
 
 #define DEBUG_LOCAL 1
@@ -39,9 +40,9 @@ int wait_any_hangging_child(task_t *parent, int *status)
                 if (IN_SINGAL_THREAD(child)) {
 #if DEBUG_LOCAL == 1
                     printk(KERN_NOTICE "wait_any_hangging_child: process.\n");
-                    if (child->uthread)
+                    if (child->pthread)
                         printk(KERN_NOTICE "wait_any_hangging_child: thread count %d.\n",
-                            atomic_get(&child->uthread->thread_count));
+                            atomic_get(&child->pthread->thread_count));
 #endif                    
                     /* 销毁子进程的PCB */
                     proc_destroy(child, 0);
@@ -82,9 +83,9 @@ int wait_one_hangging_child(task_t *parent, pid_t pid, int *status)
                 if (IN_SINGAL_THREAD(child)) {
 #if DEBUG_LOCAL == 1
                     printk(KERN_NOTICE "wait_one_hangging_child: process.\n");
-                    if (child->uthread)
+                    if (child->pthread)
                         printk(KERN_NOTICE "wait_one_hangging_child: thread count %d.\n",
-                            atomic_get(&child->uthread->thread_count));
+                            atomic_get(&child->pthread->thread_count));
                     
 #endif                    
                     /* 销毁子进程的PCB */
@@ -121,9 +122,9 @@ int deal_zombie_child(task_t *parent)
                 if (IN_SINGAL_THREAD(child)) {
 #if DEBUG_LOCAL == 1
                     printk(KERN_NOTICE "deal_zombie_child: process.\n");
-                    if (child->uthread)
+                    if (child->pthread)
                         printk(KERN_NOTICE "deal_zombie_child: thread count %d.\n",
-                            atomic_get(&child->uthread->thread_count));
+                            atomic_get(&child->pthread->thread_count));
 #endif                    
                     /* 销毁子进程的PCB */
                     proc_destroy(child, 0);
@@ -228,8 +229,8 @@ void close_other_threads(task_t *thread)
         }
     }
     /* 有线程，就把线程数设为0，表示目前是一个单进程，退出的时候就可以判断 */
-    if (thread->uthread) {
-        atomic_set(&thread->uthread->thread_count, 0);
+    if (thread->pthread) {
+        atomic_set(&thread->pthread->thread_count, 0);
     }
 }
 
@@ -350,8 +351,8 @@ void sys_exit(int status)
     /* 关闭其它线程 */
     close_other_threads(cur);
 #if DEBUG_LOCAL == 1
-    if (cur->uthread)
-        printk(KERN_DEBUG "sys_exit: thread count %d\n", atomic_get(&cur->uthread->thread_count));
+    if (cur->pthread)
+        printk(KERN_DEBUG "sys_exit: thread count %d\n", atomic_get(&cur->pthread->thread_count));
 #endif    
 
     /* 处理zombie子进程或子线程 */

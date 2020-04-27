@@ -8,7 +8,9 @@
 #include <xbook/vmspace.h>
 #include <xbook/string.h>
 #include <xbook/resource.h>
+#include <xbook/pthread.h>
 #include <arch/interrupt.h>
+#include <sys/pthread.h>
 
 /**
  * load_segment - 加载段
@@ -365,19 +367,19 @@ int proc_res_exit(task_t *task)
 }
 
 
-int proc_uthread_init(task_t *task)
+int proc_pthread_init(task_t *task)
 {
-    task->uthread = kmalloc(sizeof(uthread_t));
-    if (task->uthread == NULL)
+    task->pthread = kmalloc(sizeof(pthread_desc_t));
+    if (task->pthread == NULL)
         return -1;
-    uthread_desc_init(task->uthread);
+    pthread_desc_init(task->pthread);
     return 0;
 }
 
-int proc_uthread_exit(task_t *task)
+int proc_pthread_exit(task_t *task)
 {
-    uthread_desc_exit(task->uthread);
-    task->uthread = NULL;
+    pthread_desc_exit(task->pthread);
+    task->pthread = NULL;
     return 0;
 }
 
@@ -389,7 +391,7 @@ int proc_release(task_t *task)
         return -1;
     if (proc_res_exit(task))
         return -1;
-    if (proc_uthread_exit(task))
+    if (proc_pthread_exit(task))
         return -1;
     if (thread_release_resource(task))
         return -1;

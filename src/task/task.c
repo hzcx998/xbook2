@@ -153,7 +153,7 @@ void task_init(task_t *task, char *name, int priority)
     task->errno = 0;
 
     /* 用户线程 */
-    task->uthread = NULL;
+    task->pthread = NULL;
 
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;

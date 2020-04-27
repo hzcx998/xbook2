@@ -64,6 +64,8 @@
         "kfile.h": "c",
         "proc.h": "c",
         "uthread.h": "c",
-        "stddef.h": "c"
+        "stddef.h": "c",
+        "stdio.h": "c",
+        "pthread.h": "c"
     }
 }

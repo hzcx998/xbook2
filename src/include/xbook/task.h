@@ -10,6 +10,7 @@
 #include "resource.h"
 #include "timer.h"
 #include "alarm.h"
+#include "pthread.h"
 
 /* task state */
 typedef enum task_state {
@@ -60,22 +61,11 @@ enum thread_flags {
     THREAD_FLAG_CANCELED            = (1 << 5),     /* 线程已经标记上取消点 */
 };
 
-
-
 typedef struct priority_queue {
     list_t list;            /* 任务链表 */
     unsigned long length;   /* 队列长度 */
     unsigned int priority;  /* 优先级 */
 } priority_queue_t;
-
-/* 一个进程最多32个线程 */
-#define UTHREAD_MAX_NR      32
-
-/* 用户线程描述 */
-typedef struct uthread_desc {
-    atomic_t thread_count;      /* 线程数 */
-
-} uthread_desc_t;
 
 typedef struct task {
     unsigned char *kstack;              /* kernel stack, must be first member */
@@ -99,7 +89,7 @@ typedef struct task {
     timer_t *sleep_timer;               /* 休眠时的定时器 */
     alarm_t alarm;                      /* 闹钟 */
     long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
-    uthread_desc_t *uthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
+    pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
     unsigned int stack_magic;           /* 任务的魔数 */
 } task_t;
 
@@ -119,24 +109,18 @@ extern list_t task_global_list;
         TASK_KSTACK_SIZE) - sizeof(trap_frame_t)))
 
 /* 判断任务是否为主线程 */
-#define TASK_IS_MAIN_THREAD(task) \
-        ((task)->pid == (task)->tgid)
-
-/* 判断任务是否为主线程 */
 #define IN_SAME_THREAD_GROUP(a, b) \
         ((a)->tgid == (b)->tgid)
 
 /* 判断任务是否为单线程 */
 #define IN_SINGAL_THREAD(task) \
-        (((task)->uthread && (atomic_get(&(task)->uthread->thread_count) == 0))  || \
-        (task)->uthread == NULL)
-
+        (((task)->pthread && (atomic_get(&(task)->pthread->thread_count) == 0))  || \
+        (task)->pthread == NULL)
 
 /* 检测线程处于取消点 */
 #define CHECK_THREAD_CANCELATION_POTINT(task) \
     if (!((task)->flags & THREAD_FLAG_CANCEL_DISABLE) && (task)->flags & THREAD_FLAG_CANCELED) \
-        uthread_exit((void *) THREAD_FLAG_CANCELED)
-
+        pthread_exit((void *) THREAD_FLAG_CANCELED)
 
 void init_tasks();
 void kernel_pause();
@@ -176,7 +160,8 @@ pid_t sys_get_tid();
 
 unsigned long sys_sleep(unsigned long second);
 
-void uthread_desc_init(uthread_desc_t *uthread);
-void uthread_desc_exit(uthread_desc_t *uthread);
+void close_one_thread(task_t *thread);
+void close_other_threads(task_t *thread);
+void pthread_exit(void *status);
 
 #endif   /* _XBOOK_TASK_H */

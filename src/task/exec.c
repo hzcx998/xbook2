@@ -1,5 +1,6 @@
 #include <xbook/process.h>
 #include <xbook/string.h>
+#include <xbook/pthread.h>
 #include <arch/interrupt.h>
 
 /**
@@ -109,7 +110,7 @@ int sys_exec_raw(char *name, char **argv)
     
     /* 如果是从一个多线程执行的，那么就会有线程结构体，由于在close_other_threads
     的时候，把thread_count置0，因此，在此需要重新初始化线程描述（将thread_count置1） */
-    uthread_desc_init(cur->uthread);
+    pthread_desc_init(cur->pthread);
 
     /* 执行程序的时候需要继承原有进程的资源，因此不在这里初始化资源 */
 
@@ -237,11 +238,11 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
     
     /* 如果是从一个多线程执行的，那么就会有线程结构体，由于在close_other_threads
     的时候，把thread_count置0，因此，在此需要重新初始化线程描述（将thread_count置1） */
-    uthread_desc_init(cur->uthread);
-    if (cur->uthread) {
-        printk(KERN_DEBUG "%s: thread count %d\n", __func__, atomic_get(&cur->uthread->thread_count));
+    pthread_desc_init(cur->pthread);
+    if (cur->pthread) {
+        printk(KERN_DEBUG "%s: thread count %d\n", __func__, atomic_get(&cur->pthread->thread_count));
     }
-    
+
     /* 执行程序的时候需要继承原有进程的资源，因此不在这里初始化资源 */
 
     /* 设置执行入口 */

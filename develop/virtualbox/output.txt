@@ -2,7 +2,7 @@ hello, xbook!
 
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:22:18:48 date:2020/4/27
+info: time:0:35:18 date:2020/4/27
 info: week day:1 Monday year day:119
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -11,20 +11,35 @@ error: init_driver_arch: create one driver failed!
 info: raw block name:init
 info: raw block name:bin
 debug: sys_wait: pid=1 no child exit, waiting...
-debug: uthread_start: pid=4 routine=1310 arg=477c stackaddr=6000 stacksize=1000 detach=0
+debug: uthread_start: pid=4 routine=12cc arg=4726 stackaddr=6000 stacksize=1000 detach=0
 debug: uthread_start: new thread pid=5 tgid=4 parent pid=4
 notice: uthread_start: thread count 2
-debug: sys_thread_detach: thread=uthread pid=5 tgid=4 ppid=4 set detach.
-debug: uthread_exit: pid=5 detached.
-debug: uthread_exit: pid=5 tgid=4 ppid=1.
-debug: uthread_exit: pid=5 parent 1 waiting...
-notice: wait_any_hangging_child: pid=1 find a hanging proc 5 
-notice: wait_any_hangging_child: thread.
-debug: sys_wait: pid=1 handle a hangging child 5.
-debug: uthread_exit: pid=4 no other threads, exit process!
-debug: sys_exit: name=init pid=4 ppid=1 prio=2 status=4
+debug: uthread_join: pid=4 join thread 5
+debug: uthread_join: pid=4 wait pid=-1 status=0
+debug: uthread_join: pid=4 waiting...
+debug: uthread_start: pid=5 routine=126b arg=12345678 stackaddr=7000 stacksize=4000 detach=0
+debug: uthread_start: new thread pid=6 tgid=4 parent pid=5
+notice: uthread_start: thread count 3
+debug: uthread_join: pid=5 join thread 6
+debug: uthread_join: pid=5 wait pid=-1 status=0
+debug: uthread_join: pid=5 waiting...
+debug: uthread_exit: pid=6 joinable.
+debug: uthread_exit: pid=6 tgid=4 ppid=5.
+debug: uthread_exit: pid=6 parent 5 waiting...
+notice: wait_one_hangging_thread: pid=5 find a hanging thread 6 
+debug: uthread_join: pid=5 wait pid=6 status=7b
+debug: uthread_exit: pid=5 joinable.
+debug: uthread_exit: pid=5 tgid=4 ppid=4.
+debug: uthread_exit: pid=5 parent 4 waiting...
+notice: wait_one_hangging_thread: pid=4 find a hanging thread 5 
+debug: uthread_join: pid=4 wait pid=5 status=5
+debug: uthread_join: pid=4 thread 5 exit, will return status=5
+debug: sys_exec_file: thread count 1
+debug: sys_exec_file: thread count 1
+debug: sys_exit: name=bosh pid=4 ppid=1 prio=2 status=0
 debug: sys_exit: thread count 0
 debug: sys_exit: pid=4 release all resources done.
-debug: sys_exit: pid=4 parent 1 not waiting, zombie!
-notice: deal_zombie_child: pid=1 find a zombie child 4 
-notice: deal_zombie_child: process.
+debug: sys_exit: pid=4 parent 1 waiting...
+notice: wait_any_hangging_child: pid=1 find a hanging proc 4 
+notice: wait_any_hangging_child: process.
+debug: sys_wait: pid=1 handle a hangging child 4.
