@@ -6,6 +6,12 @@
 #include <xbook/vmspace.h>
 #include <xbook/string.h>
 
+/**
+ * 在多线程中，fork只会把调用者线程复制给子进程，而其它线程就会“蒸发”。
+ * 
+ */
+
+
 /* 中断返回 */
 static int copy_struct_and_kstack(task_t *child, task_t *parent)
 {
@@ -19,7 +25,7 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     child->state = TASK_READY;
     child->ticks = child->timeslice;
     child->parent_pid = parent->pid;
-    /* 重新设置链表，在这里不使用ListDel，那样会删除父进程在队列中的情况
+    /* 重新设置链表，在这里不使用list_del，那样会删除父进程在队列中的情况
     所以这里就直接把队列指针设为NULL，后面会添加到链表中*/
     child->list.next = child->list.prev = NULL;
     child->global_list.next = child->global_list.prev = NULL;
@@ -196,6 +202,22 @@ static int copy_res(task_t *child, task_t *parent)
     return 0;
 }
 
+/**
+ * copy_uthread_desc - 复制线程描述结构
+ * 
+ */
+static int copy_uthread_desc(task_t *child, task_t *parent)
+{
+    /* 父进程是单线程就没有线程描述 */
+    if (parent->uthread != NULL) { 
+        /* 由于复制后，只有一个线程，所以这里就直接初始化一个新的，而不是复制 */
+        if (proc_uthread_init(child))
+            return -1;
+    }
+    return 0;
+}
+
+
 static int bulid_child_stack(task_t *child)
 {
     /* 1.让子进程返回0 */
@@ -272,7 +294,7 @@ static int copy_task(task_t *child, task_t *parent)
     if (copy_struct_and_kstack(child, parent))
         return -1;
     /*
-    printk(KERN_DEBUG "in do_usrmsg_fork now. parent %s-%x child %s-%x\n", 
+    printk(KERN_DEBUG "copy_task: parent %s-%x child %s-%x\n", 
             parent->name, parent, child->name, child);
 */
     /* 2.初始化任务的内存管理器 */
@@ -292,6 +314,10 @@ static int copy_task(task_t *child, task_t *parent)
     if (copy_res(child, parent))
         return -1;
     
+    /* 6.复制线程描述 */
+    if (copy_uthread_desc(child, parent))
+        return -1;
+
     bulid_child_stack(child);
     // printk(KERN_DEBUG "child heap is [%x,%x]\n", child->vmm->heap_start, child->vmm->heap_end);
     return 0;

@@ -101,20 +101,20 @@ void alarm_handle(int trig)
 void thread_exit(void *arg)
 {
     printf("thread_exit: exit val %x\n", arg);
-
 }
 
+char *string = "hello!\n";
 
 void *thread_test2(void *arg)
 {
     printf("thread_test2: hello, deep %d!\n%x\n", uthread_self(), (unsigned int)arg);
-    uthread_detach(uthread_self());
+    //uthread_detach(uthread_self());
     
     /*
     trigger(TRIGALARM, alarm_handle);
     alarm(1);*/
     //triggeron(TRIGALARM, getpid());
-    sleep(1);
+    sleep(3);
     //exit(456);
     /*printf("thread_test2: %d sleep done!\n", uthread_self());
     exit(456);*/
@@ -128,6 +128,12 @@ void *thread_test2(void *arg)
     uthread_t pid = (uthread_t ) arg;
     uthread_join(pid, status);
     printf("thread: join done! status=%d", status);*/
+    while (1)
+    {
+        printf("$s", string);
+    }
+    
+
     return (void *)123;
 }
 int trig_flags = 0;
@@ -145,6 +151,8 @@ void *thread_test(void *arg)
     alarm(1);*/
     //triggeron(TRIGALARM, getpid());
     //uthread_detach(uthread_self());
+    uthread_t tid = uthread_create(NULL, thread_test2, (void *)0x12345678);
+    printf("thread_test: create thread %d\n", tid);
     #if 0
     uthread_t tid = uthread_create(NULL, thread_test2, (void *)0x12345678);
     printf("thread_test: create thread %d\n", tid);
@@ -168,11 +176,6 @@ void *thread_test(void *arg)
 
     trigger(TRIGALARM, trigger_handler);
     alarm(1);
-#endif
-    while (trig_flags == 1)
-    {
-        
-    }
 
     int com = res_open("com0", RES_DEV, 0);
     if (com < 0) {
@@ -188,9 +191,22 @@ void *thread_test(void *arg)
     printf("get old type:%x\n", oldtype);
     uthread_setcanceltype(oldtype, &oldtype);
     printf("get old type:%x\n", oldtype);
+#endif
+    
+    //alarm(1);
 
+    //sleep(2);
+    uthread_join(tid, NULL);
+    //triggeron(TRIGLSOFT, uthread_self());
+    
+    trigger(TRIGALARM, trigger_handler);
+    alarm(1);
+    sleep(1);
+    
+    //triggeron(TRIGUSR0, uthread_self());
+    
     //uthread_testcancel();
-    sleep(2);
+    //sleep(2);
     //uthread_detach(gettid());
     //printf("set alarm done!\n");
     /*void *status;
@@ -227,13 +243,22 @@ void test()
     //sleep(3);
     #if 1
     //uthread_setcancelstate(UTHREAD_CANCEL_DISABLE, NULL);
-    sleep(1);
+    //sleep(1);
     //uthread_setcanceltype(UTHREAD_CANCEL_ASYCHRONOUS, NULL);
-    uthread_cancel(tid);
+    //uthread_cancel(tid);
     //sleep(2);
     void *retval = 0;
+    trigger(TRIGALARM, trigger_handler);
+    alarm(1);
+    //sleep(1);
+    
+    triggeron(TRIGLSOFT, uthread_self());
+    
+    trigger(TRIGUSR0, trigger_handler);
+    triggeron(TRIGUSR0, uthread_self());
+    
     //uthread_detach(tid);
-    uthread_join(tid, &retval);
+    //uthread_join(tid, &retval);
     printf("init: %d uthread_join %d status %x done!\n", getpid(), tid, retval);
     /*uthread_join(tid2, &retval);
     printf("init: %d uthread_join %d status %x done!\n", getpid(), tid2, retval);*/
@@ -241,12 +266,6 @@ void test()
     //exit(uthread_self());
     //sleep(1);
     printf("init: will return!\n");
-    uthread_exit((void *)uthread_self());
-    
-    //}    
-    while (1)
-    {
-        /* code */
-    }
-    
+    //uthread_exit((void *)uthread_self());
+
 }

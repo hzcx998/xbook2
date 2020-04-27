@@ -2,7 +2,7 @@ hello, xbook!
 
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:19:53:54 date:2020/4/27
+info: time:22:18:48 date:2020/4/27
 info: week day:1 Monday year day:119
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -11,23 +11,20 @@ error: init_driver_arch: create one driver failed!
 info: raw block name:init
 info: raw block name:bin
 debug: sys_wait: pid=1 no child exit, waiting...
-debug: uthread_start: pid=4 routine=1310 arg=45ae stackaddr=6000 stacksize=1000 detach=0
+debug: uthread_start: pid=4 routine=1310 arg=477c stackaddr=6000 stacksize=1000 detach=0
 debug: uthread_start: new thread pid=5 tgid=4 parent pid=4
 notice: uthread_start: thread count 2
-debug: uthread_join: pid=4 join thread 5
-debug: uthread_join: pid=4 wait pid=-1 status=0
-debug: uthread_join: pid=4 waiting...
-this write from uthread.debug: uthread_exit: pid=5 joinable.
-debug: uthread_exit: pid=5 tgid=4 ppid=4.
-debug: uthread_exit: pid=5 parent 4 waiting...
-notice: wait_one_hangging_thread: pid=4 find a hanging thread 5 
-debug: uthread_join: pid=4 wait pid=5 status=5
-debug: uthread_join: pid=4 thread 5 exit, will return status=5
+debug: sys_thread_detach: thread=uthread pid=5 tgid=4 ppid=4 set detach.
+debug: uthread_exit: pid=5 detached.
+debug: uthread_exit: pid=5 tgid=4 ppid=1.
+debug: uthread_exit: pid=5 parent 1 waiting...
+notice: wait_any_hangging_child: pid=1 find a hanging proc 5 
+notice: wait_any_hangging_child: thread.
+debug: sys_wait: pid=1 handle a hangging child 5.
 debug: uthread_exit: pid=4 no other threads, exit process!
 debug: sys_exit: name=init pid=4 ppid=1 prio=2 status=4
 debug: sys_exit: thread count 0
 debug: sys_exit: pid=4 release all resources done.
-debug: sys_exit: pid=4 parent 1 waiting...
-notice: wait_any_hangging_child: pid=1 find a hanging proc 4 
-notice: wait_any_hangging_child: process.
-debug: sys_wait: pid=1 handle a hangging child 4.
+debug: sys_exit: pid=4 parent 1 not waiting, zombie!
+notice: deal_zombie_child: pid=1 find a zombie child 4 
+notice: deal_zombie_child: process.

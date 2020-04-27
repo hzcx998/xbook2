@@ -44,5 +44,7 @@ int sys_thread_setcancelstate(int state, int *oldstate);
 void sys_thread_testcancel(void);
 int sys_thread_cancel(uthread_t thread);
 void close_one_thread(task_t *thread);
+void close_other_threads(task_t *thread);
+void uthread_exit(void *status);
 
 #endif /* _XBOOK_PROCESS_H */

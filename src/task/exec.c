@@ -9,6 +9,9 @@
  * 内存映射也是安全映射，即如果虚拟地址没有映射才映射，已经映射就不映射。
  * 只有在退出进程的时候才释放所有资源。这样也在一定程度上提高了效率，
  * 但是占用的内存变大，是空间换取时间的做法。
+ * 
+ * 如果在线程中执行exec，那么线程会全部关闭，并把当前进程用新进程镜像替换。
+ * 
  */
 
 
@@ -104,6 +107,10 @@ int sys_exec_raw(char *name, char **argv)
     /* 初始化触发器 */
     trigger_init(cur->triggers);
     
+    /* 如果是从一个多线程执行的，那么就会有线程结构体，由于在close_other_threads
+    的时候，把thread_count置0，因此，在此需要重新初始化线程描述（将thread_count置1） */
+    uthread_desc_init(cur->uthread);
+
     /* 执行程序的时候需要继承原有进程的资源，因此不在这里初始化资源 */
 
     /* 设置执行入口 */
@@ -143,6 +150,10 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
     
     unsigned long flags;
     save_intr(flags);
+
+    /* 执行新进程的时候，需要关闭旧进程的子线程。 */
+    close_other_threads(cur);
+
     /* 根据文件信息创建临时原始块 */
     raw_block_t rb;
     if (raw_block_tmp_add(&rb, file->file, file->size)) {
@@ -223,6 +234,13 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
     
     /* 初始化触发器 */
     trigger_init(cur->triggers);
+    
+    /* 如果是从一个多线程执行的，那么就会有线程结构体，由于在close_other_threads
+    的时候，把thread_count置0，因此，在此需要重新初始化线程描述（将thread_count置1） */
+    uthread_desc_init(cur->uthread);
+    if (cur->uthread) {
+        printk(KERN_DEBUG "%s: thread count %d\n", __func__, atomic_get(&cur->uthread->thread_count));
+    }
     
     /* 执行程序的时候需要继承原有进程的资源，因此不在这里初始化资源 */
 

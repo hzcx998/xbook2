@@ -227,7 +227,7 @@ void close_other_threads(task_t *thread)
             }
         }
     }
-    /* 有线程，就把线程数设为0，表示目前是一个单进程 */
+    /* 有线程，就把线程数设为0，表示目前是一个单进程，退出的时候就可以判断 */
     if (thread->uthread) {
         atomic_set(&thread->uthread->thread_count, 0);
     }

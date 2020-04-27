@@ -9,8 +9,10 @@
 
 void uthread_desc_init(uthread_desc_t *uthread)
 {
-    /* 最开始只有一个主线程（当前进程） */
-    atomic_set(&uthread->thread_count, 1);
+    if (uthread != NULL) {
+        /* 最开始只有一个主线程（当前进程） */
+        atomic_set(&uthread->thread_count, 1);
+    }
 }
 
 void uthread_desc_exit(uthread_desc_t *uthread)
