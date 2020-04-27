@@ -61,6 +61,65 @@ uthread_t uthread_self(void)
     return (uthread_t) gettid();
 }
 
+/**
+ * uthread_equal - 判断两个线程是否相等
+ * @thread1: 线程1
+ * @thread2: 线程2
+ * 
+ * @return: 相等返回1，不相等返回0
+ */
+int uthread_equal(uthread_t thread1, uthread_t thread2)
+{
+    return (thread1 == thread2);
+}
+
+/**
+ * uthread_cancel - 取消线程
+ * @thread: 线程
+ * 
+ * 发送终止信号给thread线程，如果成功则返回0，否则为非0值。发送成功并不意味着thread会终止。 
+ */
+int uthread_cancel(uthread_t thread)
+{
+    return syscall1(int , SYS_THREAD_CANCEL, thread);
+}
+
+/**
+ * uthread_setcancelstate - 设置取消状态
+ * @state: 状态：UTHREAD_CANCEL_ENABLE（缺省）, 收到信号后设为CANCLED状态
+ *              UTHREAD_CANCEL_DISABLE, 忽略CANCEL信号继续运行             
+ * @oldstate: 原来的状态,old_state如果不为NULL则存入原来的Cancel状态以便恢复。 
+ * 
+ * 成功返回0，失败返回-1
+ */
+int uthread_setcancelstate(int state, int *oldstate)
+{
+    return syscall2(int , SYS_THREAD_CANCELSTATE, state, oldstate);
+}
+
+/**
+ * uthread_setcanceltype - 设置取消动作的执行时机
+ * @type: 取消类型，2种结果：UTHREAD_CANCEL_DEFFERED，收到信号后继续运行至下一个取消点再退出
+ *                          UTHREAD_CANCEL_ASYCHRONOUS，立即执行取消动作（退出）
+ * @oldtype: oldtype如果不为NULL则存入原来的取消动作类型值。 
+ * 
+ * 成功返回0，失败返回-1
+ */
+int uthread_setcanceltype(int type, int *oldtype)
+{
+    return syscall2(int , SYS_THREAD_CANCELTYPE, type, oldtype);
+}
+
+/**
+ * uthread_testcancel - 检测测试点
+ * 
+ * 检查本线程是否处于Canceld状态，如果是，则进行取消动作，否则直接返回。
+ */
+void uthread_testcancel(void)
+{
+    syscall0(int , SYS_THREAD_TESTCANCEL);
+}
+
 int uthread_attr_getdetachstate(const uthread_attr_t *attr, int *detachstate)
 {
     *detachstate = attr->detachstate; 

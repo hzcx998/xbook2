@@ -144,8 +144,8 @@ task_t *uthread_start(task_func_t *func, void *arg,
     build_user_thread_frame(frame, arg, (void *)func, thread_entry, 
         (unsigned char *)attr->stackaddr + attr->stacksize);
 
-    if (attr->detachstate) {    /* 设置detach分离 */
-        task->flags |= TASK_FLAG_DETACH;
+    if (attr->detachstate == UTHREAD_CREATE_DETACHED) {    /* 设置detach分离 */
+        task->flags |= THREAD_FLAG_DETACH;
     }
     
     /* 操作链表时关闭中断，结束后恢复之前状态 */
@@ -201,8 +201,6 @@ void uthread_exit(void *status)
     /* 减少线程数量 */
     atomic_dec(&cur->uthread->thread_count);   
     if (atomic_get(&cur->uthread->thread_count) == 0) { /* 没有线程，就直接退出整个进程 */
-        /* 恢复原来的线程数量，在释放PCB时，根据thread_count判断是进程退出还是线程退出 */
-        //atomic_inc(&cur->uthread->thread_count);
         /* 退出整个进程 */
         printk(KERN_DEBUG "uthread_exit: pid=%d no other threads, exit process!\n", cur->pid);
         sys_exit((int) status);
@@ -214,7 +212,7 @@ void uthread_exit(void *status)
     thread_release_resource(cur);
 
     /* 子线程退出 */
-    if (cur->flags & TASK_FLAG_DETACH) {    /* 不需要同步等待，"自己释放资源" */
+    if (cur->flags & THREAD_FLAG_DETACH) {    /* 不需要同步等待，"自己释放资源" */
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "uthread_exit: pid=%d detached.\n", cur->pid);
 #endif        
@@ -293,7 +291,7 @@ int sys_thread_detach(uthread_t thread)
         return -1;
     printk(KERN_DEBUG "sys_thread_detach: thread=%s pid=%d tgid=%d ppid=%d set detach.\n",
         task->name, task->pid, task->tgid, task->parent_pid);
-    task->flags |= TASK_FLAG_DETACH; /* 分离标志 */
+    task->flags |= THREAD_FLAG_DETACH; /* 分离标志 */
     /* 有可能启动时是joinable的，但是执行过程中变成detach状态，
     因此，可能存在父进程join等待，所以，这里就需要检测任务状态 */
     if (task->flags & THREAD_FLAG_JOINED) {    /* 处于join状态 */
@@ -336,7 +334,7 @@ int uthread_join(uthread_t thread, void **thread_return)
     printk(KERN_DEBUG "uthread_join: pid=%d join thread %d\n", waiter->pid, thread);
 #endif
     /* 线程存在，查看其是否为分离状态 */
-    if (find->flags & TASK_FLAG_DETACH) {
+    if (find->flags & THREAD_FLAG_DETACH) {
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "uthread_join: pid=%d join the %d was detached, just return.\n", waiter->pid, thread);
 #endif  
@@ -407,6 +405,145 @@ int uthread_join(uthread_t thread, void **thread_return)
  */
 int sys_thread_join(uthread_t thread, void **thread_return)
 {
+    CHECK_THREAD_CANCELATION_POTINT(current_task);
     return uthread_join(thread, thread_return);
 }
 
+
+/**
+ * sys_thread_cancel - 设置线程取消点
+ * @thread: 线程
+ * 
+ * 引起阻塞的系统调用都是Cancelation-point
+ * 
+ * 成功返回0，失败返回-1
+ */
+int sys_thread_cancel(uthread_t thread)
+{
+    task_t *task;
+    unsigned long flags;
+    save_intr(flags);
+    task = find_task_by_pid(thread);
+    if (task == NULL) { /* 没找到 */
+#if DEBUG_LOCAL == 1
+        printk(KERN_ERR "sys_thread_cancel: pid=%d not find thread %d!\n",
+            current_task->pid, thread);
+#endif 
+        restore_intr(flags);
+        return -1;
+    }
+#if DEBUG_LOCAL == 1
+    printk(KERN_ERR "sys_thread_cancel: pid=%d set thread %d cancelation point.\n",
+        current_task->pid, thread);
+#endif
+    /* 设置取消点 */
+    task->flags |= THREAD_FLAG_CANCELED;
+    if (task->flags & THREAD_FLAG_CANCEL_ASYCHRONOUS) { /* 立即取消线程处理 */ 
+        /* 查看是否为自己取消自己 */
+        if (task == task_current) { /* 是自己 */
+            restore_intr(flags);
+#if DEBUG_LOCAL == 1
+            printk(KERN_DEBUG "sys_thread_cancel: pid=%d cancel self.\n", current_task->pid);
+#endif 
+            uthread_exit((void *) THREAD_FLAG_CANCEL_ASYCHRONOUS); /* 退出线程运行 */
+        } else {    /* 取消其它线程 */
+#if DEBUG_LOCAL == 1
+            printk(KERN_DEBUG "sys_thread_cancel: pid=%d will cancel thread %d.\n",
+                current_task->pid, thread);
+#endif 
+            close_one_thread(task);
+        }
+    }
+    restore_intr(flags);
+    return 0;
+}
+
+
+/**
+ * sys_thread_testcancel - 线程测试取消点
+ * 
+ * 如果有取消点，就退出线程
+ */
+void sys_thread_testcancel(void)
+{
+    CHECK_THREAD_CANCELATION_POTINT(current_task);
+}
+/**
+ * sys_thread_setcancelstate - 设置取消状态
+ * @state: 状态：UTHREAD_CANCEL_ENABLE（缺省）, 收到信号后设为CANCLED状态
+ *              UTHREAD_CANCEL_DISABLE, 忽略CANCEL信号继续运行             
+ * @oldstate: 原来的状态,old_state如果不为NULL则存入原来的Cancel状态以便恢复。 
+ * 
+ * 成功返回0，失败返回-1
+ */
+int sys_thread_setcancelstate(int state, int *oldstate)
+{
+    task_t *cur = current_task;
+    if (oldstate != NULL) {  /* 保存原来的类型 */
+#if DEBUG_LOCAL == 1
+        printk(KERN_DEBUG "sys_thread_setcancelstate: pid=%d fetch oldstate.\n",
+            current_task->pid);
+#endif 
+        if (cur->flags & THREAD_FLAG_CANCEL_DISABLE) {
+            *oldstate = UTHREAD_CANCEL_DISABLE;  
+        } else {
+            *oldstate = UTHREAD_CANCEL_ENABLE;
+        }
+    }
+    if (state == UTHREAD_CANCEL_DISABLE) {
+        cur->flags |= THREAD_FLAG_CANCEL_DISABLE;
+#if DEBUG_LOCAL == 1
+        printk(KERN_DEBUG "sys_thread_setcancelstate: pid=%d set cancel disable.\n",
+            current_task->pid);
+#endif 
+    } else if (state == UTHREAD_CANCEL_ENABLE) {
+        cur->flags &= ~THREAD_FLAG_CANCEL_DISABLE;
+#if DEBUG_LOCAL == 1
+        printk(KERN_DEBUG "sys_thread_setcancelstate: pid=%d set cancel enable.\n",
+            current_task->pid);
+#endif
+    } else {
+        return -1;
+    }
+    return 0;
+}
+
+/**
+ * sys_thread_setcanceltype - 设置取消动作的执行时机
+ * @type: 取消类型，2种结果：UTHREAD_CANCEL_DEFFERED，收到信号后继续运行至下一个取消点再退出
+ *                          UTHREAD_CANCEL_ASYCHRONOUS，立即执行取消动作（退出）
+ * @oldtype: oldtype如果不为NULL则存入原来的取消动作类型值。 
+ * 
+ * 成功返回0，失败返回-1
+ */
+int sys_thread_setcanceltype(int type, int *oldtype)
+{
+    task_t *cur = current_task;
+    if (oldtype != NULL) {  /* 保存原来的类型 */
+#if DEBUG_LOCAL == 1
+        printk(KERN_DEBUG "sys_thread_setcanceltype: pid=%d fetch oldtype.\n",
+            current_task->pid);
+#endif 
+        if (cur->flags & THREAD_FLAG_CANCEL_ASYCHRONOUS) {
+            *oldtype = UTHREAD_CANCEL_ASYCHRONOUS;  
+        } else {
+            *oldtype = UTHREAD_CANCEL_DEFFERED;
+        }
+    }
+    if (type == UTHREAD_CANCEL_ASYCHRONOUS) {
+        cur->flags |= THREAD_FLAG_CANCEL_ASYCHRONOUS;
+#if DEBUG_LOCAL == 1
+        printk(KERN_DEBUG "sys_thread_setcanceltype: pid=%d set cancel asychronous.\n",
+            current_task->pid);
+#endif 
+    } else if (type == UTHREAD_CANCEL_DEFFERED) {
+        cur->flags &= ~THREAD_FLAG_CANCEL_ASYCHRONOUS;
+#if DEBUG_LOCAL == 1
+        printk(KERN_DEBUG "sys_thread_setcanceltype: pid=%d set cancel deffered.\n",
+            current_task->pid);
+#endif 
+    } else {
+        return -1;
+    }
+    return 0;
+}

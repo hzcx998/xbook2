@@ -230,6 +230,7 @@ int __readres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
  */
 int sys_getres(char *resname, unsigned long resflg, unsigned long arg)
 {
+    CHECK_THREAD_CANCELATION_POTINT(current_task);
     #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "sys_getres: resname=%s resflg=%x\n", resname, resflg);
     #endif
@@ -256,6 +257,7 @@ int sys_getres(char *resname, unsigned long resflg, unsigned long arg)
  */
 int sys_putres(int res)
 {
+    CHECK_THREAD_CANCELATION_POTINT(current_task);
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "sys_putres: res index %d\n", res);
 #endif    
@@ -302,6 +304,7 @@ int sys_putres(int res)
  */
 int sys_readres(int res, off_t off, void *buffer, size_t count)
 {
+    CHECK_THREAD_CANCELATION_POTINT(current_task);
     #if DEBUG_LOCAL == 2
     printk(KERN_DEBUG "sys_readres: res index %d buffer=%x count=%d.\n",
         res, buffer, count);
@@ -342,6 +345,7 @@ int sys_readres(int res, off_t off, void *buffer, size_t count)
  */
 int sys_writeres(int res, off_t off, void *buffer, size_t count)
 {
+    CHECK_THREAD_CANCELATION_POTINT(current_task);
     #if DEBUG_LOCAL == 2
     printk(KERN_DEBUG "sys_writeres: res index %d buffer=%x count=%d.\n",
         res, buffer, count);

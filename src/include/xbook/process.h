@@ -39,4 +39,10 @@ void sys_thread_exit(void *retval);
 int sys_thread_detach(uthread_t thread);
 int sys_thread_join(uthread_t thread, void **thread_return);
 
+int sys_thread_setcanceltype(int type, int *oldtype);
+int sys_thread_setcancelstate(int state, int *oldstate);
+void sys_thread_testcancel(void);
+int sys_thread_cancel(uthread_t thread);
+void close_one_thread(task_t *thread);
+
 #endif /* _XBOOK_PROCESS_H */

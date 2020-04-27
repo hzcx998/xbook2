@@ -54,6 +54,7 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
 
 unsigned long sys_sleep(unsigned long second)
 {
+    CHECK_THREAD_CANCELATION_POTINT(current_task);
     if (!second)
         return 0;
     clock_t ticks = second * HZ;

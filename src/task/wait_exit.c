@@ -106,7 +106,7 @@ int wait_one_hangging_child(task_t *parent, pid_t pid, int *status)
 /**
  * deal_zombie_child - 处理僵尸子进程
  * 
-*/
+ */
 int deal_zombie_child(task_t *parent)
 {
     int zombie = 0;
@@ -179,11 +179,43 @@ void adopt_children_to_init(task_t *parent)
 }
 
 /**
- * close_other_thread - 关闭当前线程组中的其它线程
+ * close_one_thread - 强制关闭一个其它线程
+ * @thread: 线程
+ * 
+ * 需要在任务安全环境中调用，即过程中不能产生中断
+ */
+void close_one_thread(task_t *thread)
+{
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "close_one_thread: task=%s pid=%d tgid=%d ppid=%d state=%d\n",
+        thread->name, thread->pid, thread->tgid, thread->parent_pid, thread->state);
+#endif
+    /* 如果线程处于就绪状态，那么就从就绪队列删除 */
+    if (thread->state == TASK_READY) {
+        /* 从优先级队列移除 */
+        list_del_init(&thread->list);
+        thread->prio_queue->length--;
+        thread->prio_queue = NULL;
+#if DEBUG_LOCAL == 1
+        printk(KERN_DEBUG "close_one_thread: pid=%d remove from ready list.\n",
+            thread->pid);
+#endif
+    }
+    /* 挂起和僵尸态已经释放了线程资源 */
+    if (thread->state != TASK_HANGING && thread->state != TASK_ZOMBIE) {
+        thread_release_resource(thread);  /* 释放线程资源 */
+    }
+    /* 销毁线程 */
+    proc_destroy(thread, 1);
+
+}
+
+/**
+ * close_other_threads - 关闭当前线程组中的其它线程
  * @thread: 当前要关闭的线程
  * 
  */
-void close_other_thread(task_t *thread)
+void close_other_threads(task_t *thread)
 {
     /* 查找所有的兄弟线程 */
     task_t *borther, *next;
@@ -191,27 +223,7 @@ void close_other_thread(task_t *thread)
         /* 查找一个兄弟线程，位于同一个线程组，但不是自己 */
         if (IN_SAME_THREAD_GROUP(thread, borther)) {
             if (thread->pid != borther->pid) {
-#if DEBUG_LOCAL == 1
-                printk(KERN_DEBUG "close_other_thread: task=%s pid=%d tgid=%d ppid=%d state=%d\n",
-                    borther->name, borther->pid, borther->tgid, borther->parent_pid, borther->state);
-#endif
-                /* 如果线程处于就绪状态，那么就从就绪队列删除 */
-                if (borther->state == TASK_READY) {
-                    /* 从优先级队列移除 */
-                    list_del_init(&borther->list);
-                    borther->prio_queue->length--;
-                    borther->prio_queue = NULL;
-#if DEBUG_LOCAL == 1
-                    printk(KERN_DEBUG "close_other_thread: pid=%d remove from ready list.\n",
-                        borther->pid);
-#endif
-                }
-                /* 挂起和僵尸态已经释放了线程资源 */
-                if (borther->state != TASK_HANGING && borther->state != TASK_ZOMBIE) {
-                    thread_release_resource(borther);  /* 释放线程资源 */
-                }
-                /* 销毁线程 */
-                proc_destroy(borther, 1);
+                close_one_thread(borther); /* 销毁兄弟 */
             }
         }
     }
@@ -241,7 +253,9 @@ void close_other_thread(task_t *thread)
  */
 pid_t sys_waitpid(pid_t pid, int *status, int options)
 {
+    
     task_t *parent = current_task;  /* 当前进程是父进程 */
+    CHECK_THREAD_CANCELATION_POTINT(parent);
     pid_t child_pid;
     unsigned long flags;
     
@@ -334,7 +348,7 @@ void sys_exit(int status)
 #endif    
     
     /* 关闭其它线程 */
-    close_other_thread(cur);
+    close_other_threads(cur);
 #if DEBUG_LOCAL == 1
     if (cur->uthread)
         printk(KERN_DEBUG "sys_exit: thread count %d\n", atomic_get(&cur->uthread->thread_count));

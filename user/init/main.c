@@ -162,12 +162,13 @@ void *thread_test(void *arg)
     
     #endif
     //uthread_detach(uthread_self());
+#if 0    
     trigger(TRIGUSR0, trigger_handler);
     triggeron(TRIGUSR0, uthread_self());    /* 触发器 */
 
     trigger(TRIGALARM, trigger_handler);
     alarm(1);
-
+#endif
     while (trig_flags == 1)
     {
         
@@ -180,13 +181,23 @@ void *thread_test(void *arg)
     } 
     char *s = "this write from uthread.";
     res_write(com, 0, s, strlen(s));
-    
+    int oldtype;
+    uthread_setcancelstate(UTHREAD_CANCEL_ENABLE, &oldtype);
+    printf("get old state:%x\n", oldtype);
+    uthread_setcanceltype(UTHREAD_CANCEL_ASYCHRONOUS, &oldtype);
+    printf("get old type:%x\n", oldtype);
+    uthread_setcanceltype(oldtype, &oldtype);
+    printf("get old type:%x\n", oldtype);
+
+    //uthread_testcancel();
+    sleep(2);
     //uthread_detach(gettid());
     //printf("set alarm done!\n");
     /*void *status;
     uthread_t pid = (uthread_t ) arg;
     uthread_join(pid, status);
     printf("thread: join done! status=%d", status);*/
+    printf("sleep done!\n\n");
     return (void *)uthread_self();
 }
 
@@ -215,6 +226,10 @@ void test()
     //}
     //sleep(3);
     #if 1
+    //uthread_setcancelstate(UTHREAD_CANCEL_DISABLE, NULL);
+    sleep(1);
+    //uthread_setcanceltype(UTHREAD_CANCEL_ASYCHRONOUS, NULL);
+    uthread_cancel(tid);
     //sleep(2);
     void *retval = 0;
     //uthread_detach(tid);

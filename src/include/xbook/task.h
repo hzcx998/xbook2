@@ -50,10 +50,14 @@ typedef struct thread_stack {
 /* init 进程的pid */
 #define INIT_PROC_PID       1
 
-enum task_flags {
-    TASK_FLAG_DETACH        = (1 << 0),     /* 任务分离标志，表示自己释放资源，仅对用户线程使用 */
-    THREAD_FLAG_JOINED      = (1 << 1),     /* 线程被其它线程等待中 */
-    THREAD_FLAG_JOINING     = (1 << 2),     /* 线程正在等待其它线程 */
+/* 线程的标志 */
+enum thread_flags {
+    THREAD_FLAG_DETACH              = (1 << 0),     /* 线程分离标志，表示自己释放资源 */
+    THREAD_FLAG_JOINED              = (1 << 1),     /* 线程被其它线程等待中 */
+    THREAD_FLAG_JOINING             = (1 << 2),     /* 线程正在等待其它线程 */
+    THREAD_FLAG_CANCEL_DISABLE      = (1 << 3),     /* 线程不能被取消 */
+    THREAD_FLAG_CANCEL_ASYCHRONOUS  = (1 << 4),     /* 线程收到取消信号时立即退出 */
+    THREAD_FLAG_CANCELED            = (1 << 5),     /* 线程已经标记上取消点 */
 };
 
 
@@ -73,31 +77,29 @@ typedef struct uthread_desc {
 
 } uthread_desc_t;
 
-
-
 typedef struct task {
-    unsigned char *kstack;              // kernel stack, must be first member
+    unsigned char *kstack;              /* kernel stack, must be first member */
     task_state_t state;                 /* 任务的状态 */
-    pid_t pid;                          // 自己的进程id
-    pid_t parent_pid;                   // 父进程id：
+    pid_t pid;                          /* 自己的进程id */
+    pid_t parent_pid;                   /* 父进程id */
     pid_t tgid;                         /* 线程组id：线程属于哪个进程，和pid一样，就说明是主线程，不然就是子线程 */
     unsigned long flags;                /* 标志 */
     unsigned long priority;             /* 任务所在的优先级队列 */
     unsigned long ticks;                /* 运行的ticks，当前剩余的timeslice */
     unsigned long timeslice;            /* 时间片，可以动态调整 */
     unsigned long elapsed_ticks;        /* 任务执行总共占用的时间片数 */
-    int exit_status;                    // 退出时的状态
+    int exit_status;                    /* 退出时的状态 */
     char name[MAX_TASK_NAMELEN];        /* 任务的名字 */
     struct vmm *vmm;                    /* 进程虚拟内存管理 */
-    list_t list;                        // 处于所在队列的链表
-    list_t global_list;                 // 全局任务队列，用来查找所有存在的任务
+    list_t list;                        /* 处于所在队列的链表 */
+    list_t global_list;                 /* 全局任务队列，用来查找所有存在的任务 */
     priority_queue_t *prio_queue;       /* 所在的优先级队列 */
     triggers_t *triggers;               /* 触发器, 内核线程没有触发器 */
     resource_t *res;                    /* 设备资源 */
     timer_t *sleep_timer;               /* 休眠时的定时器 */
     alarm_t alarm;                      /* 闹钟 */
     long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
-    uthread_desc_t *uthread;                 /* 用户线程管理 */
+    uthread_desc_t *uthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
     unsigned int stack_magic;           /* 任务的魔数 */
 } task_t;
 
@@ -128,6 +130,13 @@ extern list_t task_global_list;
 #define IN_SINGAL_THREAD(task) \
         (((task)->uthread && (atomic_get(&(task)->uthread->thread_count) == 0))  || \
         (task)->uthread == NULL)
+
+
+/* 检测线程处于取消点 */
+#define CHECK_THREAD_CANCELATION_POTINT(task) \
+    if (!((task)->flags & THREAD_FLAG_CANCEL_DISABLE) && (task)->flags & THREAD_FLAG_CANCELED) \
+        uthread_exit((void *) THREAD_FLAG_CANCELED)
+
 
 void init_tasks();
 void kernel_pause();

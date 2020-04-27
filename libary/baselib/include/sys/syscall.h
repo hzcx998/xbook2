@@ -21,18 +21,21 @@ enum {
     SYS_THREAD_CANCEL,
     SYS_THREAD_DETACH,
     SYS_GETTID,
-    SYS_PROC_RESERVED = 20,             /* 预留20个接口给进程管理 */
+    SYS_THREAD_TESTCANCEL,
+    SYS_THREAD_CANCELSTATE,
+    SYS_THREAD_CANCELTYPE,
+    SYS_PROC_RESERVED = 30,             /* 预留30个接口给进程管理 */
     SYS_HEAP,
-    SYS_VMM_RESERVED = 30,              /* 预留10个接口给内存管理 */
+    SYS_VMM_RESERVED = 40,              /* 预留10个接口给内存管理 */
     SYS_GETRES, 
     SYS_PUTRES,
     SYS_READRES, 
     SYS_WRITERES,
     SYS_CTLRES,
-    SYS_RES_RESERVED = 40,              /* 预留10个接口给资源管理 */
+    SYS_RES_RESERVED = 50,              /* 预留10个接口给资源管理 */
     SYS_ALARM,
     SYS_KTIME,
-    SYS_TIME_RESERVED = 60,             /* 预留20个接口给时间管理 */
+    SYS_TIME_RESERVED = 60,             /* 预留10个接口给时间管理 */
     SYSCALL_NR,
 };
 unsigned long __syscall0(unsigned long num);

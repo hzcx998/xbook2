@@ -17,7 +17,7 @@
 
 int kernel_main(void)
 {
-    printk(KERN_INFO "welcom to xbook kernel.\n");
+    printk(KERN_INFO "welcome to xbook kernel.\n");
     /* init memory cache for kernel */
     init_mem_caches();
     init_vmarea();
@@ -42,6 +42,7 @@ int kernel_main(void)
     enable_intr();
     
     init_driver_arch();
+    
     /* init raw block */
     init_raw_block();
 

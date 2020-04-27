@@ -33,6 +33,12 @@ void init_syscall()
     syscall_table[SYS_THREAD_DETACH] = sys_thread_detach;
     
     syscall_table[SYS_GETTID] = sys_get_tid;
+    
+    syscall_table[SYS_THREAD_CANCEL] = sys_thread_cancel;
+    syscall_table[SYS_THREAD_TESTCANCEL] = sys_thread_testcancel;
+    syscall_table[SYS_THREAD_CANCELSTATE] = sys_thread_setcancelstate;
+    syscall_table[SYS_THREAD_CANCELTYPE] = sys_thread_setcanceltype;
+    
     /* 内存管理 */
     syscall_table[SYS_HEAP] = sys_vmspace_heap;
     
