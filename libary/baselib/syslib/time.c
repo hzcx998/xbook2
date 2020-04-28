@@ -20,3 +20,10 @@ unsigned long ktime(ktime_t *ktm)
 {
     return syscall1(int, SYS_KTIME, ktm);
 }
+/**
+ * getticks - 获取内核运行时钟数
+ */
+unsigned long getticks()
+{
+    return syscall0(unsigned long, SYS_GETTICKS);
+}

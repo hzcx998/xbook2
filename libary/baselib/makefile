@@ -10,6 +10,7 @@ DIR_INCLUDE 	= ./include
 ANSI_DIR = ./ansi
 STDIO_DIR = ./stdio
 SYSLIB_DIR = ./syslib
+STDLIB_DIR = ./stdlib
 
 # flags
 ARFLAGS := -cr
@@ -34,8 +35,12 @@ SYSLIB_OBJS = 	$(SYSLIB_DIR)/proc.o \
 				$(SYSLIB_DIR)/pthread.o \
 				$(SYSLIB_DIR)/pthread_entry.o
 
+STDLIB_OBJS	= 	$(STDLIB_DIR)/rand.o \
+				$(STDLIB_DIR)/abort.o \
+				$(STDLIB_DIR)/stream.o \
+				
 # objects
-OBJS	:= 	$(ANSI_OBJS) $(STDIO_OBJS) $(SYSLIB_OBJS)
+OBJS	:= 	$(ANSI_OBJS) $(STDIO_OBJS) $(SYSLIB_OBJS) $(STDLIB_OBJS)
 
 # out file
 LIBNAME = baselib.a

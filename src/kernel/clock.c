@@ -70,6 +70,15 @@ int clock_handler(unsigned long irq, unsigned long data)
 }
 
 /**
+ * sys_get_ticks - 获取系统的ticks
+ * 
+ */
+clock_t sys_get_ticks()
+{
+    return systicks;
+}
+
+/**
  * init_clock - 初始化时钟系统
  * 多任务的运行依赖于此
  */

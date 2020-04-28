@@ -18,5 +18,6 @@ extern volatile clock_t systicks;
 void init_clock();
 void clock_msleep(unsigned long msecond);
 void loop_delay(int t);
+clock_t sys_get_ticks();
 
 #endif  /* _XBOOK_CLOCK_H */

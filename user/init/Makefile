@@ -11,13 +11,14 @@ OBJDUMP		= objdump
 DIR_LIBARY = ../../libary
 
 # libarys
-DIR_BASELIB 	= $(DIR_LIBARY)/baselib
+DIR_BASELIB 		= $(DIR_LIBARY)/baselib
 DIR_FATFSLIB 		= $(DIR_LIBARY)/fatfslib
+DIR_LWIPLIB 		= $(DIR_LIBARY)/lwiplib
 
 BIN = a.out
 BIN_DIS = out.disasm
 BIN_OFF = 0 
-BIN_CNTS = 200
+BIN_CNTS = 300
 
 FLOPPY_OFF = 522
 
@@ -36,20 +37,33 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 
 #flags
 ASM_FLAGS	= -f elf \
+			-I $(DIR_LWIPLIB)/include \
+			-I $(DIR_LWIPLIB)/include/ipv4 \
+			-I $(DIR_LWIPLIB)/include/arch \
 			-I $(DIR_BASELIB)/include \
-			-I $(DIR_FATFSLIB)/
+			-I $(DIR_FATFSLIB)/ \
+			
+			
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
+			-I $(DIR_LWIPLIB)/include \
+			-I $(DIR_LWIPLIB)/include/ipv4 \
+			-I $(DIR_LWIPLIB)/include/arch \
 			-I $(DIR_BASELIB)/include \
-			-I $(DIR_FATFSLIB)/
-
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
+			-I $(DIR_FATFSLIB)/ \
+			
+			
 
 OBJS =  _start.o \
 		main.o \
 
-LIB_FILE := $(DIR_BASELIB)/baselib.a \
-			$(DIR_FATFSLIB)/fatfs.a 
+LIB_FILE = $(DIR_LWIPLIB)/lwip-1.4.1.a \
+			$(DIR_FATFSLIB)/fatfs.a \
+			$(DIR_BASELIB)/baselib.a \
+
+
+LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
+
 
 #First read here
 .PHONY: all dis
@@ -61,7 +75,7 @@ compile: $(OBJS)
 
 link: $(BIN)
 $(BIN): $(OBJS) $(LIB_FILE)
-	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIB_FILE)
+	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIB_FILE) 
 
 
 dis: $(BIN)

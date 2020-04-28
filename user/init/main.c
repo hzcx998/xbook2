@@ -9,6 +9,13 @@
 #include <sys/time.h>
 #include <ff.h>
 
+#include <lwip/netif.h>
+#include <lwip/ip.h>
+#include <lwip/tcp.h>
+#include <lwip/init.h>
+#include <netif/etharp.h>
+#include <lwip/timers.h>
+
 #include <stdio.h>
 
 #define TTY_NAME    "tty0"
@@ -26,6 +33,8 @@ void thread_test();
 
 void fatfs_test();
 
+void lwip_test();
+
 int main(int argc, char *argv[])
 {
     res_open(TTY_NAME, RES_DEV, 0);
@@ -33,7 +42,7 @@ int main(int argc, char *argv[])
     res_open(TTY_NAME, RES_DEV, 0);
     res_ioctl(RES_STDINNO, TTYIO_CLEAR, 0);
     printf("init: say, hello!\n");
-    
+
     int pid = fork();
     if (pid < 0) {
         printf("init: fork failed! exit now!\n");
@@ -61,7 +70,7 @@ int main(int argc, char *argv[])
         /* execute a process */
         printf("init-child: pid is %d, my parent pid is %d.\n", getpid(), getppid());
         //exit(123);
-        fatfs_test();
+        lwip_test();
         /* open disk */
         /*int ide0 = res_open(DISK_NAME, RES_DEV, 0);
         if (ide0 < 0) {
@@ -122,6 +131,44 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
+#if 1
+extern err_t
+ethernetif_init(struct netif *netif);
+
+extern void ethernetif_input(struct netif *netif);
+
+struct netif rtl8139_netif;
+
+void lwip_init_task(void)
+{
+    struct ip_addr ipaddr, netmask, gateway;
+
+    lwip_init();
+
+    IP4_ADDR(&gateway, 192,168,0,1);
+    IP4_ADDR(&netmask, 255,255,255,0);
+    IP4_ADDR(&ipaddr, 192,168,0,105);
+    
+    netif_add(&rtl8139_netif, &ipaddr, &netmask, &gateway, NULL, ethernetif_init, ethernet_input);
+    netif_set_default(&rtl8139_netif);
+    netif_set_up(&rtl8139_netif);
+}
+
+void lwip_test()
+{
+    printf("ready test lwip\n");
+    lwip_init_task();
+
+    while (1)
+    {
+        ethernetif_input(&rtl8139_netif);
+        sys_check_timeouts();
+    }
+    
+}
+
+#endif
+#if 0
 FRESULT scan_files (
     char* path        /* Start node to be scanned (***also used as work area***) */
 )
@@ -301,7 +348,7 @@ void fatfs_test()
         /* code */
     }
 }
-
+#endif 
 
 #if 0
 void *thread_test2(void *arg)

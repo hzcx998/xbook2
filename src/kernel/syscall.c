@@ -5,6 +5,7 @@
 #include <xbook/trigger.h>
 #include <xbook/alarm.h>
 #include <xbook/ktime.h>
+#include <xbook/clock.h>
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -51,4 +52,6 @@ void init_syscall()
     
     syscall_table[SYS_ALARM] = sys_alarm;
     syscall_table[SYS_KTIME] = sys_get_ktime;
+    syscall_table[SYS_GETTICKS] = sys_get_ticks;
+    
 }

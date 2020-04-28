@@ -80,6 +80,7 @@ enum {
     SYS_RES_RESERVED = 50,              /* 预留10个接口给资源管理 */
     SYS_ALARM,
     SYS_KTIME,
+    SYS_GETTICKS,
     SYS_TIME_RESERVED = 60,             /* 预留10个接口给时间管理 */
     SYSCALL_NR,
 };

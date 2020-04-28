@@ -66,6 +66,9 @@
         "uthread.h": "c",
         "stddef.h": "c",
         "stdio.h": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "stdlib.h": "c",
+        "timers.h": "c",
+        "opt.h": "c"
     }
 }

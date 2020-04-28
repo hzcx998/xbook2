@@ -119,6 +119,7 @@
 #include <arch/pci.h>
 #include <arch/atomic.h>
 #include <arch/cpu.h>
+#include <sys/ioctl.h>
 
 #define DRV_VERSION "v0.1"
 #define DRV_NAME "net-rtl8139" DRV_VERSION
@@ -1638,14 +1639,23 @@ static iostatus_t rtl8139_write(device_object_t *device, io_request_t *ioreq)
 static iostatus_t rtl8139_devctl(device_object_t *device, io_request_t *ioreq)
 {
     unsigned int ctlcode = ioreq->parame.devctl.code;
-
+    unsigned long arg = ioreq->parame.devctl.arg;
+    device_extension_t *extension = (device_extension_t *) device->device_extension;
     iostatus_t status;
+    unsigned char *mac;
 
     switch (ctlcode)
     {
-    case DEVCTL_CODE_TEST:
+    case NETIO_GETMAC:
+        mac = (unsigned char *) arg;
+        *mac++ = extension->mac_addr[0];
+        *mac++ = extension->mac_addr[1];
+        *mac++ = extension->mac_addr[2];
+        *mac++ = extension->mac_addr[3];
+        *mac++ = extension->mac_addr[4];
+        *mac++ = extension->mac_addr[5];
 #if DEBUG_LOCAL == 1
-        printk(KERN_DEBUG "rtl8139_devctl: code=%x arg=%x\n", ctlcode, ioreq->parame.devctl.arg);
+        printk(KERN_DEBUG "rtl8139_devctl: copy mac addr to addr %x\n", ioreq->parame.devctl.arg);
 #endif
         status = IO_SUCCESS;
         break;

@@ -34,4 +34,8 @@
 #define TTYIO_HOLDER     DEVCTL_CODE('t', 1)
 #define TTYIO_VISITOR    DEVCTL_CODE('t', 2)
 
+/* net */
+#define NETIO_GETMAC        DEVCTL_CODE('n', 1)
+#define NETIO_SETMAC        DEVCTL_CODE('n', 2)
+
 #endif   /* _SYS_IOCTL_H */
