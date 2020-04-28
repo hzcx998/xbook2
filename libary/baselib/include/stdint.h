@@ -30,5 +30,11 @@ typedef signed char     s8;
 
 typedef int ptrdiff_t;
 typedef int intptr_t;
-
+#if 0
+typedef unsigned int	UINT;	/* int must be 16-bit or 32-bit */
+typedef unsigned char	BYTE;	/* char must be 8-bit */
+typedef unsigned short	WORD;	/* 16-bit unsigned integer */
+typedef unsigned long	DWORD;	/* 32-bit unsigned integer */
+typedef WORD			WCHAR;	/* UTF-16 character type */
+#endif
 #endif  /*_LIB_STDINT_H*/

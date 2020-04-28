@@ -195,7 +195,7 @@ static int copy_res(task_t *child, task_t *parent)
     child->res = kmalloc(sizeof(triggers_t));
     if (child->res == NULL)
         return -1;
-    
+    resource_init(child->res);
     /* 更新资源引用 */
     //dump_resource(parent->res);
     resource_copy(child->res, parent->res);

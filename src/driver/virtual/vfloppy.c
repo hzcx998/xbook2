@@ -166,7 +166,7 @@ iostatus_t vfloppy_driver_vine(driver_object_t *driver)
     /* 绑定驱动信息 */
     driver->driver_enter = vfloppy_enter;
     driver->driver_exit = vfloppy_exit;
-
+    
     driver->dispatch_function[IOREQ_READ] = vfloppy_read;
     driver->dispatch_function[IOREQ_WRITE] = vfloppy_write;
     driver->dispatch_function[IOREQ_DEVCTL] = vfloppy_devctl;

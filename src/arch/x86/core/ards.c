@@ -27,7 +27,6 @@ unsigned int get_memory_size_from_hardware()
 		ardsNum = MAX_ARDS_NR;
 	}
 	struct ards_struct *ards = (struct ards_struct *) (ARDS_ADDR+4);	//ards 地址
-	printk("\n");
 	int i;
 	for(i = 0; i < ardsNum; i++){
 		//寻找可用最大内存

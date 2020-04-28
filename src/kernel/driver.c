@@ -19,7 +19,7 @@ LIST_HEAD(driver_list_head);
 driver_func_t driver_vine_table[] = {
     serial_driver_vine,                 /* serial */
     console_driver_vine,                /* console */
-    //ide_driver_vine,                  /* harddisk */
+    ide_driver_vine,                    /* harddisk */
     rtl8139_driver_vine,                /* net */
     keyboard_driver_vine,               /* keyboard */
     ramdisk_driver_vine,                /* ramdisk */
@@ -41,7 +41,7 @@ iostatus_t default_device_dispatch(device_object_t *device, io_request_t *ioreq)
     io_complete_request(ioreq);
     return IO_SUCCESS;  /* 默认是表示执行成功 */
 }
-
+#if 0 /* print devices */
 static void print_drivers()
 {
     driver_object_t *drvobj;
@@ -60,7 +60,21 @@ static void print_drivers()
     }
 }
 
-
+static void print_drivers_mini()
+{
+    driver_object_t *drvobj;
+    device_object_t *devobj;
+    int device_count;
+    printk(KERN_INFO "io system info-> drivers\n");
+    /* 遍历所有的驱动 */
+    list_for_each_owner (drvobj, &driver_list_head, list) {
+        list_for_each_owner (devobj, &drvobj->device_list, list) {
+            printk("%s ", devobj->name.text);
+        }
+    }
+    printk("\n");
+}
+#endif
 static driver_object_t *io_search_driver_by_name(char *drvname)
 {
     driver_object_t *drvobj;
@@ -779,9 +793,6 @@ iostatus_t io_device_decrease_reference(device_object_t *devobj)
  */
 handle_t device_open(char *devname, unsigned int flags)
 {
-    if (devname == NULL)
-        return -1;
-    
     device_object_t *devobj;
     /* 搜索设备 */
     devobj = io_search_device_by_name(devname);
@@ -793,6 +804,7 @@ handle_t device_open(char *devname, unsigned int flags)
     
     status = io_device_increase_reference(devobj);
     if (status == IO_FAILED) {
+        printk(KERN_ERR "device_open: increase reference failed!\n");
         return -1;
     }
 
@@ -832,9 +844,7 @@ handle_t device_open(char *devname, unsigned int flags)
     }
     
 rollback_ref:
-#if DEBUG_LOCAL == 1
     printk(KERN_ERR "device_open: do dispatch failed!\n");
-#endif
     io_device_decrease_reference(devobj);
 
     return -1;
@@ -1145,7 +1155,7 @@ void init_driver_arch()
     }
     
     
-
+    //print_drivers_mini();
     /* 输出所有驱动以及设备 */
     //print_drivers();
 #if 0    

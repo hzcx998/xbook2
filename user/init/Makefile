@@ -11,12 +11,13 @@ OBJDUMP		= objdump
 DIR_LIBARY = ../../libary
 
 # libarys
-DIR_BASELIB = $(DIR_LIBARY)/baselib
+DIR_BASELIB 	= $(DIR_LIBARY)/baselib
+DIR_FATFSLIB 		= $(DIR_LIBARY)/fatfslib
 
 BIN = a.out
 BIN_DIS = out.disasm
 BIN_OFF = 0 
-BIN_CNTS = 100
+BIN_CNTS = 200
 
 FLOPPY_OFF = 522
 
@@ -35,17 +36,20 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 
 #flags
 ASM_FLAGS	= -f elf \
-			-I $(DIR_BASELIB)/include
+			-I $(DIR_BASELIB)/include \
+			-I $(DIR_FATFSLIB)/
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
-			-I $(DIR_BASELIB)/include
+			-I $(DIR_BASELIB)/include \
+			-I $(DIR_FATFSLIB)/
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 
 OBJS =  _start.o \
 		main.o \
 
-LIB_FILE := $(DIR_BASELIB)/baselib.a 
+LIB_FILE := $(DIR_BASELIB)/baselib.a \
+			$(DIR_FATFSLIB)/fatfs.a 
 
 #First read here
 .PHONY: all dis

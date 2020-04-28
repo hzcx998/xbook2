@@ -257,8 +257,8 @@ typedef struct {
 最大文件大小依据MAX_MEM_CACHE_SIZE而定
  */
 raw_block_info_t rbi_table[MAX_RBI_NR] = {
-    {"init", 0, 100, 1024*50},
-    {"bin", 200, 100, 1024*50},
+    {"init", 0, 200, 1024*100},
+    {"bin", 200, 200, 1024*100},
 };
 
 void init_raw_block()

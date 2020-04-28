@@ -15,6 +15,7 @@
  * 
  */
 
+#define DEBUG_LOCAL 0
 
 /**
  * sys_exec_raw - 执行原始进程
@@ -214,7 +215,7 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
         printk(KERN_ERR "sys_exec_file: load_image failed!\n");
         goto free_tmp_arg;
     }
-
+    
     /* 构建中断栈框 */
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
@@ -239,9 +240,11 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
     /* 如果是从一个多线程执行的，那么就会有线程结构体，由于在close_other_threads
     的时候，把thread_count置0，因此，在此需要重新初始化线程描述（将thread_count置1） */
     pthread_desc_init(cur->pthread);
+#if DEBUG_LOCAL == 1
     if (cur->pthread) {
         printk(KERN_DEBUG "%s: thread count %d\n", __func__, atomic_get(&cur->pthread->thread_count));
     }
+#endif    
 
     /* 执行程序的时候需要继承原有进程的资源，因此不在这里初始化资源 */
 

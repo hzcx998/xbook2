@@ -119,9 +119,14 @@ extern list_t task_global_list;
 
 /* 检测线程处于取消点 */
 #define CHECK_THREAD_CANCELATION_POTINT(task) \
-    if (!((task)->flags & THREAD_FLAG_CANCEL_DISABLE) && (task)->flags & THREAD_FLAG_CANCELED) \
-        pthread_exit((void *) THREAD_FLAG_CANCELED)
-
+    do { \
+        if (!((task)->flags & THREAD_FLAG_CANCEL_DISABLE) && \
+            (task)->flags & THREAD_FLAG_CANCELED) { \
+            pthread_exit((void *) THREAD_FLAG_CANCELED); \
+        } \
+    } while (0)
+    
+        
 void init_tasks();
 void kernel_pause();
 

@@ -10,8 +10,6 @@ int init_arch()
 {	
     /* the first thing is to init debug! */
 	init_kernel_debug();
-    printk("hello, xbook!\n");
-
     /* init segment */
     init_segment_descriptor();
     /* init interrupt */

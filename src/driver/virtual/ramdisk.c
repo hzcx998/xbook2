@@ -17,7 +17,7 @@
 /* 10MB */
 #define RAMDISK_SECTORS     20480
 
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 typedef struct _device_extension {
     device_object_t *device_object; /* 设备对象 */
@@ -50,6 +50,9 @@ iostatus_t ramdisk_read(device_object_t *device, io_request_t *ioreq)
 #endif
 
 	}
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "ramdisk_read: io status:%d\n", status);
+#endif
     ioreq->io_status.status = status;
     io_complete_request(ioreq);
     return status;
@@ -78,7 +81,9 @@ iostatus_t ramdisk_write(device_object_t *device, io_request_t *ioreq)
             off, (length / SECTOR_SIZE));
 #endif
 	}
-
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "ramdisk_write: io status:%d\n", status);
+#endif
     ioreq->io_status.status = status;
     io_complete_request(ioreq);
     return status;

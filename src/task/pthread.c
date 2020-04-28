@@ -4,7 +4,7 @@
 #include <xbook/pthread.h>
 #include <arch/interrupt.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 /* 用户线程 */
 

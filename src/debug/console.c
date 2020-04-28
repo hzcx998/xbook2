@@ -252,9 +252,10 @@ void init_console_debug()
     /* 消除编译未使用提示 */
     get_cursor();
 
+    clean_screen(obj);
     /* 默认在左上角 */
     obj->x = 0;
-    obj->y = 5;
+    obj->y = 0;
     set_cursor(obj->y * SCREEN_WIDTH + obj->x);
 }
 

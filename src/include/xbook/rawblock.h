@@ -12,9 +12,8 @@
 
 #define RB_BLOCK_NR 256
 
-#define RB_DEVICE   "vfloppy"
-
-//#define RB_DEVICE   "ide0"
+//#define RB_DEVICE   "vfloppy"
+#define RB_DEVICE   "ide0"
 
 typedef struct raw_block {
     list_t list;                /* 所有块构成一个链表 */

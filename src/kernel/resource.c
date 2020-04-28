@@ -32,17 +32,18 @@ res_item_t *res_to_item(int res)
 int install_res(unsigned long flags, unsigned long handle)
 {
     resource_t *res = current_task->res;
-    res_item_t *item;
     int i;
     for (i = 0; i < RES_NR; i++) {
-        item = &res->table[i];
-        if (item->flags == 0) { /* not used */
-            item->flags = flags;
-            item->handle = handle;
-            return i;
-        }
+        if (!res->table[i].flags)
+            break;
     }
-    return -1;
+    if (i >= RES_NR) {
+        printk(KERN_ERR "install_res: out of range!\n");
+        return -1;
+    }
+    res->table[i].flags = flags;
+    res->table[i].handle = handle;
+    return i;
 }
 
 /**
@@ -54,6 +55,7 @@ int install_res(unsigned long flags, unsigned long handle)
 int uninstall_res(int idx)
 {
     if (IS_BAD_RES(idx)) {
+        printk(KERN_ERR "install_res: bad index in table!\n");
         return -1;
     }
     resource_t *res = current_task->res;
@@ -69,8 +71,9 @@ int __getres_device(char *name, unsigned long resflg)
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "__getres_device: get name %s\n", name);
 #endif    
-    handle_t handle;
-    if ((handle = device_open(name, resflg & RES_LOCAL_MASK)) < 0) {
+    handle_t handle = device_open(name, resflg & RES_LOCAL_MASK);
+    if (handle < 0) {
+        printk(KERN_ERR "__getres_device: device open %d failed!\n", handle);
         return -1;
     }
     #if DEBUG_LOCAL == 1
@@ -80,9 +83,7 @@ int __getres_device(char *name, unsigned long resflg)
     /* 打开资源成功，安装到进程中 */
     int res = install_res(resflg & RES_GLOBAL_MASK, handle);
     if (res == -1) { /* 失败后要关闭设备 */  
-        #if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "__getres_device: install res failed!\n");
-        #endif
+        printk(KERN_ERR "__getres_device: install res failed!\n");
         device_close(handle);
         return -1;
     }
@@ -244,9 +245,13 @@ int sys_getres(char *resname, unsigned long resflg, unsigned long arg)
         resflg = (resflg & (RES_LOCAL_MASK | RES_SLAVER_MASK)) | RES_IPC;
         res = __getres_ipc(resname, resflg, arg);
     }
+    if (res == -1) {
+        printk(KERN_ERR "sys_getres: get %s fialed!.\n", resname);        
+    } else {
 #if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "sys_getres: install res success.\n");
+        printk(KERN_DEBUG "sys_getres: install res success.\n");
 #endif
+    }
     return res;
 }
 /**
@@ -453,13 +458,15 @@ void resource_copy(resource_t *dst, resource_t *src)
     res_item_t *item;
     for (i = 0; i < RES_NR; i++) {
         item = &src->table[i];
-        if (item->flags) { /* 项在使用中 */
+        if (item->flags > 0) { /* 项在使用中 */
             switch (item->flags & RES_MASTER_MASK)
             {
             case RES_DEV:
-                dst->table[i] = *item;  /* 复制项 */
+                dst->table[i].flags = item->flags;  /* 复制项 */
+                dst->table[i].handle = item->handle;  /* 复制项 */
+                
                 /* 设备增长 */
-                device_grow(item->handle);
+                device_grow(dst->table[i].handle);
                 break;
             case RES_IPC:
                 /* 不复制ipc资源和表项 */
