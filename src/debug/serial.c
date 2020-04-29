@@ -162,7 +162,7 @@ static int serial_send(struct serial_object *obj, char data)
  */
 void serial_putchar(char ch)
 {
-    /* 如果是回车，就需要发送一个'\r'，以兼容unix/linux操作系统的输出 */
+    /* 如果是回车，就需要发送一个'\r'，以兼d容unix/linux操作系统的输出 */
     if(ch == '\n')
         serial_send(&serial_object, '\r');
     
