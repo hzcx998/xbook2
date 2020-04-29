@@ -17,6 +17,7 @@
 #define IO_SUCCESS             (0 << 0)    /* 成功 */
 #define IO_FAILED              (1 << 0)    /* 失败 */        
 #define IO_PENDING             (1 << 1)    /* 未决 */
+#define IO_NOWAIT              (1 << 2)    /* 不需要等待 */
 
 /* 系统可以打开的设备数量，可以根据设备数调节 */
 #define DEVICE_HANDLE_NR        32
@@ -186,7 +187,6 @@ typedef struct _device_object
         mutexlock_t mutexlock;          /* 设备互斥锁 */
     } lock;
     unsigned long reserved;             /* 预留 */
-    device_queue_t device_queue[DEVICE_QUEUE_NR];        /* 设备队列，用于分发数据包到打开设备的进程 */
 } device_object_t;
 
 /* 派遣函数定义 */ 
@@ -246,8 +246,20 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq);
 
 void io_complete_request(io_request_t *ioreq);
 
-int io_device_queue_get(device_object_t *devobj, unsigned char *buf, int buflen, int flags);
-int io_device_queue_put(device_object_t *devobj, unsigned char *buf, int len);
+void io_device_queue_init(device_queue_t *queue);
+
+iostatus_t io_device_queue_append(
+    device_queue_t *queue, 
+    unsigned char *buf,
+    int len
+);
+
+int io_device_queue_pickup(
+    device_queue_t *queue,
+    unsigned char *buf,
+    int buflen,
+    int flags
+);
 
 handle_t device_open(char *devname, unsigned int flags);
 int device_close(handle_t handle);

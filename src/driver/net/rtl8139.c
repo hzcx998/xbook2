@@ -559,7 +559,7 @@ typedef struct _device_extension {
 
     uint32_t rx_config;      /* 接收配置 */
 
-    char read_net_status;         /* 读取模式：为1时表示读取网络状态，为0时表示读取数据包 */
+    device_queue_t rx_queue;    /* 接收队列 */
 
 } device_extension_t;
 
@@ -1081,8 +1081,7 @@ keep_pkt:
 #endif    
         /* 接受数据包 */
         //rtl8139_packet_receive(ext, &rx_ring[ring_offset + 4], pkt_size);
-        if (pkt_size <= ETH_FRAME_LEN)
-            io_device_queue_put(ext->device_object, &rx_ring[ring_offset + 4], pkt_size);
+        io_device_queue_append(&ext->rx_queue, &rx_ring[ring_offset + 4], pkt_size);
 
         //NlltReceive(&rx_ring[ring_offset + 4], pkt_size);
         /* 创建接收缓冲区，并把数据复制进去 */
@@ -1487,8 +1486,6 @@ static int rtl8139_init(device_extension_t *ext)
 
     ext->drv_flags = 0;
 
-    ext->read_net_status = 0;
-
     /* 初始化自旋锁 */
     spinlock_init(&ext->lock);
     spinlock_init(&ext->rx_lock);
@@ -1596,28 +1593,34 @@ static iostatus_t rtl8139_read(device_object_t *device, io_request_t *ioreq)
     device_extension_t *ext = device->device_extension;
     iostatus_t status = IO_SUCCESS;
 
-    uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
-    if (!ext->read_net_status) {
-        len = ioreq->parame.read.length;
-        /* 从网络接收队列中获取一个包 */
-        len = io_device_queue_get(device, buf, len, ioreq->parame.read.offset);
-        if (len == -1)
-            status = IO_FAILED;
-    } else {
-        memcpy(buf, &ext->stats, sizeof(struct net_device_status));
-        len = sizeof(struct net_device_status);
+    uint8_t *buf = (uint8_t *)ioreq->user_buffer; 
+    int flags = 0;
+
+#if DEBUG_LOCAL == 2    
+    printk(KERN_DEBUG "rtl8139_write: receive data=%x len=%d flags=%x\n",
+        buf, ioreq->parame.read.length, ioreq->parame.read.offset);
+#endif
+    len = ioreq->parame.read.length;
+
+    if (ioreq->parame.read.offset & DEV_NOWAIT) {
+        flags |= IO_NOWAIT;
     }
-    
+    /* 从网络接收队列中获取一个包 */
+    len = io_device_queue_pickup(&ext->rx_queue, buf, len, flags);
+    if (len < 0)
+        status = IO_FAILED;
+
 #if DEBUG_LOCAL == 1    
-    buf = (uint8_t *)ioreq->system_buffer; 
-    dump_buffer(buf, 32, 1);
+    if (len > 0) {
+        buf = (uint8_t *)ioreq->user_buffer; 
+        dump_buffer(buf, 32, 1);
+    }
 #endif
     ioreq->io_status.status = status;
     ioreq->io_status.infomation = len;
     
     /* 调用完成请求 */
     io_complete_request(ioreq);
-
     return status;
 }
 
@@ -1625,7 +1628,11 @@ static iostatus_t rtl8139_write(device_object_t *device, io_request_t *ioreq)
 {
     unsigned long len = ioreq->parame.write.length;
     
-    uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
+    uint8_t *buf = (uint8_t *)ioreq->user_buffer; 
+#if DEBUG_LOCAL == 2    
+    printk(KERN_DEBUG "rtl8139_write: transmit data=%x len=%d flags=%x\n",
+        buf, ioreq->parame.write.length, ioreq->parame.write.offset);
+#endif
     if (rtl8139_transmit(device->device_extension, buf, len))
         len = -1;
 
@@ -1683,12 +1690,14 @@ static iostatus_t rtl8139_enter(driver_object_t *driver)
         printk(KERN_DEBUG KERN_ERR "rtl8139_enter: create device failed!\n");
         return status;
     }
-    /* buffered io mode */
-    devobj->flags = DO_BUFFERED_IO | DO_DISPENSE;
+    /* neither io mode */
+    devobj->flags = 0;
     
     devext = (device_extension_t *)devobj->device_extension;
     devext->device_object = devobj;
-    
+    /* 初始化接收队列，用内核队列结构保存，等待被读取 */
+    io_device_queue_init(&devext->rx_queue);
+
     if (rtl8139_get_pci_info(devext)) {
         status = IO_FAILED;
         io_delete_device(devobj);

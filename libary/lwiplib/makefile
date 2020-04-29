@@ -11,6 +11,7 @@ NETIF_INCLUDE 	= $(DIR_INCLUDE)/netif
 ARCH_DIR		= ./arch
 CORE_DIR		= ./core
 NETIF_DIR		= ./netif
+API_DIR			= ./api
 IPV4_DIR		= $(CORE_DIR)/ipv4
 
 
@@ -61,9 +62,17 @@ IPV4_OBJS = 	$(IPV4_DIR)/autoip.o \
 				
 NETIF_OBJS = 	$(NETIF_DIR)/etharp.o \
 				$(NETIF_DIR)/ethernetif.o \
-	
+
+API_OBJS =  	$(API_DIR)/api_lib.o \
+				$(API_DIR)/api_msg.o \
+				$(API_DIR)/err.o \
+				$(API_DIR)/netbuf.o \
+				$(API_DIR)/netdb.o \
+				$(API_DIR)/netifapi.o \
+				$(API_DIR)/sockets.o \
+				$(API_DIR)/tcpip.o \
 # objects
-OBJS	:=  $(CORE_OBJS) $(ARCH_OBJS) $(IPV4_OBJS) $(NETIF_OBJS)
+OBJS	:=  $(CORE_OBJS) $(ARCH_OBJS) $(IPV4_OBJS) $(NETIF_OBJS)  $(API_OBJS)
 
 # out file
 LIBNAME = lwip-1.4.1.a

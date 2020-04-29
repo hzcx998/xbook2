@@ -33,7 +33,7 @@ static inline void semaphore_init(semaphore_t *sema, int value)
 	/* 设置成初始值 */
 	atomic_set(&sema->counter, value);
 	/* 初始化等待队列 */
-	wait_queue_init(&sema->waiter, NULL);
+	wait_queue_init(&sema->waiter);
 }
 
 /**
@@ -42,21 +42,8 @@ static inline void semaphore_init(semaphore_t *sema, int value)
  */
 static inline void __semaphore_down(semaphore_t *sema)
 {
-	/* 申请一个等待者 */
-	wait_queue_t waiter;
-	task_t *current = current_task;
-
-	/* 把当前进程设置成一个等待者 */
-	wait_queue_init(&waiter, current);
-	
 	/* 把自己添加到信号量的等待队列中，等待被唤醒 */
-	list_add_tail(&waiter.wait_list, &sema->waiter.wait_list);
-
-    /* 状态设置成阻塞 */
-	//SET_TASK_STATUS(current, TASK_BLOCKED);
-	/* 调度到其它任务 */
-	//schedule();
-	
+	list_add_tail(&current_task->list, &sema->waiter.wait_list);
 	task_block(TASK_BLOCKED);
 }
 
@@ -111,14 +98,14 @@ static inline int semaphore_try_down(semaphore_t *sema)
 static inline void __semaphore_up(semaphore_t *sema)
 {
 	/* 从等待队列获取一个等待者 */
-	wait_queue_t *waiter = list_first_owner(&sema->waiter.wait_list, wait_queue_t, wait_list);
+	task_t *waiter = list_first_owner(&sema->waiter.wait_list, task_t, list);
 	
 	/* 让等待者的链表从信号量的链表中脱去 */
-	list_del(&waiter->wait_list);
+	list_del(&waiter->list);
     
 	/* 设置任务为就绪状态 */
-	waiter->task->state = TASK_READY;
-    task_priority_queue_add_head(waiter->task);
+	waiter->state = TASK_READY;
+    task_priority_queue_add_head(waiter);
 }
 
 /**

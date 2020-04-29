@@ -69,6 +69,8 @@
         "pthread.h": "c",
         "stdlib.h": "c",
         "timers.h": "c",
-        "opt.h": "c"
+        "opt.h": "c",
+        "inet.h": "c",
+        "tftpserver.h": "c"
     }
 }

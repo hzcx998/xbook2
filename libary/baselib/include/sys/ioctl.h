@@ -10,6 +10,10 @@
         ((unsigned int) ((((type) & 0xffff) << 16) | ((cmd) & 0xffff)))
 #endif
 
+/* 设备标志 */
+#define DEV_NOWAIT      0x01        /* 非阻塞方式 */
+
+
 /* 定义系统的设备控制码 */
 
 /* 控制台 */

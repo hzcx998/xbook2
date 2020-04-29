@@ -7,14 +7,8 @@
 #include <sys/pthread.h>
 #include <sys/trigger.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
 #include <ff.h>
-
-#include <lwip/netif.h>
-#include <lwip/ip.h>
-#include <lwip/tcp.h>
-#include <lwip/init.h>
-#include <netif/etharp.h>
-#include <lwip/timers.h>
 
 #include <stdio.h>
 
@@ -24,16 +18,28 @@
 //#define DISK_NAME   "vfloppy"
 
 /* login arg */
-#define BIN_OFFSET      200
-#define BIN_SECTORS     100
+#define BIN_OFFSET      300
+#define BIN_SECTORS     300
 #define BIN_SIZE        (BIN_SECTORS*512)
 #define BIN_NAME        "login"
 
-void thread_test();
+void build_fatfs();
 
-void fatfs_test();
+FATFS fatfs_info;           /* Filesystem object */
 
-void lwip_test();
+FRESULT fatfs_scan_files (
+    char* path        /* Start node to be scanned (***also used as work area***) */
+);
+
+/**
+ * initsrv - 初始化服务
+ * 
+ * 启动其它服务进程，以及等待所有子进程。
+ * 启动的服务可以通过配置服务列表来选择。
+ * 
+ * 
+ * 
+ */
 
 int main(int argc, char *argv[])
 {
@@ -41,42 +47,29 @@ int main(int argc, char *argv[])
     res_open(TTY_NAME, RES_DEV, 0);
     res_open(TTY_NAME, RES_DEV, 0);
     res_ioctl(RES_STDINNO, TTYIO_CLEAR, 0);
-    printf("init: say, hello!\n");
+    printf("initsrv: start.\n");
 
     int pid = fork();
     if (pid < 0) {
-        printf("init: fork failed! exit now!\n");
+        printf("initsrv: fork error! abort service.\n");
         return -1;
     }
-
-    if (pid > 0) {  /* parent */
-        //printf("init-parent: pid is %d, my child pid is %d.\n", getpid(), pid);
-        while (1) { /* loop */
-#if 0
-            int status = 0;
-            pid = wait(&status);    /* wait one child exit */
-            if (pid > 1) {
-                printf("init: my child pid %d exit with status %d\n", pid, status);
-            }
-#endif
+    if (pid > 0) {
+        while (1) {
             int status = 0;
             int _pid;
-            _pid = waitpid(-1, &status, 0);    /* wait one child exit */
+            _pid = waitpid(-1, &status, 0);    /* wait any child exit */
             if (_pid > 1) {
-                printf("init: my child pid %d exit with status %d\n", _pid, status);
+                printf("initsrv: process[%d] exit with status %x.\n", _pid, status);
             }
         }
     } else {
-        /* execute a process */
-        printf("init-child: pid is %d, my parent pid is %d.\n", getpid(), getppid());
-        //exit(123);
-        lwip_test();
-        /* open disk */
-        /*int ide0 = res_open(DISK_NAME, RES_DEV, 0);
-        if (ide0 < 0) {
-            printf("init-child: open disk '%s' %d failed! exit now.", DISK_NAME, ide0);
-            return -1;
-        }*/
+        /* filesrv */
+        printf("filesrv: start.\n");
+        build_fatfs();
+
+        /* 构建文件系统 */
+        //build_fatfs();
         /* alloc memory for file */
         unsigned char *heap_pos = heap(0);
         //printf("init-child: heap addr %x.\n", heap_pos);
@@ -87,35 +80,50 @@ int main(int argc, char *argv[])
         memset(buf, 0, BIN_SIZE);
        // printf("init-child: alloc data at %x for 40 kb.\n", buf);
         
+#if 0
+        /* open disk */
+        int ide0 = res_open(DISK_NAME, RES_DEV, 0);
+        if (ide0 < 0) {
+            printf("init-child: open disk '%s' %d failed! exit now.", DISK_NAME, ide0);
+            return -1;
+        }
+        
         /* read disk sector for file: offset=200, sectors=50 */
-        /*if (res_read(ide0, BIN_OFFSET, buf, BIN_SIZE) < 0) {
+        if (res_read(ide0, BIN_OFFSET, buf, BIN_SIZE / 2) < 0) {
             printf("init-child: read disk sectors failed! exit now\n");
             return -1;
-        }*/
-        FATFS fs;           /* Filesystem object */
+        }
+        if (res_read(ide0, BIN_OFFSET + 150, buf + BIN_SIZE / 2, BIN_SIZE / 2) < 0) {
+            printf("init-child: read disk sectors failed! exit now\n");
+            return -1;
+        }
+        printf("filesrv: read done.\n");
+#endif
+#if 1   /* read file data */
+        
         FIL fil;            /* File object */
         FRESULT res;        /* API result code */
         UINT br;            /* Bytes written */
-        f_mount(&fs, "hd1:", 0);
 
-        res = f_open(&fil, "hd1:login", FA_OPEN_EXISTING | FA_READ);
+        res = f_open(&fil, "hd1:/netsrv.xsv", FA_OPEN_EXISTING | FA_READ);
         if (res != FR_OK) {
             printf("open file failed!\n");
             exit(res);
         }
-
+        printf("read ...\n");
         res = f_read(&fil, buf, BIN_SIZE, &br);
         if (res != FR_OK) {
             printf("read failed! %d\n", res);
             exit(res);
         }
+        printf("read done!\n");
+        
         if (br != BIN_SIZE) {
             printf("read file failed! read %d\n", br);
             exit(br);
         }
         f_close(&fil);
-        f_mount(0, "hd1:", 0);
-
+#endif
         //printf("init-child: load data success.\n");
         
         kfile_t file = {buf, BIN_SIZE};
@@ -131,45 +139,125 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
-#if 1
-extern err_t
-ethernetif_init(struct netif *netif);
 
-extern void ethernetif_input(struct netif *netif);
+/* 文件系统驱动器 */
+static char *fs_drives[] = {
+    "hd1:", 
+    0,
+};
 
-struct netif rtl8139_netif;
-
-void lwip_init_task(void)
+void build_fatfs()
 {
-    struct ip_addr ipaddr, netmask, gateway;
-
-    lwip_init();
-
-    IP4_ADDR(&gateway, 192,168,0,1);
-    IP4_ADDR(&netmask, 255,255,255,0);
-    IP4_ADDR(&ipaddr, 192,168,0,105);
     
-    netif_add(&rtl8139_netif, &ipaddr, &netmask, &gateway, NULL, ethernetif_init, ethernet_input);
-    netif_set_default(&rtl8139_netif);
-    netif_set_up(&rtl8139_netif);
-}
+    FIL fil;            /* File object */
+    FRESULT res;        /* API result code */
+    UINT bw, br;            /* Bytes written */
+    BYTE work[FF_MAX_SS]; /* Work area (larger is better for processing time) */
 
-void lwip_test()
-{
-    printf("ready test lwip\n");
-    lwip_init_task();
-
-    while (1)
+    /* 打印路径的缓冲区 */
+    char pathbuf[256];
+    char cwdbuf[32];
+    char **drv_name = &fs_drives[0];
+    while (*drv_name != NULL)
     {
-        ethernetif_input(&rtl8139_netif);
-        sys_check_timeouts();
+        printf("filesrv: make file system on drive %s start.\n", *drv_name);
+#if 0   /* mkfs */
+        /* 在磁盘上创建文件系统 */
+        /*res = f_mkfs(*drv_name, 0, work, sizeof(work));
+        if (res != FR_OK) {
+            printf("filesrv: make fs on drive %s failed with resoult code %d.\n", res);
+            exit(res);
+        }*/
+#endif        
+        /* 挂载到内存中 */
+        f_mount(&fatfs_info, *drv_name, 0);
+        f_chdrive(*drv_name);
+        memset(cwdbuf, 0, 32);
+        f_getcwd(cwdbuf, 32);
+        printf("filesrv: list drive %s : %s\n", *drv_name, cwdbuf);
+#if 0
+        res = f_open(&fil, "hd1:test.txt", FA_CREATE_NEW | FA_WRITE | FA_READ);
+        if (res != FR_OK) {
+            printf("open file failed!\n");
+            exit(res);
+        }
+
+        f_write(&res, "hello", 5, &bw);
+
+        f_close(&fil);
+#endif
+        memset(pathbuf, 0, 256);
+        strcpy(pathbuf, "hd1:/");
+        fatfs_scan_files(pathbuf);
+        
+        //f_mount(0, *drv_name, 0);
+        drv_name++;
     }
+    drv_name = &fs_drives[0];
+
+    /* 切换回第一个驱动器 */
+    f_chdrive(*drv_name);
+    printf("filesrv: init done.\n");
+
+#if 1   /* write file */
     
-}
+    /* alloc memory for file */
+    unsigned char *heap_pos = heap(0);
+    printf("filesrv: heap %x.\n", heap_pos);
+
+    heap(heap_pos + BIN_SIZE); // 40 kb memory
+    
+    printf("filesrv: heap %x done.\n", heap_pos);
+    unsigned char *buf = heap_pos;
+    memset(buf, 0, BIN_SIZE);
+
+    res = f_open(&fil, "hd1:/netsrv.xsv", FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+    if (res != FR_OK) {
+        printf("filesrv: open file failed!\n");
+        exit(res);
+    }
+    printf("filesrv: open done.\n");
+
+    // printf("init-child: alloc data at %x for 40 kb.\n", buf);
+    printf("filesrv: open done.\n");
+
+    /* open disk */
+    int ide0 = res_open(DISK_NAME, RES_DEV, 0);
+    if (ide0 < 0) {
+        printf("filesrv: open disk '%s' %d failed! exit now.", DISK_NAME, ide0);
+        return;
+    }
+    /* read disk sector for file: offset=200, sectors=50 */
+    /*if (res_read(ide0, BIN_OFFSET, buf, BIN_SIZE) < 0) {
+        printf("filesrv: read disk sectors failed! exit now\n");
+        return;
+    }*/
+    /* read disk sector for file: offset=200, sectors=50 */
+    if (res_read(ide0, BIN_OFFSET, buf, BIN_SIZE / 2) < 0) {
+        printf("init-child: read disk sectors failed! exit now\n");
+        return -1;
+    }
+    if (res_read(ide0, BIN_OFFSET + 150, buf + BIN_SIZE / 2, BIN_SIZE / 2) < 0) {
+        printf("init-child: read disk sectors failed! exit now\n");
+        return -1;
+    }
+    printf("filesrv: open disk done.\n");
+
+    f_write(&fil, buf, BIN_SIZE, &bw);
+    if (bw != BIN_SIZE) {
+        printf("filesrv: write file failed!\n");
+        return;
+    }
+    printf("filesrv: write file done.\n");
+
+    f_close(&fil);
 
 #endif
-#if 0
-FRESULT scan_files (
+    printf("filesrv: write done.\n");
+
+}
+
+FRESULT fatfs_scan_files (
     char* path        /* Start node to be scanned (***also used as work area***) */
 )
 {
@@ -187,7 +275,7 @@ FRESULT scan_files (
                 printf("%s/%s\n", path, fno.fname);
                 i = strlen(path);
                 sprintf(&path[i], "/%s", fno.fname);
-                res = scan_files(path);                    /* Enter the directory */
+                res = fatfs_scan_files(path);                    /* Enter the directory */
                 if (res != FR_OK) break;
                 path[i] = 0;
             } else {                                       /* It is a file. */
@@ -285,7 +373,7 @@ void fatfs_test()
     }
     char pathbuf[256];
     strcpy(pathbuf, "/");
-    scan_files(pathbuf);
+    //scan_files(pathbuf);
 
     f_mount(NULL, "hd1:", 0);
     printf("test fatfs done!\n");
@@ -348,59 +436,3 @@ void fatfs_test()
         /* code */
     }
 }
-#endif 
-
-#if 0
-void *thread_test2(void *arg)
-{
-    printf("thread_test2: hello, thread %d, arg=%x\n", pthread_self(), (unsigned int)arg);
-    //sleep(3);
-    printf("thread_test2: will return soon!\n");
-    return (void *)123;
-}
-void trigger_handler(int trig)
-{
-    printf("trigger_handler: trigger %d occur!\n", trig);
-
-}
-
-void *thread_test(void *arg)
-{
-    printf("thread_test: hello, thread %d, arg=%s\n", pthread_self(), arg);
-    
-    pthread_t tid;
-    pthread_create(&tid, NULL, thread_test2, (void *)0x12345678);
-    printf("thread_test: create thread %d\n", tid);
-    
-    pthread_join(tid, NULL);
-    
-    printf("thread_test: will return soon!\n");
-    return (void *)pthread_self();
-}
-
-void thread_test()
-{
-    printf("init: testing...\n");
-    unsigned char *stack_top;
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setstacksize(&attr, 4096);
-    /* get heap start addr */
-    stack_top = heap(0);
-    /* expand heap */
-    heap(stack_top + attr.stacksize);
-    memset(stack_top, 0, attr.stacksize);
-    pthread_attr_setstackaddr(&attr, stack_top);
-    /* create the thread */
-    pthread_t tid;
-    pthread_create(&tid, &attr, thread_test, "hello, THREAD1!");
-    printf("init: create thread %d\n", tid);
-    void *retval = 0;
-    trigger(TRIGALARM, trigger_handler);
-    alarm(1);
-    /* wait tig thread */
-    pthread_join(tid, &retval);
-    printf("init: %d pthread_join %d status %x done!\n", pthread_self(), tid, retval);
-    printf("init: will return!\n");
-}
-#endif

@@ -66,7 +66,7 @@
 
 #define ETHDEVNAME "rtl8139"
 
-#define NETIF_MTX 1518
+#define ETH_MTU 1500
 
 /**
  * Helper struct to hold private data used to operate your ethernet interface.
@@ -113,7 +113,7 @@ low_level_init(struct netif *netif)
     }
 
   /* maximum transfer unit */
-  netif->mtu = NETIF_MTX;
+  netif->mtu = ETH_MTU;
   
   /* device capabilities */
   /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
@@ -189,8 +189,8 @@ low_level_input(struct netif *netif)
   /* Obtain the size of the packet and put it into the "len"
      variable. */
   //len = ;
-  u8_t rxbuf[NETIF_MTX];
-  len = res_read(ethernetif->ethres, 0, rxbuf, NETIF_MTX);
+  u8_t rxbuf[ETH_MTU];
+  len = res_read(ethernetif->ethres, DEV_NOWAIT, rxbuf, ETH_MTU);
     if (len < 0)
         return 0;
 #if ETH_PAD_SIZE

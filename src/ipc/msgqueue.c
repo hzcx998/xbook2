@@ -79,8 +79,8 @@ msg_queue_t *msg_queue_alloc(char *name)
             msgq->msgs = 0;
             msgq->msgsz = MSG_MAX_LEN;  /* 默认消息长度 */
             /* 发送者和接受者等待队列 */
-            wait_queue_init(&msgq->senders, NULL);
-            wait_queue_init(&msgq->receivers, NULL);
+            wait_queue_init(&msgq->senders);
+            wait_queue_init(&msgq->receivers);
 #if DEBUG_MSGQ == 1
             printk(KERN_DEBUG "msg_queue_alloc: msgq id=%d\n", msgq->id);
 #endif

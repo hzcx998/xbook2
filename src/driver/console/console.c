@@ -195,6 +195,7 @@ static void vga_outchar(device_extension_t *ext, unsigned char ch)
 	unsigned char *vram = (unsigned char *)(V_MEM_BASE + 
         (ext->original_addr + ext->y * SCREEN_WIDTH + ext->x) *2) ;
 	switch (ch) {
+
     case '\n':
         // 如果是回车，那还是要把回车写进去
         *vram++ = '\0';
@@ -218,6 +219,9 @@ static void vga_outchar(device_extension_t *ext, unsigned char ch)
             *(vram-1) = COLOR_DEFAULT;
         }
         break;
+    case '\r':
+        /* 忽略掉 */
+        break;  
     default: 
         *vram++ = ch;
         *vram = ext->color;

@@ -301,14 +301,13 @@ int driver_object_delete(driver_object_t *driver)
 /**
  * io_device_queue_init - 设备队列初始化
  * @queue: 队列
- * @task: 设备队列上的任务
  */
-void io_device_queue_init(device_queue_t *queue, task_t *task)
+void io_device_queue_init(device_queue_t *queue)
 {
     /* 初始化设备队列 */
     spinlock_init(&queue->lock);
     INIT_LIST_HEAD(&queue->list_head);
-    wait_queue_init(&queue->wait_queue, task);
+    wait_queue_init(&queue->wait_queue);
     queue->entry_count = 0;
 }
 
@@ -353,12 +352,6 @@ iostatus_t io_create_device(
     spinlock_init(&devobj->lock.spinlock);    /* 初始化设备锁-自旋锁 */
     mutexlock_init(&devobj->lock.mutexlock);  /* 初始化设备锁-互斥锁 */
     
-    /* 初始化设备队列 */
-    int i;
-    for (i = 0; i < DEVICE_QUEUE_NR; i++) {
-        io_device_queue_init(&devobj->device_queue[i], NULL);
-    }
-
     spin_lock(&driver->device_lock);
     /* 设备创建好后，添加到驱动链表上 */
     ASSERT(!list_find(&devobj->list, &driver->device_list));
@@ -600,156 +593,63 @@ void io_device_queue_cleanup(device_queue_t *queue)
     spin_unlock(&queue->lock);
 }
 
-int io_device_queue_insert(device_object_t *devobj)
+iostatus_t io_device_queue_append(device_queue_t *queue, unsigned char *buf, int len)
 {
-    device_queue_t *queue;
-    int i;
-    /* 先检查是否已经在设备队列中 */
-    for (i = 0; i < DEVICE_QUEUE_NR; i++) {
-        queue = &devobj->device_queue[i];
-        if (queue->wait_queue.task == current_task)
-            break;
-    }
-    if (i < DEVICE_QUEUE_NR) {  /* 已经在设备队列中，就不用添加 */
-        return -1;
-    }
-    for (i = 0; i < DEVICE_QUEUE_NR; i++) {
-        queue = &devobj->device_queue[i];
-        if (queue->wait_queue.task == NULL) {
-            queue->wait_queue.task = current_task;  /* 记录新的任务 */
-#if DEBUG_LOCLA == 1
-            printk(KERN_DEBUG "io_device_queue_insert: pid=%d insert ok.\n", current_task->pid);
-#endif
-            return 0;
-        }
-    }
-    return -1;
-}
+    spin_lock(&queue->lock);
 
-void io_device_queue_remove(device_object_t *devobj)
-{
-    device_queue_t *queue;
-    int i;
-    /* 先检查是否已经在设备队列中 */
-    for (i = 0; i < DEVICE_QUEUE_NR; i++) {
-        queue = &devobj->device_queue[i];
-        if (queue->wait_queue.task == current_task) {
-            io_device_queue_cleanup(queue);     /* 清除队列上面的内容 */
-            io_device_queue_init(queue, NULL);  /* 重新初始化队列 */
+    if (queue->entry_count > DEVICE_QUEUE_ENTRY_NR) { /* 超过队列项数，就先丢弃数据包 */
 #if DEBUG_LOCLA == 1
-            printk(KERN_DEBUG "io_device_queue_remove: pid=%d remove ok.\n", current_task->pid);
+        printk(KERN_NOTICE "io_device_queue_append: device queue full!\n");   
 #endif
-            break;
-        }
+        spin_unlock(&queue->lock);
+        return IO_FAILED;
     }
-}
-
-int io_device_queue_put(device_object_t *devobj, unsigned char *buf, int len)
-{
-    if (!(devobj->flags & DO_DISPENSE)) /* 没有可分发标志就返回 */
-        return -1; 
-
-    device_queue_t *queue;
-    int i;
-    /* 先检查是否已经在设备队列中 */
-    for (i = 0; i < DEVICE_QUEUE_NR; i++) {
-        queue = &devobj->device_queue[i];
-        if (queue->wait_queue.task != NULL) { /* 分发到所有已注册的设备 */ 
-            if (queue->entry_count > DEVICE_QUEUE_ENTRY_NR) { /* 超过队列项数，就先丢弃数据包 */
-#if DEBUG_LOCLA == 1
-                printk(KERN_NOTICE "io_device_queue_put: device queue full!\n");   
-#endif
-                continue;   /* 给其它进程分发 */
-            }
-            device_queue_entry_t *entry = kmalloc(sizeof(device_queue_entry_t) + len);
-            if (entry == NULL)
-                return -1;
-            spin_lock(&queue->lock);
-            list_add_tail(&entry->list, &queue->list_head);
-            queue->entry_count++;
-            entry->buf = (unsigned char *) (entry + 1);
-            entry->length = len;
-            memcpy(entry->buf, buf, len);
-            spin_unlock(&queue->lock);
-            wait_queue_wakeup(&queue->wait_queue);
-#if DEBUG_LOCLA == 1
-            printk(KERN_DEBUG "io_device_queue_put: pid=%d len=%d.\n", 
-                queue->wait_queue.task->pid, len);
-#endif
-        }
-    }    
-    return 0;
-}
-
-int io_device_queue_get(device_object_t *devobj, unsigned char *buf, int buflen, int flags)
-{
-    if (!(devobj->flags & DO_DISPENSE)) /* 没有可分发标志就返回 */
-        return -1; 
+    device_queue_entry_t *entry = kmalloc(sizeof(device_queue_entry_t) + len);
+    if (entry == NULL) {
+        spin_unlock(&queue->lock);
+        return IO_FAILED;
+    }
     
-    device_queue_t *queue;
-    int i;
-    /* 先检查是否已经在设备队列中 */
-    for (i = 0; i < DEVICE_QUEUE_NR; i++) {
-        queue = &devobj->device_queue[i];
-        if (queue->wait_queue.task == current_task) {   /* 如果是当前任务 */
-            spin_lock(&queue->lock);
-            if (!queue->entry_count) {  /* 没有数据包 */
-                spin_unlock(&queue->lock);
-                wait_queue_add(&queue->wait_queue, current_task);
-                task_block(TASK_BLOCKED);
-                spin_lock(&queue->lock);
-            }
-            device_queue_entry_t *entry;
-            entry = list_first_owner(&queue->list_head, device_queue_entry_t, list);
-            list_del(&entry->list);
-            queue->entry_count--;
-            int len = MIN(entry->length, buflen);
-            memcpy(buf, entry->buf, len);
-            kfree(entry);
-            spin_unlock(&queue->lock);
+    list_add_tail(&entry->list, &queue->list_head);
+    queue->entry_count++;
+    entry->buf = (unsigned char *) (entry + 1);
+    entry->length = len;
+    memcpy(entry->buf, buf, len);
+    spin_unlock(&queue->lock);
+    wait_queue_wakeup(&queue->wait_queue);
 #if DEBUG_LOCLA == 1
-            printk(KERN_DEBUG "io_device_queue_get: pid=%d len=%d.\n",
-                queue->wait_queue.task->pid, len);
+    printk(KERN_DEBUG "io_device_queue_put: pid=%d len=%d.\n", 
+        queue->wait_queue.task->pid, len);
+#endif
+    return IO_SUCCESS;
+}
+
+int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen, int flags)
+{
+    spin_lock(&queue->lock);
+    if (!queue->entry_count) {  /* 没有数据包 */
+        if (flags & IO_NOWAIT) {    /* 不进行等待 */
+            spin_unlock(&queue->lock);
+            return -1;    
+        }
+        wait_queue_add(&queue->wait_queue, current_task);
+        spin_unlock(&queue->lock);
+        task_block(TASK_BLOCKED);
+        spin_lock(&queue->lock);
+    }
+    device_queue_entry_t *entry;
+    entry = list_first_owner(&queue->list_head, device_queue_entry_t, list);
+    list_del(&entry->list);
+    queue->entry_count--;
+    int len = MIN(entry->length, buflen);
+    memcpy(buf, entry->buf, len);
+    kfree(entry);
+    spin_unlock(&queue->lock);
+#if DEBUG_LOCLA == 1
+    printk(KERN_DEBUG "io_device_queue_get: pid=%d len=%d.\n",
+        queue->wait_queue.task->pid, len);
 #endif            
-            
-            return len;
-        }
-    }
-    return -1;
-}
-
-int io_device_queue_fast_read(device_object_t *devobj, unsigned char *buf, int buflen)
-{
-    
-    device_queue_t *queue;
-    int i;
-    /* 先检查是否已经在设备队列中 */
-    for (i = 0; i < DEVICE_QUEUE_NR; i++) {
-        queue = &devobj->device_queue[i];
-        if (queue->wait_queue.task == current_task) {
-            spin_lock(&queue->lock);
-            /* 是当前进程才进行读取 */
-            if (!queue->entry_count) {
-                spin_unlock(&queue->lock);
-                
-                return -1;       /* 是空队列就直接返回，仍然需要继续读取 */
-            }
-            /* 摘取一个数据包 */
-            device_queue_entry_t *entry;
-            entry = list_first_owner(&queue->list_head, device_queue_entry_t, list);
-            list_del(&entry->list);
-            queue->entry_count--;
-            int len = MIN(entry->length, buflen);
-            memcpy(buf, entry->buf, len);
-            kfree(entry);
-            spin_unlock(&queue->lock);
-#if DEBUG_LOCLA == 1
-            printk(KERN_DEBUG "io_device_queue_fast_read: pid=%d fast read ok.\n", current_task->pid);
-#endif        
-            return len;   /* 已经读取一个数据包 */
-        }
-    }
-    return -1; /* 不在队列中 */
+    return len;
 }
 
 iostatus_t io_device_increase_reference(device_object_t *devobj)
@@ -757,10 +657,6 @@ iostatus_t io_device_increase_reference(device_object_t *devobj)
     /* 增加引用 */
     if (atomic_get(&devobj->reference) >= 0) {
         atomic_inc(&devobj->reference);
-        /* 如果有分发标志才添加到设备队列 */
-        if (devobj->flags & DO_DISPENSE) {
-            io_device_queue_insert(devobj);
-        }
     } else {
         printk(KERN_ERR "device_open: reference %d error!\n", atomic_get(&devobj->reference));
         return IO_FAILED;
@@ -773,10 +669,6 @@ iostatus_t io_device_decrease_reference(device_object_t *devobj)
     /* 减少引用 */
     if (atomic_get(&devobj->reference) >= 0) {
         atomic_dec(&devobj->reference);
-        /* 如果有分发标志，才把当前进程的设备队列链从设备中删除 */
-        if (devobj->flags & DO_DISPENSE) {
-            io_device_queue_remove(devobj);
-        }
     } else {
         printk(KERN_ERR "device_close: reference %d error!\n", atomic_get(&devobj->reference));
         return IO_FAILED;    
@@ -965,17 +857,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         /* 应该激活一个触发器，让调用者停止运行 */
         return -1;
     }
-    
     int len;
-
-    /* 是分发设备读取就尝试进入分发读取 */
-    if ((devobj->flags & DO_DISPENSE)) {
-        /* 如果在设备队列中已经有数据包，那就获取，没有了才会去读取 */
-        len = io_device_queue_fast_read(devobj, buffer, length);
-        if (len > 0)
-            return len; /* 读取成功，直接返回读取的数据量 */
-    }     
-    
     iostatus_t status = IO_SUCCESS;
     io_request_t *ioreq = NULL;
     ioreq = io_build_sync_request(IOREQ_READ, devobj, buffer, length, offset, NULL);
