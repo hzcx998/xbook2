@@ -11,7 +11,7 @@ OBJDUMP		= objdump
 DIR_LIBARY = ../../libary
 
 # libarys
-DIR_BASELIB 		= $(DIR_LIBARY)/baselib
+DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
 DIR_FATFSLIB 		= $(DIR_LIBARY)/fatfslib
 
 BIN = a.out
@@ -36,13 +36,15 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 
 #flags
 ASM_FLAGS	= -f elf \
-			-I $(DIR_BASELIB)/include \
+			-I $(DIR_XBOOKLIB)/include \
+			-I $(DIR_XBOOKLIB)/include/pthread \
 			-I $(DIR_FATFSLIB)/ \
 			
 			
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
-			-I $(DIR_BASELIB)/include \
+			-I $(DIR_XBOOKLIB)/include \
+			-I $(DIR_XBOOKLIB)/include/pthread \
 			-I $(DIR_FATFSLIB)/ \
 			
 			
@@ -50,8 +52,8 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 OBJS =  _start.o \
 		main.o \
 
-LIB_FILE = 	$(DIR_FATFSLIB)/fatfs.a \
-			$(DIR_BASELIB)/baselib.a \
+LIB_FILE = 	$(DIR_FATFSLIB)/fatfs-r0.14.a \
+			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000

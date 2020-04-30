@@ -17,7 +17,7 @@ DIR_TFTP = ./tftp
 DIR_PING = ./ping
 
 # libarys
-DIR_BASELIB 		= $(DIR_LIBARY)/baselib
+DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
 DIR_LWIPLIB 		= $(DIR_LIBARY)/lwiplib
 
 BIN = a.out
@@ -46,7 +46,8 @@ ASM_FLAGS	= -f elf \
 			-I $(DIR_LWIPLIB)/include \
 			-I $(DIR_LWIPLIB)/include/ipv4 \
 			-I $(DIR_LWIPLIB)/include/arch \
-			-I $(DIR_BASELIB)/include \
+			-I $(DIR_XBOOKLIB)/include \
+			-I $(DIR_XBOOKLIB)/include/pthread \
 			-I $(DIR_PING) \
 			
 			
@@ -56,7 +57,8 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_LWIPLIB)/include \
 			-I $(DIR_LWIPLIB)/include/ipv4 \
 			-I $(DIR_LWIPLIB)/include/arch \
-			-I $(DIR_BASELIB)/include \
+			-I $(DIR_XBOOKLIB)/include \
+			-I $(DIR_XBOOKLIB)/include/pthread \
 			-I $(DIR_PING) \
 			
 MAIN_OBJS 	= 	_start.o \
@@ -73,7 +75,7 @@ OBJS =  $(MAIN_OBJS) $(TFTP_OBJS) $(PING_OBJS)
 
 
 LIB_FILE = $(DIR_LWIPLIB)/lwip-1.4.1.a \
-			$(DIR_BASELIB)/baselib.a \
+			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 

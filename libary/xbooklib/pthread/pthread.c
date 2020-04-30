@@ -1,8 +1,10 @@
 #include <sys/syscall.h>
 #include <sys/proc.h>
-#include <sys/pthread.h>
 #include <sys/vmm.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread/pthread.h>
 
 /* 线程入口，启动线程后会先进入入口执行 */
 void __pthread_entry();
@@ -10,8 +12,10 @@ void __pthread_entry();
 int pthread_make_default_attr(pthread_attr_t *attr)
 {
     attr->stacksize = PTHREAD_STACKSIZE_DEL;
-    attr->stackaddr = heap(0); /* 分配空间 */
-    heap(attr->stackaddr + attr->stacksize);
+    attr->stackaddr = malloc(attr->stacksize); /* 分配空间 */
+    if (attr->stackaddr == NULL)
+        return -1;
+    memset(attr->stackaddr, 0, attr->stacksize);
     attr->detachstate = PTHREAD_CREATE_JOINABLE;
     return 0;
 }  
@@ -165,6 +169,9 @@ int pthread_attr_getstackaddr(const pthread_attr_t *attr, void **stackaddr)
 
 int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr)
 {
+    if (attr->stackaddr){
+        free(attr->stackaddr);  /* free old stack */
+    }
     attr->stackaddr = stackaddr;
     return 0;
 }

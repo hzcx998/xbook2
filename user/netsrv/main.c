@@ -12,6 +12,7 @@
 #include <tftpserver.h>
 #include <ping.h>
 #include <loopback.h>
+#include <pthread.h>
 
 extern err_t ethernetif_init(struct netif *netif);
 
@@ -243,9 +244,61 @@ void http_lwip_demo(void *pdata)
 
 #endif 
 
+
+void child_delay(int t)
+{
+    int i, j;
+    for (i = 0; i < 100 * t; i++)
+        for (j = 0; j < 1000; j++);
+}
+
+int count = 0;
+
+int ticks = 0;
+
+pthread_spinlock_t spinlock;
+
+void *thread_a(void *arg)
+{
+    while (1)
+    {
+        pthread_spin_lock(&spinlock);
+        count = 1;
+        ticks++;
+
+        if (count != 1)
+            printf("thread_a: !!!!!!!!!!!!\n");
+        
+        printf("thread_a: %d\n", count);
+        pthread_spin_unlock(&spinlock);
+        child_delay(1);
+    }
+}
+
+void *thread_b(void *arg)
+{
+
+    while (1)
+    {
+        pthread_spin_lock(&spinlock);
+
+        count = 2;
+        
+        ticks++;
+        
+        if (count != 2)
+            printf("thread_b: @@@@@@@@@@@@\n");
+        printf("thread_b:  %d\n", count);
+        pthread_spin_unlock(&spinlock);
+        child_delay(1);
+    }
+}
+
 int main(int argc, char *argv[])
 {
+    
     printf("netsrv: start.\n");
+#if 0    
     //init LwIP
 	lwip_init_task();
     //telnet_server_init();
@@ -268,5 +321,17 @@ int main(int argc, char *argv[])
 		
 		//todo: add your own user code here
 	}
+#endif
+    pthread_spin_init(&spinlock, 0);
+    
+    pthread_t thread1, thread2;
+    pthread_create(&thread1, NULL, thread_a, NULL);
+    pthread_create(&thread2, NULL, thread_b, NULL);
+    
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+    pthread_spin_destroy(&spinlock);
+    
     return 0;
 }
+

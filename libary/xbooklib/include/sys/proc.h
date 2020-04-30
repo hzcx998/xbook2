@@ -15,5 +15,6 @@ pid_t getpid();
 pid_t getppid();
 pid_t gettid();
 unsigned long sleep(unsigned long second);
+void sched_yeild();
 
 #endif  /* _SYS_PROC_H */

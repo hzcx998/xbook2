@@ -15,20 +15,20 @@ API_DIR			= ./api
 IPV4_DIR		= $(CORE_DIR)/ipv4
 
 
-BASELIB_INCLUDE 	= ../baselib/include
+XBOOKLIB_INCLUDE 	= ../xbooklib/include
 
 # flags
 ARFLAGS := -cr
 C_FLAGS	:=  -c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
 			-fno-stack-protector -std=c99 \
 			-I $(DIR_INCLUDE) \
-			-I $(BASELIB_INCLUDE) \
+			-I $(XBOOKLIB_INCLUDE) \
 			-I $(IPV4_INCLUDE) \
 			-I $(NETIF_INCLUDE) \
 			
 NASM_FLAGS	:= -f elf \
 			-I $(DIR_INCLUDE) \
-			-I $(BASELIB_INCLUDE) \
+			-I $(XBOOKLIB_INCLUDE) \
 			-I $(IPV4_INCLUDE) \
 			-I $(NETIF_INCLUDE) \
 

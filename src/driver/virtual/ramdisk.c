@@ -17,7 +17,7 @@
 /* 10MB */
 #define RAMDISK_SECTORS     20480
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 typedef struct _device_extension {
     device_object_t *device_object; /* 设备对象 */

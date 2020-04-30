@@ -42,6 +42,10 @@ task_t *get_next_task(task_t *task)
         // 更新信息
         task->ticks = task->timeslice;
         task->state = TASK_READY;
+    /* 如果是主动让出cpu，那么就只插入搭配就绪队列，不修改ticks */
+    } else if (task->state == TASK_READY) {
+        /* 让出cpu，加入就绪队列 */
+        task_priority_queue_add_tail(task);
     }
     /* 2.从就绪队列中获取一个任务 */
     /* 一定能够找到一个任务，因为最后的是idle任务 */

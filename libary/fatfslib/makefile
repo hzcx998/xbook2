@@ -8,18 +8,18 @@ RM			= rm
 DIR_INCLUDE 	= ./
 FATFS_DIR		= ./
 
-BASELIB_INCLUDE 	= ../baselib/include
+XBOOKLIB_INCLUDE 	= ../xbooklib/include
 
 # flags
 ARFLAGS := -cr
 C_FLAGS	:=  -c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
 			-fno-stack-protector -std=c99 \
 			-I $(DIR_INCLUDE) \
-			-I $(BASELIB_INCLUDE) \
+			-I $(XBOOKLIB_INCLUDE) \
 			
 NASM_FLAGS	:= -f elf \
 			-I $(DIR_INCLUDE) \
-			-I $(BASELIB_INCLUDE) \
+			-I $(XBOOKLIB_INCLUDE) \
 
 FATFS_OBJS = 	$(FATFS_DIR)diskio.o \
 				$(FATFS_DIR)ff.o \
@@ -30,7 +30,7 @@ FATFS_OBJS = 	$(FATFS_DIR)diskio.o \
 OBJS	:= 	$(FATFS_OBJS)
 
 # out file
-LIBNAME = fatfs.a
+LIBNAME = fatfs-r0.14.a
 	
 # all need to do
 all: $(LIBNAME) 

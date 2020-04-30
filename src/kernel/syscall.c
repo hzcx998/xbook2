@@ -40,6 +40,8 @@ void init_syscall()
     syscall_table[SYS_THREAD_CANCELSTATE] = sys_thread_setcancelstate;
     syscall_table[SYS_THREAD_CANCELTYPE] = sys_thread_setcanceltype;
     
+    syscall_table[SYS_SCHED_YEILD] = sys_sched_yeild;
+    
     /* 内存管理 */
     syscall_table[SYS_HEAP] = sys_vmspace_heap;
     

@@ -318,6 +318,21 @@ void task_unblock(task_t *task)
 }
 
 /**
+ * task_yeild - 主动让出cpu
+ * 
+ */
+void task_yeild()
+{
+    // 先关闭中断，并且保存中断状态
+    unsigned long flags;
+    save_intr(flags);
+    set_current_state(TASK_READY); /* 设置为就绪状态 */
+    schedule(); /* 调度到其它任务 */
+    restore_intr(flags);
+}
+
+
+/**
  * create_idle_thread - 为内核主线程设定身份
  * 
  * 内核主线程就是从boot到现在的执行流。到最后会演变成idle

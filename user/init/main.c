@@ -5,13 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <sys/pthread.h>
 #include <sys/trigger.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <ff.h>
 
 #include <stdio.h>
+#include <pthread.h>
 
 #define TTY_NAME    "tty0"
 

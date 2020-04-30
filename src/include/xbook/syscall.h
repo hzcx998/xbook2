@@ -46,7 +46,7 @@ writeres(res, arg, buffer, size)
 
 typedef void * syscall_t;
 
-enum {
+enum syscall_num {
     SYS_EXIT,
     SYS_FORK,
     SYS_EXECR,
@@ -69,6 +69,7 @@ enum {
     SYS_THREAD_TESTCANCEL,
     SYS_THREAD_CANCELSTATE,
     SYS_THREAD_CANCELTYPE,
+    SYS_SCHED_YEILD,
     SYS_PROC_RESERVED = 30,             /* 预留30个接口给进程管理 */
     SYS_HEAP,
     SYS_VMM_RESERVED = 40,              /* 预留10个接口给内存管理 */

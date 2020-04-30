@@ -7,10 +7,16 @@ RM			= rm
 # dir
 DIR_INCLUDE 	= ./include
 
+__ARCH_X86 = x86
+
+# 
+ARCH_DIR = ./arch/$(__ARCH_X86)
+
 ANSI_DIR = ./ansi
 STDIO_DIR = ./stdio
 SYSLIB_DIR = ./syslib
 STDLIB_DIR = ./stdlib
+PTHREAD_DIR = ./pthread
 
 # flags
 ARFLAGS := -cr
@@ -20,6 +26,8 @@ C_FLAGS	:=  -c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
 
 NASM_FLAGS	:= -f elf \
 			-I $(DIR_INCLUDE) \
+
+ARCH_OBJS 	=	$(ARCH_DIR)/xchg.o
 
 ANSI_OBJS 	=	$(ANSI_DIR)/string.o
 
@@ -32,20 +40,23 @@ SYSLIB_OBJS = 	$(SYSLIB_DIR)/proc.o \
 				$(SYSLIB_DIR)/time.o \
 				$(SYSLIB_DIR)/trigger.o \
 				$(SYSLIB_DIR)/vmm.o \
-				$(SYSLIB_DIR)/pthread.o \
-				$(SYSLIB_DIR)/pthread_entry.o \
 				$(SYSLIB_DIR)/brk.o
 
 STDLIB_OBJS	= 	$(STDLIB_DIR)/rand.o \
 				$(STDLIB_DIR)/abort.o \
 				$(STDLIB_DIR)/stream.o \
 				$(STDLIB_DIR)/malloc.o \
+
+PTHREAD_OBJS	=	$(PTHREAD_DIR)/pthread_entry.o \
+					$(PTHREAD_DIR)/pthread.o \
+					$(PTHREAD_DIR)/pthread_spinlock.o \
+					$(PTHREAD_DIR)/pthread_mutex.o \
 				
 # objects
-OBJS	:= 	$(ANSI_OBJS) $(STDIO_OBJS) $(SYSLIB_OBJS) $(STDLIB_OBJS)
+OBJS	:= 	$(ARCH_OBJS) $(ANSI_OBJS) $(STDIO_OBJS) $(SYSLIB_OBJS) $(STDLIB_OBJS) $(PTHREAD_OBJS)
 
 # out file
-LIBNAME = baselib.a
+LIBNAME = xbooklib-0.0.1.a
 	
 # all need to do
 all: $(LIBNAME) 

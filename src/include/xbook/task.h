@@ -146,9 +146,12 @@ void task_activate(task_t *task);
 
 void task_block(task_state_t state);
 void task_unblock(task_t *task);
+void task_yeild();
 
 #define task_sleep() task_block(TASK_BLOCKED) 
 #define task_wakeup(task) task_unblock(task) 
+
+#define sys_sched_yeild     task_yeild
 
 task_t *process_create(char *name, char **argv);
 

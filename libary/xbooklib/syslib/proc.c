@@ -124,3 +124,8 @@ unsigned long sleep(unsigned long second)
 {
     return syscall1(int, SYS_SLEEP, second);
 }
+
+void sched_yeild()
+{
+    syscall0(int, SYS_SCHED_YEILD);
+}
