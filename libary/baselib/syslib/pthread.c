@@ -47,7 +47,7 @@ void pthread_exit(void *retval)
 
 void __pthread_exit(void *retval)
 {
-    printf("pthread_exit: exit val %x\n", retval);
+    //printf("pthread_exit: exit val %x\n", retval);
     pthread_exit(retval);
 }
 
