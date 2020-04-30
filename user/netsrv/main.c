@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
 	lwip_init_task();
     //telnet_server_init();
 	//setup echo server
-    tcpserver_init();
+    //tcpserver_init();
 
     ping_init();
     int i = 0;

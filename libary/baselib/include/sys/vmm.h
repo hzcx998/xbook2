@@ -6,8 +6,4 @@
 /* vmm */
 void *heap(void *heap);
 
-void *malloc(size_t size);
-void free(void *ptr);
-
-
 #endif  /* _SYS_VMM_H */

@@ -33,11 +33,13 @@ SYSLIB_OBJS = 	$(SYSLIB_DIR)/proc.o \
 				$(SYSLIB_DIR)/trigger.o \
 				$(SYSLIB_DIR)/vmm.o \
 				$(SYSLIB_DIR)/pthread.o \
-				$(SYSLIB_DIR)/pthread_entry.o
+				$(SYSLIB_DIR)/pthread_entry.o \
+				$(SYSLIB_DIR)/brk.o
 
 STDLIB_OBJS	= 	$(STDLIB_DIR)/rand.o \
 				$(STDLIB_DIR)/abort.o \
 				$(STDLIB_DIR)/stream.o \
+				$(STDLIB_DIR)/malloc.o \
 				
 # objects
 OBJS	:= 	$(ANSI_OBJS) $(STDIO_OBJS) $(SYSLIB_OBJS) $(STDLIB_OBJS)

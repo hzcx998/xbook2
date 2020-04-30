@@ -3,6 +3,7 @@
 #include <sys/proc.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/pthread.h>
 #include <sys/trigger.h>
@@ -68,15 +69,12 @@ int main(int argc, char *argv[])
         printf("filesrv: start.\n");
         build_fatfs();
 
-        /* 构建文件系统 */
-        //build_fatfs();
-        /* alloc memory for file */
-        unsigned char *heap_pos = heap(0);
-        //printf("init-child: heap addr %x.\n", heap_pos);
-
-        heap(heap_pos + BIN_SIZE); // 40 kb memory
-
-        unsigned char *buf = heap_pos;
+        
+        unsigned char *buf = malloc(BIN_SIZE);
+        if (buf == NULL) {
+            printf("malloc failed!\n");
+            exit(-1);
+        }
         memset(buf, 0, BIN_SIZE);
        // printf("init-child: alloc data at %x for 40 kb.\n", buf);
         
@@ -201,14 +199,11 @@ void build_fatfs()
 
 #if 1   /* write file */
     
-    /* alloc memory for file */
-    unsigned char *heap_pos = heap(0);
-    printf("filesrv: heap %x.\n", heap_pos);
-
-    heap(heap_pos + BIN_SIZE); // 40 kb memory
-    
-    printf("filesrv: heap %x done.\n", heap_pos);
-    unsigned char *buf = heap_pos;
+    unsigned char *buf = malloc(BIN_SIZE);
+    if (buf == NULL) {
+        printf("malloc failed!\n");
+        exit(-1);
+    }
     memset(buf, 0, BIN_SIZE);
 
     res = f_open(&fil, "hd1:/netsrv.xsv", FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
@@ -252,6 +247,7 @@ void build_fatfs()
 
     f_close(&fil);
 
+    free(buf);
 #endif
     printf("filesrv: write done.\n");
 
@@ -388,13 +384,11 @@ void fatfs_test()
         printf("init-child: open disk '%s' %d failed! exit now.", DISK_NAME, ide0);
         return;
     }
-    /* alloc memory for file */
-    unsigned char *heap_pos = heap(0);
-    //printf("init-child: heap addr %x.\n", heap_pos);
-
-    heap(heap_pos + BIN_SIZE); // 40 kb memory
-
-    unsigned char *buf = heap_pos;
+    unsigned char *buf = malloc(BIN_SIZE);
+    if (buf == NULL) {
+        printf("malloc failed!\n");
+        exit(-1);
+    }
     memset(buf, 0, BIN_SIZE);
     // printf("init-child: alloc data at %x for 40 kb.\n", buf);
     
@@ -430,6 +424,7 @@ void fatfs_test()
     printf("write file %d!\n", bw);
     f_close(&fil);
     f_mount(0, "hd1:", 0);
+    free(fbuf);
     return;
     while (1)
     {

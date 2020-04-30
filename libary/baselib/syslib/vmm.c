@@ -17,13 +17,3 @@ void *heap(void *heap)
 {
     return syscall1(void *, SYS_HEAP, heap);
 }
-
-void *malloc(size_t size)
-{
-    return NULL;
-}
-
-void free(void *ptr)
-{
-
-}
