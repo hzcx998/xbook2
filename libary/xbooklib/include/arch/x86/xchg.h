@@ -31,7 +31,6 @@ static inline unsigned int  __xchg(unsigned int x,
     return old;
 }
 
-
 #define xchg(ptr,v) ((__typeof__(*(ptr)))__xchg((unsigned int) \
         (v),(ptr),sizeof(*(ptr))))
 

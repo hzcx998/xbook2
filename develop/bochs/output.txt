@@ -1,44 +1,9 @@
-hello, xbook!
-
 info: memory total:1fff0000 byte 511 MB
 info: welcome to xbook kernel.
-info: time:2:11:48 date:2020/4/27
-info: week day:1 Monday year day:119
+info: time:0:46:28 date:2020/5/1
+info: week day:5 Friday year day:123
 info: init_pci: pci type device found 5.
+info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
 error: init_driver_arch: create one driver failed!
 info: raw block name:init
-info: raw block name:bin
-debug: pthread_start: pid=4 routine=12cc arg=475a stackaddr=6000 stacksize=1000 detach=0
-debug: pthread_start: new thread pid=5 tgid=4 parent pid=4
-notice: pthread_start: thread count 2
-debug: pthread_join: pid=4 join thread 5
-debug: pthread_join: pid=4 wait pid=-1 status=0
-debug: pthread_join: pid=4 waiting...
-debug: pthread_start: pid=5 routine=126b arg=12345678 stackaddr=7000 stacksize=4000 detach=0
-debug: pthread_start: new thread pid=6 tgid=4 parent pid=5
-notice: pthread_start: thread count 3
-debug: pthread_join: pid=5 join thread 6
-debug: pthread_join: pid=5 wait pid=-1 status=0
-debug: pthread_join: pid=5 waiting...
-debug: pthread_exit: pid=6 joinable.
-debug: pthread_exit: pid=6 tgid=4 ppid=5.
-debug: pthread_exit: pid=6 parent 5 waiting...
-notice: wait_one_hangging_thread: pid=5 find a hanging thread 6 
-debug: pthread_join: pid=5 wait pid=6 status=7b
-debug: pthread_exit: pid=5 joinable.
-debug: pthread_exit: pid=5 tgid=4 ppid=4.
-debug: pthread_exit: pid=5 parent 4 waiting...
-notice: wait_one_hangging_thread: pid=4 find a hanging thread 5 
-debug: pthread_join: pid=4 wait pid=5 status=5
-debug: pthread_join: pid=4 thread 5 exit, will return status=5
-debug: sys_wait: pid=1 no child exit, waiting...
-debug: sys_exec_file: thread count 1
-debug: sys_exec_file: thread count 1
-debug: sys_exit: name=bosh pid=4 ppid=1 prio=2 status=0
-debug: sys_exit: thread count 0
-debug: sys_exit: pid=4 release all resources done.
-debug: sys_exit: pid=4 parent 1 waiting...
-notice: wait_any_hangging_child: pid=1 find a hanging proc 4 
-notice: wait_any_hangging_child: process.
-debug: sys_wait: pid=1 handle a hangging child 4.

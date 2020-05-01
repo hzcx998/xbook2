@@ -17,6 +17,7 @@
 #include <xbook/fifoio.h>
 #include <xbook/rwlock.h>
 #include <xbook/vmm.h>
+#include <xbook/waitque.h>
 
 static pid_t next_pid;
 
@@ -762,6 +763,8 @@ void init_tasks()
     create_idle_thread();
 
     new_pid(); /* 跳过pid1，预留给INIT进程 */
+
+    init_waitque(); /* 初始化用户态等待队列 */
 
     /* 有可能做测试阻塞main线程，那么就没有线程，
     在切换任务的时候就会出错，所以这里创建一个测试线程 */

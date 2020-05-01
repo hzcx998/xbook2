@@ -7,10 +7,10 @@ RM			= rm
 # dir
 DIR_INCLUDE 	= ./include
 
-__ARCH_X86 = x86
 
 # 
-ARCH_DIR = ./arch/$(__ARCH_X86)
+ARCH_DIR = ./arch
+ARCH_X86_DIR = $(ARCH_DIR)/x86
 
 ANSI_DIR = ./ansi
 STDIO_DIR = ./stdio
@@ -27,7 +27,10 @@ C_FLAGS	:=  -c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
 NASM_FLAGS	:= -f elf \
 			-I $(DIR_INCLUDE) \
 
-ARCH_OBJS 	=	$(ARCH_DIR)/xchg.o
+ARCH_X86_OBJS 	=	$(ARCH_X86_DIR)/xchg.o \
+					$(ARCH_X86_DIR)/atomic.o
+
+ARCH_OBJS	= $(ARCH_X86_OBJS)
 
 ANSI_OBJS 	=	$(ANSI_DIR)/string.o
 
@@ -40,12 +43,14 @@ SYSLIB_OBJS = 	$(SYSLIB_DIR)/proc.o \
 				$(SYSLIB_DIR)/time.o \
 				$(SYSLIB_DIR)/trigger.o \
 				$(SYSLIB_DIR)/vmm.o \
-				$(SYSLIB_DIR)/brk.o
+				$(SYSLIB_DIR)/brk.o \
+				$(SYSLIB_DIR)/waitque.o
 
 STDLIB_OBJS	= 	$(STDLIB_DIR)/rand.o \
 				$(STDLIB_DIR)/abort.o \
 				$(STDLIB_DIR)/stream.o \
 				$(STDLIB_DIR)/malloc.o \
+				$(STDLIB_DIR)/errno.o \
 
 PTHREAD_OBJS	=	$(PTHREAD_DIR)/pthread_entry.o \
 					$(PTHREAD_DIR)/pthread.o \

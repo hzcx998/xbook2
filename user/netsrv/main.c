@@ -256,22 +256,51 @@ int count = 0;
 
 int ticks = 0;
 
+/*
+0: none
+1: spin lock
+2: mutex lock
+*/
+#define LOCK_TYPE 2
+
+#if LOCK_TYPE == 1
 pthread_spinlock_t spinlock;
+#elif LOCK_TYPE == 2
+pthread_mutex_t mutexlock;
+#endif
 
 void *thread_a(void *arg)
 {
     while (1)
     {
+        child_delay(1);
+#if LOCK_TYPE == 1
         pthread_spin_lock(&spinlock);
+#elif LOCK_TYPE == 2
+        if (pthread_mutex_lock(&mutexlock)) {
+            printf("thread_a: mutex failed!\n");
+            
+            continue;
+        }
+        /*if (pthread_mutex_trylock(&mutexlock))
+            continue;*/
+#endif
         count = 1;
         ticks++;
-
+        child_delay(1);
         if (count != 1)
             printf("thread_a: !!!!!!!!!!!!\n");
         
-        printf("thread_a: %d\n", count);
+        //printf("thread_a: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: %d\n", count);
+
+#if LOCK_TYPE == 1
         pthread_spin_unlock(&spinlock);
-        child_delay(1);
+#elif LOCK_TYPE == 2
+        pthread_mutex_unlock(&mutexlock);
+        printf("thread_a: mutex unlock!\n");
+#endif
+        
+        
     }
 }
 
@@ -280,17 +309,33 @@ void *thread_b(void *arg)
 
     while (1)
     {
+        child_delay(1);
+#if LOCK_TYPE == 1
         pthread_spin_lock(&spinlock);
-
+#elif LOCK_TYPE == 2
+        if (pthread_mutex_lock(&mutexlock)) {
+            printf("thread_b: mutex failed!\n");
+           
+            continue;
+        }
+        /* if (pthread_mutex_trylock(&mutexlock))
+            continue;*/
+#endif
         count = 2;
         
         ticks++;
-        
+        child_delay(1);
         if (count != 2)
             printf("thread_b: @@@@@@@@@@@@\n");
-        printf("thread_b:  %d\n", count);
+        //printf("thread_b: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb: %d\n", count);
+
+#if LOCK_TYPE == 1
         pthread_spin_unlock(&spinlock);
-        child_delay(1);
+#elif LOCK_TYPE == 2
+        pthread_mutex_unlock(&mutexlock);
+#endif
+        
+        
     }
 }
 
@@ -322,7 +367,17 @@ int main(int argc, char *argv[])
 		//todo: add your own user code here
 	}
 #endif
+#if LOCK_TYPE == 1
     pthread_spin_init(&spinlock, 0);
+#elif LOCK_TYPE == 2
+    pthread_mutexattr_t mattr;
+    pthread_mutexattr_init(&mattr);
+    pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
+    
+    if (pthread_mutex_init(&mutexlock, &mattr)) {
+        printf("pthread_mutex_init failed!\n");
+    }
+#endif
     
     pthread_t thread1, thread2;
     pthread_create(&thread1, NULL, thread_a, NULL);
@@ -330,8 +385,36 @@ int main(int argc, char *argv[])
     
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
-    pthread_spin_destroy(&spinlock);
     
+    /*
+    if (pthread_mutex_trylock(&mutexlock)) {
+        printf("lock failed\n");
+    }else{
+        printf("lock succes\n");
+    }
+    if (pthread_mutex_trylock(&mutexlock)) {
+        printf("lock failed\n");
+    }else{
+        printf("lock succes\n");
+    }
+    //加锁几次，同样也要释放几次
+    pthread_mutex_unlock(&mutexlock);
+    pthread_mutex_unlock(&mutexlock);
+    */
+
+    
+
+
+#if LOCK_TYPE == 1
+    pthread_spin_destroy(&spinlock);
+#elif LOCK_TYPE == 2
+    
+    //销毁互斥锁属性和互斥锁
+    pthread_mutexattr_destroy(&mattr);
+    pthread_mutex_destroy(&mutexlock);
+    
+#endif
+    printf("ready exit!\n");
     return 0;
 }
 

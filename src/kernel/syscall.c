@@ -6,6 +6,7 @@
 #include <xbook/alarm.h>
 #include <xbook/ktime.h>
 #include <xbook/clock.h>
+#include <xbook/waitque.h>
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -41,6 +42,11 @@ void init_syscall()
     syscall_table[SYS_THREAD_CANCELTYPE] = sys_thread_setcanceltype;
     
     syscall_table[SYS_SCHED_YEILD] = sys_sched_yeild;
+    
+    syscall_table[SYS_WAITQUE_CREATE] = sys_waitque_create;
+    syscall_table[SYS_WAITQUE_DESTROY] = sys_waitque_destroy;
+    syscall_table[SYS_WAITQUE_WAIT] = sys_waitque_wait;
+    syscall_table[SYS_WAITQUE_WAKE] = sys_waitque_wake;
     
     /* 内存管理 */
     syscall_table[SYS_HEAP] = sys_vmspace_heap;

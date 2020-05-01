@@ -125,6 +125,10 @@ unsigned long sleep(unsigned long second)
     return syscall1(int, SYS_SLEEP, second);
 }
 
+/**
+ * sched_yeild - 让出cpu
+ * 
+ */
 void sched_yeild()
 {
     syscall0(int, SYS_SCHED_YEILD);

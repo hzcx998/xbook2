@@ -25,6 +25,10 @@ enum {
     SYS_THREAD_CANCELSTATE,
     SYS_THREAD_CANCELTYPE,
     SYS_SCHED_YEILD,
+    SYS_WAITQUE_CREATE,
+    SYS_WAITQUE_DESTROY,
+    SYS_WAITQUE_WAIT,
+    SYS_WAITQUE_WAKE,
     SYS_PROC_RESERVED = 30,             /* 预留30个接口给进程管理 */
     SYS_HEAP,
     SYS_VMM_RESERVED = 40,              /* 预留10个接口给内存管理 */

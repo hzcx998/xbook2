@@ -8,3 +8,4 @@ obj-y		+=	exec.o
 obj-y		+=	trigger.o
 obj-y		+=	sleep.o
 obj-y		+=	pthread.o
+obj-y		+=	waitque.o

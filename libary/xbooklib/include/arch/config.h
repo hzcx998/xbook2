@@ -9,6 +9,7 @@
 /* 根据不同的平台选择导入头文件 */
 #if LIB_ARCH == LIB_ARCH_X86
 #include "x86/xchg.h"
+#include "x86/atomic.h"
 
 #endif
 
