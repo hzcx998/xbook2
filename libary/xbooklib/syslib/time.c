@@ -21,9 +21,33 @@ unsigned long ktime(ktime_t *ktm)
     return syscall1(int, SYS_KTIME, ktm);
 }
 /**
- * getticks - 获取内核运行时钟数
+ * clock - 获取内核运行时钟数
  */
-unsigned long getticks()
+clock_t clock()
 {
-    return syscall0(unsigned long, SYS_GETTICKS);
+    return syscall0(clock_t, SYS_GETTICKS);
+}
+
+/**
+ * gettimeofday - 获取当前的时间
+ * @tv: 时间
+ * @tz: 时区
+ * 
+ * 成功返回0，失败返回-1
+ */
+int gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+    return syscall2(int, SYS_GETTIMEOFDAY, tv, tz);
+}
+
+/**
+ * clock_gettime - 获取时机
+ * @clockid: 获取的类型
+ * @ts: 时间结构
+ * 
+ * 成功返回0，失败返回-1
+ */
+int clock_gettime(clockid_t clockid, struct timespec *ts)
+{
+    return syscall2(int, SYS_CLOCK_GETTIME, clockid, ts);
 }

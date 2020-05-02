@@ -61,5 +61,7 @@ void init_syscall()
     syscall_table[SYS_ALARM] = sys_alarm;
     syscall_table[SYS_KTIME] = sys_get_ktime;
     syscall_table[SYS_GETTICKS] = sys_get_ticks;
+    syscall_table[SYS_GETTIMEOFDAY] = sys_gettimeofday;
+    syscall_table[SYS_CLOCK_GETTIME] = sys_clock_gettime;
     
 }

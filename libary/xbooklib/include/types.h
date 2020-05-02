@@ -10,7 +10,9 @@ typedef unsigned char mode_t;
 typedef unsigned long dev_t;
 typedef unsigned long blksize_t;
 typedef unsigned long blkcnt_t;
-typedef unsigned long clock_t;
+typedef long clock_t;
 typedef unsigned long size_t;
+typedef long time_t;
+typedef int clockid_t;
 
 #endif  /* _LIB_TYPES_H */

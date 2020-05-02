@@ -7,5 +7,5 @@
 
 u32_t sys_now()
 {
-  return getticks();
+  return clock();
 }

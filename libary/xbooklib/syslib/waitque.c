@@ -28,7 +28,7 @@ int waitque_destroy(int handle)
  * 
  * 成功返回0，失败返回-1
  */
-int waitque_wait(int handle, int *addr, int wqflags, int value)
+int waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long value)
 {
     return syscall4(int, SYS_WAITQUE_WAIT, handle, addr, wqflags, value);
 }
@@ -39,7 +39,7 @@ int waitque_wait(int handle, int *addr, int wqflags, int value)
  * 
  * 成功返回0，失败返回-1
  */
-int waitque_wake(int handle, int *addr, int wqflags, int value)
+int waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long value)
 {
     return syscall4(int, SYS_WAITQUE_WAKE, handle, addr, wqflags, value);
 }

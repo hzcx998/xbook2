@@ -167,6 +167,7 @@ pid_t sys_get_ppid();
 pid_t sys_get_tid();
 
 unsigned long sys_sleep(unsigned long second);
+unsigned long task_sleep_by_ticks(clock_t ticks);
 
 void close_one_thread(task_t *thread);
 void close_other_threads(task_t *thread);

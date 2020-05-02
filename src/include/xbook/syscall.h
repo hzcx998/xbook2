@@ -86,6 +86,8 @@ enum syscall_num {
     SYS_ALARM,
     SYS_KTIME,
     SYS_GETTICKS,
+    SYS_GETTIMEOFDAY,
+    SYS_CLOCK_GETTIME,
     SYS_TIME_RESERVED = 60,             /* 预留10个接口给时间管理 */
     SYSCALL_NR,
 };

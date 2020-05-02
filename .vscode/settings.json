@@ -71,6 +71,7 @@
         "timers.h": "c",
         "opt.h": "c",
         "inet.h": "c",
-        "tftpserver.h": "c"
+        "tftpserver.h": "c",
+        "errno.h": "c"
     }
 }

@@ -96,4 +96,26 @@ static inline void wait_queue_wakeup(wait_queue_t *wait_queue)
     spin_unlock_irqrestore(&wait_queue->lock, flags);
 }
 
+
+/**
+ * wait_queue_wakeup_all - 唤醒等待队列中的全部任务
+ * @wait_queue: 等待队列
+ */
+static inline void wait_queue_wakeup_all(wait_queue_t *wait_queue)
+{
+	/* 添加到队列时，需要关闭中断 */
+    unsigned long flags;
+    spin_lock_irqsave(&wait_queue->lock, flags);
+
+    task_t *task, *next;
+    list_for_each_owner_safe (task, next, &wait_queue->wait_list, list) {
+        /* 从当前队列删除 */
+		list_del(&task->list);
+		/* 唤醒任务 */
+		task_wakeup(task);
+    }
+
+    spin_unlock_irqrestore(&wait_queue->lock, flags);
+}
+
 #endif   /* _XBOOK_WAIT_QUEUE_H */

@@ -36,14 +36,7 @@
 #include <stdlib.h> /* abort */
 #include <limits.h>
 
-#ifdef _MSC_VER
-#pragma warning (disable: 4244) /* disable conversion warning (implicit integer promotion!) */
-#pragma warning (disable: 4127) /* conditional expression is constant */
-#pragma warning (disable: 4996) /* 'strncpy' was declared deprecated */
-#pragma warning (disable: 4103) /* structure packing changed by including file */
-#endif
-
-#define LWIP_PROVIDE_ERRNO
+//#define LWIP_PROVIDE_ERRNO
 
 /* Define platform endianness (might already be defined) */
 #ifndef BYTE_ORDER
@@ -91,11 +84,6 @@ typedef u32_t sys_prot_t;
 #define LWIP_ERROR(message, expression, handler) do { if (!(expression)) { \
   printf("Assertion \"%s\" failed at line %d in %s\n", message, __LINE__, __FILE__); \
   fflush(NULL);handler;} } while(0)
-
-#ifdef _MSC_VER
-/* C runtime functions redefined */
-#define snprintf _snprintf
-#endif
 
 u32_t dns_lookup_external_hosts_file(const char *name);
 

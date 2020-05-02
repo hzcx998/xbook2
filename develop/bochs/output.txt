@@ -1,6 +1,6 @@
 info: memory total:1fff0000 byte 511 MB
 info: welcome to xbook kernel.
-info: time:0:46:28 date:2020/5/1
+info: time:22:56:3 date:2020/5/1
 info: week day:5 Friday year day:123
 info: init_pci: pci type device found 5.
 info: ide_enter: found 2 hard disks.

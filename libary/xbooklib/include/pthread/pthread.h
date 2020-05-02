@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <arch/atomic.h>
+#include <sys/time.h>
 
 /* thread type */
 typedef unsigned long pthread_t;
@@ -55,6 +56,7 @@ void pthread_testcancel(void);
 
 /* pthread attr */
 int pthread_attr_init(pthread_attr_t *attr);
+int pthread_attr_destroy(pthread_attr_t *attr);
 int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate);
 int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate);    
 int pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stacksize);
@@ -64,7 +66,7 @@ int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr);
 
 /* spin lock: TAS lock */
 typedef struct __pthread_spinlock {
-    volatile uint32_t count;        /* 锁值: 1上锁，0，没上锁 */
+    volatile int count;        /* 锁值: 1上锁，0，没上锁 */
     int pshared;                    /* 是否在多进程之间使用 */
 } pthread_spinlock_t;
 
@@ -96,7 +98,7 @@ typedef struct __pthread_mutexattr {
         {PTHREAD_PROCESS_PRIVATE, PTHREAD_MUTEX_DEFAULT}
 
 typedef struct __pthread_mutex {
-    atomic_t lock;                  /* 锁值：1锁可以获取，0，锁不可以获取 */
+    int lock;                       /* 锁值：1锁可以获取，0，锁不可以获取 */
     int count;                      /* 可重入时owner持有锁的次数 */
     int owner;                      /* 锁的持有者 */
     int kind;                       /* 锁的类型 */
@@ -106,7 +108,7 @@ typedef struct __pthread_mutex {
 } pthread_mutex_t;
 /* 默认初始化为未初始化的自旋锁 */
 #define PTHREAD_MUTEX_INITIALIZER \
-        {.lock = ATOMIC_INIT(1), \
+        {.lock = 1, \
          .count = 0, \
          .owner = 0, \
          .kind = PTHREAD_MUTEX_DEFAULT, \
@@ -127,5 +129,40 @@ int pthread_mutexattr_getpshared(pthread_mutexattr_t *mattr, int *pshared);
 int pthread_mutexattr_settype(pthread_mutexattr_t *mattr , int type);
 int pthread_mutexattr_gettype(pthread_mutexattr_t *mattr , int *type);
  
+
+typedef struct __pthread_condattr {
+    int pshared;                        /* 分析属性 */
+} pthread_condattr_t;
+
+/* 默认初始化为未初始化的自旋锁 */
+#define PTHREAD_COND_ATTR_INITIALIZER \
+        {PTHREAD_PROCESS_PRIVATE}
+
+typedef struct __pthread_cond {
+    pthread_spinlock_t spin;        /* 维护操作时的自旋锁 */
+    int waitque;                    /* 对应的内核的用户等待队列 */
+    pthread_condattr_t cond_attr;      /* 属性 */
+} pthread_cond_t;
+/* 默认初始化为未初始化的自旋锁 */
+#define PTHREAD_COND_INITIALIZER \
+        {.spin = PTHREAD_SPIN_LOCK_INITIALIZER, \
+         .waitque = -1, \
+         .cond_attr = PTHREAD_COND_ATTR_INITIALIZER}
+
+int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *condattr);
+int pthread_cond_destroy(pthread_cond_t *cond);
+int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+int pthread_cond_timedwait(
+    pthread_cond_t *cond,
+    pthread_mutex_t *mutex,
+    const struct timespec *abstime
+);
+int pthread_cond_signal(pthread_cond_t *cond);
+int pthread_cond_broadcast(pthread_cond_t *cond);
+
+int pthread_condattr_init(pthread_condattr_t *mattr);
+int pthread_condattr_destroy(pthread_condattr_t *mattr);
+int pthread_condattr_getpshared(pthread_condattr_t *attr, int *pshared);
+int pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared);
 
 #endif  /* _SYS_PTHREAD_H */

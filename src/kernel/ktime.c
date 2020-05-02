@@ -1,4 +1,6 @@
 #include <xbook/ktime.h>
+#include <xbook/clock.h>
+#include <xbook/task.h>
 
 ktime_t ktime;
 /* 每月对应的天数，2月的会在闰年是加1 */
@@ -135,6 +137,105 @@ void sys_get_ktime(ktime_t *time)
 {
     *time = ktime;
 }
+
+/* 这个算法来自linux内核 */
+#define MINUTE 60
+#define HOUR (60*MINUTE)
+#define DAY (24*HOUR)
+#define YEAR (365*DAY)
+
+/* interestingly, we assume leap-years */
+static int month[12] = {
+	0,
+	DAY*(31),
+	DAY*(31+29),
+	DAY*(31+29+31),
+	DAY*(31+29+31+30),
+	DAY*(31+29+31+30+31),
+	DAY*(31+29+31+30+31+30),
+	DAY*(31+29+31+30+31+30+31),
+	DAY*(31+29+31+30+31+30+31+31),
+	DAY*(31+29+31+30+31+30+31+31+30),
+	DAY*(31+29+31+30+31+30+31+31+30+31),
+	DAY*(31+29+31+30+31+30+31+31+30+31+30)
+};
+
+/**
+ * make_timestamp - 生成时间戳
+ * @tm: 时间结构
+ * 
+ * 返回时间戳，单位是秒(s)
+ */
+long make_timestamp(ktime_t * tm)
+{
+	long res;
+	int year;
+
+	year = tm->year - 70;
+/* magic offsets (y+1) needed to get leapyears right.*/
+	res = YEAR*year + DAY*((year+1)/4);
+	res += month[tm->month];
+/* and (y+2) here. If it wasn't a leap-year, we have to adjust */
+	if (tm->month>1 && ((year+2)%4))
+		res -= DAY;
+	res += DAY*(tm->day-1);
+	res += HOUR*tm->hour;
+	res += MINUTE*tm->minute;
+	res += tm->second;
+	return res;
+}
+
+/**
+ * sys_gettimeofday - 获取时间
+ * @tv: 时间
+ * @tz: 时区
+ * 
+ * 成功返回0，失败返回-1
+ */
+int sys_gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+    if (!tv && !tv)
+        return -1;
+
+    if (tv) {
+        tv->tv_sec = make_timestamp(&ktime);                    /* 生成秒数 */
+        tv->tv_usec = ((systicks % HZ) * MS_PER_TICKS) * 1000;  /* 微秒 */
+    }
+    if (tz) {
+        tz->tz_dsttime = 0;
+        tz->tz_minuteswest = 0;
+    }
+    return 0;
+}
+
+int sys_clock_gettime(clockid_t clockid, struct timespec *ts)
+{
+    if (!ts)
+        return -1; 
+    switch (clockid)
+    {
+    case CLOCK_REALTIME:        /* 系统统当前时间，从1970年1.1日算起 */
+        ts->tv_sec = make_timestamp(&ktime);                        /* 生成秒数 */
+        ts->tv_nsec = ((systicks % HZ) * MS_PER_TICKS) * 1000000;   /* 纳秒 */
+        break;
+    case CLOCK_MONOTONIC:       /*系统的启动时间，不能被设置*/
+        ts->tv_sec = (systicks / HZ);                               /* 生成秒数 */
+        ts->tv_nsec = ((systicks % HZ) * MS_PER_TICKS) * 1000000;   /* 纳秒 */
+        break;
+    case CLOCK_PROCESS_CPUTIME_ID:  /* 本进程运行时间*/
+        ts->tv_sec = current_task->elapsed_ticks / HZ;                        /* 生成秒数 */
+        ts->tv_nsec = ((current_task->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;   /* 纳秒 */
+        break;
+    case CLOCK_THREAD_CPUTIME_ID:   /*本线程运行时间*/
+        ts->tv_sec = current_task->elapsed_ticks / HZ;                        /* 生成秒数 */
+        ts->tv_nsec = ((current_task->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;   /* 纳秒 */
+        break;
+    default:
+        return -1;
+    }
+    return 0;
+}
+
 
 /**
  * print_ktime - 打印系统时间

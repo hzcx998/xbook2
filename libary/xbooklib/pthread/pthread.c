@@ -149,6 +149,16 @@ int pthread_attr_init(pthread_attr_t *attr)
     return 0;
 }
 
+int pthread_attr_destroy(pthread_attr_t *attr)
+{
+    if (attr->stackaddr)
+        free(attr->stackaddr);
+    attr->stackaddr = NULL;
+    attr->stacksize = 0;
+    attr->detachstate = 0;
+    return 0;
+}
+
 int pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stacksize)
 {
     *stacksize = attr->stacksize; 

@@ -13,7 +13,9 @@ typedef unsigned char mode_t;
 typedef unsigned long dev_t;
 typedef unsigned long blksize_t;
 typedef unsigned long blkcnt_t;
-typedef unsigned long clock_t;
+typedef long clock_t;
+typedef long time_t;
+typedef int clockid_t;
 
 /* 在线程中作为形参 */
 typedef void task_func_t(void *);

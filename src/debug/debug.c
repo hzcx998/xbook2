@@ -47,7 +47,7 @@ void panic(const char *fmt, ...)
 //断言
 void assertion_failure(char *exp, char *file, char *baseFile, int line)
 {
-	printk("\nassert(%s) failed:\nfile: %s\nbase_file: %s\nln%d",
+	printk("\nassert(%s) failed:\nfile: %s\nbase_file: %s\nln: %d",
 	exp, file, baseFile, line);
 
 	spin("assertion failure()");

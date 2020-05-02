@@ -19,8 +19,8 @@ typedef struct __waitque {
     ((handle) < 0 || (handle) >= WAITQUE_NR)
 
 void init_waitque();
-int sys_waitque_wake(int handle, int *addr, int wqflags, int value);
-int sys_waitque_wait(int handle, int *addr, int wqflags, int value);
+int sys_waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long value);
+int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long value);
 int sys_waitque_destroy(int handle);
 int sys_waitque_create();
 

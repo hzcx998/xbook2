@@ -92,16 +92,4 @@
 #define ETXTBSY         139
 #define EWOULDBLOCK     140
 
-typedef int errno_t;
-
-extern int *_errno(void);
-
-#define errno (*_errno())
-
-errno_t set_errno(int value);
-errno_t get_errno(int *value);
-
-void perror(char *str);
-char *strerror(int errnum);
-
 #endif  /* _LIB_ERRNO_H */
