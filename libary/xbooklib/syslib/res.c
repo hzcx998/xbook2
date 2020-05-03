@@ -74,3 +74,18 @@ int res_ioctl(int res, unsigned int cmd, unsigned long arg)
 {
     return syscall3(int, SYS_CTLRES, res, cmd, arg);
 }
+
+
+
+/**
+ * dev_scan - 扫描设备
+ * @de: 输入设备项，为NULL时表示第一次扫描开始
+ * @type: 设备的类型
+ * @out: 输出的设备项
+ * 
+ * 成功返回0，失败返回-1
+ */
+int dev_scan(devent_t *de, device_type_t type, devent_t *out)
+{
+    return syscall3(int, SYS_DEVSCAN, de, type, out);
+}

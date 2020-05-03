@@ -68,7 +68,7 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
     pthread_mutex_unlock(mutex);
 
     /* 加入等待队列，并把自旋锁解锁 */
-    waitque_wait(cond->waitque, (int *) &cond->spin.count, WAITQUE_SET, 0);
+    waitque_wait(cond->waitque, (void *) &cond->spin.count, WAITQUE_ZERO, 0);
     //printf("cond: %d after wait, lock mutex.\n", pthread_self());
     /* 对互斥锁加锁，获得操作。 */
     pthread_mutex_lock(mutex);
@@ -86,7 +86,7 @@ int pthread_cond_timedwait(
     pthread_mutex_t *mutex,
     const struct timespec *abstime
 ) {
-    if (!cond || !mutex || !abstime)
+    if (!cond || !mutex)
         return EINVAL;
     /* 如果是通过静态方式创建，那么waitque就需要重新获取 */
     if (cond->waitque == -1) {
@@ -100,7 +100,7 @@ int pthread_cond_timedwait(
     pthread_mutex_unlock(mutex);
 
     /* 加入等待队列，并把自旋锁解锁 */
-    retval = waitque_wait(cond->waitque, (int *) &cond->spin.count, WAITQUE_TIMED | WAITQUE_ZERO, (unsigned long) abstime);
+    retval = waitque_wait(cond->waitque, (void *) &cond->spin.count, WAITQUE_TIMED | WAITQUE_ZERO, (unsigned long) abstime);
 
     //printf("cond: %d after wait, lock mutex.\n", pthread_self());
     /* 对互斥锁加锁，获得操作。 */
@@ -200,7 +200,8 @@ int pthread_condattr_getpshared(pthread_condattr_t *attr, int *pshared)
 {
     if (!attr || !pshared)
         return EINVAL;
-    *pshared = attr->pshared;
+    if (pshared)
+        *pshared = attr->pshared;
     return 0;
 }
 

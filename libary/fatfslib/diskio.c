@@ -21,9 +21,11 @@
 #define DEV_IDE0		1	/* Example: Map IDE0 to physical drive 1 */
 #define DEV_IDE1		2	/* Example: Map IDE1 to physical drive 2 */
 
-
 /* device handle table */
 int device_handles[FF_VOLUMES] = {-1, -1, -1};
+
+extern disk_drive_t disk_drives[];
+
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
@@ -33,8 +35,11 @@ DSTATUS disk_status (
 	BYTE pdrv		/* Physical drive nmuber to identify the drive */
 )
 {
+    if (pdrv >= FF_VOLUMES)
+        return STA_NOINIT;
 	DSTATUS stat = 0;
 	int result = 0;
+    return stat;
 
 	switch (pdrv) {
 	case DEV_RAM :
@@ -73,6 +78,19 @@ DSTATUS disk_initialize (
 {
 	DSTATUS stat;
 	int result;
+    if (pdrv >= FF_VOLUMES)
+        return STA_NOINIT;
+
+    result = res_open(disk_drives[pdrv].devent.de_name, RES_DEV, 0);
+    if (result >= 0) {
+        disk_drives[pdrv].handle = result;
+        stat = 0;
+    } else {
+        stat = STA_NODISK;
+        printf("%s: open disk %s failed!\n", __func__, disk_drives[pdrv].devent.de_name);
+    }
+    return stat;
+
 	switch (pdrv) {
 	case DEV_RAM :
         result = res_open("ramdisk", RES_DEV, 0);
@@ -125,8 +143,18 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
+    if (pdrv >= FF_VOLUMES)
+        return RES_PARERR;
 	DRESULT res;
 	int result;
+
+    result = res_read(disk_drives[pdrv].handle, sector, buff, count * FF_MIN_SS);
+    if (result < 0) {
+        res = RES_ERROR;
+    } else {
+        res = RES_OK;
+    }
+    return res;
 
 	switch (pdrv) {
 	case DEV_RAM :
@@ -175,8 +203,19 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
+	if (pdrv >= FF_VOLUMES)
+        return RES_PARERR;
 	DRESULT res;
 	int result;
+
+    result = res_write(disk_drives[pdrv].handle, sector, (char *) buff, count * FF_MIN_SS);
+    if (result < 0) {
+        res = RES_ERROR;
+    } else {
+        res = RES_OK;
+    }
+    return res;
+
 
 	switch (pdrv) {
 	case DEV_RAM :
@@ -225,7 +264,31 @@ DRESULT disk_ioctl (
 	void *buff		/* Buffer to send/receive control data */
 )
 {
-	DRESULT res = RES_ERROR;
+    if (pdrv >= FF_VOLUMES)
+        return RES_PARERR;
+	
+	DRESULT res;
+    switch(cmd)
+    {
+    case CTRL_SYNC:
+        res = RES_OK;
+        break;     
+    case GET_SECTOR_SIZE:
+        *(WORD*)buff = 512; res = RES_OK;
+        break;     
+    case GET_BLOCK_SIZE:
+        *(WORD*)buff = 1; res = RES_OK;
+        break;     
+    case GET_SECTOR_COUNT:
+        *(DWORD*)buff = res_ioctl(disk_drives[pdrv].handle, DISKIO_GETSIZE, 0);res = RES_OK;
+        break;
+    default:
+        res = RES_ERROR;
+        break;
+    }
+
+    return res;
+    
 	switch (pdrv) {
 	case DEV_RAM :
         switch(cmd)

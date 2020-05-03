@@ -156,21 +156,38 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
                     ticks += newtm.tv_sec * 1000 / MS_PER_TICKS;  /* 秒转换成ticks */
                 }
             }
-            if (!ticks) {   /* ticks为0，就直接返回 */
+            if (ticks <= 0) {   /* ticks为0，就直接返回 */
                 /* 从等待队列删除 */
                 wait_queue_remove(&waitque->wait_queue, current_task);
                 restore_intr(flags);
                 return ETIMEDOUT;   /* 和超时效果一样 */
             }
+            /* 休眠的ticks太小，导致调度过于频繁，因此，在此进行增加,
+            越小加的越多，越多，加的越少 */
+            if (ticks < 10)
+                ticks += 10 - ticks;
+            
 #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "%s: pid=%d sleep ticks %u\n", __func__, current_task->pid, ticks);
 #endif
             if (task_sleep_by_ticks(ticks) > 0) {
+          
+#if DEBUG_LOCAL == 1
+                printk(KERN_DEBUG "%s: pid=%d was breaked\n", __func__, current_task->pid);
+#endif      
                 goto out;
             } else { /* timeout */
 #if DEBUG_LOCAL == 1
                 printk(KERN_DEBUG "%s: pid=%d timeout\n", __func__, current_task->pid);
 #endif
+                task_t *task, *next;
+                list_for_each_owner_safe (task, next, &waitque->wait_queue.wait_list, list) {
+                    if (task == current_task) {
+                        /* 从当前队列删除 */
+                        list_del(&task->list);
+                        break;
+                    }          
+                }
                 restore_intr(flags);
                 return ETIMEDOUT;
             }
@@ -206,7 +223,7 @@ int sys_waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long
     waitque_t *waitque = &waitque_table[handle];
     if (waitque->flags) {
 #if DEBUG_LOCAL == 1
-        printk(KERN_DEBUG "%s: pid=%d wake\n", __func__, current_task->pid);
+        printk(KERN_DEBUG "%s: pid=%d wake handle=%d\n", __func__, current_task->pid, handle);
 #endif
         /* 对变量进行操作 */
         if (addr) {
@@ -250,7 +267,7 @@ int sys_waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long
 #if DEBUG_LOCAL == 1
                 printk(KERN_DEBUG "%s: pid=%d wake single thread.\n", __func__, current_task->pid);
 #endif
-            }               
+            }
             /* 从当前队列删除 */
             list_del(&task->list);
             /* 唤醒任务 */

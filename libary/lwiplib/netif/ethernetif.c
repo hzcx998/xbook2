@@ -156,7 +156,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
     //send data from(q->payload, q->len);
     len = res_write(ethernetif->ethres, 0, q->payload, q->len);
     if (len < 0) {
-        retval = ERR_TIMEOUT;
+        retval = ERR_BUF;
     }
   }
 
@@ -190,7 +190,7 @@ low_level_input(struct netif *netif)
      variable. */
   //len = ;
   u8_t rxbuf[ETH_MTU];
-  len = res_read(ethernetif->ethres, DEV_NOWAIT, rxbuf, ETH_MTU);
+  len = res_read(ethernetif->ethres, 0, rxbuf, ETH_MTU);
     if (len < 0)
         return 0;
 #if ETH_PAD_SIZE
@@ -217,7 +217,7 @@ low_level_input(struct netif *netif)
        * actually received size. In this case, ensure the tot_len member of the
        * pbuf is the sum of the chained pbuf len members.
        */
-    q = p;
+        q = p;
       //read data into(q->payload, q->len);
       
         if (len < 0) {

@@ -251,13 +251,14 @@ typedef struct {
     unsigned long size;
 } raw_block_info_t;
 
-#define MAX_RBI_NR  1
+#define MAX_RBI_NR  2
 /* raw block info table
 需要添加新原始块时，就添加到这个表中即可。
 最大文件大小依据MAX_MEM_CACHE_SIZE而定
  */
 raw_block_info_t rbi_table[MAX_RBI_NR] = {
-    {"init", 0, 300, 1024*150},
+    {"initsrv", 200, 200, 1024*100},
+    {"filesrv", 400, 400, 1024*200},
 };
 
 void init_raw_block()

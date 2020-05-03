@@ -5,6 +5,7 @@
 #include <xbook/assert.h>
 #include <xbook/mdl.h>
 #include <xbook/clock.h>
+#include <xbook/string.h>
 #include <sys/ioctl.h>
 #include <arch/pci.h>
 
@@ -311,6 +312,91 @@ void io_device_queue_init(device_queue_t *queue)
     queue->entry_count = 0;
 }
 
+
+/**
+ * io_search_device_by_name - 通过名字来搜索一个设备
+ * @name: 设备名
+ * 
+ * @return: 成功返回设备指针，失败返回NULL
+ */
+device_object_t *io_iterative_search_device_by_type(device_object_t *devptr, device_type_t type)
+{
+    driver_object_t *drvobj;
+    device_object_t *devobj;
+    int flags = 0;  /* 标记可迭代对象 */
+    spin_lock(&driver_lock);
+    /* 遍历所有的驱动 */
+    list_for_each_owner (drvobj, &driver_list_head, list) {
+        list_for_each_owner (devobj, &drvobj->device_list, list) {
+            if (devobj->type == type) { /* 设备类型 */   
+                /* 搜索是第一个设备 */
+                if (devptr == NULL) {
+                    spin_unlock(&driver_lock);
+                    return devobj;
+                } else {
+                    if (flags) {    /* 可以选择下一个设备，就直接返回下一个设备 */
+                        spin_unlock(&driver_lock);
+                        return devobj;
+                    }
+                    if (devptr == devobj) { /* 找到和当前设备一样的设备 */
+                        flags = 1;  /* 下一次就是后面的迭代设备对象 */
+                    }
+                }
+            }
+        }
+    }
+    spin_unlock(&driver_lock);
+    return NULL;
+}
+
+
+/**
+ * sys_devscan - 扫描某种类型的设备
+ * @de: 输入的设备项
+ * @type: 设备类型
+ * @out: 输出设备项
+ * 
+ * @return: 成功返回0，失败返回-1
+ */
+int sys_devscan(devent_t *de, device_type_t type, devent_t *out)
+{
+    if (!out)
+        return -1;
+    driver_object_t *drvobj;
+    device_object_t *devobj;
+    int flags = 0;  /* 标记可迭代对象 */
+    spin_lock(&driver_lock);
+    /* 遍历所有的驱动 */
+    list_for_each_owner (drvobj, &driver_list_head, list) {
+        list_for_each_owner (devobj, &drvobj->device_list, list) {
+            if (devobj->type == type) { /* 设备类型 */   
+                /* 搜索是第一个设备 */
+                if (de == NULL) {
+                    memset(out->de_name, 0, DEVICE_NAME_LEN);
+                    strcpy(out->de_name, devobj->name.text);
+                    out->de_type = type;
+                    spin_unlock(&driver_lock);
+                    return 0;
+                } else {
+                    if (flags) {    /* 可以选择下一个设备，就直接返回下一个设备 */
+                    
+                        memset(out->de_name, 0, DEVICE_NAME_LEN);
+                        strcpy(out->de_name, devobj->name.text);
+                        out->de_type = type;
+                        spin_unlock(&driver_lock);
+                        return 0;
+                    }
+                    if (!strcmp(de->de_name, devobj->name.text)) { /* 找到和当前设备一样的设备 */
+                        flags = 1;  /* 下一次就是后面的迭代设备对象 */
+                    }
+                }
+            }
+        }
+    }
+    spin_unlock(&driver_lock);
+    return -1;
+}
+
 /**
  * io_create_device - 创建一个设备
  * 
@@ -323,7 +409,7 @@ iostatus_t io_create_device(
     driver_object_t *driver,
     unsigned long device_extension_size,
     char *device_name,
-    _device_type_t type,
+    device_type_t type,
     device_object_t **device
 ) {
     device_object_t *devobj;

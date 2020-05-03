@@ -2,10 +2,11 @@
 #define _XBOOK_DRIVER_H
 
 #include "list.h"
-#include <arch/atomic.h>
 #include "string.h"
 #include "spinlock.h"
 #include "mutexlock.h"
+#include <arch/atomic.h>
+#include <sys/res.h>
 
 #define DRIVER_NAME_LEN 32
 
@@ -46,34 +47,6 @@ enum _io_request_function {
     IOREQ_DEVCTL,                   /* 设备控制派遣索引 */
     MAX_IOREQ_FUNCTION_NR
 };
-
-typedef enum _device_type {
-    DEVICE_TYPE_BEEP,                    /* 蜂鸣器设备 */
-    DEVICE_TYPE_DISK,                    /* 磁盘设备 */
-    DEVICE_TYPE_KEYBOARD,                /* 键盘设备 */
-    DEVICE_TYPE_MOUSE,                   /* 鼠标设备 */
-    DEVICE_TYPE_NULL,                    /* 空设备 */
-    DEVICE_TYPE_PORT,                   /* 端口设备 */
-    DEVICE_TYPE_SERIAL_PORT,            /* 串口设备 */
-    DEVICE_TYPE_PARALLEL_PORT,           /* 并口设备 */
-    DEVICE_TYPE_PHYSIC_NETCARD,          /* 物理网卡设备 */
-    DEVICE_TYPE_PRINTER,                 /* 打印机设备 */
-    DEVICE_TYPE_SCANNER,                 /* 扫描仪设备 */
-    DEVICE_TYPE_SCREEN,                  /* 屏幕设备 */
-    DEVICE_TYPE_SOUND,                   /* 声音设备 */
-    DEVICE_TYPE_STREAM,                  /* 流设备 */
-    DEVICE_TYPE_UNKNOWN,                 /* 未知设备 */
-    DEVICE_TYPE_VIDEO,                   /* 视频设备 */
-    DEVICE_TYPE_VIRTUAL_DISK,            /* 虚拟磁盘设备 */
-    DEVICE_TYPE_VIRTUAL_CHAR,            /* 虚拟字符设备 */
-    DEVICE_TYPE_WAVE_IN,                 /* 声音输入设备 */
-    DEVICE_TYPE_WAVE_OUT,                /* 声音输出设备 */
-    DEVICE_TYPE_8042_PORT,               /* 8042端口设备 */
-    DEVICE_TYPE_NETWORK,                 /* 网络设备 */
-    DEVICE_TYPE_BUS_EXTERNDER,           /* BUS总线扩展设备 */
-    DEVICE_TYPE_ACPI,                    /* ACPI设备 */
-    MAX_DEVICE_TYPE_NR
-} _device_type_t;
 
 #define DEVCTL_CODE_TEST DEVCTL_CODE(DEVICE_TYPE_SERIAL_PORT, 1)
 
@@ -175,7 +148,7 @@ typedef struct _device_queue_entry {
 typedef struct _device_object
 {
     list_t list;                        /* 设备在驱动中的链表 */
-    _device_type_t type;                /* 设备类型 */
+    device_type_t type;                /* 设备类型 */
     struct _driver_object *driver;      /* 设备所在的驱动 */
     void *device_extension;             /* 设备扩展，自定义 */
     unsigned int flags;                 /* 设备标志 */
@@ -219,7 +192,7 @@ iostatus_t io_create_device(
     driver_object_t *driver,
     unsigned long device_extension_size,
     char *device_name,
-    _device_type_t type,
+    device_type_t type,
     device_object_t **device
 );
 
@@ -271,5 +244,8 @@ int device_grow(handle_t handle);
 void dump_device_object(device_object_t *device);
 
 int io_uninstall_driver(char *drvname);
+
+device_object_t *io_iterative_search_device_by_type(device_object_t *devptr, device_type_t type);
+int sys_devscan(devent_t *de, device_type_t type, devent_t *out);
 
 #endif   /* _XBOOK_DRIVER_H */

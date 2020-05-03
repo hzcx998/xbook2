@@ -10,14 +10,20 @@ OBJDUMP		= objdump
 #The file path
 DIR_LIBARY = ../../libary
 
+DIR_INCLUDE = ./include
+
+DIR_TFTP = ./tftp
+
+DIR_PING = ./ping
+
 # libarys
 DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
-DIR_FATFSLIB 		= $(DIR_LIBARY)/fatfslib
+DIR_LWIPLIB 		= $(DIR_LIBARY)/lwiplib
 
 BIN = a.out
 BIN_DIS = out.disasm
-BIN_OFF = 0 
-BIN_CNTS = 300
+BIN_OFF = 800 
+BIN_CNTS = 400
 
 FLOPPY_OFF = 522
 
@@ -36,28 +42,43 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 
 #flags
 ASM_FLAGS	= -f elf \
+			-I $(DIR_INCLUDE) \
+			-I $(DIR_LWIPLIB)/include \
+			-I $(DIR_LWIPLIB)/include/ipv4 \
+			-I $(DIR_LWIPLIB)/include/arch \
 			-I $(DIR_XBOOKLIB)/include \
 			-I $(DIR_XBOOKLIB)/include/pthread \
-			-I $(DIR_FATFSLIB)/ \
+			-I $(DIR_PING) \
 			
 			
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
+			-I $(DIR_INCLUDE) \
+			-I $(DIR_LWIPLIB)/include \
+			-I $(DIR_LWIPLIB)/include/ipv4 \
+			-I $(DIR_LWIPLIB)/include/arch \
 			-I $(DIR_XBOOKLIB)/include \
 			-I $(DIR_XBOOKLIB)/include/pthread \
-			-I $(DIR_FATFSLIB)/ \
+			-I $(DIR_PING) \
 			
-			
+MAIN_OBJS 	= 	_start.o \
+				main.o \
 
-OBJS =  _start.o \
-		main.o \
+TFTP_OBJS	=	$(DIR_TFTP)/tftpserver.o \
+				$(DIR_TFTP)/tftputils.o \
+				$(DIR_TFTP)/lwipdemo.o \
+				
 
-LIB_FILE = 	$(DIR_FATFSLIB)/fatfs-r0.14.a \
+PING_OBJS	=	$(DIR_PING)/ping.o \
+				$(DIR_PING)/loopback.o \
+				
+OBJS =  $(MAIN_OBJS) $(PING_OBJS)
+
+
+LIB_FILE = $(DIR_LWIPLIB)/lwip-1.4.1.a \
 			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
-
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
-
 
 #First read here
 .PHONY: all dis

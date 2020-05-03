@@ -51,8 +51,8 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
     if (mutex->kind == PTHREAD_MUTEX_NORMAL) {  /* 普通锁 */
         while (1) { /* 用循环避免“惊群”效应 */        
             pthread_spin_lock(&mutex->spin);    /* 获得对互斥锁得操作 */
-            /* 如果非0，那么说明该互斥锁已经被其它线程持有，自己等待 */
-            if (!mutex->lock) {
+            /* 如果0，那么说明该互斥锁已经被其它线程持有，自己等待 */
+            if (!test_and_set(&mutex->lock, 0)) {
                 /*
                 在即将阻塞前，需要释放mutex->spin自旋锁。但是释放后到waitque_wait之前的这一部分
                 空间是有可能切换到其它线程，其它线程就可能会同时到达这里。那么就违背了准则。
@@ -63,7 +63,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
                 */
                 //printf("had locked!\n");
                 /* 设置自选锁值为0，并且阻塞自己 */
-                waitque_wait(mutex->waitque, (int *) &mutex->spin, WAITQUE_SET, 0);
+                waitque_wait(mutex->waitque, (void *) &mutex->spin, WAITQUE_ZERO, 0);
             } else {
                 mutex->lock = 0;    /* 获得锁 */
                 mutex->owner = pthread_self();
@@ -86,7 +86,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
             }
             
             /* 如果非0，那么说明该互斥锁已经被其它线程持有，自己等待 */
-            if (!mutex->lock) {
+            if (!test_and_set(&mutex->lock, 0)) {
                 /*
                 在即将阻塞前，需要释放mutex->spin自旋锁。但是释放后到waitque_wait之前的这一部分
                 空间是有可能切换到其它线程，其它线程就可能会同时到达这里。那么就违背了准则。
@@ -97,7 +97,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
                 */
                 //printf("had locked!\n");
                 /* 设置自选锁值为0，并且阻塞自己 */
-                waitque_wait(mutex->waitque, (int *) &mutex->spin, WAITQUE_SET, 0);
+                waitque_wait(mutex->waitque, (void *) &mutex->spin, WAITQUE_ZERO, 0);
             } else {
                 mutex->lock = 0;    /* 获得锁 */
                 mutex->owner = pthread_self();
@@ -126,7 +126,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
             }
             
             /* 如果非0，那么说明该互斥锁已经被其它线程持有，自己等待 */
-            if (!mutex->lock) {
+            if (!test_and_set(&mutex->lock, 0)) {
                 /*
                 在即将阻塞前，需要释放mutex->spin自旋锁。但是释放后到waitque_wait之前的这一部分
                 空间是有可能切换到其它线程，其它线程就可能会同时到达这里。那么就违背了准则。
@@ -137,7 +137,7 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
                 */
                 //printf("had locked!\n");
                 /* 设置自选锁值为0，并且阻塞自己 */
-                waitque_wait(mutex->waitque, (int *) &mutex->spin, WAITQUE_SET, 0);
+                waitque_wait(mutex->waitque, (void *) &mutex->spin, WAITQUE_ZERO, 0);
             } else {
                 mutex->lock = 0;    /* 获得锁 */
                 mutex->owner = pthread_self();
@@ -212,11 +212,12 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex)
     if (mutex->kind == PTHREAD_MUTEX_NORMAL) {  /* 普通锁 */ 
         /* 可以获取 */
         pthread_spin_lock(&mutex->spin);    /* 获得对互斥锁得操作 */
-        if (mutex->lock == 0) {    /* 非1，表示不能被获取，直接返回 */
+        if (!test_and_set(&mutex->lock, 0)) {    /* 非1，表示不能被获取，直接返回 */
             pthread_spin_unlock(&mutex->spin);    /* 取消对互斥锁得操作 */
             return EBUSY;
         }
         mutex->lock = 0;   /* 锁值减少 */
+        mutex->owner = pthread_self();
         pthread_spin_unlock(&mutex->spin);    /* 取消对互斥锁得操作 */
     } else if (mutex->kind == PTHREAD_MUTEX_ERRORCHECK) {  /* 检测锁 */ 
         /* 可以获取 */
@@ -233,7 +234,7 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex)
         }
         /* 可以获取 */
         pthread_spin_lock(&mutex->spin);    /* 获得对互斥锁得操作 */
-        if (mutex->lock == 0) {    /* 非1，表示不能被获取，直接返回 */
+        if (!test_and_set(&mutex->lock, 0)) {    /* 非1，表示不能被获取，直接返回 */
             pthread_spin_unlock(&mutex->spin);    /* 取消对互斥锁得操作 */
             return EBUSY;
         }
@@ -255,7 +256,7 @@ int pthread_mutex_trylock(pthread_mutex_t *mutex)
         }
         /* 可以获取 */
         pthread_spin_lock(&mutex->spin);    /* 获得对互斥锁得操作 */
-        if (mutex->lock == 0) {    /* 非1，表示不能被获取，直接返回 */
+        if (!test_and_set(&mutex->lock, 0)) {     /* 非1，表示不能被获取，直接返回 */
             pthread_spin_unlock(&mutex->spin);    /* 取消对互斥锁得操作 */
             return EBUSY;
         }
@@ -302,7 +303,8 @@ int pthread_mutexattr_getpshared(pthread_mutexattr_t *mattr, int *pshared)
 {
     if (!mattr)
         return EINVAL;
-    *pshared = mattr->pshared;
+    if (pshared)
+        *pshared = mattr->pshared;
     return 0;
 }
 int pthread_mutexattr_settype(pthread_mutexattr_t *mattr , int type)
@@ -316,6 +318,7 @@ int pthread_mutexattr_gettype(pthread_mutexattr_t *mattr , int *type)
 {
     if (!mattr)
         return EINVAL;
-    *type = mattr->type;
+    if (type)
+        *type = mattr->type;
     return 0;
 }

@@ -297,10 +297,10 @@ void task_unblock(task_t *task)
     state有3种状态，分别是TASK_BLOCKED, TASK_WAITING
     只有它们能被唤醒, TASK_ZOMBIE只能阻塞，不能被唤醒
     */
-    ASSERT((task->state == TASK_BLOCKED) || 
+    /*ASSERT((task->state == TASK_BLOCKED) || 
         (task->state == TASK_WAITING) ||
         (task->state == TASK_STOPPED));
-    
+    */
     if (task->state != TASK_READY) {
         // 保证没有在就绪队列中
         ASSERT(!is_task_in_priority_queue(task));
@@ -702,7 +702,7 @@ void dump_task(task_t *task)
     //printk("vmm->vm_frame:%x priority:%d ticks:%d elapsed ticks:%d\n", task->vmm->page_storage, task->priority, task->ticks, task->elapsed_ticks);
     printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
-static char *init_argv[3] = {"init", 0};
+static char *init_argv[3] = {"initsrv", 0, 0};
 
 /**
  * start_user - 开启用户进程
@@ -712,7 +712,9 @@ static char *init_argv[3] = {"init", 0};
 void start_user()
 {
     /* 加载init进程 */
-    process_create("init", init_argv);
+    task_t *proc = process_create(init_argv[0], init_argv);
+    if (proc == NULL)
+        panic("kernel start initsrv failed! please check initsrv!\n");
     
     /* 降级期间不允许产生中断 */
 	unsigned long flags;

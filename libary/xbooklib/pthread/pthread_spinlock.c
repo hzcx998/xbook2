@@ -9,6 +9,8 @@
 
 int pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 {
+    if (!lock)
+        return EINVAL;
     lock->count = 0;
     lock->pshared = pshared;
     return 0;
@@ -16,6 +18,8 @@ int pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 
 int pthread_spin_destroy(pthread_spinlock_t *lock)
 {
+    if (!lock)
+        return EINVAL;
     lock->pshared = 0;
     if (lock->count > 0) {
         lock->count = 0;
@@ -27,6 +31,8 @@ int pthread_spin_destroy(pthread_spinlock_t *lock)
 
 int pthread_spin_lock(pthread_spinlock_t *lock)
 {
+    if (!lock)
+        return EINVAL;
     int i;
     while (1)
     {
@@ -40,6 +46,8 @@ int pthread_spin_lock(pthread_spinlock_t *lock)
 }
 int pthread_spin_trylock(pthread_spinlock_t *lock)
 {
+    if (!lock)
+        return EINVAL;
     uint32_t oldvale;
     /* 如果返回的旧值是0，那么成功获取，如果是1表示已经被占用，需要等待 */
     oldvale = test_and_set(&lock->count, 1);
@@ -51,11 +59,15 @@ int pthread_spin_trylock(pthread_spinlock_t *lock)
 
 int pthread_spin_unlock(pthread_spinlock_t *lock)
 {
+    if (!lock)
+        return EINVAL;
     lock->count = 0;
     return 0;
 }
 
 int pthread_spin_is_locked(pthread_spinlock_t *lock)
 {
+    if (!lock)
+        return EINVAL;
     return lock->count;
 }

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread/pthread.h>
+#include <errno.h>
 
 /* 线程入口，启动线程后会先进入入口执行 */
 void __pthread_entry();
@@ -30,6 +31,9 @@ int pthread_create(
     void * (*start_routine) (void *),
     void *arg
 ) {
+    if (!thread || !start_routine)
+        return EINVAL;
+
     pthread_attr_t default_attr;
     if (attr == NULL) {
         /* 自动分配属性 */
@@ -131,18 +135,24 @@ void pthread_testcancel(void)
 
 int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate)
 {
+    if (!attr)
+        return EINVAL;
     *detachstate = attr->detachstate; 
     return 0;
 }
 
 int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
 {
+    if (!attr)
+        return EINVAL;
     attr->detachstate = detachstate;
     return 0;
 }
 
 int pthread_attr_init(pthread_attr_t *attr)
 {
+    if (!attr)
+        return EINVAL;
     attr->stacksize = PTHREAD_STACKSIZE_DEL;
     attr->stackaddr = NULL;
     attr->detachstate = PTHREAD_CREATE_JOINABLE;
@@ -151,6 +161,8 @@ int pthread_attr_init(pthread_attr_t *attr)
 
 int pthread_attr_destroy(pthread_attr_t *attr)
 {
+    if (!attr)
+        return EINVAL;
     if (attr->stackaddr)
         free(attr->stackaddr);
     attr->stackaddr = NULL;
@@ -161,24 +173,35 @@ int pthread_attr_destroy(pthread_attr_t *attr)
 
 int pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stacksize)
 {
-    *stacksize = attr->stacksize; 
+    if (!attr)
+        return EINVAL;
+    if (stacksize)
+        *stacksize = attr->stacksize; 
     return 0;
 }
 
 int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize)
 {
+    if (!attr)
+        return EINVAL;
     attr->stacksize = stacksize;
     return 0;
 }
 
 int pthread_attr_getstackaddr(const pthread_attr_t *attr, void **stackaddr)
 {
-    *stackaddr = attr->stackaddr; 
+    if (!attr)
+        return EINVAL;
+    if (stackaddr)
+        *stackaddr = attr->stackaddr; 
     return 0;
 }
 
 int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr)
 {
+    if (!attr)
+        return EINVAL;
+        
     if (attr->stackaddr){
         free(attr->stackaddr);  /* free old stack */
     }

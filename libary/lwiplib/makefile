@@ -13,6 +13,7 @@ CORE_DIR		= ./core
 NETIF_DIR		= ./netif
 API_DIR			= ./api
 IPV4_DIR		= $(CORE_DIR)/ipv4
+SNMP_DIR		= $(CORE_DIR)/snmp
 
 
 XBOOKLIB_INCLUDE 	= ../xbooklib/include
@@ -23,12 +24,14 @@ C_FLAGS	:=  -c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
 			-fno-stack-protector -std=c99 \
 			-I $(DIR_INCLUDE) \
 			-I $(XBOOKLIB_INCLUDE) \
+			-I $(XBOOKLIB_INCLUDE)/pthread \
 			-I $(IPV4_INCLUDE) \
 			-I $(NETIF_INCLUDE) \
 			
 NASM_FLAGS	:= -f elf \
 			-I $(DIR_INCLUDE) \
 			-I $(XBOOKLIB_INCLUDE) \
+			-I $(XBOOKLIB_INCLUDE)/pthread \
 			-I $(IPV4_INCLUDE) \
 			-I $(NETIF_INCLUDE) \
 
@@ -60,6 +63,13 @@ IPV4_OBJS = 	$(IPV4_DIR)/autoip.o \
 				$(IPV4_DIR)/ip_frag.o \
 				$(IPV4_DIR)/ip.o \
 				
+SNMP_OBJS = 	$(SNMP_DIR)/asn1_dec.o \
+				$(SNMP_DIR)/asn1_enc.o \
+				$(SNMP_DIR)/mib_structs.o \
+				$(SNMP_DIR)/mib2.o \
+				$(SNMP_DIR)/msg_in.o \
+				$(SNMP_DIR)/msg_out.o \
+
 NETIF_OBJS = 	$(NETIF_DIR)/etharp.o \
 				$(NETIF_DIR)/ethernetif.o \
 
@@ -72,7 +82,7 @@ API_OBJS =  	$(API_DIR)/api_lib.o \
 				$(API_DIR)/sockets.o \
 				$(API_DIR)/tcpip.o \
 # objects
-OBJS	:=  $(CORE_OBJS) $(ARCH_OBJS) $(IPV4_OBJS) $(NETIF_OBJS)  $(API_OBJS)
+OBJS	:=  $(CORE_OBJS) $(ARCH_OBJS) $(IPV4_OBJS) $(SNMP_OBJS) $(NETIF_OBJS)  $(API_OBJS)
 
 # out file
 LIBNAME = lwip-1.4.1.a

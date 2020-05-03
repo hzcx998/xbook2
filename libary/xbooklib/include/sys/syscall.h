@@ -37,6 +37,7 @@ enum {
     SYS_READRES, 
     SYS_WRITERES,
     SYS_CTLRES,
+    SYS_DEVSCAN, 
     SYS_RES_RESERVED = 50,              /* 预留10个接口给资源管理 */
     SYS_ALARM,
     SYS_KTIME,

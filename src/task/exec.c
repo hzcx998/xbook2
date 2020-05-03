@@ -15,7 +15,7 @@
  * 
  */
 
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 /**
  * sys_exec_raw - 执行原始进程
@@ -149,7 +149,6 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
 {
     /* 没有参数或者参数错误 */
     task_t *cur = current_task;
-    
     unsigned long flags;
     save_intr(flags);
 
@@ -192,7 +191,7 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
         printk("arg: %s", argv[argc]);
         argc++;
     }*/
-    
+
     /* 由于需要重载镜像数据，而传递的参数是在用户数据中，因此需要先保存
     参数，然后再重载镜像 */
     char *tmp_arg = kmalloc(PAGE_SIZE);
@@ -215,7 +214,7 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
         printk(KERN_ERR "sys_exec_file: load_image failed!\n");
         goto free_tmp_arg;
     }
-    
+
     /* 构建中断栈框 */
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
@@ -256,7 +255,7 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
     strcpy(cur->name, tmp_name);
     
     raw_block_tmp_del(&rb);  /* 删除临时原始块 */
-    
+
     //dump_trap_frame(frame);
     /* 切换到进程执行 */
     switch_to_user(frame);
