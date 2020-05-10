@@ -1,7 +1,7 @@
-#ifndef _SYSCALL_H
-#define _SYSCALL_H
+#ifndef _SYS_SYSCALL_H
+#define _SYS_SYSCALL_H
 
-enum {
+enum syscall_num {
     SYS_EXIT,
     SYS_FORK,
     SYS_EXECR,
@@ -45,6 +45,11 @@ enum {
     SYS_GETTIMEOFDAY,
     SYS_CLOCK_GETTIME,
     SYS_TIME_RESERVED = 60,             /* 预留10个接口给时间管理 */
+    SYS_SRVCALL,
+    SYS_SRVCALL_LISTEN,
+    SYS_SRVCALL_ACK,
+    SYS_SRVCALL_BIND,
+    SYS_SRVCALL_UNBIND,
     SYSCALL_NR,
 };
 unsigned long __syscall0(unsigned long num);
@@ -74,4 +79,5 @@ unsigned long __syscall4(unsigned long num, unsigned long arg0,
 #define syscall4(type, num, arg0, arg1, arg2, arg3) \
         (type) __syscall4((unsigned long ) num, (unsigned long ) arg0,\
         (unsigned long ) arg1, (unsigned long ) arg2, (unsigned long ) arg3)
-#endif   /* _SYSCALL_H */
+
+#endif   /* _SYS_ */

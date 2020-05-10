@@ -44,8 +44,9 @@ SYSLIB_OBJS 	= 	$(SYSLIB_DIR)/proc.o \
 					$(SYSLIB_DIR)/trigger.o \
 					$(SYSLIB_DIR)/vmm.o \
 					$(SYSLIB_DIR)/brk.o \
-					$(SYSLIB_DIR)/waitque.o
-
+					$(SYSLIB_DIR)/waitque.o \
+					$(SYSLIB_DIR)/srvcall.o \
+					
 STDLIB_OBJS		= 	$(STDLIB_DIR)/rand.o \
 					$(STDLIB_DIR)/abort.o \
 					$(STDLIB_DIR)/stream.o \

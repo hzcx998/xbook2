@@ -9,3 +9,5 @@ obj-y		+=	trigger.o
 obj-y		+=	sleep.o
 obj-y		+=	pthread.o
 obj-y		+=	waitque.o
+obj-y		+=	waitqueue.o
+obj-y		+=	mutexlock.o

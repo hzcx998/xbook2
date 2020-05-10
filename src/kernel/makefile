@@ -8,3 +8,4 @@ obj-y		+= 	driver.o
 obj-y		+= 	timer.o
 obj-y		+= 	alarm.o
 obj-y		+= 	ktime.o
+obj-y		+= 	srvcall.o

@@ -50,6 +50,7 @@ int thread_release_resource(task_t *task)
     /* 取消定时器 */
     timer_cancel(task->sleep_timer);
     task->sleep_timer = NULL;
+
     return 0;
 }
 
@@ -128,7 +129,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
 
     task->vmm = parent->vmm;    /*共享内存 */
     task->res = parent->res;    /* 共享资源 */
-    task->triggers = parent->triggers;/* 共享触发器 */
+    task->triggers = parent->triggers; /* 共享触发器 */
 
     /* 中断栈框 */
     proc_make_trap_frame(task);

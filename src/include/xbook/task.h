@@ -23,20 +23,6 @@ typedef enum task_state {
     TASK_ZOMBIE,            /* 进程处于僵尸状态，父进程没有等待它 */
 } task_state_t;
 
-typedef struct thread_stack {
-    uint32_t ebp;
-    uint32_t ebx;
-    uint32_t edi;
-    uint32_t esi;
-
-    /* 首次运行指向kthread_func_t，其它时候指向switch_to的返回地址 */
-    void (*eip) (task_func_t *func, void *arg);
-
-    uint32_t unused;
-    task_func_t *function;   // 线程要调用的函数
-    void *arg;  // 线程携带的参数
-} thread_stack_t;
-
 #define MAX_TASK_NAMELEN 32
 
 /* 栈魔数，用于检测内核栈是否向下越界 */
@@ -46,7 +32,7 @@ typedef struct thread_stack {
 #define MAX_STACK_ARGC 16
 
 /* 内核栈大小为8kb */
-#define TASK_KSTACK_SIZE    4096
+#define TASK_KSTACK_SIZE    8192
 
 /* init 进程的pid */
 #define INIT_PROC_PID       1
@@ -59,6 +45,9 @@ enum thread_flags {
     THREAD_FLAG_CANCEL_DISABLE      = (1 << 3),     /* 线程不能被取消 */
     THREAD_FLAG_CANCEL_ASYCHRONOUS  = (1 << 4),     /* 线程收到取消信号时立即退出 */
     THREAD_FLAG_CANCELED            = (1 << 5),     /* 线程已经标记上取消点 */
+    SERVER_RECEVING                 = (1 << 6),     /* 服务器处于接受中 */
+    CLIENT_SENDING                  = (1 << 7),     /* 客户端正在发送中 */
+    
 };
 
 typedef struct priority_queue {
@@ -67,7 +56,7 @@ typedef struct priority_queue {
     unsigned int priority;  /* 优先级 */
 } priority_queue_t;
 
-typedef struct task {
+typedef struct _task {
     unsigned char *kstack;              /* kernel stack, must be first member */
     task_state_t state;                 /* 任务的状态 */
     pid_t pid;                          /* 自己的进程id */

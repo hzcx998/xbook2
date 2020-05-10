@@ -21,9 +21,7 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     /* 单独修改内容 */
     child->pid = fork_pid();
     child->tgid = child->pid;      /* 生成的进程是主线程 */
-    child->elapsed_ticks = 0;
     child->state = TASK_READY;
-    child->ticks = child->timeslice;
     child->parent_pid = parent->pid;
     /* 重新设置链表，在这里不使用list_del，那样会删除父进程在队列中的情况
     所以这里就直接把队列指针设为NULL，后面会添加到链表中*/
@@ -216,7 +214,6 @@ static int copy_pthread_desc(task_t *child, task_t *parent)
     }
     return 0;
 }
-
 
 static int bulid_child_stack(task_t *child)
 {

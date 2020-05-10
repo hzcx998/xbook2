@@ -5,6 +5,7 @@
 #include "string.h"
 #include "spinlock.h"
 #include "mutexlock.h"
+#include "waitqueue.h"
 #include <arch/atomic.h>
 #include <sys/res.h>
 

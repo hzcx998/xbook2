@@ -26,4 +26,6 @@ typedef struct {
     char text[1];   /* msg text */
 } kmsgbuf_t;
 
+
+
 #endif   /* _SYS_IPC_H */

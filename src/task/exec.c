@@ -1,6 +1,7 @@
 #include <xbook/process.h>
 #include <xbook/string.h>
 #include <xbook/pthread.h>
+#include <xbook/srvcall.h>
 #include <arch/interrupt.h>
 
 /**
@@ -113,6 +114,8 @@ int sys_exec_raw(char *name, char **argv)
     的时候，把thread_count置0，因此，在此需要重新初始化线程描述（将thread_count置1） */
     pthread_desc_init(cur->pthread);
 
+    /* 解除服务调用绑定 */
+    sys_srvcall_unbind(-1);
     /* 执行程序的时候需要继承原有进程的资源，因此不在这里初始化资源 */
 
     /* 设置执行入口 */
@@ -239,6 +242,9 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
     /* 如果是从一个多线程执行的，那么就会有线程结构体，由于在close_other_threads
     的时候，把thread_count置0，因此，在此需要重新初始化线程描述（将thread_count置1） */
     pthread_desc_init(cur->pthread);
+
+    /* 解除服务调用绑定 */
+    sys_srvcall_unbind(-1);
 #if DEBUG_LOCAL == 1
     if (cur->pthread) {
         printk(KERN_DEBUG "%s: thread count %d\n", __func__, atomic_get(&cur->pthread->thread_count));

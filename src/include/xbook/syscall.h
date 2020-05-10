@@ -90,6 +90,11 @@ enum syscall_num {
     SYS_GETTIMEOFDAY,
     SYS_CLOCK_GETTIME,
     SYS_TIME_RESERVED = 60,             /* 预留10个接口给时间管理 */
+    SYS_SRVCALL,
+    SYS_SRVCALL_LISTEN,
+    SYS_SRVCALL_ACK,
+    SYS_SRVCALL_BIND,
+    SYS_SRVCALL_UNBIND,
     SYSCALL_NR,
 };
 

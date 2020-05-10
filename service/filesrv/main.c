@@ -9,6 +9,8 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/kfile.h>
+#include <sys/ipc.h>
+#include <sys/srvcall.h>
 #include <ff.h>
 
 #include <stdio.h>
@@ -25,13 +27,6 @@
 /* 最多可以挂载的驱动器 */
 #define FILESRV_DRV_NR   10
 
-/* login arg */
-#define BIN_OFFSET      300
-#define BIN_SECTORS     600
-#define BIN_SIZE        (BIN_SECTORS*512)
-#define BIN_NAME        "login"
-
-
 #define SECTORS_PER_BLOCK   256
 
 FATFS fatfs_info_table[FILESRV_DRV_NR];           /* Filesystem object */
@@ -45,6 +40,7 @@ int filesrv_create_files();
 int filesrv_execute();
 
 int execv(const char *path, const char *argv[]);
+
 
 /**
  * filesrv - 文件服务
@@ -64,18 +60,46 @@ int main(int argc, char *argv[])
         printf("%s: create files failed, service stopped!\n", SRV_NAME);
         return -1;
     }
-
+    
     /* 启动其它程序 */
     if (filesrv_execute()) {
         printf("%s: execute failed, service stopped!\n", SRV_NAME);
         return -1;
     }
-
+    
+    if (srvcall_bind(SRV_FS))  {
+        printf("%s: bind srvcall failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
+    int seq = 0;
+    srvcall_arg_t srvarg;
     while (1)
     {
         /* 接收消息 */
         /* 处理消息 */
         /* 反馈消息 */
+        memset(&srvarg, 0, sizeof(srvcall_arg_t));
+        if (srvcall_listen(SRV_FS, &srvarg)) {
+            continue;
+        }
+        switch (srvarg.data[0])
+        {
+        case FILESRV_OPEN:
+            printf("%s: srvcall [open]\n", SRV_NAME);
+            printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
+            break;
+        case FILESRV_CLOSE:
+            printf("%s: srvcall [close]\n", SRV_NAME);
+            break;
+        default:
+            break;
+        }
+        
+        printf("%s: srvcall listen ok! %d\n", SRV_NAME, seq);
+        
+        srvcall_ack(SRV_FS, &srvarg);
+        seq++;
+            
     }
     return 0;
 }
@@ -227,8 +251,7 @@ int filesrv_create_file(char *path, size_t size, char *diskname, long off)
             SRV_NAME, __func__, diskname);
         goto close_file;
     }
-    //printf("%s: %s: res_open ok.\n", SRV_NAME, __func__);
-    
+
     /* 从磁盘读取文件 */
     int left_count = sectors;
     
@@ -287,13 +310,24 @@ int filesrv_create_files()
 
 int filesrv_execute()
 {
-    if (execv(PATH_NETSRV, NULL)) {
-        printf("%s: %s: execv failed!\n", SRV_NAME, __func__);
-        exit(-1);
+    int pid = fork();
+    if (pid < 0) {
+        printf("%s: %s: fork failed!\n", SRV_NAME, __func__);
+        return -1;
+    }
+    if (!pid) { /* 子进程执行新进程 */
+        if (execv(PATH_NETSRV, NULL)) {
+            printf("%s: %s: execv failed!\n", SRV_NAME, __func__);
+            exit(-1);
+        }    
     }
     return 0;
 }
 
+/**
+ * execv - 执行程序，替换当前进程镜像
+ * 
+ */
 int execv(const char *path, const char *argv[])
 {
     /* netsrv */
@@ -333,6 +367,13 @@ int execv(const char *path, const char *argv[])
     //printf("%s: %s: process name %s\n", SRV_NAME, __func__, name);
     execfile(name, &file, (char **) argv);
     return -1;
+}
+
+int execl(const char *path, const char *arg, ...)
+{
+	va_list parg = (va_list)(&arg);
+	const char **p = (const char **) parg;
+	return execv(path, p);
 }
 
 FRESULT fatfs_scan_files (

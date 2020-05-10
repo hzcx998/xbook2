@@ -14,6 +14,7 @@
 #include <xbook/pipe.h>
 #include <xbook/driver.h>
 #include <xbook/ktime.h>
+#include <xbook/srvcall.h>
 
 int kernel_main(void)
 {
@@ -33,6 +34,8 @@ int kernel_main(void)
     init_pipe();
 
     init_syscall();
+    init_srvcall();
+    
     init_ktime();
 
     init_tasks();

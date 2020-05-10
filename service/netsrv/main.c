@@ -16,8 +16,43 @@
 #include <pthread.h>
 #include <sys/proc.h>
 #include <sys/time.h>
+#include <sys/ipc.h>
+#include <sys/srvcall.h>
 #include <time.h>
 #include <errno.h>
+#include <sys/res.h>
+
+/**
+ * 系统调用是用户态陷入内核，让内核帮忙执行一些内容。
+ * 服务调用是用户态转移到用户态，让服务进程帮忙执行一些内容。
+ * srvcall, 传入参数，然后先陷入内核，然后寻找到对应的服务进程。
+ * 查看服务进程的状态，如果可转移，那么就直接转移，不然，就等待。
+ * 
+ * 服务进程，先通过系统调用，进入到可服务状态，等待其它进程跳转服务。
+ * 先查看就绪队列，如果有就从里面挑选一个出来，并执行。然后继续陷入
+ * 内核挑选，直到就绪队列为空，然后就进入阻塞等待状态。
+ * 
+ * 服务进程：处于可转移状态，当第一个进程跳转的时候，将参数传递给它
+ * 然后唤醒它。然后阻塞调用进程。
+ * 处于不可转移状态，说明正在处理一个转移，那么，就需要把当前进程挂到
+ * 服务进程的就绪队列，然后阻塞自己，等待服务进程处理完服务后并解除
+ * 阻塞。
+ * 
+ * srvcall0(int, opt, a, b, c);
+ * srvcall1(long, a, b, c);
+ * 
+ * srvlisten(srvmsg); 监听服务
+ * ...处理数据...
+ * 如果涉及到缓冲区数据操作，就把对应进程的地址
+ * 映射到服务进程中，直接进行数据的读写。
+ * ...处理完毕...
+ * srvecho(srvmsg);   应答服务
+ * 
+ * fopen(string, arg)
+ * 
+ */
+
+
 
 /* 当前服务的名字 */
 #define SRV_NAME    "netsrv"
@@ -232,8 +267,24 @@ static void http_server_init(void)
 										
 }
 
+void *server_test(void *arg)
+{
+    srvcall_arg_t srvarg;
+    char *path = "0:/abc";
+	while(1)
+	{
+        srvarg.data[0] = FILESRV_OPEN;
+        srvarg.data[1] = (unsigned long) path;
+        srvcall(SRV_FS, &srvarg);
+	}
+
+    return NULL;
+}
+
+
 void http_lwip_demo(void *pdata)
 {
+
 	//init LwIP
 	lwip_init_task();
 
@@ -241,12 +292,27 @@ void http_lwip_demo(void *pdata)
  	echo_client_init();
     http_server_init();
 	//for periodic handle
+    
+    pthread_t thread1;
+    pthread_create(&thread1, NULL, server_test, NULL);
+    
+    srvcall_arg_t srvarg;
+    while (1)
+    {
+        srvarg.data[0] = FILESRV_CLOSE;
+        
+        srvcall(SRV_FS, &srvarg);
+
+    }
+
 	while(1)
 	{
-        ethernetif_input(&rtl8139_netif);
-        sys_check_timeouts();
+        /* 检测输入，并进行超时检测 */
+        //ethernetif_input(&rtl8139_netif);
+        //sys_check_timeouts();
 		
 		//todo: add your own user code here
+
 	}
 }
 

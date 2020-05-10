@@ -7,6 +7,7 @@
 #include <xbook/ktime.h>
 #include <xbook/clock.h>
 #include <xbook/waitque.h>
+#include <xbook/srvcall.h>
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -47,7 +48,7 @@ void init_syscall()
     syscall_table[SYS_WAITQUE_DESTROY] = sys_waitque_destroy;
     syscall_table[SYS_WAITQUE_WAIT] = sys_waitque_wait;
     syscall_table[SYS_WAITQUE_WAKE] = sys_waitque_wake;
-    
+
     /* 内存管理 */
     syscall_table[SYS_HEAP] = sys_vmspace_heap;
     
@@ -65,4 +66,9 @@ void init_syscall()
     syscall_table[SYS_GETTIMEOFDAY] = sys_gettimeofday;
     syscall_table[SYS_CLOCK_GETTIME] = sys_clock_gettime;
     
+    syscall_table[SYS_SRVCALL] = sys_srvcall;
+    syscall_table[SYS_SRVCALL_LISTEN] = sys_srvcall_listen;
+    syscall_table[SYS_SRVCALL_ACK] = sys_srvcall_ack;
+    syscall_table[SYS_SRVCALL_BIND] = sys_srvcall_bind;
+    syscall_table[SYS_SRVCALL_UNBIND] = sys_srvcall_unbind;
 }
