@@ -3,7 +3,7 @@
 #include <xbook/waitqueue.h>
 #include <xbook/spinlock.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 typedef struct _srvcall {
     int port;

@@ -10,19 +10,17 @@
 #include <sys/ioctl.h>
 #include <sys/kfile.h>
 #include <sys/ipc.h>
-#include <sys/srvcall.h>
 #include <ff.h>
 
 #include <stdio.h>
 #include <pthread.h>
 
+#include "filesrv.h"
+
 /* 创建文件系统状态：0，不创建文件系统，1创建文件系统 */
 #define MKFS_STATE  0
 
 #define DISK_NAME   "ide0"
-
-/* 当前服务的名字 */
-#define SRV_NAME    "filesrv"
 
 /* 最多可以挂载的驱动器 */
 #define FILESRV_DRV_NR   10
@@ -54,6 +52,11 @@ int main(int argc, char *argv[])
         printf("%s: init filesystem failed, service stopped!\n", SRV_NAME);
         return -1;
     }
+    
+    if (filesrv_file_table_init()) {
+        printf("%s: init file table failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
 
     /* 构建文件 */
     if (filesrv_create_files()) {
@@ -71,10 +74,13 @@ int main(int argc, char *argv[])
         printf("%s: bind srvcall failed, service stopped!\n", SRV_NAME);
         return -1;
     }
+    FIL file0;
+    FRESULT fres;
     int seq = 0;
     char buf0[32];
     char *str = "filesrv->read."; 
     srvarg_t srvarg;
+    int callnum;
     while (1)
     {
         /* 接收消息 */
@@ -84,26 +90,38 @@ int main(int argc, char *argv[])
         if (srvcall_listen(SRV_FS, &srvarg)) {
             continue;
         }
+        callnum = srvarg.data[0];
+        printf("%s: srvcall num %d\n", SRV_NAME, callnum);
 
+        if (callnum >= 0 && callnum < FILESRV_CALL_NR) {
+            filesrv_call_table[callnum](&srvarg);
+        }
+        #if 0
         switch (srvarg.data[0])
         {
         case FILESRV_OPEN:
-            printf("%s: srvcall [open]\n", SRV_NAME);
-            printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
-            /* 检测参数 */
-            if (!srvcall_check(&srvarg)) {
-                srvarg.data[1] = (unsigned long) &buf0[0];
-                if (srvcall_fetch(SRV_FS, &srvarg)) {
-                    break;
-                }
-            }
+            
             /* 现在已经获取了完整的数据 */
             printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
             printf("path: %s\n", (char *) srvarg.data[1]);
-
+            printf("%s: data2 %x\n", SRV_NAME, srvarg.data[2]);
+            
+            fres = f_open(&file0, (char *) srvarg.data[1], FA_CREATE_ALWAYS | FA_READ | FA_WRITE);
+            if (fres != FR_OK) {
+                srvarg.retval = 0;  /* null */
+            } else {
+                srvarg.retval = (unsigned long) &file0;
+            }
             break;
         case FILESRV_CLOSE:
             printf("%s: srvcall [close]\n", SRV_NAME);
+            printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
+            fres = f_close((FIL *)srvarg.data[1]);
+            if (fres != FR_OK) {
+                srvarg.retval = -1;  /* null */
+            } else {
+                srvarg.retval = 0;
+            }
             break;
         case FILESRV_READ:
             printf("%s: srvcall [read]\n", SRV_NAME);
@@ -122,12 +140,12 @@ int main(int argc, char *argv[])
             printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
             printf("%s: data2 %x\n", SRV_NAME, srvarg.data[2]);
             printf("str: %s\n", (char *) srvarg.data[2]);
-
+            srvarg.retval = 123;
             break;
         default:
             break;
         }
-        
+        #endif
         printf("%s: srvcall listen ok! %d\n", SRV_NAME, seq);
         
         srvcall_ack(SRV_FS, &srvarg);

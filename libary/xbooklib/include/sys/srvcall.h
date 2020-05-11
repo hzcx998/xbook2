@@ -35,6 +35,7 @@ enum filesrv_call_num {
     FILESRV_READ,
     FILESRV_WRITE,
     FILESRV_LSEEK,
+    FILESRV_CALL_NR,    /* 最大数量 */
 };
 
 
