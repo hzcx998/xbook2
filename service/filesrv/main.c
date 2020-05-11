@@ -52,9 +52,14 @@ int main(int argc, char *argv[])
         printf("%s: init filesystem failed, service stopped!\n", SRV_NAME);
         return -1;
     }
-    
+
     if (filesrv_file_table_init()) {
         printf("%s: init file table failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
+    
+    if (filesrv_init_interface()) {
+        printf("%s: init interface failed, service stopped!\n", SRV_NAME);
         return -1;
     }
 

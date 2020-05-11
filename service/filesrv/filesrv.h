@@ -26,4 +26,6 @@ filesrv_file_t *filesrv_alloc_file();
 int filesrv_free_file(filesrv_file_t *file);
 int filesrv_free_file2(FIL *fil);
 
+int filesrv_init_interface();
+
 #endif

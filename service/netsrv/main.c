@@ -349,14 +349,14 @@ int close(int fd)
     
     if (_fil->file == NULL)
         return -1;
-    srvarg_t _srvarg;
-    memset(&_srvarg, 0, sizeof(srvarg_t));
-    _srvarg.data[0] = FILESRV_CLOSE;
-    _srvarg.size[0] = 0;
-    _srvarg.data[1] = (unsigned long) _fil->file;
-    _srvarg.size[1] = 0;
-    if (!srvcall(SRV_FS, &_srvarg)) {
-        if (_srvarg.retval == -1) {
+    srvarg_t srvarg;
+    memset(&srvarg, 0, sizeof(srvarg_t));
+    srvarg.data[0] = FILESRV_CLOSE;
+    srvarg.size[0] = 0;
+    srvarg.data[1] = (unsigned long) _fil->file;
+    srvarg.size[1] = 0;
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (srvarg.retval == -1) {
             return -1;
         }
         __free_filedes(_fil);
@@ -365,6 +365,83 @@ int close(int fd)
     return -1;
 }
 
+int read(int fd, void *buffer, size_t nbytes)
+{
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    struct _filedes *_fil = __filedes_table + fd;
+    
+    if (_fil->file == NULL)
+        return -1;
+    srvarg_t srvarg;
+    memset(&srvarg, 0, sizeof(srvarg_t));
+    srvarg.data[0] = FILESRV_READ;
+    srvarg.size[0] = 0;
+    srvarg.data[1] = (unsigned long) _fil->file;
+    srvarg.size[1] = 0;
+    srvarg.data[2] = (unsigned long) buffer;
+    srvarg.size[2] = nbytes;
+    srvarg.io = (1 << 2);
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (srvarg.retval == -1) {
+            return -1;
+        }
+        return srvarg.retval;
+    }
+    return -1;
+}
+
+int write(int fd, void *buffer, size_t nbytes)
+{
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    struct _filedes *_fil = __filedes_table + fd;
+    
+    if (_fil->file == NULL)
+        return -1;
+    srvarg_t srvarg;
+    memset(&srvarg, 0, sizeof(srvarg_t));
+    srvarg.data[0] = FILESRV_WRITE;
+    srvarg.size[0] = 0;
+    srvarg.data[1] = (unsigned long) _fil->file;
+    srvarg.size[1] = 0;
+    srvarg.data[2] = (unsigned long) buffer;
+    srvarg.size[2] = nbytes;
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (srvarg.retval == -1) {
+            return -1;
+        }
+        return srvarg.retval;
+    }
+    return -1;
+}
+
+int lseek(int fd, off_t offset, int whence)
+{
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    struct _filedes *_fil = __filedes_table + fd;
+    
+    if (_fil->file == NULL)
+        return -1;
+    srvarg_t srvarg;
+    memset(&srvarg, 0, sizeof(srvarg_t));
+    srvarg.data[0] = FILESRV_LSEEK;
+    srvarg.size[0] = 0;
+    srvarg.data[1] = (unsigned long) _fil->file;
+    srvarg.size[1] = 0;
+    srvarg.data[2] = (unsigned long) offset;
+    srvarg.size[2] = 0;
+    srvarg.data[3] = (unsigned long) whence;
+    srvarg.size[3] = 0;
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (srvarg.retval == -1) {
+            return -1;
+        }
+        return srvarg.retval;
+    }
+    return -1;
+}
 
 void *server_test2(void *arg)
 {
@@ -383,13 +460,11 @@ void *server_test2(void *arg)
         printf("%s: buf %s retval %d\n", __func__, buf, srvarg.retval);
 
 	}
-
     return NULL;
 }
 
 void http_lwip_demo(void *pdata)
 {
-
 	//init LwIP
 	lwip_init_task();
 
@@ -417,6 +492,19 @@ void http_lwip_demo(void *pdata)
     if (close(0)) {
         printf("close fd %d failed!\n", 0);
     }
+
+    fd = open("1:/filsrv3", O_CREAT | O_RDWR);
+    if (fd < 0) {
+        printf("open file failed!\n");
+    }
+    int wb = write(fd, "hello, filesrv!\n", 17);
+    printf("write bytes %d\n", wb);
+    
+    int pos = lseek(fd, 0, SEEK_SET);
+    printf("seek %d\n", pos);
+    char buf[32];
+    int rb = read(fd, buf, 32);
+    printf("rb bytes %d buf=%s\n", rb, buf);
     
     while (1)
     {

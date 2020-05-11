@@ -28,8 +28,10 @@ static int copy_srvarg_buffer(srvarg_t *dst, srvarg_t *src, int srvio, int new_b
         if (src->size[i] > 0) { /* 参数是地址 */
             if (srvio == SRVIO_USER) {      /* 有效：SRVIO_USER */
                 if (src->io & (1 << i)) {   /* SRVIO_USER */
-                    /* 需要将数据复制回到用户缓冲区 */
-                    memcpy((void *) dst->data[i], (void *) src->data[i], src->size[i]);
+                    if (dst->data[i] && src->data[i]) {    
+                        /* 需要将数据复制回到用户缓冲区，缓冲区长度由源指定 */
+                        memcpy((void *) dst->data[i], (void *) src->data[i], src->size[i]);
+                    }
                 }
                 if (new_buf) {  /* 需要将内核缓冲区释放 */
 #if DEBUG_LOCAL == 1
@@ -50,8 +52,10 @@ static int copy_srvarg_buffer(srvarg_t *dst, srvarg_t *src, int srvio, int new_b
                     memset((void *) dst->data[i], 0, dst->size[i]);
                 }
                 if (!(src->io & (1 << i))) {   /* SRVIO_SERVICE */
-                    /* 复制完整数据 */
-                    memcpy((void *) dst->data[i], (void *) src->data[i], dst->size[i]);
+                    if (dst->data[i] && src->data[i]) {   
+                        /* 复制完整数据，数据长度由目标指定 */
+                        memcpy((void *) dst->data[i], (void *) src->data[i], dst->size[i]);
+                    }
                 }
             }
         }
