@@ -95,6 +95,7 @@ enum syscall_num {
     SYS_SRVCALL_ACK,
     SYS_SRVCALL_BIND,
     SYS_SRVCALL_UNBIND,
+    SYS_SRVCALL_FETCH,
     SYSCALL_NR,
 };
 

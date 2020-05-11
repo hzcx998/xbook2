@@ -17,13 +17,14 @@ void init_srvcall();
         ((port) < 0 || port >= SRVCALL_NR)
 
 
-#define COPY_SRVMSG(dst, src) \
-        memcpy((dst), (src), sizeof(srvcall_arg_t));
+#define COPY_SRVARG(dst, src) \
+        memcpy((dst), (src), sizeof(srvarg_t));
 
 int sys_srvcall_bind(int port);
 int sys_srvcall_unbind(int port);
-int sys_srvcall_listen(int port, srvcall_arg_t *arg);
-int sys_srvcall_ack(int port, srvcall_arg_t *arg);
-int sys_srvcall(int port, srvcall_arg_t *arg);
+int sys_srvcall_listen(int port, srvarg_t *arg);
+int sys_srvcall_ack(int port, srvarg_t *arg);
+int sys_srvcall(int port, srvarg_t *arg);
+int sys_srvcall_fetch(int port, srvarg_t *arg);
 
 #endif   /* _XBOOK_SRVCALL_H */

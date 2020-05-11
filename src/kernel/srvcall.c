@@ -11,12 +11,66 @@ typedef struct _srvcall {
     task_t *holder;             /* 服务持有者 */
     task_t *caller;             /* 服务调用者 */
     spinlock_t spin;            /* 自选锁 */
-    srvcall_arg_t arg;          /* 参数 */
+    srvarg_t arg;          /* 参数 */
     wait_queue_t wait_queue;    /* 等待队列 */
 } srvcall_t;
 
 /* 服务调用表 */
 srvcall_t srvcall_table[SRVCALL_NR]; 
+
+static int copy_srvarg_buffer(srvarg_t *dst, srvarg_t *src, int srvio, int new_buf)
+{
+    /* 设置返回值 */
+    dst->retval = src->retval;
+
+    int i;
+    for (i = 0; i < SRVARG_NR; i++) {
+        if (src->size[i] > 0) { /* 参数是地址 */
+            if (srvio == SRVIO_USER) {      /* 有效：SRVIO_USER */
+                if (src->io & (1 << i)) {   /* SRVIO_USER */
+                    /* 需要将数据复制回到用户缓冲区 */
+                    memcpy((void *) dst->data[i], (void *) src->data[i], src->size[i]);
+                }
+                if (new_buf) {  /* 需要将内核缓冲区释放 */
+#if DEBUG_LOCAL == 1
+                    printk(KERN_DEBUG "%s: data%d free buffer: %x size %d\n", __func__, i, src->data[i], src->size[i]);   
+#endif
+                    kfree((void *) src->data[i]);
+                }
+            } else if (srvio == SRVIO_SERVICE) {   /* 有效：SRVIO_SERVICE */
+                /* 需要将数据复制回到服务缓冲区 */
+                if (new_buf) {  /* 需要创建一个新的缓冲区来储存数据 */
+                    dst->data[i] = (unsigned long) kmalloc(dst->size[i]);
+                    if (dst->data[i] == 0) {
+                        return -1;
+                    }
+#if DEBUG_LOCAL == 1
+                    printk(KERN_DEBUG "%s: data%d alloc buffer: %x size %d\n", __func__, i, dst->data[i], dst->size[i]);
+#endif
+                    memset((void *) dst->data[i], 0, dst->size[i]);
+                }
+                if (!(src->io & (1 << i))) {   /* SRVIO_SERVICE */
+                    /* 复制完整数据 */
+                    memcpy((void *) dst->data[i], (void *) src->data[i], dst->size[i]);
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+/**
+ * copy_srvarg - 复制参数
+ * @dst: 目标
+ * @src: 源
+ * @srvio: 有效的数据流向方向
+ * @new_buf: 需要新的缓冲区 
+ */
+static int copy_srvarg(srvarg_t *dst, srvarg_t *src, int srvio, int new_buf)
+{
+    memcpy(dst, src, sizeof(srvarg_t));
+    return copy_srvarg_buffer(dst, src, srvio, new_buf);
+}
 
 /**
  * sys_srvcall_bind - 服务调用绑定
@@ -78,8 +132,8 @@ int sys_srvcall_unbind(int port)
 /**
  * sys_srvcall_listen - 服务调用监听
  * 
- */
-int sys_srvcall_listen(int port, srvcall_arg_t *arg)
+ */ 
+int sys_srvcall_listen(int port, srvarg_t *arg)
 {
     if (IS_BAD_SRVCALL(port))
         return -1;
@@ -99,20 +153,50 @@ int sys_srvcall_listen(int port, srvcall_arg_t *arg)
     task_block(TASK_BLOCKED);
     spin_lock(&call->spin);
     /* 把参数写入服务进程 */
-    COPY_SRVMSG(arg, &call->arg);
-    spin_unlock(&call->spin);
+    COPY_SRVARG(arg, &call->arg);
 
+    spin_unlock(&call->spin);
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "%s: task=%d listen port=%d, args: %x %x\n", 
     __func__, current_task->pid, port, arg->data[0], arg->data[1]);
-
+#endif
     return 0;   /* 监听成功 */
 }
+
+/**
+ * sys_srvcall_fetch - 获取参数缓冲区值
+ * @port: 获取的端口
+ * @arg: 参数
+ * 
+ * 成功返回0，失败返回-1
+ */
+int sys_srvcall_fetch(int port, srvarg_t *arg)
+{
+    if (IS_BAD_SRVCALL(port))
+        return -1;
+    srvcall_t *call = srvcall_table + port;
+    /* 必须是持有者监听 */
+    if (call->holder != current_task)
+        return -1;
+    
+    spin_lock(&call->spin);
+
+    if (copy_srvarg_buffer(arg, &call->arg, SRVIO_SERVICE, 0)) {
+        spin_unlock(&call->spin);
+        return -1;
+    }
+    /* 检测参数，并复制数据 */
+    spin_unlock(&call->spin);
+
+    return 0;
+}
+
 
 /**
  * sys_srvcall_ack - 服务调用应答
  * 
  */
-int sys_srvcall_ack(int port, srvcall_arg_t *arg)
+int sys_srvcall_ack(int port, srvarg_t *arg)
 {
     if (IS_BAD_SRVCALL(port))
         return -1;
@@ -127,8 +211,12 @@ int sys_srvcall_ack(int port, srvcall_arg_t *arg)
     /* 处于应答状态 */
     call->state = SRVCALL_ACK;
     /* 把参数写回服务参数 */
-    COPY_SRVMSG(&call->arg, arg);
-
+    if (copy_srvarg_buffer(&call->arg, arg, SRVIO_USER, 0)) {
+        spin_unlock(&call->spin);
+        return -1;
+    }
+    
+    /* 从进程中复制到内核 */
     if (call->caller) {
         if (call->caller->state == TASK_BLOCKED) {  
 #if DEBUG_LOCAL == 1
@@ -160,7 +248,7 @@ int sys_srvcall_ack(int port, srvcall_arg_t *arg)
  * port: 请求的端口
  * 
  */
-int sys_srvcall(int port, srvcall_arg_t *arg)
+int sys_srvcall(int port, srvarg_t *arg)
 {
     if (IS_BAD_SRVCALL(port))
         return -1;
@@ -178,8 +266,12 @@ int sys_srvcall(int port, srvcall_arg_t *arg)
             printk(KERN_DEBUG "%s: task=%d call port=%d. in listen...\n", __func__, 
                 current_task->pid, port);
 #endif
-            /* 把参数写入服务 */
-            COPY_SRVMSG(&call->arg, arg);
+            /* 把参数复制到内核 */
+            if (copy_srvarg(&call->arg, arg, SRVIO_SERVICE, 1)) {
+                spin_unlock(&call->spin);
+                return -1;
+            }
+
             call->state = SRVCALL_PENDING;
             call->caller = current_task;
             /* 唤醒服务 */
@@ -195,7 +287,12 @@ int sys_srvcall(int port, srvcall_arg_t *arg)
                 spin_lock(&call->spin);
             }
             /* 被唤醒后，复制参数到进程空间 */
-            COPY_SRVMSG(arg, &call->arg);
+            if (copy_srvarg_buffer(arg, &call->arg, SRVIO_USER, 1)) {
+                spin_unlock(&call->spin);
+                return -1;
+            }
+
+            /* 复制缓冲区 */
             call->state = SRVCALL_FINISH;    /* 调用完成 */
 #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "%s: task=%d call port=%d. finished.\n", __func__, 

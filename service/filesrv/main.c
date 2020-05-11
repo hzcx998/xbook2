@@ -72,24 +72,57 @@ int main(int argc, char *argv[])
         return -1;
     }
     int seq = 0;
-    srvcall_arg_t srvarg;
+    char buf0[32];
+    char *str = "filesrv->read."; 
+    srvarg_t srvarg;
     while (1)
     {
         /* 接收消息 */
         /* 处理消息 */
         /* 反馈消息 */
-        memset(&srvarg, 0, sizeof(srvcall_arg_t));
+        memset(&srvarg, 0, sizeof(srvarg_t));
         if (srvcall_listen(SRV_FS, &srvarg)) {
             continue;
         }
+
         switch (srvarg.data[0])
         {
         case FILESRV_OPEN:
             printf("%s: srvcall [open]\n", SRV_NAME);
             printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
+            /* 检测参数 */
+            if (!srvcall_check(&srvarg)) {
+                srvarg.data[1] = (unsigned long) &buf0[0];
+                if (srvcall_fetch(SRV_FS, &srvarg)) {
+                    break;
+                }
+            }
+            /* 现在已经获取了完整的数据 */
+            printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
+            printf("path: %s\n", (char *) srvarg.data[1]);
+
             break;
         case FILESRV_CLOSE:
             printf("%s: srvcall [close]\n", SRV_NAME);
+            break;
+        case FILESRV_READ:
+            printf("%s: srvcall [read]\n", SRV_NAME);
+            printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
+            /* 检测参数 */
+            if (!srvcall_check(&srvarg)) {
+                srvarg.data[2] = (unsigned long) &buf0[0];
+                if (srvcall_fetch(SRV_FS, &srvarg)) {
+                    break;
+                }
+            }
+            srvarg.data[1] = (unsigned long) str;
+            srvarg.size[1] = strlen(str);
+            
+            /* 现在已经获取了完整的数据 */
+            printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
+            printf("%s: data2 %x\n", SRV_NAME, srvarg.data[2]);
+            printf("str: %s\n", (char *) srvarg.data[2]);
+
             break;
         default:
             break;

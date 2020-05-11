@@ -11,6 +11,7 @@ vmm, task, ipc , service 来自微内核 Microkernel.
 drivers 来自宏内核 Monolithic kernel.  
 libOS 来自外内核 exokernel.  
 
+# 综述
 因此，这是一个基于传统内核的新混内核。目前只是尝试一些新的内容，因此可能会比较鸡肋。
 
 正在开发中，敬请期待吧！ :)  

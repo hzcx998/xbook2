@@ -269,18 +269,40 @@ static void http_server_init(void)
 
 void *server_test(void *arg)
 {
-    srvcall_arg_t srvarg;
+    srvarg_t srvarg;
     char *path = "0:/abc";
 	while(1)
 	{
         srvarg.data[0] = FILESRV_OPEN;
         srvarg.data[1] = (unsigned long) path;
+        srvarg.size[0] = 0;
+        srvarg.size[1] = strlen(path) + 1;
         srvcall(SRV_FS, &srvarg);
 	}
 
     return NULL;
 }
 
+
+void *server_test2(void *arg)
+{
+    srvarg_t srvarg;
+    char buf[32];
+	while(1)
+	{
+        srvarg.data[0] = FILESRV_READ;
+        srvarg.size[0] = 0;
+        srvarg.data[1] = (unsigned long) buf;
+        srvarg.size[1] = 32;
+        srvarg.data[2] = (unsigned long) "hello read.";
+        srvarg.size[2] = 32;
+        srvarg.io |= 1 << 1;
+        srvcall(SRV_FS, &srvarg);
+        printf("%s: buf %s\n", __func__, buf);
+	}
+
+    return NULL;
+}
 
 void http_lwip_demo(void *pdata)
 {
@@ -295,12 +317,14 @@ void http_lwip_demo(void *pdata)
     
     pthread_t thread1;
     pthread_create(&thread1, NULL, server_test, NULL);
+    pthread_t thread2;
+    pthread_create(&thread2, NULL, server_test2, NULL);
     
-    srvcall_arg_t srvarg;
+    srvarg_t srvarg;
     while (1)
     {
         srvarg.data[0] = FILESRV_CLOSE;
-        
+        srvarg.size[0] = 0;
         srvcall(SRV_FS, &srvarg);
 
     }

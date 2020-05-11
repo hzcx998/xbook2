@@ -149,15 +149,16 @@ static int mem_cache_free_pages(void *address)
 	return 0;
 }
 
-static int mem_group_init(mem_cache_t *cache,
+static int mem_group_init(
+    mem_cache_t *cache,
 	mem_group_t *group,
-	flags_t flags)
-{
+	flags_t flags
+) {
 	// 把group添加到free链表
 	list_add(&group->list, &cache->free_groups);
 
 	// 位图位于group结构后面
-	unsigned char *map = (unsigned char *)(group+1);
+	unsigned char *map = (unsigned char *)(group + 1);
 
 	// 设定位图
 	group->map.byte_length = DIV_ROUND_UP(cache->object_count, 8);
@@ -403,7 +404,7 @@ void *kmalloc(size_t size)
 		return NULL;
 	}
 	
-	cache_size_t *cachesz = cache_size;
+	cache_size_t *cachesz = &cache_size[0];
 
 	while (cachesz->cache_size) {
 		// 如果找到一个大于等于当前大小的cache，就跳出循环
