@@ -48,10 +48,11 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_FATFSLIB)/ \
 			
 			
-
 OBJS =  main.o \
 		interface.o \
 		filetable.o \
+		init.o \
+		fatfs.o \
 
 LIB_FILE = 	$(DIR_FATFSLIB)/fatfs-r0.14.a \
 			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \

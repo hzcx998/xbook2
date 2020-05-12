@@ -15,6 +15,7 @@ DIR_INCLUDE = ./include
 DIR_TFTP = ./tftp
 
 DIR_PING = ./ping
+DIR_HTTP = ./http
 
 # libarys
 DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
@@ -70,8 +71,11 @@ TFTP_OBJS	=	$(DIR_TFTP)/tftpserver.o \
 
 PING_OBJS	=	$(DIR_PING)/ping.o \
 				$(DIR_PING)/loopback.o \
-				
-OBJS =  $(MAIN_OBJS) $(PING_OBJS)
+
+HTTP_OBJS	=	$(DIR_HTTP)/http.o \
+
+
+OBJS =  $(MAIN_OBJS) $(PING_OBJS) $(HTTP_OBJS)
 
 
 LIB_FILE = $(DIR_LWIPLIB)/lwip-1.4.1.a \

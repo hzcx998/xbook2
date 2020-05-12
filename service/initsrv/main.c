@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     res_open(TTY_NAME, RES_DEV, 0);
     res_ioctl(RES_STDINNO, TTYIO_CLEAR, 0);
     printf("%s: started\n", SRV_NAME);
-
+    
     /* 创建一个子进程 */
     int pid = fork();
     if (pid < 0) {
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
             }
         }
     }
-    printf("%s: ready launch %s.\n", SRV_NAME, SUBSRV_NAME);
+    //printf("%s: ready launch %s.\n", SRV_NAME, SUBSRV_NAME);
 
     /* 子进程，需要启动文件服务 */
     char *srv_argv[4] = {SUBSRV_NAME, "abc", "1234", 0};

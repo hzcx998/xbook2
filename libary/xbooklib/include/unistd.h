@@ -31,5 +31,7 @@ int read(int fd, void *buffer, size_t nbytes);
 int write(int fd, void *buffer, size_t nbytes);
 int lseek(int fd, off_t offset, int whence);
 
+int execv(const char *path, const char *argv[]);
+int execl(const char *path, const char *arg, ...);
 
 #endif  /* _LIB_UNISTD_H */

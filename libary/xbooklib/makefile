@@ -66,6 +66,7 @@ PTHREAD_OBJS	=	$(PTHREAD_DIR)/pthread_entry.o \
 					$(PTHREAD_DIR)/pthread_cond.o \
 
 UNISTD_OBJS		= 	$(UNISTD_DIR)/file.o \
+					$(UNISTD_DIR)/exec.o \
 					
 # objects
 OBJS			= 	$(ARCH_OBJS) $(ANSI_OBJS) $(STDIO_OBJS) \

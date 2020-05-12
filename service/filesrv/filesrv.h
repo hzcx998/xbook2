@@ -28,4 +28,8 @@ int filesrv_free_file2(FIL *fil);
 
 int filesrv_init_interface();
 
-#endif
+int filesrv_init();
+int filesrv_create_files();
+int filesrv_execute();
+
+#endif  /* _FILESRV_H */
