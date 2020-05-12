@@ -20,22 +20,22 @@ unsigned char *srvbuf128k;
 static int do_open(srvarg_t *arg)
 {
     /* 需要检测参数 */
-    if (!srvcall_check(arg)) {
-        arg->data[1] = (unsigned long) srvbuf256;
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        
         if (srvcall_fetch(SRV_FS, arg))
             return -1;
     }
     filesrv_file_t *file = filesrv_alloc_file();
-    if (file == NULL)
+    if (file == NULL) {
+        printf("%s: %s: alloc file failed!\n", SRV_NAME, __func__);    
         return -1;
-
+    }
     FRESULT fr;
     /* 现在已经获取了完整的数据 */
-    printf("%s: data1 %x\n", SRV_NAME, arg->data[1]);
-    printf("path: %s\n", (char *) arg->data[1]);
-    printf("%s: data2 %x\n", SRV_NAME, arg->data[2]);
     BYTE mode = 0;  /* 文件打开模式 */
-    int flags = arg->data[2];
+    int flags = GETSRV_DATA(arg, 2, int);
     
     if (flags & O_RDONLY) {
         mode |= FA_READ;
@@ -52,12 +52,14 @@ static int do_open(srvarg_t *arg)
         mode |= FA_OPEN_ALWAYS;
     }
 
-    fr = f_open(&file->fil, (char *) arg->data[1], mode);
+    fr = f_open(&file->fil, GETSRV_DATA(arg, 1, const char *), mode);
     if (fr != FR_OK) {
-        arg->retval = 0;  /* null */
+        // arg->retval = 0;  /* null */
+        SETSRV_RETVAL(arg, 0);
         return -1;
     } else {
-        arg->retval = (unsigned long) &file->fil;
+        SETSRV_RETVAL(arg, &file->fil);
+        //arg->retval = (unsigned long) &file->fil;
     }
     return 0;
 }
@@ -65,15 +67,13 @@ static int do_open(srvarg_t *arg)
 static int do_close(srvarg_t *arg)
 {
     FRESULT fr;
-    printf("%s: srvcall [close]\n", SRV_NAME);
-    printf("%s: data1 %x\n", SRV_NAME, arg->data[1]);
-    fr = f_close((FIL *)arg->data[1]);
+    fr = f_close(GETSRV_DATA(arg, 1, FIL *));
     if (fr != FR_OK) {
         arg->retval = -1;  /* null */
         return -1;
     } 
     arg->retval = 0;
-    return filesrv_free_file2((FIL *)arg->data[1]);
+    return filesrv_free_file2(GETSRV_DATA(arg, 1, FIL *));
 }
 
 
@@ -81,24 +81,16 @@ static int do_read(srvarg_t *arg)
 {
     FRESULT fr;
     UINT br;
-    FIL *fp = (FIL *) arg->data[1];
-    printf("%s: srvcall [read]\n", SRV_NAME);
-    printf("%s: data1 %x data2 %x\n", SRV_NAME, fp, arg->data[2]);
-    int len = MIN(arg->size[2], SRVBUF_128K);
-    printf("%s: len %x\n", SRV_NAME, len);
-    
+    FIL *fp = GETSRV_DATA(arg, 1, FIL *);
+    int len = MIN(GETSRV_SIZE(arg, 2), SRVBUF_128K);
     fr = f_read(fp, srvbuf128k, len, &br);
     if (fr != FR_OK) {
-        printf("%s: f_read failed!\n", SRV_NAME);
-        arg->retval = -1;  /* null */
+        SETSRV_RETVAL(arg, -1);
         return -1;
     }
-    printf("%s: read len %x\n", SRV_NAME, br);
-    
-    arg->data[2] = (unsigned long) srvbuf128k;
-    arg->size[2] = br;
-    
-    arg->retval = br;
+    SETSRV_DATA(arg, 2, srvbuf128k);
+    SETSRV_SIZE(arg, 2, br);
+    SETSRV_RETVAL(arg, br);
     return 0;
 }
 
@@ -106,30 +98,24 @@ static int do_write(srvarg_t *arg)
 {
     FRESULT fr;
     UINT bw;
-    FIL *fp = (FIL *) arg->data[1];
-    void *buffer = (void *) arg->data[2];
-    size_t nbytes = (size_t) arg->size[2];
-
-    printf("%s: srvcall [write]\n", SRV_NAME);
-    printf("%s: fp=%x buf=%x nbytes=%d\n", SRV_NAME, fp, buffer, nbytes);
-
+    FIL *fp = GETSRV_DATA(arg, 1, FIL *);
+    size_t nbytes = GETSRV_SIZE(arg, 2);
     int len = MIN(nbytes, SRVBUF_128K);
     
     /* 需要检测参数 */
-    if (!srvcall_check(arg)) {
-        arg->data[2] = (unsigned long) srvbuf128k;
-        arg->size[2] = len;  /* 获取数据长度 */
-        
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 2, srvbuf128k);
+        SETSRV_SIZE(arg, 2, len);
         if (srvcall_fetch(SRV_FS, arg))
             return -1;
     }
 
     fr = f_write(fp, srvbuf128k, len, &bw);
     if (fr != FR_OK) {
-        arg->retval = -1;  /* null */
+        SETSRV_RETVAL(arg, -1);
         return -1;
     }
-    arg->retval = bw;
+    SETSRV_RETVAL(arg, bw);
     return 0;
 }
 
@@ -137,12 +123,9 @@ static int do_write(srvarg_t *arg)
 static int do_lseek(srvarg_t *arg)
 {
     FRESULT fr;
-    printf("%s: srvcall [write]\n", SRV_NAME);
-    FIL *fp = (FIL *) arg->data[1];
-    off_t offset = arg->data[2];
-    int whence = arg->data[3];
-    printf("%s: fp=%x off=%d whence=%d\n", SRV_NAME, fp, offset, whence);
-    
+    FIL *fp = GETSRV_DATA(arg, 1, FIL *);
+    off_t offset = GETSRV_DATA(arg, 2, off_t);
+    int whence = GETSRV_DATA(arg, 3, int);
     off_t new_off = 0;
     switch (whence)
     {
@@ -160,10 +143,10 @@ static int do_lseek(srvarg_t *arg)
     }
     fr = f_lseek(fp, new_off);
     if (fr != FR_OK) {
-        arg->retval = 0;
+        SETSRV_RETVAL(arg, 0);
         return -1;
     }
-    arg->retval = new_off;
+    SETSRV_RETVAL(arg, new_off);
     return 0;
 }
 

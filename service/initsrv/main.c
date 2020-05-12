@@ -10,7 +10,6 @@
 #include <sys/ioctl.h>
 #include <ff.h>
 
-#include <stdio.h>
 #include <pthread.h>
 
 #define TTY_NAME    "tty0"

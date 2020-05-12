@@ -1,6 +1,10 @@
 #ifndef _LIB_UNISTD_H
 #define _LIB_UNISTD_H
 
+#include "types.h"
+#include "stddef.h"
+
+
 /* file open 文件打开 */
 #define O_RDONLY    0x01
 #define O_WRONLY    0x02
@@ -20,6 +24,12 @@
 
 int brk(void *addr);
 void *sbrk(int increment);
+
+int open(const char *path, int flags);
+int close(int fd);
+int read(int fd, void *buffer, size_t nbytes);
+int write(int fd, void *buffer, size_t nbytes);
+int lseek(int fd, off_t offset, int whence);
 
 
 #endif  /* _LIB_UNISTD_H */

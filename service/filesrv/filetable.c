@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "filesrv.h"
+#include <string.h>
 
 filesrv_file_t *filesrv_file_table;
 
@@ -21,7 +22,7 @@ filesrv_file_t *filesrv_alloc_file()
     for (i = 0; i < FILESRV_FILE_OPEN_NR; i++) {
         if (filesrv_file_table[i].flags == 0) {
             filesrv_file_table[i].flags = 1;
-            memset(filesrv_file_table[i].fil, 0, sizeof(FIL));
+            memset(&filesrv_file_table[i].fil, 0, sizeof(FIL));
             return &filesrv_file_table[i];
         }
     }

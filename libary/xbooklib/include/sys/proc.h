@@ -6,7 +6,7 @@
 
 /* process */
 pid_t fork();
-void exit(int status);
+void _exit(int status);
 int wait(int *status);
 int waitpid(pid_t pid, int *status, int options);
 int execraw(char *name, char *argv[]);

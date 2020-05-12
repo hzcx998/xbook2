@@ -49,8 +49,7 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			
 			
 
-OBJS =  _start.o \
-		main.o \
+OBJS =  main.o \
 		interface.o \
 		filetable.o \
 

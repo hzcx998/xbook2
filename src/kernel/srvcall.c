@@ -29,6 +29,9 @@ static int copy_srvarg_buffer(srvarg_t *dst, srvarg_t *src, int srvio, int new_b
             if (srvio == SRVIO_USER) {      /* 有效：SRVIO_USER */
                 if (src->io & (1 << i)) {   /* SRVIO_USER */
                     if (dst->data[i] && src->data[i]) {    
+#if DEBUG_LOCAL == 1
+                        printk(KERN_DEBUG "%s: data[%d],size=%d dst:%x src:%x\n", __func__, i, src->size[i], dst->data[i], src->data[i]);   
+#endif
                         /* 需要将数据复制回到用户缓冲区，缓冲区长度由源指定 */
                         memcpy((void *) dst->data[i], (void *) src->data[i], src->size[i]);
                     }
@@ -290,6 +293,10 @@ int sys_srvcall(int port, srvarg_t *arg)
                 task_block(TASK_BLOCKED);
                 spin_lock(&call->spin);
             }
+#if DEBUG_LOCAL == 1
+            printk(KERN_DEBUG "%s: task=%d call port=%d. copy to user.\n", __func__, 
+                current_task->pid, port);
+#endif
             /* 被唤醒后，复制参数到进程空间 */
             if (copy_srvarg_buffer(arg, &call->arg, SRVIO_USER, 1)) {
                 spin_unlock(&call->spin);

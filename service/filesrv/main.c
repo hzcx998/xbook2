@@ -10,10 +10,12 @@
 #include <sys/ioctl.h>
 #include <sys/kfile.h>
 #include <sys/ipc.h>
+#include <sys/proc.h>
 #include <ff.h>
 
 #include <stdio.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "filesrv.h"
 
@@ -39,7 +41,6 @@ int filesrv_execute();
 
 int execv(const char *path, const char *argv[]);
 
-
 /**
  * filesrv - 文件服务
  */
@@ -47,6 +48,18 @@ int main(int argc, char *argv[])
 {
     printf("%s: started.\n", SRV_NAME);
 
+    /* 绑定成为服务调用 */
+    if (srvcall_bind(SRV_FS))  {
+        printf("%s: bind srvcall failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
+    
+    /* 启动其它程序 */
+    if (filesrv_execute()) {
+        printf("%s: execute failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
+    
     /* 初始化文件系统 */
     if (filesrv_init()) { /* 创建文件系统 */
         printf("%s: init filesystem failed, service stopped!\n", SRV_NAME);
@@ -68,94 +81,26 @@ int main(int argc, char *argv[])
         printf("%s: create files failed, service stopped!\n", SRV_NAME);
         return -1;
     }
-    
-    /* 启动其它程序 */
-    if (filesrv_execute()) {
-        printf("%s: execute failed, service stopped!\n", SRV_NAME);
-        return -1;
-    }
-    
-    if (srvcall_bind(SRV_FS))  {
-        printf("%s: bind srvcall failed, service stopped!\n", SRV_NAME);
-        return -1;
-    }
-    FIL file0;
-    FRESULT fres;
-    int seq = 0;
-    char buf0[32];
-    char *str = "filesrv->read."; 
+    int seq;
     srvarg_t srvarg;
     int callnum;
     while (1)
     {
-        /* 接收消息 */
-        /* 处理消息 */
-        /* 反馈消息 */
         memset(&srvarg, 0, sizeof(srvarg_t));
-        if (srvcall_listen(SRV_FS, &srvarg)) {
+        /* 1.监听服务 */
+        if (srvcall_listen(SRV_FS, &srvarg)) {  
             continue;
         }
-        callnum = srvarg.data[0];
-        printf("%s: srvcall num %d\n", SRV_NAME, callnum);
-
+        /* 2.处理服务 */
+        callnum = GETSRV_DATA(&srvarg, 0, int);
         if (callnum >= 0 && callnum < FILESRV_CALL_NR) {
             filesrv_call_table[callnum](&srvarg);
         }
-        #if 0
-        switch (srvarg.data[0])
-        {
-        case FILESRV_OPEN:
-            
-            /* 现在已经获取了完整的数据 */
-            printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
-            printf("path: %s\n", (char *) srvarg.data[1]);
-            printf("%s: data2 %x\n", SRV_NAME, srvarg.data[2]);
-            
-            fres = f_open(&file0, (char *) srvarg.data[1], FA_CREATE_ALWAYS | FA_READ | FA_WRITE);
-            if (fres != FR_OK) {
-                srvarg.retval = 0;  /* null */
-            } else {
-                srvarg.retval = (unsigned long) &file0;
-            }
-            break;
-        case FILESRV_CLOSE:
-            printf("%s: srvcall [close]\n", SRV_NAME);
-            printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
-            fres = f_close((FIL *)srvarg.data[1]);
-            if (fres != FR_OK) {
-                srvarg.retval = -1;  /* null */
-            } else {
-                srvarg.retval = 0;
-            }
-            break;
-        case FILESRV_READ:
-            printf("%s: srvcall [read]\n", SRV_NAME);
-            printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
-            /* 检测参数 */
-            if (!srvcall_check(&srvarg)) {
-                srvarg.data[2] = (unsigned long) &buf0[0];
-                if (srvcall_fetch(SRV_FS, &srvarg)) {
-                    break;
-                }
-            }
-            srvarg.data[1] = (unsigned long) str;
-            srvarg.size[1] = strlen(str);
-            
-            /* 现在已经获取了完整的数据 */
-            printf("%s: data1 %x\n", SRV_NAME, srvarg.data[1]);
-            printf("%s: data2 %x\n", SRV_NAME, srvarg.data[2]);
-            printf("str: %s\n", (char *) srvarg.data[2]);
-            srvarg.retval = 123;
-            break;
-        default:
-            break;
-        }
-        #endif
-        printf("%s: srvcall listen ok! %d\n", SRV_NAME, seq);
-        
-        srvcall_ack(SRV_FS, &srvarg);
+        printf("%s: srvcall seq=%d.\n", SRV_NAME, seq);
         seq++;
-            
+        /* 3.应答服务 */
+        srvcall_ack(SRV_FS, &srvarg);   
+
     }
     return 0;
 }
@@ -372,6 +317,7 @@ int filesrv_execute()
         return -1;
     }
     if (!pid) { /* 子进程执行新进程 */
+
         if (execv(PATH_NETSRV, NULL)) {
             printf("%s: %s: execv failed!\n", SRV_NAME, __func__);
             exit(-1);
@@ -380,6 +326,46 @@ int filesrv_execute()
     return 0;
 }
 
+/**
+ * execv - 执行程序，替换当前进程镜像
+ * 
+ */
+int execv(const char *path, const char *argv[])
+{
+    int rdbytes;
+    int fd = open(path, O_RDONLY);
+    
+    if (fd == -1) {
+        return -1;
+    }
+    int filesz = lseek(fd, 0, SEEK_END);
+    unsigned char *buf = malloc(filesz);
+    if (buf == NULL) {
+        close(fd);
+        return -1;
+    }
+    //memset(buf, 0, filesz);
+    lseek(fd, 0, SEEK_SET);
+    rdbytes = read(fd, buf, filesz);    
+    if (rdbytes != filesz) {
+        close(fd);
+        free(buf);
+        return -1;
+    }
+    close(fd);
+    kfile_t file;
+    file.file = buf;
+    file.size = rdbytes;
+    char *name = strrchr(path, '/');
+    name++;
+    if (name[0] == 0) { /* 后面没有名字 */
+        name = (char *) path;
+    }
+    //printf("%s: %s: process name %s\n", SRV_NAME, __func__, name);
+    execfile(name, &file, (char **) argv);
+    return -1;
+}
+#if 0
 /**
  * execv - 执行程序，替换当前进程镜像
  * 
@@ -397,22 +383,22 @@ int execv(const char *path, const char *argv[])
         return -1;
     }
 
-    unsigned char *buff = malloc(f_size(&fil));
-    if (buff == NULL) {
+    unsigned char *buf = malloc(f_size(&fil));
+    if (buf == NULL) {
         f_close(&fil);
         return -1;
     }
 
-    fres = f_read(&fil, buff, (UINT)f_size(&fil), (UINT *)&bw);    
+    fres = f_read(&fil, buf, (UINT)f_size(&fil), (UINT *)&bw);    
     if (fres != FR_OK || bw != f_size(&fil)) {
         f_close(&fil);
-        free(buff);
+        free(buf);
         return -1;
     }
     f_close(&fil);
     
     kfile_t file;
-    file.file = buff;
+    file.file = buf;
     file.size = bw;
 
     char *name = strrchr(path, '/');
@@ -424,7 +410,7 @@ int execv(const char *path, const char *argv[])
     execfile(name, &file, (char **) argv);
     return -1;
 }
-
+#endif
 int execl(const char *path, const char *arg, ...)
 {
 	va_list parg = (va_list)(&arg);

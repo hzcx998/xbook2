@@ -18,6 +18,8 @@ SYSLIB_DIR 		= ./syslib
 STDLIB_DIR 		= ./stdlib
 PTHREAD_DIR 	= ./pthread
 TIME_DIR 		= ./time
+UNISTD_DIR		= ./unistd
+
 # flags
 ARFLAGS 		= -cr
 C_FLAGS			= 	-c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
@@ -28,7 +30,8 @@ NASM_FLAGS		= 	-f elf \
 					-I $(DIR_INCLUDE) \
 
 ARCH_X86_OBJS 	=	$(ARCH_X86_DIR)/xchg.o \
-					$(ARCH_X86_DIR)/atomic.o
+					$(ARCH_X86_DIR)/atomic.o \
+					$(ARCH_X86_DIR)/_start.o
 
 ARCH_OBJS		= 	$(ARCH_X86_OBJS)
 
@@ -46,6 +49,7 @@ SYSLIB_OBJS 	= 	$(SYSLIB_DIR)/proc.o \
 					$(SYSLIB_DIR)/brk.o \
 					$(SYSLIB_DIR)/waitque.o \
 					$(SYSLIB_DIR)/srvcall.o \
+					$(SYSLIB_DIR)/auto.o \
 					
 STDLIB_OBJS		= 	$(STDLIB_DIR)/rand.o \
 					$(STDLIB_DIR)/abort.o \
@@ -60,11 +64,13 @@ PTHREAD_OBJS	=	$(PTHREAD_DIR)/pthread_entry.o \
 					$(PTHREAD_DIR)/pthread_spinlock.o \
 					$(PTHREAD_DIR)/pthread_mutex.o \
 					$(PTHREAD_DIR)/pthread_cond.o \
-				
+
+UNISTD_OBJS		= 	$(UNISTD_DIR)/file.o \
+					
 # objects
 OBJS			= 	$(ARCH_OBJS) $(ANSI_OBJS) $(STDIO_OBJS) \
 					$(SYSLIB_OBJS) $(STDLIB_OBJS) $(PTHREAD_OBJS) \
-					$(TIME_OBJS)
+					$(TIME_OBJS) $(UNISTD_OBJS)
 
 # out file
 LIBNAME = xbooklib-0.0.1.a

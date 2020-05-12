@@ -31,10 +31,10 @@ int srvcall_fetch(int port, srvarg_t *arg)
 }
 
 /**
- * srvcall_check - 检测参数是否有缓冲区
+ * srvcall_inbuffer - 检测参数是否有缓冲区
  * 
  */
-int srvcall_check(srvarg_t *arg)
+int srvcall_inbuffer(srvarg_t *arg)
 {
     int i;
     for (i = 0; i < SRVARG_NR; i++) {

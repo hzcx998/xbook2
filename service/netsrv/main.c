@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <sys/res.h>
 #include <unistd.h>
+#include <math.h>
 
 /**
  * 系统调用是用户态陷入内核，让内核帮忙执行一些内容。
@@ -284,165 +285,6 @@ void *server_test(void *arg)
     return NULL;
 }
 
-/* 任务可以打开的文件数量 */
-#define _MAX_FILEDES_NR     32
-
-struct _filedes {
-    void *file;      /* file ptr */
-};
-
-struct _filedes __filedes_table[_MAX_FILEDES_NR] = {{0}, }; 
-
-static struct _filedes *__alloc_filedes()
-{
-    int i;
-    for (i = 0; i < _MAX_FILEDES_NR; i++) {
-        if (__filedes_table[i].file == NULL) {
-            return &__filedes_table[i];
-        }
-    }
-    return NULL;
-}
-
-static void __free_filedes(struct _filedes *_fil)
-{
-    _fil->file = NULL;
-}
-
-int open(const char *path, int flags);
-int close(int fd);
-int read(int fd, void *buffer, size_t nbytes);
-int write(int fd, void *buffer, size_t nbytes);
-int lseek(int fd, off_t offset, int whence);
-
-int open(const char *path, int flags)
-{
-    srvarg_t srvarg;
-    memset(&srvarg, 0, sizeof(srvarg_t));
-    srvarg.data[0] = FILESRV_OPEN;
-    srvarg.size[0] = 0;
-    srvarg.data[1] = (unsigned long) path;
-    srvarg.size[1] = strlen(path) + 1;
-    srvarg.data[2] = (unsigned long) flags;
-    srvarg.size[2] = 0;
-    /* 文件描述符地址 */
-    struct _filedes *_fil = __alloc_filedes();
-    if (_fil == NULL) {
-        return -1;        
-    }
-    
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (srvarg.retval == 0) {
-            return -1;
-        }
-        _fil->file = (void *) srvarg.retval;
-        return _fil - __filedes_table;
-    }
-    return -1;
-}
-
-int close(int fd)
-{
-    if (fd < 0 || fd >= _MAX_FILEDES_NR)
-        return -1;
-    struct _filedes *_fil = __filedes_table + fd;
-    
-    if (_fil->file == NULL)
-        return -1;
-    srvarg_t srvarg;
-    memset(&srvarg, 0, sizeof(srvarg_t));
-    srvarg.data[0] = FILESRV_CLOSE;
-    srvarg.size[0] = 0;
-    srvarg.data[1] = (unsigned long) _fil->file;
-    srvarg.size[1] = 0;
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (srvarg.retval == -1) {
-            return -1;
-        }
-        __free_filedes(_fil);
-        return 0;
-    }
-    return -1;
-}
-
-int read(int fd, void *buffer, size_t nbytes)
-{
-    if (fd < 0 || fd >= _MAX_FILEDES_NR)
-        return -1;
-    struct _filedes *_fil = __filedes_table + fd;
-    
-    if (_fil->file == NULL)
-        return -1;
-    srvarg_t srvarg;
-    memset(&srvarg, 0, sizeof(srvarg_t));
-    srvarg.data[0] = FILESRV_READ;
-    srvarg.size[0] = 0;
-    srvarg.data[1] = (unsigned long) _fil->file;
-    srvarg.size[1] = 0;
-    srvarg.data[2] = (unsigned long) buffer;
-    srvarg.size[2] = nbytes;
-    srvarg.io = (1 << 2);
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (srvarg.retval == -1) {
-            return -1;
-        }
-        return srvarg.retval;
-    }
-    return -1;
-}
-
-int write(int fd, void *buffer, size_t nbytes)
-{
-    if (fd < 0 || fd >= _MAX_FILEDES_NR)
-        return -1;
-    struct _filedes *_fil = __filedes_table + fd;
-    
-    if (_fil->file == NULL)
-        return -1;
-    srvarg_t srvarg;
-    memset(&srvarg, 0, sizeof(srvarg_t));
-    srvarg.data[0] = FILESRV_WRITE;
-    srvarg.size[0] = 0;
-    srvarg.data[1] = (unsigned long) _fil->file;
-    srvarg.size[1] = 0;
-    srvarg.data[2] = (unsigned long) buffer;
-    srvarg.size[2] = nbytes;
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (srvarg.retval == -1) {
-            return -1;
-        }
-        return srvarg.retval;
-    }
-    return -1;
-}
-
-int lseek(int fd, off_t offset, int whence)
-{
-    if (fd < 0 || fd >= _MAX_FILEDES_NR)
-        return -1;
-    struct _filedes *_fil = __filedes_table + fd;
-    
-    if (_fil->file == NULL)
-        return -1;
-    srvarg_t srvarg;
-    memset(&srvarg, 0, sizeof(srvarg_t));
-    srvarg.data[0] = FILESRV_LSEEK;
-    srvarg.size[0] = 0;
-    srvarg.data[1] = (unsigned long) _fil->file;
-    srvarg.size[1] = 0;
-    srvarg.data[2] = (unsigned long) offset;
-    srvarg.size[2] = 0;
-    srvarg.data[3] = (unsigned long) whence;
-    srvarg.size[3] = 0;
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (srvarg.retval == -1) {
-            return -1;
-        }
-        return srvarg.retval;
-    }
-    return -1;
-}
-
 void *server_test2(void *arg)
 {
     srvarg_t srvarg;
@@ -472,7 +314,8 @@ void http_lwip_demo(void *pdata)
  	echo_client_init();
     http_server_init();
 	//for periodic handle
-    
+    printf("%s: ready file .\n", SRV_NAME);
+
     int fd = open("1:/filsrv", O_CREAT | O_RDWR);
     if (fd < 0) {
         printf("open file failed!\n");
@@ -497,14 +340,20 @@ void http_lwip_demo(void *pdata)
     if (fd < 0) {
         printf("open file failed!\n");
     }
-    int wb = write(fd, "hello, filesrv!\n", 17);
+
+    char *test_buf = malloc(1025);
+    memset(test_buf, 'a', 1025);
+    
+    int wb = write(fd, test_buf, 1025);
     printf("write bytes %d\n", wb);
     
-    int pos = lseek(fd, 0, SEEK_SET);
+    int pos = lseek(fd, -1024, SEEK_END);
     printf("seek %d\n", pos);
-    char buf[32];
-    int rb = read(fd, buf, 32);
-    printf("rb bytes %d buf=%s\n", rb, buf);
+
+    memset(test_buf, 0, 1025);
+    
+    int rb = read(fd, test_buf, 1025);
+    printf("rb bytes %d\n", rb);
     
     while (1)
     {

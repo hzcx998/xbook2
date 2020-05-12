@@ -2,15 +2,18 @@
 #include <sys/proc.h>
 #include <sys/trigger.h>
 
+extern void _exit_cleanup();
+
 /**
- * exit() - exit process
+ * _exit() - exit process
  * 
  * @status: exit status, give to parent.
  * 
  * exit process, after that, the process end of it's life.
  */
-void exit(int status)
+void _exit(int status)
 {
+    _exit_cleanup();
     syscall1(int , SYS_EXIT, status);
 }
 

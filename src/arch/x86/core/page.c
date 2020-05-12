@@ -596,7 +596,7 @@ int do_page_fault(trap_frame_t *frame)
     //printk(KERN_DEBUG "page fault addr:%x\n", addr);
     
     /* in kernel page fault */
-    if (!(frame->error_code & PG_ERR_USER)) {
+    if (!(frame->error_code & PG_ERR_USER) && addr >= PAGE_OFFSET) {
         printk("task name=%s pid=%d\n", cur->name, cur->pid);
         printk(KERN_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
         printk(KERN_EMERG "page fault at %x.\n", addr);

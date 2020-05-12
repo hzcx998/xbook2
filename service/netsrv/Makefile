@@ -61,8 +61,7 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_XBOOKLIB)/include/pthread \
 			-I $(DIR_PING) \
 			
-MAIN_OBJS 	= 	_start.o \
-				main.o \
+MAIN_OBJS 	= 	main.o \
 
 TFTP_OBJS	=	$(DIR_TFTP)/tftpserver.o \
 				$(DIR_TFTP)/tftputils.o \
