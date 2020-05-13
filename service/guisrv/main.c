@@ -5,41 +5,93 @@
 #include <sys/ioctl.h>
 #include <sys/vmm.h>
 
+
+#include  <learninggui.h>
+
+#include  "driver_lcd.h"
+#include  "gui_main.h"
 #include "guisrv.h"
 
 int main(int argc, char *argv[])
 {
     printf("%s: started.\n", SRV_NAME);
-    
-    int resid = res_open("video", RES_DEV, 0);
-    if (resid < 0) {
-        printf("%s: open video res failed! stop srvice.\n", SRV_NAME);    
+
+
+    GUI_MESSAGE  msg = {0};
+    int          ret = 0;
+  
+
+    /*
+     *  Step 1: register driver(s)
+     */
+    /* User screen */
+    #ifdef  _LG_SCREEN_
+    register_screen();
+    #endif
+    printf("register_screen done\n");
+
+    /*
+     *  Step 2: call gui_open
+     */
+    ret = gui_open( );
+    if ( ret < 0 )
+        return  -1;
+
+    printf("gui_open done\n");
+
+    /*
+     *  Step 3: init system
+     */
+
+
+    /*
+     *  Step 4: call message_set_routine
+     */
+    ret = message_set_routine(message_user_main_routine);
+    if ( ret < 0 )
+        return  -1;
+
+    printf("message_set_routine done\n");
+
+
+    /*
+     *  Step 5: create and show user GUI
+     */
+    paint_gui_main( ); 
+
+    printf("paint_gui_main done\n");
+
+    /*
+     *  Step 6: message loop
+     */
+    while( 1 )
+    {
+        /* Loop style 1 */
+        ret = message_get(&msg);
+        if (ret > 0)
+        {
+            if ( MESSAGE_IS_QUIT(&msg) )
+                break;
+
+            message_dispatch(&msg);
+        }
+
+        /* Deal app code */
+        ;
+
     }
-    printf("%s: open video res %d.\n", SRV_NAME, resid);
- 
-    video_info_t video_info;
-    res_ioctl(resid, VIDEOIO_GETINFO, (unsigned long) &video_info);
-    printf("%s: video: bits per pixel: %d\n", SRV_NAME, video_info.bits_per_pixel);
-    printf("%s: video: x resolution: %d\n", SRV_NAME, video_info.x_resolution);
-    printf("%s: video: y resolution: %d\n", SRV_NAME, video_info.y_resolution);
-    printf("%s: video: bytes per scan line: %d\n", SRV_NAME, video_info.bytes_per_scan_line);
-    int memsz = video_info.bytes_per_scan_line * video_info.y_resolution;
-    void *mapaddr = res_mmap(resid, memsz, 0);
-    if (mapaddr == NULL) {
-        printf("%s: video mapped failed!\n", SRV_NAME);
-        return -1;
-    }
+    printf("quit learning GUI.\n");
 
-    printf("%s: mapped addr %x\n", SRV_NAME, mapaddr);
-    memset(mapaddr, 0xff, memsz);
 
-    munmap(mapaddr, memsz);
+    /*
+     *  Step 7: user clean 
+     */
 
-    int i = 0;
-	while(1)
-	{
-        i += 5;
-        memset(mapaddr, i, memsz);
-	}
+
+    /*
+     *  Step 8: call gui_open
+     */
+    gui_close( );
+
     return 0;
 }

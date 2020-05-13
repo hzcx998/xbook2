@@ -239,7 +239,7 @@ static iostatus_t vbe_enter(driver_object_t *driver)
     extension->vir_base_addr = ioremap(extension->mode_info->phyBasePtr, video_ram_size);
     printk(KERN_DEBUG "%s: %s: " "mapped virtual addr in kernel: %x.\n", 
         DRV_NAME, __func__, extension->vir_base_addr);
-    memset(extension->vir_base_addr, 0xfa, video_ram_size);
+    memset(extension->vir_base_addr, 0x00, video_ram_size);
 
     return status;
 }

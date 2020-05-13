@@ -14,11 +14,12 @@ DIR_INCLUDE = ./include
 
 # libarys
 DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
+DIR_LEARNINGGUI 		= $(DIR_LIBARY)/learninggui
 
 BIN = a.out
 BIN_DIS = out.disasm
 BIN_OFF = 800 
-BIN_CNTS = 400
+BIN_CNTS = 600
 
 FLOPPY_OFF = 522
 
@@ -39,19 +40,24 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 ASM_FLAGS	= -f elf \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_XBOOKLIB)/include \
+			-I $(DIR_LEARNINGGUI)/include \
 			
-
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_XBOOKLIB)/include \
-
+			-I $(DIR_LEARNINGGUI)/include \
 			
 MAIN_OBJS 	= 	main.o \
+				gui_main.o \
+				driver_lcd.o \
+				lake_alpha.o \
+				
 
 OBJS =  $(MAIN_OBJS)
 
 
-LIB_FILE = $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
+LIB_FILE 	= $(DIR_LEARNINGGUI)/learninggui-0.5.0.a \
+			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 

@@ -226,7 +226,7 @@ free_buf:
 
 int filesrv_create_files()
 {
-    if (filesrv_create_file(PATH_NETSRV, 200 * 1024, "ide0", 800)) {
+    if (filesrv_create_file(PATH_NETSRV, 300 * 1024, "ide0", 800)) {
         return -1;
     }
     return 0;

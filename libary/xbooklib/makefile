@@ -7,10 +7,10 @@ RM				= rm
 # dir
 DIR_INCLUDE 	= ./include
 
-
 # 
 ARCH_DIR 		= ./arch
 ARCH_X86_DIR 	= $(ARCH_DIR)/x86
+ARCH_WORDSIZE32_DIR 	= $(ARCH_DIR)/wordsize-32
 
 ANSI_DIR 		= ./ansi
 STDIO_DIR 		= ./stdio
@@ -19,21 +19,25 @@ STDLIB_DIR 		= ./stdlib
 PTHREAD_DIR 	= ./pthread
 TIME_DIR 		= ./time
 UNISTD_DIR		= ./unistd
-
+MATH_DIR		= ./math
 # flags
 ARFLAGS 		= -cr
 C_FLAGS			= 	-c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
 					-fno-stack-protector -std=c99 \
-					-I $(DIR_INCLUDE)
+					-I $(DIR_INCLUDE) \
+					
 
 NASM_FLAGS		= 	-f elf \
 					-I $(DIR_INCLUDE) \
+			
 
 ARCH_X86_OBJS 	=	$(ARCH_X86_DIR)/xchg.o \
 					$(ARCH_X86_DIR)/atomic.o \
 					$(ARCH_X86_DIR)/_start.o
 
-ARCH_OBJS		= 	$(ARCH_X86_OBJS)
+ARCH_WORDSIZE32_OBJS 	=	$(ARCH_WORDSIZE32_DIR)/divdi3.o \
+
+ARCH_OBJS		= 	$(ARCH_X86_OBJS) $(ARCH_WORDSIZE32_OBJS)
 
 ANSI_OBJS 		=	$(ANSI_DIR)/string.o
 
@@ -67,7 +71,9 @@ PTHREAD_OBJS	=	$(PTHREAD_DIR)/pthread_entry.o \
 
 UNISTD_OBJS		= 	$(UNISTD_DIR)/file.o \
 					$(UNISTD_DIR)/exec.o \
-					
+
+MATH_OBJS		= 	
+
 # objects
 OBJS			= 	$(ARCH_OBJS) $(ANSI_OBJS) $(STDIO_OBJS) \
 					$(SYSLIB_OBJS) $(STDLIB_OBJS) $(PTHREAD_OBJS) \

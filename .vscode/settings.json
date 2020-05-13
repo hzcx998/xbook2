@@ -72,6 +72,7 @@
         "opt.h": "c",
         "inet.h": "c",
         "tftpserver.h": "c",
-        "errno.h": "c"
+        "errno.h": "c",
+        "learninggui.h": "c"
     }
 }
