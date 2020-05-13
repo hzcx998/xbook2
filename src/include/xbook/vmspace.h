@@ -44,6 +44,8 @@ int vmspace_unmmap(uint32_t addr, uint32_t len);
 unsigned long sys_vmspace_heap(unsigned long heap);
 unsigned long vmspace_get_unmaped(vmm_t *vmm, unsigned len);
 
+#define sys_munmap  vmspace_unmmap
+
 /**
  * vmspace_init - 初始化虚拟空间
  * 

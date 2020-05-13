@@ -46,6 +46,7 @@ enum _io_request_function {
     IOREQ_READ,                     /* 设备读取派遣索引 */
     IOREQ_WRITE,                    /* 设备写入派遣索引 */
     IOREQ_DEVCTL,                   /* 设备控制派遣索引 */
+    IOREQ_MMAP,                     /* 设备内存映射派遣索引 */
     MAX_IOREQ_FUNCTION_NR
 };
 
@@ -69,7 +70,8 @@ enum _io_request_flags {
     IOREQ_READ_OPERATION        = (1 << 2),
     IOREQ_WRITE_OPERATION       = (1 << 3),
     IOREQ_DEVCTL_OPERATION      = (1 << 4),
-    IOREQ_BUFFERED_IO           = (1 << 5),
+    IOREQ_MMAP_OPERATION        = (1 << 5),
+    IOREQ_BUFFERED_IO           = (1 << 6),
     IOREQ_COMPLETION            = (1 << 31),    /* 完成请求 */
 };
 
@@ -103,6 +105,11 @@ typedef struct _io_parame {
             unsigned int code;
             unsigned long arg;
         } devctl;
+        struct {
+            int flags;
+            size_t length;
+        } mmap;
+        
     };
 } io_parame_t;
 
@@ -241,6 +248,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset);
 ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset);
 ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg);
 int device_grow(handle_t handle);
+void *device_mmap(handle_t handle, size_t length, int flags);
 
 void dump_device_object(device_object_t *device);
 

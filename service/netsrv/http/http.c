@@ -158,26 +158,3 @@ static void http_server_init(void)
   tcp_accept(pcb, http_accept);   
 										
 }
-
-extern struct netif rtl8139_netif;
-extern void ethernetif_input(struct netif *netif);
-
-void http_lwip_demo(void *pdata)
-{
-	//init LwIP
-	lwip_init_task();
-
-	//setup echo server
- 	echo_client_init();
-    http_server_init();
-	
-	while(1)
-	{
-        /* 检测输入，并进行超时检测 */
-        ethernetif_input(&rtl8139_netif);
-        sys_check_timeouts();
-		
-		//todo: add your own user code here
-
-	}
-}

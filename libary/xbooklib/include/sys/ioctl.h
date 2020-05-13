@@ -42,4 +42,14 @@
 #define NETIO_GETMAC        DEVCTL_CODE('n', 1)
 #define NETIO_SETMAC        DEVCTL_CODE('n', 2)
 
+
+/* video */
+typedef struct _video_info {
+    char bits_per_pixel;                  /* 每个像素的位数 */
+    short bytes_per_scan_line;          /* 单行的字节数 */
+    short x_resolution, y_resolution;   /* 分辨率x，y */    
+} video_info_t;
+#define VIDEOIO_GETINFO     DEVCTL_CODE('v', 1) /* get video info */
+
+
 #endif   /* _SYS_IOCTL_H */

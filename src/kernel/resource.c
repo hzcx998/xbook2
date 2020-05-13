@@ -446,6 +446,45 @@ int sys_ctlres(int res, unsigned int cmd, unsigned long arg)
 }
 
 /**
+ * sys_mmap - 映射资源
+ * @res: 资源
+ * @length: 长度
+ * @flags: 映射标志
+ * 
+ * @return: 成功返回映射后的地址，失败返回NULL
+ */
+void *sys_mmap(int res, size_t length, int flags)
+{
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "%s: res index %d cmd=%d arg=%x.\n",
+        __func__, res, cmd, arg);
+#endif  
+    res_item_t *item = res_to_item(res);
+    if (item == NULL)
+        return NULL;
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "%s: devno=%x.\n", __func__, item->handle);
+#endif  
+    void *retval = NULL;
+    switch (item->flags & RES_MASTER_MASK)
+    {
+    case RES_DEV:
+        #if DEBUG_LOCAL == 2
+            printk(KERN_DEBUG "%s: devno=%x.\n", __func__, item->handle);
+        #endif   
+        retval = device_mmap(item->handle, length, flags);
+        break;
+    default:
+        retval = NULL;
+        break;
+    }
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "%s: control done!\n", __func__);
+#endif  
+    return retval;
+}
+
+/**
  * resource_copy - 复制资源
  * 
  * @res: 资源

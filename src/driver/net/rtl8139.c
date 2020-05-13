@@ -1481,6 +1481,10 @@ static int rtl8139_init(device_extension_t *ext)
             ext->mac_addr[2], ext->mac_addr[3], 
             ext->mac_addr[4], ext->mac_addr[5]);
 #endif
+    printk(KERN_INFO "netcard rtl8139: mac addr: %x:%x:%x:%x:%x:%x\n", ext->mac_addr[0], ext->mac_addr[1],
+            ext->mac_addr[2], ext->mac_addr[3], 
+            ext->mac_addr[4], ext->mac_addr[5]);
+    
     /* 设置硬件特征为接收所有包，接收包不带CRC */
     ext->dev_features = NET_FEATURE_RXALL;
 

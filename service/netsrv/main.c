@@ -26,8 +26,8 @@
 #include <http.h>
 #include <netsrv.h>
 
-#if 1
 extern err_t ethernetif_init(struct netif *netif);
+extern void ethernetif_input(struct netif *netif);
 
 struct netif rtl8139_netif;
 
@@ -44,11 +44,27 @@ void lwip_init_task(void)
     netif_set_default(&rtl8139_netif);
     netif_set_up(&rtl8139_netif);
 }
-#endif
 
 int main(int argc, char *argv[])
 {
     printf("%s: started.\n", SRV_NAME);
-    http_lwip_demo(NULL);
+    //init LwIP
+	lwip_init_task();
+
+    /*
+    setup echo server
+ 	echo_client_init();
+    http_server_init();*/
+	
+    //ping_init();
+	
+	while(1)
+	{
+        /* 检测输入，并进行超时检测 */
+        ethernetif_input(&rtl8139_netif);
+        sys_check_timeouts();
+		
+		//todo: add your own user code here
+	}
     return 0;
 }

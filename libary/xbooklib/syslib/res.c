@@ -89,3 +89,16 @@ int dev_scan(devent_t *de, device_type_t type, devent_t *out)
 {
     return syscall3(int, SYS_DEVSCAN, de, type, out);
 }
+
+/**
+ * sys_mmap - 映射资源
+ * @res: 资源
+ * @length: 长度
+ * @flags: 映射标志
+ * 
+ * @return: 成功返回映射后的地址，失败返回NULL
+ */
+void *res_mmap(int res, size_t length, int flags)
+{
+    return syscall3(void *, SYS_MMAP, res, length, flags);
+}

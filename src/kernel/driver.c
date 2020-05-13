@@ -6,6 +6,7 @@
 #include <xbook/mdl.h>
 #include <xbook/clock.h>
 #include <xbook/string.h>
+#include <xbook/vmspace.h>
 #include <sys/ioctl.h>
 #include <arch/pci.h>
 
@@ -18,13 +19,14 @@ LIST_HEAD(driver_list_head);
 虚拟设备必须在物理设备初始化完成后
  */
 driver_func_t driver_vine_table[] = {
-    serial_driver_vine,                 /* serial */
-    console_driver_vine,                /* console */
-    ide_driver_vine,                    /* harddisk */
+    serial_driver_vine,                 /* char */
+    console_driver_vine,                /* char */
+    ide_driver_vine,                    /* disk */
     rtl8139_driver_vine,                /* net */
-    keyboard_driver_vine,               /* keyboard */
-    ramdisk_driver_vine,                /* ramdisk */
-    vfloppy_driver_vine,                /* vfloppy */
+    keyboard_driver_vine,               /* input */
+    ramdisk_driver_vine,                /* disk */
+    vfloppy_driver_vine,                /* disk */
+    vbe_driver_vine,                    /* video */
     tty_driver_vine,                    /* filter: tty */
     null_driver_vine,                   /* filter: null */
 };
@@ -529,6 +531,8 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
         func = device->driver->dispatch_function[IOREQ_WRITE];
     } else if (ioreq->flags & IOREQ_DEVCTL_OPERATION) {
         func = device->driver->dispatch_function[IOREQ_DEVCTL];
+    } else if (ioreq->flags & IOREQ_MMAP_OPERATION) {
+        func = device->driver->dispatch_function[IOREQ_MMAP];
     }
     if (func)
         status = func(device, ioreq); /* 执行操作 */
@@ -627,6 +631,11 @@ io_request_t *io_build_sync_request(
         ioreq->flags |= IOREQ_DEVCTL_OPERATION;
         ioreq->parame.devctl.code = 0;
         ioreq->parame.devctl.arg = 0;
+        break;
+    case IOREQ_MMAP:
+        ioreq->flags |= IOREQ_MMAP_OPERATION;
+        ioreq->parame.mmap.flags = offset;
+        ioreq->parame.mmap.length = length;
         break;
     default:
         break;
@@ -893,6 +902,63 @@ rollback_ref:
 #endif
     io_device_increase_reference(devobj);
     return -1;
+}
+
+
+/**
+ * device_mmap - 映射设备操作
+ * @handle: 设备句柄
+ * @length: 设备资源长度
+ * @flags: 标志
+ * 
+ * @return: 成功返回映射后的地址，失败返回NULL
+ */
+void *device_mmap(handle_t handle, size_t length, int flags)
+{
+    if (IS_BAD_DEVICE_HANDLE(handle))
+        return NULL;
+    
+    printk(KERN_DEBUG "%s: start.\n", __func__);
+
+    device_object_t *devobj;
+    
+    devobj = GET_DEVICE_BY_HANDLE(handle);
+
+    /* 获取设备 */
+    if (devobj == NULL) {
+        printk(KERN_ERR "%s: device object error by handle=%d!\n", __func__, handle);
+        /* 应该激活一个触发器，让调用者停止运行 */
+        return NULL;
+    }
+    
+    iostatus_t status = IO_SUCCESS;
+    
+    io_request_t *ioreq = NULL;
+
+    ioreq = io_build_sync_request(IOREQ_MMAP, devobj, NULL, length, flags, NULL);
+    if (ioreq == NULL) {
+        printk(KERN_ERR "%s: alloc io request packet failed!\n", __func__);
+        return NULL;
+    }
+    status = io_call_dirver(devobj, ioreq);
+
+    if (!io_complete_check(ioreq, status)) {
+        void *mapaddr = NULL;
+        /* 对获取的物理地址进行映射 */
+        printk(KERN_DEBUG "%s: get device phy addr:%x\n", __func__, ioreq->io_status.infomation);
+        if (ioreq->io_status.infomation) {  /* 有物理地址，说明获取成功，再做进一步设置 */
+            /* 进行内存映射 */
+            mapaddr = vmspace_mmap(0, ioreq->io_status.infomation, length, 
+                PROT_USER | PROT_WRITE, VMS_MAP_SHARED);
+        }
+        io_request_free((ioreq));
+        return mapaddr;
+    }
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "%s: do dispatch failed!\n", __func__);
+#endif
+    io_request_free((ioreq));
+    return NULL;
 }
 
 /**

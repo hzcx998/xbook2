@@ -1,6 +1,5 @@
 
 %include "const.inc"
-%include "config.inc"
 
 org 0x90000
 [bits 16]
@@ -39,6 +38,10 @@ entry:
     
     ; get memory info
 	call get_memory_info
+
+%if CONFIG_GRAPHIC == 1
+    call get_vbe_info
+%endif  ; CONFIG_GRAPHIC
 
 ;保护模式设置的步骤为
 ;1.关闭中断，防止中间发生中断，因为保护模式中断和实模式中断的方式不一样
@@ -157,6 +160,79 @@ get_memory_info:
 .mem_ok:
 
 	ret 
+
+get_vbe_info:
+    push ds     ; 保存数据段
+    ;获取VBE信息块
+    ; Input: AX=4F00H
+    ;        ES:DI=储存信息块的缓冲区
+    ; Output: AX=VBE return status
+	mov	ax, VBE_INFO_SEG	
+	mov	es, ax
+	mov	di, 0
+	mov	ax, VBE_CMD_VBEINFO	;检查VBE存在功能，指定ax=0x4f00
+	int	0x10
+    
+    ;ax=0x004f 获取成功
+	cmp	ax, 0x004f	
+	jne	.vbe_error
+    
+	;检查VBE版本，必须是VBE 2.0及其以上
+	mov	ax, [es:di + 4]
+	cmp	ax, 0x0200      ; VBE2.0的BCD码是0x200
+	jb	.vbe_error	    ; if (ax < 0x0200) goto screen_default
+
+    ;获取画面信息， 256字节
+	;cx=输入检查的模式
+	
+    ; 获取VBE模式
+    ; Input: AX=4F01H
+    ;        CX=模式号
+    ;        ES:DI=储存模式块的缓冲区
+    ; Output: AX=VBE return status
+	mov ax, VBE_MODE_SEG
+	mov es, ax
+    mov	cx, VBE_MODE	;cx=模式号
+	mov	ax, 0x4f01	;获取画面模式功能，指定ax=0x4f01
+	int	0x10
+
+	cmp	ax, 0x004f	;ax=0x004f 指定的这种模式可以使用
+	jne	.vbe_error
+
+%if CONFIG_GRAPHIC_SWITCH == 1
+    ;切换到指定的模式
+	mov	bx, VBE_MODE + 0x4000	;bx=模式号和属性
+	mov	ax, 0x4f02	;切换模式模式功能，指定ax=0x4f01
+	int	0x10
+%endif
+	;由于初始化图形模式改变了ds的值，这里设置和cs一样
+	mov ax, cs
+	mov ds, ax
+    jmp .finish
+.vbe_error:
+    mov ax, 0xb800
+	mov es, ax
+    
+    ; 第3排显示 error
+    mov byte [es:160*24+0],'N'    
+    mov byte [es:160*24+1],0x04
+    mov byte [es:160*24+2],'O'    
+    mov byte [es:160*24+3],0x04
+    mov byte [es:160*24+4],' '    
+    mov byte [es:160*24+5],0x04
+    mov byte [es:160*24+6],'V'    
+    mov byte [es:160*24+7],0x04
+    mov byte [es:160*24+8],'B'    
+    mov byte [es:160*24+9],0x04
+    mov byte [es:160*24+10],'E'    
+    mov byte [es:160*24+11],0x04
+    
+    hlt
+    jmp $
+.finish:
+    pop ds      ; 恢复数据段
+    ret
+
 
 
 

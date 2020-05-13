@@ -134,9 +134,11 @@ ping_recv(void *arg, struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *addr)
       iecho = (struct icmp_echo_hdr *)((u8_t*)p->payload + PBUF_IP_HLEN);
       if ((iecho->type == ICMP_ER) && (iecho->id == PING_ID) && (iecho->seqno == htons(ping_seq_num))) {
           LWIP_DEBUGF( PING_DEBUG, ("ping: recv "));
+          printf("ping: recv ");
           ip_addr_debug_print(PING_DEBUG, addr);
           LWIP_DEBUGF( PING_DEBUG, (" time=%"U32_F" ms\n", (sys_now()-ping_time)));
-
+            printf(" time=%"U32_F" ms\n", (sys_now()-ping_time));
+          
           /* do some ping result processing */
           PING_RESULT(1);
           pbuf_free(p);
@@ -211,6 +213,8 @@ ping_init(void)
 {
     /* 要ping的目的 */
     IP4_ADDR(&ping_dst, 192, 168, 0, 104);
+    //IP4_ADDR(&ping_dst, 192, 168, 43, 216);
+
   ping_raw_init();
 }
 

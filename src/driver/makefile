@@ -6,3 +6,4 @@ obj-y	+= pci/
 obj-y	+= input/
 obj-y	+= tty/
 obj-y	+= virtual/
+obj-y	+= video/

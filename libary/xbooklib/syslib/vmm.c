@@ -17,3 +17,16 @@ void *heap(void *heap)
 {
     return syscall1(void *, SYS_HEAP, heap);
 }
+
+
+/**
+ * munmap() - ummap memory range
+ * @addr: start addr
+ * @length: memory length
+ * 
+ * @return: success is 0, failed is -1 
+ */
+int munmap(void *addr, size_t length)
+{
+    return syscall2(int , SYS_MUNMAP, addr, length);
+}

@@ -63,11 +63,40 @@ PAGE_US_U  	EQU     4	; 0100 U/S user level, cpl3
 
 KERNEL_PAGE_ATTR    EQU (PAGE_US_S | PAGE_RW_W | PAGE_P_1)
 
-;VESA支持
-VESA_INFO_SEG	EQU		0x110	; 物理地址是0x1100
-VESA_INFO_SIZE	EQU		0x200	; vbe2.0+ 的信息块大小是512 字节
+;VBE支持
+VBE_INFO_SEG	EQU		0x110	; 物理地址是0x1100
+VBE_INFO_SIZE	EQU		0x200	; vbe2.0+ 的信息块大小是512 字节
 
-VESA_MODE_SEG	EQU		0x130	; 物理地址是0x1300
-VESA_MODE_SIZE	EQU		0x100	; 固定大小256字节
+VBE_MODE_SEG	EQU		0x130	; 物理地址是0x1300
+VBE_MODE_SIZE	EQU		0x100	; 固定大小256字节
 
-VESA_CMD_VBEINFO  EQU     0x4f00  ; 返回VBE控制器的信息
+VBE_CMD_VBEINFO  EQU     0x4f00  ; 返回VBE控制器的信息
+
+; 配置vbe驱动，注意也要修改内核中的图形配置
+%define CONFIG_GRAPHIC      1
+
+; 启动图形模式
+%define CONFIG_GRAPHIC_SWITCH   1
+; 注意！！！ 配置图形只检测图形模式，如果要切换到图形模式，则需要打开图形开关
+
+%if CONFIG_GRAPHIC == 1
+;图形模式列表：
+; 16位
+VMODE_640_480_16     EQU 0x111
+VMODE_800_600_16     EQU 0x114
+VMODE_1024_768_16    EQU 0x117
+VMODE_1280_1024_16   EQU 0x11A
+
+; 24位
+; 24bit 不能再vmware中使用，不知道为何，可能是不支持
+VMODE_640_480_24            EQU 0x112
+VMODE_800_600_24            EQU 0x115
+VMODE_1024_768_24           EQU 0x118
+VMODE_1280_1024_24          EQU 0x11B
+VMODE_VMWARE_800_600_24     EQU	0x140
+
+; 使用的模式
+VBE_MODE	EQU	VMODE_800_600_16
+
+%endif  ; CONFIG_GRAPHIC
+

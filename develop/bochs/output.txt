@@ -1,9 +1,47 @@
 info: memory total:1fff0000 byte 511 MB
 info: welcome to xbook kernel.
-info: time:22:56:3 date:2020/5/1
-info: week day:5 Friday year day:123
+info: time:11:2:16 date:2020/5/13
+info: week day:3 Wednesday year day:135
 info: init_pci: pci type device found 5.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
 error: init_driver_arch: create one driver failed!
-info: raw block name:init
+debug: vbe_driver_vine: driver name=vbe-graph
+debug: vbe-graph: vbe_enter: sizeof vbe info block 512 mode block 255
+debug: VBE info block:
+debug: vbe signature:VESA
+debug: vbe version:200
+debug: OEM string ptr:c0009348
+debug: capabilities:1
+debug: video mode ptr:1100022
+debug: total memory:256
+debug: oem software reversion:0
+debug: oem vendor name ptr:0
+debug: oem product name ptr:0
+debug: oem product reversion ptr:0
+debug: oem data:
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+debug: reserved (mode list):
+100 101 102 103 104 105 10d 10e 10f 110 111 112 113 114 115 116 117 118 140 141 142 143 144 146 148 149 14a 14b 14c 175 176 177 178 179 17a 18d 18e 18f ffff 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+debug: VBE mode info block:
+debug: mode attributes:9b
+debug: horizontal resolution in pixels:800
+debug: vertical resolution in pixels:600
+debug: bits per pixel:16
+debug: physical address for flat memory frame buffer:e0000000
+debug: bytesPerScanLine:640
+debug: vbe-graph: vbe_enter: video ram size: ea600 bytes
+debug: vbe-graph: vbe_enter: mapped virtual addr in kernel: f8601000.
+info: raw block name:initsrv
+info: raw block name:filesrv
+initsrv: started
+filesrv: started.
+guisrv: started.
+‘ÇpHhÅguisrv: open video res 3.
+guisrv: video: bits per pixel: 16
+guisrv: video: x resolution: 800
+guisrv: video: y resolution: 600
+guisrv: video: bytes per scan line: 1600
+debug: device_mmap: start.
+debug: device_mmap: get device phy addr:e0000000
+guisrv: mapped addr 20010000

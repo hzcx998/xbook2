@@ -5,5 +5,6 @@
 
 /* vmm */
 void *heap(void *heap);
+int munmap(void *addr, size_t length);
 
 #endif  /* _SYS_VMM_H */
