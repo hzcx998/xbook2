@@ -26,6 +26,7 @@ clean_screen:
 	mov byte [es:6],'T'
 	mov byte [es:7],0x07
 
+
 	;we read load from sector 1(0 is first) width 8 sectors to 0x10000
 	;es:dx=buffer address
 	mov ax, LOADER_SEG

@@ -30,6 +30,9 @@ entry:
 	mov byte [es:160+10],'R'
 	mov byte [es:160+11],0x07
 
+	; load setup file
+	call load_setup_file
+
     ; load kernel file from disk
 	call load_kernel_file
 
@@ -76,7 +79,9 @@ set_protect_mode:
 	;索引为1，也就是第二个描述符，第一个是NULL的，根据GDT可知，他是一个代码段
 	;=============
 	;也就是说，我们使用了代码段
-	jmp	dword 0x08:protect_mode_entry
+	
+	; 跳转到setup里面执行
+	jmp	dword 0x08:flush
 	
 ;si=LBA address, from 0
 ;cx=sectors
@@ -161,6 +166,7 @@ get_memory_info:
 
 	ret 
 
+%if CONFIG_GRAPHIC == 1
 get_vbe_info:
     push ds     ; 保存数据段
     ;获取VBE信息块
@@ -232,8 +238,18 @@ get_vbe_info:
 .finish:
     pop ds      ; 恢复数据段
     ret
+%endif
 
-
+; load setup file
+load_setup_file:
+	mov ax, SETUP_SEG
+	mov si, SETUP_OFF
+	mov cx, LOADER_CNTS
+	;调用读取一整个块的扇区数据函数，其实也就是循环读取128个扇区，只是
+	;把它做成函数，方便调用
+	call load_file_block
+	
+	ret
 
 
 ;在这个地方把elf格式的内核加载到一个内存，elf文件不能从头执行，
@@ -364,22 +380,7 @@ gdt_reg:
 
 [bits 32]
 align 32
-;切换到保护模式后会跳转到这里
-protect_mode_entry:
-	;init all segment registeres
-	;初始化保护模式下的段描述符，此时访问内存方式已经改变
-	
-	;这个地方的0x10是选择子，不是段
-	;选择子的格式是这样的
-	;|3~15      |2 |0~1		|
-	;|描述符索引 |TI|RPL	 |
-	;0x10的解析是
-	;|2         |0b|00b     |
-	;也及时说RPL为0，及要访问的段的特权级为0
-	;TI为0，也就是说在GDT中获取描述符，TI为1时，是在IDT中获取描述符。
-	;索引为2，也就是第三个描述符，根据GDT可知，他是一个数据段
-	;=============
-	;也就是说，我们使用了数据段段
+flush:
 	mov ax, 0x10	;the data 
 	mov ds, ax 
 	mov es, ax 
@@ -388,148 +389,9 @@ protect_mode_entry:
 	mov ss, ax 
 	mov esp, LOADER_STACK_TOP
 	
-	;put 'P'
-	mov byte [0xb8000+160*2+0], 'P'
-	mov byte [0xb8000+160*2+1], 0X07
-	mov byte [0xb8000+160*2+2], 'R'
-	mov byte [0xb8000+160*2+3], 0X07
-	mov byte [0xb8000+160*2+4], 'O'
-	mov byte [0xb8000+160*2+5], 0X07
-	mov byte [0xb8000+160*2+6], 'T'
-	mov byte [0xb8000+160*2+7], 0X07
-	mov byte [0xb8000+160*2+8], 'E'
-	mov byte [0xb8000+160*2+9], 0X07
-	mov byte [0xb8000+160*2+10], 'C'
-	mov byte [0xb8000+160*2+11], 0X07
-	mov byte [0xb8000+160*2+12], 'T'
-	mov byte [0xb8000+160*2+13], 0X07
-	
-	call setup_page
+	jmp 0x08: SETUP_ADDR
 
-	mov byte [0x800b8000+160*3+0], 'P'
-	mov byte [0x800b8000+160*3+1], 0X07
-	mov byte [0x800b8000+160*3+2], 'A'
-	mov byte [0x800b8000+160*3+3], 0X07
-	mov byte [0x800b8000+160*3+4], 'G'
-	mov byte [0x800b8000+160*3+5], 0X07
-	mov byte [0x800b8000+160*3+6], 'E'
-	mov byte [0x800b8000+160*3+7], 0X07
-
-	;从elf内核文件中读取内核的代码段和数据段到1M的位置
-	call load_kernel
-
-	;jmp $
-
-	;这个时候，我们就可以跳转到1M这个地方去执行我们的内核了
-	;由于在makefile中我们制定了-e _start,所以，就会把kernel/_start.asm中的
-	;_start标签最为整个内核程序的入口地址，也就是说_start实在代码的最前面，
-	;这个地方跳转过去，就是相当于跳转到_start执行
-	
-    ; 这个地方最好是自动获取地址
-    jmp 0X08:KERNEL_START_ADDR
-	
-	;push eax
-	;jmp $
-
-; 遍历每一个 Program Header，根据 Program Header 中的信息来确定把什么放进内存，放到什么位置，以及放多少。
-;把内核的代码段和数据段从elf文件中读取到1个对应的内存地址中
-load_kernel:
-	xor	esi, esi
-	mov	cx, word [KERNEL_PHY_ADDR + 2Ch]
-	movzx	ecx, cx					
-	mov	esi, [KERNEL_PHY_ADDR + 1Ch]
-	add	esi, KERNEL_PHY_ADDR
-.begin:
-	mov	eax, [esi + 0]
-	cmp	eax, 0
-	jz	.unaction
-	push	dword [esi + 010h]
-	mov	eax, [esi + 04h]	
-	add	eax, KERNEL_PHY_ADDR
-    push	eax				
-	push	dword [esi + 08h]
-	call	memcpy
-	add	esp, 12	
-.unaction:
-	add	esi, 020h
-	dec	ecx
-	jnz	.begin
-	ret
-	
-memcpy:
-	push	ebp
-	mov	ebp, esp
-
-	push	esi
-	push	edi
-	push	ecx
-
-	mov	edi, [ebp + 8]
-	mov	esi, [ebp + 12]
-	mov	ecx, [ebp + 16]
-.1:
-	cmp	ecx, 0
-	jz	.2
-
-	mov	al, [ds:esi]
-	inc	esi			
-					
-	mov	byte [es:edi], al
-	inc	edi
-
-	dec	ecx
-	jmp	.1
-.2:
-	mov	eax, [ebp + 8]
-
-	pop	ecx
-	pop	edi
-	pop	esi
-	mov	esp, ebp
-	pop	ebp
-
-	ret			; 函数结束，返回	
-
-setup_page:  
-    mov ecx,1024                       ;1024个目录项
-    mov ebx,PAGE_DIR_PHY_ADDR                 ;页目录的物理地址
-    xor esi,esi
-.clean_page_dir_table:
-    mov dword [ebx+esi],0x00000000  ;页目录表项清零 
-    add esi,4
-    loop .clean_page_dir_table
-
-    mov edi, PAGE_TBL_PHY_ADDR
-    mov ebx, PAGE_DIR_PHY_ADDR
-
-	; 第一个页表
-    mov dword [ebx], PAGE_TBL_PHY_ADDR | KERNEL_PAGE_ATTR 
-    mov dword [ebx+512*4], PAGE_TBL_PHY_ADDR | KERNEL_PAGE_ATTR    
-	; 第二个页表
-    mov dword [ebx+4], (PAGE_TBL_PHY_ADDR+0X1000) | KERNEL_PAGE_ATTR
-    mov dword [ebx+513*4], (PAGE_TBL_PHY_ADDR+0X1000) | KERNEL_PAGE_ATTR    
-
-	; 页目录自己
-	mov dword [ebx+1023*4], PAGE_DIR_PHY_ADDR | KERNEL_PAGE_ATTR
-   	
-	;低端8M内存直接对应，可以直接访问到
-   	mov cx, 1024*2
-    mov esi, 0 | KERNEL_PAGE_ATTR
-    
-.map_kernel_page_table:	;kernel page table
-    mov [edi], esi
-    add esi, 0x1000
-    add edi,4
-    loop .map_kernel_page_table
-   	
-.switch_paging_mode:
-   	mov eax , PAGE_DIR_PHY_ADDR
-    mov cr3,eax
-    mov eax, cr0
-    or eax, 0x80000000
-    mov cr0, eax
-
-    ret	
+	jmp $
 
 ;fill it with 4kb
 times (4096-($-$$)) db 0
