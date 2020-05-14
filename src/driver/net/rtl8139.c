@@ -187,6 +187,7 @@ typedef enum {
 	RTL8129,
 } board_t;
 
+#if 0
 /* indexed by board_t, above */
 static const struct {
 	const char *name;
@@ -195,6 +196,7 @@ static const struct {
 	{ "RealTek RTL8139", RTL8139_CAPS },
 	{ "RealTek RTL8129", RTL8129_CAPS },
 };
+#endif
 
 /* Symbolic offsets to registers. */
 enum rtl8139_registers {
@@ -602,11 +604,12 @@ static const unsigned int rtl8139_tx_config =
 static const u16 rtl8139_intr_mask =
 	PCI_ERR | PCS_TIMEOUT | RX_UNDERRUN | RX_OVERFLOW | RX_FIFO_OVER |
 	TX_ERR | TX_OK | RX_ERR | RX_OK;
-
+#if 0
 /* 没有接收的中断屏蔽 */
-static const u16 rtl8139_no_rx_Intr_mask =
+static const u16 rtl8139_no_rx_intr_mask =
 	PCI_ERR | PCS_TIMEOUT | RX_UNDERRUN |
 	TX_ERR | TX_OK | RX_ERR ;
+#endif
 
 static int rtl8139_get_pci_info(device_extension_t *ext)
 {
