@@ -13,6 +13,8 @@ CC			= gcc
 LD 			= ld
 DD 			= dd
 OBJDUMP		= objdump
+OBJCOPY		= objcopy
+
 # virtual machine
 QEMU 		= qemu-system-i386
 BOCHS 		= bochs
@@ -59,8 +61,11 @@ LDFLAGS		= -m elf_i386
 #system disk
 LOADER_OFF = 2		
 LOADER_CNTS = 8
- 
-KERNEL_OFF = 10
+
+SETUP_OFF = 10		
+SETUP_CNTS = 90
+
+KERNEL_OFF = 100
 
 # assume 512 kb, now just 256kb 
 KERNEL_CNTS = 512	
@@ -75,6 +80,7 @@ ARCH_BOOT_DIR = $(ARCH)boot/
 #boot temp file
 BOOT_BIN =  $(ARCH_BOOT_DIR)boot.bin
 LOADER_BIN =  $(ARCH_BOOT_DIR)loader.bin
+SETUP_BIN =  $(ARCH_BOOT_DIR)setup.bin
 
 TOPDIR	:= $(CURDIR)
 
@@ -112,6 +118,9 @@ endif
 CFLAGS	:=  -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 -fno-stack-protector $(OPTFLAGS) $(INCLUDE_PATH) -c
 NASM_FLAGS	:= $(INCLUDE_PATH)
 
+OBJCOPY_FLAGS = -R .note -R .comment -S 
+
+
 #kernel file	
 KERNEL_ELF =  kernel.elf
 KERNEL_ELF_DISASM =  kernel.elf.disasm
@@ -119,7 +128,7 @@ KERNEL_ELF_DISASM =  kernel.elf.disasm
 PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg vbox clean dis
 PHONY	+= $(SRCDIRS)
 
-export NASM NASM_FLAGS CC LD CFLAGS LDFLAGS TOPDIR
+export NASM NASM_FLAGS CC LD CFLAGS LDFLAGS TOPDIR OBJCOPY OBJCOPY_FLAGS
 
 #----cmd----
 all: disk
@@ -135,9 +144,11 @@ else
 	$(MAKE) -C $@ -f $(TOPDIR)/Makefile.build clean
 endif
 
+# -n: close memory aligin.
+# -s: strip-all symbol
 $(KERNEL_ELF): $(OBJS)
-	@echo [LD] with $(TOOLS_DIR)x86-kernel.ld output $@
-	$(LD) -T $(ARCH)x86-kernel.ld -o $(KERNEL_ELF) $(OBJS)
+	@echo [LD] with $(ARCH)x86-kernel.ld output $@
+	$(LD) -n -T $(ARCH)x86-kernel.ld -o $(KERNEL_ELF) $(OBJS)
 	
 
 #$(LD) $(LDFLAGS)  -e _start -Ttext 0x80100000 -o $(KERNEL_ELF) $(OBJS)
@@ -150,6 +161,7 @@ dis: $(KERNEL_ELF)
 disk: $(KERNEL_ELF)
 	$(DD) if=$(BOOT_BIN) of=$(FLAPPY_IMG) bs=512 count=1 conv=notrunc
 	$(DD) if=$(LOADER_BIN) of=$(FLAPPY_IMG) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
+	$(DD) if=$(SETUP_BIN) of=$(FLAPPY_IMG) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
 	$(DD) if=$(KERNEL_ELF) of=$(FLAPPY_IMG) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
 
 #run kernel in vm
@@ -187,7 +199,9 @@ QEMU_ARGUMENT = -m 256M \
 		-name "Xbook Development Platform for x86" \
 		-fda $(FLAPPY_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 		-serial stdio \
-		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
+		
+
+# -net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
 		
 qemu: disk
 	$(QEMU) $(QEMU_ARGUMENT)

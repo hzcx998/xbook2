@@ -12,13 +12,26 @@ LOADER_OFF EQU 2
 ;we assume loader.bin size is 4kb(8 sectors)	
 LOADER_CNTS EQU 8		
 
-;we read loader.bin to memory 0x90000
+;we read loader.bin to memory 0x90000 for 4kb
 ;so the segment is 0x9000, we are in real mode now.
 LOADER_SEG EQU 0x9000	
 
+;we read setup.bin from disk sector 10
+SETUP_OFF EQU 10	
+
+;we assume setup.bin size is 45kb(90 sectors)	
+SETUP_CNTS EQU 90		
+
+;we read setup.bin to memory 0x91000 for 45kb
+;so the segment is 0x9100, we are in real mode now.
+SETUP_SEG EQU 0x9100	
+
+SETUP_ADDR EQU 0x91000	
+
+
 ;---loader const----
-;we read kernel.elf from disk sector 10 
-KERNEL_OFF EQU 10	
+;we read kernel.elf from disk sector 100 
+KERNEL_OFF EQU 100	
 
 ;----we assume that kernel max is 512 kb (0x80000 byte)----
 ; 内核文件的物理内存范围是0x10000~0x90000
