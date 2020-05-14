@@ -137,7 +137,7 @@ endif
 
 $(KERNEL_ELF): $(OBJS)
 	@echo [LD] with $(TOOLS_DIR)x86-kernel.ld output $@
-	$(LD) -T $(ARCH)x86-kernel.ld -o $(KERNEL_ELF) $(OBJS)
+	$(LD) -n -T $(ARCH)x86-kernel.ld -o $(KERNEL_ELF) $(OBJS)
 	
 
 #$(LD) $(LDFLAGS)  -e _start -Ttext 0x80100000 -o $(KERNEL_ELF) $(OBJS)
