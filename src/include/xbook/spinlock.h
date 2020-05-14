@@ -78,7 +78,7 @@ typedef struct spinlock {
  */
 #define spin_lock_irqsave(lock, flags) \
     save_intr(flags); \
-    spin_lock(lock)
+    spin_lock(lock);
 
 /**
  * spin_unlock_irqrestore - 自旋锁解锁并恢复中断状态
