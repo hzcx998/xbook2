@@ -26,6 +26,7 @@
 /* 设备共有的资源 */
 typedef struct _device_public {
     handle_t visitor_id;        /* 可访问者设备id */
+    int detach_kbd;             /* 分离键盘 */
 } device_public_t;
 
 typedef struct _device_extension {
@@ -105,16 +106,20 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
     if (extension->public->visitor_id == extension->device_id) {  /* 可拜访者设备id */
         /* 前台任务 */
         if (extension->hold_pid == current_task->pid) {
-            ioreq->io_status.infomation = device_read(extension->kbd,
-                ioreq->user_buffer, 4, ioreq->parame.read.offset); /* read all */
-            if (ioreq->io_status.infomation == -1) {
+            if (extension->public->detach_kbd) {    /* 键盘分离了就不能读取键盘 */
                 status = IO_FAILED;
             } else {
-                /* 过滤弹起码 */
-                unsigned int key = *(unsigned int *) ioreq->user_buffer;
-                //printk("code:%x\n", key);
-                if (key & 0x40000) {    /* 弹起码标志 */
-                    status = IO_FAILED; /* 不捕捉 */
+                ioreq->io_status.infomation = device_read(extension->kbd,
+                    ioreq->user_buffer, 4, ioreq->parame.read.offset); /* read all */
+                if (ioreq->io_status.infomation == -1) {
+                    status = IO_FAILED;
+                } else {
+                    /* 过滤弹起码 */
+                    unsigned int key = *(unsigned int *) ioreq->user_buffer;
+                    //printk("code:%x\n", key);
+                    if (key & 0x40000) {    /* 弹起码标志 */
+                        status = IO_FAILED; /* 不捕捉 */
+                    }
                 }
             }
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
@@ -158,6 +163,13 @@ iostatus_t tty_devctl(device_object_t *device, io_request_t *ioreq)
     case TTYIO_HOLDER:
         extension->hold_pid = current_task->pid;
         break;
+    case TTYIO_DETACH:
+        extension->public->detach_kbd = 1;
+        break;
+    case TTYIO_COMBINE:
+        extension->public->detach_kbd = 0;
+        break;
+            
     default:
         retval = device_devctl(extension->con, ioreq->parame.devctl.code,
             ioreq->parame.devctl.arg);
@@ -222,6 +234,7 @@ static iostatus_t tty_enter(driver_object_t *driver)
         /* 默认第一个tty */
         if (public->visitor_id == -1)
             public->visitor_id = i;
+        public->detach_kbd = 0; /* 键盘尚未分离 */
     }
     return status;
 }

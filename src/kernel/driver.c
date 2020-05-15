@@ -1187,8 +1187,7 @@ void init_driver_arch()
         if (driver_object_create(vine))
             printk(KERN_ERR "init_driver_arch: create one driver failed!\n");
     }
-    
-    
+ 
     //print_drivers_mini();
     /* 输出所有驱动以及设备 */
     //print_drivers();

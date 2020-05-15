@@ -138,7 +138,6 @@ static  int  video_detect_var(GUI_SCREEN *screen)
     screen_width     = screen->width;
     screen_height    = screen->height;
 
-    
     printf("video info: w:%d h:%d bpp:%d \n", screen->width, screen->height, video_info.bits_per_pixel);
 
     switch (video_info.bits_per_pixel) 

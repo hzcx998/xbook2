@@ -150,7 +150,7 @@
 
 
 /* Keyboard support macro */
-/* #define   _LG_KEYBOARD_ */
+#define   _LG_KEYBOARD_ 
    
 /* MTJT: Mouse-Touchscreen-Joystick-Tablet */
 /* MTJT support macro */

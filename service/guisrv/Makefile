@@ -50,6 +50,7 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 MAIN_OBJS 	= 	main.o \
 				gui_main.o \
 				driver_lcd.o \
+				driver_keyboard.o \
 				lake_alpha.o \
 				
 

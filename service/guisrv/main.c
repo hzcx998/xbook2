@@ -9,6 +9,7 @@
 #include  <learninggui.h>
 
 #include  "driver_lcd.h"
+#include  "driver_keyboard.h"
 #include  "gui_main.h"
 #include "guisrv.h"
 
@@ -28,6 +29,11 @@ int main(int argc, char *argv[])
     #ifdef  _LG_SCREEN_
     register_screen();
     #endif
+    /* User keyboard */
+    #ifdef    _LG_KEYBOARD_
+    register_keyboard();
+    #endif
+
     printf("register_screen done\n");
 
     /*

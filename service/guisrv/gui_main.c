@@ -6,6 +6,7 @@
 
 #include  "lake_alpha.h"
 
+#include  "guisrv.h"
 
 static  GUI_VAR_CONST  TCHAR  ascii_latin_str1[] = "abcdefghijklmnopqrstuvwxyz";
 static  GUI_VAR_CONST  TCHAR  ascii_latin_str2[] = "ABCDEFGHIJKLMNOPQRSTUVQXYZ";
@@ -98,6 +99,23 @@ int  paint_gui_main(void)
  
 int  message_user_main_routine(/* GUI_MESSAGE */ void *msg)
 {
+    int   key       = 0;
+    if ( msg == 0 )
+        return  -1;
+
+    switch ( MESSAGE_GET_ID(msg) )
+    {
+        case  MSG_KEY_DOWN:
+            key = MESSAGE_GET_KEY_VALUE(msg);
+            printf("%s: key down %d %c.\n", SRV_NAME, key, key);
+            break;
+        case  MSG_KEY_UP:
+            key = MESSAGE_GET_KEY_VALUE(msg);
+            printf("%s: key up %d %c.\n", SRV_NAME, key, key);
+            break;
+        default:
+            break;
+    }
 
     return  1;
 }

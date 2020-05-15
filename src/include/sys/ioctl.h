@@ -36,6 +36,11 @@
 #define TTYIO_GETPOS        CONIO_GETPOS
 #define TTYIO_HOLDER        DEVCTL_CODE('t', 1)
 #define TTYIO_VISITOR       DEVCTL_CODE('t', 2)
+#define TTYIO_DETACH        DEVCTL_CODE('t', 3)
+#define TTYIO_COMBINE       DEVCTL_CODE('t', 4)
+
+
+
 
 /* net */
 #define NETIO_GETMAC        DEVCTL_CODE('n', 1)
@@ -48,6 +53,10 @@ typedef struct _video_info {
     short x_resolution, y_resolution;   /* 分辨率x，y */    
 } video_info_t;
 #define VIDEOIO_GETINFO     DEVCTL_CODE('v', 1) /* get video info */
+
+/* even */
+#define EVENIO_GETLED     DEVCTL_CODE('e', 1) /* get led states */
+
 
 
 #endif   /* _SYS_IOCTL_H */

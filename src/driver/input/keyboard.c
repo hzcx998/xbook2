@@ -5,8 +5,12 @@
 #include <xbook/driver.h>
 #include <xbook/fifoio.h>
 #include <xbook/task.h>
+#include <xbook/spinlock.h>
+#include <xbook/math.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
+#include <sys/input.h>
+#include <sys/ioctl.h>
 
 #define DRV_NAME "input-keyboard"
 #define DRV_VERSION "0.1"
@@ -19,7 +23,7 @@
 
 
 /* 把小键盘上的数值修复成主键盘上的值 */
-#define CONFIG_PAD_FIX
+//#define CONFIG_PAD_FIX
 
 /* 键盘控制器端口 */
 enum kbd_controller_port {
@@ -250,7 +254,7 @@ enum InputKeycodeFlags {
 };
 
 /* Keymap for US MF-2 ext-> */
-static unsigned int keymap[MAX_SCAN_CODE_NR * KEYMAP_COLS] = {
+static unsigned int kbd_keymap[MAX_SCAN_CODE_NR * KEYMAP_COLS] = {
 
 /* scan-code			!Shift		Shift		E0 XX	*/
 /* ==================================================================== */
@@ -268,8 +272,8 @@ static unsigned int keymap[MAX_SCAN_CODE_NR * KEYMAP_COLS] = {
 /* 0x0B - '0'		*/	'0',		')',		0,
 /* 0x0C - '-'		*/	'-',		'_',		0,
 /* 0x0D - '='		*/	'=',		'+',		0,
-/* 0x0E - BS		*/	'\b',	    '\b',	    0,
-/* 0x0F - TAB		*/	'\t',		'\t',		0,
+/* 0x0E - BS		*/	KBD_BACKSPACE,	    KBD_BACKSPACE,	    0,
+/* 0x0F - TAB		*/	KBD_TAB,	KBD_TAB,		0,
 /* 0x10 - 'q'		*/	'q',		'Q',		0,
 /* 0x11 - 'w'		*/	'w',		'W',		0,
 /* 0x12 - 'e'		*/	'e',		'E',		0,
@@ -282,7 +286,7 @@ static unsigned int keymap[MAX_SCAN_CODE_NR * KEYMAP_COLS] = {
 /* 0x19 - 'p'		*/	'p',		'P',		0,
 /* 0x1A - '['		*/	'[',		'{',		0,
 /* 0x1B - ']'		*/	']',		'}',		0,
-/* 0x1C - CR/LF		*/	'\n',		'\n',		KBD_PAD_ENTER,
+/* 0x1C - CR/LF		*/	KBD_ENTER,		KBD_ENTER,		KBD_PAD_ENTER,
 /* 0x1D - l. Ctrl	*/	KBD_CTRL_L, KBD_CTRL_L,	KBD_CTRL_R,
 /* 0x1E - 'a'		*/	'a',		'A',		0,
 /* 0x1F - 's'		*/	's',		'S',		0,
@@ -475,6 +479,16 @@ WWW Favorites	E0, 66		E0, E6
 
 *=====================================================================================*/
 
+#define EVBUF_SIZE        8
+
+typedef struct input_even_buf {
+    input_event_t evbuf[EVBUF_SIZE];       /* 事件输入缓冲区 */
+    int head, tail;                        /* 输入输出时的指针 */
+    spinlock_t lock;                    /* 自旋锁来保护写入和读取操作 */
+} input_even_buf_t;
+
+
+
 typedef struct _device_extension {
     device_object_t *device_object; /* 设备对象 */
     char irq;           /* irq号 */
@@ -493,8 +507,206 @@ typedef struct _device_extension {
 
     fifo_io_t fifoio;
     unsigned int keycode;       /* 解析出来的键值 */
+    input_even_buf_t evbuf;     /* 事件缓冲区 */
 } device_extension_t;
 
+int input_even_init(input_even_buf_t *evbuf)
+{
+    spinlock_init(&evbuf->lock);
+    evbuf->head = evbuf->tail = 0;
+    memset(evbuf->evbuf, 0, sizeof(input_event_t) * EVBUF_SIZE);
+    return 0;
+}
+
+
+int input_even_put(input_even_buf_t *evbuf, input_event_t *even)
+{
+    spin_lock(&evbuf->lock);
+    evbuf->evbuf[evbuf->head++] = *even;
+    evbuf->head &= EVBUF_SIZE - 1;
+    spin_unlock(&evbuf->lock);
+    return 0;
+}
+
+int input_even_get(input_even_buf_t *evbuf, input_event_t *even)
+{
+    spin_lock(&evbuf->lock);
+    if (evbuf->head == evbuf->tail) {   /* 没有数据后就返回 */
+        spin_unlock(&evbuf->lock);
+        return -1;    
+    }
+    *even = evbuf->evbuf[evbuf->tail++];
+    evbuf->tail &= EVBUF_SIZE - 1;
+    spin_unlock(&evbuf->lock);
+    return 0;
+}
+
+/* 键值表，和InputKeycode对应 */
+static  const  unsigned short map_table[] = {
+    KBD_PAUSEBREAK,         KEY_PAUSE, 
+    KBD_UP,                 KEY_UP,
+    KBD_DOWN,               KEY_DOWN,
+    KBD_LEFT,               KEY_RIGHT,
+    KBD_RIGHT,              KEY_LEFT,
+    KBD_BACKSPACE,          KEY_BACKSPACE,
+    KBD_TAB,                KEY_TAB,
+    KBD_INSERT,             KEY_INSERT,
+    KBD_HOME,               KEY_HOME,
+    KBD_END,                KEY_END,
+    KBD_ENTER,              KEY_ENTER,
+    KBD_PAGEUP,             KEY_PAGEUP,
+    KBD_PAGEDOWN,           KEY_PAGEDOWN,
+    KBD_F1,                 KEY_F1,
+    KBD_F2,                 KEY_F2,
+    KBD_F3,                 KEY_F3,
+    KBD_F4,                 KEY_F4,
+    KBD_F5,                 KEY_F5,
+    KBD_F6,                 KEY_F6,
+    KBD_F7,                 KEY_F7,
+    KBD_F8,                 KEY_F8,
+    KBD_F9,                 KEY_F9,
+    KBD_F10,                KEY_F10,
+    KBD_F11,                KEY_F11,
+    KBD_ESC,                KEY_ESCAPE,
+    KBD_F12,                KEY_F12,
+    ' ',                    KEY_SPACE,
+    '!',                    KEY_EXCLAIM,
+    '"',                    KEY_QUOTEDBL,
+    '#',                    KEY_HASH,
+    '$',                    KEY_DOLLAR,
+    '%',                    KEY_PERSENT,
+    '&',                    KEY_AMPERSAND,
+    '\'',                   KEY_QUOTE,
+    '(',                    KEY_LEFTPAREN,
+    ')',                    KEY_RIGHTPAREN,
+    '*',                    KEY_ASTERISK,
+    '+',                    KEY_PLUS,
+    ',',                    KEY_COMMA,
+    '-',                    KEY_MINUS,
+    '.',                    KEY_PERIOD,
+    '/',                    KEY_SLASH,
+    '0',                    KEY_0,
+    '1',                    KEY_1,
+    '2',                    KEY_2,
+    '3',                    KEY_3,
+    '4',                    KEY_4,
+    '5',                    KEY_5,
+    '6',                    KEY_6,
+    '7',                    KEY_7,
+    '8',                    KEY_8,
+    '9',                    KEY_9,
+    ':',                    KEY_COLON,
+    ';',                    KEY_SEMICOLON,
+    '<',                    KEY_LESS,
+    '=',                    KEY_EQUALS,
+    '>',                    KEY_GREATER,
+    '?',                    KEY_QUESTION,
+    '@',                    KEY_AT,
+    'A',                    KEY_A,
+    'B',                    KEY_B,
+    'C',                    KEY_C,
+    'D',                    KEY_D,
+    'E',                    KEY_E,
+    'F',                    KEY_F,
+    'G',                    KEY_G,
+    'H',                    KEY_H,
+    'I',                    KEY_I,
+    'J',                    KEY_J,
+    'K',                    KEY_K,
+    'L',                    KEY_L,
+    'M',                    KEY_M,
+    'N',                    KEY_N,
+    'O',                    KEY_O,
+    'P',                    KEY_P,
+    'Q',                    KEY_Q,
+    'R',                    KEY_R,
+    'S',                    KEY_S,
+    'T',                    KEY_T,
+    'U',                    KEY_U,
+    'V',                    KEY_V,
+    'W',                    KEY_W,
+    'X',                    KEY_X,
+    'Y',                    KEY_Y,
+    'Z',                    KEY_Z,
+    '[',                    KEY_LEFTSQUAREBRACKET,
+    '\\',                   KEY_BACKSLASH,
+    ']',                    KEY_RIGHTSQUAREBRACKET,
+    '^',                    KEY_CARET,
+    '_',                    KEY_UNDERSCRE,
+    '`',                    KEY_BACKQUOTE,
+    'a',                    KEY_a,
+    'b',                    KEY_b,
+    'c',                    KEY_c,
+    'd',                    KEY_d,
+    'e',                    KEY_e,
+    'f',                    KEY_f,
+    'g',                    KEY_g,
+    'h',                    KEY_h,
+    'i',                    KEY_i,
+    'j',                    KEY_j,
+    'k',                    KEY_k,
+    'l',                    KEY_l,
+    'm',                    KEY_m,
+    'n',                    KEY_n,
+    'o',                    KEY_o,
+    'p',                    KEY_p,
+    'q',                    KEY_q,
+    'r',                    KEY_r,
+    's',                    KEY_s,
+    't',                    KEY_t,
+    'u',                    KEY_u,
+    'v',                    KEY_v,
+    'w',                    KEY_w,
+    'x',                    KEY_x,
+    'y',                    KEY_y,
+    'z',                    KEY_z,
+    '{',                    KEY_LEFTBRACKET,
+    '|',                    KEY_VERTICAL,
+    '}',                    KEY_RIGHTBRACKET,
+    '~',                    KEY_TILDE,
+    KBD_DELETE,             KEY_DELETE,
+    KBD_PAD_0,              KEY_KP0,
+    KBD_PAD_1,              KEY_KP1,
+    KBD_PAD_2,              KEY_KP2,
+    KBD_PAD_3,              KEY_KP3,
+    KBD_PAD_4,              KEY_KP4,
+    KBD_PAD_5,              KEY_KP5,
+    KBD_PAD_6,              KEY_KP6,
+    KBD_PAD_7,              KEY_KP7,
+    KBD_PAD_8,              KEY_KP8,
+    KBD_PAD_9,              KEY_KP9,
+    KBD_PAD_DOT,            KEY_KP_PERIOD,
+    KBD_PAD_SLASH,          KEY_KP_DIVIDE,
+    KBD_PAD_STAR,           KEY_KP_MULTIPLY,
+    KBD_PAD_MINUS,          KEY_KP_MINUS,
+    KBD_PAD_PLUS,           KEY_KP_PLUS,
+    KBD_PAD_ENTER,          KEY_KP_ENTER,
+    KBD_PAD_ENTER,          KEY_KP_EQUALS,
+    KBD_NUM_LOCK,           KEY_NUMLOCK,
+    KBD_CAPS_LOCK,          KEY_CAPSLOCK,
+    KBD_SCROLL_LOCK,        KEY_SCROLLOCK,
+    KBD_SHIFT_R,            KEY_RSHIFT,
+    KBD_SHIFT_L,            KEY_LSHIFT,
+    KBD_CTRL_R,             KEY_RCTRL,
+    KBD_CTRL_L,             KEY_LCTRL,
+    KBD_ALT_R,              KEY_RALT,
+    KBD_ALT_L,              KEY_LALT,
+    KBD_PRINTSCREEN,        KEY_PRINT,
+    KBD_PAUSEBREAK,         KEY_BREAK
+};
+
+uint16_t scan_code_to_even_code(int key)
+{
+    int i;
+    for (i = 0; i < ARRAY_SIZE(map_table); i++) {
+        if (i % 2 == 0) {   /* 偶数：源键值码 */
+            if (map_table[i] == key) {
+                return map_table[i + 1];
+            }
+        }
+    };
+    return KEY_UNKNOWN; /* 未知编码 */
+}
 
 /* 等待键盘控制器应答，如果不是回复码就一直等待
 这个本应该是宏的，但是在vmware虚拟机中会卡在那儿，所以改成宏类函数
@@ -596,8 +808,8 @@ unsigned int keyboard_do_read(device_extension_t *ext)
 		/* 处理一般字符 */
 		make = (scan_code & KBD_FLAG_BREAK_MASK ? 0 : 1);
 
-		//先定位到 keymap 中的行 
-		keyrow = &keymap[(scan_code & 0x7F) * KEYMAP_COLS];
+		//先定位到 kbd_keymap 中的行 
+		keyrow = &kbd_keymap[(scan_code & 0x7F) * KEYMAP_COLS];
 		
 		ext->column = 0;
 		int caps = ext->shift_left || ext->shift_right;
@@ -781,27 +993,26 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
     
     /* 直接返回读取的数据 */
     ioreq->io_status.infomation = ioreq->parame.read.length;
-    switch (ioreq->parame.read.length)
-    {
-    case 1:
-        *(unsigned char *)ioreq->user_buffer = ext->keycode;
-        break;
-    case 2:
-        *(unsigned short *)ioreq->user_buffer = ext->keycode;
-        break;
-    case 4:
-        *(unsigned int *)ioreq->user_buffer = ext->keycode;
-        break;
-    default:
+    /* 参数正确 */
+    if (ioreq->user_buffer && ioreq->parame.read.length == sizeof(input_event_t)) {
+        input_event_t *even = (input_event_t *) ioreq->user_buffer;
+        if (input_even_get(&ext->evbuf, even)) {
+            status = IO_FAILED;
+        } else {
+#if DEBUG_LOCAL == 1
+            printk(KERN_DEBUG "key even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
+            printk(KERN_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
+#endif        
+        }
+    } else {
         status = IO_FAILED;
-        break;
     }
-    
+#if 0
     if (!ext->keycode)
         status = IO_FAILED;
 
     ext->keycode = 0; /* 读取后置0 */
-
+#endif
     ioreq->io_status.status = status;
     /* 调用完成请求 */
     io_complete_request(ioreq);
@@ -811,17 +1022,20 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
 
 iostatus_t keyboard_devctl(device_object_t *device, io_request_t *ioreq)
 {
-    unsigned int ctlcode = ioreq->parame.devctl.code;
+    device_extension_t *extension = device->device_extension;
 
+    unsigned int ctlcode = ioreq->parame.devctl.code;
+    unsigned int leds;
     iostatus_t status;
 
     switch (ctlcode)
     {
-    case DEVCTL_CODE_TEST:
-#if DEBUG_LOCAL == 1
-        printk(KERN_DEBUG "keyboard_devctl: code=%x arg=%x\n", ctlcode, ioreq->parame.devctl.arg);
-#endif
-        status = IO_SUCCESS;
+    case EVENIO_GETLED:
+        leds =  extension->num_lock | 
+            (extension->caps_lock << 1) |
+            (extension->scroll_lock << 2);
+        *(unsigned int *) ioreq->parame.devctl.arg = leds;
+        
         break;
     default:
         status = IO_FAILED;
@@ -838,8 +1052,25 @@ void kbd_thread(void *arg) {
     device_extension_t *ext = (device_extension_t *) arg;
     unsigned int key;
     while (1) {
+        key = 0;
         key = keyboard_do_read(ext);
         if (key > 0) {
+            input_event_t e;
+            e.type = EV_KEY;
+            if (key & KBD_FLAG_BREAK) {
+                e.value = 0;
+            } else {
+                e.value = 1;
+            }
+            /* 转换成内核识别的键值 */
+            e.code = scan_code_to_even_code(key & KBD_KEY_MASK);
+
+            input_even_put(&ext->evbuf, &e);
+#if DEBUG_LOCAL == 1
+            printk(KERN_DEBUG "key even set: type=%d code=%x value=%d\n", e.type, e.code, e.value);
+            printk(KERN_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
+#endif
+            /* 解析成输入数据并放到缓冲区中 */
             ext->keycode = key;
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "kbd_thread: key:%c\n", key);
@@ -889,6 +1120,8 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
         return status;
     }
     fifo_io_init(&devext->fifoio, buf, DEV_FIFO_BUF_LEN);
+
+    input_even_init(&devext->evbuf);
 
     /* 注册时钟中断并打开中断，因为设定硬件过程中可能产生中断，所以要提前打开 */	
 	register_irq(devext->irq, keyboard_handler, IRQF_DISABLED, "IRQ1", DRV_NAME, (uint32_t)devext);
