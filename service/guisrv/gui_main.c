@@ -100,6 +100,7 @@ int  paint_gui_main(void)
 int  message_user_main_routine(/* GUI_MESSAGE */ void *msg)
 {
     int   key       = 0;
+    int x, y;
     if ( msg == 0 )
         return  -1;
 
@@ -113,6 +114,10 @@ int  message_user_main_routine(/* GUI_MESSAGE */ void *msg)
             key = MESSAGE_GET_KEY_VALUE(msg);
             printf("%s: key up %d %c.\n", SRV_NAME, key, key);
             break;
+        case MSG_MTJT_MOVE:
+            x = MESSAGE_GET_MTJT_X(msg);
+            y = MESSAGE_GET_MTJT_Y(msg);
+            //printf("%s: mouse (%d, %d).\n", SRV_NAME, x, y);
         default:
             break;
     }

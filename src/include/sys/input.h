@@ -7,9 +7,11 @@ typedef struct input_event {
     uint32_t value;
 } input_event_t;
 
-#define EV_UNKNOWN          0      
-#define EV_KEY              1
-#define EV_REL              2
+#define EV_SYN              0x00
+#define EV_KEY              0x01
+#define EV_REL              0x02
+#define EV_ABS              0x03 //绝对坐标
+#define EV_MSC              0x04 //其他
 
 /* 按键 */
 enum input_key_code {
@@ -187,5 +189,15 @@ enum input_key_code {
     BTN_MIDDLE,  /* mouse middle */
     KEY_LAST       /* last one */        
 };
+
+/* 相对坐标 */
+enum input_rel_code {
+    REL_MISC = 0,
+    REL_X,
+    REL_Y,
+    REL_WHEEL
+};
+
+
 
 #endif   /* _SYS_INPUT_H */

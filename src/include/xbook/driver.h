@@ -8,6 +8,7 @@
 #include "waitqueue.h"
 #include <arch/atomic.h>
 #include <sys/res.h>
+#include <sys/input.h>
 
 #define DRIVER_NAME_LEN 32
 
@@ -256,5 +257,19 @@ int io_uninstall_driver(char *drvname);
 
 device_object_t *io_iterative_search_device_by_type(device_object_t *devptr, device_type_t type);
 int sys_devscan(devent_t *de, device_type_t type, devent_t *out);
+
+/* 事件缓冲区大小，事件个数 */
+#define EVBUF_SIZE        64
+
+/* 输入事件缓冲区 */
+typedef struct _input_even_buf {
+    input_event_t evbuf[EVBUF_SIZE];       /* 事件输入缓冲区 */
+    int head, tail;                        /* 输入输出时的指针 */
+    spinlock_t lock;                    /* 自旋锁来保护写入和读取操作 */
+} input_even_buf_t;
+
+int input_even_init(input_even_buf_t *evbuf);
+int input_even_put(input_even_buf_t *evbuf, input_event_t *even);
+int input_even_get(input_even_buf_t *evbuf, input_event_t *even);
 
 #endif   /* _XBOOK_DRIVER_H */

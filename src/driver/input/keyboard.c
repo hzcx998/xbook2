@@ -9,7 +9,6 @@
 #include <xbook/math.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
-#include <sys/input.h>
 #include <sys/ioctl.h>
 
 #define DRV_NAME "input-keyboard"
@@ -479,16 +478,6 @@ WWW Favorites	E0, 66		E0, E6
 
 *=====================================================================================*/
 
-#define EVBUF_SIZE        8
-
-typedef struct input_even_buf {
-    input_event_t evbuf[EVBUF_SIZE];       /* 事件输入缓冲区 */
-    int head, tail;                        /* 输入输出时的指针 */
-    spinlock_t lock;                    /* 自旋锁来保护写入和读取操作 */
-} input_even_buf_t;
-
-
-
 typedef struct _device_extension {
     device_object_t *device_object; /* 设备对象 */
     char irq;           /* irq号 */
@@ -509,37 +498,6 @@ typedef struct _device_extension {
     unsigned int keycode;       /* 解析出来的键值 */
     input_even_buf_t evbuf;     /* 事件缓冲区 */
 } device_extension_t;
-
-int input_even_init(input_even_buf_t *evbuf)
-{
-    spinlock_init(&evbuf->lock);
-    evbuf->head = evbuf->tail = 0;
-    memset(evbuf->evbuf, 0, sizeof(input_event_t) * EVBUF_SIZE);
-    return 0;
-}
-
-
-int input_even_put(input_even_buf_t *evbuf, input_event_t *even)
-{
-    spin_lock(&evbuf->lock);
-    evbuf->evbuf[evbuf->head++] = *even;
-    evbuf->head &= EVBUF_SIZE - 1;
-    spin_unlock(&evbuf->lock);
-    return 0;
-}
-
-int input_even_get(input_even_buf_t *evbuf, input_event_t *even)
-{
-    spin_lock(&evbuf->lock);
-    if (evbuf->head == evbuf->tail) {   /* 没有数据后就返回 */
-        spin_unlock(&evbuf->lock);
-        return -1;    
-    }
-    *even = evbuf->evbuf[evbuf->tail++];
-    evbuf->tail &= EVBUF_SIZE - 1;
-    spin_unlock(&evbuf->lock);
-    return 0;
-}
 
 /* 键值表，和InputKeycode对应 */
 static  const  unsigned short map_table[] = {
@@ -970,7 +928,7 @@ unsigned int keyboard_do_read(device_extension_t *ext)
 }
 
 /**
- * keyboard_handler - 时钟中断处理函数
+ * keyboard_handler - 键盘中断处理函数
  * @irq: 中断号
  * @data: 中断的数据
  */

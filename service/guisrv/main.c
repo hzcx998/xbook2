@@ -10,6 +10,7 @@
 
 #include  "driver_lcd.h"
 #include  "driver_keyboard.h"
+#include  "driver_mtjt.h"
 #include  "gui_main.h"
 #include "guisrv.h"
 
@@ -32,6 +33,10 @@ int main(int argc, char *argv[])
     /* User keyboard */
     #ifdef    _LG_KEYBOARD_
     register_keyboard();
+    #endif
+    /* User mtjt */
+    #ifdef    _LG_MTJT_
+    register_mtjt();
     #endif
 
     printf("register_screen done\n");

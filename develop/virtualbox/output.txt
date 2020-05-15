@@ -1,9 +1,62 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:0:46:36 date:2020/5/1
-info: week day:5 Friday year day:123
+info: time:18:26:21 date:2020/5/15
+info: week day:5 Friday year day:137
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
 error: init_driver_arch: create one driver failed!
-info: raw block name:init
+debug: vbe_driver_vine: driver name=vbe-graph
+debug: vbe-graph: vbe_enter: sizeof vbe info block 512 mode block 255
+debug: VBE info block:
+debug: vbe signature:VESA
+debug: vbe version:200
+debug: OEM string ptr:c0007c66
+debug: capabilities:1
+debug: video mode ptr:1100022
+debug: total memory:144
+debug: oem software reversion:0
+debug: oem vendor name ptr:0
+debug: oem product name ptr:0
+debug: oem product reversion ptr:0
+debug: oem data:
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+debug: reserved (mode list):
+100 101 102 103 104 105 106 107 10d 10e 10f 110 111 112 113 114 115 116 117 118 119 11a 11b 140 141 142 143 144 145 146 147 148 149 14a 14b 14c ffff 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+debug: VBE mode info block:
+debug: mode attributes:9b
+debug: horizontal resolution in pixels:800
+debug: vertical resolution in pixels:600
+debug: bits per pixel:16
+debug: physical address for flat memory frame buffer:e0000000
+debug: bytesPerScanLine:640
+debug: vbe-graph: vbe_enter: video ram size: ea600 bytes
+debug: vbe-graph: vbe_enter: mapped virtual addr in kernel: f8601000.
+info: raw block name:initsrv
+info: raw block name:filesrv
+initsrv: started
+filesrv: started.
+guisrv: started.
+’Ç–HTÅvideo info: w:800 h:600 bpp:16 
+register_screen done
+debug: device_mmap: start.
+debug: vbe_mmap: start
+debug: vbe_mmap: length=ea600 mode len=ea600
+debug: vbe_mmap: get phy addr:e0000000
+debug: device_mmap: get device phy addr:e0000000
+guisrv: mapped addr 20058000
+gui_open done
+message_set_routine done
+paint_gui_main done
+guisrv: key down 162 ¢.
+guisrv: key down 163 £.
+guisrv: key down 163 £.
+guisrv: key down 163 £.
+guisrv: key down 163 £.
+guisrv: key down 163 £.
+guisrv: key down 163 £.
+guisrv: key down 163 £.
+guisrv: key down 163 £.
+guisrv: key down 163 £.
+guisrv: key up 163 £.
+guisrv: key up 162 ¢.

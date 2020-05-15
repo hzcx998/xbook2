@@ -10,12 +10,6 @@
 #include  <keyboard.h>
 #include  <driver.h>
 
-
-
-#define _LG_KEYBOARD_
-
-
-
 #ifdef    _LG_KEYBOARD_
 
 

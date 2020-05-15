@@ -154,14 +154,13 @@
    
 /* MTJT: Mouse-Touchscreen-Joystick-Tablet */
 /* MTJT support macro */
-/* #define   _LG_MTJT_ */
+#define   _LG_MTJT_ 
 
 /* Cursor support macro */    
-/*
+
 #define  _LG_CURSOR_
     #define  MAX_CURSOR_WIDTH                              16
     #define  MAX_CURSOR_HEIGHT                             16
-*/
 
 /* Message support macro */
 #define  _LG_MESSAGE_

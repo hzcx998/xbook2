@@ -27,6 +27,7 @@ driver_func_t driver_vine_table[] = {
     ramdisk_driver_vine,                /* disk */
     vfloppy_driver_vine,                /* disk */
     vbe_driver_vine,                    /* video */
+    mouse_driver_vine,                  /* input */
     tty_driver_vine,                    /* filter: tty */
     null_driver_vine,                   /* filter: null */
 };
@@ -1166,6 +1167,39 @@ void dump_device_object(device_object_t *device)
     printk(KERN_DEBUG "dump_device_object: type=%d driver=%x extension=%x flags=%x reference=%x name=%s\n",
         device->type, device->driver, device->device_extension, device->flags,
         atomic_get(&device->reference), device->name.text);
+}
+
+int input_even_init(input_even_buf_t *evbuf)
+{
+    spinlock_init(&evbuf->lock);
+    evbuf->head = evbuf->tail = 0;
+    memset(evbuf->evbuf, 0, sizeof(input_event_t) * EVBUF_SIZE);
+    return 0;
+}
+
+
+int input_even_put(input_even_buf_t *evbuf, input_event_t *even)
+{
+    unsigned long flags;
+    spin_lock_irqsave(&evbuf->lock, flags);
+    evbuf->evbuf[evbuf->head++] = *even;
+    evbuf->head &= EVBUF_SIZE - 1;
+    spin_unlock_irqrestore(&evbuf->lock, flags);
+    return 0;
+}
+
+int input_even_get(input_even_buf_t *evbuf, input_event_t *even)
+{
+    unsigned long flags;
+    spin_lock_irqsave(&evbuf->lock, flags);
+    if (evbuf->head == evbuf->tail) {   /* 没有数据后就返回 */
+        spin_unlock_irqrestore(&evbuf->lock, flags);
+        return -1;    
+    }
+    *even = evbuf->evbuf[evbuf->tail++];
+    evbuf->tail &= EVBUF_SIZE - 1;
+    spin_unlock_irqrestore(&evbuf->lock, flags);
+    return 0;
 }
 
 /* 初始化驱动架构 */

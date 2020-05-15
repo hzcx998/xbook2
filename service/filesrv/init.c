@@ -27,7 +27,7 @@
 #define SECTORS_PER_BLOCK   256
 
 /* 创建文件系统状态：0，不创建文件系统，1创建文件系统 */
-#define MKFS_STATE  0
+#define MKFS_STATE  1
 
 FATFS fatfs_info_table[FILESRV_DRV_NR];           /* Filesystem object */
 
@@ -226,7 +226,7 @@ free_buf:
 
 int filesrv_create_files()
 {
-    if (filesrv_create_file(PATH_NETSRV, 300 * 1024, "ide0", 800)) {
+    if (filesrv_create_file(PATH_NETSRV, 350 * 1024, "ide0", 800)) {
         return -1;
     }
     return 0;

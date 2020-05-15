@@ -190,12 +190,20 @@ iostatus_t vbe_mmap(device_object_t *device, io_request_t *ioreq)
     iostatus_t status = IO_FAILED;;
     
     extension = device->device_extension;
+    printk(KERN_DEBUG "%s: start\n", __func__);
 
     ioreq->io_status.infomation = 0;
+    printk(KERN_DEBUG "%s: length=%x mode len=%x\n", __func__, 
+        ioreq->parame.mmap.length, extension->mode_info->bytesPerScanLine *
+        extension->mode_info->yResolution);
+
     /* 检测参数大小 */
-    if (ioreq->parame.mmap.length <= extension->mode_info->linebytesPerScanLine *
+    if (ioreq->parame.mmap.length <= extension->mode_info->bytesPerScanLine *
             extension->mode_info->yResolution) {
+        
         ioreq->io_status.infomation = (unsigned long) extension->mode_info->phyBasePtr;    /* 返回物理地址 */
+        printk(KERN_DEBUG "%s: get phy addr:%x\n", __func__, ioreq->io_status.infomation);
+    
         status = IO_SUCCESS;
     }
 

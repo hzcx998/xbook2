@@ -19,7 +19,7 @@ DIR_LEARNINGGUI 		= $(DIR_LIBARY)/learninggui
 BIN = a.out
 BIN_DIS = out.disasm
 BIN_OFF = 800 
-BIN_CNTS = 600
+BIN_CNTS = 700
 
 FLOPPY_OFF = 522
 
@@ -51,6 +51,7 @@ MAIN_OBJS 	= 	main.o \
 				gui_main.o \
 				driver_lcd.o \
 				driver_keyboard.o \
+				driver_mtjt.o \
 				lake_alpha.o \
 				
 

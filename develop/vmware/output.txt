@@ -1,45 +1,54 @@
-hello, xbook!
-
-info: memory total:10000000 byte 256 MB
+info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:0:38:10 date:2020/4/27
-info: week day:1 Monday year day:119
+info: time:18:24:59 date:2020/5/15
+info: week day:5 Friday year day:137
 info: init_pci: pci type device found 6.
-info: ide_enter: found 1 hard disks.
+info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
 error: init_driver_arch: create one driver failed!
-info: raw block name:init
-info: raw block name:bin
-debug: sys_wait: pid=1 no child exit, waiting...
-debug: uthread_start: pid=4 routine=12cc arg=4726 stackaddr=6000 stacksize=1000 detach=0
-debug: uthread_start: new thread pid=5 tgid=4 parent pid=4
-notice: uthread_start: thread count 2
-debug: uthread_join: pid=4 join thread 5
-debug: uthread_join: pid=4 wait pid=-1 status=0
-debug: uthread_join: pid=4 waiting...
-debug: uthread_start: pid=5 routine=126b arg=12345678 stackaddr=7000 stacksize=4000 detach=0
-debug: uthread_start: new thread pid=6 tgid=4 parent pid=5
-notice: uthread_start: thread count 3
-debug: uthread_join: pid=5 join thread 6
-debug: uthread_join: pid=5 wait pid=-1 status=0
-debug: uthread_join: pid=5 waiting...
-debug: uthread_exit: pid=6 joinable.
-debug: uthread_exit: pid=6 tgid=4 ppid=5.
-debug: uthread_exit: pid=6 parent 5 waiting...
-notice: wait_one_hangging_thread: pid=5 find a hanging thread 6 
-debug: uthread_join: pid=5 wait pid=6 status=7b
-debug: uthread_exit: pid=5 joinable.
-debug: uthread_exit: pid=5 tgid=4 ppid=4.
-debug: uthread_exit: pid=5 parent 4 waiting...
-notice: wait_one_hangging_thread: pid=4 find a hanging thread 5 
-debug: uthread_join: pid=4 wait pid=5 status=5
-debug: uthread_join: pid=4 thread 5 exit, will return status=5
-debug: sys_exec_file: thread count 1
-debug: sys_exec_file: thread count 1
-debug: sys_exit: name=bosh pid=4 ppid=1 prio=2 status=0
-debug: sys_exit: thread count 0
-debug: sys_exit: pid=4 release all resources done.
-debug: sys_exit: pid=4 parent 1 waiting...
-notice: wait_any_hangging_child: pid=1 find a hanging proc 4 
-notice: wait_any_hangging_child: process.
-debug: sys_wait: pid=1 handle a hangging child 4.
+debug: vbe_driver_vine: driver name=vbe-graph
+debug: vbe-graph: vbe_enter: sizeof vbe info block 512 mode block 255
+debug: VBE info block:
+debug: vbe signature:VESA
+debug: vbe version:200
+debug: OEM string ptr:c0005a9b
+debug: capabilities:3
+debug: video mode ptr:c00063be
+debug: total memory:2048
+debug: oem software reversion:200
+debug: oem vendor name ptr:c0005a8f
+debug: oem product name ptr:c0005a78
+debug: oem product reversion ptr:c0005a74
+debug: oem data:
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+debug: reserved (mode list):
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+debug: VBE mode info block:
+debug: mode attributes:bb
+debug: horizontal resolution in pixels:800
+debug: vertical resolution in pixels:600
+debug: bits per pixel:16
+debug: physical address for flat memory frame buffer:e8000000
+debug: bytesPerScanLine:640
+debug: vbe-graph: vbe_enter: video ram size: ea600 bytes
+debug: vbe-graph: vbe_enter: mapped virtual addr in kernel: f8601000.
+info: raw block name:initsrv
+info: raw block name:filesrv
+initsrv: started
+filesrv: started.
+guisrv: started.
+’Ç–HhÅvideo info: w:800 h:600 bpp:16 
+register_screen done
+debug: device_mmap: start.
+debug: vbe_mmap: start
+debug: vbe_mmap: length=ea600 mode len=ea600
+debug: vbe_mmap: get phy addr:e8000000
+debug: device_mmap: get device phy addr:e8000000
+guisrv: mapped addr 20058000
+gui_open done
+message_set_routine done
+paint_gui_main done
+guisrv: key down 162 ¢.
+guisrv: key down 163 £.
+guisrv: key up 162 ¢.
+guisrv: key up 163 £.

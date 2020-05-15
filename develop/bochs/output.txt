@@ -1,7 +1,7 @@
 info: memory total:1fff0000 byte 511 MB
 info: welcome to xbook kernel.
-info: time:11:2:16 date:2020/5/13
-info: week day:3 Wednesday year day:135
+info: time:18:32:49 date:2020/5/15
+info: week day:5 Friday year day:137
 info: init_pci: pci type device found 5.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -37,11 +37,17 @@ info: raw block name:filesrv
 initsrv: started
 filesrv: started.
 guisrv: started.
-‘ÇpHhÅguisrv: open video res 3.
-guisrv: video: bits per pixel: 16
-guisrv: video: x resolution: 800
-guisrv: video: y resolution: 600
-guisrv: video: bytes per scan line: 1600
+’Ç–HhÅvideo info: w:800 h:600 bpp:16 
+register_screen done
 debug: device_mmap: start.
+debug: vbe_mmap: start
+debug: vbe_mmap: length=ea600 mode len=ea600
+debug: vbe_mmap: get phy addr:e0000000
 debug: device_mmap: get device phy addr:e0000000
-guisrv: mapped addr 20010000
+guisrv: mapped addr 20058000
+gui_open done
+message_set_routine done
+paint_gui_main done
+guisrv: key down 162 ¢.
+guisrv: key up 138 ä.
+guisrv: key up 162 ¢.
