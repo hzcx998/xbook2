@@ -51,6 +51,15 @@ typedef  unsigned int          UINT;
 typedef  unsigned char         UCHAR;
 #endif
 
+#ifndef  DOBULE
+typedef  double                DOUBLE;
+#endif
+
+#ifndef  FLOAT
+typedef  float                 FLOAT;
+#endif
+
+
 
 /* Sram or ram access bus width. It can be more than real bus width, but can not be less than real bus width. */
 #ifndef  BINT

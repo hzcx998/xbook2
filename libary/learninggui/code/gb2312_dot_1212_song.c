@@ -18101,6 +18101,8 @@ static  GUI_VAR_CONST  MONO_CHARSET_FONT  gb2312_d1212s_class_2_font =
     /* .font_id                  = */ 27,
     #endif  /* _LG_FONT_ID_ */
     /* .is_in_this_charset_block = */ is_in_gb2312_d1212s_class_2_block,
+    /* .is_get_serial_data       = */ 0,
+    /* .get_serial_data          = */ NULL,
     /* .get_data_start_index     = */ get_gb2312_d1212s_class_2_index,
     /* .width                    = */ 12,
     /* .height                   = */ 12,
@@ -23223,6 +23225,8 @@ static  GUI_VAR_CONST  MONO_CHARSET_FONT  gb2312_d1212s_symbol_font =
     /* .font_id                  = */ 26,
     #endif  /* _LG_FONT_ID_ */
     /* .is_in_this_charset_block = */ is_in_gb2312_d1212s_symbol_block,
+    /* .is_get_serial_data       = */ 0,
+    /* .get_serial_data          = */ NULL,
     /* .get_data_start_index     = */ get_gb2312_d1212s_symbol_index,
     /* .width                    = */ 12,
     /* .height                   = */ 12,
@@ -45830,6 +45834,8 @@ GUI_VAR_CONST  MONO_CHARSET_FONT  lb8012 =
     /* .font_id                  = */ 25,
     #endif  /* _LG_FONT_ID_ */
     /* .is_in_this_charset_block = */ is_in_gb2312_d1212s_class_1_block,
+    /* .is_get_serial_data       = */ 0,
+    /* .get_serial_data          = */ NULL,
     /* .get_data_start_index     = */ get_gb2312_d1212s_class_1_index,
     /* .width                    = */ 12,
     /* .height                   = */ 12,

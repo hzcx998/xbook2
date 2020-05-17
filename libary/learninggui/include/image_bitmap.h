@@ -91,6 +91,9 @@ struct  _GUI_BITMAP
 typedef  struct  _GUI_BITMAP   GUI_BITMAP;
 
 
+
+
+
 #ifdef  _LG_BITMAP_
 
 #ifdef  __cplusplus
@@ -99,12 +102,17 @@ extern  "C"
 #endif
 
     int  in_bitmap_fill(HDC hdc, int x, int y, const void *bitmap);
+    int  in_bitmap_rotate(HDC hdc, int x, int y, const void *bitmap, void *rotate);
+    int  in_bitmap_rotate_special(HDC hdc, int x, int y, const void *bitmap, void *rotate);
+
+    int  in_bitmap_symmetry_special(HDC hdc, int x, int y, const void *bitmap, void *symmetry);
+
     #ifdef   _LG_BITMAP_FILE_
     int  in_bitmap_file_fill(HDC hdc, int x, int y, const char *file);
     #endif
 
     #ifdef   _LG_FILL_BITMAP_EXTENSION_
-    int  in_bitmap_fill_rect(HDC hdc, const void *rect,  const void *bitmap); 
+    int  in_bitmap_scale(HDC hdc, const void *rect,  const void *bitmap); 
     #ifdef   _LG_BITMAP_FILE_
     int  in_bitmap_file_fill_rect(HDC hdc, const void *rect,  const char *file); 
     #endif
@@ -113,24 +121,35 @@ extern  "C"
 
     #ifndef  _LG_ALONE_VERSION_
     int  bitmap_fill(HDC hdc, int x, int y, const void *bitmap);
+    int  bitmap_rotate(HDC hdc, int x, int y, const void *bitmap, void *rotate);
+    int  bitmap_rotate_special(HDC hdc, int x, int y, const void *bitmap, void *rotate);
+
+    int  bitmap_symmetry_special(HDC hdc, int x, int y, const void *bitmap, void *symmetry);
+
     #ifdef   _LG_BITMAP_FILE_
     int  bitmap_file_fill(HDC hdc, int x, int y, const char *file);
     #endif
     #else
     #define  bitmap_fill(hdc, x, y, bitmap)    in_bitmap_fill(hdc, x, y, bitmap)
+    #define  bitmap_rotate(hdc,x,y,bitmap,rotate)  in_bitmap_rotate(hdc,x,y,bitmap,rotate)
+    #define  bitmap_rotate_special(hdc,x,y,bitmap,rotate)  in_bitmap_rotate_simple(hdc,x,y,bitmap,rotate)
+
+    #define  bitmap_symmetry_special(hdc,x,y,bitmap,symmetry)   in_bitmap_symmetry_special(hdc,x,y,bitmap,symmetry) 
+
     #ifdef   _LG_BITMAP_FILE_
     #define  bitmap_file_fill(hdc, x, y, file) in_bitmap_file_fill(hdc, x, y, file)
     #endif
+
     #endif
 
     #ifdef   _LG_FILL_BITMAP_EXTENSION_
     #ifndef  _LG_ALONE_VERSION_
-    int  bitmpa_fill_rect(HDC hdc, const void *rect, const void *bitmap);
+    int  bitmap_scale(HDC hdc, const void *rect, const void *bitmap);
     #ifdef   _LG_BITMAP_FILE_
     int  bitmap_file_fill_rect(HDC hdc, const void *rect,  const char *file); 
     #endif
     #else
-    #define  bitmap_fill_rect(hdc, rect, bitmap)    in_bitmap_fill_rect(hdc, rect, bitmap)
+    #define  bitmap_scale(hdc, rect, bitmap)    in_bitmap_scale(hdc, rect, bitmap)
     #ifdef   _LG_BITMAP_FILE_
     #define  bitmap_file_fill_rect(hdc, rect, file) in_bitmap_file_fill_rect(hdc, rect, file)
     #endif

@@ -8,11 +8,25 @@
 
 #include  <learninggui.h>
 
+#include  "guisrv.h"
+
 #include  "driver_lcd.h"
 #include  "driver_keyboard.h"
 #include  "driver_mtjt.h"
+
+#define DEBUG_WINDOW 1
+
+#include  "message_routine.h"
+#include  "counter.h"
 #include  "gui_main.h"
-#include "guisrv.h"
+
+#if DEBUG_WINDOW == 1
+#include  "app_font.h"
+
+#include  "win_comm.h"
+#endif
+
+
 
 int main(int argc, char *argv[])
 {
@@ -21,7 +35,10 @@ int main(int argc, char *argv[])
 
     GUI_MESSAGE  msg = {0};
     int          ret = 0;
-  
+
+#if DEBUG_WINDOW == 1
+    HWND         p    = NULL; 
+#endif
 
     /*
      *  Step 1: register driver(s)
@@ -50,15 +67,34 @@ int main(int argc, char *argv[])
 
     printf("gui_open done\n");
 
+
     /*
      *  Step 3: init system
      */
+    
+
+    /*
+     *  Step 3: init system
+     */
+    /* Set window default font */
+
+#if DEBUG_WINDOW == 1
+    win_set_window_default_font((GUI_FONT *)(&app_font));
+    /* Set client default_font */
+    win_set_client_default_font((GUI_FONT *)(&app_font));
+#endif
+
 
 
     /*
      *  Step 4: call message_set_routine
      */
+
+#if DEBUG_WINDOW == 1    
+    ret = message_set_routine(message_main_routine);
+#else
     ret = message_set_routine(message_user_main_routine);
+#endif
     if ( ret < 0 )
         return  -1;
 
@@ -68,9 +104,14 @@ int main(int argc, char *argv[])
     /*
      *  Step 5: create and show user GUI
      */
-    paint_gui_main( ); 
-
-    printf("paint_gui_main done\n");
+#if DEBUG_WINDOW == 1    
+     /* Create frame1 */
+    p = create_frame1();
+    if ( p == NULL )
+        return  -1;
+#else
+    paint_gui_main();
+#endif
 
     /*
      *  Step 6: message loop

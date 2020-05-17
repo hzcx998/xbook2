@@ -19,10 +19,11 @@
 #define  __LGUI_CONFIG_BASIC_HEADER__
 
 /* Window support macro */
-//#define  _LG_WINDOW_
+ #define  _LG_WINDOW_ 
+
 
 /* Multi-thread support macro */
-/* #define  _LG_MULTI_THREAD_ */
+/*#define  _LG_MULTI_THREAD_*/
 
 /* Color support macro */
 #define  _LG_COLOR_
@@ -52,7 +53,7 @@
 
 /* DC support macro */
 #define  _LG_DC_
-    #define  MAX_DC_NUM                                    32
+    #define  MAX_DC_NUM                                    4
 
     #define   _LG_PEN_
     #define   _LG_BRUSH_
@@ -81,17 +82,13 @@
         #define  _LG_MULTI_BYTE_CODE_VERSION_
             #define MULTI_BYTE_START_CODE                  0xA1
 
-            /* #define  _LG_GB2312_D1616CS_C1_FONT_ */
-                /*
+            #define  _LG_GB2312_D1616CS_C1_FONT_
                 #define  INCLUDE_GB2312_D1616CS_SYSBOL
-                #define  INCLUDE_GB2312_D1616CS_C2
-                */
+                #define  INCLUDE_GB2312_D1616CS_C2 
 
-            /*
             #define  _LG_GB2312_D1212CS_C1_FONT_
                 #define  INCLUDE_GB2312_D1212CS_SYSBOL
                 #define  INCLUDE_GB2312_D1212CS_C2
-            */
 
         /*
         #define  _LG_UNICODE_VERSION_
@@ -146,15 +143,15 @@
 /* Screen support macro */
 #define  _LG_SCREEN_
     /* #define  _LG_SNAPSHOT_ */
-     #define  _LG_NEED_REFRESH_SCREEN_
+    #define  _LG_NEED_REFRESH_SCREEN_
 
 
 /* Keyboard support macro */
-#define   _LG_KEYBOARD_ 
+#define   _LG_KEYBOARD_
    
 /* MTJT: Mouse-Touchscreen-Joystick-Tablet */
 /* MTJT support macro */
-#define   _LG_MTJT_ 
+#define   _LG_MTJT_
 
 /* Cursor support macro */    
 
@@ -162,9 +159,15 @@
     #define  MAX_CURSOR_WIDTH                              16
     #define  MAX_CURSOR_HEIGHT                             16
 
+
 /* Message support macro */
 #define  _LG_MESSAGE_
+    #ifdef  _LG_WINDOW_
     #define  MESSAGE_QUEUE_LEN                             128
+    #else
+    #define  MESSAGE_QUEUE_LEN                             32
+    #endif  /* _LG_WINDOW_ */
+
     #define  _LG_LONG_MESSAGE_
 
     #define   _LG_COUNTER_

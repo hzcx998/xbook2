@@ -1,7 +1,7 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:18:26:21 date:2020/5/15
-info: week day:5 Friday year day:137
+info: time:22:21:54 date:2020/5/16
+info: week day:6 Saturday year day:138
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -32,6 +32,7 @@ debug: physical address for flat memory frame buffer:e0000000
 debug: bytesPerScanLine:640
 debug: vbe-graph: vbe_enter: video ram size: ea600 bytes
 debug: vbe-graph: vbe_enter: mapped virtual addr in kernel: f8601000.
+debug: mouse_driver_vine: driver name=input-mouse
 info: raw block name:initsrv
 info: raw block name:filesrv
 initsrv: started
@@ -44,19 +45,823 @@ debug: vbe_mmap: start
 debug: vbe_mmap: length=ea600 mode len=ea600
 debug: vbe_mmap: get phy addr:e0000000
 debug: device_mmap: get device phy addr:e0000000
-guisrv: mapped addr 20058000
+guisrv: mapped addr 2003e000
 gui_open done
 message_set_routine done
 paint_gui_main done
-guisrv: key down 162 ¢.
-guisrv: key down 163 £.
-guisrv: key down 163 £.
-guisrv: key down 163 £.
-guisrv: key down 163 £.
-guisrv: key down 163 £.
-guisrv: key down 163 £.
-guisrv: key down 163 £.
-guisrv: key down 163 £.
-guisrv: key down 163 £.
-guisrv: key up 163 £.
-guisrv: key up 162 ¢.
+debug: mouse even get: type=2 code=1 value=-1
+debug: mouse even buf: head=2 tail=1
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=2 tail=2
+debug: mouse even get: type=2 code=1 value=-1
+debug: mouse even buf: head=4 tail=3
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=4 tail=4
+debug: mouse even get: type=2 code=2 value=-1
+debug: mouse even buf: head=6 tail=5
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=6 tail=6
+debug: mouse even get: type=2 code=1 value=-1
+debug: mouse even buf: head=9 tail=7
+debug: mouse even get: type=2 code=2 value=-1
+debug: mouse even buf: head=9 tail=8
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=9 tail=9
+debug: mouse even get: type=2 code=2 value=-1
+debug: mouse even buf: head=11 tail=10
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=11 tail=11
+debug: mouse even get: type=2 code=1 value=-1
+debug: mouse even buf: head=13 tail=12
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=13 tail=13
+debug: mouse even get: type=2 code=2 value=-1
+debug: mouse even buf: head=15 tail=14
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=15 tail=15
+debug: mouse even get: type=2 code=2 value=-1
+debug: mouse even buf: head=17 tail=16
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=17 tail=17
+debug: mouse even get: type=2 code=1 value=-1
+debug: mouse even buf: head=19 tail=18
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=19 tail=19
+debug: mouse even get: type=2 code=2 value=-1
+debug: mouse even buf: head=21 tail=20
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=21 tail=21
+debug: mouse even get: type=2 code=2 value=-1
+debug: mouse even buf: head=23 tail=22
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=23 tail=23
+debug: mouse even get: type=2 code=2 value=-1
+debug: mouse even buf: head=25 tail=24
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=25 tail=25
+debug: mouse even get: type=2 code=1 value=1
+debug: mouse even buf: head=28 tail=26
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=28 tail=27
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=28 tail=28
+debug: mouse even get: type=2 code=1 value=1
+debug: mouse even buf: head=31 tail=29
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=31 tail=30
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=31 tail=31
+debug: mouse even get: type=2 code=1 value=1
+debug: mouse even buf: head=34 tail=32
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=34 tail=33
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=34 tail=34
+debug: mouse even get: type=2 code=1 value=2
+debug: mouse even buf: head=37 tail=35
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=37 tail=36
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=37 tail=37
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=40 tail=38
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=40 tail=39
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=40 tail=40
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=43 tail=41
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=43 tail=42
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=43 tail=43
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=46 tail=44
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=46 tail=45
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=46 tail=46
+debug: mouse even get: type=2 code=1 value=5
+debug: mouse even buf: head=49 tail=47
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=49 tail=48
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=49 tail=49
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=52 tail=50
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=52 tail=51
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=52 tail=52
+debug: mouse even get: type=2 code=1 value=7
+debug: mouse even buf: head=55 tail=53
+debug: mouse even get: type=2 code=2 value=4
+debug: mouse even buf: head=55 tail=54
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=55 tail=55
+debug: mouse even get: type=2 code=1 value=2
+debug: mouse even buf: head=58 tail=56
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=58 tail=57
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=58 tail=58
+debug: mouse even get: type=2 code=1 value=5
+debug: mouse even buf: head=61 tail=59
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=61 tail=60
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=61 tail=61
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=0 tail=62
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=0 tail=63
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=0 tail=0
+debug: mouse even get: type=2 code=1 value=5
+debug: mouse even buf: head=3 tail=1
+debug: mouse even get: type=2 code=2 value=4
+debug: mouse even buf: head=3 tail=2
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=3 tail=3
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=6 tail=4
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=6 tail=5
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=6 tail=6
+debug: mouse even get: type=2 code=1 value=4
+debug: mouse even buf: head=9 tail=7
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=9 tail=8
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=9 tail=9
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=12 tail=10
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=12 tail=11
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=12 tail=12
+debug: mouse even get: type=2 code=1 value=5
+debug: mouse even buf: head=15 tail=13
+debug: mouse even get: type=2 code=2 value=5
+debug: mouse even buf: head=15 tail=14
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=15 tail=15
+debug: mouse even get: type=2 code=1 value=2
+debug: mouse even buf: head=18 tail=16
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=18 tail=17
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=18 tail=18
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=21 tail=19
+debug: mouse even get: type=2 code=2 value=5
+debug: mouse even buf: head=21 tail=20
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=21 tail=21
+debug: mouse even get: type=2 code=1 value=1
+debug: mouse even buf: head=24 tail=22
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=24 tail=23
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=24 tail=24
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=27 tail=25
+debug: mouse even get: type=2 code=2 value=7
+debug: mouse even buf: head=27 tail=26
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=27 tail=27
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=29 tail=28
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=29 tail=29
+debug: mouse even get: type=2 code=1 value=1
+debug: mouse even buf: head=32 tail=30
+debug: mouse even get: type=2 code=2 value=6
+debug: mouse even buf: head=32 tail=31
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=32 tail=32
+debug: mouse even get: type=2 code=2 value=4
+debug: mouse even buf: head=34 tail=33
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=34 tail=34
+debug: mouse even get: type=2 code=2 value=7
+debug: mouse even buf: head=36 tail=35
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=36 tail=36
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=38 tail=37
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=38 tail=38
+debug: mouse even get: type=2 code=2 value=5
+debug: mouse even buf: head=40 tail=39
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=40 tail=40
+debug: mouse even get: type=2 code=1 value=-7
+debug: mouse even buf: head=43 tail=41
+debug: mouse even get: type=2 code=2 value=12
+debug: mouse even buf: head=43 tail=42
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=43 tail=43
+debug: mouse even get: type=2 code=1 value=-3
+debug: mouse even buf: head=46 tail=44
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=46 tail=45
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=46 tail=46
+debug: mouse even get: type=2 code=1 value=-8
+debug: mouse even buf: head=49 tail=47
+debug: mouse even get: type=2 code=2 value=9
+debug: mouse even buf: head=49 tail=48
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=49 tail=49
+debug: mouse even get: type=2 code=1 value=-4
+debug: mouse even buf: head=52 tail=50
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=52 tail=51
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=52 tail=52
+debug: mouse even get: type=2 code=1 value=-8
+debug: mouse even buf: head=55 tail=53
+debug: mouse even get: type=2 code=2 value=6
+debug: mouse even buf: head=55 tail=54
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=55 tail=55
+debug: mouse even get: type=2 code=1 value=-6
+debug: mouse even buf: head=58 tail=56
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=58 tail=57
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=58 tail=58
+debug: mouse even get: type=2 code=1 value=-9
+debug: mouse even buf: head=61 tail=59
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=61 tail=60
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=61 tail=61
+debug: mouse even get: type=2 code=1 value=-5
+debug: mouse even buf: head=0 tail=62
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=0 tail=63
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=0 tail=0
+debug: mouse even get: type=2 code=1 value=-12
+debug: mouse even buf: head=2 tail=1
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=2 tail=2
+debug: mouse even get: type=2 code=1 value=-7
+debug: mouse even buf: head=4 tail=3
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=4 tail=4
+debug: mouse even get: type=2 code=1 value=-12
+debug: mouse even buf: head=7 tail=5
+debug: mouse even get: type=2 code=2 value=-2
+debug: mouse even buf: head=7 tail=6
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=7 tail=7
+debug: mouse even get: type=2 code=1 value=-8
+debug: mouse even buf: head=10 tail=8
+debug: mouse even get: type=2 code=2 value=-3
+debug: mouse even buf: head=10 tail=9
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=10 tail=10
+debug: mouse even get: type=2 code=1 value=-10
+debug: mouse even buf: head=13 tail=11
+debug: mouse even get: type=2 code=2 value=-5
+debug: mouse even buf: head=13 tail=12
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=13 tail=13
+debug: mouse even get: type=2 code=1 value=-7
+debug: mouse even buf: head=16 tail=14
+debug: mouse even get: type=2 code=2 value=-4
+debug: mouse even buf: head=16 tail=15
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=16 tail=16
+debug: mouse even get: type=2 code=1 value=-14
+debug: mouse even buf: head=19 tail=17
+debug: mouse even get: type=2 code=2 value=-14
+debug: mouse even buf: head=19 tail=18
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=19 tail=19
+debug: mouse even get: type=2 code=1 value=-5
+debug: mouse even buf: head=22 tail=20
+debug: mouse even get: type=2 code=2 value=-6
+debug: mouse even buf: head=22 tail=21
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=22 tail=22
+debug: mouse even get: type=2 code=1 value=-14
+debug: mouse even buf: head=25 tail=23
+debug: mouse even get: type=2 code=2 value=-18
+debug: mouse even buf: head=25 tail=24
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=25 tail=25
+debug: mouse even get: type=2 code=1 value=-6
+debug: mouse even buf: head=28 tail=26
+debug: mouse even get: type=2 code=2 value=-11
+debug: mouse even buf: head=28 tail=27
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=28 tail=28
+debug: mouse even get: type=2 code=1 value=-9
+debug: mouse even buf: head=31 tail=29
+debug: mouse even get: type=2 code=2 value=-24
+debug: mouse even buf: head=31 tail=30
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=31 tail=31
+debug: mouse even get: type=2 code=1 value=-1
+debug: mouse even buf: head=34 tail=32
+debug: mouse even get: type=2 code=2 value=-12
+debug: mouse even buf: head=34 tail=33
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=34 tail=34
+debug: mouse even get: type=2 code=1 value=-2
+debug: mouse even buf: head=37 tail=35
+debug: mouse even get: type=2 code=2 value=-13
+debug: mouse even buf: head=37 tail=36
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=37 tail=37
+debug: mouse even get: type=2 code=2 value=-25
+debug: mouse even buf: head=39 tail=38
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=39 tail=39
+debug: mouse even get: type=2 code=2 value=-12
+debug: mouse even buf: head=41 tail=40
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=41 tail=41
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=44 tail=42
+debug: mouse even get: type=2 code=2 value=-19
+debug: mouse even buf: head=44 tail=43
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=44 tail=44
+debug: mouse even get: type=2 code=1 value=5
+debug: mouse even buf: head=47 tail=45
+debug: mouse even get: type=2 code=2 value=-13
+debug: mouse even buf: head=47 tail=46
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=47 tail=47
+debug: mouse even get: type=2 code=1 value=4
+debug: mouse even buf: head=50 tail=48
+debug: mouse even get: type=2 code=2 value=-4
+debug: mouse even buf: head=50 tail=49
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=50 tail=50
+debug: mouse even get: type=2 code=1 value=12
+debug: mouse even buf: head=53 tail=51
+debug: mouse even get: type=2 code=2 value=-10
+debug: mouse even buf: head=53 tail=52
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=53 tail=53
+debug: mouse even get: type=2 code=1 value=6
+debug: mouse even buf: head=56 tail=54
+debug: mouse even get: type=2 code=2 value=-5
+debug: mouse even buf: head=56 tail=55
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=56 tail=56
+debug: mouse even get: type=2 code=1 value=20
+debug: mouse even buf: head=59 tail=57
+debug: mouse even get: type=2 code=2 value=-7
+debug: mouse even buf: head=59 tail=58
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=59 tail=59
+debug: mouse even get: type=2 code=1 value=7
+debug: mouse even buf: head=62 tail=60
+debug: mouse even get: type=2 code=2 value=-4
+debug: mouse even buf: head=62 tail=61
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=62 tail=62
+debug: mouse even get: type=2 code=1 value=24
+debug: mouse even buf: head=1 tail=63
+debug: mouse even get: type=2 code=2 value=-4
+debug: mouse even buf: head=1 tail=0
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=1 tail=1
+debug: mouse even get: type=2 code=1 value=12
+debug: mouse even buf: head=3 tail=2
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=3 tail=3
+debug: mouse even get: type=2 code=1 value=13
+debug: mouse even buf: head=5 tail=4
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=5 tail=5
+debug: mouse even get: type=2 code=1 value=27
+debug: mouse even buf: head=7 tail=6
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=7 tail=7
+debug: mouse even get: type=2 code=1 value=12
+debug: mouse even buf: head=10 tail=8
+debug: mouse even get: type=2 code=2 value=6
+debug: mouse even buf: head=10 tail=9
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=10 tail=10
+debug: mouse even get: type=2 code=1 value=24
+debug: mouse even buf: head=13 tail=11
+debug: mouse even get: type=2 code=2 value=11
+debug: mouse even buf: head=13 tail=12
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=13 tail=13
+debug: mouse even get: type=2 code=1 value=11
+debug: mouse even buf: head=16 tail=14
+debug: mouse even get: type=2 code=2 value=6
+debug: mouse even buf: head=16 tail=15
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=16 tail=16
+debug: mouse even get: type=2 code=1 value=18
+debug: mouse even buf: head=19 tail=17
+debug: mouse even get: type=2 code=2 value=16
+debug: mouse even buf: head=19 tail=18
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=19 tail=19
+debug: mouse even get: type=2 code=1 value=7
+debug: mouse even buf: head=22 tail=20
+debug: mouse even get: type=2 code=2 value=9
+debug: mouse even buf: head=22 tail=21
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=22 tail=22
+debug: mouse even get: type=2 code=1 value=12
+debug: mouse even buf: head=25 tail=23
+debug: mouse even get: type=2 code=2 value=19
+debug: mouse even buf: head=25 tail=24
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=25 tail=25
+debug: mouse even get: type=2 code=1 value=2
+debug: mouse even buf: head=28 tail=26
+debug: mouse even get: type=2 code=2 value=5
+debug: mouse even buf: head=28 tail=27
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=28 tail=28
+debug: mouse even get: type=2 code=1 value=5
+debug: mouse even buf: head=31 tail=29
+debug: mouse even get: type=2 code=2 value=23
+debug: mouse even buf: head=31 tail=30
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=31 tail=31
+debug: mouse even get: type=2 code=2 value=11
+debug: mouse even buf: head=33 tail=32
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=33 tail=33
+debug: mouse even get: type=2 code=1 value=-1
+debug: mouse even buf: head=36 tail=34
+debug: mouse even get: type=2 code=2 value=11
+debug: mouse even buf: head=36 tail=35
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=36 tail=36
+debug: mouse even get: type=2 code=1 value=-7
+debug: mouse even buf: head=39 tail=37
+debug: mouse even get: type=2 code=2 value=24
+debug: mouse even buf: head=39 tail=38
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=39 tail=39
+debug: mouse even get: type=2 code=1 value=-8
+debug: mouse even buf: head=42 tail=40
+debug: mouse even get: type=2 code=2 value=12
+debug: mouse even buf: head=42 tail=41
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=42 tail=42
+debug: mouse even get: type=2 code=1 value=-20
+debug: mouse even buf: head=45 tail=43
+debug: mouse even get: type=2 code=2 value=24
+debug: mouse even buf: head=45 tail=44
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=45 tail=45
+debug: mouse even get: type=2 code=1 value=-12
+debug: mouse even buf: head=48 tail=46
+debug: mouse even get: type=2 code=2 value=11
+debug: mouse even buf: head=48 tail=47
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=48 tail=48
+debug: mouse even get: type=2 code=1 value=-30
+debug: mouse even buf: head=51 tail=49
+debug: mouse even get: type=2 code=2 value=18
+debug: mouse even buf: head=51 tail=50
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=51 tail=51
+debug: mouse even get: type=2 code=1 value=-20
+debug: mouse even buf: head=54 tail=52
+debug: mouse even get: type=2 code=2 value=8
+debug: mouse even buf: head=54 tail=53
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=54 tail=54
+debug: mouse even get: type=2 code=1 value=-17
+debug: mouse even buf: head=57 tail=55
+debug: mouse even get: type=2 code=2 value=4
+debug: mouse even buf: head=57 tail=56
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=57 tail=57
+debug: mouse even get: type=2 code=1 value=-39
+debug: mouse even buf: head=60 tail=58
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=60 tail=59
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=60 tail=60
+debug: mouse even get: type=2 code=1 value=-15
+debug: mouse even buf: head=63 tail=61
+debug: mouse even get: type=2 code=2 value=-2
+debug: mouse even buf: head=63 tail=62
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=63 tail=63
+debug: mouse even get: type=2 code=1 value=-42
+debug: mouse even buf: head=2 tail=0
+debug: mouse even get: type=2 code=2 value=-14
+debug: mouse even buf: head=2 tail=1
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=2 tail=2
+debug: mouse even get: type=2 code=1 value=-13
+debug: mouse even buf: head=5 tail=3
+debug: mouse even get: type=2 code=2 value=-7
+debug: mouse even buf: head=5 tail=4
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=5 tail=5
+debug: mouse even get: type=2 code=1 value=-25
+debug: mouse even buf: head=8 tail=6
+debug: mouse even get: type=2 code=2 value=-18
+debug: mouse even buf: head=8 tail=7
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=8 tail=8
+debug: mouse even get: type=2 code=1 value=-12
+debug: mouse even buf: head=11 tail=9
+debug: mouse even get: type=2 code=2 value=-15
+debug: mouse even buf: head=11 tail=10
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=11 tail=11
+debug: mouse even get: type=2 code=1 value=-18
+debug: mouse even buf: head=14 tail=12
+debug: mouse even get: type=2 code=2 value=-26
+debug: mouse even buf: head=14 tail=13
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=14 tail=14
+debug: mouse even get: type=2 code=1 value=-7
+debug: mouse even buf: head=17 tail=15
+debug: mouse even get: type=2 code=2 value=-18
+debug: mouse even buf: head=17 tail=16
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=17 tail=17
+debug: mouse even get: type=2 code=1 value=-9
+debug: mouse even buf: head=20 tail=18
+debug: mouse even get: type=2 code=2 value=-29
+debug: mouse even buf: head=20 tail=19
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=20 tail=20
+debug: mouse even get: type=2 code=1 value=-1
+debug: mouse even buf: head=23 tail=21
+debug: mouse even get: type=2 code=2 value=-12
+debug: mouse even buf: head=23 tail=22
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=23 tail=23
+debug: mouse even get: type=2 code=1 value=2
+debug: mouse even buf: head=26 tail=24
+debug: mouse even get: type=2 code=2 value=-23
+debug: mouse even buf: head=26 tail=25
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=26 tail=26
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=29 tail=27
+debug: mouse even get: type=2 code=2 value=-9
+debug: mouse even buf: head=29 tail=28
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=29 tail=29
+debug: mouse even get: type=2 code=1 value=6
+debug: mouse even buf: head=32 tail=30
+debug: mouse even get: type=2 code=2 value=-9
+debug: mouse even buf: head=32 tail=31
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=32 tail=32
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=35 tail=33
+debug: mouse even get: type=2 code=2 value=-3
+debug: mouse even buf: head=35 tail=34
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=35 tail=35
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=38 tail=36
+debug: mouse even get: type=2 code=2 value=-4
+debug: mouse even buf: head=38 tail=37
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=38 tail=38
+debug: mouse even get: type=2 code=1 value=1
+debug: mouse even buf: head=40 tail=39
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=40 tail=40
+debug: mouse even get: type=2 code=1 value=1
+debug: mouse even buf: head=42 tail=41
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=42 tail=42
+debug: mouse even get: type=2 code=1 value=9
+debug: mouse even buf: head=45 tail=43
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=45 tail=44
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=45 tail=45
+debug: mouse even get: type=2 code=1 value=11
+debug: mouse even buf: head=48 tail=46
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=48 tail=47
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=48 tail=48
+debug: mouse even get: type=2 code=1 value=30
+debug: mouse even buf: head=51 tail=49
+debug: mouse even get: type=2 code=2 value=8
+debug: mouse even buf: head=51 tail=50
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=51 tail=51
+debug: mouse even get: type=2 code=1 value=14
+debug: mouse even buf: head=54 tail=52
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=54 tail=53
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=54 tail=54
+debug: mouse even get: type=2 code=1 value=30
+debug: mouse even buf: head=57 tail=55
+debug: mouse even get: type=2 code=2 value=8
+debug: mouse even buf: head=57 tail=56
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=57 tail=57
+debug: mouse even get: type=2 code=1 value=12
+debug: mouse even buf: head=60 tail=58
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=60 tail=59
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=60 tail=60
+debug: mouse even get: type=2 code=1 value=16
+debug: mouse even buf: head=63 tail=61
+debug: mouse even get: type=2 code=2 value=6
+debug: mouse even buf: head=63 tail=62
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=63 tail=63
+debug: mouse even get: type=2 code=1 value=6
+debug: mouse even buf: head=2 tail=0
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=2 tail=1
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=2 tail=2
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=5 tail=3
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=5 tail=4
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=5 tail=5
+debug: mouse even get: type=2 code=1 value=2
+debug: mouse even buf: head=8 tail=6
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=8 tail=7
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=8 tail=8
+debug: mouse even get: type=2 code=1 value=2
+debug: mouse even buf: head=11 tail=9
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=11 tail=10
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=11 tail=11
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=13 tail=12
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=13 tail=13
+debug: mouse even get: type=2 code=1 value=-2
+debug: mouse even buf: head=16 tail=14
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=16 tail=15
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=16 tail=16
+debug: mouse even get: type=2 code=1 value=-19
+debug: mouse even buf: head=19 tail=17
+debug: mouse even get: type=2 code=2 value=8
+debug: mouse even buf: head=19 tail=18
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=19 tail=19
+debug: mouse even get: type=2 code=1 value=-15
+debug: mouse even buf: head=22 tail=20
+debug: mouse even get: type=2 code=2 value=4
+debug: mouse even buf: head=22 tail=21
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=22 tail=22
+debug: mouse even get: type=2 code=1 value=-37
+debug: mouse even buf: head=25 tail=23
+debug: mouse even get: type=2 code=2 value=3
+debug: mouse even buf: head=25 tail=24
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=25 tail=25
+debug: mouse even get: type=2 code=1 value=-36
+debug: mouse even buf: head=27 tail=26
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=27 tail=27
+debug: mouse even get: type=2 code=1 value=-17
+debug: mouse even buf: head=29 tail=28
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=29 tail=29
+debug: mouse even get: type=2 code=1 value=-33
+debug: mouse even buf: head=32 tail=30
+debug: mouse even get: type=2 code=2 value=-7
+debug: mouse even buf: head=32 tail=31
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=32 tail=32
+debug: mouse even get: type=2 code=1 value=-4
+debug: mouse even buf: head=34 tail=33
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=34 tail=34
+debug: mouse even get: type=2 code=1 value=-4
+debug: mouse even buf: head=36 tail=35
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=36 tail=36
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=38 tail=37
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=38 tail=38
+debug: mouse even get: type=2 code=1 value=6
+debug: mouse even buf: head=41 tail=39
+debug: mouse even get: type=2 code=2 value=-1
+debug: mouse even buf: head=41 tail=40
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=41 tail=41
+debug: mouse even get: type=2 code=1 value=16
+debug: mouse even buf: head=43 tail=42
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=43 tail=43
+debug: mouse even get: type=2 code=1 value=8
+debug: mouse even buf: head=45 tail=44
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=45 tail=45
+debug: mouse even get: type=2 code=1 value=12
+debug: mouse even buf: head=48 tail=46
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=48 tail=47
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=48 tail=48
+debug: mouse even get: type=2 code=1 value=3
+debug: mouse even buf: head=51 tail=49
+debug: mouse even get: type=2 code=2 value=2
+debug: mouse even buf: head=51 tail=50
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=51 tail=51
+debug: mouse even get: type=2 code=1 value=2
+debug: mouse even buf: head=54 tail=52
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=54 tail=53
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=54 tail=54
+debug: mouse even get: type=2 code=1 value=1
+debug: mouse even buf: head=57 tail=55
+debug: mouse even get: type=2 code=2 value=8
+debug: mouse even buf: head=57 tail=56
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=57 tail=57
+debug: mouse even get: type=2 code=1 value=-3
+debug: mouse even buf: head=60 tail=58
+debug: mouse even get: type=2 code=2 value=16
+debug: mouse even buf: head=60 tail=59
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=60 tail=60
+debug: mouse even get: type=2 code=1 value=-10
+debug: mouse even buf: head=63 tail=61
+debug: mouse even get: type=2 code=2 value=14
+debug: mouse even buf: head=63 tail=62
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=63 tail=63
+debug: mouse even get: type=2 code=1 value=-25
+debug: mouse even buf: head=2 tail=0
+debug: mouse even get: type=2 code=2 value=24
+debug: mouse even buf: head=2 tail=1
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=2 tail=2
+debug: mouse even get: type=2 code=1 value=-15
+debug: mouse even buf: head=5 tail=3
+debug: mouse even get: type=2 code=2 value=13
+debug: mouse even buf: head=5 tail=4
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=5 tail=5
+debug: mouse even get: type=2 code=1 value=-23
+debug: mouse even buf: head=8 tail=6
+debug: mouse even get: type=2 code=2 value=19
+debug: mouse even buf: head=8 tail=7
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=8 tail=8
+debug: mouse even get: type=2 code=1 value=-8
+debug: mouse even buf: head=11 tail=9
+debug: mouse even get: type=2 code=2 value=5
+debug: mouse even buf: head=11 tail=10
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=11 tail=11
+debug: mouse even get: type=2 code=1 value=-10
+debug: mouse even buf: head=14 tail=12
+debug: mouse even get: type=2 code=2 value=7
+debug: mouse even buf: head=14 tail=13
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=14 tail=14
+debug: mouse even get: type=2 code=1 value=-4
+debug: mouse even buf: head=17 tail=15
+debug: mouse even get: type=2 code=2 value=4
+debug: mouse even buf: head=17 tail=16
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=17 tail=17
+debug: mouse even get: type=2 code=1 value=-3
+debug: mouse even buf: head=20 tail=18
+debug: mouse even get: type=2 code=2 value=1
+debug: mouse even buf: head=20 tail=19
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=20 tail=20
+debug: mouse even get: type=2 code=1 value=-1
+debug: mouse even buf: head=22 tail=21
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=22 tail=22
+debug: mouse even get: type=2 code=1 value=-1
+debug: mouse even buf: head=24 tail=23
+debug: mouse even get: type=0 code=0 value=0
+debug: mouse even buf: head=24 tail=24

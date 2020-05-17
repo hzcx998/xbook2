@@ -23,6 +23,7 @@
 #include  <counter.h>
 #include  <timer.h>
 
+#include  <screen.h>
 #include  <snapshot.h>
 
 #ifdef  _LG_WINDOW_
@@ -50,10 +51,6 @@ static  volatile  unsigned int    lmtail = 0;
 static  volatile  IN_GUI_MESSAGE  lmqueu[MESSAGE_QUEUE_LEN] = { {0} };
 
 static  volatile  unsigned int    llooid = 0;
-
-#ifdef  _LG_NEED_REFRESH_SCREEN_
-static  volatile  unsigned int    lsrefc = 0;
-#endif
 
 #ifdef  _LG_WINDOW_
 extern  volatile  HWND  lhfocu;    
@@ -311,24 +308,6 @@ COUNTER_LOOP:
     }
     #endif  /* _LG_COUNTER_ */
 
-    /* screen refresh loop */
-    #ifdef  _LG_CUSTOM_SCREEN_
-    #ifdef  _LG_NEED_REFRESH_SCREEN_
-    if ( (lscrn.need_refresh))
-    {
-        lsrefc++;
-
-        if ( lsrefc > (lscrn.refresh_loop_interval) )
-        {
-            if ( (lscrn.refresh) != NULL )
-                (lscrn.refresh)();
-
-            lsrefc = 0;
-        }
-    }
-    #endif  /* _LG_NEED_REFRESH_SCREEN_ */
-    #endif  /* _LG_CUSTOM_SCREEN_ */
-
 
     /* Window invalidate area repaint */
     #ifdef  _LG_WINDOW_
@@ -340,6 +319,13 @@ COUNTER_LOOP:
     #endif
     #endif
 
+
+    /* Refresh screen */
+    if ( (lscrn.refresh) != NULL )
+        (lscrn.refresh)();
+
+
+    
     llooid = NONE_LOOP_ID;
 
     return  0;

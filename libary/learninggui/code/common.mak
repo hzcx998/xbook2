@@ -9,11 +9,11 @@ CFLAGS      = -std=c89 -fpic -fno-stack-protector -D_POSIX_C_SOURCE=199309L -O1 
 LDFLAGS     = -r
 
 
-SO_LDFLAGS  = -shared -lrt
+SO_LDFLAGS  = -shared -lrt -lm
 A_LDFLAGS   = cqs
 
 
-VERSION     = 0.5.0
+VERSION     = 0.5.2
 
 
 SO_TARGET_S = liblearninggui.so

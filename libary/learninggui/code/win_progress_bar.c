@@ -49,8 +49,8 @@ static  int  in_progress_bar_callback(/* GUI_MESSAGE *msg */ void *msg)
      int                 i      = 0;
 
     /* char or unsigned char ? */
-    char                 tbuf1[16] = "";
-    char                 tbuf2[16] = "";
+    char                 tbuf1[32] = "";
+    char                 tbuf2[32] = "";
 
 
 

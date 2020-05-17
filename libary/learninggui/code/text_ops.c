@@ -14,6 +14,7 @@
 
 #include  <stdio.h>
 #include  <string.h>
+#include  <math.h>
 
 #include  <lgmacro.h>
 
@@ -25,7 +26,7 @@
 #include  <screen.h>
 
 #include  <text_ops.h>
-
+#include  <image_comm.h>
 
 #ifdef  _LG_WINDOW_
 #include  <win_clip.h>
@@ -43,6 +44,8 @@ static  int    lg_current_y       = 0;
 
 static  BINT   lg_start_new_line  = 0;
 
+static  UCHAR  start_data[288+1]  = {0};
+static  unsigned int  data_len    = 0;
 
 #define  in_text_out_blank(pdc)       (lg_current_x += MISSING_CHAR_BLANK_WIDTH)
 #define  in_text_out_tab(pdc)         (lg_current_x += MISSING_CHAR_BLANK_WIDTH*4)
@@ -50,7 +53,7 @@ static  BINT   lg_start_new_line  = 0;
 
 
 #ifdef  _LG_MONO_CHARSET_FONT_
-static  int  in_mono_charset_text_out(HDC hdc, const void *font, const TCHAR *str, int code_counter, unsigned int *position)
+static  int  in_mono_charset_text_out(HDC hdc, const void *font, const TCHAR *str, int code_counter, unsigned int *position, GUI_SYMMETRY_ROTATE *s_r)
 {
     MONO_CHARSET_FONT  *first_mono_charset_font  = (MONO_CHARSET_FONT *)font;
     MONO_CHARSET_FONT  *start_mono_charset_font  = (MONO_CHARSET_FONT *)font;
@@ -72,13 +75,25 @@ static  int  in_mono_charset_text_out(HDC hdc, const void *font, const TCHAR *st
 
     GUI_COLOR     gui_color = 0;
     SCREEN_COLOR  screen_foreground_color = 0;  
-    SCREEN_COLOR  screen_back_color = 0;
+    SCREEN_COLOR  screen_back_color       = 0;
+    SCREEN_COLOR  screen_color            = 0;
 
     UCHAR           tchar   = 0;
     int             itemp   = 0;
 
     int             x       = 0;
     int             y       = 0;  
+
+    int             x0      = 0;
+    int             y0      = 0;  
+    int         new_x       = 0;
+    int         new_y       = 0;  
+
+    double      fsin        = 0;
+    double      fcos        = 0;
+    double      fvalue1     = 0;
+    double      fvalue2     = 0;
+
 
     unsigned char   lf_flag = 0;
     unsigned char   cr_flag = 0;
@@ -91,8 +106,24 @@ static  int  in_mono_charset_text_out(HDC hdc, const void *font, const TCHAR *st
              int    shift = 0;
 
 
+
+    if ( hdc == NULL )
+        return  -1;
     if ( mono_charset_font == NULL )
         return  -1;
+    if ( s_r == NULL )
+	return  -1;
+    if ( position == NULL)
+        return  -1;
+
+
+    if ( (s_r->rotate.is_rotate) )
+    {
+        fsin = sin(((s_r->rotate.theta)*PI)/IMAGE_ROTATE_180);
+        fcos = cos(((s_r->rotate.theta)*PI)/IMAGE_ROTATE_180);
+        x0   = s_r->rotate.x + hdc->rect.left;
+        y0   = s_r->rotate.y + hdc->rect.top;
+    }
 
     gui_color = in_hdc_get_text_fore_color(hdc);
     screen_foreground_color = (lscrn.gui_to_screen_color)(gui_color);
@@ -206,49 +237,382 @@ static  int  in_mono_charset_text_out(HDC hdc, const void *font, const TCHAR *st
         #ifdef  _LG_TEXT_METRIC_
         if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_TOP) == TEXT_FRAME_TOP )
         {
-            if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTH(&hdc->rect)) )
+            y = hdc->rect.top + lg_current_y;
+            for ( k = 0; k < width; k++ )
             {
-                y = hdc->rect.top + lg_current_y;
-                for ( k = 0; k < width; k++ )
-                {
-                    x = hdc->rect.left + lg_current_x + k;
-                    if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                    {
-                        in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                    }
-                }
+                x = hdc->rect.left + lg_current_x + k;
+
+                /* */
+		if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{	
+		    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		    continue;
+		}
+
+
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+                    new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+	        {
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+			
+
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		         new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		         new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		         new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			 new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		         continue;
+		    } else {
+	                 new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			 new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+
+
+	            x       = new_x;
+		    y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+	        }
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+	        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		     continue;
+	        } else {
+	             new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+	             new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+	        new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		/* continue; */
+		/* */
             }
         }
 
         if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_LEFT) == TEXT_FRAME_LEFT )
         {
             x = hdc->rect.left + lg_current_x;
-	        if ( (lg_current_x>=0)&&(lg_current_x<GUI_RECTW(&hdc->rect)) )
+
+            for ( j = 0; j < height; j++ )
             {
-                for ( j = 0; j < height; j++ )
-                {
-                    y = hdc->rect.top + lg_current_y + j;
-                    if ( ((lg_current_y+j)>=0)&&((lg_current_y+j)<GUI_RECTH(&hdc->rect)) )
-                    {
-                        in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                    }
-                }
+                y = hdc->rect.top + lg_current_y + j;
+
+                /* */
+		if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{	
+		    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		    continue;
+		}
+
+
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+                    new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+	        {
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+			
+
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		         new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		         new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		         new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			 new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		         continue;
+		    } else {
+	                 new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			 new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+
+
+	            x       = new_x;
+		    y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+	        }
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+	        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		     continue;
+	        } else {
+	             new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+	             new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+	        new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		/* continue; */
+		/* */
             }
         }
+
 
         if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_RIGHT) == TEXT_FRAME_RIGHT )
         {
             y = hdc->rect.top + lg_current_y;
-            if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTH(&hdc->rect)) )
+
+            for ( j = 0; j < height; j++ )
             {
-                for ( j = 0; j < height; j++ )
-                {
-                    x = hdc->rect.left + lg_current_x + k;
-                    if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                    {
-                        in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                    }
-                }
+                x = hdc->rect.left + lg_current_x + k;
+
+                /* */
+		if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{	
+		    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		    continue;
+		}
+
+
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+                    new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+	        {
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+			
+
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		         new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		         new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		         new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			 new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		         continue;
+		    } else {
+	                 new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			 new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+
+
+	            x       = new_x;
+		    y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+	        }
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+	        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		     continue;
+	        } else {
+	             new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+	             new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+	        new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		/* continue; */
+		/* */
             }
         }
 
@@ -260,22 +624,146 @@ static  int  in_mono_charset_text_out(HDC hdc, const void *font, const TCHAR *st
                 x = hdc->rect.left + lg_current_x + k;
                 y = hdc->rect.top + lg_current_y +itemp;
 
-                if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) \
-                     &&((lg_current_y+itemp)>=2)&&((lg_current_y+itemp-2)<GUI_RECTH(&hdc->rect)) )
-                {
-                    in_output_screen_pixel_abs(hdc, x, y-2, screen_foreground_color);
-                }
+                /* */
+		if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{
+		    /* ?? y+2 or y-2 */	
+		    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		    continue;
+		}
 
-                if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) \
-                     &&((lg_current_y+itemp+2))&&((lg_current_y+itemp+2)<GUI_RECTH(&hdc->rect)) )
-                {
-                    in_output_screen_pixel_abs(hdc, x, y+2, screen_foreground_color);
-                }
+
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+                    new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+	        {
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+			
+
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		         new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		         new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		         new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			 new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		         continue;
+		    } else {
+	                 new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			 new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+
+
+	            x       = new_x;
+		    y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+	        }
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+	        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		     continue;
+	        } else {
+	             new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+	             new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+	        new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		/* continue; */
+		/* */
             }
         }
         #endif
 
-        start_index = mono_charset_font->get_data_start_index(pchar);
+	if ( (mono_charset_font->is_get_serial_data) > 0 )
+	{
+            data_len = sizeof(start_data);
+	    memset(start_data, 0, sizeof(start_data));
+            ret = mono_charset_font->get_serial_data(pchar, start_data, &data_len);
+            if ( ret < 0 )
+                goto  MONO_CHARSET_FONT_NEXT;
+
+	    if ( data_len > sizeof(start_data) )
+                goto  MONO_CHARSET_FONT_NEXT;
+
+	    itemp = (width*height)/8;
+	    if ( ((width*height)%8) > 0 )
+	        itemp += 1;
+            if ( data_len < itemp )
+                goto  MONO_CHARSET_FONT_NEXT;
+	} else {
+            start_index = mono_charset_font->get_data_start_index(pchar);
+	}
         for ( j = 0; j < height; j++ )
         {
             for ( k = 0; k < width; k++ )
@@ -284,28 +772,158 @@ static  int  in_mono_charset_text_out(HDC hdc, const void *font, const TCHAR *st
                 index   =  itemp/8;
                 shift   =  itemp%8;
 
-                /* ?? */
-                /* tchar =  *((UCHAR *)((void *)(mono_charset_font->data) + start_index + index)); */
-                tchar =  *((UCHAR *)((UCHAR *)(mono_charset_font->data) + start_index + index));
+                /* tchar = *((UCHAR *)((void *)(mono_charset_font->data) + start_index + index)); */
+	        if ( (mono_charset_font->is_get_serial_data) > 0 )
+                    tchar = start_data[index];
+		else
+                    tchar = *((UCHAR *)((UCHAR *)(mono_charset_font->data) + start_index + index));
                
                 x = hdc->rect.left + lg_current_x;
                 y = hdc->rect.top + lg_current_y;
 
-                if ( (lg_current_x>=0)&&(lg_current_x < GUI_RECTW(&hdc->rect)) \
-                     &&(lg_current_y>=0)&&(lg_current_y < GUI_RECTH(&hdc->rect)))
-                { 
-                    if ( (tchar << shift )&0x80 )
-                    {
-                        in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                    } else {
-                        if ( (hdc->back_mode) == MODE_COPY )
-                        {
-                            in_output_screen_pixel_abs(hdc, x, y, screen_back_color);
-                        }
-                    }
-                }
 
-                lg_current_x++;
+                /* */
+                if ( (tchar << shift )&0x80 )
+                    screen_color = screen_foreground_color; 
+		else if ( (hdc->back_mode) == MODE_COPY ) {
+                    screen_color = screen_back_color; 
+		} else {
+                    lg_current_x++;  
+		    continue;
+	        }
+
+
+		if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{	
+	            in_output_screen_pixel_abs(hdc,x,y,screen_color);
+
+	            lg_current_x++;  
+	            continue;
+		}
+
+
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                        lg_current_x++;  
+		        continue;
+	            } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+                    lg_current_x++;  
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		{
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+	            lg_current_x++;  
+	            continue;
+
+		} 
+			
+
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                        lg_current_x++;  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+
+
+	            x       = new_x;
+	            y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+                    lg_current_x++;  
+	            continue;
+
+		}
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+	        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                    lg_current_x++;  
+		    continue;
+		} else {
+	            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+	            new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+		new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+		lg_current_x++;  
+		/* continue; */
+
+		/* */
             }
          
             #ifdef  _LG_TEXT_METRIC_
@@ -321,24 +939,134 @@ static  int  in_mono_charset_text_out(HDC hdc, const void *font, const TCHAR *st
         #ifdef  _LG_TEXT_METRIC_
         if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_BOTTOM) == TEXT_FRAME_BOTTOM )
         {
-            if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTW(&hdc->rect)) )
+            y = hdc->rect.top + lg_current_y;
+            for ( k = 0; k < width; k++ )
             {
-                y = hdc->rect.top + lg_current_y;
-                for ( k = 0; k < width; k++ )
-                {
-                    x = hdc->rect.left + lg_current_x + k;
-                    if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                    {
-                       in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                    }
-                }
+                x = hdc->rect.left + lg_current_x + k;
+
+	        /* */
+		if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{	
+		    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		    continue;
+		}
+
+
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+                    new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+	        {
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+			
+
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		         new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		         new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		         new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			 new_x = (x - hdc->rect.left);
+	            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		         continue;
+		    } else {
+	                 new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			 new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+
+
+	            x       = new_x;
+		    y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+	        }
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+	        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		     continue;
+	        } else {
+	             new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+	             new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+	        new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		/* continue; */
+		/* */
             }
         }
         #endif 
 
         #ifdef  _LG_TEXT_METRIC_
-        lg_current_x += width + hdc->text_metric.offset_italic*height + hdc->text_metric.space_right;
-        lg_current_y -= height + hdc->text_metric.offset_escapement;
+        lg_current_x += width+hdc->text_metric.offset_italic*height + hdc->text_metric.space_right;
+        lg_current_y -= height+hdc->text_metric.offset_escapement;
         #else
         lg_current_x += width;
         lg_current_y -= height;
@@ -387,7 +1115,7 @@ static  int  in_mono_charset_text_out(HDC hdc, const void *font, const TCHAR *st
 
 
 #ifdef  _LG_MONO_DISCRETE_FONT_
-static  int  in_mono_discrete_text_out(HDC hdc, const void *font, const TCHAR *str, int code_counter, unsigned int *position)
+static  int  in_mono_discrete_text_out(HDC hdc, const void *font, const TCHAR *str, int code_counter, unsigned int *position, GUI_SYMMETRY_ROTATE *s_r)
 {
     MONO_DISCRETE_FONT  *first_mono_discrete_font  = (MONO_DISCRETE_FONT *)font;
     MONO_DISCRETE_FONT  *start_mono_discrete_font  = (MONO_DISCRETE_FONT *)font;
@@ -414,12 +1142,25 @@ static  int  in_mono_discrete_text_out(HDC hdc, const void *font, const TCHAR *s
     GUI_COLOR     gui_color = 0;
     SCREEN_COLOR  screen_foreground_color = 0;  
     SCREEN_COLOR  screen_back_color = 0;
+    SCREEN_COLOR  screen_color = 0;
+
 
     UCHAR           tchar   = 0;
     int             itemp   = 0;
     int             x       = 0;
     int             y       = 0;  
- 
+
+    int             x0      = 0;
+    int             y0      = 0;  
+    int         new_x       = 0;
+    int         new_y       = 0;  
+
+    double      fsin        = 0;
+    double      fcos        = 0;
+    double      fvalue1     = 0;
+    double      fvalue2     = 0;
+
+
     unsigned char   lf_flag = 0;
     unsigned char   cr_flag = 0;
 
@@ -431,8 +1172,24 @@ static  int  in_mono_discrete_text_out(HDC hdc, const void *font, const TCHAR *s
 
 
 
+    if ( hdc == NULL )
+        return  -1;
     if ( mono_discrete_font == NULL )
         return  -1;
+    if ( s_r == NULL )
+	return -1;
+    if ( position == NULL )
+        return  -1;
+
+
+
+    if ( s_r->rotate.is_rotate )
+    {
+        fsin = sin(((s_r->rotate.theta)*PI)/IMAGE_ROTATE_180);
+        fcos = cos(((s_r->rotate.theta)*PI)/IMAGE_ROTATE_180);
+        x0   = s_r->rotate.x + hdc->rect.left;
+        y0   = s_r->rotate.y + hdc->rect.top;
+    }
 
 
     gui_color = in_hdc_get_text_fore_color(hdc);
@@ -570,51 +1327,384 @@ static  int  in_mono_discrete_text_out(HDC hdc, const void *font, const TCHAR *s
                 #ifdef  _LG_TEXT_METRIC_
                 if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_TOP) == TEXT_FRAME_TOP )
                 {
-                    if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTH(&hdc->rect)) )
+                    y = hdc->rect.top + lg_current_y;
+                    for ( k = 0; k < width; k++ )
                     {
-                        y = hdc->rect.top + lg_current_y;
-                        for ( k = 0; k < width; k++ )
-                        {
-                            x = hdc->rect.left + lg_current_x + k;
-                            if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                            {
-                                in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                            }
-                        }
+                        x = hdc->rect.left + lg_current_x + k;
+			   
+                        /* */
+			if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+			{	
+			    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+			    continue;
+			}
+
+
+			if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+			       
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			} 
+				    		    
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+			{
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			} 
+			
+
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+
+
+			    x       = new_x;
+			    y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			}
+
+
+			/* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+			if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			{
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    new_x = (x - hdc->rect.left);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		            continue;
+			} else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			    new_y = y - hdc->rect.top;
+			}     
+
+		        new_x += hdc->rect.left;
+			new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			/* continue; */
+			/* */
                     }
                 }
 
                 if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_LEFT) == TEXT_FRAME_LEFT )
                 {
                     x = hdc->rect.left + lg_current_x;
-	            if ( (lg_current_x>=0)&&(lg_current_x<GUI_RECTW(&hdc->rect)) )
+
+                    for ( j = 0; j < height; j++ )
                     {
-                        for ( j = 0; j < height; j++ )
-                        {
-                            y = hdc->rect.top + lg_current_y + j;
-                            if ( ((lg_current_y+j)>=0)&&((lg_current_y+j)<GUI_RECTH(&hdc->rect)) )
-                            {
-                                in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                            }
-                        }
+                        y = hdc->rect.top + lg_current_y + j;
+
+
+			if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+			{	
+			    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+			    continue;
+			}
+
+
+			if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+			       
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			} 
+				    		    
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+			{
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			} 
+			
+
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+
+
+			    x       = new_x;
+			    y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			}
+
+			/* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+			if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			{
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    new_x = (x - hdc->rect.left);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		            continue;
+			} else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			    new_y = y - hdc->rect.top;
+			}     
+
+		        new_x += hdc->rect.left;
+			new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			/* continue; */
+			/* */
                     }
                 }
+
+
 
                 if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_RIGHT) == TEXT_FRAME_RIGHT )
                 {
                     y = hdc->rect.top + lg_current_y;
-                    if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTH(&hdc->rect)) )
+
+                    for ( j = 0; j < height; j++ )
                     {
-                        for ( j = 0; j < height; j++ )
-                        {
-                            x = hdc->rect.left + lg_current_x + k;
-                            if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                            {
-                                in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                            }
-                        }
+                        x = hdc->rect.left + lg_current_x + k;
+
+
+			if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+			{	
+			    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+			    continue;
+			}
+
+
+			if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+			       
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			} 
+				    		    
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+			{
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			} 
+			
+
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+
+
+			    x       = new_x;
+			    y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			}
+
+			/* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+			if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			{
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    new_x = (x - hdc->rect.left);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		            continue;
+			} else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			    new_y = y - hdc->rect.top;
+			}     
+
+		        new_x += hdc->rect.left;
+			new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			/* continue; */
+			/* */
                     }
                 }
+
 
                 if ( hdc->text_metric.is_strike_out )
                 {
@@ -624,17 +1714,121 @@ static  int  in_mono_discrete_text_out(HDC hdc, const void *font, const TCHAR *s
                         x = hdc->rect.left + lg_current_x + k;
                         y = hdc->rect.top + lg_current_y +itemp;
 
-                        if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) \
-                             &&((lg_current_y+itemp)>=2)&&((lg_current_y+itemp-2)<GUI_RECTH(&hdc->rect)) )
-                        {
-                            in_output_screen_pixel_abs(hdc, x, y-2, screen_foreground_color);
-                        }
 
-                        if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) \
-                             &&((lg_current_y+itemp+2))&&((lg_current_y+itemp+2)<GUI_RECTH(&hdc->rect)) )
-                        {
-                            in_output_screen_pixel_abs(hdc, x, y+2, screen_foreground_color);
-                        }
+			if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+			{	
+			    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+			    continue;
+			}
+
+
+			if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+			       
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			} 
+				    		    
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+			{
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			} 
+			
+
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+
+
+			    x       = new_x;
+			    y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			}
+
+			/* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+			if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			{
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    new_x = (x - hdc->rect.left);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		            continue;
+			} else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			    new_y = y - hdc->rect.top;
+			}     
+
+		        new_x += hdc->rect.left;
+			new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			/* continue; */
+			/* */
                     }
                 }
                 #endif
@@ -643,32 +1837,156 @@ static  int  in_mono_discrete_text_out(HDC hdc, const void *font, const TCHAR *s
                 {
                     for ( k = 0; k < width; k++ )
                     {
-                        itemp   =  width*j + k;
-                        index   =  itemp/8;
-                        shift   = itemp%8;
-
-                        /* ?? */
+                        itemp  = (width*j + k);
+                        index  = (itemp/8);
+                        shift  = (itemp%8);
+	
                         /* tchar = *((void *)(pcharset+2*sizeof(UCHAR)+index)); */
                         tchar = *((UCHAR *)(pcharset+2*sizeof(UCHAR)+index));
 
                         x = hdc->rect.left + lg_current_x;
                         y = hdc->rect.top + lg_current_y;
 
-                        if ( (lg_current_x>=0)&&(lg_current_x < GUI_RECTW(&hdc->rect)) \
-                             &&(lg_current_y>=0)&&(lg_current_y < GUI_RECTH(&hdc->rect)))
-                        { 
-                            if ( (tchar << shift )&0x80 )
-                            {
-                                in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                            } else {
-                                if ( (hdc->back_mode) == MODE_COPY )
-                                {
-                                    in_output_screen_pixel_abs(hdc, x, y, screen_back_color);
-                                }
-                            }
-                        }
+	
+                        if ( (tchar << shift )&0x80 )
+                            screen_color = screen_foreground_color; 
+			else if ( (hdc->back_mode) == MODE_COPY ) {
+                            screen_color = screen_back_color; 
+			} else {
+	                    lg_current_x++;  
+			    continue;
+			}
 
-                        lg_current_x++;
+
+			if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+			{	
+			    in_output_screen_pixel_abs(hdc,x,y,screen_color);
+
+	                    lg_current_x++;  
+			    continue;
+			}
+
+
+			if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                                lg_current_x++;  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+			       
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+                            lg_current_x++;  
+			    continue;
+			} 
+				    		    
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+			{
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+			    lg_current_x++;  
+			    continue;
+
+			} 
+			
+
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                                lg_current_x++;  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+
+
+			    x       = new_x;
+			    y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+                            lg_current_x++;  
+			    continue;
+
+			}
+
+
+			/* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+			if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			{
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    new_x = (x - hdc->rect.left);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                            lg_current_x++;  
+		            continue;
+			} else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			    new_y = y - hdc->rect.top;
+			}     
+
+		        new_x += hdc->rect.left;
+			new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+			lg_current_x++;  
+			/* continue; */
                     }
           
                     #ifdef  _LG_TEXT_METRIC_
@@ -683,17 +2001,125 @@ static  int  in_mono_discrete_text_out(HDC hdc, const void *font, const TCHAR *s
                 #ifdef  _LG_TEXT_METRIC_
                 if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_BOTTOM) == TEXT_FRAME_BOTTOM )
                 {
-                    if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTW(&hdc->rect)) )
+                    y = hdc->rect.top + lg_current_y;
+                    for ( k = 0; k < width; k++ )
                     {
-                        y = hdc->rect.top + lg_current_y;
-                        for ( k = 0; k < width; k++ )
-                        {
-                            x = hdc->rect.left + lg_current_x + k;
-                            if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                            {
-                               in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                            }
-                        }
+                        x = hdc->rect.left + lg_current_x + k;
+
+
+			if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+			{	
+			    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+			    continue;
+			}
+
+
+			if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+			       
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			} 
+				    		    
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+			{
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			} 
+			
+
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+			{
+			    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			    {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+			    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+				continue;
+			    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+			    }     
+
+		            new_x += hdc->rect.left;
+			    new_y += hdc->rect.top;
+
+
+			    x       = new_x;
+			    y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			    continue;
+			}
+
+			/* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+			if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+			{
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			    new_x = (x - hdc->rect.left);
+			}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		            continue;
+			} else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			    new_y = y - hdc->rect.top;
+			}     
+
+		        new_x += hdc->rect.left;
+			new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+			/* continue; */
                     }
                 }
                 #endif 
@@ -766,7 +2192,7 @@ static  int  in_mono_discrete_text_out(HDC hdc, const void *font, const TCHAR *s
 
 
 #ifdef  _LG_MIXED_CHARSET_FONT_
-static  int  in_mixed_charset_text_out(HDC hdc, const void *font, const TCHAR *str, int code_counter, unsigned int *position)
+static  int  in_mixed_charset_text_out(HDC hdc, const void *font, const TCHAR *str, int code_counter, unsigned int *position, GUI_SYMMETRY_ROTATE *s_r)
 {
     MIXED_CHARSET_FONT  *first_mixed_charset_font  = (MIXED_CHARSET_FONT *)font;
     MIXED_CHARSET_FONT  *start_mixed_charset_font  = (MIXED_CHARSET_FONT *)font;
@@ -792,12 +2218,24 @@ static  int  in_mixed_charset_text_out(HDC hdc, const void *font, const TCHAR *s
     GUI_COLOR       gui_color;
     SCREEN_COLOR    screen_foreground_color;  
     SCREEN_COLOR    screen_back_color;
+    SCREEN_COLOR    screen_color;
 
     UCHAR           tchar   = 0;
     int             itemp   = 0;
     int             x       = 0;
     int             y       = 0;
-   
+    int             x0      = 0;
+    int             y0      = 0;  
+    int         new_x       = 0;
+    int         new_y       = 0;  
+
+    double      fsin        = 0;
+    double      fcos        = 0;
+    double      fvalue1     = 0;
+    double      fvalue2     = 0;
+
+ 
+
     unsigned char   lf_flag = 0;
     unsigned char   cr_flag = 0;
 
@@ -810,9 +2248,23 @@ static  int  in_mixed_charset_text_out(HDC hdc, const void *font, const TCHAR *s
              int    shift = 0;
 
 
+    if ( hdc == NULL )
+        return  -1;
     if ( prop_charset_font == NULL )
         return  -1;
+    if ( s_r == NULL )
+	return  -1;
+    if ( position == NULL)
+        return  -1;
 
+
+    if ( (s_r->rotate.is_rotate) )
+    {
+        fsin = sin(((s_r->rotate.theta)*PI)/IMAGE_ROTATE_180);
+        fcos = cos(((s_r->rotate.theta)*PI)/IMAGE_ROTATE_180);
+        x0   = s_r->rotate.x + hdc->rect.left;
+        y0   = s_r->rotate.y + hdc->rect.top;
+    }
 
     gui_color = in_hdc_get_text_fore_color(hdc);
     screen_foreground_color = (lscrn.gui_to_screen_color)(gui_color);
@@ -929,52 +2381,379 @@ static  int  in_mixed_charset_text_out(HDC hdc, const void *font, const TCHAR *s
         #ifdef  _LG_TEXT_METRIC_
         if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_TOP) == TEXT_FRAME_TOP )
         {
-            if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTH(&hdc->rect)) )
+            y = hdc->rect.top + lg_current_y;
+            for ( k = 0; k < width; k++ )
             {
-                y = hdc->rect.top + lg_current_y;
-                for ( k = 0; k < width; k++ )
-                {
-                    x = hdc->rect.left + lg_current_x + k;
-                    if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                    {
-                        in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                    }
-                }
+                x = hdc->rect.left + lg_current_x + k;
+
+                /* */
+		if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{	
+	            in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		    continue;
+		}
+
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+	            } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		{
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+			
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+		    }     
+
+		    new_x += hdc->rect.left;
+		    new_y += hdc->rect.top;
+
+
+		    x       = new_x;
+		    y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		    continue;
+		}
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+		if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		    continue;
+		} else {
+	            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+		new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		/* continue; */
+		/* */
             }
         }
 
         if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_LEFT) == TEXT_FRAME_LEFT )
         {
             x = hdc->rect.left + lg_current_x;
-	        if ( (lg_current_x>=0)&&(lg_current_x<GUI_RECTW(&hdc->rect)) )
+            for ( j = 0; j < height; j++ )
             {
-                for ( j = 0; j < height; j++ )
-                {
-                    y = hdc->rect.top + lg_current_y + j;
-                    if ( ((lg_current_y+j)>=0)&&((lg_current_y+j)<GUI_RECTH(&hdc->rect)) )
-                    {
-                        in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                    }
-                }
+                y = hdc->rect.top + lg_current_y + j;
+
+                /* */
+		if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{	
+	            in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		    continue;
+		}
+
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+	            } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		{
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+			
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+		    }     
+
+		    new_x += hdc->rect.left;
+		    new_y += hdc->rect.top;
+
+
+		    x       = new_x;
+		    y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		    continue;
+		}
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+		if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		    continue;
+		} else {
+	            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+		new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		/* continue; */
+		/* */
             }
         }
+
 
         if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_RIGHT) == TEXT_FRAME_RIGHT )
         {
             y = hdc->rect.top + lg_current_y;
-            if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTH(&hdc->rect)) )
+
+            for ( j = 0; j < height; j++ )
             {
-                for ( j = 0; j < height; j++ )
-                {
-                    /* ??: + k  */
-                    x = hdc->rect.left + lg_current_x + k;
-                    if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                    {
-                        in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                    }
-                }
-            }
+                /* ??: + k  */
+                x = hdc->rect.left + lg_current_x + k;
+
+                /* */
+		if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{	
+	            in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		    continue;
+		}
+
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+	            } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		{
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+			
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+		    }     
+
+		    new_x += hdc->rect.left;
+		    new_y += hdc->rect.top;
+
+
+		    x       = new_x;
+		    y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		    continue;
+		}
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+		if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		    continue;
+		} else {
+	            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+		new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		/* continue; */
+		/* */
+           }
         }
+
 
         if ( hdc->text_metric.is_strike_out )
         {
@@ -984,17 +2763,120 @@ static  int  in_mixed_charset_text_out(HDC hdc, const void *font, const TCHAR *s
                 x = hdc->rect.left + lg_current_x + k;
                 y = hdc->rect.top + lg_current_y +itemp;
 
-                if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) \
-                     &&((lg_current_y+itemp)>=2)&&((lg_current_y+itemp-2)<GUI_RECTH(&hdc->rect)) )
-                {
-                    in_output_screen_pixel_abs(hdc, x, y-2, screen_foreground_color);
-                }
+                /* */
+		if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{	
+	            in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		    continue;
+		}
 
-                if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) \
-                     &&((lg_current_y+itemp+2))&&((lg_current_y+itemp+2)<GUI_RECTH(&hdc->rect)) )
-                {
-                    in_output_screen_pixel_abs(hdc, x, y+2, screen_foreground_color);
-                }
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+	            } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		{
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+			
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+		    }     
+
+		    new_x += hdc->rect.left;
+		    new_y += hdc->rect.top;
+
+
+		    x       = new_x;
+		    y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		    continue;
+		}
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+		if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		    continue;
+		} else {
+	            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+		new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		/* continue; */
+		/* */
             }
         }
         #endif
@@ -1019,28 +2901,153 @@ static  int  in_mixed_charset_text_out(HDC hdc, const void *font, const TCHAR *s
                 index   =  itemp/8;
                 shift   =  itemp%8;
 
-                /* ?? */
                 /* tchar =  *((UCHAR *)((pcharset->data) + index)); */
                 tchar =  *((UCHAR *)((pcharset->data) + index));
 
                 x = hdc->rect.left + lg_current_x;
                 y = hdc->rect.top + lg_current_y;
 
-                if ( (lg_current_x>=0)&&(lg_current_x < GUI_RECTW(&hdc->rect)) \
-                     &&(lg_current_y>=0)&&(lg_current_y < GUI_RECTH(&hdc->rect)))
-                { 
-                    if ( (tchar << shift )&0x80 )
-                    {
-                        in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                    } else {
-                        if ( (hdc->back_mode) == MODE_COPY )
-                        {
-                            in_output_screen_pixel_abs(hdc, x, y, screen_back_color);
-                        }
-                    }
-                }
 
-                lg_current_x++;
+                if ( (tchar << shift )&0x80 )
+                    screen_color = screen_foreground_color; 
+		else if ( (hdc->back_mode) == MODE_COPY ) {
+                    screen_color = screen_back_color; 
+		} else {
+	            lg_current_x++;  
+		    continue;
+		}
+
+
+
+	        if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{	
+		    in_output_screen_pixel_abs(hdc,x,y,screen_color);
+
+	            lg_current_x++;  
+	            continue;
+		}
+
+
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                        lg_current_x++;  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+                    lg_current_x++;  
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		{
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+	            lg_current_x++;  
+		    continue;
+
+		} 
+			
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                        lg_current_x++;  
+		        continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+		    }     
+
+		    new_x += hdc->rect.left;
+		    new_y += hdc->rect.top;
+
+
+	            x       = new_x;
+	            y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+                    lg_current_x++;  
+	            continue;
+
+		}
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+		if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	            new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                    lg_current_x++;  
+		    continue;
+		} else {
+	            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+	            new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+		new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+		lg_current_x++;  
+		/* continue; */
             }
           
             #ifdef  _LG_TEXT_METRIC_
@@ -1055,17 +3062,125 @@ static  int  in_mixed_charset_text_out(HDC hdc, const void *font, const TCHAR *s
         #ifdef  _LG_TEXT_METRIC_
         if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_BOTTOM) == TEXT_FRAME_BOTTOM )
         {
-            if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTW(&hdc->rect)) )
+            y = hdc->rect.top + lg_current_y;
+            for ( k = 0; k < width; k++ )
             {
-                y = hdc->rect.top + lg_current_y;
-                for ( k = 0; k < width; k++ )
-                {
-                    x = hdc->rect.left + lg_current_x + k;
-                    if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                    {
-                        in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                    }
-                }
+                x = hdc->rect.left + lg_current_x + k;	    
+
+                /* */
+		if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		{	
+	            in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		    continue;
+		}
+
+		if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		{
+		    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+	            } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+	            }     
+
+		    new_x += hdc->rect.left;
+	            new_y += hdc->rect.top;
+			       
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+				    		    
+		if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		{
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	            continue;
+		} 
+			
+		if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		{
+	            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		    {
+		        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		        new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			new_x = (x - hdc->rect.left);
+		    }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			continue;
+		    } else {
+	                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			new_y = y - hdc->rect.top;
+		    }     
+
+		    new_x += hdc->rect.left;
+		    new_y += hdc->rect.top;
+
+
+		    x       = new_x;
+		    y       = new_y;
+
+                    fvalue1 =  ((int)(x-x0))*fcos;
+                    fvalue2 = -((int)(y-y0))*fsin;
+                    new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                    fvalue1 =  ((int)(x-x0))*fsin;
+                    fvalue2 =  ((int)(y-y0))*fcos;
+                    new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                    in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		    continue;
+		}
+
+
+		/* GUI_FIRST_ROTATE */
+                fvalue1 =  ((int)(x-x0))*fcos;
+                fvalue2 = -((int)(y-y0))*fsin;
+                new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                fvalue1 =  ((int)(x-x0))*fsin;
+                fvalue2 =  ((int)(y-y0))*fcos;
+                new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		x  = new_x;
+		y  = new_y;	
+
+		if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		{
+		    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		    new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		    new_x = (x - hdc->rect.left);
+		}  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		    continue;
+		} else {
+	            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		    new_y = y - hdc->rect.top;
+		}     
+
+		new_x += hdc->rect.left;
+		new_y += hdc->rect.top;
+			       
+                in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		/* continue; */
+		/* */
             }
         }
         #endif 
@@ -1117,7 +3232,7 @@ static  int  in_mixed_charset_text_out(HDC hdc, const void *font, const TCHAR *s
 
 
 #ifdef  _LG_MIXED_DISCRETE_FONT_
-static  int  in_mixed_discrete_text_out(HDC hdc, const void *font, const TCHAR *str, int code_counter, unsigned int *position)
+static  int  in_mixed_discrete_text_out(HDC hdc, const void *font, const TCHAR *str, int code_counter, unsigned int *position, GUI_SYMMETRY_ROTATE *s_r)
 {
     MIXED_DISCRETE_FONT  *first_mixed_discrete_font  = (MIXED_DISCRETE_FONT *)font;
     MIXED_DISCRETE_FONT  *start_mixed_discrete_font  = (MIXED_DISCRETE_FONT *)font;
@@ -1149,12 +3264,24 @@ static  int  in_mixed_discrete_text_out(HDC hdc, const void *font, const TCHAR *
     GUI_COLOR       gui_color = 0;
     SCREEN_COLOR    screen_foreground_color = 0;  
     SCREEN_COLOR    screen_back_color = 0;
+    SCREEN_COLOR    screen_color = 0;
 
     UCHAR           tchar   = 0;
     int             itemp   = 0;
     int             x       = 0;
     int             y       = 0;  
- 
+    int             x0      = 0;
+    int             y0      = 0;  
+    int         new_x       = 0;
+    int         new_y       = 0;  
+
+    double      fsin        = 0;
+    double      fcos        = 0;
+    double      fvalue1     = 0;
+    double      fvalue2     = 0;
+
+
+
     unsigned char   lf_flag = 0;
     unsigned char   cr_flag = 0;
 
@@ -1166,9 +3293,23 @@ static  int  in_mixed_discrete_text_out(HDC hdc, const void *font, const TCHAR *
              int    shift = 0;
 
 
+    if ( hdc == NULL )
+        return  -1;
     if ( mixed_discrete_font == NULL )
         return  -1;
+    if ( s_r == NULL )
+	return  -1;
+    if ( position == NULL)
+        return  -1;
 
+
+    if ( (s_r->rotate.is_rotate) )
+    {
+        fsin = sin(((s_r->rotate.theta)*PI)/IMAGE_ROTATE_180);
+        fcos = cos(((s_r->rotate.theta)*PI)/IMAGE_ROTATE_180);
+        x0   = s_r->rotate.x + hdc->rect.left;
+        y0   = s_r->rotate.y + hdc->rect.top;
+    }
 
     gui_color = in_hdc_get_text_fore_color(hdc);
     screen_foreground_color = (lscrn.gui_to_screen_color)(gui_color);
@@ -1315,45 +3456,383 @@ static  int  in_mixed_discrete_text_out(HDC hdc, const void *font, const TCHAR *
                 #ifdef  _LG_TEXT_METRIC_
                 if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_TOP) == TEXT_FRAME_TOP )
                 {
-                    if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTH(&hdc->rect)) )
+                    y = hdc->rect.top + lg_current_y;
+                    for ( k = 0; k < width; k++ )
                     {
-                        y = hdc->rect.top + lg_current_y;
-                        for ( k = 0; k < width; k++ )
-                        {
-                            x = hdc->rect.left + lg_current_x + k;
-                            if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                               in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                        }
+                        x = hdc->rect.left + lg_current_x + k;
+
+                        /* */
+		        if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		        {	
+	                    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		            continue;
+		        }
+
+		        if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		        {
+		            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			        continue;
+	                    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+	                    }     
+
+		            new_x += hdc->rect.left;
+	                    new_y += hdc->rect.top;
+			       
+                           in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	                   continue;
+		        } 
+			
+
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		        {
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	                    continue;
+		        } 
+			
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		        {
+	                    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			        continue;
+		            } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+		            }     
+
+		            new_x += hdc->rect.left;
+		            new_y += hdc->rect.top;
+
+
+		            x       = new_x;
+		            y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		            continue;
+		        }
+
+
+		        /* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+		        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		        {
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            new_x = (x - hdc->rect.left);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		            continue;
+		        } else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = y - hdc->rect.top;
+		        }     
+
+		        new_x += hdc->rect.left;
+		        new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		        /* continue; */
+		        /* */
                     }
                 }
+
 
                 if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_LEFT) == TEXT_FRAME_LEFT )
                 {
                     x = hdc->rect.left + lg_current_x;
-	                if ( (lg_current_x>=0)&&(lg_current_x<GUI_RECTW(&hdc->rect)) )
+
+                    for ( j = 0; j < height; j++ )
                     {
-                        for ( j = 0; j < height; j++ )
-                        {
-                            y = hdc->rect.top + lg_current_y + j;
-                            if ( ((lg_current_y+j)>=0)&&((lg_current_y+j)<GUI_RECTH(&hdc->rect)) )
-                                in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                        }
+                        y = hdc->rect.top + lg_current_y + j;
+
+                        /* */
+		        if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		        {	
+	                    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		            continue;
+		        }
+
+		        if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		        {
+		            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			        continue;
+	                    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+	                    }     
+
+		            new_x += hdc->rect.left;
+	                    new_y += hdc->rect.top;
+			       
+                           in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	                   continue;
+		        } 
+			
+
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		        {
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	                    continue;
+		        } 
+			
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		        {
+	                    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			        continue;
+		            } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+		            }     
+
+		            new_x += hdc->rect.left;
+		            new_y += hdc->rect.top;
+
+
+		            x       = new_x;
+		            y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		            continue;
+		        }
+
+
+		        /* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+		        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		        {
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            new_x = (x - hdc->rect.left);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		            continue;
+		        } else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = y - hdc->rect.top;
+		        }     
+
+		        new_x += hdc->rect.left;
+		        new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		        /* continue; */
+		        /* */
                     }
                 }
+
 
                 if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_RIGHT) == TEXT_FRAME_RIGHT )
                 {
                     y = hdc->rect.top + lg_current_y;
-                    if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTH(&hdc->rect)) )
+
+                    for ( j = 0; j < height; j++ )
                     {
-                        for ( j = 0; j < height; j++ )
-                        {
-                            x = hdc->rect.left + lg_current_x + k;
-                            if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                                in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                        }
+                        x = hdc->rect.left + lg_current_x + k;
+
+                        /* */
+		        if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		        {	
+	                    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		            continue;
+		        }
+
+		        if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		        {
+		            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			        continue;
+	                    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+	                    }     
+
+		            new_x += hdc->rect.left;
+	                    new_y += hdc->rect.top;
+			       
+                           in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	                   continue;
+		        } 
+			
+
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		        {
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	                    continue;
+		        } 
+			
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		        {
+	                    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			        continue;
+		            } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+		            }     
+
+		            new_x += hdc->rect.left;
+		            new_y += hdc->rect.top;
+
+
+		            x       = new_x;
+		            y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		            continue;
+		        }
+
+
+		        /* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+		        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		        {
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            new_x = (x - hdc->rect.left);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		            continue;
+		        } else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = y - hdc->rect.top;
+		        }     
+
+		        new_x += hdc->rect.left;
+		        new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		        /* continue; */
+		        /* */
                     }
-                }
+               }
+
 
                if ( hdc->text_metric.is_strike_out )
                {
@@ -1363,14 +3842,122 @@ static  int  in_mixed_discrete_text_out(HDC hdc, const void *font, const TCHAR *
                         x = hdc->rect.left + lg_current_x + k;
                         y = hdc->rect.top + lg_current_y +itemp;
 
-                        if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) \
-                              &&((lg_current_y+itemp)>=2)&&((lg_current_y+itemp-2)<GUI_RECTH(&hdc->rect)) )
-                            in_output_screen_pixel_abs(hdc, x, y-2, screen_foreground_color);
+                        /* */
+		        if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		        {	
+	                    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		            continue;
+		        }
 
-                        if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) \
-                             &&((lg_current_y+itemp+2))&&((lg_current_y+itemp+2)<GUI_RECTH(&hdc->rect)) )
-                            in_output_screen_pixel_abs(hdc, x, y+2, screen_foreground_color);
-                    }
+		        if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		        {
+		            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			        continue;
+	                    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+	                    }     
+
+		            new_x += hdc->rect.left;
+	                    new_y += hdc->rect.top;
+			       
+                           in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	                   continue;
+		        } 
+			
+
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		        {
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	                    continue;
+		        } 
+			
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		        {
+	                    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			        continue;
+		            } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+		            }     
+
+		            new_x += hdc->rect.left;
+		            new_y += hdc->rect.top;
+
+
+		            x       = new_x;
+		            y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		            continue;
+		        }
+
+
+		        /* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+		        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		        {
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            new_x = (x - hdc->rect.left);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		            continue;
+		        } else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = y - hdc->rect.top;
+		        }     
+
+		        new_x += hdc->rect.left;
+		        new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		        /* continue; */
+		        /* */
+		    }
                 }
                 #endif
 
@@ -1387,19 +3974,147 @@ static  int  in_mixed_discrete_text_out(HDC hdc, const void *font, const TCHAR *
                         x = hdc->rect.left + lg_current_x;
                         y = hdc->rect.top + lg_current_y;
 
-                        if ( (lg_current_x>=0)&&(lg_current_x < GUI_RECTW(&hdc->rect)) \
-                          &&(lg_current_y>=0)&&(lg_current_y < GUI_RECTH(&hdc->rect)))
-                        { 
-                            if ( (tchar << shift )&0x80 )
-                            {
-                                in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                            } else {
-                                if ( (hdc->back_mode) == MODE_COPY )
-                                    in_output_screen_pixel_abs(hdc, x, y, screen_back_color);
-                            }
-                        }
 
-                        lg_current_x++;
+
+                        if ( (tchar << shift )&0x80 )
+                            screen_color = screen_foreground_color; 
+		        else if ( (hdc->back_mode) == MODE_COPY ) {
+                            screen_color = screen_back_color; 
+		        } else {
+	                    lg_current_x++;  
+		            continue;
+		        }
+
+
+
+	                if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		        {	
+		            in_output_screen_pixel_abs(hdc,x,y,screen_color);
+
+	                    lg_current_x++;  
+	                    continue;
+		        }
+
+
+		        if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		        {
+		            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                                lg_current_x++;  
+			        continue;
+		            } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+	                    }     
+
+
+		            new_x += hdc->rect.left;
+	                    new_y += hdc->rect.top;
+			       
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+                            lg_current_x++;  
+	                    continue;
+	 	        } 
+				    		    
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		        {
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+	                    lg_current_x++;  
+		            continue;
+		        } 
+			
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		        {
+		            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                                lg_current_x++;  
+		                continue;
+		            } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+		            }     
+
+		            new_x += hdc->rect.left;
+		            new_y += hdc->rect.top;
+
+
+	                    x       = new_x;
+	                    y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+                            lg_current_x++;  
+	                    continue;
+
+		        }
+
+
+		        /* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+		        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		        {
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+	                    new_x = (x - hdc->rect.left);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+                            lg_current_x++;  
+		            continue;
+		        } else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+	                    new_y = y - hdc->rect.top;
+		        }     
+
+		        new_x += hdc->rect.left;
+		        new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_color);
+
+		        lg_current_x++;  
+		        /* continue; */
                     }
 
                     #ifdef  _LG_TEXT_METRIC_
@@ -1414,15 +4129,126 @@ static  int  in_mixed_discrete_text_out(HDC hdc, const void *font, const TCHAR *
                 #ifdef  _LG_TEXT_METRIC_
                 if ( ((hdc->text_metric.frame_style)&TEXT_FRAME_BOTTOM) == TEXT_FRAME_BOTTOM )
                 {
-                    if ( (lg_current_y>=0)&&(lg_current_y<GUI_RECTW(&hdc->rect)) )
+                    y = hdc->rect.top + lg_current_y;
+                    for ( k = 0; k < width; k++ )
                     {
-                        y = hdc->rect.top + lg_current_y;
-                        for ( k = 0; k < width; k++ )
-                        {
-                            x = hdc->rect.left + lg_current_x + k;
-                            if ( ((lg_current_x+k)>=0)&&((lg_current_x+k)<GUI_RECTW(&hdc->rect)) )
-                               in_output_screen_pixel_abs(hdc, x, y, screen_foreground_color);
-                        }
+	   	        x = hdc->rect.left + lg_current_x + k;
+
+                        /* */
+		        if (((s_r->symmetry.is_symmetry) == 0)&&( (s_r->rotate.is_rotate) == 0 ))
+		        {	
+	                    in_output_screen_pixel_abs(hdc,x,y,screen_foreground_color);
+		            continue;
+		        }
+
+		        if ( (s_r->symmetry.is_symmetry) && ( (s_r->rotate.is_rotate) == 0 ) )
+		        {
+		            if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			        continue;
+	                    } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+	                    }     
+
+		            new_x += hdc->rect.left;
+	                    new_y += hdc->rect.top;
+			       
+                           in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	                   continue;
+		        } 
+			
+
+		        if ( (s_r->rotate.is_rotate) && ( (s_r->symmetry.is_symmetry) == 0 ) ) 
+		        {
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+	                    continue;
+		        } 
+			
+		        if ( ((s_r->first) == GUI_FIRST_SYMMETRY) )
+		        {
+	                    if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		            {
+		                new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		                new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+			        new_x = (x - hdc->rect.left);
+		            }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+			        continue;
+		            } else {
+	                        new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+			        new_y = y - hdc->rect.top;
+		            }     
+
+		            new_x += hdc->rect.left;
+		            new_y += hdc->rect.top;
+
+
+		            x       = new_x;
+		            y       = new_y;
+
+                            fvalue1 =  ((int)(x-x0))*fcos;
+                            fvalue2 = -((int)(y-y0))*fsin;
+                            new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                            fvalue1 =  ((int)(x-x0))*fsin;
+                            fvalue2 =  ((int)(y-y0))*fcos;
+                            new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+                            in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		            continue;
+		        }
+
+
+		        /* GUI_FIRST_ROTATE */
+                        fvalue1 =  ((int)(x-x0))*fcos;
+                        fvalue2 = -((int)(y-y0))*fsin;
+                        new_x   =  fvalue1 + fvalue2 + (int)x0;
+
+                        fvalue1 =  ((int)(x-x0))*fsin;
+                        fvalue2 =  ((int)(y-y0))*fcos;
+                        new_y   =  fvalue1 + fvalue2 + (int)y0;
+
+
+		        x  = new_x;
+		        y  = new_y;	
+
+		        if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_POINT )
+		        {
+		            new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_HLINE ) {
+		            new_y = (s_r->symmetry.point[0].y)*2 - (y - hdc->rect.top);
+		            new_x = (x - hdc->rect.left);
+		        }  else if ( (s_r->symmetry.symmetry_type) == GUI_SYMMETRY_LINE ) {  
+		            continue;
+		        } else {
+	                    new_x = (s_r->symmetry.point[0].x)*2 - (x - hdc->rect.left);
+		            new_y = y - hdc->rect.top;
+		        }     
+
+		        new_x += hdc->rect.left;
+		        new_y += hdc->rect.top;
+			       
+                        in_output_screen_pixel_abs(hdc,new_x,new_y,screen_foreground_color);
+		        /* continue; */
+		        /* */
                     }
                 }
                 #endif
@@ -1490,14 +4316,16 @@ static  int  in_mixed_discrete_text_out(HDC hdc, const void *font, const TCHAR *
 
 int  in_text_out(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_counter)
 {
-    GUI_FONT  *font        = NULL;
-    GUI_FONT  *start_font  = NULL;
-    TCHAR     *pstr        = NULL;  
-             int  raw_len  = code_counter;
-             int  cur_len  = code_counter;
-             int  out_len  = 0;
+    GUI_FONT  *font          = NULL;
+    GUI_FONT  *start_font    = NULL;
+    TCHAR     *pstr          = NULL;  
+             int  raw_len    = code_counter;
+             int  cur_len    = code_counter;
+             int  out_len    = 0;
 
-    unsigned int  position = 0;
+    unsigned int  position   = 0;
+    GUI_SYMMETRY_ROTATE  s_r = {0};
+
 
 
     if ( code_counter == 0 )
@@ -1588,22 +4416,22 @@ int  in_text_out(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int co
 
     #ifdef  _LG_MONO_CHARSET_FONT_
     if ( (font->type) == MONO_CHARSET_FONT_TYPE )
-        in_mono_charset_text_out(hdc, font->font, pstr, cur_len, &position);
+        in_mono_charset_text_out(hdc, font->font, pstr, cur_len, &position, &s_r);
     #endif
 
     #ifdef  _LG_MONO_DISCRETE_FONT_
     if ( (font->type) == MONO_DISCRETE_FONT_TYPE )
-        in_mono_discrete_text_out(hdc, font->font, pstr, cur_len, &position);
+        in_mono_discrete_text_out(hdc, font->font, pstr, cur_len, &position, &s_r);
     #endif
 
     #ifdef  _LG_MIXED_CHARSET_FONT_
     if ( (font->type) == MIXED_CHARSET_FONT_TYPE )
-        in_mixed_charset_text_out(hdc, font->font, pstr, cur_len, &position);
+        in_mixed_charset_text_out(hdc, font->font, pstr, cur_len, &position, &s_r);
     #endif
 
     #ifdef  _LG_MIXED_DISCRETE_FONT_
     if ( (font->type) == MIXED_DISCRETE_FONT_TYPE )
-        in_mixed_discrete_text_out(hdc, font->font, pstr, cur_len, &position);
+        in_mixed_discrete_text_out(hdc, font->font, pstr, cur_len, &position, &s_r);
     #endif
 
     pstr    += position;
@@ -1673,21 +4501,288 @@ int  text_out(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_
 #endif
 
 
-#ifdef  _LG_TEXT_OUT_EXTENSION_
-int  in_text_out_rect(/* HDC hdc */ void *hdc, void *rect, const TCHAR *str, int  code_counter, unsigned int  format)
+
+int  in_text_rotate_special(/* HDC hdc */void *hdc,int x, int y,const TCHAR *str, int code_counter, GUI_ROTATE *rotate)
+{
+    GUI_SYMMETRY_ROTATE  s_r = {0};
+    int  ret = 0;
+
+
+    if ( hdc == NULL )
+        return  -1;
+    if ( str == NULL )
+	return  -1;
+    if ( rotate == NULL )
+        return  -1;
+
+
+    memset(&s_r, 0, sizeof(GUI_SYMMETRY_ROTATE));
+    s_r.first = 0;
+    memcpy(&(s_r.rotate), rotate, sizeof(GUI_ROTATE));
+
+    ret = in_text_symmetry_rotate(hdc, x, y, str, code_counter, &s_r);
+
+    return  ret;
+}
+
+#ifndef  _LG_ALONE_VERSION_
+int  text_rotate_special(/* HDC hdc */void *hdc,int x, int y,const TCHAR *str, int code_counter, GUI_ROTATE *rotate)
+{
+    int  ret = 0;
+
+    gui_lock( );
+    ret = in_text_rotate_special(hdc, x, y, str, code_counter, rotate);
+    gui_unlock( );
+
+    return  ret;
+}
+#endif
+
+
+int  in_text_symmetry_special(/* HDC hdc */void *hdc,int x, int y,const TCHAR *str, int code_counter, GUI_SYMMETRY *symmetry)
+{
+    GUI_SYMMETRY_ROTATE  s_r = {0};
+    int  ret = 0;
+
+
+    if ( hdc == NULL )
+        return  -1;
+    if ( str == NULL )
+	return  -1;
+    if ( symmetry == NULL )
+        return  -1;
+
+
+    memset(&s_r, 0, sizeof(GUI_SYMMETRY_ROTATE));
+    s_r.first = 0;
+    memcpy(&(s_r.symmetry), symmetry, sizeof(GUI_SYMMETRY));
+
+    ret = in_text_symmetry_rotate(hdc, x, y, str, code_counter, &s_r);
+
+    return  ret;
+}
+
+#ifndef  _LG_ALONE_VERSION_
+int  text_symmetry_special(/* HDC hdc */void *hdc,int x, int y,const TCHAR *str, int code_counter, GUI_SYMMETRY *symmetry)
+{
+    int  ret = 0;
+
+    gui_lock( );
+    ret = in_text_symmetry_special(hdc, x, y, str, code_counter, symmetry);
+    gui_unlock( );
+
+    return  ret;
+}
+#endif
+
+
+int  in_text_symmetry_rotate(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_counter, GUI_SYMMETRY_ROTATE *s_r)
 {
     GUI_FONT  *font        = NULL;
     GUI_FONT  *start_font  = NULL;
     TCHAR     *pstr        = NULL;  
-    GUI_RECT  *p           = (GUI_RECT *)rect;
- 
-    unsigned int  raw_len  = code_counter;
-    unsigned int  cur_len  = code_counter;
-    unsigned int  out_len  = 0;
+             int  raw_len  = code_counter;
+             int  cur_len  = code_counter;
+             int  out_len  = 0;
 
     unsigned int  position = 0;
-             int  temp1    = 0;
-             int  temp2    = 0;
+
+
+    
+    if ( code_counter == 0 )
+        return  0;
+    if ( s_r == NULL )
+	return  -1;
+
+
+
+    (lscrn.output_sequence_start)();
+
+
+    #ifndef  _LG_WINDOW_ 
+    #ifdef  _LG_CURSOR_
+    in_cursor_maybe_restore_back_abs(((HDC)hdc)->rect.left + x, ((HDC)hdc)->rect.top + y, ((HDC)hdc)->rect.right, ((HDC)hdc)->rect.bottom);
+    #endif 
+    #endif
+
+    #ifdef  _LG_WINDOW_ 
+    if (in_init_max_output_rect(hdc) < 1)
+    {
+        #ifndef  _LG_WINDOW_ 
+        #ifdef  _LG_CURSOR_
+        in_cursor_maybe_refresh( );
+        #endif
+        #endif
+        (lscrn.output_sequence_end)();
+
+        return  -1;
+    }
+
+    while ( 1 )
+    {
+        if ( in_get_current_clip_rect(hdc) < 1 )
+            break;
+    #endif
+
+
+    if ( code_counter < 0 )
+    {
+        #ifdef  _LG_UNICODE_VERSION_
+            int  temp_len = 0;
+            int  i = 0;
+
+            raw_len = 0;
+            temp_len = sizeof(*str)/2 + 1;
+            for (i = 0; i < temp_len; i++)
+            {
+               if ( ((*(str+i))=='\0')&& ((*(str+i+1))=='\0'))
+               {
+                   raw_len = i;
+                   break;
+               }
+            }
+        #else
+            raw_len = strlen(str);
+        #endif
+
+        cur_len = raw_len;
+    }
+
+    font       = ((HDC)hdc)->font;
+    start_font = font;
+    if ( font == 0 )
+        goto  TEXT_OUT_EXIT;
+
+    lg_start_x   = x;
+    lg_start_y   = y;
+
+    lg_current_x = lg_start_x;
+    lg_current_y = lg_start_y;
+
+    pstr = (TCHAR *)str;
+    out_len = 0;
+
+    lg_start_new_line = 1;
+
+
+    TEXT_OUT_START:
+    /* ?? */
+    /*
+    if ( ((font->type) < MIN_FONT_TYPE ) || ((font->type) > MAX_FONT_TYPE) )
+        goto  TEXT_OUT_EXIT;
+    */
+    /* Avoid compilng warning */
+    if ( (font->type) > MAX_FONT_TYPE )
+        goto  TEXT_OUT_EXIT;
+
+
+    position = 0;
+
+    #ifdef  _LG_MONO_CHARSET_FONT_
+    if ( (font->type) == MONO_CHARSET_FONT_TYPE )
+        in_mono_charset_text_out(hdc, font->font, pstr, cur_len, &position, s_r);
+    #endif
+
+    #ifdef  _LG_MONO_DISCRETE_FONT_
+    if ( (font->type) == MONO_DISCRETE_FONT_TYPE )
+        in_mono_discrete_text_out(hdc, font->font, pstr, cur_len, &position, s_r);
+    #endif
+
+    #ifdef  _LG_MIXED_CHARSET_FONT_
+    if ( (font->type) == MIXED_CHARSET_FONT_TYPE )
+        in_mixed_charset_text_out(hdc, font->font, pstr, cur_len, &position, s_r);
+    #endif
+
+    #ifdef  _LG_MIXED_DISCRETE_FONT_
+    if ( (font->type) == MIXED_DISCRETE_FONT_TYPE )
+        in_mixed_discrete_text_out(hdc, font->font, pstr, cur_len, &position, s_r);
+    #endif
+
+    pstr    += position;
+    out_len += position;
+    cur_len  = raw_len - out_len;
+
+    if ( out_len >= raw_len )
+        goto  TEXT_OUT_EXIT;
+
+    if ( position > 0 )
+        start_font = font;
+ 
+    font = font->next;
+    if ( font == start_font )
+        goto  TEXT_OUT_BLANK;
+
+    if ( font != 0 )
+        goto  TEXT_OUT_START;
+
+    font = ((HDC)hdc)->font;
+    if ( font == start_font )
+        goto  TEXT_OUT_BLANK;
+
+    goto  TEXT_OUT_START;
+
+
+    TEXT_OUT_BLANK:
+    in_text_out_blank(pdc);
+    pstr++;
+
+    font = ((HDC)hdc)->font;
+    start_font = font;
+
+    goto  TEXT_OUT_START;
+
+
+    TEXT_OUT_EXIT:
+    lg_start_new_line = 0;
+
+
+    #ifdef  _LG_WINDOW_
+    }
+    #endif
+
+    #ifndef  _LG_WINDOW_ 
+    #ifdef  _LG_CURSOR_
+    in_cursor_maybe_refresh( );
+    #endif
+    #endif
+
+    (lscrn.output_sequence_end)();
+
+    return  1;
+}
+
+#ifndef  _LG_ALONE_VERSION_
+int  text_symmetry_rotate(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_counter, GUI_SYMMETRY_ROTATE *s_r)
+{
+    int  ret = 0;
+
+    gui_lock( );
+    ret = in_text_symmetry_rotate(hdc, x, y, str, code_counter, s_r);
+    gui_unlock( );
+
+    return  ret;
+}
+#endif
+
+
+
+
+#ifdef  _LG_TEXT_OUT_EXTENSION_
+int  in_text_out_rect(/* HDC hdc */ void *hdc, void *rect, const TCHAR *str, int  code_counter, unsigned int  format)
+{
+    GUI_FONT  *font          = NULL;
+    GUI_FONT  *start_font    = NULL;
+    TCHAR     *pstr          = NULL;  
+    GUI_RECT  *p             = (GUI_RECT *)rect;
+ 
+    unsigned int  raw_len    = code_counter;
+    unsigned int  cur_len    = code_counter;
+    unsigned int  out_len    = 0;
+
+    unsigned int  position   = 0;
+             int  temp1      = 0;
+             int  temp2      = 0;
+    GUI_SYMMETRY_ROTATE  s_r = {0};
 
 
 
@@ -1696,6 +4791,7 @@ int  in_text_out_rect(/* HDC hdc */ void *hdc, void *rect, const TCHAR *str, int
 
     if ( rect == NULL )
         return  0;
+
 
 
 
@@ -1824,22 +4920,22 @@ int  in_text_out_rect(/* HDC hdc */ void *hdc, void *rect, const TCHAR *str, int
 
     #ifdef  _LG_MONO_CHARSET_FONT_
     if ( (font->type) == MONO_CHARSET_FONT_TYPE )
-        in_mono_charset_text_out(hdc, font->font, pstr, cur_len, &position);
+        in_mono_charset_text_out(hdc, font->font, pstr, cur_len, &position, &s_r);
     #endif
 
     #ifdef  _LG_MONO_DISCRETE_FONT_
     if ( (font->type) == MONO_DISCRETE_FONT_TYPE )
-        in_mono_discrete_text_out(hdc, font->font, pstr, cur_len, &position);
+        in_mono_discrete_text_out(hdc, font->font, pstr, cur_len, &position, &s_r);
     #endif
 
     #ifdef  _LG_MIXED_CHARSET_FONT_
     if ( (font->type) == MIXED_CHARSET_FONT_TYPE )
-        in_mixed_charset_text_out(hdc, font->font, pstr, cur_len, &position);
+        in_mixed_charset_text_out(hdc, font->font, pstr, cur_len, &position, &s_r);
     #endif
 
     #ifdef  _LG_MIXED_DISCRETE_FONT_
     if ( (font->type) == MIXED_DISCRETE_FONT_TYPE )
-        in_mixed_discrete_text_out(hdc, font->font, pstr, cur_len, &position);
+        in_mixed_discrete_text_out(hdc, font->font, pstr, cur_len, &position, &s_r);
     #endif
 
     pstr    += position;

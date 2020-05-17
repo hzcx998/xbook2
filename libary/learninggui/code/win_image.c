@@ -91,7 +91,7 @@ static  int  in_image_callback(/* GUI_MESSAGE *msg */ void *msg)
             if ( (GET_IN_GUI_IMAGE(p)->image_align) != IMAGE_ALIGN_FILL )
                 goto  PAINT_IMAGE_NO_FILL_BITMAP;
 
-            in_bitmap_fill_rect(hdc, &rect, GET_IN_GUI_IMAGE(p)->pimage);
+            in_bitmap_scale(hdc, &rect, GET_IN_GUI_IMAGE(p)->pimage);
             goto  PAINT_IMAGE_OK;
 
             PAINT_IMAGE_NO_FILL_BITMAP:

@@ -482,7 +482,7 @@ PAINT_BIMAGE_BITMAP:
     if ( (p->common.bimage_align) != IMAGE_ALIGN_FILL )
         goto  PAINT_BIMAGE_NO_FILL_BITMAP;
 
-    in_bitmap_fill_rect(hdc, &rect, p->common.pimage);
+    in_bitmap_scale(hdc, &rect, p->common.pimage);
     goto  PAINT_BIMAGE_OK;
 
 PAINT_BIMAGE_NO_FILL_BITMAP:

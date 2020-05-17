@@ -6,7 +6,7 @@
 ** Use VBoxManage or the VirtualBox Manager GUI to make changes.
 -->
 <VirtualBox xmlns="http://www.virtualbox.org/" version="1.15-windows">
-  <Machine uuid="{faf7315a-3be0-4232-8d1d-004191843504}" name="xbook" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2020-05-15T10:26:42Z">
+  <Machine uuid="{faf7315a-3be0-4232-8d1d-004191843504}" name="xbook" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2020-05-16T14:22:08Z">
     <MediaRegistry>
       <HardDisks>
         <HardDisk uuid="{8c389410-2fcb-414a-9418-eac5ab386079}" location="D:/Developmemts/github/xbook2/develop/image/c.vhd" format="VHD" type="Normal"/>

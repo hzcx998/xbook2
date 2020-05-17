@@ -72,12 +72,16 @@ PTHREAD_OBJS	=	$(PTHREAD_DIR)/pthread_entry.o \
 UNISTD_OBJS		= 	$(UNISTD_DIR)/file.o \
 					$(UNISTD_DIR)/exec.o \
 
-MATH_OBJS		= 	
+MATH_OBJS		= 	$(MATH_DIR)/fabs.o \
+					$(MATH_DIR)/sin.o \
+					$(MATH_DIR)/cos.o \
+					$(MATH_DIR)/sqrt.o \
+					
 
 # objects
 OBJS			= 	$(ARCH_OBJS) $(ANSI_OBJS) $(STDIO_OBJS) \
 					$(SYSLIB_OBJS) $(STDLIB_OBJS) $(PTHREAD_OBJS) \
-					$(TIME_OBJS) $(UNISTD_OBJS)
+					$(TIME_OBJS) $(UNISTD_OBJS) $(MATH_OBJS)
 
 # out file
 LIBNAME = xbooklib-0.0.1.a

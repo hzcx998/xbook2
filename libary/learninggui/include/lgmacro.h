@@ -28,11 +28,11 @@
 
 
 #ifndef GUI_MAX
-#define GUI_MAX(a, b)           ( (a>b) ? a : b )
+#define GUI_MAX(a, b)           ( ((a)>(b)) ? (a) : (b) )
 #endif
 
 #ifndef GUI_MIN
-#define GUI_MIN(a, b)           ( (a<b) ? a : b )
+#define GUI_MIN(a, b)           ( ( (a) < (b) ) ? (a) : (b) )
 #endif
 
 #ifndef GUI_ABS
@@ -66,6 +66,9 @@
 
 
 #define    NULL_CHAR                    0x00
+
+
+#define    PI                           3.1415926535898
 
 
 #endif  /* __LGUI_LGMACRO_HEADER__ */

@@ -46,6 +46,8 @@ COUNTER_TIMER_OBJS 	= $(DIR_CODE)/counter.o \
 # message			
 MESSAGE_OBJS 	= $(DIR_CODE)/message.o \
 
+BANK_OBJS		= $(DIR_CODE)/gui_bank.o \
+
 # 2d
 D2_OBJS 			= $(DIR_CODE)/d2_pixel.o \
 					$(DIR_CODE)/d2_line.o \
@@ -66,11 +68,7 @@ CHARSETS_OBJS 		= $(DIR_CODE)/ascii_latin_dot_0612.o \
 					$(DIR_CODE)/ascii_latin_dot_0816.o \
 					$(DIR_CODE)/gb2312_dot_1212_song.o \
 					$(DIR_CODE)/gb2312_dot_1616_song.o \
-					$(DIR_CODE)/uni_cjk_unified_dot_1212_song.o \
-					$(DIR_CODE)/hz1212_punctuation.o \
-					$(DIR_CODE)/uni_cjk_unified_dot_1616_song.o \
-					$(DIR_CODE)/hz1616_punctuation.o \
-
+	
 # tools
 TOOLS_OBJS 		= $(DIR_CODE)/code_tools.o \
 
@@ -80,6 +78,8 @@ IMAGE_OBJS 			= $(DIR_CODE)/image_comm.o \
 					$(DIR_CODE)/image_icon.o \
 					$(DIR_CODE)/image_gif.o \
 					$(DIR_CODE)/snapshot.o \
+					$(DIR_CODE)/lgui_bitmap_rotate.o \
+					$(DIR_CODE)/lgui_bitmap_transform.o \
 					
 
 # rect ops tools
@@ -144,9 +144,10 @@ OBJS	:=  $(DRIVERS_OBJS) \
 			$(GUI_OBJS) \
 			$(WINDOWS_VERSION_OBJS) \
 			$(WIDGETS_OBJS) \
-
+			$(BANK_OBJS) \
+			
 # out file
-LIBNAME = learninggui-0.5.0.a
+LIBNAME = learninggui-0.5.2.a
 	
 # all need to do
 all: $(LIBNAME) 

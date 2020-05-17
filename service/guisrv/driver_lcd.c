@@ -294,19 +294,279 @@ static  int  lcd_output_pixel(int x, int y, SCREEN_COLOR  color)
 /* Hardware accelerbrate interface */
 static  int  lcd_output_hline(int left, int right, int top, SCREEN_COLOR  color)
 {
-     return  0;
+    SCREEN_COLOR  a_color;
+    SCREEN_COLOR  b_color;
+    SCREEN_COLOR  c_color;
+
+    int  offset = 0;
+    int  i      = 0;
+
+
+
+    if ( left > (screen_width-1) )
+        return  -1;
+    if ( right > (screen_width-1) )
+        return  -1;
+
+    if ( top > (screen_height-1) )
+        return  -1;
+
+
+
+    switch( (bits_per_pixel) )
+    {
+        case  8:
+            offset = (screen_width)*top+left;
+            if ( offset >= ((screen_width)*(screen_height)-1))
+                return  -1;
+
+            for ( i = 0; i <= right - left; i++ )
+    	        *(video_ram_start+offset+i) = (unsigned char)color;
+
+            break;
+
+        case  15:
+            offset = 2*((screen_width)*top+left);
+            if ( offset >= ((screen_width)*(screen_height)*2-2))
+                return  -1;
+
+            for ( i = 0; i <= right - left; i++ )
+    	        *((short int*)((video_ram_start) + offset + 2*i)) = (short int)color;
+
+            break;
+
+        case  16:
+            offset = 2*((screen_width)*top+left);
+            if ( offset >= ((screen_width)*(screen_height)*2-2))
+                return  -1;
+
+            for ( i = 0; i <= right - left; i++ )
+    	        *((short int*)((video_ram_start) + offset + 2*i)) = (short int)color;
+
+            break;
+
+        case  24:
+            offset = 3*((screen_width)*top+left);
+            if ( offset >= ((screen_width)*(screen_height)*3-3))
+                return  -1;
+
+            a_color = color&0xFF;
+    	    b_color = (color&0xFF00) >> 8;
+    	    c_color = (color&0xFF0000) >> 16;
+            for ( i = 0; i <= right - left; i++ )
+            {
+    	        *((video_ram_start) + offset + 3*i + 0) = a_color;
+    	        *((video_ram_start) + offset + 3*i + 1) = b_color;
+    	        *((video_ram_start) + offset + 3*i + 2) = c_color;
+            }
+            break;
+
+        case  32:
+            offset = 4*((screen_width)*top+left);
+            if ( offset >= ((screen_width)*(screen_height)*4-4))
+                return  -1;
+
+            for ( i = 0; i <= right - left; i++ )
+    	        *((int*)((video_ram_start) + offset + 4*i)) = (int)color;
+
+            break;
+
+        default:
+            break;
+
+    }
+
+    return  1;
 }
 
 /* Hardware accelerbrate interface */
 static  int  lcd_output_vline(int left, int top, int bottom, SCREEN_COLOR  color)
 {
-    return  0;
+SCREEN_COLOR  a_color;
+    SCREEN_COLOR  b_color;
+    SCREEN_COLOR  c_color;
+
+    int  offset = 0;
+    int  i      = 0;
+
+
+
+    if ( left > (screen_width-1) )
+        return  -1;
+    if ( top > (screen_height-1) )
+        return  -1;
+    if ( bottom > (screen_height-1) )
+        return  -1;
+
+
+    switch( (bits_per_pixel) )
+    {
+        case  8:
+            for ( i = 0; i <= bottom - top; i++ )
+            {
+                offset = (screen_width)*(top+i)+left;
+                if ( offset >= ((screen_width)*(screen_height)-1))
+                    return  -1;
+
+    	        *(video_ram_start+offset) = (unsigned char)color;
+            }
+            break;
+
+        case  15:
+            for ( i = 0; i <= bottom - top; i++ )
+            {
+                offset = 2*((screen_width)*(top+i)+left);
+                if ( offset >= ((screen_width)*(screen_height)*2-2))
+                    return  -1;
+
+    	        *((short int*)((video_ram_start) + offset)) = (short int)color;
+            }
+            break;
+
+        case  16:
+            for ( i = 0; i <= bottom - top; i++ )
+            {
+                offset = 2*((screen_width)*(top+i)+left);
+                if ( offset >= ((screen_width)*(screen_height)*2-2))
+                    return  -1;
+
+    	        *((short int*)((video_ram_start) + offset)) = (short int)color;
+            }
+            break;
+
+        case  24:
+            a_color = color&0xFF;
+    	    b_color = (color&0xFF00) >> 8;
+    	    c_color = (color&0xFF0000) >> 16;
+
+            for ( i = 0; i <= bottom - top; i++ )
+            {
+                offset = 3*((screen_width)*(top+i)+ left);
+                if ( offset >= ((screen_width)*(screen_height)*3-3))
+                    return  -1;
+
+       	        *((video_ram_start) + offset + 0) = a_color;
+    	        *((video_ram_start) + offset + 1) = b_color;
+    	        *((video_ram_start) + offset + 2) = c_color;
+            }
+            break;
+
+        case  32:
+            for ( i = 0; i <= bottom - top; i++ )
+            {
+                offset = 4*((screen_width)*(top+i)+left);
+                if ( offset >= ((screen_width)*(screen_height)*4-4))
+                    return  -1;
+
+    	        *((int*)((video_ram_start) + offset)) = (int)color;
+            }
+            break;
+
+        default:
+            break;
+
+    }
+
+    return  1;
 }
 
 /* Hardware accelerbrate interface */
 static  int  lcd_output_rect_fill(int left, int top, int right, int bottom, SCREEN_COLOR  color)
 {
-    return  0;
+SCREEN_COLOR  a_color;
+    SCREEN_COLOR  b_color;
+    SCREEN_COLOR  c_color;
+
+    int  offset = 0;
+    int  i      = 0;
+    int  j      = 0;
+
+
+    if ( left > (screen_width-1) )
+        return  -1;
+    if ( right > (screen_width-1) )
+        return  -1;
+
+    if ( top > (screen_height-1) )
+        return  -1;
+
+
+
+    switch( (bits_per_pixel) )
+    {
+        case  8:
+            for ( j = 0; j <= bottom - top; j++ )
+            {
+                offset = (screen_width)*(top+j)+left;
+                if ( offset >= ((screen_width)*(screen_height)-1))
+                    return  -1;
+
+                for ( i = 0; i <= right - left; i++ )
+    	            *(video_ram_start+offset+i) = (unsigned char)color;
+            }
+            break;
+
+        case  15:
+            for ( j = 0; j <= bottom - top; j++ )
+            {
+                offset = 2*((screen_width)*(top+j)+left);
+                if ( offset >= ((screen_width)*(screen_height)*2-2))
+                    return  -1;
+
+                for ( i = 0; i <= right - left; i++ )
+    	            *((short int*)((video_ram_start) + offset + 2*i)) = (short int)color;
+            }
+            break;
+
+        case  16:
+            for ( j = 0; j <= bottom - top; j++ )
+            {
+                offset = 2*((screen_width)*(top+j)+left);
+                if ( offset >= ((screen_width)*(screen_height)*2-2))
+                    return  -1;
+
+                for ( i = 0; i <= right - left; i++ )
+    	            *((short int*)((video_ram_start) + offset + 2*i)) = (short int)color;
+            }
+            break;
+
+        case  24:
+            a_color = color&0xFF;
+    	    b_color = (color&0xFF00) >> 8;
+    	    c_color = (color&0xFF0000) >> 16;
+            for ( j = 0; j <= bottom - top; j++ )
+            {
+                offset = 3*((screen_width)*(top+j)+left);
+                if ( offset >= ((screen_width)*(screen_height)*3-3))
+                    return  -1;
+
+                for ( i = 0; i <= right - left; i++ )
+                {
+    	            *((video_ram_start) + offset + 3*i + 0) = a_color;
+    	            *((video_ram_start) + offset + 3*i + 1) = b_color;
+    	            *((video_ram_start) + offset + 3*i + 2) = c_color;
+                }
+            }
+            break;
+
+        case  32:
+            for ( j = 0; j <= bottom - top; j++ )
+            {
+                offset = 4*((screen_width)*(top+j)+left);
+                if ( offset >= ((screen_width)*(screen_height)*4-4))
+                    return  -1;
+
+                for ( i = 0; i <= right - left; i++ )
+    	            *((int*)((video_ram_start) + offset + 4*i)) = (int)color;
+            }
+            break;
+
+        default:
+            break;
+
+    }
+
+    return  1;
 }
 
 /* Optimize interface */
@@ -331,8 +591,71 @@ static  int  lcd_input_sequence_start(void)
 static  int  lcd_input_pixel(int x, int y, SCREEN_COLOR *color)
 {
     /* Maybe have code or maybe have not code */
+    int           offset    = 0;
+    SCREEN_COLOR  tmp_color = 0;
 
 
+    if ( color == NULL )
+        return  -1;
+
+
+    if ( x > (screen_width-1) )
+        return  -1;
+
+    if ( y > (screen_height-1) )
+        return  -1;
+
+
+    /* Get pixel */
+    switch( (bits_per_pixel) )
+    {
+        case  8:
+            offset = (screen_width)*y+x;
+            if ( offset >= ((screen_width)*(screen_height)-1))
+                return  -1;
+
+    	    *color = *(video_ram_start+offset);
+            break;
+
+        case  15:
+            offset = 2*((screen_width)*y+x);
+            if ( offset >= ((screen_width)*(screen_height)*2-2))
+                return  -1;
+
+    	    *color = *((short int*)(video_ram_start + offset));
+            break;
+
+        case  16:
+            offset = 2*((screen_width)*y+x);
+            if ( offset >= ((screen_width)*(screen_height)*2-2))
+                return  -1;
+
+    	    *color = *((short int*)(video_ram_start + offset));
+            break;
+
+        case  24:
+            offset = 3*((screen_width)*y+x);
+            if ( offset >= ((screen_width)*(screen_height)*3-3))
+                return  -1;
+
+    	    tmp_color  = *(video_ram_start + offset + 0)&0xFF;
+    	    tmp_color |= ((*(video_ram_start + offset + 1))&0xFF00) >> 8;
+    	    tmp_color |= ((*(video_ram_start + offset + 2))&0xFF0000) >> 16;
+            *color     = tmp_color;
+            break;
+
+        case  32:
+            offset = 4*((screen_width)*y+x);
+            if ( offset >= ((screen_width)*(screen_height)*4-4))
+                return  -1;
+
+    	    *color = *((int*)(video_ram_start + offset));
+            break;
+
+        default:
+            break;
+
+    }
     return  1;
 }
 
@@ -351,7 +674,44 @@ static  int  lcd_input_sequence_end(void)
 static  int  lcd_clear(SCREEN_COLOR  color)
 {
     /* Maybe have code or maybe have not code */ 
+    SCREEN_COLOR  screen_color = color;
+    unsigned int  i = 0;
 
+
+    switch( bits_per_pixel )
+    {
+        case  8:
+            memset(video_ram_start, (screen_color&0xFF), video_ram_size);
+            break;
+
+        case  15:
+            for ( i = 0; i < video_ram_size; i += 2 )
+                memcpy(video_ram_start+i, &screen_color, 2);
+
+            break;
+       
+        case  16:
+            for ( i = 0; i < video_ram_size; i += 2 )
+                memcpy(video_ram_start+i, &screen_color, 2);
+
+            break;
+ 
+        case  24:
+            for ( i = 0; i < video_ram_size; i += 3 )
+                memcpy(video_ram_start+i, &screen_color, 3);
+
+            break;
+
+        case  32:
+            for ( i = 0; i < video_ram_size; i += 4 )
+                memcpy(video_ram_start+i, &screen_color, 4);
+
+            break;
+ 
+        default:
+            break;
+
+    }
     return  1;
 }
 #endif
@@ -396,9 +756,9 @@ int  register_screen(void)
     if ( ret < 1 )
         return  -1;
     
-    screen.is_hline_accelerate      = 0;
-    screen.is_vline_accelerate      = 0;
-    screen.is_rect_fill_accelerate  = 0;
+    screen.is_hline_accelerate      = 1;
+    screen.is_vline_accelerate      = 1;
+    screen.is_rect_fill_accelerate  = 1;
 
     screen.open                     = lcd_open;
     screen.close                    = lcd_close;

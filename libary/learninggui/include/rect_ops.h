@@ -29,6 +29,15 @@
 #include  <type_gui.h>
 
 
+
+#define   GUI_POWER_1              1
+#define   GUI_POWER_2              2
+#define   GUI_POWER_3              3
+#define   GUI_POWER_4              4
+#define   GUI_POWER_5              5
+
+
+
 #ifdef  __cplusplus
 extern  "C"
 {
@@ -43,6 +52,9 @@ extern  "C"
     int  in_is_zero_rect(const GUI_RECT *pr);
     int  in_is_none_zero_rect(const GUI_RECT *pr);
 
+    int  in_gui_divide_rect(GUI_RECT *in_r, unsigned int power, GUI_RECT *out_r, unsigned int out_num, unsigned int *ret_num);
+
+ 
     #ifndef  _LG_ALONE_VERSION_
     int  merge_rect(GUI_RECT *pdest, const GUI_RECT *pr0, const GUI_RECT *pr1);
     int  intersect_rect(GUI_RECT *pdest, const GUI_RECT *pr0, const GUI_RECT *pr1);
@@ -52,6 +64,8 @@ extern  "C"
     int  is_intersect_rect(const GUI_RECT *pr0, const GUI_RECT *pr1);
     int  is_zero_rect(const GUI_RECT *pr);
     int  is_none_zero_rect(const GUI_RECT *pr);
+
+    int  gui_divide_rect(GUI_RECT *in_r, unsigned int power, GUI_RECT *out_r, unsigned int out_num, unsigned int *ret_num);
     #else
     #define  merge_rect(pdest, pr0, pr1)                in_merge_rect(pdest, pr0, pr1)
     #define  intersect_rect(pdest, pr0, pr1)            in_intersect_rect(pdest, pr0, pr1) 
@@ -61,6 +75,8 @@ extern  "C"
     #define  is_intersect_rect(pr0, pr1)                in_is_intersect_rect(pr0, pr1) 
     #define  is_zero_rect(pr)                           in_is_zero_rect(pr)  
     #define  is_none_zero_rect(pr)                      in_is_none_zero_rect(pr) 
+
+    #define  gui_divide_rect(in_r,power,out_r,out_num,ret_num)   in_gui_divide_rect(in_r,power, out_r, out_num, ret_num)
     #endif  /* _LG_ALONE_VERSION_ */
 
 

@@ -26,6 +26,10 @@ OBJS  += counter.o  timer.o
 OBJS  += message.o
 
 
+# bank
+OBJS  += gui_bank.o
+
+
 # 2D
 OBJS  += d2_pixel.o  d2_line.o  d2_rect.o  d2_triangle.o  d2_circle.o  d2_ellipse.o
 
@@ -36,9 +40,7 @@ OBJS  += font_ops.o text_ops.o  text_glyph.o
 
 # charsets
 OBJS  += ascii_latin_dot_0612.o  ascii_latin_dot_0816.o \
-    gb2312_dot_1212_song.o  gb2312_dot_1616_song.o  \
-    uni_cjk_unified_dot_1212_song.o  hz1212_punctuation.o \
-    uni_cjk_unified_dot_1616_song.o  hz1616_punctuation.o 
+    gb2312_dot_1212_song.o  gb2312_dot_1616_song.o 
 
 
 # tools
@@ -46,7 +48,8 @@ OBJS  += code_tools.o
 
 
 # image
-OBJS  += image_comm.o  image_bitmap.o  image_icon.o  image_gif.o  snapshot.o
+OBJS  += image_comm.o image_bitmap.o  lgui_bitmap_rotate.o  lgui_bitmap_transform.o \
+	 image_icon.o image_gif.o  snapshot.o
 
 
 # rect ops tools
@@ -73,6 +76,8 @@ OBJS  += win_tools.o  win_dc.o  win_default.o  win_caret.o  win_clip.o  win_bar.
 OBJS  +=  win_widget_group.o \
     win_group_box.o  win_cell.o  win_label.o  win_frame.o  win_push_button.o  win_radio_button.o \
     win_check_box.o  win_line_edit.o  win_list_box.o  win_com_box.o  win_progress_bar.o  win_slider_bar.o  win_image.o
+
+
 
 .PHONY: all
 

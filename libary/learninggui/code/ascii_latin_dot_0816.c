@@ -427,6 +427,8 @@ GUI_VAR_CONST  MONO_CHARSET_FONT  lasc08 =
     /* .font_id                  = */ 10,
     #endif  /* _LG_FONT_ID_ */
     /* .is_in_this_charset_block = */ is_in_ascii_d0816_block,
+    /* .is_get_serial_data       = */ 0,
+    /* .get_serial_data          = */ NULL,
     /* .get_data_start_index     = */ get_ascii_d0816_start_index,
     /* .width                    = */ 8,
     /* .height                   = */ 16,

@@ -60,7 +60,7 @@ static  int  input_read_mtjt(void *msg)
     ret = res_read( mtjt_res, 0, &event, sizeof(event) );
     if ( ret < 1 )
         return  0;
-
+    //printf("get mouse data\n");
     switch (event.type)
     {        
         case EV_REL:

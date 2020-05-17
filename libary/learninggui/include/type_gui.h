@@ -108,6 +108,16 @@ struct  _GUI_POINT
 typedef  struct _GUI_POINT   GUI_POINT;
 
 
+/* GUI_DOUBLE_POINT */
+struct  _GUI_DOUBLE_POINT
+{
+    DOUBLE  x;
+    DOUBLE  y;
+};
+typedef  struct _GUI_DOUBLE_POINT   GUI_DOUBLE_POINT;
+
+
+
 /* GUI_RECT */
 struct  _GUI_RECT
 {
@@ -121,6 +131,18 @@ typedef  struct _GUI_RECT   GUI_RECT;
 #define  GUI_RECTW(rect)    (((rect)->right)-((rect)->left)+1)
 #define  GUI_RECTH(rect)    (((rect)->bottom)-((rect)->top)+1)
 
+/* GUI_DOUBLE_RECT */
+struct  _GUI_DOUBLE_RECT
+{
+    DOUBLE  left;
+    DOUBLE  top;
+    DOUBLE  right;
+    DOUBLE  bottom;
+};
+typedef  struct _GUI_DOUBLE_RECT   GUI_DOUBLE_RECT;
+
+
+
 
 /* GUI_SIZE */
 struct  _GUI_SIZE
@@ -129,6 +151,90 @@ struct  _GUI_SIZE
     int  cy;
 };
 typedef  struct _GUI_SIZE   GUI_SIZE;
+
+
+struct tagGUI_FLOAT_RGB 
+{
+    FLOAT   blue;
+    FLOAT   green;
+    FLOAT   red;
+    FLOAT   appha;
+};
+typedef  struct  tagGUI_DOUBLE_RGB  GUI_DOUBLE_RGB; 
+
+
+struct tagGUI_DOUBLE_RGB 
+{
+    DOUBLE  blue;
+    DOUBLE  green;
+    DOUBLE  red;
+    DOUBLE  alpha;
+};
+typedef  struct  tagGUI_DOUBLE_RGB  GUI_DOUBLE_RGB; 
+
+
+
+/* GUI_ROTATE */
+struct  _GUI_ROTATE
+{
+    int  is_rotate;
+    int  x;
+    int  y;
+    int  theta;
+
+    GUI_DOUBLE_RGB  *buffer;
+    unsigned  int    buf_size;
+};
+typedef  struct _GUI_ROTATE   GUI_ROTATE;
+
+
+/* GUI_TRANSFORM */
+struct  _GUI_TRANSFORM
+{
+    int                is_transform;
+    GUI_DOUBLE_POINT   corner[4];
+
+    GUI_DOUBLE_POINT  *raw_buffer;
+    unsigned  int      raw_size;
+
+    GUI_DOUBLE_RGB    *transform_buffer;
+    unsigned  int      transform_size;
+ 
+    GUI_DOUBLE_POINT   offset;
+};
+typedef  struct _GUI_TRANSFORM   GUI_TRANSFORM;
+
+
+
+/* GUI_SYMMETRY */
+#define  GUI_SYMMETRY_VLINE               0
+#define  GUI_SYMMETRY_HLINE               1
+#define  GUI_SYMMETRY_LINE                2
+#define  GUI_SYMMETRY_POINT               3
+
+/* GUI_SYMMETRY */
+struct  _GUI_SYMMETRY
+{
+    int   is_symmetry;
+    int   symmetry_type;
+    GUI_POINT  point[2];
+};
+typedef  struct _GUI_SYMMETRY   GUI_SYMMETRY;
+
+
+/* GUI_SYMMETRY_ROTATE */
+#define  GUI_FIRST_SYMMETRY           0
+#define  GUI_FIRST_ROTATE             1
+
+
+struct  _GUI_SYMMETRY_ROTATE
+{
+    int             first;	
+    GUI_SYMMETRY    symmetry;
+    GUI_ROTATE      rotate;
+};
+typedef  struct _GUI_SYMMETRY_ROTATE   GUI_SYMMETRY_ROTATE;
+
 
 
 /* GUI_PEN */
@@ -242,7 +348,12 @@ struct _MONO_CHARSET_FONT
     UCHAR                       id;
     #endif
     int                         (*is_in_this_charset_block)(const TCHAR *code);
+
+    unsigned int                is_get_serial_data;
+    unsigned int                (*get_serial_data)(const TCHAR *code, UCHAR *data, unsigned int *data_len);
+
     unsigned int                (*get_data_start_index)(const TCHAR *code);
+
     UCHAR                       width;
     UCHAR                       height;
     void                       *data;
@@ -357,11 +468,34 @@ struct  _GUI_DC
     /* Absolute coordinate */
     GUI_RECT     rect;
 
+    /* Absolute coordinate */
+    BUINT        is_paint_rect;
+    GUI_RECT     paint_rect;
+   
+
     #ifdef  _LG_WINDOW_
     void        *hwnd;
     #endif
 };
 typedef  struct _GUI_DC    GUI_DC;
 typedef  struct _GUI_DC   *HDC;
+
+
+
+/* GUI_BANK */
+struct  _GUI_BANK
+{
+    char         *p;
+    unsigned int  len;
+    unsigned int  width;
+    unsigned int  height;
+    unsigned int  bits;
+    unsigned int  is_transparent;
+    SCREEN_COLOR  transparent_color;
+    unsigned int  option;
+};
+typedef  struct _GUI_BANK   GUI_BANK;
+
+
 
 #endif  /* __LGUI_TYYPE_GUI_HEADER__ */

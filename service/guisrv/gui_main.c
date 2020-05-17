@@ -117,7 +117,39 @@ int  message_user_main_routine(/* GUI_MESSAGE */ void *msg)
         case MSG_MTJT_MOVE:
             x = MESSAGE_GET_MTJT_X(msg);
             y = MESSAGE_GET_MTJT_Y(msg);
+            break;
             //printf("%s: mouse (%d, %d).\n", SRV_NAME, x, y);
+        case MSG_MTJT_LBUTTON_DOWN:
+            x = MESSAGE_GET_MTJT_X(msg);
+            y = MESSAGE_GET_MTJT_Y(msg);
+            printf("%s: mouse left button down (%d, %d).\n", SRV_NAME, x, y);
+            break;
+        case MSG_MTJT_LBUTTON_UP:
+            x = MESSAGE_GET_MTJT_X(msg);
+            y = MESSAGE_GET_MTJT_Y(msg);
+            printf("%s: mouse left button up (%d, %d).\n", SRV_NAME, x, y);
+            break;
+        case MSG_MTJT_RBUTTON_DOWN:
+            x = MESSAGE_GET_MTJT_X(msg);
+            y = MESSAGE_GET_MTJT_Y(msg);
+            printf("%s: mouse right button down (%d, %d).\n", SRV_NAME, x, y);
+            break;
+        case MSG_MTJT_RBUTTON_UP:
+            x = MESSAGE_GET_MTJT_X(msg);
+            y = MESSAGE_GET_MTJT_Y(msg);
+            printf("%s: mouse right button up (%d, %d).\n", SRV_NAME, x, y);
+            break;
+        case MSG_MTJT_MBUTTON_DOWN:
+            x = MESSAGE_GET_MTJT_X(msg);
+            y = MESSAGE_GET_MTJT_Y(msg);
+            printf("%s: mouse middle button down (%d, %d).\n", SRV_NAME, x, y);
+            break;
+        case MSG_MTJT_MBUTTON_UP:
+            x = MESSAGE_GET_MTJT_X(msg);
+            y = MESSAGE_GET_MTJT_Y(msg);
+            printf("%s: mouse middle button up (%d, %d).\n", SRV_NAME, x, y);
+            break;
+        
         default:
             break;
     }

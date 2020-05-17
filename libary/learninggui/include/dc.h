@@ -104,6 +104,9 @@ extern  "C"
     int  in_hdc_get_rect(HDC hdc, void *rect);
     int  in_hdc_set_rect(HDC hdc, void *rect);
 
+    int  in_hdc_get_paint_rect(HDC hdc, void *rect);
+    int  in_hdc_set_paint_rect(HDC hdc, void *rect);
+
     #ifdef  _LG_FONT_
     int  in_hdc_set_font(HDC hdc, const void *font);
     int  in_hdc_get_font(HDC hdc, void *font);
@@ -169,6 +172,9 @@ extern  "C"
     int  hdc_get_rect(HDC hdc, void *rect);
     int  hdc_set_rect(HDC hdc, void *rect);
 
+    int  hdc_get_paint_rect(HDC hdc, void *rect);
+    int  hdc_set_paint_rect(HDC hdc, void *rect);
+
     #ifdef  _LG_FONT_
     int  hdc_set_font(HDC hdc, const void *font);
     int  hdc_get_font(HDC hdc, void *font);
@@ -213,6 +219,9 @@ extern  "C"
 
     #define  hdc_get_rect(hdc, rect)                          in_hdc_get_rect(hdc, rect)
     #define  hdc_set_rect(hdc, rect)                          in_hdc_set_rect(hdc, rect)
+
+    #define  hdc_get_paint_rect(hdc, rect)                    in_hdc_get_paint_rect(hdc, rect)
+    #define  hdc_set_paint_rect(hdc, rect)                    in_hdc_set_paint_rect(hdc, rect)
 
     #ifdef  _LG_FONT_
     #define  hdc_set_font(hdc, font)                          in_hdc_set_font(hdc, font)

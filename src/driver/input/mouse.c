@@ -153,6 +153,13 @@ typedef struct _device_extension {
 #if USE_THREAD == 1
     fifo_io_t fifoio;
 #endif
+
+    /* 按键记录:
+     bit 0 置1表示左键已经按下。
+     bit 1 置1表示右键已经按下。
+     bit 2 置1表示中键已经按下。
+    */
+    uint8_t button_record;      
 } device_extension_t;
 
 /* 等待键盘控制器应答，如果不是回复码就一直等待
@@ -206,12 +213,12 @@ static int mouse_parse(device_extension_t *extension)
 	if (extension->phase == 3) {
 		extension->mouse_data.byte2 = extension->raw_data;
 		extension->phase = 1;
-/*
+
 #if DEBUG_LOCAL == 1		
         printk(KERN_DEBUG "(B:%x, X:%d, Y:%d)\n", 
             extension->mouse_data.byte0, (char)extension->mouse_data.byte1,
             (char)extension->mouse_data.byte2);
-#endif*/
+#endif
         input_event_t e;
         /* 水平方向 */
         if (extension->mouse_data.byte1) {  /* x轴有变化 */
@@ -249,23 +256,89 @@ static int mouse_parse(device_extension_t *extension)
             /* 推送事件 */
             input_even_put(&extension->evbuf, &e);
         }
-        /* 按钮 */
-        if (extension->mouse_data.byte0 & 0x07) {  /* 有按钮产生 */
-            /*e.type = EV_KEY;
-            if () {
-
-            }
-            e.code = 0;
-            e.value = extension->mouse_data.byte3;
-            */
-        }
-        /* 同步 */
+        /* 同步鼠标移动 */
         e.type = EV_SYN;
         e.code = 0;
         e.value = 0;
         /* 推送事件 */
         input_even_put(&extension->evbuf, &e);
-		return 1;
+#if 1		
+        /* 按钮 */
+        extension->mouse_data.byte0 &= 0x07; /* 只取低3位 */
+        if (extension->mouse_data.byte0 & 0x01) {   /* left button */
+            if (!(extension->button_record & 0x01)) {   /* left button not pressed */
+                extension->button_record |= 0x01; /* record */
+
+                /* 鼠标左键按下 */
+                e.type = EV_KEY;
+                e.code = BTN_LEFT;
+                e.value = 1;    /* 1表示按下 */
+                /* 推送事件 */
+                input_even_put(&extension->evbuf, &e);
+            }
+        } else {    /* no left button */
+            /* 如果上次是按下，这次又没有按下，就是弹起 */
+            if (extension->button_record & 0x01) {
+                extension->button_record &= ~0x01; /* clear record */
+                
+                /* 鼠标左键弹起 */
+                e.type = EV_KEY;
+                e.code = BTN_LEFT;
+                e.value = 0;    /* 0表示弹起 */
+                /* 推送事件 */
+                input_even_put(&extension->evbuf, &e);
+            }
+        } 
+        if (extension->mouse_data.byte0 & 0x02) {   /* right button */
+            if (!(extension->button_record & 0x02)) {   /* right button not pressed */
+                extension->button_record |= 0x02; /* record */
+
+                /* 鼠标右键按下 */
+                e.type = EV_KEY;
+                e.code = BTN_RIGHT;
+                e.value = 1;    /* 1表示按下 */
+                /* 推送事件 */
+                input_even_put(&extension->evbuf, &e);
+            }
+        } else {    /* no right button */
+            /* 如果上次是按下，这次又没有按下，就是弹起 */
+            if (extension->button_record & 0x02) {
+                extension->button_record &= ~0x02; /* clear record */
+                
+                /* 鼠标左键弹起 */
+                e.type = EV_KEY;
+                e.code = BTN_RIGHT;
+                e.value = 0;    /* 0表示弹起 */
+                /* 推送事件 */
+                input_even_put(&extension->evbuf, &e);
+            }
+        } 
+        if (extension->mouse_data.byte0 & 0x04) {   /* middle button */
+            if (!(extension->button_record & 0x04)) {   /* middle button not pressed */
+                extension->button_record |= 0x04; /* record */
+
+                /* 鼠标中键按下 */
+                e.type = EV_KEY;
+                e.code = BTN_MIDDLE;
+                e.value = 1;    /* 1表示按下 */
+                /* 推送事件 */
+                input_even_put(&extension->evbuf, &e);
+            }
+        } else {    /* no middle button */
+            /* 如果上次是按下，这次又没有按下，就是弹起 */
+            if (extension->button_record & 0x04) {
+                extension->button_record &= ~0x04; /* clear record */
+                
+                /* 鼠标左键弹起 */
+                e.type = EV_KEY;
+                e.code = BTN_MIDDLE;
+                e.value = 0;    /* 0表示弹起 */
+                /* 推送事件 */
+                input_even_put(&extension->evbuf, &e);
+            }
+        }
+#endif
+        return 1;
 	}
 	return -1; 
 }
@@ -378,6 +451,7 @@ static iostatus_t mouse_enter(driver_object_t *driver)
 
     input_even_init(&devext->evbuf);
 
+    devext->button_record = 0;
 #if USE_THREAD == 1
     unsigned char *buf = kmalloc(DEV_FIFO_BUF_LEN);
     if (buf == NULL) {

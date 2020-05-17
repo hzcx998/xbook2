@@ -11,4 +11,9 @@
 /* 除后下舍 */
 #define DIV_ROUND_DOWN(X, STEP) ((X) / (STEP))
 
+double sin(double x);
+double cos(double x);
+double sqrt (double x);
+double fabs(double x);
+
 #endif /* _LIB_MATH_H */

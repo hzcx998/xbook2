@@ -1,6 +1,6 @@
 info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:18:24:59 date:2020/5/15
+info: time:18:49:0 date:2020/5/15
 info: week day:5 Friday year day:137
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -48,7 +48,15 @@ guisrv: mapped addr 20058000
 gui_open done
 message_set_routine done
 paint_gui_main done
-guisrv: key down 162 ¢.
 guisrv: key down 163 £.
+guisrv: key down 162 ¢.
 guisrv: key up 162 ¢.
 guisrv: key up 163 £.
+guisrv: key down 163 £.
+guisrv: key up 163 £.
+guisrv: key down 163 £.
+guisrv: key up 163 £.
+guisrv: key down 162 ¢.
+guisrv: key down 163 £.
+guisrv: key up 163 £.
+guisrv: key up 162 ¢.

@@ -57,6 +57,10 @@ extern  "C"
 #endif
 
     int  in_text_out(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_counter);
+    int  in_text_rotate_special(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_counter, GUI_ROTATE *rotate);
+    int  in_text_symmetry_special(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_counter, GUI_SYMMETRY *symmetry);
+    int  in_text_symmetry_rotate(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_counter, GUI_SYMMETRY_ROTATE *s_r);
+
 
     #ifdef  _LG_TEXT_OUT_EXTENSION_
     int  in_text_out_rect(/* HDC hdc */ void *hdc, void *rect, const TCHAR *str, int code_counter, unsigned int format);
@@ -65,8 +69,15 @@ extern  "C"
 
     #ifndef  _LG_ALONE_VERSION_
     int  text_out(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_counter);
+    int  text_rotate_special(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_counter, GUI_ROTATE *rotate); 
+    int  text_symmetry_special(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_counter, GUI_SYMMETRY *symmetry);
+    int  text_symmetry_rotate(/* HDC hdc */ void *hdc, int x, int y, const TCHAR *str, int code_counter, GUI_SYMMETRY_ROTATE *s_r);
     #else
     #define  text_out(hdc, x, y, str, code_counter)    in_text_out(hdc, x, y, str, code_counter)
+    #define  text_rotate_special(hdc,x,y,str, code_counter,rotate)   in_text_rotate_special(hdc, x,y, str, code_counter, rotate) 
+    #define  text_symmetry_special(hdc,x, y, str, code_counter, symmetry)   in_text_symmetry_special(hdc, x, y, str, code_counter, symmetry)
+
+    #define  text_symmetry_rotate(hdc,x, y, str, code_counter, s_r)   in_text_symmetry_rotate(hdc, x, y, str, code_counter, s_r)
     #endif
 
     #ifdef  _LG_TEXT_OUT_EXTENSION_

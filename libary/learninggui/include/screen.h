@@ -31,7 +31,6 @@
 #include  <type_gui.h>
 
 
-#ifdef  _LG_SCREEN_
 
 #define  NO_REFRESH_SCREEN                0x00
 #define  NEED_REFRESH_SCREEN              0x01
@@ -46,6 +45,11 @@ struct  _GUI_SCREEN
     BUINT          is_vline_accelerate;
     BUINT          is_rect_fill_accelerate;
 
+    BUINT          is_hbank_accelerate;
+    BUINT          is_vbank_accelerate;
+    BUINT          is_bank_fill_accelerate;
+    BUINT          is_bank_copy_accelerate;
+
     int            (*open)(void);
     int	           (*close)(void);
 
@@ -57,6 +61,10 @@ struct  _GUI_SCREEN
     int            (*output_hline)(int left, int right, int top, SCREEN_COLOR  color);
     int            (*output_vline)(int left, int top, int bottom, SCREEN_COLOR  color);
     int            (*output_rect_fill)(int left, int top, int right, int bottom, SCREEN_COLOR  color);
+    int            (*output_hbank)(int left, int right, int top, int bank_x0, int bank_y0, void *gui_bank); 
+    int            (*output_vbank)(int left, int top, int bottom, int bank_x0, int bank_y0, void *gui_bank);
+    int            (*output_bank_fill)(int left, int top, int right, int bottom, int bank_x0, int bank_y0, void *gui_bank);
+
     int	           (*output_sequence_end)(void);
 
     int	           (*input_sequence_start)(void);
@@ -128,6 +136,5 @@ extern  "C"
 }
 #endif
 
-#endif  /* _LG_SCREEN_ */
 
 #endif  /* __LGUI_SCREEN_HEADER__ */

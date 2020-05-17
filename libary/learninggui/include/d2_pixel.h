@@ -47,14 +47,18 @@ extern  "C"
 
     int  in_point_output_pixel(HDC hdc, int x, int y);
     int  in_point_input_pixel(HDC hdc, int x, int y, GUI_COLOR  *color);
+    int  in_point_input_pixel_abs(HDC hdc, int x, int y, GUI_COLOR  *color);
 
     #ifndef  _LG_ALONE_VERSION_
     int  point_output_pixel(HDC hdc, int x, int y);
     int  point_input_pixel(HDC hdc, int x, int y, GUI_COLOR  *color);
+    int  point_input_pixel_abs(HDC hdc, int x, int y, GUI_COLOR  *color);
     #else
     #define  point_output_pixel(hdc, x, y)               in_point_output_pixel(hdc, x, y)
-    #define  point_input_pixel(hdc, x, y, color)         in_point_input_pixel(hdc, x, y, color)
+    #define  point_input_pixel(hdc, x, y, color)         in_point_input_pixel(hdc, x, y, color) 
+    #define  point_input_pixel_abs(hdc, x, y, color)     in_point_input_pixel_abs(hdc, x, y, color)
     #endif  /* _LG_ALONE_VERSION_ */
+
 
 #ifdef  __cplusplus
 }

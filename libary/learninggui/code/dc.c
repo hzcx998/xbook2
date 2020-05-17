@@ -309,6 +309,58 @@ int  hdc_set_rect(HDC hdc, void *rect)
 #endif
 
 
+int  in_hdc_get_paint_rect(HDC hdc, void *rect)
+{
+
+    if ( rect == NULL )
+        return  -1;
+
+    if ((hdc->is_paint_rect) == 0)
+        return  -1;
+
+    *((GUI_RECT *)rect) = hdc->paint_rect;
+
+    return  1;
+}
+
+#ifndef  _LG_ALONE_VERSION_
+int  hdc_get_paint_rect(HDC hdc, void *rect)
+{
+    int  ret;
+
+    gui_lock( );
+    ret = in_hdc_get_paint_rect(hdc, rect);
+    gui_unlock( );
+
+    return  ret;
+}    
+#endif
+
+
+int  in_hdc_set_paint_rect(HDC hdc, void *rect)
+{
+    if ( rect == NULL )
+        return  -1;
+
+    hdc->paint_rect = *((GUI_RECT *)rect);
+
+    return  1;
+}
+
+#ifndef  _LG_ALONE_VERSION_
+int  hdc_set_paint_rect(HDC hdc, void *rect)
+{
+    int  ret = 0;
+
+    gui_lock( );
+    ret = in_hdc_set_paint_rect(hdc, rect);
+    gui_unlock( );
+
+    return  ret;
+}    
+#endif
+
+
 #ifdef  _LG_FONT_
 
 int  in_hdc_set_font(HDC hdc, const void *font)

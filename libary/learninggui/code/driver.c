@@ -21,13 +21,11 @@
 
 int  in_driver_register(unsigned int driver_type, void *driver)
 {
-    #ifdef  _LG_SCREEN_
     if ( driver_type == DRIVER_SCREEN )
     {
         lscrn  = *((GUI_SCREEN *)driver);      
         return  1;
     }
-    #endif  /* _LG_SCREEN_ */
 
     #ifdef  _LG_KEYBOARD_ 
     if ( driver_type == DRIVER_KEYBOARD )

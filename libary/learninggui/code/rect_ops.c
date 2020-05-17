@@ -12,6 +12,7 @@
  *  GNU General Public License for more details.
  */
 
+#include  <lock.h>
 #include  <rect_ops.h>
 #include  <lgmacro.h>
 
@@ -133,3 +134,192 @@ int  in_is_none_zero_rect(const GUI_RECT *pr)
     
     return  1;
 }
+
+
+/* Divide rect function */
+int  in_gui_divide_rect(GUI_RECT *in_r, unsigned int power, GUI_RECT *out_r, unsigned int out_num, unsigned int *ret_num)
+{
+    #define   DELTA_SPACE      5
+    #define   DELTA_OFFSET     1
+
+
+    GUI_RECT      temp_rect = {0};
+    unsigned int  value     = 0;
+    unsigned int  ret_num1  = 0;
+    unsigned int  ret_num2  = 0;
+             int  mid_left  = 0;
+	     int  mid_top   = 0;
+             int  i         = 0;
+
+
+    if ( in_r == NULL )
+        return  -1;
+    if ( out_r == NULL )
+        return  -1;
+    if ( ret_num == NULL )
+        return  -1;
+
+    if ( power < 1 )
+        return  -1;
+    if ( out_num < 1 )
+        return  -1;
+
+
+    /* Horizonal line */
+    if ( (in_r->top) == (in_r->bottom) )
+    {
+        *out_r   = *in_r;
+	*ret_num = 1;
+
+        return  1;
+    }
+
+    /* Vertical line */
+    if ( (in_r->left) == (in_r->right) )
+    {
+        *out_r   = *in_r;
+	*ret_num = 1;
+
+        return  1;
+    }
+
+
+    /* Horizonal adjust  */
+    if ( GUI_ABS((in_r->top) - (in_r->bottom)) < DELTA_SPACE ) 
+    {
+        *out_r   = *in_r;
+	*ret_num = 1;
+
+        return  1;
+    }
+
+
+    /* Vertical adjust  */
+    if ( GUI_ABS((in_r->left) - (in_r->right)) < DELTA_SPACE ) 
+    {
+        *out_r   = *in_r;
+	*ret_num = 1;
+
+        return  1;
+    }
+
+
+
+    /* Need to be divided */
+    value = 1; 
+    for ( i = 0; i < power; i++ )
+        value *= 2;
+    if ( out_num < value )
+        return  -1;
+
+
+    mid_left = (((in_r->left) + (in_r->right))/2);
+    mid_top  = (((in_r->top) + (in_r->bottom))/2);
+
+    if ( power == 1 )
+    {
+        temp_rect = *in_r;
+        temp_rect.right  = mid_left;
+        temp_rect.bottom = mid_top;
+	/* Adjust .right */
+        if ( (temp_rect.left) < (temp_rect.right) )
+	{
+	    temp_rect.right += DELTA_OFFSET;
+	} else if ( (temp_rect.left) > (temp_rect.right) ) {
+	    temp_rect.right -= DELTA_OFFSET;
+	}
+	/* Adjust .bottom */
+        if ( (temp_rect.top) < (temp_rect.bottom) )
+	{
+	    temp_rect.bottom += DELTA_OFFSET;
+	} else if ( (temp_rect.top) > (temp_rect.bottom) ) {
+	    temp_rect.bottom -= DELTA_OFFSET;
+	}
+        *out_r = temp_rect;
+
+
+        temp_rect = *in_r;
+        temp_rect.left = mid_left;
+        temp_rect.top  = mid_top; 
+	/* Adjust .left */
+        if ( (temp_rect.left) < (temp_rect.right) )
+	{
+	    temp_rect.left -= DELTA_OFFSET;
+	} else if ( (temp_rect.left) > (temp_rect.right) ) {
+	    temp_rect.left += DELTA_OFFSET;
+	}
+	/* Adjust .top */
+        if ( (temp_rect.top) < (temp_rect.bottom) )
+	{
+	    temp_rect.top -= DELTA_OFFSET;
+	} else if ( (temp_rect.top) > (temp_rect.bottom) ) {
+	    temp_rect.top += DELTA_OFFSET;
+	}
+        *(out_r+1) = temp_rect;
+
+
+	*ret_num = 2;
+
+
+        return  1;	
+    } 
+
+    temp_rect = *in_r;
+    temp_rect.right  = mid_left;
+    temp_rect.bottom = mid_top;
+    /* Adjust .right */
+    if ( (temp_rect.left) < (temp_rect.right) )
+    {
+        temp_rect.right += DELTA_OFFSET;
+    } else if ( (temp_rect.left) > (temp_rect.right) ) {
+	temp_rect.right -= DELTA_OFFSET;
+    }
+    /* Adjust .bottom */
+    if ( (temp_rect.top) < (temp_rect.bottom) )
+    {
+	temp_rect.bottom += DELTA_OFFSET;
+    } else if ( (temp_rect.top) > (temp_rect.bottom) ) {
+	temp_rect.bottom -= DELTA_OFFSET;
+    }
+    in_gui_divide_rect(&temp_rect, power-1, out_r, out_num, &ret_num1);
+
+
+    temp_rect = *in_r;
+    temp_rect.left = mid_left;
+    temp_rect.top  = mid_top;
+    /* Adjust .left */
+    if ( (temp_rect.left) < (temp_rect.right) )
+    {
+	temp_rect.left -= DELTA_OFFSET;
+    } else if ( (temp_rect.left) > (temp_rect.right) ) {
+	temp_rect.left += DELTA_OFFSET;
+    }
+    /* Adjust .top */
+    if ( (temp_rect.top) < (temp_rect.bottom) )
+    {
+	temp_rect.top -= DELTA_OFFSET;
+    } else if ( (temp_rect.top) > (temp_rect.bottom) ) {
+	temp_rect.top += DELTA_OFFSET;
+    }
+
+    if ( ret_num1 > out_num )
+        ret_num1 = out_num;
+    in_gui_divide_rect(&temp_rect, power-1, out_r + ret_num1, out_num-ret_num1, &ret_num2);
+
+    *ret_num = (ret_num1 + ret_num2);
+
+    return  1;
+}
+
+#ifndef  _LG_ALONE_VERSION_
+int  gui_divide_rect(GUI_RECT *in_r, unsigned int power, GUI_RECT *out_r, unsigned int out_num, unsigned int *ret_num)
+{
+    int  ret = 0;
+
+    gui_lock( );
+    ret =  in_gui_divide_rect(in_r, power, out_r, out_num, ret_num);
+    gui_unlock( );
+
+    return  ret;
+}
+#endif

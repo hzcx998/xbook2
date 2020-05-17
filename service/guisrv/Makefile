@@ -14,7 +14,7 @@ DIR_INCLUDE = ./include
 
 # libarys
 DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
-DIR_LEARNINGGUI 		= $(DIR_LIBARY)/learninggui
+DIR_LEARNINGGUI		= $(DIR_LIBARY)/learninggui
 
 BIN = a.out
 BIN_DIS = out.disasm
@@ -48,17 +48,25 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_LEARNINGGUI)/include \
 			
 MAIN_OBJS 	= 	main.o \
-				gui_main.o \
 				driver_lcd.o \
 				driver_keyboard.o \
 				driver_mtjt.o \
-				lake_alpha.o \
+				app_font.o \
+				message_routine.o \
+				mono_discrete_font_ascii.o \
+				mono_discrete_font_Chinese.o \
+				sine.o \
+				win_comm.o \
+				win_frame1.o \
+				win_frame2.o \
+				win_frame3.o \
+				win_frame4.o \
+				win_frame5.o \
 				
-
 OBJS =  $(MAIN_OBJS)
 
 
-LIB_FILE 	= $(DIR_LEARNINGGUI)/learninggui-0.5.0.a \
+LIB_FILE 	= $(DIR_LEARNINGGUI)/learninggui-0.5.2.a \
 			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000

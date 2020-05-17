@@ -333,6 +333,8 @@ GUI_VAR_CONST  MONO_CHARSET_FONT  lasc06 =
     /* .font_id                  = */ 11,
     #endif  /* _LG_FONT_ID_ */
     /* .is_in_this_charset_block = */ is_in_ascii_d0612_block,
+    /* .is_get_serial_data       = */ 0,
+    /* .get_serial_data          = */ NULL,
     /* .get_data_start_index     = */ get_ascii_d0612_start_index,
     /* .width                    = */ 6,
     /* .height                   = */ 12,

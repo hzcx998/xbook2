@@ -35,7 +35,7 @@
 #include  <error_code.h>
 
 #include  <lgconst.h>
-
+#include  <lgmacro.h>
 
 #include  <color_match.h>
 #include  <palette.h>  
@@ -48,13 +48,12 @@
 
 #include  <color_match.h>
 
-
-#ifdef  _LG_SCREEN_
 #include  <screen.h>
 #ifdef  _LG_SNAPSHOT_
 #include  <snapshot.h>
 #endif
-#endif
+
+#include  <gui_bank.h>
 
 #ifdef  _LG_PEN_
 #include  <pen.h>
@@ -89,9 +88,15 @@
 #include  <d2_ellipse.h>
 #endif
 
+#include  <rect_ops.h>
+
+#include  <gui_bank.h>
+
 #include  <image_comm.h>
 #ifdef  _LG_BITMAP_
 #include  <image_bitmap.h>
+#include  <lgui_bitmap_rotate.h>
+#include  <lgui_bitmap_transform.h>
 #endif
 #ifdef  _LG_ICON_
 #include  <image_icon.h>
