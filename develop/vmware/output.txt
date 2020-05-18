@@ -1,11 +1,27 @@
 info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:18:49:0 date:2020/5/15
-info: week day:5 Friday year day:137
+info: time:17:19:31 date:2020/5/18
+info: week day:1 Monday year day:140
 info: init_pci: pci type device found 6.
+debug: init_driver_arch: get current driver vine:8010f763
+debug: init_driver_arch: get next driver.
+debug: init_driver_arch: get current driver vine:801101f5
+debug: init_driver_arch: get next driver.
+debug: init_driver_arch: get current driver vine:8010f1e9
 info: ide_enter: found 2 hard disks.
+debug: init_driver_arch: get next driver.
+debug: init_driver_arch: get current driver vine:80111db1
+debug: rtl8139_driver_vine: driver name=net-rtl8139v0.1
 debug: RTL8139 init failed: not find pci device.
 error: init_driver_arch: create one driver failed!
+debug: init_driver_arch: get next driver.
+debug: init_driver_arch: get current driver vine:80113169
+debug: init_driver_arch: get next driver.
+debug: init_driver_arch: get current driver vine:80114462
+debug: init_driver_arch: get next driver.
+debug: init_driver_arch: get current driver vine:80114763
+debug: init_driver_arch: get next driver.
+debug: init_driver_arch: get current driver vine:80114e23
 debug: vbe_driver_vine: driver name=vbe-graph
 debug: vbe-graph: vbe_enter: sizeof vbe info block 512 mode block 255
 debug: VBE info block:
@@ -32,6 +48,62 @@ debug: physical address for flat memory frame buffer:e8000000
 debug: bytesPerScanLine:640
 debug: vbe-graph: vbe_enter: video ram size: ea600 bytes
 debug: vbe-graph: vbe_enter: mapped virtual addr in kernel: f8601000.
+debug: init_driver_arch: get next driver.
+debug: init_driver_arch: get current driver vine:80113914
+debug: init_driver_arch: get next driver.
+debug: init_driver_arch: get current driver vine:80113f63
+debug: init_driver_arch: get next driver.
+debug: init_driver_arch: get current driver vine:80114130
+debug: init_driver_arch: get next driver.
+info: io system info-> drivers
+info: driver: name=uart-serial
+info:         device: name=com0
+info:         device: name=com1
+info:         device: name=com2
+info:         device: name=com3
+info:         device: count=4
+info: driver: name=vga-console
+info:         device: name=con0
+info:         device: name=con1
+info:         device: name=con2
+info:         device: name=con3
+info:         device: name=con4
+info:         device: name=con5
+info:         device: name=con6
+info:         device: name=con7
+info:         device: count=8
+info: driver: name=ide-disk
+info:         device: name=ide0
+info:         device: name=ide1
+info:         device: count=2
+info: driver: name=input-keyboard
+info:         device: name=kbd
+info:         device: count=1
+info: driver: name=virtual-ramdisk
+info:         device: name=ramdisk
+info:         device: count=1
+info: driver: name=virtual-floppy
+info:         device: name=vfloppy
+info:         device: count=1
+info: driver: name=vbe-graph
+info:         device: name=video
+info:         device: count=1
+info: driver: name=input-mouse
+info:         device: name=mouse
+info:         device: count=1
+info: driver: name=virtual-tty
+info:         device: name=tty0
+info:         device: name=tty1
+info:         device: name=tty2
+info:         device: name=tty3
+info:         device: name=tty4
+info:         device: name=tty5
+info:         device: name=tty6
+info:         device: name=tty7
+info:         device: count=8
+info: driver: name=virt-null
+info:         device: name=null
+info:         device: count=1
 info: raw block name:initsrv
 info: raw block name:filesrv
 initsrv: started
@@ -44,19 +116,6 @@ debug: vbe_mmap: start
 debug: vbe_mmap: length=ea600 mode len=ea600
 debug: vbe_mmap: get phy addr:e8000000
 debug: device_mmap: get device phy addr:e8000000
-guisrv: mapped addr 20058000
+guisrv: mapped addr 2004b000
 gui_open done
 message_set_routine done
-paint_gui_main done
-guisrv: key down 163 £.
-guisrv: key down 162 ¢.
-guisrv: key up 162 ¢.
-guisrv: key up 163 £.
-guisrv: key down 163 £.
-guisrv: key up 163 £.
-guisrv: key down 163 £.
-guisrv: key up 163 £.
-guisrv: key down 162 ¢.
-guisrv: key down 163 £.
-guisrv: key up 163 £.
-guisrv: key up 162 ¢.

@@ -162,16 +162,6 @@ typedef struct _device_extension {
     uint8_t button_record;      
 } device_extension_t;
 
-/* 等待键盘控制器应答，如果不是回复码就一直等待
-这个本应该是宏的，但是在vmware虚拟机中会卡在那儿，所以改成宏类函数
- */
-static void WAIT_KBC_ACK()
-{
-	unsigned char read;
-	do {
-		read = in8(KBC_READ_DATA);
-	} while ((read != KBC_RET_ACK));
-}
 #if USE_THREAD == 1
 /**
  * get_bytes_from_buf - 从键盘缓冲区中读取下一个字节
@@ -467,27 +457,23 @@ static iostatus_t mouse_enter(driver_object_t *driver)
     /* 开启鼠标端口 */
     WAIT_KBC_WRITE();
 	out8(KBC_CMD, KBC_CMD_ENABLE_MOUSE);
-	WAIT_KBC_ACK();
 	
 	/* 设置发送数据给鼠标 */
 	WAIT_KBC_WRITE();
 	out8(KBC_CMD, KBC_CMD_SEND_TO_MOUSE);
-	WAIT_KBC_ACK();
 	
 	/* 传递打开鼠标的数据传输 */
 	WAIT_KBC_WRITE();
 	out8(KBC_WRITE_DATA, MOUSE_CMD_ENABLE_SEND);
-	WAIT_KBC_ACK();
-	    
+	 
     /* 设置鼠标与键盘使能以及IRQ中断开启 */
     WAIT_KBC_WRITE();
 	out8(KBC_CMD, KBC_CMD_WRITE_CONFIG);
-	WAIT_KBC_ACK();
 	
     /* 配置键盘控制器的值 */
     WAIT_KBC_WRITE();
 	out8(KBC_WRITE_DATA, KBC_CONFIG);
-	WAIT_KBC_ACK();
+
 #if USE_THREAD == 1    
     /* 启动一个内核线程来处理数据 */
     kthread_start("mouse", TASK_PRIO_RT, mouse_thread, devext);

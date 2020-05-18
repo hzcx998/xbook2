@@ -126,7 +126,7 @@
 
 #define DEV_NAME "rtl8139"
 
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 /*备注以太网的情况*/
 #define ETH_ALEN 6 /*以太网地址，即MAC地址，6字节*/

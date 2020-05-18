@@ -45,7 +45,7 @@ iostatus_t default_device_dispatch(device_object_t *device, io_request_t *ioreq)
     io_complete_request(ioreq);
     return IO_SUCCESS;  /* 默认是表示执行成功 */
 }
-#if 0 /* print devices */
+#if DEBUG_LOCAL == 1 /* print devices */
 static void print_drivers()
 {
     driver_object_t *drvobj;
@@ -1218,13 +1218,15 @@ void init_driver_arch()
     /* 初始化驱动程序 */
     for (i = 0; i < ARRAY_SIZE(driver_vine_table); i++) {
         vine = driver_vine_table[i];
-        if (driver_object_create(vine))
+        if (driver_object_create(vine)) {
             printk(KERN_ERR "init_driver_arch: create one driver failed!\n");
+        }
     }
- 
+ #if DEBUG_LOCAL == 1
     //print_drivers_mini();
     /* 输出所有驱动以及设备 */
-    //print_drivers();
+    print_drivers();
+#endif
 #if 0    
     handle_t null = device_open("null", 0);
     if (null < 0)

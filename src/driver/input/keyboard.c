@@ -666,9 +666,6 @@ uint16_t scan_code_to_even_code(int key)
     return KEY_UNKNOWN; /* 未知编码 */
 }
 
-/* 等待键盘控制器应答，如果不是回复码就一直等待
-这个本应该是宏的，但是在vmware虚拟机中会卡在那儿，所以改成宏类函数
- */
 static void WAIT_KBC_ACK()
 {
 	unsigned char read;
@@ -1089,12 +1086,10 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
     /* 发送写配置命令 */
     WAIT_KBC_WRITE();
 	out8(KBC_CMD, KBC_CMD_WRITE_CONFIG);
-    WAIT_KBC_ACK();
-    
+
     /* 往数据端口写入配置值 */
     WAIT_KBC_WRITE();
 	out8(KBC_WRITE_DATA, KBC_CONFIG);
-	WAIT_KBC_ACK();
 
     /* 启动一个内核线程来处理数据 */
     kthread_start("kbd", TASK_PRIO_RT, kbd_thread, devext);
