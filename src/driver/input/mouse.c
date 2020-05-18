@@ -170,7 +170,7 @@ static void WAIT_KBC_ACK()
 	unsigned char read;
 	do {
 		read = in8(KBC_READ_DATA);
-	} while ((read =! KBC_RET_ACK));
+	} while ((read != KBC_RET_ACK));
 }
 #if USE_THREAD == 1
 /**
