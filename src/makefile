@@ -42,7 +42,6 @@ VMWARE_VMX	= "D:\VMpc\vmware-xbook2\xbook2.vmx"
 
 #----tools----
 TOOLS_DIR = ../tools/
-FATFS		= $(TOOLS_DIR)/fatfs/fatfs
 
 #----image----
 #img dir
@@ -53,9 +52,6 @@ HDA_IMG		= $(IMG_DIR)c.img
 HDB_IMG		= $(IMG_DIR)d.img
 HDC_IMG		= $(IMG_DIR)e.img
 HDD_IMG		= $(IMG_DIR)f.img
-
-#----rom----
-ROM_DIR		= $(DEVELOPMENT_DIR)rom
 
 #----flags----
 #out a map file: -Map kernel.map
@@ -159,9 +155,6 @@ $(KERNEL_ELF): $(OBJS)
 
 dis: $(KERNEL_ELF)
 	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > $(KERNEL_ELF_DISASM)
-
-rom:
-	$(FATFS) $(HDB_IMG) $(ROM_DIR)
 
 #write file into disk
 disk: $(KERNEL_ELF)
