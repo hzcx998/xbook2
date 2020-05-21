@@ -15,10 +15,8 @@ DIR_XBOOKLIB = $(DIR_LIBARY)/xbooklib
 
 BIN = a.out
 BIN_DIS = out.disasm
-BIN_OFF = 200 
+BIN_OFF = 4000 
 BIN_CNTS = 100
-
-FLOPPY_OFF = 722
 
 #img dir
 IMG_DIR = ../../develop/image/
@@ -62,7 +60,7 @@ $(BIN): $(OBJS) $(LIB_FILE)
 dis: $(BIN)
 	$(OBJDUMP) -M intel -D $(BIN) > $(BIN_DIS)
 
-disk: img vhd vmdk floppy 
+disk: img vhd vmdk 
 
 img:
 	$(DD) if=$(BIN) of=$(HD_IMG) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
@@ -72,17 +70,14 @@ vhd:
 	
 vmdk:
 	$(DD) if=$(BIN) of=$(HD_VMDK) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
-
-floppy:
-	$(DD) if=$(BIN) of=$(FD_IMG) bs=512 seek=$(FLOPPY_OFF) count=$(BIN_CNTS) conv=notrunc
-		
+	
 qemu: compile link img
 	
 vbox: compile link vhd
 
 vmware: compile link vmdk
 	
-phy: compile link floppy
+phy: compile link
 
 #Clean temporary files
 clean:

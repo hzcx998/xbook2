@@ -11,10 +11,10 @@ int main(int argc, char *argv[])
     
     printf("bosh: I am do nothing now!\n");
     
-    exit(0);
     while (1);  /* loop forever */
-
-    return 0;   
+    
+    exit(0);
+    return 0;
 }
 
 int read_key()

@@ -10,7 +10,6 @@
 #include <sys/ioctl.h>
 #include <sys/kfile.h>
 #include <sys/ipc.h>
-#include <sys/proc.h>
 #include <ff.h>
 #include <stdio.h>
 #include <pthread.h>
@@ -19,14 +18,15 @@
 #define DEBUG_LOCAL 0
 
 #include "filesrv.h"
+#include "fatfs.h"
 
 /**
  * filesrv - 文件服务
  */
 int main(int argc, char *argv[])
 {
-    printf("%s: started.\n", SRV_NAME);
-
+    //printf("%s: started.\n", SRV_NAME);
+    
     /* 绑定成为服务调用 */
     if (srvcall_bind(SRV_FS))  {
         printf("%s: bind srvcall failed, service stopped!\n", SRV_NAME);
@@ -57,12 +57,19 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    /* 构建文件 */
     if (filesrv_create_files()) {
-        printf("%s: create files failed, service stopped!\n", SRV_NAME);
+        printf("%s: create file failed, service stopped!\n", SRV_NAME);
         return -1;
     }
 
+    printf("%s: scan files start:\n", SRV_NAME);
+    char scan_path[256];
+    memset(scan_path, 0, 256);
+    strcpy(scan_path, "0:");
+    /* 扫描文件 */
+    fatfs_scan_files(scan_path);
+    printf("%s: scan files end.\n", SRV_NAME);
+    
     int seq;
     srvarg_t srvarg;
     int callnum;

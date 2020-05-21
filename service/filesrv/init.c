@@ -27,7 +27,10 @@
 #define SECTORS_PER_BLOCK   256
 
 /* 创建文件系统状态：0，不创建文件系统，1创建文件系统 */
-#define MKFS_STATE  1
+#define MKFS_STATE  0
+
+/* 原始磁盘，不在上面挂载文件系统 */
+#define RAW_DISK    "ide0"
 
 FATFS fatfs_info_table[FILESRV_DRV_NR];           /* Filesystem object */
 
@@ -49,16 +52,19 @@ int filesrv_probe_device()
             break;
 #if DEBUG_LOCAL == 1
         printf("%s: %s: probe device %s\n", SRV_NAME, __func__, devent.de_name);
-#endif        
-        disk_drives[idx].devent = devent;
-        disk_drives[idx].seq[0] = idx + '0';
-        disk_drives[idx].seq[1] = ':';
-        disk_drives[idx].seq[2] = 0;
-        disk_drives[idx].handle = -1;
+#endif      
+        if (strcmp(devent.de_name, RAW_DISK)) {
+            disk_drives[idx].devent = devent;
+            disk_drives[idx].seq[0] = idx + '0';
+            disk_drives[idx].seq[1] = ':';
+            disk_drives[idx].seq[2] = 0;
+            disk_drives[idx].handle = -1;
 
-        idx++;
-        if (idx >= FILESRV_DRV_NR)
-            break;
+            idx++;
+            if (idx >= FILESRV_DRV_NR)
+                break;
+        }
+        
         p = &devent;
     } while (1);
 
@@ -81,6 +87,13 @@ int filesrv_probe_device()
             break;
         p = &devent;
     } while (1);
+
+    int i;
+    for (i = 0; i < idx; i++) {
+        printf("%s: disk seq: %s -> %s\n", SRV_NAME, disk_drives[i].seq,
+            disk_drives[i].devent.de_name);
+    }
+
     return 0;
 }
 
@@ -89,9 +102,6 @@ int filesrv_init()
     FRESULT res;        /* API result code */
     BYTE work[FF_MAX_SS]; /* Work area (larger is better for processing time) */
 
-    /* 打印路径的缓冲区 */
-    char pathbuf[256];
-    char cwdbuf[32];
     disk_drive_t *dd;
     /* 探测磁盘 */
     filesrv_probe_device();
@@ -103,14 +113,27 @@ int filesrv_init()
             printf("%s: %s: make file system on drive %s start.\n", SRV_NAME, __func__, dd->seq);
 #endif             
             if (dd->devent.de_type == DEVICE_TYPE_DISK) {
-#if MKFS_STATE == 1   /* mkfs */
-                /* 在磁盘上创建文件系统 */
-                res = f_mkfs(dd->seq, 0, work, sizeof(work));
-                if (res != FR_OK) {
-                    printf("%s: make fs on drive %s failed with resoult code %d.\n", SRV_NAME, res);
-                    return res;
+                /* 检测磁盘是否有引导标志 */
+                char buf[512];
+                memset(buf, 0, 512);
+                int diskres = res_open(dd->devent.de_name, RES_DEV, 0);
+                if (diskres < 0) {
+                    printf("%s: open disk %s failed!\n", SRV_NAME, dd->devent.de_name);
+                    return -1;
                 }
-#endif
+                res_read(diskres, 0, buf, 512);
+                res_close(diskres);
+                //printf("%x %x\n", buf[510], buf[511]);
+                if (buf[510] != 0x55 && buf[511] != 0xaa) {
+                    printf("%s: no fs on %s, create new one.\n", SRV_NAME, dd->devent.de_name);
+                    
+                    /* 在磁盘上创建文件系统 */
+                    res = f_mkfs(dd->seq, 0, work, sizeof(work));
+                    if (res != FR_OK) {
+                        printf("%s: make fs on drive %s failed with resoult code %d.\n", SRV_NAME, res);
+                        return res;
+                    }
+                }
             } else {    /* 虚拟磁盘每次都需要创建文件系统 */
                 /* 在磁盘上创建文件系统 */
                 res = f_mkfs(dd->seq, 0, work, sizeof(work));
@@ -119,16 +142,18 @@ int filesrv_init()
                     return res;
                 }
             }
-
+            //printf("%s: mount drive:%s\n", SRV_NAME, dd->seq);
             /* 挂载到内存中 */
-            res = f_mount(&fatfs_info_table[i], dd->seq, 0);
+            res = f_mount(&fatfs_info_table[i], dd->seq, 1);
             if (res != FR_OK) {
                 printf("%s: %s: mount fs on drive %s failed with resoult code %d.\n", SRV_NAME, __func__, res);
                 return res;
             }
+            
+#if DEBUG_LOCAL == 1
             f_chdrive(dd->seq);
             memset(cwdbuf, 0, 32);
-#if DEBUG_LOCAL == 1
+
             f_getcwd(cwdbuf, 32);
             //printf("%s: %s: list path %s\n", SRV_NAME, __func__, cwdbuf);
             memset(pathbuf, 0, 256);
@@ -138,9 +163,11 @@ int filesrv_init()
 #endif        
         }
     }
+#if DEBUG_LOCAL == 1
     /* 切换回第一个驱动器 */
     dd = &disk_drives[0];
     f_chdrive(dd->seq);
+#endif
     //printf("%s: init done.\n", SRV_NAME);
     return 0;
 }
@@ -221,30 +248,64 @@ free_buf:
     return -1;
 }
 
-#define PATH_NETSRV "1:/netsrv.xsv"
+#define PATH_GUISRV "0:/guisrv.xsv"
+#define PATH_NETSRV "0:/netsrv.xsv"
 
+/* 文件映射 */
+struct file_map {
+    char *path;     /* 路径 */
+    size_t size;    /* 实际大小 */
+    off_t off;      /* 偏移 */
+    char execute;   /* 是否需要执行 */
+};
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
+struct file_map file_map_table[] = {
+    //{PATH_GUISRV, 350 * 1024, 800},
+    {PATH_NETSRV, 400 * 512, 1500, 1},
+    {"/login.xbk", 100 * 512, 4000, 1},
+    {"/bosh.xbk", 100 * 512, 4100, 0},
+};
+
+/*
+[dir] [file] [size] [off]
+<bin/abc, hello, 1023, 100>
+<srv, guisrv.xsv, 1023, 200>
+*/
 int filesrv_create_files()
 {
-    if (filesrv_create_file(PATH_NETSRV, 350 * 1024, "ide0", 800)) {
-        return -1;
+    struct file_map *fmap;
+    int i;
+    for (i = 0; i < ARRAY_SIZE(file_map_table); i++) {
+        fmap = &file_map_table[i];
+        if (filesrv_create_file(fmap->path, fmap->size, RAW_DISK, fmap->off)) {
+            continue;
+        }
     }
     return 0;
 }
 
 int filesrv_execute()
 {
-    int pid = fork();
-    if (pid < 0) {
-        printf("%s: %s: fork failed!\n", SRV_NAME, __func__);
-        return -1;
-    }
-    if (!pid) { /* 子进程执行新进程 */
-
-        if (execv(PATH_NETSRV, NULL)) {
-            printf("%s: %s: execv failed!\n", SRV_NAME, __func__);
-            exit(-1);
-        }    
+    struct file_map *fmap;
+    int pid;
+    int i;
+    for (i = 0; i < ARRAY_SIZE(file_map_table); i++) {
+        fmap = &file_map_table[i];
+        if (fmap->execute) {
+            pid = fork();
+            if (pid < 0) {
+                printf("%s: %s: fork failed!\n", SRV_NAME, __func__);
+                return -1;
+            }
+            if (!pid) { /* 子进程执行新进程 */
+                if (execv(fmap->path, NULL)) {
+                    printf("%s: %s: execv failed!\n", SRV_NAME, __func__);
+                    exit(-1);
+                }
+            }
+        }
     }
     return 0;
 }

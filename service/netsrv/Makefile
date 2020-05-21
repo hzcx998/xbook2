@@ -23,7 +23,7 @@ DIR_LWIPLIB 		= $(DIR_LIBARY)/lwiplib
 
 BIN = a.out
 BIN_DIS = out.disasm
-BIN_OFF = 800 
+BIN_OFF = 1500 
 BIN_CNTS = 400
 
 FLOPPY_OFF = 522

@@ -19,9 +19,6 @@ const unsigned char htmldata[] = "	\
 	    <center><p>A WebServer Based on LwIP v1.4.1!</center>\
 	    </html>";
 
-static void echo_client_init(void);
-static void http_server_init(void);
-
 //@@code for a echo client
 //@@client will connect to server first,then send anything received out to server 
 //@@client will never close connection actively
@@ -67,13 +64,11 @@ static err_t echo_client_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 	tcp_recv(pcb, echo_client_recv);
 	tcp_sent(pcb, echo_client_sent);
     
-	
-	 
     tcp_write(pcb, GREETING, sizeof(GREETING), 1); 
     return ERR_OK;
 }
 
-static void echo_client_init(void)
+void echo_client_init(void)
 {
   struct tcp_pcb *pcb = NULL;	            		
   struct ip_addr server_ip;
@@ -138,8 +133,7 @@ static err_t http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
   * @param  None 
   * @retval None 
   */
- 
-static void http_server_init(void)
+void http_server_init(void)
 {
   struct tcp_pcb *pcb = NULL;	            		
   

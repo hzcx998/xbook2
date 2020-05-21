@@ -89,7 +89,7 @@ VBE_CMD_VBEINFO  EQU     0x4f00  ; 返回VBE控制器的信息
 %define CONFIG_GRAPHIC      1
 
 ; 启动图形模式
-%define CONFIG_GRAPHIC_SWITCH   1
+%define CONFIG_GRAPHIC_SWITCH   0
 ; 注意！！！ 配置图形只检测图形模式，如果要切换到图形模式，则需要打开图形开关
 
 %if CONFIG_GRAPHIC == 1

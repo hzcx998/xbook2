@@ -25,10 +25,10 @@ enum input_key_code {
     KEY_LEFT,         /* left arrow */
     KEY_BACKSPACE,    /* backspace */
     KEY_TAB,          /* 9: tab */
+    KEY_ENTER,        /* 10: enter */
     KEY_INSERT,       /* insert */
     KEY_HOME,         /* home */
     KEY_END,          /* end */
-    KEY_ENTER,        /* 13: enter */
     KEY_PAGEUP,       /* page up */
     KEY_PAGEDOWN,     /* page down */
     KEY_F1,           /* F1 */

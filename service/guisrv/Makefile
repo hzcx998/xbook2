@@ -16,8 +16,11 @@ DIR_INCLUDE = ./include
 DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
 DIR_LEARNINGGUI		= $(DIR_LIBARY)/learninggui
 
-BIN = a.out
-BIN_DIS = out.disasm
+# rom dir
+ROM_DIR = ../../develop/rom
+
+BIN = $(ROM_DIR)/guisrv.xsv
+BIN_DIS = guisrv.xsv.disasm
 BIN_OFF = 800 
 BIN_CNTS = 700
 
@@ -35,6 +38,7 @@ FD_IMG = $(IMG_DIR)$(FLOPPY_IMG)
 HD_IMG = $(IMG_DIR)$(DISK_IMG)
 HD_VHD = $(IMG_DIR)$(DISK_VHD)
 HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
+
 
 #flags
 ASM_FLAGS	= -f elf \

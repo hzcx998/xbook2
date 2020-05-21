@@ -109,6 +109,31 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
             if (extension->public->detach_kbd) {    /* 键盘分离了就不能读取键盘 */
                 status = IO_FAILED;
             } else {
+                /* read from input even */
+                struct input_event event;
+                int ret = 0;
+                
+                memset(&event, 0, sizeof(event));
+                ret = device_read(extension->kbd, &event, sizeof(event), 0);
+                if ( ret < 1 ) {
+                    status = IO_FAILED;
+                } else {
+                    switch (event.type)
+                    {                
+                        case EV_KEY:         
+                            /* 按下的按键 */
+                            if ((event.value) > 0) {
+                                //printk("tty: key down %x %c\n", event.code, event.code);
+                                ioreq->io_status.infomation = sizeof(event);
+                                *(unsigned int *) ioreq->user_buffer = event.code;
+                            }
+                            break;
+                        default:
+                            status = IO_FAILED;
+                            break;
+                    }
+                }
+                #if 0
                 ioreq->io_status.infomation = device_read(extension->kbd,
                     ioreq->user_buffer, 4, ioreq->parame.read.offset); /* read all */
                 if (ioreq->io_status.infomation == -1) {
@@ -121,6 +146,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                         status = IO_FAILED; /* 不捕捉 */
                     }
                 }
+                #endif
             }
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
             trigger_force(TRIGHW, current_task->pid);

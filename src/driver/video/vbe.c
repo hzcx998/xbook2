@@ -14,7 +14,10 @@
 
 #define DEV_NAME "video"
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
+
+/* 将显存映射到内核，在内核态也可以操作显存 */
+#define MAP_VRAM_TO_KERN    1
 
 /* VBE信息的内存地址 */
 #define VBE_INFO_ADDR  0x80001100
@@ -241,14 +244,26 @@ static iostatus_t vbe_enter(driver_object_t *driver)
     dump_vbe_mode_info_block(extension->mode_info);
 
 #endif  /* VESA_DEBUG */
+
+    extension->vir_base_addr = NULL;
+#if MAP_VRAM_TO_KERN == 1
+    /* 将显存映射到内核 */
     int video_ram_size = extension->mode_info->bytesPerScanLine * extension->mode_info->yResolution;
+    extension->vir_base_addr = ioremap(extension->mode_info->phyBasePtr, video_ram_size);
+    if (extension->vir_base_addr == NULL) {
+        status = IO_FAILED;
+        printk(KERN_ERR "%s: %s: ioremap for vbe ram failed!\n", 
+            DRV_NAME, __func__);
+        return status;
+    }
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "%s: %s: " "video ram size: %x bytes\n", 
         DRV_NAME, __func__, video_ram_size);
-    extension->vir_base_addr = ioremap(extension->mode_info->phyBasePtr, video_ram_size);
     printk(KERN_DEBUG "%s: %s: " "mapped virtual addr in kernel: %x.\n", 
         DRV_NAME, __func__, extension->vir_base_addr);
-    memset(extension->vir_base_addr, 0x00, video_ram_size);
-
+#endif  /*  DEBUG_LOCAL */
+#endif  /* MAP_VRAM_TO_KERN */
+ 
     return status;
 }
 

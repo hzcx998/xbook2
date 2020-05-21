@@ -42,6 +42,7 @@ VMWARE_VMX	= "D:\VMpc\vmware-xbook2\xbook2.vmx"
 
 #----tools----
 TOOLS_DIR = ../tools/
+FATFS		= $(TOOLS_DIR)/fatfs/fatfs
 
 #----image----
 #img dir
@@ -52,6 +53,9 @@ HDA_IMG		= $(IMG_DIR)c.img
 HDB_IMG		= $(IMG_DIR)d.img
 HDC_IMG		= $(IMG_DIR)e.img
 HDD_IMG		= $(IMG_DIR)f.img
+
+#----rom----
+ROM_DIR		= $(DEVELOPMENT_DIR)rom
 
 #----flags----
 #out a map file: -Map kernel.map
@@ -120,12 +124,11 @@ NASM_FLAGS	:= $(INCLUDE_PATH)
 
 OBJCOPY_FLAGS = -R .note -R .comment -S 
 
-
 #kernel file	
 KERNEL_ELF =  kernel.elf
 KERNEL_ELF_DISASM =  kernel.elf.disasm
 
-PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg vbox clean dis
+PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg vbox clean dis rom
 PHONY	+= $(SRCDIRS)
 
 export NASM NASM_FLAGS CC LD CFLAGS LDFLAGS TOPDIR OBJCOPY OBJCOPY_FLAGS
@@ -156,6 +159,9 @@ $(KERNEL_ELF): $(OBJS)
 
 dis: $(KERNEL_ELF)
 	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > $(KERNEL_ELF_DISASM)
+
+rom:
+	$(FATFS) $(HDB_IMG) $(ROM_DIR)
 
 #write file into disk
 disk: $(KERNEL_ELF)
@@ -199,9 +205,7 @@ QEMU_ARGUMENT = -m 256M \
 		-name "Xbook Development Platform for x86" \
 		-fda $(FLAPPY_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 		-serial stdio \
-		
-
-# -net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
+		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
 		
 qemu: disk
 	$(QEMU) $(QEMU_ARGUMENT)

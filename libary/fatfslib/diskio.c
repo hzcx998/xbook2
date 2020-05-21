@@ -80,7 +80,7 @@ DSTATUS disk_initialize (
 	int result;
     if (pdrv >= FF_VOLUMES)
         return STA_NOINIT;
-
+    //printf("disk: %s\n", disk_drives[pdrv].devent.de_name);
     result = res_open(disk_drives[pdrv].devent.de_name, RES_DEV, 0);
     if (result >= 0) {
         disk_drives[pdrv].handle = result;
@@ -90,44 +90,6 @@ DSTATUS disk_initialize (
         printf("%s: open disk %s failed!\n", __func__, disk_drives[pdrv].devent.de_name);
     }
     return stat;
-
-	switch (pdrv) {
-	case DEV_RAM :
-        result = res_open("ramdisk", RES_DEV, 0);
-        if (result >= 0) {
-            
-            device_handles[DEV_RAM] = result;
-            stat = 0;
-        } else {
-            stat = STA_NODISK;
-            printf("open ramdisk failed!\n");
-        }
-        break;
-	case DEV_IDE0 :
-		//result = RAM_disk_initialize();
-        result = res_open("ide0", RES_DEV, 0);
-        if (result >= 0) {
-            device_handles[DEV_IDE0] = result;
-            stat = 0;
-        } else {
-            stat = STA_NODISK;
-        }
-		break;
-	case DEV_IDE1 :
-		//result = RAM_disk_initialize();
-        result = res_open("ide1", RES_DEV, 0);
-        if (result >= 0) {
-            device_handles[DEV_IDE1] = result;
-            stat = 0;
-        } else {
-            stat = STA_NODISK;
-        }
-		break;
-    default:
-        stat = STA_NOINIT;
-        break;
-	}
-	return stat;
 }
 
 
@@ -154,37 +116,6 @@ DRESULT disk_read (
     } else {
         res = RES_OK;
     }
-    return res;
-
-	switch (pdrv) {
-	case DEV_RAM :
-        result = res_read(device_handles[DEV_RAM], sector, buff, count * FF_MIN_SS);
-        if (result < 0) {
-            res = RES_ERROR;
-        } else {
-            res = RES_OK;
-        }
-		break;
-	case DEV_IDE0 :
-		result = res_read(device_handles[DEV_IDE0], sector, buff, count * FF_MIN_SS);
-        if (result < 0) {
-            res = RES_ERROR;
-        } else {
-            res = RES_OK;
-        }
-		break;
-	case DEV_IDE1 :
-        result = res_read(device_handles[DEV_IDE1], sector, buff, count * FF_MIN_SS);
-        if (result < 0) {
-            res = RES_ERROR;
-        } else {
-            res = RES_OK;
-        }
-        break;
-	default:
-        res = RES_PARERR;
-        break;	
-	}
     return res;
 }
 
@@ -215,40 +146,6 @@ DRESULT disk_write (
         res = RES_OK;
     }
     return res;
-
-
-	switch (pdrv) {
-	case DEV_RAM :
-        result = res_write(device_handles[DEV_RAM], sector, (char *) buff, count * FF_MIN_SS);
-        if (result < 0) {
-            res = RES_ERROR;
-        } else {
-            res = RES_OK;
-        }
-        break;
-	case DEV_IDE0 :
-		result = res_write(device_handles[DEV_IDE0], sector, (char *) buff, count * FF_MIN_SS);
-        if (result < 0) {
-            res = RES_ERROR;
-        } else {
-            res = RES_OK;
-        }
-		break;
-	case DEV_IDE1 :
-        result = res_write(device_handles[DEV_IDE1], sector, (char *) buff, count * FF_MIN_SS);
-        if (result < 0) {
-            res = RES_ERROR;
-        } else {
-            res = RES_OK;
-        }
-        break;
-    default:
-        res = RES_PARERR;
-        break;
-	}
-
-
-	return res;
 }
 
 #endif
@@ -281,77 +178,11 @@ DRESULT disk_ioctl (
         break;     
     case GET_SECTOR_COUNT:
         *(DWORD*)buff = res_ioctl(disk_drives[pdrv].handle, DISKIO_GETSIZE, 0);res = RES_OK;
+        //printf("disk%d count:%d\n", pdrv, *(DWORD*)buff);
         break;
     default:
         res = RES_ERROR;
         break;
     }
-
-    return res;
-    
-	switch (pdrv) {
-	case DEV_RAM :
-        switch(cmd)
-        {
-        case CTRL_SYNC:
-            res = RES_OK;
-            break;     
-        case GET_SECTOR_SIZE:
-            *(WORD*)buff = 512; res = RES_OK;
-            break;     
-        case GET_BLOCK_SIZE:
-            *(WORD*)buff = 1; res = RES_OK;
-            break;     
-        case GET_SECTOR_COUNT:
-            *(DWORD*)buff = res_ioctl(device_handles[DEV_RAM], DISKIO_GETSIZE, 0);res = RES_OK;
-            break;
-        default:
-            res = RES_PARERR;
-            break;
-        }
-        break;
-	case DEV_IDE0 :
-        switch(cmd)
-        {
-        case CTRL_SYNC:
-            res = RES_OK;
-            break;     
-        case GET_SECTOR_SIZE:
-            *(WORD*)buff = 512; res = RES_OK;
-            break;     
-        case GET_BLOCK_SIZE:
-            *(WORD*)buff = 1; res = RES_OK;
-            break;     
-        case GET_SECTOR_COUNT:
-            *(DWORD*)buff = res_ioctl(device_handles[DEV_IDE0], DISKIO_GETSIZE, 0);res = RES_OK;
-            break;
-        default:
-            res = RES_PARERR;
-            break;
-        }
-        break;
-
-	case DEV_IDE1 :
-        switch(cmd)
-        {
-        case CTRL_SYNC:
-            res = RES_OK;
-            break;     
-        case GET_SECTOR_SIZE:
-            *(WORD*)buff = 512; res = RES_OK;
-            break;     
-        case GET_BLOCK_SIZE:
-            *(WORD*)buff = 1; res = RES_OK;
-            break;     
-        case GET_SECTOR_COUNT:
-            *(DWORD*)buff = res_ioctl(device_handles[DEV_IDE1], DISKIO_GETSIZE, 0);res = RES_OK;
-            break;
-        default:
-            res = RES_PARERR;
-            break;
-        }
-        break;
-	}
-
 	return res;
 }

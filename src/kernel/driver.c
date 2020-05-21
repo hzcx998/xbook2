@@ -25,7 +25,7 @@ driver_func_t driver_vine_table[] = {
     rtl8139_driver_vine,                /* net */
     keyboard_driver_vine,               /* input */
     ramdisk_driver_vine,                /* disk */
-    vfloppy_driver_vine,                /* disk */
+    //vfloppy_driver_vine,                /* disk */
     vbe_driver_vine,                    /* video */
     mouse_driver_vine,                  /* input */
     tty_driver_vine,                    /* filter: tty */

@@ -31,8 +31,6 @@
 int main(int argc, char *argv[])
 {
     printf("%s: started.\n", SRV_NAME);
-
-
     GUI_MESSAGE  msg = {0};
     int          ret = 0;
 
@@ -56,8 +54,6 @@ int main(int argc, char *argv[])
     register_mtjt();
     #endif
 
-    printf("register_screen done\n");
-
     /*
      *  Step 2: call gui_open
      */
@@ -65,14 +61,10 @@ int main(int argc, char *argv[])
     if ( ret < 0 )
         return  -1;
 
-    printf("gui_open done\n");
-
-
     /*
      *  Step 3: init system
      */
     
-
     /*
      *  Step 3: init system
      */
@@ -83,8 +75,6 @@ int main(int argc, char *argv[])
     /* Set client default_font */
     win_set_client_default_font((GUI_FONT *)(&app_font));
 #endif
-
-
 
     /*
      *  Step 4: call message_set_routine
@@ -97,9 +87,6 @@ int main(int argc, char *argv[])
 #endif
     if ( ret < 0 )
         return  -1;
-
-    printf("message_set_routine done\n");
-
 
     /*
      *  Step 5: create and show user GUI
@@ -134,12 +121,10 @@ int main(int argc, char *argv[])
     }
     printf("quit learning GUI.\n");
 
-
     /*
      *  Step 7: user clean 
      */
-
-
+    
     /*
      *  Step 8: call gui_open
      */

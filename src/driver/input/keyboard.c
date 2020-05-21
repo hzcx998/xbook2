@@ -1052,10 +1052,7 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
     devobj->flags = 0;
     devext = (device_extension_t *)devobj->device_extension;
     devext->device_object = devobj;
-#if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "keyboard_enter: device extension: device name=%s object=%x\n",
-        devext->device_name.text, devext->device_object);
-#endif        
+
     devext->irq = IRQ1;
     devext->keycode = 0;
 	/* 初始化私有数据 */

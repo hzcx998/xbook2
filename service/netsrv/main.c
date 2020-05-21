@@ -26,6 +26,7 @@
 #include <http.h>
 #include <netsrv.h>
 
+
 extern err_t ethernetif_init(struct netif *netif);
 extern void ethernetif_input(struct netif *netif);
 
@@ -47,14 +48,14 @@ void lwip_init_task(void)
 
 int main(int argc, char *argv[])
 {
-    printf("%s: started.\n", SRV_NAME);
+    //printf("%s: started.\n", SRV_NAME);
     //init LwIP
 	lwip_init_task();
 
-    /*
-    setup echo server
+    
+    // setup echo server
  	echo_client_init();
-    http_server_init();*/
+    http_server_init();
 	
     //ping_init();
 	
