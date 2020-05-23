@@ -1,7 +1,7 @@
 info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:15:45:58 date:2020/5/21
-info: week day:4 Thursday year day:143
+info: time:20:59:14 date:2020/5/23
+info: week day:6 Saturday year day:145
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.

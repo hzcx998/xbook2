@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
     }
 login_ok:
     printf("\nlogin: login success! :)\n");
+
     /* 打开shell */
     if (execv(BIN_NAME, NULL)) {
         printf("login: execv shell failed!\n");

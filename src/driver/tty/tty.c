@@ -121,7 +121,9 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                                 ioreq->io_status.infomation = sizeof(event);
                                 *(unsigned int *) ioreq->user_buffer = event.code;
                                 status = IO_SUCCESS;
-                            
+#if DEBUG_LOCAL == 1                                
+                                printk(KERN_DEBUG "tty: read keycode %x\n", event.code);
+#endif
                             }
                             break;
                         default:

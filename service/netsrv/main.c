@@ -48,10 +48,10 @@ void lwip_init_task(void)
 
 int main(int argc, char *argv[])
 {
+
     //printf("%s: started.\n", SRV_NAME);
     //init LwIP
 	lwip_init_task();
-
     
     // setup echo server
  	echo_client_init();

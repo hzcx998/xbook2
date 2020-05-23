@@ -57,7 +57,10 @@
 
 #include <sys/res.h>
 #include <sys/ioctl.h>
+#include <sys/proc.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'
@@ -94,10 +97,15 @@ static void
 low_level_init(struct netif *netif)
 {
     struct ethernetif *ethernetif = netif->state;
-  
+    
     ethernetif->ethres = res_open(ETHDEVNAME, RES_DEV, 0);
-    if (ethernetif->ethres < 0)
+    if (ethernetif->ethres < 0) {
+        printf("lwip: open driver %s not exist! yeild cpu.\n", ETHDEVNAME);
+        while (1) {
+            sched_yeild();
+        }
         return;
+    }
 
     u8_t mac_addr[ETHARP_HWADDR_LEN] = {0};
 

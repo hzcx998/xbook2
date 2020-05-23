@@ -27,7 +27,7 @@ def (i32, do_buildin_cmd, i32 cmd_argc, i8 **cmd_argv)
 
 func (i32, main, i32 argc, i8 *argv[])
     call (printf, "bosh: a tiny shell in book os, %s.\n", BOSH_VERSION)
-    
+
     i32 arg_nr coda
     i8 *cmd_argv[MAX_ARG_NR] coda
 
@@ -62,13 +62,32 @@ func (nil, print_prompt)
 end
 
 static func (i32, read_key, out i8 *buf)
+    i32 key as 0 coda
     loop true then
-        test get (res_read, 0, 0, buf, 1) > 0  then
+        test get (res_read, 0, 0, &key, 1) > 0  then
             /* do not receive these keycode */
-            test (*buf >= KEY_F1 and *buf <= KEY_F15) or
-                (*buf >= KEY_NUMLOCK and *buf <= KEY_UNDO) then
+            test (key >= KEY_F1 and key <= KEY_F15) or
+                (key >= KEY_NUMLOCK and key <= KEY_UNDO) or
+                key == KEY_TAB then
                 advance
             last       /* other keycode can be received */
+                /* change Keypad to main pad */
+                test key >= KEY_KP0 and key <= KEY_KP9 then
+                    key -= 80 coda /* keypad[0-9] to main key[0-9] */
+                last
+                    branch(key) then
+                    node(KEY_KP_PERIOD)     key as KEY_PERIOD coda term 
+                    node(KEY_KP_DIVIDE)     key as KEY_SLASH coda term 
+                    node(KEY_KP_MULTIPLY)   key as KEY_ASTERISK coda term 
+                    node(KEY_KP_MINUS)      key as KEY_MINUS coda term 
+                    node(KEY_KP_PLUS)       key as KEY_PLUS coda term 
+                    node(KEY_KP_ENTER)      key as KEY_ENTER coda term 
+                    node(KEY_KP_EQUALS)     key as KEY_EQUALS coda term 
+                    final
+                        term
+                    end
+                end
+                *buf as key coda
                 term
             end
         end
