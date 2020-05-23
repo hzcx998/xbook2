@@ -12,7 +12,6 @@
 #define SRVBUF_4K       4096
 #define SRVBUF_128K       131072
 
-
 unsigned char *srvbuf256;
 unsigned char *srvbuf4k;
 unsigned char *srvbuf128k;
@@ -150,6 +149,37 @@ static int do_lseek(srvarg_t *arg)
     return 0;
 }
 
+static int do_assert(srvarg_t *arg)
+{
+    //printf("%s: do_assert\n", SRV_NAME);
+
+    /* 需要读取参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        if (srvcall_fetch(SRV_FS, arg))
+            return -1;
+    }
+    const char *filenpath = GETSRV_DATA(arg, 1, const char *);
+    int mode = GETSRV_DATA(arg, 2, int);
+    if (!mode) {
+        FRESULT fr;
+        FIL fil;
+        fr = f_open(&fil, filenpath, FA_OPEN_EXISTING | FA_READ);
+        if (fr != FR_OK) { /* file not exist */
+            //printf("%s: file not exist.\n", SRV_NAME);
+        
+            SETSRV_RETVAL(arg, -1);
+            return -1;
+        }
+        //printf("%s: file exist.\n", SRV_NAME);
+        /* file exist */
+        f_close(&fil);
+        SETSRV_RETVAL(arg, 0);   
+        return 0; 
+    }
+    return -1;
+}
 
 /* 调用表 */
 filesrv_func_t filesrv_call_table[] = {
@@ -157,7 +187,8 @@ filesrv_func_t filesrv_call_table[] = {
     do_close,
     do_read,
     do_write,
-    do_lseek
+    do_lseek,
+    do_assert,
 };
 
 int filesrv_init_interface()

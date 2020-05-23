@@ -198,6 +198,4 @@ enum input_rel_code {
     REL_WHEEL
 };
 
-
-
 #endif   /* _SYS_INPUT_H */

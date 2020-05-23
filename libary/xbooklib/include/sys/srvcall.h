@@ -72,16 +72,4 @@ int srvcall(int port, srvarg_t *arg);
 int srvcall_fetch(int port, srvarg_t *arg);
 int srvcall_inbuffer(srvarg_t *arg);
 
-/* file server call */
-enum filesrv_call_num {
-    FILESRV_OPEN = 0,
-    FILESRV_CLOSE,
-    FILESRV_READ,
-    FILESRV_WRITE,
-    FILESRV_LSEEK,
-    FILESRV_CALL_NR,    /* 最大数量 */
-};
-/* 缓冲区最大长度 */
-#define FILESRV_BUF_MAX_SIZE    (128*1024)
-
 #endif   /* _SYS_SRVCALL_H */

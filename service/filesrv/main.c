@@ -17,6 +17,8 @@
 
 #define DEBUG_LOCAL 0
 
+#define LIST_FILES 1
+
 #include "filesrv.h"
 #include "fatfs.h"
 
@@ -61,14 +63,14 @@ int main(int argc, char *argv[])
         printf("%s: create file failed, service stopped!\n", SRV_NAME);
         return -1;
     }
-
-    printf("%s: scan files start:\n", SRV_NAME);
+#if LIST_FILES == 1
     char scan_path[256];
     memset(scan_path, 0, 256);
     strcpy(scan_path, "0:");
     /* 扫描文件 */
     fatfs_scan_files(scan_path);
-    printf("%s: scan files end.\n", SRV_NAME);
+#endif
+    printf("\n%s: enter receving request state.\n", SRV_NAME);
     
     int seq;
     srvarg_t srvarg;
@@ -80,14 +82,16 @@ int main(int argc, char *argv[])
         if (srvcall_listen(SRV_FS, &srvarg)) {  
             continue;
         }
+
+#if DEBUG_LOCAL == 1
+        printf("%s: srvcall seq=%d.\n", SRV_NAME, seq);
+#endif 
         /* 2.处理服务 */
         callnum = GETSRV_DATA(&srvarg, 0, int);
         if (callnum >= 0 && callnum < FILESRV_CALL_NR) {
             filesrv_call_table[callnum](&srvarg);
         }
-#if DEBUG_LOCAL == 1
-        printf("%s: srvcall seq=%d.\n", SRV_NAME, seq);
-#endif        
+       
         seq++;
         /* 3.应答服务 */
         srvcall_ack(SRV_FS, &srvarg);   

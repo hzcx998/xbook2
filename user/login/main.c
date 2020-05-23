@@ -12,7 +12,7 @@
 
 #define INPUT_BUF_LEN   80
 
-#define BIN_NAME        "0:/bosh.xbk"
+#define BIN_NAME        "0:/bosh"
 
 int read_key();
 void input_buf(char *buf, char pwd);
@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
     char user_name[INPUT_BUF_LEN] = {0, };
     char pwd_name[INPUT_BUF_LEN] = {0, };
     res_ioctl(RES_STDINNO, TTYIO_HOLDER, getpid()); /* set keyboard holder */
+    goto login_ok;
     while (1) {
         printf("user name: ");
         /* input user */
@@ -40,7 +41,7 @@ int main(int argc, char *argv[])
         }
         printf("\nlogin: user name or password error! :(\n");
     }
-    
+login_ok:
     printf("\nlogin: login success! :)\n");
     /* 打开shell */
     if (execv(BIN_NAME, NULL)) {

@@ -6,12 +6,12 @@
 #include <xbook/vmspace.h>
 #include <xbook/string.h>
 
+#define DEBUG_LOCAL 0
+
 /**
  * 在多线程中，fork只会把调用者线程复制给子进程，而其它线程就会“蒸发”。
  * 
  */
-
-
 /* 中断返回 */
 static int copy_struct_and_kstack(task_t *child, task_t *parent)
 {
@@ -331,8 +331,10 @@ int sys_fork()
 {
     /* 把当前任务当做父进程 */
     task_t *parent = current_task;
-    /*printk(KERN_DEBUG "parent %s pid=%d prio=%d is forking now.\n", 
-        parent->name, parent->pid, parent->priority);*/
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "%s: parent %s pid=%d prio=%d is forking now.\n", 
+        __func__, parent->name, parent->pid, parent->priority);
+#endif    
     /* 为子进程分配空间 */
     task_t *child = kmalloc(TASK_KSTACK_SIZE);
     if (child == NULL) {
@@ -353,10 +355,10 @@ int sys_fork()
     /* 把子进程添加到就绪队列和全局链表 */
     task_global_list_add(child);
     task_priority_queue_add_tail(child); /* 放到队首 */
-    /*
-    printk(KERN_DEBUG "task %s pid %d fork task %s pid %d\n", 
-        parent->name, parent->pid, child->name, child->pid);
-    */
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "%s: task %s pid %d fork task %s pid %d\n", 
+        __func__, parent->name, parent->pid, child->name, child->pid);
+#endif
     restore_intr(flags);
     
     /* 父进程返回子进程pid */

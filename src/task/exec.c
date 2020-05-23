@@ -16,7 +16,7 @@
  * 
  */
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 /**
  * sys_exec_raw - 执行原始进程
@@ -150,6 +150,9 @@ free_tmp_arg:
  */
 int sys_exec_file(char *name, kfile_t *file, char **argv)
 {
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "%s: enter.\n", __func__);
+#endif
     /* 没有参数或者参数错误 */
     task_t *cur = current_task;
     unsigned long flags;
@@ -188,13 +191,15 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
         printk(KERN_ERR "sys_exec_file: it is not a elf format file!\n", name);
         goto free_tmp_rb;
     }
-    /*
+#if DEBUG_LOCAL == 1
     int argc = 0;
+    printk(KERN_DEBUG "%s: dump args:\n", __func__);
+    
     while (argv[argc]) {
-        printk("arg: %s", argv[argc]);
+        printk(KERN_DEBUG "arg: %s\n", argv[argc]);
         argc++;
-    }*/
-
+    }
+#endif
     /* 由于需要重载镜像数据，而传递的参数是在用户数据中，因此需要先保存
     参数，然后再重载镜像 */
     char *tmp_arg = kmalloc(PAGE_SIZE);

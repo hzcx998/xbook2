@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/proc.h>
 #include <sys/kfile.h>
 
@@ -14,7 +15,6 @@ int execv(const char *path, const char *argv[])
 {
     int rdbytes;
     int fd = open(path, O_RDONLY);
-    
     if (fd == -1) {
         return -1;
     }
@@ -36,9 +36,13 @@ int execv(const char *path, const char *argv[])
     file.file = buf;
     file.size = rdbytes;
     char *name = strrchr(path, '/');
-    name++;
-    if (name[0] == 0) { /* 后面没有名字 */
+    if (name == NULL) {
         name = (char *) path;
+    } else {
+        name++;
+        if (name[0] == 0) { /* 后面没有名字 */
+            name = (char *) path;
+        }
     }
     execfile(name, &file, (char **) argv);
     return -1;

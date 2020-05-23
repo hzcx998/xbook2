@@ -1,9 +1,10 @@
 #include <unistd.h>
-#include <sys/srvcall.h>
 #include <types.h>
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
+#include <sys/srvcall.h>
+#include <srv/filesrv.h>
 
 /* 任务可以打开的文件数量 */
 #define _MAX_FILEDES_NR     32
@@ -37,6 +38,8 @@ int open(const char *path, int flags)
     SETSRV_ARG(&srvarg, 0, FILESRV_OPEN, 0);
     SETSRV_ARG(&srvarg, 1, path, strlen(path) + 1);
     SETSRV_ARG(&srvarg, 2, flags, 0);
+    SETSRV_RETVAL(&srvarg, -1);
+
     /* 文件描述符地址 */
     struct _filedes *_fil = __alloc_filedes();
     if (_fil == NULL) {
@@ -87,6 +90,7 @@ int __read(int fd, void *buffer, size_t nbytes)
     SETSRV_ARG(&srvarg, 1, _fil->file, 0);
     SETSRV_ARG(&srvarg, 2, buffer, nbytes);
     SETSRV_IO(&srvarg, (1 << 2));
+    SETSRV_RETVAL(&srvarg, -1);
 
     if (!srvcall(SRV_FS, &srvarg)) {
         if (GETSRV_RETVAL(&srvarg, int) == -1) {
@@ -136,6 +140,8 @@ int __write(int fd, void *buffer, size_t nbytes)
     SETSRV_ARG(&srvarg, 0, FILESRV_WRITE, 0);
     SETSRV_ARG(&srvarg, 1, _fil->file, 0);
     SETSRV_ARG(&srvarg, 2, buffer, nbytes);
+    SETSRV_RETVAL(&srvarg, -1);
+
     if (!srvcall(SRV_FS, &srvarg)) {
         if (GETSRV_RETVAL(&srvarg, int) == -1) {
             return -1;
@@ -184,7 +190,28 @@ int lseek(int fd, off_t offset, int whence)
     SETSRV_ARG(&srvarg, 1, _fil->file, 0);
     SETSRV_ARG(&srvarg, 2, offset, 0);
     SETSRV_ARG(&srvarg, 3, whence, 0);
+    SETSRV_RETVAL(&srvarg, -1);
+
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return GETSRV_RETVAL(&srvarg, int);
+    }
+    return -1;
+}
+
+int access(const char *filenpath, int mode)
+{
+    if (filenpath == NULL)
+        return -1;
     
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_ASSERT, 0);
+    SETSRV_ARG(&srvarg, 1, filenpath, strlen(filenpath) + 1);
+    SETSRV_ARG(&srvarg, 2, mode, 0);
+    SETSRV_RETVAL(&srvarg, -1);
+
     if (!srvcall(SRV_FS, &srvarg)) {
         if (GETSRV_RETVAL(&srvarg, int) == -1) {
             return -1;

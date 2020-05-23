@@ -2,6 +2,7 @@
 #define _FILESRV_H
 
 #include <sys/srvcall.h>
+#include <srv/filesrv.h>
 #include <ff.h>
 
 /* 当前服务的名字 */

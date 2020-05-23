@@ -264,8 +264,9 @@ struct file_map {
 struct file_map file_map_table[] = {
     //{PATH_GUISRV, 350 * 1024, 800},
     {PATH_NETSRV, 400 * 512, 1500, 1},
-    {"/login.xbk", 100 * 512, 4000, 1},
-    {"/bosh.xbk", 100 * 512, 4100, 0},
+    {"/login", 100 * 512, 4000, 1},
+    {"/bosh", 100 * 512, 4100, 0},
+    {"/test", 100 * 512, 4300, 0},
 };
 
 /*

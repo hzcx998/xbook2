@@ -73,6 +73,7 @@
         "inet.h": "c",
         "tftpserver.h": "c",
         "errno.h": "c",
-        "learninggui.h": "c"
+        "learninggui.h": "c",
+        "filesrv.h": "c"
     }
 }

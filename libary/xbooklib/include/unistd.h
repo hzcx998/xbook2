@@ -21,6 +21,15 @@
 #define SEEK_CUR 2
 #define SEEK_END 3
 
+/* file acesss 文件检测 */
+#define R_OK 4 /* Test for read permission. */
+#define W_OK 2 /* Test for write permission. */
+#define X_OK 1 /* Test for execute permission. */
+#define F_OK 0 /* Test for existence. */
+
+#define STDIN_FILENO    0  /* 标准输入文件号 */
+#define STDOUT_FILENO   1  /* 标准输出文件号 */
+#define STDERR_FILENO   2  /* 标准错误文件号 */
 
 int brk(void *addr);
 void *sbrk(int increment);
@@ -30,6 +39,7 @@ int close(int fd);
 int read(int fd, void *buffer, size_t nbytes);
 int write(int fd, void *buffer, size_t nbytes);
 int lseek(int fd, off_t offset, int whence);
+int access(const char *filenpath, int mode);
 
 int execv(const char *path, const char *argv[]);
 int execl(const char *path, const char *arg, ...);

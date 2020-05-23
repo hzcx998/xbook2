@@ -97,63 +97,41 @@ iostatus_t tty_close(device_object_t *device, io_request_t *ioreq)
     return status;
 }
 
-
 iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
     
-    iostatus_t status = IO_SUCCESS;
+    iostatus_t status = IO_FAILED;
     if (extension->public->visitor_id == extension->device_id) {  /* 可拜访者设备id */
         /* 前台任务 */
         if (extension->hold_pid == current_task->pid) {
-            if (extension->public->detach_kbd) {    /* 键盘分离了就不能读取键盘 */
-                status = IO_FAILED;
-            } else {
+            if (!extension->public->detach_kbd) {    /* 键盘分离了就不能读取键盘 */
                 /* read from input even */
                 struct input_event event;
                 int ret = 0;
                 
                 memset(&event, 0, sizeof(event));
                 ret = device_read(extension->kbd, &event, sizeof(event), 0);
-                if ( ret < 1 ) {
-                    status = IO_FAILED;
-                } else {
+                if ( ret >= 1 ) {
                     switch (event.type)
                     {                
-                        case EV_KEY:         
+                        case EV_KEY:
                             /* 按下的按键 */
                             if ((event.value) > 0) {
-                                //printk("tty: key down %x %c\n", event.code, event.code);
                                 ioreq->io_status.infomation = sizeof(event);
                                 *(unsigned int *) ioreq->user_buffer = event.code;
+                                status = IO_SUCCESS;
+                            
                             }
                             break;
                         default:
-                            status = IO_FAILED;
                             break;
                     }
                 }
-                #if 0
-                ioreq->io_status.infomation = device_read(extension->kbd,
-                    ioreq->user_buffer, 4, ioreq->parame.read.offset); /* read all */
-                if (ioreq->io_status.infomation == -1) {
-                    status = IO_FAILED;
-                } else {
-                    /* 过滤弹起码 */
-                    unsigned int key = *(unsigned int *) ioreq->user_buffer;
-                    //printk("code:%x\n", key);
-                    if (key & 0x40000) {    /* 弹起码标志 */
-                        status = IO_FAILED; /* 不捕捉 */
-                    }
-                }
-                #endif
             }
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
             trigger_force(TRIGHW, current_task->pid);
-            status = IO_FAILED;
         }
-    } else {
-        status = IO_FAILED;
     }
     ioreq->io_status.status = status;
     /* 调用完成请求 */
