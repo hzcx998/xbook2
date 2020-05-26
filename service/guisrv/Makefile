@@ -14,13 +14,12 @@ DIR_INCLUDE = ./include
 
 # libarys
 DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
-DIR_LEARNINGGUI		= $(DIR_LIBARY)/learninggui
 
 # rom dir
 ROM_DIR = ../../develop/rom
 
-BIN = $(ROM_DIR)/guisrv.xsv
-BIN_DIS = guisrv.xsv.disasm
+BIN = a.out
+BIN_DIS = a.out.disasm
 BIN_OFF = 800 
 BIN_CNTS = 700
 
@@ -44,34 +43,21 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 ASM_FLAGS	= -f elf \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_XBOOKLIB)/include \
-			-I $(DIR_LEARNINGGUI)/include \
-			
+
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_XBOOKLIB)/include \
-			-I $(DIR_LEARNINGGUI)/include \
-			
+
+DRIVERS_OBJS 	= 	drivers/screen.o \
+					drivers/mouse.o \
+					drivers/keyboard.o \
+
 MAIN_OBJS 	= 	main.o \
-				driver_lcd.o \
-				driver_keyboard.o \
-				driver_mtjt.o \
-				app_font.o \
-				message_routine.o \
-				mono_discrete_font_ascii.o \
-				mono_discrete_font_Chinese.o \
-				sine.o \
-				win_comm.o \
-				win_frame1.o \
-				win_frame2.o \
-				win_frame3.o \
-				win_frame4.o \
-				win_frame5.o \
 				
-OBJS =  $(MAIN_OBJS)
+OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS)
 
 
-LIB_FILE 	= $(DIR_LEARNINGGUI)/learninggui-0.5.2.a \
-			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
+LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 

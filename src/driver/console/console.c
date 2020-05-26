@@ -13,7 +13,7 @@
 #define DEBUG_LOCAL 0
 
 /* 把控制台的信息输出内核调试输出 */
-#define CON_TO_DEBUGER   0
+#define CON_TO_DEBUGER   1
 
 
 #define DISPLAY_VRAM 0x800b8000

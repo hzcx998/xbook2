@@ -283,6 +283,7 @@ int sys_srvcall(int port, srvarg_t *arg)
             call->caller = current_task;
             /* 唤醒服务 */
             task_unblock(call->holder);
+
             if (call->state != SRVCALL_ACK) {    /* 只要还没应答，就可以阻塞 */  
 #if DEBUG_LOCAL == 1
                 printk(KERN_DEBUG "%s: task=%d call port=%d. block.\n", __func__, 

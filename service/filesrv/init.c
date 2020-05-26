@@ -248,7 +248,7 @@ free_buf:
     return -1;
 }
 
-#define PATH_GUISRV "0:/guisrv.xsv"
+#define PATH_GUISRV "0:/guisrv"
 #define PATH_NETSRV "0:/netsrv.xsv"
 
 /* 文件映射 */
@@ -262,9 +262,9 @@ struct file_map {
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
 struct file_map file_map_table[] = {
-    //{PATH_GUISRV, 350 * 1024, 800},
+    {PATH_GUISRV, 100 * 512, 800, 1},
     {PATH_NETSRV, 400 * 512, 1500, 1},
-    {"/login", 100 * 512, 4000, 1},
+    {"/login", 100 * 512, 4000, 0},
     {"/bosh", 100 * 512, 4100, 0},
     {"/test", 100 * 512, 4300, 0},
 };
