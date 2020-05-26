@@ -9,6 +9,8 @@
 #include <drivers/mouse.h>
 #include <drivers/keyboard.h>
 
+#include <graph/draw.h>
+
 #include <guisrv.h>
 
 int init_guisrv()
@@ -104,8 +106,21 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    screen.output_rect_fill(0, 0, 100, 200, 0xffff0a);
+    //screen.output_rect_fill(0, 0, 100, 200, 0xffff0a);
 
+    graph_put_point(0,0,0xffff00);
+    GUI_COLOR c;
+    graph_get_point(0, 0, &c);
+    printf("color: %x\n", c);
+
+    graph_put_point(100,0,0x00ff00);
+    graph_get_point(100, 0, &c);
+    printf("color: %x\n", c);
+    
+    graph_put_point(1,50,0xff0000);
+    graph_get_point(1,50, &c);
+    printf("color: %x\n", c);
+    
     loop_guisrv();
 
     if (close_guisrv()) {

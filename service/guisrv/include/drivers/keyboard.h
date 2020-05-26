@@ -1,8 +1,6 @@
 #ifndef __GUISRV_DRIVER_KEYBOARD_H__
 #define __GUISRV_DRIVER_KEYBOARD_H__
 
-#include <gui_color.h>
-
 typedef struct _gui_keyboard {
     
     int            (*open)(void);

@@ -52,9 +52,11 @@ DRIVERS_OBJS 	= 	drivers/screen.o \
 					drivers/mouse.o \
 					drivers/keyboard.o \
 
+GRAPH_OBJS 	= 		graph/point.o \
+					
 MAIN_OBJS 	= 	main.o \
 				
-OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS)
+OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(GRAPH_OBJS)
 
 
 LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \

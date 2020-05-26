@@ -1,8 +1,6 @@
 #ifndef __GUISRV_DRIVER_MOUSE_H__
 #define __GUISRV_DRIVER_MOUSE_H__
 
-#include <gui_color.h>
-
 typedef struct _gui_mouse {
     int            (*open)(void);
     int	           (*close)(void);
