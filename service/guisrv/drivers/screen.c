@@ -339,8 +339,6 @@ static  int  screen_output_hline(int left, int right, int top, SCREEN_COLOR  col
     int  offset = 0;
     int  i      = 0;
 
-
-
     if ( left > (screen_width-1) )
         return  -1;
     if ( right > (screen_width-1) )
@@ -348,8 +346,6 @@ static  int  screen_output_hline(int left, int right, int top, SCREEN_COLOR  col
 
     if ( top > (screen_height-1) )
         return  -1;
-
-
 
     switch( (bits_per_pixel) )
     {

@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <guisrv.h>
 
+#include <window/layer.h>
+
 #ifndef   GUI_MOUSE_DEVICE_NAME
 #define   GUI_MOUSE_DEVICE_NAME        "mouse"
 #endif
@@ -127,8 +129,11 @@ read_mouse_continue:
             if ( flag_rel == 1 )
             {
                 /* 设定鼠标移动消息 */
-                printf("[mouse ] x:%d, y:%d\n", mouse_x, mouse_y);
-
+                //printf("[mouse ] x:%d, y:%d\n", mouse_x, mouse_y);
+                /* 尝试移动鼠标 */
+                if (layer_topest) {
+                    layer_set_xy(layer_topest, mouse_x, mouse_y);
+                }
                 flag_rel = 0;
                 return  0;
             }

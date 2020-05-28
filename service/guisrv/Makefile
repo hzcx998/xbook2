@@ -53,11 +53,15 @@ DRIVERS_OBJS 	= 	drivers/screen.o \
 					drivers/keyboard.o \
 
 GRAPH_OBJS 	= 		graph/point.o \
-					
+					graph/line.o \
+					graph/rect.o \
+					graph/bitmap.o \
+
+WINDOW_OBJS 	=	window/layer.o \
+
 MAIN_OBJS 	= 	main.o \
 				
-OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(GRAPH_OBJS)
-
+OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(GRAPH_OBJS) $(WINDOW_OBJS)
 
 LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 

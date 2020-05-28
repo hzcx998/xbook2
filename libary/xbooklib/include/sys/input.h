@@ -1,6 +1,8 @@
 #ifndef _SYS_INPUT_H
 #define _SYS_INPUT_H
 
+#include <stdint.h>
+
 typedef struct input_event {
     uint16_t type;
     uint16_t code;
