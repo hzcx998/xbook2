@@ -74,6 +74,8 @@
         "tftpserver.h": "c",
         "errno.h": "c",
         "learninggui.h": "c",
-        "filesrv.h": "c"
+        "filesrv.h": "c",
+        "layer.h": "c",
+        "point.h": "c"
     }
 }

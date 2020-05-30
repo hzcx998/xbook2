@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <guisrv.h>
 
+#include <layer/color.h>
+
 #ifndef   GUI_SCREEN_DEVICE_NAME
 #define   GUI_SCREEN_DEVICE_NAME        "video"
 #endif

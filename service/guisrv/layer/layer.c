@@ -1,6 +1,7 @@
-#include <window/layer.h>
+#include <layer/layer.h>
 #include <drivers/screen.h>
-#include <graph/draw.h>
+#include <layer/color.h>
+#include <layer/draw.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -68,13 +69,18 @@ layer_t *create_layer(int width, int height)
  *      如果图层没有存在于链表中，就是插入一个新图层。
  *      如果图层已经在链表中，那么就是调整一个图层的位置。
  *      如果设置图层小于0，为负，那么就是要隐藏图层
+ * 
+ * 调整Z序时需要刷新图层：
+ *      当调整到更低的图层时，如果是隐藏图层，那么就刷新最底层到原图层Z的下一层。
+ *      不是隐藏图层的话，刷新当前图层上一层到原来图层。
+ *      当调整到更高的图层时，就只刷新新图层的高度那一层。
  * @return: 成功返回0，失败返回-1
  */
 void layer_set_z(layer_t *layer, int z)
 {
     layer_t *tmp = NULL;
     layer_t *old_layer = NULL;
-                
+    int old_z = layer->z;                
     /* 已经存在与现实链表中，就说明只是调整一下高度而已。 */
     if (list_find(&layer->list, &layer_show_list_head)) {
         printf("layer z:%d set new z:%d\n", layer->z, z);
@@ -90,7 +96,7 @@ void layer_set_z(layer_t *layer, int z)
             /* 如果要调整到最高的图层位置 */
             if (z == top_layer_z) {
                 printf("layer z:%d set new z:%d same with top %d\n", layer->z, z, top_layer_z);
-        
+
                 /* 先从链表中移除 */
                 list_del_init(&layer->list);
 
@@ -103,6 +109,10 @@ void layer_set_z(layer_t *layer, int z)
                 layer->z = z;
                 /* 添加到链表末尾 */
                 list_add_tail(&layer->list, &layer_show_list_head);
+
+                /* 刷新新图层[z, z] */
+                layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
+
             } else {    /* 不是最高图层，那么就和其它图层交换 */
                 
                 if (z > layer->z) { /* 如果新高度比原来的高度高 */
@@ -125,6 +135,10 @@ void layer_set_z(layer_t *layer, int z)
                         
                         layer->z = z;
                         list_add_after(&layer->list, &old_layer->list);
+
+                        /* 刷新新图层[z, z] */
+                        layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
+                
                     } else {
                         printf("[error ] not found the old layer on %d\n", z);
                     }
@@ -148,6 +162,10 @@ void layer_set_z(layer_t *layer, int z)
                         
                         layer->z = z;
                         list_add_before(&layer->list, &old_layer->list);
+
+                        /* 刷新新图层[z + 1, old z] */
+                        layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z + 1, old_z);
+                
                     } else {
                         printf("[error ] not found the old layer on %d\n", z);
                     }
@@ -155,19 +173,21 @@ void layer_set_z(layer_t *layer, int z)
             }
         } else { /* 小于0就是要隐藏起来的图层 */
             printf("layer z:%d will be hided.\n", layer->z);
-            
             /* 先从链表中移除 */
             list_del_init(&layer->list);
-            
-            /* 把位于当前图层后面的图层的高度都向下降1 */
-            list_for_each_owner (tmp, &layer_show_list_head, list) {
-                if (tmp->z > layer->z) {
-                    tmp->z--;
-                }
+            if (top_layer_z > old_z) {  /* 旧图层必须在顶图层下面 */
+                /* 把位于当前图层后面的图层的高度都向下降1 */
+                list_for_each_owner (tmp, &layer_show_list_head, list) {
+                    if (tmp->z > layer->z) {
+                        tmp->z--;
+                    }
+                }   
             }
-            
             /* 由于隐藏了一个图层，那么，图层顶层的高度就需要减1 */
             top_layer_z--;
+
+            /* 刷新图层, [0, layer->z] */
+            layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, 0, old_z);
 
             layer->z = -1;  /* 隐藏图层后，高度变为-1 */
         }
@@ -189,13 +209,13 @@ void layer_set_z(layer_t *layer, int z)
                 layer->z = z;
                 /* 直接添加到显示队列 */
                 list_add_tail(&layer->list, &layer_show_list_head);
-                
+
             } else {
                 printf("add a layer %d to midlle or head\n", z);
                 
                 /* 查找和当前图层一样高度的图层 */
                 list_for_each_owner(tmp, &layer_show_list_head, list) {
-                    if (tmp->z == z) { 
+                    if (tmp->z == z) {
                         old_layer = tmp;
                         break;
                     }
@@ -219,6 +239,10 @@ void layer_set_z(layer_t *layer, int z)
                     printf("[error ] not found old layer!\n");
                 }
             }
+            
+            /* 刷新新图层[z, top z] */
+            layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, top_layer_z);
+
         }
         /* 小于0就是要隐藏起来的图层，但是由于不在图层链表中，就不处理 */
     }
@@ -244,31 +268,6 @@ int destroy_layer(layer_t *layer)
 }
 
 /**
- * flush_layer - 把图层刷新到显存
- * @layer: 图层
- * 
- * @成功返回0，失败返回-1
- */
-int flush_layer(layer_t *layer)
-{
-    if (layer == NULL)
-        return -1;
-
-    graph_draw_bitmap(layer->x, layer->y, layer->width, layer->height, layer->buffer);
-
-    return 0;
-}
-
-int flush_layers()
-{
-    layer_t *layer;
-    list_for_each_owner (layer, &layer_show_list_head, list) {
-        flush_layer(layer);
-    }
-    return 0;
-}
-
-/**
  * print_layers - 打印所有图层信息
  * 
  */
@@ -283,13 +282,13 @@ void print_layers()
 }
 
 /**
- * layer_refresh - 刷新图层
+ * layer_refresh_by_z - 刷新图层
  * 
  * 刷新某个区域的[z0-z1]之间的图层，相当于在1一个3d空间中刷新
  * 某个矩形区域。（有点儿抽象哦，铁汁~）
  * 
  */
-void layer_refresh(int left, int top, int right, int buttom, int z0, int z1)
+void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1)
 {
     /* 在图层中的位置 */
     int layer_left, layer_top, layer_right, layer_buttom;
@@ -337,13 +336,28 @@ void layer_refresh(int left, int top, int right, int buttom, int z0, int z1)
                     /* 获取图层中的颜色 */
                     color = layer->buffer[layer_y * layer->width + layer_x];
                     /* 写入到显存 */
-                    graph_put_point(screen_x, screen_y, color);
+                    screen.output_pixel(screen_x, screen_y, screen.gui_to_screen_color(color));
                 }
             }
 
         }
     }
 
+}
+
+
+/**
+ * layer_refresh - 刷新图层
+ * 
+ * 刷新某个区域的图层
+ * 
+ */
+void layer_refresh(layer_t *layer, int left, int top, int right, int buttom)
+{
+    if (layer->z >= 0) {
+        layer_refresh_by_z(layer->x + left, layer->y + top, layer->x + right + 1,
+            layer->y + buttom + 1, layer->z, layer->z);
+    }
 }
 
 /**
@@ -360,8 +374,10 @@ void layer_set_xy(layer_t *layer, int x, int y)
     layer->x = x;
     layer->y = y;
     if (layer->z >= 0) {
-        layer_refresh(old_x, old_y, old_x + layer->width, old_y + layer->height, 0, layer->z - 1);
-        layer_refresh(x, y, x + layer->width, y + layer->height, layer->z, layer->z);
+        /* 刷新原来位置 */
+        layer_refresh_by_z(old_x, old_y, old_x + layer->width, old_y + layer->height, 0, layer->z - 1);
+        /* 刷新新位置 */
+        layer_refresh_by_z(x, y, x + layer->width, y + layer->height, layer->z, layer->z);
     }
 }
 
@@ -383,9 +399,7 @@ int guisrv_init_layer()
 {
     layer_t *layer1, *layer2, *layer3, *layer4;
 
-
     layer1 = create_layer(screen.width, screen.height);
-
     if (layer1 == NULL) {
         printf("create layer failed!\n");
         return -1;
@@ -395,6 +409,10 @@ int guisrv_init_layer()
     memset(layer1->buffer, 0x99, screen.width * screen.height * sizeof(GUI_COLOR));
     layer_set_z(layer1, 0);
 
+    layer_draw_rect(layer1, 0, 0, 200, 300, COLOR_RED);
+    layer_draw_line(layer1, 0, 0, 200, 300, COLOR_GREEN);
+    layer_draw_point(layer1, 300, 100, COLOR_BLUE);
+    
     layer2 = create_layer(50, 50);
     if (layer2 == NULL) {
         printf("create layer failed!\n");
@@ -471,8 +489,12 @@ int guisrv_init_layer()
     print_layers();
     layer_topest = layer_get_by_z(top_layer_z);
 
+    int i;
+    for (i = 0; i < layer_topest->height; i++)
+        layer_draw_line(layer_topest, 0, i, layer_topest->width, i, i * 45 | (i * 30) << 8 | (i * 15) << 16);
+    
     /* 刷新所有图层 */
-    layer_refresh(0, 0, screen.width, screen.height, 0, top_layer_z);
+    layer_refresh_by_z(0, 0, screen.width, screen.height, 0, top_layer_z);
 
     return 0;
 }

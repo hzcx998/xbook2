@@ -1,20 +1,36 @@
-#include <graph/line.h>
-#include <graph/point.h>
+#include <layer/line.h>
+#include <layer/point.h>
 #include <drivers/screen.h>
 
-void graph_draw_line(int x0, int y0, int x1, int y1, GUI_COLOR color)
+void layer_put_vline(layer_t *layer, int left, int top, int buttom, GUI_COLOR color)
+{
+    int i;
+    for (i = top; i <= buttom; i++) {
+        layer_put_point(layer, left, i, color);
+    }
+}
+
+void layer_put_hline(layer_t *layer, int left, int right, int top, GUI_COLOR color)
+{
+    int i;
+    for (i = left; i <= right; i++) {
+        layer_put_point(layer, i, top, color);
+    }
+}
+
+void layer_draw_line(layer_t *layer, int x0, int y0, int x1, int y1, GUI_COLOR color)
 {
     if (x0 == x1) { /* 垂直的线 */
         if (y0 < y1) 
-            screen.output_vline(x0, y0, y1, screen.gui_to_screen_color(color));
+            layer_put_vline(layer, x0, y0, y1, color);
         else 
-            screen.output_vline(x0, y1, y0, screen.gui_to_screen_color(color));
+            layer_put_vline(layer, x0, y1, y0, color);
         return;
     } else if (y0 == y1) {  /* 水平的直线 */
         if (x0 < x1) 
-            screen.output_hline(x0, x1, y0, screen.gui_to_screen_color(color));
+            layer_put_hline(layer, x0, x1, y0, color);
         else 
-            screen.output_hline(x1, x0, y0, screen.gui_to_screen_color(color));
+            layer_put_hline(layer, x1, x0, y0, color);
         return;
     }
     int i, x, y, len, dx, dy;
@@ -59,7 +75,7 @@ void graph_draw_line(int x0, int y0, int x1, int y1, GUI_COLOR color)
 		}	
 	}
 	for(i = 0; i < len; i++){
-        graph_put_point((x >> 10), (y >> 10), color);
+        layer_put_point(layer, (x >> 10), (y >> 10), color);
 		x += dx;
 		y += dy;
 	}

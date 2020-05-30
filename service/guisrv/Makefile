@@ -52,16 +52,19 @@ DRIVERS_OBJS 	= 	drivers/screen.o \
 					drivers/mouse.o \
 					drivers/keyboard.o \
 
-GRAPH_OBJS 	= 		graph/point.o \
-					graph/line.o \
-					graph/rect.o \
-					graph/bitmap.o \
+LAYER_OBJS 	= 		layer/point.o \
+					layer/line.o \
+					layer/rect.o \
+					layer/bitmap.o \
+					layer/layer.o \
 
-WINDOW_OBJS 	=	window/layer.o \
+WINDOW_OBJS 	=	window/window.o \
+					window/point.o \
 
-MAIN_OBJS 	= 	main.o \
+MAIN_OBJS 		= 	main.o \
 				
-OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(GRAPH_OBJS) $(WINDOW_OBJS)
+OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS)
+
 
 LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 

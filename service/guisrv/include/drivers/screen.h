@@ -1,7 +1,7 @@
 #ifndef __GUISRV_DRIVER_SCREEN_H__
 #define __GUISRV_DRIVER_SCREEN_H__
 
-#include <graph/color.h>
+#include <layer/color.h>
 
 typedef struct _gui_screen {
     int width;  
