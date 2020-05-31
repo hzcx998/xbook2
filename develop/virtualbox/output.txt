@@ -1,7 +1,7 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:23:40:54 date:2020/5/28
-info: week day:4 Thursday year day:150
+info: time:11:44:57 date:2020/5/31
+info: week day:0 Sunday year day:153
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -26,102 +26,23 @@ debug: vbe_mmap: start
 debug: vbe_mmap: length=ea600 mode len=ea600
 debug: vbe_mmap: get phy addr:e0000000
 debug: device_mmap: get device phy addr:e0000000
-guisrv: mapped addr 20014000
-color: f8fc00
-color: fc00
-color: f80000
-create layer: addr 1dec00, buffer a000, width 800, height 600
+guisrv: mapped addr 20015000
+create layer: addr c000, buffer b000, width 32, height 32
 insert a layer at top z 0
 add a layer 0 to tail
-create layer: addr 1e1338, buffer 1dec28, width 50, height 50
-insert a layer at top z 1
-add a layer 1 to tail
-layer top z:1
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:1
-create layer: addr 1eafa0, buffer 1e1360, width 100, height 100
-create layer done!
+add a layer 0 to midlle or head
+found a old layer 0
 add a layer 1 to midlle or head
 found a old layer 1
-layer z:2 set new z:2
-layer z:2 set new z:2 same with top 2
-layer top z:2
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:1
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:2
-layer z:1 set new z:2
-layer z:1 set new z:2 same with top 2
-layer top z:2
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:1
 error: device_open: device rtl8139 not found!
 error: __getres_device: device open -1 failed!
 error: sys_getres: get rtl8139 fialed!.
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:2
-layer z:0 set new z:1
-TÅlayer z:0 < new z:1 
-find old layer:1e1338 z1
-layer top z:2
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:0
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:1
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:2
-layer z:2 set new z:0
-layer z:2 > new z:0 
-find old layer:1e1338 z0
-layer top z:2
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:0
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:1
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:2
-layer z:0 set new z:3
-layer z:0 set new z:3 but above top 2
-layer z:0 set new z:2 same with top 2
-layer top z:2
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:0
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:1
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:2
-layer z:2 set new z:-1
-layer z:2 will be hided.
-layer top z:1
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:0
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:1
-layer z:0 set new z:-1
-layer z:0 will be hided.
-layer top z:0
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-insert a layer at top z 1
-add a layer 1 to tail
-layer top z:1
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:1
-add a layer 1 to midlle or head
-found a old layer 1
-layer top z:2
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:1
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:2
-create layer: addr 1ebfc8, buffer 1eafc8, width 32, height 32
-create layer done!
-insert a layer at top z 3
-add a layer 3 to tail
-layer top z:3
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:1
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:2
-layer addr:1ebfc8 buffer:1eafc8 width:32 height:32 x:0 y:0 z:3
 lwip: open driver rtl8139 not exist! yeild cpu.
 [mouse ] left button down.
-[mouse ] x:81, y:52
+[mouse ] x:131, y:25
 [mouse ] left button up.
-[mouse ] x:443, y:489
-[mouse ] left button down.
-[mouse ] x:556, y:527
-[mouse ] left button up.
-[mouse ] x:556, y:527
-[mouse ] left button down.
-[mouse ] x:517, y:553
-[mouse ] left button up.
-[mouse ] x:401, y:251
-[mouse ] left button down.
-[mouse ] x:35, y:25
-[mouse ] left button up.
-[mouse ] x:463, y:247
+[mouse ] x:476, y:297
+[mouse ] right button down.
+[mouse ] x:322, y:303
+[mouse ] right button up.
+[mouse ] x:322, y:303

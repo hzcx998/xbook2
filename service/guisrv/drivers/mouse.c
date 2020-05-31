@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <guisrv.h>
 
-#include <window/layer.h>
+#include <environment/mouse.h>
 
 #ifndef   GUI_MOUSE_DEVICE_NAME
 #define   GUI_MOUSE_DEVICE_NAME        "mouse"
@@ -29,10 +29,6 @@ static  int  mouse_close(void)
 {
     return  res_close(mouse_res);
 }
-
-int mouse_x = 100;
-int mouse_y = 100;
-
 
 static  int  mouse_read(void)
 {
@@ -79,31 +75,28 @@ read_mouse_continue:
                 /* 左键按下事件，需要传递鼠标位置 */
                 
                 if (event.value > 0) {
-                    printf("[mouse ] left button down.\n");
+                    env_mouse.left_btn_down();
                 } else {
-                    printf("[mouse ] left button up.\n");
+                    env_mouse.left_btn_up();
                 }
-                printf("[mouse ] x:%d, y:%d\n", mouse_x, mouse_y);
-
                 return  0;
             } else if ( (event.code) == BTN_MIDDLE ) {
                 /* 中键按下事件，需要传递鼠标位置 */
                 if (event.value > 0) {
-                    printf("[mouse ] middle button down.\n");
+                    env_mouse.middle_btn_down();
                 } else {
-                    printf("[mouse ] middle button up.\n");
+                    env_mouse.middle_btn_up();
                 }
-                printf("[mouse ] x:%d, y:%d\n", mouse_x, mouse_y);
-                
+
                 return  0;
             } else if ( (event.code) == BTN_RIGHT ) {
                 /* 右键按下事件，需要传递鼠标位置 */
                 if (event.value > 0) {
-                    printf("[mouse ] right button down.\n");
+                    env_mouse.right_btn_down();
+                    
                 } else {
-                    printf("[mouse ] right button up.\n");
+                    env_mouse.right_btn_up();
                 }
-                printf("[mouse ] x:%d, y:%d\n", mouse_x, mouse_y);
                 
                 return  0;
             } else {
@@ -119,8 +112,8 @@ read_mouse_continue:
 
         case EV_SYN:
             /* 同步事件，设置鼠标相对位置 */
-            mouse_x += x_rel;
-            mouse_y += y_rel;
+            env_mouse.x += x_rel;
+            env_mouse.y += y_rel;
             
             /* 相对位置置0 */
             x_rel = 0;
@@ -128,12 +121,7 @@ read_mouse_continue:
 
             if ( flag_rel == 1 )
             {
-                /* 设定鼠标移动消息 */
-                //printf("[mouse ] x:%d, y:%d\n", mouse_x, mouse_y);
-                /* 尝试移动鼠标 */
-                if (layer_topest) {
-                    layer_set_xy(layer_topest, mouse_x, mouse_y);
-                }
+                env_mouse_move();
                 flag_rel = 0;
                 return  0;
             }
@@ -147,15 +135,15 @@ read_mouse_continue:
     return  0;
 }
 
-gui_mouse_t mouse = {0};
+drv_mouse_t drv_mouse = {0};
 
 int init_mouse_driver()
 {
-    memset(&mouse, 0, sizeof(mouse));
+    memset(&drv_mouse, 0, sizeof(drv_mouse));
     
-    mouse.open = mouse_open;
-    mouse.close = mouse_close;
+    drv_mouse.open = mouse_open;
+    drv_mouse.close = mouse_close;
 
-    mouse.read = mouse_read;
+    drv_mouse.read = mouse_read;
     return 0;
 }

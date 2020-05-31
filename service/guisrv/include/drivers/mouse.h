@@ -1,14 +1,14 @@
 #ifndef __GUISRV_DRIVER_MOUSE_H__
 #define __GUISRV_DRIVER_MOUSE_H__
 
-typedef struct _gui_mouse {
+typedef struct _drv_mouse {
     int            (*open)(void);
     int	           (*close)(void);
     int	           (*read)(void);
     
-} gui_mouse_t;
+} drv_mouse_t;
 
-extern gui_mouse_t mouse;
+extern drv_mouse_t drv_mouse;
 
 int init_mouse_driver();
 

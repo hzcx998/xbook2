@@ -76,6 +76,7 @@
         "learninggui.h": "c",
         "filesrv.h": "c",
         "layer.h": "c",
-        "point.h": "c"
+        "point.h": "c",
+        "line.h": "c"
     }
 }

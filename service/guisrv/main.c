@@ -13,6 +13,7 @@
 #include <layer/layer.h>
 
 #include <window/window.h>
+#include <environment/mouse.h>
 
 
 #include <guisrv.h>
@@ -39,11 +40,11 @@ int init_guisrv()
 int open_guisrv()
 {
     /* drivers */
-    if (screen.open()) {
+    if (drv_screen.open()) {
         printf("[failed ] %s: open screen driver failed!\n", SRV_NAME);
         return -1;
     }
-    if (mouse.open()) {
+    if (drv_mouse.open()) {
         printf("[failed ] %s: open mouse driver failed!\n", SRV_NAME);
         return -1;
     }
@@ -57,11 +58,11 @@ int open_guisrv()
 int close_guisrv()
 {
     /* drivers */
-    if (screen.close()) {
+    if (drv_screen.close()) {
         printf("[failed ] %s: close screen driver failed!\n", SRV_NAME);
         return -1;
     }
-    if (mouse.close()) {
+    if (drv_mouse.close()) {
         printf("[failed ] %s: close mouse driver failed!\n", SRV_NAME);
         return -1;
     }
@@ -81,18 +82,18 @@ int start_guisrv()
         return -1;
     }
     
-    /* 创建窗口测试 */
     if (init_gui_window()) {
         printf("[failed ] %s: init window management failed!\n", SRV_NAME);
         return -1;
     }
+    
 }
 
 int loop_guisrv()
 {
     while (1)
     {
-        mouse.read();
+        drv_mouse.read();
         keyboard.read(); 
         
     }

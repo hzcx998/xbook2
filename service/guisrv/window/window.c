@@ -1,12 +1,14 @@
 #include <window/window.h>
 #include <window/draw.h>
 #include <layer/draw.h>
+#include <drivers/screen.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-/* 管理窗口打开的位置 */
+#include <environment/desktop.h>
+
 
 
 gui_window_t *gui_create_window(
@@ -82,7 +84,7 @@ gui_window_t *gui_create_window(
 
     /* 绘制窗口本体 */
     if (!(attr & GUIW_NO_TITLE)) {  /* 有标题才绘制标题 */
-        layer_draw_rect_fill(win->layer, 0, 0, win->layer->width, GUIW_TITLE_HEIGHT, COLOR_BLUE);
+        layer_draw_rect_fill(win->layer, 0, 0, win->layer->width, GUIW_TITLE_HEIGHT, COLOR_RGB(128, 128, 128));
     }
 
     layer_set_xy(layer, x, y);
@@ -123,11 +125,15 @@ int gui_window_update(gui_window_t *win, int left, int top, int right, int butto
 {
     layer_refresh(win->layer, win->x_off + left, win->y_off + top, 
         win->x_off + right, win->y_off + buttom);
+    return 0;
 }
 
 int init_gui_window()
 {
-    printf("in gui window.\n");
+    if (init_env_desktop()) {
+        return -1;
+    }
+    
     gui_window_t *win = gui_create_window("xbook2", 20, 20, 320, 240, 0, NULL);
     if (win == NULL) {
         printf("create window failed!\n");
@@ -139,8 +145,16 @@ int init_gui_window()
     gui_window_put_point(win, 13, 15, COLOR_GREEN);
 
     gui_window_update(win, 10, 10, 15, 15);
-    sleep(3);   /* 休眠1s */
 
-    gui_destroy_window(win);
+    gui_window_draw_line(win, 20, 20, 100, 150, COLOR_YELLOW);
+    
+    gui_window_draw_rect(win, 20, 20, 100, 150, COLOR_BLUE);
+    gui_window_draw_rect_fill(win, 100, 20, 100, 150, COLOR_GREEN);
+    
+    gui_window_update(win, 20, 20, 300, 200);
+
+    //sleep(3);   /* 休眠1s */
+
+    //gui_destroy_window(win);
     return 0;
 }

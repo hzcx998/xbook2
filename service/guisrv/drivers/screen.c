@@ -109,7 +109,7 @@ static  unsigned int    bytes_per_pixel = 0;
 static  unsigned int    screen_width    = 0;
 static  unsigned int    screen_height   = 0;
 
-static  int  screen_detect_var(gui_screen_t *screen)
+static  int  screen_detect_var(drv_screen_t *screen)
 {
     int ret = 0;
 
@@ -604,27 +604,27 @@ static  int  screen_output_rect_fill(int left, int top, int right, int bottom, S
 
 
 
-gui_screen_t screen = {0};
+drv_screen_t drv_screen = {0};
 
 int init_screen_driver()
 {
     int ret = 0;
 
-    memset(&screen, 0, sizeof(screen));
-    ret = screen_detect_var(&screen);
+    memset(&drv_screen, 0, sizeof(drv_screen));
+    ret = screen_detect_var(&drv_screen);
     if (ret < 0)
         return -1;
     
-    screen.open = screen_open;
-    screen.close = screen_close;
+    drv_screen.open = screen_open;
+    drv_screen.close = screen_close;
 
-    screen.output_pixel = screen_output_pixel;
-    screen.input_pixel  = screen_input_pixel;
+    drv_screen.output_pixel = screen_output_pixel;
+    drv_screen.input_pixel  = screen_input_pixel;
 
-    screen.output_hline = screen_output_hline;
-    screen.output_vline = screen_output_vline;
-    screen.output_hline = screen_output_hline;
-    screen.output_rect_fill = screen_output_rect_fill;
+    drv_screen.output_hline = screen_output_hline;
+    drv_screen.output_vline = screen_output_vline;
+    drv_screen.output_hline = screen_output_hline;
+    drv_screen.output_rect_fill = screen_output_rect_fill;
     
     return 0;
 }

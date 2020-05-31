@@ -60,10 +60,16 @@ LAYER_OBJS 	= 		layer/point.o \
 
 WINDOW_OBJS 	=	window/window.o \
 					window/point.o \
+					window/line.o \
+					window/rect.o \
+					window/bitmap.o \
+
+ENVIRONMENT_OBJS =	environment/mouse.o \
+					environment/desktop.o \
 
 MAIN_OBJS 		= 	main.o \
 				
-OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS)
+OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) $(ENVIRONMENT_OBJS)
 
 
 LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \

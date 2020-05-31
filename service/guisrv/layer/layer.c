@@ -1,11 +1,13 @@
-#include <layer/layer.h>
-#include <drivers/screen.h>
-#include <layer/color.h>
-#include <layer/draw.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <guisrv.h>
+#include <layer/layer.h>
+#include <drivers/screen.h>
+#include <layer/color.h>
+#include <layer/draw.h>
+#include <environment/mouse.h>
 
 LIST_HEAD(layer_list_head);
 LIST_HEAD(layer_show_list_head);
@@ -304,10 +306,10 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
         left = 0;
 	if (top < 0)
         top = 0;
-	if (right > screen.width)
-        right = screen.width;
-	if (buttom > screen.height)
-        buttom = screen.height;
+	if (right > drv_screen.width)
+        right = drv_screen.width;
+	if (buttom > drv_screen.height)
+        buttom = drv_screen.height;
     
     layer_t *layer;
     GUI_COLOR color;
@@ -336,10 +338,9 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
                     /* 获取图层中的颜色 */
                     color = layer->buffer[layer_y * layer->width + layer_x];
                     /* 写入到显存 */
-                    screen.output_pixel(screen_x, screen_y, screen.gui_to_screen_color(color));
+                    drv_screen.output_pixel(screen_x, screen_y, drv_screen.gui_to_screen_color(color));
                 }
             }
-
         }
     }
 
@@ -356,7 +357,7 @@ void layer_refresh(layer_t *layer, int left, int top, int right, int buttom)
 {
     if (layer->z >= 0) {
         layer_refresh_by_z(layer->x + left, layer->y + top, layer->x + right + 1,
-            layer->y + buttom + 1, layer->z, layer->z);
+            layer->y + buttom + 1, layer->z, top_layer_z);
     }
 }
 
@@ -397,16 +398,17 @@ layer_t *layer_get_by_z(int z)
 
 int guisrv_init_layer()
 {
+#if 0
     layer_t *layer1, *layer2, *layer3, *layer4;
 
-    layer1 = create_layer(screen.width, screen.height);
+    layer1 = create_layer(drv_screen.width, drv_screen.height);
     if (layer1 == NULL) {
         printf("create layer failed!\n");
         return -1;
     }
     printf("create layer: addr %x, buffer %x, width %d, height %d\n",
         layer1, layer1->buffer, layer1->width, layer1->height);
-    memset(layer1->buffer, 0x99, screen.width * screen.height * sizeof(GUI_COLOR));
+    memset(layer1->buffer, 0x99, drv_screen.width * drv_screen.height * sizeof(GUI_COLOR));
     layer_set_z(layer1, 0);
 
     layer_draw_rect(layer1, 0, 0, 200, 300, COLOR_RED);
@@ -494,7 +496,13 @@ int guisrv_init_layer()
         layer_draw_line(layer_topest, 0, i, layer_topest->width, i, i * 45 | (i * 30) << 8 | (i * 15) << 16);
     
     /* 刷新所有图层 */
-    layer_refresh_by_z(0, 0, screen.width, screen.height, 0, top_layer_z);
+    layer_refresh_by_z(0, 0, drv_screen.width, drv_screen.height, 0, top_layer_z);
+#endif
 
+    if (init_env_mouse()) {
+        printf("[failed ] %s: init mouse environment failed!\n", SRV_NAME);
+        return -1;
+    }
+    
     return 0;
 }

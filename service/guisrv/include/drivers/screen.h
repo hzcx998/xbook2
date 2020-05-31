@@ -3,7 +3,7 @@
 
 #include <layer/color.h>
 
-typedef struct _gui_screen {
+typedef struct _drv_screen {
     int width;  
     int height;
     
@@ -21,9 +21,9 @@ typedef struct _gui_screen {
     int            (*output_vline)(int left, int top, int bottom, SCREEN_COLOR  color);
     int            (*output_rect_fill)(int left, int top, int right, int bottom, SCREEN_COLOR  color);
 
-} gui_screen_t;
+} drv_screen_t;
 
-extern gui_screen_t screen;
+extern drv_screen_t drv_screen;
 
 int init_screen_driver();
 
