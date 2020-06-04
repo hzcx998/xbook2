@@ -16,6 +16,8 @@ int top_layer_z = -1;    /* 顶层图层的Z轴 */
 /* 顶层图层和底层图层 */
 layer_t *layer_topest = NULL;
 
+uint16_t *layer_map = NULL;
+
 /**
  * create_layer - 创建一个图层
  * @width: 图层宽度
@@ -54,10 +56,70 @@ layer_t *create_layer(int width, int height)
     layer->width = width;
     layer->height = height;
     layer->z = -1;          /* 不显示的图层 */
+    layer->extension= NULL;
     init_list(&layer->list);
     /* 添加到链表末尾 */
     list_add_tail(&layer->global_list, &layer_list_head);
     return layer;
+}
+
+
+static void layer_refresh_map(int left, int top, int right, int buttom, int z0)
+{
+    /* 在图层中的位置 */
+    int layer_left, layer_top, layer_right, layer_buttom;
+
+    /* 在屏幕上的位置 */
+    int screen_x, screen_y;
+
+    /* 在图层上的位置 */
+    int layer_x, layer_y;
+
+    /* 修复需要刷新的区域 */
+    if (left < 0)
+        left = 0;
+	if (top < 0)
+        top = 0;
+	if (right > drv_screen.width)
+        right = drv_screen.width;
+	if (buttom > drv_screen.height)
+        buttom = drv_screen.height;
+    
+    layer_t *layer;
+    GUI_COLOR color;
+    /* 刷新高度为[Z0-top]区间的图层 */
+    list_for_each_owner (layer, &layer_show_list_head, list) {
+        if (layer->z >= z0) {
+            /* 获取刷新范围 */
+            layer_left = left - layer->x;
+            layer_top = top - layer->y;
+            layer_right = right - layer->x;
+            layer_buttom = buttom - layer->y;
+            /* 修复范围 */
+            if (layer_left < 0)
+                layer_left = 0;
+            if (layer_top < 0)
+                layer_top = 0;
+            if (layer_right > layer->width) 
+                layer_right = layer->width;
+            if (layer_buttom > layer->height)
+                layer_buttom = layer->height;
+            
+            for(layer_y = layer_top; layer_y < layer_buttom; layer_y++){
+                screen_y = layer->y + layer_y;
+                for(layer_x = layer_left; layer_x < layer_right; layer_x++){
+                    screen_x = layer->x + layer_x;
+                    /* 获取图层中的颜色 */
+                    color = layer->buffer[layer_y * layer->width + layer_x];
+                    if (color & 0xff000000) {   /* 不是全透明的，就把高度写入到地图中 */
+                        layer_map[(screen_y * drv_screen.width + screen_x)] = layer->z;
+                    }
+                    /* 写入到显存 */
+                    //drv_screen.output_pixel(screen_x, screen_y, drv_screen.gui_to_screen_color(color));
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -113,6 +175,7 @@ void layer_set_z(layer_t *layer, int z)
                 list_add_tail(&layer->list, &layer_show_list_head);
 
                 /* 刷新新图层[z, z] */
+                layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
                 layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
 
             } else {    /* 不是最高图层，那么就和其它图层交换 */
@@ -139,6 +202,7 @@ void layer_set_z(layer_t *layer, int z)
                         list_add_after(&layer->list, &old_layer->list);
 
                         /* 刷新新图层[z, z] */
+                        layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
                         layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
                 
                     } else {
@@ -166,8 +230,8 @@ void layer_set_z(layer_t *layer, int z)
                         list_add_before(&layer->list, &old_layer->list);
 
                         /* 刷新新图层[z + 1, old z] */
+                        layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z + 1);
                         layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z + 1, old_z);
-                
                     } else {
                         printf("[error ] not found the old layer on %d\n", z);
                     }
@@ -188,8 +252,9 @@ void layer_set_z(layer_t *layer, int z)
             /* 由于隐藏了一个图层，那么，图层顶层的高度就需要减1 */
             top_layer_z--;
 
-            /* 刷新图层, [0, layer->z] */
-            layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, 0, old_z);
+            /* 刷新图层, [0, layer->z - 1] */
+            layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, 0);
+            layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, 0, old_z - 1);
 
             layer->z = -1;  /* 隐藏图层后，高度变为-1 */
         }
@@ -211,6 +276,10 @@ void layer_set_z(layer_t *layer, int z)
                 layer->z = z;
                 /* 直接添加到显示队列 */
                 list_add_tail(&layer->list, &layer_show_list_head);
+
+                /* 刷新新图层[z, z] */
+                layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
+                layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
 
             } else {
                 printf("add a layer %d to midlle or head\n", z);
@@ -240,11 +309,11 @@ void layer_set_z(layer_t *layer, int z)
                 } else {    /* 没有找到旧图层 */
                     printf("[error ] not found old layer!\n");
                 }
-            }
-            
-            /* 刷新新图层[z, top z] */
-            layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, top_layer_z);
+                /* 刷新新图层[z, z] */
+                layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
+                layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
 
+            }
         }
         /* 小于0就是要隐藏起来的图层，但是由于不在图层链表中，就不处理 */
     }
@@ -335,10 +404,13 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
                 screen_y = layer->y + layer_y;
                 for(layer_x = layer_left; layer_x < layer_right; layer_x++){
                     screen_x = layer->x + layer_x;
-                    /* 获取图层中的颜色 */
-                    color = layer->buffer[layer_y * layer->width + layer_x];
-                    /* 写入到显存 */
-                    drv_screen.output_pixel(screen_x, screen_y, drv_screen.gui_to_screen_color(color));
+                    /* 照着map中的z进行刷新 */			
+                    if (layer_map[(screen_y * drv_screen.width + screen_x)] == layer->z) {
+                        /* 获取图层中的颜色 */
+                        color = layer->buffer[layer_y * layer->width + layer_x];
+                        /* 写入到显存 */
+                        drv_screen.output_pixel(screen_x, screen_y, drv_screen.gui_to_screen_color(color));
+                    }
                 }
             }
         }
@@ -356,8 +428,10 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
 void layer_refresh(layer_t *layer, int left, int top, int right, int buttom)
 {
     if (layer->z >= 0) {
+        layer_refresh_map(layer->x + left, layer->y + top, layer->x + right + 1,
+            layer->y + buttom + 1, layer->z);
         layer_refresh_by_z(layer->x + left, layer->y + top, layer->x + right + 1,
-            layer->y + buttom + 1, layer->z, top_layer_z);
+            layer->y + buttom + 1, layer->z, layer->z);
     }
 }
 
@@ -375,6 +449,11 @@ void layer_set_xy(layer_t *layer, int x, int y)
     layer->x = x;
     layer->y = y;
     if (layer->z >= 0) {
+        /* 刷新原来位置 */
+        layer_refresh_map(old_x, old_y, old_x + layer->width, old_y + layer->height, 0);
+        /* 刷新新位置 */
+        layer_refresh_map(x, y, x + layer->width, y + layer->height, layer->z);
+
         /* 刷新原来位置 */
         layer_refresh_by_z(old_x, old_y, old_x + layer->width, old_y + layer->height, 0, layer->z - 1);
         /* 刷新新位置 */
@@ -396,8 +475,20 @@ layer_t *layer_get_by_z(int z)
 }
 
 
+
 int guisrv_init_layer()
 {
+    /* 分配地图空间 */
+    layer_map = sbrk(0);
+    if (layer_map == (void *) -1) {
+        return -1;
+    }
+    if (sbrk(drv_screen.width * drv_screen.height * sizeof(uint16_t)) == (void *) -1) {
+        sbrk(-(drv_screen.width * drv_screen.height * sizeof(uint16_t)));
+        return -1;
+    }
+    memset(layer_map, 0, drv_screen.width * drv_screen.height * sizeof(uint16_t));
+
 #if 0
     layer_t *layer1, *layer2, *layer3, *layer4;
 

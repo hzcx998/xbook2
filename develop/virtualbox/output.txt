@@ -1,7 +1,7 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:11:44:57 date:2020/5/31
-info: week day:0 Sunday year day:153
+info: time:21:10:39 date:2020/6/4
+info: week day:4 Thursday year day:157
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -27,7 +27,7 @@ debug: vbe_mmap: length=ea600 mode len=ea600
 debug: vbe_mmap: get phy addr:e0000000
 debug: device_mmap: get device phy addr:e0000000
 guisrv: mapped addr 20015000
-create layer: addr c000, buffer b000, width 32, height 32
+create layer: addr f6600, buffer f5600, width 32, height 32
 insert a layer at top z 0
 add a layer 0 to tail
 add a layer 0 to midlle or head
@@ -39,10 +39,13 @@ error: __getres_device: device open -1 failed!
 error: sys_getres: get rtl8139 fialed!.
 lwip: open driver rtl8139 not exist! yeild cpu.
 [mouse ] left button down.
-[mouse ] x:131, y:25
+[mouse ] x:126, y:38
+[mouse ] fond a window 31db38.
+touch window: pos=20-20, size=320-240
+in window title
 [mouse ] left button up.
-[mouse ] x:476, y:297
-[mouse ] right button down.
-[mouse ] x:322, y:303
-[mouse ] right button up.
-[mouse ] x:322, y:303
+[mouse ] x:267, y:221
+[keyboard ] key 97->— down.
+[keyboard ] key 99->™ down.
+[keyboard ] key 97->— up.
+[keyboard ] key 99->™ up.

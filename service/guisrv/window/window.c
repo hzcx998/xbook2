@@ -9,8 +9,6 @@
 
 #include <environment/desktop.h>
 
-
-
 gui_window_t *gui_create_window(
     char *title,
     int x,
@@ -54,7 +52,7 @@ gui_window_t *gui_create_window(
         destroy_layer(layer);
         return NULL;
     }
-        
+
     if (sbrk(sizeof(gui_window_t)) == (void *) -1) {
         destroy_layer(layer);
         return NULL;
@@ -70,6 +68,8 @@ gui_window_t *gui_create_window(
     win->attr = attr;
     win->layer = layer;
     win->parent = parent;
+    layer->extension = (void *) win;
+
     memset(win->title, 0, GUIW_TITLE_LEN);
     if (title) {    /* 有标题才复制 */    
         strcpy(win->title, title);
@@ -86,6 +86,7 @@ gui_window_t *gui_create_window(
     if (!(attr & GUIW_NO_TITLE)) {  /* 有标题才绘制标题 */
         layer_draw_rect_fill(win->layer, 0, 0, win->layer->width, GUIW_TITLE_HEIGHT, COLOR_RGB(128, 128, 128));
     }
+    layer_draw_rect_fill(win->layer, win->x_off, win->y_off, win->layer->width, win->height, COLOR_WHITE);
 
     layer_set_xy(layer, x, y);
     layer_set_z(layer, layer_topest->z);    /* 位于顶层图层下面 */

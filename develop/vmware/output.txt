@@ -1,7 +1,7 @@
 info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:23:53:55 date:2020/5/28
-info: week day:4 Thursday year day:150
+info: time:21:8:41 date:2020/6/4
+info: week day:4 Thursday year day:157
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -26,132 +26,76 @@ debug: vbe_mmap: start
 debug: vbe_mmap: length=ea600 mode len=ea600
 debug: vbe_mmap: get phy addr:e8000000
 debug: device_mmap: get device phy addr:e8000000
-guisrv: mapped addr 20014000
-color: f8fc00
-color: fc00
-color: f80000
-create layer: addr 1dec00, buffer a000, width 800, height 600
+guisrv: mapped addr 20015000
+create layer: addr f6600, buffer f5600, width 32, height 32
 insert a layer at top z 0
 add a layer 0 to tail
-create layer: addr 1e1338, buffer 1dec28, width 50, height 50
-insert a layer at top z 1
-add a layer 1 to tail
-layer top z:1
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:1
-create layer: addr 1eafa0, buffer 1e1360, width 100, height 100
-create layer done!
+add a layer 0 to midlle or head
+found a old layer 0
 add a layer 1 to midlle or head
 found a old layer 1
-layer z:2 set new z:2
-layer z:2 set new z:2 same with top 2
-layer top z:2
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:1
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:2
-layer z:1 set new z:2
-layer z:1 set new z:2 same with top 2
-layer top z:2
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:1
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:2
-layer z:0 set new z:1
-layer z:0 < new z:1 
-find old layer:1e1338 z1
-layer top z:2
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:0
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:1
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:2
-layer z:2 set new z:0
-layer z:2 > new z:0 
-find old layer:1e1338 z0
-layer top z:2
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:0
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:1
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:2
-layer z:0 set new z:3
-layer z:0 set new z:3 but above top 2
-layer z:0 set new z:2 same with top 2
-layer top z:2
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:0
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:1
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:2
-layer z:2 set new z:-1
-layer z:2 will be hided.
-layer top z:1
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:0
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:1
-layer z:0 set new z:-1
-layer z:0 will be hided.
-layer top z:0
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-insert a layer at top z 1
-add a layer 1 to tail
-layer top z:1
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer error: device_open: device rtl8139 not found!
+error: device_open: device rtl8139 not found!
 error: __getres_device: device open -1 failed!
 error: sys_getres: get rtl8139 fialed!.
-addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:1
-add a layer 1 to midlle or head
-found a old layer 1
-layer top z:2
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:1
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:2
-create layer: addr 1ebfc8, buffer 1eafc8, width 32, height 32
-create layer done!
-insert a layer at top z 3
-add a layer 3 to tail
-layer top z:3
-layer addr:1dec00 buffer:a000 width:800 height:600 x:0 y:0 z:0
-layer addr:1e1338 buffer:1dec28 width:50 height:50 x:0 y:0 z:1
-layer addr:1eafa0 buffer:1e1360 width:100 height:100 x:0 y:0 z:2
-layer addr:1ebfc8 buffer:1eafc8 width:32 height:32 x:0 y:0 z:3
 lwip: open driver rtl8139 not exist! yeild cpu.
 [mouse ] left button down.
-[mouse ] x:389, y:211
-[mouse ] right button down.
-[mouse ] x:448, y:223
+[mouse ] x:135, y:39
+[mouse ] fond a window 31db38.
+touch window: pos=20-20, size=320-240
+in window title
 [mouse ] left button up.
-[mouse ] x:374, y:288
-[mouse ] right button up.
-[mouse ] x:353, y:249
-[mouse ] right button down.
-[mouse ] x:401, y:223
-[mouse ] right button up.
-[mouse ] x:216, y:303
+[mouse ] x:325, y:199
 [mouse ] left button down.
-[mouse ] x:42, y:83
+[mouse ] x:342, y:178
+[mouse ] fond a window 31db38.
+[mouse ] fond a window 2cb258.
+touch window: pos=0-0, size=800-600
+no window title
 [mouse ] left button up.
-[mouse ] x:531, y:251
+[mouse ] x:305, y:225
 [mouse ] left button down.
-[mouse ] x:288, y:402
+[mouse ] x:267, y:188
+[mouse ] fond a window 31db38.
+touch window: pos=210-180, size=320-240
+in window title
 [mouse ] left button up.
-[mouse ] x:407, y:130
+[mouse ] x:285, y:266
 [mouse ] left button down.
-[mouse ] x:635, y:205
+[mouse ] x:387, y:270
+[mouse ] fond a window 31db38.
+touch window: pos=228-258, size=320-240
+in window title
 [mouse ] left button up.
-[mouse ] x:423, y:260
+[mouse ] x:285, y:211
 [mouse ] left button down.
-[mouse ] x:308, y:154
+[mouse ] x:217, y:215
+[mouse ] fond a window 31db38.
+touch window: pos=126-199, size=320-240
+in window title
 [mouse ] left button up.
-[mouse ] x:310, y:279
+[mouse ] x:264, y:200
 [mouse ] left button down.
-[mouse ] x:380, y:143
+[mouse ] x:250, y:187
+[mouse ] fond a window 31db38.
+touch window: pos=173-184, size=320-240
+in window title
 [mouse ] left button up.
-[mouse ] x:255, y:265
+[mouse ] x:238, y:81
 [mouse ] left button down.
-[mouse ] x:48, y:54
+[mouse ] x:332, y:96
+[mouse ] fond a window 31db38.
+touch window: pos=161-78, size=320-240
+in window title
 [mouse ] left button up.
-[mouse ] x:611, y:417
+[mouse ] x:432, y:171
 [mouse ] left button down.
-[mouse ] x:477, y:433
+[mouse ] x:364, y:157
+[mouse ] fond a window 31db38.
+touch window: pos=261-153, size=320-240
+in window title
 [mouse ] left button up.
-[mouse ] x:112, y:154
-[keyboard ] key 96->– down.
-[keyboard ] key 96->– up.
-[keyboard ] key 97->— down.
+[mouse ] x:294, y:176
 [keyboard ] key 99->™ down.
-[keyboard ] key 97->— up.
+[keyboard ] key 97->— down.
 [keyboard ] key 99->™ up.
+[keyboard ] key 97->— up.

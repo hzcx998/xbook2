@@ -6,7 +6,7 @@
 ** Use VBoxManage or the VirtualBox Manager GUI to make changes.
 -->
 <VirtualBox xmlns="http://www.virtualbox.org/" version="1.15-windows">
-  <Machine uuid="{faf7315a-3be0-4232-8d1d-004191843504}" name="xbook" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2020-05-31T03:45:45Z">
+  <Machine uuid="{faf7315a-3be0-4232-8d1d-004191843504}" name="xbook" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2020-06-04T13:11:09Z">
     <MediaRegistry>
       <HardDisks>
         <HardDisk uuid="{8c389410-2fcb-414a-9418-eac5ab386079}" location="D:/Developmemts/github/xbook2/develop/image/c.vhd" format="VHD" type="Normal"/>
@@ -19,7 +19,7 @@
     <ExtraData>
       <ExtraDataItem name="GUI/InformationWindowGeometry" value="690,351,634,347"/>
       <ExtraDataItem name="GUI/LastCloseAction" value="PowerOff"/>
-      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="144,254,800,651"/>
+      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="522,185,800,651"/>
     </ExtraData>
     <Hardware>
       <CPU>
@@ -47,7 +47,7 @@
       </UART>
       <AudioAdapter driver="DirectSound" enabled="true" enabledIn="false"/>
       <GuestProperties>
-        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="zh_CN" timestamp="1590896746501246000" flags=""/>
+        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="zh_CN" timestamp="1591275429685894700" flags=""/>
       </GuestProperties>
     </Hardware>
     <StorageControllers>
