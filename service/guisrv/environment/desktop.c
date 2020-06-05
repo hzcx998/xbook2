@@ -22,5 +22,8 @@ int init_env_desktop()
         env_desktop.window->height, COLOR_RGB(0, 128, 192));
     gui_window_update(env_desktop.window, 0, 0, env_desktop.window->width, env_desktop.window->height);
 
+    /* 设置当前窗口 */
+    current_window = env_desktop.window;
+
     return 0;
 }

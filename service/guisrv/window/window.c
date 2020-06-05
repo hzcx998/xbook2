@@ -9,6 +9,9 @@
 
 #include <environment/desktop.h>
 
+/* 当前活动的窗口 */
+gui_window_t *window_current;
+
 gui_window_t *gui_create_window(
     char *title,
     int x,
@@ -68,6 +71,9 @@ gui_window_t *gui_create_window(
     win->attr = attr;
     win->layer = layer;
     win->parent = parent;
+    win->title_color = COLOR_WHITE;
+    win->title_bar_color = COLOR_RGB(128, 128, 128);
+    
     layer->extension = (void *) win;
 
     memset(win->title, 0, GUIW_TITLE_LEN);
@@ -89,7 +95,10 @@ gui_window_t *gui_create_window(
     layer_draw_rect_fill(win->layer, win->x_off, win->y_off, win->layer->width, win->height, COLOR_WHITE);
 
     layer_set_xy(layer, x, y);
+    
     layer_set_z(layer, layer_topest->z);    /* 位于顶层图层下面 */
+    //gui_window_switch(win);
+    gui_window_focus(win);
 
     return win;
 }
@@ -129,12 +138,77 @@ int gui_window_update(gui_window_t *win, int left, int top, int right, int butto
     return 0;
 }
 
+void gui_window_title_switch(gui_window_t *window, bool on)
+{
+    if (on) {
+        window->title_bar_color = COLOR_RGB(192, 192, 192);
+    } else {
+        window->title_bar_color = COLOR_RGB(128, 128, 128);
+    }
+    /* 绘制标题栏背景 */
+    layer_draw_rect_fill(window->layer, 0, 0, window->layer->width, GUIW_TITLE_HEIGHT,
+        window->title_bar_color);
+    layer_refresh(window->layer, 0, 0, window->layer->width, GUIW_TITLE_HEIGHT);
+}
+
+/**
+ * gui_window_switch - 切换图形窗口
+ * @window: 窗口
+ * 
+ */
+void gui_window_focus(gui_window_t *window)
+{
+    if (window == current_window) {
+        return;
+    }
+    if (window) {   /* 切换到指定窗口 */
+        /* 修改聚焦窗口 */
+        
+        /* 移除聚焦 */
+        if (current_window && !(current_window->attr & GUIW_NO_TITLE)) {  /* 有标题，就修改标题栏颜色 */
+            /* 修改标题栏颜色 */
+            gui_window_title_switch(current_window, false);
+        }
+
+        /* 绑定聚焦 */
+        if (!(window->attr & GUIW_NO_TITLE)) {  /* 有标题，就修改标题栏颜色 */
+            /* 修改标题栏颜色 */
+            gui_window_title_switch(window, true);
+        }
+        current_window = window;
+    }
+}
+
+/**
+ * gui_window_switch - 切换图形窗口
+ * @window: 窗口
+ * 
+ */
+void gui_window_switch(gui_window_t *window)
+{
+    if (window == current_window) {
+        return;
+    }
+    if (window) {   /* 切换到指定窗口 */
+        /* 修改窗口的高度为最高 */
+        if (window->layer) {
+            /* 切换到鼠标下面 */
+            layer_set_z(window->layer, layer_topest->z - 1);
+            
+            gui_window_focus(window);
+        }
+    }
+}
+
 int init_gui_window()
 {
+    window_current = NULL;
+
     if (init_env_desktop()) {
         return -1;
     }
     
+    /* 创建测试窗口 */
     gui_window_t *win = gui_create_window("xbook2", 20, 20, 320, 240, 0, NULL);
     if (win == NULL) {
         printf("create window failed!\n");
@@ -154,8 +228,27 @@ int init_gui_window()
     
     gui_window_update(win, 20, 20, 300, 200);
 
-    //sleep(3);   /* 休眠1s */
+    win = gui_create_window("xbook3", 500, 100, 240, 360, 0, NULL);
+    if (win == NULL) {
+        printf("create window failed!\n");
+        return -1;
+    }
+    
+    gui_window_put_point(win, 10, 10, COLOR_BLUE);
+    gui_window_put_point(win, 15, 13, COLOR_RED);
+    gui_window_put_point(win, 13, 15, COLOR_GREEN);
 
+    gui_window_update(win, 10, 10, 15, 15);
+
+    gui_window_draw_line(win, 20, 20, 100, 150, COLOR_YELLOW);
+    
+    gui_window_draw_rect(win, 20, 20, 100, 150, COLOR_BLUE);
+    gui_window_draw_rect_fill(win, 100, 20, 100, 150, COLOR_GREEN);
+    
+    gui_window_update(win, 20, 20, 300, 200);
+    
+    //sleep(3);   /* 休眠1s */
+    
     //gui_destroy_window(win);
     return 0;
 }

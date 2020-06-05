@@ -56,17 +56,22 @@ static void __left_button_down()
                     env_mouse.hold_window = window;
 
                     /* 如果不是活动窗口，就切换成为活动窗口 */
+                    gui_window_switch(window);
 
                     break;
                 } else {    /* in body */
                     /* 发送消息给窗口，如果不是激活窗口，就先激活 */
                     printf("in window body\n");
-                    
+                    gui_window_switch(window);
+
                 }
-            } else {    /* 没有标题，就发送消息，切换窗口并激活 */
+            } else {    /* 没有标题，就发送消息，聚焦窗口 */
                 printf("no window title\n");
-                    
+
+                /* 聚焦窗口 */
+                gui_window_focus(window);
             }
+            
             break;
         }
     }
