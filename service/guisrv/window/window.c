@@ -6,8 +6,10 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <guisrv.h>
 
 #include <environment/desktop.h>
+#include <environment/mouse.h>
 
 /* 当前活动的窗口 */
 gui_window_t *window_current;
@@ -71,7 +73,7 @@ gui_window_t *gui_create_window(
     win->attr = attr;
     win->layer = layer;
     win->parent = parent;
-    win->title_color = COLOR_WHITE;
+    win->title_color = COLOR_RED;
     win->title_bar_color = COLOR_RGB(128, 128, 128);
     
     layer->extension = (void *) win;
@@ -89,15 +91,12 @@ gui_window_t *gui_create_window(
     }
 
     /* 绘制窗口本体 */
-    if (!(attr & GUIW_NO_TITLE)) {  /* 有标题才绘制标题 */
-        layer_draw_rect_fill(win->layer, 0, 0, win->layer->width, GUIW_TITLE_HEIGHT, COLOR_RGB(128, 128, 128));
-    }
     layer_draw_rect_fill(win->layer, win->x_off, win->y_off, win->layer->width, win->height, COLOR_WHITE);
 
     layer_set_xy(layer, x, y);
     
     layer_set_z(layer, layer_topest->z);    /* 位于顶层图层下面 */
-    //gui_window_switch(win);
+
     gui_window_focus(win);
 
     return win;
@@ -128,6 +127,9 @@ int gui_destroy_window(gui_window_t *win)
     if (destroy_layer(layer))
         return -1;
     
+    /* 获取顶层窗口 */
+    
+
     return 0;
 }
 
@@ -142,12 +144,15 @@ void gui_window_title_switch(gui_window_t *window, bool on)
 {
     if (on) {
         window->title_bar_color = COLOR_RGB(192, 192, 192);
+        window->title_color = COLOR_RGB(255, 255, 255);
     } else {
         window->title_bar_color = COLOR_RGB(128, 128, 128);
+        window->title_color = COLOR_RGB(200, 200, 200);
     }
     /* 绘制标题栏背景 */
     layer_draw_rect_fill(window->layer, 0, 0, window->layer->width, GUIW_TITLE_HEIGHT,
         window->title_bar_color);
+    layer_draw_text(window->layer, 24, 4, window->title, window->title_color);
     layer_refresh(window->layer, 0, 0, window->layer->width, GUIW_TITLE_HEIGHT);
 }
 
@@ -203,11 +208,20 @@ void gui_window_switch(gui_window_t *window)
 int init_gui_window()
 {
     window_current = NULL;
-
+    
     if (init_env_desktop()) {
+        printf("[desktop ] %s: init desktop environment failed!\n", SRV_NAME);
         return -1;
     }
     
+    gui_window_draw_text(env_desktop.window, 0,0,"abcdefghijklmnopqrstuvwxyz0123456789",
+        COLOR_RED);
+
+    gui_window_draw_text_ex(env_desktop.window, 0,16,"abcdefghijklmnopqrstuvwxyz0123456789",
+        COLOR_RED, gui_get_font("simsun"));
+    
+    gui_window_update(env_desktop.window, 0,0, 400, 16*2);
+
     /* 创建测试窗口 */
     gui_window_t *win = gui_create_window("xbook2", 20, 20, 320, 240, 0, NULL);
     if (win == NULL) {
@@ -245,10 +259,16 @@ int init_gui_window()
     gui_window_draw_rect(win, 20, 20, 100, 150, COLOR_BLUE);
     gui_window_draw_rect_fill(win, 100, 20, 100, 150, COLOR_GREEN);
     
-    gui_window_update(win, 20, 20, 300, 200);
+    gui_window_draw_rect_fill(win, 100, 20, 100, 150, COLOR_GREEN);
+    
+    gui_window_draw_text(win, 100, 200, "hello, world!", COLOR_RED);
+
+    gui_window_draw_text_ex(win, 100, 220, "hello, world!", COLOR_RED, gui_get_font("Simsun"));
+    
+    gui_window_update(win, 20, 20, 300, 300);
     
     //sleep(3);   /* 休眠1s */
-    
+
     //gui_destroy_window(win);
     return 0;
 }

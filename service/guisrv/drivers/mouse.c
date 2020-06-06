@@ -15,7 +15,6 @@
 
 static  int   mouse_res = 0;
 
-
 static  int  mouse_open(void)
 {
     mouse_res = res_open( GUI_MOUSE_DEVICE_NAME, RES_DEV, 0);

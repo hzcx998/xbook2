@@ -98,7 +98,7 @@ phy: compile link floppy
 	
 #Clean temporary files
 clean:
-	-rm *.o
+	-rm $(OBJS)
 	-rm $(BIN)
 
 %.o: %.asm

@@ -1,7 +1,7 @@
 info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:21:8:41 date:2020/6/4
-info: week day:4 Thursday year day:157
+info: time:18:23:14 date:2020/6/6
+info: week day:6 Saturday year day:159
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -26,76 +26,230 @@ debug: vbe_mmap: start
 debug: vbe_mmap: length=ea600 mode len=ea600
 debug: vbe_mmap: get phy addr:e8000000
 debug: device_mmap: get device phy addr:e8000000
-guisrv: mapped addr 20015000
-create layer: addr f6600, buffer f5600, width 32, height 32
+guisrv: mapped addr 2001c000
+create layer: addr fd600, buffer fc600, width 32, height 32
 insert a layer at top z 0
 add a layer 0 to tail
 add a layer 0 to midlle or head
 found a old layer 0
 add a layer 1 to midlle or head
 found a old layer 1
+add a layer 2 to midlle or head
+found a old layer 2
 error: device_open: device rtl8139 not found!
 error: __getres_device: device open -1 failed!
 error: sys_getres: get rtl8139 fialed!.
 lwip: open driver rtl8139 not exist! yeild cpu.
 [mouse ] left button down.
-[mouse ] x:135, y:39
-[mouse ] fond a window 31db38.
-touch window: pos=20-20, size=320-240
-in window title
-[mouse ] left button up.
-[mouse ] x:325, y:199
-[mouse ] left button down.
-[mouse ] x:342, y:178
-[mouse ] fond a window 31db38.
-[mouse ] fond a window 2cb258.
+[mouse ] x:364, y:270
+[mouse ] fond a window 37ec28.
+[mouse ] fond a window 324b40.
+[mouse ] fond a window 2d2258.
 touch window: pos=0-0, size=800-600
 no window title
 [mouse ] left button up.
-[mouse ] x:305, y:225
+[mouse ] x:346, y:256
 [mouse ] left button down.
-[mouse ] x:267, y:188
-[mouse ] fond a window 31db38.
-touch window: pos=210-180, size=320-240
+[mouse ] x:597, y:113
+[mouse ] fond a window 37ec28.
+touch window: pos=500-100, size=240-360
 in window title
+layer z:2 set new z:2
+[mouse] change state 0 to 1
 [mouse ] left button up.
-[mouse ] x:285, y:266
+[mouse ] x:525, y:93
+[mouse] change state 0 to 0
 [mouse ] left button down.
-[mouse ] x:387, y:270
-[mouse ] fond a window 31db38.
-touch window: pos=228-258, size=320-240
+[mouse ] x:261, y:31
+[mouse ] fond a window 37ec28.
+[mouse ] fond a window 324b40.
+touch window: pos=20-20, size=320-240
 in window title
+layer z:1 set new z:2
+layer z:1 < new z:2 
+find old layer:37ebfc z2
+[mouse] change state 0 to 1
 [mouse ] left button up.
-[mouse ] x:285, y:211
+[mouse ] x:452, y:151
+[mouse] change state 0 to 0
 [mouse ] left button down.
-[mouse ] x:217, y:215
-[mouse ] fond a window 31db38.
-touch window: pos=126-199, size=320-240
+[mouse ] x:557, y:87
+[mouse ] fond a window 324b40.
+[mouse ] fond a window 37ec28.
+touch window: pos=428-80, size=240-360
 in window title
-[mouse ] left button up.
-[mouse ] x:264, y:200
+layer z:1 set new z:2
+layer z:1 < new z:2 
+find old layer:324b14 z2
+[mouse] change state 0 to 1
+[info: memory total:20000000 byte 512 MB
+info: welcome to xbook kernel.
+info: time:18:23:42 date:2020/6/6
+info: week day:6 Saturday year day:159
+info: init_pci: pci type device found 6.
+info: ide_enter: found 2 hard disks.
+debug: RTL8139 init failed: not find pci device.
+error: init_driver_arch: create one driver failed!
+info: raw block name:initsrv
+info: raw block name:filesrv
+initsrv: started
+filesrv: disk seq: 0: -> ide1
+filesrv: disk seq: 1: -> ramdisk
+0:/NETSRV.XSV
+0:/login.xbk
+0:/bosh.xbk
+0:/login
+0:/bosh
+0:/test
+0:/guisrv
+
+filesrv: enter receving request state.
+[ok ] graph service start.
+debug: device_mmap: start.
+debug: vbe_mmap: start
+debug: vbe_mmap: length=ea600 mode len=ea600
+debug: vbe_mmap: get phy addr:e8000000
+debug: device_mmap: get device phy addr:e8000000
+guisrv: mapped addr 2001c000
+create layer: addr fd600, buffer fc600, width 32, height 32
+insert a layer at top z 0
+add a layer 0 to tail
+add a layer 0 to midlle or head
+found a old layer 0
+found a old layer 0
+add a layer 1 to midlle or head
+found a old layer 1
+found a old layer 1
+add a layer 2 to midlle or head
+found a old layer 2
+found a old layer 2
+error: device_open: device rtl8139 not found!
+error: __getres_device: device open -1 failed!
+error: sys_getres: get rtl8139 fialed!.
+lwip: open driver rtl8139 not exist! yeild cpu.
 [mouse ] left button down.
-[mouse ] x:250, y:187
-[mouse ] fond a window 31db38.
-touch window: pos=173-184, size=320-240
-in window title
+[mouse ] x:559, y:109
+[mouse ] fond a window 37ec28.
+touch window: pos=500-100, size=240-360
+0in window title
+window 324b40.
+[mouse] change state 0 to 1
+8.
 [mouse ] left button up.
-[mouse ] x:238, y:81
+[mouse ] x:444, y:109
+p.
+[mouse] change state 0 to 0
 [mouse ] left button down.
-[mouse ] x:332, y:96
-[mouse ] fond a window 31db38.
-touch window: pos=161-78, size=320-240
+[mouse ] x:227, y:25
+
+[mouse ] fond a window 37ec28.
+[mouse ] fond a window 324b40.
+touch window: pos=20-20, size=320-240
+0
 in window title
+w z:2
+layer z:1 set new z:2
+ to 1
+layer z:1 < new z:2 
+up.
+find old layer:37ebfc z2
+[mouse] change state 0 to 1
 [mouse ] left button up.
-[mouse ] x:432, y:171
+.
+[mouse ] x:240, y:140
+[mouse] change state 0 to 0
+8.
 [mouse ] left button down.
-[mouse ] x:364, y:157
-[mouse ] fond a window 31db38.
-touch window: pos=261-153, size=320-240
+40.
+[mouse ] x:191, y:158
+[mouse ] fond a window 324b40.
+touch window: pos=33-135, size=320-240
 in window title
+z:2 
+[mouse] change state 0 to 1
 [mouse ] left button up.
-[mouse ] x:294, y:176
-[keyboard ] key 99->™ down.
+ 1
+[mouse ] x:225, y:133
+p.
+[mouse] change state 0 to 0
+[mouse ] left button down.
+
+[mouse ] x:508, y:102
+own.
+[mouse ] fond a window 324b40.
+[mouse ] fond a window 37ec28.
+touch window: pos=385-100, size=240-360
+in window title
+window 37ec28.
+layer z:1 set new z:2
+layer z:1 < new z:2 
+
+find old layer:324b14 z2
+[mouse] change state 0 to 1
+[mouse ] left button up.
+ 1
+[mouse ] x:563, y:97
+up.
+[mouse] change state 0 to 0
+[mouse ] left button down.
+[mouse ] x:543, y:106
+[mouse ] fond a window 37ec28.
+touch window: pos=440-95, size=240-360
+in window title
+[mouse] change state 0 to 1
+[mouse ] left button up.
+[mouse ] x:545, y:99
+[mouse] change state 0 to 0
+[info: memory total:20000000 byte 512 MB
+info: welcome to xbook kernel.
+info: time:18:24:13 date:2020/6/6
+info: week day:6 Saturday year day:159
+info: init_pci: pci type device found 6.
+info: ide_enter: found 2 hard disks.
+debug: RTL8139 init failed: not find pci device.
+error: init_driver_arch: create one driver failed!
+info: raw block name:initsrv
+info: raw block name:filesrv
+initsrv: started
+filesrv: disk seq: 0: -> ide1
+filesrv: disk seq: 1: -> ramdisk
+0:/NETSRV.XSV
+0:/login.xbk
+0:/bosh.xbk
+0:/login
+0:/bosh
+0:/test
+0:/guisrv
+
+filesrv: enter receving request state.
+[ok ] graph service start.
+debug: device_mmap: start.
+debug: vbe_mmap: start
+debug: vbe_mmap: length=ea600 mode len=ea600
+debug: vbe_mmap: get phy addr:e8000000
+debug: device_mmap: get device phy addr:e8000000
+guisrv: mapped addr 2001c000
+create layer: addr fd600, buffer fc600, width 32, height 32
+insert a layer at top z 0
+add a layer 0 to tail
+add a layer 0 to midlle or head
+found a old layer 0
+found a old layer 0
+add a layer 1 to midlle or head
+found a old layer 1
+found a old layer 1
+add a layer 2 to midlle or head
+found a old layer 2
+found a old layer 2
 [keyboard ] key 97->— down.
-[keyboard ] key 99->™ up.
+[keyboard ] key 99->™ down.
+8.
 [keyboard ] key 97->— up.
+b40.
+[keyboard ] key 99->™ up.
+1
+8.
+error: device_open: device rtl8139 not found!
+error: __getres_device: device open -1 failed!
+error: sys_getres: get rtl8139 fialed!.
+lwip: open driver rtl8139 not exist! yeild cpu.

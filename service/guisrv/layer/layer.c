@@ -8,6 +8,7 @@
 #include <layer/color.h>
 #include <layer/draw.h>
 #include <environment/mouse.h>
+#include <font/font.h>
 
 LIST_HEAD(layer_list_head);
 LIST_HEAD(layer_show_list_head);
@@ -590,8 +591,11 @@ int guisrv_init_layer()
     layer_refresh_by_z(0, 0, drv_screen.width, drv_screen.height, 0, top_layer_z);
 #endif
 
+    /* 初始化字体管理 */
+    gui_init_font();
+    
     if (init_env_mouse()) {
-        printf("[failed ] %s: init mouse environment failed!\n", SRV_NAME);
+        printf("[mouse ] %s: init mouse environment failed!\n", SRV_NAME);
         return -1;
     }
     

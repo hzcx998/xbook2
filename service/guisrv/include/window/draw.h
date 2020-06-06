@@ -5,5 +5,6 @@
 #include "line.h"
 #include "rect.h"
 #include "bitmap.h"
+#include "char.h"
 
 #endif  /* __GUISRV_WINDOW_DRAW_H__ */

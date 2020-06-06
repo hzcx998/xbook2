@@ -57,24 +57,32 @@ LAYER_OBJS 	= 		layer/point.o \
 					layer/rect.o \
 					layer/bitmap.o \
 					layer/layer.o \
-
+					layer/char.o \
+					
 WINDOW_OBJS 	=	window/window.o \
 					window/point.o \
 					window/line.o \
 					window/rect.o \
 					window/bitmap.o \
+					window/char.o \
 
 ENVIRONMENT_OBJS =	environment/mouse.o \
 					environment/desktop.o \
 
+FONT_OBJS 		=	font/font.o \
+					font/font_simsun.o \
+					font/font_standard.o \
+
+
 MAIN_OBJS 		= 	main.o \
 				
-OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) $(ENVIRONMENT_OBJS)
+OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) $(ENVIRONMENT_OBJS) $(FONT_OBJS)
 
 
 LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
+# -n: close memory aligin.
+LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000 -n
 
 #First read here
 .PHONY: all dis
@@ -116,7 +124,7 @@ phy: compile link floppy
 	
 #Clean temporary files
 clean:
-	-rm *.o
+	-rm $(OBJS)
 	-rm $(BIN)
 
 %.o: %.asm

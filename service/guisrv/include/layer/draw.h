@@ -5,6 +5,7 @@
 #include "line.h"
 #include "rect.h"
 #include "bitmap.h"
+#include "char.h"
 
 
 #endif  /* __GUISRV_LAYER_DRAW_H__ */

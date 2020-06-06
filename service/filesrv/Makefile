@@ -57,8 +57,8 @@ OBJS =  main.o \
 LIB_FILE = 	$(DIR_FATFSLIB)/fatfs-r0.14.a \
 			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
-
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
+# -n: close memory aligin.
+LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000  -n
 
 
 #First read here
@@ -101,7 +101,7 @@ phy: compile link floppy
 	
 #Clean temporary files
 clean:
-	-rm *.o
+	-rm $(OBJS)
 	-rm $(BIN)
 
 %.o: %.asm
