@@ -8,6 +8,7 @@
 
 #include <layer/layer.h>
 #include <window/window.h>
+#include <widget/widget.h>
 
 env_mouse_t env_mouse = {0};
 
@@ -40,15 +41,20 @@ static void __left_button_down()
         local_my = env_mouse.y - window->y;
         if (local_mx >= 0 && local_mx < window->width && 
             local_my >= 0 && local_my < window->height) {
+            
+            gui_widget_mouse_button_down(&layer->widget_list_head, 0, env_mouse.x, env_mouse.y);
+
             printf("touch window: pos=%d-%d, size=%d-%d\n", 
                 window->x, window->y, window->width, window->height);
                     
             if (!(window->attr & GUIW_NO_TITLE)) {
-                
+                 
                 /* 有标题才判断标题栏 */
                 if (local_my < GUIW_TITLE_HEIGHT) { /* in title */
                     /* 判断是否为控制按钮，如果是，就处理，不是就可能要移动窗口，切换窗口 */
                     printf("in window title\n");
+
+                    /* 处理按钮 */
 
                     env_mouse.local_x = local_mx;
                     env_mouse.local_y = local_my;
@@ -94,8 +100,27 @@ static void __left_button_up()
         mouse_enter_state(env_mouse);
         env_mouse_set_state(MOUSE_CURSOR_NORMAL);
     } else {    /* 没有抓住窗口，简单传输按键弹起消息 */
-        
-
+        gui_window_t *window;
+        layer_t *layer;
+        int local_mx, local_my;
+        /* 查看点击的位置，看是否是一个 */
+        list_for_each_owner_reverse (layer, &layer_show_list_head, list) {
+            if (layer == layer_topest)
+                continue;
+            if (layer->extension == NULL)
+                continue;
+            
+            window = (gui_window_t *) layer->extension;
+            local_mx = env_mouse.x - window->x;
+            local_my = env_mouse.y - window->y;
+            gui_widget_mouse_button_up(&layer->widget_list_head, 0, env_mouse.x, env_mouse.y);
+            
+            if (local_mx >= 0 && local_mx < window->width && 
+                local_my >= 0 && local_my < window->height) {
+                
+                break;
+            }
+        }
     }
 }
 
@@ -136,12 +161,41 @@ void env_mouse_move()
 
             layer_set_xy(env_mouse.hold_window->layer, env_mouse.x - 
                 env_mouse.local_x, env_mouse.y - env_mouse.local_y);
+        } else {
+            gui_window_t *window;
+            layer_t *layer;
+            int local_mx, local_my;
+            /* 查看点击的位置，看是否是一个 */
+            list_for_each_owner_reverse (layer, &layer_show_list_head, list) {
+                if (layer == layer_topest)
+                    continue;
+                if (layer->extension == NULL)
+                    continue;
+                
+                window = (gui_window_t *) layer->extension;
+                local_mx = env_mouse.x - window->x;
+                local_my = env_mouse.y - window->y;
+                gui_widget_mouse_motion(&layer->widget_list_head, env_mouse.x, env_mouse.y);
+                    
+                if (local_mx >= 0 && local_mx < window->width && 
+                    local_my >= 0 && local_my < window->height) {
+                    if (current_window != window) { /* 鼠标切换到其它窗口 */
+                        /* 改变窗口消息 */
+                    }
+
+                    /* 移动消息 */
+
+                    break;
+                }
+            }
         }
+
+        
     }
 }
 
 /* 需要对齐，不然数据就会出现混乱 */
-char __attribute__((aligned(MOUSE_CURSOR_WIDTH * MOUSE_CURSOR_HEIGHT)))__mouse_cursor_normal[MOUSE_CURSOR_WIDTH * MOUSE_CURSOR_HEIGHT] = {
+char __attribute__((aligned(32)))__mouse_cursor_normal[MOUSE_CURSOR_WIDTH * MOUSE_CURSOR_HEIGHT] = {
     1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     1,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -176,7 +230,7 @@ char __attribute__((aligned(MOUSE_CURSOR_WIDTH * MOUSE_CURSOR_HEIGHT)))__mouse_c
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 /* 需要对齐，不然数据就会出现混乱 */
-char __attribute__((aligned(MOUSE_CURSOR_WIDTH * MOUSE_CURSOR_HEIGHT)))__mouse_cursor_hold[MOUSE_CURSOR_WIDTH * MOUSE_CURSOR_HEIGHT] = {
+char __attribute__((aligned(32)))__mouse_cursor_hold[MOUSE_CURSOR_WIDTH * MOUSE_CURSOR_HEIGHT] = {
     2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     2,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -280,7 +334,8 @@ int init_env_mouse()
     env_mouse.right_btn_up      = __right_button_up;
     env_mouse.middle_btn_down   = __middle_button_down;
     env_mouse.middle_btn_up     = __middle_button_up;
-
+    printf("[mouse] layer create.\n");
+        
     /* 顶层图层是鼠标图层 */
     layer_topest = create_layer(MOUSE_CURSOR_WIDTH, MOUSE_CURSOR_HEIGHT);
     if (layer_topest == NULL) {

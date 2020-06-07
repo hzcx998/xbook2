@@ -73,16 +73,19 @@ FONT_OBJS 		=	font/font.o \
 					font/font_simsun.o \
 					font/font_standard.o \
 
-
+WIDGET_OBJS		=	widget/widget.o \
+					widget/label.o \
+					widget/button.o \
+					
 MAIN_OBJS 		= 	main.o \
 				
-OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) $(ENVIRONMENT_OBJS) $(FONT_OBJS)
-
+OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) \
+		$(FONT_OBJS) $(ENVIRONMENT_OBJS) $(WIDGET_OBJS)
 
 LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
 # -n: close memory aligin.
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000 -n
+LDFLAGS		= -T link.ld -n
 
 #First read here
 .PHONY: all dis

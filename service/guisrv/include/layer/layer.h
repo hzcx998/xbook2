@@ -11,6 +11,7 @@ typedef struct _layer {
     GUI_COLOR *buffer;          /* 图层缓冲区 */
     list_t list;                /* 在显示图层中的一个节点 */
     list_t global_list;         /* 在全局图层链表中的一个节点 */
+    list_t widget_list_head;    /* 子控件链表 */
     void *extension;            /* 图层拓展 */
 } layer_t;
 

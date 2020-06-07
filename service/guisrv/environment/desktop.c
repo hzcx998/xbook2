@@ -5,6 +5,8 @@
 #include <window/draw.h>
 
 #include <environment/desktop.h>
+#include <widget/label.h>
+#include <widget/button.h>
 
 env_desktop_t env_desktop;
 
@@ -25,5 +27,14 @@ int init_env_desktop()
     /* 设置当前窗口 */
     current_window = env_desktop.window;
 
+    gui_label_t *label = gui_create_label(GUI_LABEL_TEXT, 0, 100, 0, 0);
+    label->set_text(label, "hello, world!\n");
+    label->add(label, env_desktop.window->layer);
+    label->show(label);
+
+    gui_button_t *button = gui_create_button(GUI_LABEL_TEXT, 0,400, 40, 20);
+    button->add(button, env_desktop.window->layer);
+    button->show(button);
+    
     return 0;
 }

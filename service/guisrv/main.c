@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
-#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <sys/res.h>
 #include <sys/ioctl.h>
 #include <sys/vmm.h>
@@ -99,6 +100,20 @@ int loop_guisrv()
     }
 }
 
+void *gui_malloc(size_t size)
+{
+    void *p = (void *)sbrk(0);
+    if (p == (void *) -1)
+        return NULL;
+    if (sbrk(size) == (void *) -1)
+        return NULL;
+    return p;
+}
+
+void gui_free(void *ptr)
+{
+    /* invalid */
+}
 
 /*
 GUI struct:

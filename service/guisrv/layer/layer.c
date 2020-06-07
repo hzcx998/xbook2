@@ -28,39 +28,39 @@ uint16_t *layer_map = NULL;
  */
 layer_t *create_layer(int width, int height)
 {
-    // (GUI_COLOR *) malloc(width * height * sizeof(GUI_COLOR));
-    
-    GUI_COLOR *buffer = sbrk(0);
-    if (buffer == (void *) -1)
+    GUI_COLOR *buffer = gui_malloc(width * height * sizeof(GUI_COLOR));
+    if (buffer == NULL)
         return NULL;
-    if (sbrk(width * height * sizeof(GUI_COLOR)) == (void *) -1) {
-        return NULL;
-    }
+    printf("[layer] alloc buffer %x\n", buffer);
+
     memset(buffer, 0, width * height * sizeof(GUI_COLOR));
-    layer_t *layer = sbrk(0);
-    if (layer == (void *) -1) {
-        sbrk(-(width * height * sizeof(GUI_COLOR)));
-        return NULL;
-    }
-    if (sbrk(sizeof(layer_t)) == (void *) -1) {
-        sbrk(-(width * height * sizeof(GUI_COLOR)));
-        
-        return NULL;
-    }
-    /*layer_t *layer = (layer_t *) malloc(sizeof(layer_t));
+    layer_t *layer = gui_malloc(sizeof(layer_t));
+    printf("[layer] alloc layer %x\n", layer);
+    
     if (layer == NULL) {
-        free(buffer);
+        gui_free(buffer);
         return NULL;
-    }*/
+    }
+
     memset(layer, 0, sizeof(layer_t));
+    printf("[layer] alloc layer %x done\n", layer);
+    
     layer->buffer = buffer;
     layer->width = width;
     layer->height = height;
     layer->z = -1;          /* 不显示的图层 */
     layer->extension= NULL;
     init_list(&layer->list);
+
+    printf("[layer] left\n");
+    
     /* 添加到链表末尾 */
     list_add_tail(&layer->global_list, &layer_list_head);
+    printf("[layer] right\n");
+    
+    init_list(&layer->widget_list_head);
+    printf("[layer] set layer %x done\n", layer);
+    
     return layer;
 }
 
@@ -479,16 +479,17 @@ layer_t *layer_get_by_z(int z)
 
 int guisrv_init_layer()
 {
+    printf("[layer] start.\n");
     /* 分配地图空间 */
-    layer_map = sbrk(0);
-    if (layer_map == (void *) -1) {
-        return -1;
-    }
-    if (sbrk(drv_screen.width * drv_screen.height * sizeof(uint16_t)) == (void *) -1) {
-        sbrk(-(drv_screen.width * drv_screen.height * sizeof(uint16_t)));
+    layer_map = gui_malloc(drv_screen.width * drv_screen.height * sizeof(uint16_t));
+    if (layer_map == NULL) {
         return -1;
     }
     memset(layer_map, 0, drv_screen.width * drv_screen.height * sizeof(uint16_t));
+    printf("[layer] alloc map.\n");
+    
+    init_list(&layer_show_list_head);
+    init_list(&layer_list_head);
 
 #if 0
     layer_t *layer1, *layer2, *layer3, *layer4;
@@ -593,11 +594,14 @@ int guisrv_init_layer()
 
     /* 初始化字体管理 */
     gui_init_font();
+    printf("[layer] init font.\n");
     
     if (init_env_mouse()) {
         printf("[mouse ] %s: init mouse environment failed!\n", SRV_NAME);
         return -1;
     }
+    printf("[layer] done.\n");
+    
     
     return 0;
 }
