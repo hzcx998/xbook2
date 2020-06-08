@@ -2,6 +2,7 @@
 #include <widget/button.h>
 #include <guisrv.h>
 #include <string.h>
+#include <stdio.h>
 
 /**
  * gui_ButtonSetLocation - 设置按钮的位置
@@ -35,6 +36,27 @@ static void __set_name(gui_button_t *button, char *name)
     button->label.set_name(&button->label, name);
 }
 
+static void __set_color(gui_button_t *button, GUI_COLOR back, GUI_COLOR font)
+{
+    button->label.set_color(&button->label, back, font);
+}
+
+static void __set_color3(
+    gui_button_t *button,
+    GUI_COLOR _default,
+    GUI_COLOR _focus,
+    GUI_COLOR _select
+) {
+    button->default_color = _default;
+    button->focus_color = _focus;
+    button->selected_color = _select;
+}
+
+static void __set_align(gui_button_t *button, gui_widget_align_t align)
+{
+    button->label.set_align(&button->label, align);
+}
+
 /**
  * __set_text_len - 设置按钮的最大长度
  * @Button: 按钮
@@ -52,6 +74,11 @@ static void __set_text(gui_button_t *button, char *text)
     button->label.set_text(&button->label, text);
 }
 
+static void __set_handler(gui_button_t *button, btn_handler_t down, btn_handler_t up)
+{
+    button->btn_down_handler = down;
+    button->btn_up_handler = up;
+}
 
 static void __set_image(gui_button_t *button, int width,
     int height, uint8_t *data, GUI_COLOR border, GUI_COLOR fill)
@@ -96,37 +123,30 @@ static void __show(gui_button_t *button)
 }
 
 /**
- * __set_handler - 设置按钮处理函数
- * @button: 按钮
- * @handler: 处理函数
- */
-static void __set_handler(gui_button_t *button, gui_button_handler_t handler)
-{
-    button->handler = handler;
-}
-
-
-/**
  * gui_button_mouse_down - 鼠标按下事件
  * @widget: 控件
  * @button: 按钮
- * @mx: 鼠标横坐标
- * @my: 鼠标纵坐标
+ * @local_mx: 鼠标横坐标
+ * @local_my: 鼠标纵坐标
  */
-static void __button_mouse_down(gui_widget_t *widget, int btn, int mx, int my)
+static void __button_mouse_down(gui_widget_t *widget, int btn, int local_mx, int local_my)
 {
     gui_button_t *button = (gui_button_t *) widget;
     gui_label_t *label = &button->label;
     
-    if (widget->x <= mx && mx < widget->x + widget->width &&
-        widget->y <= my && my < widget->y + widget->height) {
+    if (widget->x <= local_mx && local_mx < widget->x + widget->width &&
+        widget->y <= local_my && local_my < widget->y + widget->height) {
         /* 必须是聚焦了才能点击，点击后变成选择状态 */
         if (button->state == GUI_BUTTON_FOCUS) {
             /* 聚焦 */
             button->state = GUI_BUTTON_SELECTED;
             label->back_color = button->selected_color;
             /* 重绘 */
-            label->widget.draw_counter = 0;    
+            label->widget.draw_counter = 0;  
+
+            /* 调用处理函数 */
+            if (button->btn_down_handler)
+                button->btn_down_handler(button, btn, local_mx, local_my);  
         }
     }
 }
@@ -135,15 +155,15 @@ static void __button_mouse_down(gui_widget_t *widget, int btn, int mx, int my)
  * gui_button_mouse_Down - 鼠标弹起事件
  * @widget: 控件
  * @button: 按钮
- * @mx: 鼠标横坐标
- * @my: 鼠标纵坐标
+ * @local_mx: 鼠标横坐标
+ * @local_my: 鼠标纵坐标
  */
-static void __button_mouse_up(gui_widget_t *widget, int btn, int mx, int my)
+static void __button_mouse_up(gui_widget_t *widget, int btn, int local_mx, int local_my)
 {
     gui_button_t *button = (gui_button_t *) widget;
     gui_label_t *label = &button->label;
-    if (widget->x <= mx && mx < widget->x + widget->width &&
-        widget->y <= my && my < widget->y + widget->height) {
+    if (widget->x <= local_mx && local_mx < widget->x + widget->width &&
+        widget->y <= local_my && local_my < widget->y + widget->height) {
         /* 如果已经是选择状态，那么弹起后，就会去处理调用函数。由于还在按钮内，所以状态设置为聚焦 */
         if (button->state == GUI_BUTTON_SELECTED) {
             /* 聚焦 */
@@ -152,8 +172,8 @@ static void __button_mouse_up(gui_widget_t *widget, int btn, int mx, int my)
             /* 重绘 */
             label->widget.draw_counter = 0;      
             /* 调用处理函数 */
-            if (button->handler)
-                button->handler(button);
+            if (button->btn_up_handler)
+                button->btn_up_handler(button, btn, local_mx, local_my);
         }
     } else {
         /* 如果弹起的时候没在按钮内，只有选择状态才会设置成默认状态。 */
@@ -168,13 +188,14 @@ static void __button_mouse_up(gui_widget_t *widget, int btn, int mx, int my)
     }
 }
 
-static void __button_mouse_motion(gui_widget_t *widget, int mx, int my)
+static void __button_mouse_motion(gui_widget_t *widget, int local_mx, int local_my)
 {
     gui_button_t *button = (gui_button_t *) widget;
     gui_label_t *label = &button->label;
-
-    if (widget->x <= mx && mx < widget->x + widget->width &&
-        widget->y <= my && my < widget->y + widget->height) {
+    if (widget->x <= local_mx && local_mx < widget->x + widget->width &&
+        widget->y <= local_my && local_my < widget->y + widget->height &&
+        local_mx >= 0 && local_my >= 0) {   /* 鼠标必须为正 */
+        
         /* 在移动的时候，如果是默认状态，并且碰撞到，那么就设置成聚焦状态 */
         if (button->state == GUI_BUTTON_DEFAULT) {
             /* 聚焦 */
@@ -196,6 +217,16 @@ static void __button_mouse_motion(gui_widget_t *widget, int mx, int my)
     }
 }
 
+/**
+ * gui_ButtonDestroy - 销毁一个按钮
+ * 
+ */
+void gui_button_destroy(gui_button_t *button)
+{
+    __cleanup(button);
+    gui_free(button);
+}
+
 int gui_button_init(
     gui_button_t *button,
     gui_label_types_t type,
@@ -214,10 +245,12 @@ int gui_button_init(
 
     /* 初始化按钮自己的信息 */
     button->state = GUI_BUTTON_DEFAULT;
+    button->tag = 0;
     button->default_color = GUI_BUTTON_DEFAULT_COLOR;
     button->focus_color = GUI_BUTTON_FOCUS_COLOR;
     button->selected_color = GUI_BUTTON_SELECTED_COLOR;
-    button->handler = NULL;
+    button->btn_down_handler = NULL;
+    button->btn_up_handler = NULL;
     
     /* 设置事件 */
     button->label.widget.set_mouse(&button->label.widget, __button_mouse_down,
@@ -228,11 +261,16 @@ int gui_button_init(
     button->set_text_len = __set_text_len;
     button->set_text = __set_text;
     button->set_name = __set_name;
-    
+    button->set_color = __set_color;
+    button->set_color3 = __set_color3;
+    button->set_align = __set_align;
+    button->set_handler = __set_handler;
+
     button->add = __add;
     button->del = __del;
     button->show = __show;
     button->cleanup = __cleanup;
+    button->destroy = gui_button_destroy;
 
     return 0;
 }
@@ -259,14 +297,4 @@ gui_button_t *gui_create_button(
         return NULL;
     }
     return button;
-}
-
-/**
- * gui_ButtonDestroy - 销毁一个按钮
- * 
- */
-void gui_button_destroy(gui_button_t *button)
-{
-    __cleanup(button);
-    gui_free(button);
 }

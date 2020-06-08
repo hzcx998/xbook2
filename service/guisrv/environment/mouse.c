@@ -42,7 +42,7 @@ static void __left_button_down()
         if (local_mx >= 0 && local_mx < window->width && 
             local_my >= 0 && local_my < window->height) {
             
-            gui_widget_mouse_button_down(&layer->widget_list_head, 0, env_mouse.x, env_mouse.y);
+            gui_widget_mouse_button_down(&layer->widget_list_head, 0, local_mx, local_my);
 
             printf("touch window: pos=%d-%d, size=%d-%d\n", 
                 window->x, window->y, window->width, window->height);
@@ -50,7 +50,7 @@ static void __left_button_down()
             if (!(window->attr & GUIW_NO_TITLE)) {
                  
                 /* 有标题才判断标题栏 */
-                if (local_my < GUIW_TITLE_HEIGHT) { /* in title */
+                if (ENV_IN_BOX(window->title_box, local_mx, local_my)) { /* in title */
                     /* 判断是否为控制按钮，如果是，就处理，不是就可能要移动窗口，切换窗口 */
                     printf("in window title\n");
 
@@ -113,7 +113,7 @@ static void __left_button_up()
             window = (gui_window_t *) layer->extension;
             local_mx = env_mouse.x - window->x;
             local_my = env_mouse.y - window->y;
-            gui_widget_mouse_button_up(&layer->widget_list_head, 0, env_mouse.x, env_mouse.y);
+            gui_widget_mouse_button_up(&layer->widget_list_head, 0, local_mx, local_my);
             
             if (local_mx >= 0 && local_mx < window->width && 
                 local_my >= 0 && local_my < window->height) {
@@ -175,13 +175,16 @@ void env_mouse_move()
                 window = (gui_window_t *) layer->extension;
                 local_mx = env_mouse.x - window->x;
                 local_my = env_mouse.y - window->y;
-                gui_widget_mouse_motion(&layer->widget_list_head, env_mouse.x, env_mouse.y);
-                    
+                gui_widget_mouse_motion(&layer->widget_list_head, local_mx, local_my);
                 if (local_mx >= 0 && local_mx < window->width && 
                     local_my >= 0 && local_my < window->height) {
-                    if (current_window != window) { /* 鼠标切换到其它窗口 */
-                        /* 改变窗口消息 */
+                    /* 进入某个窗口 */
+                    if (env_mouse.hover_window != window && env_mouse.hover_window) { /* 从其他窗口进入当前窗口 */
+                        /* 离开上个窗口的控件 */
+                        gui_widget_mouse_motion(&env_mouse.hover_window->layer->widget_list_head, -1, -1);
+
                     }
+                    env_mouse.hover_window = window;    /* 悬停在某个窗口 */
 
                     /* 移动消息 */
 
@@ -189,8 +192,6 @@ void env_mouse_move()
                 }
             }
         }
-
-        
     }
 }
 
@@ -328,6 +329,7 @@ int init_env_mouse()
     env_mouse.local_x = 0;
     env_mouse.local_y = 0;
     env_mouse.hold_window = NULL;
+    env_mouse.hover_window = NULL;
     env_mouse.left_btn_down     = __left_button_down;
     env_mouse.left_btn_up       = __left_button_up;
     env_mouse.right_btn_down    = __right_button_down;

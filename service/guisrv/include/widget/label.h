@@ -45,7 +45,7 @@ typedef struct _gui_label {
     char *text;                     /* 文本 */
     uint8_t text_len;               /* 文本长度 */
     uint8_t text_len_max;           /* 文本最大长度 */
-    gui_widget_align_t text_align;    /* 文本对齐 */
+    gui_widget_align_t align;    /* 内容对齐 */
 
 /// 函数指针
     /* 内部函数 */
@@ -56,11 +56,13 @@ typedef struct _gui_label {
     void (*set_text) (struct _gui_label *, char *);
     int (*set_font) (struct _gui_label *, char *);
     void (*set_name) (struct _gui_label *, char *);
+    void (*set_align) (struct _gui_label *, gui_widget_align_t );
     void (*add) (struct _gui_label *, layer_t *);
     void (*del) (struct _gui_label *);
     void (*show) (struct _gui_label *);
     void (*cleanup) (struct _gui_label *);
-
+    void (*destroy) (struct _gui_label *);
+    
     /* 图形 */
 } gui_label_t;
 

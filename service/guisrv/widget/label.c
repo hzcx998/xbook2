@@ -76,6 +76,11 @@ static int __set_text_len(gui_label_t *label, int length)
     return 0;
 }
 
+static void __set_align(gui_label_t *label, gui_widget_align_t align)
+{
+    label->align = align;
+}
+
 /**
  * __set_text - 设置标签的文本
  * @label: 标签
@@ -163,7 +168,7 @@ static void __widget_show(gui_widget_t *widget)
         if (label->type == GUI_LABEL_TEXT) {
             y = widget->y + widget->height / 2 - label->font->height / 2;
             
-            switch (label->text_align)
+            switch (label->align)
             {
             case GUI_WIDGET_ALIGN_LEFT:
                 x = widget->x;
@@ -210,6 +215,17 @@ static void __cleanup(gui_label_t *label)
 
 }
 
+
+/**
+ * gui_label_destroy - 销毁一个标签
+ * 
+ */
+void gui_label_destroy(gui_label_t *label)
+{
+    __cleanup(label);
+    gui_free(label);
+}
+
 /**
  * gui_label_init - 初始化一个标签
  * @label: 标签
@@ -242,7 +258,7 @@ int gui_label_init(
     
     label->text_len = strlen(label->text);
 
-    label->text_align = GUI_WIDGET_ALIGN_LEFT;   /* 默认左对齐 */
+    label->align = GUI_WIDGET_ALIGN_LEFT;   /* 默认左对齐 */
     /* 设置系统字体 */
     label->font = current_font;
     /* 默认是文本 */
@@ -265,12 +281,14 @@ int gui_label_init(
     label->set_text = __set_text;
     label->set_font = __set_font;
     label->set_name = __set_name;
+    label->set_align = __set_align;
     
     label->add = __add;
     label->del = __del;
     label->show = __show;
     label->cleanup = __cleanup;
-
+    label->destroy = gui_label_destroy;
+    
     return 0;
 }
 
@@ -294,14 +312,4 @@ gui_label_t *gui_create_label(
         return NULL;
     }
     return label;
-}
-
-/**
- * gui_label_destroy - 销毁一个标签
- * 
- */
-void gui_label_destroy(gui_label_t *label)
-{
-    __cleanup(label);
-    gui_free(label);
 }

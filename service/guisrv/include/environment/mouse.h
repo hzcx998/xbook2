@@ -31,6 +31,8 @@ typedef struct _env_mouse {
     int x, y;
     int local_x, local_y;           /* 鼠标在窗口中的偏移 */
     gui_window_t *hold_window;      /* 抓住的窗口 */
+    gui_window_t *hover_window;     /* 悬停的窗口 */
+    
     layer_t *layer;
     void (*left_btn_down)(void);
     void (*left_btn_up)(void);

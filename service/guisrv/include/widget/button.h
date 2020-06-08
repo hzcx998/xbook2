@@ -18,27 +18,38 @@
 #define GUI_BUTTON_FOCUS_COLOR      COLOR_ARGB(255, 200, 200, 200)
 #define GUI_BUTTON_SELECTED_COLOR   COLOR_ARGB(255, 100, 100, 100)
 
+struct _gui_button;
+
+typedef void (*btn_handler_t) (struct _gui_button *button, int, int, int);
+
 typedef struct _gui_button {
     gui_label_t label;      /* 继承标签：第一个成员 */
+    int tag;                /* 标记 */ 
     int state;              /* 按钮状态：默认，聚焦，点击 */
     GUI_COLOR default_color;    /* 默认颜色 */
     GUI_COLOR focus_color;      /* 聚焦颜色 */
     GUI_COLOR selected_color;   /* 选择颜色 */
-    void (*handler) (struct _gui_button *button);
+    btn_handler_t btn_down_handler;
+    btn_handler_t btn_up_handler;
 
     /* 内部函数 */
     void (*set_location) (struct _gui_button *, int , int );
     void (*set_size) (struct _gui_button *, int , int );
     void (*set_color) (struct _gui_button *, GUI_COLOR , GUI_COLOR );
+    void (*set_color3) (struct _gui_button *, GUI_COLOR, GUI_COLOR, GUI_COLOR);
     int (*set_text_len) (struct _gui_button *, int );
     void (*set_text) (struct _gui_button *, char *);
+    void (*set_align) (struct _gui_button *, gui_widget_align_t );
     int (*set_font) (struct _gui_button *, char *);
     void (*set_name) (struct _gui_button *, char *);
+    void (*set_handler) (struct _gui_button *, btn_handler_t , btn_handler_t );
+
     void (*add) (struct _gui_button *, layer_t *);
     void (*del) (struct _gui_button *);
     void (*show) (struct _gui_button *);
     void (*cleanup) (struct _gui_button *);
-
+    void (*destroy) (struct _gui_button *);
+    
 } gui_button_t;
 
 /* 处理回调函数 */
