@@ -12,7 +12,7 @@ void init_srvcall();
 #define SRVCALL_ACK         3
 #define SRVCALL_FINISH      4
 
-#define SRVCALL_NR  3
+#define SRVCALL_NR  4
 #define IS_BAD_SRVCALL(port) \
         ((port) < 0 || port >= SRVCALL_NR)
 

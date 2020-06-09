@@ -10,6 +10,8 @@
 #include <environment/mouse.h>
 #include <font/font.h>
 
+#define DEBUG_LOCAL 0
+
 LIST_HEAD(layer_list_head);
 LIST_HEAD(layer_show_list_head);
 
@@ -31,20 +33,17 @@ layer_t *create_layer(int width, int height)
     GUI_COLOR *buffer = gui_malloc(width * height * sizeof(GUI_COLOR));
     if (buffer == NULL)
         return NULL;
-    printf("[layer] alloc buffer %x\n", buffer);
 
     memset(buffer, 0, width * height * sizeof(GUI_COLOR));
     layer_t *layer = gui_malloc(sizeof(layer_t));
-    printf("[layer] alloc layer %x\n", layer);
-    
+
     if (layer == NULL) {
         gui_free(buffer);
         return NULL;
     }
 
     memset(layer, 0, sizeof(layer_t));
-    printf("[layer] alloc layer %x done\n", layer);
-    
+
     layer->buffer = buffer;
     layer->width = width;
     layer->height = height;
@@ -52,15 +51,11 @@ layer_t *create_layer(int width, int height)
     layer->extension= NULL;
     init_list(&layer->list);
 
-    printf("[layer] left\n");
-    
     /* 添加到链表末尾 */
     list_add_tail(&layer->global_list, &layer_list_head);
-    printf("[layer] right\n");
-    
+
     init_list(&layer->widget_list_head);
-    printf("[layer] set layer %x done\n", layer);
-    
+
     return layer;
 }
 
@@ -148,20 +143,24 @@ void layer_set_z(layer_t *layer, int z)
     int old_z = layer->z;                
     /* 已经存在与现实链表中，就说明只是调整一下高度而已。 */
     if (list_find(&layer->list, &layer_show_list_head)) {
+#if DEBUG_LOCAL == 1    
         printf("layer z:%d set new z:%d\n", layer->z, z);
+#endif
         /* 设置为正，就是要调整高度 */
         if (z >= 0) {
             /* 修复Z轴 */
             if (z > top_layer_z) {
+#if DEBUG_LOCAL == 1                
                 printf("layer z:%d set new z:%d but above top %d\n", layer->z, z, top_layer_z);
-        
+#endif        
                 z = top_layer_z;
                 
             }
             /* 如果要调整到最高的图层位置 */
             if (z == top_layer_z) {
+#if DEBUG_LOCAL == 1                
                 printf("layer z:%d set new z:%d same with top %d\n", layer->z, z, top_layer_z);
-
+#endif
                 /* 先从链表中移除 */
                 list_del_init(&layer->list);
 
@@ -182,7 +181,9 @@ void layer_set_z(layer_t *layer, int z)
             } else {    /* 不是最高图层，那么就和其它图层交换 */
                 
                 if (z > layer->z) { /* 如果新高度比原来的高度高 */
+#if DEBUG_LOCAL == 1
                     printf("layer z:%d < new z:%d \n", layer->z, z, top_layer_z);
+#endif
                     /* 先从链表中移除 */
                     list_del_init(&layer->list);
 
@@ -197,8 +198,9 @@ void layer_set_z(layer_t *layer, int z)
                     }
                     /* 添加到新图层高度的位置 */
                     if (old_layer) {
+#if DEBUG_LOCAL == 1
                         printf("find old layer:%x z%d\n", old_layer, old_layer->z + 1);
-                        
+#endif                        
                         layer->z = z;
                         list_add_after(&layer->list, &old_layer->list);
 
@@ -210,7 +212,9 @@ void layer_set_z(layer_t *layer, int z)
                         printf("[error ] not found the old layer on %d\n", z);
                     }
                 } else if (z < layer->z) { /* 如果新高度比原来的高度低 */
+#if DEBUG_LOCAL == 1                
                     printf("layer z:%d > new z:%d \n", layer->z, z, top_layer_z);
+#endif
                     /* 先从链表中移除 */
                     list_del_init(&layer->list);
                         
@@ -225,8 +229,9 @@ void layer_set_z(layer_t *layer, int z)
                     }
                     /* 添加到新图层高度的位置 */
                     if (old_layer) {
+#if DEBUG_LOCAL == 1
                         printf("find old layer:%x z%d\n", old_layer, old_layer->z - 1);
-                        
+#endif                        
                         layer->z = z;
                         list_add_before(&layer->list, &old_layer->list);
 
@@ -239,7 +244,9 @@ void layer_set_z(layer_t *layer, int z)
                 }
             }
         } else { /* 小于0就是要隐藏起来的图层 */
+#if DEBUG_LOCAL == 1
             printf("layer z:%d will be hided.\n", layer->z);
+#endif
             /* 先从链表中移除 */
             list_del_init(&layer->list);
             if (top_layer_z > old_z) {  /* 旧图层必须在顶图层下面 */
@@ -250,6 +257,7 @@ void layer_set_z(layer_t *layer, int z)
                     }
                 }   
             }
+            
             /* 由于隐藏了一个图层，那么，图层顶层的高度就需要减1 */
             top_layer_z--;
 
@@ -266,14 +274,18 @@ void layer_set_z(layer_t *layer, int z)
             if (z > top_layer_z) {
                 top_layer_z++;      /* 图层顶增加 */
                 z = top_layer_z;
+#if DEBUG_LOCAL == 1
                 printf("insert a layer at top z %d\n", z);
+#endif
             } else {
                 top_layer_z++;      /* 图层顶增加 */
             }
 
             /* 如果新高度就是最高的图层，就直接插入到图层队列末尾 */
             if (z == top_layer_z) {
+#if DEBUG_LOCAL == 1
                 printf("add a layer %d to tail\n", z);
+#endif
                 layer->z = z;
                 /* 直接添加到显示队列 */
                 list_add_tail(&layer->list, &layer_show_list_head);
@@ -283,8 +295,9 @@ void layer_set_z(layer_t *layer, int z)
                 layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
 
             } else {
+#if DEBUG_LOCAL == 1
                 printf("add a layer %d to midlle or head\n", z);
-                
+#endif                
                 /* 查找和当前图层一样高度的图层 */
                 list_for_each_owner(tmp, &layer_show_list_head, list) {
                     if (tmp->z == z) {
@@ -294,8 +307,6 @@ void layer_set_z(layer_t *layer, int z)
                 }
                 tmp = NULL;
                 if (old_layer) {    /* 找到一个旧图层 */
-                    printf("found a old layer %d\n", z);
-
                     /* 把后面的图层的高度都+1 */
                     list_for_each_owner(tmp, &layer_show_list_head, list) {
                         if (tmp->z >= old_layer->z) { 
@@ -345,11 +356,15 @@ int destroy_layer(layer_t *layer)
  */
 void print_layers()
 {
+#if DEBUG_LOCAL == 1
     printf("layer top z:%d\n", top_layer_z);
+#endif
     layer_t *layer;
     list_for_each_owner (layer, &layer_show_list_head, list) {
+#if DEBUG_LOCAL == 1
         printf("layer addr:%x buffer:%x width:%d height:%d x:%d y:%d z:%d\n",
             layer, layer->buffer, layer->width, layer->height, layer->x, layer->y, layer->z);
+#endif
     }
 }
 
@@ -479,129 +494,24 @@ layer_t *layer_get_by_z(int z)
 
 int guisrv_init_layer()
 {
-    printf("[layer] start.\n");
     /* 分配地图空间 */
     layer_map = gui_malloc(drv_screen.width * drv_screen.height * sizeof(uint16_t));
     if (layer_map == NULL) {
         return -1;
     }
     memset(layer_map, 0, drv_screen.width * drv_screen.height * sizeof(uint16_t));
-    printf("[layer] alloc map.\n");
-    
+
     init_list(&layer_show_list_head);
     init_list(&layer_list_head);
 
-#if 0
-    layer_t *layer1, *layer2, *layer3, *layer4;
-
-    layer1 = create_layer(drv_screen.width, drv_screen.height);
-    if (layer1 == NULL) {
-        printf("create layer failed!\n");
-        return -1;
-    }
-    printf("create layer: addr %x, buffer %x, width %d, height %d\n",
-        layer1, layer1->buffer, layer1->width, layer1->height);
-    memset(layer1->buffer, 0x99, drv_screen.width * drv_screen.height * sizeof(GUI_COLOR));
-    layer_set_z(layer1, 0);
-
-    layer_draw_rect(layer1, 0, 0, 200, 300, COLOR_RED);
-    layer_draw_line(layer1, 0, 0, 200, 300, COLOR_GREEN);
-    layer_draw_point(layer1, 300, 100, COLOR_BLUE);
-    
-    layer2 = create_layer(50, 50);
-    if (layer2 == NULL) {
-        printf("create layer failed!\n");
-        return -1;
-    }
-    printf("create layer: addr %x, buffer %x, width %d, height %d\n",
-        layer2, layer2->buffer, layer2->width, layer2->height);
-    memset(layer2->buffer, 0xff, 50 * 50 * sizeof(GUI_COLOR));
-    layer_set_z(layer2, 1);
-    print_layers();
-
-    layer3 = create_layer(100, 100);
-    if (layer3 == NULL) {
-        printf("create layer failed!\n");
-        return -1;
-    }
-    
-    printf("create layer: addr %x, buffer %x, width %d, height %d\n",
-        layer3, layer3->buffer, layer3->width, layer3->height);
-    printf("create layer done!\n");
-    memset(layer3->buffer, 0x55, 100 * 100 * sizeof(GUI_COLOR));
-    layer_set_z(layer3, 1);
-
-    /* 调整已有图层高度 */
-    layer_set_z(layer2, 2);
-
-    print_layers();
-
-    layer_set_z(layer3, 2);
-
-    print_layers();
-
-    layer_set_z(layer1, 1);
-
-    print_layers();
-
-    layer_set_z(layer3, 0);
-    
-    print_layers();
-
-    layer_set_z(layer3, 3);
-    
-    print_layers();
-
-    /* 隐藏图层 */
-    layer_set_z(layer3, -1);
-    
-    print_layers();
-
-    layer_set_z(layer2, -1);
-    
-    print_layers();
-
-    /* 恢复图层 */
-    layer_set_z(layer3, 1);
-    
-    print_layers();
-
-    layer_set_z(layer2, 1);
-    
-    print_layers();
-
-    layer4 = create_layer(32, 32);
-    if (layer4 == NULL) {
-        printf("create layer failed!\n");
-        return -1;
-    }
-    printf("create layer: addr %x, buffer %x, width %d, height %d\n",
-        layer4, layer4->buffer, layer4->width, layer4->height);
-    printf("create layer done!\n");
-    memset(layer4->buffer, 0xdd, 32 * 32 * sizeof(GUI_COLOR));
-    layer_set_z(layer4, 10);
-
-    print_layers();
-    layer_topest = layer_get_by_z(top_layer_z);
-
-    int i;
-    for (i = 0; i < layer_topest->height; i++)
-        layer_draw_line(layer_topest, 0, i, layer_topest->width, i, i * 45 | (i * 30) << 8 | (i * 15) << 16);
-    
-    /* 刷新所有图层 */
-    layer_refresh_by_z(0, 0, drv_screen.width, drv_screen.height, 0, top_layer_z);
-#endif
-
     /* 初始化字体管理 */
     gui_init_font();
-    printf("[layer] init font.\n");
-    
+
     if (init_env_mouse()) {
         printf("[mouse ] %s: init mouse environment failed!\n", SRV_NAME);
         return -1;
     }
-    printf("[layer] done.\n");
-    
+
     
     return 0;
 }

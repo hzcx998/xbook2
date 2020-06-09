@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     //printf("%s: started.\n", SRV_NAME);
     
     /* 绑定成为服务调用 */
-    if (srvcall_bind(SRV_FS))  {
+    if (srvcall_bind(SRV_FS)  == -1)  {
         printf("%s: bind srvcall failed, service stopped!\n", SRV_NAME);
         return -1;
     }

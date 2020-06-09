@@ -79,5 +79,6 @@ void gui_window_switch(gui_window_t *window);
 void gui_window_focus(gui_window_t *window);
 int gui_window_hide(gui_window_t *win);
 gui_window_t *gui_window_topest();
+int gui_window_show(gui_window_t *win);
 
 #endif  /* __GUISRV_WINDOW_H__ */

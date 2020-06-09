@@ -1,6 +1,6 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:16:53:2 date:2020/6/8
+info: time:23:20:41 date:2020/6/8
 info: week day:1 Monday year day:161
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -42,245 +42,120 @@ insert a layer at top z 0
 add a layer 0 to tail
 [layer] done.
 [layer] alloc buffer fd634
+hello, test!
 [layer] alloc layer 2d2234
 [layer] alloc layer 2d2234 done
 [layer] left
 [layer] right
 [layer] set layer 2d2234 done
 add a layer 0 to midlle or head
-ferror: device_open: device rtl8139 not found!
-error: __getres_device: device open -1 failed!
-error: sys_getres: get rtl8139 fialed!.
-ound a old layer 0
-lwip: open driver rtl8139 not exist! yeild cpu.
-[layer] alloc buffer 2d2560
-[layer] alloc layer 324d60
-[layer] alloc layer 324d60 done
+found a old layer 0
+[layer] alloc buffer 2d256c
+[layer] alloc layer 324d6c
+[layer] alloc layer 324d6c done
 [layer] left
 [layer] right
-[layer] set layer 324d60 done
+[layer] set layer 324d6c done
 [window] create text title.
 add a layer 1 to midlle or head
 found a old layer 1
-[layer] alloc buffer 3252f4
-[layer] alloc layer 37f2f4
-[layer] alloc layer 37f2f4 done
+[layer] alloc buffer 325324
+[layer] alloc layer 37f324
+[layer] alloc layer 37f324 done
 [layer] left
 [layer] right
-[layer] set layer 37f2f4 done
+[layer] set layer 37f324 done
 [window] create text title.
 add a layer 2 to midlle or head
 found a old layer 2
 [mouse ] left button down.
-[mouse ] x:582, y:114
-[mouse ] fond a window 37f328.
+[mouse ] x:26, y:413
+[mouse ] fond a window 37f358.
+[mouse ] fond a window 324da0.
+[mouse ] fond a window 2d2268.
+touch window: pos=0-0, size=800-600
+no window title
+[mouse ] left button up.
+[mouse ] x:26, y:413
+[mouse ] left button down.
+[mouse ] x:580, y:110
+[mouse ] fond a window 37f358.
 touch window: pos=500-100, size=240-360
-0in window title
+in window title
+layer z:2 set new z:2
 [mouse] change state 0 to 1
 [mouse ] left button up.
-[mouse ] x:460, y:120
+[mouse ] x:589, y:128
 [mouse] change state 0 to 0
 [mouse ] left button down.
-[mouse ] x:219, y:39
-[mouse ] fond a window 37f328.
-[mouse ] fond a window 324d94.
+[mouse ] x:181, y:28
+[mouse ] fond a window 37f358.
+[mouse ] fond a window 324da0.
 touch window: pos=20-20, size=320-240
 in window title
 layer z:1 set new z:2
 layer z:1 < new z:2 
-find old layer:37f2f4 z2
+find old layer:37f324 z2
 [mouse] change state 0 to 1
 [mouse ] left button up.
-[mouse ] x:294, y:188
+[mouse ] x:272, y:186
 [mouse] change state 0 to 0
 [mouse ] left button down.
-[mouse ] x:477, y:114
-[mouse ] fond a window 324d94.
-[mouse ] fond a window 37f328.
-touch window: pos=378-106, size=240-360
+[mouse ] x:246, y:186
+[mouse ] fond a window 324da0.
+touch window: pos=111-178, size=320-240
+in window title
+[mouse] change state 0 to 1
+[mouse ] left button up.
+[mouse ] x:316, y:197
+[mouse] change state 0 to 0
+[keyboard ] key 99->™ down.
+[keyboard ] key 97->— down.
+[keyboard ] key 67->g down.
+[keyboard ] key 67->g up.
+[keyboard ] key 99->™ up.
+[keyboard ] key 97->— up.
+[mouse ] left button down.
+[mouse ] x:540, y:127
+[mouse ] fond a window 324da0.
+[mouse ] fond a window 37f358.
+touch window: pos=509-118, size=240-360
 in window title
 layer z:1 set new z:2
 layer z:1 < new z:2 
-find old layer:324d60 z2
+find old layer:324d6c z2
 [mouse] change state 0 to 1
 [mouse ] left button up.
-[mouse ] x:549, y:111
+[mouse ] x:540, y:112
 [mouse] change state 0 to 0
 [mouse ] left button down.
-[mouse ] x:297, y:185
-[mouse ] fond a window 37f328.
-[mouse ] fond a window 324d94.
-touch window: pos=95-169, size=320-240
+[mouse ] x:401, y:196
+[mouse ] fond a window 37f358.
+[mouse ] fond a window 324da0.
+touch window: pos=181-189, size=320-240
 in window title
 layer z:1 set new z:2
 layer z:1 < new z:2 
-find old layer:37f2f4 z2
-[mouse ] left button up.
-[mouse ] x:297, y:185
-[mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:288, y:183
-[mouse ] fond a window 324d94.
-touch window: pos=95-169, size=320-240
-in window title
+find old layer:37f324 z2
 [mouse] change state 0 to 1
 [mouse ] left button up.
-[mouse ] x:425, y:195
+[mouse ] x:347, y:187
 [mouse] change state 0 to 0
 [mouse ] left button down.
-[mouse ] x:506, y:192
-[mouse ] fond a window 324d94.
-[button] window_btn_handler 0, 274, 11
-touch window: pos=232-181, size=320-240
+[mouse ] x:684, y:121
+[mouse ] fond a window 324da0.
+[mouse ] fond a window 37f358.
+[button] down handler 0, 175, 18
+[button] tag minim
+touch window: pos=509-103, size=240-360
 in window body
-[mouse ] left button up.
-[mouse ] x:506, y:192
-[button] window_btn_handler 0, 274, 11
-[mouse ] left button down.
-[mouse ] x:534, y:195
-[mouse ] fond a window 324d94.
-[button] window_btn_handler 0, 302, 14
-touch window: pos=232-181, size=320-240
-in window body
-[mouse ] left button up.
-[mouse ] x:534, y:195
-[button] window_btn_handler 0, 302, 14
-[mouse ] left button down.
-[mouse ] x:445, y:191
-[mouse ] fond a window 324d94.
-touch window: pos=232-181, size=320-240
-in window title
-[mouse] change state 0 to 1
-[mouse ] left button up.
-[mouse ] x:266, y:153
-[mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:520, y:115
-[mouse ] fond a window 324d94.
-[mouse ] fond a window 37f328.
-touch window: pos=450-103, size=240-360
-in window title
 layer z:1 set new z:2
 layer z:1 < new z:2 
-find old layer:324d60 z2
+find old layer:324d6c z2
 [mouse ] left button up.
-[mouse ] x:520, y:115
-[mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:562, y:118
-[mouse ] fond a window 37f328.
-touch window: pos=450-103, size=240-360
-in window title
-[mouse] change state 0 to 1
-[mouse ] left button up.
-[mouse ] x:553, y:104
-[mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:660, y:90
-[mouse ] fond a window 37f328.
-[button] window_btn_handler 0, 219, 1
-touch window: pos=441-89, size=240-360
-in window body
-[mouse ] left button up.
-[mouse ] x:660, y:90
-[button] window_btn_handler 0, 219, 1
-[mouse ] left button down.
-[mouse ] x:646, y:95
-[mouse ] fond a window 37f328.
-[button] window_btn_handler 0, 205, 6
-touch window: pos=441-89, size=240-360
-in window body
-[mouse ] left button up.
-[mouse ] x:646, y:95
-[button] window_btn_handler 0, 205, 6
-[mouse ] left button down.
-[mouse ] x:646, y:95
-[mouse ] fond a window 37f328.
-[button] window_btn_handler 0, 205, 6
-touch window: pos=441-89, size=240-360
-in window body
-[mouse ] left button up.
-[mouse ] x:646, y:95
-[button] window_btn_handler 0, 205, 6
-[mouse ] left button down.
-[mouse ] x:620, y:100
-[mouse ] fond a window 37f328.
-[button] window_btn_handler 0, 179, 11
-touch window: pos=441-89, size=240-360
-in window body
-[mouse ] left button up.
-[mouse ] x:620, y:100
-[button] window_btn_handler 0, 179, 11
-[mouse ] left button down.
-[mouse ] x:620, y:100
-[mouse ] fond a window 37f328.
-[button] window_btn_handler 0, 179, 11
-touch window: pos=441-89, size=240-360
-in window body
-[mouse ] left button up.
-[mouse ] x:620, y:100
-[button] window_btn_handler 0, 179, 11
-[mouse ] left button down.
-[mouse ] x:575, y:100
-[mouse ] fond a window 37f328.
-touch window: pos=441-89, size=240-360
-in window title
-[mouse] change state 0 to 1
-[mouse ] left button up.
-[mouse ] x:573, y:80
-[mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:203, y:157
-[mouse ] fond a window 37f328.
-[mouse ] fond a window 324d94.
-touch window: pos=53-143, size=320-240
-in window title
-layer z:1 set new z:2
-layer z:1 < new z:2 
-find old layer:37f2f4 z2
-[mouse] change state 0 to 1
-[mouse ] left button up.
-[mouse ] x:258, y:173
-[mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:563, y:79
-[mouse ] fond a window 324d94.
-[mouse ] fond a window 37f328.
-touch window: pos=439-69, size=240-360
-in window title
-layer z:1 set new z:2
-layer z:1 < new z:2 
-find old layer:324d60 z2
-[mouse ] left button up.
-[mouse ] x:563, y:79
-[mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:544, y:79
-[mouse ] fond a window 37f328.
-touch window: pos=439-69, size=240-360
-in window title
-[mouse] change state 0 to 1
-[mouse ] left button up.
-[mouse ] x:547, y:97
-[mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:277, y:169
-[mouse ] fond a window 37f328.
-[mouse ] fond a window 324d94.
-touch window: pos=108-159, size=320-240
-in window title
-layer z:1 set new z:2
-layer z:1 < new z:2 
-find old layer:37f2f4 z2
-[mouse ] left button up.
-[mouse ] x:277, y:169
-[mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:308, y:169
-[mouse ] fond a window 324d94.
-touch window: pos=108-159, size=320-240
-in window title
-[mouse] change state 0 to 1
-[mouse ] left button up.
-[mouse ] x:262, y:185
-[mouse] change state 0 to 0
+[mouse ] x:684, y:121
+[button] up handler 0, 175, 18
+[button] tag minim
+layer z:2 set new z:-1
+layer z:2 will be hided.
+layer z:1 set new z:1

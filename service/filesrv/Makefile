@@ -47,7 +47,6 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_XBOOKLIB)/include/pthread \
 			-I $(DIR_FATFSLIB)/ \
 			
-			
 OBJS =  main.o \
 		interface.o \
 		filetable.o \
@@ -58,7 +57,7 @@ LIB_FILE = 	$(DIR_FATFSLIB)/fatfs-r0.14.a \
 			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
 # -n: close memory aligin.
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000  -n
+LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 
 
 #First read here

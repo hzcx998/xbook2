@@ -262,11 +262,11 @@ struct file_map {
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
 struct file_map file_map_table[] = {
-    {PATH_GUISRV, 100 * 512, 800, 1},
-    {PATH_NETSRV, 400 * 512, 1500, 1},
+    {PATH_GUISRV, 200 * 512, 800, 1},
+    {PATH_NETSRV, 400 * 512, 1500, 0},
     {"/login", 100 * 512, 4000, 0},
     {"/bosh", 100 * 512, 4100, 0},
-    {"/test", 100 * 512, 4300, 0},
+    {"/test", 100 * 512, 4300, 1},
 };
 
 /*

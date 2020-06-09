@@ -23,21 +23,16 @@ BIN_DIS = a.out.disasm
 BIN_OFF = 800 
 BIN_CNTS = 700
 
-FLOPPY_OFF = 522
-
 #img dir
 IMG_DIR = ../../develop/image/
 
-FLOPPY_IMG = a.img
 DISK_IMG = c.img
 DISK_VHD = c.vhd
 DISK_VMDK = c-flat.vmdk
 
-FD_IMG = $(IMG_DIR)$(FLOPPY_IMG)
 HD_IMG = $(IMG_DIR)$(DISK_IMG)
 HD_VHD = $(IMG_DIR)$(DISK_VHD)
 HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
-
 
 #flags
 ASM_FLAGS	= -f elf \
@@ -76,11 +71,14 @@ FONT_OBJS 		=	font/font.o \
 WIDGET_OBJS		=	widget/widget.o \
 					widget/label.o \
 					widget/button.o \
-					
+
+CORE_OBJS 		= 	core/interface.o \
+
 MAIN_OBJS 		= 	main.o \
+
 				
 OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) \
-		$(FONT_OBJS) $(ENVIRONMENT_OBJS) $(WIDGET_OBJS)
+		$(FONT_OBJS) $(ENVIRONMENT_OBJS) $(WIDGET_OBJS) $(CORE_OBJS)
 
 LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
@@ -97,13 +95,13 @@ compile: $(OBJS)
 
 link: $(BIN)
 $(BIN): $(OBJS) $(LIB_FILE)
-	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIB_FILE) 
+	$(LD) $(LDFLAGS) $(OBJS) $(LIB_FILE) -o $(BIN) 
 
 
 dis: $(BIN)
 	$(OBJDUMP) -M intel -D $(BIN) > $(BIN_DIS)
 
-disk: img vhd vmdk floppy
+disk: img vhd vmdk
 
 img:
 	$(DD) if=$(BIN) of=$(HD_IMG) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
@@ -114,17 +112,12 @@ vhd:
 vmdk:
 	$(DD) if=$(BIN) of=$(HD_VMDK) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
 
-floppy:
-	$(DD) if=$(BIN) of=$(FD_IMG) bs=512 seek=$(FLOPPY_OFF) count=$(BIN_CNTS) conv=notrunc
-	
 qemu: compile link img
 	
 vbox: compile link vhd
 
 vmware: compile link vmdk
 
-phy: compile link floppy
-	
 #Clean temporary files
 clean:
 	-rm $(OBJS)

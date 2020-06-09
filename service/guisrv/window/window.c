@@ -81,7 +81,6 @@ int window_create_title_bar(gui_window_t *win, int width, char *title)
     if (win->text_title == NULL) {
         return -1;
     }
-    printf("[window] create text title.\n");
     /* 设置标题内容 */
     if (title)
         win->text_title->set_text(win->text_title, title);
@@ -246,11 +245,19 @@ gui_window_t *gui_create_window(
 
     layer_set_xy(layer, x, y);
     
-    layer_set_z(layer, layer_topest->z);    /* 位于顶层图层下面 */
-
-    gui_window_focus(win);
-
     return win;
+}
+
+/*
+ * 把一个隐藏的窗口显示出来
+ */
+int gui_window_show(gui_window_t *win)
+{
+    if (!win)
+        return -1;
+    layer_set_z(win->layer, layer_topest->z);    /* 位于顶层图层下面 */
+    gui_window_focus(win);
+    return 0;
 }
 
 int gui_destroy_window(gui_window_t *win)
@@ -369,6 +376,10 @@ void gui_window_focus(gui_window_t *window)
             /* 修改标题栏颜色 */
             gui_window_title_switch(window, true);
         }
+
+        /* 刷新一下窗体部分 */
+        gui_window_update(window, 0, 0 , window->width, window->height);
+
         current_window = window;
     }
 }
@@ -447,6 +458,8 @@ int init_gui_window()
     gui_window_draw_rect(win, 20, 20, 100, 150, COLOR_BLUE);
     gui_window_draw_rect_fill(win, 100, 20, 100, 150, COLOR_GREEN);
     
+    gui_window_show(win);
+
     gui_window_update(win, 20, 20, 300, 200);
 
     win = gui_create_window("xbook3", 500, 100, 240, 360, 0, NULL);
@@ -472,6 +485,7 @@ int init_gui_window()
 
     gui_window_draw_text_ex(win, 100, 220, "hello, world!", COLOR_RED, gui_get_font("Simsun"));
     
+    gui_window_show(win);
     gui_window_update(win, 20, 20, 300, 300);
     
     //sleep(3);   /* 休眠1s */

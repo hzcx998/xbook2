@@ -20,6 +20,7 @@
 
 #define SRV_FS      0
 #define SRV_NET     1
+#define SRV_GUI     2
 
 #define SRVIO_SERVICE      0    /* 流向服务 */
 #define SRVIO_USER         1    /* 流向用户 */

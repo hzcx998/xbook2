@@ -10,6 +10,8 @@
 #include <window/window.h>
 #include <widget/widget.h>
 
+#define DEBUG_LOCAL 0
+
 env_mouse_t env_mouse = {0};
 
 extern list_t layer_show_list_head;
@@ -336,8 +338,7 @@ int init_env_mouse()
     env_mouse.right_btn_up      = __right_button_up;
     env_mouse.middle_btn_down   = __middle_button_down;
     env_mouse.middle_btn_up     = __middle_button_up;
-    printf("[mouse] layer create.\n");
-        
+
     /* 顶层图层是鼠标图层 */
     layer_topest = create_layer(MOUSE_CURSOR_WIDTH, MOUSE_CURSOR_HEIGHT);
     if (layer_topest == NULL) {
@@ -346,13 +347,14 @@ int init_env_mouse()
     }
     env_mouse.layer = layer_topest;
 
+#if DEBUG_LOCAL == 1 
     printf("create layer: addr %x, buffer %x, width %d, height %d\n",
         layer_topest, layer_topest->buffer, layer_topest->width, layer_topest->height);
-    //memset(layer_topest->buffer, 0xdd, 32 * 32 * sizeof(GUI_COLOR));
-    //env_mouse_draw(env_mouse.state);
-    env_mouse_draw_buffer(env_mouse.layer->buffer, __mouse_cursor_normal);
-    /* 绘制鼠标图层 */
+#endif
 
+    /* 绘制鼠标图层 */
+    env_mouse_draw_buffer(env_mouse.layer->buffer, __mouse_cursor_normal);
+    
     /* 设置鼠标图层高度 */
     layer_set_z(layer_topest, 0);
     

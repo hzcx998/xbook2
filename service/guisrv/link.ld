@@ -36,7 +36,7 @@ SECTIONS {
    
     /* bss segement */
     .bss : {
-        . = ALIGN(4);        /* Align the start of the section */
+        . = ALIGN(1024);        /* Align the start of the section */
         _sbss = .;           /* Provide the name for the start of this section */
       
         *(.bss)
