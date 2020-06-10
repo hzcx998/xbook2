@@ -17,6 +17,67 @@ extern list_t layer_show_list_head;
 /* 当前活动的窗口 */
 gui_window_t *window_current;
 
+/* 下一个新窗口的id */
+volatile unsigned int next_window_id;
+
+/* 窗口链表 */
+list_t window_list_head;
+
+/* 窗口高速缓存表 */
+gui_window_t *window_cache_table[GUIW_CACHE_TABLE_SIZE];
+
+/**
+ * 添加窗口到窗口缓存表 
+ */
+int gui_window_cache_add(gui_window_t *win)
+{
+    int i;
+
+    /* 如果已经在缓存表中则返回 */
+    for (i = 0; i < GUIW_CACHE_TABLE_SIZE; i++)
+        if (window_cache_table[i] == win)
+            return 0;
+
+    for (i = 0; i < GUIW_CACHE_TABLE_SIZE; i++)
+        if (window_cache_table[i] == NULL)
+            break;
+
+    if (i >= GUIW_CACHE_TABLE_SIZE)
+        return -1;
+         
+    window_cache_table[i] = win;
+    return 0;
+}
+
+/**
+ * 从窗口缓存表删除窗口 
+ */
+int gui_window_cache_del(gui_window_t *win)
+{
+    int i;
+    for (i = 0; i < GUIW_CACHE_TABLE_SIZE; i++) {
+        if (window_cache_table[i] == win) {
+            window_cache_table[i] = NULL;
+            return 0;
+        }
+    }
+    return -1;    
+}
+
+/**
+ * 从窗口缓存表中查找窗口 
+ */
+gui_window_t *gui_window_cache_find(unsigned int wid)
+{
+    int i;
+    for (i = 0; i < GUIW_CACHE_TABLE_SIZE; i++) {
+        if (window_cache_table[i] && window_cache_table[i]->id == wid) {
+            return window_cache_table[i];
+        }
+    }
+    return NULL;    
+}
+
 void window_btn_down_handler(gui_button_t *button, int btn, int local_mx, int local_my)
 {
     printf("[button] down handler %d, %d, %d\n", btn, local_mx, local_my);
@@ -167,6 +228,7 @@ gui_window_t *gui_create_window(
     int y,
     int width,
     int height,
+    GUI_COLOR background,
     int attr,
     gui_window_t *parent
 ) {
@@ -210,18 +272,21 @@ gui_window_t *gui_create_window(
     }
 
     /* 设置窗口结构 */
+    win->id = next_window_id++;
     win->x = x;
     win->y = y;
     win->x_off = 0;
     win->y_off = y_off;
     win->width = width;
     win->height = height;
+    win->window_size = width * height * sizeof(GUI_COLOR);
     win->attr = attr;
     win->layer = layer;
     win->parent = parent;
     win->title_color = GUIW_TITLE_TEXT_ON_COLOR;
     win->title_bar_color = GUIW_TITLE_BAR_ON_COLOR;
-    
+    win->shmid = -1;
+
     layer->extension = (void *) win;
 
     if (!(attr & GUIW_NO_TITLE)) { /* 有标题才创建 */
@@ -240,8 +305,11 @@ gui_window_t *gui_create_window(
         list_add_tail(&win->list, &parent->child_list);
     }
 
+    /* 添加到窗口链表 */
+    list_add_tail(&win->window_list, &window_list_head);
+
     /* 绘制窗口本体 */
-    layer_draw_rect_fill(win->layer, win->x_off, win->y_off, win->layer->width, win->height, COLOR_WHITE);
+    layer_draw_rect_fill(win->layer, win->x_off, win->y_off, win->layer->width, win->height, background);
 
     layer_set_xy(layer, x, y);
     
@@ -278,15 +346,15 @@ int gui_destroy_window(gui_window_t *win)
         list_del_init(&win->list);
         win->parent = NULL;
     }
+    /* 脱离窗口链表 */
+    list_del(&win->window_list);
 
     /* 释放窗口占用的空间 */
 
     /* 释放图层 */
     if (destroy_layer(layer))
         return -1;
-    
-    /* 获取顶层窗口 */
-    
+
     /* 切换到顶层窗口 */
     gui_window_switch(gui_window_topest());
 
@@ -384,6 +452,18 @@ void gui_window_focus(gui_window_t *window)
     }
 }
 
+gui_window_t *gui_window_get_by_id(unsigned int wid)
+{
+    gui_window_t *win;
+    list_for_each_owner (win, &window_list_head, window_list) {
+        if (win->id == wid) {
+            return win;
+        }
+    }
+    return NULL;
+}
+
+
 /**
  * 查找最顶层的窗口 
  * 
@@ -426,7 +506,14 @@ void gui_window_switch(gui_window_t *window)
 int init_gui_window()
 {
     window_current = NULL;
-    
+    next_window_id = 0;
+    init_list(&window_list_head);
+
+    /* 初始化窗口缓存表 */
+    int i;
+    for (i = 0; i < GUIW_CACHE_TABLE_SIZE; i++)
+        window_cache_table[i] = NULL;
+
     if (init_env_desktop()) {
         printf("[desktop ] %s: init desktop environment failed!\n", SRV_NAME);
         return -1;
@@ -441,7 +528,7 @@ int init_gui_window()
     gui_window_update(env_desktop.window, 0,0, 400, 16*2);
 
     /* 创建测试窗口 */
-    gui_window_t *win = gui_create_window("xbook2", 20, 20, 320, 240, 0, NULL);
+    gui_window_t *win = gui_create_window("xbook2", 20, 20, 320, 240, COLOR_WHITE, 0, NULL);
     if (win == NULL) {
         printf("create window failed!\n");
         return -1;
@@ -462,7 +549,7 @@ int init_gui_window()
 
     gui_window_update(win, 20, 20, 300, 200);
 
-    win = gui_create_window("xbook3", 500, 100, 240, 360, 0, NULL);
+    win = gui_create_window("xbook3", 500, 100, 240, 360, COLOR_BLACK, 0, NULL);
     if (win == NULL) {
         printf("create window failed!\n");
         return -1;

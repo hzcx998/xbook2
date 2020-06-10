@@ -168,7 +168,7 @@ int __writeres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
     switch (item->flags & RES_SLAVER_MASK)
     {
     case IPC_SHM:
-        shmaddr = share_mem_map(item->handle, buffer);
+        shmaddr = share_mem_map(item->handle, buffer, off);
         if (shmaddr == NULL) {
             return -1;
         }
@@ -202,7 +202,7 @@ int __readres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
     switch (item->flags & RES_SLAVER_MASK)
     {
     case IPC_SHM:
-        if (share_mem_unmap(buffer))
+        if (share_mem_unmap(buffer, off))
             return -1;
         break;
     case IPC_SEM:

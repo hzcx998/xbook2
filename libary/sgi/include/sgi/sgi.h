@@ -1,0 +1,41 @@
+#ifndef __SGI_H__
+#define __SGI_H__
+
+/* SGI: Simple graphical interface */
+#include <stddef.h>
+#include "sgiw.h"
+
+/* 支持打开的最大窗口句柄数 */
+#define SGI_WINDOW_HANDLE_NR   8
+
+typedef struct _SGI_Display
+{
+    unsigned int connected;         /* 连接标志：是否连接上图形服务 */
+    unsigned int width;             /* 窗口宽度 */
+    unsigned int height;            /* 窗口高度 */
+    SGI_Window root_window;         /* 根窗口 */
+    SGI_Window win_handle_table[SGI_WINDOW_HANDLE_NR];  /* 可显示的窗口数 */
+
+} SGI_Display;
+
+void *SGI_Malloc(size_t size);
+void SGI_Free(void *ptr);
+
+SGI_Display *SGI_OpenDisplay();
+int SGI_CloseDisplay(SGI_Display *display);
+
+SGI_Window SGI_CreateSimpleWindow(
+    SGI_Display *display,
+    SGI_Window parent,
+    int x,
+    int y,
+    unsigned int width,
+    unsigned int height,
+    unsigned int background
+);
+int SGI_DestroyWindow(SGI_Display *display, SGI_Window window);
+
+int SGI_MapWindow(SGI_Display *display, SGI_Window window);
+int SGI_UnmapWindow(SGI_Display *display, SGI_Window window);
+
+#endif  /* __SGI_H__ */

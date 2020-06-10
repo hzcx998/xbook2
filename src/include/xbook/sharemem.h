@@ -26,8 +26,8 @@ int share_mem_free(share_mem_t *shm);
 int share_mem_get(char *name, unsigned long size, unsigned long flags);
 int share_mem_put(int shmid);
 
-void *share_mem_map(int shmid, void *shmaddr);
-int share_mem_unmap(const void *shmaddr);
+void *share_mem_map(int shmid, void *shmaddr, int shmflg);
+int share_mem_unmap(const void *shmaddr, int shmflg);
 
 void init_share_mem();
 

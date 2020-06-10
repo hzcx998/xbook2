@@ -14,7 +14,7 @@ int init_env_desktop()
 {
     /* 桌面窗口 */
     env_desktop.window = gui_create_window(NULL, 0, 0, 
-        drv_screen.width, drv_screen.height, GUIW_NO_TITLE, NULL);
+        drv_screen.width, drv_screen.height, COLOR_WHITE, GUIW_NO_TITLE, NULL);
 
     if (env_desktop.window == NULL) {
         printf("create desktop window failed!\n");

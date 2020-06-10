@@ -1,7 +1,7 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:23:20:41 date:2020/6/8
-info: week day:1 Monday year day:161
+info: time:22:10:46 date:2020/6/10
+info: week day:3 Wednesday year day:163
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -27,135 +27,75 @@ debug: vbe_mmap: length=ea600 mode len=ea600
 debug: vbe_mmap: get phy addr:e0000000
 debug: device_mmap: get device phy addr:e0000000
 guisrv: mapped addr 2001c000
-[layer] start.
-[layer] alloc map.
-[layer] init font.
-[mouse] layer create.
-[layer] alloc buffer fc600
-[layer] alloc layer fd600
-[layer] alloc layer fd600 done
-[layer] left
-[layer] right
-[layer] set layer fd600 done
-create layer: addr fd600, buffer fc600, width 32, height 32
-insert a layer at top z 0
-add a layer 0 to tail
-[layer] done.
-[layer] alloc buffer fd634
 hello, test!
-[layer] alloc layer 2d2234
-[layer] alloc layer 2d2234 done
-[layer] left
-[layer] right
-[layer] set layer 2d2234 done
-add a layer 0 to midlle or head
-found a old layer 0
-[layer] alloc buffer 2d256c
-[layer] alloc layer 324d6c
-[layer] alloc layer 324d6c done
-[layer] left
-[layer] right
-[layer] set layer 324d6c done
-[window] create text title.
-add a layer 1 to midlle or head
-found a old layer 1
-[layer] alloc buffer 325324
-[layer] alloc layer 37f324
-[layer] alloc layer 37f324 done
-[layer] left
-[layer] right
-[layer] set layer 37f324 done
-[window] create text title.
-add a layer 2 to midlle or head
-found a old layer 2
-[mouse ] left button down.
-[mouse ] x:26, y:413
-[mouse ] fond a window 37f358.
-[mouse ] fond a window 324da0.
-[mouse ] fond a window 2d2268.
-touch window: pos=0-0, size=800-600
-no window title
-[mouse ] left button up.
-[mouse ] x:26, y:413
-[mouse ] left button down.
-[mouse ] x:580, y:110
-[mouse ] fond a window 37f358.
-touch window: pos=500-100, size=240-360
-in window title
-layer z:2 set new z:2
+[guisrv] ready bind service.
+[guisrv] bind service ok.
+guisrv: srvcall seq=0.
+[guisrv] open display
+[SGI] oepn display: root window:0 width:800 height:600
+[test] open display ok!
+guisrv: srvcall seq=1.
+[test] create window success!
+guisrv: srvcall seq=2.
+[test] map window success!
+[test] close display ok!
 [mouse] change state 0 to 1
-[mouse ] left button up.
-[mouse ] x:589, y:128
 [mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:181, y:28
-[mouse ] fond a window 37f358.
-[mouse ] fond a window 324da0.
-touch window: pos=20-20, size=320-240
-in window title
-layer z:1 set new z:2
-layer z:1 < new z:2 
-find old layer:37f324 z2
 [mouse] change state 0 to 1
-[mouse ] left button up.
-[mouse ] x:272, y:186
 [mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:246, y:186
-[mouse ] fond a window 324da0.
-touch window: pos=111-178, size=320-240
-in window title
 [mouse] change state 0 to 1
-[mouse ] left button up.
-[mouse ] x:316, y:197
 [mouse] change state 0 to 0
-[keyboard ] key 99->™ down.
-[keyboard ] key 97->— down.
-[keyboard ] key 67->g down.
-[keyboard ] key 67->g up.
-[keyboard ] key 99->™ up.
-[keyboard ] key 97->— up.
-[mouse ] left button down.
-[mouse ] x:540, y:127
-[mouse ] fond a window 324da0.
-[mouse ] fond a window 37f358.
-touch window: pos=509-118, size=240-360
-in window title
-layer z:1 set new z:2
-layer z:1 < new z:2 
-find old layer:324d6c z2
 [mouse] change state 0 to 1
-[mouse ] left button up.
-[mouse ] x:540, y:112
 [mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:401, y:196
-[mouse ] fond a window 37f358.
-[mouse ] fond a window 324da0.
-touch window: pos=181-189, size=320-240
-in window title
-layer z:1 set new z:2
-layer z:1 < new z:2 
-find old layer:37f324 z2
 [mouse] change state 0 to 1
-[mouse ] left button up.
-[mouse ] x:347, y:187
 [mouse] change state 0 to 0
-[mouse ] left button down.
-[mouse ] x:684, y:121
-[mouse ] fond a window 324da0.
-[mouse ] fond a window 37f358.
-[button] down handler 0, 175, 18
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[button] down handler 0, 255, 17
 [button] tag minim
-touch window: pos=509-103, size=240-360
-in window body
-layer z:1 set new z:2
-layer z:1 < new z:2 
-find old layer:324d6c z2
-[mouse ] left button up.
-[mouse ] x:684, y:121
-[button] up handler 0, 175, 18
+[button] up handler 0, 255, 17
 [button] tag minim
-layer z:2 set new z:-1
-layer z:2 will be hided.
-layer z:1 set new z:1
+[button] down handler 0, 257, 12
+[button] tag minim
+[button] up handler 0, 257, 12
+[button] tag minim
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+$@[mouse] change state 0 to 0
+$èâ[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+Ç$M[mouse] change state 0 to 1
+$è[mouse] change state 0 to 0
+ìÇEü[mouse] change state 0 to 1
+ëƒEüƒ}ü~ß¸[mouse] change state 0 to 0
+ë‹E‹UüƒÂ‹…ÀtƒEüƒ}ü~æëƒ}ü~¸ÿÿÿÿë‹U‹E‹MüƒÁ‰ˆ‹EüÉÃU‰åƒìÇEü[mouse] change state 0 to 1
+}ü~¸ÿÿÿÿë‹U‹E‹MüƒÁ‰ˆ‹EüÉÃU‰åƒìÇEü[mouse] change state 0 to 0
+U‰åƒìÇEü[mouse] change state 0 to 1
+‹E‹UüƒÂÇ[mouse] change state 0 to 0
+Î¸ÿÿÿÿÉÃU‰åƒ}[mouse] change state 0 to 0
+‹UƒÂ‹]ÃU‰åƒìhÇ$0[mouse] change state 0 to 1
+ôƒ}ô[mouse] change state 0 to 0
+[mouse] change state 0 to 0
+$è¿[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+…Àu[‹EðƒøÿtV‹Eô‹[mouse] change state 0 to 0
+Eô‰$è‰þÿÿ‹Uô‰B‹Eô‹H‹Eô‹P‹Eô‹@‰L$‰T$‰D$Ç$pM[button] down handler 0, 182, 19
+[button] tag minim
+Eô‹P‹Eô‹@‰L$‰T$‰D$Ç$pM[button] up handler 0, 182, 19
+ë‹Eô‰$èb[button] tag minim
+ÃU‰åƒì(ƒ}

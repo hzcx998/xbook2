@@ -189,7 +189,7 @@ err:
  * @shmid: 共享内存的id
  * @shmaddr: 共享内存的地址
  *          若该参数为NULL，则在进程空间自动选择一个闲的地址来映射，
- *          不为空，那么久在进程空间映射为该地址
+ *          不为空，那么就在进程空间映射为该地址
  * 
  * 把共享内存的物理地址映射到当前进程的进程空间，
  * 需要用到的映射是虚拟地址和物理地址直接映射，不需要分配物理页，
@@ -197,7 +197,7 @@ err:
  * 
  * @return: 成功返回映射在进程空间的地址，失败返回-1
  */
-void *share_mem_map(int shmid, void *shmaddr)
+void *share_mem_map(int shmid, void *shmaddr, int shmflg)
 {
     share_mem_t *shm;
     semaphore_down(&share_mem_mutex);
@@ -216,7 +216,11 @@ void *share_mem_map(int shmid, void *shmaddr)
         if (addr == -1) /* 已经没有空闲的空间 */
             return (void *) -1;
     } else {
-        addr = (unsigned long) shmaddr;
+        if (shmflg & IPC_RND)
+            addr = (unsigned long) shmaddr & PAGE_ADDR_MASK; /* 页地址对齐 */
+        else 
+            addr = (unsigned long) shmaddr;
+            
         if (addr < cur->vmm->map_start || 
             addr + len >= cur->vmm->map_end) /* 指定地址不在映射范围内 */
             return (void *) -1;
@@ -231,7 +235,7 @@ void *share_mem_map(int shmid, void *shmaddr)
     if (shmaddr != (void *) -1)
         atomic_inc(&shm->links);
 #if DEBUG_SHM == 1
-            printk(KERN_DEBUG "share_mem_map: map at %x\n", shmaddr);
+    printk(KERN_DEBUG "share_mem_map: map at %x\n", shmaddr);
 #endif
     return shmaddr;
 }
@@ -242,14 +246,19 @@ void *share_mem_map(int shmid, void *shmaddr)
  * 
  * @return: 成功返回0，失败返回-1
  */
-int share_mem_unmap(const void *shmaddr)
+int share_mem_unmap(const void *shmaddr, int shmflg)
 {
     if (!shmaddr) {
         return -1;
     }
     task_t *cur = current_task;
 
-    unsigned long addr = (unsigned long) shmaddr;
+    unsigned long addr;
+    if (shmflg & IPC_RND)
+        addr = (unsigned long) shmaddr & PAGE_ADDR_MASK; /* 页地址对齐 */
+    else 
+        addr = (unsigned long) shmaddr;
+
     vmspace_t *sp = vmspace_find(cur->vmm, addr);
     if (sp == NULL) /* 没有找到对应的空间 */
         return -1;

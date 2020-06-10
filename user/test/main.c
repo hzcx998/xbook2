@@ -7,46 +7,7 @@
 #include <srv/guisrv.h>
 #include <sys/srvcall.h>
 #include <sys/proc.h>
-
-/* SGI: Simple graphical interface */
-
-typedef unsigned int SGI_Window;
-
-typedef struct _SGI_Display
-{
-    unsigned int width;             /* 窗口宽度 */
-    unsigned int height;            /* 窗口高度 */
-    SGI_Window root_window;         /* 根窗口 */
-} SGI_Display;
-
-void *SGI_Malloc(size_t size)
-{
-    return malloc(size);
-}
-
-void SGI_Free(void *ptr)
-{
-    free(ptr);
-}
-
-
-SGI_Display *SGI_OpenDisplay()
-{
-    DEFINE_SRVARG(srvarg);
-    SETSRV_ARG(&srvarg, 0, GUISRV_OPEN_DISPLAY, 0);
-
-    if (!srvcall(SRV_GUI, &srvarg)) {
-        if (GETSRV_RETVAL(&srvarg, int) == -1) {
-            return NULL;
-        }
-        SGI_Display *display = SGI_Malloc(sizeof(SGI_Display));
-        if (display == NULL) {
-            return NULL;
-        }
-        return display;
-    }
-    return NULL;
-}
+#include <sgi/sgi.h>
 
 int main(int argc, char *argv[])
 {
@@ -58,7 +19,43 @@ int main(int argc, char *argv[])
         printf("[test] open gui failed!\n");
         return -1;
     }
-    printf("[test] open gui ok!\n");
+    printf("[test] open display ok!\n");
+
+    SGI_Window win = SGI_CreateSimpleWindow(
+        display,
+        display->root_window,
+        10,
+        100,
+        320,
+        240,
+        0XffFAFA55
+    );
+
+    if (win < 0) {
+        printf("[test] create window failed!\n");
+    }
+    printf("[test] create window success!\n");
+
+    if (SGI_MapWindow(display, win)) {
+        printf("[test] map window failed!\n");
+    } else {
+        printf("[test] map window success!\n");
+    }
+    sleep(2);
+    if (SGI_UnmapWindow(display, win)) {
+        printf("[test] unmap window failed!\n");
+    } else {
+        printf("[test] unmap window success!\n");
+    }
+
+    if (SGI_DestroyWindow(display, win)) {
+        printf("[test] destroy window failed!\n");
+    } else {
+        printf("[test] destroy window success!\n");
+    }
+    
+    SGI_CloseDisplay(display);
+    printf("[test] close display ok!\n");
 
     return 0;
 }

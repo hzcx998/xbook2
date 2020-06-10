@@ -10,6 +10,7 @@
 #define IPC_READER  0x20        /* reader for pipe */
 #define IPC_WRITER  0x40        /* writer for pipe */
 #define IPC_NOSYNC  0x80        /* no sync */
+#define IPC_RND     0x100       /* addr round page align */
 
 /* IPC slaver flags */
 #define IPC_SHM     0x100000    /* share memory ipc */

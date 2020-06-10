@@ -14,6 +14,7 @@ DIR_INCLUDE = ./include
 
 # libarys
 DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
+DIR_SGI 			= $(DIR_LIBARY)/sgi
 
 # rom dir
 ROM_DIR = ../../develop/rom
@@ -38,10 +39,12 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 ASM_FLAGS	= -f elf \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_XBOOKLIB)/include \
+			-I $(DIR_SGI)/include \
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_XBOOKLIB)/include \
+			-I $(DIR_SGI)/include \
 
 DRIVERS_OBJS 	= 	drivers/screen.o \
 					drivers/mouse.o \
