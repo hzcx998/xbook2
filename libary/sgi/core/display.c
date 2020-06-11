@@ -1,6 +1,8 @@
 #include <sgi/sgi.h>
 #include <sgi/sgii.h>
 #include <sys/srvcall.h>
+#include <sys/res.h>
+#include <sys/ipc.h>
 #include <srv/guisrv.h>
 #include <string.h>
 #include <stdio.h>
@@ -55,6 +57,7 @@ SGI_Display *SGI_OpenDisplay()
         return NULL;
     }
     memset(display, 0, sizeof(SGI_Display));
+
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, GUISRV_OPEN_DISPLAY, 0);
     SETSRV_ARG(&srvarg, 1, display, sizeof(SGI_Display));
@@ -71,12 +74,23 @@ SGI_Display *SGI_OpenDisplay()
     if (!display->connected)
         goto od_free_display;
     /* success! */
-    
+    char msgname[16];
+    memset(msgname, 0, 16);
+    sprintf(msgname, "guisrv-display%d", display->id);
+    printf("[SGI] open msg %s.\n", msgname);
+    /* 创建一个消息队列，用来和客户端进程交互 */
+    int msgid = res_open(msgname, RES_IPC | IPC_MSG | IPC_CREAT, 0);
+    if (msgid < 0) 
+        goto od_free_display;
+        
+    /* 消息id */
+    display->msgid = msgid;
+
     SGI_WindowInfo winfo;
     winfo.winid = display->root_window;
     winfo.shmid = -1;
     winfo.mapped_addr = NULL;
-
+    
     /* 把根窗口添加到窗口句柄 */
     display->root_window = SGI_DisplayWindowInfoAdd(display, &winfo);
     printf("[SGI] oepn display: root window:%d width:%d height:%d\n",
@@ -99,6 +113,25 @@ int SGI_CloseDisplay(SGI_Display *display)
         /* 关闭窗口 */
         SGI_DisplayWindowInfoDel(display, i);
     }
+
+    if (display->msgid >= 0)
+        res_close(display->msgid);
+
+    /* 发送关闭显示服务请求 */
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, GUISRV_CLOSE_DISPLAY, 0);
+    SETSRV_ARG(&srvarg, 1, display->id, 0);
+    SETSRV_RETVAL(&srvarg, -1);
+    if (srvcall(SRV_GUI, &srvarg)) {
+        goto close_display_error;
+    }
+    if (GETSRV_RETVAL(&srvarg, int) == -1) {
+        goto close_display_error;
+    }
+
     SGI_Free(display);
     return 0;
+
+close_display_error:
+    return -1;
 }

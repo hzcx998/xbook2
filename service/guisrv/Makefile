@@ -63,6 +63,7 @@ WINDOW_OBJS 	=	window/window.o \
 					window/rect.o \
 					window/bitmap.o \
 					window/char.o \
+					window/event.o \
 
 ENVIRONMENT_OBJS =	environment/mouse.o \
 					environment/desktop.o \
@@ -76,6 +77,7 @@ WIDGET_OBJS		=	widget/widget.o \
 					widget/button.o \
 
 CORE_OBJS 		= 	core/interface.o \
+					core/display.o \
 
 MAIN_OBJS 		= 	main.o \
 

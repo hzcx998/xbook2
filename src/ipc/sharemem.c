@@ -244,11 +244,8 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
             vaddr = (unsigned long) shmaddr & PAGE_ADDR_MASK; /* 页地址对齐 */
         else 
             vaddr = (unsigned long) shmaddr;
-        
+#if DEBUG_SHM == 1
         printk(KERN_DEBUG "%s: old virtual addr:%x\n", __func__, vaddr);
-
-#if 0   /* 要映射的虚拟地址可以相交，也就是说可以映射一个已经存在的虚拟地址，但是返回的是新的虚拟地址 */        
-        
 #endif
         /* 映射一个已经存在的物理地址 */
         if (!shm->page_addr) {
@@ -261,9 +258,9 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
             shm->flags |= SHARE_MEM_PRIVATE;
         }
     }
-
+#if DEBUG_SHM == 1
     printk(KERN_DEBUG "%s: virtual addr:%x physical addr:%x\n", __func__, addr, shm->page_addr);
-
+#endif
     /* 把虚拟地址和物理地址进行映射，物理地址是共享的。由于已经确切获取了一个地址，
     所以这里就用固定映射，因为是共享内存，所以使用共享的方式。 */
     shmaddr = vmspace_mmap(addr, shm->page_addr, shm->npages * PAGE_SIZE,

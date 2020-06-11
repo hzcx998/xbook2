@@ -4,6 +4,7 @@
 /* SGI: Simple graphical interface */
 #include <stddef.h>
 #include "sgiw.h"
+#include "sgie.h"
 
 /* 支持打开的最大窗口句柄数 */
 #define SGI_WINDOW_HANDLE_NR   8
@@ -15,6 +16,8 @@ typedef struct _SGI_Display
     unsigned int height;            /* 窗口高度 */
     SGI_Window root_window;         /* 根窗口 */
     SGI_WindowInfo winfo_table[SGI_WINDOW_HANDLE_NR]; /* 窗口信息表 */
+    int msgid;                      /* 消息队列：用来接收事件 */
+    unsigned int id;                /* 显示id */
 } SGI_Display;
 
 void *SGI_Malloc(size_t size);
@@ -73,5 +76,7 @@ int SGI_WindowDrawRect(
     unsigned int height,
     SGI_Argb color
 );
+
+int SGI_NextEvent(SGI_Display *display, SGI_Event *event);
 
 #endif  /* __SGI_H__ */

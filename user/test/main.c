@@ -56,11 +56,32 @@ int main(int argc, char *argv[])
     else
         printf("[test] update window success!\n");
 
-    while (1)
-    {
-        /* code */
+    SGI_Event event;
+    while (1) {
+        if (SGI_NextEvent(display, &event))
+            continue;
+        switch (event.type)
+        {
+        case SGI_MOUSE_BUTTON:
+            if (event.button.state == SGI_PRESSED) {    // 按下
+                if (event.button.button == 0) {
+                    printf("[test] left button pressed.\n");
+                }
+            } else {
+                if (event.button.button == 0) {
+                    printf("[test] left button released.\n");
+                }
+            }
+            break;
+        case SGI_MOUSE_MOTION:
+            printf("[test] mouse motion %d, %d.\n", event.motion.x, event.motion.y);
+            break;
+        default:
+            break;
+        }
     }
-    
+    sleep(1);
+
     if (SGI_UnmapWindow(display, win)) {
         printf("[test] unmap window failed!\n");
     } else {

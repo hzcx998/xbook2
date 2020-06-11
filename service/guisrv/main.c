@@ -15,7 +15,7 @@
 
 #include <window/window.h>
 #include <environment/mouse.h>
-
+#include <environment/interface.h>
 
 #include <guisrv.h>
 
@@ -145,10 +145,11 @@ int main(int argc, char *argv[])
     if (start_guisrv() < 0)
         return -1;
     
-#if 1
     if (init_guisrv_interface() < 0) 
         return -1;
-#endif
+
+    init_env_display();
+
     loop_guisrv();
 
     if (close_guisrv()) {

@@ -288,6 +288,7 @@ gui_window_t *gui_create_window(
     win->shmid = -1;
     win->mapped_addr = NULL;
     win->start_off = 0;
+    win->display_id = 0;
 
     layer->extension = (void *) win;
 
@@ -309,6 +310,10 @@ gui_window_t *gui_create_window(
 
     /* 添加到窗口链表 */
     list_add_tail(&win->window_list, &window_list_head);
+    
+    /* 设置标题盒子 */
+    ENV_BOX_INIT(win->body_box, win->x_off, win->y_off,
+        win->x_off + win->layer->width, win->height + win->y_off);
 
     /* 绘制窗口本体 */
     layer_draw_rect_fill(win->layer, win->x_off, win->y_off, win->layer->width, win->height, background);

@@ -29,7 +29,7 @@ SGI_Window SGI_CreateSimpleWindow(
     if (!SGI_DisplayWindowInfoCheck(display)) {
         return -1;      /* 没有可用窗口句柄就返回 */
     }
-
+    
     /* 构建服务调用 */
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, GUISRV_CREATE_WIN, 0);
@@ -39,6 +39,7 @@ SGI_Window SGI_CreateSimpleWindow(
     SETSRV_ARG(&srvarg, 4, width, 0);
     SETSRV_ARG(&srvarg, 5, height, 0);
     SETSRV_ARG(&srvarg, 6, background, 0);
+    SETSRV_ARG(&srvarg, 7, display->id, 0);
     SETSRV_RETVAL(&srvarg, -1);
 
     /* 执行服务调用 */

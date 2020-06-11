@@ -28,6 +28,7 @@ NASM_FLAGS		= 	-f elf \
 
 CORE_OBJS	=		$(CORE_DIR)/display.o \
 					$(CORE_DIR)/mem.o \
+					$(CORE_DIR)/event.o \
 					
 WINMAN_OBJS	=		$(WINMAN_DIR)/window.o \
 

@@ -6,11 +6,15 @@
 #include <sgi/sgi.h>
 #include <drivers/screen.h>
 #include <environment/desktop.h>
+#include <environment/interface.h>
 #include <window/window.h>
 #include <sys/res.h>
 #include <sys/ipc.h>
 
 #define DEBUG_LOCAL 1
+
+/* 下一个显示id */
+static unsigned int next_display_id;
 
 int do_null(srvarg_t *arg)
 {
@@ -25,6 +29,30 @@ int do_open_display(srvarg_t *arg)
 #endif
     /* 返回服务信息 */
     static SGI_Display display;
+    memset(&display, 0, sizeof(SGI_Display));
+
+    display.id = next_display_id++;     /* 获取id，并指向下一个id */
+
+    /* 构建消息队列名字 */
+    char msgname[16];
+    memset(msgname, 0, 16);
+    sprintf(msgname, "guisrv-display%d", display.id);
+    printf("[GUISRV] open msg %s.\n", msgname);
+    /* 创建一个消息队列，用来和客户端进程交互 */
+    int msgid = res_open(msgname, RES_IPC | IPC_MSG | IPC_CREAT | IPC_EXCL, 0);
+    if (msgid < 0) {
+        printf("[%s] open msg queue failed!\n", SRV_NAME);
+        goto od_error;
+    }
+
+    env_display_t disp;
+    disp.dispid = display.id;
+    disp.msgid = msgid;
+    if (env_display_add(&disp)) {
+        res_close(msgid);
+        goto od_error;
+    }
+
     display.connected = 1;      /* 连接上 */
     display.width = drv_screen.width;
     display.height = drv_screen.height;
@@ -34,19 +62,40 @@ int do_open_display(srvarg_t *arg)
     SETSRV_SIZE(arg, 1, sizeof(SGI_Display));
     SETSRV_RETVAL(arg, 0);  /* 成功 */
     return 0;
+od_error:
+    SETSRV_DATA(arg, 1, &display);
+    SETSRV_SIZE(arg, 1, sizeof(SGI_Display));
+    SETSRV_RETVAL(arg, -1);  /* 失败 */
+    return -1;
 }
 
 int do_close_display(srvarg_t *arg)
 {
-    arg->retval = 0;
+    unsigned int display_id = GETSRV_DATA(arg, 1, unsigned int);  // display id
+    env_display_t *disp = env_display_find(display_id);
+    if (!disp) {
+        SETSRV_RETVAL(arg, -1);  /* 失败 */
+        return -1;
+    }
+    res_close(disp->msgid);
+
+    env_display_del(display_id);
+
+    SETSRV_RETVAL(arg, 0);
     return 0;
 }
-
 
 int do_create_window(srvarg_t *arg)
 {
     gui_window_t *parent = gui_window_get_by_id(GETSRV_DATA(arg, 1, unsigned int));
     if (parent == NULL) {   /* 没有找到父窗口，失败 */
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+
+    unsigned int display_id = GETSRV_DATA(arg, 7, unsigned int);
+    /* 参数检测 */
+    if (display_id <= 0) {
         SETSRV_RETVAL(arg, -1);
         return -1;
     }
@@ -83,6 +132,10 @@ int do_create_window(srvarg_t *arg)
         return -1;
     }
     win->shmid = shmid;
+    win->display_id = display_id;
+#if DEBUG_LOCAL == 1
+    printf("[%s] window display id=%d.\n", SRV_NAME, win->display_id);
+#endif
 
     /* 创建成功，添加到窗口缓存表 */
     gui_window_cache_add(win);
@@ -113,6 +166,9 @@ int do_destroy_window(srvarg_t *arg)
     /* 关闭共享内存 */
     res_close(win->shmid);
     win->shmid = -1;
+
+    /* 断开显示连接 */
+    win->display_id = 0;
 
     /* 销毁窗口 */
     if (gui_destroy_window(win))
@@ -292,6 +348,7 @@ void *guisrv_echo_thread(void *arg)
 
 int init_guisrv_interface()
 {
+    next_display_id = 1;    /* 从1开始 */
     /* 开一个线程来接收服务 */
     pthread_t thread_echo;
     int retval = pthread_create(&thread_echo, NULL, guisrv_echo_thread, NULL);

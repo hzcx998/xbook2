@@ -314,7 +314,9 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
         task_block(TASK_BLOCKED); /* 阻塞自己 */
         semaphore_down(&msgq->mutex); /* 唤醒后再次获取 */
     }
-
+#if DEBUG_MSGQ == 1
+        printk(KERN_DEBUG "receive start.\n");
+#endif
     /* 根据msgtype获取一个消息 */
     msg_t *msg = NULL, *tmp;
     if (msgtype > 0) {  /* 第一个分支 */

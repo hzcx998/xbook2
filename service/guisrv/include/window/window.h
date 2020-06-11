@@ -48,14 +48,19 @@ typedef struct _gui_window {
     GUI_COLOR title_bar_color;  /* 标题栏颜色 */
     GUI_COLOR title_color;      /* 标题颜色 */
     env_box_t title_box;        /* 标题盒子 */
-
+    env_box_t body_box;         /* 窗体盒子 */
+    
     gui_button_t *btn_close;    /* “关闭”按钮 */
     gui_button_t *btn_minim;    /* “最小化”按钮 */
     gui_button_t *btn_maxim;    /* “最大化”按钮 */
     gui_label_t  *text_title;   /* 标题文本 */
+    
+/// 客户端交互信息
     int shmid;                  /* 共享内存的id，用来映射客户端窗口 */
     void *mapped_addr;          /* 共享内存映射后的地址 */
     unsigned short start_off;   /* 起始偏移 */
+    unsigned int display_id;    /* 窗口所在的显示id */
+
 } gui_window_t;
 
 extern gui_window_t *window_current;
