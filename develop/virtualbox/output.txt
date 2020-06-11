@@ -1,7 +1,7 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:22:10:46 date:2020/6/10
-info: week day:3 Wednesday year day:163
+info: time:18:37:6 date:2020/6/11
+info: week day:4 Thursday year day:164
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -35,10 +35,21 @@ guisrv: srvcall seq=0.
 [SGI] oepn display: root window:0 width:800 height:600
 [test] open display ok!
 guisrv: srvcall seq=1.
+[guisrv] create window: shm name guisrv-win3.
+[SGI] create window: shm name guisrv-win3.
 [test] create window success!
 guisrv: srvcall seq=2.
+[guisrv] map window share memory at 38b160
+debug: share_mem_map: old virtual addr:38b000
+debug: share_mem_map: phy addr:2aa6000.
+debug: share_mem_map: virtual addr:20107000 physical addr:2aa6000
+[guisrv] mapped window share memory at 20107000, start off is 160
+debug: share_mem_map: virtual addr:20011000 physical addr:2aa6000
+[test] map window at 20011000, start off:160
 [test] map window success!
-[test] close display ok!
+guisrv: srvcall seq=3.
+[GUISRV] update window.
+[test] update window success!
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
 [mouse] change state 0 to 1
@@ -57,45 +68,28 @@ guisrv: srvcall seq=2.
 [mouse] change state 0 to 0
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
+[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[button] down handler 0, 255, 17
+[button] down handler 0, 253, 7
 [button] tag minim
-[button] up handler 0, 255, 17
-[button] tag minim
-[button] down handler 0, 257, 12
-[button] tag minim
-[button] up handler 0, 257, 12
+[button] up handler 0, 253, 7
 [button] tag minim
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-$@[mouse] change state 0 to 0
-$èâ[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-Ç$M[mouse] change state 0 to 1
-$è[mouse] change state 0 to 0
-ìÇEü[mouse] change state 0 to 1
-ëƒEüƒ}ü~ß¸[mouse] change state 0 to 0
-ë‹E‹UüƒÂ‹…ÀtƒEüƒ}ü~æëƒ}ü~¸ÿÿÿÿë‹U‹E‹MüƒÁ‰ˆ‹EüÉÃU‰åƒìÇEü[mouse] change state 0 to 1
-}ü~¸ÿÿÿÿë‹U‹E‹MüƒÁ‰ˆ‹EüÉÃU‰åƒìÇEü[mouse] change state 0 to 0
-U‰åƒìÇEü[mouse] change state 0 to 1
-‹E‹UüƒÂÇ[mouse] change state 0 to 0
-Î¸ÿÿÿÿÉÃU‰åƒ}[mouse] change state 0 to 0
-‹UƒÂ‹]ÃU‰åƒìhÇ$0[mouse] change state 0 to 1
-ôƒ}ô[mouse] change state 0 to 0
-[mouse] change state 0 to 0
-$è¿[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-…Àu[‹EğƒøÿtV‹Eô‹[mouse] change state 0 to 0
-Eô‰$è‰şÿÿ‹Uô‰B‹Eô‹H‹Eô‹P‹Eô‹@‰L$‰T$‰D$Ç$pM[button] down handler 0, 182, 19
+[button] down handler 0, 260, 12
 [button] tag minim
-Eô‹P‹Eô‹@‰L$‰T$‰D$Ç$pM[button] up handler 0, 182, 19
-ë‹Eô‰$èb[button] tag minim
-ÃU‰åƒì(ƒ}
+[button] up handler 0, 260, 12
+[button] tag minim
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[button] down handler 0, 189, 8
+[button] tag minim
+[button] up handler 0, 189, 8
+[button] tag minim

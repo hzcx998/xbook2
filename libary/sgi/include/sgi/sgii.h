@@ -5,13 +5,14 @@
 #include <stddef.h>
 #include "sgi.h"
 
-bool __SGI_DisplayWindowHandleCheck(SGI_Display *display);
-int __SGI_DisplayWindowHandleAdd(SGI_Display *display, unsigned int wid);
-int __SGI_DisplayWindowHandleDel(SGI_Display *display, SGI_Window window);
-int __SGI_DisplayWindowHandleFind(SGI_Display *display, SGI_Window window);
+bool SGI_DisplayWindowInfoCheck(SGI_Display *display);
+int SGI_DisplayWindowInfoAdd(SGI_Display *display, SGI_WindowInfo *winfo);
+int SGI_DisplayWindowInfoDel(SGI_Display *display, SGI_Window window);
 
 #define SGI_BAD_WIN_HANDLE(win) \
     (win < 0 || win >= SGI_WINDOW_HANDLE_NR)
 
+#define SGI_DISPLAY_GET_WININFO(display, window) \
+        (SGI_BAD_WIN_HANDLE(window) ? NULL : &(display)->winfo_table[window])
 
 #endif  /* __SGI_INTERFACE_H__ */

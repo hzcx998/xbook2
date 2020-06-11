@@ -172,9 +172,8 @@ int __writeres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
         if (shmaddr == NULL) {
             return -1;
         }
-        /* 如果buf为空，就需要保存映射后的地址到count里面 */
-        if (buffer == NULL)
-            *(size_t *)count = (size_t )shmaddr;
+        /* 保存映射后的地址 */
+        *(size_t *)count = (size_t )shmaddr;
         break;
     case IPC_SEM:
         if (sem_down(item->handle, off))

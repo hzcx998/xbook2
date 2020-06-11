@@ -11,11 +11,15 @@
 
 #define SHARE_MEM_NAME_LEN      24
 
+
+#define SHARE_MEM_PRIVATE       0x01    /* 在本进程中映射一段共享内存 */
+
 /* 共享内存结构 */
 typedef struct share_mem {
     unsigned short id;          /* 共享内存id */
     unsigned long page_addr;    /* 共享的物理内存 */
     unsigned long npages;       /* 物理页数量 */
+    unsigned int flags;         /* 标志 */
     atomic_t links;        /* 使用这段共享内存被映射的次数 */
     char name[SHARE_MEM_NAME_LEN];      /* 名字 */
 } share_mem_t;

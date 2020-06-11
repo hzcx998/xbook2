@@ -100,9 +100,9 @@ share_mem_t *share_mem_alloc(char *name, unsigned long size)
                 size = 1;
             size = PAGE_ALIGN(size);
             shm->npages = size / PAGE_SIZE; /* 计算占用的页面数 */
-            shm->page_addr = alloc_pages(shm->npages);  /* 分配物理内存 */
-            if (!shm->page_addr)    /* 分配失败，返回NULL */
-                return NULL;
+            shm->page_addr = 0;  /* 还没有物理地址 */
+            shm->flags = 0;
+
             /* 设置共享内存名字 */
             memcpy(shm->name, name, SHARE_MEM_NAME_LEN);
             shm->name[SHARE_MEM_NAME_LEN - 1] = '\0';
@@ -128,8 +128,10 @@ int share_mem_free(share_mem_t *shm)
     printk(KERN_DEBUG "share_mem_free: shm id=%d page=%x pages=%d\n",
         shm->id, shm->page_addr, shm->npages);
 #endif
-    if (free_pages(shm->page_addr))
-        return -1;
+    /* 要有物理地址并且还不能是映射的当前进程的共享内存 */
+    if (shm->page_addr && !(shm->flags & SHARE_MEM_PRIVATE))
+        if (free_pages(shm->page_addr))
+            return -1;
     memset(shm->name, 0, SHARE_MEM_NAME_LEN);
 
     return 0;
@@ -210,30 +212,65 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
     
     unsigned long addr;
     unsigned long len = shm->npages * PAGE_SIZE;
+
+    /* 获取一个未使用的虚拟地址 */
+    addr = vmspace_get_unmaped(cur->vmm, shm->npages * PAGE_SIZE);
+    if (addr == -1) /* 已经没有空闲的空间 */
+        return (void *) -1;
+
+    /* 检测虚拟地址是否合法 */
+    if (addr < cur->vmm->map_start || 
+        addr + len >= cur->vmm->map_end) /* 指定地址不在映射范围内 */
+        return (void *) -1;
+
+    /* 如果有空间和它相交，就返回错误 */
+    if (vmspace_find_intersection(cur->vmm, addr, addr + len))
+        return (void *) -1;
+        
     /* 现在已经找到了共享内存，需要将它映射到当前进程的空间 */
     if (shmaddr == NULL) {  /* 自动选择一个映射地址 */
-        addr = vmspace_get_unmaped(cur->vmm, shm->npages * PAGE_SIZE);
-        if (addr == -1) /* 已经没有空闲的空间 */
-            return (void *) -1;
+
+        /* 如果没有需要分配一个新的物理地址，并映射之 */
+        if (!shm->page_addr) {
+            shm->page_addr = alloc_pages(shm->npages);  /* 分配物理内存 */
+            if (!shm->page_addr)    /* 分配失败，返回NULL */
+                return (void *) -1;
+        } 
+        
     } else {
+        unsigned long vaddr;
+
         if (shmflg & IPC_RND)
-            addr = (unsigned long) shmaddr & PAGE_ADDR_MASK; /* 页地址对齐 */
+            vaddr = (unsigned long) shmaddr & PAGE_ADDR_MASK; /* 页地址对齐 */
         else 
-            addr = (unsigned long) shmaddr;
+            vaddr = (unsigned long) shmaddr;
+        
+        printk(KERN_DEBUG "%s: old virtual addr:%x\n", __func__, vaddr);
+
+#if 0   /* 要映射的虚拟地址可以相交，也就是说可以映射一个已经存在的虚拟地址，但是返回的是新的虚拟地址 */        
+        
+#endif
+        /* 映射一个已经存在的物理地址 */
+        if (!shm->page_addr) {
+            shm->page_addr = addr_v2p(vaddr);    /* 直接获取物理地址 */
+            printk(KERN_DEBUG "%s: phy addr:%x.\n", __func__, shm->page_addr);
+            if (!shm->page_addr)    /* 虚拟地址没有映射过 */
+                return (void *) -1;
             
-        if (addr < cur->vmm->map_start || 
-            addr + len >= cur->vmm->map_end) /* 指定地址不在映射范围内 */
-            return (void *) -1;
-        /* 如果有空间和它相交，就返回错误 */
-        if (vmspace_find_intersection(cur->vmm, addr, addr + len))
-            return (void *) -1;
+            /* 映射本进程中的共享内存 */
+            shm->flags |= SHARE_MEM_PRIVATE;
+        }
     }
+
+    printk(KERN_DEBUG "%s: virtual addr:%x physical addr:%x\n", __func__, addr, shm->page_addr);
+
     /* 把虚拟地址和物理地址进行映射，物理地址是共享的。由于已经确切获取了一个地址，
     所以这里就用固定映射，因为是共享内存，所以使用共享的方式。 */
     shmaddr = vmspace_mmap(addr, shm->page_addr, shm->npages * PAGE_SIZE,
         PROT_USER | PROT_WRITE, VMS_MAP_FIXED | VMS_MAP_SHARED);
     if (shmaddr != (void *) -1)
         atomic_inc(&shm->links);
+
 #if DEBUG_SHM == 1
     printk(KERN_DEBUG "share_mem_map: map at %x\n", shmaddr);
 #endif
@@ -272,7 +309,7 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
     /* 取消虚拟空间映射 */
     int retval = do_vmspace_unmap(cur->vmm, sp->start, sp->end - sp->start);
     if (!retval) {  /* 减少链接数 */
-        if (shm)
+        if (shm) 
             atomic_dec(&shm->links);
     }
 #if DEBUG_SHM == 1
@@ -321,6 +358,7 @@ void init_share_mem()
         share_mem_table[i].id = 1 + i + i * 2; /* 共享内存id */
         share_mem_table[i].page_addr = 0;
         share_mem_table[i].npages = 0;
+        share_mem_table[i].flags = 0;
         atomic_set(&share_mem_table[i].links, 0);
         memset(share_mem_table[i].name, 0, SHARE_MEM_NAME_LEN);
     }

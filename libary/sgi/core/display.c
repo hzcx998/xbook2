@@ -5,11 +5,11 @@
 #include <string.h>
 #include <stdio.h>
 
-bool __SGI_DisplayWindowHandleCheck(SGI_Display *display)
+bool SGI_DisplayWindowInfoCheck(SGI_Display *display)
 {
     int i;
     for (i = 0; i < SGI_WINDOW_HANDLE_NR; i++) {
-        if (!display->win_handle_table[i])    /* 找到一个空闲的句柄 */
+        if (!display->winfo_table[i].winid)    /* 找到一个空闲的句柄 */
             return true;
     }
     return false;
@@ -18,43 +18,34 @@ bool __SGI_DisplayWindowHandleCheck(SGI_Display *display)
 /*
 把窗口id添加到窗口句柄表，并返回句柄值
 */
-int __SGI_DisplayWindowHandleAdd(SGI_Display *display, unsigned int wid)
+int SGI_DisplayWindowInfoAdd(SGI_Display *display, SGI_WindowInfo *winfo)
 {
     int i;
     for (i = 0; i < SGI_WINDOW_HANDLE_NR; i++) {
-        if (!display->win_handle_table[i])    /* 找到一个空闲的句柄 */
+        if (!display->winfo_table[i].winid)    /* 找到一个空闲的句柄 */
             break;
     }
     if (i >= SGI_WINDOW_HANDLE_NR)
         return -1;
-    display->win_handle_table[i] = wid;
+    display->winfo_table[i] = *winfo;
     return i;   /* 返回窗口句柄值 */
 }
 
 /*
 * 把窗口从窗口句柄表中移除
 */
-int __SGI_DisplayWindowHandleDel(SGI_Display *display, SGI_Window window)
+int SGI_DisplayWindowInfoDel(SGI_Display *display, SGI_Window window)
 {
     int i;
     for (i = 0; i < SGI_WINDOW_HANDLE_NR; i++) {
-        if (display->win_handle_table[i] == window) {
-            display->win_handle_table[i] = 0;
+        if (display->winfo_table[i].winid && i == window) {
+            display->winfo_table[i].winid = 0;
+            display->winfo_table[i].shmid = -1;
+            display->winfo_table[i].mapped_addr = NULL;
             return 0;
         }
     }
     return -1;
-}
-
-
-/*
-* 从窗口句柄表查找窗口id
-*/
-int __SGI_DisplayWindowHandleFind(SGI_Display *display, SGI_Window window)
-{
-    if (SGI_BAD_WIN_HANDLE(window))
-        return -1;
-    return display->win_handle_table[window];
 }
 
 SGI_Display *SGI_OpenDisplay()
@@ -81,9 +72,13 @@ SGI_Display *SGI_OpenDisplay()
         goto od_free_display;
     /* success! */
     
+    SGI_WindowInfo winfo;
+    winfo.winid = display->root_window;
+    winfo.shmid = -1;
+    winfo.mapped_addr = NULL;
+
     /* 把根窗口添加到窗口句柄 */
-    display->root_window = __SGI_DisplayWindowHandleAdd(display, display->root_window);
-    
+    display->root_window = SGI_DisplayWindowInfoAdd(display, &winfo);
     printf("[SGI] oepn display: root window:%d width:%d height:%d\n",
         display->root_window, display->width, display->height);
 
@@ -98,11 +93,11 @@ int SGI_CloseDisplay(SGI_Display *display)
     if (!display) {
         return -1;
     }
-    /* 释放显示的所有窗口 */
+    /* ！！！释放显示的所有窗口，0号是根窗口，不释放 */
     int i;
-    for (i = 0; i < SGI_WINDOW_HANDLE_NR; i++) {
+    for (i = 1; i < SGI_WINDOW_HANDLE_NR; i++) {
         /* 关闭窗口 */
-        display->win_handle_table[i] = 0;
+        SGI_DisplayWindowInfoDel(display, i);
     }
     SGI_Free(display);
     return 0;

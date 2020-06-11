@@ -20,8 +20,9 @@ int do_null(srvarg_t *arg)
 
 int do_open_display(srvarg_t *arg)
 {
+#if DEBUG_LOCAL == 1    
     printf("[guisrv] open display\n");
-
+#endif
     /* 返回服务信息 */
     static SGI_Display display;
     display.connected = 1;      /* 连接上 */
@@ -70,7 +71,9 @@ int do_create_window(srvarg_t *arg)
     char shmname[16];
     memset(shmname, 0, 16);
     sprintf(shmname, "guisrv-win%d", win->id);
+#if DEBUG_LOCAL == 1
     printf("[guisrv] create window: shm name %s.\n", shmname);
+#endif
     /* 创建一个共享内存 */
     int shmid = res_open(shmname, RES_IPC | IPC_SHM | IPC_CREAT | IPC_EXCL, win->window_size);
     if (shmid < 0) { /* 创建共享内存失败 */
@@ -109,6 +112,7 @@ int do_destroy_window(srvarg_t *arg)
 
     /* 关闭共享内存 */
     res_close(win->shmid);
+    win->shmid = -1;
 
     /* 销毁窗口 */
     if (gui_destroy_window(win))
@@ -135,19 +139,30 @@ int do_map_window(srvarg_t *arg)
         if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
             goto mw_error;
     }
-#if 0
+
     /* 对窗口进行映射操作 */
     void *mapaddr = (void *) (win->layer->buffer + win->y_off * win->width);
+#if DEBUG_LOCAL == 1
     printf("[guisrv] map window share memory at %x\n", mapaddr);
-
-    if (res_write(win->shmid, IPC_RND, mapaddr, 0) < 0) /* 映射共享内存 */
-         goto mw_error;
 #endif
+    long mapped; /* 保存映射后的地址 */
+    if (res_write(win->shmid, IPC_RND, mapaddr, (size_t) &mapped) < 0) /* 映射共享内存 */
+        goto mw_error;
+    if (mapped == -1)
+        goto mw_error;
+    
+    win->mapped_addr = (void *) mapped;
+    win->start_off = (unsigned long) mapaddr & 0xfff;    /* 页内偏移 */
 
+#if DEBUG_LOCAL == 1
+    printf("[guisrv] mapped window share memory at %x, start off is %x\n", 
+        mapped, win->start_off);
+#endif    
     /* 映射完后显示窗口 */
     gui_window_show(win);
 
-    SETSRV_RETVAL(arg, 0);
+    /* 返回页内偏移 */
+    SETSRV_RETVAL(arg, win->start_off);
     return 0;
 mw_error:
     SETSRV_RETVAL(arg, -1);
@@ -169,15 +184,47 @@ int do_unmap_window(srvarg_t *arg)
         if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
             goto mw_error;
     }
-    
+
     /* 先隐藏窗口 */
     gui_window_hide(win);
-#if 0
     /* 解除窗口的映射 */
-    void *mapaddr = (void *) (win->layer->buffer + win->y_off * win->width);
-    printf("[guisrv] unmap window share memory at %x\n", mapaddr);
-    if (res_read(win->shmid, IPC_RND, mapaddr, 0) < 0) /* 解除共享内存映射 */
+#if DEBUG_LOCAL == 1
+    printf("[guisrv] unmap window share memory at %x\n", win->mapped_addr);
+#endif
+    if (res_read(win->shmid, IPC_RND, win->mapped_addr, 0) < 0) /* 解除共享内存映射 */
+        goto mw_error;    
+    win->mapped_addr = NULL;
+
+    SETSRV_RETVAL(arg, 0);
+    return 0;
+mw_error:
+    SETSRV_RETVAL(arg, -1);
+    return -1;
+}
+
+int do_update_window(srvarg_t *arg)
+{
+    /* 获取窗口id */
+    int wid = GETSRV_DATA(arg, 1, int);
+    if (wid < 0)
         goto mw_error;
+
+    gui_window_t *win = gui_window_cache_find(wid);   
+    if (win == NULL) {  /* 没有在缓存中找到窗口 */
+        /*  尝试在窗口链表中寻找 */
+        win = gui_window_get_by_id(wid);
+        if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
+            goto mw_error;
+    }
+
+    gui_window_update(
+        win,
+        GETSRV_DATA(arg, 2, int),   // left
+        GETSRV_DATA(arg, 3, int),   // top
+        GETSRV_DATA(arg, 4, int),   // right
+        GETSRV_DATA(arg, 5, int));  // bottom
+#if DEBUG_LOCAL == 1
+    printf("[GUISRV] update window.\n");
 #endif
 
     SETSRV_RETVAL(arg, 0);
@@ -187,7 +234,6 @@ mw_error:
     return -1;
 }
 
-
 /* 调用表 */
 guisrv_func_t guisrv_call_table[] = {
     do_open_display,
@@ -196,11 +242,14 @@ guisrv_func_t guisrv_call_table[] = {
     do_destroy_window,
     do_map_window,
     do_unmap_window,
+    do_update_window,
 };
 
 void *guisrv_echo_thread(void *arg)
 {
+#if DEBUG_LOCAL == 1
     printf("[guisrv] ready bind service.\n");
+#endif    
     
     /* 绑定成为服务调用 */
     if (srvcall_bind(SRV_GUI) == -1)  {
@@ -208,8 +257,10 @@ void *guisrv_echo_thread(void *arg)
         return (void *) -1;
     }
 
+#if DEBUG_LOCAL == 1
     printf("[guisrv] bind service ok.\n");
-    
+#endif
+
     int seq;
     srvarg_t srvarg;
     int callnum;

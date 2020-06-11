@@ -286,6 +286,8 @@ gui_window_t *gui_create_window(
     win->title_color = GUIW_TITLE_TEXT_ON_COLOR;
     win->title_bar_color = GUIW_TITLE_BAR_ON_COLOR;
     win->shmid = -1;
+    win->mapped_addr = NULL;
+    win->start_off = 0;
 
     layer->extension = (void *) win;
 

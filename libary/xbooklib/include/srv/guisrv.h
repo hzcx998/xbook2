@@ -9,6 +9,7 @@ enum guisrv_call_num {
     GUISRV_DESTROY_WIN,
     GUISRV_MAP_WIN,
     GUISRV_UNMAP_WIN,
+    GUISRV_UPDATE_WIN,
     GUISRV_CALL_NR,    /* 最大数量 */
 };
 

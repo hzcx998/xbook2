@@ -54,6 +54,8 @@ typedef struct _gui_window {
     gui_button_t *btn_maxim;    /* “最大化”按钮 */
     gui_label_t  *text_title;   /* 标题文本 */
     int shmid;                  /* 共享内存的id，用来映射客户端窗口 */
+    void *mapped_addr;          /* 共享内存映射后的地址 */
+    unsigned short start_off;   /* 起始偏移 */
 } gui_window_t;
 
 extern gui_window_t *window_current;

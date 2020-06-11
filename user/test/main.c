@@ -41,7 +41,26 @@ int main(int argc, char *argv[])
     } else {
         printf("[test] map window success!\n");
     }
-    sleep(2);
+    int x, y;
+    for (y = 0; y < 10; y++) {
+        for (x = 0; x < 320; x++) {
+            SGI_WindowDrawPixel(display, win, x, y, SGIC_RED);
+        }
+    }
+    
+    SGI_WindowDrawRect(display, win, 50, 50, 100, 50, SGIC_BLUE);
+    SGI_WindowDrawRectFill(display, win, 70, 100, 50, 100, SGIC_GREEN);
+
+    if (SGI_UpdateWindow(display, win, 0, 0, 320, 240))
+        printf("[test] update window failed!\n");
+    else
+        printf("[test] update window success!\n");
+
+    while (1)
+    {
+        /* code */
+    }
+    
     if (SGI_UnmapWindow(display, win)) {
         printf("[test] unmap window failed!\n");
     } else {

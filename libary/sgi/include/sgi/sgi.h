@@ -14,8 +14,7 @@ typedef struct _SGI_Display
     unsigned int width;             /* 窗口宽度 */
     unsigned int height;            /* 窗口高度 */
     SGI_Window root_window;         /* 根窗口 */
-    SGI_Window win_handle_table[SGI_WINDOW_HANDLE_NR];  /* 可显示的窗口数 */
-
+    SGI_WindowInfo winfo_table[SGI_WINDOW_HANDLE_NR]; /* 窗口信息表 */
 } SGI_Display;
 
 void *SGI_Malloc(size_t size);
@@ -37,5 +36,42 @@ int SGI_DestroyWindow(SGI_Display *display, SGI_Window window);
 
 int SGI_MapWindow(SGI_Display *display, SGI_Window window);
 int SGI_UnmapWindow(SGI_Display *display, SGI_Window window);
+
+int SGI_UpdateWindow(
+    SGI_Display *display,
+    SGI_Window window,
+    int left,
+    int top,
+    int right,
+    int bottom
+);
+
+int SGI_WindowDrawPixel(
+    SGI_Display *display,
+    SGI_Window window,
+    int x,
+    int y,
+    SGI_Argb color
+);
+
+int SGI_WindowDrawRectFill(
+    SGI_Display *display,
+    SGI_Window window,
+    int x,
+    int y,
+    unsigned int width,
+    unsigned int height,
+    
+    SGI_Argb color
+);
+int SGI_WindowDrawRect(
+    SGI_Display *display,
+    SGI_Window window,
+    int x,
+    int y,
+    unsigned int width,
+    unsigned int height,
+    SGI_Argb color
+);
 
 #endif  /* __SGI_H__ */
