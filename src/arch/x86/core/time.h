@@ -9,7 +9,7 @@ void __init_pit_clock();
 #define __init_clock_hardware       __init_pit_clock
 
 /* HZ */
-#define __HZ                (100 * 10)
+#define __HZ                (100 * 1)
 
 /* get time */
 #define __get_time_hour     cmos_get_hour_hex
