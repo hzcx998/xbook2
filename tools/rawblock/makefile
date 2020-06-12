@@ -5,17 +5,15 @@ DD = dd
 
 # files
 
-## test ## 
-NAME_TEST = ./test.txt
-OFFS_TEST = 0
-CNTS_TEST = 1
-SIZE_TEST = 1
+## FILE1 ## 
+NAME_FILE1 = ./mario.nes
+OFFS_FILE1 = 10000
+CNTS_FILE1 = 100
 
-## test2 ## 
-NAME_TEST2 = ./test2.txt
-OFFS_TEST2 = 10
-CNTS_TEST2 = 2
-SIZE_TEST = 1
+## FILE2 ## 
+NAME_FILE2 = ./FILE2.txt
+OFFS_FILE2 = 10
+CNTS_FILE2 = 2
 
 #img dir
 IMG_DIR = ../../develop/image/
@@ -32,20 +30,23 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 .PHONY: all
 
 # default work
-all: img
+all: img vhd vmdk
 
 # .img file
 img:
-	$(DD) if=$(NAME_TEST) of=$(HD_IMG) bs=512 seek=$(OFFS_TEST) count=$(CNTS_TEST) conv=notrunc
-	$(DD) if=$(NAME_TEST2) of=$(HD_IMG) bs=512 seek=$(OFFS_TEST2) count=$(CNTS_TEST2) conv=notrunc
+	$(DD) if=$(NAME_FILE1) of=$(HD_IMG) bs=512 seek=$(OFFS_FILE1) count=$(CNTS_FILE1) conv=notrunc
+
+#	$(DD) if=$(NAME_FILE2) of=$(HD_IMG) bs=512 seek=$(OFFS_FILE2) count=$(CNTS_FILE2) conv=notrunc
 	
 # .vhd file
 vhd:
-	$(DD) if=$(NAME_TEST) of=$(HD_VHD) bs=512 seek=$(OFFS_TEST) count=$(CNTS_TEST) conv=notrunc
-	$(DD) if=$(NAME_TEST2) of=$(HD_VHD) bs=512 seek=$(OFFS_TEST2) count=$(CNTS_TEST2) conv=notrunc
+	$(DD) if=$(NAME_FILE1) of=$(HD_VHD) bs=512 seek=$(OFFS_FILE1) count=$(CNTS_FILE1) conv=notrunc
+
+#	$(DD) if=$(NAME_FILE2) of=$(HD_VHD) bs=512 seek=$(OFFS_FILE2) count=$(CNTS_FILE2) conv=notrunc
 	
 # .vmdk file
 vmdk:
-	$(DD) if=$(NAME_TEST) of=$(HD_VMDK) bs=512 seek=$(OFFS_TEST) count=$(CNTS_TEST) conv=notrunc
-	$(DD) if=$(NAME_TEST2) of=$(HD_VMDK) bs=512 seek=$(OFFS_TEST2) count=$(CNTS_TEST2) conv=notrunc
+	$(DD) if=$(NAME_FILE1) of=$(HD_VMDK) bs=512 seek=$(OFFS_FILE1) count=$(CNTS_FILE1) conv=notrunc
+
+#	$(DD) if=$(NAME_FILE2) of=$(HD_VMDK) bs=512 seek=$(OFFS_FILE2) count=$(CNTS_FILE2) conv=notrunc
 	

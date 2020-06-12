@@ -81,6 +81,16 @@ int SGI_WindowDrawRect(
     SGI_Argb color
 );
 
+int SGI_WindowDrawPixmap(
+    SGI_Display *display,
+    SGI_Window window,
+    int x,
+    int y,
+    unsigned int width,
+    unsigned int height,
+    SGI_Argb *pixmap
+);
+
 int SGI_NextEvent(SGI_Display *display, SGI_Event *event);
 
 #endif  /* __SGI_H__ */

@@ -11,7 +11,7 @@
 #include <sys/res.h>
 #include <sys/ipc.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 /* 下一个显示id */
 static unsigned int next_display_id;

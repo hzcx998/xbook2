@@ -18,16 +18,18 @@ typedef struct _SGI_KeyboardEvent {
 
 /* 图形鼠标移动 */
 typedef struct _SGI_MouseMotionEvent {
-    unsigned char type;                /* 鼠标移动事件类型：SGI_MOUSE_MOTION */
-    int x;              /* x偏移 */
-    int y;              /* y偏移 */
+    unsigned char type;                 /* 鼠标移动事件类型：SGI_MOUSE_MOTION */
+    int x;                              /* x横坐标 */
+    int y;                              /* y纵坐标 */
 } SGI_MouseMotionEvent;
 
 /* 图形鼠标按扭 */
 typedef struct _SGI_MouseButtonEvent {
-    unsigned char type;                /* 鼠标按钮事件类型：SGI_MOUSE_DOWN, SGI_MOUSE_UP */
-    unsigned char state;               /* 按钮状态 */
-    unsigned char button;              /* 按钮值 */
+    unsigned char type;                 /* 鼠标按钮事件类型：SGI_MOUSE_DOWN, SGI_MOUSE_UP */
+    unsigned char state;                /* 按钮状态 */
+    unsigned char button;               /* 按钮值 */
+    int x;                              /* x横坐标 */
+    int y;                              /* y纵坐标 */
 } SGI_MouseButtonEvent;
 
 /* 图形的事件类型 */
@@ -36,7 +38,8 @@ typedef enum _SGI_EventType {
     SGI_KEY,                /* 按键事件 */
     SGI_MOUSE_MOTION,       /* 鼠标移动 */
     SGI_MOUSE_BUTTON,       /* 鼠标按钮事件 */
-    MAX_SGI_EventT_NR,      /* 最大的事件数量 */
+    SGI_QUIT,               /* 退出事件 */
+    SGI_EVENT_NR,           /* 最大的事件数量 */
 } SGI_EventType;
 
 /* 图形输入

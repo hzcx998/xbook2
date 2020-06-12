@@ -499,8 +499,6 @@ layer_t *layer_get_by_z(int z)
     return NULL;
 }
 
-
-
 int guisrv_init_layer()
 {
     /* 分配地图空间 */
@@ -516,8 +514,8 @@ int guisrv_init_layer()
     /* 初始化字体管理 */
     gui_init_font();
 
-    if (init_env_mouse()) {
-        printf("[mouse ] %s: init mouse environment failed!\n", SRV_NAME);
+    if (init_mouse_input()) {
+        printf("[mouse ] %s: init mouse input failed!\n", SRV_NAME);
         return -1;
     }
 

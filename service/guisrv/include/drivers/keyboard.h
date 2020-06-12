@@ -2,17 +2,15 @@
 #define __GUISRV_DRIVER_KEYBOARD_H__
 
 typedef struct _gui_keyboard {
-    
     int            (*open)(void);
     int	           (*close)(void);
     int	           (*read)(void);
-    
-} gui_keyboard_t;
+    int ledstate;                 /* 修饰按键 */
+} drv_keyboard_t;
 
-extern gui_keyboard_t keyboard;
+extern drv_keyboard_t drv_keyboard;
 
 int init_keyboard_driver();
-
 
 
 #endif  /* __GUISRV_DRIVER_KEYBOARD_H__ */

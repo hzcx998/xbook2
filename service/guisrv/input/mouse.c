@@ -15,14 +15,14 @@
 
 #define DEBUG_LOCAL 0
 
-env_mouse_t env_mouse = {0};
+input_mouse_t input_mouse = {0};
 
 extern list_t layer_show_list_head;
 
 static void __button_down(int btn)
 {
     /* 如果抓住窗口后，就不能判断点击 */
-    if (env_mouse.hold_window)
+    if (input_mouse.hold_window)
         return;
 
     gui_window_t *window;
@@ -37,8 +37,8 @@ static void __button_down(int btn)
         
         window = (gui_window_t *) layer->extension;
 
-        local_mx = env_mouse.x - window->x;
-        local_my = env_mouse.y - window->y;
+        local_mx = input_mouse.x - window->x;
+        local_my = input_mouse.y - window->y;
         if (local_mx >= 0 && local_mx < window->width && 
             local_my >= 0 && local_my < window->height) {
             
@@ -46,7 +46,7 @@ static void __button_down(int btn)
             if (gui_widget_mouse_button_down(&layer->widget_list_head, btn,
                 local_mx, local_my) == GUI_WIDGET_EVENT_HANDLED)
                 break;
-
+            
 #if DEBUG_LOCAL == 1    
             printf("touch window: pos=%d-%d, size=%d-%d\n", 
                 window->x, window->y, window->width, window->height);
@@ -62,15 +62,15 @@ static void __button_down(int btn)
                     {
                     case 0: /* 鼠标左键 */
                         /* 判断是否为控制按钮，如果是，就处理，不是就可能要移动窗口，切换窗口 */
-                        env_mouse.local_x = local_mx;
-                        env_mouse.local_y = local_my;
+                        input_mouse.local_x = local_mx;
+                        input_mouse.local_y = local_my;
                         
-                        env_mouse.hold_window = window;
+                        input_mouse.hold_window = window;
 
                         /* 如果不是活动窗口，就切换成为活动窗口 */
                         gui_window_switch(window);
 
-                        mouse_enter_state(env_mouse);
+                        mouse_enter_state(input_mouse);
                         break;
                     case 1: /* 鼠标右键 */
 
@@ -89,7 +89,9 @@ static void __button_down(int btn)
                     gui_event_t event;
                     event.type = SGI_MOUSE_BUTTON;
                     event.button.state = SGI_PRESSED;
-                    event.button.button = btn;    // left
+                    event.button.button = btn;
+                    event.button.x = local_mx - window->x_off;
+                    event.button.y = local_my - window->y_off;
                     gui_window_send_event(window, &event);
                 }
             } else {    /* 没有标题，就发送消息，聚焦窗口 */
@@ -102,7 +104,9 @@ static void __button_down(int btn)
                 gui_event_t event;
                 event.type = SGI_MOUSE_BUTTON;
                 event.button.state = SGI_PRESSED;
-                event.button.button = btn;    // left
+                event.button.button = btn;
+                event.button.x = local_mx;
+                event.button.y = local_my;
                 gui_window_send_event(window, &event);
             }
             break;
@@ -114,18 +118,18 @@ static void __button_up(int btn)
 {
 #if DEBUG_LOCAL == 1    
     printf("[mouse ] %d button up.\n", btn);
-    printf("[mouse ] x:%d, y:%d\n", env_mouse.x, env_mouse.y);
+    printf("[mouse ] x:%d, y:%d\n", input_mouse.x, input_mouse.y);
 #endif    
     /* 处于抓住窗口，所以就释放窗口 */
-    if (env_mouse.hold_window) {
+    if (input_mouse.hold_window) {
         /* 更新窗口的位置 */
-        env_mouse.hold_window->x = env_mouse.hold_window->layer->x;
-        env_mouse.hold_window->y = env_mouse.hold_window->layer->y;
+        input_mouse.hold_window->x = input_mouse.hold_window->layer->x;
+        input_mouse.hold_window->y = input_mouse.hold_window->layer->y;
 
-        env_mouse.hold_window = NULL;
+        input_mouse.hold_window = NULL;
 
-        mouse_enter_state(env_mouse);
-        env_mouse_set_state(MOUSE_CURSOR_NORMAL);
+        mouse_enter_state(input_mouse);
+        input_mouse_set_state(MOUSE_CURSOR_NORMAL);
     } else {    /* 没有抓住窗口，简单传输按键弹起消息 */
         gui_window_t *window;
         layer_t *layer;
@@ -138,8 +142,8 @@ static void __button_up(int btn)
                 continue;
             
             window = (gui_window_t *) layer->extension;
-            local_mx = env_mouse.x - window->x;
-            local_my = env_mouse.y - window->y;
+            local_mx = input_mouse.x - window->x;
+            local_my = input_mouse.y - window->y;
             if (local_mx >= 0 && local_mx < window->width && 
                 local_my >= 0 && local_my < window->height) {
                 
@@ -175,8 +179,10 @@ static void __button_up(int btn)
                         /* 发送消息到窗口 */
                         gui_event_t event;
                         event.type = SGI_MOUSE_BUTTON;
-                        event.button.state = SGI_PRESSED;
-                        event.button.button = btn;    // left
+                        event.button.state = SGI_RELEASED;
+                        event.button.button = btn;
+                        event.button.x = local_mx - window->x_off;
+                        event.button.y = local_my - window->y_off;
                         gui_window_send_event(window, &event);
                         
                     }
@@ -186,6 +192,8 @@ static void __button_up(int btn)
                     event.type = SGI_MOUSE_BUTTON;
                     event.button.state = SGI_RELEASED;
                     event.button.button = btn;    // btn
+                    event.button.x = local_mx;
+                    event.button.y = local_my;
                     gui_window_send_event(window, &event);
                 }
                 break;
@@ -197,26 +205,26 @@ static void __button_up(int btn)
 void __motion()
 {
      /* 对鼠标进行修复 */
-    if (env_mouse.x < 0)
-        env_mouse.x = 0;
-    if (env_mouse.y < 0)
-        env_mouse.y = 0;
-    if (env_mouse.x >= drv_screen.width)
-        env_mouse.x = drv_screen.width - 1;
-    if (env_mouse.y >= drv_screen.height)
-        env_mouse.y = drv_screen.height - 1;
+    if (input_mouse.x < 0)
+        input_mouse.x = 0;
+    if (input_mouse.y < 0)
+        input_mouse.y = 0;
+    if (input_mouse.x >= drv_screen.width)
+        input_mouse.x = drv_screen.width - 1;
+    if (input_mouse.y >= drv_screen.height)
+        input_mouse.y = drv_screen.height - 1;
     
     /* 设定鼠标移动消息 */
-    //printf("[mouse ] x:%d, y:%d\n", env_mouse.x, env_mouse.y);
+    //printf("[mouse ] x:%d, y:%d\n", input_mouse.x, input_mouse.y);
     /* 尝试移动鼠标 */
     if (layer_topest) {
-        layer_set_xy(layer_topest, env_mouse.x, env_mouse.y);
-        if (env_mouse.hold_window) {    /* 让抓住的窗口跟住鼠标移动 */
+        layer_set_xy(layer_topest, input_mouse.x, input_mouse.y);
+        if (input_mouse.hold_window) {    /* 让抓住的窗口跟住鼠标移动 */
             
-            env_mouse_set_state(MOUSE_CURSOR_HOLD);
+            input_mouse_set_state(MOUSE_CURSOR_HOLD);
 
-            layer_set_xy(env_mouse.hold_window->layer, env_mouse.x - 
-                env_mouse.local_x, env_mouse.y - env_mouse.local_y);
+            layer_set_xy(input_mouse.hold_window->layer, input_mouse.x - 
+                input_mouse.local_x, input_mouse.y - input_mouse.local_y);
         } else {
             gui_window_t *window;
             layer_t *layer;
@@ -229,18 +237,18 @@ void __motion()
                     continue;
                 
                 window = (gui_window_t *) layer->extension;
-                local_mx = env_mouse.x - window->x;
-                local_my = env_mouse.y - window->y;
+                local_mx = input_mouse.x - window->x;
+                local_my = input_mouse.y - window->y;
                 gui_widget_mouse_motion(&layer->widget_list_head, local_mx, local_my);
                 
                 if (local_mx >= 0 && local_mx < window->width && 
                     local_my >= 0 && local_my < window->height) {
                     /* 进入某个窗口 */
-                    if (env_mouse.hover_window != window && env_mouse.hover_window) { /* 从其他窗口进入当前窗口 */
+                    if (input_mouse.hover_window != window && input_mouse.hover_window) { /* 从其他窗口进入当前窗口 */
                         /* 离开上个窗口的控件 */
-                        gui_widget_mouse_motion(&env_mouse.hover_window->layer->widget_list_head, -1, -1);
+                        gui_widget_mouse_motion(&input_mouse.hover_window->layer->widget_list_head, -1, -1);
                     }
-                    env_mouse.hover_window = window;    /* 悬停在某个窗口 */
+                    input_mouse.hover_window = window;    /* 悬停在某个窗口 */
                     
                     if (!(window->attr & GUIW_NO_TITLE)) {
                         /* 没有在标题栏才发送移动消息 */
@@ -340,9 +348,9 @@ char __attribute__((aligned(32)))__mouse_cursor_hold[MOUSE_CURSOR_WIDTH * MOUSE_
 };
 
 /**
- * env_mouse_draw_buffer - 往缓冲区里面绘制鼠标
+ * input_mouse_draw_buffer - 往缓冲区里面绘制鼠标
  */
-static void env_mouse_draw_buffer(GUI_COLOR *buffer, char *data)
+static void input_mouse_draw_buffer(GUI_COLOR *buffer, char *data)
 {
     int x, y;
 	for (y = 0; y < MOUSE_CURSOR_HEIGHT; y++) {
@@ -365,15 +373,15 @@ static void env_mouse_draw_buffer(GUI_COLOR *buffer, char *data)
  * 根据鼠标的状态绘制鼠标
  * 
  */
-void env_mouse_draw(mouse_cursor_state_t state)
+void input_mouse_draw(mouse_cursor_state_t state)
 {
     switch (state)
     {
     case MOUSE_CURSOR_NORMAL:
-        env_mouse_draw_buffer(env_mouse.layer->buffer, __mouse_cursor_normal);
+        input_mouse_draw_buffer(input_mouse.layer->buffer, __mouse_cursor_normal);
         break;
     case MOUSE_CURSOR_HOLD:
-        env_mouse_draw_buffer(env_mouse.layer->buffer, __mouse_cursor_hold);
+        input_mouse_draw_buffer(input_mouse.layer->buffer, __mouse_cursor_hold);
         
         break;
     
@@ -381,31 +389,31 @@ void env_mouse_draw(mouse_cursor_state_t state)
         break;
     }
     /* 刷新鼠标图层 */
-    layer_refresh(env_mouse.layer, 0, 0, env_mouse.layer->width, env_mouse.layer->height);
+    layer_refresh(input_mouse.layer, 0, 0, input_mouse.layer->width, input_mouse.layer->height);
 }
 
-void env_mouse_set_state(mouse_cursor_state_t state)
+void input_mouse_set_state(mouse_cursor_state_t state)
 {
-    if (env_mouse.state_changed == false) {
-        printf("[mouse] change state %d to %d\n", env_mouse.state, state);
-        env_mouse_draw(state);
-        env_mouse.state_changed = true;
+    if (input_mouse.state_changed == false) {
+        printf("[mouse] change state %d to %d\n", input_mouse.state, state);
+        input_mouse_draw(state);
+        input_mouse.state_changed = true;
     }
 }
 
-int init_env_mouse()
+int init_mouse_input()
 {
-    env_mouse.state = MOUSE_CURSOR_NORMAL;
-    env_mouse.state_changed = false;
-    env_mouse.x = drv_screen.width / 2;
-    env_mouse.y = drv_screen.height / 2;
-    env_mouse.local_x = 0;
-    env_mouse.local_y = 0;
-    env_mouse.hold_window = NULL;
-    env_mouse.hover_window = NULL;
-    env_mouse.button_down   = __button_down;
-    env_mouse.button_up     = __button_up;
-    env_mouse.motion     = __motion;
+    input_mouse.state = MOUSE_CURSOR_NORMAL;
+    input_mouse.state_changed = false;
+    input_mouse.x = drv_screen.width / 2;
+    input_mouse.y = drv_screen.height / 2;
+    input_mouse.local_x = 0;
+    input_mouse.local_y = 0;
+    input_mouse.hold_window = NULL;
+    input_mouse.hover_window = NULL;
+    input_mouse.button_down   = __button_down;
+    input_mouse.button_up     = __button_up;
+    input_mouse.motion     = __motion;
     
     /* 顶层图层是鼠标图层 */
     layer_topest = create_layer(MOUSE_CURSOR_WIDTH, MOUSE_CURSOR_HEIGHT);
@@ -413,7 +421,7 @@ int init_env_mouse()
         printf("create layer failed!\n");
         return -1;
     }
-    env_mouse.layer = layer_topest;
+    input_mouse.layer = layer_topest;
 
 #if DEBUG_LOCAL == 1 
     printf("create layer: addr %x, buffer %x, width %d, height %d\n",
@@ -421,13 +429,13 @@ int init_env_mouse()
 #endif
 
     /* 绘制鼠标图层 */
-    env_mouse_draw_buffer(env_mouse.layer->buffer, __mouse_cursor_normal);
+    input_mouse_draw_buffer(input_mouse.layer->buffer, __mouse_cursor_normal);
     
     /* 设置鼠标图层高度 */
     layer_set_z(layer_topest, 0);
     
     /* 设置鼠标图层位置 */
-    layer_set_xy(layer_topest, env_mouse.x, env_mouse.y);
+    layer_set_xy(layer_topest, input_mouse.x, input_mouse.y);
 
     return 0;
 }

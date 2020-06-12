@@ -2,6 +2,8 @@
 #include <xbook/task.h>
 #include <xbook/debug.h>
 
+#define DEBUG_LOCAL 0
+
 void dump_vmspace(vmm_t *vmm)
 {
     if (vmm == NULL)
@@ -356,10 +358,10 @@ unsigned long sys_vmspace_heap(unsigned long heap)
     unsigned long ret;
     unsigned long old_heap, new_heap;
     vmm_t *vmm = current_task->vmm;
-    
-    /*printk(KERN_DEBUG "sys_vmspace_heap: vmm heap start %x end %x new %x\n", 
-        vmm->heap_start, vmm->heap_end, heap);*/
-
+#if DEBUG_LOCAL == 1    
+    printk(KERN_DEBUG "%s: vmm heap start %x end %x new %x\n", 
+        __func__, vmm->heap_start, vmm->heap_end, heap);
+#endif
     /* 如果堆比开始位置都小就退出 */
     if (heap < vmm->heap_start) {
         //printk(KERN_DEBUG "sys_vmspace_heap: new heap too low!\n");
@@ -391,9 +393,15 @@ unsigned long sys_vmspace_heap(unsigned long heap)
     if (heap > vmm->heap_start + MAX_VMS_HEAP_SIZE)
         goto the_end;
 
+    vmspace_t *find;
     /* 检查是否和已经存在的空间发生重叠 */
-    if (vmspace_find_intersection(vmm, old_heap, new_heap + PAGE_SIZE)) {
-        printk(KERN_ERR "sys_vmspace_heap: space intersection!\n");
+    if ((find = vmspace_find_intersection(vmm, old_heap, new_heap + PAGE_SIZE))) {
+        printk(KERN_ERR "%s: space intersection! old=%x, new=%x, end=%x\n",
+            __func__, old_heap, new_heap, new_heap + PAGE_SIZE);
+#if DEBUG_LOCAL == 1   
+        printk(KERN_ERR "%s: find: start=%x, end=%x\n",
+            __func__, find->start, find->end);
+#endif
         goto the_end;
     }
     

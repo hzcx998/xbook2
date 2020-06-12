@@ -441,3 +441,46 @@ int SGI_WindowDrawRectFill(
     
     return __WindowDrawRectFill(winfo, x, y, x + width - 1, y + height -1, color);
 }
+
+/**
+ * 绘制像素位图
+ */
+int SGI_WindowDrawPixmap(
+    SGI_Display *display,
+    SGI_Window window,
+    int x,
+    int y,
+    unsigned int width,
+    unsigned int height,
+    SGI_Argb *pixmap
+) {
+    if (!display)
+        return -1;
+    if (!display->connected)
+        return -1;
+    if (SGI_BAD_WIN_HANDLE(window))
+        return -1;
+    if (!pixmap)
+        return -1;
+    SGI_WindowInfo *winfo = SGI_DISPLAY_GET_WININFO(display, window);
+    if (!winfo)
+        return -1;
+    
+    int x0, y0, wx, wy;
+
+    for (y0 = 0; y0 < height; y0++) {
+        wy = y + y0;
+        if (wy < 0 || wy >= winfo->height)  /* 越界 */
+            continue;
+        for (x0 = 0; x0 < width; x0++) {
+            wx = x + x0;
+            if (wx < 0 || wx >= winfo->width)  /* 越界 */
+                continue;
+            /* 写入像素值 */
+            SGI_Argb *vram = (SGI_Argb *) ((SGI_Argb *) (winfo->mapped_addr + 
+                 + winfo->start_off) + wy * winfo->width + wx);
+            *vram = pixmap[y0 *  width + x0];
+        }
+    }
+    return 0;
+}

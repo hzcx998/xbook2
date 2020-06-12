@@ -289,8 +289,8 @@ int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
  */
 void proc_heap_init(task_t *task)
 {
-    /* heap默认在数据的后面 */
-    task->vmm->heap_start = task->vmm->data_end;
+    /* heap默认在数据的后面的一个页后面 */
+    task->vmm->heap_start = task->vmm->data_end + PAGE_SIZE;
     
     /* 页对齐 */
     task->vmm->heap_start = PAGE_ALIGN(task->vmm->heap_start);

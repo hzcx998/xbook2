@@ -14,6 +14,8 @@
 #define   GUI_MOUSE_DEVICE_NAME        "mouse"
 #endif
 
+drv_mouse_t drv_mouse = {0};
+
 static  int   mouse_res = 0;
 
 static  int  mouse_open(void)
@@ -75,26 +77,26 @@ read_mouse_continue:
                 /* 左键按下事件，需要传递鼠标位置 */
                 
                 if (event.value > 0) {
-                    env_mouse.button_down(0);
+                    input_mouse.button_down(0);
                 } else {
-                    env_mouse.button_up(0);
+                    input_mouse.button_up(0);
                 }
                 return  0;
             } else if ( (event.code) == BTN_MIDDLE ) {
                 /* 中键按下事件，需要传递鼠标位置 */
                 if (event.value > 0) {
-                    env_mouse.button_down(1);
+                    input_mouse.button_down(1);
                 } else {
-                    env_mouse.button_up(1);
+                    input_mouse.button_up(1);
                 }
 
                 return  0;
             } else if ( (event.code) == BTN_RIGHT ) {
                 /* 右键按下事件，需要传递鼠标位置 */
                 if (event.value > 0) {
-                    env_mouse.button_down(2);
+                    input_mouse.button_down(2);
                 } else {
-                    env_mouse.button_up(2);
+                    input_mouse.button_up(2);
                 }
                 return  0;
             } else {
@@ -110,8 +112,8 @@ read_mouse_continue:
 
         case EV_SYN:
             /* 同步事件，设置鼠标相对位置 */
-            env_mouse.x += x_rel;
-            env_mouse.y += y_rel;
+            input_mouse.x += x_rel;
+            input_mouse.y += y_rel;
             
            
             /* 相对位置置0 */
@@ -120,7 +122,7 @@ read_mouse_continue:
 
             if ( flag_rel == 1 )
             {
-                env_mouse.motion();
+                input_mouse.motion();
                 flag_rel = 0;
                 return  0;
             }
@@ -133,8 +135,6 @@ read_mouse_continue:
 
     return  0;
 }
-
-drv_mouse_t drv_mouse = {0};
 
 int init_mouse_driver()
 {

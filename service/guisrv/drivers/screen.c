@@ -8,6 +8,8 @@
 
 #include <layer/color.h>
 
+#define DEBUG_LOCAL 1
+
 #ifndef   GUI_SCREEN_DEVICE_NAME
 #define   GUI_SCREEN_DEVICE_NAME        "video"
 #endif
@@ -180,9 +182,9 @@ static int screen_open(void)
         printf("%s: video mapped failed!\n", SRV_NAME);
         return -1;
     }
-
+#if DEBUG_LOCAL == 1
     printf("%s: mapped addr %x\n", SRV_NAME, video_ram_start);
-
+#endif
     return  0;
 }
 

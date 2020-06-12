@@ -25,7 +25,6 @@ enum SGI_KeyModify {
 
 /* 内核图形按键信息 */
 typedef struct _SGI_KeyInfo {
-    int scancode;       /* 扫描码 */
     int code;           /* 键值 */
     int modify;         /* 修饰按键 */
 } SGI_KeyInfo;
@@ -202,21 +201,6 @@ enum SGI_KeyCode {
     SGIK_EURO,   /* euro */
     SGIK_UNDO,   /* undo */
     SGIK_LAST       /* last one */        
-};
-
-/* 控制标志 */
-enum SGI_KeycodeFlag {
-    SGIK_FLAG_KEY_MASK  = 0x1FF,        /* 键值的mask值 */
-    SGIK_FLAG_SHIFT_L   = 0x0200,		/* Shift key			*/
-    SGIK_FLAG_SHIFT_R   = 0x0400,		/* Shift key			*/
-    SGIK_FLAG_CTRL_L    = 0x0800,		/* Control key			*/
-    SGIK_FLAG_CTRL_R    = 0x1000,		/* Control key			*/
-    SGIK_FLAG_ALT_L     = 0x2000,		/* Alternate key		*/
-    SGIK_FLAG_ALT_R     = 0x4000,		/* Alternate key		*/
-    SGIK_FLAG_PAD	    = 0x8000,		/* keys in num pad		*/
-    SGIK_FLAG_NUM	    = 0x10000,	    /* 数字锁		*/
-    SGIK_FLAG_CAPS	    = 0x20000,	    /* 数字锁		*/
-    SGIK_FLAG_BREAK	    = 0x40000,		/* Break Code   */
 };
 
 #endif  /* __SGI_KEYCODE_H__ */

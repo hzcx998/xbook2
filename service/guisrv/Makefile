@@ -65,8 +65,7 @@ WINDOW_OBJS 	=	window/window.o \
 					window/char.o \
 					window/event.o \
 
-ENVIRONMENT_OBJS =	environment/mouse.o \
-					environment/desktop.o \
+ENVIRONMENT_OBJS =	environment/desktop.o \
 
 FONT_OBJS 		=	font/font.o \
 					font/font_simsun.o \
@@ -79,11 +78,15 @@ WIDGET_OBJS		=	widget/widget.o \
 CORE_OBJS 		= 	core/interface.o \
 					core/display.o \
 
+INPUT_OBJS 		= 	input/keyboard.o \
+					input/mouse.o \
+
 MAIN_OBJS 		= 	main.o \
 
 				
 OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) \
-		$(FONT_OBJS) $(ENVIRONMENT_OBJS) $(WIDGET_OBJS) $(CORE_OBJS)
+		$(FONT_OBJS) $(ENVIRONMENT_OBJS) $(WIDGET_OBJS) $(CORE_OBJS) \
+		$(INPUT_OBJS)
 
 LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 

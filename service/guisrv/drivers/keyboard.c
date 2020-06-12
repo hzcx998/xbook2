@@ -7,6 +7,7 @@
 #include <sys/input.h>
 
 #include <drivers/keyboard.h>
+#include <input/keyboard.h>
 
 #ifndef  GUI_KEYBOARD_DEVICE_NAME 
 #define  GUI_KEYBOARD_DEVICE_NAME         "kbd"
@@ -15,6 +16,8 @@
 static  int  kbd_res  = 0;
 static  unsigned char  caps_lock_value = 0;    
 static  unsigned char  num_lock_value  = 0;
+
+drv_keyboard_t drv_keyboard = {0};
 
 static  int  keyboard_open(void)
 {
@@ -26,14 +29,10 @@ static  int  keyboard_open(void)
     res_ioctl( kbd_res, EVENIO_GETLED,(unsigned long) &ledstate);
 
     if ( ledstate&0x01 )
-        num_lock_value = 1;
-    else
-        num_lock_value = 0;
+        drv_keyboard.ledstate |= GUI_KMOD_NUM;
 
-    if ( ledstate&0x02 )
-        caps_lock_value = 1;
-    else
-        caps_lock_value = 0;
+    if ( ledstate & 0x02 )
+        drv_keyboard.ledstate |= GUI_KMOD_CAPS;
 
     return 0;
 }
@@ -56,12 +55,14 @@ static  int  keyboard_read()
     switch (event.type)
     {                
         case EV_KEY:         
-
-            if ( (event.value) > 0 )
-                printf("[keyboard ] key %x->%c down.\n", event.code, event.code);
-            else
-                printf("[keyboard ] key %x->%c up.\n", event.code, event.code);
-
+            /* 图形服务先处理按键，然后再根据按键值传输给当前活动的窗口 */
+            if ( (event.value) > 0 ) {  /* key presssed  */
+                input_keyboard.key_pressed(event.code);
+                
+            } else {    /* key released  */
+                input_keyboard.key_released(event.code);
+                
+            }
             return  0;
 
         default:
@@ -70,16 +71,17 @@ static  int  keyboard_read()
 
     return  -1;
 }
-gui_keyboard_t keyboard = {0};
 
 int init_keyboard_driver()
 {
-    memset(&keyboard, 0, sizeof(keyboard));
+    memset(&drv_keyboard, 0, sizeof(drv_keyboard));
     
-    keyboard.open = keyboard_open;
-    keyboard.close = keyboard_close;
+    drv_keyboard.ledstate = 0;
 
-    keyboard.read = keyboard_read;
+    drv_keyboard.open = keyboard_open;
+    drv_keyboard.close = keyboard_close;
+
+    drv_keyboard.read = keyboard_read;
 
     return 0;
 }

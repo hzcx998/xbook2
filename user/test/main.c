@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 {
     printf("hello, test!\n");
     sleep(1);
-
+    
     SGI_Display *display = SGI_OpenDisplay();
     if (display == NULL) {
         printf("[test] open gui failed!\n");
@@ -51,6 +51,15 @@ int main(int argc, char *argv[])
     SGI_WindowDrawRect(display, win, 50, 50, 100, 50, SGIC_BLUE);
     SGI_WindowDrawRectFill(display, win, 70, 100, 50, 100, SGIC_GREEN);
 
+
+    SGI_Argb pixmap[10*10*sizeof(SGI_Argb)];
+    for (y = 0; y < 10; y++) {
+        for (x = 0; x < 10; x++) {
+            pixmap[y * 10 + x] = SGI_ARGB(0xff, x * 10, x * 15, y * 10);
+        }
+    }
+    SGI_WindowDrawPixmap(display, win, 100, 200, 10, 10, pixmap);
+
     if (SGI_UpdateWindow(display, win, 0, 0, 320, 240))
         printf("[test] update window failed!\n");
     else
@@ -66,8 +75,7 @@ int main(int argc, char *argv[])
             continue;
         
         event_window = SGI_DISPLAY_EVENT_WINDOW(display);
-        printf("[test] event window %d\n", event_window);
-
+        // printf("[test] event window %d\n", event_window);
         switch (event.type)
         {
         case SGI_MOUSE_BUTTON:
@@ -91,6 +99,15 @@ int main(int argc, char *argv[])
             break;
         case SGI_MOUSE_MOTION:
             printf("[test] mouse motion %d, %d.\n", event.motion.x, event.motion.y);
+            break;
+        case SGI_KEY:
+            if (event.key.state == SGI_PRESSED)
+                printf("[test] keyboard key pressed [%x, %c] modify %x.\n", event.key.keycode.code, 
+                    event.key.keycode.code, event.key.keycode.modify);
+            else 
+                printf("[test] keyboard key released [%x, %c] modify %x.\n", event.key.keycode.code, 
+                    event.key.keycode.code, event.key.keycode.modify);
+
             break;
         default:
             break;

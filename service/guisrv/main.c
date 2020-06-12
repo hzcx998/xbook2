@@ -16,6 +16,7 @@
 #include <window/window.h>
 #include <environment/mouse.h>
 #include <environment/interface.h>
+#include <input/keyboard.h>
 
 #include <guisrv.h>
 
@@ -49,7 +50,7 @@ int open_guisrv()
         printf("[failed ] %s: open mouse driver failed!\n", SRV_NAME);
         return -1;
     }
-    if (keyboard.open()) {
+    if (drv_keyboard.open()) {
         printf("[failed ] %s: open keyboard driver failed!\n", SRV_NAME);
         return -1;
     }
@@ -67,7 +68,7 @@ int close_guisrv()
         printf("[failed ] %s: close mouse driver failed!\n", SRV_NAME);
         return -1;
     }
-    if (keyboard.close()) {
+    if (drv_keyboard.close()) {
         printf("[failed ] %s: close keyboard driver failed!\n", SRV_NAME);
         return -1;
     }
@@ -94,7 +95,8 @@ int loop_guisrv()
     while (1)
     {
         drv_mouse.read();
-        keyboard.read(); 
+        drv_keyboard.read(); 
+        // 接收消息队列，根据消息队列内容处理消息
         
     }
 }

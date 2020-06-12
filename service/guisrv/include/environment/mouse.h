@@ -25,7 +25,7 @@ typedef enum mouse_cursor_state {
 #define MOUSE_CURSOR_WIDTH   32
 #define MOUSE_CURSOR_HEIGHT  32
 
-typedef struct _env_mouse {
+typedef struct _input_mouse {
     mouse_cursor_state_t state;     /* 鼠标的状态 */
     bool state_changed;             /* 状态是否已经改变了 */
     int x, y;
@@ -37,14 +37,14 @@ typedef struct _env_mouse {
     void (*motion)(void);
     void (*button_down)(int);
     void (*button_up)(int);
-} env_mouse_t;
+} input_mouse_t;
 
-extern env_mouse_t env_mouse;
+extern input_mouse_t input_mouse;
 
 #define mouse_enter_state(mouse) (mouse).state_changed = false
 
-int init_env_mouse();
-void env_mouse_draw(mouse_cursor_state_t state);
-void env_mouse_set_state(mouse_cursor_state_t state);
+int init_mouse_input();
+void input_mouse_draw(mouse_cursor_state_t state);
+void input_mouse_set_state(mouse_cursor_state_t state);
 
 #endif  /* __GUISRV_ENVIRONMENT_MOUSE_H__ */

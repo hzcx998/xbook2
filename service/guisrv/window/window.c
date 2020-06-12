@@ -10,6 +10,7 @@
 
 #include <environment/desktop.h>
 #include <environment/mouse.h>
+#include <input/keyboard.h>
 
 /* 图层显示链表 */
 extern list_t layer_show_list_head;
@@ -525,6 +526,9 @@ int init_gui_window()
     window_current = NULL;
     next_window_id = 0;
     init_list(&window_list_head);
+
+    /* 初始化键盘输入，涉及到后面把按键信息分发给窗口 */
+    init_keyboard_input();
 
     /* 初始化窗口缓存表 */
     int i;

@@ -257,16 +257,26 @@ struct file_map {
     size_t size;    /* 实际大小 */
     off_t off;      /* 偏移 */
     char execute;   /* 是否需要执行 */
+    const char **argv;
 };
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
+
+const char *infones_argv[3] = {
+    "/infones",
+    "/mario.nes",
+    0
+};
+
 struct file_map file_map_table[] = {
-    {PATH_GUISRV, 200 * 512, 800, 1},
-    {PATH_NETSRV, 400 * 512, 1500, 0},
-    {"/login", 100 * 512, 4000, 0},
-    {"/bosh", 100 * 512, 4100, 0},
-    {"/test", 100 * 512, 4300, 1},
+    {PATH_GUISRV, 200 * 512, 800, 1, NULL},
+    {PATH_NETSRV, 400 * 512, 1500, 0, NULL},
+    {"/login", 100 * 512, 4000, 0, NULL},
+    {"/bosh", 100 * 512, 4100, 0, NULL},
+    {"/test", 100 * 512, 4300, 0, NULL},
+    {"/infones", 650 * 512, 4400, 1, infones_argv},
+    {"/mario.nes", 100 * 512, 10000, 0, NULL},
 };
 
 /*
@@ -301,7 +311,8 @@ int filesrv_execute()
                 return -1;
             }
             if (!pid) { /* 子进程执行新进程 */
-                if (execv(fmap->path, NULL)) {
+
+                if (execv(fmap->path, fmap->argv)) {
                     printf("%s: %s: execv failed!\n", SRV_NAME, __func__);
                     exit(-1);
                 }
