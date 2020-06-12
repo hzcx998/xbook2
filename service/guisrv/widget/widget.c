@@ -74,33 +74,43 @@ static void __del(gui_widget_t *widget)
     widget->layer = NULL;
 } 
 
-void gui_widget_mouse_button_up(list_t *list_head, int button, int mx, int my)
+int gui_widget_mouse_button_up(list_t *list_head, int button, int mx, int my)
 {
+    int retval = 0;
     /* 控件检测 */
     gui_widget_t *widget;
     list_for_each_owner (widget, list_head, list) {
         if (widget->type == GUI_WIDGET_BUTTON) {
             if (widget->mouse_btn_up)
-                widget->mouse_btn_up(widget, button, mx, my);
+                retval = widget->mouse_btn_up(widget, button, mx, my);
         }
-        __show(widget);
+        if (retval == GUI_WIDGET_EVENT_HANDLED) {
+            __show(widget);
+            return GUI_WIDGET_EVENT_HANDLED;
+        }
     }
+    return 0;
 }
 
-void gui_widget_mouse_button_down(list_t *list_head, int button, int mx, int my)
+int gui_widget_mouse_button_down(list_t *list_head, int button, int mx, int my)
 {
+    int retval = 0;
     /* 控件检测 */
     gui_widget_t *widget;
     list_for_each_owner (widget, list_head, list) {
         if (widget->type == GUI_WIDGET_BUTTON) {
             if (widget->mouse_btn_down)
-                widget->mouse_btn_down(widget, button, mx, my);
+                retval = widget->mouse_btn_down(widget, button, mx, my);
         }
-        __show(widget);
+        if (retval == GUI_WIDGET_EVENT_HANDLED) {
+            __show(widget);
+            return GUI_WIDGET_EVENT_HANDLED;
+        }
     }
+    return 0;
 }
 
-void gui_widget_mouse_motion(list_t *list_head, int mx, int my)
+int gui_widget_mouse_motion(list_t *list_head, int mx, int my)
 {
     /* 控件检测 */
     gui_widget_t *widget;
@@ -111,6 +121,7 @@ void gui_widget_mouse_motion(list_t *list_head, int mx, int my)
         }
         __show(widget);
     }
+    return 0;
 }
 
 void gui_widget_init(

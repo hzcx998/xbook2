@@ -34,21 +34,14 @@ typedef struct _env_mouse {
     gui_window_t *hover_window;     /* 悬停的窗口 */
     
     layer_t *layer;
-    void (*left_btn_down)(void);
-    void (*left_btn_up)(void);
-    void (*right_btn_down)(void);
-    void (*right_btn_up)(void);
-    void (*middle_btn_down)(void);
-    void (*middle_btn_up)(void);
-    
+    void (*motion)(void);
+    void (*button_down)(int);
+    void (*button_up)(int);
 } env_mouse_t;
 
 extern env_mouse_t env_mouse;
 
 #define mouse_enter_state(mouse) (mouse).state_changed = false
-
-
-void env_mouse_move();
 
 int init_env_mouse();
 void env_mouse_draw(mouse_cursor_state_t state);

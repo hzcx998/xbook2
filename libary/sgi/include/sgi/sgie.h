@@ -50,7 +50,7 @@ typedef union _SGI_Event {
 } SGI_Event;
 
 typedef struct _SGI_EventMsg {
-    long type;      
+    long type;                  /* 消息队列固定格式 */
     SGI_Event event;
 } SGI_EventMsg;
 

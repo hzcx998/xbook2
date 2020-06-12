@@ -78,60 +78,66 @@ gui_window_t *gui_window_cache_find(unsigned int wid)
     return NULL;    
 }
 
-void window_btn_down_handler(gui_button_t *button, int btn, int local_mx, int local_my)
+int window_btn_down_handler(gui_button_t *button, int btn, int local_mx, int local_my)
 {
     printf("[button] down handler %d, %d, %d\n", btn, local_mx, local_my);
-
+    int retval = 0;
     switch (button->tag)
     {
     case 1:
         printf("[button] tag close\n");
 
+        retval = GUI_WIDGET_EVENT_HANDLED;
         break;
     case 2:
         printf("[button] tag maxim\n");
         
+        
+        retval = GUI_WIDGET_EVENT_HANDLED;
         break;
     case 3:
         printf("[button] tag minim\n");
         
+        retval = GUI_WIDGET_EVENT_HANDLED;
         break;
     
     default:
         break;
     }
-
+    return retval;
 }
 
-void window_btn_up_handler(gui_button_t *button, int btn, int local_mx, int local_my)
+int window_btn_up_handler(gui_button_t *button, int btn, int local_mx, int local_my)
 {
     printf("[button] up handler %d, %d, %d\n", btn, local_mx, local_my);
     gui_label_t *label = &button->label;
     gui_widget_t *widget = &label->widget;
 
-
+    int retval = 0;
     switch (button->tag)
     {
     case 1:
         printf("[button] tag close\n");
         /* 发送关闭窗口信息给窗口 */
-
+        retval = GUI_WIDGET_EVENT_HANDLED;
         break;
     case 2:
         printf("[button] tag maxim\n");
         /* 对窗口最大化 */
-
+        retval = GUI_WIDGET_EVENT_HANDLED;
         break;
     case 3:
         printf("[button] tag minim\n");
         if (widget->layer->extension) {
             gui_window_hide(widget->layer->extension);
+            retval = GUI_WIDGET_EVENT_HANDLED;
         }
         break;
     
     default:
         break;
     }
+    return retval;
 }
 
 int window_create_title_bar(gui_window_t *win, int width, char *title)
@@ -378,6 +384,10 @@ int gui_window_hide(gui_window_t *win)
 
     /* 切换到顶层窗口 */
     gui_window_switch(gui_window_topest());
+
+    /* 刷新所有显示的图层 */
+    layer_refresh_all();
+    
     return -1;
 }
 

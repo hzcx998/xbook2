@@ -6,8 +6,10 @@
 #include "sgi.h"
 
 bool SGI_DisplayWindowInfoCheck(SGI_Display *display);
-int SGI_DisplayWindowInfoAdd(SGI_Display *display, SGI_WindowInfo *winfo);
+SGI_Window SGI_DisplayWindowInfoAdd(SGI_Display *display, SGI_WindowInfo *winfo);
 int SGI_DisplayWindowInfoDel(SGI_Display *display, SGI_Window window);
+SGI_WindowInfo *SGI_DisplayWindowInfoFindByWinid(SGI_Display *display, int winid);
+SGI_Window SGI_DisplayWindowHandleFindByWinid(SGI_Display *display, int winid);
 
 #define SGI_BAD_WIN_HANDLE(win) \
     (win < 0 || win >= SGI_WINDOW_HANDLE_NR)

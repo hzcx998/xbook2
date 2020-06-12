@@ -27,5 +27,6 @@ void layer_set_z(layer_t *layer, int z);
 void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1);
 layer_t *layer_get_by_z(int z);
 void layer_refresh(layer_t *layer, int left, int top, int right, int buttom);
+void layer_refresh_all();
 
 #endif  /* __GUISRV_WINDOW_LAYER_H__ */

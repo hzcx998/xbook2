@@ -18,7 +18,11 @@ typedef struct _SGI_Display
     SGI_WindowInfo winfo_table[SGI_WINDOW_HANDLE_NR]; /* 窗口信息表 */
     int msgid;                      /* 消息队列：用来接收事件 */
     unsigned int id;                /* 显示id */
+    SGI_Window event_window;        /* 接收事件的窗口 */
 } SGI_Display;
+
+#define SGI_DISPLAY_EVENT_WINDOW(display) \
+        (display)->event_window
 
 void *SGI_Malloc(size_t size);
 void SGI_Free(void *ptr);

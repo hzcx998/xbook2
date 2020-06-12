@@ -76,7 +76,6 @@ int close_guisrv()
 
 int start_guisrv()
 {
-    
     /* init layer */
     if (guisrv_init_layer()) {
         printf("[failed ] %s: init window layer failed!\n", SRV_NAME);

@@ -21,6 +21,10 @@ int SGI_NextEvent(SGI_Display *display, SGI_Event *event)
         if (res_read(display->msgid, 0, &msg, sizeof(SGI_Event)) < 0) {
             return -1;
         }
+        /* 接收事件的窗口 */
+        display->event_window = SGI_DisplayWindowHandleFindByWinid(display, msg.type);
+        if (display->event_window < 0)  /* 正确的事件窗口 */
+            return -1;
         /* 复制消息 */
         *event = msg.event;
         return 0;

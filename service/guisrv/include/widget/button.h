@@ -20,7 +20,7 @@
 
 struct _gui_button;
 
-typedef void (*btn_handler_t) (struct _gui_button *button, int, int, int);
+typedef int (*btn_handler_t) (struct _gui_button *button, int, int, int);
 
 typedef struct _gui_button {
     gui_label_t label;      /* 继承标签：第一个成员 */

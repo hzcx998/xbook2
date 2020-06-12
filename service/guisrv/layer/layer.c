@@ -451,6 +451,15 @@ void layer_refresh(layer_t *layer, int left, int top, int right, int buttom)
     }
 }
 
+void layer_refresh_all()
+{
+    /* 从底刷新到顶 */
+    layer_t *layer;
+    list_for_each_owner (layer, &layer_show_list_head, list) {
+        layer_refresh(layer, 0, 0, layer->width, layer->height);
+    }
+}
+
 /**
  * layer_set_xy - 设置图层的位置
  * @layer: 图层

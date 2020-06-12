@@ -28,11 +28,14 @@ typedef enum _gui_widget_align {
 #define GUI_WIDGET_DEFAULT_WIDTH         40
 #define GUI_WIDGET_DEFAULT_HEIGHT        20
 
+/* 事件已经捕捉 */
+#define GUI_WIDGET_EVENT_HANDLED    1
+
 struct _gui_widget;
 
 /* 控件绘图指针 */
 typedef void (*gui_widget_draw_t) (struct _gui_widget *widget);
-typedef void (*gui_widget_mouse_button_t) (struct _gui_widget *widget, int button, int mx, int my);
+typedef int (*gui_widget_mouse_button_t) (struct _gui_widget *widget, int button, int mx, int my);
 typedef void (*gui_widget_mouse_motion_t) (struct _gui_widget *widget, int mx, int my);
 
 /* 控件结构体 */
@@ -54,8 +57,8 @@ typedef struct _gui_widget {
     void (*draw_handler) (struct _gui_widget *widget);   
     
     /* 鼠标事件 */
-    void (*mouse_btn_down) (struct _gui_widget *widget, int button, int mx, int my);
-    void (*mouse_btn_up) (struct _gui_widget *widget,  int button, int mx, int my);
+    int (*mouse_btn_down) (struct _gui_widget *widget, int button, int mx, int my);
+    int (*mouse_btn_up) (struct _gui_widget *widget,  int button, int mx, int my);
     void (*mouse_motion) (struct _gui_widget *widget, int mx, int my);
 
     /* 内部方法 */
@@ -102,8 +105,8 @@ void gui_widget_init(
     char *name
 );
 
-void gui_widget_mouse_button_down(list_t *list_head, int button, int mx, int my);
-void gui_widget_mouse_button_up(list_t *list_head, int button, int mx, int my);
-void gui_widget_mouse_motion(list_t *list_head, int mx, int my);
+int gui_widget_mouse_button_down(list_t *list_head, int button, int mx, int my);
+int gui_widget_mouse_button_up(list_t *list_head, int button, int mx, int my);
+int gui_widget_mouse_motion(list_t *list_head, int mx, int my);
 
 #endif   /* _GUISRV_WIDGET_H */

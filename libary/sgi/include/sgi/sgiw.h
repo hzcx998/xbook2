@@ -28,8 +28,8 @@ typedef unsigned int SGI_Argb;
 #define SGIC_NONE       SGI_RGB(0, 0, 0)
 
 /* 窗口句柄信息描述 */
-typedef struct _SGI_WindowInfo
-{
+typedef struct _SGI_WindowInfo {
+    int flags;                  /* 信息标志 */
     int winid;                  /* 窗口id */
     int shmid;                  /* 共享内存id，指向显存共享 */
     void *mapped_addr;          /* 共享内存映射后的地址 */

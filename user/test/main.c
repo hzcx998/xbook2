@@ -56,20 +56,36 @@ int main(int argc, char *argv[])
     else
         printf("[test] update window success!\n");
 
+
+    printf("[test] window handle %d\n", win);
+
     SGI_Event event;
+    SGI_Window event_window;
     while (1) {
         if (SGI_NextEvent(display, &event))
             continue;
+        
+        event_window = SGI_DISPLAY_EVENT_WINDOW(display);
+        printf("[test] event window %d\n", event_window);
+
         switch (event.type)
         {
         case SGI_MOUSE_BUTTON:
             if (event.button.state == SGI_PRESSED) {    // 按下
                 if (event.button.button == 0) {
                     printf("[test] left button pressed.\n");
+                } else if (event.button.button == 1) {
+                    printf("[test] middle button pressed.\n");
+                } else if (event.button.button == 2) {
+                    printf("[test] right button pressed.\n");
                 }
             } else {
                 if (event.button.button == 0) {
                     printf("[test] left button released.\n");
+                } else if (event.button.button == 1) {
+                    printf("[test] middle button released.\n");
+                } else if (event.button.button == 2) {
+                    printf("[test] right button released.\n");
                 }
             }
             break;

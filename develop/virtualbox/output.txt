@@ -1,7 +1,7 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:18:37:6 date:2020/6/11
-info: week day:4 Thursday year day:164
+info: time:13:27:35 date:2020/6/12
+info: week day:5 Friday year day:165
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -32,64 +32,143 @@ hello, test!
 [guisrv] bind service ok.
 guisrv: srvcall seq=0.
 [guisrv] open display
+[GUISRV] open msg guisrv-display1.
+[guisrv] env_display_add: display id=1, msg id=6
+[SGI] open msg guisrv-display1.
 [SGI] oepn display: root window:0 width:800 height:600
 [test] open display ok!
 guisrv: srvcall seq=1.
 [guisrv] create window: shm name guisrv-win3.
+[guisrv] window display id=1.
 [SGI] create window: shm name guisrv-win3.
 [test] create window success!
 guisrv: srvcall seq=2.
-[guisrv] map window share memory at 38b160
-debug: share_mem_map: old virtual addr:38b000
-debug: share_mem_map: phy addr:2aa6000.
-debug: share_mem_map: virtual addr:20107000 physical addr:2aa6000
-[guisrv] mapped window share memory at 20107000, start off is 160
-debug: share_mem_map: virtual addr:20011000 physical addr:2aa6000
-[test] map window at 20011000, start off:160
+[guisrv] map window share memory at 38b19c
+ÿdebug: share_mem_map: phy addr:2aa6000.
+[guisrv] mapped window share memory at 20107000, start off is 19c
+[test] map window at 20012000, start off:19c
 [test] map window success!
 guisrv: srvcall seq=3.
 [GUISRV] update window.
 [test] update window success!
+[test] window handle 1
+[test] event window 1
+a[test] mouse motion 292, 97.
+[test] event window 1
+9[test] mouse motion 229, 57.
+[test] event window 1
+ [test] mouse motion 229, 32.
+[test] event window 1
+ [test] mouse motion 230, 32.
+[test] event window 1
+[test] mouse motion 230, 25.
+[test] event window 1
+	[test] mouse motion 230, 9.
+[test] event window 1
+[test] mouse motion 226, 0.
+[test] event window 1
+[test] mouse motion 227, 3.
+[test] event window 1
+[test] mouse motion 230, 13.
+[test] event window 1
+[test] mouse motion 230, 17.
+[test] event window 1
+[test] mouse motion 230, 23.
+[test] event window 1
+[test] mouse motion 230, 26.
+[test] event window 1
+[test] mouse motion 230, 29.
+[test] event window 1
+[test] mouse motion 230, 30.
+[test] event window 1
+[test] mouse motion 229, 33.
+[test] event window 1
+[test] mouse motion 225, 38.
+[test] event window 1
+[test] mouse motion 224, 42.
+[test] event window 1
+[test] mouse motion 224, 45.
+[test] event window 1
+[test] mouse motion 238, 63.
+[test] event window 1
+[test] mouse motion 249, 71.
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[button] down handler 0, 253, 7
+[button] down handler 0, 173, 11
 [button] tag minim
-[button] up handler 0, 253, 7
+[button] up handler 0, 173, 11
 [button] tag minim
+[test] event window 1
+[test] mouse motion 196, 1.
+[test] event window 1
+[test] mouse motion 168, 27.
+[test] event window 1
+&[test] mouse motion 155, 38.
+[test] event window 1
+%[test] mouse motion 157, 37.
+[test] event window 1
+[test] mouse motion 161, 19.
+[test] event window 1
+[test] mouse motion 171, 1.
+[test] event window 1
+[test] mouse motion 164, 13.
+[test] event window 1
+[test] mouse motion 160, 26.
+[test] event window 1
+[test] mouse motion 159, 30.
+[test] event window 1
+$[test] mouse motion 155, 36.
+[test] event window 1
+$[test] mouse motion 159, 36.
+[test] event window 1
+[test] mouse motion 172, 24.
+[test] event window 1
+[test] mouse motion 189, 11.
+[test] event window 1
+[test] mouse motion 191, 7.
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[button] down handler 0, 260, 12
+[button] down handler 0, 258, 13
 [button] tag minim
-[button] up handler 0, 260, 12
+[button] up handler 0, 258, 13
 [button] tag minim
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[button] down handler 0, 189, 8
+[test] event window 1
+[test] mouse motion 213, 0.
+[test] event window 1
+[test] mouse motion 217, 1.
+[test] event window 1
+[test] mouse motion 222, 1.
+[test] event window 1
+[test] mouse motion 232, 1.
+[test] event window 1
+[test] mouse motion 239, 1.
+[test] event window 1
+[test] mouse motion 236, 1.
+[test] event window 1
+[test] mouse motion 235, 1.
+[test] event window 1
+[test] mouse motion 230, 1.
+[test] event window 1
+[test] mouse motion 229, 1.
+[test] event window 1
+[test] mouse motion 228, 1.
+[test] event window 1
+[test] mouse motion 224, 1.
+[test] event window 1
+[test] mouse motion 221, 1.
+[test] event window 1
+[test] mouse motion 220, 1.
+[test] event window 1
+[test] mouse motion 219, 1.
+[test] event window 1
+[test] mouse motion 216, 1.
+[test] event window 1
+[test] mouse motion 215, 0.
+[button] down handler 0, 249, 15
 [button] tag minim
-[button] up handler 0, 189, 8
+[button] up handler 0, 249, 15
 [button] tag minim

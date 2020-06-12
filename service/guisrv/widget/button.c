@@ -129,7 +129,7 @@ static void __show(gui_button_t *button)
  * @local_mx: 鼠标横坐标
  * @local_my: 鼠标纵坐标
  */
-static void __button_mouse_down(gui_widget_t *widget, int btn, int local_mx, int local_my)
+static int __button_mouse_down(gui_widget_t *widget, int btn, int local_mx, int local_my)
 {
     gui_button_t *button = (gui_button_t *) widget;
     gui_label_t *label = &button->label;
@@ -146,9 +146,10 @@ static void __button_mouse_down(gui_widget_t *widget, int btn, int local_mx, int
 
             /* 调用处理函数 */
             if (button->btn_down_handler)
-                button->btn_down_handler(button, btn, local_mx, local_my);  
+                return button->btn_down_handler(button, btn, local_mx, local_my);  
         }
     }
+    return 0;
 }
 
 /**
@@ -158,7 +159,7 @@ static void __button_mouse_down(gui_widget_t *widget, int btn, int local_mx, int
  * @local_mx: 鼠标横坐标
  * @local_my: 鼠标纵坐标
  */
-static void __button_mouse_up(gui_widget_t *widget, int btn, int local_mx, int local_my)
+static int __button_mouse_up(gui_widget_t *widget, int btn, int local_mx, int local_my)
 {
     gui_button_t *button = (gui_button_t *) widget;
     gui_label_t *label = &button->label;
@@ -173,7 +174,7 @@ static void __button_mouse_up(gui_widget_t *widget, int btn, int local_mx, int l
             label->widget.draw_counter = 0;      
             /* 调用处理函数 */
             if (button->btn_up_handler)
-                button->btn_up_handler(button, btn, local_mx, local_my);
+                return button->btn_up_handler(button, btn, local_mx, local_my);
         }
     } else {
         /* 如果弹起的时候没在按钮内，只有选择状态才会设置成默认状态。 */
@@ -186,6 +187,7 @@ static void __button_mouse_up(gui_widget_t *widget, int btn, int local_mx, int l
             label->widget.draw_counter = 0;
         }
     }
+    return 0;
 }
 
 static void __button_mouse_motion(gui_widget_t *widget, int local_mx, int local_my)

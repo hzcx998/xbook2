@@ -1,4 +1,5 @@
 #include <drivers/mouse.h>
+#include <drivers/screen.h>
 #include <sys/res.h>
 #include <sys/ioctl.h>
 #include <sys/vmm.h>
@@ -74,29 +75,27 @@ read_mouse_continue:
                 /* 左键按下事件，需要传递鼠标位置 */
                 
                 if (event.value > 0) {
-                    env_mouse.left_btn_down();
+                    env_mouse.button_down(0);
                 } else {
-                    env_mouse.left_btn_up();
+                    env_mouse.button_up(0);
                 }
                 return  0;
             } else if ( (event.code) == BTN_MIDDLE ) {
                 /* 中键按下事件，需要传递鼠标位置 */
                 if (event.value > 0) {
-                    env_mouse.middle_btn_down();
+                    env_mouse.button_down(1);
                 } else {
-                    env_mouse.middle_btn_up();
+                    env_mouse.button_up(1);
                 }
 
                 return  0;
             } else if ( (event.code) == BTN_RIGHT ) {
                 /* 右键按下事件，需要传递鼠标位置 */
                 if (event.value > 0) {
-                    env_mouse.right_btn_down();
-                    
+                    env_mouse.button_down(2);
                 } else {
-                    env_mouse.right_btn_up();
+                    env_mouse.button_up(2);
                 }
-                
                 return  0;
             } else {
                 /* 其它键按下事件，需要传递鼠标位置 */
@@ -114,13 +113,14 @@ read_mouse_continue:
             env_mouse.x += x_rel;
             env_mouse.y += y_rel;
             
+           
             /* 相对位置置0 */
             x_rel = 0;
             y_rel = 0;
 
             if ( flag_rel == 1 )
             {
-                env_mouse_move();
+                env_mouse.motion();
                 flag_rel = 0;
                 return  0;
             }

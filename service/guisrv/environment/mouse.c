@@ -19,13 +19,8 @@ env_mouse_t env_mouse = {0};
 
 extern list_t layer_show_list_head;
 
-
-static void __left_button_down()
+static void __button_down(int btn)
 {
-#if DEBUG_LOCAL == 1    
-    printf("[mouse ] left button down.\n");
-    printf("[mouse ] x:%d, y:%d\n", env_mouse.x, env_mouse.y);
-#endif
     /* 如果抓住窗口后，就不能判断点击 */
     if (env_mouse.hold_window)
         return;
@@ -47,7 +42,11 @@ static void __left_button_down()
         if (local_mx >= 0 && local_mx < window->width && 
             local_my >= 0 && local_my < window->height) {
             
-            gui_widget_mouse_button_down(&layer->widget_list_head, 0, local_mx, local_my);
+            /* 如果成功处理了控件事件，就退出 */
+            if (gui_widget_mouse_button_down(&layer->widget_list_head, btn,
+                local_mx, local_my) == GUI_WIDGET_EVENT_HANDLED)
+                break;
+
 #if DEBUG_LOCAL == 1    
             printf("touch window: pos=%d-%d, size=%d-%d\n", 
                 window->x, window->y, window->width, window->height);
@@ -56,23 +55,29 @@ static void __left_button_down()
                  
                 /* 有标题才判断标题栏 */
                 if (ENV_IN_BOX(window->title_box, local_mx, local_my)) { /* in title */
-                    /* 判断是否为控制按钮，如果是，就处理，不是就可能要移动窗口，切换窗口 */
 #if DEBUG_LOCAL == 1    
                     printf("in window title\n");
 #endif
-                    /* 处理按钮 */
+                    switch (btn)
+                    {
+                    case 0: /* 鼠标左键 */
+                        /* 判断是否为控制按钮，如果是，就处理，不是就可能要移动窗口，切换窗口 */
+                        env_mouse.local_x = local_mx;
+                        env_mouse.local_y = local_my;
+                        
+                        env_mouse.hold_window = window;
 
-                    env_mouse.local_x = local_mx;
-                    env_mouse.local_y = local_my;
-                    
-                    env_mouse.hold_window = window;
+                        /* 如果不是活动窗口，就切换成为活动窗口 */
+                        gui_window_switch(window);
 
-                    /* 如果不是活动窗口，就切换成为活动窗口 */
-                    gui_window_switch(window);
+                        mouse_enter_state(env_mouse);
+                        break;
+                    case 1: /* 鼠标右键 */
 
-                    mouse_enter_state(env_mouse);
-
-                    break;
+                        break;
+                    default:
+                        break;
+                    }
                 } else if (ENV_IN_BOX(window->body_box, local_mx, local_my)) {    /* in body */
                     /* 发送消息给窗口，如果不是激活窗口，就先激活 */
 #if DEBUG_LOCAL == 1    
@@ -84,7 +89,7 @@ static void __left_button_down()
                     gui_event_t event;
                     event.type = SGI_MOUSE_BUTTON;
                     event.button.state = SGI_PRESSED;
-                    event.button.button = 0;    // left
+                    event.button.button = btn;    // left
                     gui_window_send_event(window, &event);
                 }
             } else {    /* 没有标题，就发送消息，聚焦窗口 */
@@ -97,19 +102,18 @@ static void __left_button_down()
                 gui_event_t event;
                 event.type = SGI_MOUSE_BUTTON;
                 event.button.state = SGI_PRESSED;
-                event.button.button = 0;    // left
+                event.button.button = btn;    // left
                 gui_window_send_event(window, &event);
             }
-            
             break;
         }
     }
 }
 
-static void __left_button_up()
+static void __button_up(int btn)
 {
 #if DEBUG_LOCAL == 1    
-    printf("[mouse ] left button up.\n");
+    printf("[mouse ] %d button up.\n", btn);
     printf("[mouse ] x:%d, y:%d\n", env_mouse.x, env_mouse.y);
 #endif    
     /* 处于抓住窗口，所以就释放窗口 */
@@ -136,55 +140,72 @@ static void __left_button_up()
             window = (gui_window_t *) layer->extension;
             local_mx = env_mouse.x - window->x;
             local_my = env_mouse.y - window->y;
-            gui_widget_mouse_button_up(&layer->widget_list_head, 0, local_mx, local_my);
-            
-            if (ENV_IN_BOX(window->body_box, local_mx, local_my)) {
-                /* 发送消息到窗口 */
-                gui_event_t event;
-                event.type = SGI_MOUSE_BUTTON;
-                event.button.state = SGI_RELEASED;
-                event.button.button = 0;    // left
-                gui_window_send_event(window, &event);
+            if (local_mx >= 0 && local_mx < window->width && 
+                local_my >= 0 && local_my < window->height) {
+                
+                /* 如果成功处理了控件事件，就退出 */
+                if (gui_widget_mouse_button_up(&layer->widget_list_head, btn,
+                    local_mx, local_my) == GUI_WIDGET_EVENT_HANDLED)
+                    break;
+                    
+                if (!(window->attr & GUIW_NO_TITLE)) {
+                    /* 有标题才判断标题栏 */
+                    if (ENV_IN_BOX(window->title_box, local_mx, local_my)) { /* in title */
+#if DEBUG_LOCAL == 1    
+                        printf("in window title\n");
+#endif
+                        switch (btn)
+                        {
+                        case 0: /* 鼠标左键 */
+                            
+                            break;
+                        case 1: /* 鼠标右键 */
+
+                            break;
+                        default:
+                            break;
+                        }
+                    } else if (ENV_IN_BOX(window->body_box, local_mx, local_my)) {    /* in body */
+                        /* 发送消息给窗口，如果不是激活窗口，就先激活 */
+#if DEBUG_LOCAL == 1    
+                        printf("in window body\n");
+#endif
+                        gui_window_switch(window);
+
+                        /* 发送消息到窗口 */
+                        gui_event_t event;
+                        event.type = SGI_MOUSE_BUTTON;
+                        event.button.state = SGI_PRESSED;
+                        event.button.button = btn;    // left
+                        gui_window_send_event(window, &event);
+                        
+                    }
+                } else {    /* 没有标题，就发送消息，聚焦窗口 */
+                    /* 发送消息到窗口 */
+                    gui_event_t event;
+                    event.type = SGI_MOUSE_BUTTON;
+                    event.button.state = SGI_RELEASED;
+                    event.button.button = btn;    // btn
+                    gui_window_send_event(window, &event);
+                }
                 break;
             }
         }
     }
 }
 
-static void __right_button_down()
+void __motion()
 {
-#if DEBUG_LOCAL == 1    
-    printf("[mouse ] right button down.\n");
-    printf("[mouse ] x:%d, y:%d\n", env_mouse.x, env_mouse.y);
-#endif
-}
-
-static void __right_button_up()
-{
-#if DEBUG_LOCAL == 1    
-    printf("[mouse ] right button up.\n");
-    printf("[mouse ] x:%d, y:%d\n", env_mouse.x, env_mouse.y);
-#endif
-}
-
-static void __middle_button_down()
-{
-#if DEBUG_LOCAL == 1    
-    printf("[mouse ] middle button down.\n");
-    printf("[mouse ] x:%d, y:%d\n", env_mouse.x, env_mouse.y);
-#endif
-}
-
-static void __middle_button_up()
-{
-#if DEBUG_LOCAL == 1    
-    printf("[mouse ] middle button up.\n");
-    printf("[mouse ] x:%d, y:%d\n", env_mouse.x, env_mouse.y);
-#endif
-}
-
-void env_mouse_move()
-{
+     /* 对鼠标进行修复 */
+    if (env_mouse.x < 0)
+        env_mouse.x = 0;
+    if (env_mouse.y < 0)
+        env_mouse.y = 0;
+    if (env_mouse.x >= drv_screen.width)
+        env_mouse.x = drv_screen.width - 1;
+    if (env_mouse.y >= drv_screen.height)
+        env_mouse.y = drv_screen.height - 1;
+    
     /* 设定鼠标移动消息 */
     //printf("[mouse ] x:%d, y:%d\n", env_mouse.x, env_mouse.y);
     /* 尝试移动鼠标 */
@@ -211,6 +232,7 @@ void env_mouse_move()
                 local_mx = env_mouse.x - window->x;
                 local_my = env_mouse.y - window->y;
                 gui_widget_mouse_motion(&layer->widget_list_head, local_mx, local_my);
+                
                 if (local_mx >= 0 && local_mx < window->width && 
                     local_my >= 0 && local_my < window->height) {
                     /* 进入某个窗口 */
@@ -381,13 +403,10 @@ int init_env_mouse()
     env_mouse.local_y = 0;
     env_mouse.hold_window = NULL;
     env_mouse.hover_window = NULL;
-    env_mouse.left_btn_down     = __left_button_down;
-    env_mouse.left_btn_up       = __left_button_up;
-    env_mouse.right_btn_down    = __right_button_down;
-    env_mouse.right_btn_up      = __right_button_up;
-    env_mouse.middle_btn_down   = __middle_button_down;
-    env_mouse.middle_btn_up     = __middle_button_up;
-
+    env_mouse.button_down   = __button_down;
+    env_mouse.button_up     = __button_up;
+    env_mouse.motion     = __motion;
+    
     /* 顶层图层是鼠标图层 */
     layer_topest = create_layer(MOUSE_CURSOR_WIDTH, MOUSE_CURSOR_HEIGHT);
     if (layer_topest == NULL) {
