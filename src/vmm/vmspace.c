@@ -401,6 +401,8 @@ unsigned long sys_vmspace_heap(unsigned long heap)
 #if DEBUG_LOCAL == 1   
         printk(KERN_ERR "%s: find: start=%x, end=%x\n",
             __func__, find->start, find->end);
+
+        printk(KERN_ERR "task=%d.\n", current_task->pid);
 #endif
         goto the_end;
     }

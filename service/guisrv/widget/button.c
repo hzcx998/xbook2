@@ -74,6 +74,20 @@ static void __set_text(gui_button_t *button, char *text)
     button->label.set_text(&button->label, text);
 }
 
+static void __set_pixmap(
+    gui_button_t *button,
+    unsigned int width,
+    unsigned int height,
+    GUI_COLOR *pixmap
+) {
+    button->label.set_pixmap(&button->label, width, height, pixmap);
+}
+
+static void __set_data(gui_button_t *button, void *data)
+{
+    button->data = data;
+}
+
 static void __set_handler(gui_button_t *button, btn_handler_t down, btn_handler_t up)
 {
     button->btn_down_handler = down;
@@ -135,7 +149,8 @@ static int __button_mouse_down(gui_widget_t *widget, int btn, int local_mx, int 
     gui_label_t *label = &button->label;
     
     if (widget->x <= local_mx && local_mx < widget->x + widget->width &&
-        widget->y <= local_my && local_my < widget->y + widget->height) {
+        widget->y <= local_my && local_my < widget->y + widget->height &&
+        local_mx >= 0 && local_my >= 0) {
         /* 必须是聚焦了才能点击，点击后变成选择状态 */
         if (button->state == GUI_BUTTON_FOCUS) {
             /* 聚焦 */
@@ -164,7 +179,8 @@ static int __button_mouse_up(gui_widget_t *widget, int btn, int local_mx, int lo
     gui_button_t *button = (gui_button_t *) widget;
     gui_label_t *label = &button->label;
     if (widget->x <= local_mx && local_mx < widget->x + widget->width &&
-        widget->y <= local_my && local_my < widget->y + widget->height) {
+        widget->y <= local_my && local_my < widget->y + widget->height &&
+        local_mx >= 0 && local_my >= 0) {
         /* 如果已经是选择状态，那么弹起后，就会去处理调用函数。由于还在按钮内，所以状态设置为聚焦 */
         if (button->state == GUI_BUTTON_SELECTED) {
             /* 聚焦 */
@@ -253,7 +269,8 @@ int gui_button_init(
     button->selected_color = GUI_BUTTON_SELECTED_COLOR;
     button->btn_down_handler = NULL;
     button->btn_up_handler = NULL;
-    
+    button->data = NULL;
+
     /* 设置事件 */
     button->label.widget.set_mouse(&button->label.widget, __button_mouse_down,
         __button_mouse_up, __button_mouse_motion);
@@ -267,6 +284,8 @@ int gui_button_init(
     button->set_color3 = __set_color3;
     button->set_align = __set_align;
     button->set_handler = __set_handler;
+    button->set_pixmap = __set_pixmap;
+    button->set_data = __set_data;
 
     button->add = __add;
     button->del = __del;

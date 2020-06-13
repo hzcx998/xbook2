@@ -102,7 +102,8 @@ int start_guisrv()
         printf("[failed ] %s: init window management failed!\n", SRV_NAME);
         return -1;
     }
-  
+
+    
     return 0;
 }
 

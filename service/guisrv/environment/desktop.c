@@ -33,10 +33,22 @@ int init_env_desktop()
     label->set_text(label, "hello, world!\n");
     label->add(label, env_desktop.window->layer);
     label->show(label);
+    
+    static GUI_COLOR pixmap[10*10*4];
+    int i;
+    for (i = 0; i < 10 * 10; i++) {
+        pixmap[i] = COLOR_ARGB(255, i * 5, i * 15, i * 20);
+    }
+    gui_label_t *label1 = gui_create_label(GUI_LABEL_PIXMAP, 100, 100, 20, 20);
+    label1->set_pixmap(label1, 10, 10, pixmap);
+    label1->add(label1, env_desktop.window->layer);
+    label1->show(label1);
 
     gui_button_t *button = gui_create_button(GUI_LABEL_TEXT, 0,400, 40, 20);
     button->add(button, env_desktop.window->layer);
     button->show(button);
     
+    
+
     return 0;
 }

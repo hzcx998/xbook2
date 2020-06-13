@@ -31,6 +31,7 @@ typedef struct _gui_button {
     GUI_COLOR selected_color;   /* 选择颜色 */
     btn_handler_t btn_down_handler;
     btn_handler_t btn_up_handler;
+    void *data;        /* 数据 */
 
     /* 内部函数 */
     void (*set_location) (struct _gui_button *, int , int );
@@ -43,7 +44,9 @@ typedef struct _gui_button {
     int (*set_font) (struct _gui_button *, char *);
     void (*set_name) (struct _gui_button *, char *);
     void (*set_handler) (struct _gui_button *, btn_handler_t , btn_handler_t );
-
+    void (*set_pixmap) (struct _gui_button *, unsigned int , unsigned int , GUI_COLOR *);
+    void (*set_data) (struct _gui_button *, void *);
+    
     void (*add) (struct _gui_button *, layer_t *);
     void (*del) (struct _gui_button *);
     void (*show) (struct _gui_button *);

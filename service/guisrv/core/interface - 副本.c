@@ -146,6 +146,16 @@ static int do_create_window(srvarg_t *arg)
 #if DEBUG_LOCAL == 1
     printf("[%s] window display id=%d.\n", SRV_NAME, win->display_id);
 #endif
+#if 0
+    /* 创建一个窗口控制 */
+    win->winctl = gui_create_winctl(win);
+    if (win->winctl == NULL) {
+        res_close(win->shmid);  /* 关闭共享内存 */
+        gui_destroy_window(win); /* 销毁窗口 */
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+#endif
 
     /* 创建成功，添加到窗口缓存表 */
     gui_window_cache_add(win);
@@ -173,6 +183,9 @@ static int do_destroy_window(srvarg_t *arg)
     /* 先从窗口缓存表中删除 */
     gui_window_cache_del(win);
 
+    //gui_destroy_winctl(win->winctl);
+    //win->winctl = NULL;
+
     /* 关闭共享内存 */
     res_close(win->shmid);
     win->shmid = -1;
@@ -196,14 +209,14 @@ static int do_map_window(srvarg_t *arg)
     /* 获取窗口id */
     int wid = GETSRV_DATA(arg, 1, int);
     if (wid < 0)
-        goto mw_error;
+        goto map_error;
 
     gui_window_t *win = gui_window_cache_find(wid);   
     if (win == NULL) {  /* 没有在缓存中找到窗口 */
         /*  尝试在窗口链表中寻找 */
         win = gui_window_get_by_id(wid);
         if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
-            goto mw_error;
+            goto map_error;
     }
 
     /* 对窗口进行映射操作 */
@@ -213,9 +226,9 @@ static int do_map_window(srvarg_t *arg)
 #endif
     long mapped; /* 保存映射后的地址 */
     if (res_write(win->shmid, IPC_RND, mapaddr, (size_t) &mapped) < 0) /* 映射共享内存 */
-        goto mw_error;
+        goto map_error;
     if (mapped == -1)
-        goto mw_error;
+        goto map_error;
     
     win->mapped_addr = (void *) mapped;
     win->start_off = (unsigned long) mapaddr & 0xfff;    /* 页内偏移 */
@@ -224,13 +237,20 @@ static int do_map_window(srvarg_t *arg)
     printf("[guisrv] mapped window share memory at %x, start off is %x\n", 
         mapped, win->start_off);
 #endif    
+
+    /*if (gui_winctl_add(win->winctl)) 
+        goto map_error;*/
+
     /* 映射完后显示窗口 */
     gui_window_show(win);
+
+    /* 刷新一下窗口控制 */
+    // gui_winctl_show();
 
     /* 返回页内偏移 */
     SETSRV_RETVAL(arg, win->start_off);
     return 0;
-mw_error:
+map_error:
     SETSRV_RETVAL(arg, -1);
     return -1;
 }
@@ -240,29 +260,33 @@ static int do_unmap_window(srvarg_t *arg)
     /* 获取窗口id */
     int wid = GETSRV_DATA(arg, 1, int);
     if (wid < 0)
-        goto mw_error;
+        goto unmap_error;
 
     gui_window_t *win = gui_window_cache_find(wid);   
     if (win == NULL) {  /* 没有在缓存中找到窗口 */
         /*  尝试在窗口链表中寻找 */
         win = gui_window_get_by_id(wid);
         if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
-            goto mw_error;
+            goto unmap_error;
     }
 
     /* 先隐藏窗口 */
     gui_window_hide(win);
+/*
+    if (gui_winctl_del(win->winctl)) 
+        goto unmap_error;
+*/
     /* 解除窗口的映射 */
 #if DEBUG_LOCAL == 1
     printf("[guisrv] unmap window share memory at %x\n", win->mapped_addr);
 #endif
     if (res_read(win->shmid, IPC_RND, win->mapped_addr, 0) < 0) /* 解除共享内存映射 */
-        goto mw_error;    
+        goto unmap_error;    
     win->mapped_addr = NULL;
 
     SETSRV_RETVAL(arg, 0);
     return 0;
-mw_error:
+unmap_error:
     SETSRV_RETVAL(arg, -1);
     return -1;
 }

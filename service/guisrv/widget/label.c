@@ -36,7 +36,16 @@ static void __set_size(gui_label_t *label, int width, int height)
 static void __set_color(gui_label_t *label, GUI_COLOR back, GUI_COLOR font)
 {
     label->back_color = back;
-    label->font_color = font;
+
+    switch (label->content.type) {
+    case GUI_LABEL_TEXT:
+        label->content.text.font_color = font;
+        break;
+    case GUI_LABEL_PIXMAP:
+        break;
+    default:
+        break;
+    }
 }
 
 /**
@@ -44,25 +53,28 @@ static void __set_color(gui_label_t *label, GUI_COLOR back, GUI_COLOR font)
  * @label: 标签
  * @length: 最大长度
  * 
- * 设置文本前必须调用一次
+ * 设置长文本前必须调用一次
  */
 static int __set_text_len(gui_label_t *label, int length)
 {
+    if (label->content.type != GUI_LABEL_TEXT)
+        return -1;
+
     /* 对长度进行限制 */
     if (length > GUI_MAX_LABEL_TEXT_LEN - 1)
         length = GUI_MAX_LABEL_TEXT_LEN - 1;
     
     char *old = NULL;
     /* 如果已经有数据，那么保存旧数据地址 */
-    if (label->text != NULL) {
-        old = label->text;
+    if (label->content.text.text != NULL) {
+        old = label->content.text.text;
     }
     
     /* 分配文本 */
-    label->text = gui_malloc(length);
-    if (label->text == NULL) {
+    label->content.text.text = gui_malloc(length);
+    if (label->content.text.text == NULL) {
         /* 如果分配失败，恢复原来的数据 */
-        label->text = old;
+        label->content.text.text = old;
         return -1;
     }
     /* 分配新数据成功，并且原来也有数据，那么就把原来的数据释放掉 */
@@ -70,9 +82,9 @@ static int __set_text_len(gui_label_t *label, int length)
         gui_free(old);
     }
 
-    label->text_len_max = length;
+    label->content.text.text_len_max = length;
     /* 数据清空 */
-    memset(label->text, 0, length);
+    memset(label->content.text.text, 0, length);
     return 0;
 }
 
@@ -88,18 +100,23 @@ static void __set_align(gui_label_t *label, gui_widget_align_t align)
  */
 static void __set_text(gui_label_t *label, char *text)
 {
+    if (label->content.type != GUI_LABEL_TEXT)
+        return;
+
+    /* 文本类型 */
+    label->content.type = GUI_LABEL_TEXT;
+
     int length = strlen(text);
     /* 修复长度 */
-    if (length > label->text_len_max - 1)
-        length = label->text_len_max - 1;
+    if (length > label->content.text.text_len_max - 1)
+        length = label->content.text.text_len_max - 1;
     
     /* 设置文本 */
-    memcpy(label->text, text, length);
+    memcpy(label->content.text.text, text, length);
     /* 末尾填'\0' */
-    label->text[length] = '\0';
-    label->text_len = length;
-    /* 文本类型 */
-    label->type = GUI_LABEL_TEXT;
+    label->content.text.text[length] = '\0';
+    label->content.text.text_len = length;
+    
 }
 
 /**
@@ -109,19 +126,36 @@ static void __set_text(gui_label_t *label, char *text)
  */
 static int __set_font(gui_label_t *label, char *font_name)
 {
+    if (label->content.type != GUI_LABEL_TEXT)
+        return -1;
+
     gui_font_t *font = gui_get_font(font_name);
     
     /* 找到才设置，没找到就不设置 */
     if (!font)
         return -1;
 
-    label->font = font;
+    label->content.text.font = font;
     return 0;
 }
 
 static void __set_name(gui_label_t *label, char *name)
 {
     label->widget.set_name(&label->widget, name);
+}
+
+static void __set_pixmap(
+    gui_label_t *label,
+    unsigned int width,
+    unsigned int height,
+    GUI_COLOR *data
+) {
+    if (label->content.type != GUI_LABEL_PIXMAP)
+        return;
+
+    label->content.pixmap.width = width;
+    label->content.pixmap.height = height;
+    label->content.pixmap.data = data;
 }
 
 /**
@@ -165,19 +199,18 @@ static void __widget_show(gui_widget_t *widget)
     /* 可见才绘制 */
     if (label->visable) {
         int x, y;
-        if (label->type == GUI_LABEL_TEXT) {
-            y = widget->y + widget->height / 2 - label->font->height / 2;
+        if (label->content.type == GUI_LABEL_TEXT) {
+            y = widget->y + widget->height / 2 - label->content.text.font->height / 2;
             
-            switch (label->align)
-            {
+            switch (label->align) {
             case GUI_WIDGET_ALIGN_LEFT:
                 x = widget->x;
                 break;
             case GUI_WIDGET_ALIGN_CENTER:
-                x = widget->x + widget->width / 2 - (label->text_len * label->font->width) / 2 ;
+                x = widget->x + widget->width / 2 - (label->content.text.text_len * label->content.text.font->width) / 2 ;
                 break;
             case GUI_WIDGET_ALIGN_RIGHT:
-                x = widget->x + widget->width - (label->text_len * label->font->width);
+                x = widget->x + widget->width - (label->content.text.text_len * label->content.text.font->width);
                 break;
             default:
                 break;
@@ -185,12 +218,32 @@ static void __widget_show(gui_widget_t *widget)
             GUI_COLOR color;
             /* 选择显示颜色 */
             if (!label->disabel) {
-                color = label->font_color;
+                color = label->content.text.font_color;
             } else {
-                color = label->disable_color;
+                color = label->content.text.disable_color;
             }
             /* 再绘制文本 */
-            layer_draw_text_ex(widget->layer, x, y, label->text, color, label->font);
+            layer_draw_text_ex(widget->layer, x, y, label->content.text.text, color, label->content.text.font);
+        } else if (label->content.type == GUI_LABEL_PIXMAP) {
+            y = widget->y + widget->height / 2 - label->content.pixmap.height / 2;
+            
+            switch (label->align) {
+            case GUI_WIDGET_ALIGN_LEFT:
+                x = widget->x;
+                break;
+            case GUI_WIDGET_ALIGN_CENTER:
+                x = widget->x + widget->width / 2 - label->content.pixmap.width / 2;
+                break;
+            case GUI_WIDGET_ALIGN_RIGHT:
+                x = widget->x + widget->width - label->content.pixmap.width;
+                break;
+            default:
+                break;
+            }
+
+            /* 绘制数据 */
+            layer_draw_bitmap(widget->layer, x, y, 
+                label->content.pixmap.width, label->content.pixmap.height, label->content.pixmap.data);
         }
     }
     /* 刷新标签 */
@@ -209,12 +262,18 @@ static void __show(gui_label_t *label)
  */
 static void __cleanup(gui_label_t *label)
 {
-    /* 释放文本 */
-    if (label->text)
-        gui_free(label->text);
-
+    switch (label->content.type) {
+    case GUI_LABEL_TEXT:
+        /* 释放文本内容 */
+        if (label->content.text.text)
+            gui_free(label->content.text.text);
+        break;
+    case GUI_LABEL_PIXMAP:
+        break;
+    default:
+        break;
+    }
 }
-
 
 /**
  * gui_label_destroy - 销毁一个标签
@@ -239,30 +298,38 @@ int gui_label_init(
     int width,
     int height
 ) {
-    label->text_len_max = GUI_DEFAULT_LABEL_TEXT_LEN;
-    label->text = gui_malloc(label->text_len_max);
-    if (label->text == NULL) {
-        return -1;
-    }
     /* 进行默认的初始化 */
     label->visable = 1;
     label->disabel = 0;
     label->back_color = GUI_LABEL_BACK_COLOR;
-    label->font_color = GUI_LABEL_FONT_COLOR;
-    label->disable_color = GUI_LABEL_DISABEL_COLOR;
-    
-    /* 设置默认标签 */
-    memset(label->text, 0, label->text_len_max);
-   
-    strcpy(label->text, "text");
-    
-    label->text_len = strlen(label->text);
-
     label->align = GUI_WIDGET_ALIGN_LEFT;   /* 默认左对齐 */
-    /* 设置系统字体 */
-    label->font = current_font;
-    /* 默认是文本 */
-    label->type = type;
+
+    label->content.type = type;
+    switch (type) {
+    case GUI_LABEL_TEXT:
+        
+        label->content.text.text_len_max = GUI_DEFAULT_LABEL_TEXT_LEN;
+        label->content.text.text = gui_malloc(label->content.text.text_len_max);
+        if (label->content.text.text == NULL) {
+            return -1;
+        }
+        label->content.text.font_color = GUI_LABEL_FONT_COLOR;
+        label->content.text.disable_color = GUI_LABEL_DISABEL_COLOR;
+        /* 文本内容 */
+        memset(label->content.text.text, 0, label->content.text.text_len_max);
+        strcpy(label->content.text.text, " ");
+        label->content.text.text_len = strlen(label->content.text.text);
+        label->content.text.font = current_font; /* 设置系统字体 */
+        break;
+    case GUI_LABEL_PIXMAP:
+        /* 初始化像素图 */
+        label->content.pixmap.width = 0;
+        label->content.pixmap.height = 0;
+        label->content.pixmap.data = NULL;
+        break;
+    default:
+        break;
+    }
     
     /* 初始化widget */
     gui_widget_init(&label->widget, GUI_WIDGET_LABEL, "label");
@@ -282,7 +349,8 @@ int gui_label_init(
     label->set_font = __set_font;
     label->set_name = __set_name;
     label->set_align = __set_align;
-    
+    label->set_pixmap = __set_pixmap;
+
     label->add = __add;
     label->del = __del;
     label->show = __show;

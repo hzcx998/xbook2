@@ -13,6 +13,8 @@
 #include <arch/interrupt.h>
 #include <sys/pthread.h>
 
+#define DEBUG_LOCAL 0
+
 /**
  * load_segment - 加载段
  * @rb: 文件描述符
@@ -56,6 +58,7 @@ static int load_segment(raw_block_t *rb, unsigned long offset, unsigned long fil
         printk(KERN_ERR "load_segment: vmspace_mmap failed!\n");
         return -1;
     }
+    // printk(KERN_DEBUG "task %d map space: addr %x end %x\n", current_task->pid, vaddr_page, vaddr_page + occupy_pages * PAGE_SIZE);
     /* 清空内存 */
     //memset((void *) vaddr_page, 0, occupy_pages * PAGE_SIZE);
 
@@ -121,11 +124,14 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb)
             if (prog_header.p_flags == ELF32_PHDR_CODE) {
                 vmm->code_start = prog_header.p_vaddr;
                 vmm->code_end = prog_header.p_vaddr + prog_header.p_memsz;
+
                 //printk(KERN_DEBUG "code start:%x end:%x\n", vmm->code_start, vmm->code_end);
 
             } else if (prog_header.p_flags == ELF32_PHDR_DATA) {
                 vmm->data_start = prog_header.p_vaddr;
                 vmm->data_end = prog_header.p_vaddr + prog_header.p_memsz;
+
+                vmm->data_end = vmm->data_end;
                 //printk(KERN_DEBUG "data start:%x end:%x\n", vmm->data_start, vmm->data_end);
             }
             //printk(KERN_DEBUG "seg start:%x end:%x\n", prog_header.p_vaddr, prog_header.p_vaddr + prog_header.p_memsz);
@@ -289,6 +295,13 @@ int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
  */
 void proc_heap_init(task_t *task)
 {
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "task=%d dump vmspace.\n", task->pid);
+    dump_vmspace(task->vmm);
+
+    printk(KERN_DEBUG "data segment end=%x end2=%d.\n", 
+        task->vmm->data_end, PAGE_ALIGN(task->vmm->data_end));
+#endif    
     /* heap默认在数据的后面的一个页后面 */
     task->vmm->heap_start = task->vmm->data_end + PAGE_SIZE;
     

@@ -15,6 +15,7 @@
 #define GUIW_BTN_MINIM      0x02    /* 最小化按钮 */
 #define GUIW_BTN_MAXIM      0x04    /* 最大化按钮 */
 #define GUIW_BTN_CLOSE      0x08    /* 关闭按钮 */
+#define GUIW_FIXED          0x10    /* 固定的窗口 */
 
 #define GUIW_BTN_MASK       (GUIW_BTN_MINIM | GUIW_BTN_MAXIM | GUIW_BTN_CLOSE)
 
@@ -39,7 +40,6 @@ typedef struct _gui_window {
     int x_off, y_off;           /* 窗口数据的偏移 */
     size_t window_size;            /* 窗口占用的内存大小 */
     int attr;                   /* 窗口的属性 */
-    char title[GUIW_TITLE_LEN]; /* 窗口标题 */
     layer_t *layer;             /* 窗口对应的图层 */
     list_t list;                /* 窗口链表 */
     list_t child_list;          /* 子窗口链表 */

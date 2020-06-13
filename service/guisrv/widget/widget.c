@@ -84,8 +84,9 @@ int gui_widget_mouse_button_up(list_t *list_head, int button, int mx, int my)
             if (widget->mouse_btn_up)
                 retval = widget->mouse_btn_up(widget, button, mx, my);
         }
+        __show(widget);
+
         if (retval == GUI_WIDGET_EVENT_HANDLED) {
-            __show(widget);
             return GUI_WIDGET_EVENT_HANDLED;
         }
     }
@@ -102,8 +103,8 @@ int gui_widget_mouse_button_down(list_t *list_head, int button, int mx, int my)
             if (widget->mouse_btn_down)
                 retval = widget->mouse_btn_down(widget, button, mx, my);
         }
+        __show(widget);
         if (retval == GUI_WIDGET_EVENT_HANDLED) {
-            __show(widget);
             return GUI_WIDGET_EVENT_HANDLED;
         }
     }

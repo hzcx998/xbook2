@@ -296,6 +296,10 @@ gui_window_t *gui_create_window(
     win->mapped_addr = NULL;
     win->start_off = 0;
     win->display_id = 0;
+    win->text_title = NULL;
+    win->btn_close = NULL;
+    win->btn_minim = NULL;
+    win->btn_maxim = NULL;
 
     layer->extension = (void *) win;
 
@@ -540,6 +544,11 @@ int init_gui_window()
         return -1;
     }
     
+    if (init_winctl_manager()) {
+        printf("[desktop ] %s: init winctl manager failed!\n", SRV_NAME);
+        return -1;
+    }
+
     gui_window_draw_text(env_desktop.window, 0,0,"abcdefghijklmnopqrstuvwxyz0123456789",
         COLOR_RED);
 

@@ -66,6 +66,7 @@ WINDOW_OBJS 	=	window/window.o \
 					window/event.o \
 
 ENVIRONMENT_OBJS =	environment/desktop.o \
+					environment/winctl.o \
 
 FONT_OBJS 		=	font/font.o \
 					font/font_simsun.o \
@@ -85,7 +86,6 @@ EVENT_OBJS 		= 	event/msgque.o \
 
 MAIN_OBJS 		= 	main.o \
 
-				
 OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) \
 		$(FONT_OBJS) $(ENVIRONMENT_OBJS) $(WIDGET_OBJS) $(CORE_OBJS) \
 		$(INPUT_OBJS) $(EVENT_OBJS)
@@ -93,7 +93,8 @@ OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) \
 LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
 # -n: close memory aligin.
-LDFLAGS		= -T link.ld -n
+#LDFLAGS		= -T link.ld -n
+LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 
 #First read here
 .PHONY: all dis

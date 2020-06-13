@@ -30,7 +30,7 @@ SECTIONS {
         *(.data)
         *(.data.*)
 
-        . = ALIGN(4);        /* Align the end of the section */
+        . = ALIGN(1024);        /* Align the end of the section */
     }
     _edata = .;             /* Provide the name for the end of this section */
    
@@ -41,7 +41,7 @@ SECTIONS {
       
         *(.bss)
         *(.bss.*)
-        . = ALIGN(512);
+        . = ALIGN(4096);
     }
     _ebss = .;             /* Provide the name for the end of this section */
 }

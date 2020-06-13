@@ -13,6 +13,8 @@
 #include <window/event.h>
 #include <sys/input.h>
 
+#include <environment/winctl.h>
+
 #define DEBUG_LOCAL 0
 
 input_mouse_t input_mouse = {0};
@@ -58,6 +60,13 @@ static void __button_down(int btn)
 #if DEBUG_LOCAL == 1    
                     printf("in window title\n");
 #endif
+                    /* 固定窗口是不能移动的 */
+                    if (window->attr & GUIW_FIXED) {
+                        /* 如果不是活动窗口，就切换成为活动窗口 */
+                        gui_window_switch(window);
+                        return;
+                    }
+
                     switch (btn)
                     {
                     case 0: /* 鼠标左键 */
@@ -222,9 +231,15 @@ void __motion()
         if (input_mouse.hold_window) {    /* 让抓住的窗口跟住鼠标移动 */
             
             input_mouse_set_state(MOUSE_CURSOR_HOLD);
-
-            layer_set_xy(input_mouse.hold_window->layer, input_mouse.x - 
-                input_mouse.local_x, input_mouse.y - input_mouse.local_y);
+            int wx = input_mouse.x - input_mouse.local_x;
+            int wy = input_mouse.y - input_mouse.local_y;
+            
+            /* 修复窗口位置 */
+            if (wx < GUI_WINCTL_WIDTH)
+                wx = GUI_WINCTL_WIDTH;
+            if (wy < 0)
+                wy = 0;
+            layer_set_xy(input_mouse.hold_window->layer, wx, wy);
         } else {
             gui_window_t *window;
             layer_t *layer;

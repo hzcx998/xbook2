@@ -243,12 +243,12 @@ int SGI_UpdateWindow(
 
     /* 使用消息来传递交互信息，速度比服务调用快许多，但是不支持同步 */
     SGI_Msg msg;
-    msg.type    = winfo->winid;     /* 类型是窗口id */
-    msg.id      = 1;                /* UPDATE_WINDOW */
-    msg.arg0    = left;
-    msg.arg1    = top;
-    msg.arg2    = right;
-    msg.arg3    = bottom;
+    msg.type    = 1;     /* 类型是窗口id */
+    msg.arg0    = winfo->winid;
+    msg.arg1    = left;
+    msg.arg2    = top;
+    msg.arg3    = right;
+    msg.arg4    = bottom;
     /* 写入消息 */    
     if (res_write(display->request_msgid, IPC_NOWAIT, &msg, SGI_MSG_LEN) < 0)
         return -1;
@@ -496,5 +496,107 @@ int SGI_WindowDrawPixmap(
             *vram = pixmap[y0 *  width + x0];
         }
     }
+    return 0;
+}
+
+int SGI_SetWMName(
+    SGI_Display *display,
+    SGI_Window window,
+    char *name
+) {
+     if (!display)
+        return -1;
+    if (!display->connected)
+        return -1;
+    if (SGI_BAD_WIN_HANDLE(window))
+        return -1;
+    if (!name)
+        return -1;
+
+    SGI_WindowInfo *winfo = SGI_DISPLAY_GET_WININFO(display, window);
+    if (!winfo)
+        return -1;
+
+    /* 构建服务调用消息 */
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, GUISRV_SET_WMNAME, 0);
+    SETSRV_ARG(&srvarg, 1, winfo->winid, 0);
+    SETSRV_ARG(&srvarg, 2, name, strlen(name)+1);
+
+    SETSRV_RETVAL(&srvarg, -1);
+    /* 执行服务调用 */
+    if (srvcall(SRV_GUI, &srvarg))
+        return -1;
+    if (GETSRV_RETVAL(&srvarg, int) == -1)
+        return -1;
+    return 0;
+}
+
+
+int SGI_SetWMIconName(
+    SGI_Display *display,
+    SGI_Window window,
+    char *name
+) {
+     if (!display)
+        return -1;
+    if (!display->connected)
+        return -1;
+    if (SGI_BAD_WIN_HANDLE(window))
+        return -1;
+    if (!name)
+        return -1;
+        
+    SGI_WindowInfo *winfo = SGI_DISPLAY_GET_WININFO(display, window);
+    if (!winfo)
+        return -1;
+
+    /* 构建服务调用消息 */
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, GUISRV_SET_WMICONNAME, 0);
+    SETSRV_ARG(&srvarg, 1, winfo->winid, 0);
+    SETSRV_ARG(&srvarg, 2, name, strlen(name)+1);
+
+    SETSRV_RETVAL(&srvarg, -1);
+    /* 执行服务调用 */
+    if (srvcall(SRV_GUI, &srvarg))
+        return -1;
+    if (GETSRV_RETVAL(&srvarg, int) == -1)
+        return -1;
+    return 0;
+}
+
+int SGI_SetWMIcon(
+    SGI_Display *display,
+    SGI_Window window,
+    SGI_Argb *pixmap,
+    unsigned int width,
+    unsigned int height
+) {
+     if (!display)
+        return -1;
+    if (!display->connected)
+        return -1;
+    if (SGI_BAD_WIN_HANDLE(window))
+        return -1;
+
+    SGI_WindowInfo *winfo = SGI_DISPLAY_GET_WININFO(display, window);
+    if (!winfo)
+        return -1;
+
+    /* 构建服务调用消息 */
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, GUISRV_SET_WMICON, 0);
+    SETSRV_ARG(&srvarg, 1, winfo->winid, 0);
+    SETSRV_ARG(&srvarg, 2, pixmap, width * height * sizeof(SGI_Argb));
+    SETSRV_ARG(&srvarg, 3, width, 0);
+    SETSRV_ARG(&srvarg, 4, height, 0);
+
+    SETSRV_RETVAL(&srvarg, -1);
+    /* 执行服务调用 */
+    if (srvcall(SRV_GUI, &srvarg))
+        return -1;
+    if (GETSRV_RETVAL(&srvarg, int) == -1)
+        return -1;
     return 0;
 }

@@ -10,7 +10,7 @@
 
 #define SRVBUF_256      256
 #define SRVBUF_4K       4096
-#define SRVBUF_128K       131072
+#define SRVBUF_128K     131072
 
 unsigned char *srvbuf256;
 unsigned char *srvbuf4k;

@@ -36,6 +36,12 @@ int main(int argc, char *argv[])
     }
     printf("[test] create window success!\n");
 
+    SGI_SetWMName(display, win, "new title, 123 abc #$");
+
+    static SGI_Argb icon[5*5*4];
+    
+    SGI_SetWMIcon(display, win, icon, 5, 5);
+
     if (SGI_MapWindow(display, win)) {
         printf("[test] map window failed!\n");
     } else {

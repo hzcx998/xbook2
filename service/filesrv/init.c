@@ -274,9 +274,9 @@ struct file_map file_map_table[] = {
     {PATH_NETSRV, 400 * 512, 1500, 0, NULL},
     {"/login", 100 * 512, 4000, 0, NULL},
     {"/bosh", 100 * 512, 4100, 0, NULL},
-    {"/test", 100 * 512, 4300, 0, NULL},
-    {"/infones", 650 * 512, 4400, 1, infones_argv},
-    {"/mario.nes", 100 * 512, 10000, 0, NULL},
+    {"/test", 100 * 512, 4300, 1, NULL},
+//    {"/infones", 650 * 512, 4400, 1, infones_argv},
+//    {"/mario.nes", 100 * 512, 10000, 0, NULL},
 };
 
 /*

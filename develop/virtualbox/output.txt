@@ -1,6 +1,6 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:13:15:31 date:2020/6/13
+info: time:14:59:16 date:2020/6/13
 info: week day:6 Saturday year day:166
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -40,3 +40,13 @@ infones: arg /mario.nes
 debug: share_mem_map: phy addr:3149000.
 [test] map window at 2016e000, start off:99c
 [infones] map window success!
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] map window at 2016e000
+[infones] unmap window success!
+[infones] map window success!
+[infones] destroy window success!
+[guisrv] env_display_del: display id=1, msg id=7
+[infones] close display ok!
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0

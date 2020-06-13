@@ -7,7 +7,6 @@
 
 typedef struct _SGI_Msg {
     long type;              /* 固定格式：消息类型 */
-    unsigned long id;       /* 消息id */
     unsigned long arg0;     /* 参数 */
     unsigned long arg1;     /* 参数 */
     unsigned long arg2;     /* 参数 */
@@ -19,5 +18,11 @@ typedef struct _SGI_Msg {
 } __attribute__ ((packed)) SGI_Msg;
 
 #define SGI_MSG_LEN (sizeof(struct _SGI_Msg) - sizeof(long))
+
+enum SGI_MsgType {
+    SGI_MSG_UNKNOWN = 0,
+    SGI_MSG_UPDATE_WINDOW,  /* 更新窗口 */
+};
+
 
 #endif  /* __SGI_MESSAGE_H__ */

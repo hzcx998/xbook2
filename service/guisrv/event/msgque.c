@@ -24,6 +24,19 @@ static int __close()
     return 0;
 }
 
+static int do_update_window(gui_msg_t *msg)
+{
+    gui_window_t *win = gui_window_cache_find(msg->arg0);   
+    if (win == NULL) {  /* 没有在缓存中找到窗口 */
+        /*  尝试在窗口链表中寻找 */
+        win = gui_window_get_by_id(msg->arg0);
+        if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
+            return -1;
+    }
+    gui_window_update(win, msg->arg1, msg->arg2, msg->arg3, msg->arg4);
+    return 0;
+}
+
 static int __read()
 {
     gui_msg_t msg;
@@ -31,33 +44,20 @@ static int __read()
     if (res_read(event_msgque.msgid, IPC_NOWAIT, &msg, GUI_MSG_LEN) < 0)
         return -1;
     /* 处理消息 */
-    //msg.type // 窗口id
-    //printf("[%s] get a message.\n", SRV_NAME);
-    //printf("[%s] winid=%d, msgid=%d\n", SRV_NAME, msg.type, msg.id);
-    
-    if (msg.type < 0)
+    if (msg.type <= 0)
         return -1;
 
-    gui_window_t *win = gui_window_cache_find(msg.type);   
-    if (win == NULL) {  /* 没有在缓存中找到窗口 */
-        /*  尝试在窗口链表中寻找 */
-        win = gui_window_get_by_id(msg.type);
-        if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
-            return -1;
-    }
-
-    switch (msg.id)
+    int retval = -1;
+    switch (msg.type)
     {
-    case 1:
-        gui_window_update(win, msg.arg0, msg.arg1, msg.arg2, msg.arg3);
+    case SGI_MSG_UPDATE_WINDOW:
+        retval = do_update_window(&msg);
         break;
     default:
         break;
     }
-
-    return 0;
+    return retval;
 }
-
 
 int init_msgque_event()
 {

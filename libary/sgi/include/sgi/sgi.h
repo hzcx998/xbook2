@@ -95,4 +95,23 @@ int SGI_WindowDrawPixmap(
 int SGI_NextEvent(SGI_Display *display, SGI_Event *event);
 int SGI_PollEvent(SGI_Display *display, SGI_Event *event);
 
+int SGI_SetWMName(
+    SGI_Display *display,
+    SGI_Window window,
+    char *name
+);
+int SGI_SetWMIconName(
+    SGI_Display *display,
+    SGI_Window window,
+    char *name
+);
+
+int SGI_SetWMIcon(
+    SGI_Display *display,
+    SGI_Window window,
+    SGI_Argb *pixmap,
+    unsigned int width,
+    unsigned int height
+);
+
 #endif  /* __SGI_H__ */
