@@ -1,6 +1,6 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:4:13:16 date:2020/6/13
+info: time:13:15:31 date:2020/6/13
 info: week day:6 Saturday year day:166
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -31,7 +31,7 @@ debug: device_mmap: get device phy addr:e0000000
 guisrv: mapped addr 2001d000
 infones: arg /mario.nes
 [GUISRV] open msg guisrv-display1.
-[guisrv] env_display_add: display id=1, msg id=6
+[guisrv] env_display_add: display id=1, msg id=7
 [SGI] open msg guisrv-display1.
 [SGI] oepn display: root window:0 width:800 height:600
 [infones] open display ok!

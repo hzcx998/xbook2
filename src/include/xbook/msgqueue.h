@@ -15,7 +15,7 @@
 #define MSGQ_MAX_NR			128
 
 /* 消息队列上最多允许多少个消息 */
-#define MSGQ_MAX_MSGS		64
+#define MSGQ_MAX_MSGS		128
 
 typedef struct msg {
 	list_t list;				/* 消息链表，添加到消息队列中去 */

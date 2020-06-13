@@ -1,7 +1,7 @@
 info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:13:4:41 date:2020/6/12
-info: week day:5 Friday year day:165
+info: time:13:17:30 date:2020/6/13
+info: week day:6 Saturday year day:166
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -18,6 +18,8 @@ filesrv: disk seq: 1: -> ramdisk
 0:/bosh
 0:/test
 0:/guisrv
+0:/infones
+0:/mario.nes
 
 filesrv: enter receving request state.
 [ok ] graph service start.
@@ -25,139 +27,19 @@ debug: device_mmap: start.
 debug: vbe_mmap: start
 debug: vbe_mmap: length=ea600 mode len=ea600
 debug: vbe_mmap: get phy addr:e8000000
-debug: device_mmap: get dehello, test!
-vice phy addr:e8000000
-guisrv: mapped addr 2001c000
-[guisrv] ready bind service.
-[guisrv] bind service ok.
-guisrv: srvcall seq=0.
-[guisrv] open display
+debug: device_mmap: get device phy addr:e8000000
+guisrv: mapped addr 2001d000
+infones: arg /mario.nes
 [GUISRV] open msg guisrv-display1.
-[guisrv] env_display_add: display id=1, msg id=6
+[guisrv] env_display_add: display id=1, msg id=7
 [SGI] open msg guisrv-display1.
 [SGI] oepn display: root window:0 width:800 height:600
-[test] open display ok!
-guisrv: srvcall seq=1.
-[guisrv] create window: shm name guisrv-win3.
-[guisrv] window display id=1.
+[infones] open display ok!
 [SGI] create window: shm name guisrv-win3.
-ÿ[test] create window success!
-guisrv: srvcall seq=2.
-[guisrv] map window share memory at 38b19c
-debug: share_mem_map: phy addr:2be6000.
-[guisrv] mapped window share memory at 20107000, start off is 19c
-[test] map window at 20012000, start off:19c
-[test] map window success!
-guisrv: srvcall seq=3.
-[GUISRV] update window.
-[test] update window success!
-[test] window handle 1
-[test] event window 1
-Ç[test] mouse motion 315, 199.
-[test] event window 1
-Æ[test] mouse motion 311, 198.
-[test] event window 1
-Ã[test] mouse motion 308, 195.
-[test] event window 1
-¾[test] mouse motion 306, 190.
-[test] event window 1
-´[test] mouse motion 303, 180.
-[test] event window 1
-¯[test] mouse motion 303, 175.
-[test] event window 1
-©[test] mouse motion 303, 169.
-[test] event window 1
-¥[test] mouse motion 304, 165.
-[test] event window 1
-¡[test] mouse motion 306, 161.
-[test] event window 1
-œ[test] mouse motion 311, 156.
-[test] event window 1
-³[test] mouse motion 315, 179.
-[test] event window 1
-³[test] mouse motion 297, 179.
-[test] event window 1
-²[test] mouse motion 293, 178.
-[test] event window 1
-­[test] mouse motion 291, 173.
-[test] event window 1
-¦[test] mouse motion 291, 166.
-[test] event window 1
-›[test] mouse motion 291, 155.
-[test] event window 1
-…[test] mouse motion 310, 133.
-[test] event window 1
-v[test] mouse motion 301, 118.
-[test] event window 1
-v[test] mouse motion 291, 118.
-[test] event window 1
-v[test] mouse motion 290, 118.
-[test] event window 1
-t[test] mouse motion 288, 116.
-[test] event window 1
-n[test] mouse motion 288, 110.
-[test] event window 1
-d[test] mouse motion 296, 100.
-[test] event window 1
-[[test] mouse motion 311, 91.
-[test] event window 1
-~[test] mouse motion 307, 126.
-[test] event window 1
-~[test] mouse motion 296, 126.
-[test] event window 1
-{[test] mouse motion 295, 123.
-[test] event window 1
-t[test] mouse motion 295, 116.
-[test] event window 1
-m[test] mouse motion 301, 109.
-[test] event window 1
-e[test] mouse motion 313, 101.
-[test] event window 1
-+[test] mouse motion 315, 43.
-[test] event window 1
-)[test] mouse motion 303, 41.
-[test] event window 1
-'[test] mouse motion 288, 39.
-[test] event window 1
-$[test] mouse motion 280, 36.
-[test] event window 1
-#[test] mouse motion 273, 35.
-[test] event window 1
-#[test] mouse motion 265, 35.
-[test] event window 1
-"[test] mouse motion 260, 34.
-[test] event window 1
-![test] mouse motion 257, 33.
-[test] event window 1
-![test] mouse motion 255, 33.
-[test] event window 1
-[test] mouse motion 252, 30.
-[test] event window 1
-[test] mouse motion 248, 29.
-[test] event window 1
-[test] mouse motion 246, 28.
-[test] event window 1
-[test] mouse motion 240, 24.
-[test] event window 1
-[test] mouse motion 238, 23.
-[test] event window 1
-[test] mouse motion 235, 19.
-[test] event window 1
-[test] mouse motion 233, 15.
-[test] event window 1
-[test] mouse motion 227, 8.
-[test] event window 1
-[test] mouse motion 225, 5.
-[test] event window 1
-[test] mouse motion 215, 0.
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[button] down handler 0, 272, 13
-[button] tag maxim
-[button] down handler 0, 255, 12
-[button] tag minim
-[button] up handler 0, 255, 12
-[button] tag minim
+[infones] create window success!
+debug: share_mem_map: phy addr:3289000.
+[test] map window at 2016e000, start off:99c
+[infones] map window success!
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
 [mouse] change state 0 to 1
@@ -168,36 +50,3 @@ $[test] mouse motion 280, 36.
 [mouse] change state 0 to 0
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[button] down handler 0, 293, 6
-[button] tag maxim
-[button] up handler 0, 293, 6
-[button] tag maxim
-[button] down handler 0, 313, 7
-[button] tag close
-[button] up handler 0, 313, 7
-[button] tag close
-[button] down handler 0, 313, 7
-[button] tag close
-[button] up handler 0, 313, 7
-[button] tag close
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[button] down handler 0, 182, 13
-[button] tag minim
-[button] up handler 0, 182, 13
-[button] tag minim
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[button] down handler 0, 261, 16
-[button] tag minim
-[button] up handler 0, 261, 16
-[button] tag minim
-[keyboard ] key 97->— down.
-[keyboard ] key 99->™ down.
-[keyboard ] key 97->— up.
-[keyboard ] key 99->™ up.

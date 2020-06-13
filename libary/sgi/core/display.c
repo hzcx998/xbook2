@@ -127,11 +127,19 @@ SGI_Display *SGI_OpenDisplay()
     if (msgid < 0) 
         goto od_free_display;
     
-    SGI_DisplayWindowInfoInit(display);
     /* 消息id */
-    display->msgid = msgid;
+    display->event_msgid = msgid;
     display->event_window = 0;
 
+    /* 图形服务的接收消息队列 */
+    msgid = res_open("guisrv-msgque", RES_IPC | IPC_MSG | IPC_CREAT, 0);
+    if (msgid < 0) 
+        goto od_event_msgid;
+
+    display->request_msgid = msgid;
+
+    SGI_DisplayWindowInfoInit(display);
+    
     /* 根窗口信息 */
     SGI_WindowInfo winfo;
     winfo.winid = display->root_window;
@@ -146,6 +154,8 @@ SGI_Display *SGI_OpenDisplay()
         display->root_window, display->width, display->height);
 
     return display;
+od_event_msgid:
+    res_close(display->event_msgid);
 od_free_display:
     SGI_Free(display);
     return NULL;
@@ -163,8 +173,11 @@ int SGI_CloseDisplay(SGI_Display *display)
         SGI_DisplayWindowInfoDel(display, i);
     }
 
-    if (display->msgid >= 0)
-        res_close(display->msgid);
+    if (display->request_msgid >= 0)
+        res_close(display->request_msgid);
+    
+    if (display->event_msgid >= 0)
+        res_close(display->event_msgid);
 
     /* 发送关闭显示服务请求 */
     DEFINE_SRVARG(srvarg);

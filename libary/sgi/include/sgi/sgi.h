@@ -16,7 +16,8 @@ typedef struct _SGI_Display
     unsigned int height;            /* 窗口高度 */
     SGI_Window root_window;         /* 根窗口 */
     SGI_WindowInfo winfo_table[SGI_WINDOW_HANDLE_NR]; /* 窗口信息表 */
-    int msgid;                      /* 消息队列：用来接收事件 */
+    int event_msgid;                /* 消息队列：用来接收事件 */
+    int request_msgid;              /* 消息队列：用来请求事件 */
     unsigned int id;                /* 显示id */
     SGI_Window event_window;        /* 接收事件的窗口 */
 } SGI_Display;
@@ -92,5 +93,6 @@ int SGI_WindowDrawPixmap(
 );
 
 int SGI_NextEvent(SGI_Display *display, SGI_Event *event);
+int SGI_PollEvent(SGI_Display *display, SGI_Event *event);
 
 #endif  /* __SGI_H__ */

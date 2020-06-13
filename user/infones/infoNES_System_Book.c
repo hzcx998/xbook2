@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <sgi/sgi.h>
+#include <sys/time.h>
 
 #include <InfoNES.h>
 #include <InfoNES_System.h>
@@ -502,15 +503,19 @@ void InfoNES_LoadFrame()
     //GUI_DrawBitmapPlus(0, 40, NES_DISP_WIDTH, NES_DISP_HEIGHT, (unsigned int *)graphBuffer);
     SGI_WindowDrawPixmap(display, win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT, (SGI_Argb *) graphBuffer);
     SGI_UpdateWindow(display, win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT);
-
+    
+    /* 延迟 */
+    clock_t start;
+    start = clock();
+    while ((clock() - start) < 7);
 }
 
 // 按键处理
-void PollEvent(void)
+int PollEvent(void)
 {
     SGI_Event event;
-    if (SGI_NextEvent(display, &event))
-        return;
+    if (SGI_PollEvent(display, &event))
+        return -1;
     switch (event.type)
     {
     case SGI_KEY:
@@ -616,6 +621,7 @@ void PollEvent(void)
     default:
         break;
     }
+    return 0;
 }
 
 /*===================================================================*/
@@ -639,7 +645,8 @@ void InfoNES_PadState( DWORD *pdwKeyPad1, DWORD *pdwPad2, DWORD *pdwSystem )
  *      Input for InfoNES
  *
  */
-PollEvent();
+    /* 如果有多个事件就一直获取 */
+    while (!PollEvent());
   /* Transfer joypad state */
   *pdwKeyPad1   = dwKeyPad1;
   *pdwPad2   = dwKeyPad2;
@@ -738,7 +745,10 @@ void InfoNES_SoundOutput( int samples, BYTE *wave1, BYTE *wave2, BYTE *wave3, BY
 /*            InfoNES_Wait() : Wait Emulation if required            */
 /*                                                                   */
 /*===================================================================*/
-void InfoNES_Wait() {}
+void InfoNES_Wait() 
+{
+    
+}
 
 /*===================================================================*/
 /*                                                                   */

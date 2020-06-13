@@ -81,12 +81,14 @@ CORE_OBJS 		= 	core/interface.o \
 INPUT_OBJS 		= 	input/keyboard.o \
 					input/mouse.o \
 
+EVENT_OBJS 		= 	event/msgque.o \
+
 MAIN_OBJS 		= 	main.o \
 
 				
 OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) \
 		$(FONT_OBJS) $(ENVIRONMENT_OBJS) $(WIDGET_OBJS) $(CORE_OBJS) \
-		$(INPUT_OBJS)
+		$(INPUT_OBJS) $(EVENT_OBJS)
 
 LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 

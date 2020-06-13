@@ -18,6 +18,8 @@
 #include <environment/interface.h>
 #include <input/keyboard.h>
 
+#include <event/msgque.h>
+
 #include <guisrv.h>
 
 int init_guisrv()
@@ -33,6 +35,10 @@ int init_guisrv()
     }
     if (init_keyboard_driver()) {
         printf("[failed ] %s: init keyboard driver failed!\n", SRV_NAME);
+        return -1;
+    }
+    
+    if (init_msgque_event()) {
         return -1;
     }
 
@@ -54,6 +60,10 @@ int open_guisrv()
         printf("[failed ] %s: open keyboard driver failed!\n", SRV_NAME);
         return -1;
     }
+    if (event_msgque.open()) {
+        printf("[failed ] %s: open mesque event failed!\n", SRV_NAME);
+        return -1;
+    }
     return 0;
 }
 
@@ -72,6 +82,11 @@ int close_guisrv()
         printf("[failed ] %s: close keyboard driver failed!\n", SRV_NAME);
         return -1;
     }
+    if (event_msgque.close()) {
+        printf("[failed ] %s: close msgque event failed!\n", SRV_NAME);
+        return -1;
+    }
+
     return 0;
 }
 
@@ -87,6 +102,7 @@ int start_guisrv()
         printf("[failed ] %s: init window management failed!\n", SRV_NAME);
         return -1;
     }
+  
     return 0;
 }
 
@@ -97,7 +113,8 @@ int loop_guisrv()
         drv_mouse.read();
         drv_keyboard.read(); 
         // 接收消息队列，根据消息队列内容处理消息
-        
+        event_msgque.read();
+
     }
 }
 

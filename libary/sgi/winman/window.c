@@ -1,5 +1,6 @@
 #include <sgi/sgi.h>
 #include <sgi/sgii.h>
+#include <sgi/sgim.h>
 #include <sys/srvcall.h>
 #include <srv/guisrv.h>
 #include <string.h>
@@ -240,6 +241,19 @@ int SGI_UpdateWindow(
     if (!winfo)
         return -1;
 
+    /* 使用消息来传递交互信息，速度比服务调用快许多，但是不支持同步 */
+    SGI_Msg msg;
+    msg.type    = winfo->winid;     /* 类型是窗口id */
+    msg.id      = 1;                /* UPDATE_WINDOW */
+    msg.arg0    = left;
+    msg.arg1    = top;
+    msg.arg2    = right;
+    msg.arg3    = bottom;
+    /* 写入消息 */    
+    if (res_write(display->request_msgid, IPC_NOWAIT, &msg, SGI_MSG_LEN) < 0)
+        return -1;
+
+#if 0
     /* 构建服务调用消息 */
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, GUISRV_UPDATE_WIN, 0);
@@ -256,7 +270,7 @@ int SGI_UpdateWindow(
     
     if (GETSRV_RETVAL(&srvarg, int) == -1)
         return -1;
-    
+#endif    
     /* 执行成功 */
     return 0;
 }

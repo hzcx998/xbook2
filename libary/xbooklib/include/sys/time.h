@@ -9,7 +9,8 @@
 #define CLOCK_PROCESS_CPUTIME_ID  3 /* 本进程运行时间*/
 #define CLOCK_THREAD_CPUTIME_ID   4 /*本线程运行时间*/
 
-#define CLOCKS_PER_SEC ((clock_t)100)   /* 1秒100个时钟 */
+#define CLOCKS_PER_SEC  (100 * 5)   /* 1秒的时钟数 */
+#define HZ_PER_CLOCKS   (CLOCKS_PER_SEC / 100)   /* 每个时钟的HZ数 */
 
 struct timeval {
     long tv_sec;         /* seconds */

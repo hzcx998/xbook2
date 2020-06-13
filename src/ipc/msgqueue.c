@@ -227,7 +227,9 @@ int msg_queue_send(int msgid, void *msgbuf, size_t size, int msgflg)
     if (msgq->msgs > MSGQ_MAX_MSGS) {
         if (msgflg & IPC_NOWAIT) {  /* 有不等待标志，直接返回 */
             semaphore_up(&msgq->mutex);
+#if DEBUG_MSGQ == 1
             printk(KERN_DEBUG "msg_queue_send: message queue full, no wait!\n");
+#endif
             return -1;
         }
 #if DEBUG_MSGQ == 1
@@ -301,8 +303,9 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
     if (!msgq->msgs) {
         if (msgflg & IPC_NOWAIT) {  /* 有不等待标志，直接返回 */
             semaphore_up(&msgq->mutex);
+#if DEBUG_MSGQ == 1            
             printk(KERN_DEBUG "msg_queue_recv: message queue empty, no wait!\n");
-            
+#endif            
             return -1;
         }
 #if DEBUG_MSGQ == 1
