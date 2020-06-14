@@ -14,6 +14,7 @@
 #include <sys/input.h>
 
 #include <environment/winctl.h>
+#include <environment/statusbar.h>
 
 #define DEBUG_LOCAL 0
 
@@ -244,8 +245,9 @@ void __motion()
             /* 修复窗口位置 */
             if (wx < GUI_WINCTL_WIDTH)
                 wx = GUI_WINCTL_WIDTH;
-            if (wy < 0)
-                wy = 0;
+            if (wy < GUI_STATUSBAR_HEIGHT)
+                wy = GUI_STATUSBAR_HEIGHT;
+
             layer_set_xy(input_mouse.hold_window->layer, wx, wy);
         } else {
             gui_window_t *window;
@@ -277,7 +279,7 @@ void __motion()
                         event.motion.x = local_mx;
                         event.motion.y = local_my;
                         gui_window_send_event(window, &event);
-                        
+
                         /* 对于hover来说，就是离开 */
                         event.motion.state = SGI_LEAVE;
                         gui_window_send_event(input_mouse.hover_window, &event);

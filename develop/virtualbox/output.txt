@@ -1,6 +1,6 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:17:28:52 date:2020/6/14
+info: time:18:47:25 date:2020/6/14
 info: week day:0 Sunday year day:167
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -33,132 +33,54 @@ hello, test!
 [guisrv] ready bind service.
 [guisrv] bind service ok.
 infones: arg /mario.nes
-guisrv: srvcall seq=0.
 [guisrv] open display
 [GUISRV] open msg guisrv-display1.
 [guisrv] env_display_add: display id=1, msg id=7
+guisrv: srvcall seq=0 callnum 0.
 [SGI] open msg guisrv-display1.
 [SGI] oepn display: root window:0 width:800 height:600
 [test] open display ok!
-guisrv: srvcall seq=1.
 [guisrv] create window: shm name guisrv-win3.
 [guisrv] window display id=1.
+guisrv: srvcall seq=1 callnum 2.
 [SGI] create window: shm name guisrv-win3.
 ÿ[test] create window success!
-guisrv: srvcall seq=2.
-guisrv: srvcall seq=3.
+guisrv: srvcall seq=2 callnum 6.
 [guisrv] set icon (5, 5)
-guisrv: srvcall seq=4.
-[guisrv] map window share memory at 346540
+guisrv: srvcall seq=3 callnum 8.
+[guisrv] map window share memory at 34654c
 debug: share_mem_map: phy addr:3128000.
-[guisrv] mapped window share memory at 2010c000, start off is 540
-[test] map window at 20014000, start off:540
+[guisrv] mapped window share memory at 2010c000, start off is 54c
+guisrv: srvcall seq=4 callnum 4.
+[test] map window at 20014000, start off:54c
 [test] map window success!
 [test] update window success!
 [test] window handle 1
-guisrv: srvcall seq=5.
+[guisrv] select input mask 6b
+guisrv: srvcall seq=5 callnum 9.
 [guisrv] open display
 [GUISRV] open msg guisrv-display2.
 [guisrv] env_display_add: display id=2, msg id=9
+guisrv: srvcall seq=6 callnum 0.
 [SGI] open msg guisrv-display2.
 [SGI] oepn display: root window:0 width:800 height:600
 [infones] open display ok!
-guisrv: srvcall seq=6.
 [guisrv] create window: shm name guisrv-win4.
 [guisrv] window display id=2.
+guisrv: srvcall seq=7 callnum 2.
 [SGI] create window: shm name guisrv-win4.
-ÿ[infones] create window success!
-guisrv: srvcall seq=7.
-[guisrv] map window share memory at 397c24
-debug: share_mem_map: phy addr:317a000.
-[guisrv] mapped window share memory at 20157000, start off is c24
-[test] map window at 2016e000, start off:c24
+[infones] create window success!
+[guisrv] map window share memory at 397c34
+ÿdebug: share_mem_map: phy addr:317a000.
+[guisrv] mapped window share memory at 20157000, start off is c34
+guisrv: srvcall seq=8 callnum 4.
+[test] map window at 2016f000, start off:c34
 [infones] map window success!
-[test] mouse motion 316, 168.
-[test] mouse motion 313, 164.
-[test] mouse motion 296, 141.
-[test] mouse motion 284, 128.
-[test] mouse motion 277, 118.
-[test] mouse motion 274, 112.
-[test] mouse motion 274, 104.
-[test] mouse motion 270, 81.
-[test] mouse motion 261, 61.
-[test] mouse motion 256, 55.
-[test] mouse motion 260, 61.
-[test] mouse motion 262, 62.
-[test] mouse motion 264, 66.
-[test] mouse motion 265, 69.
-[test] mouse motion 268, 77.
-[test] mouse motion 270, 86.
-[test] mouse motion 270, 89.
-[test] mouse motion 274, 101.
-[test] mouse motion 274, 107.
-[test] mouse motion 274, 114.
-[test] mouse motion 274, 115.
-[test] mouse motion 278, 119.
-[test] mouse motion 283, 125.
-[test] mouse motion 285, 128.
-[test] mouse motion 286, 131.
-[test] mouse motion 293, 138.
-[test] mouse motion 299, 149.
-[test] mouse motion 303, 154.
-[test] mouse motion 307, 156.
-[test] mouse motion 309, 159.
-[test] mouse motion 314, 165.
+[test] mouse enter window motion 317, 149.
+ÿ[test] left button pressed.
+[test] left button released.
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[test] mouse motion 315, 36.
-[test] mouse motion 298, 28.
-[test] mouse motion 282, 16.
-[test] mouse motion 278, 13.
-[test] mouse motion 272, 7.
-[test] mouse motion 270, 4.
-[test] mouse motion 267, 1.
-[test] mouse motion 266, 0.
-[test] mouse motion 268, 2.
-[test] mouse motion 271, 5.
-[test] mouse motion 274, 8.
-[test] mouse motion 274, 9.
-[test] mouse motion 276, 11.
-[test] mouse motion 279, 15.
-[test] mouse motion 284, 19.
-[test] mouse motion 286, 20.
-[test] mouse motion 288, 21.
-[test] mouse motion 293, 24.
-[test] mouse motion 295, 26.
-[test] mouse motion 304, 30.
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[test] mouse motion 303, 2.
-[test] mouse motion 263, 2.
-[test] mouse motion 258, 2.
-[test] mouse motion 250, 0.
-[test] mouse motion 253, 1.
-[test] mouse motion 255, 2.
-[test] mouse motion 256, 2.
-[test] mouse motion 262, 2.
-[test] mouse motion 267, 2.
-[test] mouse motion 278, 2.
-[test] mouse motion 284, 2.
-[test] mouse motion 313, 2.
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[button] down handler 0, 272, 11
-[button] tag maxim
-[button] down handler 0, 261, 11
-[button] tag minim
-[button] up handler 0, 261, 11
-[button] tag minim
-[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[test] mouse motion 182, 0.
-[test] mouse motion 242, 10.
-[test] mouse motion 276, 15.
-[test] mouse motion 264, 13.
-[test] mouse motion 230, 8.
-[test] mouse motion 206, 3.
-[test] mouse motion 194, 2.
-[mouse] change state 0 to 1
+[test] mouse leave window motion 332, 156.
+ð[mouse] change state 0 to 1
 [mouse] change state 0 to 0
