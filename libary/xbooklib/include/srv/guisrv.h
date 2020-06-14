@@ -12,6 +12,7 @@ enum guisrv_call_num {
     GUISRV_SET_WMNAME,
     GUISRV_SET_WMICONNAME,
     GUISRV_SET_WMICON,
+    GUISRV_SELECT_INPUT,
     GUISRV_CALL_NR,    /* 最大数量 */
 };
 

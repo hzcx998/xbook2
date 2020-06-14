@@ -16,6 +16,8 @@
 #include <window/window.h>
 #include <environment/mouse.h>
 #include <environment/interface.h>
+#include <environment/statusbar.h>
+
 #include <input/keyboard.h>
 
 #include <event/msgque.h>
@@ -115,15 +117,20 @@ int loop_guisrv()
         drv_keyboard.read(); 
         // 接收消息队列，根据消息队列内容处理消息
         event_msgque.read();
-
+        statusbar_manager.read();
+        
     }
 }
 
 void *gui_malloc(size_t size)
 {
+    //return malloc(size);
+
     void *p = (void *)sbrk(0);
     if (p == (void *) -1)
         return NULL;
+
+    size = (size + 3) & (~3);
     if (sbrk(size) == (void *) -1)
         return NULL;
     return p;
@@ -132,6 +139,7 @@ void *gui_malloc(size_t size)
 void gui_free(void *ptr)
 {
     /* invalid */
+    free(ptr);
 }
 
 /*

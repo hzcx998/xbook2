@@ -1,6 +1,7 @@
 #include <sgi/sgi.h>
 #include <sgi/sgii.h>
 #include <sgi/sgim.h>
+#include <sgi/sgie.h>
 #include <sys/srvcall.h>
 #include <srv/guisrv.h>
 #include <string.h>
@@ -84,6 +85,7 @@ SGI_Window SGI_CreateSimpleWindow(
     winfo.start_off = 0;
     winfo.width = width;
     winfo.height = height;
+    winfo.input_mask = SGI_EventMaskDefault;
     
     /* 把窗口id放入窗口句柄表 */
     SGI_Window win = SGI_DisplayWindowInfoAdd(display, &winfo);
@@ -573,7 +575,7 @@ int SGI_SetWMIcon(
     unsigned int width,
     unsigned int height
 ) {
-     if (!display)
+    if (!display)
         return -1;
     if (!display->connected)
         return -1;
@@ -599,4 +601,39 @@ int SGI_SetWMIcon(
     if (GETSRV_RETVAL(&srvarg, int) == -1)
         return -1;
     return 0;
+}
+
+
+int SGI_SelectInput(
+    SGI_Display *display,
+    SGI_Window w,
+    long mask
+) {
+    if (!display)
+        return -1;
+    if (!display->connected)
+        return -1;
+    if (SGI_BAD_WIN_HANDLE(w))
+        return -1;
+
+    SGI_WindowInfo *winfo = SGI_DISPLAY_GET_WININFO(display, w);
+    if (!winfo)
+        return -1;
+
+    winfo->input_mask = mask;
+
+    /* 构建服务调用消息 */
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, GUISRV_SELECT_INPUT, 0);
+    SETSRV_ARG(&srvarg, 1, winfo->winid, 0);
+    SETSRV_ARG(&srvarg, 2, mask, 0);
+    SETSRV_RETVAL(&srvarg, -1);
+
+    /* 执行服务调用 */
+    if (srvcall(SRV_GUI, &srvarg))
+        return -1;
+    if (GETSRV_RETVAL(&srvarg, int) == -1)
+        return -1;
+
+    return 0;   
 }

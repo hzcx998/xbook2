@@ -114,4 +114,10 @@ int SGI_SetWMIcon(
     unsigned int height
 );
 
+int SGI_SelectInput(
+    SGI_Display *display,
+    SGI_Window w,
+    long mask
+);
+
 #endif  /* __SGI_H__ */

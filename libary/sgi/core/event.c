@@ -57,3 +57,5 @@ int SGI_PollEvent(SGI_Display *display, SGI_Event *event)
     }
     return -1;
 }
+
+

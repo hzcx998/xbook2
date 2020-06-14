@@ -13,7 +13,7 @@
 #include <sys/ipc.h>
 #include <math.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 #define SRVBUF_256      256
 #define SRVBUF_32K      32768
@@ -146,6 +146,14 @@ static int do_create_window(srvarg_t *arg)
 #if DEBUG_LOCAL == 1
     printf("[%s] window display id=%d.\n", SRV_NAME, win->display_id);
 #endif
+    /* 创建窗口控制 */
+    win->winctl = gui_create_winctl(win);
+    if (win->winctl == NULL) {
+        res_close(win->shmid);      /* 关闭共享内存 */
+        gui_destroy_window(win);    /* 销毁窗口 */
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
 
     /* 创建成功，添加到窗口缓存表 */
     gui_window_cache_add(win);
@@ -172,6 +180,10 @@ static int do_destroy_window(srvarg_t *arg)
     
     /* 先从窗口缓存表中删除 */
     gui_window_cache_del(win);
+
+    /* 销毁窗口控制 */
+    gui_destroy_winctl(win->winctl);
+    win->winctl = NULL;
 
     /* 关闭共享内存 */
     res_close(win->shmid);
@@ -224,8 +236,13 @@ static int do_map_window(srvarg_t *arg)
     printf("[guisrv] mapped window share memory at %x, start off is %x\n", 
         mapped, win->start_off);
 #endif    
+    
     /* 映射完后显示窗口 */
     gui_window_show(win);
+
+    /* 添加到窗口控制器，并显示 */
+    gui_winctl_add(win->winctl);
+    gui_winctl_show();
 
     /* 返回页内偏移 */
     SETSRV_RETVAL(arg, win->start_off);
@@ -250,8 +267,12 @@ static int do_unmap_window(srvarg_t *arg)
             goto mw_error;
     }
 
+    /* 从窗口控制器删除窗口控制 */
+    gui_winctl_del(win->winctl);
+
     /* 先隐藏窗口 */
     gui_window_hide(win);
+
     /* 解除窗口的映射 */
 #if DEBUG_LOCAL == 1
     printf("[guisrv] unmap window share memory at %x\n", win->mapped_addr);
@@ -392,6 +413,31 @@ setwmn_error:
     return -1;
 }
 
+static int do_select_input(srvarg_t *arg)
+{
+    /* 获取窗口id */
+    int wid = GETSRV_DATA(arg, 1, int);
+    if (wid < 0)
+        goto si_error;
+
+    gui_window_t *win = gui_window_cache_find(wid);   
+    if (win == NULL) {  /* 没有在缓存中找到窗口 */
+        /*  尝试在窗口链表中寻找 */
+        win = gui_window_get_by_id(wid);
+        if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
+            goto si_error;
+    }
+
+    /// input mask
+    win->input_mask = GETSRV_DATA(arg, 2, long);
+    printf("[%s] select input mask %x\n", SRV_NAME, win->input_mask);
+    SETSRV_RETVAL(arg, 0);
+    return 0;
+si_error:
+    SETSRV_RETVAL(arg, -1);
+    return -1;
+}
+
 /* 调用表 */
 guisrv_func_t guisrv_call_table[] = {
     do_open_display,
@@ -403,6 +449,7 @@ guisrv_func_t guisrv_call_table[] = {
     do_set_wm_name,
     do_set_wm_icon_name,
     do_set_wm_icon,
+    do_select_input,
 };
 
 void *guisrv_echo_thread(void *arg)
@@ -432,15 +479,14 @@ void *guisrv_echo_thread(void *arg)
             continue;
         }
 
-#if DEBUG_LOCAL == 1
-        printf("%s: srvcall seq=%d.\n", SRV_NAME, seq);
-#endif 
         /* 2.处理服务 */
         callnum = GETSRV_DATA(&srvarg, 0, int);
         if (callnum >= 0 && callnum < GUISRV_CALL_NR) {
             guisrv_call_table[callnum](&srvarg);
         }
-
+#if DEBUG_LOCAL == 1
+        printf("%s: srvcall seq=%d callnum %d.\n", SRV_NAME, seq, callnum);
+#endif 
         seq++;
         /* 3.应答服务 */
         srvcall_ack(SRV_GUI, &srvarg);   

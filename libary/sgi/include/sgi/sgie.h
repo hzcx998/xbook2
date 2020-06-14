@@ -5,8 +5,10 @@
 
 /* 图形事件状态 */
 typedef enum _SGI_EventState  {
-    SGI_PRESSED   = 1,    /* 按下状态 */
-    SGI_RELEASED,         /* 释放状态 */
+    SGI_PRESSED   = 1,      /* 按下状态 */
+    SGI_RELEASED,           /* 释放状态 */
+    SGI_ENTER,              /* 进入状态 */
+    SGI_LEAVE,              /* 离开状态 */
 } SGI_EventState;
 
 /* 图形键盘输入 */
@@ -19,6 +21,7 @@ typedef struct _SGI_KeyboardEvent {
 /* 图形鼠标移动 */
 typedef struct _SGI_MouseMotionEvent {
     unsigned char type;                 /* 鼠标移动事件类型：SGI_MOUSE_MOTION */
+    unsigned char state;                /* 移动状态： */
     int x;                              /* x横坐标 */
     int y;                              /* y纵坐标 */
 } SGI_MouseMotionEvent;
@@ -57,5 +60,22 @@ typedef struct _SGI_EventMsg {
     SGI_Event event;
 } SGI_EventMsg;
 
+/* 窗口可以接收的事件
+鼠标点击，鼠标弹起，鼠标移动
+按键按下，按键弹起
+鼠标进入窗口，鼠标离开窗口
+ */
+enum SGI_EventMask {
+    SGI_ButtonPressMask     = 0x01,
+    SGI_ButtonRleaseMask    = 0x02,
+    SGI_PointerMotionMask   = 0x04,
+    SGI_KeyPressMask        = 0x08,
+    SGI_KeyRleaseMask       = 0x10,
+    SGI_EnterWindow         = 0x20,
+    SGI_LeaveWindow         = 0x40,
+    SGI_EventMaskDefault    = (SGI_ButtonPressMask | SGI_ButtonRleaseMask |
+                            SGI_KeyPressMask |  SGI_KeyRleaseMask | SGI_EnterWindow |
+                            SGI_LeaveWindow),
+};
 
 #endif  /* __SGI_EventT_H__ */

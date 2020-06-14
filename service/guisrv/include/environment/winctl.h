@@ -10,12 +10,13 @@
 
 #define GUI_WINCTL_WIDTH       64
 
-#define GUI_WINCTL_BACKCOLOR    COLOR_RGB(0,64,128)
+#define GUI_WINCTL_BACK_COLOR    COLOR_RGB(0,64,128)
+#define GUI_WINCTL_ACTIVE_COLOR  COLOR_RGB(0,96,192)
 
 typedef struct {
-
+    bool                ishidden;       /* 窗口隐藏 */
     gui_button_t        *button;        /* 按钮 */
-    struct _gui_window  *window;  /* 对应的窗口，存在互相调用的时候，就用struct原型 */
+    struct _gui_window  *window;        /* 对应的窗口，存在互相调用的时候，就用struct原型 */
     list_t              list;           /* 窗口控制链表 */
 } gui_winctl_t;
 
@@ -23,7 +24,9 @@ typedef struct {
 typedef struct {
     struct _gui_window  *window;            /* 管理器所在窗口 */
     list_t              winctl_list_head;   /* 窗口控制链表头 */
-    GUI_COLOR           backcolor;          /* 背景颜色 */
+    GUI_COLOR           back_color;          /* 背景颜色 */
+    GUI_COLOR           active_color;       /* 激活后的颜色 */
+
 } gui_winctl_manager_t;
 
 int init_winctl_manager();

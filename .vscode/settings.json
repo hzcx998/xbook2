@@ -77,6 +77,14 @@
         "filesrv.h": "c",
         "layer.h": "c",
         "point.h": "c",
-        "line.h": "c"
+        "line.h": "c",
+        "draw.h": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "xmemory0": "c",
+        "xrefwrap": "c",
+        "xstddef": "c",
+        "xtr1common": "c",
+        "xutility": "c"
     }
 }

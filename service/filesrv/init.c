@@ -275,7 +275,7 @@ struct file_map file_map_table[] = {
     {"/login", 100 * 512, 4000, 0, NULL},
     {"/bosh", 100 * 512, 4100, 0, NULL},
     {"/test", 100 * 512, 4300, 1, NULL},
-//    {"/infones", 650 * 512, 4400, 1, infones_argv},
+    {"/infones", 650 * 512, 4400, 1, infones_argv},
 //    {"/mario.nes", 100 * 512, 10000, 0, NULL},
 };
 

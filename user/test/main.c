@@ -65,14 +65,17 @@ int main(int argc, char *argv[])
         }
     }
     SGI_WindowDrawPixmap(display, win, 100, 200, 10, 10, pixmap);
-
+    
     if (SGI_UpdateWindow(display, win, 0, 0, 320, 240))
         printf("[test] update window failed!\n");
     else
         printf("[test] update window success!\n");
 
-
+    
     printf("[test] window handle %d\n", win);
+
+    SGI_SelectInput(display, win, SGI_ButtonPressMask | SGI_ButtonRleaseMask |
+        SGI_KeyPressMask | SGI_EnterWindow | SGI_LeaveWindow);
 
     SGI_Event event;
     SGI_Window event_window;
@@ -104,7 +107,13 @@ int main(int argc, char *argv[])
             }
             break;
         case SGI_MOUSE_MOTION:
-            printf("[test] mouse motion %d, %d.\n", event.motion.x, event.motion.y);
+            if (event.motion.state == SGI_ENTER) {
+                printf("[test] mouse enter window motion %d, %d.\n", event.motion.x, event.motion.y);
+            } else if (event.motion.state == SGI_LEAVE) {
+                printf("[test] mouse leave window motion %d, %d.\n", event.motion.x, event.motion.y);
+            } else {
+                printf("[test] mouse motion %d, %d.\n", event.motion.x, event.motion.y);
+            }
             break;
         case SGI_KEY:
             if (event.key.state == SGI_PRESSED)

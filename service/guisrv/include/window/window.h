@@ -55,12 +55,14 @@ typedef struct _gui_window {
     gui_button_t *btn_maxim;    /* “最大化”按钮 */
     gui_label_t  *text_title;   /* 标题文本 */
     
+    void *winctl;               /* 窗口控制 */
+
 /// 客户端交互信息
     int shmid;                  /* 共享内存的id，用来映射客户端窗口 */
     void *mapped_addr;          /* 共享内存映射后的地址 */
     unsigned short start_off;   /* 起始偏移 */
     unsigned int display_id;    /* 窗口所在的显示id */
-
+    long input_mask;            /* 输入遮罩 */
 } gui_window_t;
 
 extern gui_window_t *window_current;
@@ -100,5 +102,7 @@ gui_window_t *gui_window_get_by_id(unsigned int wid);
 int gui_window_cache_add(gui_window_t *win);
 int gui_window_cache_del(gui_window_t *win);
 gui_window_t *gui_window_cache_find(unsigned int wid);
+void gui_window_hide_all();
+void gui_window_show_all();
 
 #endif  /* __GUISRV_WINDOW_H__ */

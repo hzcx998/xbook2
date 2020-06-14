@@ -30,6 +30,7 @@ static void __button_down(int btn)
     gui_window_t *window;
     layer_t *layer;
     int local_mx, local_my;
+    char need_update_winctl = 0;
     /* 查看点击的位置，看是否是一个 */
     list_for_each_owner_reverse (layer, &layer_show_list_head, list) {
         if (layer == layer_topest)
@@ -107,8 +108,14 @@ static void __button_down(int btn)
 #if DEBUG_LOCAL == 1    
                 printf("no window title\n");
 #endif
+                /* 记录是否需要更新窗口显示 */
+                if (window != current_window)
+                    need_update_winctl = 1;
                 /* 聚焦窗口 */
                 gui_window_focus(window);
+                if (need_update_winctl)
+                    gui_winctl_show();
+
                 /* 发送事件到窗口 */
                 gui_event_t event;
                 event.type = SGI_MOUSE_BUTTON;
@@ -262,6 +269,18 @@ void __motion()
                     if (input_mouse.hover_window != window && input_mouse.hover_window) { /* 从其他窗口进入当前窗口 */
                         /* 离开上个窗口的控件 */
                         gui_widget_mouse_motion(&input_mouse.hover_window->layer->widget_list_head, -1, -1);
+
+                        /* 对于window来说，就是进入*/
+                        gui_event_t event;
+                        event.type = SGI_MOUSE_MOTION;
+                        event.motion.state = SGI_ENTER;
+                        event.motion.x = local_mx;
+                        event.motion.y = local_my;
+                        gui_window_send_event(window, &event);
+                        
+                        /* 对于hover来说，就是离开 */
+                        event.motion.state = SGI_LEAVE;
+                        gui_window_send_event(input_mouse.hover_window, &event);
                     }
                     input_mouse.hover_window = window;    /* 悬停在某个窗口 */
                     
@@ -271,6 +290,7 @@ void __motion()
                             /* 发送消息到窗口 */
                             gui_event_t event;
                             event.type = SGI_MOUSE_MOTION;
+                            event.motion.state = 0;
                             event.motion.x = local_mx - window->x_off;
                             event.motion.y = local_my - window->y_off;
                             gui_window_send_event(window, &event);
@@ -279,6 +299,7 @@ void __motion()
                         /* 发送消息到窗口 */
                         gui_event_t event;
                         event.type = SGI_MOUSE_MOTION;
+                        event.motion.state = 0;
                         event.motion.x = local_mx;
                         event.motion.y = local_my;
                         gui_window_send_event(window, &event);

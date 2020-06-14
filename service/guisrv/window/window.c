@@ -7,9 +7,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <guisrv.h>
+#include <sgi/sgie.h>
 
 #include <environment/desktop.h>
-#include <environment/mouse.h>
+#include <environment/winctl.h>
+#include <environment/statusbar.h>
 #include <input/keyboard.h>
 
 /* 图层显示链表 */
@@ -265,6 +267,11 @@ gui_window_t *gui_create_window(
         y_off = GUIW_TITLE_HEIGHT;
     }
 
+    /* 位置偏移设定 */
+    if (!(attr & GUIW_FIXED)) {
+        x += GUI_WINCTL_WIDTH;
+    }   
+        
     /* alloc a new layer first */
     layer_t *layer = create_layer(w, h);
     if (layer == NULL) {
@@ -300,7 +307,8 @@ gui_window_t *gui_create_window(
     win->btn_close = NULL;
     win->btn_minim = NULL;
     win->btn_maxim = NULL;
-
+    win->winctl = NULL; 
+    win->input_mask = SGI_EventMaskDefault; /* 设置默认输入遮罩 */
     layer->extension = (void *) win;
 
     if (!(attr & GUIW_NO_TITLE)) { /* 有标题才创建 */
@@ -394,6 +402,32 @@ int gui_window_hide(gui_window_t *win)
     layer_refresh_all();
     
     return -1;
+}
+
+void gui_window_hide_all()
+{
+    gui_window_t *win;
+    list_for_each_owner (win, &window_list_head, window_list) {
+        if (!(win->attr & GUIW_NO_TITLE) && !(win->attr & GUIW_FIXED)) {
+            /* 0图层永远是桌面窗口 */
+            if (win->layer->z > 0) {
+                gui_window_hide(win);
+            }
+        }
+    }
+}
+
+void gui_window_show_all()
+{
+    gui_window_t *win;
+    list_for_each_owner (win, &window_list_head, window_list) {
+        if (!(win->attr & GUIW_NO_TITLE) && !(win->attr & GUIW_FIXED)) {
+            /* 0图层永远是桌面窗口 */
+            if (win->layer->z < 0) {
+                gui_window_show(win);
+            }
+        }
+    }
 }
 
 int gui_window_update(gui_window_t *win, int left, int top, int right, int buttom)
@@ -521,6 +555,9 @@ void gui_window_switch(gui_window_t *window)
             layer_set_z(window->layer, layer_topest->z - 1);
             
             gui_window_focus(window);
+
+            /* 显示窗口控制 */
+            gui_winctl_show();
         }
     }
 }
@@ -549,6 +586,11 @@ int init_gui_window()
         return -1;
     }
 
+    if (init_statusbar_manager()) {
+        printf("[desktop ] %s: init statusbar manager failed!\n", SRV_NAME);
+        return -1;
+    }
+
     gui_window_draw_text(env_desktop.window, 0,0,"abcdefghijklmnopqrstuvwxyz0123456789",
         COLOR_RED);
 
@@ -557,6 +599,7 @@ int init_gui_window()
     
     gui_window_update(env_desktop.window, 0,0, 400, 16*2);
 
+#if 0
     /* 创建测试窗口 */
     gui_window_t *win = gui_create_window("xbook2", 20, 20, 320, 240, COLOR_WHITE, 0, NULL);
     if (win == NULL) {
@@ -604,7 +647,7 @@ int init_gui_window()
     
     gui_window_show(win);
     gui_window_update(win, 20, 20, 300, 300);
-    
+#endif    
     //sleep(3);   /* 休眠1s */
 
     //gui_destroy_window(win);

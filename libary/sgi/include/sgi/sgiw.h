@@ -36,6 +36,7 @@ typedef struct _SGI_WindowInfo {
     unsigned short start_off;   /* 起始偏移 */
     unsigned int width;         /* 窗口宽度 */
     unsigned int height;        /* 窗口高度 */
+    long input_mask;            /* 输入遮罩 */                  
 } SGI_WindowInfo;
 
 #endif  /* __SGI_WM_H__ */

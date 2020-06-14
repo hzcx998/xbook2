@@ -67,6 +67,8 @@ WINDOW_OBJS 	=	window/window.o \
 
 ENVIRONMENT_OBJS =	environment/desktop.o \
 					environment/winctl.o \
+					environment/statusbar.o \
+					environment/statusbar-time.o \
 
 FONT_OBJS 		=	font/font.o \
 					font/font_simsun.o \
@@ -99,7 +101,7 @@ LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 #First read here
 .PHONY: all dis
 
-all: compile link disk 
+all: clean compile link disk 
 
 #Compile files
 compile: $(OBJS)
