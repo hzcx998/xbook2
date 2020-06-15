@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <guisrv.h>
 #include <sgi/sgie.h>
+#include <arch/const.h>
 
 #include <environment/desktop.h>
 #include <environment/winctl.h>
@@ -271,7 +272,9 @@ gui_window_t *gui_create_window(
     if (!(attr & GUIW_FIXED)) {
         x += GUI_WINCTL_WIDTH;
     }   
-        
+    
+    printf("[guisrv] create window width=%d height=%d yoff=%d\n", w, h, y_off);
+
     /* alloc a new layer first */
     layer_t *layer = create_layer(w, h);
     if (layer == NULL) {
@@ -293,7 +296,6 @@ gui_window_t *gui_create_window(
     win->y_off = y_off;
     win->width = width;
     win->height = height;
-    win->window_size = width * height * sizeof(GUI_COLOR);
     win->attr = attr;
     win->layer = layer;
     win->parent = parent;
@@ -309,6 +311,14 @@ gui_window_t *gui_create_window(
     win->btn_maxim = NULL;
     win->winctl = NULL; 
     win->input_mask = SGI_EventMaskDefault; /* 设置默认输入遮罩 */
+    win->map_size = width * height * sizeof(GUI_COLOR);
+    /* 为什么要进行页对齐？
+    因为映射后可能存在原本占用2个页，但是页内偏移大于0，那么客户端在进行
+    访问的时候，实际上是访问2个页+页内偏移。如果只给客户端映射2个页，
+    那么客户端就可能会访问不到部分地址，导致访问异常。
+     */
+    win->map_size = PG_ALIGN(win->map_size) + PG_SIZE;
+
     layer->extension = (void *) win;
 
     if (!(attr & GUIW_NO_TITLE)) { /* 有标题才创建 */

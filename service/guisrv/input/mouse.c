@@ -263,10 +263,11 @@ void __motion()
                 window = (gui_window_t *) layer->extension;
                 local_mx = input_mouse.x - window->x;
                 local_my = input_mouse.y - window->y;
-                gui_widget_mouse_motion(&layer->widget_list_head, local_mx, local_my);
                 
                 if (local_mx >= 0 && local_mx < window->width && 
                     local_my >= 0 && local_my < window->height) {
+                    gui_widget_mouse_motion(&layer->widget_list_head, local_mx, local_my);
+                
                     /* 进入某个窗口 */
                     if (input_mouse.hover_window != window && input_mouse.hover_window) { /* 从其他窗口进入当前窗口 */
                         /* 离开上个窗口的控件 */

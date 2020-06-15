@@ -131,10 +131,10 @@ static int do_create_window(srvarg_t *arg)
     memset(shmname, 0, 16);
     sprintf(shmname, "guisrv-win%d", win->id);
 #if DEBUG_LOCAL == 1
-    printf("[guisrv] create window: shm name %s.\n", shmname);
+    printf("[guisrv] create window: shm name %s, size %x\n", shmname, win->map_size);
 #endif
     /* 创建一个共享内存 */
-    int shmid = res_open(shmname, RES_IPC | IPC_SHM | IPC_CREAT | IPC_EXCL, win->window_size);
+    int shmid = res_open(shmname, RES_IPC | IPC_SHM | IPC_CREAT | IPC_EXCL, win->map_size);
     if (shmid < 0) { /* 创建共享内存失败 */
         /* 销毁窗口 */
         gui_destroy_window(win);
@@ -488,6 +488,7 @@ void *guisrv_echo_thread(void *arg)
         printf("%s: srvcall seq=%d callnum %d.\n", SRV_NAME, seq, callnum);
 #endif 
         seq++;
+
         /* 3.应答服务 */
         srvcall_ack(SRV_GUI, &srvarg);   
 

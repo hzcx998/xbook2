@@ -30,7 +30,8 @@ uint16_t *layer_map = NULL;
  */
 layer_t *create_layer(int width, int height)
 {
-    GUI_COLOR *buffer = gui_malloc(width * height * sizeof(GUI_COLOR));
+    size_t bufsz = width * height * sizeof(GUI_COLOR);
+    GUI_COLOR *buffer = gui_malloc(bufsz);
     if (buffer == NULL)
         return NULL;
 

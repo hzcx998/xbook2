@@ -173,9 +173,8 @@ int init_winctl_manager()
     winctl_manager.back_color = GUI_WINCTL_BACK_COLOR;
     winctl_manager.active_color = GUI_WINCTL_ACTIVE_COLOR;
 
-    /* ！！！如果高度不-1，那么就会内存出错，不知道为什么。。。 */
     winctl_manager.window = gui_create_window(
-        NULL, 0, GUI_STATUSBAR_HEIGHT, GUI_WINCTL_WIDTH, drv_screen.height - 1 - GUI_STATUSBAR_HEIGHT,
+        NULL, 0, GUI_STATUSBAR_HEIGHT, GUI_WINCTL_WIDTH, drv_screen.height - GUI_STATUSBAR_HEIGHT,
         winctl_manager.back_color, GUIW_NO_TITLE | GUIW_FIXED, NULL);
     
     if (winctl_manager.window == NULL)

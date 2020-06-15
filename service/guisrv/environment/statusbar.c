@@ -281,7 +281,7 @@ int init_statusbar_manager()
 
 
     statusbar_manager.window = gui_create_window(
-        NULL, 0, 0, drv_screen.width - 1, GUI_STATUSBAR_HEIGHT,
+        NULL, 0, 0, drv_screen.width, GUI_STATUSBAR_HEIGHT,
         statusbar_manager.back_color, GUIW_NO_TITLE | GUIW_FIXED, NULL);
     
     if (statusbar_manager.window == NULL)

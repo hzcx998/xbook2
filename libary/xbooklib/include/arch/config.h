@@ -10,6 +10,7 @@
 #if LIB_ARCH == LIB_ARCH_X86
 #include "x86/xchg.h"
 #include "x86/atomic.h"
+#include "x86/const.h"
 
 #endif
 

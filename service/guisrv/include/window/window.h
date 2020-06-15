@@ -38,7 +38,6 @@ typedef struct _gui_window {
     int x, y;                   /* 窗口的位置 */
     int width, height;          /* 窗口的宽高 */
     int x_off, y_off;           /* 窗口数据的偏移 */
-    size_t window_size;            /* 窗口占用的内存大小 */
     int attr;                   /* 窗口的属性 */
     layer_t *layer;             /* 窗口对应的图层 */
     list_t list;                /* 窗口链表 */
@@ -60,6 +59,7 @@ typedef struct _gui_window {
 /// 客户端交互信息
     int shmid;                  /* 共享内存的id，用来映射客户端窗口 */
     void *mapped_addr;          /* 共享内存映射后的地址 */
+    size_t map_size;            /* 映射占用内存大小：页为单位 */
     unsigned short start_off;   /* 起始偏移 */
     unsigned int display_id;    /* 窗口所在的显示id */
     long input_mask;            /* 输入遮罩 */

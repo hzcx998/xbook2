@@ -57,11 +57,12 @@ SGI_Window SGI_CreateSimpleWindow(
     char shmname[16];
     memset(shmname, 0, 16);
     sprintf(shmname, "guisrv-win%d", wid);
+
 #if DEBUG_LOCAL == 1    
-    printf("[SGI] create window: shm name %s.\n", shmname);
+    printf("[SGI] create window: shm name %s\n", shmname);
 #endif
     /* 连接一个共享内存 */
-    int shmid = res_open(shmname, RES_IPC | IPC_SHM | IPC_CREAT, width * height * sizeof(unsigned int));
+    int shmid = res_open(shmname, RES_IPC | IPC_SHM | IPC_CREAT, 0);
     if (shmid < 0) { /* 创建共享内存失败 */
         /* 销毁窗口 */
         SETSRV_ARG(&srvarg, 0, GUISRV_DESTROY_WIN, 0);
@@ -169,7 +170,7 @@ int SGI_MapWindow(SGI_Display *display, SGI_Window window)
     winfo->mapped_addr = (void *)mapped;
     winfo->start_off = retval;
 #if DEBUG_LOCAL == 1  
-    printf("[test] map window at %x, start off:%x\n", mapped, winfo->start_off);
+    printf("[sgi] map window at %x, start off:%x\n", mapped, winfo->start_off);
 #endif   
     /* 执行成功 */
     return 0;
@@ -486,14 +487,18 @@ int SGI_WindowDrawPixmap(
 
     for (y0 = 0; y0 < height; y0++) {
         wy = y + y0;
-        if (wy < 0 || wy >= winfo->height)  /* 越界 */
+        if (wy < 0)
             continue;
+        if (wy >= winfo->height)  /* 越界 */
+            break;
         for (x0 = 0; x0 < width; x0++) {
             wx = x + x0;
-            if (wx < 0 || wx >= winfo->width)  /* 越界 */
+            if (wx < 0)
                 continue;
+            if (wx >= winfo->width)  /* 越界 */
+                break;
             /* 写入像素值 */
-            SGI_Argb *vram = (SGI_Argb *) ((SGI_Argb *) (winfo->mapped_addr + 
+            SGI_Argb *vram = (SGI_Argb *) ((SGI_Argb *) ((unsigned char *) winfo->mapped_addr + 
                  + winfo->start_off) + wy * winfo->width + wx);
             *vram = pixmap[y0 *  width + x0];
         }
