@@ -157,6 +157,11 @@ int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
         }
     }
     
+    if (flags & VMS_MAP_REMAP) {
+        printk("has remap\n");
+        prot |= PROT_REMAP;
+    }
+
     /* 从slab中分配一块内存来当做VMSpace结构 */
     vmspace_t *space = vmspace_alloc();
     if (!space) {

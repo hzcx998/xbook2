@@ -55,7 +55,7 @@ int SGI_UpdateWindow(
     int bottom
 );
 
-int SGI_WindowDrawPixel(
+int SGI_DrawPixel(
     SGI_Display *display,
     SGI_Window window,
     int x,
@@ -63,7 +63,7 @@ int SGI_WindowDrawPixel(
     SGI_Argb color
 );
 
-int SGI_WindowDrawRectFill(
+int SGI_DrawFillRect(
     SGI_Display *display,
     SGI_Window window,
     int x,
@@ -73,7 +73,7 @@ int SGI_WindowDrawRectFill(
     
     SGI_Argb color
 );
-int SGI_WindowDrawRect(
+int SGI_DrawRect(
     SGI_Display *display,
     SGI_Window window,
     int x,
@@ -83,7 +83,7 @@ int SGI_WindowDrawRect(
     SGI_Argb color
 );
 
-int SGI_WindowDrawPixmap(
+int SGI_DrawPixmap(
     SGI_Display *display,
     SGI_Window window,
     int x,

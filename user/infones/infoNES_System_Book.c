@@ -504,7 +504,7 @@ void InfoNES_LoadFrame()
   }
     /* 绘制到窗口中 */
     //GUI_DrawBitmapPlus(0, 40, NES_DISP_WIDTH, NES_DISP_HEIGHT, (unsigned int *)graphBuffer);
-    SGI_WindowDrawPixmap(display, win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT, (SGI_Argb *) graphBuffer);
+    SGI_DrawPixmap(display, win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT, (SGI_Argb *) graphBuffer);
     SGI_UpdateWindow(display, win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT);
 
     /* 延迟 */

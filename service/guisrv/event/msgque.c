@@ -34,7 +34,7 @@ static int do_update_window(gui_msg_t *msg)
         if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
             return -1;
     }
-    gui_window_update(win, msg->arg1, msg->arg2, msg->arg3 - 1, msg->arg4 - 1);
+    gui_window_update(win, msg->arg1, msg->arg2, msg->arg3, msg->arg4);
     return 0;
 }
 

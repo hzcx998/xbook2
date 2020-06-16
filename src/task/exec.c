@@ -2,6 +2,7 @@
 #include <xbook/string.h>
 #include <xbook/pthread.h>
 #include <xbook/srvcall.h>
+#include <xbook/vmspace.h>
 #include <arch/interrupt.h>
 
 /**
@@ -80,13 +81,18 @@ int sys_exec_raw(char *name, char **argv)
     char tmp_name[MAX_TASK_NAMELEN] = {0};
     strcpy(tmp_name, name);
 
+    // vmm_unmap_space(cur->vmm);
+
     /* 释放虚拟空间地址管理，后面映射时重新加载镜像 */
     vmm_release_space(cur->vmm);
+    
     /* 加载镜像 */
     if (proc_load_image(cur->vmm, &elf_header, rb)) {
         printk(KERN_ERR "sys_exec_raw: load_image failed!\n");
         goto free_tmp_arg;
     }
+    printk(KERN_DEBUG "task name=%s pid=%d ready load image done.\n", cur->name, cur->pid);
+
     /* 构建中断栈框 */
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
@@ -213,7 +219,9 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
     /* 备份进程名 */
     char tmp_name[MAX_TASK_NAMELEN] = {0};
     strcpy(tmp_name, name);
-    
+
+    /* 取消空间映射 */
+    // vmm_unmap_space(cur->vmm);
     /* 释放虚拟空间地址管理，后面映射时重新加载镜像 */
     vmm_release_space(cur->vmm);
 

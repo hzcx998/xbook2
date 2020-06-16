@@ -28,6 +28,7 @@ typedef struct vmm {
 void vmm_init(vmm_t *vmm);
 int vmm_exit(vmm_t *vmm);
 int vmm_release_space(vmm_t *vmm);
+int vmm_unmap_space(vmm_t *vmm);
 
 void dump_vmm(vmm_t *vmm);
 

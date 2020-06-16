@@ -10,6 +10,7 @@
 #define PROT_EXEC        0x4       /* page can be executed */
 #define PROT_KERN        0x8       /* page in kernel */
 #define PROT_USER        0x10      /* page in user */
+#define PROT_REMAP       0x20      /* page remap */
 
 static inline unsigned long v2p(void *address)
 {

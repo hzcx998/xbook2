@@ -27,24 +27,31 @@
 
 int init_guisrv()
 {
+    printf("[guisrv ] %s: init_screen_driver.\n", SRV_NAME);
+    
     /* drivers */
     if (init_screen_driver()) {
         printf("[failed ] %s: init screen driver failed!\n", SRV_NAME);
         return -1;
     }
+    printf("[guisrv ] %s: init msgque ok.\n", SRV_NAME);
+    
     if (init_mouse_driver()) {
         printf("[failed ] %s: init mouse driver failed!\n", SRV_NAME);
         return -1;
     }
+    
     if (init_keyboard_driver()) {
         printf("[failed ] %s: init keyboard driver failed!\n", SRV_NAME);
         return -1;
     }
+    printf("[guisrv ] %s: init msgque!\n", SRV_NAME);
     
     if (init_msgque_event()) {
         return -1;
     }
-
+    printf("[guisrv ] %s: init msgque ok.\n", SRV_NAME);
+    
     return 0;
 }
 
@@ -132,7 +139,7 @@ int loop_guisrv()
 
 void *gui_malloc(size_t size)
 {
-    //return malloc(size);
+    return malloc(size);
 
     void *p = (void *)sbrk(0);
     if (p == (void *) -1)
@@ -147,7 +154,7 @@ void *gui_malloc(size_t size)
 void gui_free(void *ptr)
 {
     /* invalid */
-    //free(ptr);
+    free(ptr);
 }
 
 /*
@@ -173,17 +180,18 @@ int main(int argc, char *argv[])
 
     if (init_guisrv())
         return -1;
-    
+    printf("[ok ] init ok.\n");
+
     if (open_guisrv())
         return -1;
     
     if (start_guisrv() < 0)
         return -1;
     
+    init_env_display();
+
     if (init_guisrv_interface() < 0) 
         return -1;
-
-    init_env_display();
 
     loop_guisrv();
 

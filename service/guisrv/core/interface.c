@@ -11,9 +11,13 @@
 #include <window/window.h>
 #include <sys/res.h>
 #include <sys/ipc.h>
+#include <sys/proc.h>
+#include <unistd.h>
+#include <stdlib.h>
+
 #include <math.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 #define SRVBUF_256      256
 #define SRVBUF_32K      32768
@@ -471,6 +475,49 @@ guisrv_func_t guisrv_call_table[] = {
     do_select_input,
 };
 
+/* 文件映射 */
+struct file_map {
+    char *path;     /* 路径 */
+    size_t size;    /* 实际大小 */
+    off_t off;      /* 偏移 */
+    char execute;   /* 是否需要执行 */
+    const char **argv;
+};
+
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
+struct file_map file_map_table[] = {
+    {"/terminal", 100 * 512, 5100, 1, NULL},
+//    {"/login", 100 * 512, 4000, 0, NULL},
+//    {"/bosh", 100 * 512, 4100, 0, NULL},
+//    {"/test", 100 * 512, 4300, 1, NULL},
+//    {"/infones", 650 * 512, 4400, 1, infones_argv},
+//    {"/mario.nes", 100 * 512, 10000, 0, NULL},
+};
+
+int guisrv_execute()
+{
+    struct file_map *fmap;
+    int pid = 0;
+    int i;
+    for (i = 0; i < ARRAY_SIZE(file_map_table); i++) {
+        fmap = &file_map_table[i];
+        if (fmap->execute) {
+            pid = fork();
+            if (pid < 0) {
+                printf("%s: %s: fork failed!\n", SRV_NAME, __func__);
+                return -1;
+            }
+            if (!pid) { /* 子进程执行新进程 */
+                if (execv(fmap->path, fmap->argv)) {
+                    printf("%s: %s: execv failed!\n", SRV_NAME, __func__);
+                    exit(-1);
+                }
+            }
+        }
+    }
+    return 0;
+}
 
 /* 掌控互斥 */
 pthread_mutex_t guisrv_master_mutex;
@@ -490,6 +537,9 @@ void *guisrv_echo_thread(void *arg)
 #if DEBUG_LOCAL == 1
     printf("[guisrv] bind service ok.\n");
 #endif
+
+    guisrv_execute();
+
 
     int seq;
     srvarg_t srvarg;

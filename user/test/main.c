@@ -53,12 +53,12 @@ int main(int argc, char *argv[])
     int x, y;
     for (y = 0; y < 10; y++) {
         for (x = 0; x < 320; x++) {
-            SGI_WindowDrawPixel(display, win, x, y, SGIC_RED);
+            SGI_DrawPixel(display, win, x, y, SGIC_RED);
         }
     }
     
-    SGI_WindowDrawRect(display, win, 50, 50, 100, 50, SGIC_BLUE);
-    SGI_WindowDrawRectFill(display, win, 70, 100, 50, 100, SGIC_GREEN);
+    SGI_DrawRect(display, win, 50, 50, 100, 50, SGIC_BLUE);
+    SGI_DrawFillRect(display, win, 70, 100, 50, 100, SGIC_GREEN);
 
 
     SGI_Argb pixmap[10*10*sizeof(SGI_Argb)];
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
             pixmap[y * 10 + x] = SGI_ARGB(0xff, x * 10, x * 15, y * 10);
         }
     }
-    SGI_WindowDrawPixmap(display, win, 100, 200, 10, 10, pixmap);
+    SGI_DrawPixmap(display, win, 100, 200, 10, 10, pixmap);
     
     SGI_DrawString(display, win, 100, 50, "hello, text!\nabc\n\rdef", 30, SGIC_BLUE);
 

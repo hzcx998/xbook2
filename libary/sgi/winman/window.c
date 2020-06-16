@@ -175,14 +175,17 @@ int SGI_MapWindow(SGI_Display *display, SGI_Window window)
     int retval = GETSRV_RETVAL(&srvarg, int);
     if (retval == -1)
         return -1;
+    printf("[SGI] %s: ready map memory.\n", __func__);
     
     /* 映射窗口显示区域到客户端 */
     long mapped; /* 保存映射后的地址 */
-    if (res_write(winfo->shmid, 0, NULL, (size_t) &mapped) < 0) /* 映射共享内存 */
+    if (res_write(winfo->shmid, IPC_REMAP, NULL, (size_t) &mapped) < 0) /* 映射共享内存 */
         return -1;
     if (mapped == -1)
         return -1;
- 
+    
+    printf("[SGI] %s: map memory done.\n", __func__);
+    
     winfo->mapped_addr = (void *)mapped;
     winfo->start_off = retval;
 #if DEBUG_LOCAL == 1  
@@ -296,7 +299,7 @@ int SGI_UpdateWindow(
 /**
  * 绘制像素
  */
-int SGI_WindowDrawPixel(
+int SGI_DrawPixel(
     SGI_Display *display,
     SGI_Window window,
     int x,
@@ -328,7 +331,7 @@ int SGI_WindowDrawPixel(
 /**
  * 绘制像素
  */
-static int SGI_WindowDrawPixelWithWinfo(
+static int SGI_DrawPixelWithWinfo(
     SGI_WindowInfo *winfo,
     int x,
     int y,
@@ -345,7 +348,7 @@ static int SGI_WindowDrawPixelWithWinfo(
     return 0;
 }
 
-static int SGI_WindowDrawHLine(
+static int SGI_DrawHLine(
     SGI_WindowInfo *winfo,
     int left,
     int right,
@@ -372,7 +375,7 @@ static int SGI_WindowDrawHLine(
     return  0;
 }
 
-static int SGI_WindowDrawVLine(
+static int SGI_DrawVLine(
     SGI_WindowInfo *winfo,
     int left,
     int top,
@@ -401,7 +404,7 @@ static int SGI_WindowDrawVLine(
 /**
  * 刷新窗口的某个区域
  */
-int SGI_WindowDrawRect(
+int SGI_DrawRect(
     SGI_Display *display,
     SGI_Window window,
     int x,
@@ -422,18 +425,18 @@ int SGI_WindowDrawRect(
         return -1;
     
     /* left */
-    SGI_WindowDrawVLine(winfo, x, y, y + height - 1, color);
+    SGI_DrawVLine(winfo, x, y, y + height - 1, color);
     /* right */
-    SGI_WindowDrawVLine(winfo, x + width - 1, y, y + height - 1, color);
+    SGI_DrawVLine(winfo, x + width - 1, y, y + height - 1, color);
     /* top */
-    SGI_WindowDrawHLine(winfo, x, x + width - 1, y, color);
+    SGI_DrawHLine(winfo, x, x + width - 1, y, color);
     /* bottom */
-    SGI_WindowDrawHLine(winfo, x, x + width - 1, y + height - 1, color);
+    SGI_DrawHLine(winfo, x, x + width - 1, y + height - 1, color);
     return 0;
 }
 
 /* Hardware accelerbrate interface */
-static  int  __WindowDrawRectFill(
+static  int  __DrawFillRectFast(
     SGI_WindowInfo *winfo,
     int left,
     int top,
@@ -447,13 +450,11 @@ static  int  __WindowDrawRectFill(
     
     if ( left > (winfo->width-1) )
         return  -1;
-    if ( right > (winfo->width-1) )
-        return  -1;
     if ( top > (winfo->height-1) )
         return  -1;
 
     unsigned char *vram = (unsigned char *) ((unsigned char *) winfo->mapped_addr + winfo->start_off);
-    
+
     for ( j = 0; j <= bottom - top; j++ )
     {
         offset = 4*((winfo->width)*(top+j)+left);
@@ -463,14 +464,13 @@ static  int  __WindowDrawRectFill(
         for ( i = 0; i <= right - left; i++ )
             *((SGI_Argb *) ((vram) + offset + 4 * i)) = (SGI_Argb) color;
     }
- 
     return  1;
 }
 
 /**
  * 刷新窗口的某个区域
  */
-int SGI_WindowDrawRectFill(
+int SGI_DrawFillRect(
     SGI_Display *display,
     SGI_Window window,
     int x,
@@ -490,13 +490,37 @@ int SGI_WindowDrawRectFill(
     if (!winfo)
         return -1;
     
-    return __WindowDrawRectFill(winfo, x, y, x + width - 1, y + height -1, color);
+    if (__DrawFillRectFast(winfo, x, y, x + width - 1, y + height -1, color) > 0)
+        return 0;
+
+    SGI_Argb *vram;
+    int x0, y0, wx, wy;
+
+    for (y0 = 0; y0 < height; y0++) {
+        wy = y + y0;
+        if (wy < 0)
+            continue;
+        if (wy >= winfo->height)  /* 越界 */
+            break;
+        for (x0 = 0; x0 < width; x0++) {
+            wx = x + x0;
+            if (wx < 0)
+                continue;
+            if (wx >= winfo->width)  /* 越界 */
+                break;
+            /* 写入像素值 */
+            vram = (SGI_Argb *) ((SGI_Argb *) ((unsigned char *) winfo->mapped_addr + 
+                 + winfo->start_off) + wy * winfo->width + wx);
+            *vram = color;
+        }
+    }
+    return 0;
 }
 
 /**
  * 绘制像素位图
  */
-int SGI_WindowDrawPixmap(
+int SGI_DrawPixmap(
     SGI_Display *display,
     SGI_Window window,
     int x,
@@ -694,7 +718,7 @@ static int SGI_DrawCharBit(
         d = data[j];
         for (i = 0; i < winfo->font->width; i++) {
             if (d & (1 << i))
-                SGI_WindowDrawPixelWithWinfo(winfo, x + (winfo->font->width - i - 1), y + j, color);
+                SGI_DrawPixelWithWinfo(winfo, x + (winfo->font->width - i - 1), y + j, color);
         }
     }
     return 0;

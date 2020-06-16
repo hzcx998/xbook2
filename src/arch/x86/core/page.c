@@ -50,6 +50,8 @@ int __free_pages(unsigned long page)
 	}
     return -1;
 }
+
+
 /*
  * __page_link - 物理地址和虚拟地址链接起来
  * @va: 虚拟地址
@@ -70,7 +72,7 @@ void __page_link(unsigned long va, unsigned long pa, unsigned long prot)
 	if (*pde & PG_P_1) {
         /* phy page must not exist! */
         ASSERT(!(*pte & PG_P_1)); 
-        
+
         /* make sure phy page not exist! */
         if (!(*pte & PG_P_1)) {
             *pte = (paddr | prot | PG_P_1);
@@ -97,6 +99,69 @@ void __page_link(unsigned long va, unsigned long pa, unsigned long prot)
 
         /* make sure phy page not exist! */
         ASSERT(!(*pte & PG_P_1));
+
+        *pte = (paddr | prot | PG_P_1);
+    }
+}
+
+
+/*
+ * __page_link_unsafe - 物理地址和虚拟地址链接起来
+ * @va: 虚拟地址
+ * @pa: 物理地址
+ * @prot: 页的保护
+ * 
+ * 把虚拟地址和物理地址连接起来，这样就能访问物理地址了
+ */
+void __page_link_unsafe(unsigned long va, unsigned long pa, unsigned long prot)
+{
+    unsigned long vaddr = (unsigned long )va;
+    unsigned long paddr = (unsigned long )pa;
+    /* get page dir and page table */
+	pde_t *pde = get_pde_ptr(vaddr);
+	pte_t *pte = get_pte_ptr(vaddr);
+
+    /* if page table exist. */
+	if (*pde & PG_P_1) {
+        /* phy page must not exist! */
+        //ASSERT(!(*pte & PG_P_1));
+
+        if ((*pte & PG_P_1)) {
+            free_page(*pte & PAGE_ADDR_MASK);
+            *pte = 0;
+        }
+
+        /* make sure phy page not exist! */
+        if (!(*pte & PG_P_1)) {
+            *pte = (paddr | prot | PG_P_1);
+        } else {
+            /* phy page exist! */
+            panic("pte %x has exist!\n", *pte);
+            *pte = (paddr | prot | PG_P_1);
+        }
+	} else { /* no page table, need create a new one. */
+        unsigned long page_table = __alloc_pages(1);
+        if (!page_table) {
+            /* no page left */
+            panic("kernel no page left!\n");
+            /* we can goto free some pages and try it again,
+             but now we just stop! */
+        }
+        //printk(KERN_DEBUG "page_link -> new page table %x\n", page_table);
+
+        /* add page table to page dir */
+        *pde = (page_table | prot | PG_P_1);
+
+        /* clear page to avoid dirty data */
+        memset((void *)((unsigned long)pte & PAGE_ADDR_MASK), 0, PAGE_SIZE);
+
+        /* make sure phy page not exist! */
+        //ASSERT(!(*pte & PG_P_1));
+
+        if ((*pte & PG_P_1)) {
+            free_page(*pte & PAGE_ADDR_MASK);
+            *pte = 0;
+        }
 
         *pte = (paddr | prot | PG_P_1);
     }
@@ -214,9 +279,13 @@ int __map_pages_fixed(unsigned long start, unsigned long addr, unsigned long len
 	//printk(KERN_DEBUG "map_pages -> start%x->%x len %x\n", first, pages, len);
     while (first < end)
 	{
-        // 对单个页进行链接
-		__page_link(first, pages, attr);
-		first += PAGE_SIZE;
+        if (prot & PROT_REMAP) {
+            __page_link_unsafe(first, pages, attr);
+        } else {
+            // 对单个页进行链接
+		    __page_link(first, pages, attr);
+        }
+        first += PAGE_SIZE;
         pages += PAGE_SIZE;
 	}
 	return 0;
@@ -311,7 +380,9 @@ int __map_pages_safe(unsigned long start, unsigned long len, unsigned long prot)
                 printk("error: user_map_vaddr -> map pages failed!\n");
                 return -1;
             }
+            
             __page_link(vaddr, page_addr, attr);
+            
             //printk("info: map_pages_safe -> start%x->%x\n", vaddr, page_addr);
         }
         vaddr += PAGE_SIZE;

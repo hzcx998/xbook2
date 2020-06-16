@@ -34,10 +34,12 @@ void vmm_active(vmm_t *vmm)
         page_dir_active(v2p(vmm->page_storage), 1);
     }
 }
+
 /**
  * vmm_release_space - 释放掉进程空间管理
  * @vmm: 虚拟内存管理
  * 
+ * 以及释放对应的空间
  * 额外需要释放共享空间
  * 
  * @return: 成功返回0， 失败返回-1
@@ -48,9 +50,8 @@ int vmm_release_space(vmm_t *vmm)
         return -1; 
     /* 释放虚拟空间地址描述 */
     vmspace_t *space = (vmspace_t *)vmm->vmspace_head;
+
     vmspace_t *p;
-    //dump_vmspace(vmm);
-    
     while (space != NULL) {
         p = space;
         space = space->next;
@@ -60,18 +61,42 @@ int vmm_release_space(vmm_t *vmm)
     return 0;
 }
 
+/**
+ * vmm_unmap_space - 取消虚拟空间映射
+ * @vmm: 虚拟内存管理
+ * 
+ * 取消虚拟地址映射
+ * 额外需要释放共享空间
+ * 
+ * @return: 成功返回0， 失败返回-1
+ */
+int vmm_unmap_space(vmm_t *vmm)
+{
+    if (vmm == NULL)
+        return -1; 
+    /* 释放虚拟空间地址描述 */
+    vmspace_t *space = (vmspace_t *)vmm->vmspace_head;
+
+    /* 取消虚拟空间的地址映射 */
+    while (space != NULL) {
+        /* 由于内存区域可能不是连续的，所以需要用安全的方式来取消映射 */
+        unmap_pages_safe(space->start, space->end - space->start, space->flags & VMS_MAP_SHARED);
+        space = space->next;
+    }
+    return 0;
+}
+
+
 int vmm_exit(vmm_t *vmm)
 {
     if (vmm == NULL)
         return -1; 
     if (vmm->vmspace_head == NULL)
         return -1;
-    /* 取消虚拟空间的地址映射 */
-    vmspace_t *space = (vmspace_t *)vmm->vmspace_head;
-    while (space != NULL) {
-        /* 由于内存区域可能不是连续的，所以需要用安全的方式来取消映射 */
-        unmap_pages_safe(space->start, space->end - space->start, space->flags & VMS_MAP_SHARED);
-        space = space->next;
+
+    /* 取消虚拟空间映射 */
+    if (vmm_unmap_space(vmm)) {
+        return -1;
     }
     /* 释放虚拟空间描述 */
     if (vmm_release_space(vmm)) {

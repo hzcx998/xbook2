@@ -10,6 +10,7 @@
 #define VMS_MAP_STACK       0x20       /* 映射成栈，会动态变化 */
 #define VMS_MAP_HEAP        0x40       /* 映射成堆，会动态变化 */
 #define VMS_MAP_SHARED      0x80       /* 映射成共享内存 */
+#define VMS_MAP_REMAP       0x100      /* 强制重写映射 */
 
 #define MAX_VMS_STACK_SIZE  (16 * MB)   /* 最大栈拓展大小 */
 

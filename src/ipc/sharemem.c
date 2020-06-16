@@ -235,10 +235,15 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
             if (!shm->page_addr)    /* 分配失败，返回NULL */
                 return (void *) -1;
         } 
+        printk(KERN_DEBUG "%s: virtual addr:%x physical addr:%x\n", __func__, addr, shm->page_addr);
+        unsigned long flags = VMS_MAP_FIXED | VMS_MAP_SHARED;
+        if (shmflg & IPC_REMAP) {
+            flags |= VMS_MAP_REMAP;
+        }
         /* 把虚拟地址和物理地址进行映射，物理地址是共享的。由于已经确切获取了一个地址，
         所以这里就用固定映射，因为是共享内存，所以使用共享的方式。 */
         shmaddr = vmspace_mmap(addr, shm->page_addr, shm->npages * PAGE_SIZE,
-            PROT_USER | PROT_WRITE, VMS_MAP_FIXED | VMS_MAP_SHARED);
+            PROT_USER | PROT_WRITE, flags);
     } else {    /* 把给定的虚拟地址映射成共享内存 */
         unsigned long vaddr;
 

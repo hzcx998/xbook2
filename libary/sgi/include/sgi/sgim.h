@@ -17,7 +17,7 @@ typedef struct _SGI_Msg {
     unsigned long arg7;     /* 参数 */
 } __attribute__ ((packed)) SGI_Msg;
 
-#define SGI_MSG_LEN (sizeof(struct _SGI_Msg) - sizeof(long))
+#define SGI_MSG_LEN (sizeof(SGI_Msg) - sizeof(long))
 
 enum SGI_MsgType {
     SGI_MSG_UNKNOWN = 0,
