@@ -101,7 +101,7 @@ LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 #First read here
 .PHONY: all dis
 
-all: clean compile link disk 
+all: compile link disk 
 
 #Compile files
 compile: $(OBJS)

@@ -173,6 +173,8 @@ int msg_queue_put(int msgid)
 #if DEBUG_msgq == 1
         printk(KERN_INFO "msgq msgs %d.\n", msgq->msgs);
 #endif
+        /* 先释放所有队列中的消息 */
+        
         msg_queue_free(msgq);
         semaphore_up(&msg_queue_mutex);        
         return 0;

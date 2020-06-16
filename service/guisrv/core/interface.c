@@ -13,7 +13,7 @@
 #include <sys/ipc.h>
 #include <math.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 #define SRVBUF_256      256
 #define SRVBUF_32K      32768
@@ -87,7 +87,11 @@ static int do_close_display(srvarg_t *arg)
         SETSRV_RETVAL(arg, -1);  /* 失败 */
         return -1;
     }
+    
+    /* 删除消息队列 */
+    res_ioctl(disp->msgid, IPC_DEL, RES_IPC | IPC_MSG);
     res_close(disp->msgid);
+    printf("[%s] %s: msgid=%d\n", SRV_NAME, __func__, disp->msgid);
 
     env_display_del(display_id);
 
@@ -125,7 +129,7 @@ static int do_create_window(srvarg_t *arg)
         SETSRV_RETVAL(arg, -1);
         return -1;
     }
-
+ 
     /* 创建一段独一无二的共享内存 */
     char shmname[16];
     memset(shmname, 0, 16);
@@ -165,6 +169,8 @@ static int do_create_window(srvarg_t *arg)
 
 static int do_destroy_window(srvarg_t *arg)
 {
+    printf("[%s] %s: start\n", SRV_NAME, __func__);
+    
     /* 获取窗口id */
     int wid = GETSRV_DATA(arg, 1, int);
     if (wid < 0)
@@ -177,6 +183,7 @@ static int do_destroy_window(srvarg_t *arg)
         if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
             goto mw_error;
     }
+    printf("[%s] %s: del cache\n", SRV_NAME, __func__);
     
     /* 先从窗口缓存表中删除 */
     gui_window_cache_del(win);
@@ -185,8 +192,13 @@ static int do_destroy_window(srvarg_t *arg)
     gui_destroy_winctl(win->winctl);
     win->winctl = NULL;
 
+    /* 删除共享内存 */
+    res_ioctl(win->shmid, IPC_DEL, RES_IPC | IPC_SHM);
     /* 关闭共享内存 */
     res_close(win->shmid);
+
+    printf("[%s] %s: shmid=%d\n", SRV_NAME, __func__, win->shmid);
+    
     win->shmid = -1;
 
     /* 断开显示连接 */
@@ -267,6 +279,13 @@ static int do_unmap_window(srvarg_t *arg)
             goto mw_error;
     }
 
+    printf("[%s] %s addr=%x\n", SRV_NAME, __func__, win->mapped_addr);
+    
+    /* 解除共享内存映射 */
+    if (res_read(win->shmid, 0, win->mapped_addr, 0) < 0) 
+        goto mw_error;    
+    win->mapped_addr = NULL;
+
     /* 从窗口控制器删除窗口控制 */
     gui_winctl_del(win->winctl);
 
@@ -277,10 +296,7 @@ static int do_unmap_window(srvarg_t *arg)
 #if DEBUG_LOCAL == 1
     printf("[guisrv] unmap window share memory at %x\n", win->mapped_addr);
 #endif
-    if (res_read(win->shmid, IPC_RND, win->mapped_addr, 0) < 0) /* 解除共享内存映射 */
-        goto mw_error;    
-    win->mapped_addr = NULL;
-
+    
     SETSRV_RETVAL(arg, 0);
     return 0;
 mw_error:
@@ -452,6 +468,10 @@ guisrv_func_t guisrv_call_table[] = {
     do_select_input,
 };
 
+
+/* 掌控互斥 */
+pthread_mutex_t guisrv_master_mutex;
+
 void *guisrv_echo_thread(void *arg)
 {
 #if DEBUG_LOCAL == 1
@@ -479,8 +499,13 @@ void *guisrv_echo_thread(void *arg)
             continue;
         }
 
+        pthread_mutex_lock(&guisrv_master_mutex);
+
         /* 2.处理服务 */
         callnum = GETSRV_DATA(&srvarg, 0, int);
+#if DEBUG_LOCAL == 0
+        printf("%s: srvcall seq=%d callnum %d.\n", SRV_NAME, seq, callnum);
+#endif 
         if (callnum >= 0 && callnum < GUISRV_CALL_NR) {
             guisrv_call_table[callnum](&srvarg);
         }
@@ -491,7 +516,7 @@ void *guisrv_echo_thread(void *arg)
 
         /* 3.应答服务 */
         srvcall_ack(SRV_GUI, &srvarg);   
-
+        pthread_mutex_unlock(&guisrv_master_mutex);
     }
     pthread_exit((void *) -1);
     return NULL;
@@ -516,6 +541,8 @@ int init_guisrv_interface()
         return -1;
     }
     memset(srvbuf128k, 0, SRVBUF_128K);
+
+    pthread_mutex_init(&guisrv_master_mutex, NULL);
 
     /* 开一个线程来接收服务 */
     pthread_t thread_echo;

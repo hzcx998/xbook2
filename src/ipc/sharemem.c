@@ -213,31 +213,33 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
     unsigned long addr;
     unsigned long len = shm->npages * PAGE_SIZE;
 
-    /* 获取一个未使用的虚拟地址 */
-    addr = vmspace_get_unmaped(cur->vmm, shm->npages * PAGE_SIZE);
-    if (addr == -1) /* 已经没有空闲的空间 */
-        return (void *) -1;
-
-    /* 检测虚拟地址是否合法 */
-    if (addr < cur->vmm->map_start || 
-        addr + len >= cur->vmm->map_end) /* 指定地址不在映射范围内 */
-        return (void *) -1;
-
-    /* 如果有空间和它相交，就返回错误 */
-    if (vmspace_find_intersection(cur->vmm, addr, addr + len))
-        return (void *) -1;
-        
     /* 现在已经找到了共享内存，需要将它映射到当前进程的空间 */
     if (shmaddr == NULL) {  /* 自动选择一个映射地址 */
+        /* 获取一个未使用的虚拟地址 */
+        addr = vmspace_get_unmaped(cur->vmm, shm->npages * PAGE_SIZE);
+        if (addr == -1) /* 已经没有空闲的空间 */
+            return (void *) -1;
 
+        /* 检测虚拟地址是否合法 */
+        if (addr < cur->vmm->map_start || 
+            addr + len >= cur->vmm->map_end) /* 指定地址不在映射范围内 */
+            return (void *) -1;
+        
+        /* 如果有空间和它相交，就返回错误 */
+        if (vmspace_find_intersection(cur->vmm, addr, addr + len))
+            return (void *) -1;
+            
         /* 如果没有需要分配一个新的物理地址，并映射之 */
         if (!shm->page_addr) {
             shm->page_addr = alloc_pages(shm->npages);  /* 分配物理内存 */
             if (!shm->page_addr)    /* 分配失败，返回NULL */
                 return (void *) -1;
         } 
-        
-    } else {
+        /* 把虚拟地址和物理地址进行映射，物理地址是共享的。由于已经确切获取了一个地址，
+        所以这里就用固定映射，因为是共享内存，所以使用共享的方式。 */
+        shmaddr = vmspace_mmap(addr, shm->page_addr, shm->npages * PAGE_SIZE,
+            PROT_USER | PROT_WRITE, VMS_MAP_FIXED | VMS_MAP_SHARED);
+    } else {    /* 把给定的虚拟地址映射成共享内存 */
         unsigned long vaddr;
 
         if (shmflg & IPC_RND)
@@ -257,14 +259,12 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
             /* 映射本进程中的共享内存 */
             shm->flags |= SHARE_MEM_PRIVATE;
         }
+        shmaddr = (void *)vaddr;
     }
 #if DEBUG_SHM == 1
     printk(KERN_DEBUG "%s: virtual addr:%x physical addr:%x\n", __func__, addr, shm->page_addr);
 #endif
-    /* 把虚拟地址和物理地址进行映射，物理地址是共享的。由于已经确切获取了一个地址，
-    所以这里就用固定映射，因为是共享内存，所以使用共享的方式。 */
-    shmaddr = vmspace_mmap(addr, shm->page_addr, shm->npages * PAGE_SIZE,
-        PROT_USER | PROT_WRITE, VMS_MAP_FIXED | VMS_MAP_SHARED);
+    
     if (shmaddr != (void *) -1)
         atomic_inc(&shm->links);
 
@@ -294,23 +294,34 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
         addr = (unsigned long) shmaddr;
 
     vmspace_t *sp = vmspace_find(cur->vmm, addr);
-    if (sp == NULL) /* 没有找到对应的空间 */
+    if (sp == NULL) {/* 没有找到对应的空间 */
+        printk(KERN_DEBUG "share_mem_unmap: not fond space\n");
         return -1;
+    }
+
+#if 0
     if (sp->start != addr)  /* 找到空间后，但还要是一样的起始地址才可以 */
         return -1;
-    
+#endif
+
     addr = addr_v2p(addr); /* 通过用户虚拟地址获取物理地址 */
     semaphore_down(&share_mem_mutex);
     share_mem_t *shm = share_mem_find_by_addr(addr);
     semaphore_up(&share_mem_mutex);
-    /* 取消虚拟空间映射 */
-    int retval = do_vmspace_unmap(cur->vmm, sp->start, sp->end - sp->start);
+    int retval = 0;
+    /* 不是映射已经存在的内存区域才会取消映射 */
+    if (!(shm->flags & SHARE_MEM_PRIVATE)) {
+        /* 取消虚拟空间映射 */
+        retval = do_vmspace_unmap(cur->vmm, sp->start, sp->end - sp->start);
+    }
     if (!retval) {  /* 减少链接数 */
         if (shm) 
             atomic_dec(&shm->links);
+    } else {
+        printk(KERN_ERR "share_mem_unmap: do unmap at %x failed!\n", addr);
     }
 #if DEBUG_SHM == 1
-            printk(KERN_DEBUG "share_mem_unmap: unmap at %x\n", shmaddr);
+    printk(KERN_DEBUG "share_mem_unmap: unmap at %x\n", addr);
 #endif
     return retval;
 }
@@ -332,6 +343,7 @@ int share_mem_put(int shmid)
 #if DEBUG_SHM == 1
         printk(KERN_INFO "shm links %d.\n", atomic_get(&shm->links));
 #endif
+        
         share_mem_free(shm);
         semaphore_up(&share_mem_mutex);
         return 0;

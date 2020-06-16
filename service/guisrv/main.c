@@ -23,6 +23,7 @@
 #include <event/msgque.h>
 
 #include <guisrv.h>
+#include <pthread/pthread.h>
 
 int init_guisrv()
 {
@@ -105,18 +106,25 @@ int start_guisrv()
         return -1;
     }
 
-    
     return 0;
 }
+
+extern pthread_mutex_t guisrv_master_mutex;
 
 int loop_guisrv()
 {
     while (1)
     {
+        pthread_mutex_lock(&guisrv_master_mutex);
+
         drv_mouse.read();
         drv_keyboard.read(); 
         // 接收消息队列，根据消息队列内容处理消息
         event_msgque.read();
+
+        pthread_mutex_unlock(&guisrv_master_mutex);
+
+        /* 图形服务内部处理的部分就不需要在互斥中，不涉及到和接口相关的部分。 */
         statusbar_manager.read();
         
     }
@@ -139,7 +147,7 @@ void *gui_malloc(size_t size)
 void gui_free(void *ptr)
 {
     /* invalid */
-    free(ptr);
+    //free(ptr);
 }
 
 /*

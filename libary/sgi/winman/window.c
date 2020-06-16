@@ -106,17 +106,23 @@ int SGI_DestroyWindow(SGI_Display *display, SGI_Window window)
     if (!winfo)
         return -1;
 
+    printf("[SGI] %s begin.\n", __func__);
+    
     /* 构建服务调用消息 */
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, GUISRV_DESTROY_WIN, 0);
     SETSRV_ARG(&srvarg, 1, winfo->winid, 0);
     SETSRV_RETVAL(&srvarg, -1);
+    printf("[SGI] %s winid=%d.\n", __func__, winfo->winid);
+    
     /* 执行服务调用 */
     if (srvcall(SRV_GUI, &srvarg))
         return -1;
     
     if (GETSRV_RETVAL(&srvarg, int) == -1)
         return -1;
+    
+    printf("[SGI] shmid:%d\n", winfo->shmid);
     
     /* 关闭共享内存 */
     res_close(winfo->shmid);
@@ -196,6 +202,14 @@ int SGI_UnmapWindow(SGI_Display *display, SGI_Window window)
     if (!winfo->mapped_addr)
         return -1;
     
+    
+#if DEBUG_LOCAL == 1  
+    printf("[sgi] unmap window at %x\n", winfo->mapped_addr);
+#endif   
+    /* 取消映射 */
+    if (res_read(winfo->shmid, 0, winfo->mapped_addr, 0) < 0) /* 解除共享内存映射 */
+        return -1;
+    
     /* 构建服务调用消息 */
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, GUISRV_UNMAP_WIN, 0);
@@ -206,13 +220,6 @@ int SGI_UnmapWindow(SGI_Display *display, SGI_Window window)
         return -1;
     
     if (GETSRV_RETVAL(&srvarg, int) == -1)
-        return -1;
-    
-#if DEBUG_LOCAL == 1  
-    printf("[test] map window at %x\n", winfo->mapped_addr);
-#endif   
-    /* 取消映射 */
-    if (res_read(winfo->shmid, 0, winfo->mapped_addr, 0) < 0) /* 解除共享内存映射 */
         return -1;
 
     winfo->mapped_addr = NULL;
@@ -243,7 +250,6 @@ int SGI_UpdateWindow(
     SGI_WindowInfo *winfo = SGI_DISPLAY_GET_WININFO(display, window);
     if (!winfo)
         return -1;
-
     /* 使用消息来传递交互信息，速度比服务调用快许多，但是不支持同步 */
     SGI_Msg msg;
     msg.type    = 1;     /* 类型是窗口id */

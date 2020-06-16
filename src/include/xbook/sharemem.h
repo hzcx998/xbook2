@@ -12,7 +12,7 @@
 #define SHARE_MEM_NAME_LEN      24
 
 
-#define SHARE_MEM_PRIVATE       0x01    /* 在本进程中映射一段共享内存 */
+#define SHARE_MEM_PRIVATE       0x01    /* 映射的虚拟地址在本进程中已经存在 */
 
 /* 共享内存结构 */
 typedef struct share_mem {

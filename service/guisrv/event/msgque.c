@@ -19,6 +19,7 @@ static int __open()
 
 static int __close()
 {
+    res_ioctl(event_msgque.msgid, IPC_DEL, RES_IPC | IPC_MSG);
     res_close(event_msgque.msgid);
     
     return 0;

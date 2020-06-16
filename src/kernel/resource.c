@@ -219,6 +219,7 @@ int __readres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
     }
     return 0;
 }
+
 /**
  * sys_getres - 获取资源
  * @resname: 资源名
@@ -496,6 +497,8 @@ void resource_copy(resource_t *dst, resource_t *src)
     res_item_t *item;
     for (i = 0; i < RES_NR; i++) {
         item = &src->table[i];
+        //dst->table[i] = src->table[i];
+#if 1
         if (item->flags > 0) { /* 项在使用中 */
             switch (item->flags & RES_MASTER_MASK)
             {
@@ -508,11 +511,13 @@ void resource_copy(resource_t *dst, resource_t *src)
                 break;
             case RES_IPC:
                 /* 不复制ipc资源和表项 */
+                
                 break;
             default:
                 break;
             }
         }
+#endif    
     }
 }
 /**
@@ -530,7 +535,7 @@ void resource_release(resource_t *res)
         item = &res->table[i];
         if (item->flags) {      
 #if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "resource_release: index=%d handle=%x flags=%x.\n", i, item->handle, item->flags);
+            printk(KERN_DEBUG "resource_release: index=%d handle=%x flags=%x.\n", i, item->handle, item->flags);
 #endif
             switch (item->flags & RES_MASTER_MASK)
             {
@@ -560,12 +565,14 @@ void resource_release(resource_t *res)
 /**
  * dump_resource - 调试
  * 
- * @res: 资源
+ * @res: 资源 
  */
 void dump_resource(resource_t *res)
 {
     if (res == NULL)
         return;
+
+    printk(KERN_DEBUG "dump_resource->\n");
     int i;
     res_item_t *item;
     for (i = 0; i < RES_NR; i++) {
@@ -574,12 +581,12 @@ void dump_resource(resource_t *res)
         {
         case RES_DEV:
             /* 设备增长 */
-            printk(KERN_DEBUG "dump_resource: index=%d devno=%x\n",
-                i, item->handle);
+            printk(KERN_DEBUG "dump_resource: index=%d devno=%x flags=%x\n",
+                i, item->handle, item->flags);
             break;
         case RES_IPC:
-            printk(KERN_DEBUG "dump_resource: index=%d ipcno=%x\n",
-                i, item->handle);
+            printk(KERN_DEBUG "dump_resource: index=%d ipcno=%x flags=%x\n",
+                i, item->handle, item->flags);
             /* code */
             break;
         default:

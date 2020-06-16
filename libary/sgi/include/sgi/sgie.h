@@ -42,6 +42,7 @@ typedef enum _SGI_EventType {
     SGI_MOUSE_MOTION,       /* 鼠标移动 */
     SGI_MOUSE_BUTTON,       /* 鼠标按钮事件 */
     SGI_QUIT,               /* 退出事件 */
+    SGI_WINMAX,             /* 窗口最大化事件 */
     SGI_EVENT_NR,           /* 最大的事件数量 */
 } SGI_EventType;
 

@@ -2,6 +2,7 @@
 #include <xbook/stdarg.h>
 #include <xbook/vsprintf.h>
 #include <xbook/memops.h>
+#include <xbook/spinlock.h>
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
 
@@ -62,6 +63,9 @@ void spin(char * functionName)
 		cpu_idle();
 	}
 }
+
+DEFINE_SPIN_LOCK_UNLOCKED(print_lock);
+
 #if CONFIG_DEBUG_METHOD == 1
 
 /**
@@ -123,6 +127,9 @@ int console_print(const char *fmt, ...)
  */
 int serial_print(const char *fmt, ...)
 {
+    /* 自旋锁上锁 */
+    spin_lock(&print_lock);
+
 	int i;
 	char buf[256];
 	va_list arg = (va_list)((char*)(&fmt) + 4); /*4是参数fmt所占堆栈中的大小*/
@@ -159,7 +166,9 @@ int serial_print(const char *fmt, ...)
             serial_putchar(*p++);
     
     }
-        
+    /* 自旋锁解锁锁 */
+    spin_unlock(&print_lock);
+    
 	return i;
 }
 #endif /* CONFIG_SERIAL_DEBUG */

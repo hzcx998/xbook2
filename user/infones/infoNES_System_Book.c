@@ -85,24 +85,28 @@ int main(int argc, char **argv)
 
 void exit_application()
 {
-    if (SGI_UnmapWindow(display, win)) {
+    int ret;
+    ret = SGI_UnmapWindow(display, win);
+
+    if (ret < 0) {
         printf("[infones] unmap window failed!\n");
         goto exit_end;
     } else {
         printf("[infones] unmap window success!\n");
     }
-
-    if (SGI_DestroyWindow(display, win)) {
+    ret = SGI_DestroyWindow(display, win);
+    
+    if (ret < 0) {
         printf("[infones] destroy window failed!\n");
         goto exit_end;
     } else {
         printf("[infones] destroy window success!\n");
     }
-    
+
     SGI_CloseDisplay(display);
     printf("[infones] close display ok!\n");
 exit_end:
-    exit(0);
+    exit(-1);
 }
 
 /*===================================================================*/
@@ -125,14 +129,13 @@ void start_application( char *filename )
     //printf("load2 ");
     /* Load SRAM */
     if (LoadSRAM()) {
-        exit_application();
+        return;
     }
 
     char title[32] = {0};
     sprintf(title, "infones - %s", filename);
 
     sleep(1);
-    
     
     display = SGI_OpenDisplay();
     if (display == NULL) {
@@ -161,7 +164,7 @@ void start_application( char *filename )
         printf("[infones] map window failed!\n");
         return;
     } else {
-        printf("[infones] map window success!\n");
+        printf("[infones] to map window success!\n");
     }
 
     //printf("main ");
@@ -169,7 +172,7 @@ void start_application( char *filename )
        
   } else {
       printf("[infones] InfoNES_Load failed!\n");
-      exit_application();
+      return;
   }
 }
 
@@ -567,10 +570,7 @@ int PollEvent(void)
             case SGIK_V:
 				SaveSRAM();
 				break;
-			case SGIK_q:
-            case SGIK_Q:
-                exit_application();
-                break;
+			
             default:
                 break;
             }
@@ -609,6 +609,10 @@ int PollEvent(void)
             case SGIK_K:
             	dwKeyPad1 &= ~(1 << 0);
 				break;			/* 'A' */
+            case SGIK_q:
+            case SGIK_Q:
+                exit_application();
+                break;
             default:
                 break;
 			}					/* 按键松开 */

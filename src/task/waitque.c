@@ -10,7 +10,7 @@
 #include <sys/waitque.h>
 #include <errno.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 /* waitque储存池 */
 waitque_t *waitque_table;

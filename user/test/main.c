@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     printf("[test] window handle %d\n", win);
 
     SGI_SelectInput(display, win, SGI_ButtonPressMask | SGI_ButtonRleaseMask |
-        SGI_KeyPressMask | SGI_EnterWindow | SGI_LeaveWindow);
+        SGI_KeyPressMask | SGI_KeyRleaseMask | SGI_EnterWindow | SGI_LeaveWindow);
 
     SGI_Event event;
     SGI_Window event_window;
@@ -116,27 +116,38 @@ int main(int argc, char *argv[])
             }
             break;
         case SGI_KEY:
-            if (event.key.state == SGI_PRESSED)
+            if (event.key.state == SGI_PRESSED) {
                 printf("[test] keyboard key pressed [%x, %c] modify %x.\n", event.key.keycode.code, 
                     event.key.keycode.code, event.key.keycode.modify);
-            else 
+                
+                
+            } else {
                 printf("[test] keyboard key released [%x, %c] modify %x.\n", event.key.keycode.code, 
                     event.key.keycode.code, event.key.keycode.modify);
+                if (event.key.keycode.code == SGIK_Q || event.key.keycode.code == SGIK_q) {
+                    goto exit_gui;
+                }
+            }
 
+            break;
+        case SGI_QUIT:
+            printf("[test] get quit event.\n");
+            goto exit_gui;
             break;
         default:
             break;
         }
     }
     sleep(1);
-
-    if (SGI_UnmapWindow(display, win)) {
+exit_gui:
+    
+    if (SGI_UnmapWindow(display, win) < 0) {
         printf("[test] unmap window failed!\n");
     } else {
         printf("[test] unmap window success!\n");
     }
 
-    if (SGI_DestroyWindow(display, win)) {
+    if (SGI_DestroyWindow(display, win) < 0) {
         printf("[test] destroy window failed!\n");
     } else {
         printf("[test] destroy window success!\n");

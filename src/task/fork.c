@@ -190,9 +190,10 @@ static int copy_trigger(task_t *child, task_t *parent)
 
 static int copy_res(task_t *child, task_t *parent)
 {
-    child->res = kmalloc(sizeof(triggers_t));
+    child->res = kmalloc(sizeof(resource_t));
     if (child->res == NULL)
         return -1;
+    memset(child->res, 0, sizeof(resource_t));
     resource_init(child->res);
     /* 更新资源引用 */
     //dump_resource(parent->res);
@@ -306,11 +307,11 @@ static int copy_task(task_t *child, task_t *parent)
     /* 4.复制触发器 */
     if (copy_trigger(child, parent))
         return -1;
-    
+
     /* 5.复制资源 */
     if (copy_res(child, parent))
         return -1;
-    
+        
     /* 6.复制线程描述 */
     if (copy_pthread_desc(child, parent))
         return -1;
@@ -345,6 +346,7 @@ int sys_fork()
     ASSERT(parent->vmm != NULL);
     unsigned long flags;
     save_intr(flags);
+
     /* 复制进程 */
     if (copy_task(child, parent)) {
         printk(KERN_ERR "do_usrmsg_fork: copy task failed!\n");
@@ -355,6 +357,8 @@ int sys_fork()
     /* 把子进程添加到就绪队列和全局链表 */
     task_global_list_add(child);
     task_priority_queue_add_tail(child); /* 放到队首 */
+
+
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "%s: task %s pid %d fork task %s pid %d\n", 
         __func__, parent->name, parent->pid, child->name, child->pid);

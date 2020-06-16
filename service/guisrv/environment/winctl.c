@@ -119,11 +119,15 @@ int gui_winctl_del(gui_winctl_t *winctl)
 {
     if (!winctl)
         return -1;
-
+    
     if (!list_find(&winctl->list, &winctl_manager.winctl_list_head))
         return -1;
+        
+    /* 删除按钮 */
+    winctl->button->del(winctl->button);
 
     list_del(&winctl->list);
+    
     return 0;
 }
 
@@ -131,8 +135,8 @@ int gui_destroy_winctl(gui_winctl_t *winctl)
 {
     if (!winctl)
         return -1;
-    
-    gui_button_destroy(winctl->button);
+
+    winctl->button->destroy(winctl->button);
     return 0;
 }
 

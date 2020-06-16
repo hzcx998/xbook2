@@ -300,7 +300,7 @@ int filesrv_create_files()
 int filesrv_execute()
 {
     struct file_map *fmap;
-    int pid;
+    int pid = 0;
     int i;
     for (i = 0; i < ARRAY_SIZE(file_map_table); i++) {
         fmap = &file_map_table[i];

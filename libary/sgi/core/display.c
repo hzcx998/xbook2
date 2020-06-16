@@ -150,8 +150,8 @@ SGI_Display *SGI_OpenDisplay()
 
     /* 把根窗口添加到窗口句柄 */
     display->root_window = SGI_DisplayWindowInfoAdd(display, &winfo);
-    printf("[SGI] oepn display: root window:%d width:%d height:%d\n",
-        display->root_window, display->width, display->height);
+    printf("[SGI] oepn display: id:%d root window:%d width:%d height:%d\n",
+        display->id ,display->root_window, display->width, display->height);
 
     return display;
 od_event_msgid:
@@ -166,19 +166,16 @@ int SGI_CloseDisplay(SGI_Display *display)
     if (!display) {
         return -1;
     }
+
+    printf("[SGI] close display: id:%d\n", display->id);
+
     /* ！！！释放显示的所有窗口，0号是根窗口，不释放 */
     int i;
     for (i = 1; i < SGI_WINDOW_HANDLE_NR; i++) {
         /* 关闭窗口 */
         SGI_DisplayWindowInfoDel(display, i);
     }
-
-    if (display->request_msgid >= 0)
-        res_close(display->request_msgid);
     
-    if (display->event_msgid >= 0)
-        res_close(display->event_msgid);
-
     /* 发送关闭显示服务请求 */
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, GUISRV_CLOSE_DISPLAY, 0);
@@ -190,6 +187,15 @@ int SGI_CloseDisplay(SGI_Display *display)
     if (GETSRV_RETVAL(&srvarg, int) == -1) {
         goto close_display_error;
     }
+
+    printf("[SGI] request msgid:%d\n", display->request_msgid);
+    printf("[SGI] event msgid:%d\n", display->event_msgid);
+
+    if (display->request_msgid >= 0)
+        res_close(display->request_msgid);
+    
+    if (display->event_msgid >= 0)
+        res_close(display->event_msgid);
 
     SGI_Free(display);
     return 0;
