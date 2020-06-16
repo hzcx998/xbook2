@@ -16,7 +16,7 @@ WINMAN_DIR 		= ./winman
 # flags
 ARFLAGS 		= -cr
 C_FLAGS			= 	-c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
-					-fno-stack-protector -std=c99 \
+					-fno-stack-protector -std=gnu99 \
 					-I $(DIR_INCLUDE) \
 					-I $(DIR_INCLUDE_XBOOK) \
 					
@@ -31,6 +31,8 @@ CORE_OBJS	=		$(CORE_DIR)/display.o \
 					$(CORE_DIR)/event.o \
 					
 WINMAN_OBJS	=		$(WINMAN_DIR)/window.o \
+					$(WINMAN_DIR)/font.o \
+					$(WINMAN_DIR)/font_standard.o \
 
 # objects
 OBJS			= 	$(CORE_OBJS) $(WINMAN_OBJS)

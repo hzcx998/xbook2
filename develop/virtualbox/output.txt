@@ -1,6 +1,6 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:1:10:0 date:2020/6/16
+info: time:20:40:44 date:2020/6/16
 info: week day:2 Tuesday year day:169
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -9,38 +9,7 @@ error: init_driver_arch: create one driver failed!
 info: raw block name:initsrv
 info: raw block name:filesrv
 initsrv: started
-debug: parent res:debug: dump_resource->
-debug: dump_resource: index=0 devno=3 flags=1000000
-debug: dump_resource: index=1 devno=3 flags=1000000
-debug: dump_resource: index=2 devno=3 flags=1000000
-debug: child res:debug: dump_resource->
-debug: dump_resource: index=0 devno=3 flags=1000000
-debug: dump_resource: index=1 devno=3 flags=1000000
-debug: dump_resource: index=2 devno=3 flags=1000000
-debug: parent res:debug: dump_resource->
-debug: dump_resource: index=0 devno=3 flags=1000000
-debug: dump_resource: index=1 devno=3 flags=1000000
-debug: dump_resource: index=2 devno=3 flags=1000000
-debug: child res:debug: dump_resource->
-debug: dump_resource: index=0 devno=3 flags=1000000
-debug: dump_resource: index=1 devno=3 flags=1000000
-debug: dump_resource: index=2 devno=3 flags=1000000
-debug: parent res:debug: dump_resource->
-debug: dump_resource: index=0 devno=3 flags=1000000
-debug: dump_resource: index=1 devno=3 flags=1000000
-debug: dump_resource: index=2 devno=3 flags=1000000
-debug: child res:debug: dump_resource->
-debug: dump_resource: index=0 devno=3 flags=1000000
-debug: dump_resource: index=1 devno=3 flags=1000000
-debug: dump_resource: index=2 devno=3 flags=1000000
-debug: parent res:debug: dump_resource->
-debug: dump_resource: index=0 devno=3 flags=1000000
-debug: dump_resource: index=1 devno=3 flags=1000000
-debug: dump_resource: index=2 devno=3 flags=1000000
-debug: child res:debug: dump_resource->
-debug: dump_resource: index=0 devno=3 flags=1000000
-debug: dump_resource: index=1 devno=3 flags=1000000
-debug: dump_resource: index=2 devno=3 flags=1000000
+debug: sys_wait: pid=1 no child exit, waiting...
 filesrv: disk seq: 0: -> ide1
 filesrv: disk seq: 1: -> ramdisk
 0:/NETSRV.XSV
@@ -60,75 +29,84 @@ debug: vbe_mmap: start
 debug: vbe_mmap: length=ea600 mode len=ea600
 debug: vbe_mmap: get phy addr:e0000000
 debug: device_mmap: get device phy addr:e0000000
-guisrv: mapped addr 20021000
+guisrv: mapped addr 20022000
 hello, test!
 [guisrv] create window width=800 height=600 yoff=0
 [guisrv] create window width=64 height=570 yoff=0
 [guisrv] create window width=800 height=30 yoff=0
 infones: arg /mario.nes
+guisrv: srvcall seq=0 callnum 0.
 [GUISRV] open msg guisrv-display1.
 [guisrv] env_display_add: display id=1, msg id=7
 [SGI] open msg guisrv-display1.
 [SGI] oepn display: id:1 root window:0 width:800 height:600
 [test] open display ok!
-[guisrv] create window width=320 height=264 yoff=24
+guisrv: srvcall seq=1 callnum 2.
+[guisrv] create window width=320 height=264 yoff=24
 [SGI] create window: shm name guisrv-win3
 [test] create window success!
-[guisrv] set icon (5, 5)
-debug: share_mem_map: phy addr:3129000.
+guisrv: srvcall seq=2 callnum 6.
+guisrv: srvcall seq=3 callnum 8.
+[guisrv] set icon (5, 5)
+guisrv: srvcall seq=4 callnum 4.
+debug: share_mem_map: phy addr:312a000.
 [sgi] map window at 20015000, start off:6c4
 [test] map window success!
 [test] update window success!
 [test] window handle 1
+guisrv: srvcall seq=5 callnum 9.
 [guisrv] select input mask 7b
+guisrv: srvcall seq=6 callnum 0.
 [GUISRV] open msg guisrv-display2.
 [guisrv] env_display_add: display id=2, msg id=9
 [SGI] open msg guisrv-display2.
 [SGI] oepn display: id:2 root window:0 width:800 height:600
 [infones] open display ok!
+guisrv: srvcall seq=7 callnum 2.
 [guisrv] create window width=256 height=264 yoff=24
 [SGI] create window: shm name guisrv-win4
-ÿÿ[infones] create window success!
-debug: share_mem_map: phy addr:317b000.
-[sgi] map window at 2016f000, start off:dac
+[infones] create window success!
+guisrv: srvcall seq=8 callnum 4.
+debug: share_mem_map: phy addr:317d000.
+[sgi] map window at 20170000, start off:dac
 [infones] to map window success!
-[sgi] unmap window at 2016f000
-[infones] unmap window success!
-[guisrv] do_destroy_window: shmid=10
-[SGI] shmid:5
-[infones] destroy window success!
-[SGI] close display: id:2
-[guisrv] do_close_display: msgid=9
-[guisrv] env_display_del: display id=2, msg id=9
-[SGI] request msgid:4
-[SGI] event msgid:3
-[infones] close display ok!
-debug: resource_release: index=0 handle=3 flags=1000000.
-debug: resource_release: index=1 handle=3 flags=1000000.
-debug: resource_release: index=2 handle=3 flags=1000000.
-[test] mouse enter window motion 316, 92.
-ÿÿ[mouse] change state 0 to 1
+[test] mouse enter window motion 311, 122.
+ÿ[test] left button pressed.
+[test] left button released.
+[mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[test] mouse leave window motion 456, 145.
-ÿ[test] mouse enter window motion 210, 1.
-ÿÿÿ[mouse] change state 0 to 0
-[test] keyboard key pressed [71, q] modify 1.
-[test] keyboard key released [71, q] modify 1.
-task name=guisrv pid=5
-alter: do_page_fault: touch TRIGHW trigger because unknown space!
-alter: page fault addr:7fffef5c
-debug: vector:14 edi:8 esi:7fffefb4 ebp:7fffef98 esp dummy:8124ffd8 ebx:4 edx:0 ecx:0 eax:ffffffff
-debug: gs:2b fs:2b es:2b ds:2b error code:4 eip:d4fa cs:23 eflags:10202 esp:7fffef5c ss:2b
-debug: resource_release: index=0 handle=3 flags=1000000.
-debug: resource_release: index=1 handle=3 flags=1000000.
-debug: resource_release: index=2 handle=3 flags=1000000.
-debug: resource_release: index=3 handle=6 flags=1000000.
-debug: resource_release: index=4 handle=7 flags=1000000.
-debug: resource_release: index=5 handle=0 flags=1000000.
-debug: resource_release: index=6 handle=1 flags=2400003.
-debug: resource_release: index=7 handle=4 flags=2400003.
-debug: resource_release: index=8 handle=1 flags=2100003.
-[sgi] unmap window at 20015000
-[test] unmap window success!
-alter: do_page_fault: user access user unknown space .
-alter: page fault addr:33ee50
+[test] left button pressed.
+[test] left button released.
+[test] left button pressed.
+[test] left button released.
+[test] mouse leave window motion 392, 162.
+ÿ[test] mouse enter window motion 3, 34.
+[test] left button released.
+[test] mouse leave window motion 385, 182.
+ÿ[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse enter window motion 0, 52.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse leave window motion 403, 157.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse enter window motion 68, 160.
+t[test] left button pressed.
+[test] left button released.
+[test] mouse leave window motion 235, 177.
+ÿ[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse enter window motion 6, 114.
+ÿÿÿ[test] mouse leave window motion 393, 246.
+ÿ[test] mouse enter window motion 4, 183.
+ÿÿÿ[test] left button released.
+[test] left button pressed.
+[test] left button released.
+[test] left button pressed.
+[test] left button released.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse leave window motion 399, 119.
+[test] mouse enter window motion 130, 1.
+ÿÿÿ

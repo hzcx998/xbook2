@@ -1,7 +1,7 @@
 info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:19:2:44 date:2020/6/14
-info: week day:0 Sunday year day:167
+info: time:12:20:43 date:2020/6/16
+info: week day:2 Tuesday year day:169
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -9,6 +9,7 @@ error: init_driver_arch: create one driver failed!
 info: raw block name:initsrv
 info: raw block name:filesrv
 initsrv: started
+debug: sys_wait: pid=1 no child exit, waiting...
 filesrv: disk seq: 0: -> ide1
 filesrv: disk seq: 1: -> ramdisk
 0:/NETSRV.XSV
@@ -27,76 +28,125 @@ debug: device_mmap: start.
 debug: vbe_mmap: start
 debug: vbe_mmap: length=ea600 mode len=ea600
 debug: vbe_mmap: get phy addr:e8000000
-debug: device_mmap: get device phy addr:e800hello, test!
-0000
-guisrv: mapped addr 20021000
-[guisrv] ready bind service.
-[guisrv] bind service ok.
+debug: device_mmap: get device phy addr:e8000000
+guisrv: mapped addr 20022000
+hello, test!
+[guisrv] create window width=800 height=600 yoff=0
+[guisrv] create window width=64 height=570 yoff=0
+[guisrv] create window width=800 height=30 yoff=0
 infones: arg /mario.nes
-[guisrv] open display
+guisrv: srvcall seq=0 callnum 0.
 [GUISRV] open msg guisrv-display1.
 [guisrv] env_display_add: display id=1, msg id=7
-guisrv: srvcall seq=0 callnum 0.
 [SGI] open msg guisrv-display1.
-[SGI] oepn display: root window:0 width:800 height:600
+[SGI] oepn display: id:1 root window:0 width:800 height:600
 [test] open display ok!
-[guisrv] create window: shm name guisrv-win3.
-[guisrv] window display id=1.
 guisrv: srvcall seq=1 callnum 2.
-[SGI] create window: shm name guisrv-win3.
+[guisrv] create window width=320 height=264 yoff=24
+[SGI] create window: shm name guisrv-win3
 [test] create window success!
 guisrv: srvcall seq=2 callnum 6.
-[guisrv] set icon (5, 5)
 guisrv: srvcall seq=3 callnum 8.
-[guisrv] map window share memory at 34654c
-debug: share_mem_map: phy addr:3268000.
-[guisrv] mapped window share memory at 2010c000, start off is 54c
+[guisrv] set icon (5, 5)
 guisrv: srvcall seq=4 callnum 4.
-[test] map window at 20014000, start off:54c
+debug: share_mem_map: phy addr:326a000.
+[sgi] map window at 20015000, start off:6c4
 [test] map window success!
 [test] update window success!
 [test] window handle 1
-[guisrv] select input mask 6b
 guisrv: srvcall seq=5 callnum 9.
-[guisrv] open display
+[guisrv] select input mask 7b
+[test] mouse enter window motion 279, 232.
+ÿguisrv: srvcall seq=6 callnum 0.
 [GUISRV] open msg guisrv-display2.
 [guisrv] env_display_add: display id=2, msg id=9
-guisrv: srvcall seq=6 callnum 0.
 [SGI] open msg guisrv-display2.
-[SGI] oepn display: root window:0 width:800 height:600
+[SGI] oepn display: id:2 root window:0 width:800 height:600
 [infones] open display ok!
-[guisrv] create window: shm name guisrv-win4.
-[guisrv] window display id=2.
+[test] mouse leave window motion 401, 260.
 guisrv: srvcall seq=7 callnum 2.
-[SGI] create window: shm name guisrv-win4.
+[guisrv] create window width=256 height=264 yoff=24
+[SGI] create window: shm name guisrv-win4
 [infones] create window success!
-[guisrv] map window share memory at 397c34
-debug: share_mem_map: phy addr:32ba000.
-[guisrv] mapped window share memory at 20157000, start off is c34
+[test] mouse enter window motion 305, 239.
+[test] mouse enter window motion 279, 238.
+[test] mouse leave window motion 361, 340.
+ÿ[test] mouse leave window motion 400, 286.
+[test] mouse enter window motion 315, 234.
 guisrv: srvcall seq=8 callnum 4.
-[test] map window at 2016f000, start off:c34
-[infones] map window success!
-[test] mouse enter window motion 319, 212.
-ÿ[test] mouse leave window motion 250, 173.
+debug: share_mem_map: phy addr:32bc000.
+[sgi] map window at 2016f000, start off:dac
+[infones] to map window success!
+[test] mouse leave window motion 395, 305.
+[test] mouse enter window motion 304, 238.
+ÿ[test] mouse leave window motion 394, 267.
+ÿ[test] mouse enter window motion 313, 113.
+[test] mouse leave window motion 247, 80.
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[test] mouse enter window motion 303, 45.
-pð[mouse] change state 0 to 1
+[test] mouse enter window motion 307, 21.
+ÿÿ[mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[test] mouse leave window motion 317, 173.
+[test] mouse leave window motion 303, 223.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse enter window motion 221, 5.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse leave window motion 7, 94.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse enter window motion 163, 0.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse leave window motion 152, 168.
+ð[test] mouse enter window motion 62, 1.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse leave window motion 220, 166.
+[test] mouse enter window motion 113, 0.
+ÿÿÿ[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse leave window motion 298, 194.
 ÿ[mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[test] mouse enter window motion 310, 20.
-ÿÿ[test] mouse leave window motion 307, 174.
-ÿ[test] mouse enter window motion 148, 0.
-ÿÿÿ[test] mouse leave window motion 320, 172.
-ÿ[test] mouse enter window motion 148, 0.
-ÿÿÿ[mouse] change state 0 to 1
-[mouse] change state 0 to 0
-[test] mouse leave window motion 333, 200.
-ÿ[test] mouse enter window motion 236, 0.
-ÿÿÿ[mouse] change state 0 to 1
+[mouse] change state 0 to 1
 [mouse] change state 0 to 0
 [mouse] change state 0 to 1
 [mouse] change state 0 to 0
-[test] mouse leave window motion 165, 94.
+[test] mouse enter window motion 217, 0.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse leave window motion 252, 202.
+[test] mouse enter window motion 220, 0.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse leave window motion 413, 161.
+ð[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse enter window motion 318, 64.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse leave window motion 281, 182.
+[test] mouse enter window motion 199, 0.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse leave window motion 418, 213.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse enter window motion 318, 126.
+ð[test] left button pressed.
+[test] left button released.
+[test] mouse leave window motion 419, 323.
+ÿ[test] mouse enter window motion 316, 229.
+ÿ[mouse] change state 0 to 1
+[mouse] change state 0 to 0
+[test] mouse leave window motion 268, 183.
+[test] mouse enter window motion 264, 0.
+ÿÿÿ[test] mouse leave window motion 432, 188.
+[mouse] change state 0 to 1
+[mouse] change state 0 to 0

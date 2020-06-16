@@ -39,7 +39,10 @@ int main(int argc, char *argv[])
     SGI_SetWMName(display, win, "new title, 123 abc #$");
 
     static SGI_Argb icon[5*5*4];
-    
+    int i;
+    for (i = 0; i < 5*5; i++) {
+        icon[i] = SGI_RGB(i * 20, i* 15, i* 5);
+    }
     SGI_SetWMIcon(display, win, icon, 5, 5);
 
     if (SGI_MapWindow(display, win)) {
@@ -65,6 +68,14 @@ int main(int argc, char *argv[])
         }
     }
     SGI_WindowDrawPixmap(display, win, 100, 200, 10, 10, pixmap);
+    
+    SGI_DrawString(display, win, 100, 50, "hello, text!\nabc\n\rdef", 30, SGIC_BLUE);
+
+    if (SGI_SetFont(display, win, SGI_LoadFont(display, "standard-8*16")) < 0) {
+        printf("[test] set font failed!\n");
+    }
+
+    SGI_DrawString(display, win, 100, 200, "hello, text!\nabc\n\rdef", 30, SGIC_BLUE);
     
     if (SGI_UpdateWindow(display, win, 0, 0, 320, 240))
         printf("[test] update window failed!\n");
@@ -128,7 +139,6 @@ int main(int argc, char *argv[])
                     goto exit_gui;
                 }
             }
-
             break;
         case SGI_QUIT:
             printf("[test] get quit event.\n");

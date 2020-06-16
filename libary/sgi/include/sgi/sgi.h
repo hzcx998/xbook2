@@ -20,6 +20,7 @@ typedef struct _SGI_Display
     int request_msgid;              /* 消息队列：用来请求事件 */
     unsigned int id;                /* 显示id */
     SGI_Window event_window;        /* 接收事件的窗口 */
+    list_t font_list_head;          /* 字体链表头 */
 } SGI_Display;
 
 #define SGI_DISPLAY_EVENT_WINDOW(display) \
@@ -118,6 +119,55 @@ int SGI_SelectInput(
     SGI_Display *display,
     SGI_Window w,
     long mask
+);
+
+int SGI_RegisterFont(
+    SGI_Display *display,
+    const char *name,
+    const char *copyright,
+    void *addr,
+    unsigned int width,
+    unsigned int height
+);
+
+int SGI_UnregisterFont(
+    SGI_Display *display,
+    SGI_FontInfo *font
+);
+
+int SGI_UnregisterFontByName(
+    SGI_Display *display,
+    const char *name
+);
+
+SGI_FontInfo *SGI_LoadFont(
+    SGI_Display *display,
+    const char *name
+);
+
+int SGI_SetFont(
+    SGI_Display *display,
+    SGI_Window win,
+    SGI_FontInfo *font
+);
+
+int SGI_DrawString(
+    SGI_Display *display,
+    SGI_Window window,
+    int x,
+    int y,
+    char *str,
+    size_t len,
+    SGI_Argb color
+);
+
+int SGI_DrawChar(
+    SGI_Display *display,
+    SGI_Window window,
+    int x,
+    int y,
+    char ch,
+    SGI_Argb color
 );
 
 #endif  /* __SGI_H__ */

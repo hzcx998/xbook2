@@ -1,6 +1,8 @@
 #ifndef __SGI_WM_H__    /* window management */
 #define __SGI_WM_H__
 
+#include "sgif.h"
+
 typedef int SGI_Window;
 
 typedef struct _SGI_Color {
@@ -36,7 +38,8 @@ typedef struct _SGI_WindowInfo {
     unsigned short start_off;   /* 起始偏移 */
     unsigned int width;         /* 窗口宽度 */
     unsigned int height;        /* 窗口高度 */
-    long input_mask;            /* 输入遮罩 */                  
+    long input_mask;            /* 输入遮罩 */  
+    struct _SGI_FontInfo *font; /* 当前字体 */                
 } SGI_WindowInfo;
 
 #endif  /* __SGI_WM_H__ */

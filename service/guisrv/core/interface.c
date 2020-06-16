@@ -280,7 +280,7 @@ static int do_unmap_window(srvarg_t *arg)
     }
 
     printf("[%s] %s addr=%x\n", SRV_NAME, __func__, win->mapped_addr);
-    
+
     /* 解除共享内存映射 */
     if (res_read(win->shmid, 0, win->mapped_addr, 0) < 0) 
         goto mw_error;    
@@ -421,7 +421,10 @@ static int do_set_wm_icon(srvarg_t *arg)
     
     /* 设置图标数据 */
     printf("[%s] set icon (%d, %d)\n", SRV_NAME, width, height);
-    
+    gui_winctl_t *winctl = (gui_winctl_t *) win->winctl;
+    if (winctl) {
+        winctl->button->set_pixmap(winctl->button, width, height, (GUI_COLOR *) srvbuf32k);
+    }
     SETSRV_RETVAL(arg, 0);
     return 0;
 setwmn_error:

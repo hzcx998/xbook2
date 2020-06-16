@@ -1,5 +1,6 @@
 #include <sgi/sgi.h>
 #include <sgi/sgii.h>
+#include <sgi/sgif.h>
 #include <sys/srvcall.h>
 #include <sys/res.h>
 #include <sys/ipc.h>
@@ -109,14 +110,14 @@ SGI_Display *SGI_OpenDisplay()
     SETSRV_RETVAL(&srvarg, -1);
 
     if (srvcall(SRV_GUI, &srvarg)) {
-        goto od_free_display;
+        goto free_display;
     }
     if (GETSRV_RETVAL(&srvarg, int) == -1) {
-        goto od_free_display;
+        goto free_display;
     }
     /* 链接失败 */
     if (!display->connected)
-        goto od_free_display;
+        goto free_display;
     /* success! */
     char msgname[16];
     memset(msgname, 0, 16);
@@ -125,7 +126,7 @@ SGI_Display *SGI_OpenDisplay()
     /* 创建一个消息队列，用来和客户端进程交互 */
     int msgid = res_open(msgname, RES_IPC | IPC_MSG | IPC_CREAT, 0);
     if (msgid < 0) 
-        goto od_free_display;
+        goto free_display;
     
     /* 消息id */
     display->event_msgid = msgid;
@@ -134,12 +135,15 @@ SGI_Display *SGI_OpenDisplay()
     /* 图形服务的接收消息队列 */
     msgid = res_open("guisrv-msgque", RES_IPC | IPC_MSG | IPC_CREAT, 0);
     if (msgid < 0) 
-        goto od_event_msgid;
+        goto free_event_msgid;
 
     display->request_msgid = msgid;
 
     SGI_DisplayWindowInfoInit(display);
     
+    if (SGI_InitFont(display) < 0)
+        goto free_request_msgid;
+
     /* 根窗口信息 */
     SGI_WindowInfo winfo;
     winfo.winid = display->root_window;
@@ -152,11 +156,13 @@ SGI_Display *SGI_OpenDisplay()
     display->root_window = SGI_DisplayWindowInfoAdd(display, &winfo);
     printf("[SGI] oepn display: id:%d root window:%d width:%d height:%d\n",
         display->id ,display->root_window, display->width, display->height);
-
     return display;
-od_event_msgid:
+
+free_request_msgid:
+    res_close(display->request_msgid);
+free_event_msgid:
     res_close(display->event_msgid);
-od_free_display:
+free_display:
     SGI_Free(display);
     return NULL;
 }
@@ -166,14 +172,23 @@ int SGI_CloseDisplay(SGI_Display *display)
     if (!display) {
         return -1;
     }
+    if (!display->connected)
+        return -1;
 
     printf("[SGI] close display: id:%d\n", display->id);
 
-    /* ！！！释放显示的所有窗口，0号是根窗口，不释放 */
+    /* 注销链表上的所有字体 */
+    SGI_FontInfo *font, *ftnext;
+    list_for_each_owner_safe (font, ftnext, &display->font_list_head, list) {
+        SGI_UnregisterFont(display, font);
+    }
+    
+    /* 释放显示的所有窗口，0号是根窗口，不释放 */
     int i;
     for (i = 1; i < SGI_WINDOW_HANDLE_NR; i++) {
-        /* 关闭窗口 */
-        SGI_DisplayWindowInfoDel(display, i);
+        if (display->winfo_table[i].flags > 0) {
+            SGI_DestroyWindow(display, i);
+        }
     }
     
     /* 发送关闭显示服务请求 */

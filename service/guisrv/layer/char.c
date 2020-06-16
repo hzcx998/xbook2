@@ -34,7 +34,6 @@ static void layer_draw_word_bit(
 	}	
 }
 
-
 void layer_draw_word_ex(
     layer_t *layer,
     int x,

@@ -17,4 +17,8 @@ SGI_Window SGI_DisplayWindowHandleFindByWinid(SGI_Display *display, int winid);
 #define SGI_DISPLAY_GET_WININFO(display, window) \
         (SGI_BAD_WIN_HANDLE(window) ? NULL : &(display)->winfo_table[window])
 
+/* 导入头文件 */
+int SGI_InitFont(SGI_Display *display);
+int SGI_RegisterFontStandard(SGI_Display *display);
+
 #endif  /* __SGI_INTERFACE_H__ */
