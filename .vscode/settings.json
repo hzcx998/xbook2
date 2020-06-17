@@ -86,6 +86,9 @@
         "xstddef": "c",
         "xtr1common": "c",
         "xutility": "c",
-        "initializer_list": "c"
+        "initializer_list": "c",
+        "console.h": "c",
+        "algorithm": "c",
+        "limits": "c"
     }
 }

@@ -45,6 +45,8 @@ LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 OBJS =  main.o \
 		window.o \
 		console.o \
+		cmd.o \
+		cursor.o \
 
 LIB_FILE := $(DIR_SGI)/sgi-0.0.1.a \
 			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \

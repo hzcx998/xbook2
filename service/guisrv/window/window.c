@@ -352,7 +352,7 @@ gui_window_t *gui_create_window(
     
     /* 设置标题盒子 */
     ENV_BOX_INIT(win->body_box, win->x_off, win->y_off,
-        win->x_off + win->layer->width, win->height + win->y_off);
+        win->x_off + win->layer->width, win->layer->height);
 
     /* 绘制窗口本体 */
     layer_draw_rect_fill(win->layer, win->x_off, win->y_off, win->layer->width, win->height, background);

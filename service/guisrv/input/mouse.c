@@ -43,8 +43,8 @@ static void __button_down(int btn)
 
         local_mx = input_mouse.x - window->x;
         local_my = input_mouse.y - window->y;
-        if (local_mx >= 0 && local_mx < window->width && 
-            local_my >= 0 && local_my < window->height) {
+        if (local_mx >= 0 && local_mx < layer->width && 
+            local_my >= 0 && local_my < layer->height) {
             
             /* 如果成功处理了控件事件，就退出 */
             if (gui_widget_mouse_button_down(&layer->widget_list_head, btn,
@@ -54,7 +54,12 @@ static void __button_down(int btn)
 #if DEBUG_LOCAL == 1    
             printf("touch window: pos=%d-%d, size=%d-%d\n", 
                 window->x, window->y, window->width, window->height);
-#endif                    
+            printf("win: pos:%d,%d size:%d,%d mouse:%d,%d local:%d,%d\n", 
+                window->x, window->y, window->width, window->height,
+                    input_mouse.x, input_mouse.y, local_mx, local_my);
+
+#endif                  
+            
             if (!(window->attr & GUIW_NO_TITLE)) {
                  
                 /* 有标题才判断标题栏 */
@@ -161,8 +166,8 @@ static void __button_up(int btn)
             window = (gui_window_t *) layer->extension;
             local_mx = input_mouse.x - window->x;
             local_my = input_mouse.y - window->y;
-            if (local_mx >= 0 && local_mx < window->width && 
-                local_my >= 0 && local_my < window->height) {
+            if (local_mx >= 0 && local_mx < layer->width && 
+                local_my >= 0 && local_my < layer->height) {
                 
                 /* 如果成功处理了控件事件，就退出 */
                 if (gui_widget_mouse_button_up(&layer->widget_list_head, btn,
@@ -264,8 +269,8 @@ void __motion()
                 local_mx = input_mouse.x - window->x;
                 local_my = input_mouse.y - window->y;
                 
-                if (local_mx >= 0 && local_mx < window->width && 
-                    local_my >= 0 && local_my < window->height) {
+                if (local_mx >= 0 && local_mx < layer->width && 
+                    local_my >= 0 && local_my < layer->height) {
                     gui_widget_mouse_motion(&layer->widget_list_head, local_mx, local_my);
                 
                     /* 进入某个窗口 */

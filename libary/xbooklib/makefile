@@ -20,6 +20,9 @@ PTHREAD_DIR 	= ./pthread
 TIME_DIR 		= ./time
 UNISTD_DIR		= ./unistd
 MATH_DIR		= ./math
+CTYPE_DIR		= ./ctype
+
+
 # flags
 ARFLAGS 		= -cr
 C_FLAGS			= 	-c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
@@ -77,11 +80,12 @@ MATH_OBJS		= 	$(MATH_DIR)/fabs.o \
 					$(MATH_DIR)/cos.o \
 					$(MATH_DIR)/sqrt.o \
 					
+CTYPE_OBJS		= 	$(CTYPE_DIR)/ctype.o \
 
 # objects
 OBJS			= 	$(ARCH_OBJS) $(ANSI_OBJS) $(STDIO_OBJS) \
 					$(SYSLIB_OBJS) $(STDLIB_OBJS) $(PTHREAD_OBJS) \
-					$(TIME_OBJS) $(UNISTD_OBJS) $(MATH_OBJS)
+					$(TIME_OBJS) $(UNISTD_OBJS) $(MATH_OBJS) $(CTYPE_OBJS)
 
 # out file
 LIBNAME = xbooklib-0.0.1.a

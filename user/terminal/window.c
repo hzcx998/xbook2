@@ -5,6 +5,9 @@
 #include <sgi/sgi.h>
 #include "terminal.h"
 #include "window.h"
+#include "cmd.h"
+#include "cursor.h"
+#include "console.h"
 
 #define DEBUG_LEVEL 1
 
@@ -61,7 +64,7 @@ int con_open_window()
     }
     /* 选择接收的输入内容 */
     SGI_SelectInput(display, win, SGI_ButtonPressMask | SGI_ButtonRleaseMask |
-        SGI_KeyPressMask | SGI_KeyRleaseMask);
+        SGI_KeyPressMask | SGI_KeyRleaseMask | SGI_PointerMotionMask);
     
     /* 绘制光标 */
     draw_cursor();
@@ -98,26 +101,54 @@ int con_event_loop(char *buf, int count)
     SGI_Window win = screen.win;
     SGI_Display *display = screen.display;
     SGI_Event event;
-    char *pos = buf;
-    int len = 0;    /* 命令字符长度 */
+
+    cmdman->cmd_pos = cmdman->cmd_line;
+    cmdman->cmd_len = 0;
+
     int i, j;
     char *q;
 
     int cx, cy;
-    while ((pos - buf) < count) {
+    while ((cmdman->cmd_pos - buf) < count) {
         if (SGI_NextEvent(display, &event))
             continue;
         switch (event.type)
         {
+        case SGI_MOUSE_BUTTON:
+            if (event.button.state == SGI_PRESSED) {    // 按下
+                if (event.button.button == 0) {
+                    printf("[%s] left button pressed.\n", APP_NAME);
+                    con_flush();
+                    screen.mousex = event.button.x;
+                    screen.mousey = event.button.y;
+                    con_region_chars(screen.mousex, screen.mousey, screen.mousex, screen.mousey);
+                }
+            } else {
+                if (event.button.button == 0) {
+                    
+                    printf("[%s] left button released.\n", APP_NAME);
+                    screen.mousex = -1;
+                    screen.mousey = -1;
+                }
+            }
+            break;
+        case SGI_MOUSE_MOTION:
+            if (screen.mousex >= 0 && screen.mousey >= 0) {
+                 con_flush();
+                con_region_chars(screen.mousex, screen.mousey, event.button.x, event.button.y);
+            }
+            break;
         case SGI_KEY:
             if (event.key.state == SGI_PRESSED) {
                 /* 组合按键 */
                 if (event.key.keycode.modify & SGI_KMOD_CTRL) {
                     if (event.key.keycode.code == SGIK_UP) {
                         scroll_screen(CON_SCROLL_UP, 1, 0, 1);
+                        //print_cursor();
                         break;
                     } else if (event.key.keycode.code == SGIK_DOWN) {
                         scroll_screen(CON_SCROLL_DOWN, 1, 0, 1);
+                        //print_cursor();
                         break;
                     }
                 }
@@ -126,12 +157,18 @@ int con_event_loop(char *buf, int count)
                 {
                
                 case SGIK_UP:
+                    
+                    focus_cursor();
                     /* 选择上一个的命令 */
-                    move_cursor_off(0, -1);
+                    //move_cursor_off(0, -1);
+                    cmd_buf_select(-1);
                     break;
                 case SGIK_DOWN:
+                    
+                    focus_cursor();
                     /* 选择下一个命令 */
-                    move_cursor_off(0, 1);
+                    //move_cursor_off(0, 1);
+                    cmd_buf_select(1);
                     break;
                 case SGIK_NUMLOCK:
                 case SGIK_CAPSLOCK:
@@ -144,62 +181,67 @@ int con_event_loop(char *buf, int count)
                 case SGIK_LALT:
                     break;
                 case SGIK_LEFT:
-                    if(pos > buf){
-                        --pos;
+                    focus_cursor();
+                    if(cmdman->cmd_pos > buf){
+                        --cmdman->cmd_pos;
                         move_cursor_off(-1, 0);
                     }
                     break;
                 case SGIK_RIGHT:
-                    if ((pos - buf) < len) {
+                    focus_cursor();
+                    if ((cmdman->cmd_pos - buf) < cmdman->cmd_len) {
                         move_cursor_off(1, 0);
-                        ++pos;
+                        ++cmdman->cmd_pos;
                     }
                     break;
                 case SGIK_ENTER:
-                    move_cursor_off(len - (pos - buf), 0);
+                    focus_cursor();
+                    move_cursor_off(cmdman->cmd_len - (cmdman->cmd_pos - buf), 0);
                     screen.outc('\n');
-                    buf[len] = 0;
+                    buf[cmdman->cmd_len] = 0;
                     /* 发送给命令行 */
                     return 0;   /* 执行命令 */
                 case SGIK_BACKSPACE:
-                    if(pos > buf){
-                        if (pos >= buf + len) { /* 在末尾 */
-                            --pos;
-                            *pos = '\0';
+                    focus_cursor();
+                    if(cmdman->cmd_pos > buf){
+                        if (cmdman->cmd_pos >= buf + cmdman->cmd_len) { /* 在末尾 */
+                            --cmdman->cmd_pos;
+                            *cmdman->cmd_pos = '\0';
                             screen.outc('\b');
                       
                         } else {    /* 在中间 */
-                            --pos;
+                            --cmdman->cmd_pos;
                             /* 获取现在的位置 */
                             get_cursor(&cx, &cy);
                             /* 去除后面的字符 */
-                            j = strlen(pos);
+                            j = strlen(cmdman->cmd_pos);
                             while (j--)
                                 screen.outc(' ');
                             /* 移动回到原来的位置 */
                             move_cursor(cx, cy);
 
-                            for (q = pos; q < buf + len; q++) {
+                            for (q = cmdman->cmd_pos; q < buf + cmdman->cmd_len; q++) {
                                 *q = *(q + 1);
                             }
                             /* 向前移动一个位置 */
                             move_cursor_off(-1, 0);
                             /* 获取现在的位置 */
                             get_cursor(&cx, &cy);
-                            screen.outs(pos);
+                            screen.outs(cmdman->cmd_pos);
                             /* 移动回到原来的位置 */
                             move_cursor(cx, cy);
                         }
-                        len--;
+                        cmdman->cmd_len--;
                     }
                     break;
                 default:
-                    if (pos >= buf + len) { /* 在末尾 */
-                        *pos = event.key.keycode.code;
+                    focus_cursor();
+                    if (cmdman->cmd_pos >= buf + cmdman->cmd_len) { /* 在末尾 */
+                        *cmdman->cmd_pos = event.key.keycode.code;
                         screen.outc(event.key.keycode.code);
                     } else { 
                         /* 把后面的数据向后移动一个单位 ab1c|def */
-                        for (q = buf + len; q > pos; q--) {
+                        for (q = buf + cmdman->cmd_len; q > cmdman->cmd_pos; q--) {
                             *q = *(q - 1);
                             *(q - 1) = '\0';
                         }
@@ -207,12 +249,12 @@ int con_event_loop(char *buf, int count)
                         get_cursor(&cx, &cy);
 
                         /* 发送给命令行 */
-                        *pos = event.key.keycode.code;
-                        screen.outs(pos);
+                        *cmdman->cmd_pos = event.key.keycode.code;
+                        screen.outs(cmdman->cmd_pos);
                         move_cursor(cx + 1, cy);
                     }
-                    pos++;
-                    len++;
+                    cmdman->cmd_pos++;
+                    cmdman->cmd_len++;
                     break;
                 }
             }
