@@ -235,7 +235,9 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
             if (!shm->page_addr)    /* 分配失败，返回NULL */
                 return (void *) -1;
         } 
+#if DEBUG_SHM == 1
         printk(KERN_DEBUG "%s: virtual addr:%x physical addr:%x\n", __func__, addr, shm->page_addr);
+#endif
         unsigned long flags = VMS_MAP_FIXED | VMS_MAP_SHARED;
         if (shmflg & IPC_REMAP) {
             flags |= VMS_MAP_REMAP;
@@ -257,7 +259,9 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
         /* 映射一个已经存在的物理地址 */
         if (!shm->page_addr) {
             shm->page_addr = addr_v2p(vaddr);    /* 直接获取物理地址 */
+#if DEBUG_SHM == 1            
             printk(KERN_DEBUG "%s: phy addr:%x.\n", __func__, shm->page_addr);
+#endif
             if (!shm->page_addr)    /* 虚拟地址没有映射过 */
                 return (void *) -1;
             

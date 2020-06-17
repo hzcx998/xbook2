@@ -16,6 +16,8 @@
 #include <input/keyboard.h>
 #include <window/event.h>
 
+#define DEBUG_LOCAL 1
+
 /* 图层显示链表 */
 extern list_t layer_show_list_head;
 
@@ -85,24 +87,22 @@ gui_window_t *gui_window_cache_find(unsigned int wid)
 
 int window_btn_down_handler(gui_button_t *button, int btn, int local_mx, int local_my)
 {
+#if DEBUG_LOCAL == 1    
     printf("[button] down handler %d, %d, %d\n", btn, local_mx, local_my);
+#endif
     int retval = 0;
     switch (button->tag)
     {
     case 1:
-        printf("[button] tag close\n");
 
         retval = GUI_WIDGET_EVENT_HANDLED;
         break;
     case 2:
-        printf("[button] tag maxim\n");
-        
-        
+
         retval = GUI_WIDGET_EVENT_HANDLED;
         break;
     case 3:
-        printf("[button] tag minim\n");
-        
+
         retval = GUI_WIDGET_EVENT_HANDLED;
         break;
     
@@ -114,7 +114,9 @@ int window_btn_down_handler(gui_button_t *button, int btn, int local_mx, int loc
 
 int window_btn_up_handler(gui_button_t *button, int btn, int local_mx, int local_my)
 {
+#if DEBUG_LOCAL == 1    
     printf("[button] up handler %d, %d, %d\n", btn, local_mx, local_my);
+#endif
     gui_label_t *label = &button->label;
     gui_widget_t *widget = &label->widget;
 
@@ -125,7 +127,6 @@ int window_btn_up_handler(gui_button_t *button, int btn, int local_mx, int local
     switch (button->tag)
     {
     case 1:
-        printf("[button] tag close\n");
         /* 发送事件到窗口 */
         event.type = SGI_QUIT;  /* 发送退出事件 */
         gui_window_send_event(win, &event);
@@ -133,14 +134,12 @@ int window_btn_up_handler(gui_button_t *button, int btn, int local_mx, int local
         retval = GUI_WIDGET_EVENT_HANDLED;
         break;
     case 2:
-        printf("[button] tag maxim\n");
         /* 对窗口最大化 */
         event.type = SGI_WINMAX;  /* 发送最大化事件 */
         gui_window_send_event(win, &event);
         retval = GUI_WIDGET_EVENT_HANDLED;
         break;
     case 3:
-        printf("[button] tag minim\n");
         if (widget->layer->extension) {
             gui_window_hide(widget->layer->extension);
             retval = GUI_WIDGET_EVENT_HANDLED;
@@ -283,9 +282,9 @@ gui_window_t *gui_create_window(
     if (!(attr & GUIW_FIXED)) {
         x += GUI_WINCTL_WIDTH;
     }   
-    
+#if DEBUG_LOCAL == 1         
     printf("[guisrv] create window width=%d height=%d yoff=%d\n", w, h, y_off);
-
+#endif
     /* alloc a new layer first */
     layer_t *layer = create_layer(w, h);
     if (layer == NULL) {

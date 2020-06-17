@@ -9,6 +9,7 @@
 #include <layer/draw.h>
 #include <environment/mouse.h>
 #include <font/font.h>
+#include <arch/const.h>
 
 #define DEBUG_LOCAL 0
 
@@ -31,6 +32,7 @@ uint16_t *layer_map = NULL;
 layer_t *create_layer(int width, int height)
 {
     size_t bufsz = width * height * sizeof(GUI_COLOR);
+    bufsz += PG_SIZE;
     GUI_COLOR *buffer = gui_malloc(bufsz);
     if (buffer == NULL)
         return NULL;

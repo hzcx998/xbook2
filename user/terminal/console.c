@@ -106,13 +106,15 @@ static int can_scroll_down()
 }
 
 
-/*
-向上或者向下滚动屏幕
-dir 是方向
-lines 是几行
-accord 是不是自动
-*/
-static void scroll_screen(int dir, int lines, int accord)
+/**
+ * scroll_screen - 向上或者向下滚动屏幕
+ * @dir: 滚动方向
+ * @lines 滚动几行
+ * @cursorx: 滚动后光标x是否改变
+ * @cursory: 滚动后光标y是否改变
+ *
+ */
+void scroll_screen(int dir, int lines, int cursorx, int cursory)
 {
 	if (dir == CON_SCROLL_UP) {
 		//判断是否能滚屏
@@ -134,13 +136,15 @@ static void scroll_screen(int dir, int lines, int accord)
         /* 刷新全部 */
         SGI_UpdateWindow(screen.display, screen.win, 0, 0,
             screen.width, screen.height);
-
-        cursor.x = 0;
-		cursor.y += lines;
-		if (cursor.y > screen.rows - 1) {
-			cursor.y = screen.rows - 1;
-		}
-		//修改光标位置
+        if (cursorx)
+            cursor.x = 0;
+		if (cursory) {
+            cursor.y += lines;
+            if (cursor.y > screen.rows - 1) {
+                cursor.y = screen.rows - 1;
+            }          
+        }
+        //修改光标位置
 		draw_cursor();
 	} else if (dir == CON_SCROLL_DOWN) {
 		//判断是否能滚屏
@@ -162,13 +166,17 @@ static void scroll_screen(int dir, int lines, int accord)
         SGI_UpdateWindow(screen.display, screen.win, 0, 0,
             screen.width, screen.height);
         
-		if (!accord) {
+		//if (!accord) {
+        if (cursorx)
             cursor.x = 0;
+
+        if (cursory) {
 			cursor.y -= lines;
 			if (cursor.y < 0) {
 				cursor.y = 0;
 			}
-		}
+        }
+		//}
         //绘制光标
 		draw_cursor();
 	}
@@ -216,7 +224,7 @@ static void cursor_pos_check()
 		//暂时做修复处理
 		cursor.y = screen.rows -1;
 
-		scroll_screen(CON_SCROLL_DOWN, 1, 1);
+		scroll_screen(CON_SCROLL_DOWN, 1, 1, 0);
 	}
 }
 
@@ -269,6 +277,17 @@ void move_cursor(int x, int y)
 	//背景的颜色
 	con_ouput_visual(ch, cursor.x * screen.char_width,
         cursor.y * screen.char_height);
+}
+
+void move_cursor_off(int x, int y)
+{
+    move_cursor(cursor.x + x, cursor.y + y);
+}
+
+void get_cursor(int *x, int *y)
+{   
+    *x = cursor.x;
+    *y = cursor.y;
 }
 
 void con_out_char(char ch)
@@ -324,8 +343,6 @@ void con_out_str(char *str)
     }
 }
 
-
-
 /*
 清除屏幕上的所有东西，
 字符缓冲区里面的文字
@@ -372,6 +389,18 @@ void draw_cursor()
     SGI_UpdateWindow(screen.display, screen.win, x, y, 
         x + screen.char_width, y + screen.char_height);
 }
+
+int cprintf(const char *fmt, ...)
+{
+	char buf[STR_DEFAULT_LEN];
+	va_list arg = (va_list)((char*)(&fmt) + 4); /*4是参数fmt所占堆栈中的大小*/
+	vsprintf(buf, fmt, arg);
+	
+    /* 输出到控制台 */
+    screen.outs(buf);
+	return 0;
+}
+
 
 void init_con_cursor()
 {

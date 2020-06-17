@@ -8,6 +8,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#define DEBUG_LOCAL 0
+
 bool SGI_DisplayWindowInfoCheck(SGI_Display *display)
 {
     int i;
@@ -122,7 +124,9 @@ SGI_Display *SGI_OpenDisplay()
     char msgname[16];
     memset(msgname, 0, 16);
     sprintf(msgname, "guisrv-display%d", display->id);
+#if DEBUG_LOCAL == 1    
     printf("[SGI] open msg %s.\n", msgname);
+#endif
     /* 创建一个消息队列，用来和客户端进程交互 */
     int msgid = res_open(msgname, RES_IPC | IPC_MSG | IPC_CREAT, 0);
     if (msgid < 0) 
@@ -154,8 +158,11 @@ SGI_Display *SGI_OpenDisplay()
 
     /* 把根窗口添加到窗口句柄 */
     display->root_window = SGI_DisplayWindowInfoAdd(display, &winfo);
+#if DEBUG_LOCAL == 1    
     printf("[SGI] oepn display: id:%d root window:%d width:%d height:%d\n",
         display->id ,display->root_window, display->width, display->height);
+#endif
+
     return display;
 
 free_request_msgid:
@@ -174,9 +181,9 @@ int SGI_CloseDisplay(SGI_Display *display)
     }
     if (!display->connected)
         return -1;
-
+#if DEBUG_LOCAL == 1    
     printf("[SGI] close display: id:%d\n", display->id);
-
+#endif
     /* 注销链表上的所有字体 */
     SGI_FontInfo *font, *ftnext;
     list_for_each_owner_safe (font, ftnext, &display->font_list_head, list) {
@@ -202,10 +209,10 @@ int SGI_CloseDisplay(SGI_Display *display)
     if (GETSRV_RETVAL(&srvarg, int) == -1) {
         goto close_display_error;
     }
-
+#if DEBUG_LOCAL == 1    
     printf("[SGI] request msgid:%d\n", display->request_msgid);
     printf("[SGI] event msgid:%d\n", display->event_msgid);
-
+#endif
     if (display->request_msgid >= 0)
         res_close(display->request_msgid);
     

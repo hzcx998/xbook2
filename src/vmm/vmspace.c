@@ -158,7 +158,6 @@ int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
     }
     
     if (flags & VMS_MAP_REMAP) {
-        printk("has remap\n");
         prot |= PROT_REMAP;
     }
 

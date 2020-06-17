@@ -17,7 +17,7 @@
 
 #include <math.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 #define SRVBUF_256      256
 #define SRVBUF_32K      32768
@@ -51,7 +51,9 @@ static int do_open_display(srvarg_t *arg)
     char msgname[16];
     memset(msgname, 0, 16);
     sprintf(msgname, "guisrv-display%d", display.id);
+#if DEBUG_LOCAL == 1     
     printf("[GUISRV] open msg %s.\n", msgname);
+#endif
     /* 创建一个消息队列，用来和客户端进程交互 */
     int msgid = res_open(msgname, RES_IPC | IPC_MSG | IPC_CREAT | IPC_EXCL, 0);
     if (msgid < 0) {
@@ -95,8 +97,9 @@ static int do_close_display(srvarg_t *arg)
     /* 删除消息队列 */
     res_ioctl(disp->msgid, IPC_DEL, RES_IPC | IPC_MSG);
     res_close(disp->msgid);
+#if DEBUG_LOCAL == 1     
     printf("[%s] %s: msgid=%d\n", SRV_NAME, __func__, disp->msgid);
-
+#endif
     env_display_del(display_id);
 
     SETSRV_RETVAL(arg, 0);
@@ -173,8 +176,6 @@ static int do_create_window(srvarg_t *arg)
 
 static int do_destroy_window(srvarg_t *arg)
 {
-    printf("[%s] %s: start\n", SRV_NAME, __func__);
-    
     /* 获取窗口id */
     int wid = GETSRV_DATA(arg, 1, int);
     if (wid < 0)
@@ -187,8 +188,6 @@ static int do_destroy_window(srvarg_t *arg)
         if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
             goto mw_error;
     }
-    printf("[%s] %s: del cache\n", SRV_NAME, __func__);
-    
     /* 先从窗口缓存表中删除 */
     gui_window_cache_del(win);
 
@@ -200,9 +199,9 @@ static int do_destroy_window(srvarg_t *arg)
     res_ioctl(win->shmid, IPC_DEL, RES_IPC | IPC_SHM);
     /* 关闭共享内存 */
     res_close(win->shmid);
-
+#if DEBUG_LOCAL == 1     
     printf("[%s] %s: shmid=%d\n", SRV_NAME, __func__, win->shmid);
-    
+#endif    
     win->shmid = -1;
 
     /* 断开显示连接 */
@@ -282,9 +281,9 @@ static int do_unmap_window(srvarg_t *arg)
         if (win == NULL) /* 在窗口链表中也没有找到，就出错 */
             goto mw_error;
     }
-
+#if DEBUG_LOCAL == 1     
     printf("[%s] %s addr=%x\n", SRV_NAME, __func__, win->mapped_addr);
-
+#endif
     /* 解除共享内存映射 */
     if (res_read(win->shmid, 0, win->mapped_addr, 0) < 0) 
         goto mw_error;    
@@ -424,7 +423,9 @@ static int do_set_wm_icon(srvarg_t *arg)
         height = GUI_WINCTL_ICON_SIZE;
     
     /* 设置图标数据 */
+#if DEBUG_LOCAL == 1     
     printf("[%s] set icon (%d, %d)\n", SRV_NAME, width, height);
+#endif
     gui_winctl_t *winctl = (gui_winctl_t *) win->winctl;
     if (winctl) {
         winctl->button->set_pixmap(winctl->button, width, height, (GUI_COLOR *) srvbuf32k);
@@ -453,7 +454,9 @@ static int do_select_input(srvarg_t *arg)
 
     /// input mask
     win->input_mask = GETSRV_DATA(arg, 2, long);
+#if DEBUG_LOCAL == 1     
     printf("[%s] select input mask %x\n", SRV_NAME, win->input_mask);
+#endif
     SETSRV_RETVAL(arg, 0);
     return 0;
 si_error:
@@ -556,7 +559,7 @@ void *guisrv_echo_thread(void *arg)
 
         /* 2.处理服务 */
         callnum = GETSRV_DATA(&srvarg, 0, int);
-#if DEBUG_LOCAL == 0
+#if DEBUG_LOCAL == 1
         printf("%s: srvcall seq=%d callnum %d.\n", SRV_NAME, seq, callnum);
 #endif 
         if (callnum >= 0 && callnum < GUISRV_CALL_NR) {

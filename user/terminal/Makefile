@@ -17,7 +17,7 @@ DIR_SGI = $(DIR_LIBARY)/sgi
 BIN = a.out
 BIN_DIS = out.disasm
 BIN_OFF = 5100 
-BIN_CNTS = 100
+BIN_CNTS = 200
 
 #img dir
 IMG_DIR = ../../develop/image/

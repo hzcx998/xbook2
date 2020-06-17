@@ -434,7 +434,7 @@ void input_mouse_draw(mouse_cursor_state_t state)
 void input_mouse_set_state(mouse_cursor_state_t state)
 {
     if (input_mouse.state_changed == false) {
-        printf("[mouse] change state %d to %d\n", input_mouse.state, state);
+        //printf("[mouse] change state %d to %d\n", input_mouse.state, state);
         input_mouse_draw(state);
         input_mouse.state_changed = true;
     }

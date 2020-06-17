@@ -2,7 +2,7 @@
 #include <guisrv.h>
 #include <stdio.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 env_display_t env_display_table[ENV_DISPLAY_NR];
 

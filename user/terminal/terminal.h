@@ -47,14 +47,20 @@ void set_cursor_size();
 void draw_cursor();
 void con_put_str(char *str);
 void draw_char(char ch);
+void get_cursor(int *x, int *y);
+void move_cursor(int x, int y);
 
 /* 80*25*20 = 10kb */
-#define CON_BUFFER_SIZE 80*25*2
+
+#define CON_FRAME_NR    20
+
 #define CON_CHAR_WIDTH  8
 #define CON_CHAR_HEIGHT 16
 
-#define CON_CLOUMNS     79 
-#define CON_ROWS        25
+#define CON_CLOUMNS     40 
+#define CON_ROWS        15
+
+#define CON_BUFFER_SIZE (CON_CLOUMNS * CON_ROWS * CON_FRAME_NR)
 
 #define CON_SCREEN_WIDTH (CON_CHAR_WIDTH * CON_CLOUMNS)
 #define CON_SCREEN_HEIGHT (CON_CHAR_HEIGHT * CON_ROWS)
@@ -99,7 +105,9 @@ typedef struct {
 extern con_screen_t screen;
 
 int init_con_screen();
-
+void scroll_screen(int dir, int lines, int cursorx, int cursory);
+void move_cursor_off(int x, int y);
+int cprintf(const char *fmt, ...);
 
 /* 单个命令缓冲区大小 */
 #define CMD_BUF_SIZE    128
@@ -110,5 +118,8 @@ int init_con_screen();
 typedef struct {
     char cmdbuf[CMD_BUF_SIZE];
 } cmd_buf_t;
+
+void print_prompt();
+
 
 #endif  /* __TERMINAL_APP_H__ */

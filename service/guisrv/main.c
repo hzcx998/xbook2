@@ -133,7 +133,6 @@ int loop_guisrv()
 
         /* 图形服务内部处理的部分就不需要在互斥中，不涉及到和接口相关的部分。 */
         statusbar_manager.read();
-        
     }
 }
 

@@ -9,7 +9,7 @@
 #include <sys/res.h>
 #include <sys/ipc.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 SGI_Window SGI_CreateSimpleWindow(
     SGI_Display *display,
@@ -114,24 +114,23 @@ int SGI_DestroyWindow(SGI_Display *display, SGI_Window window)
     if (!winfo)
         return -1;
 
-    printf("[SGI] %s begin.\n", __func__);
-    
     /* 构建服务调用消息 */
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, GUISRV_DESTROY_WIN, 0);
     SETSRV_ARG(&srvarg, 1, winfo->winid, 0);
     SETSRV_RETVAL(&srvarg, -1);
+#if DEBUG_LOCAL == 1 
     printf("[SGI] %s winid=%d.\n", __func__, winfo->winid);
-    
+#endif    
     /* 执行服务调用 */
     if (srvcall(SRV_GUI, &srvarg))
         return -1;
     
     if (GETSRV_RETVAL(&srvarg, int) == -1)
         return -1;
-    
+#if DEBUG_LOCAL == 1     
     printf("[SGI] shmid:%d\n", winfo->shmid);
-    
+#endif    
     /* 关闭共享内存 */
     res_close(winfo->shmid);
     winfo->shmid = -1;
@@ -175,16 +174,13 @@ int SGI_MapWindow(SGI_Display *display, SGI_Window window)
     int retval = GETSRV_RETVAL(&srvarg, int);
     if (retval == -1)
         return -1;
-    printf("[SGI] %s: ready map memory.\n", __func__);
-    
+
     /* 映射窗口显示区域到客户端 */
     long mapped; /* 保存映射后的地址 */
     if (res_write(winfo->shmid, IPC_REMAP, NULL, (size_t) &mapped) < 0) /* 映射共享内存 */
         return -1;
     if (mapped == -1)
         return -1;
-    
-    printf("[SGI] %s: map memory done.\n", __func__);
     
     winfo->mapped_addr = (void *)mapped;
     winfo->start_off = retval;

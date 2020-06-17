@@ -332,7 +332,11 @@ int sys_fork()
 {
     /* 把当前任务当做父进程 */
     task_t *parent = current_task;
-#if DEBUG_LOCAL == 1
+
+    unsigned long flags;
+    save_intr(flags);
+
+#if DEBUG_LOCAL == 0
     printk(KERN_DEBUG "%s: parent %s pid=%d prio=%d is forking now.\n", 
         __func__, parent->name, parent->pid, parent->priority);
 #endif    
@@ -344,9 +348,7 @@ int sys_fork()
     }
     /* 当前中断处于关闭中，并且父进程有页目录表 */
     ASSERT(parent->vmm != NULL);
-    unsigned long flags;
-    save_intr(flags);
-
+    
     /* 复制进程 */
     if (copy_task(child, parent)) {
         printk(KERN_ERR "do_usrmsg_fork: copy task failed!\n");
@@ -359,9 +361,9 @@ int sys_fork()
     task_priority_queue_add_tail(child); /* 放到队首 */
 
 
-#if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "%s: task %s pid %d fork task %s pid %d\n", 
-        __func__, parent->name, parent->pid, child->name, child->pid);
+#if DEBUG_LOCAL == 0
+    printk(KERN_DEBUG "%s: task %s pid %d fork task %s pid %d ppid %d\n", 
+        __func__, parent->name, parent->pid, child->name, child->pid, child->parent_pid);
 #endif
     restore_intr(flags);
     

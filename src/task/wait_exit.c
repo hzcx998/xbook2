@@ -262,7 +262,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
     
     while (1) {
 #if DEBUG_LOCAL == 1
-        //printk(KERN_DEBUG "sys_wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
+        printk(KERN_DEBUG "sys_wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
 #endif    
         save_intr(flags);
         if (pid == -1) {    /* 任意子进程 */            
@@ -290,6 +290,10 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
         /* 处理zombie子进程 */
         deal_zombie_child(parent);
 
+
+#if DEBUG_LOCAL == 1
+            printk(KERN_DEBUG "sys_wait: check no wait!\n");
+#endif
         /* 现在肯定没有子进程处于退出状态 */
         if (options & WNOHANG) {    /* 有不挂起标志 */
             restore_intr(flags);
@@ -299,15 +303,11 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
         /* 查看是否有子进程 */
         if (!find_child_proc(parent)) {
 #if DEBUG_LOCAL == 1
-            //printk(KERN_DEBUG "sys_wait: no children!\n");
+            printk(KERN_DEBUG "sys_wait: no children!\n");
 #endif    
-            //printk("no children!\n");
             restore_intr(flags);
             return -1; /* no child, return -1 */
         }
-        //printk(KERN_DEBUG "proc wait: find proc.\n");
-        
-        //printk(KERN_DEBUG "proc wait: no child exit, waiting...\n");
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "sys_wait: pid=%d no child exit, waiting...\n", parent->pid);
 #endif   
