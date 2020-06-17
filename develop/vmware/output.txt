@@ -1,6 +1,6 @@
 info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:18:8:20 date:2020/6/17
+info: time:18:42:56 date:2020/6/17
 info: week day:3 Wednesday year day:170
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -10,8 +10,14 @@ info: raw block name:initsrv
 info: raw block name:filesrv
 debug: task name=initsrv pid=1 ready load image done.
 initsrv: started
+debug: sys_fork: parent initsrv pid=1 prio=2 is forking now.
+debug: sys_fork: task initsrv pid 1 fork task initsrv pid 4 ppid 1
+debug: sys_wait: name=initsrv pid=1 wait child.
+debug: sys_wait: check no wait!
 debug: sys_wait: pid=1 no child exit, waiting...
 debug: task name=initsrv pid=4 ready load image done.
+debug: sys_fork: parent filesrv pid=4 prio=2 is forking now.
+debug: sys_fork: task filesrv pid 4 fork task filesrv pid 5 ppid 4
 filesrv: disk seq: 0: -> ide1
 filesrv: disk seq: 1: -> ramdisk
 0:/NETSRV.XSV
@@ -41,12 +47,15 @@ guisrv: mapped addr 20023000
 [guisrv] create window width=800 height=600 yoff=0
 [guisrv] create window width=64 height=570 yoff=0
 [guisrv] create window width=800 height=30 yoff=0
+debug: sys_fork: parent pthread pid=6 prio=2 is forking now.
+debug: sys_fork: task pthread pid 6 fork task pthread pid 7 ppid 6
 The app terminal is started.
 [terminal] con_open_window: open display 1 ok.
 [guisrv] create window width=320 height=264 yoff=24
 [terminal] con_open_window: create window 1 success.
 [terminal] con_open_window: map window success.
-cmd: test
+debug: sys_fork: parent terminal pid=7 prio=2 is forking now.
+debug: sys_fork: task terminal pid 7 fork task terminal pid 8 ppid 7
 hello, test!
 [test] open display ok!
 [guisrv] create window width=320 height=264 yoff=24
@@ -54,24 +63,23 @@ hello, test!
 [test] map window success!
 [test] update window success!
 [test] window handle 1
-[test] mouse enter window motion 132, 62.
-[test] mouse leave window motion 135, 3.
-[test] mouse enter window motion 164, 0.
-[test] mouse leave window motion 420, 118.
-cmd: infonses mario.nes
-terminal: execute cmd infonses falied!
-cmd: infones mario.nes
+[test] keyboard key pressed [6f, o] modify 1.
+[test] keyboard key released [66, f] modify 1.
+[test] keyboard key released [6f, o] modify 1.
+[test] keyboard key pressed [6e, n] modify 1.
+[test] keyboard key released [6e, n] modify 1.
+[test] mouse enter window motion 263, 119.
+[test] mouse leave window motion 166, 49.
+ÿÿdebug: sys_fork: parent terminal pid=7 prio=2 is forking now.
+debug: sys_fork: task terminal pid 7 fork task terminal pid 9 ppid 7
+terminal: parent wait child 9
+debug: sys_wait: name=terminal pid=7 wait child.
+debug: sys_wait: check no wait!
+debug: sys_wait: pid=7 no child exit, waiting...
 infones: arg mario.nes
 [infones] open display ok!
 [guisrv] create window width=256 height=264 yoff=24
 [infones] create window success!
 [infones] to map window success!
-[test] mouse enter window motion 21, 170.
-ÿÿ[test] mouse leave window motion 90, 3.
-ÿÿÿÿ[test] mouse enter window motion 38, 222.
-ÿÿ[test] left button pressed.
-[test] left button released.
-[test] mouse leave window motion 613, 106.
-[test] mouse enter window motion 44, 4.
-[test] mouse leave window motion 443, 136.
-ÿ
+[test] mouse enter window motion 314, 42.
+ÿÿ[test] mouse leave window motion 252, 11.
