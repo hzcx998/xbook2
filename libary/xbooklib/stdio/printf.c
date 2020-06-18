@@ -9,8 +9,8 @@
  */
 int printf(const char *fmt, ...)
 {
-	//int i;
 	char buf[STR_DEFAULT_LEN];
+    memset(buf, 0, STR_DEFAULT_LEN);
 	va_list arg = (va_list)((char*)(&fmt) + 4); /*4是参数fmt所占堆栈中的大小*/
 	vsprintf(buf, fmt, arg);
 	

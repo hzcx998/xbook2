@@ -5,7 +5,7 @@
 
 int printf(const char *fmt, ...);
 
-#define STR_DEFAULT_LEN 256
+#define STR_DEFAULT_LEN 1024
 
 int vsprintf(char *buf, const char *fmt, va_list args);
 int vsnprintf(char *buf, int buflen, const char *fmt, va_list args);

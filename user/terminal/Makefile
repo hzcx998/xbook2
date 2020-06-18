@@ -47,7 +47,8 @@ OBJS =  main.o \
 		console.o \
 		cmd.o \
 		cursor.o \
-
+		clipboard.o \
+		
 LIB_FILE := $(DIR_SGI)/sgi-0.0.1.a \
 			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 			

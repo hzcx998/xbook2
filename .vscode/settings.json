@@ -89,6 +89,10 @@
         "initializer_list": "c",
         "console.h": "c",
         "algorithm": "c",
-        "limits": "c"
+        "limits": "c",
+        "cmd.h": "c",
+        "xmemory": "c",
+        "cstring": "c",
+        "iosfwd": "c"
     }
 }

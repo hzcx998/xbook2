@@ -8,6 +8,7 @@
 #include "cmd.h"
 #include "cursor.h"
 #include "console.h"
+#include "clipboard.h"
 
 #define DEBUG_LEVEL 1
 
@@ -107,10 +108,8 @@ int con_event_loop(char *buf, int count)
 
     int i, j;
     char *q;
-
     int cx, cy;
-    int click_x = -1, click_y = -1;
-    int mx, my;
+
     while ((cmdman->cmd_pos - buf) < count) {
         if (SGI_NextEvent(display, &event))
             continue;
@@ -120,32 +119,21 @@ int con_event_loop(char *buf, int count)
             if (event.button.state == SGI_PRESSED) {    // 按下
                 if (event.button.button == 0) {
                     printf("[%s] left button pressed.\n", APP_NAME);
-                    con_flush();
-                    click_x = event.button.x;
-                    click_y = event.button.y;
-                    mx = event.button.x;
-                    my = event.button.y;
-                    
-                    con_region_chars(click_x, click_y, click_x, click_y);
-                }
+                    clipboard_start_select(event.button.x, event.button.y);
+
+                } else if (event.button.button == 2) {
+                    clipboard_copy_select();
+                } 
             } else {
                 if (event.button.button == 0) {
-                    
                     printf("[%s] left button released.\n", APP_NAME);
-                    click_x = -1;
-                    click_y = -1;
+                    clipboard_end_select(event.button.x, event.button.y);
+
                 }
             }
             break;
         case SGI_MOUSE_MOTION:
-            if (click_x >= 0 && click_y >= 0) {
-                /* 刷新范围内的窗口 */
-                con_flush2(mx, my, event.button.x, event.button.y);
-                mx = event.button.x;
-                my = event.button.y;
-                /* 选择选取 */
-                con_region_chars(click_x, click_y, event.button.x, event.button.y);
-            }
+            clipboard_move_select(event.motion.x, event.motion.y);
             break;
         case SGI_KEY:
             if (event.key.state == SGI_PRESSED) {
@@ -162,18 +150,16 @@ int con_event_loop(char *buf, int count)
                     }
                 }
                 /* 过滤一些按键 */
-                switch (event.key.keycode.code)
-                {
-               
+                switch (event.key.keycode.code) {
                 case SGIK_UP:
-                    
+                    clipboard_break_select();
                     focus_cursor();
                     /* 选择上一个的命令 */
                     //move_cursor_off(0, -1);
                     cmd_buf_select(-1);
                     break;
                 case SGIK_DOWN:
-                    
+                    clipboard_break_select();
                     focus_cursor();
                     /* 选择下一个命令 */
                     //move_cursor_off(0, 1);
@@ -190,6 +176,7 @@ int con_event_loop(char *buf, int count)
                 case SGIK_LALT:
                     break;
                 case SGIK_LEFT:
+                    clipboard_break_select();
                     focus_cursor();
                     if(cmdman->cmd_pos > buf){
                         --cmdman->cmd_pos;
@@ -197,6 +184,7 @@ int con_event_loop(char *buf, int count)
                     }
                     break;
                 case SGIK_RIGHT:
+                    clipboard_break_select();
                     focus_cursor();
                     if ((cmdman->cmd_pos - buf) < cmdman->cmd_len) {
                         move_cursor_off(1, 0);
@@ -204,6 +192,7 @@ int con_event_loop(char *buf, int count)
                     }
                     break;
                 case SGIK_ENTER:
+                    clipboard_break_select();
                     focus_cursor();
                     move_cursor_off(cmdman->cmd_len - (cmdman->cmd_pos - buf), 0);
                     screen.outc('\n');
@@ -211,6 +200,7 @@ int con_event_loop(char *buf, int count)
                     /* 发送给命令行 */
                     return 0;   /* 执行命令 */
                 case SGIK_BACKSPACE:
+                    clipboard_break_select();
                     focus_cursor();
                     if(cmdman->cmd_pos > buf){
                         if (cmdman->cmd_pos >= buf + cmdman->cmd_len) { /* 在末尾 */
@@ -244,7 +234,10 @@ int con_event_loop(char *buf, int count)
                     }
                     break;
                 default:
+                    clipboard_break_select();
                     focus_cursor();
+                    /* 取消框选 */
+
                     if (cmdman->cmd_pos >= buf + cmdman->cmd_len) { /* 在末尾 */
                         *cmdman->cmd_pos = event.key.keycode.code;
                         screen.outc(event.key.keycode.code);

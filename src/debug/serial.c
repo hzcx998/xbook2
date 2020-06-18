@@ -13,7 +13,7 @@
 #define COM4_BASE   0X2E8
 
 /* 最大波特率值 */
-#define MAX_BAUD_VALUE  11520
+#define MAX_BAUD_VALUE  115200
 
 /* 波特率值表：
 Baud Rate   | Divisor 
@@ -36,7 +36,7 @@ Divisor = 115200 / BaudRate
 */
 
 /* 默认波特率值 */
-#define DEFAULT_BAUD_VALUE  11520
+#define DEFAULT_BAUD_VALUE  19200
 #define DEFAULT_DIVISOR_VALUE (MAX_BAUD_VALUE / DEFAULT_BAUD_VALUE)
 
 #define SERIAL_IRQ_4    IRQ4

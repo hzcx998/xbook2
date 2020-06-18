@@ -8,6 +8,7 @@
 #include "cmd.h"
 #include "cursor.h"
 #include "console.h"
+#include "clipboard.h"
 
 /* 控制台全局变量 */
 con_screen_t screen;
@@ -30,6 +31,27 @@ void con_set_chars(char ch, int counts, int x, int y)
     
 }
 
+void con_get_chars(char *buf, int counts, int x, int y)
+{
+    int cx = x, cy = y;
+    char *p = buf;
+    while (counts > 0) {
+        con_get_char(p, cx, cy);
+        cx++;
+        if (cx >= screen.columns) {
+            cx = 0;
+            cy++;
+            /*if (cy >= screen.rows) {
+                cy = screen.rows;
+            }*/
+        }
+        counts--;
+        if (*p) /* 非结束字符才继续往后移动 */
+            p++;
+    }
+    
+}
+
 void con_select_char(int cx, int cy)
 {
     char ch;
@@ -45,8 +67,10 @@ void con_select_char(int cx, int cy)
     SGI_DrawFillRect(screen.display, screen.win, x, y,
         screen.char_width, screen.char_height, bgcolor);
     
-    /* 绘制字符 */
-    SGI_DrawChar(screen.display, screen.win, x, y, ch, fontcolor);
+    if (0x20 <= ch && ch <= 0x7e) {
+        /* 绘制字符 */
+        SGI_DrawChar(screen.display, screen.win, x, y, ch, fontcolor);
+    }
 }
 
 void con_region_chars(int x0, int y0, int x1, int y1)
@@ -58,7 +82,7 @@ void con_region_chars(int x0, int y0, int x1, int y1)
     int left, right, top, bottom;
     top = min(y0, y1);
     bottom = max(y0, y1);
-    
+    /* 取整对齐 */
     top = top / screen.char_height * screen.char_height;
     bottom = bottom / screen.char_height * screen.char_height + screen.char_height;
     
@@ -167,10 +191,11 @@ void load_char_buffer()
 			
 			x = bx * screen.char_width;
 			y = by * screen.char_height;
-
-            /* 绘制字符 */
-            SGI_DrawChar(screen.display, screen.win, x, 
-                y, ch, screen.font_color);
+            if (0x20 <= ch && ch <= 0x7e) {
+                /* 绘制字符 */
+                SGI_DrawChar(screen.display, screen.win, x, 
+                    y, ch, screen.font_color);
+            }
 		}
     }
 }
@@ -387,13 +412,14 @@ void con_out_char(char ch)
 	switch (ch) {
 		case '\n':
 			//光标的位置设定一个字符
-			con_set_char(' ', cursor.x, cursor.y);
+			con_set_char('\n', cursor.x, cursor.y);
             
 			//能否回车
 			if (can_scroll_down())
 				move_cursor(0, cursor.y + 1);
 			break;
 		case '\b':
+            con_set_char(' ', cursor.x, cursor.y);
 			//改变位置
 			cursor.x--;
 
@@ -472,7 +498,6 @@ static void con_clear_area(int x, int y, unsigned int width, unsigned int height
     /* 刷新全部 */
     SGI_UpdateWindow(screen.display, screen.win, x, y,
         x + width, y + height);
-    
 }
 
 int cprintf(const char *fmt, ...)
@@ -514,6 +539,12 @@ int init_con_screen()
     screen.clear_area = con_clear_area;
     init_con_cursor();
     if (init_cmd_man() < 0) {
+        free(screen.buffer);
+        return -1;
+    }
+
+    if (init_clipboard() < 0) {
+        exit_cmd_man();
         free(screen.buffer);
         return -1;
     }

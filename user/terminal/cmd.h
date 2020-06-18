@@ -32,6 +32,7 @@ typedef struct {
 extern cmd_man_t *cmdman; 
 
 int init_cmd_man();
+void exit_cmd_man();
 int cmd_parse(char * cmd_str, char **argv, char token);
 int execute_cmd(int argc, char **argv);
 int do_buildin_cmd(int cmd_argc, char **cmd_argv);
@@ -39,5 +40,6 @@ void print_prompt();
 void print_cmdline();
 int cmd_buf_select(int dir);
 void cmd_buf_insert();
+int cmdline_set(char *buf, int buflen);
 
 #endif  /* __TERMINAL_CMD_H__ */

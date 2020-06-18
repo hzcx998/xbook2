@@ -231,6 +231,7 @@ void cmd_buf_insert()
 
     /* 选择下一个即将插入的缓冲区 */
     cmdbuf = &cmdman->cmd_bufs[cmdman->next_cmd_buf];
+    memset(cmdbuf->cmdbuf, 0, CMD_LINE_LEN);
     memcpy(cmdbuf->cmdbuf, cmdman->cmd_line, CMD_LINE_LEN);
     cmdbuf->flags = 1;
 
@@ -245,6 +246,7 @@ void cmd_buf_insert()
 void cmd_buf_copy()
 {
     cmd_buf_t *cmdbuf = &cmdman->cmd_bufs[cmdman->cur_cmd_buf];
+    memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
     memcpy(cmdman->cmd_line, cmdbuf->cmdbuf, CMD_LINE_LEN);
 }
 
@@ -304,6 +306,44 @@ int cmd_buf_select(int dir)
     return -1;
 }
 
+/**
+ * cmdline_set - 设置命令行内容 
+ */
+int cmdline_set(char *buf, int buflen)
+{
+    /* 计算一下原有命令占用的终端列数 */
+    int cmdlen = strlen(cmdman->cmd_line);
+    int cwdlen = strlen(cmdman->cwd_cache);
+    int total = cmdlen + cwdlen + 1; /* 多算一个字符 */
+    int lines = DIV_ROUND_UP(total, screen.columns);
+    /* 如果原来是多行，那么就需要往上移动lines-1行 */
+    if (lines > 1)
+        cursor.y -= (lines - 1);
+    /* 光标所在的位置 */
+    int y = cursor.y * screen.char_height;
+    /* 要多清除一行的内容 */
+    screen.clear_area(0, y, screen.width, (lines + 1) * screen.char_height);
+    /* 清除total个字符 */
+    con_set_chars(' ', total, 0, cursor.y);
+    /* 移动到行首 */
+    move_cursor(0, cursor.y);
+    /* 打印提示符和当前命令行 */
+    print_prompt();
+    /* 复制命令行内容 */
+    memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
+    memcpy(cmdman->cmd_line, buf, min(CMD_LINE_LEN, buflen));
+    print_cmdline();
+    /* 计算命令行的长度和当前字符的位置 */
+    cmdman->cmd_len = strlen(cmdman->cmd_line);
+    cmdman->cmd_pos = cmdman->cmd_line + cmdman->cmd_len; /* 末尾位置 */
+
+    /* 手动刷新屏幕 */
+    SGI_UpdateWindow(screen.display, screen.win, 0, 0, screen.width, screen.height);
+
+    return -1;
+}
+
+
 void print_prompt() 
 {
     cprintf("%s>", cmdman->cwd_cache);
@@ -325,4 +365,9 @@ int init_cmd_man()
     cmdman->next_cmd_buf = 0;
 
     return 0;
+}
+
+void exit_cmd_man()
+{
+    free(cmdman);
 }

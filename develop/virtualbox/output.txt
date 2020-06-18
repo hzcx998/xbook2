@@ -1,6 +1,6 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:3:13:57 date:2020/6/18
+info: time:15:44:17 date:2020/6/18
 info: week day:4 Thursday year day:171
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -54,6 +54,47 @@ The app terminal is started.
 [guisrv] create window width=320 height=264 yoff=24
 [terminal] con_open_window: create window 1 success.
 [terminal] con_open_window: map window success.
+terminal: execute cmd abc falied!
+debug: sys_fork: parent terminal pid=7 prio=2 is forking now.
+debug: sys_fork: task terminal pid 7 fork task terminal pid 8 ppid 7
+terminal: parent wait child 8
+debug: sys_wait: name=terminal pid=7 wait child.
+debug: sys_wait: check no wait!
+debug: sys_wait: pid=7 no child exit, waiting...
+hello, test!
+[test] open display ok!
+[guisrv] create window width=320 height=264 yoff=24
+[test] create window success!
+[test] map window success!
+[test] update window success!
+[test] window handle 1
+[test] mouse enter window motion 246, 4.
+ÿÿÿ[button] down handler 0, 264, 15
+[button] up handler 0, 264, 15
+[test] mouse leave window motion 161, 9.
+[test] mouse enter window motion 7, 19.
+ÿÿÿÿ[test] mouse leave window motion 6, 17.
+[test] mouse enter window motion 207, 35.
+[test] mouse leave window motion 3, 14.
+[test] mouse enter window motion 250, 22.
+[test] mouse leave window motion 72, 100.
+ÿÿ[test] mouse enter window motion 5, 13.
+ÿÿÿÿ[button] down handler 0, 304, 15
+[button] up handler 0, 304, 15
+ÿ[test] get quit event.
+ÿÿÿ[test] unmap window success!
+ÿ[test] destroy window success!
+ÿ[test] close display ok!
+ÿdebug: sys_exit: name=test pid=8 ppid=7 prio=2 status=0
+debug: sys_exit: thread count 0
+debug: sys_exit: pid=8 release all resources done.
+debug: sys_exit: pid=8 parent 7 waiting...
+debug: sys_wait: name=terminal pid=7 wait child.
+notice: wait_one_hangging_child: pid=7 find a hanging task 8 
+notice: wait_one_hangging_child: process.
+debug: sys_wait: pid=7 handle a hangging child 8.
+[terminal] left button released.
+[terminal] left button pressed.
 [terminal] left button pressed.
 [terminal] left button released.
 [terminal] left button pressed.
@@ -66,4 +107,13 @@ The app terminal is started.
 [terminal] left button released.
 [terminal] left button pressed.
 [terminal] left button released.
-terminal: execute cmd aasdasd falied!
+terminal: execute cmd 1231231233333333333333123123123123123123123 falied!
+terminal: execute cmd 1231231233333333333333123123123123123123123 falied!
+[terminal] left button pressed.
+[terminal] left button released.
+start: 34, 166 end: 53, 184
+ÀÀÀÿterminal: execute cmd 1231231233333333333333123123123123123123123 falied!
+hÿ_|ÿd,ÿi;¤ÿnJ¸ÿsYÌÿxhàÿ[terminal] left button pressed.
+[terminal] left button released.
+start: 57, 132 end: 54, 150
+ÀÀÀÿterminal: execute cmd 1231233333333333333123123123123123123123 falied!
