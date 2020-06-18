@@ -75,4 +75,6 @@ void init_syscall()
     syscall_table[SYS_SRVCALL_UNBIND] = sys_srvcall_unbind;
     syscall_table[SYS_SRVCALL_FETCH] = sys_srvcall_fetch;
     
+    syscall_table[SYS_UNID] = sys_unid;
+    
 }

@@ -6,6 +6,7 @@
 #include <xbook/msgqueue.h>
 #include <xbook/pipe.h>
 #include <xbook/driver.h>
+#include <xbook/clock.h>
 #include <sys/res.h>
 #include <sys/ipc.h>
 
@@ -431,8 +432,16 @@ int sys_ctlres(int res, unsigned int cmd, unsigned long arg)
             }
             if (!retval) /* 如果删除成功，就需要卸载资源 */
                 uninstall_res(res);
-        } else {
-            retval = -1;
+        } else {    /* 其它命令就特殊处理 */
+            /* 根据从类型进行不同的操作 */
+            switch (item->flags & RES_SLAVER_MASK) {
+            case IPC_PIPE:
+                retval = pipe_ctl(item->handle, cmd, arg);
+                break;    
+            default:
+                retval = -1;
+                break;
+            }
         }
         break;
     default:
@@ -510,8 +519,16 @@ void resource_copy(resource_t *dst, resource_t *src)
                 device_grow(dst->table[i].handle);
                 break;
             case RES_IPC:
-                /* 不复制ipc资源和表项 */
                 
+                switch (item->flags & RES_SLAVER_MASK) {
+                case IPC_PIPE: /* 只复制管道ipc资源和表项 */ 
+                    printk("copy pipe ipc!\n");
+                    dst->table[i].flags = item->flags;  /* 复制项 */
+                    dst->table[i].handle = item->handle;  /* 复制项 */
+                    break;
+                default:
+                    break;
+                } 
                 break;
             default:
                 break;
@@ -593,6 +610,18 @@ void dump_resource(resource_t *res)
             break;
         }
     }
+}
+
+/**
+ * sys_unid - 生成唯一id
+ * @id: 参考值
+ */
+unsigned long sys_unid(int id)
+{
+    unsigned long _id;
+    /* id(0-7) pid(8-15) systicks(16-31) */
+    _id = (id & 0xff) + ((current_task->pid & 0xff) << 8) + ((systicks & 0xffff) << 16);
+    return _id;
 }
 
 void resource_init(resource_t *res)

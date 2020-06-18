@@ -43,5 +43,6 @@ int sys_readres(int res, off_t off, void *buffer, size_t count);
 int sys_writeres(int res, off_t off, void *buffer, size_t count);
 int sys_ctlres(int res, unsigned int cmd, unsigned long arg);
 void *sys_mmap(int res, size_t length, int flags);
+unsigned long sys_unid(int id);
 
 #endif  /* _XBOOK_RESOURCE_H */

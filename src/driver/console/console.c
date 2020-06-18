@@ -15,7 +15,6 @@
 /* 把控制台的信息输出内核调试输出 */
 #define CON_TO_DEBUGER   1
 
-
 #define DISPLAY_VRAM 0x800b8000
 
 #define	CRTC_ADDR_REG	0x3D4	/* CRT Controller Registers - Addr Register */

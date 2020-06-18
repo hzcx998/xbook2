@@ -56,6 +56,7 @@ int res_read(int res, off_t off, void *buffer, size_t size);
 int res_ioctl(int res, unsigned int cmd, unsigned long arg);
 int dev_scan(devent_t *de, device_type_t type, devent_t *out);
 void *res_mmap(int res, size_t length, int flags);
+unid_t res_unid(int id);
 
 /* 磁盘驱动器 */
 typedef struct disk_drive {

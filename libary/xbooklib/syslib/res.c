@@ -102,3 +102,12 @@ void *res_mmap(int res, size_t length, int flags)
 {
     return syscall3(void *, SYS_MMAP, res, length, flags);
 }
+
+/**
+ * unid - 生成一个唯一的id值
+ * @id: 参考值
+ */
+unid_t res_unid(int id)
+{
+    return syscall1(unid_t , SYS_UNID, id);
+}

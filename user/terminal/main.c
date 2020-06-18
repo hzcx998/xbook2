@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
             printf("%s: num of arguments exceed %d\n", APP_NAME, MAX_ARG_NR);
             continue;
         }
-#if 0        
+#if 0
         /* 打印参数 */
         int i;
         for (i = 0; i < argnum; i++) {

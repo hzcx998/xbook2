@@ -37,7 +37,7 @@ int pipe_get(char *name, unsigned long flags);
 int pipe_put(int pipeid);
 int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg);
 int pipe_read(int pipeid, void *buffer, size_t size, int pipeflg);
-
+int pipe_ctl(int pipeid, unsigned int cmd, unsigned long arg);
 void init_pipe();
 
 #endif   /* _XBOOK_PIPE_H */

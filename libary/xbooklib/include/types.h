@@ -14,5 +14,6 @@ typedef long clock_t;
 typedef unsigned long size_t;
 typedef long time_t;
 typedef int clockid_t;
+typedef unsigned long unid_t;
 
 #endif  /* _LIB_TYPES_H */

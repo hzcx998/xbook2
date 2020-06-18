@@ -266,8 +266,9 @@ int SGI_UpdateWindow(
     msg.arg2    = top;
     msg.arg3    = right;
     msg.arg4    = bottom;
+    
     /* 写入消息 */    
-    if (res_write(display->request_msgid, IPC_NOWAIT, &msg, SGI_MSG_LEN) < 0)
+    if (res_write(display->request_msgid, 0, &msg, SGI_MSG_LEN) < 0)
         return -1;
 
 #if 0

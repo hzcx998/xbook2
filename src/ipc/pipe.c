@@ -133,7 +133,7 @@ int pipe_get(char *name, unsigned long flags)
     char craete_new = 0; /* 是否需要创建一个新的管道 */
     pipe_t *pipe;
     int retval = -1;
-    int rw;
+    int rw = -1;
     /* get pipe table access */
     semaphore_down(&pipe_mutex);
     /* 有创建标志 */
@@ -143,8 +143,9 @@ int pipe_get(char *name, unsigned long flags)
             rw = 0;
         } else if (flags & IPC_WRITER) {
             rw = 1;
-        } else { /* 没有读写者，错误 */
-            goto err; 
+        } else { /* 没有读写者，允许通过 */
+            //goto err; 
+            printk(KERN_NOTICE "get pipe %s without reader or writer!\n", name);
         }
 
         if (flags & IPC_EXCL) { /* 必须不存在才行 */
@@ -159,12 +160,12 @@ int pipe_get(char *name, unsigned long flags)
                 goto err;
             }
             /* 根据读写标志设定读写者 */
-            if (rw) {
+            if (rw == 1) {
                 if (pipe->writer) /* 写者已经存在，只能有一个写者 */
                     goto err;
                 pipe->writer = current_task;
                 
-            } else {
+            } else if (rw == 0) {
                 if (pipe->reader) /* 读者已经存在，只能有一个读者 */
                     goto err;
                 pipe->reader = current_task;  
@@ -183,9 +184,9 @@ int pipe_get(char *name, unsigned long flags)
                 goto err;
             }
             /* 新分配的管道，读写者都不存在 */
-            if (rw) {
+            if (rw == 1) {
                 pipe->writer = current_task;
-            } else {
+            } else if (rw == 0) {
                 pipe->reader = current_task;    
             }
             retval = pipe->id; /* 返回管道id */
@@ -472,6 +473,65 @@ int pipe_read(int pipeid, void *buffer, size_t size, int pipeflg)
 
     return chunk;
 }
+
+/**
+ * pipe_set_rdwr - 设置管道读写者
+ * @pipeid: 管道id
+ * @arg: 参数
+ */
+int pipe_set_rdwr(int pipeid, unsigned long arg)
+{
+    pipe_t *pipe;
+    /* get pipe table access */
+    semaphore_down(&pipe_mutex);
+    pipe = pipe_find_by_id(pipeid);
+    if (pipe) {  /* 管道存在 */
+        /* 设置期间，不允许读写 */
+        mutex_lock(&pipe->mutex);
+        /* 对管道进行设置 */
+        if (arg == IPC_READER) {
+            pipe->reader = current_task;    /* 设置读者身份 */
+        } else if (arg == IPC_WRITER) {
+            pipe->writer = current_task;    /* 设置写者身份 */
+        } else {
+            printk(KERN_NOTICE "%s: arg error!\n", __func__);
+            mutex_unlock(&pipe->mutex);
+            semaphore_up(&pipe_mutex);
+            /* 参数出错 */
+            return -1;
+        }
+        mutex_unlock(&pipe->mutex);
+        semaphore_up(&pipe_mutex);        
+        return 0;
+    }
+    semaphore_up(&pipe_mutex);
+    /* 没有找到管道 */
+    return -1;
+}
+
+/**
+ * pipe_ctl - 管道控制
+ * @pipeid: 管道id
+ * @cmd: 命令
+ * @arg: 参数
+ * 
+ * @return: 成功返回0，失败返回-1
+ */
+int pipe_ctl(int pipeid, unsigned int cmd, unsigned long arg)
+{
+    int retval = 0;
+    switch (cmd)
+    {
+    case IPC_SETRW:
+        retval = pipe_set_rdwr(pipeid, arg);
+        break;
+    default:
+        retval = -1;
+        break;
+    }
+    return retval;
+}
+
 
 /**
  * init_pipe - 初始化管道

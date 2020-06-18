@@ -21,6 +21,7 @@
 
 /* IPC cmd */
 #define IPC_DEL     1           /* del a ipc from kernel */
+#define IPC_SETRW   2           /* set ipc reader writer */
 
 /* message buf */
 typedef struct {

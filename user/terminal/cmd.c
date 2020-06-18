@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <math.h>
+#include <sys/ipc.h>
+#include <sys/res.h>
+
 #include "cmd.h"
 #include "terminal.h"
 #include "console.h"
@@ -89,27 +92,63 @@ int execute_cmd(int argc, char **argv)
         if (access(argv[0], F_OK)) {
             return -1;
         } else {
+            /* 获取一个"唯一"id" */
+            unid_t unid = res_unid(1);
+            char pipename[IPC_NAME_LEN] = {0};
+            sprintf(pipename, "shell-rw%d", unid);
+            /* 创建管道 */
+            int pipe_r = res_open(pipename, RES_IPC | IPC_PIPE | IPC_CREAT | IPC_EXCL | IPC_READER, 0);
+            if (pipe_r < 0) {
+                printf("%s: open read pipe failed!\n", APP_NAME);
+                return -1;
+            }
+
             /* 创建一个进程 */
             pid = fork();
-
-            if (pid == -1) {  /* 父进程 */
+            if (pid == -1) {  /* fork失败 */
                 printf("%s: fork child failed!\n", APP_NAME);
                 return -1;
             } else if (pid > 0) {  /* 父进程 */
-                if (!daemon) {
-                    printf("%s: parent wait child %d\n", APP_NAME, pid);
-                    /* shell程序等待子进程退出 */
-                    pid = waitpid(pid, &status, 0);
-                    /* 执行失败 */
-                    if ( status == pid )
-                        return -1;
+                if (daemon) {
+                    return -1;
                 }
+
+                char buf[16];
+                memset(buf, 0, 16);
+                if (res_read(pipe_r, 0, buf, 16) > 0) {
+                    printf("pipe read:%s\n", buf);
+                }
+                
+                printf("%s: parent wait child %d\n", APP_NAME, pid);
+                /* shell程序等待子进程退出 */
+                pid = waitpid(pid, &status, 0);
+                /* 执行失败 */
+                if ( status == pid )
+                    return -1;
+
+                res_close(pipe_r);  /* 关闭读者 */
             } else {    /* 子进程 */
+                res_close(pipe_r);  /* 关闭读者 */
+                int pipe_w = res_open(pipename, RES_IPC | IPC_PIPE | IPC_CREAT | IPC_WRITER, 0);
+                if (pipe_w < 0) {
+                    printf("%s: open write pipe failed!\n", APP_NAME);
+                    return -1;
+                }
+
+                char *str = "hello, pipe!";
+                int c;
+                if ((c = res_write(pipe_w, 0, str, strlen(str))) > 0) {
+                    printf("pipe write:%d\n", c);
+                }
+
+                /* 把标准输出重定向到管道 */
+                
                 /* 子进程执行程序 */
                 pid = execv((const char *) argv[0], (const char **) argv);
                 /* 如果执行出错就退出 */
                 if (pid == -1) {
                     printf("execv file %s failed!\n", argv[0]);
+                    res_close(pipe_w);  /* 关闭写者 */
                     exit(pid);  /* 退出 */
                 }
             }

@@ -85,6 +85,7 @@ enum syscall_num {
     SYS_CTLRES,
     SYS_DEVSCAN, 
     SYS_MMAP, 
+    
     SYS_RES_RESERVED = 50,              /* 预留10个接口给资源管理 */
     SYS_ALARM,
     SYS_KTIME,
@@ -98,6 +99,7 @@ enum syscall_num {
     SYS_SRVCALL_BIND,
     SYS_SRVCALL_UNBIND,
     SYS_SRVCALL_FETCH,
+    SYS_UNID,
     SYSCALL_NR,
 };
 
