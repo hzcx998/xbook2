@@ -8,6 +8,8 @@
 #define max(a,b)    (((a) > (b)) ? (a) : (b))
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 
+#define abs(a)    ((a) > 0 ? (a) : -(a))
+
 /* 除后上入 */
 #define DIV_ROUND_UP(X, STEP) ((X + STEP - 1) / (STEP))
 

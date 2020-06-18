@@ -1,7 +1,7 @@
 info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:18:42:56 date:2020/6/17
-info: week day:3 Wednesday year day:170
+info: time:12:43:8 date:2020/6/18
+info: week day:4 Thursday year day:171
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -54,32 +54,44 @@ The app terminal is started.
 [guisrv] create window width=320 height=264 yoff=24
 [terminal] con_open_window: create window 1 success.
 [terminal] con_open_window: map window success.
-debug: sys_fork: parent terminal pid=7 prio=2 is forking now.
-debug: sys_fork: task terminal pid 7 fork task terminal pid 8 ppid 7
-hello, test!
-[test] open display ok!
-[guisrv] create window width=320 height=264 yoff=24
-[test] create window success!
-[test] map window success!
-[test] update window success!
-[test] window handle 1
-[test] keyboard key pressed [6f, o] modify 1.
-[test] keyboard key released [66, f] modify 1.
-[test] keyboard key released [6f, o] modify 1.
-[test] keyboard key pressed [6e, n] modify 1.
-[test] keyboard key released [6e, n] modify 1.
-[test] mouse enter window motion 263, 119.
-[test] mouse leave window motion 166, 49.
-ˇˇdebug: sys_fork: parent terminal pid=7 prio=2 is forking now.
-debug: sys_fork: task terminal pid 7 fork task terminal pid 9 ppid 7
-terminal: parent wait child 9
-debug: sys_wait: name=terminal pid=7 wait child.
-debug: sys_wait: check no wait!
-debug: sys_wait: pid=7 no child exit, waiting...
-infones: arg mario.nes
-Å[infones] open display ok!
-[guisrv] create window width=256 height=264 yoff=24
-[infones] create window success!
-[infones] to map window success!
-[test] mouse enter window motion 314, 42.
-ˇˇ[test] mouse leave window motion 252, 11.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.

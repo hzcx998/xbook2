@@ -109,6 +109,8 @@ int con_event_loop(char *buf, int count)
     char *q;
 
     int cx, cy;
+    int click_x = -1, click_y = -1;
+    int mx, my;
     while ((cmdman->cmd_pos - buf) < count) {
         if (SGI_NextEvent(display, &event))
             continue;
@@ -119,23 +121,30 @@ int con_event_loop(char *buf, int count)
                 if (event.button.button == 0) {
                     printf("[%s] left button pressed.\n", APP_NAME);
                     con_flush();
-                    screen.mousex = event.button.x;
-                    screen.mousey = event.button.y;
-                    con_region_chars(screen.mousex, screen.mousey, screen.mousex, screen.mousey);
+                    click_x = event.button.x;
+                    click_y = event.button.y;
+                    mx = event.button.x;
+                    my = event.button.y;
+                    
+                    con_region_chars(click_x, click_y, click_x, click_y);
                 }
             } else {
                 if (event.button.button == 0) {
                     
                     printf("[%s] left button released.\n", APP_NAME);
-                    screen.mousex = -1;
-                    screen.mousey = -1;
+                    click_x = -1;
+                    click_y = -1;
                 }
             }
             break;
         case SGI_MOUSE_MOTION:
-            if (screen.mousex >= 0 && screen.mousey >= 0) {
-                 con_flush();
-                con_region_chars(screen.mousex, screen.mousey, event.button.x, event.button.y);
+            if (click_x >= 0 && click_y >= 0) {
+                /* 刷新范围内的窗口 */
+                con_flush2(mx, my, event.button.x, event.button.y);
+                mx = event.button.x;
+                my = event.button.y;
+                /* 选择选取 */
+                con_region_chars(click_x, click_y, event.button.x, event.button.y);
             }
             break;
         case SGI_KEY:

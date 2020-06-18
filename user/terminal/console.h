@@ -43,10 +43,6 @@ typedef struct {
     SGI_Argb background_color;  /* 背景颜色 */
     SGI_Argb font_color;        /* 字体颜色 */
     SGI_Argb select_color;      /* 选中时的颜色 */
-    
-    int mousex;     /* 鼠标横坐标 */
-    int mousey;     /* 鼠标纵坐标 */
-
 /// 窗口相关    
     SGI_Display *display;       /* 屏幕的显示 */
     SGI_Window win;             /* 屏幕的窗口 */
@@ -71,6 +67,8 @@ void con_put_str(char *str);
 void con_ouput_visual(char ch, int x, int y);
 void con_region_chars(int x0, int y0, int x1, int y1);
 void con_flush();
+void con_flush2(int mx0, int my0, int mx1, int my1);
+void con_flush_area(int x0, int y0, int x1, int y1);
 
 static inline void con_get_char(char *ch, int x, int y)
 {

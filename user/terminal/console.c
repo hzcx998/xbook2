@@ -215,6 +215,62 @@ void con_flush()
     draw_cursor();
 }
 
+
+/**
+ * con_flush_area - 刷新屏幕区域
+ */
+void con_flush_area(int x0, int y0, int x1, int y1)
+{
+    //清空背景
+    SGI_DrawFillRect(screen.display, screen.win, x0, y0,
+        x1 - x0, y1 - y0, screen.background_color);
+
+    //把字符全部加载到窗口
+    load_char_buffer();
+
+    /* 刷新全部 */
+    SGI_UpdateWindow(screen.display, screen.win, x0, y0, x1, y1);
+
+    draw_cursor();
+}
+
+/**
+ * con_flush_rect - 刷新屏幕区域
+ */
+void con_flush_rect(int x, int y, int w, int h)
+{
+    //清空背景
+    SGI_DrawFillRect(screen.display, screen.win, x, y,
+        w, h, screen.background_color);
+
+    //把字符全部加载到窗口
+    load_char_buffer();
+
+    /* 刷新全部 */
+    SGI_UpdateWindow(screen.display, screen.win, x, y, x + w, y + h);
+
+    draw_cursor();
+}
+
+/**
+ * con_flush2 - 根据鼠标移动位置来刷新
+ * 如果鼠标移动的时候跨越字符后，就需要重新刷新，不然就不刷新
+ */
+void con_flush2(int mx0, int my0, int mx1, int my1)
+{
+    int cx0, cy0, cx1, cy1;
+    cx0 = mx0 / screen.char_width;
+    cy0 = my0 / screen.char_height;
+    cx1 = mx1 / screen.char_width;
+    cy1 = my1 / screen.char_height;
+    /* 鼠标移动以单个字符为单位进行判断，在单个字符内移动就不刷新 */
+    if ((cx0 != cx1) || (cy0 != cy1)) {
+        /* 选取一个合适的范围 */
+        con_flush_rect(0, min(cy0, cy1) * screen.char_height,
+            screen.width, (abs(cy1 - cy0) + 1)  * screen.char_height);        
+    }
+}
+
 /**
  * scroll_screen - 向上或者向下滚动屏幕
  * @dir: 滚动方向
@@ -449,8 +505,6 @@ int init_con_screen()
     screen.background_color = CON_SCREEN_BG_COLOR;
     screen.font_color = CON_SCREEN_FONT_COLOR;
     screen.select_color = CON_SCREEN_SELECT_COLOR;
-    screen.mousex = -1;
-    screen.mousey = -1;
     screen.display = NULL;
     screen.font = NULL;
     screen.win = 0;

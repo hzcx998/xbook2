@@ -1,6 +1,6 @@
 info: memory total:fff0000 byte 255 MB
 info: welcome to xbook kernel.
-info: time:3:8:22 date:2020/6/18
+info: time:3:13:57 date:2020/6/18
 info: week day:4 Thursday year day:171
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -66,13 +66,4 @@ The app terminal is started.
 [terminal] left button released.
 [terminal] left button pressed.
 [terminal] left button released.
-[terminal] left button pressed.
-[terminal] left button released.
-[terminal] left button pressed.
-[terminal] left button released.
-[terminal] left button pressed.
-T04ÅT04Å[terminal] left button released.
-[terminal] left button pressed.
-[terminal] left button released.
-[terminal] left button pressed.
-[terminal] left button released.
+terminal: execute cmd aasdasd falied!
