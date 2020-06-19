@@ -6,7 +6,7 @@
 #include <sys/ipc.h>
 
 /* debug pipe : 1 enable, 0 disable */
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 /* 管道表 */
 pipe_t *pipe_table;
@@ -77,9 +77,8 @@ pipe_t *pipe_alloc(char *name)
             if (pipe->fifo == NULL)
                 return NULL;
             /* 设置管道名字 */
-            memcpy(pipe->name, name, PIPE_NAME_LEN);
-            pipe->name[PIPE_NAME_LEN - 1] = '\0';
-            
+            memset(pipe->name, 0, PIPE_NAME_LEN);
+            strcpy(pipe->name, name);
 #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "pipe_alloc: pipe id=%d\n", pipe->id);
 #endif
@@ -309,8 +308,7 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
     int left_size = (int )size;
     int off = 0;
     unsigned char *buf = buffer;
-    int chunk;
-    
+    int chunk = 0;
     /* 只要还有数据，就不停地写入，直到写完为止 */
     while (left_size > 0) {
         /* 对已有数据的检测，必须是在关闭中断下检测，不能被打断 */

@@ -7,7 +7,12 @@
 #include <srv/guisrv.h>
 #include <sys/srvcall.h>
 #include <sys/proc.h>
+#include <sys/res.h>
 #include <sgi/sgi.h>
+
+
+#if 0
+
 
 int main(int argc, char *argv[])
 {
@@ -165,6 +170,25 @@ exit_gui:
     
     SGI_CloseDisplay(display);
     printf("[test] close display ok!\n");
+
+    return 0;
+}
+
+#endif
+
+
+int main(int argc, char *argv[])
+{
+    printf("hello, test!\n");
+    printf("this is string: %s %c value:%d %x!\n", "abc", 'A', 123456789, 0x1234abcd);
+
+    int i = 0;
+
+    char ch;
+    while ((ch = getchar()) != '\n')
+    {
+        putchar(ch);
+    }
 
     return 0;
 }

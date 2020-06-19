@@ -7,6 +7,10 @@
 #define RES_IPC    0x2000000            /* ipc resource */
 
 
+/* 资源的控制命令 */
+#define RES_REDIR    1
+
+
 #define DEVICE_NAME_LEN 32
 
 /* 设备项 */

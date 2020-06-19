@@ -384,10 +384,63 @@ int sys_writeres(int res, off_t off, void *buffer, size_t count)
 }
 
 /**
+ * resource_rediret - 资源重定向
+ * @old_res: 旧资源
+ * @new_res: 新资源
+ * 
+ * 把旧资源重定向到新资源
+ * 
+ * 成功返回新资源，失败返回-1
+ */
+int resource_rediret(int old_res, int new_res)
+{
+    int retval;
+
+    /* 参数检测 */
+    if (IS_BAD_RES(new_res))
+        return -1;
+
+    /* 检测是否一样 */
+    if (old_res == new_res)
+        return new_res; /* 直接返回，不做处理 */
+
+    /* 1.查看新资源是否已经打开，如果是则关闭，不是则继续 */
+    res_item_t *item = res_to_item(new_res);
+    if (item) { /* 资源已经打开 */
+        /* 关闭资源 */
+        retval = sys_putres(new_res);
+        if (retval == -1) {
+            return -1;
+        }
+    }
+
+    /* 2.将旧资源的内容复制到新资源位置上 */
+    retval = resource_item_copy(new_res, old_res);
+    if (retval < 0) {
+        printk(KERN_CRIT "%s: copy res from %d to %d failed!\n", __func__, old_res, old_res);
+        return -1;
+    }
+
+    /* 3.卸载旧资源 */
+    retval = uninstall_res(old_res);
+    if (!retval) {
+        retval = new_res;   /* 指向新的资源 */
+    } else {
+        printk(KERN_CRIT "%s: get res %d failed!\n", __func__, old_res);
+        return -1;
+    }
+    return retval;
+}
+
+
+/**
  * sys_ctlres - 控制资源
  * @res: 资源
- * @buffer: 缓冲区
- * @count: 数据量，磁盘是扇区数
+ * @cmd: 命令
+ * @arg: 参数
+ * 
+ * 命令优先级：
+ *      RES资源控制命令 > DEL删除命令 > 资源本身命令
  * 
  * @return: 成功返回信息，失败返回-1
  */
@@ -410,37 +463,45 @@ int sys_ctlres(int res, unsigned int cmd, unsigned long arg)
         #if DEBUG_LOCAL == 2
             printk(KERN_DEBUG "sys_ctlres: devno=%x.\n", item->handle);
         #endif   
-        retval = device_devctl(item->handle, cmd, arg);
+        if (cmd == RES_REDIR) { /* 资源命令 */
+            retval = resource_rediret(res, (int ) arg);
+        } else {
+            retval = device_devctl(item->handle, cmd, arg);
+        }
         break;
     case RES_IPC:
-        if (cmd == IPC_DEL) { /* 命令是删除IPC */
-            /* 根据从类型进行不同的操作 */
-            switch (item->flags & RES_SLAVER_MASK)
-            {
-            case IPC_SHM:
-                share_mem_put(item->handle);
-                break;
-            case IPC_SEM:
-                sem_put(item->handle);
-                break;
-            case IPC_MSG:
-                msg_queue_put(item->handle);
-                break;
-            default:
-                retval = -1;
-                break;
-            }
-            if (!retval) /* 如果删除成功，就需要卸载资源 */
-                uninstall_res(res);
-        } else {    /* 其它命令就特殊处理 */
-            /* 根据从类型进行不同的操作 */
-            switch (item->flags & RES_SLAVER_MASK) {
-            case IPC_PIPE:
-                retval = pipe_ctl(item->handle, cmd, arg);
-                break;    
-            default:
-                retval = -1;
-                break;
+        if (cmd == RES_REDIR) { /* 资源命令 */
+            retval = resource_rediret(res, (int ) arg);
+        } else {
+            if (cmd == IPC_DEL) { /* 命令是删除IPC */
+                /* 根据从类型进行不同的操作 */
+                switch (item->flags & RES_SLAVER_MASK)
+                {
+                case IPC_SHM:
+                    share_mem_put(item->handle);
+                    break;
+                case IPC_SEM:
+                    sem_put(item->handle);
+                    break;
+                case IPC_MSG:
+                    msg_queue_put(item->handle);
+                    break;
+                default:
+                    retval = -1;
+                    break;
+                }
+                if (!retval) /* 如果删除成功，就需要卸载资源 */
+                    uninstall_res(res);
+            } else {    /* 其它命令就特殊处理 */
+                /* 根据从类型进行不同的操作 */
+                switch (item->flags & RES_SLAVER_MASK) {
+                case IPC_PIPE:
+                    retval = pipe_ctl(item->handle, cmd, arg);
+                    break;    
+                default:
+                    retval = -1;
+                    break;
+                }
             }
         }
         break;
@@ -491,6 +552,22 @@ void *sys_mmap(int res, size_t length, int flags)
     printk(KERN_DEBUG "%s: control done!\n", __func__);
 #endif  
     return retval;
+}
+
+/**
+ * resource_item_copy - 复制资源项
+ */
+int resource_item_copy(int dst_res, int src_res)
+{
+    res_item_t *src = res_to_item(src_res);
+    if (src == NULL)
+        return -1;
+    res_item_t *dst = res_to_item(dst_res);
+    if (dst == NULL)
+        return -1;
+    
+    *dst = *src;
+    return 0;
 }
 
 /**

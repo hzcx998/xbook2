@@ -110,11 +110,16 @@ int wait_one_hangging_child(task_t *parent, pid_t pid, int *status)
  */
 int deal_zombie_child(task_t *parent)
 {
-    int zombie = 0;
+    int zombies = 0;        /* 僵尸进程数 */
+    int zombie = -1;        /* 第一个僵尸进程 */
     task_t *child, *next;
     list_for_each_owner_safe (child, next, &task_global_list, global_list) {
         if (child->parent_pid == parent->pid) {
             if (child->state == TASK_ZOMBIE) { /* child is zombie, destroy it  */
+                if (zombie == -1) {
+                    zombie = child->pid;
+                }
+                
 #if DEBUG_LOCAL == 1
                 printk(KERN_NOTICE "deal_zombie_child: pid=%d find a zombie child %d \n", parent->pid, child->pid);
 #endif
@@ -135,13 +140,12 @@ int deal_zombie_child(task_t *parent)
                     /* 销毁子线程的PCB */
                     proc_destroy(child, 1);
                 }
-                
-                zombie++;
+                zombies++;
 
             }
         }
     }
-    return zombie;
+    return zombie;  /* 如果没有僵尸进程就返回-1，有则返回第一个僵尸进程的pid */
 }
 
 /**
@@ -261,7 +265,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
     unsigned long flags;
     
     while (1) {
-#if DEBUG_LOCAL == 1
+#if DEBUG_LOCAL == 2
         printk(KERN_DEBUG "sys_wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
 #endif    
         save_intr(flags);
@@ -288,29 +292,33 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
         }
         
         /* 处理zombie子进程 */
-        deal_zombie_child(parent);
-
-
-#if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "sys_wait: check no wait!\n");
-#endif
-        /* 现在肯定没有子进程处于退出状态 */
-        if (options & WNOHANG) {    /* 有不挂起标志 */
+        if ((child_pid = deal_zombie_child(parent)) > 0) {
             restore_intr(flags);
-            return 0;   /* 不阻塞等待，返回0 */
+            return child_pid;
         }
 
-        /* 查看是否有子进程 */
+#if DEBUG_LOCAL == 2
+        printk(KERN_DEBUG "sys_wait: check no wait!\n");
+#endif
+       
+        /* 查看是否有其它子进程 */
         if (!find_child_proc(parent)) {
-#if DEBUG_LOCAL == 1
+#if DEBUG_LOCAL == 2
             printk(KERN_DEBUG "sys_wait: no children!\n");
 #endif    
             restore_intr(flags);
             return -1; /* no child, return -1 */
         }
+
+        /* 现在肯定没有子进程处于退出状态 */
+        if (options & WNOHANG) {    /* 有不挂起等待标志，就直接返回 */
+            restore_intr(flags);
+            return 0;   /* 不阻塞等待，返回0 */
+        }
+
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "sys_wait: pid=%d no child exit, waiting...\n", parent->pid);
-#endif   
+#endif
         restore_intr(flags);
         /* WATING for children to exit */
         task_block(TASK_WAITING);

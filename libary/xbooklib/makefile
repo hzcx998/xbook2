@@ -46,6 +46,8 @@ ANSI_OBJS 		=	$(ANSI_DIR)/string.o
 
 STDIO_OBJS 		= 	$(STDIO_DIR)/printf.o \
 					$(STDIO_DIR)/vsprintf.o \
+					$(STDIO_DIR)/getchar.o \
+					$(STDIO_DIR)/putchar.o \
 
 SYSLIB_OBJS 	= 	$(SYSLIB_DIR)/proc.o \
 					$(SYSLIB_DIR)/res.o \

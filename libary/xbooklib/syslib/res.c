@@ -111,3 +111,21 @@ unid_t res_unid(int id)
 {
     return syscall1(unid_t , SYS_UNID, id);
 }
+
+
+/**
+ * res_redirect() - res redirect
+ * 
+ * @old_res: old_res index in table
+ * @new_res: new_res index in table
+ * 
+ * redirect old res to new res, if new res exist, close new res first,
+ * then redirect old res to new res, after that, remove old res index
+ * int table.
+ * 
+ * @return: new res >= 0 is sucess, -1 is failed 
+ */
+int res_redirect(int old_res, int new_res)
+{
+    return res_ioctl(old_res, RES_REDIR, new_res);
+}

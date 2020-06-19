@@ -103,7 +103,7 @@ extern list_t task_global_list;
 
 /* 判断任务是否为单线程 */
 #define IN_SINGAL_THREAD(task) \
-        (((task)->pthread && (atomic_get(&(task)->pthread->thread_count) == 1))  || \
+        (((task)->pthread && (atomic_get(&(task)->pthread->thread_count) <= 1))  || \
         (task)->pthread == NULL)
 
 /* 检测线程处于取消点 */

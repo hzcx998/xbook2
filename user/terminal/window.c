@@ -99,14 +99,13 @@ int con_close_window()
 
 int con_event_loop(char *buf, int count)
 {
-    SGI_Window win = screen.win;
     SGI_Display *display = screen.display;
     SGI_Event event;
 
     cmdman->cmd_pos = cmdman->cmd_line;
     cmdman->cmd_len = 0;
 
-    int i, j;
+    int j;
     char *q;
     int cx, cy;
 
@@ -272,4 +271,40 @@ int con_event_loop(char *buf, int count)
 }
 
 
+int con_event_poll(char *buf)
+{
+    SGI_Display *display = screen.display;
+    SGI_Event event;
 
+    *buf = 0;
+
+    if (SGI_PollEvent(display, &event))
+        return -1;
+
+    switch (event.type)
+    {
+    case SGI_KEY:
+        /* 只捕捉按下 */
+        if (event.key.state == SGI_PRESSED) {
+            *buf = event.key.keycode.code;
+            switch (*buf)
+            {
+            case SGIK_ENTER:
+                *buf = '\n';
+                break;
+            default:
+                break;
+            }
+        } else {
+            return -1;
+        }
+        break;
+    case SGI_QUIT:
+        printf("[%s] %s: handle quit event.\n", APP_NAME, __func__);
+        return -1;  /* 退出 */
+    default:
+        return -1;
+    }
+
+    return 0;
+}

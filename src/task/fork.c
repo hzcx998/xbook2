@@ -6,7 +6,7 @@
 #include <xbook/vmspace.h>
 #include <xbook/string.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 /**
  * 在多线程中，fork只会把调用者线程复制给子进程，而其它线程就会“蒸发”。
@@ -336,7 +336,7 @@ int sys_fork()
     unsigned long flags;
     save_intr(flags);
 
-#if DEBUG_LOCAL == 0
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "%s: parent %s pid=%d prio=%d is forking now.\n", 
         __func__, parent->name, parent->pid, parent->priority);
 #endif    
@@ -361,7 +361,7 @@ int sys_fork()
     task_priority_queue_add_tail(child); /* 放到队首 */
 
 
-#if DEBUG_LOCAL == 0
+#if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "%s: task %s pid %d fork task %s pid %d ppid %d\n", 
         __func__, parent->name, parent->pid, child->name, child->pid, child->parent_pid);
 #endif

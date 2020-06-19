@@ -34,6 +34,7 @@ typedef struct {
 void resource_init(resource_t *res);
 void resource_copy(resource_t *dst, resource_t *src);
 void resource_release(resource_t *res);
+int resource_item_copy(int dst_res, int src_res);
 
 void dump_resource(resource_t *res);
 

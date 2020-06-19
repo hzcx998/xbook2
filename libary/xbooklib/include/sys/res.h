@@ -7,9 +7,13 @@
 #define RES_DEV    0x1000000
 #define RES_IPC    0x2000000
 
+/* 标准输入输出资源 */
 #define RES_STDINNO   0
 #define RES_STDOUTNO   1
 #define RES_STDERRNO   2
+
+/* 资源的控制命令 */
+#define RES_REDIR    1
 
 #define DEVICE_NAME_LEN 32
 
@@ -57,6 +61,7 @@ int res_ioctl(int res, unsigned int cmd, unsigned long arg);
 int dev_scan(devent_t *de, device_type_t type, devent_t *out);
 void *res_mmap(int res, size_t length, int flags);
 unid_t res_unid(int id);
+int res_redirect(int old_res, int new_res);
 
 /* 磁盘驱动器 */
 typedef struct disk_drive {
