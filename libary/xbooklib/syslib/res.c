@@ -129,3 +129,4 @@ int res_redirect(int old_res, int new_res)
 {
     return res_ioctl(old_res, RES_REDIR, new_res);
 }
+

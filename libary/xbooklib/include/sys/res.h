@@ -3,6 +3,7 @@
 
 #include <types.h>
 
+
 /* 资源类型 */
 #define RES_DEV    0x1000000
 #define RES_IPC    0x2000000

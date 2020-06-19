@@ -18,6 +18,7 @@
 #include <xbook/rwlock.h>
 #include <xbook/vmm.h>
 #include <xbook/waitque.h>
+#include <xbook/math.h>
 
 static pid_t next_pid;
 
@@ -692,6 +693,58 @@ void taskD(void *arg)
         if (i > 0xf000000)
             kthread_exit(current_task);*/
     }
+}
+
+
+/**
+ * sys_tstate - 获取任务状态
+ * @ts: 任务状态
+ * @idx: 索引
+ */
+int sys_tstate(tstate_t *ts, unsigned int *idx)
+{
+    if (ts == NULL)
+        return -1;
+
+    /* 如果是0，就从第一个 */
+    int n = 0;
+    task_t *task;
+    list_for_each_owner (task, &task_global_list, global_list) {
+        /* 找到一致的索引 */
+        if (n == *idx) {
+            /* 复制数据信息 */
+            ts->ts_pid = task->pid;
+            ts->ts_ppid = task->parent_pid;
+            ts->ts_tgid = task->tgid;
+            ts->ts_state = task->state;
+            ts->ts_priority = task->priority;
+            ts->ts_timeslice = task->timeslice;
+            ts->ts_runticks = task->elapsed_ticks;
+            memset(ts->ts_name, 0, PROC_NAME_LEN);
+            strcpy(ts->ts_name, task->name);
+            *idx = *idx + 1;
+            return 0;
+        }
+        n++;
+    }
+    /* 已经到达末尾了 */
+    return -1;
+}
+
+
+/**
+ * sys_getver - 获取系统版本
+ * @buf: 缓冲区
+ * @len: 缓冲区长度
+ */
+int sys_getver(char *buf, int len)
+{
+    if (len < strlen(OS_NAME) + strlen(OS_VERSION))
+        return -1;
+
+    strcpy(buf, OS_NAME);
+    strcat(buf, OS_VERSION);
+    return 0;
 }
 
 

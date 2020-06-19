@@ -13,6 +13,16 @@ void vmm_init(vmm_t *vmm)
     
 }
 
+int sys_mstate(mstate_t *ms)
+{
+    ms->ms_total    = get_total_page_nr() * PAGE_SIZE;
+    ms->ms_free     = get_free_page_nr() * PAGE_SIZE;
+    ms->ms_used     = ms->ms_total - ms->ms_free;
+    if (ms->ms_used < 0)
+        ms->ms_used = 0;
+    return 0;
+}
+
 void dump_vmm(vmm_t *vmm)
 {
     printk(KERN_DEBUG "code: start=%x, end=%x\n", vmm->code_start, vmm->code_end);

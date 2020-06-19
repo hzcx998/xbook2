@@ -3,6 +3,7 @@
 
 #include <arch/page.h>
 #include <arch/task.h>
+#include <sys/proc.h>
 #include "types.h"
 #include "list.h"
 #include "vmm.h"
@@ -154,7 +155,9 @@ void dump_task_kstack(thread_stack_t *kstack);
 pid_t sys_get_pid();
 pid_t sys_get_ppid();
 pid_t sys_get_tid();
+int sys_getver(char *buf, int len);
 
+int sys_tstate(tstate_t *ts, unsigned int *idx);
 unsigned long sys_sleep(unsigned long second);
 unsigned long task_sleep_by_ticks(clock_t ticks);
 

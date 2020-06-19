@@ -30,3 +30,15 @@ int munmap(void *addr, size_t length)
 {
     return syscall2(int , SYS_MUNMAP, addr, length);
 }
+
+
+/**
+ * mstate() - get memory state
+ * @ms: memory state
+ * 
+ * @return: success is 0, failed is -1 
+ */
+int mstate(mstate_t *ms)
+{
+    return syscall1(int , SYS_MSTATE, ms);
+}

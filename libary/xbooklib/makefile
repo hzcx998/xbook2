@@ -67,6 +67,7 @@ STDLIB_OBJS		= 	$(STDLIB_DIR)/rand.o \
 					$(STDLIB_DIR)/errno.o \
 
 TIME_OBJS		= 	$(TIME_DIR)/time.o \
+					$(TIME_DIR)/asctime.o \
 				
 PTHREAD_OBJS	=	$(PTHREAD_DIR)/pthread_entry.o \
 					$(PTHREAD_DIR)/pthread.o \

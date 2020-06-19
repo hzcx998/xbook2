@@ -22,6 +22,16 @@ typedef struct vmm {
     unsigned long env_start, env_end;       /* 环境空间范围 */
 } vmm_t;
 
+/* 物理内存信息 */
+typedef struct {
+    unsigned long ms_total;    /* 物理内存总大小 */
+    unsigned long ms_free;     /* 物理内存空闲大小 */
+    unsigned long ms_used;     /* 物理内存已使用大小 */
+} mstate_t;
+
+int sys_mstate(mstate_t *ms);
+
+
 #define vmm_alloc() (vmm_t *)kmalloc(sizeof(vmm_t)) 
 #define vmm_free(vmm) kfree(vmm) 
 

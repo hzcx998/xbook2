@@ -10,7 +10,7 @@
 #define CON_CHAR_WIDTH  8
 #define CON_CHAR_HEIGHT 16
 
-#define CON_CLOUMNS     40 
+#define CON_CLOUMNS     60 
 #define CON_ROWS        15
 
 #define CON_BUFFER_SIZE (CON_CLOUMNS * CON_ROWS * CON_FRAME_NR)

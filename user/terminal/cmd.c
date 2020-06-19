@@ -7,6 +7,12 @@
 #include <sys/ipc.h>
 #include <sys/res.h>
 #include <sys/wait.h>
+#include <sys/proc.h>
+#include <sys/sys.h>
+#include <sys/vmm.h>
+#include <sys/time.h>
+#include <arch/const.h>
+#include <time.h>
 
 #include "cmd.h"
 #include "terminal.h"
@@ -17,7 +23,6 @@
 cmd_man_t *cmdman; 
 
 #define DEBUG_LOCAL 0
-
 
 /**
  * cmd_parse - 从输入的命令行解析参数
@@ -107,7 +112,7 @@ int execute_cmd(int argc, char **argv)
             /* 创建管道 */
             int pipe_out_rd = res_open(out_pipename, RES_IPC | IPC_PIPE | IPC_CREAT | IPC_EXCL | IPC_READER, 0);
             if (pipe_out_rd < 0) {
-                printf("%s: open stdout read pipe failed!\n", APP_NAME);
+                cprintf("%s: open stdout read pipe failed!\n", APP_NAME);
                 return -1;
             }
 
@@ -118,7 +123,7 @@ int execute_cmd(int argc, char **argv)
             /* 创建管道 */
             int pipe_in_wr = res_open(in_pipename, RES_IPC | IPC_PIPE | IPC_CREAT | IPC_EXCL | IPC_WRITER, 0);
             if (pipe_in_wr < 0) {
-                printf("%s: open stdin write pipe failed!\n", APP_NAME);
+                cprintf("%s: open stdin write pipe failed!\n", APP_NAME);
                 res_close(pipe_out_rd);     /* 关闭输出读者 */
                 return -1;
             }
@@ -128,7 +133,7 @@ int execute_cmd(int argc, char **argv)
             /* 创建一个进程 */
             pid = fork();
             if (pid == -1) {  /* fork失败 */
-                printf("%s: fork child failed!\n", APP_NAME);
+                cprintf("%s: fork child failed!\n", APP_NAME);
                 res_close(pipe_out_rd);     /* 关闭输出读者 */
                 res_close(pipe_in_wr);      /* 关闭输入写者 */
                 return -1;
@@ -141,7 +146,7 @@ int execute_cmd(int argc, char **argv)
 
                 int rdbytes;
 #if DEBUG_LOCAL == 1                
-                printf("%s: parent wait child %d\n", APP_NAME, pid);
+                cprintf("%s: parent wait child %d\n", APP_NAME, pid);
 #endif
                 int child_exit = 0;
                 while (1) {
@@ -151,7 +156,7 @@ int execute_cmd(int argc, char **argv)
                     /* 没有子进程 */
                     if (waitret > 0) {
 #if DEBUG_LOCAL == 1                        
-                        printf("%s: pid %d exit with %x.\n", APP_NAME, waitret, status);
+                        cprintf("%s: pid %d exit with %x.\n", APP_NAME, waitret, status);
 #endif
                         /* 子进程成功退出 */
                         child_exit = 1;
@@ -162,15 +167,13 @@ int execute_cmd(int argc, char **argv)
                         } else {
                             if (child_exit > 0) {
 #if DEBUG_LOCAL == 1                                  
-                                printf("%s: wait child process success!\n", APP_NAME);
+                                cprintf("%s: wait child process success!\n", APP_NAME);
 #endif
                                 res_close(pipe_out_rd);     /* 关闭输出读者 */
                                 res_close(pipe_in_wr);      /* 关闭输入写者 */
                                 return 0;
                             } else {
-#if DEBUG_LOCAL == 1  
-                                printf("%s: wait child process failed!\n", APP_NAME);
-#endif
+                                cprintf("%s: wait child process failed!\n", APP_NAME);
                                 res_close(pipe_out_rd);     /* 关闭输出读者 */
                                 res_close(pipe_in_wr);      /* 关闭输入写者 */
                                 return -1;
@@ -194,9 +197,7 @@ int execute_cmd(int argc, char **argv)
                         int wrret = res_write(pipe_in_wr, 0, &key, 1);
                         //printf("write ret:%d\n", wrret);
                         if (wrret < 0) {
-#if DEBUG_LOCAL == 1
-                            printf("%s: write key %d to pipe failed!\n", APP_NAME, key);
-#endif
+                            cprintf("%s: write key %d to pipe failed!\n", APP_NAME, key);
                         }
                     }
 
@@ -213,14 +214,14 @@ int execute_cmd(int argc, char **argv)
                     /* ---- 打开输出管道 ---- */
                     pipe_out_wr = res_open(out_pipename, RES_IPC | IPC_PIPE | IPC_CREAT | IPC_WRITER, 0);
                     if (pipe_out_wr < 0) {
-                        printf("%s: open stdout write pipe failed!\n", APP_NAME);
+                        cprintf("%s: open stdout write pipe failed!\n", APP_NAME);
                         return -1;
                     }
 
                     /* ---- 打开输入管道 ---- */
                     pipe_in_rd = res_open(in_pipename, RES_IPC | IPC_PIPE | IPC_CREAT | IPC_READER, 0);
                     if (pipe_in_rd < 0) {
-                        printf("%s: open stdin read pipe failed!\n", APP_NAME);
+                        cprintf("%s: open stdin read pipe failed!\n", APP_NAME);
                         res_close(pipe_out_wr);  /* 关闭输出写者 */
                         return -1;
                     }
@@ -228,7 +229,7 @@ int execute_cmd(int argc, char **argv)
                     /* 把输出管道重定向到标准输出资源 */
                     new_res = res_redirect(pipe_out_wr, RES_STDOUTNO); 
                     if (new_res < 0) {
-                        printf("%s: redirect pipe to stdout failed!\n", APP_NAME);
+                        cprintf("%s: redirect pipe to stdout failed!\n", APP_NAME);
                         res_close(pipe_out_wr);     /* 关闭输出写者 */
                         res_close(pipe_in_rd);      /* 关闭输入读者 */
                         exit(pid);  /* 退出 */
@@ -238,7 +239,7 @@ int execute_cmd(int argc, char **argv)
                     /* 把输入管道重定向到标准输入资源 */
                     new_res = res_redirect(pipe_in_rd, RES_STDINNO); 
                     if (new_res < 0) {
-                        printf("%s: redirect pipe to stdin failed!\n", APP_NAME);
+                        cprintf("%s: redirect pipe to stdin failed!\n", APP_NAME);
                         res_close(pipe_out_wr);     /* 关闭输出写者 */
                         res_close(pipe_in_rd);      /* 关闭输入读者 */
                         exit(pid);  /* 退出 */
@@ -250,7 +251,7 @@ int execute_cmd(int argc, char **argv)
                 pid = execv((const char *) argv[0], (const char **) argv);
                 /* 如果执行出错就退出 */
                 if (pid == -1) {
-                    printf("execv file %s failed!\n", argv[0]);
+                    cprintf("execv file %s failed!\n", argv[0]);
                     if (!daemon) {  /* 不是后台进程 */
                         res_close(pipe_out_wr);     /* 关闭输出写者 */
                         res_close(pipe_in_rd);      /* 关闭输入读者 */
@@ -269,7 +270,7 @@ int cmd_cls(int argc, char **argv)
 {
 	//printf("cls: argc %d\n", argc);
 	if ( argc != 1 ) {
-		printf("cls: no argument support!\n");
+		cprintf("cls: no argument support!\n");
 		return -1;
 	}
 
@@ -277,7 +278,6 @@ int cmd_cls(int argc, char **argv)
 
     return 0;
 }
-
 
 /**
  * cmd_set - 设置终端的属性
@@ -322,6 +322,122 @@ int cmd_set(int argc, char **argv)
     return 0;
 }
 
+static const char *proc_print_status[] = {
+    "READY",
+    "RUNNING",
+    "BLOCKED",
+    "WAITING",
+    "STOPED",
+    "ZOMBIE",
+    "DIED"
+};
+
+/**
+ * cmd_ps - 查看任务
+ */
+int cmd_ps(int argc, char **argv)
+{
+    tstate_t ts;
+    int num = 0;
+    
+    int all = 0;
+
+    if (argc > 1) {
+        char *p = (char *)argv[1];
+        if (*p == '-') {
+            p++;
+            switch (*p)
+            {
+            case 'a':   /* 显示所有信息 */
+                all = 1;
+                break;
+            case 'h':   /* 显示帮助信息 */
+                cprintf("Usage: ps [option]\n");
+                cprintf("Option:\n");
+                cprintf("  -a    Print all tasks. Example: ps -a \n");
+                cprintf("  -h    Get help of ps. Example: ps -h \n");
+                cprintf("Note: If no arguments, only print user process.\n");
+                return 0;
+            default:
+                cprintf("ps: unknown option!\n");
+                return -1;
+            }
+        } else {
+            cprintf("ps: unknown argument!\n");
+            return -1;
+        }
+    }
+
+    cprintf("   PID   PPID     STAT    PRO      TICKS    NAME\n");
+    while (!tstate(&ts, &num)) {
+        /* 如果没有全部标志，就只显示用户进程。也就是ppid不为-1的进程 */
+        if (!all) {
+            if (ts.ts_ppid == -1)
+                continue;
+        }
+        cprintf("%6d %6d %8s %6d %10d    %s\n", 
+            ts.ts_pid, ts.ts_ppid, proc_print_status[(unsigned char) ts.ts_state], ts.ts_priority,
+            ts.ts_runticks, ts.ts_name);
+    }
+    return 0;
+}
+
+int cmd_ver(int argc, char **argv)
+{
+	char buf[SYS_VER_LEN] = {0};
+    getver(buf, SYS_VER_LEN);
+    cprintf("%s\n",buf);
+    return 0;
+}
+
+int cmd_exit(int argc, char **argv)
+{
+    con_close_window();
+    exit(0);
+    return 0; 
+}
+
+int cmd_mem(int argc, char **argv)
+{
+    if (argc > 1) {
+        cprintf("free: no arguments support!\n");
+        return -1;
+    }
+    mstate_t ms;
+    mstate(&ms);
+    cprintf("          TOTAL           USED           FREE\n");
+    cprintf("%14dB%14dB%14dB\n", ms.ms_total, ms.ms_used, ms.ms_free);
+    cprintf("%14dM%14dM%14dM\n", ms.ms_total / MB, ms.ms_used / MB, ms.ms_free / MB);
+    return 0;
+}
+
+int cmd_date(int argc, char **argv)
+{
+    ktime_t ktm;
+    ktime(&ktm);
+    struct tm tm;
+    ktimeto(&ktm, &tm);
+    cprintf("date: %s\n", asctime(&tm));
+    return 0;
+}
+
+int cmd_help(int argc, char **argv)
+{
+	if(argc != 1){
+		cprintf("help: no argument support!\n");
+		return -1;
+	}
+	cprintf("  cls         clean screen.\n"\
+	        "  exit        exit shell.\n"\
+	        "  mem         print memory info.\n"\
+	        "  ps          print tasks.\n"\
+            "  set         set shell info.\n"\
+            "  date        show date.\n"\
+	        "  ver         show os version.\n");
+
+    return 0;
+}
+
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
 /* buildin cmd struct */
@@ -334,6 +450,12 @@ struct buildin_cmd {
 struct buildin_cmd buildin_cmd_table[] = {
     {"cls", cmd_cls},
     {"set", cmd_set},
+    {"ps", cmd_ps},
+    {"help", cmd_help},
+    {"ver", cmd_ver},
+    {"exit", cmd_exit},
+    {"mem", cmd_mem},
+    {"date", cmd_date},
 };
 
 int do_buildin_cmd(int cmd_argc, char **cmd_argv)
@@ -347,7 +469,7 @@ int do_buildin_cmd(int cmd_argc, char **cmd_argv)
         cmd_ptr = &buildin_cmd_table[i];
         if (!strcmp(cmd_ptr->name, cmd_argv[0])) {
             if (cmd_ptr->cmd_func(cmd_argc, cmd_argv)) {
-                printf("do_buildin_cmd: %s failed!\n");
+                cprintf("do_buildin_cmd: %s failed!\n", cmd_argv[0]);
             }
             return 0;
         }

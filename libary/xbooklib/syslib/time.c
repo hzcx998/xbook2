@@ -1,5 +1,6 @@
 #include <sys/time.h>
 #include <sys/syscall.h>
+#include <time.h>
 
 /**
  * alarm - 设置一个闹钟
@@ -50,4 +51,20 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 int clock_gettime(clockid_t clockid, struct timespec *ts)
 {
     return syscall2(int, SYS_CLOCK_GETTIME, clockid, ts);
+}
+
+int ktimeto(ktime_t *ktm, struct tm *tm)
+{
+    if (!ktm || !tm)
+        return -1;
+    tm->tm_year = ktm->year - 1900;
+    tm->tm_yday = ktm->year_day;
+    tm->tm_mon = ktm->month;
+    tm->tm_mday = ktm->day;
+    tm->tm_hour = ktm->hour;
+    tm->tm_min = ktm->minute;
+    tm->tm_sec = ktm->second;
+    tm->tm_wday = ktm->week_day;
+    tm->tm_isdst = -1;
+    return 0;
 }

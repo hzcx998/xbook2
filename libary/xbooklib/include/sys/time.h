@@ -3,6 +3,7 @@
 
 #include "ktime.h"
 #include "types.h"
+#include <time.h>
 
 #define CLOCK_REALTIME            1 /*系统统当前时间，从1970年1.1日算起*/
 #define CLOCK_MONOTONIC           2 /*系统的启动时间，不能被设置*/
@@ -36,5 +37,7 @@ int clock_gettime(clockid_t clockid, struct timespec *ts);
 unsigned long alarm(unsigned long second);
 unsigned long ktime(ktime_t *ktm);
 clock_t clock();
+
+int ktimeto(ktime_t *ktm, struct tm *tm);
 
 #endif  /* _SYS_TIME_H */

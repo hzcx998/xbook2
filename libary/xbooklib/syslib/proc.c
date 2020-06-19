@@ -136,3 +136,20 @@ void sched_yeild()
 {
     syscall0(int, SYS_SCHED_YEILD);
 }
+
+
+/**
+ * tstate - 获取任务状态
+ * 
+ */
+int tstate(tstate_t *ts, int *idx)
+{
+    return syscall2(int, SYS_TSTATE, ts, idx);
+}
+
+int getver(char *buf, int len)
+{
+    if (!buf || len < 1)
+        return -1;
+    return syscall2(int, SYS_GETVER, buf, len);
+}

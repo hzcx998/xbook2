@@ -4,6 +4,21 @@
 #include "kfile.h"
 #include "types.h"
 
+
+#define PROC_NAME_LEN 32
+
+/* 任务状态 */
+typedef struct _tstate {
+    pid_t ts_pid;          /* 进程id */
+    pid_t ts_ppid;         /* 父进程id */
+    pid_t ts_tgid;         /* 线程组id */
+    char ts_state;         /* 运行状态 */
+    unsigned long ts_priority;  /* 优先级 */
+    unsigned long ts_timeslice; /* 时间片 */
+    unsigned long ts_runticks;  /* 运行的ticks数 */
+    char ts_name[PROC_NAME_LEN];      /* 任务名字 */
+} tstate_t;
+
 /* process */
 pid_t fork();
 void _exit(int status);
@@ -16,5 +31,7 @@ pid_t getppid();
 pid_t gettid();
 unsigned long sleep(unsigned long second);
 void sched_yeild();
+int tstate(tstate_t *ts, int *idx);
+int getver(char *buf, int len);
 
 #endif  /* _SYS_PROC_H */

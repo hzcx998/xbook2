@@ -76,5 +76,7 @@ void init_syscall()
     syscall_table[SYS_SRVCALL_FETCH] = sys_srvcall_fetch;
     
     syscall_table[SYS_UNID] = sys_unid;
-    
+    syscall_table[SYS_TSTATE] = sys_tstate;
+    syscall_table[SYS_GETVER] = sys_getver;
+    syscall_table[SYS_MSTATE] = sys_mstate;    
 }

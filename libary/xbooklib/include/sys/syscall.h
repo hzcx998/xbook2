@@ -54,6 +54,9 @@ enum syscall_num {
     SYS_SRVCALL_UNBIND,
     SYS_SRVCALL_FETCH,
     SYS_UNID,
+    SYS_TSTATE,
+    SYS_GETVER,
+    SYS_MSTATE,
     SYSCALL_NR,
 };
 unsigned long __syscall0(unsigned long num);

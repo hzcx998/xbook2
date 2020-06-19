@@ -36,5 +36,4 @@ typedef struct ktime {
 	int year_day;        /**/
 } ktime_t;
 
-
 #endif   /* _SYS_KTIME_H */

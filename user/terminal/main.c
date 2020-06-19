@@ -12,8 +12,6 @@ char *cmd_argv[MAX_ARG_NR] = {0};
 
 int main(int argc, char *argv[])
 {
-    printf("The app %s is started.\n", APP_NAME);
-
     if (init_con_screen() < 0) {
         return -1;
     }
@@ -41,7 +39,7 @@ int main(int argc, char *argv[])
         int argnum = -1;
         argnum = cmd_parse(cmdman->cmd_line, cmd_argv, ' ');
         if(argnum == -1){
-            printf("%s: num of arguments exceed %d\n", APP_NAME, MAX_ARG_NR);
+            cprintf("%s: num of arguments exceed %d\n", APP_NAME, MAX_ARG_NR);
             continue;
         }
 #if 0
@@ -52,7 +50,7 @@ int main(int argc, char *argv[])
         }
 #endif
         if (execute_cmd(argnum, cmd_argv)) {
-            printf("%s: execute cmd %s falied!\n", APP_NAME, cmd_argv[0]);
+            cprintf("%s: execute cmd %s falied!\n", APP_NAME, cmd_argv[0]);
         }
     }
     
