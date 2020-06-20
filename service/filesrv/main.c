@@ -14,13 +14,36 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <spin.h>
+
+#include <drivers/disk.h>
 
 #define DEBUG_LOCAL 0
 
 #define LIST_FILES 1
 
-#include "filesrv.h"
+#include <filesrv.h>
 #include "fatfs.h"
+
+
+#include <fsal/fsal.h>
+
+/*
+File Service struct:
++-----------------------+
+| 文件系统接口          |
+| 文件系统环境          |
+\                       /
++-----------------------+
+| 文件系统抽象层         |
+\                       /
++-----------------------+
+| FATFS | SIMPLE FS     |
+\                       /
++-----------------------+
+| 驱动                  |
++-----------------------+
+*/
 
 /**
  * filesrv - 文件服务
@@ -28,7 +51,12 @@
 int main(int argc, char *argv[])
 {
     //printf("%s: started.\n", SRV_NAME);
-    
+    if (init_disk_driver() < 0) {
+        printf("%s: init disk driver failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
+    //spin();
+
     /* 绑定成为服务调用 */
     if (srvcall_bind(SRV_FS)  == -1)  {
         printf("%s: bind srvcall failed, service stopped!\n", SRV_NAME);
@@ -41,9 +69,15 @@ int main(int argc, char *argv[])
         return -1;
     }
     
+#if  0     
     /* 初始化文件系统 */
     if (filesrv_init()) { /* 创建文件系统 */
         printf("%s: init filesystem failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
+#endif
+    if (init_fsal() < 0) { /* 创建文件系统 */
+        printf("%s: init fsal failed, service stopped!\n", SRV_NAME);
         return -1;
     }
 

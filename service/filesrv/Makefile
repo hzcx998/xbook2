@@ -12,7 +12,6 @@ DIR_LIBARY = ../../libary
 
 # libarys
 DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
-DIR_FATFSLIB 		= $(DIR_LIBARY)/fatfslib
 
 BIN = a.out
 BIN_DIS = out.disasm
@@ -38,23 +37,36 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 ASM_FLAGS	= -f elf \
 			-I $(DIR_XBOOKLIB)/include \
 			-I $(DIR_XBOOKLIB)/include/pthread \
-			-I $(DIR_FATFSLIB)/ \
-			
-			
+			-I include \
+			-I fatfs
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_XBOOKLIB)/include \
 			-I $(DIR_XBOOKLIB)/include/pthread \
-			-I $(DIR_FATFSLIB)/ \
+			-I include \
+			-I fatfs
 			
-OBJS =  main.o \
+
+FATFS_OBJS = 	fatfs/diskio.o \
+				fatfs/ff.o \
+				fatfs/ffsystem.o \
+				fatfs/ffunicode.o \
+
+
+FSAL_OBJS = 	fsal/fsal.o \
+				fsal/fatfs.o \
+
+DRIVERS_OBJS =  drivers/disk.o \
+
+MAIN_OBJS =  main.o \
 		interface.o \
 		filetable.o \
 		init.o \
 		fatfs.o \
 
-LIB_FILE = 	$(DIR_FATFSLIB)/fatfs-r0.14.a \
-			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
+OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(FATFS_OBJS) $(FSAL_OBJS)
+
+LIB_FILE = 	$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
 # -n: close memory aligin.
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000

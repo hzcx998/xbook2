@@ -6,8 +6,9 @@
 
 #define STR_DEFAULT_LEN 1024
 
-
+#ifndef EOF
 #define EOF -1
+#endif
 
 int printf(const char *fmt, ...);
 

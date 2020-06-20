@@ -77,7 +77,7 @@ int close(int fd)
     return -1;
 }
 
-int __read(int fd, void *buffer, size_t nbytes)
+static int __read(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0 || fd >= _MAX_FILEDES_NR)
         return -1;
@@ -127,7 +127,7 @@ int read(int fd, void *buffer, size_t nbytes)
     return read_total;
 }
 
-int __write(int fd, void *buffer, size_t nbytes)
+static int __write(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0 || fd >= _MAX_FILEDES_NR)
         return -1;

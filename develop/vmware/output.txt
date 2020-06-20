@@ -1,7 +1,7 @@
 info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:17:5:28 date:2020/6/19
-info: week day:5 Friday year day:172
+info: time:0:8:4 date:2020/6/20
+info: week day:6 Saturday year day:173
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -12,8 +12,8 @@ debug: task name=initsrv pid=1 ready load image done.
 initsrv: started
 debug: sys_fork: parent initsrv pid=1 prio=2 is forking now.
 debug: sys_fork: task initsrv pid 1 fork task initsrv pid 4 ppid 1
-debug: task namdebug: sys_wait: pid=1 no child exit, waiting...
-e=initsrv pid=4 ready load image done.
+debug: sys_wait: pid=1 no child exit, waiting...
+debug: task name=initsrv pid=4 ready load image done.
 debug: sys_fork: parent filesrv pid=4 prio=2 is forking now.
 debug: sys_fork: task filesrv pid 4 fork task filesrv pid 5 ppid 4
 filesrv: disk seq: 0: -> ide1
@@ -47,37 +47,7 @@ guisrv: mapped addr 20023000
 [guisrv] create window width=800 height=30 yoff=0
 debug: sys_fork: parent pthread pid=6 prio=2 is forking now.
 debug: sys_fork: task pthread pid 6 fork task pthread pid 7 ppid 6
-The app terminal is started.
 [terminal] con_open_window: open display 1 ok.
-[guisrv] create window width=320 height=264 yoff=24
+[guisrv] create window width=480 height=264 yoff=24
 [terminal] con_open_window: create window 1 success.
 [terminal] con_open_window: map window success.
-debug: sys_fork: parent terminal pid=7 prio=2 is forking now.
-copy pipe ipc!
-copy pipe ipc!
-debug: sys_fork: task terminal pid 7 fork task terminal pid 8 ppid 7
-debug: sys_exit: name=test pid=8 ppid=7 prio=2 status=0
-debug: sys_exit: thread count 0
-debug: sys_exit: pid=8 release all resources done.
-debug: sys_exit: pid=8 parent 7 not waiting, zombie!
-notice: deal_zombie_child: pid=7 find a zombie child 8 
-notice: deal_zombie_child: process.
-debug: sys_fork: parent terminal pid=7 prio=2 is forking now.
-copy pipe ipc!
-copy pipe ipc!
-debug: sys_fork: task terminal pid 7 fork task terminal pid 9 ppid 7
-[guisrv] create window width=256 height=264 yoff=24
-[button] down handler 0, 246, 10
-[button] up handler 0, 246, 10
-debug: sys_exit: name=infones pid=9 ppid=7 prio=2 status=-1
-debug: sys_exit: thread count 0
-debug: sys_exit: pid=9 release all resources done.
-debug: sys_exit: pid=9 parent 7 not waiting, zombie!
-notice: deal_zombie_child: pid=7 find a zombie child 9 
-notice: deal_zombie_child: process.
-[terminal] left button pressed.
-[terminal] left button released.
-[terminal] left button pressed.
-[terminal] left button released.
-[terminal] left button pressed.
-[terminal] left button released.

@@ -1122,7 +1122,7 @@ iostatus_t ide_devctl(device_object_t *device, io_request_t *ioreq)
     switch (ctlcode)
     {
     case DISKIO_GETSIZE:
-        infomation = ext->size;
+        *((unsigned int *) arg) = ext->size; 
         break;
     case DISKIO_CLEAR:
         ide_clean_disk(device->device_extension, arg);

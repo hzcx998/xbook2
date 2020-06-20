@@ -17,7 +17,7 @@
 #include <unistd.h>
 
 #include "fatfs.h"
-#include "filesrv.h"
+#include <filesrv.h>
 
 #define DEBUG_LOCAL 0
 

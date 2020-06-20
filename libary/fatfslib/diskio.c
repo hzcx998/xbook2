@@ -26,6 +26,16 @@ int device_handles[FF_VOLUMES] = {-1, -1, -1};
 
 extern disk_drive_t disk_drives[];
 
+/*
+fatfs文件系统磁盘映射表
+0, handle
+1, handle
+2, handle
+3, handle
+4, handle
+*/
+
+
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */

@@ -92,11 +92,12 @@ iostatus_t ramdisk_write(device_object_t *device, io_request_t *ioreq)
 iostatus_t ramdisk_devctl(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
+    unsigned long arg = ioreq->parame.devctl.arg;
     iostatus_t status = IO_SUCCESS;
     switch (ioreq->parame.devctl.code)
     {    
     case DISKIO_GETSIZE:
-        ioreq->io_status.infomation = extension->sectors;
+        *((unsigned int *) arg) = extension->sectors; 
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "ramdisk_devctl: get disk sectors=%d\n", extension->sectors);
 #endif
