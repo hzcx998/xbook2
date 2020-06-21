@@ -10,16 +10,23 @@
 #define _MAX_FILEDES_NR     32
 
 struct _filedes {
-    void *file;      /* file ptr */
+    int flags;      /* 文件描述符的标志 */
+    int fileidx;    /* 文件索引 */
 };
 
-struct _filedes __filedes_table[_MAX_FILEDES_NR] = {{0}, }; 
+struct _filedes __filedes_table[_MAX_FILEDES_NR] = {{0, -1}, }; 
 
+#if 0
+/* default work dir */
+static char __current_work_dir[MAX_PATH_LEN] = {'c', ':', 0, };
+#endif
 static struct _filedes *__alloc_filedes()
 {
     int i;
     for (i = 0; i < _MAX_FILEDES_NR; i++) {
-        if (__filedes_table[i].file == NULL) {
+        if (__filedes_table[i].flags == 0) {
+            __filedes_table[i].flags = 1;
+            __filedes_table[i].fileidx = -1;
             return &__filedes_table[i];
         }
     }
@@ -28,15 +35,33 @@ static struct _filedes *__alloc_filedes()
 
 static void __free_filedes(struct _filedes *_fil)
 {
-    _fil->file = NULL;
+    _fil->flags = 0;
+    _fil->fileidx = -1;
 }
-
 
 int open(const char *path, int flags)
 {
+    char *p = (char *) path;
+#if 0    
+    /* 对路径处理，传递的必须是绝对路径 */
+    char *p = (char *) path;
+    char *q = strchr(p, ':');
+    char full_path[MAX_PATH_LEN] = {0};
+    if (q == NULL) { /* 相对路径 */
+        
+        strcpy(full_path, __current_work_dir);
+        if (*p != '/') {    /* 第一个字符不是'/'就需要追加一个 */
+            strcat(full_path, "/");
+        }   
+        /* 追加路径 */
+        strcat(full_path, path);
+    } else {    /* 绝对路径 */
+        strcpy(full_path, path);
+    }
+#endif    
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, FILESRV_OPEN, 0);
-    SETSRV_ARG(&srvarg, 1, path, strlen(path) + 1);
+    SETSRV_ARG(&srvarg, 1, p, strlen(p) + 1);
     SETSRV_ARG(&srvarg, 2, flags, 0);
     SETSRV_RETVAL(&srvarg, -1);
 
@@ -47,10 +72,10 @@ int open(const char *path, int flags)
     }
     
     if (!srvcall(SRV_FS, &srvarg)) {
-        if (GETSRV_RETVAL(&srvarg, void *) == NULL) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
             return -1;
         }
-        _fil->file = GETSRV_RETVAL(&srvarg, void *);
+        _fil->fileidx = GETSRV_RETVAL(&srvarg, int);
         return _fil - __filedes_table;
     }
     return -1;
@@ -62,11 +87,11 @@ int close(int fd)
         return -1;
     struct _filedes *_fil = __filedes_table + fd;
     
-    if (_fil->file == NULL)
+    if (_fil->flags == 0)
         return -1;
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, FILESRV_CLOSE, 0);
-    SETSRV_ARG(&srvarg, 1, _fil->file, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
     if (!srvcall(SRV_FS, &srvarg)) {
         if (GETSRV_RETVAL(&srvarg, int) == -1) {
             return -1;
@@ -83,11 +108,11 @@ static int __read(int fd, void *buffer, size_t nbytes)
         return -1;
     struct _filedes *_fil = __filedes_table + fd;
     
-    if (_fil->file == NULL)
+    if (_fil->flags == 0)
         return -1;
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, FILESRV_READ, 0);
-    SETSRV_ARG(&srvarg, 1, _fil->file, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
     SETSRV_ARG(&srvarg, 2, buffer, nbytes);
     SETSRV_IO(&srvarg, (1 << 2));
     SETSRV_RETVAL(&srvarg, -1);
@@ -133,12 +158,12 @@ static int __write(int fd, void *buffer, size_t nbytes)
         return -1;
     struct _filedes *_fil = __filedes_table + fd;
     
-    if (_fil->file == NULL)
+    if (_fil->flags == 0)
         return -1;
 
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, FILESRV_WRITE, 0);
-    SETSRV_ARG(&srvarg, 1, _fil->file, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
     SETSRV_ARG(&srvarg, 2, buffer, nbytes);
     SETSRV_RETVAL(&srvarg, -1);
 
@@ -182,12 +207,12 @@ int lseek(int fd, off_t offset, int whence)
         return -1;
     struct _filedes *_fil = __filedes_table + fd;
     
-    if (_fil->file == NULL)
+    if (_fil->flags == 0)
         return -1;
 
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, FILESRV_LSEEK, 0);
-    SETSRV_ARG(&srvarg, 1, _fil->file, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
     SETSRV_ARG(&srvarg, 2, offset, 0);
     SETSRV_ARG(&srvarg, 3, whence, 0);
     SETSRV_RETVAL(&srvarg, -1);

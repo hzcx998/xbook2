@@ -52,9 +52,10 @@ FATFS_OBJS = 	fatfs/diskio.o \
 				fatfs/ffsystem.o \
 				fatfs/ffunicode.o \
 
-
 FSAL_OBJS = 	fsal/fsal.o \
 				fsal/fatfs.o \
+				fsal/path.o \
+				fsal/interface.o \
 
 DRIVERS_OBJS =  drivers/disk.o \
 

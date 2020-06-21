@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <fsal/fsal.h>
 
 #include "fatfs.h"
 #include <filesrv.h>
@@ -26,158 +27,13 @@
 
 #define SECTORS_PER_BLOCK   256
 
-/* 创建文件系统状态：0，不创建文件系统，1创建文件系统 */
-#define MKFS_STATE  0
-
 /* 原始磁盘，不在上面挂载文件系统 */
 #define RAW_DISK    "ide0"
 
-FATFS fatfs_info_table[FILESRV_DRV_NR];           /* Filesystem object */
-
-/* 文件系统驱动器：需要导出给fatfs的diskio.c使用 */
-disk_drive_t disk_drives[FILESRV_DRV_NR];
-
-/**
- * filesrv_probe_device - 探测设备
- * 
- */
-int filesrv_probe_device()
-{
-    int idx = 0;
-    /* 磁盘设备 */
-    devent_t *p = NULL;
-    devent_t devent;
-    do {
-        if (dev_scan(p, DEVICE_TYPE_DISK, &devent))
-            break;
-#if DEBUG_LOCAL == 1
-        printf("%s: %s: probe device %s\n", SRV_NAME, __func__, devent.de_name);
-#endif      
-        if (strcmp(devent.de_name, RAW_DISK)) {
-            disk_drives[idx].devent = devent;
-            disk_drives[idx].seq[0] = idx + '0';
-            disk_drives[idx].seq[1] = ':';
-            disk_drives[idx].seq[2] = 0;
-            disk_drives[idx].handle = -1;
-
-            idx++;
-            if (idx >= FILESRV_DRV_NR)
-                break;
-        }
-        
-        p = &devent;
-    } while (1);
-
-    /* 虚拟磁盘设备 */
-    p = NULL;
-    do {
-        if (dev_scan(p, DEVICE_TYPE_VIRTUAL_DISK, &devent))
-            break;
-#if DEBUG_LOCAL == 1
-        printf("%s: %s: probe device %s\n", SRV_NAME, __func__, devent.de_name);
-#endif        
-        disk_drives[idx].devent = devent;
-        disk_drives[idx].seq[0] = idx + '0';
-        disk_drives[idx].seq[1] = ':';
-        disk_drives[idx].seq[2] = 0;
-        disk_drives[idx].handle = -1;
-
-        idx++;
-        if (idx >= FILESRV_DRV_NR)
-            break;
-        p = &devent;
-    } while (1);
-
-    int i;
-    for (i = 0; i < idx; i++) {
-        printf("%s: disk seq: %s -> %s\n", SRV_NAME, disk_drives[i].seq,
-            disk_drives[i].devent.de_name);
-    }
-
-    return 0;
-}
-
-int filesrv_init()
-{
-    FRESULT res;        /* API result code */
-    BYTE work[FF_MAX_SS]; /* Work area (larger is better for processing time) */
-
-    disk_drive_t *dd;
-    /* 探测磁盘 */
-    filesrv_probe_device();
-    int i;
-    for (i = 0; i < FILESRV_DRV_NR; i++) {
-        dd = &disk_drives[i];
-        if (dd->seq[0] != 0) {
-#if DEBUG_LOCAL == 1
-            printf("%s: %s: make file system on drive %s start.\n", SRV_NAME, __func__, dd->seq);
-#endif             
-            if (dd->devent.de_type == DEVICE_TYPE_DISK) {
-                /* 检测磁盘是否有引导标志 */
-                char buf[512];
-                memset(buf, 0, 512);
-                int diskres = res_open(dd->devent.de_name, RES_DEV, 0);
-                if (diskres < 0) {
-                    printf("%s: open disk %s failed!\n", SRV_NAME, dd->devent.de_name);
-                    return -1;
-                }
-                res_read(diskres, 0, buf, 512);
-                res_close(diskres);
-                //printf("%x %x\n", buf[510], buf[511]);
-                if (buf[510] != 0x55 && buf[511] != 0xaa) {
-                    printf("%s: no fs on %s, create new one.\n", SRV_NAME, dd->devent.de_name);
-                    
-                    /* 在磁盘上创建文件系统 */
-                    res = f_mkfs(dd->seq, 0, work, sizeof(work));
-                    if (res != FR_OK) {
-                        printf("%s: make fs on drive %s failed with resoult code %d.\n", SRV_NAME, res);
-                        return res;
-                    }
-                }
-            } else {    /* 虚拟磁盘每次都需要创建文件系统 */
-                /* 在磁盘上创建文件系统 */
-                res = f_mkfs(dd->seq, 0, work, sizeof(work));
-                if (res != FR_OK) {
-                    printf("%s: %s: make fs on drive %s failed with resoult code %d.\n", SRV_NAME, __func__, res);
-                    return res;
-                }
-            }
-            //printf("%s: mount drive:%s\n", SRV_NAME, dd->seq);
-            /* 挂载到内存中 */
-            res = f_mount(&fatfs_info_table[i], dd->seq, 1);
-            if (res != FR_OK) {
-                printf("%s: %s: mount fs on drive %s failed with resoult code %d.\n", SRV_NAME, __func__, res);
-                return res;
-            }
-            
-#if DEBUG_LOCAL == 1
-            f_chdrive(dd->seq);
-            memset(cwdbuf, 0, 32);
-
-            f_getcwd(cwdbuf, 32);
-            //printf("%s: %s: list path %s\n", SRV_NAME, __func__, cwdbuf);
-            memset(pathbuf, 0, 256);
-            strcpy(pathbuf, dd->seq);
-
-            fatfs_scan_files(pathbuf);
-#endif        
-        }
-    }
-#if DEBUG_LOCAL == 1
-    /* 切换回第一个驱动器 */
-    dd = &disk_drives[0];
-    f_chdrive(dd->seq);
-#endif
-    //printf("%s: init done.\n", SRV_NAME);
-    return 0;
-}
-
-
 int filesrv_create_file(char *path, size_t size, char *diskname, long off)
 {
-    FIL fil;            /* File object */
-    FRESULT res;        /* API result code */
-    UINT bw;            /* Bytes written */
+    int fi;
+    int writebytes;
 
     long sectors = size / SECTOR_SIZE + 1;
     unsigned char *buf = malloc(sectors * SECTOR_SIZE);
@@ -188,8 +44,8 @@ int filesrv_create_file(char *path, size_t size, char *diskname, long off)
     memset(buf, 0, size);
     //printf("%s: %s: malloc ok.\n", SRV_NAME, __func__);
     
-    res = f_open(&fil, path, FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
-    if (res != FR_OK) {
+    fi = fsif.open(path, O_CREAT | O_RDWR);
+    if (fi < 0) {
         printf("%s: %s: open file failed!\n", SRV_NAME, __func__);
         goto free_buf;
     }
@@ -232,24 +88,23 @@ int filesrv_create_file(char *path, size_t size, char *diskname, long off)
         }
     }
     
-    f_write(&fil, buf, size, &bw);
-    if (bw != size) {
+    writebytes = fsif.write(fi, buf, size);
+    if (writebytes != size) {
         printf("%s: %s: f_write failed!\n", SRV_NAME, __func__);
     }
-    f_close(&fil);
+    fsif.close(fi);
     free(buf);
     return 0;
 close_file:
-    f_close(&fil);
-    
+    fsif.close(fi);
 free_buf:
     free(buf);
 
     return -1;
 }
 
-#define PATH_GUISRV "0:/guisrv"
-#define PATH_NETSRV "0:/netsrv.xsv"
+#define PATH_GUISRV "c:/guisrv"
+#define PATH_NETSRV "c:/netsrv"
 
 /* 文件映射 */
 struct file_map {
@@ -262,29 +117,23 @@ struct file_map {
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
-
 const char *infones_argv[3] = {
-    "/infones",
-    "/mario.nes",
+    "c:/infones",
+    "c:/mario.nes",
     0
 };
 
 struct file_map file_map_table[] = {
     {PATH_GUISRV, 200 * 512, 800, 1, NULL},
     {PATH_NETSRV, 400 * 512, 1500, 0, NULL},
-    {"/terminal", 200 * 512, 5100, 0, NULL},
+    {"c:/terminal", 200 * 512, 5100, 0, NULL},
 //    {"/login", 100 * 512, 4000, 0, NULL},
 //    {"/bosh", 100 * 512, 4100, 0, NULL},
-    {"/test", 100 * 512, 4300, 0, NULL},
-    {"/infones", 650 * 512, 4400, 0, infones_argv},
+    {"c:/test", 100 * 512, 4300, 0, NULL},
+    {"c:/infones", 650 * 512, 4400, 0, infones_argv},
 //    {"/mario.nes", 100 * 512, 10000, 0, NULL},
 };
 
-/*
-[dir] [file] [size] [off]
-<bin/abc, hello, 1023, 100>
-<srv, guisrv.xsv, 1023, 200>
-*/
 int filesrv_create_files()
 {
     struct file_map *fmap;

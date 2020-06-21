@@ -4,7 +4,10 @@
 typedef unsigned long size_t;
 typedef unsigned long dma_addr_t;
 
-typedef int wchar_t;
+#ifndef _WCHAR_T_DEFINED   
+typedef unsigned short wchar_t;   
+#define _WCHAR_T_DEFINED   
+#endif  
 
 /*
  *这里是define类型的

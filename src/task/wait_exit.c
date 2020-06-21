@@ -6,7 +6,7 @@
 #include <xbook/pthread.h>
 #include <sys/wait.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 /*
 僵尸进程：当进程P调用exit时，其父进程没有wait，那么它就变成一个僵尸进程。

@@ -15,7 +15,6 @@ int filesrv_file_table_init()
     return 0;
 }
 
-
 filesrv_file_t *filesrv_alloc_file()
 {
     int i;

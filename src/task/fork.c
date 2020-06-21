@@ -6,7 +6,7 @@
 #include <xbook/vmspace.h>
 #include <xbook/string.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 /**
  * 在多线程中，fork只会把调用者线程复制给子进程，而其它线程就会“蒸发”。
