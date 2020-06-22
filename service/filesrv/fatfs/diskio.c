@@ -22,10 +22,7 @@
 #define DEV_IDE0		1	/* Example: Map IDE0 to physical drive 1 */
 #define DEV_IDE1		2	/* Example: Map IDE1 to physical drive 2 */
 
-/* device handle table */
-
-extern disk_drive_t disk_drives[];
-
+/* 文件系统驱动映射表 */
 extern int fatfs_drv_map[FF_VOLUMES];
 
 /*

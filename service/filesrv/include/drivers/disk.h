@@ -29,5 +29,6 @@ extern disk_drvier_t drv_disk;
 int disk_probe_device(device_type_t type);
 void disk_info_print();
 int init_disk_driver();
+int disk_res_find(char *name);
 
 #endif  /* __FILESRV_DRIVERS_DISK_H__ */

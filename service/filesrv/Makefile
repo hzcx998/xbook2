@@ -61,9 +61,9 @@ DRIVERS_OBJS 	=  drivers/disk.o \
 
 CORE_OBJS 	=   core/interface.o \
 				core/init.o \
+				core/fstype.o \
 
 MAIN_OBJS =  main.o \
-		fatfs.o \
 
 OBJS =  $(MAIN_OBJS) $(CORE_OBJS) $(DRIVERS_OBJS) $(FATFS_OBJS) $(FSAL_OBJS)
 

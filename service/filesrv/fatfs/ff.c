@@ -5827,8 +5827,6 @@ static FRESULT create_partition (
 	return FR_OK;
 }
 
-
-
 FRESULT f_mkfs (
 	const TCHAR* path,		/* Logical drive number */
 	const MKFS_PARM* opt,	/* Format options */

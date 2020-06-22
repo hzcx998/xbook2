@@ -94,6 +94,7 @@
         "xmemory": "c",
         "cstring": "c",
         "iosfwd": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "ffconf.h": "c"
     }
 }

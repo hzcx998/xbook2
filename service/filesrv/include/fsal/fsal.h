@@ -7,11 +7,15 @@
 #include <wchar.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/list.h>
 
 typedef struct {
-    int (*mkfs)(void *, int);
-    int (*mount)(void *, char, int );
-    int (*unmount)(void *, int );
+    list_t list;                    /* 系统抽象的链表 */
+    char *name;                     /* 文件系统抽象层名字 */
+    char **subtable;                /* 子系统表 */
+    int (*mkfs)(char *, char *, unsigned long );
+    int (*mount)(char *, char *, char *, unsigned long );
+    int (*unmount)(char *, unsigned long );
     int (*open)(void *, int );
     int (*close)(int );
     int (*read)(int , void *, size_t );
@@ -29,7 +33,13 @@ typedef struct {
     int (*chmod)(char *, mode_t);
     int (*fchmod)(int , mode_t);
     int (*utime)(char *, uint32_t );
-    
+    int (*feof)(int );
+    int (*ferror)(int );
+    off_t (*ftell)(int );
+    size_t (*fsize)(int );
+    int (*rewind)(int );
+    int (*rewinddir)(int );
+    int (*rmdir)(char *);
     void *extention;
 } fsal_t;
 
@@ -37,6 +47,9 @@ typedef struct {
 extern fsal_t fsif;
 
 int init_fsal();
+
+#define MT_REMKFS       0x01 /* 挂在前需要格式化磁盘 */
+#define MT_DELAYED      0x02 /* 延时挂载 */
 
 /* 允许打开的文件数量 */
 #define FSAL_FILE_OPEN_NR       128
@@ -99,6 +112,7 @@ int init_fsal_path_table();
 int fsal_path_insert(void *path, char drive, fsal_t *fsal);
 int fsal_path_remove(void *path);
 void fsal_path_print();
+
 fsal_path_t *fsal_path_find(void *path);
 int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path);
 

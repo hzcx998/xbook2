@@ -5,6 +5,7 @@
 #include <sys/res.h>
 
 #include <ffconf.h>
+#include <string.h>
 
 /* 探测设备，储存起来 */
 
@@ -67,6 +68,23 @@ void disk_info_print()
             disk->devent.de_name, disk->devent.de_type);
     }
 }
+
+/**
+ * disk_res_find - 查找磁盘
+ * 
+ */
+int disk_res_find(char *name)
+{
+    disk_info_t *disk;
+    list_for_each_owner (disk, &disk_list_head, list) {
+        if (!strcmp(disk->devent.de_name, name)) {
+            return disk->solt;
+        }
+    }
+    return -1;
+}
+
+
 
 static int __open(int solt)
 {
@@ -140,11 +158,6 @@ static int __ioctl(int solt, unsigned int cmd, unsigned long arg)
         return -1;
     return 0;
 }
-
-/* 文件系统驱动映射表 */
-int fatfs_drv_map[FF_VOLUMES] = {
-    1,0,2,3,4,5,6,7,8,9
-};
 
 int init_disk_driver()
 {

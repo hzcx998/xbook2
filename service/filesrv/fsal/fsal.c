@@ -103,20 +103,44 @@ int init_fsal()
         return -1;
     }
 
-#if 1
+#if 0
     /* 尝试创建文件系统 */
     if (fatfs_fsal.mkfs("0:", 0) < 0) {
         printf("[%s] %s: make fatfs failed!\n", SRV_NAME, __func__);
         return -1;
     }
-#endif    
+#endif
+    
+    //fsal_mount("ide0", "c", "fat32", 0);
+    //fsal_unmount("c", 0);
+
+#if 0
     /* 把fatfs的0:路径挂载到c驱动器下面 */
     if (fatfs_fsal.mount("0:", 'c',0) < 0) {
         printf("[%s] %s: mount fatfs failed!\n", SRV_NAME, __func__);
         return -1;
     }
-    
+#endif
+
+    if (fsif.mkfs("ide1", "fat16", 0) < 0) {
+        printf("[%s] %s: mkfs failed!\n", SRV_NAME, __func__);
+        return -1;
+    }
+
+    if (fsif.mount("ide1", "c", "fat16", 0) < 0) {
+        printf("[%s] %s: mount failed!\n", SRV_NAME, __func__);
+        return -1;
+    }
+
     fsal_path_print();
+#if 0
+    if (fsif.unmount("c:", 0) < 0) {
+        printf("[%s] %s: unmount failed!\n", SRV_NAME, __func__);
+        return -1;
+    }
+
+    fsal_path_print();
+#endif
 #if 0
     if (fatfs_fsal.unmount("0:", 0) < 0) {
         printf("[%s] %s: unmount fatfs failed!\n", SRV_NAME, __func__);
@@ -158,10 +182,11 @@ int init_fsal()
     if (rdbytes < 0)
         return -1;
     printf("[%s] %s: read bytes %d ok. str:%s\n", SRV_NAME, __func__, rdbytes, buf);
-    
+    /*
     if (fsif.truncate(retval, 100) < 0)
         printf("truncate failed!\n");
-
+    */
+    
     fsif.close(retval);
 
     char path[MAX_PATH] = {0};
@@ -199,6 +224,40 @@ int init_fsal()
     if (!fsif.state("c:/bin", &state)) {
         printf("file name:%s size:%d date:%x time:%x\n", state.d_name, state.d_size, state.d_date, state.d_time);
     }
+
+    int fidx = fsif.open("c:/bin", O_RDONLY);
+    if (fidx < 0) {
+        printf("[%s] %s: open file failed!\n", SRV_NAME, __func__);
+        return -1;
+    }
+    printf("read file:");
+    char ch;
+    while (!fsif.feof(fidx)) {
+        fsif.read(fidx, &ch, 1);
+        printf("%c", ch);
+    }
+    printf("file size:%d pos:%d\n", fsif.fsize(fidx), fsif.ftell(fidx));
+
+    fsif.read(fidx, &ch, 1);
+
+    printf("file error:%d\n", fsif.ferror(fidx));
+
+    fsif.rewind(fidx);
+    printf("file pos:%d\n", fsif.ftell(fidx));
+    
+    fsif.rmdir("c:/usr3");
+
+    memset(path, 0, MAX_PATH);
+    strcpy(path, "c:");
+    fsal_list_dir(path);
+
+    //spin();
+
+    if (init_rom_file()) {
+        printf("%s: create file failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
+
 
     return 0;
 }

@@ -16,6 +16,8 @@
 /* 除后下舍 */
 #define DIV_ROUND_DOWN(X, STEP) ((X) / (STEP))
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 double sin(double x);
 double cos(double x);
 double sqrt (double x);

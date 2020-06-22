@@ -17,8 +17,6 @@
 #include <spin.h>
 
 #include <drivers/disk.h>
-#include "fatfs.h"
-
 #include <fsal/fsal.h>
 #include <core/filesrv.h>
 #include <core/if.h>
@@ -54,20 +52,15 @@ int main(int argc, char *argv[])
         return -1;
     }
     
-    /* 启动其它程序 */
-    if (filesrv_execute()) {
+    /* 初始化子进程 */
+    if (init_child_proc()) {
         printf("%s: execute failed, service stopped!\n", SRV_NAME);
         return -1;
     }
     
+    /* 初始化驱动 */
     if (init_disk_driver() < 0) {
         printf("%s: init disk driver failed, service stopped!\n", SRV_NAME);
-        return -1;
-    }
-    
-    /* 初始化文件系统抽象层 */
-    if (init_fsal() < 0) {
-        printf("%s: init fsal failed, service stopped!\n", SRV_NAME);
         return -1;
     }
     
@@ -77,6 +70,12 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    /* 初始化文件系统抽象层 */
+    if (init_fsal() < 0) {
+        printf("%s: init fsal failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
+    
     /* 处理服务 */
     printf("\n%s: enter receving request state.\n", SRV_NAME);
     int seq;

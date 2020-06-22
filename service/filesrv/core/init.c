@@ -13,24 +13,107 @@
 #include <sys/proc.h>
 #include <ff.h>
 #include <stdio.h>
+#include <math.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <fsal/fsal.h>
 
 #include <core/filesrv.h>
 #include <core/if.h>
+#include <core/fstype.h>
 
 #define DEBUG_LOCAL 0
 
-/* 最多可以挂载的驱动器 */
-#define FILESRV_DRV_NR   10
+/**
+ * init_srvcore - 初始化服务核心
+ * 
+ */
+int init_srvcore()
+{
+    /* 初始化接口部分 */
+    if (init_fstype() < 0) {
+        printf("%s: init fstype failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
 
-#define SECTORS_PER_BLOCK   256
+    /* 初始化接口部分 */
+    if (init_srv_interface() < 0) {
+        printf("%s: init srv if failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
 
-/* 原始磁盘，不在上面挂载文件系统 */
-#define RAW_DISK    "ide0"
+    return 0;
+}
 
-int filesrv_create_file(char *path, size_t size, char *diskname, long off)
+const char *infones_argv[3] = {
+    "c:/infones",
+    "c:/mario.nes",
+    0
+};
+
+/* 文件映射表 */
+struct file_map file_map_table[] = {
+    {PATH_GUISRV, 200 * 512, 800, 1, NULL},
+    {PATH_NETSRV, 400 * 512, 1500, 0, NULL},
+    {"c:/terminal", 200 * 512, 5100, 0, NULL},
+//    {"/login", 100 * 512, 4000, 0, NULL},
+//    {"/bosh", 100 * 512, 4100, 0, NULL},
+    {"c:/test", 100 * 512, 4300, 0, NULL},
+//    {"c:/infones", 650 * 512, 4400, 0, infones_argv},
+//    {"c:/mario.nes", 100 * 512, 10000, 0, NULL},
+};
+
+int srv_create_file(char *path, size_t size, char *diskname, long off);
+
+/**
+ * init_rom_file - 把raw磁盘上的内容加载到文件系统中
+ * 
+ */
+int init_rom_file()
+{
+    struct file_map *fmap;
+    int i;
+    for (i = 0; i < ARRAY_SIZE(file_map_table); i++) {
+        fmap = &file_map_table[i];
+        if (srv_create_file(fmap->path, fmap->size, RAW_DISK, fmap->off)) {
+            continue;
+        }
+    }
+    return 0;
+}
+/**
+ * init_child_proc - 创建一些子进程
+ * 
+ */
+int init_child_proc()
+{
+    struct file_map *fmap;
+    int pid = 0;
+    int i;
+    for (i = 0; i < ARRAY_SIZE(file_map_table); i++) {
+        fmap = &file_map_table[i];
+        if (fmap->execute) {
+            pid = fork();
+            if (pid < 0) {
+                printf("%s: %s: fork failed!\n", SRV_NAME, __func__);
+                return -1;
+            }
+            if (!pid) { /* 子进程执行新进程 */
+                if (execv(fmap->path, fmap->argv)) {
+                    printf("%s: %s: execv failed!\n", SRV_NAME, __func__);
+                    exit(-1);
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+/**
+ * 加载一个文件
+ * 
+*/
+int srv_create_file(char *path, size_t size, char *diskname, long off)
 {
     int fi;
     int writebytes;
@@ -101,89 +184,4 @@ free_buf:
     free(buf);
 
     return -1;
-}
-
-#define PATH_GUISRV "c:/guisrv"
-#define PATH_NETSRV "c:/netsrv"
-
-/* 文件映射 */
-struct file_map {
-    char *path;     /* 路径 */
-    size_t size;    /* 实际大小 */
-    off_t off;      /* 偏移 */
-    char execute;   /* 是否需要执行 */
-    const char **argv;
-};
-
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
-const char *infones_argv[3] = {
-    "c:/infones",
-    "c:/mario.nes",
-    0
-};
-
-struct file_map file_map_table[] = {
-    {PATH_GUISRV, 200 * 512, 800, 1, NULL},
-    {PATH_NETSRV, 400 * 512, 1500, 0, NULL},
-    {"c:/terminal", 200 * 512, 5100, 0, NULL},
-//    {"/login", 100 * 512, 4000, 0, NULL},
-//    {"/bosh", 100 * 512, 4100, 0, NULL},
-    {"c:/test", 100 * 512, 4300, 0, NULL},
-//    {"c:/infones", 650 * 512, 4400, 0, infones_argv},
-//    {"c:/mario.nes", 100 * 512, 10000, 0, NULL},
-};
-
-int filesrv_create_files()
-{
-    struct file_map *fmap;
-    int i;
-    for (i = 0; i < ARRAY_SIZE(file_map_table); i++) {
-        fmap = &file_map_table[i];
-        if (filesrv_create_file(fmap->path, fmap->size, RAW_DISK, fmap->off)) {
-            continue;
-        }
-    }
-    return 0;
-}
-
-int filesrv_execute()
-{
-    struct file_map *fmap;
-    int pid = 0;
-    int i;
-    for (i = 0; i < ARRAY_SIZE(file_map_table); i++) {
-        fmap = &file_map_table[i];
-        if (fmap->execute) {
-            pid = fork();
-            if (pid < 0) {
-                printf("%s: %s: fork failed!\n", SRV_NAME, __func__);
-                return -1;
-            }
-            if (!pid) { /* 子进程执行新进程 */
-                if (execv(fmap->path, fmap->argv)) {
-                    printf("%s: %s: execv failed!\n", SRV_NAME, __func__);
-                    exit(-1);
-                }
-            }
-        }
-    }
-    return 0;
-}
-
-int init_srvcore()
-{
-
-    /* 初始化接口部分 */
-    if (init_srv_interface() < 0) {
-        printf("%s: init srv if failed, service stopped!\n", SRV_NAME);
-        return -1;
-    }
-
-    if (filesrv_create_files()) {
-        printf("%s: create file failed, service stopped!\n", SRV_NAME);
-        return -1;
-    }
-
-    return 0;
 }
