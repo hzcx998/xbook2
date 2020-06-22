@@ -6,6 +6,7 @@
 #include <types.h>
 #include <wchar.h>
 #include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
     int (*mkfs)(void *, int);
@@ -16,6 +17,19 @@ typedef struct {
     int (*read)(int , void *, size_t );
     int (*write)(int , void *, size_t );
     int (*lseek)(int , off_t , int );
+    int (*opendir)(char *);
+    int (*closedir)(int);
+    int (*readdir)(int , void *);
+    int (*mkdir)(char *);
+    int (*unlink)(char *);
+    int (*rename)(char *, char *);
+    int (*truncate)(int , off_t);
+    int (*sync)(int );
+    int (*state)(char *, void *);
+    int (*chmod)(char *, mode_t);
+    int (*fchmod)(int , mode_t);
+    int (*utime)(char *, uint32_t );
+    
     void *extention;
 } fsal_t;
 
@@ -44,7 +58,7 @@ extern fsal_file_t *fsal_file_table;
 /* 在表中的索引转换成文件指针 */
 #define FSAL_I2F(idx)  ((fsal_file_t *)(&fsal_file_table[(idx)]))
 
-#define ISBAD_FSALIDX(idx) ((idx) < 0 || (idx) >= FSAL_FILE_OPEN_NR)
+#define ISBAD_FSAL_FIDX(idx) ((idx) < 0 || (idx) >= FSAL_FILE_OPEN_NR)
 
 fsal_file_t *fsal_file_alloc();
 int fsal_file_free(fsal_file_t *file);
@@ -87,5 +101,7 @@ int fsal_path_remove(void *path);
 void fsal_path_print();
 fsal_path_t *fsal_path_find(void *path);
 int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path);
+
+int fsal_list_dir(char* path);
 
 #endif  /* __FILESRV_FSAL_H__ */

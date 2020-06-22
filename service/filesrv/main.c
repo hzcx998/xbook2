@@ -17,16 +17,13 @@
 #include <spin.h>
 
 #include <drivers/disk.h>
-
-#define DEBUG_LOCAL 0
-
-#define LIST_FILES 1
-
-#include <filesrv.h>
 #include "fatfs.h"
 
-
 #include <fsal/fsal.h>
+#include <core/filesrv.h>
+#include <core/if.h>
+
+#define DEBUG_LOCAL 0
 
 /*
 File Service struct:
@@ -50,11 +47,6 @@ File Service struct:
  */
 int main(int argc, char *argv[])
 {
-    //printf("%s: started.\n", SRV_NAME);
-    if (init_disk_driver() < 0) {
-        printf("%s: init disk driver failed, service stopped!\n", SRV_NAME);
-        return -1;
-    }
     
     /* 绑定成为服务调用 */
     if (srvcall_bind(SRV_FS)  == -1)  {
@@ -68,43 +60,25 @@ int main(int argc, char *argv[])
         return -1;
     }
     
-#if  0     
-    /* 初始化文件系统 */
-    if (filesrv_init()) { /* 创建文件系统 */
-        printf("%s: init filesystem failed, service stopped!\n", SRV_NAME);
+    if (init_disk_driver() < 0) {
+        printf("%s: init disk driver failed, service stopped!\n", SRV_NAME);
         return -1;
     }
-#endif
-    if (init_fsal() < 0) { /* 创建文件系统 */
+    
+    /* 初始化文件系统抽象层 */
+    if (init_fsal() < 0) {
         printf("%s: init fsal failed, service stopped!\n", SRV_NAME);
         return -1;
     }
-
-    /* 初始化文件表 */
-    if (filesrv_file_table_init()) {
-        printf("%s: init file table failed, service stopped!\n", SRV_NAME);
-        return -1;
-    }
     
-    /* 初始化对外接口 */
-    if (filesrv_init_interface()) {
-        printf("%s: init interface failed, service stopped!\n", SRV_NAME);
+    /* 初始化服务核心 */
+    if (init_srvcore() < 0) {
+        printf("%s: init srvcore failed, service stopped!\n", SRV_NAME);
         return -1;
     }
 
-    if (filesrv_create_files()) {
-        printf("%s: create file failed, service stopped!\n", SRV_NAME);
-        return -1;
-    }
-#if LIST_FILES == 1
-    char scan_path[256];
-    memset(scan_path, 0, 256);
-    strcpy(scan_path, "0:");
-    /* 扫描文件 */
-    fatfs_scan_files(scan_path);
-#endif
+    /* 处理服务 */
     printf("\n%s: enter receving request state.\n", SRV_NAME);
-    
     int seq;
     srvarg_t srvarg;
     int callnum;
@@ -128,7 +102,6 @@ int main(int argc, char *argv[])
         seq++;
         /* 3.应答服务 */
         srvcall_ack(SRV_FS, &srvarg);   
-
     }
     return 0;
 }

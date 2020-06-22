@@ -93,6 +93,7 @@
         "cmd.h": "c",
         "xmemory": "c",
         "cstring": "c",
-        "iosfwd": "c"
+        "iosfwd": "c",
+        "unistd.h": "c"
     }
 }

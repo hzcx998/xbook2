@@ -46,7 +46,6 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I include \
 			-I fatfs
 			
-
 FATFS_OBJS = 	fatfs/diskio.o \
 				fatfs/ff.o \
 				fatfs/ffsystem.o \
@@ -56,16 +55,17 @@ FSAL_OBJS = 	fsal/fsal.o \
 				fsal/fatfs.o \
 				fsal/path.o \
 				fsal/interface.o \
+				fsal/dir.o \
 
-DRIVERS_OBJS =  drivers/disk.o \
+DRIVERS_OBJS 	=  drivers/disk.o \
+
+CORE_OBJS 	=   core/interface.o \
+				core/init.o \
 
 MAIN_OBJS =  main.o \
-		interface.o \
-		filetable.o \
-		init.o \
 		fatfs.o \
 
-OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(FATFS_OBJS) $(FSAL_OBJS)
+OBJS =  $(MAIN_OBJS) $(CORE_OBJS) $(DRIVERS_OBJS) $(FATFS_OBJS) $(FSAL_OBJS)
 
 LIB_FILE = 	$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 

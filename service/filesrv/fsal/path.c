@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <filesrv.h>
+#include <core/filesrv.h>
 #include <unistd.h>
 
 /* 路径转换表 */
@@ -89,13 +89,13 @@ int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path)
     if (start == NULL)
         return -1;
 
-    start++;
-    if (*start == 0) {   /* x:后面没有字符 */
-        return -1;
-    }
-
+    
     /* 复制文件系统的挂载路径标识 */
     strcpy(new_path, fpath->path);
+    start++;
+    if (*start == 0) {   /* x:后面没有字符 */
+        strcat(new_path, "/");
+    }
     /* 复制文件路径内容 */
     strcat(new_path, start);
     return 0;

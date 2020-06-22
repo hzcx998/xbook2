@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <filesrv.h>
+#include <core/filesrv.h>
 #include <drivers/disk.h>
 #include <sys/res.h>
 

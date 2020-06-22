@@ -15,7 +15,7 @@ enum filesrv_call_num {
 #define FILESRV_BUF_MAX_SIZE    (128*1024)
 
 
-#define MAX_PATH_LEN    256
+#define MAX_PATH_LEN    260
 
 
 #endif   /* _SRV_FILE_SRV_H */

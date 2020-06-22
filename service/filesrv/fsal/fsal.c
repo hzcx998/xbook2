@@ -1,9 +1,11 @@
 #include <fsal/fsal.h>
 #include <fsal/fatfs.h>
+#include <fsal/dir.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <filesrv.h>
+#include <core/filesrv.h>
 #include <unistd.h>
 #include <spin.h>
 
@@ -57,9 +59,43 @@ int fsal_file_free(fsal_file_t *file)
     return 0;
 }
 
+int fsal_list_dir(char* path)
+{
+    dirent_t de;
+    int i;
+    int dir = fsif.opendir(path);
+    if (dir >= 0) {
+        while (1) {
+            /* 读取目录项 */
+            if (fsif.readdir(dir, &de) < 0)
+                break;
+            
+            if (de.d_attr & DE_DIR) {   /* 是目录，就需要递归扫描 */
+                printf("%s/%s\n", path, de.d_name);
+                /* 构建新的路径 */
+                i = strlen(path);
+                sprintf(&path[i], "/%s", de.d_name);
+                if (fsal_list_dir(path) < 0)
+                    break;
+                path[i] = 0;
+            } else {    /* 直接列出文件 */
+                printf("%s/%s  size=%d\n", path, de.d_name, de.d_size);
+            }
+        }
+        fsif.closedir(dir);
+    }
+    return dir;
+}
+
+
+
 int init_fsal()
 {
     if (init_fsal_file_table() < 0) {
+        return -1;
+    }
+
+    if (init_fsal_dir_table() < 0) {
         return -1;
     }
     
@@ -67,7 +103,7 @@ int init_fsal()
         return -1;
     }
 
-#if 0    
+#if 1
     /* 尝试创建文件系统 */
     if (fatfs_fsal.mkfs("0:", 0) < 0) {
         printf("[%s] %s: make fatfs failed!\n", SRV_NAME, __func__);
@@ -89,9 +125,7 @@ int init_fsal()
     
     fsal_path_print();
     
-    spin();
 #endif
-
     int retval = fsif.open("c:/bin", O_CREAT | O_RDWR);
     if (retval < 0) {
         printf("[%s] %s: open file failed!\n", SRV_NAME, __func__);
@@ -111,6 +145,9 @@ int init_fsal()
     if (wrbytes < 0)
         return -1;
 
+    if (fsif.sync(retval) < 0)
+        printf("[%s] %s: sync file %d failed!\n", SRV_NAME, __func__);
+
     printf("[%s] %s: write bytes %d ok.\n", SRV_NAME, __func__, wrbytes);
 
     int seekval = fsif.lseek(retval, 0, SEEK_SET);
@@ -122,8 +159,46 @@ int init_fsal()
         return -1;
     printf("[%s] %s: read bytes %d ok. str:%s\n", SRV_NAME, __func__, rdbytes, buf);
     
+    if (fsif.truncate(retval, 100) < 0)
+        printf("truncate failed!\n");
+
     fsif.close(retval);
 
+    char path[MAX_PATH] = {0};
+    strcpy(path, "c:");
+    fsal_list_dir(path);
+
+    fsif.mkdir("c:/usr");
+    fsif.mkdir("c:/usr/share");
+    fsif.mkdir("c:/lib");
+    
+    memset(path, 0, MAX_PATH);
+    strcpy(path, "c:");
+    fsal_list_dir(path);
+
+    fsif.unlink("c:/usr/share");
+    fsif.unlink("c:/usr");
+    //fsif.unlink("c:/test");
+
+    memset(path, 0, MAX_PATH);
+    strcpy(path, "c:");
+    fsal_list_dir(path);
+
+    fsif.rename("c:/lib", "c:/usr2");
+    fsif.rename("c:/usr2", "c:/usr3");
+    
+    memset(path, 0, MAX_PATH);
+    strcpy(path, "c:");
+    fsal_list_dir(path);
+
+    fstate_t state;
+    if (!fsif.state("c:/bin", &state)) {
+        printf("file name:%s size:%d date:%x time:%x\n", state.d_name, state.d_size, state.d_date, state.d_time);
+    }
+    fsif.utime("c:/bin", 0x12345678);
+    if (!fsif.state("c:/bin", &state)) {
+        printf("file name:%s size:%d date:%x time:%x\n", state.d_name, state.d_size, state.d_date, state.d_time);
+    }
 
     return 0;
 }

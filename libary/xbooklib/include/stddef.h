@@ -65,5 +65,12 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
     #endif
 #endif
 
+
+#ifndef MAX_PATH
+#define MAX_PATH    260
+#endif
+
+
+
 #endif  /*_LIB_STDDEF_H*/
 
