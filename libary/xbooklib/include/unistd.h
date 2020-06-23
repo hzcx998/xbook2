@@ -4,7 +4,6 @@
 #include "types.h"
 #include "stddef.h"
 
-
 /* file open 文件打开 */
 #define O_RDONLY    0x01
 #define O_WRONLY    0x02
@@ -40,6 +39,15 @@ int read(int fd, void *buffer, size_t nbytes);
 int write(int fd, void *buffer, size_t nbytes);
 int lseek(int fd, off_t offset, int whence);
 int access(const char *filenpath, int mode);
+int unlink(const char *path);
+int ftruncate(int fd, off_t offset);
+int fsync(int fd);
+
+int _eof(int fd);
+int _error(int fd);
+long tell(int fd);
+size_t _size(int fd);
+int rewind(int fd);
 
 int execv(const char *path, const char *argv[]);
 int execl(const char *path, const char *arg, ...);

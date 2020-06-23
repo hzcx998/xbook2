@@ -41,6 +41,9 @@ static void __free_filedes(struct _filedes *_fil)
 
 int open(const char *path, int flags)
 {
+    if (path == NULL)
+        return -1;
+    
     char *p = (char *) path;
 #if 0    
     /* 对路径处理，传递的必须是绝对路径 */
@@ -104,8 +107,6 @@ int close(int fd)
 
 static int __read(int fd, void *buffer, size_t nbytes)
 {
-    if (fd < 0 || fd >= _MAX_FILEDES_NR)
-        return -1;
     struct _filedes *_fil = __filedes_table + fd;
     
     if (_fil->flags == 0)
@@ -114,7 +115,7 @@ static int __read(int fd, void *buffer, size_t nbytes)
     SETSRV_ARG(&srvarg, 0, FILESRV_READ, 0);
     SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
     SETSRV_ARG(&srvarg, 2, buffer, nbytes);
-    SETSRV_IO(&srvarg, (1 << 2));
+    SETSRV_IO(&srvarg, (SRVIO_USER << 2));
     SETSRV_RETVAL(&srvarg, -1);
 
     if (!srvcall(SRV_FS, &srvarg)) {
@@ -129,6 +130,11 @@ static int __read(int fd, void *buffer, size_t nbytes)
 
 int read(int fd, void *buffer, size_t nbytes)
 {
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    if (buffer == NULL)
+        return -1;
+
     char *buf = (char *) buffer;
     int count = (int )nbytes;
     int chunk = MIN(count, FILESRV_BUF_MAX_SIZE);
@@ -154,8 +160,7 @@ int read(int fd, void *buffer, size_t nbytes)
 
 static int __write(int fd, void *buffer, size_t nbytes)
 {
-    if (fd < 0 || fd >= _MAX_FILEDES_NR)
-        return -1;
+    
     struct _filedes *_fil = __filedes_table + fd;
     
     if (_fil->flags == 0)
@@ -178,6 +183,11 @@ static int __write(int fd, void *buffer, size_t nbytes)
 
 int write(int fd, void *buffer, size_t nbytes)
 {
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    if (buffer == NULL)
+        return -1;
+
     char *buf = (char *) buffer;
     int count = (int )nbytes;
     int chunk = MIN(count, FILESRV_BUF_MAX_SIZE);
@@ -242,6 +252,190 @@ int access(const char *filenpath, int mode)
             return -1;
         }
         return GETSRV_RETVAL(&srvarg, int);
+    }
+    return -1;
+}
+
+int unlink(const char *path)
+{
+    if (path == NULL)
+        return -1;
+
+    char *p = (char *) path;
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_UNLINK, 0);
+    SETSRV_ARG(&srvarg, 1, p, strlen(p) + 1);
+    SETSRV_RETVAL(&srvarg, -1);
+
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return 0;
+    }
+    return -1;
+}
+
+int ftruncate(int fd, off_t offset)
+{
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    struct _filedes *_fil = __filedes_table + fd;
+    
+    if (_fil->flags == 0)
+        return -1;
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_FTRUNCATE, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
+    SETSRV_ARG(&srvarg, 2, offset, 0);
+    
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return 0;
+    }
+    return -1;
+}
+
+int fsync(int fd)
+{
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    struct _filedes *_fil = __filedes_table + fd;
+    
+    if (_fil->flags == 0)
+        return -1;
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_FSYNC, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return 0;
+    }
+    return -1;
+}
+
+int fchmod(int fd, mode_t mode)
+{
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    struct _filedes *_fil = __filedes_table + fd;
+    
+    if (_fil->flags == 0)
+        return -1;
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_FCHMOD, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
+    SETSRV_ARG(&srvarg, 2, mode, 0);
+    
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return 0;
+    }
+    return -1;
+}
+
+int _eof(int fd)
+{
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    struct _filedes *_fil = __filedes_table + fd;
+    
+    if (_fil->flags == 0)
+        return -1;
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_FEOF, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return GETSRV_RETVAL(&srvarg, int);
+    }
+    return -1;
+}
+
+int _error(int fd)
+{
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    struct _filedes *_fil = __filedes_table + fd;
+    
+    if (_fil->flags == 0)
+        return -1;
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_FERROR, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return 0;
+    }
+    return -1;
+}
+
+long tell(int fd)
+{
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    struct _filedes *_fil = __filedes_table + fd;
+    
+    if (_fil->flags == 0)
+        return -1;
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_FTELL, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return GETSRV_RETVAL(&srvarg, int);
+    }
+    return -1;
+}
+
+size_t _size(int fd)
+{
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    struct _filedes *_fil = __filedes_table + fd;
+    
+    if (_fil->flags == 0)
+        return -1;
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_FSIZE, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return GETSRV_RETVAL(&srvarg, int);
+    }
+    return -1;
+}
+
+int rewind(int fd)
+{
+    if (fd < 0 || fd >= _MAX_FILEDES_NR)
+        return -1;
+    struct _filedes *_fil = __filedes_table + fd;
+    
+    if (_fil->flags == 0)
+        return -1;
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_REWIND, 0);
+    SETSRV_ARG(&srvarg, 1, _fil->fileidx, 0);
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return 0;
     }
     return -1;
 }

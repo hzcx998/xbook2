@@ -17,12 +17,11 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <fsal/fsal.h>
+#include <debug.h>
 
 #include <core/filesrv.h>
 #include <core/if.h>
 #include <core/fstype.h>
-
-#define DEBUG_LOCAL 0
 
 /**
  * init_srvcore - 初始化服务核心
@@ -41,6 +40,7 @@ int init_srvcore()
         printf("%s: init srv if failed, service stopped!\n", SRV_NAME);
         return -1;
     }
+    dbgprint(">>> debug print hello %d\n", 123);
 
     return 0;
 }

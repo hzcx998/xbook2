@@ -77,6 +77,9 @@ PTHREAD_OBJS	=	$(PTHREAD_DIR)/pthread_entry.o \
 
 UNISTD_OBJS		= 	$(UNISTD_DIR)/file.o \
 					$(UNISTD_DIR)/exec.o \
+					$(UNISTD_DIR)/dir.o \
+					$(UNISTD_DIR)/stat.o \
+					$(UNISTD_DIR)/mount.o \
 
 MATH_OBJS		= 	$(MATH_DIR)/fabs.o \
 					$(MATH_DIR)/sin.o \

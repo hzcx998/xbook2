@@ -44,7 +44,7 @@ static int __close(int idx)
     return fsal->close(idx);
 }
 
-static int __truncate(int idx, off_t offset)
+static int __ftruncate(int idx, off_t offset)
 {
     if (ISBAD_FSAL_FIDX(idx))
         return -1;
@@ -53,9 +53,8 @@ static int __truncate(int idx, off_t offset)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
-    return fsal->truncate(idx, offset);
+    return fsal->ftruncate(idx, offset);
 }
-
 
 static int __read(int idx, void *buf, size_t size)
 {
@@ -93,7 +92,7 @@ static int __lseek(int idx, off_t off, int whence)
     return fsal->lseek(idx, off, whence);
 }
 
-static int __sync(int idx)
+static int __fsync(int idx)
 {
     if (ISBAD_FSAL_FIDX(idx))
         return -1;
@@ -102,7 +101,7 @@ static int __sync(int idx)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
-    return fsal->sync(idx);
+    return fsal->fsync(idx);
 }
 
 static int __opendir(char *path)
@@ -156,7 +155,7 @@ static int __readdir(int idx, void *buf)
     return fsal->readdir(idx, buf);
 }
 
-static int __mkdir(char *path)
+static int __mkdir(char *path, mode_t mode)
 {
     if (path == NULL)
         return -1;
@@ -180,7 +179,7 @@ static int __mkdir(char *path)
         return -1;
 
     /* 执行打开 */
-    return fsal->mkdir(new_path);
+    return fsal->mkdir(new_path, mode);
 }
 
 static int __unlink(char *path)
@@ -296,7 +295,19 @@ static int __chmod(char *path, mode_t mode)
     return fsal->chmod(new_path, mode);
 }
 
-static int __utime(char *path, uint32_t time)
+static int __fchmod(int idx, mode_t mode)
+{
+    if (ISBAD_FSAL_DIDX(idx))
+        return -1;
+    /* 查找对应的文件系统 */
+    fsal_dir_t *pdir = FSAL_I2D(idx);
+    fsal_t *fsal = pdir->fsal;
+    if (fsal == NULL)
+        return -1;
+    return fsal->fchmod(idx, mode);
+}
+
+static int __utime(char *path, time_t actime, time_t modtime)
 {
     if (path == NULL)
         return -1;
@@ -320,7 +331,7 @@ static int __utime(char *path, uint32_t time)
         return -1;
 
     /* 执行打开 */
-    return fsal->utime(new_path, time);
+    return fsal->utime(new_path, actime, modtime);
 }
 
 static int __feof(int idx)
@@ -334,7 +345,6 @@ static int __feof(int idx)
         return -1;
     return fsal->feof(idx);
 }
-
 
 static int __ferror(int idx)
 {
@@ -543,10 +553,11 @@ fsal_t fsif = {
     .mkdir      = __mkdir,
     .unlink     = __unlink,
     .rename     = __rename,
-    .truncate   = __truncate,
-    .sync       = __sync,
+    .ftruncate  = __ftruncate,
+    .fsync      = __fsync,
     .state      = __state,
     .chmod      = __chmod,
+    .fchmod     = __fchmod,
     .utime      = __utime,
     .feof       = __feof,
     .ferror     = __ferror,

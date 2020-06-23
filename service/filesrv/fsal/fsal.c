@@ -121,12 +121,12 @@ int init_fsal()
         return -1;
     }
 #endif
-
+/*
     if (fsif.mkfs("ide1", "fat16", 0) < 0) {
         printf("[%s] %s: mkfs failed!\n", SRV_NAME, __func__);
         return -1;
     }
-
+*/
     if (fsif.mount("ide1", "c", "fat16", 0) < 0) {
         printf("[%s] %s: mount failed!\n", SRV_NAME, __func__);
         return -1;
@@ -169,7 +169,7 @@ int init_fsal()
     if (wrbytes < 0)
         return -1;
 
-    if (fsif.sync(retval) < 0)
+    if (fsif.fsync(retval) < 0)
         printf("[%s] %s: sync file %d failed!\n", SRV_NAME, __func__);
 
     printf("[%s] %s: write bytes %d ok.\n", SRV_NAME, __func__, wrbytes);
@@ -193,9 +193,9 @@ int init_fsal()
     strcpy(path, "c:");
     fsal_list_dir(path);
 
-    fsif.mkdir("c:/usr");
-    fsif.mkdir("c:/usr/share");
-    fsif.mkdir("c:/lib");
+    fsif.mkdir("c:/usr", 0);
+    fsif.mkdir("c:/usr/share", 0);
+    fsif.mkdir("c:/lib", 0);
     
     memset(path, 0, MAX_PATH);
     strcpy(path, "c:");
@@ -220,7 +220,7 @@ int init_fsal()
     if (!fsif.state("c:/bin", &state)) {
         printf("file name:%s size:%d date:%x time:%x\n", state.d_name, state.d_size, state.d_date, state.d_time);
     }
-    fsif.utime("c:/bin", 0x12345678);
+    fsif.utime("c:/bin", 0, 0x12345678);
     if (!fsif.state("c:/bin", &state)) {
         printf("file name:%s size:%d date:%x time:%x\n", state.d_name, state.d_size, state.d_date, state.d_time);
     }

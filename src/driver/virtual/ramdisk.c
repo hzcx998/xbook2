@@ -12,7 +12,7 @@
 #define DRV_NAME "virtual-ramdisk"
 #define DRV_VERSION "0.1"
 
-#define DEV_NAME "ramdisk"
+#define DEV_NAME "ram0"
 
 /* 10MB */
 #define RAMDISK_SECTORS     20480

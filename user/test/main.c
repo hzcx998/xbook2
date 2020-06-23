@@ -2,14 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <unistd.h>
+#include <dirent.h>
+#include <utime.h>
 
 #include <srv/guisrv.h>
 #include <sys/srvcall.h>
 #include <sys/proc.h>
 #include <sys/res.h>
 #include <sgi/sgi.h>
-
+#include <sys/stat.h>
+#include <sys/mount.h>
 
 #if 0
 
@@ -176,14 +178,209 @@ exit_gui:
 
 #endif
 
+DIR *sys_list_dir(char* path)
+{
+    struct dirent *de;
+    int i;
+    DIR *dir = opendir(path);
+    if (dir) {
+        while (1) {
+            /* 读取目录项 */
+            if ((de = readdir(dir)) == NULL)
+                break;
+            
+            if (de->d_attr & DE_DIR) {   /* 是目录，就需要递归扫描 */
+                printf("%s/%s\n", path, de->d_name);
+                /* 构建新的路径 */
+                i = strlen(path);
+                sprintf(&path[i], "/%s", de->d_name);
+                sys_list_dir(path);
+
+                path[i] = 0;
+            } else {    /* 直接列出文件 */
+                printf("%s/%s  size=%d\n", path, de->d_name, de->d_size);
+            }
+        }
+        closedir(dir);
+        return NULL;
+    }
+    return dir;
+}
+
 
 int main(int argc, char *argv[])
 {
     printf("hello, test!\n");
     printf("this is string: %s %c value:%d %x!\n", "abc", 'A', 123456789, 0x1234abcd);
 
-    int i = 0;
+    /* 文件操作测试 */
+    int fd = open("c:/gcc", O_CREAT | O_RDWR);
+    if (fd < 0) {
+        printf("open file failed!\n");
+    }
 
+    char *str = "hello, test!";
+    int wr = write(fd, str, strlen(str));
+    if (wr < 0) {
+        printf("write file failed!\n");
+    }
+
+    printf("write %d bytes.\n", wr);
+
+    lseek(fd, 0, SEEK_SET);
+
+    char buf[32] = {0};
+    read(fd, buf, 12);
+    printf("read buf:%s\n", buf);
+
+    if (fsync(fd))
+        printf("> fsync failed!\n");
+
+    ftruncate(fd, 5);
+
+    //lseek(fd, 0, SEEK_SET);
+    rewind(fd);
+
+    memset(buf, 0, 32);
+    printf("read bytes:%d\n", read(fd, buf, 12));
+
+    printf("read buf:%s\n", buf);
+
+    if (fchmod(fd, 0))
+        printf("fchmod failed!\n");
+
+    printf("tell file pos:%d fsize:%d\n", tell(fd), _size(fd));
+
+    close(fd);
+
+    char path[MAX_PATH] = {0};
+    strcpy(path, "c:");
+    sys_list_dir(path);
+
+    /*
+    if (mkfs("ram0", "fat16", 0)) {
+        printf("make fs failed!\n");
+    }*/
+
+    if (mount("ram0", "d:", "fat16", 0)) {
+        printf("mount fs failed!\n");
+    }
+
+    fd = open("d:/test", O_CREAT | O_RDWR);
+    if (fd < 0) {
+        printf("open file failed!\n");
+    }
+
+    char *str2 = "hello, ram!\n";
+    write(fd, str2, strlen(str2));
+
+    rewind(fd);
+
+    memset(buf, 0, 32);
+
+    read(fd, buf, 32);
+
+    printf("buf:%s\n", buf);
+
+    fsync(fd);
+    close(fd);
+
+    memset(path, 0, MAX_PATH);
+    strcpy(path, "d:");
+    sys_list_dir(path);
+
+    if (unmount("d:",  0)) {
+        printf("unmount fs failed!\n");
+    }
+
+    fd = open("d:/test", O_CREAT | O_RDWR);
+    if (fd < 0) {
+        printf("open file after unmount failed!\n");
+    }
+
+
+#if 0
+    if (mkdir("c:/tmp", 0) < 0)
+        printf("mkdir failed!\n");
+
+    if (mkdir("c:/tmp/test", 0) < 0)
+        printf("mkdir failed!\n");
+
+    if (mkdir("c:/share", 0) < 0)
+        printf("mkdir failed!\n");
+
+    memset(path, 0, MAX_PATH);
+    strcpy(path, "c:");
+    sys_list_dir(path);
+
+    if (rmdir("c:/share"))
+        printf("rmdir share failed!\n");
+    
+    if (unlink("c:/tmp"))  
+        printf("unlink tmp failed!\n");
+
+    if (unlink("c:/tmp/test"))  
+        printf("unlink tmp/test failed!\n");
+    
+    if (unlink("c:/tmp"))  
+        printf("unlink tmp failed!\n");
+
+    if (unlink("c:/gcc"))  
+        printf("unlink gcc failed!\n");
+
+
+    if (rename("c:/tmp", "c:/tmp2"))  
+        printf("rename tmp failed!\n");
+
+    if (rename("c:/tmp2/test", "c:/tmp2/app"))  
+        printf("rename tmp2/test failed!\n");
+
+    if (rename("c:/null", "c:/dev"))  
+        printf("rename null failed!\n");
+
+    const struct utimbuf utimebuf = {0, 0x12345678};
+    if (utime("c:/gcc", &utimebuf))
+        printf("utime failed!\n");
+
+    if (chmod("c:/gcc", 0))
+        printf("chmod failed!\n");
+
+    struct stat sbuf;
+    memset(&sbuf, 0, sizeof(struct stat));
+    if (stat("c:/gcc", &sbuf) < 0)
+        printf("stat failed!\n");
+
+    printf("state: size=%d, date=%x, time=%x, attr=%x\n", 
+        sbuf.st_size, sbuf.st_date, sbuf.st_time, sbuf.st_attr);
+
+
+
+
+    //sys_list_dir(path);
+
+    fd = open("c:/gcc", O_RDWR);
+    if (fd < 0) {
+        printf("open file failed!\n");
+    }
+    printf("ready read file:\n");
+    char ch;
+    while (!_eof(fd)) {
+        read(fd, &ch, 1);
+        printf("%c", ch);
+    }
+    close(fd);
+#endif
+
+
+
+
+
+
+
+
+
+    int i = 0;
+    
     char ch;
     while ((ch = getchar()) != '\n')
     {

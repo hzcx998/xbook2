@@ -1,12 +1,10 @@
-#include <ff.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
-#include <unistd.h>
 #include <math.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <types.h>
-
 #include <fsal/fsal.h>
 #include <core/if.h>
 #include <core/filesrv.h>
@@ -132,6 +130,411 @@ static int __assert(srvarg_t *arg)
     return -1;
 }
 
+static int __opendir(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        
+        if (srvcall_fetch(SRV_FS, arg))
+            return -1;
+    }
+    char *path = GETSRV_DATA(arg, 1, char *);
+    int di = fsif.opendir(path);
+    if (di < 0) {
+        printf("[%s] open dir %s failed!\n", SRV_NAME, path);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, di);
+    return 0;
+}
+
+
+static int __closedir(srvarg_t *arg)
+{
+    int didx = GETSRV_DATA(arg, 1, int);
+    int retval = fsif.closedir(didx);
+    if (retval < 0) {
+        printf("[%s] close dir %d failed!\n", SRV_NAME, didx);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __readdir(srvarg_t *arg)
+{
+    int didx = GETSRV_DATA(arg, 1, int);
+    int len = MIN(GETSRV_SIZE(arg, 2), SRVBUF_4K);
+
+    int readbytes = fsif.readdir(didx, srvbuf4k);
+    if (readbytes < 0) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_DATA(arg, 2, srvbuf4k);
+    SETSRV_SIZE(arg, 2, len);
+
+    SETSRV_RETVAL(arg, readbytes);
+    return 0;
+}
+
+static int __rewinddir(srvarg_t *arg)
+{
+    int didx = GETSRV_DATA(arg, 1, int);
+    int retval = fsif.rewinddir(didx);
+    if (retval < 0) {
+        printf("[%s] rewinddir failed!\n", SRV_NAME);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __mkdir(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        if (srvcall_fetch(SRV_FS, arg))
+            return -1;
+    }
+    char *path = GETSRV_DATA(arg, 1, char *);
+    mode_t mode = GETSRV_DATA(arg, 2, mode_t);
+    int retval = fsif.mkdir(path, mode);
+    if (retval < 0) {
+        printf("[%s] make dir %s failed!\n", SRV_NAME, path);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __unlink(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        if (srvcall_fetch(SRV_FS, arg)) {
+            return -1;
+        }
+            
+    }
+    char *path = GETSRV_DATA(arg, 1, char *);
+    int retval = fsif.unlink(path);
+    if (retval < 0) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __rmdir(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        if (srvcall_fetch(SRV_FS, arg))
+            return -1;
+    }
+    char *path = GETSRV_DATA(arg, 1, char *);
+    int retval = fsif.rmdir(path);
+    if (retval < 0) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __rename(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        SETSRV_DATA(arg, 2, srvbuf4k);
+        SETSRV_SIZE(arg, 2, MIN(GETSRV_SIZE(arg, 2), SRVBUF_4K));
+        if (srvcall_fetch(SRV_FS, arg))
+            return -1;
+    }
+    char *source = GETSRV_DATA(arg, 1, char *);
+    char *target = GETSRV_DATA(arg, 2, char *);
+    
+    int retval = fsif.rename(source, target);
+    if (retval < 0) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __ftruncate(srvarg_t *arg)
+{
+    int fidx = GETSRV_DATA(arg, 1, int);
+    off_t off = GETSRV_DATA(arg, 2, off_t);
+    
+    int retval = fsif.ftruncate(fidx, off);
+    if (retval < 0) {
+        printf("[%s] truncate failed!\n", SRV_NAME);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __fsync(srvarg_t *arg)
+{
+    int fidx = GETSRV_DATA(arg, 1, int);
+    int retval = fsif.fsync(fidx);
+    if (retval < 0) {
+        printf("[%s] sync failed!\n", SRV_NAME);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __state(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        if (srvcall_fetch(SRV_FS, arg)) {
+            return -1;
+        }
+    }
+    char *path = GETSRV_DATA(arg, 1, char *);
+    int len = MIN(GETSRV_SIZE(arg, 2), SRVBUF_4K);
+
+    int retval = fsif.state(path, srvbuf4k);
+    if (retval < 0) {
+        printf("[%s] sync failed!\n", SRV_NAME);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    /* 传输数据给用户 */
+    SETSRV_DATA(arg, 2, srvbuf4k);
+    SETSRV_SIZE(arg, 2, len);
+
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __chmod(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        if (srvcall_fetch(SRV_FS, arg)) {
+            return -1;
+        }
+    }
+    char *path = GETSRV_DATA(arg, 1, char *);
+    mode_t mode = GETSRV_DATA(arg, 2, mode_t);
+
+    int retval = fsif.chmod(path, mode);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __fchmod(srvarg_t *arg)
+{
+    int fi = GETSRV_DATA(arg, 1, int);
+    mode_t mode = GETSRV_DATA(arg, 2, mode_t);
+
+    int retval = fsif.fchmod(fi, mode);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __utime(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        if (srvcall_fetch(SRV_FS, arg)) {
+            return -1;
+        }
+    }
+    char *path = GETSRV_DATA(arg, 1, char *);
+    time_t actime = GETSRV_DATA(arg, 2, time_t);
+    time_t modtime = GETSRV_DATA(arg, 3, time_t);
+    int retval = fsif.utime(path, actime, modtime);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __feof(srvarg_t *arg)
+{
+    int fi = GETSRV_DATA(arg, 1, int);
+    int retval = fsif.feof(fi);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __ferror(srvarg_t *arg)
+{
+    int fi = GETSRV_DATA(arg, 1, int);
+    int retval = fsif.ferror(fi);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __ftell(srvarg_t *arg)
+{
+    int fi = GETSRV_DATA(arg, 1, int);
+    off_t retval = fsif.ftell(fi);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __fsize(srvarg_t *arg)
+{
+    int fi = GETSRV_DATA(arg, 1, int);
+    size_t retval = fsif.fsize(fi);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __rewind(srvarg_t *arg)
+{
+    int fi = GETSRV_DATA(arg, 1, int);
+    int retval = fsif.rewind(fi);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __mount(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        SETSRV_DATA(arg, 2, srvbuf4k);
+        SETSRV_SIZE(arg, 2, MIN(GETSRV_SIZE(arg, 2), SRVBUF_4K));
+        SETSRV_DATA(arg, 3, srvbuf128k);
+        SETSRV_SIZE(arg, 3, MIN(GETSRV_SIZE(arg, 3), SRVBUF_128K));
+        if (srvcall_fetch(SRV_FS, arg)) {
+            return -1;
+        }
+    }
+    char *source = GETSRV_DATA(arg, 1, char *);
+    char *target = GETSRV_DATA(arg, 2, char *);
+    char *fstype = GETSRV_DATA(arg, 3, char *);
+    unsigned long flags = GETSRV_DATA(arg, 4, unsigned long);
+    int retval = fsif.mount(source, target, fstype, flags);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __unmount(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        if (srvcall_fetch(SRV_FS, arg)) {
+            return -1;
+        }
+    }
+    char *source = GETSRV_DATA(arg, 1, char *);
+    unsigned long flags = GETSRV_DATA(arg, 2, unsigned long);
+    int retval = fsif.unmount(source, flags);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __mkfs(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf256);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_256));
+        SETSRV_DATA(arg, 2, srvbuf4k);
+        SETSRV_SIZE(arg, 2, MIN(GETSRV_SIZE(arg, 2), SRVBUF_4K));
+        if (srvcall_fetch(SRV_FS, arg)) {
+            return -1;
+        }
+    }
+    char *source = GETSRV_DATA(arg, 1, char *);
+    char *fstype = GETSRV_DATA(arg, 2, char *);
+    unsigned long flags = GETSRV_DATA(arg, 3, unsigned long);
+    int retval = fsif.mkfs(source, fstype, flags);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
 /* 调用表 */
 srvcall_func_t filesrv_call_table[] = {
     __open,
@@ -140,6 +543,28 @@ srvcall_func_t filesrv_call_table[] = {
     __write,
     __lseek,
     __assert,
+    __opendir,
+    __closedir,
+    __readdir,
+    __rewinddir,
+    __mkdir,
+    __unlink,
+    __rmdir,
+    __rename,
+    __ftruncate,
+    __fsync,
+    __state,
+    __chmod,
+    __fchmod,
+    __utime,
+    __feof,
+    __ferror,
+    __ftell,
+    __fsize,
+    __rewind,
+    __mount,
+    __unmount,
+    __mkfs,
 };
 
 int init_srv_interface()
@@ -159,5 +584,6 @@ int init_srv_interface()
         return -1;
     }
     memset(srvbuf128k, 0, SRVBUF_128K);
+
     return 0;
 }

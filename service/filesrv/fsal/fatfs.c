@@ -8,6 +8,7 @@
 #include <core/filesrv.h>
 #include <unistd.h>
 #include <drivers/disk.h>
+#include <sys/stat.h>
 
 #define DEBUG_LOCAL 0
 
@@ -423,7 +424,7 @@ static int __readdir(int idx, void *buf)
     return 0;
 }
 
-static int __mkdir(char *path)
+static int __mkdir(char *path, mode_t mode)
 {
     FRESULT res;
     res = f_mkdir(path);
@@ -453,7 +454,7 @@ static int __rename(char *old_path, char *new_path)
     return 0;
 }
 
-static int __truncate(int idx, off_t offset)
+static int __ftruncate(int idx, off_t offset)
 {
     if (ISBAD_FSAL_FIDX(idx))
         return -1;
@@ -479,7 +480,7 @@ static int __truncate(int idx, off_t offset)
     return 0;
 }
 
-static int __sync(int idx)
+static int __fsync(int idx)
 {
     if (ISBAD_FSAL_FIDX(idx))
         return -1;
@@ -507,40 +508,49 @@ static int __state(char *path, void *buf)
     }
     
     /* 往通用目录结构里面填充数据 */
-    fstate_t *state = (fstate_t *)buf;
+    stat_t *stat = (stat_t *)buf;
     
     /* 解析属性 */
-    state->d_attr = 0;
+    stat->st_attr = 0;
     if (finfo.fattrib & AM_RDO)
-        state->d_attr |= DE_RDONLY;
+        stat->st_attr |= DE_RDONLY;
     if (finfo.fattrib & AM_HID)
-        state->d_attr |= DE_HIDDEN;
+        stat->st_attr |= DE_HIDDEN;
     if (finfo.fattrib & AM_SYS)
-        state->d_attr |= DE_SYSTEM;
+        stat->st_attr |= DE_SYSTEM;
     if (finfo.fattrib & AM_DIR)
-        state->d_attr |= DE_DIR;
+        stat->st_attr |= DE_DIR;
     if (finfo.fattrib & AM_ARC)
-        state->d_attr |= DE_ARCHIVE;
+        stat->st_attr |= DE_ARCHIVE;
 
-    state->d_size = finfo.fsize;
-    state->d_time = finfo.ftime;
-    state->d_date = finfo.fdate;
-    memcpy(state->d_name, finfo.fname, DIR_NAME_LEN);
-    state->d_name[DIR_NAME_LEN - 1] = '\0';
+    stat->st_size = finfo.fsize;
+    stat->st_time = finfo.ftime;
+    stat->st_date = finfo.fdate;
+    
     return 0;
 }
 
 static int __chmod(char *path, mode_t mode)
 {
-    return -1;
+    return 0;
 }
 
-static int __utime(char *path, uint32_t time)
+static int __fchmod(int idx, mode_t mode)
+{
+    if (ISBAD_FSAL_FIDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_I2F(idx);
+    if (!fp->flags)   /* file not used! */
+        return -1;
+    return 0;
+}
+
+static int __utime(char *path, time_t actime, time_t modtime)
 {
     FRESULT fres;
     FILINFO finfo;
-    finfo.fdate = (time >> 16) & 0xffff;
-    finfo.ftime = time & 0xffff;
+    finfo.fdate = (modtime >> 16) & 0xffff;
+    finfo.ftime = modtime & 0xffff;
     fres = f_utime(path, &finfo);
     if (fres != FR_OK)
         return -1;
@@ -580,7 +590,7 @@ static int __ferror(int idx)
 /**
  * __ftell - 返回当前读写位置
  * 
- * 执行失败返回0，成功返回位置
+ * 执行失败返回-1，成功返回位置
  */
 static off_t __ftell(int idx)
 {
@@ -681,10 +691,11 @@ fsal_t fatfs_fsal = {
     .mkdir      = __mkdir,
     .unlink     = __unlink,
     .rename     = __rename,
-    .truncate   = __truncate,
-    .sync       = __sync,
+    .ftruncate  = __ftruncate,
+    .fsync      = __fsync,
     .state      = __state,
     .chmod      = __chmod,
+    .fchmod     = __fchmod,
     .utime      = __utime,
     .feof       = __feof,
     .ferror     = __ferror,
