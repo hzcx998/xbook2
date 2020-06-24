@@ -4,6 +4,35 @@
 #include "types.h"
 #include "stddef.h"
 
+
+/* 高4位是属性位 */
+#define S_IFSOCK 0x90    //scoket
+#define S_IFLNK 0x50     //符号连接
+#define S_IFIFO 0x30     //先进先出
+#define S_IFBLK 0x80     //区块装置
+#define S_IFCHR 0x40     //字符装置
+#define S_IFDIR 0x20     //目录
+#define S_IFREG 0x10     //一般文件
+
+#define S_IREAD 0x04     //文件所有者具可读取权限
+#define S_IWRITE 0x02    //文件所有者具可写入权限
+#define S_IEXEC 0x01     //文件所有者具可执行权限
+
+//上述的文件类型在POSIX中定义了检查这些类型的宏定义：
+
+#define S_ISREG (st_mode & S_IFREG)    //是否为一般文件
+#define S_ISDIR (st_mode & S_IFDIR)    //是否为目录
+#define S_ISCHR (st_mode & S_IFCHR)    //是否为字符设备
+#define S_ISBLK (st_mode & S_IFBLK)        //是否为块设备
+#define S_ISFIFO (st_mode & S_IFIFO)     //先进先出
+#define S_ISLNK (st_mode & S_IFLNK)    //判断是否为符号连接
+#define S_ISSOCK (st_mode & S_IFSOCK)   //是否为socket
+
+/* 文件模式 */
+#define M_IREAD  (1 << 2)     //文件可读取权限
+#define M_IWRITE (1 << 1)    //文件可写入权限
+#define M_IEXEC  (1 << 0)     //文件可执行权限
+
 /* file open 文件打开 */
 #define O_RDONLY    0x01
 #define O_WRONLY    0x02
@@ -48,6 +77,15 @@ int _error(int fd);
 long tell(int fd);
 size_t _size(int fd);
 int rewind(int fd);
+
+
+int mkdir(const char *path, mode_t mode);
+int rmdir(const char *path);
+int rename(const char *source, const char *target);
+
+int chdir(const char *path);
+int getcwd(char *buf, int bufsz);
+int chdrive(const char *path);
 
 int execv(const char *path, const char *argv[]);
 int execl(const char *path, const char *arg, ...);

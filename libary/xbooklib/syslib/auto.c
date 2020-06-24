@@ -1,3 +1,5 @@
+#include <sys/dir.h>
+
 /**
  * _enter_preload - 进入预先加载
  * 
@@ -5,11 +7,10 @@
  * 初始化（不需要初始化），就需要在此进行初始化。
  * 简单的说，用户不知道要初始化，但是其实需要初始化。
  */
-void _enter_preload()
+void _enter_preload(int argc, char *argv[])
 {
-
-
-
+    /* 默认使用根目录 */
+    __setcwd(ROOT_DIR_BUF);
 }
 
 /**

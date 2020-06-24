@@ -19,3 +19,8 @@
 * [ok] 添加窗口控制栏。（控制单个窗口）
 * [ok] 添加系统菜单栏。（显示时间，后台程序，窗口菜单等）
 * [ok] 为窗口设置接收输入。（SelectInput）
+* 2020/6/24
+* 完善进程中路径的转换。当输入相对路径时，在本进程中转换成绝对路径后，再发送给文件系统服务。
+    getcwd, chdir.
+* 在shell中实现ls, cd, pwd, lsdrive, lsdev, cat, cp, dir, kill(trig), mkdir,rmdir,mv,rename, rm, echo.
+* 开始网络服务进程的开发。

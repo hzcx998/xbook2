@@ -5,6 +5,7 @@
 #include <math.h>
 #include <sys/srvcall.h>
 #include <srv/filesrv.h>
+#include <sys/dir.h>
 
 /* 任务可以打开的文件数量 */
 #define _MAX_FILEDES_NR     32
@@ -16,10 +17,7 @@ struct _filedes {
 
 struct _filedes __filedes_table[_MAX_FILEDES_NR] = {{0, -1}, }; 
 
-#if 0
-/* default work dir */
-static char __current_work_dir[MAX_PATH_LEN] = {'c', ':', 0, };
-#endif
+
 static struct _filedes *__alloc_filedes()
 {
     int i;
@@ -43,8 +41,10 @@ int open(const char *path, int flags)
 {
     if (path == NULL)
         return -1;
-    
-    char *p = (char *) path;
+    char full_path[MAX_PATH] = {0};
+    build_path(path, full_path);
+
+    char *p = (char *) full_path;
 #if 0    
     /* 对路径处理，传递的必须是绝对路径 */
     char *p = (char *) path;
@@ -240,10 +240,12 @@ int access(const char *filenpath, int mode)
 {
     if (filenpath == NULL)
         return -1;
-    
+    char full_path[MAX_PATH] = {0};
+    build_path(filenpath, full_path);
+
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, FILESRV_ASSERT, 0);
-    SETSRV_ARG(&srvarg, 1, filenpath, strlen(filenpath) + 1);
+    SETSRV_ARG(&srvarg, 1, full_path, strlen(full_path) + 1);
     SETSRV_ARG(&srvarg, 2, mode, 0);
     SETSRV_RETVAL(&srvarg, -1);
 
@@ -260,8 +262,10 @@ int unlink(const char *path)
 {
     if (path == NULL)
         return -1;
+    char full_path[MAX_PATH] = {0};
+    build_path(path, full_path);
 
-    char *p = (char *) path;
+    char *p = (char *) full_path;
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, FILESRV_UNLINK, 0);
     SETSRV_ARG(&srvarg, 1, p, strlen(p) + 1);

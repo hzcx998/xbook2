@@ -8,7 +8,7 @@
 //#define NDEBUG
 
 #define ASSERT_VOID_CAST  (void)
-
+#if 0
 //version 1
 
 //fprintf(stderr, "Assertion failed:%s, file %s, line %d\n", #expr, __FILE__,__LINE__);
@@ -23,23 +23,26 @@
 #else
 #define assert(expr)  ASSERT_VOID_CAST(0)
 #endif
+#endif
 
-
+#if 1
 ////version 2
-//void assert_fail(const char *expr, const char *file, int line)
-//  {
-//    fprintf(stderr, "Assertion failed:%s, file %s, line %d\n", expr, file, line);
-//    abort(); \
-//  }
+static inline void assert_fail(const char *expr, const char *file, int line)
+{
+    //fprintf(stderr, "Assertion failed:%s, file %s, line %d\n", expr, file, line);
+    printf("Assertion failed:%s, file %s, line %d\n", expr, file, line);     
+    abort();
+}
 
-//#ifndef NDEBUG
-//#define assert(expr)  \
-//   ( (expr) \
-//     ? ASSERT_VOID_CAST(0)   \
-//     : assert_fail(#expr, __FILE__, __LINE__) \
-//    )
-//#else
-//#define assert(expr)  ASSERT_VOID_CAST(0)
-//#endif
+#ifndef NDEBUG
+#define assert(expr)  \
+   ( (expr) \
+     ? ASSERT_VOID_CAST(0)   \
+     : assert_fail(#expr, __FILE__, __LINE__) \
+    )
+#else
+#define assert(expr)  ASSERT_VOID_CAST(0)
+#endif
+#endif
 
 #endif  /* _XLIBC_ASSERT_H */

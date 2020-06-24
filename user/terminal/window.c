@@ -9,6 +9,7 @@
 #include "cursor.h"
 #include "console.h"
 #include "clipboard.h"
+#include <sys/trigger.h>
 
 #define DEBUG_LEVEL 1
 
@@ -271,7 +272,7 @@ int con_event_loop(char *buf, int count)
 }
 
 
-int con_event_poll(char *buf)
+int con_event_poll(char *buf, int pid)
 {
     SGI_Display *display = screen.display;
     SGI_Event event;
@@ -287,6 +288,15 @@ int con_event_poll(char *buf)
         /* 只捕捉按下 */
         if (event.key.state == SGI_PRESSED) {
             *buf = event.key.keycode.code;
+            /* 组合按键 */
+            if (event.key.keycode.modify & SGI_KMOD_CTRL) {
+                /* ctrl + c -> 打断进程 */
+                if (event.key.keycode.code == SGIK_C || event.key.keycode.code == SGIK_c) {
+                    /* 激活pid的重软件触发器 */
+                    triggeron(TRIGHSOFT, pid);
+                    break;
+                }
+            }
             switch (*buf)
             {
             case SGIK_ENTER:

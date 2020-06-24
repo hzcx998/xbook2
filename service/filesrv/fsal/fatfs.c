@@ -426,9 +426,11 @@ static int __readdir(int idx, void *buf)
 
 static int __mkdir(char *path, mode_t mode)
 {
+    //printf("fatfs: make dir %s\n", path);
     FRESULT res;
     res = f_mkdir(path);
     if (res != FR_OK) {
+        //printf("fatfs: %s: fresult code:%d\n", __func__, res);
         return -1;
     }
     return 0;
@@ -510,22 +512,15 @@ static int __state(char *path, void *buf)
     /* 往通用目录结构里面填充数据 */
     stat_t *stat = (stat_t *)buf;
     
+    mode_t mode = S_IREAD | S_IWRITE;
     /* 解析属性 */
-    stat->st_attr = 0;
     if (finfo.fattrib & AM_RDO)
-        stat->st_attr |= DE_RDONLY;
-    if (finfo.fattrib & AM_HID)
-        stat->st_attr |= DE_HIDDEN;
-    if (finfo.fattrib & AM_SYS)
-        stat->st_attr |= DE_SYSTEM;
-    if (finfo.fattrib & AM_DIR)
-        stat->st_attr |= DE_DIR;
-    if (finfo.fattrib & AM_ARC)
-        stat->st_attr |= DE_ARCHIVE;
+        mode &= ~S_IWRITE;
 
+    stat->st_mode = mode;
     stat->st_size = finfo.fsize;
-    stat->st_time = finfo.ftime;
-    stat->st_date = finfo.fdate;
+    stat->st_atime = (finfo.fdate << 16) | finfo.ftime;
+    stat->st_ctime = stat->st_mtime = stat->st_atime;
     
     return 0;
 }
@@ -663,6 +658,25 @@ static int __rmdir(char *path)
     return 0;
 }
 
+/**
+ * __chdir - 改变工作目录
+ * 
+ * 检测目录是否存在，以让客户端程序改变本地的工作目录
+ * 
+ * 执行失败返回-1，成功返回0
+ */
+static int __chdir(char *path)
+{
+    FRESULT res;
+    DIR dir;
+    res = f_opendir(&dir, path);                       /* Open the directory */
+    if (res != FR_OK) {
+        return -1;
+    }
+    f_closedir(&dir);
+    return 0;
+}
+
 /* fatfs 支持的文件系统类型 */
 static char *fatfs_sub_table[] = {
     "fat12",
@@ -704,5 +718,6 @@ fsal_t fatfs_fsal = {
     .rewind     = __rewind,
     .rewinddir  = __rewinddir,
     .rmdir      = __rmdir,
+    .chdir      = __chdir,
     .extention  = (void *)&fatfs_extention,
 };

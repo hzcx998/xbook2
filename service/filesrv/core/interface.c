@@ -535,6 +535,28 @@ static int __mkfs(srvarg_t *arg)
     return 0;
 }
 
+
+static int __chdir(srvarg_t *arg)
+{
+    /* 需要检测参数 */
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 1, srvbuf4k);
+        SETSRV_SIZE(arg, 1, MIN(GETSRV_SIZE(arg, 1), SRVBUF_4K));
+        if (srvcall_fetch(SRV_FS, arg)) {
+            return -1;
+        }
+    }
+    char *path = GETSRV_DATA(arg, 1, char *);
+    int retval = fsif.chdir(path);
+    if (retval < 0) {
+        printf("[%s] %s failed!\n", SRV_NAME, __func__);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
 /* 调用表 */
 srvcall_func_t filesrv_call_table[] = {
     __open,
@@ -565,6 +587,7 @@ srvcall_func_t filesrv_call_table[] = {
     __mount,
     __unmount,
     __mkfs,
+    __chdir,
 };
 
 int init_srv_interface()

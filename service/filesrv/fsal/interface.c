@@ -433,6 +433,32 @@ static int __rmdir(char *path)
     return fsal->rmdir(new_path);
 }
 
+static int __chdir(char *path)
+{
+    if (path == NULL)
+        return -1;
+    
+    fsal_path_t *fpath = fsal_path_find(path);
+    if (fpath == NULL) {
+        printf("path %s not found!\n", path);
+        return -1;
+    }
+
+    /* 查找对应的文件系统 */
+    fsal_t *fsal = fpath->fsal;
+    if (fsal == NULL) {
+        printf("path %s fsal error!\n", path);
+        return -1;
+    }
+
+    /* 转换路径 */
+    char new_path[FASL_PATH_LEN] = {0};
+    if (fsal_path_switch(fpath, new_path, path) < 0)
+        return -1;
+
+    /* 执行打开 */
+    return fsal->chdir(new_path);
+}
 
 /* 挂载文件系统 */
 int __mount(
@@ -566,4 +592,5 @@ fsal_t fsif = {
     .rewind     = __rewind,
     .rewinddir  = __rewinddir,
     .rmdir      = __rmdir,
+    .chdir      = __chdir,
 };

@@ -31,6 +31,7 @@ enum filesrv_call_num {
     FILESRV_MOUNT,
     FILESRV_UNMOUNT,
     FILESRV_MKFS,
+    FILESRV_CHDIR,
     FILESRV_CALL_NR,    /* 最大数量 */
 };
 /* 缓冲区最大长度 */

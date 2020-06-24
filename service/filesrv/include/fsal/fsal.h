@@ -40,6 +40,7 @@ typedef struct {
     int (*rewind)(int );
     int (*rewinddir)(int );
     int (*rmdir)(char *);
+    int (*chdir)(char *);
     void *extention;
 } fsal_t;
 

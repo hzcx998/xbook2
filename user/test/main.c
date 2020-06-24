@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <utime.h>
+#include <assert.h>
 
 #include <srv/guisrv.h>
 #include <sys/srvcall.h>
@@ -12,6 +13,7 @@
 #include <sgi/sgi.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <sys/dir.h>
 
 #if 0
 
@@ -207,12 +209,11 @@ DIR *sys_list_dir(char* path)
     return dir;
 }
 
-
 int main(int argc, char *argv[])
 {
     printf("hello, test!\n");
     printf("this is string: %s %c value:%d %x!\n", "abc", 'A', 123456789, 0x1234abcd);
-
+#if 0
     /* 文件操作测试 */
     int fd = open("c:/gcc", O_CREAT | O_RDWR);
     if (fd < 0) {
@@ -297,7 +298,75 @@ int main(int argc, char *argv[])
     if (fd < 0) {
         printf("open file after unmount failed!\n");
     }
+#endif
 
+
+    char cwd[32];
+    getcwd(cwd, 32);
+    printf("cwd:%s\n", cwd);
+
+    /* 生成绝对路径测试 */
+    char abs_path[MAX_PATH] = {0};
+    build_path("c:/abc", abs_path);
+    printf("path:%s\n", abs_path);
+
+    build_path("/abc", abs_path);
+    printf("path:%s\n", abs_path);
+    
+    if (mkdir("c:/xbook", 0))
+        printf("mk root failed!\n");
+
+    chdir("c:/xbook");
+
+    build_path("def", abs_path);
+    printf("path:%s\n", abs_path);
+    
+    build_path("./abc", abs_path);
+    printf("path:%s\n", abs_path);
+    
+    if (mkdir("c:/xbook/log", 0))
+        printf("mk xbook/log failed!\n");
+
+    chdir("c:/xbook/log");
+    
+    build_path("../abc/def", abs_path);
+    printf("path:%s\n", abs_path);
+    
+    build_path("/abc/", abs_path);
+    printf("path:%s\n", abs_path);
+    
+
+    build_path("abc/", abs_path);
+    printf("path:%s\n", abs_path);
+
+
+    /* 文件操作测试 */
+    int fd = open("nasm", O_CREAT | O_RDWR);
+    if (fd < 0) {
+        printf("open file failed!\n");
+    }
+
+    char *str = "hello, nasm!";
+    int wr = write(fd, str, strlen(str));
+    if (wr < 0) {
+        printf("write file failed!\n");
+    }
+
+    printf("write %d bytes.\n", wr);
+
+    lseek(fd, 0, SEEK_SET);
+
+    char buf[32] = {0};
+    read(fd, buf, 12);
+    printf("read buf:%s\n", buf);
+
+    printf("tell file pos:%d fsize:%d\n", tell(fd), _size(fd));
+
+    close(fd);
+
+    char path[MAX_PATH] = {0};
+    strcpy(path, "c:");
+    sys_list_dir(path);
 
 #if 0
     if (mkdir("c:/tmp", 0) < 0)
@@ -376,15 +445,12 @@ int main(int argc, char *argv[])
 
 
 
-
-
-
     int i = 0;
     
-    char ch;
-    while ((ch = getchar()) != '\n')
+    char cha;
+    while ((cha = getchar()) != '\n')
     {
-        putchar(ch);
+        putchar(cha);
     }
 
     return 0;
