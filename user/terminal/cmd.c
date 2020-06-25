@@ -285,17 +285,34 @@ int cmd_cls(int argc, char **argv)
 /**
  * cmd_set - 设置终端的属性
  * 
- * option:  curs [0-3] 设置光标形状
- *          curc argb值 设置光标颜色
+ * option:  cursors [0-3] 设置光标形状，例如： set cursors 1
+ *          cursorc rgb值 设置光标颜色，例如： set cursorc 255 192 168
+ *          backc  rgb值 设置背景颜色，例如： set backc 0 50 100
+ *          fontc  rgb值 设置字体颜色，例如： set fonts 192 168 255
+ *          
  */
 int cmd_set(int argc, char **argv)
 {
-	if (argc < 3) {
-		cprintf("set: too few arguments!\n");
+	if (argc < 2) {
+        /* 打印set命令信息 */
+		//cprintf("set: too few arguments!\n");
+        cprintf("Usage: set [option]\n");
+        cprintf("Option:\n");
+        cprintf("  cursors    set cursor shape. shape is [0-3].\n");
+        cprintf("  cursorc    set cursor color. color is red[0-255] green[0-255] blue[0-255].\n");
+        cprintf("  backc      set background color. color is red[0-255] green[0-255] blue[0-255].\n");
+        cprintf("  fontc      set font color. color is red[0-255] green[0-255] blue[0-255].\n");
 		return -1;
 	}
+    SGI_Color color;
+
     /*  */
-    if (!strcmp(argv[1], "curs")) {
+    if (!strcmp(argv[1], "cursors")) {
+        if (argc != 3) {
+            cprintf("set: try 'set cursors [0-3]' again!\n");
+            return -1;
+        }
+        
         if (isdigitstr(argv[2])) {
             int shape = atoi(argv[2]);
             if (shape >= CS_SOLID_FRAME && shape < CS_MAX_NR) {
@@ -308,16 +325,92 @@ int cmd_set(int argc, char **argv)
             cprintf("set: cursor shape arg is invalid!\n");
             return -1;
         }
-    } else if (!strcmp(argv[1], "curc")) {
-        if (isdigitstr(argv[2])) {
-            SGI_Argb color = (SGI_Argb) atoi(argv[2]);
-            color &= 0xffffff;
-            color |= (0xff << 24);
-            set_cursor_color(color);
-        } else {
-            cprintf("set: cursor color arg is invalid!\n");
+    } else if (!strcmp(argv[1], "cursorc")) {
+        if (argc != 5) {
+            cprintf("set: try 'set cursorc read[0-255] green[0-255] blue[0-255]' again!\n");
             return -1;
         }
+        color.alpha = 255;
+
+        if (isdigitstr(argv[2])) {
+            color.red = (unsigned char) atoi(argv[2]);
+        } else {
+            cprintf("set: cursor color read is invalid!\n");
+            return -1;
+        }
+        if (isdigitstr(argv[3])) {
+            color.green = (unsigned char) atoi(argv[3]);
+        } else {
+            cprintf("set: cursor color green is invalid!\n");
+            return -1;
+        }
+        if (isdigitstr(argv[4])) {
+            color.blue = (unsigned char) atoi(argv[4]);
+        } else {
+            cprintf("set: cursor color blue is invalid!\n");
+            return -1;
+        }
+        /* 获取了完整值，设置颜色 */
+        set_cursor_color(*(SGI_Argb *)&color);
+        
+    } else if (!strcmp(argv[1], "backc")) {
+        if (argc != 5) {
+            cprintf("set: try 'set backc read[0-255] green[0-255] blue[0-255]' again!\n");
+            return -1;
+        }
+        color.alpha = 255;
+        
+        if (isdigitstr(argv[2])) {
+            color.red = (unsigned char) atoi(argv[2]);
+        } else {
+            cprintf("set: back ground color read is invalid!\n");
+            return -1;
+        }
+        if (isdigitstr(argv[3])) {
+            color.green = (unsigned char) atoi(argv[3]);
+        } else {
+            cprintf("set: back ground color green is invalid!\n");
+            return -1;
+        }
+        if (isdigitstr(argv[4])) {
+            color.blue = (unsigned char) atoi(argv[4]);
+        } else {
+            cprintf("set: back ground color blue is invalid!\n");
+            return -1;
+        }
+        /* 获取了完整值，设置颜色 */
+        con_set_back_color(*(SGI_Argb *)&color);
+        /* 刷新屏幕 */
+        con_flush();
+    } else if (!strcmp(argv[1], "fontc")) {
+        if (argc != 5) {
+            cprintf("set: try 'set fontc read[0-255] green[0-255] blue[0-255]' again!\n");
+            return -1;
+        }
+        color.alpha = 255;
+        
+        if (isdigitstr(argv[2])) {
+            color.red = (unsigned char) atoi(argv[2]);
+        } else {
+            cprintf("set: font color read is invalid!\n");
+            return -1;
+        }
+        if (isdigitstr(argv[3])) {
+            color.green = (unsigned char) atoi(argv[3]);
+        } else {
+            cprintf("set: font color green is invalid!\n");
+            return -1;
+        }
+        if (isdigitstr(argv[4])) {
+            color.blue = (unsigned char) atoi(argv[4]);
+        } else {
+            cprintf("set: font color blue is invalid!\n");
+            return -1;
+        }
+        /* 获取了完整值，设置颜色 */
+        con_set_font_color(*(SGI_Argb *)&color);
+        /* 刷新屏幕 */
+        con_flush();
     } else {
         cprintf("set: invalid option!\n");
         return -1;
@@ -588,6 +681,10 @@ int cmd_cd(int argc, char **argv)
 		cprintf("cd: no such directory %s\n",argv[1]);
 		return -1;
 	}
+    /* 设置工作目录缓存 */
+    memset(cmdman->cwd_cache, 0, MAX_PATH_LEN);
+    getcwd(cmdman->cwd_cache, MAX_PATH_LEN);
+    
 	return 0;
 }
 
@@ -950,7 +1047,7 @@ int do_buildin_cmd(int cmd_argc, char **cmd_argv)
         cmd_ptr = &buildin_cmd_table[i];
         if (!strcmp(cmd_ptr->name, cmd_argv[0])) {
             if (cmd_ptr->cmd_func(cmd_argc, cmd_argv)) {
-                cprintf("do_buildin_cmd: %s failed!\n", cmd_argv[0]);
+                //cprintf("do_buildin_cmd: %s failed!\n", cmd_argv[0]);
             }
             return 0;
         }

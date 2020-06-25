@@ -500,6 +500,16 @@ static void con_clear_area(int x, int y, unsigned int width, unsigned int height
         x + width, y + height);
 }
 
+void con_set_back_color(SGI_Argb color)
+{
+    screen.background_color = color;
+}
+
+void con_set_font_color(SGI_Argb color)
+{
+    screen.font_color = color;
+}
+
 int cprintf(const char *fmt, ...)
 {
 	char buf[STR_DEFAULT_LEN];
@@ -529,7 +539,6 @@ int init_con_screen()
     screen.codepage = CON_CODEPAGE;
     screen.background_color = CON_SCREEN_BG_COLOR;
     screen.font_color = CON_SCREEN_FONT_COLOR;
-    screen.select_color = CON_SCREEN_SELECT_COLOR;
     screen.display = NULL;
     screen.font = NULL;
     screen.win = 0;
@@ -549,5 +558,9 @@ int init_con_screen()
         return -1;
     }
 
+    
+    memset(cmdman->cwd_cache, 0, MAX_PATH_LEN);
+    getcwd(cmdman->cwd_cache, MAX_PATH_LEN);
+    
     return 0;
 }

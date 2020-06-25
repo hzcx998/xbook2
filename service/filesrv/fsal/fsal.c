@@ -87,7 +87,16 @@ int fsal_list_dir(char* path)
     return dir;
 }
 
+int init_disk_mount()
+{
+    /* 挂载文件系统 */
+    if (fsif.mount("ide1", "c", "fat16", 0) < 0) {
+        printf("[%s] %s: mount failed!\n", SRV_NAME, __func__);
+        return -1;
+    }
 
+    return 0;
+}
 
 int init_fsal()
 {
@@ -103,6 +112,16 @@ int init_fsal()
         return -1;
     }
 
+    if (init_disk_mount() < 0) {
+        return -1;
+    }
+
+    if (init_rom_file()) {
+        printf("%s: create file failed, service stopped!\n", SRV_NAME);
+        return -1;
+    }
+
+    return 0;
 #if 0
     /* 尝试创建文件系统 */
     if (fatfs_fsal.mkfs("0:", 0) < 0) {
@@ -127,12 +146,9 @@ int init_fsal()
         return -1;
     }
 */
-    if (fsif.mount("ide1", "c", "fat16", 0) < 0) {
-        printf("[%s] %s: mount failed!\n", SRV_NAME, __func__);
-        return -1;
-    }
+    
 
-    fsal_path_print();
+    // fsal_path_print();
 #if 0
     if (fsif.unmount("c:", 0) < 0) {
         printf("[%s] %s: unmount failed!\n", SRV_NAME, __func__);
@@ -252,11 +268,6 @@ int init_fsal()
     fsal_list_dir(path);
 
     //spin();
-
-    if (init_rom_file()) {
-        printf("%s: create file failed, service stopped!\n", SRV_NAME);
-        return -1;
-    }
 
 
     return 0;

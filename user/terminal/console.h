@@ -10,17 +10,16 @@
 #define CON_CHAR_WIDTH  8
 #define CON_CHAR_HEIGHT 16
 
-#define CON_CLOUMNS     60 
-#define CON_ROWS        15
+#define CON_CLOUMNS     80 
+#define CON_ROWS        25
 
 #define CON_BUFFER_SIZE (CON_CLOUMNS * CON_ROWS * CON_FRAME_NR)
 
 #define CON_SCREEN_WIDTH (CON_CHAR_WIDTH * CON_CLOUMNS)
 #define CON_SCREEN_HEIGHT (CON_CHAR_HEIGHT * CON_ROWS)
 
-#define CON_SCREEN_BG_COLOR    SGIC_GREEN
-#define CON_SCREEN_FONT_COLOR  SGIC_RED
-#define CON_SCREEN_SELECT_COLOR  SGIC_YELLOW
+#define CON_SCREEN_BG_COLOR    SGIC_BLACK
+#define CON_SCREEN_FONT_COLOR  SGIC_WHITE
 
 
 /* ANSC */
@@ -42,7 +41,6 @@ typedef struct {
     int codepage;       /* 代码页 */
     SGI_Argb background_color;  /* 背景颜色 */
     SGI_Argb font_color;        /* 字体颜色 */
-    SGI_Argb select_color;      /* 选中时的颜色 */
 /// 窗口相关    
     SGI_Display *display;       /* 屏幕的显示 */
     SGI_Window win;             /* 屏幕的窗口 */
@@ -70,6 +68,8 @@ void con_flush();
 void con_flush2(int mx0, int my0, int mx1, int my1);
 void con_flush_area(int x0, int y0, int x1, int y1);
 void con_get_chars(char *buf, int counts, int x, int y);
+void con_set_back_color(SGI_Argb color);
+void con_set_font_color(SGI_Argb color);
 
 static inline void con_get_char(char *ch, int x, int y)
 {

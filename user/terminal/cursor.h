@@ -4,7 +4,7 @@
 #include <sgi/sgi.h>
 #include <stddef.h>
 
-#define CON_CURSOR_COLOR    SGIC_BLUE
+#define CON_CURSOR_COLOR    SGIC_WHITE
 
 enum cursor_shape {
     CS_SOLID_FRAME = 0,     /* 实心框:  8*16 */

@@ -19,9 +19,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    memset(cmdman->cwd_cache, 0, MAX_PATH_LEN);
-    strcpy(cmdman->cwd_cache, "0:/");
-
     while (1) {
         print_prompt();
         memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
@@ -50,7 +47,7 @@ int main(int argc, char *argv[])
         }
 #endif
         if (execute_cmd(argnum, cmd_argv)) {
-            cprintf("%s: execute cmd %s falied!\n", APP_NAME, cmd_argv[0]);
+            //cprintf("%s: execute cmd %s falied!\n", APP_NAME, cmd_argv[0]);
         }
     }
     

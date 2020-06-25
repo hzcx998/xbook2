@@ -722,16 +722,17 @@ iostatus_t io_device_queue_append(device_queue_t *queue, unsigned char *buf, int
 
 int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen, int flags)
 {
-    spin_lock(&queue->lock);
+    unsigned long irqflags;
+    spin_lock_irqsave(&queue->lock, irqflags);
     if (!queue->entry_count) {  /* 没有数据包 */
         if (flags & IO_NOWAIT) {    /* 不进行等待 */
-            spin_unlock(&queue->lock);
+            spin_unlock_irqrestore(&queue->lock, flags);
             return -1;    
         }
         wait_queue_add(&queue->wait_queue, current_task);
-        spin_unlock(&queue->lock);
+        spin_unlock_irqrestore(&queue->lock, irqflags);
         task_block(TASK_BLOCKED);
-        spin_lock(&queue->lock);
+        spin_lock_irqsave(&queue->lock, irqflags);
     }
     device_queue_entry_t *entry;
     entry = list_first_owner(&queue->list_head, device_queue_entry_t, list);
@@ -740,7 +741,7 @@ int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen
     int len = MIN(entry->length, buflen);
     memcpy(buf, entry->buf, len);
     kfree(entry);
-    spin_unlock(&queue->lock);
+    spin_unlock_irqrestore(&queue->lock, irqflags);
 #if DEBUG_LOCLA == 1
     printk(KERN_DEBUG "io_device_queue_get: pid=%d len=%d.\n",
         queue->wait_queue.task->pid, len);

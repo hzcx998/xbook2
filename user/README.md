@@ -6,4 +6,6 @@
 | bosh      | 4100          |200        |100 kb     |
 | test      | 4300          |100        |50 kb      |
 | infones   | 4400          |650        |325 kb     |
-| terminal  | 5100          |200        |100 kb      |
+| terminal  | 5100          |200        |100 kb     |
+| template  | 5300          |100        |50 kb      |
+| hello     | 5400          |100        |50 kb      |
