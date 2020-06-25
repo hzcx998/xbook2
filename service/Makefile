@@ -1,8 +1,8 @@
 # 要执行的服务的路径
-FILESRV = ./filesrv
-GUISRV = ./guisrv
-INITSRV = ./initsrv
-NETSRV = ./netsrv
+FILESRV 	= ./filesrv
+GUISRV 		= ./guisrv
+INITSRV 	= ./initsrv
+NETSRV 		= ./netsrv
 
 .PHONY: all clean
 

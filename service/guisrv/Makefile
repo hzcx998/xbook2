@@ -6,6 +6,8 @@ CC			= gcc
 LD 			= ld
 DD 			= dd
 OBJDUMP		= objdump
+COPY		= cp
+FATFS 		= ../../tools/fatfs/fatfs
 
 #The file path
 DIR_LIBARY = ../../libary
@@ -17,19 +19,20 @@ DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
 DIR_SGI 			= $(DIR_LIBARY)/sgi
 
 # rom dir
-ROM_DIR = ../../develop/rom
+DIR_ROM = ../../develop/rom
 
-BIN = a.out
+BIN = $(DIR_ROM)/sbin/guisrv
 BIN_DIS = a.out.disasm
-BIN_OFF = 800 
-BIN_CNTS = 700
+
+# rom disk size (MB)
+ROM_DISK_SZ = 10	
 
 #img dir
 IMG_DIR = ../../develop/image/
 
-DISK_IMG = c.img
-DISK_VHD = c.vhd
-DISK_VMDK = c-flat.vmdk
+DISK_IMG = d.img
+DISK_VHD = d.vhd
+DISK_VMDK = d-flat.vmdk
 
 HD_IMG = $(IMG_DIR)$(DISK_IMG)
 HD_VHD = $(IMG_DIR)$(DISK_VHD)
@@ -101,12 +104,12 @@ LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 #First read here
 .PHONY: all dis
 
-all: compile link disk 
+all: compile link rom
 
 #Compile files
 compile: $(OBJS)
 
-link: $(BIN)
+link: $(BIN) 
 $(BIN): $(OBJS) $(LIB_FILE)
 	$(LD) $(LDFLAGS) $(OBJS) $(LIB_FILE) -o $(BIN) 
 
@@ -114,23 +117,12 @@ $(BIN): $(OBJS) $(LIB_FILE)
 dis: $(BIN)
 	$(OBJDUMP) -M intel -D $(BIN) > $(BIN_DIS)
 
-disk: img vhd vmdk
-
-img:
-	$(DD) if=$(BIN) of=$(HD_IMG) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
+# write rom files
+rom:
+	$(FATFS) $(HD_IMG) $(DIR_ROM) $(ROM_DISK_SZ)
+	$(FATFS) $(HD_VHD) $(DIR_ROM) $(ROM_DISK_SZ)
+	$(FATFS) $(HD_VMDK) $(DIR_ROM) $(ROM_DISK_SZ)
 	
-vhd:
-	$(DD) if=$(BIN) of=$(HD_VHD) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
-	
-vmdk:
-	$(DD) if=$(BIN) of=$(HD_VMDK) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
-
-qemu: compile link img
-	
-vbox: compile link vhd
-
-vmware: compile link vmdk
-
 #Clean temporary files
 clean:
 	-rm $(OBJS)

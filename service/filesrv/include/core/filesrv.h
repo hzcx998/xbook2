@@ -9,7 +9,7 @@
 /* 原始磁盘，不在上面挂载文件系统 */
 #define RAW_DISK    "ide0"
 
-#define PATH_GUISRV "c:/guisrv"
+#define PATH_GUISRV "c:/sbin/guisrv"
 #define PATH_NETSRV "c:/netsrv"
 
 /* 文件映射 */

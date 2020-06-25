@@ -1,6 +1,6 @@
-info: memory total:fff0000 byte 255 MB
+info: memory total:7ff0000 byte 127 MB
 info: welcome to xbook kernel.
-info: time:12:17:52 date:2020/6/25
+info: time:22:27:9 date:2020/6/25
 info: week day:4 Thursday year day:178
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -22,7 +22,6 @@ filesrv: enter receving request state.
 [guisrv ] guisrv: init msgque ok.
 [guisrv ] guisrv: init msgque!
 [guisrv ] guisrv: init msgque ok.
-[ok ] init ok.
 debug: device_mmap: start.
 debug: vbe_mmap: start
 debug: vbe_mmap: length=ea600 mode len=ea600

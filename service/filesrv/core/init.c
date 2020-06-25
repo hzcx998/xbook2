@@ -72,6 +72,7 @@ int srv_create_file(char *path, size_t size, char *diskname, long off);
  */
 int init_rom_file()
 {
+    return 0;   /* do nothing */ 
     struct file_map *fmap;
     int i;
     for (i = 0; i < ARRAY_SIZE(file_map_table); i++) {

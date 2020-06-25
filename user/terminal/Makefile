@@ -6,35 +6,38 @@ CC			= gcc
 LD 			= ld
 DD 			= dd
 OBJDUMP		= objdump
+FATFS 		= ../../tools/fatfs/fatfs
 
 #The file path
 DIR_LIBARY = ../../libary
+
+#rom dir
+DIR_ROM = ../../develop/rom
 
 # libarys
 DIR_XBOOKLIB = $(DIR_LIBARY)/xbooklib
 DIR_SGI = $(DIR_LIBARY)/sgi
 
-BIN = a.out
+BIN = $(DIR_ROM)/bin/terminal
 BIN_DIS = out.disasm
-BIN_OFF = 5100 
-BIN_CNTS = 200
+
+# rom disk size (MB)
+ROM_DISK_SZ = 10	
 
 #img dir
 IMG_DIR = ../../develop/image/
 
-FLOPPY_IMG = a.img
-DISK_IMG = c.img
-DISK_VHD = c.vhd
-DISK_VMDK = c-flat.vmdk
+DISK_IMG = d.img
+DISK_VHD = d.vhd
+DISK_VMDK = d-flat.vmdk
 
-FD_IMG = $(IMG_DIR)$(FLOPPY_IMG)
 HD_IMG = $(IMG_DIR)$(DISK_IMG)
 HD_VHD = $(IMG_DIR)$(DISK_VHD)
 HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 
 #flags
 ASM_FLAGS	= -f elf \
-			-I $(DIR_XBOOKLIB)/include 
+			-I $(DIR_XBOOKLIB)/indlude 
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_XBOOKLIB)/include \
@@ -55,7 +58,7 @@ LIB_FILE := $(DIR_SGI)/sgi-0.0.1.a \
 #First read here
 .PHONY: all dis
 
-all: compile link disk 
+all: compile link rom
 
 #Compile files
 compile: $(OBJS)
@@ -64,26 +67,14 @@ link: $(BIN)
 $(BIN): $(OBJS) $(LIB_FILE)
 	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIB_FILE)
 
-
 dis: $(BIN)
 	$(OBJDUMP) -M intel -D $(BIN) > $(BIN_DIS)
 
-disk: img vhd vmdk
-
-img:
-	$(DD) if=$(BIN) of=$(HD_IMG) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
-	
-vhd:
-	$(DD) if=$(BIN) of=$(HD_VHD) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
-	
-vmdk:
-	$(DD) if=$(BIN) of=$(HD_VMDK) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
-
-qemu: compile link img
-	
-vbox: compile link vhd
-
-vmware: compile link vmdk
+# write rom files
+rom:
+	$(FATFS) $(HD_IMG) $(DIR_ROM) $(ROM_DISK_SZ)
+	$(FATFS) $(HD_VHD) $(DIR_ROM) $(ROM_DISK_SZ)
+	$(FATFS) $(HD_VMDK) $(DIR_ROM) $(ROM_DISK_SZ)
 
 #Clean temporary files
 clean:

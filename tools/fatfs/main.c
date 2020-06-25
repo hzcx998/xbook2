@@ -19,9 +19,12 @@
 #define ROM_DIR "../../develop/rom"
 
 /* 磁盘是否为ROM */
-#define ROM_DIS 1
+#define ROM_DIS 0
 
-extern int is_new_disk;
+/* 默认磁盘大小 */
+#define DISK_SIZE       (10*1024*1024)    
+
+extern int mkfs_flags;
 
 int rom_disk;   /* rom is always new */
 
@@ -33,32 +36,39 @@ int scan_host_files(char *host_path, char *custom_path);
 
 /**
  * 参数：
- * fatfs 磁盘镜像路径 rom目录
+ * fatfs 磁盘镜像路径 rom目录 磁盘大小（MB）
  * 
  */
 int main(int argc, char *argv[]) 
 {
+#if DEBUG_LOCAL == 1   
     printf("==== FATFS MANAGMENT ====\n");
-
     printf("args:\n");
     int i;
     for (i = 0; i < argc; i++) {
         printf("argv[%d]=%s\n", i, argv[i]);
     }
-    if (argc > 3) {
+#endif    
+    if (argc > 4) {
         printf("fatfs: args error!\n");
-        printf("usage: fatfs [image file] [rom dir]\n");
-        
+        printf("usage: fatfs [image file] [rom dir] disksz\n");
         return -1;
     }
     char *image_file;
     char *rom_dir;
-    if (argc == 3) {
+    int disk_sz;
+    if (argc >= 3) {
         image_file = argv[1];
         rom_dir = argv[2];
+        disk_sz = atoi(argv[3]);    /* 单位是MB */
+        if (disk_sz <= 0)
+            disk_sz = DISK_SIZE;
+        else 
+            disk_sz *= (1024*1024); /* 转换成MB */
     } else {
         image_file = IMAGE_FILE;
         rom_dir = ROM_DIR;
+        disk_sz = DISK_SIZE;
     }
 
     printf("fatfs: image file: %s\n", image_file);
@@ -66,10 +76,10 @@ int main(int argc, char *argv[])
     
     rom_disk = ROM_DIS;
 
-    drv_init(image_file);
-
-    if (drv_open() < 0) {
-        printf("fatfs: open disk driver failed!\n");
+    int retval = 0;
+    /* 初始化驱动 */
+    if (drv_init(image_file, disk_sz) < 0) {
+        printf("fatfs: init driver failed!\n");
         return -1;
     }
 
@@ -79,25 +89,37 @@ int main(int argc, char *argv[])
     UINT bw;            /* Bytes written */
     BYTE work[FF_MAX_SS]; /* Work area (larger is better for processing time) */
 
-    if (is_new_disk) {
-        MKFS_PARM opt = {FM_FAT32, 0, 0, 0, 0};
+    if (mkfs_flags) {
+#if DEBUG_LOCAL == 1           
+        printf("fatfs: make a new fs on the disk.\n");
+#endif
+        //MKFS_PARM opt = {FM_FAT32, 0, 0, 0, 0};
         /* Format the default drive with default parameters */
-        res = f_mkfs("", &opt, work, sizeof work);
+        res = f_mkfs("", 0, work, sizeof work);
         if (res) {
             printf("fatfs: f_mkfs error with %d\n", res);
-            return -1;
+            retval = -1;
+            goto scroll_close_driver;
         }
     }
 
     /* Gives a work area to the default drive */
-    f_mount(&fs, "", 0);
+    if (f_mount(&fs, "", 0) != FR_OK) {
+        printf("fatfs: mount fs on disk failed!\n");
+        retval = -1;
+        goto scroll_close_driver;
+    }
 
     /* 打印rom目录内容 */
+    #if DEBUG_LOCAL == 1   
     printf("==== HOST ROM FILES ====\n");
+    #endif
     scan_host_files(rom_dir, "0:");
 
     /* 打印磁盘文件上的文件信息 */
+    #if DEBUG_LOCAL == 1   
     printf("==== FILES ====\n");
+    #endif
     char dir_buf[256] = {0};
     strcpy(dir_buf, "0:");
     scan_files(dir_buf);
@@ -105,9 +127,10 @@ int main(int argc, char *argv[])
     /* Unregister work area */
     f_mount(0, "", 0);
 
+scroll_close_driver:
     /* 关闭驱动 */
     drv_close();
-    return 0;
+    return retval;
 }
 
 FRESULT scan_files (
@@ -142,7 +165,9 @@ FRESULT scan_files (
                 if (res != FR_OK) break;
                 //path[i] = 0;
             } else {                                       /* It is a file. */
+                #if DEBUG_LOCAL == 1    
                 printf("%s/%s size: %d\n", path, fno.fname, fno.fsize);
+                #endif
             }
         }
         f_closedir(&dir);
@@ -156,8 +181,9 @@ FRESULT scan_files (
  */
 int copy_file_to_custom(char *host_path, char *custom_path)
 {
+#if DEBUG_LOCAL == 1    
     printf("fatfs: copy file from %s to %s\n", host_path, custom_path);
-
+#endif
     FILE *fp = fopen(host_path, "rb+");
     if (fp == NULL) {
         printf("fatfs: error: open host file %s failed!\n", host_path);

@@ -53,6 +53,10 @@ HDB_IMG		= $(IMG_DIR)d.img
 HDC_IMG		= $(IMG_DIR)e.img
 HDD_IMG		= $(IMG_DIR)f.img
 
+HDB_VHD		= $(IMG_DIR)d.vhd
+HDB_VMDK	= $(IMG_DIR)d-flat.vmdk
+
+
 #----flags----
 #out a map file: -Map kernel.map
 #i386 link flags
@@ -124,7 +128,7 @@ OBJCOPY_FLAGS = -R .note -R .comment -S
 KERNEL_ELF =  kernel.elf
 KERNEL_ELF_DISASM =  kernel.elf.disasm
 
-PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg vbox clean dis rom
+PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg vbox clean dis
 PHONY	+= $(SRCDIRS)
 
 export NASM NASM_FLAGS CC LD CFLAGS LDFLAGS TOPDIR OBJCOPY OBJCOPY_FLAGS

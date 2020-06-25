@@ -179,7 +179,6 @@ int main(int argc, char *argv[])
 
     if (init_guisrv())
         return -1;
-    printf("[ok ] init ok.\n");
 
     if (open_guisrv())
         return -1;

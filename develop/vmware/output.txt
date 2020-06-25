@@ -1,7 +1,7 @@
 info: memory total:20000000 byte 512 MB
 info: welcome to xbook kernel.
-info: time:0:8:4 date:2020/6/20
-info: week day:6 Saturday year day:173
+info: time:21:29:17 date:2020/6/25
+info: week day:4 Thursday year day:178
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
 debug: RTL8139 init failed: not find pci device.
@@ -10,24 +10,11 @@ info: raw block name:initsrv
 info: raw block name:filesrv
 debug: task name=initsrv pid=1 ready load image done.
 initsrv: started
-debug: sys_fork: parent initsrv pid=1 prio=2 is forking now.
-debug: sys_fork: task initsrv pid 1 fork task initsrv pid 4 ppid 1
-debug: sys_wait: pid=1 no child exit, waiting...
 debug: task name=initsrv pid=4 ready load image done.
-debug: sys_fork: parent filesrv pid=4 prio=2 is forking now.
-debug: sys_fork: task filesrv pid 4 fork task filesrv pid 5 ppid 4
-filesrv: disk seq: 0: -> ide1
-filesrv: disk seq: 1: -> ramdisk
-0:/NETSRV.XSV
-0:/login.xbk
-0:/bosh.xbk
-0:/login
-0:/bosh
-0:/test
-0:/guisrv
-0:/infones
-0:/mario.nes
-0:/terminal
+filesrv: disk_info_print: probe device:ide0 type:1
+filesrv: disk_info_print: probe device:ide1 type:1
+filesrv: disk_info_print: probe device:ram0 type:16
+[filesrv] __mount: will mount fs source ide1 target c fstype fat16.
 
 filesrv: enter receving request state.
 [ok ] graph service start.
@@ -35,19 +22,65 @@ filesrv: enter receving request state.
 [guisrv ] guisrv: init msgque ok.
 [guisrv ] guisrv: init msgque!
 [guisrv ] guisrv: init msgque ok.
-[ok ] init ok.
 debug: device_mmap: start.
 debug: vbe_mmap: start
 debug: vbe_mmap: length=ea600 mode len=ea600
 debug: vbe_mmap: get phy addr:e8000000
 debug: device_mmap: get device phy addr:e8000000
-guisrv: mapped addr 20023000
+guisrv: mapped addr 20024000
 [guisrv] create window width=800 height=600 yoff=0
 [guisrv] create window width=64 height=570 yoff=0
 [guisrv] create window width=800 height=30 yoff=0
-debug: sys_fork: parent pthread pid=6 prio=2 is forking now.
-debug: sys_fork: task pthread pid 6 fork task pthread pid 7 ppid 6
 [terminal] con_open_window: open display 1 ok.
-[guisrv] create window width=480 height=264 yoff=24
+[guisrv] create window width=640 height=424 yoff=24
 [terminal] con_open_window: create window 1 success.
 [terminal] con_open_window: map window success.
+copy pipe ipc!
+copy pipe ipc!
+infones: arg nes/shadow.nes
+[infones] open display ok!
+[guisrv] create window width=256 height=264 yoff=24
+[infones] create window success!
+[infones] to map window success!
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+copy pipe ipc!
+copy pipe ipc!
+infones: arg nes/mario.nes
+[infones] open display ok!
+[guisrv] create window width=256 height=264 yoff=24
+[infones] create window success!
+[infones] to map window success!
+[terminal] left button pressed.
+[terminal] left button released.
+copy pipe ipc!
+copy pipe ipc!
+infones: arg nes/mario.nes
+[infones] open display ok!
+[guisrv] create window width=256 height=264 yoff=24
+[infones] create window success!
+[infones] to map window success!
+[button] down handler 0, 253, 5
+[button] up handler 0, 253, 5
+[infones] unmap window success!
+[infones] destroy window success!
+[infones] close display ok!
+[infones] unmap window success!
+[infones] destroy window success!
+[infones] close display ok!
+[terminal] left button pressed.
+infones: arg nes/shadow.nes
+[terminal] left button released.
+copy pipe ipc!
+copy pipe ipc!
+infones: arg nes/shadow.nes
+[infones] open display ok!
+[guisrv] create window width=256 height=264 yoff=24
+[infones] create window success!
+[infones] to map window success!

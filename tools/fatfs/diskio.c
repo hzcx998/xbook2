@@ -80,7 +80,7 @@ DRESULT disk_read (
 	DRESULT res;
 	int result;
 
-    result = drv_read(sector, buff, count * FF_MIN_SS);
+    result = drv_read(sector, buff, count);
     if (result < 0) {
         res = RES_ERROR;
     } else {
@@ -109,7 +109,7 @@ DRESULT disk_write (
 	DRESULT res;
 	int result;
 
-    result = drv_write(sector, (char *) buff, count * FF_MIN_SS);
+    result = drv_write(sector, (char *) buff, count);
     if (result < 0) {
         res = RES_ERROR;
     } else {
