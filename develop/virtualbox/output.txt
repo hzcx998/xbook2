@@ -1,6 +1,6 @@
 info: memory total:7ff0000 byte 127 MB
 info: welcome to xbook kernel.
-info: time:22:27:9 date:2020/6/25
+info: time:23:26:3 date:2020/6/25
 info: week day:4 Thursday year day:178
 info: init_pci: pci type device found 6.
 info: ide_enter: found 2 hard disks.
@@ -35,3 +35,17 @@ guisrv: mapped addr 20024000
 [guisrv] create window width=640 height=424 yoff=24
 [terminal] con_open_window: create window 1 success.
 [terminal] con_open_window: map window success.
+copy pipe ipc!
+copy pipe ipc!
+[guisrv] create window width=640 height=424 yoff=24
+copy pipe ipc!
+copy pipe ipc!
+[guisrv] create window width=640 height=424 yoff=24
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.
+[terminal] left button pressed.
+[terminal] left button released.

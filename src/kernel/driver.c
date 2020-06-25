@@ -680,29 +680,30 @@ static int io_complete_check(io_request_t *ioreq, iostatus_t status)
 void io_device_queue_cleanup(device_queue_t *queue)
 {
     device_queue_entry_t *entry, *next;
-    spin_lock(&queue->lock);
+    unsigned long irqflags;
+    spin_lock_irqsave(&queue->lock, irqflags);
     /* 由于要删除队列成员，所以需要用safe版本 */
     list_for_each_owner_safe (entry, next, &queue->list_head, list) {
         list_del(&entry->list); /* 从链表删除 */
         kfree(entry);           /* 释放空间 */
     }
-    spin_unlock(&queue->lock);
+    spin_unlock_irqrestore(&queue->lock, irqflags);
 }
 
 iostatus_t io_device_queue_append(device_queue_t *queue, unsigned char *buf, int len)
 {
-    spin_lock(&queue->lock);
-
+    unsigned long irqflags;
+    spin_lock_irqsave(&queue->lock, irqflags);
     if (queue->entry_count > DEVICE_QUEUE_ENTRY_NR) { /* 超过队列项数，就先丢弃数据包 */
 #if DEBUG_LOCLA == 1
         printk(KERN_NOTICE "io_device_queue_append: device queue full!\n");   
 #endif
-        spin_unlock(&queue->lock);
+        spin_unlock_irqrestore(&queue->lock, irqflags);
         return IO_FAILED;
     }
     device_queue_entry_t *entry = kmalloc(sizeof(device_queue_entry_t) + len);
     if (entry == NULL) {
-        spin_unlock(&queue->lock);
+        spin_unlock_irqrestore(&queue->lock, irqflags);
         return IO_FAILED;
     }
     
@@ -711,7 +712,7 @@ iostatus_t io_device_queue_append(device_queue_t *queue, unsigned char *buf, int
     entry->buf = (unsigned char *) (entry + 1);
     entry->length = len;
     memcpy(entry->buf, buf, len);
-    spin_unlock(&queue->lock);
+    spin_unlock_irqrestore(&queue->lock, irqflags);
     wait_queue_wakeup(&queue->wait_queue);
 #if DEBUG_LOCLA == 1
     printk(KERN_DEBUG "io_device_queue_put: pid=%d len=%d.\n", 

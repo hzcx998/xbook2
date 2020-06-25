@@ -11,7 +11,7 @@ OBJDUMP		= objdump
 DIR_LIBARY = ../../libary
 
 # libarys
-DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
+DIR_XLIBC 		= $(DIR_LIBARY)/xlibc
 
 BIN = a.out
 BIN_DIS = out.disasm
@@ -35,19 +35,19 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 
 #flags
 ASM_FLAGS	= -f elf \
-			-I $(DIR_XBOOKLIB)/include \
-			-I $(DIR_XBOOKLIB)/include/pthread \
+			-I $(DIR_XLIBC)/include \
+			-I $(DIR_XLIBC)/include/pthread \
 			
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
-			-I $(DIR_XBOOKLIB)/include \
-			-I $(DIR_XBOOKLIB)/include/pthread \
+			-I $(DIR_XLIBC)/include \
+			-I $(DIR_XLIBC)/include/pthread \
 			
 			
 
 OBJS =  main.o \
 
-LIB_FILE = 	$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
+LIB_FILE = 	$(DIR_XLIBC)/xlibc-0.0.1.a \
 
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000

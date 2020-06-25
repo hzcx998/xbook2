@@ -15,7 +15,7 @@ DIR_LIBARY = ../../libary
 DIR_ROM = ../../develop/rom
 
 # libarys
-DIR_XBOOKLIB = $(DIR_LIBARY)/xbooklib
+DIR_XLIBC = $(DIR_LIBARY)/xlibc
 DIR_SGI = $(DIR_LIBARY)/sgi
 
 BIN = $(DIR_ROM)/bin/infones
@@ -37,10 +37,10 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 
 #flags
 ASM_FLAGS	= -f elf \
-			-I $(DIR_XBOOKLIB)/include 
+			-I $(DIR_XLIBC)/include 
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 -std=c99\
-			-I $(DIR_XBOOKLIB)/include \
+			-I $(DIR_XLIBC)/include \
 			-I $(DIR_SGI)/include \
 			-I core 
 
@@ -49,7 +49,7 @@ LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 OBJS =  infoNES_System_Book.o \
 
 LIB_FILE := $(DIR_SGI)/sgi-0.0.1.a \
-			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
+			$(DIR_XLIBC)/xlibc-0.0.1.a \
 			
 #First read here
 .PHONY: all dis

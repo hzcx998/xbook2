@@ -70,10 +70,10 @@ int main(int argc, char *argv[])
         rom_dir = ROM_DIR;
         disk_sz = DISK_SIZE;
     }
-
+#if DEBUG_LOCAL == 1   
     printf("fatfs: image file: %s\n", image_file);
     printf("fatfs: rom dir: %s\n", rom_dir);
-    
+#endif    
     rom_disk = ROM_DIS;
 
     int retval = 0;
@@ -126,6 +126,8 @@ int main(int argc, char *argv[])
 
     /* Unregister work area */
     f_mount(0, "", 0);
+
+    printf("fatfs: write rom files success.\n");
 
 scroll_close_driver:
     /* 关闭驱动 */

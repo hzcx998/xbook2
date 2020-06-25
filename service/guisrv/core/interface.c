@@ -14,7 +14,6 @@
 #include <sys/proc.h>
 #include <unistd.h>
 #include <stdlib.h>
-
 #include <math.h>
 
 #define DEBUG_LOCAL 0
@@ -481,21 +480,12 @@ guisrv_func_t guisrv_call_table[] = {
 /* 文件映射 */
 struct file_map {
     char *path;     /* 路径 */
-    size_t size;    /* 实际大小 */
-    off_t off;      /* 偏移 */
     char execute;   /* 是否需要执行 */
     const char **argv;
 };
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-
 struct file_map file_map_table[] = {
-    {"c:/bin/terminal", 100 * 512, 5100, 1, NULL},
-//    {"0:/login", 100 * 512, 4000, 0, NULL},
-//    {"0:/bosh", 100 * 512, 4100, 0, NULL},
-//    {"0:/test", 100 * 512, 4300, 1, NULL},
-//    {"0:/infones", 650 * 512, 4400, 1, infones_argv},
-//    {"0:/mario.nes", 100 * 512, 10000, 0, NULL},
+    {"c:/bin/bosh", 1, NULL},
 };
 
 int guisrv_execute()

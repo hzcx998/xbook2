@@ -15,7 +15,7 @@ DIR_LIBARY = ../../libary
 DIR_INCLUDE = ./include
 
 # libarys
-DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
+DIR_XLIBC 		= $(DIR_LIBARY)/xlibc
 DIR_SGI 			= $(DIR_LIBARY)/sgi
 
 # rom dir
@@ -41,12 +41,12 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 #flags
 ASM_FLAGS	= -f elf \
 			-I $(DIR_INCLUDE) \
-			-I $(DIR_XBOOKLIB)/include \
+			-I $(DIR_XLIBC)/include \
 			-I $(DIR_SGI)/include \
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_INCLUDE) \
-			-I $(DIR_XBOOKLIB)/include \
+			-I $(DIR_XLIBC)/include \
 			-I $(DIR_SGI)/include \
 
 DRIVERS_OBJS 	= 	drivers/screen.o \
@@ -95,7 +95,7 @@ OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) \
 		$(FONT_OBJS) $(ENVIRONMENT_OBJS) $(WIDGET_OBJS) $(CORE_OBJS) \
 		$(INPUT_OBJS) $(EVENT_OBJS)
 
-LIB_FILE 	= $(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
+LIB_FILE 	= $(DIR_XLIBC)/xlibc-0.0.1.a \
 
 # -n: close memory aligin.
 #LDFLAGS		= -T link.ld -n
