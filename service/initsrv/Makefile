@@ -12,7 +12,6 @@ DIR_LIBARY = ../../libary
 
 # libarys
 DIR_XBOOKLIB 		= $(DIR_LIBARY)/xbooklib
-DIR_FATFSLIB 		= $(DIR_LIBARY)/fatfslib
 
 BIN = a.out
 BIN_DIS = out.disasm
@@ -38,21 +37,17 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 ASM_FLAGS	= -f elf \
 			-I $(DIR_XBOOKLIB)/include \
 			-I $(DIR_XBOOKLIB)/include/pthread \
-			-I $(DIR_FATFSLIB)/ \
-			
 			
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_XBOOKLIB)/include \
 			-I $(DIR_XBOOKLIB)/include/pthread \
-			-I $(DIR_FATFSLIB)/ \
 			
 			
 
 OBJS =  main.o \
 
-LIB_FILE = 	$(DIR_FATFSLIB)/fatfs-r0.14.a \
-			$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
+LIB_FILE = 	$(DIR_XBOOKLIB)/xbooklib-0.0.1.a \
 
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
@@ -69,7 +64,6 @@ compile: $(OBJS)
 link: $(BIN)
 $(BIN): $(OBJS) $(LIB_FILE)
 	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIB_FILE) 
-
 
 dis: $(BIN)
 	$(OBJDUMP) -M intel -D $(BIN) > $(BIN_DIS)

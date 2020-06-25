@@ -8,8 +8,6 @@
 #include <sys/trigger.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
-#include <ff.h>
-
 #include <pthread.h>
 
 #define TTY_NAME    "tty0"
