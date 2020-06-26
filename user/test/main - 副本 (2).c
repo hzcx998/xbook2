@@ -213,9 +213,9 @@ void* consume(void *arg)
         }
 
         //printf("write.\n");
-        /*
+        
         res_write(STDOUT_FILENO, 0, shared.buff[reader_index].data,
-                shared.buff[reader_index].n);*/
+                shared.buff[reader_index].n);
         //printf("%s\n", shared.buff[reader_index].data);
 
         reader_index = (reader_index+1)%NBUFF;

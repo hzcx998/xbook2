@@ -29,6 +29,8 @@ int init_env_desktop()
     /* 设置当前窗口 */
     current_window = env_desktop.window;
 
+#if 0
+
     gui_label_t *label = gui_create_label(GUI_LABEL_TEXT, 0, 100, 0, 0);
     label->set_text(label, "hello, world!\n");
     label->add(label, env_desktop.window->layer);
@@ -47,8 +49,7 @@ int init_env_desktop()
     gui_button_t *button = gui_create_button(GUI_LABEL_TEXT, 0,400, 40, 20);
     button->add(button, env_desktop.window->layer);
     button->show(button);
-    
-    
+#endif
 
     return 0;
 }

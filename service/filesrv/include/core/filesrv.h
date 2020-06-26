@@ -10,7 +10,7 @@
 #define RAW_DISK    "ide0"
 
 #define PATH_GUISRV "c:/sbin/guisrv"
-#define PATH_NETSRV "c:/netsrv"
+#define PATH_NETSRV "c:/sbin/netsrv"
 
 /* 文件映射 */
 struct file_map {

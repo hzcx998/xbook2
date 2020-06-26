@@ -610,7 +610,7 @@ int init_gui_window()
         printf("[desktop ] %s: init statusbar manager failed!\n", SRV_NAME);
         return -1;
     }
-
+#if 0
     gui_window_draw_text(env_desktop.window, 0,0,"abcdefghijklmnopqrstuvwxyz0123456789",
         COLOR_RED);
 
@@ -619,7 +619,6 @@ int init_gui_window()
     
     gui_window_update(env_desktop.window, 0,0, 400, 16*2);
 
-#if 0
     /* 创建测试窗口 */
     gui_window_t *win = gui_create_window("xbook2", 20, 20, 320, 240, COLOR_WHITE, 0, NULL);
     if (win == NULL) {

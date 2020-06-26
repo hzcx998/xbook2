@@ -21,4 +21,7 @@ typedef struct dirent {
     char d_name[DIR_NAME_LEN]; /* 名字 */
 } dirent_t;
 
+typedef long ssize_t;
+
+
 #endif  /* _SYS_TYPES_H */

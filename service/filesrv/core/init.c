@@ -54,7 +54,7 @@ const char *infones_argv[3] = {
 /* 文件映射表 */
 struct file_map file_map_table[] = {
     {PATH_GUISRV, 200 * 512, 800, 1, NULL},
-    {PATH_NETSRV, 400 * 512, 1500, 0, NULL},
+    {PATH_NETSRV, 400 * 512, 1500, 1, NULL},
     {"c:/terminal", 200 * 512, 5100, 0, NULL},
 //    {"/login", 100 * 512, 4000, 0, NULL},
 //    {"/bosh", 100 * 512, 4100, 0, NULL},

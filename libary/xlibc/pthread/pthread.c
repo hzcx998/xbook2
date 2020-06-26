@@ -208,3 +208,12 @@ int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr)
     attr->stackaddr = stackaddr;
     return 0;
 }
+
+void pthread_cleanup_push(void (*routine)(void *), void *arg)
+{
+    
+}
+void pthread_cleanup_pop(int execute)
+{
+
+}

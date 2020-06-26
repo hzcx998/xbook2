@@ -139,7 +139,7 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
             不然就是正常超时 */
             clock_t ticks = 0;      /* 需要休眠的ticks数 */
             
-            /* 计算需要休眠的时间 */
+            /* 计算需要休眠的时间，如果value为NULL，表示直接返回 */
             if (value > 0) {
                 struct timespec *abstm = (struct timespec *)value;
                 /* 求差 */

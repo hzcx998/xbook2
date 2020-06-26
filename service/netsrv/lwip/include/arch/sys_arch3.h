@@ -29,65 +29,31 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __ARCH_CC_H__
-#define __ARCH_CC_H__
+#ifndef __ARCH_SYS_ARCH_H__
+#define __ARCH_SYS_ARCH_H__
 
-#include <stdio.h> /* printf, fflush, FILE */
-#include <stdlib.h> /* abort */
-#include <limits.h>
-#include <sys/time.h>
+#include <errno.h>
 
-//#define LWIP_PROVIDE_ERRNO
+#define SYS_MBOX_NULL NULL
+#define SYS_SEM_NULL  NULL
 
-/* Define platform endianness (might already be defined) */
-#ifndef BYTE_ORDER
-#define BYTE_ORDER LITTLE_ENDIAN
-#endif /* BYTE_ORDER */
-
-/* Define generic types used in lwIP */
-typedef unsigned   char    u8_t;
-typedef signed     char    s8_t;
-typedef unsigned   short   u16_t;
-typedef signed     short   s16_t;
-typedef unsigned   long    u32_t;
-typedef signed     long    s32_t;
-
-typedef size_t mem_ptr_t;
 typedef u32_t sys_prot_t;
 
-/* Define (sn)printf formatters for these lwIP types */
-#define X8_F  "02x"
-#define U16_F "hu"
-#define U32_F "lu"
-#define S32_F "ld"
-#define X32_F "lx"
+struct sys_sem;
+typedef struct sys_sem * sys_sem_t;
+#define sys_sem_valid(sem) (((sem) != NULL) && (*(sem) != NULL))
+#define sys_sem_set_invalid(sem) do { if((sem) != NULL) { *(sem) = NULL; }}while(0)
 
-#ifdef __GNUC__
-#define S16_F "d"
-#define X16_F "uX"
-#define SZT_F "u"
-#else
-#define S16_F "hd"
-#define X16_F "hx"
-#define SZT_F "lu"
-#endif
+/* let sys.h use binary semaphores for mutexes */
+#define LWIP_COMPAT_MUTEX 1
 
-/* Compiler hints for packing structures */
-#define PACK_STRUCT_STRUCT
-#define PACK_STRUCT_USE_INCLUDES
+struct sys_mbox;
+typedef struct sys_mbox *sys_mbox_t;
+#define sys_mbox_valid(mbox) (((mbox) != NULL) && (*(mbox) != NULL))
+#define sys_mbox_set_invalid(mbox) do { if((mbox) != NULL) { *(mbox) = NULL; }}while(0)
 
-/* Plaform specific diagnostic output */
-#define LWIP_PLATFORM_DIAG(x)	do {printf x;} while(0)
+struct sys_thread;
+typedef struct sys_thread * sys_thread_t;
 
-#define LWIP_PLATFORM_ASSERT(x) do {printf("Assertion \"%s\" failed at line %d in %s\n", \
-                                     x, __LINE__, __FILE__); fflush(NULL); abort();} while(0)
+#endif /* __ARCH_SYS_ARCH_H__ */
 
-#define LWIP_ERROR(message, expression, handler)  \
-	do { if (!(expression)) { \
-  			printf("Assertion \"%s\" failed at line %d in %s\n", \
-            message, __LINE__, __FILE__); handler;}} while(0)
-
-
-#define LWIP_RAND() ((u32_t)rand())
-
-#endif /* __ARCH_CC_H__ */

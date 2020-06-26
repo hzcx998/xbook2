@@ -47,6 +47,7 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 
 OBJS =  main.o \
+		cond_sync.o \
 
 LIB_FILE := $(DIR_SGI)/sgi-0.0.1.a \
 			$(DIR_XLIBC)/xlibc-0.0.1.a \

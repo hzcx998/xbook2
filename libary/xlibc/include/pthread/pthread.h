@@ -165,4 +165,8 @@ int pthread_condattr_destroy(pthread_condattr_t *mattr);
 int pthread_condattr_getpshared(pthread_condattr_t *attr, int *pshared);
 int pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared);
 
+void pthread_cleanup_push(void (*routine)(void *), void *arg);
+void pthread_cleanup_pop(int execute);
+
+
 #endif  /* _SYS_PTHREAD_H */

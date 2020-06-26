@@ -73,6 +73,7 @@ PTHREAD_OBJS	=	$(PTHREAD_DIR)/pthread_entry.o \
 					$(PTHREAD_DIR)/pthread_spinlock.o \
 					$(PTHREAD_DIR)/pthread_mutex.o \
 					$(PTHREAD_DIR)/pthread_cond.o \
+					$(PTHREAD_DIR)/semaphore.o \
 
 UNISTD_OBJS		= 	$(UNISTD_DIR)/file.o \
 					$(UNISTD_DIR)/exec.o \

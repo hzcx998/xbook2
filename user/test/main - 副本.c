@@ -18,8 +18,8 @@
 #include "cond_sem.h"
 #include  <sys/types.h>
 #include  <errno.h>
-#include  <semaphore.h>
 
+ 
 #define	NBUFF	 8
 #define BUFFSIZE 128
  
@@ -28,8 +28,8 @@ struct {	/* data shared by producer and consumer */
     char	data[BUFFSIZE];			/* a buffer */
     ssize_t	n;						/* count of #bytes in the buffer */
   } buff[NBUFF];					/* NBUFF of these buffers/counts */
-  sem_t nempty, nfull;		/* semaphores, not pointers */
-  sem_t writer_mutex, reader_mutex;
+  cond_sem_t nempty, nfull;		/* semaphores, not pointers */
+  cond_sem_t writer_mutex, reader_mutex;
 } shared;
  
 int writer_index = 0, reader_index = 0;
@@ -59,10 +59,10 @@ int main(int argc, char **argv)
  
     printf("init sem.\n");
         
-    sem_init(&shared.writer_mutex, 0,1);
-    sem_init(&shared.reader_mutex, 0,1);
-    sem_init(&shared.nempty, 0,NBUFF);
-    sem_init(&shared.nfull, 0,0);
+    cond_sem_init(&shared.writer_mutex, 1);
+    cond_sem_init(&shared.reader_mutex, 1);
+    cond_sem_init(&shared.nempty, NBUFF);
+    cond_sem_init(&shared.nfull, 0);
  
     /*
     pthread_init(&tid_produce1);
@@ -110,13 +110,11 @@ int main(int argc, char **argv)
     pthread_destroy(tid_produce3);
  */
  
-    sem_destroy(&shared.writer_mutex);
-    sem_destroy(&shared.reader_mutex);
-    sem_destroy(&shared.nempty);
-    sem_destroy(&shared.nfull);
+    cond_sem_destroy(&shared.writer_mutex);
+    cond_sem_destroy(&shared.reader_mutex);
+    cond_sem_destroy(&shared.nempty);
+    cond_sem_destroy(&shared.nfull);
  
-
-    close(fd);
     printf("test end.\n");
     exit(0);
     return 0;
@@ -128,9 +126,9 @@ void *produce(void *arg)
 {
     while( 1 )
     {
-        sem_wait(&shared.nempty);	/* wait for at least 1 empty slot */
+        cond_sem_p(&shared.nempty);	/* wait for at least 1 empty slot */
  
-        sem_wait(&shared.writer_mutex);
+        cond_sem_p(&shared.writer_mutex);
  
         shared.buff[writer_index].n =
                 read(fd, shared.buff[writer_index].data, BUFFSIZE);
@@ -138,15 +136,15 @@ void *produce(void *arg)
 
         if( shared.buff[writer_index].n <= 0 )
         {
-            sem_post(&shared.nfull);
-            sem_post(&shared.writer_mutex);
+            cond_sem_v(&shared.nfull);
+            cond_sem_v(&shared.writer_mutex);
             return NULL;
         }
  
         writer_index = (writer_index+1)%NBUFF;
  
-        sem_post(&shared.nfull);
-        sem_post(&shared.writer_mutex);
+        cond_sem_v(&shared.nfull);
+        cond_sem_v(&shared.writer_mutex);
     }
  
     return NULL;
@@ -161,7 +159,7 @@ void* produce_tryP(void *arg)
         /* wait for at least 1 empty slot */
         while( 1 )
         {
-            status = sem_trywait(&shared.nempty);
+            status = cond_sem_tryP(&shared.nempty);
             if( status == 0 )
                 break;
             else if( status == EAGAIN )
@@ -177,22 +175,22 @@ void* produce_tryP(void *arg)
                 return NULL;
         }
  
-        sem_wait(&shared.writer_mutex);
+        cond_sem_p(&shared.writer_mutex);
  
         shared.buff[writer_index].n =
                 read(fd, shared.buff[writer_index].data, BUFFSIZE);
  
         if( shared.buff[writer_index].n <= 0 )
         {
-            sem_post(&shared.nfull);
-            sem_post(&shared.writer_mutex);
+            cond_sem_v(&shared.nfull);
+            cond_sem_v(&shared.writer_mutex);
             return NULL;
         }
  
         writer_index = (writer_index+1)%NBUFF;
  
-        sem_post(&shared.nfull);
-        sem_post(&shared.writer_mutex);
+        cond_sem_v(&shared.nfull);
+        cond_sem_v(&shared.writer_mutex);
     }
  
     return NULL;
@@ -202,26 +200,26 @@ void* consume(void *arg)
 {
     while( 1 )
     {
-        sem_wait(&shared.nfull);
-        sem_wait(&shared.reader_mutex);
+        cond_sem_p(&shared.nfull);
+        cond_sem_p(&shared.reader_mutex);
  
         if( shared.buff[reader_index].n <= 0)
         {
-            sem_post(&shared.nempty);
-            sem_post(&shared.reader_mutex);
+            cond_sem_v(&shared.nempty);
+            cond_sem_v(&shared.reader_mutex);
             return NULL;
         }
 
         //printf("write.\n");
-        /*
-        res_write(STDOUT_FILENO, 0, shared.buff[reader_index].data,
+        
+        /*write(STDOUT_FILENO, shared.buff[reader_index].data,
                 shared.buff[reader_index].n);*/
-        //printf("%s\n", shared.buff[reader_index].data);
+        printf("%s\n", shared.buff[reader_index].data);
 
         reader_index = (reader_index+1)%NBUFF;
  
-        sem_post(&shared.nempty);
-        sem_post(&shared.reader_mutex);
+        cond_sem_v(&shared.nempty);
+        cond_sem_v(&shared.reader_mutex);
     }
  
     return NULL;
