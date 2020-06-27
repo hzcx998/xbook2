@@ -21,6 +21,9 @@
 #include <math.h>
 #include <netsrv.h>
 
+
+#include <lwip/dhcp.h>
+
 extern err_t ethernetif_init(struct netif *netif);
 extern void ethernetif_input(struct netif *netif);
 void tcpecho_init(void);
@@ -29,10 +32,21 @@ void
 httpserver_init();
 void
 udpecho_init(void);
-void socket_examples_init(void);
+void socket_examples_init2(void);
 void chargen_init(void);
+void dns_netconn_init();
+void dhcp_netconn_init();
+
+void socket_examples_init(void);
 
 struct netif rtl8139_netif;
+
+/**
+ * 0： 仅虚拟机和主机通信
+ * 1： 虚拟机和主机以及外网通信
+ * 2： DHCP动态分配ip
+*/
+#define CONFIG_LEVEL 1
 
 void lwip_init_task(void)
 {
@@ -40,14 +54,30 @@ void lwip_init_task(void)
 
     tcpip_init(NULL, NULL);
 
+    #if CONFIG_LEVEL == 0    
     IP4_ADDR(&gateway, 192,168,0,1);
     IP4_ADDR(&netmask, 255,255,255,0);
     IP4_ADDR(&ipaddr, 192,168,0,105);
-    
+    #elif CONFIG_LEVEL == 1
+    IP4_ADDR(&gateway, 169,254,177,48);
+    IP4_ADDR(&netmask, 255,255,0,0);
+    IP4_ADDR(&ipaddr, 169,254,177,105);
+
+    #elif CONFIG_LEVEL == 2
+    IP4_ADDR(&gateway, 0,0,0,0);
+    IP4_ADDR(&netmask, 0,0,0,0);
+    IP4_ADDR(&ipaddr, 0,0,0,0);
+    #endif
+
     //netif_add(&rtl8139_netif, &ipaddr, &netmask, &gateway, NULL, ethernetif_init, ethernet_input);
     netif_add(&rtl8139_netif, &ipaddr, &netmask, &gateway, NULL, ethernetif_init, tcpip_input);
     netif_set_default(&rtl8139_netif);
     netif_set_up(&rtl8139_netif);
+#if CONFIG_LEVEL == 2
+    printf("[%s] %s: dhcp start.\n", SRV_NAME, __func__);
+    dhcp_start(&rtl8139_netif);
+    
+#endif
 }
 
 /*
@@ -65,7 +95,7 @@ Net Service:
 */
 
 
-
+int lwip_init_done();
 
 int main(int argc, char *argv[])
 {
@@ -74,10 +104,12 @@ int main(int argc, char *argv[])
 	lwip_init_task();
 
     tcpecho_init();
+    
+    //dhcp_netconn_init();
 
+    //socket_examples_init();
     //httpserver_init();
     //udpecho_init();
-
     //socket_examples_init();
     //chargen_init();
     // setup echo server
@@ -85,17 +117,36 @@ int main(int argc, char *argv[])
     //http_server_init();
 	
     //ping_init();
-	
+	int init_done = 0;
 	while(1)
 	{
         /* 检测输入，并进行超时检测 */
         ethernetif_input(&rtl8139_netif);
         //sys_check_timeouts();
 		
+        /* 如果初始化完毕 */
+        if (!init_done) {
+            init_done = lwip_init_done();;
+        }
+
 		//todo: add your own user code here
 	}
     return 0;
 }
+
+int lwip_init_done()
+{
+#if CONFIG_LEVEL == 2
+    if(rtl8139_netif.dhcp->state != DHCP_BOUND)
+        return 0;
+
+    printf("[%s] %s: dhcp ip:%s.\n", SRV_NAME, __func__, ipaddr_ntoa((ip_addr_t *)&(rtl8139_netif.ip_addr)));
+#endif
+
+    //dns_netconn_init();
+    return 1; 
+}
+
 
 
 #if LWIP_NETCONN
@@ -314,7 +365,7 @@ udpecho_init(void)
 #include <stdio.h>
 
 #ifndef SOCK_TARGET_HOST
-#define SOCK_TARGET_HOST  "192.168.0.104"
+#define SOCK_TARGET_HOST  "10.253.190.124"
 #endif
 
 #ifndef SOCK_TARGET_PORT
@@ -479,7 +530,7 @@ static void socket_timeoutrecv(void *arg)
   }
 }
 
-void socket_examples_init(void)
+void socket_examples_init2(void)
 {
   //sys_thread_new("socket_nonblocking", socket_nonblocking, NULL, 0, TCPIP_THREAD_PRIO+2);
   sys_thread_new("socket_timeoutrecv", socket_timeoutrecv, NULL, 0, TCPIP_THREAD_PRIO+1);
@@ -699,3 +750,250 @@ void chargen_init(void)
 }
 
 #endif /* LWIP_SOCKET */
+
+
+#if LWIP_NETCONN
+
+#define MAX_BUFFER_LEN 256
+char recvbuf[MAX_BUFFER_LEN];
+char sendbuf[MAX_BUFFER_LEN];
+
+static void dns_netconn_thread(void *arg)
+{
+    printf("dns start.\n");
+    struct netconn *conn,*newconn = NULL;
+	err_t ret = ERR_OK;
+	conn = netconn_new(NETCONN_TCP);
+	netconn_bind(conn,NULL,8080);
+	netconn_listen(conn);
+	
+	while(1)
+	{
+		 ret = netconn_accept(conn, &newconn);
+		 while(newconn != NULL)
+		 {
+		   struct netbuf *inbuf = NULL;
+		   char *dataptr;
+		   u16_t size;
+		   ret = netconn_recv(newconn, &inbuf);
+		   if(ret == ERR_OK)
+		   {
+             
+			 struct ip_addr dnsaddr;
+			 
+			 netbuf_data(inbuf, (void **)&dataptr, &size);
+			 if(size >= MAX_BUFFER_LEN)
+			 {
+                netbuf_delete(inbuf);
+				continue;
+			 }
+			 
+			 MEMCPY( recvbuf, dataptr, size);
+			 recvbuf[size] = '\0';
+			 netbuf_delete(inbuf);
+			 if ((ret = netconn_gethostbyname((char*)(recvbuf), &(dnsaddr))) == ERR_OK){
+				u16_t strlen = sprintf(sendbuf,"%s = %s\n",recvbuf,ip_ntoa(&dnsaddr));
+				if(strlen > 0)
+				  netconn_write(newconn,sendbuf, strlen, NETCONN_COPY);
+	
+			 }
+             sleep(1);
+			 
+		   }else{
+		   
+			netconn_close(newconn);
+			netconn_delete(newconn);
+			newconn = NULL;
+		   }
+		 }//while(newconn!=NULL)
+	 }
+
+}
+
+void
+dns_netconn_init()
+{
+  sys_thread_new("http_server_netconn", dns_netconn_thread, NULL, DEFAULT_THREAD_STACKSIZE, TCPIP_THREAD_PRIO+1);
+}
+
+#endif /* LWIP_NETCONN*/
+
+
+#if LWIP_NETCONN
+
+#define MAX_BUFFER_LEN 256
+char sendbuf[MAX_BUFFER_LEN];
+
+static void dhcp_netconn_thread(void *arg)
+{
+	struct netconn *conn;
+	struct ip_addr serveraddr;
+	u32_t err,wr_err;
+	int strlen = 0;
+   
+	//while(rtl8139_netif.dhcp->state != DHCP_BOUND);
+		
+	
+	IP4_ADDR(&serveraddr,10,253,190,124); 			//���������IP��ַ
+	
+	while(1)
+	{
+	   conn=netconn_new(NETCONN_TCP);			//����TCP���ӽṹ
+	   err=netconn_connect(conn,&serveraddr,8080);	//���ӷ��������˿ں�8080
+	 
+	   if(err==ERR_OK) {							//���ӳɹ�
+		   printf("Connection OK \n"); 		//��ӡ��Ϣ
+		   do
+		   {
+		      strlen = sprintf(sendbuf,"A LwIP client Using DHCP Address: %s\r\n", \
+			  	ipaddr_ntoa((ip_addr_t *)&(rtl8139_netif.ip_addr)));
+			  
+              /*strcpy(sendbuf, "hello");
+              strlen = 5;*/
+			  wr_err=netconn_write(conn,sendbuf, strlen, NETCONN_COPY);
+
+			  sleep(1);
+		   }while(wr_err==ERR_OK);
+           while (1)
+           {
+               /* code */
+           }
+           
+	   }
+	   printf("Connection failed \n");
+	   netconn_close(conn); 						//�ر�����
+	   netconn_delete(conn);						//ɾ�����ӽṹ
+	}
+
+}
+
+void dhcp_netconn_init()
+{
+  sys_thread_new("dhcp_netconn_thread", dhcp_netconn_thread, NULL, DEFAULT_THREAD_STACKSIZE, TCPIP_THREAD_PRIO+1);
+}
+
+#endif /* LWIP_NETCONN*/
+
+
+#if 1//LWIP_SOCKET
+
+#include <lwip/sockets.h>
+#include <lwip/sys.h>
+#include <lwip/netdb.h>
+#ifndef SOCK_TARGET_HOST
+#define SOCK_TARGET_HOST  "10.0.0.172"
+#endif
+
+#ifndef SOCK_TARGET_PORT2
+#define SOCK_TARGET_PORT2  80
+#endif
+
+int reclen = 0;
+struct hostent* hip = NULL;
+static u8_t buf[1024];
+
+static void sockex_nonblocking_connect(void *arg)
+{
+  char *m_requestheader = "GET http://www.163.com HTTP/1.1\r\nHost:www.163.com\r\nAccept:*/*\r\nUser-Agent:Mozilla/4.0(compatible; MSIE 7.0; Windows NT 6.0; Trident/4.0)\r\nConnection:Close\r\n\r\n";
+
+  int s;
+  int ret;
+  struct sockaddr_in addr;
+  int err;
+  int tick = 0;
+  
+  int count = 0;
+  
+  char* strHeader1 = "POST http://uas.mmarket.com:8090/register HTTP/1.1\r\nX-Online-Host: uas.mmarket.com:8090\r\ncontent-type: Application\r\nx-up-calling-line-id:\r\nUser-Agent: Java/1.6.0_16\r\nAccept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2\r\nProxy-Connection:\r\nContent-Length: 74\r\nHost: uas.mmarket.com:8090\r\n\r\n<req><imsi>00000000000</imsi><apid>3</apid><channel_id></channel_id></req>";
+  
+ 
+  LWIP_UNUSED_ARG(arg);
+  /* set up address to connect to */
+  memset(&addr, 0, sizeof(addr));
+  addr.sin_len = sizeof(addr);
+  addr.sin_family = AF_INET;
+  addr.sin_port = PP_HTONS(SOCK_TARGET_PORT2);
+  //addr.sin_addr.s_addr = inet_addr(SOCK_TARGET_HOST);
+  addr.sin_addr.s_addr = inet_addr(inet_ntoa(*((struct in_addr *)hip->h_addr_list[0])));
+
+  /* first try blocking: */
+
+  /* create the socket */
+  
+  printf("start socket.\n");
+  s = lwip_socket(AF_INET, SOCK_STREAM, 0);
+  LWIP_ASSERT("s >= 0", s >= 0);
+
+  /* connect */
+  ret = lwip_connect(s, (struct sockaddr*)&addr, sizeof(addr));
+  /* should succeed */
+  LWIP_ASSERT("ret == 0", ret == 0);
+
+  /* write something */
+  ret = lwip_write(s, m_requestheader, strlen(m_requestheader));
+  //LWIP_ASSERT("ret == 4", ret == 4);
+
+  
+  while(1)
+  {
+	  count = lwip_read(s,buf,1024);
+	  if (count == -1)
+	  {
+		  break;
+	  }
+	  if(count != 0){
+		  tick = 0;
+			//EnterCriticalSection(&critSec1);
+		  reclen += count;
+		  //LeaveCriticalSection(&critSec1);
+		  printf("new len %d, total Len:%d KB\r\n",count, reclen/1024);
+		 
+	  }else
+	  {
+		  sleep(3);
+		  if(tick == 10)
+		  {
+			  break;
+		  }
+	  }
+	  tick++;
+  }
+  /* close */
+  ret = lwip_close(s);
+  LWIP_ASSERT("ret == 0", ret == 0);
+  printf("Data transfer over, close the socket = %d\n", s);
+
+}
+
+static void sockex_nonblocking(void *arg)
+{
+    //while(rtl8139_netif.dhcp->state != DHCP_BOUND);
+	printf("start socket.\n");
+   arg = arg;
+
+   while(hip == NULL)
+   {
+		hip = gethostbyname("www.163.com");
+
+		if(hip != NULL) {
+            printf("IP Address : %s\n",inet_ntoa(*((struct in_addr *)hip->h_addr_list[0])));
+            break;
+        }
+			
+   }
+
+   while(1)
+   	{
+        sockex_nonblocking_connect(NULL);
+   	    sleep(3);
+		
+    }
+
+}
+
+void socket_examples_init(void)
+{
+  sys_thread_new("sockex_nonblocking_connect", sockex_nonblocking, NULL, 0, TCPIP_THREAD_PRIO + 1);
+}
+
+#endif /* LWIP_SOCKETS */
