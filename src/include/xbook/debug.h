@@ -42,6 +42,8 @@ int (*printk)(const char *fmt, ...);
     printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
 #define pr_cont(fmt, ...) \
     printk(KERN_CONT fmt, ##__VA_ARGS__)
+#define pr_dbg(fmt, ...) \
+    printk(KERN_DEBUG fmt, ##__VA_ARGS__)
 
 #define logger(fmt, ...) \
         printk("file:%s line:%d " pr_fmt(fmt), __FILE__, __LINE__, ##__VA_ARGS__)

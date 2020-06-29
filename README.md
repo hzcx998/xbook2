@@ -36,7 +36,7 @@ KERNEL MODE:
 IDE硬盘驱动，PS/2鼠标，键盘驱动，VBE视频驱动
 RTL8139网卡驱动，UART串口驱动
 
-FATFS文件系统库，LWIP网络协议库，LEARNINGGUI图形库
+FATFS文件系统，LWIP网络协议，SGI图形库
 PTHREAD线程库
 ```
 

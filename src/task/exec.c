@@ -91,8 +91,7 @@ int sys_exec_raw(char *name, char **argv)
         printk(KERN_ERR "sys_exec_raw: load_image failed!\n");
         goto free_tmp_arg;
     }
-    printk(KERN_DEBUG "task name=%s pid=%d ready load image done.\n", cur->name, cur->pid);
-
+    
     /* 构建中断栈框 */
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));

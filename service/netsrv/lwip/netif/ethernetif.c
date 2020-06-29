@@ -61,6 +61,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <drivers/netcard.h>
+#include <core/netsrv.h>
+
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'
@@ -81,6 +84,7 @@ struct ethernetif {
   struct eth_addr *ethaddr;
   /* Add whatever per-interface state that is needed here. */
   int ethres;       /* ethernet resource */
+  int netsolt;      /* netcard solt */
 };
 
 /* Forward declarations. */
@@ -97,20 +101,35 @@ static void
 low_level_init(struct netif *netif)
 {
     struct ethernetif *ethernetif = netif->state;
-    
+#if 0    
+    /* 打开一个网络设备 */
     ethernetif->ethres = res_open(ETHDEVNAME, RES_DEV, 0);
     if (ethernetif->ethres < 0) {
-        printf("lwip: open driver %s not exist! yeild cpu.\n", ETHDEVNAME);
+        srvprint("lwip: open driver %s not exist! yeild cpu.\n", ETHDEVNAME);
         while (1) {
             sched_yeild();
         }
         return;
     }
+#endif
 
+    ethernetif->netsolt = 0;
+    if (drv_netcard.open(ethernetif->netsolt) < 0) {
+        srvprint("lwip: open netcard driver %d not exist! yeild cpu.\n", ethernetif->netsolt);
+        while (1) {
+            sched_yeild();
+        }
+        return;
+    }
     u8_t mac_addr[ETHARP_HWADDR_LEN] = {0};
-
+#if 1
+    drv_netcard.ioctl(ethernetif->netsolt, NETIO_GETMAC, (unsigned long) &mac_addr[0]);
+#endif
+    
+#if 0
     res_ioctl(ethernetif->ethres, NETIO_GETMAC, (unsigned long) &mac_addr[0]);
-
+#endif
+  srvprint("mac: %x %x %x %x %x %x", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
@@ -162,7 +181,8 @@ low_level_output(struct netif *netif, struct pbuf *p)
        time. The size of the data in each pbuf is kept in the ->len
        variable. */
     //send data from(q->payload, q->len);
-    len = res_write(ethernetif->ethres, 0, q->payload, q->len);
+    //len = res_write(ethernetif->ethres, 0, q->payload, q->len);
+    len = drv_netcard.write(ethernetif->netsolt, q->payload, q->len);
     if (len < 0) {
         retval = ERR_BUF;
     }
@@ -192,15 +212,17 @@ low_level_input(struct netif *netif)
 {
   struct ethernetif *ethernetif = netif->state;
   struct pbuf *p, *q;
-  u16_t len;
+  int len;
 
   /* Obtain the size of the packet and put it into the "len"
      variable. */
   //len = ;
   u8_t rxbuf[ETH_MTU];
-  len = res_read(ethernetif->ethres, 0, rxbuf, ETH_MTU);
-    if (len < 0)
-        return 0;
+  //len = res_read(ethernetif->ethres, DEV_NOWAIT, rxbuf, ETH_MTU);
+  len = drv_netcard.read(ethernetif->netsolt, rxbuf, ETH_MTU);
+  //srvprint("read res %d.\n", len);
+  if (len < 0)
+    return 0;
 #if ETH_PAD_SIZE
   len += ETH_PAD_SIZE; /* allow room for Ethernet padding */
 #endif

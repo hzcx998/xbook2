@@ -1640,6 +1640,7 @@ static iostatus_t rtl8139_write(device_object_t *device, io_request_t *ioreq)
     printk(KERN_DEBUG "rtl8139_write: transmit data=%x len=%d flags=%x\n",
         buf, ioreq->parame.write.length, ioreq->parame.write.offset);
 #endif
+  
     if (rtl8139_transmit(device->device_extension, buf, len))
         len = -1;
 

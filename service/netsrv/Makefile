@@ -120,13 +120,18 @@ LWIP_API_OBJS =  	$(LWIP_API_DIR)/api_lib.o \
 					$(LWIP_API_DIR)/sockets.o \
 					$(LWIP_API_DIR)/tcpip.o \
 
+
 # objects
 LWIP_OBJS	:=  $(LWIP_CORE_OBJS) $(LWIP_ARCH_OBJS) $(LWIP_IPV4_OBJS) \
 				$(LWIP_SNMP_OBJS) $(LWIP_NETIF_OBJS)  $(LWIP_API_OBJS)
 
+CORE_OBJS	=
+
+DRIVERS_OBJS	= drivers/netcard.o
+
 MAIN_OBJS 	= 	main.o \
 
-OBJS =  $(MAIN_OBJS) $(LWIP_OBJS)
+OBJS =  $(MAIN_OBJS) $(LWIP_OBJS) $(DRIVERS_OBJS)
 
 LIB_FILE = $(DIR_XLIBC)/xlibc-0.0.1.a \
 

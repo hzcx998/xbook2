@@ -95,6 +95,7 @@
         "cstring": "c",
         "iosfwd": "c",
         "unistd.h": "c",
-        "ffconf.h": "c"
+        "ffconf.h": "c",
+        "cstdio": "c"
     }
 }

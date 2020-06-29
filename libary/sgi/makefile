@@ -6,7 +6,7 @@ RM				= rm
 
 # dir
 DIR_INCLUDE 	= ./include
-DIR_INCLUDE_XBOOK 	= ../xbooklib/include
+DIR_INCLUDE_XBOOK 	= ../xlibc/include
 
 # 
 CORE_DIR 		= ./core

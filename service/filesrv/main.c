@@ -48,36 +48,36 @@ int main(int argc, char *argv[])
     
     /* 绑定成为服务调用 */
     if (srvcall_bind(SRV_FS)  == -1)  {
-        printf("%s: bind srvcall failed, service stopped!\n", SRV_NAME);
+        srvprint("bind srvcall failed, service stopped!\n");
         return -1;
     }
     
     /* 初始化子进程 */
     if (init_child_proc()) {
-        printf("%s: execute failed, service stopped!\n", SRV_NAME);
+        srvprint("execute failed, service stopped!\n");
         return -1;
     }
     
     /* 初始化驱动 */
     if (init_disk_driver() < 0) {
-        printf("%s: init disk driver failed, service stopped!\n", SRV_NAME);
+        srvprint("init disk driver failed, service stopped!\n");
         return -1;
     }
     
     /* 初始化服务核心 */
     if (init_srvcore() < 0) {
-        printf("%s: init srvcore failed, service stopped!\n", SRV_NAME);
+        srvprint("init srvcore failed, service stopped!\n");
         return -1;
     }
 
     /* 初始化文件系统抽象层 */
     if (init_fsal() < 0) {
-        printf("%s: init fsal failed, service stopped!\n", SRV_NAME);
+        srvprint("init fsal failed, service stopped!\n");
         return -1;
     }
     
     /* 处理服务 */
-    printf("\n%s: enter receving request state.\n", SRV_NAME);
+    srvprint("enter receving request state.\n");
     int seq;
     srvarg_t srvarg;
     int callnum;
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
         }
 
 #if DEBUG_LOCAL == 1
-        printf("%s: srvcall seq=%d.\n", SRV_NAME, seq);
+        srvprint("srvcall seq=%d.\n", seq);
 #endif 
         /* 2.处理服务 */
         callnum = GETSRV_DATA(&srvarg, 0, int);

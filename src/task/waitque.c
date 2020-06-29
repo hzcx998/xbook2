@@ -7,16 +7,23 @@
 #include <xbook/waitque.h>
 #include <xbook/clock.h>
 #include <xbook/ktime.h>
+#include <xbook/mutexlock.h>
 #include <sys/waitque.h>
 #include <errno.h>
 
 #define DEBUG_LOCAL 0
 
+#define USE_MUTEX_LOCK
+
 /* waitque储存池 */
 waitque_t *waitque_table;
 
+#ifdef USE_MUTEX_LOCK
 /* 访问储存池需要互斥 */
+DEFINE_MUTEX_LOCK(waitque_table_lock);
+#else
 DEFINE_SPIN_LOCK(waitque_table_lock);
+#endif
 
 /**
  * sys_waitque_create - 创建一个等待队列
@@ -27,12 +34,28 @@ int sys_waitque_create()
 {
     waitque_t *waitque = &waitque_table[0];
     int i;
-    spin_lock(&waitque_table_lock);
+    
+    pr_dbg("%s: lock start.\n", __func__);
+#ifdef USE_MUTEX_LOCK
+    mutex_lock(&waitque_table_lock);
+
+    pr_dbg("%s: lock end.\n", __func__);
+
+#else
+
+    unsigned long irqflags;
+    spin_lock_irqsave(&waitque_table_lock, irqflags);
+#endif    
     for (i = 0; i < WAITQUE_NR; i++) {
         if (!waitque->flags) { /* 没有使用 */
             wait_queue_init(&waitque->wait_queue);
             waitque->flags = WAITQUE_USING;
-            spin_unlock(&waitque_table_lock);
+            
+            #ifdef USE_MUTEX_LOCK
+            mutex_unlock(&waitque_table_lock);
+            #else
+            spin_unlock_irqrestore(&waitque_table_lock, irqflags);
+            #endif
 #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "%s: pid=%d get handle=%d\n", __func__, current_task->pid, i);
 #endif
@@ -40,7 +63,11 @@ int sys_waitque_create()
         }
         waitque++;
     }
-    spin_unlock(&waitque_table_lock);
+    #ifdef USE_MUTEX_LOCK
+    mutex_unlock(&waitque_table_lock);
+    #else
+    spin_unlock_irqrestore(&waitque_table_lock, irqflags);
+    #endif
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "%s: pid=%d get handle failed!\n", __func__, current_task->pid);
 #endif
@@ -57,7 +84,13 @@ int sys_waitque_destroy(int handle)
 {
     if (IS_BAD_WAITQUE(handle))
         return -1;
-    spin_lock(&waitque_table_lock);
+    
+    #ifdef USE_MUTEX_LOCK
+    mutex_lock(&waitque_table_lock);
+    #else
+    unsigned long irqflags;
+    spin_lock_irqsave(&waitque_table_lock, irqflags);
+    #endif   
     waitque_t *waitque = &waitque_table[handle];
     if (waitque->flags) {
         /* 遍历唤醒等待队列上的任务 */
@@ -67,7 +100,11 @@ int sys_waitque_destroy(int handle)
         }
         waitque->flags = 0;
     }
-    spin_unlock(&waitque_table_lock);
+    #ifdef USE_MUTEX_LOCK
+    mutex_unlock(&waitque_table_lock);
+    #else
+    spin_unlock_irqrestore(&waitque_table_lock, irqflags);
+    #endif
     return 0;
 }
 
@@ -170,6 +207,7 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
 #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "%s: pid=%d sleep ticks %u\n", __func__, current_task->pid, ticks);
 #endif
+
             if (task_sleep_by_ticks(ticks) > 0) {
           
 #if DEBUG_LOCAL == 1

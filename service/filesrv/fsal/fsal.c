@@ -116,11 +116,6 @@ int init_fsal()
         return -1;
     }
 
-    if (init_rom_file()) {
-        printf("%s: create file failed, service stopped!\n", SRV_NAME);
-        return -1;
-    }
-
     return 0;
 #if 0
     /* 尝试创建文件系统 */

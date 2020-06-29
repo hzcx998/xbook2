@@ -36,9 +36,6 @@ int disk_probe_device(device_type_t type)
     do {
         if (dev_scan(p, type, &devent))
             break;
-#if DEBUG_LOCAL == 1
-        printf("%s: %s: probe device %s\n", SRV_NAME, __func__, devent.de_name);
-#endif    
         /* 添加到磁盘数组 */
         /* 创建一个设备信息 */
         disk = malloc(sizeof(disk_info_t));
@@ -64,7 +61,7 @@ void disk_info_print()
 {
     disk_info_t *disk;
     list_for_each_owner (disk, &disk_list_head, list) {
-        printf("%s: %s: probe device:%s type:%d\n", SRV_NAME, __func__,
+        srvprint("probe device:%s type:%d\n",
             disk->devent.de_name, disk->devent.de_type);
     }
 }

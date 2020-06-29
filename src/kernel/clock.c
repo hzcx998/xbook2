@@ -79,6 +79,18 @@ clock_t sys_get_ticks()
 }
 
 /**
+ * 根据ticks延迟
+ */
+clock_t clock_delay_by_ticks(clock_t ticks)
+{
+    clock_t start = systicks;
+    while (systicks - start < ticks)
+        task_yeild();
+    return ticks;
+}
+
+
+/**
  * init_clock - 初始化时钟系统
  * 多任务的运行依赖于此
  */
