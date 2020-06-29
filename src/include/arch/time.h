@@ -18,4 +18,6 @@
 #define get_time_year       __get_time_year
 #define get_time_week       __get_time_week
 
+#define udelay              __udelay
+
 #endif  /* _ARCH_TIME_H */

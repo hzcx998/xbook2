@@ -23,4 +23,8 @@ static inline unsigned long ktime2uint32()
 
 int sys_gettimeofday(struct timeval *tv, struct timezone *tz);
 int sys_clock_gettime(clockid_t clockid, struct timespec *ts);
+
+unsigned long timeval_to_systicks(struct timeval *tv);
+void systicks_to_timeval(unsigned long ticks, struct timeval *tv);
+
 #endif   /* _XBOOK_KTIME_H */

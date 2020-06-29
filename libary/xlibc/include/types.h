@@ -19,5 +19,7 @@ typedef unsigned long ino_t;
 typedef unsigned long nlink_t;
 typedef unsigned int uid_t;
 typedef unsigned int gid_t;
+typedef unsigned long useconds_t;
 
+ 
 #endif  /* _LIB_TYPES_H */

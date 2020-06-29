@@ -3,6 +3,7 @@
 
 #include "list.h"
 #include "memcache.h"
+#include "ktime.h"
 
 typedef void (*timer_callback_t) (unsigned long); 
 
@@ -44,5 +45,7 @@ void timer_del(timer_t *timer);
 void timer_mod(timer_t *timer, unsigned long timeout);
 int timer_cancel(timer_t *timer);
 void update_timers();
+long sys_usleep(struct timeval *inv, struct timeval *outv);
+
 
 #endif   /* _XBOOK_TIMER_H */

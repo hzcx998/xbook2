@@ -90,4 +90,7 @@ int chdrive(const char *path);
 int execv(const char *path, const char *argv[]);
 int execl(const char *path, const char *arg, ...);
 
+int usleep(useconds_t usec);
+
+
 #endif  /* _LIB_UNISTD_H */

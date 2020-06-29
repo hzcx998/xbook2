@@ -56,12 +56,12 @@ extern int *_errno(void);
 
 #define errno (*_errno())
 
-errno_t set_errno(int value)
+errno_t _set_errno(int value)
 {
     __errno = value;
     return __errno;
 }
-errno_t get_errno(int *value)
+errno_t _get_errno(int *value)
 {
     if (value) 
         *value = __errno;

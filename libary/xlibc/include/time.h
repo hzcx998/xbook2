@@ -33,4 +33,5 @@ char *ctime(const time_t *t);
 /* difftime函数计算t1-t2的差，并把结果值转换为秒，返回一个double类型。 */
 double difftime(time_t t1, time_t t0);
 
+
 #endif  /* _LIB_TIME_H */

@@ -103,6 +103,7 @@ enum syscall_num {
     SYS_TSTATE,
     SYS_GETVER,
     SYS_MSTATE,
+    SYS_USLEEP,
     SYSCALL_NR,
 };
 

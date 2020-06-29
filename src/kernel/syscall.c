@@ -79,4 +79,6 @@ void init_syscall()
     syscall_table[SYS_TSTATE] = sys_tstate;
     syscall_table[SYS_GETVER] = sys_getver;
     syscall_table[SYS_MSTATE] = sys_mstate;    
+    syscall_table[SYS_USLEEP] = sys_usleep;    
+    
 }

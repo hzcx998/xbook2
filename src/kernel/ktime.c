@@ -236,6 +236,39 @@ int sys_clock_gettime(clockid_t clockid, struct timespec *ts)
     return 0;
 }
 
+/**
+ * 转换的ticks值得最大值
+ */
+#define MAX_SYSTICKS_VALUE  ((~0UL >> 1) -1)
+
+/**
+ * 将timeval格式的时间转换成systicks
+ */
+unsigned long timeval_to_systicks(struct timeval *tv)
+{
+    unsigned long sec = tv->tv_sec;
+    unsigned long usec = tv->tv_usec;
+    if (sec >= (MAX_SYSTICKS_VALUE / HZ)) /* 超过秒的ticks的最大值，就直接返回最大值 */
+        return MAX_SYSTICKS_VALUE;
+    usec -= 1000000L / HZ - 1;  /* 向下对齐微妙秒数 */
+    usec /= 1000000L / HZ;  /* 秒/HZ=1秒的ticks数 */
+    return HZ * sec + usec;
+}
+
+/**
+ * 将systicks转换成timeval格式的时间
+ */
+void systicks_to_timeval(unsigned long ticks, struct timeval *tv)
+{
+    unsigned long sec = ticks / HZ;     /* 获取秒数 */
+    unsigned long usec = (ticks % HZ) * MS_PER_TICKS;    /* 获取毫秒数 */
+    usec *= 1000L;      /* 获取微秒数 */
+    if (sec >= (MAX_SYSTICKS_VALUE / HZ)) /* 超过秒的ticks的最大值，就修复它 */
+        sec = MAX_SYSTICKS_VALUE;
+    tv->tv_sec = sec;
+    tv->tv_usec = usec;
+}
+
 
 /**
  * print_ktime - 打印系统时间

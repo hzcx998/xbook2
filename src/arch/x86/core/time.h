@@ -20,4 +20,6 @@ void __init_pit_clock();
 #define __get_time_year     cmos_get_year
 #define __get_time_week     cmos_get_day_of_week
 
+void __udelay(int usec);
+
 #endif	/* _X86_TIME_H */

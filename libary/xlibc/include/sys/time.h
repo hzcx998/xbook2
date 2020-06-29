@@ -40,7 +40,6 @@ clock_t clock();
 
 int ktimeto(ktime_t *ktm, struct tm *tm);
 
-
 /* 获取文件的日期 */
 #define FILE_TIME_HOU(data) ((unsigned int)((data >> 11) & 0x1f))
 #define FILE_TIME_MIN(data) ((unsigned int)((data >> 5) & 0x3f))

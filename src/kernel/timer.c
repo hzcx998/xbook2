@@ -1,6 +1,10 @@
 #include <xbook/assert.h>
 #include <xbook/timer.h>
+#include <xbook/ktime.h>
+#include <xbook/task.h>
+#include <errno.h>
 #include <arch/interrupt.h>
+#include <arch/time.h>
 
 LIST_HEAD(timer_list_head);
 
@@ -65,4 +69,40 @@ void update_timers()
         do_timer_action(timer);
     }
     restore_intr(flags);
+}
+
+/**
+ * 以微妙为单位进行休眠。
+ * 如果毫秒数小于等于2就是延时
+ * 不然就是定时器阻塞休眠。
+ */
+long sys_usleep(struct timeval *inv, struct timeval *outv)
+{
+    struct timeval tv;
+    unsigned long ticks;
+
+    memcpy(&tv, inv, sizeof(struct timeval));
+
+    /* 检测参数 */
+    if (tv.tv_usec >= 1000000 || tv.tv_sec < 0 || tv.tv_usec < 0)
+        return -EINVAL;
+
+    /* 如果小于2毫秒就用延时的方式 */
+    if (tv.tv_usec < 2000L || tv.tv_sec == 0) {
+        udelay(tv.tv_usec);
+        return 0;
+    }
+    /* 计算ticks */
+    ticks = timeval_to_systicks(&tv);
+    /* 休眠一定的ticks */
+    ticks = task_sleep_by_ticks(ticks);
+    /* 如果还剩下ticks，就传回去 */
+    if (ticks > 0) {
+        if (outv) {
+            systicks_to_timeval(ticks, &tv);
+            memcpy(outv, &tv, sizeof(struct timeval));
+        }
+        return -EINTR;  /* 休眠被打断 */
+    }
+    return 0;
 }

@@ -20,6 +20,110 @@
 #include  <errno.h>
 #include  <semaphore.h>
 
+#if 0
+
+pthread_mutex_t mutex;
+
+void *thread_a();
+void *thread_b();
+
+int ticks = 0;
+
+int main(int argc, char *argv[])
+{
+    pthread_mutex_init(&mutex, NULL);
+
+    pthread_t t0, t1, t2, t3, t4; 
+    
+    pthread_create(&t0, NULL, thread_a, NULL);
+    pthread_create(&t1, NULL, thread_a, NULL);
+    pthread_create(&t2, NULL, thread_b, NULL);
+    pthread_create(&t3, NULL, thread_b, NULL);
+    pthread_create(&t4, NULL, thread_b, NULL);
+
+    pthread_join(t0, NULL);
+
+    return 0;
+}
+
+void *thread_a()
+{
+    printf("thread %d: start.\n", pthread_self());
+        
+    while (1)
+    {
+        pthread_mutex_lock(&mutex);
+        ticks++;
+        pthread_mutex_unlock(&mutex);
+        usleep(10);   
+    }
+}
+
+void *thread_b()
+{
+    printf("thread %d: start.\n", pthread_self());
+    
+    while (1)
+    {
+        pthread_mutex_lock(&mutex);
+        printf("thread %d: ticks %d.\n", pthread_self(), ticks);
+        pthread_mutex_unlock(&mutex);
+        usleep(10);
+    }
+}
+#endif
+
+#if 1
+sem_t sema;
+void *thread_a();
+void *thread_b();
+
+int ticks = 0;
+
+int main(int argc, char *argv[])
+{
+    sem_init(&sema, 0, 1);
+
+    pthread_t t0, t1, t2, t3, t4; 
+    
+    pthread_create(&t0, NULL, thread_a, NULL);
+    pthread_create(&t1, NULL, thread_a, NULL);
+    pthread_create(&t2, NULL, thread_b, NULL);
+    pthread_create(&t3, NULL, thread_b, NULL);
+    pthread_create(&t4, NULL, thread_b, NULL);
+
+    return 0;
+}
+
+void *thread_a()
+{
+    while (1)
+    {
+        //printf("thread %d: ticks %d.\n", pthread_self(), ticks);
+        sem_wait(&sema);
+        ticks++;
+        sem_post(&sema);
+        usleep(10);
+    }
+}
+
+
+void *thread_b()
+{
+    while (1)
+    {
+        //printf("thread %d: ticks %d.\n", pthread_self(), ticks);
+        sem_wait(&sema);
+        printf("thread %d: ticks %d.\n", pthread_self(), ticks);
+        sem_post(&sema);
+        usleep(10);
+    }
+}
+
+#endif
+
+#if 0
+
 #define	NBUFF	 8
 #define BUFFSIZE 128
  
@@ -121,9 +225,7 @@ int main(int argc, char **argv)
     exit(0);
     return 0;
 }
- 
- 
- 
+
 void *produce(void *arg)
 {
     while( 1 )
@@ -226,7 +328,7 @@ void* consume(void *arg)
  
     return NULL;
 }
-
+#endif
 #if 0
 
 int main(int argc, char *argv[])

@@ -1,7 +1,7 @@
 #include <sys/time.h>
 #include <sys/syscall.h>
 #include <time.h>
-
+#include <errno.h>
 /**
  * alarm - 设置一个闹钟
  * @second: 闹钟产生的时间
@@ -67,4 +67,26 @@ int ktimeto(ktime_t *ktm, struct tm *tm)
     tm->tm_wday = ktm->week_day;
     tm->tm_isdst = -1;
     return 0;
+}
+
+/**
+ * usleep - 以微妙为单位休眠
+ * @usec: 要休眠的时间（微秒）
+ * 
+ * 休眠过程中被打断，那么剩余的休眠时间（微秒）将被返回
+ * 
+ * 成功返回0，失败返回-1
+ */
+int usleep(useconds_t usec)
+{
+    struct timeval tvin, tvout;
+    tvin.tv_sec = usec / 1000000L;
+    tvin.tv_usec = usec % 1000000L;
+    
+    long retv = syscall2(int, SYS_USLEEP, &tvin, &tvout);
+    if (!retv)
+        return 0;
+
+    _set_errno(retv);
+    return -1;
 }
