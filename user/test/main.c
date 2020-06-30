@@ -21,6 +21,64 @@
 #include  <semaphore.h>
 
 #if 0
+pthread_mutex_t mutex;
+pthread_cond_t cond;
+
+int ticks = 0;
+
+void *thread1(void *arg)
+{
+    pthread_cleanup_push(pthread_mutex_unlock, &mutex);
+    //提供函数回调保护
+    while (1) {
+        //printf("thread1 is running\n");
+        pthread_mutex_lock(&mutex);
+        
+        pthread_cond_wait(&cond, &mutex);
+        ticks++;
+        //usleep(100);
+        //printf("thread1 applied the condition\n");
+        pthread_mutex_unlock(&mutex);
+        //sleep(4);
+        
+    }
+    pthread_cleanup_pop(0);
+}
+
+void *thread2(void *arg)
+{
+    while (1) {
+        //printf("thread2 is running\n");
+        pthread_mutex_lock(&mutex);
+        pthread_cond_wait(&cond, &mutex);
+        /*printf("thread2 applied the condition\n");
+        printf("thread %d: ticks %d\n", pthread_self(), ticks);*/
+        //usleep(100);
+        pthread_mutex_unlock(&mutex);
+        //sleep(1);
+        
+    }
+}
+
+int main()
+{
+    pthread_t thid1, thid2;
+    printf("condition variable study!\n");
+    pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&cond, NULL);
+
+    pthread_create(&thid1, NULL, (void *) thread1, NULL);
+    pthread_create(&thid2, NULL, (void *) thread2, NULL);
+    do {
+        pthread_cond_signal(&cond);
+        usleep(1000);
+    } while (1);
+    sleep(3);
+    pthread_exit(0);
+    return 0;
+}
+#endif
+#if 0
 
 pthread_mutex_t mutex;
 
@@ -91,7 +149,7 @@ int main(int argc, char *argv[])
     pthread_create(&t2, NULL, thread_b, NULL);
     pthread_create(&t3, NULL, thread_b, NULL);
     pthread_create(&t4, NULL, thread_b, NULL);
-
+    pthread_join(t0, NULL);
     return 0;
 }
 
@@ -114,9 +172,9 @@ void *thread_b()
     {
         //printf("thread %d: ticks %d.\n", pthread_self(), ticks);
         sem_wait(&sema);
-        printf("thread %d: ticks %d.\n", pthread_self(), ticks);
+        //printf("thread %d: ticks %d.\n", pthread_self(), ticks);
         sem_post(&sema);
-        usleep(10);
+        usleep(100);
     }
 }
 

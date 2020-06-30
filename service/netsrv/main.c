@@ -127,13 +127,15 @@ int main(int argc, char *argv[])
 	lwip_init_task();
 
 #if NO_SYS == 0
-    //tcpecho_init();
+    tcpecho_init();
+    //udpecho_init();
+    httpserver_init();
+    chargen_init();
 #endif    
     //dhcp_netconn_init();
 
     //socket_examples_init();
-    //httpserver_init();
-    //udpecho_init();
+    //
     //socket_examples_init();
     //chargen_init();
     // setup echo server
@@ -241,10 +243,10 @@ httpserver_serve(struct netconn *conn)
   /* Read the data from the port, blocking if nothing yet there. 
    We assume the request (the part we care about) is in one netbuf */
   err = netconn_recv(conn, &inbuf);
-  
+
   if (err == ERR_OK) {
     netbuf_data(inbuf, (void**)&buf, &buflen);
-    
+
     /* Is this an HTTP GET command? (only check the first 5 chars, since
     there are other formats for GET, and we're keeping it very simple )*/
     if (buflen>=5 &&
@@ -253,15 +255,16 @@ httpserver_serve(struct netconn *conn)
         buf[2]=='T' &&
         buf[3]==' ' &&
         buf[4]=='/' ) {
-      
       /* Send the HTML header 
              * subtract 1 from the size, since we dont send the \0 in the string
              * NETCONN_NOCOPY: our data is const static, so no need to copy it
        */
-      netconn_write(conn, http_html_hdr, sizeof(http_html_hdr)-1, NETCONN_NOCOPY);
+      netconn_write(conn, http_html_hdr, sizeof(http_html_hdr)-1, NETCONN_COPY);
       
       /* Send our HTML page */
-      netconn_write(conn, http_index_html, sizeof(http_index_html)-1, NETCONN_NOCOPY);
+      netconn_write(conn, http_index_html, sizeof(http_index_html)-1, NETCONN_COPY);
+
+      usleep(100);
     }
   }
   /* Close the connection (server closes in HTTP) */
@@ -293,6 +296,7 @@ httpserver_thread(void *arg)
   do {
     err = netconn_accept(conn, &newconn);
     if (err == ERR_OK) {
+      
       httpserver_serve(newconn);
       netconn_delete(newconn);
     }
@@ -334,7 +338,7 @@ udpecho_thread(void *arg)
 
   conn = netconn_new(NETCONN_UDP);
   LWIP_ASSERT("con != NULL", conn != NULL);
-  netconn_bind(conn, NULL, 7);
+  netconn_bind(conn, NULL, 8080);
 
   while (1) {
     err = netconn_recv(conn, &buf);
@@ -685,8 +689,6 @@ static void chargen_thread(void *arg)
             
         }
     }
-    
-    
 }
 
 /**************************************************************

@@ -90,7 +90,7 @@ CTYPE_OBJS		= 	$(CTYPE_DIR)/ctype.o \
 
 # objects
 OBJS			= 	$(ARCH_OBJS) $(ANSI_OBJS) $(STDIO_OBJS) \
-					$(SYSLIB_OBJS) $(STDLIB_OBJS) $(PTHREAD_OBJS) \
+					$(SYSLIB_OBJS) $(STDLIB_OBJS) \
 					$(TIME_OBJS) $(UNISTD_OBJS) $(MATH_OBJS) $(CTYPE_OBJS)
 
 # out file

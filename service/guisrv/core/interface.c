@@ -1,5 +1,5 @@
 #include <srv/guisrv.h>
-#include <pthread/pthread.h>
+#include <pthread.h>
 #include <guisrv.h>
 #include <stdio.h>
 #include <string.h>

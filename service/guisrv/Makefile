@@ -16,7 +16,8 @@ DIR_INCLUDE = ./include
 
 # libarys
 DIR_XLIBC 		= $(DIR_LIBARY)/xlibc
-DIR_SGI 			= $(DIR_LIBARY)/sgi
+DIR_SGI 		= $(DIR_LIBARY)/sgi
+DIR_PTHREAD 	= $(DIR_LIBARY)/pthread
 
 # rom dir
 DIR_ROM = ../../develop/rom
@@ -43,11 +44,13 @@ ASM_FLAGS	= -f elf \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_XLIBC)/include \
 			-I $(DIR_SGI)/include \
+			-I $(DIR_PTHREAD)/include \
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_XLIBC)/include \
 			-I $(DIR_SGI)/include \
+			-I $(DIR_PTHREAD)/include \
 
 DRIVERS_OBJS 	= 	drivers/screen.o \
 					drivers/mouse.o \
@@ -95,8 +98,9 @@ OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) \
 		$(FONT_OBJS) $(ENVIRONMENT_OBJS) $(WIDGET_OBJS) $(CORE_OBJS) \
 		$(INPUT_OBJS) $(EVENT_OBJS)
 
-LIB_FILE 	= $(DIR_XLIBC)/xlibc-0.0.1.a \
-
+LIB_FILE 	:=  $(DIR_PTHREAD)/pthread-0.0.1.a \
+				$(DIR_XLIBC)/xlibc-0.0.1.a \
+			
 # -n: close memory aligin.
 #LDFLAGS		= -T link.ld -n
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000

@@ -35,12 +35,8 @@ int sys_waitque_create()
     waitque_t *waitque = &waitque_table[0];
     int i;
     
-    pr_dbg("%s: lock start.\n", __func__);
 #ifdef USE_MUTEX_LOCK
     mutex_lock(&waitque_table_lock);
-
-    pr_dbg("%s: lock end.\n", __func__);
-
 #else
 
     unsigned long irqflags;
@@ -185,13 +181,8 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
                 struct timespec newtm;
                 newtm.tv_sec = abstm->tv_sec - curtm.tv_sec;
                 newtm.tv_nsec = abstm->tv_nsec - curtm.tv_nsec;
-                if (newtm.tv_nsec > 0) {    /* 计算微秒部分 */
-                    unsigned long ms = (newtm.tv_nsec / 1000000);   /* 计算毫秒 */
-                    ticks = ms / MS_PER_TICKS;      /* 计算ticks */
-                }
-                if (newtm.tv_sec > 0) {     /* 计算秒部分 */
-                    ticks += newtm.tv_sec * 1000 / MS_PER_TICKS;  /* 秒转换成ticks */
-                }
+
+                ticks = timespec_to_systicks(&newtm);
             }
             if (ticks <= 0) {   /* ticks为0，就直接返回 */
                 /* 从等待队列删除 */
@@ -201,9 +192,12 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
             }
             /* 休眠的ticks太小，导致调度过于频繁，因此，在此进行增加,
             越小加的越多，越多，加的越少 */
-            if (ticks < 10)
+            /*if (ticks < 10)
                 ticks += 10 - ticks;
-            
+            */
+            if (ticks < 2 * MS_PER_TICKS)
+                ticks = 2 * MS_PER_TICKS;
+
 #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "%s: pid=%d sleep ticks %u\n", __func__, current_task->pid, ticks);
 #endif

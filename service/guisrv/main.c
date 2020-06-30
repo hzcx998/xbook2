@@ -23,7 +23,7 @@
 #include <event/msgque.h>
 
 #include <guisrv.h>
-#include <pthread/pthread.h>
+#include <pthread.h>
 
 int init_guisrv()
 {

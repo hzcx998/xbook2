@@ -37,6 +37,7 @@ DIR_ROM = ../../develop/rom
 
 # libarys
 DIR_XLIBC 		= $(DIR_LIBARY)/xlibc
+DIR_PTHREAD 	= $(DIR_LIBARY)/pthread
 
 BIN = $(DIR_ROM)/sbin/netsrv
 BIN_DIS = out.disasm
@@ -59,7 +60,7 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 ASM_FLAGS	= -f elf \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_XLIBC)/include \
-			-I $(DIR_XLIBC)/include/pthread \
+			-I $(DIR_PTHREAD)/include \
 			
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_INCLUDE) \
@@ -68,7 +69,7 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(LWIP_NETIF_INCLUDE) \
 			-I $(LWIP_ARCH_INCLUDE) \
 			-I $(DIR_XLIBC)/include \
-			-I $(DIR_XLIBC)/include/pthread \
+			-I $(DIR_PTHREAD)/include \
 
 
 # object files
@@ -133,7 +134,8 @@ MAIN_OBJS 	= 	main.o \
 
 OBJS =  $(MAIN_OBJS) $(LWIP_OBJS) $(DRIVERS_OBJS)
 
-LIB_FILE = $(DIR_XLIBC)/xlibc-0.0.1.a \
+LIB_FILE 	:=  $(DIR_PTHREAD)/pthread-0.0.1.a \
+				$(DIR_XLIBC)/xlibc-0.0.1.a \
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 

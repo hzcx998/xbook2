@@ -1,4 +1,4 @@
-#include <pthread/pthread.h>
+#include <pthread.h>
 #include <sys/waitque.h>
 #include <sys/proc.h>
 #include <stdlib.h>
@@ -62,30 +62,25 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
         return EINVAL;
     /* 如果是通过静态方式创建，那么waitque就需要重新获取 */
     if (cond->waitque == -1) {
+        return EINVAL;
         cond->waitque = waitque_create();
         if (cond->waitque < 0)
             return ENOMEM;
     }
-    printf("conw start %d.\n", cond->spin.count.value);
+
     pthread_spin_lock(&cond->spin);    /* 获得对互斥锁得操作 */
-    printf("conw enter %d.\n",cond->spin.count.value);
-    
+
     /* 互斥锁解锁 */
     pthread_mutex_unlock(mutex);
 
     /* 加入等待队列，并把自旋锁解锁 */
-    //waitque_wait(cond->waitque, (void *) &cond->spin.count, WAITQUE_ZERO, 0);
+    waitque_wait(cond->waitque, (void *) &cond->spin.count, WAITQUE_ZERO, 0);
     //printf("cond: %d after wait, lock mutex.\n", pthread_self());
-    
     //pthread_spin_unlock(&cond->spin);    /* 获得对互斥锁得操作 */
-    
-
-    printf("conw leave %d.\n",cond->spin.count.value);
     
     /* 对互斥锁加锁，获得操作。 */
     pthread_mutex_lock(mutex);
-    printf("conw end %d.\n", cond->spin.count.value);
-    
+ 
     return 0;
 }
 #if 1
@@ -103,6 +98,7 @@ int pthread_cond_timedwait(
         return EINVAL;
     /* 如果是通过静态方式创建，那么waitque就需要重新获取 */
     if (cond->waitque == -1) {
+        return EINVAL;
         cond->waitque = waitque_create();
         if (cond->waitque < 0)
             return ENOMEM;
@@ -133,6 +129,7 @@ int pthread_cond_signal(pthread_cond_t *cond)
         return EINVAL;
     /* 如果是通过静态方式创建，那么waitque就需要重新获取 */
     if (cond->waitque == -1) {
+        return EINVAL;
         cond->waitque = waitque_create();
         if (cond->waitque < 0)
             return ENOMEM;
@@ -140,8 +137,8 @@ int pthread_cond_signal(pthread_cond_t *cond)
 
     pthread_spin_lock(&cond->spin);    /* 获得对互斥锁得操作 */
 
-    /* 加入等待队列，并把自旋锁解锁 */
-    //waitque_wake(cond->waitque, NULL, 0, 0);
+    /* 唤醒等待队列 */
+    waitque_wake(cond->waitque, NULL, 0, 0);
 
     pthread_spin_unlock(&cond->spin);    /* 获得对互斥锁得操作 */
 
@@ -159,6 +156,7 @@ int pthread_cond_broadcast(pthread_cond_t *cond)
         return EINVAL;
     /* 如果是通过静态方式创建，那么waitque就需要重新获取 */
     if (cond->waitque == -1) {
+        return EINVAL;
         cond->waitque = waitque_create();
         if (cond->waitque < 0)
             return ENOMEM;

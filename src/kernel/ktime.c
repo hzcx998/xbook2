@@ -271,6 +271,34 @@ void systicks_to_timeval(unsigned long ticks, struct timeval *tv)
 
 
 /**
+ * 将timespec格式的时间转换成systicks
+ */
+unsigned long timespec_to_systicks(struct timespec *ts)
+{
+    unsigned long sec = ts->tv_sec;
+    unsigned long nsec = ts->tv_nsec;
+    if (sec >= (MAX_SYSTICKS_VALUE / HZ)) /* 超过秒的ticks的最大值，就直接返回最大值 */
+        return MAX_SYSTICKS_VALUE;
+    nsec -= 1000000000L / HZ - 1;  /* 向下对齐纳妙秒数 */
+    nsec /= 1000000000L / HZ;  /* 秒/HZ=1秒的ticks数 */
+    return HZ * sec + nsec;
+}
+
+/**
+ * 将systicks转换成timespec格式的时间
+ */
+void systicks_to_timespec(unsigned long ticks, struct timespec *ts)
+{
+    unsigned long sec = ticks / HZ;     /* 获取秒数 */
+    unsigned long nsec = (ticks % HZ) * MS_PER_TICKS;    /* 获取毫秒数 */
+    nsec *= 1000000L;      /* 获取纳秒数 */
+    if (sec >= (MAX_SYSTICKS_VALUE / HZ)) /* 超过秒的ticks的最大值，就修复它 */
+        sec = MAX_SYSTICKS_VALUE;
+    ts->tv_sec = sec;
+    ts->tv_nsec = nsec;
+}
+
+/**
  * print_ktime - 打印系统时间
  */
 void print_ktime()

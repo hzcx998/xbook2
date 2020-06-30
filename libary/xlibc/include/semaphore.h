@@ -3,7 +3,7 @@
 #define _XLIBC_SEMAPHORE_H
 
 #include <sys/time.h>
-#include <pthread/pthread.h>
+#include <pthread.h>
 
 /* Maximum value the semaphore can have.  */
 #define SEM_VALUE_MAX   (2147483647)

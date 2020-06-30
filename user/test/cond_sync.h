@@ -1,8 +1,8 @@
 #ifndef COND_SYNC_H
 #define COND_SYNC_H
  
- 
-#include<pthread/pthread.h>
+
+#include<pthread.h>
  
 typedef struct Cond_sync_tag
 {

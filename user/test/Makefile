@@ -13,8 +13,9 @@ FATFS 		= ../../tools/fatfs/fatfs
 DIR_LIBARY = ../../libary
 
 # libarys
-DIR_XLIBC = $(DIR_LIBARY)/xlibc
-DIR_SGI = $(DIR_LIBARY)/sgi
+DIR_XLIBC 		= $(DIR_LIBARY)/xlibc
+DIR_SGI 		= $(DIR_LIBARY)/sgi
+DIR_PTHREAD 	= $(DIR_LIBARY)/pthread
 
 # rom disk size (MB)
 ROM_DISK_SZ = 10	
@@ -42,14 +43,19 @@ ASM_FLAGS	= -f elf \
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_XLIBC)/include \
-			-I $(DIR_SGI)/include 
+			-I $(DIR_SGI)/include \
+			-I $(DIR_PTHREAD)/include \
+			
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
 
 OBJS =  main.o \
 		cond_sync.o \
 
+
+# 被依赖库应放到后面。
 LIB_FILE := $(DIR_SGI)/sgi-0.0.1.a \
+			$(DIR_PTHREAD)/pthread-0.0.1.a \
 			$(DIR_XLIBC)/xlibc-0.0.1.a \
 			
 

@@ -26,5 +26,7 @@ int sys_clock_gettime(clockid_t clockid, struct timespec *ts);
 
 unsigned long timeval_to_systicks(struct timeval *tv);
 void systicks_to_timeval(unsigned long ticks, struct timeval *tv);
+unsigned long timespec_to_systicks(struct timespec *ts);
+void systicks_to_timespec(unsigned long ticks, struct timespec *ts);
 
 #endif   /* _XBOOK_KTIME_H */

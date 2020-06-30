@@ -55,7 +55,7 @@ int pthread_spin_trylock(pthread_spinlock_t *lock)
     /* 如果返回的旧值是0，那么成功获取，如果是1表示已经被占用，需要等待 */
     oldvale = atomic_xchg(&lock->count, 1);
     //oldvale = test_and_set(&lock->count, 1);
-    if (!oldvale)
+    if (oldvale != 1)   /* 没有上锁就成功 */
         return 0;
     else 
         return EBUSY;   /* EBUSY繁忙 */

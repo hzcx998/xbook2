@@ -32,7 +32,7 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
-#define NO_SYS                     1
+#define NO_SYS                     0
 #define LWIP_SOCKET               (NO_SYS==0)
 #define LWIP_NETCONN              (NO_SYS==0)
 
