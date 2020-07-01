@@ -11,6 +11,8 @@ enum filesrv_call_num {
     NETSRV_SEND,
     NETSRV_RECV,
     NETSRV_CLOSE,
+    NETSRV_SENDTO,
+    NETSRV_RECVFROM,
     NETSRV_CALL_NR,    /* 最大数量 */
 };
 

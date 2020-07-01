@@ -24,3 +24,5 @@
     getcwd, chdir.
 * 在shell中实现ls, cd, pwd, lsdrive, lsdev, cat, cp, dir, kill(trig), mkdir,rmdir,mv,rename, rm, echo.
 * 开始网络服务进程的开发。
+* 2020/7/2
+* 将src/makefile的功能独立成只编译链接内核。启动部分放到主makefile中来。

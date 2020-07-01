@@ -35,7 +35,7 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 ASM_FLAGS	= -f elf \
 			-I $(DIR_XLIBC)/include 
 
-C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
+C_FLAGS		= -c -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector \
 			-I $(DIR_XLIBC)/include 
 
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000

@@ -22,17 +22,181 @@
 #include <sys/socket.h>
 
 #include "cond_sem.h"
-
+#if 0
 int main(int argc, char *argv[])
 {
     printf("hello, test.\n");
     
     return 0;
 }
+#endif
+
+
+#if 1
+
+//#define SOCKET_UDP_SERVER_TEST
+
+#ifdef SOCKET_UDP_SERVER_TEST
+
+#define UDPPORT 8080
+#define UDPSERV "192.168.0.105"
+#define UDPSERV2 "192.168.0.104"
+
+int main()
+{
+    printf("[test] start.\n");
+    sleep(3);
+    int ret;
+    printf("[test] socket.\n");
+    int servfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (servfd < 0) {
+        printf("create socket failed!\n");
+        return -1;
+    }
+    printf("[test] socket ok.\n");
+
+    struct sockaddr_in client_addr;
+    struct sockaddr_in addr;
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_len = sizeof(addr);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(UDPPORT);
+    addr.sin_addr.s_addr = inet_addr(UDPSERV);
+
+    int serv_addr_len = sizeof(struct sockaddr_in);
+    int client_addr_len = sizeof(struct sockaddr_in);
+    
+    ret = bind(servfd, (struct sockaddr *)&addr, serv_addr_len);
+    if (ret < 0) {
+        printf("bind socket failed!\n");
+        sockclose(servfd);
+        return -1;
+    }
+
+    char buf[512];
+    int recvbytes;
+    while (1)
+    {
+        memset(buf, 0, 512);
+        recvbytes = recvfrom(servfd, buf, 512, 0, ( struct sockaddr *)&client_addr, &client_addr_len);
+        if (recvbytes < 0) {
+            printf("[test] recv failed!\n");
+            break;
+        }
+
+        printf("recv len=%d, %s.\n", recvbytes, buf);
+        printf("client len %d, addr %x port %d.\n", client_addr_len, client_addr.sin_addr.s_addr, client_addr.sin_port);
+        
+        memset(buf, 0, 512);
+        strcpy(buf, "get data!\n\r");
+        recvbytes = sendto(servfd, buf, strlen(buf), 0,  (struct sockaddr *)&client_addr, client_addr_len);
+        if (recvbytes < 0) {
+            printf("[test] send failed!\n");
+            //break;
+        }
+        printf("send len=%d.\n", recvbytes);
+        usleep(50000);
+    }
+    if (sockclose(servfd) < 0) {
+        printf("close socket failed!\n");
+        
+    }
+
+    while (1)
+    {
+        /* code */
+    }
+    
+
+    return 0;
+}
+#else
+
+#define UDPPORT 8081
+#define UDPSERV2 "192.168.0.104"
+
+int main()
+{
+    printf("[test] start.\n");
+    sleep(3);
+    int ret;
+    printf("[test] socket.\n");
+    int servfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (servfd < 0) {
+        printf("create socket failed!\n");
+        return -1;
+    }
+    printf("[test] socket ok.\n");
+
+    struct sockaddr_in client_addr;
+    struct sockaddr_in addr;
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_len = sizeof(addr);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(UDPPORT);
+    addr.sin_addr.s_addr = inet_addr(UDPSERV2);
+    //printf("addr: len=%d family=%d port=%d addr=%x\n", addr.sin_len, addr.sin_family, addr.sin_port, addr.sin_addr.s_addr);
+
+    memset(&client_addr, 0, sizeof(addr));
+    client_addr.sin_len = sizeof(addr);
+    client_addr.sin_family = AF_INET;
+    client_addr.sin_port = htons(8080);
+    client_addr.sin_addr.s_addr = inet_addr("192.168.0.105");
+    ret = bind(servfd, (struct sockaddr *)&client_addr, sizeof(struct sockaddr_in));
+    if (ret < 0) {
+        printf("bind socket failed!\n");
+        return -1;
+    }
+    int serv_addr_len = sizeof(struct sockaddr_in);
+
+    char buf[512];
+    int recvbytes;
+    while (1)
+    {
+        printf("addr: len=%d family=%d port=%x addr=%x\n", addr.sin_len, addr.sin_family, addr.sin_port, addr.sin_addr.s_addr);
+    
+        memset(buf, 0, 512);
+        strcpy(buf, "get data!\n\r");
+        recvbytes = sendto(servfd, buf, strlen(buf), 0,  (struct sockaddr *)&addr, serv_addr_len);
+        if (recvbytes < 0) {
+            printf("[test] send failed!\n");
+            //break;
+        }
+        printf("send len=%d.\n", recvbytes);
+
+        usleep(100000);
+
+        memset(buf, 0, 512);
+        recvbytes = recvfrom(servfd, buf, 512, 0, ( struct sockaddr *)&addr, &serv_addr_len);
+        if (recvbytes < 0) {
+            printf("[test] recv failed!\n");
+            break;
+        }
+
+        printf("recv len=%d, %s.\n", recvbytes, buf);
+        printf("client len %d, addr %x port %d.\n", serv_addr_len, addr.sin_addr.s_addr, addr.sin_port);
+    }
+    if (sockclose(servfd) < 0) {
+        printf("close socket failed!\n");
+    }
+
+    while (1)
+    {
+        /* code */
+    }
+    
+
+    return 0;
+}
+#endif
+#endif
+
 
 #if 0
 
-#define SOCKET_SERVER_TEST
+//#define SOCKET_SERVER_TEST
 
 #ifdef SOCKET_SERVER_TEST
 int main()
@@ -48,7 +212,6 @@ int main()
     }
     printf("[test] socket ok.\n");
 
-    
     struct sockaddr_in other_addr;
 
     struct sockaddr_in addr;
@@ -73,18 +236,38 @@ int main()
         sockclose(socket_id);
         return -1;
     }
-
-    ret = accept(socket_id, (struct sockaddr *)&other_addr, &len);
-    if (ret < 0) {
+    int client_socket;
+    client_socket = accept(socket_id, (struct sockaddr *)&other_addr, &len);
+    if (client_socket < 0) {
         printf("accept socket failed!\n");
         sockclose(socket_id);
         return -1;
     }
     printf("accept ok, client ip %x port %d, addr len %d.\n", other_addr.sin_addr, other_addr.sin_port, len);
 
+    char buf[512];
+    int recvbytes;
+
+    while (1)
+    {
+        memset(buf, 0, 512);
+        recvbytes = recv(client_socket, buf, 512, 0);
+        if (recvbytes < 0) {
+            printf("[test] recv failed!\n");
+            break;
+        }
+        printf("recv %s.\n", buf);
+        recvbytes = send(client_socket, "get data", 8, 0);
+        if (recvbytes < 0) {
+            printf("[test] send failed!\n");
+            break;
+        }
+        //usleep(50000);
+    }
+
     sleep(3);
     printf("sleep 3 seconds over.\n");
-    
+    sockclose(client_socket);
     if (sockclose(socket_id) < 0) {
         printf("close socket failed!\n");
         
@@ -128,7 +311,29 @@ int main()
         return -1;
     }
 
+    char buf[512];
+    int recvbytes;
+
+    while (1)
+    {
+        memset(buf, 0, 512);
+        recvbytes = send(socket_id, "get data", 8, 0);
+        if (recvbytes < 0) {
+            printf("[test] send failed!\n");
+            break;
+        }
+        
+        recvbytes = recv(socket_id, buf, 512, 0);
+        if (recvbytes < 0) {
+            printf("[test] recv failed!\n");
+            break;
+        }
+        printf("recv %s.\n", buf);
+        //usleep(50000);
+    }
+
     printf("connect ok, sleep 3 seconds.\n");
+        
         
     sleep(3);
     printf("sleep 3 seconds over.\n");

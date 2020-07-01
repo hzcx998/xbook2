@@ -87,8 +87,9 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_ACCEPT, 0);
     SETSRV_ARG(&srvarg, 1, sockfd, 0);
-    SETSRV_ARG(&srvarg, 2, addr, sizeof(struct sockaddr));
+    SETSRV_ARG(&srvarg, 2, addr, *addrlen);
     SETSRV_ARG(&srvarg, 3, addrlen, sizeof(socklen_t));
+    SETSRV_ARG(&srvarg, 4, *addrlen, 0); // 传入地址长度
     SETSRV_IO(&srvarg, (SRVIO_USER << 2) | (SRVIO_USER << 3));
     SETSRV_RETVAL(&srvarg, -1);
     if (!srvcall(SRV_NET, &srvarg)) {
@@ -96,7 +97,88 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
         if (ret == -1) {
             return -1;
         }
-        return 0;
+        return ret;
+    }
+    return -1;
+}
+
+int send(int sockfd, const void *buf, int len, int flags)
+{
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, NETSRV_SEND, 0);
+    SETSRV_ARG(&srvarg, 1, sockfd, 0);
+    SETSRV_ARG(&srvarg, 2, buf, len);
+    SETSRV_ARG(&srvarg, 3, flags, 0);
+    SETSRV_RETVAL(&srvarg, -1);
+    if (!srvcall(SRV_NET, &srvarg)) {
+        int ret = GETSRV_RETVAL(&srvarg, int);
+        if (ret == -1) {
+            return -1;
+        }
+        return ret;
+    }
+    return -1;
+}
+
+int recv(int sockfd, void *buf, int len, unsigned int flags)
+{
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, NETSRV_RECV, 0);
+    SETSRV_ARG(&srvarg, 1, sockfd, 0);
+    SETSRV_ARG(&srvarg, 2, buf, len);
+    SETSRV_ARG(&srvarg, 3, flags, 0);
+    SETSRV_IO(&srvarg, (SRVIO_USER << 2));
+    SETSRV_RETVAL(&srvarg, -1);
+    if (!srvcall(SRV_NET, &srvarg)) {
+        int ret = GETSRV_RETVAL(&srvarg, int);
+        if (ret == -1) {
+            return -1;
+        }
+        return ret;
+    }
+    return -1;
+}
+
+int sendto(int sockfd, const void *buf, int len, unsigned int flags,
+    const struct sockaddr *to, int tolen)
+{
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, NETSRV_SENDTO, 0);
+    SETSRV_ARG(&srvarg, 1, sockfd, 0);
+    SETSRV_ARG(&srvarg, 2, buf, len);
+    SETSRV_ARG(&srvarg, 3, flags, 0);
+    SETSRV_ARG(&srvarg, 4, to, tolen);
+    SETSRV_RETVAL(&srvarg, -1);
+    if (!srvcall(SRV_NET, &srvarg)) {
+        int ret = GETSRV_RETVAL(&srvarg, int);
+        if (ret == -1) {
+            return -1;
+        }
+        return ret;
+    }
+    return -1;
+}
+
+int recvfrom(int sockfd, void *buf, int len, unsigned int flags,
+    struct sockaddr *from, int *fromlen)
+{
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, NETSRV_RECVFROM, 0);
+    SETSRV_ARG(&srvarg, 1, sockfd, 0);
+    SETSRV_ARG(&srvarg, 2, buf, len);
+    SETSRV_ARG(&srvarg, 3, flags, 0);
+    SETSRV_ARG(&srvarg, 4, from, *fromlen);
+    SETSRV_ARG(&srvarg, 5, fromlen, sizeof(int));
+    SETSRV_ARG(&srvarg, 6, *fromlen, 0);
+    
+    SETSRV_IO(&srvarg, (SRVIO_USER << 2) | (SRVIO_USER << 4) | (SRVIO_USER << 5));
+    SETSRV_RETVAL(&srvarg, -1);
+    if (!srvcall(SRV_NET, &srvarg)) {
+        int ret = GETSRV_RETVAL(&srvarg, int);
+        if (ret == -1) {
+            return -1;
+        }
+        return ret;
     }
     return -1;
 }

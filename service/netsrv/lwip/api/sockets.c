@@ -355,7 +355,6 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     sock_set_errno(sock, err_to_errno(err));
     return -1;
   }
-  printf("[lwip] addr %x port %d\n", naddr, port);
 
   /* Note that POSIX only requires us to check addr is non-NULL. addrlen must
    * not be NULL if addr is valid.
@@ -367,8 +366,6 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     sin.sin_family = AF_INET;
     sin.sin_port = htons(port);
     inet_addr_from_ipaddr(&sin.sin_addr, &naddr);
-
-    printf("[lwip] addr %x port %d\n", &sin.sin_addr, *addrlen);
 
     if (*addrlen > sizeof(sin))
       *addrlen = sizeof(sin);

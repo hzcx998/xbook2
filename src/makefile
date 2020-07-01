@@ -129,7 +129,7 @@ OBJCOPY_FLAGS = -R .note -R .comment -S
 KERNEL_ELF =  kernel.elf
 KERNEL_ELF_DISASM =  kernel.elf.disasm
 
-PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg vbox clean dis build debuild
+PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg vbox clean dis
 PHONY	+= $(SRCDIRS)
 
 export NASM NASM_FLAGS CC LD CFLAGS LDFLAGS TOPDIR OBJCOPY OBJCOPY_FLAGS
@@ -215,21 +215,6 @@ qemudbg: disk
 # virtual box
 vbox: disk
 	$(VBOX_MANAGE) startvm $(VBOX_NAME) --type gui 
-
-# 构建环境。libary，service，user。这样，可以很方便得把内核开发和
-# 其它的开发分离
-build: 
-	cp $(RAW_IMG) $(HDA_IMG)
-	cd ../libary && make
-	cd ../service && make
-	cd ../user && make
-	
-# 清理环境。libary，service，user。这样，可以很方便得把内核开发和
-# 其它的开发分离
-debuild: 
-	cd ../libary && make clean
-	cd ../service && make clean
-	cd ../user && make clean
 	
 # clean temporary files
 clean: $(SRCDIRS)
