@@ -101,9 +101,6 @@ extern int *_errno(void);
 errno_t _set_errno(int value);
 errno_t _get_errno(int *value);
 
-#define set_errno   _set_errno
-#define get_errno   _get_errno
-
 void perror(char *str);
 char *strerror(int errnum);
 

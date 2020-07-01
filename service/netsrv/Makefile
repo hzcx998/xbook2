@@ -126,13 +126,13 @@ LWIP_API_OBJS =  	$(LWIP_API_DIR)/api_lib.o \
 LWIP_OBJS	:=  $(LWIP_CORE_OBJS) $(LWIP_ARCH_OBJS) $(LWIP_IPV4_OBJS) \
 				$(LWIP_SNMP_OBJS) $(LWIP_NETIF_OBJS)  $(LWIP_API_OBJS)
 
-CORE_OBJS	=
+CORE_OBJS	=	core/if.o
 
 DRIVERS_OBJS	= drivers/netcard.o
 
 MAIN_OBJS 	= 	main.o \
 
-OBJS =  $(MAIN_OBJS) $(LWIP_OBJS) $(DRIVERS_OBJS)
+OBJS =  $(MAIN_OBJS) $(LWIP_OBJS) $(DRIVERS_OBJS) $(CORE_OBJS)
 
 LIB_FILE 	:=  $(DIR_PTHREAD)/pthread-0.0.1.a \
 				$(DIR_XLIBC)/xlibc-0.0.1.a \

@@ -30,7 +30,7 @@
 *.dylib
 
 # Executables
-*.exe
+# not ignore *.exe, we need tools
 *.out
 *.app
 *.i*86

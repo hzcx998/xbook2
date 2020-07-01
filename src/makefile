@@ -52,6 +52,7 @@ HDA_IMG		= $(IMG_DIR)c.img
 HDB_IMG		= $(IMG_DIR)d.img
 HDC_IMG		= $(IMG_DIR)e.img
 HDD_IMG		= $(IMG_DIR)f.img
+RAW_IMG		= $(IMG_DIR)raw.img
 
 HDB_VHD		= $(IMG_DIR)d.vhd
 HDB_VMDK	= $(IMG_DIR)d-flat.vmdk
@@ -128,7 +129,7 @@ OBJCOPY_FLAGS = -R .note -R .comment -S
 KERNEL_ELF =  kernel.elf
 KERNEL_ELF_DISASM =  kernel.elf.disasm
 
-PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg vbox clean dis
+PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg vbox clean dis build debuild
 PHONY	+= $(SRCDIRS)
 
 export NASM NASM_FLAGS CC LD CFLAGS LDFLAGS TOPDIR OBJCOPY OBJCOPY_FLAGS
@@ -215,6 +216,21 @@ qemudbg: disk
 vbox: disk
 	$(VBOX_MANAGE) startvm $(VBOX_NAME) --type gui 
 
+# 构建环境。libary，service，user。这样，可以很方便得把内核开发和
+# 其它的开发分离
+build: 
+	cp $(RAW_IMG) $(HDA_IMG)
+	cd ../libary && make
+	cd ../service && make
+	cd ../user && make
+	
+# 清理环境。libary，service，user。这样，可以很方便得把内核开发和
+# 其它的开发分离
+debuild: 
+	cd ../libary && make clean
+	cd ../service && make clean
+	cd ../user && make clean
+	
 # clean temporary files
 clean: $(SRCDIRS)
 	$(RM) $(KERNEL_ELF) $(KERNEL_ELF_DISASM)

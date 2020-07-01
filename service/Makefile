@@ -14,7 +14,7 @@ all:
 	
 clean: 
 	cd $(INITSRV) && make clean
-	cd $(FILESRV) && make
-	cd $(GUISRV) && make
-	cd $(NETSRV) && make
+	cd $(FILESRV) && make clean
+	cd $(GUISRV) && make clean
+	cd $(NETSRV) && make clean
 	

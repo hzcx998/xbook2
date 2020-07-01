@@ -5,8 +5,12 @@
 #include <dirent.h>
 #include <utime.h>
 #include <assert.h>
+#include  <errno.h>
+#include  <semaphore.h>
+#include  <arpa/inet.h>
 
 #include <srv/guisrv.h>
+
 #include <sys/srvcall.h>
 #include <sys/proc.h>
 #include <sys/res.h>
@@ -14,11 +18,137 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/dir.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include "cond_sem.h"
-#include  <sys/types.h>
-#include  <errno.h>
-#include  <semaphore.h>
+
+int main(int argc, char *argv[])
+{
+    printf("hello, test.\n");
+    
+    return 0;
+}
+
+#if 0
+
+#define SOCKET_SERVER_TEST
+
+#ifdef SOCKET_SERVER_TEST
+int main()
+{
+    printf("[test] start.\n");
+    sleep(3);
+    int ret;
+    printf("[test] socket.\n");
+    int socket_id = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_id < 0) {
+        printf("create socket failed!\n");
+        return -1;
+    }
+    printf("[test] socket ok.\n");
+
+    
+    struct sockaddr_in other_addr;
+
+    struct sockaddr_in addr;
+    socklen_t len = sizeof(struct sockaddr_in);
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_len = sizeof(addr);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(8080);
+    addr.sin_addr.s_addr = inet_addr("192.168.0.105");
+
+    ret = bind(socket_id, (struct sockaddr *)&addr, sizeof(struct sockaddr_in));
+    if (ret < 0) {
+        printf("bind socket failed!\n");
+        sockclose(socket_id);
+        return -1;
+    }
+
+    ret = listen(socket_id, 2);
+    if (ret < 0) {
+        printf("listen socket failed!\n");
+        sockclose(socket_id);
+        return -1;
+    }
+
+    ret = accept(socket_id, (struct sockaddr *)&other_addr, &len);
+    if (ret < 0) {
+        printf("accept socket failed!\n");
+        sockclose(socket_id);
+        return -1;
+    }
+    printf("accept ok, client ip %x port %d, addr len %d.\n", other_addr.sin_addr, other_addr.sin_port, len);
+
+    sleep(3);
+    printf("sleep 3 seconds over.\n");
+    
+    if (sockclose(socket_id) < 0) {
+        printf("close socket failed!\n");
+        
+    }
+
+    while (1)
+    {
+        /* code */
+    }
+    
+
+    return 0;
+}
+#else
+int main()
+{
+    printf("[test] start.\n");
+    sleep(3);
+    int ret;
+    printf("[test] socket.\n");
+    int socket_id = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (socket_id < 0) {
+        printf("create socket failed!\n");
+        return -1;
+    }
+    printf("[test] socket ok.\n");
+
+    struct sockaddr_in addr;
+    size_t len;
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_len = sizeof(addr);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(8080);
+    addr.sin_addr.s_addr = inet_addr("192.168.0.104");
+
+    ret = connect(socket_id, (struct sockaddr *)&addr, sizeof(struct sockaddr_in));
+    if (ret < 0) {
+        printf("connect socket failed!\n");
+        sockclose(socket_id);
+        return -1;
+    }
+
+    printf("connect ok, sleep 3 seconds.\n");
+        
+    sleep(3);
+    printf("sleep 3 seconds over.\n");
+    
+    if (sockclose(socket_id) < 0) {
+        printf("close socket failed!\n");
+        
+    }
+
+    while (1)
+    {
+        /* code */
+    }
+    
+
+    return 0;
+}
+
+#endif
+#endif
 
 #if 0
 pthread_mutex_t mutex;
@@ -131,7 +261,7 @@ void *thread_b()
 }
 #endif
 
-#if 1
+#if 0
 sem_t sema;
 void *thread_a();
 void *thread_b();

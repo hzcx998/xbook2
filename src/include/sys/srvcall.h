@@ -3,6 +3,7 @@
 
 #define SRVIO_SERVICE      0    /* 流向服务 */
 #define SRVIO_USER         1    /* 流向用户 */
+#define SRVIO_BOTH         3   /* 双向 */
 
 #define SRVARG_NR  8
 

@@ -129,7 +129,7 @@ low_level_init(struct netif *netif)
 #if 0
     res_ioctl(ethernetif->ethres, NETIO_GETMAC, (unsigned long) &mac_addr[0]);
 #endif
-  srvprint("mac: %x %x %x %x %x %x", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+  srvprint("mac: %x %x %x %x %x %x\n", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 

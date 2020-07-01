@@ -21,6 +21,8 @@ TIME_DIR 		= ./time
 UNISTD_DIR		= ./unistd
 MATH_DIR		= ./math
 CTYPE_DIR		= ./ctype
+SOCKET_DIR		= ./socket
+ARPA_DIR		= ./arpa
 
 # flags
 ARFLAGS 		= -cr
@@ -88,10 +90,15 @@ MATH_OBJS		= 	$(MATH_DIR)/fabs.o \
 					
 CTYPE_OBJS		= 	$(CTYPE_DIR)/ctype.o \
 
+SOCKET_OBJS		= 	$(SOCKET_DIR)/socket.o \
+
+ARPA_OBJS		= 	$(ARPA_DIR)/inet.o \
+
 # objects
 OBJS			= 	$(ARCH_OBJS) $(ANSI_OBJS) $(STDIO_OBJS) \
-					$(SYSLIB_OBJS) $(STDLIB_OBJS) \
-					$(TIME_OBJS) $(UNISTD_OBJS) $(MATH_OBJS) $(CTYPE_OBJS)
+					$(SYSLIB_OBJS) $(STDLIB_OBJS) $(SOCKET_OBJS) \
+					$(TIME_OBJS) $(UNISTD_OBJS) $(MATH_OBJS) $(CTYPE_OBJS) \
+					$(ARPA_OBJS)
 
 # out file
 LIBNAME = xlibc-0.0.1.a

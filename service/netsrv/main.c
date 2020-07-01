@@ -24,6 +24,7 @@
 #include <lwipopts.h>
 
 #include <drivers/netcard.h>
+#include <core/if.h>
 
 extern err_t ethernetif_init(struct netif *netif);
 extern void ethernetif_input(struct netif *netif);
@@ -37,6 +38,7 @@ void socket_examples_init2(void);
 void chargen_init(void);
 void dns_netconn_init();
 void dhcp_netconn_init();
+void init_socket_test(void);
 
 void socket_examples_init(void);
 
@@ -126,11 +128,17 @@ int main(int argc, char *argv[])
     //init LwIP
 	lwip_init_task();
 
+    if (init_netsrv_if() < 0) {
+        srvprint("init interface failed!\n");
+        return -1;
+    }
+
 #if NO_SYS == 0
     tcpecho_init();
     //udpecho_init();
     httpserver_init();
-    chargen_init();
+    //chargen_init();
+    //init_socket_test();
 #endif    
     //dhcp_netconn_init();
 
@@ -154,6 +162,71 @@ int main(int argc, char *argv[])
 	}
     return 0;
 }
+
+
+
+#if LWIP_NETCONN
+
+#include <lwip/sockets.h>
+
+#define SOCK_TARGET_PORT2 8080
+#define SOCK_TARGET_HOST2 "192.168.0.104"
+char rxbuf2[1024];
+char sndbuf2[1024];
+
+
+void thread_socket_test(void *arg)
+{
+    int sres;
+    int ret;
+    int opt;
+    struct sockaddr_in addr;
+    size_t len;
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_len = sizeof(addr);
+    addr.sin_family = AF_INET;
+    addr.sin_port = PP_HTONS(SOCK_TARGET_PORT2);
+    addr.sin_addr.s_addr = inet_addr(SOCK_TARGET_HOST2);
+
+    sres = lwip_socket(AF_INET, SOCK_STREAM, 0);
+    if (sres < 0) {
+        printf("create socket failed!\n");
+        return;
+    }
+    ret = lwip_connect(sres, (struct sockaddr *)&addr, sizeof(addr));
+    if (ret < 0) {
+        printf("connect failed!\n");
+        lwip_close(sres);
+        return;
+    }
+    while (1) {
+        len = 0;
+        ret = lwip_read(sres, rxbuf2, 1024);
+        if (ret > 0)
+            len = ret;
+        len = sprintf(sndbuf2, "client: receve [%d] data\n", len);
+        ret = lwip_write(sres, sndbuf2, len);
+        if (ret > 0) {
+            printf("socket send %d data\n", ret);
+        } else {
+            ret = lwip_close(sres);
+            printf("socket close %d\n", ret);
+            return;
+        }
+    }
+    
+
+}
+
+void init_socket_test(void)
+{
+    sys_thread_new("socket server", thread_socket_test, NULL, 0, TCPIP_THREAD_PRIO + 1);
+
+}
+
+#endif  /* LWIP_NETCONN */
+
 
 #if LWIP_NETCONN
 

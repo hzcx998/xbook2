@@ -60,6 +60,8 @@ static int copy_srvarg_buffer(srvarg_t *dst, srvarg_t *src, int srvio, int new_b
                         memcpy((void *) dst->data[i], (void *) src->data[i], dst->size[i]);
                     }
                 }
+            } else if (srvio == SRVIO_BOTH) {
+                
             }
         }
     }
