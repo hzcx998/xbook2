@@ -176,6 +176,65 @@ static int __recv(srvarg_t *arg)
 }
 
 
+static int __write(srvarg_t *arg)
+{
+    int socket_id   = GETSRV_DATA(arg, 1, int);
+    int len         = GETSRV_SIZE(arg, 2);
+    void *buf       = (void *) srvbuf32k;
+
+    /* 最大一次性操作32kb数据 */
+    len = MIN(len, SRVBUF_32K);
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 2, buf);
+        SETSRV_SIZE(arg, 2, len);
+        if (srvcall_fetch(SRV_NET, arg))
+            return -1;
+    }
+    int wrbytes = lwip_write(socket_id, buf, len);
+    if (wrbytes == -1) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, wrbytes);
+    return 0;
+}
+
+
+static int __read(srvarg_t *arg)
+{
+    int socket_id   = GETSRV_DATA(arg, 1, int);
+    int len         = GETSRV_SIZE(arg, 2);
+    void *buf       = (void *) srvbuf32k;
+
+    /* 最大一次性操作32kb数据 */
+    len = MIN(len, SRVBUF_32K);
+    
+    int rdbytes = lwip_read(socket_id, buf, len);
+    if (rdbytes == -1) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    /* 回传缓冲区 */
+    SETSRV_DATA(arg, 2, buf);
+    SETSRV_SIZE(arg, 2, rdbytes);
+    SETSRV_RETVAL(arg, rdbytes);
+    return 0;
+}
+
+static int __shutdown(srvarg_t *arg)
+{
+    int socket_id   = GETSRV_DATA(arg, 1, int);
+    int how         = GETSRV_DATA(arg, 2, int);
+
+    int ret = lwip_shutdown(socket_id, how);
+    if (ret == -1) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, ret);
+    return 0;
+}
+
 static int __sendto(srvarg_t *arg)
 {
     int socket_id   = GETSRV_DATA(arg, 1, int);
@@ -224,7 +283,7 @@ static int __recvfrom(srvarg_t *arg)
     
     socklen_t *fromlen = (socklen_t *) srvbuf256;
     *fromlen = 0;
-    *fromlen   = GETSRV_DATA(arg, 6, int);
+    *fromlen   = GETSRV_DATA(arg, 6, socklen_t);
 
     struct sockaddr *client_addr = (struct sockaddr *) srvbuf_sockaddr;    /* 客户端地址 */
     memset(client_addr, 0, sizeof(*client_addr));
@@ -238,7 +297,7 @@ static int __recvfrom(srvarg_t *arg)
     SETSRV_DATA(arg, 2, buf);
     SETSRV_SIZE(arg, 2, recvbytes);
     SETSRV_DATA(arg, 4, client_addr);
-    SETSRV_SIZE(arg, 4, sizeof(*client_addr));
+    SETSRV_SIZE(arg, 4, *fromlen);
     SETSRV_DATA(arg, 5, fromlen);
     SETSRV_SIZE(arg, 5, sizeof(socklen_t));
     SETSRV_RETVAL(arg, recvbytes);
@@ -258,6 +317,108 @@ static int __close(srvarg_t *arg)
 }
 
 
+static int __getsockname(srvarg_t *arg)
+{
+    int socket_id   = GETSRV_DATA(arg, 1, int);
+    
+    socklen_t *addrlen = (socklen_t *) srvbuf256;
+    *addrlen = 0;
+    *addrlen   = GETSRV_DATA(arg, 4, socklen_t);
+
+    struct sockaddr *sock_addr = (struct sockaddr *) srvbuf_sockaddr;    /* 客户端地址 */
+    memset(sock_addr, 0, sizeof(*sock_addr));
+
+    int ret = lwip_getsockname(socket_id, sock_addr, addrlen);
+    if (ret == -1) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    /* 回传缓冲区 */
+    SETSRV_DATA(arg, 2, sock_addr);
+    SETSRV_SIZE(arg, 2, *addrlen);
+    SETSRV_DATA(arg, 3, addrlen);
+    SETSRV_SIZE(arg, 3, sizeof(socklen_t));
+    SETSRV_RETVAL(arg, 0);
+    return 0;
+}
+
+static int __getpeername(srvarg_t *arg)
+{
+    int socket_id   = GETSRV_DATA(arg, 1, int);
+    
+    socklen_t *addrlen = (socklen_t *) srvbuf256;
+    *addrlen = 0;
+    *addrlen   = GETSRV_DATA(arg, 4, socklen_t);
+
+    struct sockaddr *sock_addr = (struct sockaddr *) srvbuf_sockaddr;    /* 客户端地址 */
+    memset(sock_addr, 0, sizeof(*sock_addr));
+
+    int ret = lwip_getpeername(socket_id, sock_addr, addrlen);
+    if (ret == -1) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    /* 回传缓冲区 */
+    SETSRV_DATA(arg, 2, sock_addr);
+    SETSRV_SIZE(arg, 2, *addrlen);
+    SETSRV_DATA(arg, 3, addrlen);
+    SETSRV_SIZE(arg, 3, sizeof(socklen_t));
+    SETSRV_RETVAL(arg, 0);
+    return 0;
+}
+
+static int __getsockopt(srvarg_t *arg)
+{
+    int socket_id   = GETSRV_DATA(arg, 1, int);
+    int level       = GETSRV_DATA(arg, 2, int);
+    int optname     = GETSRV_DATA(arg, 3, int);
+    
+    socklen_t *optlen = (socklen_t *) srvbuf256;
+    *optlen         = GETSRV_DATA(arg, 6, socklen_t);
+
+    void *optval = (void *) srvbuf_sockaddr;    /* 客户端地址 */
+    memset(optval, 0, sizeof(*optval));
+
+    srvprint("arg: %d %d %d %x %d\n", socket_id, level, optname, optval, *optlen);
+    int ret = lwip_getsockopt(socket_id, level, optname, optval, optlen);
+    if (ret == -1) {
+        srvprint("get sock opt failed!\n");
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    /* 回传缓冲区 */
+    SETSRV_DATA(arg, 4, optval);
+    SETSRV_SIZE(arg, 4, *optlen);
+    SETSRV_DATA(arg, 5, optlen);
+    SETSRV_SIZE(arg, 5, sizeof(socklen_t));
+    SETSRV_RETVAL(arg, 0);
+    return 0;
+}
+
+static int __setsockopt(srvarg_t *arg)
+{
+    int socket_id       = GETSRV_DATA(arg, 1, int);
+    int level           = GETSRV_DATA(arg, 2, int);
+    int optname         = GETSRV_DATA(arg, 3, int);
+    socklen_t optlen    = GETSRV_SIZE(arg, 4);
+    void *optval        = (void *) srvbuf256;    /* 客户端地址 */
+    
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 4, optval);
+        SETSRV_SIZE(arg, 4, optlen);
+        if (srvcall_fetch(SRV_NET, arg))
+            return -1;
+    }
+
+    int ret = lwip_setsockopt(socket_id, level, optname, optval, optlen);
+    if (ret == -1) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, 0);
+    return 0;
+}
+
 /* 调用表 */
 srvcall_func_t netsrv_call_table[] = {
     __socket,
@@ -270,6 +431,13 @@ srvcall_func_t netsrv_call_table[] = {
     __close,
     __sendto,
     __recvfrom,
+    __write,
+    __read,
+    __shutdown,
+    __getsockname,
+    __getpeername,
+    __getsockopt,
+    __setsockopt,
 };
 
 void *netsrv_if_thread(void *arg)

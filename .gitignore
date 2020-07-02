@@ -61,5 +61,9 @@ dkms.conf
 # Image dir
 develop/image
 
+develop/bochs
+develop/virtualbox
+develop/vmware
+
 # dir
 recycle

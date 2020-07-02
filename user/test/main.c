@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 #endif
 
 
-#if 1
+#if 0
 
 //#define SOCKET_UDP_SERVER_TEST
 
@@ -194,9 +194,9 @@ int main()
 #endif
 
 
-#if 0
+#if 1
 
-//#define SOCKET_SERVER_TEST
+#define SOCKET_SERVER_TEST
 
 #ifdef SOCKET_SERVER_TEST
 int main()
@@ -211,6 +211,19 @@ int main()
         return -1;
     }
     printf("[test] socket ok.\n");
+
+
+    int opt_val;
+    socklen_t opt_len = sizeof(opt_val);
+    
+    if(getsockopt(socket_id, SOL_SOCKET, SO_TYPE, &opt_val, &opt_len) < 0)
+    {
+        perror("fail to getsockopt");
+    }
+    
+    printf("optval = %x\n", opt_val);
+
+
 
     struct sockaddr_in other_addr;
 
@@ -248,20 +261,34 @@ int main()
     char buf[512];
     int recvbytes;
 
+    struct sockaddr_in myaddr;
+    socklen_t mylen = sizeof(struct sockaddr_in );
+
     while (1)
     {
         memset(buf, 0, 512);
-        recvbytes = recv(client_socket, buf, 512, 0);
+        recvbytes = sockread(client_socket, buf, 512);
         if (recvbytes < 0) {
             printf("[test] recv failed!\n");
             break;
         }
         printf("recv %s.\n", buf);
-        recvbytes = send(client_socket, "get data", 8, 0);
+        recvbytes = sockwrite(client_socket, "get data", 8);
         if (recvbytes < 0) {
             printf("[test] send failed!\n");
             break;
         }
+
+        if (getsockname(socket_id, (struct sockaddr *)&myaddr, &mylen) < 0) {
+            printf("[test] get sock name failed!\n");
+        }
+        printf("my ip %x port %d\n", ntohl(myaddr.sin_addr.s_addr), ntohs(myaddr.sin_port));
+        
+        if (getpeername(client_socket, (struct sockaddr *)&myaddr, &mylen) < 0) {
+            printf("[test] get sock name failed!\n");
+        }
+        printf("client ip %x port %d\n", ntohl(myaddr.sin_addr.s_addr), ntohs(myaddr.sin_port));
+
         //usleep(50000);
     }
 
@@ -314,21 +341,31 @@ int main()
     char buf[512];
     int recvbytes;
 
+    struct sockaddr_in myaddr;
+    socklen_t mylen = sizeof(struct sockaddr_in );
+    // shutdown(socket_id, SHUT_WR);
+
     while (1)
     {
         memset(buf, 0, 512);
-        recvbytes = send(socket_id, "get data", 8, 0);
+        recvbytes = sockwrite(socket_id, "get data", 8);
         if (recvbytes < 0) {
             printf("[test] send failed!\n");
             break;
         }
         
-        recvbytes = recv(socket_id, buf, 512, 0);
+        recvbytes = sockread(socket_id, buf, 512);
         if (recvbytes < 0) {
             printf("[test] recv failed!\n");
             break;
         }
-        printf("recv %s.\n", buf);
+        res_write(1, 0, buf, 128);
+
+        if (getsockname(socket_id, (struct sockaddr *)&myaddr, &mylen) < 0) {
+            printf("[test] get sock name failed!\n");
+        }
+        printf("ip %x port %d\n", ntohl(myaddr.sin_addr.s_addr), ntohs(myaddr.sin_port));
+
         //usleep(50000);
     }
 
