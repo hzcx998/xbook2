@@ -32,7 +32,7 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector \
 			-I $(DIR_PTHREAD)/include \
 			
 
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
+LDFLAGS		= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 
 OBJS =  main.o \
 		cond_sync.o \

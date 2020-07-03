@@ -29,7 +29,7 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -st
 			-I $(DIR_SGI)/include \
 			-I core 
 
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
+LDFLAGS		= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 
 OBJS =  infoNES_System_Book.o \
 

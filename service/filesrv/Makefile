@@ -41,7 +41,7 @@ ASM_FLAGS	= -f elf \
 			-I include \
 			-I fatfs
 
-C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
+C_FLAGS		= -c -fno-builtin -Wall -Wunused -fno-stack-protector -m32 \
 			-I $(DIR_XLIBC)/include \
 			-I $(DIR_PTHREAD)/include \
 			-I include \
@@ -73,12 +73,12 @@ LIB_FILE = 	$(DIR_PTHREAD)/pthread-0.0.1.a \
 			$(DIR_XLIBC)/xlibc-0.0.1.a \
 
 # -n: close memory aligin.
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
+LDFLAGS		= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 
 #First read here
 .PHONY: all dis
 
-all: compile link disk 
+all: compile link disk
 
 #Compile files
 compile: $(OBJS)
@@ -86,7 +86,6 @@ compile: $(OBJS)
 link: $(BIN)
 $(BIN): $(OBJS) $(LIB_FILE)
 	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIB_FILE) 
-
 
 dis: $(BIN)
 	$(OBJDUMP) -M intel -D $(BIN) > $(BIN_DIS)
@@ -96,7 +95,7 @@ disk: img
 
 img:
 	$(DD) if=$(BIN) of=$(HD_IMG) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
-	
+
 vhd:
 	$(DD) if=$(BIN) of=$(HD_VHD) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
 	
@@ -106,12 +105,6 @@ vmdk:
 floppy:
 	$(DD) if=$(BIN) of=$(FD_IMG) bs=512 seek=$(FLOPPY_OFF) count=$(BIN_CNTS) conv=notrunc
 	
-qemu: compile link img
-	
-vbox: compile link vhd
-
-vmware: compile link vmdk
-
 phy: compile link floppy
 	
 #Clean temporary files

@@ -6,11 +6,11 @@ SGI 		= ./sgi
 .PHONY: all clean
 
 all: 
-	cd $(XLIBC) && make
-	cd $(PTHREAD) && make
-	cd $(SGI) && make
+	$(MAKE) -C $(XLIBC)
+	$(MAKE) -C $(PTHREAD)
+	$(MAKE) -C $(SGI)
 	
 clean: 
-	cd $(XLIBC) && make clean
-	cd $(PTHREAD) && make clean
-	cd $(SGI) && make clean
+	$(MAKE) -C $(XLIBC) clean
+	$(MAKE) -C $(PTHREAD) clean
+	$(MAKE) -C $(SGI) clean

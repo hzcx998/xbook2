@@ -1,5 +1,6 @@
 # MIT License
 # Copyright (c) 2020 Jason Hu, Zhu Yu
+all:
 
 # tools
 MAKE		= make

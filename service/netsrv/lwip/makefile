@@ -19,7 +19,7 @@ XBOOKLIB_INCLUDE 	= ../xbooklib/include
 
 # flags
 ARFLAGS := -cr
-C_FLAGS	:=  -c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -m32 \
+C_FLAGS	:=  -c -fno-builtin -nostdinc -Wall -Wunused -fno-PIE -Wunused -fno-stack-protector -m32 \
 			-fno-stack-protector -std=c99 \
 			-I $(DIR_INCLUDE) \
 			-I $(XBOOKLIB_INCLUDE) \

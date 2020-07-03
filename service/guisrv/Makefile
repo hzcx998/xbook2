@@ -31,7 +31,7 @@ ASM_FLAGS	= -f elf \
 			-I $(DIR_SGI)/include \
 			-I $(DIR_PTHREAD)/include \
 
-C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
+C_FLAGS		= -c -fno-builtin -Wall -Wunused -fno-stack-protector -m32 \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_XLIBC)/include \
 			-I $(DIR_SGI)/include \
@@ -88,7 +88,7 @@ LIB_FILE 	:=  $(DIR_PTHREAD)/pthread-0.0.1.a \
 			
 # -n: close memory aligin.
 #LDFLAGS		= -T link.ld -n
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
+LDFLAGS		= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 
 #First read here
 .PHONY: all dis

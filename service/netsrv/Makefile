@@ -47,7 +47,7 @@ ASM_FLAGS	= -f elf \
 			-I $(DIR_XLIBC)/include \
 			-I $(DIR_PTHREAD)/include \
 			
-C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
+C_FLAGS		= -c -fno-builtin -Wall -Wunused -Wunused -fno-stack-protector -m32 \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_LWIP_INCLUDE) \
 			-I $(LWIP_IPV4_INCLUDE) \
@@ -122,7 +122,7 @@ OBJS =  $(MAIN_OBJS) $(LWIP_OBJS) $(DRIVERS_OBJS) $(CORE_OBJS)
 LIB_FILE 	:=  $(DIR_PTHREAD)/pthread-0.0.1.a \
 				$(DIR_XLIBC)/xlibc-0.0.1.a \
 
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
+LDFLAGS		= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 
 #First read here
 .PHONY: all dis
@@ -138,7 +138,6 @@ $(BIN): $(OBJS) $(LIB_FILE)
 
 dis: $(BIN)
 	$(OBJDUMP) -M intel -D $(BIN) > $(BIN_DIS)
-
 #Clean temporary files
 clean:
 	-rm $(OBJS)

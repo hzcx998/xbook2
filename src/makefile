@@ -21,7 +21,7 @@ ARCH_DIR	= arch/x86
 #----flags----
 #out a map file: -Map kernel.map
 #i386 link flags
-LDFLAGS		= -m elf_i386
+LDFLAGS		= -no-pie -m elf_i386
 
 TOPDIR	:= $(CURDIR)
 

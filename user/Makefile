@@ -6,12 +6,12 @@ BOSH 		= ./bosh
 .PHONY: all clean
 
 all: 
-	cd $(TEST) && make
-	cd $(INFONES) && make
-	cd $(BOSH) && make
+	$(MAKE) -C $(TEST)
+	$(MAKE) -C $(INFONES)
+	$(MAKE) -C $(BOSH)
 	
 clean:
-	cd $(TEST) && make clean
-	cd $(INFONES) && make clean
-	cd $(BOSH) && make clean
+	$(MAKE) -C $(TEST) clean
+	$(MAKE) -C $(INFONES) clean
+	$(MAKE) -C $(BOSH) clean
 	

@@ -40,7 +40,7 @@ ASM_FLAGS	= -f elf \
 			-I $(DIR_PTHREAD)/include \
 			
 
-C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
+C_FLAGS		= -c -fno-builtin -Wall -Wunused -fno-stack-protector  -m32 \
 			-I $(DIR_XLIBC)/include \
 			-I $(DIR_PTHREAD)/include \
 			
@@ -52,13 +52,13 @@ LIB_FILE = 	$(DIR_PTHREAD)/pthread-0.0.1.a \
 			$(DIR_XLIBC)/xlibc-0.0.1.a \
 
 
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
+LDFLAGS		= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 
 
 #First read here
 .PHONY: all dis
 
-all: compile link disk 
+all: compile link disk
 
 #Compile files
 compile: $(OBJS)
@@ -85,15 +85,7 @@ vmdk:
 
 floppy:
 	$(DD) if=$(BIN) of=$(FD_IMG) bs=512 seek=$(FLOPPY_OFF) count=$(BIN_CNTS) conv=notrunc
-	
-qemu: compile link img
-	
-vbox: compile link vhd
 
-vmware: compile link vmdk
-
-phy: compile link floppy
-	
 #Clean temporary files
 clean:
 	-rm $(OBJS)

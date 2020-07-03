@@ -20,7 +20,7 @@ $(LOAD_BIN): loader.asm
 # make setup elf
 setup.elf :  $(SETUP_OBJS)
 	@echo [LD]  $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
-	@$(LD) $(LDFLAGS) -e _start -Ttext 0x91000 -o setup.elf $(SETUP_OBJS)  
+	@$(LD) $(LDFLAGS) -no-pie -e _start -Ttext 0x91000 -o setup.elf $(SETUP_OBJS)  
 
 #$(SETUP_BIN) : setup.asm
 #	@echo [NASM]  $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
