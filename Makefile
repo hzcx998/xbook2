@@ -12,7 +12,9 @@ build:
 	cd libary && make
 	cd service && make
 	cd user && make
-	
+
+rom:
+	tools/fatfs/fatfs develop/image/d.img develop/rom/ 10
 # 清理环境。libary，service，user。这样，可以很方便得把内核开发和
 # 其它的开发分离
 debuild: 

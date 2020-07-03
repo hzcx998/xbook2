@@ -61,7 +61,7 @@ HDB_VMDK	= $(IMG_DIR)d-flat.vmdk
 #----flags----
 #out a map file: -Map kernel.map
 #i386 link flags
-LDFLAGS		= -m elf_i386
+LDFLAGS		= -no-pie -m elf_i386
 
 #system disk
 LOADER_OFF = 2		
@@ -152,7 +152,7 @@ endif
 # -s: strip-all symbol
 $(KERNEL_ELF): $(OBJS)
 	@echo [LD] with $(ARCH)x86-kernel.ld output $@
-	$(LD) -n -T $(ARCH)x86-kernel.ld -o $(KERNEL_ELF) $(OBJS)
+	$(LD) -no-pie -n -T $(ARCH)x86-kernel.ld -o $(KERNEL_ELF) $(OBJS) 
 	
 
 #$(LD) $(LDFLAGS)  -e _start -Ttext 0x80100000 -o $(KERNEL_ELF) $(OBJS)
@@ -204,6 +204,10 @@ QEMU_ARGUMENT = -m 256M \
 		-fda $(FLAPPY_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 		-serial stdio
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 #		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
 		
 qemu: disk

@@ -42,27 +42,13 @@ DIR_PTHREAD 	= $(DIR_LIBARY)/pthread
 BIN = $(DIR_ROM)/sbin/netsrv
 BIN_DIS = out.disasm
 
-# rom disk size (MB)
-ROM_DISK_SZ = 10	
-
-#img dir
-IMG_DIR = ../../develop/image/
-
-DISK_IMG = d.img
-DISK_VHD = d.vhd
-DISK_VMDK = d-flat.vmdk
-
-HD_IMG = $(IMG_DIR)$(DISK_IMG)
-HD_VHD = $(IMG_DIR)$(DISK_VHD)
-HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
-
 #flags
 ASM_FLAGS	= -f elf \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_XLIBC)/include \
 			-I $(DIR_PTHREAD)/include \
 			
-C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
+C_FLAGS		= -c -fno-builtin -Wall -Wunused -Wunused -fno-stack-protector -m32 \
 			-I $(DIR_INCLUDE) \
 			-I $(DIR_LWIP_INCLUDE) \
 			-I $(LWIP_IPV4_INCLUDE) \
@@ -137,12 +123,12 @@ OBJS =  $(MAIN_OBJS) $(LWIP_OBJS) $(DRIVERS_OBJS) $(CORE_OBJS)
 LIB_FILE 	:=  $(DIR_PTHREAD)/pthread-0.0.1.a \
 				$(DIR_XLIBC)/xlibc-0.0.1.a \
 
-LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
+LDFLAGS		= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 
 #First read here
 .PHONY: all dis
 
-all: compile link rom 
+all: compile link
 
 #Compile files
 compile: $(OBJS)
@@ -153,12 +139,6 @@ $(BIN): $(OBJS) $(LIB_FILE)
 
 dis: $(BIN)
 	$(OBJDUMP) -M intel -D $(BIN) > $(BIN_DIS)
-
-# write rom files
-rom:
-	$(FATFS) $(HD_IMG) $(DIR_ROM) $(ROM_DISK_SZ)
-	$(FATFS) $(HD_VHD) $(DIR_ROM) $(ROM_DISK_SZ)
-	$(FATFS) $(HD_VMDK) $(DIR_ROM) $(ROM_DISK_SZ)
 	
 #Clean temporary files
 clean:
