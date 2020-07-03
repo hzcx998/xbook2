@@ -677,6 +677,30 @@ static int __chdir(char *path)
     return 0;
 }
 
+/**
+ * __ioctl - 对文件进行输入输出
+ * 
+ * FATFS不支持，默认返回0
+ * 
+ * 执行失败返回-1，成功返回0
+ */
+static int __ioctl(int fd, int cmd, unsigned long arg)
+{
+    return 0;
+}
+
+/**
+ * __fcntl - 对文件进行设定
+ * 
+ * FATFS不支持，默认返回0
+ * 
+ * 执行失败返回-1，成功返回0
+ */
+static int __fcntl(int fd, int cmd, long arg)
+{
+    return 0;
+}
+
 /* fatfs 支持的文件系统类型 */
 static char *fatfs_sub_table[] = {
     "fat12",
@@ -719,5 +743,7 @@ fsal_t fatfs_fsal = {
     .rewinddir  = __rewinddir,
     .rmdir      = __rmdir,
     .chdir      = __chdir,
+    .ioctl      = __ioctl,
+    .fcntl      = __fcntl,
     .extention  = (void *)&fatfs_extention,
 };

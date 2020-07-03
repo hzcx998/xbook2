@@ -460,6 +460,30 @@ static int __chdir(char *path)
     return fsal->chdir(new_path);
 }
 
+static int __ioctl(int idx, int cmd, unsigned long arg)
+{
+    if (ISBAD_FSAL_FIDX(idx))
+        return -1;
+    /* 查找对应的文件系统 */
+    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_t *fsal = fp->fsal;
+    if (fsal == NULL)
+        return -1;
+    return fsal->ioctl(idx, cmd, arg);
+}
+
+static int __fcntl(int idx, int cmd, long arg)
+{
+    if (ISBAD_FSAL_FIDX(idx))
+        return -1;
+    /* 查找对应的文件系统 */
+    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_t *fsal = fp->fsal;
+    if (fsal == NULL)
+        return -1;
+    return fsal->fcntl(idx, cmd, arg);
+}
+
 /* 挂载文件系统 */
 int __mount(
     char *source,         /* 需要挂载的资源 */
@@ -593,4 +617,6 @@ fsal_t fsif = {
     .rewinddir  = __rewinddir,
     .rmdir      = __rmdir,
     .chdir      = __chdir,
+    .ioctl      = __ioctl,
+    .fcntl      = __fcntl,
 };

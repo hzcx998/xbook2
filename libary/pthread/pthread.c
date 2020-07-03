@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread/pthread.h>
+#include <pthread.h>
 #include <errno.h>
 
 /* 线程入口，启动线程后会先进入入口执行 */

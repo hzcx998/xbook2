@@ -30,7 +30,7 @@
 *.dylib
 
 # Executables
-# not ignore *.exe, we need tools
+*.exe
 *.out
 *.app
 *.i*86
@@ -57,13 +57,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
-
-# Image dir
-develop/image
-
-develop/bochs
-develop/virtualbox
-develop/vmware
 
 # dir
 recycle

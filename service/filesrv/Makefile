@@ -12,6 +12,7 @@ DIR_LIBARY = ../../libary
 
 # libarys
 DIR_XLIBC 		= $(DIR_LIBARY)/xlibc
+DIR_PTHREAD 	= $(DIR_LIBARY)/pthread
 
 BIN = a.out
 BIN_DIS = out.disasm
@@ -36,13 +37,13 @@ HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
 #flags
 ASM_FLAGS	= -f elf \
 			-I $(DIR_XLIBC)/include \
-			-I $(DIR_XLIBC)/include/pthread \
+			-I $(DIR_PTHREAD)/include \
 			-I include \
 			-I fatfs
 
 C_FLAGS		= -c -fno-builtin -Wall -Wunused -m32 \
 			-I $(DIR_XLIBC)/include \
-			-I $(DIR_XLIBC)/include/pthread \
+			-I $(DIR_PTHREAD)/include \
 			-I include \
 			-I fatfs
 			
@@ -67,7 +68,9 @@ MAIN_OBJS =  main.o \
 
 OBJS =  $(MAIN_OBJS) $(CORE_OBJS) $(DRIVERS_OBJS) $(FATFS_OBJS) $(FSAL_OBJS)
 
-LIB_FILE = 	$(DIR_XLIBC)/xlibc-0.0.1.a \
+
+LIB_FILE = 	$(DIR_PTHREAD)/pthread-0.0.1.a \
+			$(DIR_XLIBC)/xlibc-0.0.1.a \
 
 # -n: close memory aligin.
 LDFLAGS		= -m elf_i386 -e _start -Ttext 0x00001000
@@ -88,7 +91,8 @@ $(BIN): $(OBJS) $(LIB_FILE)
 dis: $(BIN)
 	$(OBJDUMP) -M intel -D $(BIN) > $(BIN_DIS)
 
-disk: img vhd vmdk floppy
+#disk: img vhd vmdk floppy
+disk: img
 
 img:
 	$(DD) if=$(BIN) of=$(HD_IMG) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc

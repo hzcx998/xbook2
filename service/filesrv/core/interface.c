@@ -557,6 +557,36 @@ static int __chdir(srvarg_t *arg)
     return 0;
 }
 
+static int __ioctl(srvarg_t *arg)
+{
+    int fi              = GETSRV_DATA(arg, 1, int);
+    int cmd             = GETSRV_DATA(arg, 2, int);
+    unsigned long ioarg   = GETSRV_DATA(arg, 3, unsigned long);
+    
+    int retval = fsif.ioctl(fi, cmd, ioarg);
+    if (retval < 0) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+static int __fcntl(srvarg_t *arg)
+{
+    int fi              = GETSRV_DATA(arg, 1, int);
+    int cmd             = GETSRV_DATA(arg, 2, int);
+    long farg   = GETSRV_DATA(arg, 3, long);
+    
+    int retval = fsif.fcntl(fi, cmd, farg);
+    if (retval < 0) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
 /* 调用表 */
 srvcall_func_t filesrv_call_table[] = {
     __open,
@@ -588,6 +618,8 @@ srvcall_func_t filesrv_call_table[] = {
     __unmount,
     __mkfs,
     __chdir,
+    __ioctl,
+    __fcntl,
 };
 
 int init_srv_interface()

@@ -72,6 +72,7 @@ int unlink(const char *path);
 int ftruncate(int fd, off_t offset);
 int fsync(int fd);
 int ioctl(int fd, int cmd, unsigned long arg);
+int fcntl(int fd, int cmd, long arg);
 
 int _eof(int fd);
 int _error(int fd);

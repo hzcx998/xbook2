@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "driver.h"
-#include <io.h>
 
 /* 10MB 镜像文件 */
 #define SECTOR_SIZE     512 

@@ -1,0 +1,39 @@
+# tools
+RM			= rm
+CC       	= gcc
+
+# need mingw include and libs
+LIBS     = -static-libgcc
+INCS     = -I /usr/include
+
+# flags	
+CFLAGS   = $(INCS) -g3
+
+# objects		
+OBJS = 	main.o \
+		driver.o \
+        diskio.o \
+        ff.o \
+        ffsystem.o \
+        ffunicode.o \
+
+# out file
+BIN = fatfs
+	
+.PHONY: all clean
+
+# all need to do
+all: $(BIN) 
+
+$(BIN): $(OBJS)
+	$(CC) $(OBJS) -o $(BIN) $(LIBS)
+
+%.o : %.c
+	@echo [CC] $@ $<
+	@$(CC) -c $(CFLAGS) -o $@ $<
+
+# clean .o .a files
+clean: 
+	-$(RM) $(BIN)
+	-$(RM) $(OBJS)
+	

@@ -44,14 +44,15 @@ PTHREAD线程库
 ```
 1. 用git从仓库克隆源码或者直接下载源码。
 2. 配置最基础的工具集：gcc, nasm, ld, dd, rm, objdump, objcopy。
-3. 配置虚拟机：qemu，bochs，virtual box， vmware任选其一。
-4. 将develop目录下面的image.zip解压出来，里面有镜像文件，虚拟机运行必备。
+3. 配置虚拟机：qemu（默认），bochs，virtual box， vmware任选其一。
 5. 进入xbook2的根目录目录，打开终端或者命令行，输入命令make build先构建环境，然后make run编译运行。
 ```
 
 编译使用命令：
 ```
 > make          # 只编译源码
+> make build    # 构建环境
+> make debuild  # 清理环境
 > make run      # 编译并运行，默认使用qemu虚拟机运行
 > make qemu     # 使用qemu虚拟机运行
 > make bochs    # 使用bochs虚拟机运行

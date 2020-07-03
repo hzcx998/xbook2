@@ -3,8 +3,14 @@ RM			= rm
 CC       	= D:/Softwares/Mingw/bin/gcc.exe 		# need mingw gcc for windows
 
 # need mingw include and libs
-LIBS     = -L"D:/Softwares/Dev-Cpp/MinGW64/lib" -L"D:/Softwares/Dev-Cpp/MinGW64/x86_64-w64-mingw32/lib" -static-libgcc -g3
-INCS     = -I"D:/Softwares/Dev-Cpp/MinGW64/include" -I"D:/Softwares/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"D:/Softwares/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.8.1/include"
+LIBS     =  -L"D:/Softwares/Dev-Cpp/MinGW64/lib" \
+            -L"D:/Softwares/Dev-Cpp/MinGW64/x86_64-w64-mingw32/lib" \
+            -static-libgcc
+            
+INCS     =  -I"D:/Softwares/Dev-Cpp/MinGW64/include" \
+            -I"D:/Softwares/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" \
+            -I"D:/Softwares/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.8.1/include" \
+            -DWIN32
 
 # flags	
 CFLAGS   = $(INCS) -g3

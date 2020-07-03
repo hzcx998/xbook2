@@ -313,6 +313,12 @@ int main()
 {
     printf("[test] start.\n");
     sleep(3);
+
+    int fd = open("c:/test.txt", O_RDONLY);
+    ioctl(fd, 0, 0);
+    fcntl(fd, 0, 0);
+    close(fd);
+
     int ret;
     printf("[test] socket.\n");
     int socket_id = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -321,6 +327,7 @@ int main()
         return -1;
     }
     printf("[test] socket ok.\n");
+
 
     struct sockaddr_in addr;
     size_t len;

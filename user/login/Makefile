@@ -18,19 +18,6 @@ BIN_DIS = out.disasm
 BIN_OFF = 4000 
 BIN_CNTS = 100
 
-#img dir
-IMG_DIR = ../../develop/image/
-
-FLOPPY_IMG = a.img
-DISK_IMG = c.img
-DISK_VHD = c.vhd
-DISK_VMDK = c-flat.vmdk
-
-FD_IMG = $(IMG_DIR)$(FLOPPY_IMG)
-HD_IMG = $(IMG_DIR)$(DISK_IMG)
-HD_VHD = $(IMG_DIR)$(DISK_VHD)
-HD_VMDK = $(IMG_DIR)$(DISK_VMDK)
-
 #flags
 ASM_FLAGS	= -f elf \
 			-I $(DIR_XLIBC)/include 
@@ -47,7 +34,7 @@ LIB_FILE := $(DIR_XLIBC)/xlibc-0.0.1.a \
 #First read here
 .PHONY: all dis
 
-all: compile link disk 
+all: compile link 
 
 #Compile files
 compile: $(OBJS)
@@ -59,25 +46,6 @@ $(BIN): $(OBJS) $(LIB_FILE)
 
 dis: $(BIN)
 	$(OBJDUMP) -M intel -D $(BIN) > $(BIN_DIS)
-
-disk: img vhd vmdk 
-
-img:
-	$(DD) if=$(BIN) of=$(HD_IMG) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
-	
-vhd:
-	$(DD) if=$(BIN) of=$(HD_VHD) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
-	
-vmdk:
-	$(DD) if=$(BIN) of=$(HD_VMDK) bs=512 seek=$(BIN_OFF) count=$(BIN_CNTS) conv=notrunc
-	
-qemu: compile link img
-	
-vbox: compile link vhd
-
-vmware: compile link vmdk
-	
-phy: compile link
 
 #Clean temporary files
 clean:

@@ -1,12 +1,20 @@
 #include <stdio.h>
 #include <string.h>
 #include "driver.h"
-#include <io.h>
 #include <stdlib.h>
+
+#ifdef WIN32
+#include <io.h>
+#else
+#include <sys/dir.h>
+#include <dirent.h>
+#include <unistd.h>
+#endif
 
 #include "ff.h"
 
 #define DEBUG_LOCAL 0
+
 
 /* 磁盘驱动，把镜像文件模拟成一个磁盘设备 */
 
@@ -140,7 +148,7 @@ FRESULT scan_files (
 )
 {
     FRESULT res;
-    DIR dir;
+    FDIR dir;
     UINT i;
     static FILINFO fno;
 
@@ -149,7 +157,7 @@ FRESULT scan_files (
         for (;;) {
             res = f_readdir(&dir, &fno);                   /* Read a directory item */
             if (res != FR_OK || fno.fname[0] == 0) break;  /* Break on error or end of dir */
-            if (fno.fattrib & AM_DIR) {                    /* It is a directory */
+            if (fno.fattrib & AM_FDIR) {                    /* It is a directory */
 #if DEBUG_LOCAL == 1
                 printf("%s/%s\n", path, fno.fname);
 #endif
@@ -247,6 +255,7 @@ int copy_file_to_custom(char *host_path, char *custom_path)
     fclose(fp);
     return 0;
 }
+#ifdef WIN32
 
 /**
  * scan_host_files - 扫描主机上面的目录
@@ -325,3 +334,86 @@ int scan_host_files(char *host_path, char *custom_path)
     return rv;
 
 }
+
+#else
+
+/**
+ * scan_host_files - 扫描主机上面的目录
+ * 
+ */
+int scan_host_files(char *host_path, char *custom_path)
+{
+    int rv = 0;
+    /* 打印客机目录 */
+#if DEBUG_LOCAL == 1
+    printf("[custom path] %s\n", custom_path);
+#endif
+
+    DIR *dir;
+    struct dirent *de;
+    //struct _finddata_t data;
+    long handle;
+    char path_buf[1024] = {0};
+    memset(path_buf, 0, 1024);
+    strcpy(path_buf, host_path);
+
+    dir = opendir(host_path);
+    if (dir == NULL) {
+        return -1;
+    }
+    
+    
+    do {
+        de = readdir(dir);
+        if (de == NULL)
+            break;
+
+        char host_buf[1024];
+        memset(host_buf, 0, 1024);
+        char custom_buf[256] = {0};
+        memset(custom_buf, 0, 256);
+        if (de->d_type == 4) {//目录类型
+            if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0) {
+                /* 在客机中创建一个目录 */
+                strcat(custom_buf, custom_path);
+                if (custom_buf[strlen(custom_path)-1] != '/') {
+                    strcat(custom_buf, "/");
+                }
+                strcat(custom_buf, de->d_name);
+                //sprintf(custom_buf, "%s/%s", custom_path, de->d_name);
+#if DEBUG_LOCAL == 1
+                printf("[custom dir] %s -> %s\n", custom_buf, de->d_name);
+#endif
+                //memcpy(custom_path, custom_buf, 256);
+                f_mkdir(custom_buf);
+
+                /* 打印主机路径 */
+                sprintf(host_buf, "%s/%s", host_path, de->d_name);
+#if DEBUG_LOCAL == 1
+                printf("[host dir] %s -> %s\n", host_buf, de->d_name);
+#endif
+                scan_host_files(host_buf, custom_buf);
+            }
+        } else {//单个文件
+            /* 打印主机路径 */
+           
+            sprintf(host_buf, "%s/%s", host_path, de->d_name);
+#if DEBUG_LOCAL == 1
+            printf("[host file] %s -> %s\n", host_buf, de->d_name);
+#endif
+            /* 在客机中创建一个文件 */
+            sprintf(custom_buf, "%s/%s", custom_path, de->d_name);
+#if DEBUG_LOCAL == 1
+            printf("[custom file] %s -> %s\n", custom_buf, de->d_name);
+#endif
+            copy_file_to_custom(host_buf, custom_buf);
+        }
+    } while(1);     //成功返回0 , 出错返回-1
+    
+    closedir(dir);     // 关闭当前句柄
+
+    return rv;
+
+}
+
+#endif

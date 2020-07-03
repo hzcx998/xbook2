@@ -250,7 +250,18 @@ int fileioctl(int fd, int cmd, unsigned long arg)
     if (_INVALID_FILE(_fil))
         return -1;
     
-
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_IOCTL, 0);
+    SETSRV_ARG(&srvarg, 1, _FILE_HANDLE(_fil), 0);
+    SETSRV_ARG(&srvarg, 2, cmd, 0);
+    SETSRV_ARG(&srvarg, 3, arg, 0);
+    SETSRV_RETVAL(&srvarg, -1);
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return GETSRV_RETVAL(&srvarg, int);
+    }
 
     return -1;
 }
@@ -271,6 +282,32 @@ int ioctl(int fd, int cmd, unsigned long arg)
     }
     return -1;
 }
+
+int fcntl(int fd, int cmd, long arg)
+{
+    if (_IS_BAD_FD(fd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(fd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+    
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, FILESRV_FCNTL, 0);
+    SETSRV_ARG(&srvarg, 1, _FILE_HANDLE(_fil), 0);
+    SETSRV_ARG(&srvarg, 2, cmd, 0);
+    SETSRV_ARG(&srvarg, 3, arg, 0);
+    SETSRV_RETVAL(&srvarg, -1);
+    if (!srvcall(SRV_FS, &srvarg)) {
+        if (GETSRV_RETVAL(&srvarg, int) == -1) {
+            return -1;
+        }
+        return GETSRV_RETVAL(&srvarg, int);
+    }
+
+    return -1;
+}
+
 
 int lseek(int fd, off_t offset, int whence)
 {

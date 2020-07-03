@@ -41,6 +41,8 @@ typedef struct {
     int (*rewinddir)(int );
     int (*rmdir)(char *);
     int (*chdir)(char *);
+    int (*ioctl)(int, int, unsigned long);
+    int (*fcntl)(int, int, long);
     void *extention;
 } fsal_t;
 
