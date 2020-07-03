@@ -338,7 +338,43 @@ int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t
     return -1;
 }
 
+int sockioctl(int sockfd, int request, void *arg)
+{
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, NETSRV_IOCTL, 0);
+    SETSRV_ARG(&srvarg, 1, sockfd, 0);
+    SETSRV_ARG(&srvarg, 2, request, 0);
+    SETSRV_ARG(&srvarg, 3, arg, sizeof(void *));
+    SETSRV_RETVAL(&srvarg, -1);
 
+    if (!srvcall(SRV_NET, &srvarg)) {
+        int ret = GETSRV_RETVAL(&srvarg, int);
+        if (ret == -1) {
+            return -1;
+        }
+        return ret;
+    }
+    return -1;
+}
+
+int sockfcntl(int sockfd, int cmd, long arg)
+{
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, NETSRV_FCNTL, 0);
+    SETSRV_ARG(&srvarg, 1, sockfd, 0);
+    SETSRV_ARG(&srvarg, 2, cmd, 0);
+    SETSRV_ARG(&srvarg, 3, arg, 0);
+    SETSRV_RETVAL(&srvarg, -1);
+
+    if (!srvcall(SRV_NET, &srvarg)) {
+        int ret = GETSRV_RETVAL(&srvarg, int);
+        if (ret == -1) {
+            return -1;
+        }
+        return ret;
+    }
+    return -1;
+}
 
 
 int

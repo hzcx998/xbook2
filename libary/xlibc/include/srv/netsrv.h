@@ -20,6 +20,8 @@ enum filesrv_call_num {
     NETSRV_GETPEERNAME,
     NETSRV_GETSOCKOPT,
     NETSRV_SETSOCKOPT,
+    NETSRV_IOCTL,
+    NETSRV_FCNTL,
     NETSRV_CALL_NR,    /* 最大数量 */
 };
 

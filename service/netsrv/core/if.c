@@ -419,6 +419,44 @@ static int __setsockopt(srvarg_t *arg)
     return 0;
 }
 
+static int __ioctl(srvarg_t *arg)
+{
+    int socket_id       = GETSRV_DATA(arg, 1, int);
+    long request        = GETSRV_DATA(arg, 2, long);
+    void *ioarg         = (void *) srvbuf256;    /* 客户端地址 */
+    int arglen          = GETSRV_SIZE(arg, 3);
+
+    if (!srvcall_inbuffer(arg)) {
+        SETSRV_DATA(arg, 3, ioarg);
+        SETSRV_SIZE(arg, 3, arglen);
+        if (srvcall_fetch(SRV_NET, arg))
+            return -1;
+    }
+
+    int ret = lwip_ioctl(socket_id, request, ioarg);
+    if (ret == -1) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, 0);
+    return 0;
+}
+
+static int __fcntl(srvarg_t *arg)
+{
+    int socket_id       = GETSRV_DATA(arg, 1, int);
+    int cmd             = GETSRV_DATA(arg, 2, int);
+    int farg            = GETSRV_DATA(arg, 3, int);
+
+    int ret = lwip_fcntl(socket_id, cmd, farg);
+    if (ret == -1) {
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    SETSRV_RETVAL(arg, 0);
+    return 0;
+}
+
 /* 调用表 */
 srvcall_func_t netsrv_call_table[] = {
     __socket,
@@ -438,6 +476,8 @@ srvcall_func_t netsrv_call_table[] = {
     __getpeername,
     __getsockopt,
     __setsockopt,
+    __ioctl,
+    __fcntl,
 };
 
 void *netsrv_if_thread(void *arg)

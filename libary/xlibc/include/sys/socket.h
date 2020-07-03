@@ -142,6 +142,9 @@ int getpeername(int sockfd, struct sockaddr *serv_addr, socklen_t *addrlen);
 int getsockname(int sockfd, struct sockaddr *my_addr, socklen_t *addrlen);
 int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
 int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+int sockioctl(int sockfd, int request, void *arg);
+int sockfcntl(int sockfd, int cmd, long arg);
+int select(int maxfdp, fd_set *readfds, fd_set *writefds, fd_set *errorfds, struct timeval *timeout);
 
 #define inet_addr(cp)         _ipaddr_addr(cp)
 
