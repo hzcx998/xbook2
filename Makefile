@@ -9,16 +9,16 @@ all $(MAKECMDGOALS):
 # 其它的开发分离
 build: 
 	cp develop/image/raw.img develop/image/c.img
-	cd libary && make
-	cd service && make
-	cd user && make
+	$(MAKE) -C libary
+	$(MAKE) -C service
+	$(MAKE) -C user
 
 rom:
 	tools/fatfs/fatfs develop/image/d.img develop/rom/ 10
 # 清理环境。libary，service，user。这样，可以很方便得把内核开发和
 # 其它的开发分离
 debuild: 
-	cd libary && make clean
-	cd service && make clean
-	cd user && make clean
+	$(MAKE) -C libary clean
+	$(MAKE) -C service clean
+	$(MAKE) -C user clean
 	

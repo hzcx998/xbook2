@@ -7,14 +7,14 @@ NETSRV 		= ./netsrv
 .PHONY: all clean
 
 all: 
-	cd $(INITSRV) && make
-	cd $(FILESRV) && make
-	cd $(GUISRV) && make
-	cd $(NETSRV) && make
+	$(MAKE) -C $(INITSRV)
+	$(MAKE) -C $(FILESRV)
+	$(MAKE) -C $(GUISRV)
+	$(MAKE) -C $(NETSRV)
 	
 clean: 
-	cd $(INITSRV) && make clean
-	cd $(FILESRV) && make clean
-	cd $(GUISRV) && make clean
-	cd $(NETSRV) && make clean
+	$(MAKE) -C $(INITSRV) clean
+	$(MAKE) -C $(FILESRV) clean
+	$(MAKE) -C $(GUISRV) clean
+	$(MAKE) -C $(NETSRV) clean
 	
