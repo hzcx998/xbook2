@@ -1,24 +1,27 @@
 # MIT License
 # Copyright (c) 2020 Jason Hu, Zhu Yu
+all:
 
-.PHONY: all $(MAKECMDGOALS) build debuild
-all $(MAKECMDGOALS):
+TOP_CMD	:= build debuild rom
+PHONY	:= all $(MAKECMDGOALS) $(TOP_CMD)
+
+all $(filter-out $(TOP_CMD),$(MAKECMDGOALS)):
 	@$(MAKE) -s -C ./src $(MAKECMDGOALS)
 
-# 构建环境。libary，service，user。这样，可以很方便得把内核开发和
-# 其它的开发分离
+# 构建应用开发环境
 build: 
 	cp develop/image/raw.img develop/image/c.img
-	$(MAKE) -C libary
-	$(MAKE) -C service
-	$(MAKE) -C user
+	$(MAKE) -s -C libary
+	$(MAKE) -s -C service
+	$(MAKE) -s -C user
 
 rom:
 	tools/fatfs/fatfs develop/image/d.img develop/rom/ 10
-# 清理环境。libary，service，user。这样，可以很方便得把内核开发和
-# 其它的开发分离
+
+# 清理应用开发环境
 debuild: 
-	$(MAKE) -C libary clean
-	$(MAKE) -C service clean
-	$(MAKE) -C user clean
-	
+	$(MAKE) -s -C libary clean
+	$(MAKE) -s -C service clean
+	$(MAKE) -s -C user clean
+
+.PHONY: $(PHONY)

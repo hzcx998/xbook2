@@ -17,28 +17,8 @@ OBJCOPY		= objcopy
 
 # virtual machine
 QEMU 		= qemu-system-i386
-BOCHS 		= bochs
-VBOX_MANAGE = VBoxManage
-
-# debugger
-BOCHSDBG 	= bochsdbg
-
 # development dir
 DEVELOPMENT_DIR	= ../develop/
-
-# bochs development dir
-BOCHS_DIR = $(DEVELOPMENT_DIR)bochs/
-
-# bochsrc for windows
-BXRC_WIN 		= $(BOCHS_DIR)bochsrc.win
-# bochsrc for linux
-BXRC_LINUX 		= $(BOCHS_DIR)bochsrc.linux
-
-# virtual box 虚拟机名称
-VBOX_NAME	= "xbook"
-
-# vmware 虚拟机文件地址
-VMWARE_VMX	= "D:\VMpc\vmware-xbook2\xbook2.vmx"
 
 #----tools----
 TOOLS_DIR = ../tools/
@@ -53,9 +33,6 @@ HDB_IMG		= $(IMG_DIR)d.img
 HDC_IMG		= $(IMG_DIR)e.img
 HDD_IMG		= $(IMG_DIR)f.img
 RAW_IMG		= $(IMG_DIR)raw.img
-
-HDB_VHD		= $(IMG_DIR)d.vhd
-HDB_VMDK	= $(IMG_DIR)d-flat.vmdk
 
 
 #----flags----
@@ -129,7 +106,7 @@ OBJCOPY_FLAGS = -R .note -R .comment -S
 KERNEL_ELF =  kernel.elf
 KERNEL_ELF_DISASM =  kernel.elf.disasm
 
-PHONY	+= all run compile link disk bochs bochsdbg qemu qemudbg vbox clean dis
+PHONY	+= all run compile link disk qemu qemudbg clean dis
 PHONY	+= $(SRCDIRS)
 
 export NASM NASM_FLAGS CC LD CFLAGS LDFLAGS TOPDIR OBJCOPY OBJCOPY_FLAGS
@@ -170,20 +147,6 @@ disk: $(KERNEL_ELF)
 
 #run kernel in vm
 
-bochs: disk
-ifeq ($(HOSTOS),windows)
-	$(BOCHS) -q -f $(BXRC_WIN)
-else
-	$(BOCHS) -q -f $(BXRC_LINUX)
-endif
-
-bochsdbg: disk
-ifeq ($(HOSTOS),windows)
-	$(BOCHSDBG) -q -f $(BXRC_WIN)
-else
-	$(BOCHSDBG) -q -f $(BXRC_LINUX)
-endif
-
 #-hda $(HDA_IMG) -hdb $(HDB_IMG)
 # 网卡配置: 
 #	-net nic,vlan=0,model=rtl8139,macaddr=12:34:56:78:9a:be
@@ -213,10 +176,6 @@ qemu: disk
 qemudbg: disk
 	$(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
 
-# virtual box
-vbox: disk
-	$(VBOX_MANAGE) startvm $(VBOX_NAME) --type gui 
-	
 # clean temporary files
 clean: $(SRCDIRS)
 	$(RM) $(KERNEL_ELF) $(KERNEL_ELF_DISASM)
