@@ -196,7 +196,7 @@ int main()
 
 #if 1
 
-#define SOCKET_SERVER_TEST
+//#define SOCKET_SERVER_TEST
 
 #ifdef SOCKET_SERVER_TEST
 int main()
@@ -348,13 +348,13 @@ int main()
     while (1)
     {
         memset(buf, 0, 512);
-        recvbytes = sockwrite(socket_id, "get data", 8);
+        recvbytes = write(socket_id, "get data", 8);
         if (recvbytes < 0) {
             printf("[test] send failed!\n");
             break;
         }
         
-        recvbytes = sockread(socket_id, buf, 512);
+        recvbytes = read(socket_id, buf, 512);
         if (recvbytes < 0) {
             printf("[test] recv failed!\n");
             break;

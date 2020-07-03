@@ -203,7 +203,9 @@ QEMU_ARGUMENT = -m 256M \
 		-name "Xbook Development Platform for x86" \
 		-fda $(FLAPPY_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 		-serial stdio \
-		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
+
+
+#		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
 		
 qemu: disk
 	$(QEMU) $(QEMU_ARGUMENT)

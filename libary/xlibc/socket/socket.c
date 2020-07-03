@@ -8,8 +8,42 @@
 #include <sys/srvcall.h>
 #include <srv/netsrv.h>
 #include <arpa/inet.h>
+#include <sys/filedes.h>
 
-int socket(int domain, int type, int protocol)
+static int __close(int sockfd)
+{
+    DEFINE_SRVARG(srvarg);
+    SETSRV_ARG(&srvarg, 0, NETSRV_CLOSE, 0);
+    SETSRV_ARG(&srvarg, 1, sockfd, 0);
+    SETSRV_RETVAL(&srvarg, -1);
+    if (!srvcall(SRV_NET, &srvarg)) {
+        int ret = GETSRV_RETVAL(&srvarg, int);
+        if (ret == -1) {
+            return -1;
+        }
+        return 0;
+    }
+    return -1;
+}
+
+int sockclose(int sockfd)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    int ret = __close(_FILE_HANDLE(_fil));
+    if (ret < 0)
+        return -1;
+    
+    __free_filedes(_fil);
+    return 0;
+}
+
+static int __socket(int domain, int type, int protocol)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_SOCKET, 0);
@@ -28,7 +62,26 @@ int socket(int domain, int type, int protocol)
     return -1;
 }
 
-int bind(int sockfd, struct sockaddr *my_addr, int addrlen)
+int socket(int domain, int type, int protocol)
+{
+    /* 文件描述符地址 */
+    struct _filedes *_fil = __alloc_filedes();
+    if (_fil == NULL) {
+        return -1;
+    }
+
+    int sockfd = __socket(domain, type, protocol);
+    if (sockfd < 0) {
+        __free_filedes(_fil);
+        return -1;
+    }
+    /* 填写文件描述符内容 */
+    _FILE_HANDLE(_fil) = sockfd;
+    _FILE_FLAGS(_fil) |= _FILE_SOCKET;
+    return _FILE_TO_FD(_fil);
+}
+
+static int __bind(int sockfd, struct sockaddr *my_addr, int addrlen)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_BIND, 0);
@@ -46,7 +99,19 @@ int bind(int sockfd, struct sockaddr *my_addr, int addrlen)
     return -1;
 }
 
-int connect(int sockfd, struct sockaddr *serv_addr, int addrlen)
+int bind(int sockfd, struct sockaddr *my_addr, int addrlen)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __bind(_FILE_HANDLE(_fil), my_addr, addrlen);
+}
+
+static int __connect(int sockfd, struct sockaddr *serv_addr, int addrlen)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_CONNECT, 0);
@@ -64,7 +129,19 @@ int connect(int sockfd, struct sockaddr *serv_addr, int addrlen)
     return -1;
 }
 
-int listen(int sockfd, int backlog)
+int connect(int sockfd, struct sockaddr *serv_addr, int addrlen)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __connect(_FILE_HANDLE(_fil), serv_addr, addrlen);
+}
+
+static int __listen(int sockfd, int backlog)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_LISTEN, 0);
@@ -82,7 +159,19 @@ int listen(int sockfd, int backlog)
     return -1;
 }
 
-int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
+int listen(int sockfd, int backlog)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __listen(_FILE_HANDLE(_fil), backlog);
+}
+
+static int __accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_ACCEPT, 0);
@@ -102,7 +191,30 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
     return -1;
 }
 
-int send(int sockfd, const void *buf, int len, int flags)
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    int newsock = __accept(_FILE_HANDLE(_fil), addr, addrlen);
+    if (newsock == -1)
+        return -1;
+    /* 创建一个新的文件描述符 */
+    _fil = __alloc_filedes();
+    if (_fil == NULL) {
+        return -1;
+    }
+    /* 填写文件描述符内容 */
+    _FILE_HANDLE(_fil) = newsock;
+    _FILE_FLAGS(_fil) |= _FILE_SOCKET;
+    return _FILE_TO_FD(_fil);
+}
+
+static int __send(int sockfd, const void *buf, int len, int flags)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_SEND, 0);
@@ -120,7 +232,19 @@ int send(int sockfd, const void *buf, int len, int flags)
     return -1;
 }
 
-int recv(int sockfd, void *buf, int len, unsigned int flags)
+int send(int sockfd, const void *buf, int len, int flags)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __send(_FILE_HANDLE(_fil), buf, len, flags);
+}
+
+static int __recv(int sockfd, void *buf, int len, unsigned int flags)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_RECV, 0);
@@ -139,7 +263,19 @@ int recv(int sockfd, void *buf, int len, unsigned int flags)
     return -1;
 }
 
-int sockwrite(int sockfd, const void *buf, size_t len)
+int recv(int sockfd, void *buf, int len, unsigned int flags)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __recv(_FILE_HANDLE(_fil), buf, len, flags);
+}
+
+static int __sockwrite(int sockfd, const void *buf, size_t len)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_WRITE, 0);
@@ -156,7 +292,19 @@ int sockwrite(int sockfd, const void *buf, size_t len)
     return -1;
 }
 
-int sockread(int sockfd, void *buf, size_t len)
+int sockwrite(int sockfd, const void *buf, size_t len)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __sockwrite(_FILE_HANDLE(_fil), buf, len);
+}
+
+static int __sockread(int sockfd, void *buf, size_t len)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_READ, 0);
@@ -174,8 +322,19 @@ int sockread(int sockfd, void *buf, size_t len)
     return -1;
 }
 
+int sockread(int sockfd, void *buf, size_t len)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
 
-int sendto(int sockfd, const void *buf, int len, unsigned int flags,
+    return __sockread(_FILE_HANDLE(_fil), buf, len);
+}
+
+static int __sendto(int sockfd, const void *buf, int len, unsigned int flags,
     const struct sockaddr *to, int tolen)
 {
     DEFINE_SRVARG(srvarg);
@@ -195,7 +354,21 @@ int sendto(int sockfd, const void *buf, int len, unsigned int flags,
     return -1;
 }
 
-int recvfrom(int sockfd, void *buf, int len, unsigned int flags,
+int sendto(int sockfd, const void *buf, int len, unsigned int flags,
+    const struct sockaddr *to, int tolen)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __sendto(_FILE_HANDLE(_fil), buf, len, flags, to, tolen);
+}
+
+
+static int __recvfrom(int sockfd, void *buf, int len, unsigned int flags,
     struct sockaddr *from, int *fromlen)
 {
     DEFINE_SRVARG(srvarg);
@@ -219,7 +392,21 @@ int recvfrom(int sockfd, void *buf, int len, unsigned int flags,
     return -1;
 }
 
-int shutdown(int sockfd, int how)
+int recvfrom(int sockfd, void *buf, int len, unsigned int flags,
+    struct sockaddr *from, int *fromlen)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __recvfrom(_FILE_HANDLE(_fil), buf, len, flags, from, fromlen);
+}
+
+
+static int __shutdown(int sockfd, int how)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_SHUTDOWN, 0);
@@ -236,25 +423,21 @@ int shutdown(int sockfd, int how)
     return -1;
 }
 
-
-int sockclose(int sockfd)
+int shutdown(int sockfd, int how)
 {
-    DEFINE_SRVARG(srvarg);
-    SETSRV_ARG(&srvarg, 0, NETSRV_CLOSE, 0);
-    SETSRV_ARG(&srvarg, 1, sockfd, 0);
-    SETSRV_RETVAL(&srvarg, -1);
-    if (!srvcall(SRV_NET, &srvarg)) {
-        int ret = GETSRV_RETVAL(&srvarg, int);
-        if (ret == -1) {
-            return -1;
-        }
-        return 0;
-    }
-    return -1;
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __shutdown(_FILE_HANDLE(_fil), how);
 }
 
 
-int getpeername(int sockfd, struct sockaddr *serv_addr, socklen_t *addrlen)
+
+static int __getpeername(int sockfd, struct sockaddr *serv_addr, socklen_t *addrlen)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_GETPEERNAME, 0);
@@ -274,7 +457,21 @@ int getpeername(int sockfd, struct sockaddr *serv_addr, socklen_t *addrlen)
     }
     return -1;
 }
-int getsockname(int sockfd, struct sockaddr *my_addr, socklen_t *addrlen)
+
+int getpeername(int sockfd, struct sockaddr *serv_addr, socklen_t *addrlen)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __getpeername(_FILE_HANDLE(_fil), serv_addr, addrlen);
+}
+
+
+static int __getsockname(int sockfd, struct sockaddr *my_addr, socklen_t *addrlen)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_GETSOCKNAME, 0);
@@ -295,7 +492,19 @@ int getsockname(int sockfd, struct sockaddr *my_addr, socklen_t *addrlen)
     return -1;
 }
 
-int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen)
+int getsockname(int sockfd, struct sockaddr *my_addr, socklen_t *addrlen)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __getsockname(_FILE_HANDLE(_fil), my_addr, addrlen);
+}
+
+static int __getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_GETSOCKOPT, 0);
@@ -318,7 +527,19 @@ int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optl
     return -1;
 }
 
-int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)
+int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __getsockopt(_FILE_HANDLE(_fil), level, optname, optval, optlen);
+}
+
+static int __setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_SETSOCKOPT, 0);
@@ -338,7 +559,20 @@ int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t
     return -1;
 }
 
-int sockioctl(int sockfd, int request, void *arg)
+int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __setsockopt(_FILE_HANDLE(_fil), level, optname, optval, optlen);
+}
+
+
+static int __sockioctl(int sockfd, int request, void *arg)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_IOCTL, 0);
@@ -357,7 +591,19 @@ int sockioctl(int sockfd, int request, void *arg)
     return -1;
 }
 
-int sockfcntl(int sockfd, int cmd, long arg)
+int sockioctl(int sockfd, int request, void *arg)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __sockioctl(_FILE_HANDLE(_fil), request, arg);
+}
+
+static int __sockfcntl(int sockfd, int cmd, long arg)
 {
     DEFINE_SRVARG(srvarg);
     SETSRV_ARG(&srvarg, 0, NETSRV_FCNTL, 0);
@@ -376,6 +622,17 @@ int sockfcntl(int sockfd, int cmd, long arg)
     return -1;
 }
 
+int sockfcntl(int sockfd, int cmd, long arg)
+{
+    if (_IS_BAD_FD(sockfd))
+        return -1;
+    struct _filedes *_fil = _FD_TO_FILE(sockfd);
+    
+    if (_INVALID_FILE(_fil))
+        return -1;
+
+    return __sockfcntl(_FILE_HANDLE(_fil), cmd, arg);
+}
 
 int
 __ipaddr_aton(const char *cp, ip_addr_t *addr);
