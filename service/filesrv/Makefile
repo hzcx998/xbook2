@@ -69,8 +69,7 @@ MAIN_OBJS =  main.o \
 OBJS =  $(MAIN_OBJS) $(CORE_OBJS) $(DRIVERS_OBJS) $(FATFS_OBJS) $(FSAL_OBJS)
 
 
-LIB_FILE = 	$(DIR_PTHREAD)/pthread-0.0.1.a \
-			$(DIR_XLIBC)/xlibc-0.0.1.a \
+LIB_FILE = 	$(DIR_XLIBC)/xlibc-0.0.1.a \
 
 # -n: close memory aligin.
 LDFLAGS		= -no-pie -m elf_i386 -e _start -Ttext 0x00001000

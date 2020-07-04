@@ -83,7 +83,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb)
     Elf32_Half prog_header_size = elf_header->e_phentsize;
     
     //printk(KERN_DEBUG "prog offset %x size %d\n", prog_header_off, prog_header_size);
-    
+    Elf32_Off prog_end;
     /* 遍历所有程序头 */
     unsigned long grog_idx = 0;
     while (grog_idx < elf_header->e_phnum) {
@@ -93,12 +93,13 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb)
         if (raw_block_read_off(rb, (void *)&prog_header, prog_header_off, prog_header_size)) {
             return -1;
         }
-        /*
+#if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "proc_load_image: read prog header off %x vaddr %x filesz %x memsz %x\n", 
             prog_header.p_offset, prog_header.p_vaddr, prog_header.p_filesz, prog_header.p_memsz);
-        */
+#endif        
         /* 如果是可加载的段就加载到内存中 */
         if (prog_header.p_type == PT_LOAD) {
+            
 
             /* 由于bss段不占用文件大小，但是要占用内存，
             所以这个地方我们加载的时候就加载成memsz，
@@ -119,28 +120,57 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb)
                     prog_header.p_memsz, prog_header.p_filesz);
                 */
             }
+            prog_end = prog_header.p_vaddr + prog_header.p_memsz;
+#if DEBUG_LOCAL == 1            
+            printk(KERN_DEBUG "seg start:%x end:%x\n", prog_header.p_vaddr, prog_end);
+#endif        
+
             
             /* 设置段的起始和结束 */
             if (prog_header.p_flags == ELF32_PHDR_CODE) {
                 vmm->code_start = prog_header.p_vaddr;
-                vmm->code_end = prog_header.p_vaddr + prog_header.p_memsz;
-
-                //printk(KERN_DEBUG "code start:%x end:%x\n", vmm->code_start, vmm->code_end);
-
+                vmm->code_end = prog_end;
+#if DEBUG_LOCAL == 1  
+                printk(KERN_DEBUG "code start:%x end:%x\n", vmm->code_start, vmm->code_end);
+#endif
+                /*堆默认在代码的后面的一个页后面 */
+                vmm->heap_start = vmm->code_end + PAGE_SIZE;
+                
+                /* 页对齐 */
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
             } else if (prog_header.p_flags == ELF32_PHDR_DATA) {
                 vmm->data_start = prog_header.p_vaddr;
-                vmm->data_end = prog_header.p_vaddr + prog_header.p_memsz;
-
-                vmm->data_end = vmm->data_end;
-                //printk(KERN_DEBUG "data start:%x end:%x\n", vmm->data_start, vmm->data_end);
+                vmm->data_end = prog_end;
+#if DEBUG_LOCAL == 1                  
+                printk(KERN_DEBUG "data start:%x end:%x\n", vmm->data_start, vmm->data_end);
+#endif
+                /*堆默认在数据的后面的一个页后面 */
+                vmm->heap_start = vmm->data_end + PAGE_SIZE;
+                
+                /* 页对齐 */
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
             }
-            //printk(KERN_DEBUG "seg start:%x end:%x\n", prog_header.p_vaddr, prog_header.p_vaddr + prog_header.p_memsz);
+
+            /* 没有获取到数据段和代码段，就直接放到加载的最后 */
+            if (!vmm->heap_start && !vmm->heap_end) {
+                /*堆默认在数据的后面的一个页后面 */
+                vmm->heap_start = prog_end + PAGE_SIZE;
+                
+                /* 页对齐 */
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
+            }
         }
 
         /* 指向下一个程序头 */
         prog_header_off += prog_header_size;
         grog_idx++;
     }
+#if DEBUG_LOCAL == 1 
+    printk(KERN_DEBUG "heap start:%x\n", vmm->heap_start);
+#endif
     return 0;
 }
 
@@ -295,6 +325,7 @@ int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
  */
 void proc_heap_init(task_t *task)
 {
+    return;
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "task=%d dump vmspace.\n", task->pid);
     dump_vmspace(task->vmm);

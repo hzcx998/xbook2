@@ -68,6 +68,24 @@ int vmm_release_space(vmm_t *vmm)
         vmspace_free(p); /* 释放空间 */
     }
     vmm->vmspace_head = NULL;
+
+    vmm->code_start = 0;
+    vmm->code_end = 0;
+    vmm->data_start = 0;
+    vmm->data_end = 0;
+    vmm->heap_start = 0;
+    vmm->heap_end = 0;
+    vmm->map_start = 0;
+    vmm->map_end = 0;
+    vmm->share_start = 0;
+    vmm->share_end = 0;
+    vmm->stack_start = 0;
+    vmm->stack_end = 0;
+    vmm->arg_start = 0;
+    vmm->arg_end = 0;
+    vmm->env_start = 0;
+    vmm->env_end = 0;
+
     return 0;
 }
 
