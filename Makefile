@@ -66,26 +66,26 @@ run: qemu
 
 # 先写rom，在编译内核
 kernel:
-	@$(MAKE) -s -C ./src
+	@$(MAKE) -s -C  ./src
 
 # 构建环境。镜像>工具>环境>rom
 build:
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDB_IMG) 
-	cd $(FATFS_DIR) && $(MAKE)
-	cd $(LIBARY_DIR) && $(MAKE)
-	cd $(SERVICE_DIR) && $(MAKE)
-	cd $(USER_DIR) && $(MAKE)
+	$(MAKE) -s -C  $(FATFS_DIR)
+	$(MAKE) -s -C  $(LIBARY_DIR)
+	$(MAKE) -s -C  $(SERVICE_DIR)
+	$(MAKE) -s -C  $(USER_DIR)
 	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) 10
 
 # 清理环境。
 debuild: 
-	cd $(KERSRC) && make clean
-	cd $(FATFS_DIR) && $(MAKE) clean
-	cd $(LIBARY_DIR) && $(MAKE) clean
-	cd $(SERVICE_DIR) && $(MAKE) clean
-	cd $(USER_DIR) && $(MAKE) clean
+	$(MAKE) -s -C  $(KERSRC) clean
+	$(MAKE) -s -C  $(FATFS_DIR) clean
+	$(MAKE) -s -C  $(LIBARY_DIR) clean
+	$(MAKE) -s -C  $(SERVICE_DIR) clean
+	$(MAKE) -s -C  $(USER_DIR) clean
 	-$(RM) $(FLOPPYA_IMG)
 	-$(RM) $(HDA_IMG)
 	-$(RM) $(HDB_IMG)
@@ -96,18 +96,18 @@ rom:
 
 # 重新编译所有库
 lib: 
-	cd $(LIBARY_DIR) && $(MAKE) clean
-	cd $(LIBARY_DIR) && $(MAKE)
+	$(MAKE) -s -C  $(LIBARY_DIR) clean
+	$(MAKE) -s -C  $(LIBARY_DIR)
 
 # 重新编译所有服务
 srv: 
-	cd $(SERVICE_DIR) && $(MAKE) clean
-	cd $(SERVICE_DIR) && $(MAKE)
+	$(MAKE) -s -C  $(SERVICE_DIR) clean
+	$(MAKE) -s -C  $(SERVICE_DIR)
 
 # 重新编译所有用户
 usr: 
-	cd $(SERVICE_DIR) && $(MAKE) clean
-	cd $(SERVICE_DIR) && $(MAKE)
+	$(MAKE) -s -C  $(SERVICE_DIR) clean
+	$(MAKE) -s -C  $(SERVICE_DIR)
 
 
 #-hda $(HDA_IMG) -hdb $(HDB_IMG)
