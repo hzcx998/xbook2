@@ -128,7 +128,7 @@ static int __accept(srvarg_t *arg)
     return 0;
 }
 
-static int __send(srvarg_t *arg)
+static int __se-nd(srvarg_t *arg)
 {
     int socket_id   = GETSRV_DATA(arg, 1, int);
     int len         = GETSRV_SIZE(arg, 2);
