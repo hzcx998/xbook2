@@ -106,9 +106,9 @@ LIBNAME = xlibc-0.0.1.a
 # all need to do
 all: $(LIBNAME) 
 
-# make a libary file
+# make a library file
 $(LIBNAME): $(OBJS) 
-	@echo [AR] making libary file $(LIBNAME)
+	@echo [AR] making library file $(LIBNAME)
 	@$(AR) $(ARFLAGS) $(LIBNAME) $(OBJS)
 
 %.o : %.c

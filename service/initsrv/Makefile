@@ -8,9 +8,9 @@ DD 			= dd
 OBJDUMP		= objdump
 
 #The file path
-DIR_LIBARY = ../../libary
+DIR_LIBARY = ../../library
 
-# libarys
+# librarys
 DIR_XLIBC 		= $(DIR_LIBARY)/xlibc
 DIR_PTHREAD 	= $(DIR_LIBARY)/pthread
 

@@ -25,7 +25,7 @@ HDA_SZ		= 10321920
 HDB_SZ		= 10321920
 
 # environment dir
-LIBARY_DIR	= libary
+LIBARY_DIR	= library
 SERVICE_DIR	= service
 USER_DIR	= user
 

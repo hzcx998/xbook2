@@ -9,11 +9,11 @@ OBJDUMP		= objdump
 COPY		= cp
 
 #The file path
-DIR_LIBARY = ../../libary
+DIR_LIBARY = ../../library
 
 DIR_INCLUDE = ./include
 
-# libarys
+# librarys
 DIR_XLIBC 		= $(DIR_LIBARY)/xlibc
 DIR_SGI 		= $(DIR_LIBARY)/sgi
 DIR_PTHREAD 	= $(DIR_LIBARY)/pthread

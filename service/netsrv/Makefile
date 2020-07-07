@@ -8,7 +8,7 @@ DD 			= dd
 OBJDUMP		= objdump
 
 #The file path
-DIR_LIBARY = ../../libary
+DIR_LIBARY = ../../library
 
 # include path
 DIR_INCLUDE = ./include
@@ -34,7 +34,7 @@ LWIP_SNMP_DIR		= $(LWIP_CORE_DIR)/snmp
 # rom dir
 DIR_ROM = ../../develop/rom
 
-# libarys
+# librarys
 DIR_XLIBC 		= $(DIR_LIBARY)/xlibc
 DIR_PTHREAD 	= $(DIR_LIBARY)/pthread
 
