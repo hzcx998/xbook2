@@ -6,8 +6,8 @@ cmd_cc_o_c = $(CC) $(X_CFLAGS) -MD -MF $(@D)/.$(@F).d $(X_CPPFLAGS) -c $< -o $@
 quiet_cmd_as_o_S = $(ECHO_CC) $(@:.o=)
 cmd_as_o_S = $(AS) $(X_ASFLAGS) -MD -MF $(@D)/.$(@F).d $(X_CPPFLAGS) -c $< -o $@
 
-quiet_cmd_as_o_asm = [AS] $(@:.o=)
-cmd_as_o_asm = $(AS) $(X_AFLAGS) -o $@ -- $<
+quiet_cmd_as_o_asm = $(ECHO_AS) $(@:.o=)
+cmd_as_o_asm = $(AS) $(X_ASFLAGS) -o $@  $<
 
 # If the list of objects to link is empty, just create an empty built-in.o
 quiet_cmd_link_o_target = $(ECHO_LD) $(obj)/built-in.o

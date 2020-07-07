@@ -1,0 +1,11 @@
+SRC	+= interrupt.c
+SRC	+= softirq.c
+SRC	+= clock.c
+SRC	+= rawblock.c
+SRC	+= syscall.c
+SRC	+= resource.c
+SRC	+= driver.c
+SRC	+= timer.c
+SRC	+= alarm.c
+SRC	+= ktime.c
+SRC	+= srvcall.c

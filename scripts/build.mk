@@ -14,6 +14,7 @@ X_SUBDIR	:=
 X_SUB_OBJ	:=
 X_EXTRA		:=
 X_PREPARE	:=
+X_CLEAN		:=
 
 include $(XBUILD_DIR)/include.mk
 sinclude $(X_CONF_DIR)/auto.conf
@@ -54,7 +55,8 @@ export X_ASFLAGS X_CFLAGS X_LDFLAGS X_LIBDIRS X_LIBS X_DEFINES X_LDFLAGS X_INCDI
 X_CUR_OBJ	:=	$(foreach f,$(filter-out %/, $(SRC)),$(wildcard $(srctree)/$(src)/$(f)))
 X_CUR_OBJ	:=	$(patsubst $(srctree)/$(src)/%,$(obj)/%.o,$(X_CUR_OBJ))
 X_SUBDIR	:=	$(filter %/,$(foreach f,$(filter %/, $(SRC)),$(wildcard $(srctree)/$(src)/$(f))))
-X_SUB_OBJ	:=	$(patsubst $(srctree)/$(src)/%/,$(obj)/%/built-in.o,$(X_SUBDIR))
+X_SUBDIR	:=	$(patsubst $(srctree)/%/,%,$(X_SUBDIR))
+X_SUB_OBJ	:=	$(patsubst $(src)/%,$(obj)/%/built-in.o,$(X_SUBDIR))
 
 X_OBJS		:=	$(X_CUR_OBJ) $(X_SUB_OBJ)
 # case: $(obj)==.
@@ -90,9 +92,9 @@ $(X_TARGET): $(X_MODULE)
 $(X_NAME): $(X_OBJS)
 
 clean:
-ifneq ($(strip $(wildcard $(X_TARGET) $(obj)/.*.cmd $(X_NAME))),)
+ifneq ($(strip $(wildcard $(X_TARGET) $(obj)/.*.cmd $(X_NAME) $(X_CLEAN))),)
 	@$(ECHO) '$(ECHO_RM)' $(obj)
-	@$(RM) $(X_TARGET) $(wildcard $(obj)/.*.cmd) $(X_NAME)
+	@$(RM) $(X_TARGET) $(wildcard $(obj)/.*.cmd) $(X_NAME) $(X_CLEAN)
 endif
 
 include $(XBUILD_DIR)/rule.mk
