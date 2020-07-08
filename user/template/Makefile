@@ -9,9 +9,9 @@ OBJDUMP		= objdump
 COPY		= cp
 
 #The file path
-DIR_LIBARY = ../../libary
+DIR_LIBARY = ../../library
 
-# libarys
+# librarys
 DIR_XLIBC = $(DIR_LIBARY)/xlibc
 DIR_SGI = $(DIR_LIBARY)/sgi
 

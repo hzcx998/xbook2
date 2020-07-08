@@ -1,13 +1,9 @@
-# makefile for test
+X_LIBS		+= xlibc-0.0.1.a sgi-0.0.1.a pthread-0.0.1.a
 
-#The tools name
-NASM 		= nasm
-CC			= gcc
-LD 			= ld
-DD 			= dd
-OBJDUMP		= objdump
-COPY		= cp
+NAME		:= test
+SRC			+= main.c cond_sync.c
 
+<<<<<<< HEAD
 #The file path
 DIR_LIBARY = ../../libary
 
@@ -85,3 +81,10 @@ clean:
 	
 %.o: %.c
 	$(CC) $(C_FLAGS) $(X_INCDIRS) -c -o $@ $<
+=======
+define CUSTOM_TARGET_CMD
+echo [APP] $@; \
+$(LD) $(X_LDFLAGS) $(X_OBJS) -o $@ $(patsubst %, -L%, $(X_LIBDIRS)) --start-group $(patsubst %, -l:%, $(X_LIBS)) --end-group; \
+cp $@ $(srctree)/../develop/rom/bin
+endef
+>>>>>>> 17d36e39ee27fd9e4c6cc6e7237a014afddb6344
