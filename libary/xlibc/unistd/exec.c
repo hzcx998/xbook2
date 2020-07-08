@@ -14,11 +14,13 @@
 int execv(const char *path, const char *argv[])
 {
     int rdbytes;
-    int fd = open(path, O_RDONLY);
+    int fd = open(path, O_RDONLY, 0);
     if (fd == -1) {
         return -1;
     }
+    
     int filesz = lseek(fd, 0, SEEK_END);
+
     unsigned char *buf = malloc(filesz);
     if (buf == NULL) {
         close(fd);

@@ -29,12 +29,14 @@ static int __open(srvarg_t *arg)
     }
     int flags = GETSRV_DATA(arg, 2, int);
     void *path = GETSRV_DATA(arg, 1, void *);
+    //printf("[%s] open path %s.\n", SRV_NAME, path);
     int fi = fsif.open(path, flags);
     if (fi < 0) {
         printf("[%s] open path %s failed!\n", SRV_NAME, path);
         SETSRV_RETVAL(arg, -1);
         return -1;
     }
+
     SETSRV_RETVAL(arg, fi);
     return 0;
 }
@@ -55,10 +57,11 @@ static int __read(srvarg_t *arg)
     int len = MIN(GETSRV_SIZE(arg, 2), SRVBUF_128K);
 
     int readbytes = fsif.read(fi, srvbuf128k, len);
-    if (readbytes < 0) {
+    if (readbytes <= 0) {
         SETSRV_RETVAL(arg, -1);
         return -1;
     }
+
     SETSRV_DATA(arg, 2, srvbuf128k);
     SETSRV_SIZE(arg, 2, readbytes);
     SETSRV_RETVAL(arg, readbytes);
@@ -80,7 +83,7 @@ static int __write(srvarg_t *arg)
     }
 
     int writebytes = fsif.write(fi, srvbuf128k, len);
-    if (writebytes < 0) {
+    if (writebytes <= 0) {
         SETSRV_RETVAL(arg, -1);
         return -1;
     }
@@ -103,10 +106,8 @@ static int __lseek(srvarg_t *arg)
     return 0;
 }
 
-static int __assert(srvarg_t *arg)
+static int __access(srvarg_t *arg)
 {
-    //printf("%s: __assert\n", SRV_NAME);
-
     /* 需要读取参数 */
     if (!srvcall_inbuffer(arg)) {
         SETSRV_DATA(arg, 1, srvbuf256);
@@ -116,7 +117,7 @@ static int __assert(srvarg_t *arg)
     }
     void *filenpath = GETSRV_DATA(arg, 1, void *);
     int mode = GETSRV_DATA(arg, 2, int);
-    if (!mode) {
+    if (mode == F_OK) {
         int fi = fsif.open(filenpath, O_RDONLY);
         if (fi < 0) {
             SETSRV_RETVAL(arg, -1);
@@ -127,7 +128,8 @@ static int __assert(srvarg_t *arg)
         SETSRV_RETVAL(arg, 0);   
         return 0; 
     }
-    return -1;
+    //if ((mode & R_OK) | (mode & W_OK)) 
+    return 0;
 }
 
 static int __opendir(srvarg_t *arg)
@@ -587,6 +589,26 @@ static int __fcntl(srvarg_t *arg)
     return 0;
 }
 
+static int __fstat(srvarg_t *arg)
+{
+    int fi      = GETSRV_DATA(arg, 1, int);
+    int len     = MIN(GETSRV_SIZE(arg, 2), SRVBUF_256);
+
+    int retval = fsif.fstat(fi, srvbuf256);
+    if (retval < 0) {
+        printf("[%s] sync failed!\n", SRV_NAME);
+        SETSRV_RETVAL(arg, -1);
+        return -1;
+    }
+    /* 传输数据给用户 */
+    SETSRV_DATA(arg, 2, srvbuf256);
+    SETSRV_SIZE(arg, 2, len);
+
+    SETSRV_RETVAL(arg, retval);
+    return 0;
+}
+
+
 /* 调用表 */
 srvcall_func_t filesrv_call_table[] = {
     __open,
@@ -594,7 +616,7 @@ srvcall_func_t filesrv_call_table[] = {
     __read,
     __write,
     __lseek,
-    __assert,
+    __access,
     __opendir,
     __closedir,
     __readdir,
@@ -620,6 +642,7 @@ srvcall_func_t filesrv_call_table[] = {
     __chdir,
     __ioctl,
     __fcntl,
+    __fstat,
 };
 
 int init_srv_interface()

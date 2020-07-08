@@ -26,3 +26,5 @@
 * 开始网络服务进程的开发。
 * 2020/7/2
 * 将src/makefile的功能独立成只编译链接内核。启动部分放到主makefile中来。
+* 2020/7/4
+* 移植xui所需，freetype,xfs,list_head,jpeg,png,spinlock

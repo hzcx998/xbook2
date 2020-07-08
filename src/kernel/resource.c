@@ -599,7 +599,7 @@ void resource_copy(resource_t *dst, resource_t *src)
                 
                 switch (item->flags & RES_SLAVER_MASK) {
                 case IPC_PIPE: /* 只复制管道ipc资源和表项 */ 
-                    printk("copy pipe ipc!\n");
+                    //printk("copy pipe ipc!\n");
                     dst->table[i].flags = item->flags;  /* 复制项 */
                     dst->table[i].handle = item->handle;  /* 复制项 */
                     break;

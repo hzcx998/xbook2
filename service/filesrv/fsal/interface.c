@@ -3,6 +3,7 @@
 #include <core/filesrv.h>
 #include <core/fstype.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <drivers/disk.h>
 
 static int __open(void *path, int flags)
@@ -24,10 +25,11 @@ static int __open(void *path, int flags)
     }
 
     /* 转换路径 */
-    char new_path[FASL_PATH_LEN] = {0};
+    char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
 
+    //srvprint("open path:%s\n", new_path);
     /* 执行打开 */
     return fsal->open(new_path, flags);
 }
@@ -123,7 +125,7 @@ static int __opendir(char *path)
     }
 
     /* 转换路径 */
-    char new_path[FASL_PATH_LEN] = {0};
+    char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
 
@@ -174,7 +176,7 @@ static int __mkdir(char *path, mode_t mode)
     }
 
     /* 转换路径 */
-    char new_path[FASL_PATH_LEN] = {0};
+    char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
 
@@ -201,7 +203,7 @@ static int __unlink(char *path)
     }
 
     /* 转换路径 */
-    char new_path[FASL_PATH_LEN] = {0};
+    char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
 
@@ -228,11 +230,11 @@ static int __rename(char *old_path, char *new_path)
     }
 
     /* 转换路径 */
-    char old_path2[FASL_PATH_LEN] = {0};
+    char old_path2[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, old_path2, old_path) < 0)
         return -1;
 
-    char new_path2[FASL_PATH_LEN] = {0};
+    char new_path2[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path2, new_path) < 0)
         return -1;
 
@@ -260,12 +262,24 @@ static int __state(char *path, void *buf)
     }
 
     /* 转换路径 */
-    char new_path[FASL_PATH_LEN] = {0};
+    char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
 
     /* 执行打开 */
     return fsal->state(new_path, buf);
+}
+
+static int __fstat(int idx, void *buf)
+{
+    if (ISBAD_FSAL_DIDX(idx))
+        return -1;
+    /* 查找对应的文件系统 */
+    fsal_dir_t *pdir = FSAL_I2D(idx);
+    fsal_t *fsal = pdir->fsal;
+    if (fsal == NULL)
+        return -1;
+    return fsal->fstat(idx, buf);
 }
 
 static int __chmod(char *path, mode_t mode)
@@ -287,7 +301,7 @@ static int __chmod(char *path, mode_t mode)
     }
 
     /* 转换路径 */
-    char new_path[FASL_PATH_LEN] = {0};
+    char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
 
@@ -326,7 +340,7 @@ static int __utime(char *path, time_t actime, time_t modtime)
     }
 
     /* 转换路径 */
-    char new_path[FASL_PATH_LEN] = {0};
+    char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
 
@@ -425,7 +439,7 @@ static int __rmdir(char *path)
     }
 
     /* 转换路径 */
-    char new_path[FASL_PATH_LEN] = {0};
+    char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
 
@@ -452,7 +466,7 @@ static int __chdir(char *path)
     }
 
     /* 转换路径 */
-    char new_path[FASL_PATH_LEN] = {0};
+    char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
 
@@ -545,7 +559,7 @@ static int __unmount(char *path, unsigned long flags)
     }
 
     /* 转换路径 */
-    char new_path[FASL_PATH_LEN] = {0};
+    char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
 
@@ -619,4 +633,5 @@ fsal_t fsif = {
     .chdir      = __chdir,
     .ioctl      = __ioctl,
     .fcntl      = __fcntl,
+    .fstat      = __fstat,
 };

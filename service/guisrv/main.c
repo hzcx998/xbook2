@@ -27,14 +27,11 @@
 
 int init_guisrv()
 {
-    printf("[guisrv ] %s: init_screen_driver.\n", SRV_NAME);
-    
     /* drivers */
     if (init_screen_driver()) {
         printf("[failed ] %s: init screen driver failed!\n", SRV_NAME);
         return -1;
     }
-    printf("[guisrv ] %s: init msgque ok.\n", SRV_NAME);
     
     if (init_mouse_driver()) {
         printf("[failed ] %s: init mouse driver failed!\n", SRV_NAME);
@@ -45,12 +42,10 @@ int init_guisrv()
         printf("[failed ] %s: init keyboard driver failed!\n", SRV_NAME);
         return -1;
     }
-    printf("[guisrv ] %s: init msgque!\n", SRV_NAME);
     
     if (init_msgque_event()) {
         return -1;
     }
-    printf("[guisrv ] %s: init msgque ok.\n", SRV_NAME);
     
     return 0;
 }
@@ -175,8 +170,6 @@ GUI struct:
 
 int main(int argc, char *argv[])
 {
-    printf("[ok ] graph service start.\n");
-
     if (init_guisrv())
         return -1;
 

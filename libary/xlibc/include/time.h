@@ -1,37 +1,48 @@
-#ifndef _LIB_TIME_H
-#define _LIB_TIME_H
+#ifndef __XLIBC_TIME_H__
+#define __XLIBC_TIME_H__
 
-#include "types.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+#include <stdint.h>
+#include <types.h>
+#include <sys/time.h>
 
-struct tm
-{
-  int tm_sec;			/* Seconds.	[0-60] (1 leap second) */
-  int tm_min;			/* Minutes.	[0-59] */
-  int tm_hour;			/* Hours.	[0-23] */
-  int tm_mday;			/* Day.		[1-31] */
-  int tm_mon;			/* Month.	[0-11] */
-  int tm_year;			/* Year	- 1900.  */
-  int tm_wday;			/* Day of week.	[0-6] */
-  int tm_yday;			/* Days in year.[0-365]	*/
-  int tm_isdst;			/* DST.		[-1/0/1]*/
+struct tm {
+	int tm_sec;
+	int tm_min;
+	int tm_hour;
+	int tm_mday;
+	int tm_mon;
+	int tm_year;
+	int tm_wday;
+	int tm_yday;
+	int tm_isdst;
+
+	long __tm_gmtoff;
+	const char * __tm_zone;
 };
 
-time_t time(time_t *t);
+clock_t clock(void);
+time_t time(time_t * t);
+time_t mktime(struct tm * tm);
+double difftime (time_t, time_t);
+struct tm * gmtime(const time_t * t);
+struct tm * localtime(const time_t * t);
+char * asctime(const struct tm * tm);
+char * ctime(const time_t * t);
+size_t strftime(char * s, size_t max, const char * fmt, const struct tm * t);
+int __secs_to_tm(long long t, struct tm * tm);
+long long __tm_to_secs(const struct tm * tm);
 
-/* 结构转换成时间戳 */
-time_t mktime(struct tm *tp);
-
-/* 时间戳转换成结构 */
-struct tm *gmtime(const time_t *t);                                          
-struct tm *localtime(const time_t *t);
-
-/* tm和t转换成字符 */
-char *asctime(const struct tm *tp);
-char *ctime(const time_t *t);
-
-/* difftime函数计算t1-t2的差，并把结果值转换为秒，返回一个double类型。 */
-double difftime(time_t t1, time_t t0);
+/* ktime to tm */
+int ktimeto(ktime_t *ktm, struct tm *tm);
 
 
-#endif  /* _LIB_TIME_H */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __XLIBC_TIME_H__ */

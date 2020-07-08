@@ -52,9 +52,10 @@ static char *__errno_string[] = {
     "EILSEQ", 
 };
 
-extern int *_errno(void);
-
-#define errno (*_errno())
+extern int *_errno(void)
+{
+    return &__errno;
+}
 
 errno_t _set_errno(int value)
 {

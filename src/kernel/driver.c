@@ -948,8 +948,6 @@ void *device_mmap(handle_t handle, size_t length, int flags)
 {
     if (IS_BAD_DEVICE_HANDLE(handle))
         return NULL;
-    
-    printk(KERN_DEBUG "%s: start.\n", __func__);
 
     device_object_t *devobj;
     
@@ -976,7 +974,9 @@ void *device_mmap(handle_t handle, size_t length, int flags)
     if (!io_complete_check(ioreq, status)) {
         void *mapaddr = NULL;
         /* 对获取的物理地址进行映射 */
+#if DEBUG_LOCAL == 1        
         printk(KERN_DEBUG "%s: get device phy addr:%x\n", __func__, ioreq->io_status.infomation);
+#endif
         if (ioreq->io_status.infomation) {  /* 有物理地址，说明获取成功，再做进一步设置 */
             /* 进行内存映射 */
             mapaddr = vmspace_mmap(0, ioreq->io_status.infomation, length, 

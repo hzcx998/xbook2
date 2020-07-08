@@ -395,7 +395,7 @@ int rmdir(const char *path)
     return -1;
 }
 
-int rename(const char *source, const char *target)
+int _rename(const char *source, const char *target)
 {
     if (source == NULL || target == NULL)
         return -1;

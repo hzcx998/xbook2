@@ -21,6 +21,6 @@
 #define COLOR_GRAY       COLOR_RGB(195, 195, 195)
 #define COLOR_LEAD       COLOR_RGB(127, 127, 127)
 #define COLOR_YELLOW     COLOR_RGB(255, 255, 0)
-#define COLOR_NONE       COLOR_RGB(0, 0, 0)
+#define COLOR_NONE       COLOR_ARGB(0, 0, 0, 0)
 
 #endif  /* #ifndef __GUISRV_LAYER_COLOR_H__ */

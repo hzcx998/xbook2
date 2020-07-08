@@ -68,6 +68,9 @@ run: qemu
 kernel:
 	@$(MAKE) -s -C ./src
 
+clean:
+	@$(MAKE) -s -C ./src clean
+
 # 构建环境。镜像>工具>环境>rom
 build:
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)

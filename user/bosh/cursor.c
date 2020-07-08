@@ -11,7 +11,7 @@ con_cursor_t cursor;
 
 char cursor_size[CS_MAX_NR][2] = {
     {8, 16},
-    {8, 16},
+    {8, 16}, 
     {1, 16},
     {8, 1},
 };
@@ -43,10 +43,11 @@ void clean_cursor()
     /* 绘制背景 */
     SGI_DrawFillRect(screen.display, screen.win, x, y,
         screen.char_width, screen.char_height, screen.background_color);
-    
+#if 1
     /* 刷新光标 */
     SGI_UpdateWindow(screen.display, screen.win, x, y, 
         x + screen.char_width, y + screen.char_height);
+#endif
 }
 
 void cursor_pos_check()

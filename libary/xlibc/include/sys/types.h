@@ -23,5 +23,4 @@ typedef struct dirent {
 
 typedef long ssize_t;
 
-
 #endif  /* _SYS_TYPES_H */

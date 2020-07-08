@@ -8,7 +8,7 @@
 
 #include <layer/color.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 #ifndef   GUI_SCREEN_DEVICE_NAME
 #define   GUI_SCREEN_DEVICE_NAME        "video"

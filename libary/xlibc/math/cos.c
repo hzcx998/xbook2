@@ -1,12 +1,16 @@
+/*
+    File:       cos.c
+
+    Contains:   For cos(x)
+
+    Written by: GUI
+
+    Copyright:  (C) 2017-2020 by GuEe Studio for Book OS. All rights reserved.
+*/
+
+
 #include <math.h>
 
-/*
-* cos - 计算余弦值
-* @x: 值
-*/
-double cos(double x) 
-{
-	double tmp = sin (x);
-	tmp *= tmp;
-	return sqrt (1 - tmp);
+M_FLOAT cos(M_FLOAT x) {
+    return sin(x + MATH_PI_2);
 }

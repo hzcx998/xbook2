@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <sys/time.h>
 
 static pthread_condattr_t __pthread_cond_default_attr = PTHREAD_COND_ATTR_INITIALIZER;
 

@@ -23,10 +23,147 @@
 
 #include "cond_sem.h"
 #if 0
+
+#include <lua.h>
+#include <lstate.h>
+#include <lauxlib.h>
+#include <lualib.h>
+
+#if 1
+
+/* 测试的Lua代码字符串 */
+const char lua_test[] = { 
+    "print(\"Hello,I am lua!\\n--this is newline printf\")\n"
+    "function foo()\n"
+    "  local i = 0\n"
+    "  local sum = 1\n"
+    "  while i <= 10 do\n"
+    "    sum = sum * 2\n"
+    "    i = i + 1\n"
+    "  end\n"
+    "return sum\n"
+    "end\n"
+    "print(\"sum =\", foo())\n"
+    "print(\"and sum = 2^11 =\", 2 ^ 11)\n"
+    "print(\"exp(200) =\", math.exp(200))\n"
+};
+#else
+/* 测试的Lua代码字符串 */
+const char lua_test[] = { 
+    "print(\"Hello,I am lua!\\n--this is newline printf\")\n"
+};
+
+#endif
+ 
+/* 运行Lua */
+int main2(int argc, char *argv[])
+{
+    
+    lua_State *L;
+    
+    L = luaL_newstate(); /* 建立Lua运行环境 */
+    if (L == NULL) {
+        printf("luaL_newstate failed!\n");
+    }
+    printf("luaL_newstate done.\n");
+    luaL_openlibs(L);
+    
+    printf("luaL_openlibs done.\n");
+    luaopen_base(L);
+    
+    printf("luaopen_base done.\n");
+    luaL_dostring(L, lua_test); /* 运行Lua脚本 */
+    
+    luaL_dofile(L, "/test.lua");
+
+    printf("luaL_dostring done.\n");
+    lua_close(L);
+    printf("lua_close done.\n");
+    while (1)
+    {
+        /* code */
+    }
+    
+    return 0;
+}
+#endif
+
+#include <stdio.h>
+#include <malloc.h>
+#include <unistd.h>
+#include <string.h>
+
+#if 1
 int main(int argc, char *argv[])
 {
     printf("hello, test.\n");
+
+    char *p = malloc(8);
+    if (!p)
+        return -1;
+    memset(p, 1, 8);
+    printf("realloc\n");
+    p = realloc(p, 64);
+    printf("data: %x %x %x\n", p[0], p[7], p[63]);
+    free(p);
     
+    p = malloc(128);
+    if (!p)
+        return -1;
+    memset(p, 2, 128);
+
+    p = realloc(p, 64);
+    printf("data: %x %x %x\n", p[0], p[63], p[127]);
+    free(p);
+    
+    p = malloc(1024);
+    if (!p)
+        return -1;
+    memset(p, 3, 1024);
+    free(p);
+    
+    p = malloc(1024*10);
+    if (!p)
+        return -1;
+    memset(p, 4, 1024*10);
+    free(p);
+    
+    p = malloc(1024*1024);
+    if (!p)
+        return -1;
+    memset(p, 5, 1024*1024);
+    free(p);
+    
+    p = malloc(1024*1024*10);
+    if (!p)
+        return -1;
+    memset(p, 6, 1024*1024*10);
+    p = realloc(p, 1024*1024*20);
+    printf("data: %x %x %x\n", p[0], p[1024*1024*10-1], p[1024*1024*20-1]);
+    free(p);
+    
+    p = malloc(1024*1024);
+    if (!p)
+        return -1;
+    memset(p, 5, 1024*1024);
+    free(p);
+    
+    p = malloc(1024*10);
+    if (!p)
+        return -1;
+    memset(p, 4, 1024*10);
+    free(p);
+
+    p = malloc(128);
+    if (!p)
+        return -1;
+    memset(p, 2, 128);
+
+    p = realloc(p, 64);
+    printf("data: %x %x %x\n", p[0], p[63], p[127]);
+    free(p);
+
+    printf("test done.\n");
     return 0;
 }
 #endif
@@ -194,7 +331,7 @@ int main()
 #endif
 
 
-#if 1
+#if 0
 
 //#define SOCKET_SERVER_TEST
 
@@ -314,7 +451,7 @@ int main()
     printf("[test] start.\n");
     sleep(3);
 
-    int fd = open("c:/test.txt", O_RDONLY);
+    int fd = open("c:/test.txt", O_RDONLY, 0);
     ioctl(fd, 0, 0);
     fcntl(fd, 0, 0);
     close(fd);

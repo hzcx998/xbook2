@@ -16,7 +16,7 @@
 #include <input/keyboard.h>
 #include <window/event.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 /* 图层显示链表 */
 extern list_t layer_show_list_head;
@@ -28,7 +28,8 @@ gui_window_t *window_current;
 volatile unsigned int next_window_id;
 
 /* 窗口链表 */
-list_t window_list_head;
+LIST_HEAD(window_list_head);
+
 
 /* 窗口高速缓存表 */
 gui_window_t *window_cache_table[GUIW_CACHE_TABLE_SIZE];
@@ -347,6 +348,7 @@ gui_window_t *gui_create_window(
         list_add_tail(&win->list, &parent->child_list);
     }
 
+    srvprint("create wind addr %x id %d\n", win, win->id);
     /* 添加到窗口链表 */
     list_add_tail(&win->window_list, &window_list_head);
     
@@ -532,10 +534,13 @@ gui_window_t *gui_window_get_by_id(unsigned int wid)
 {
     gui_window_t *win;
     list_for_each_owner (win, &window_list_head, window_list) {
+        printf("find win addr:%x id:%d width:%d height:%d\n", win, win->id, win->width, win->height);
         if (win->id == wid) {
+            printf("find win id:%d\n", wid);
             return win;
         }
     }
+
     return NULL;
 }
 

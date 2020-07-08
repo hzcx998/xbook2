@@ -27,6 +27,7 @@ static int __close()
 
 static int do_update_window(gui_msg_t *msg)
 {
+    //srvprint("arg =%d\n",msg->arg0 );
     gui_window_t *win = gui_window_cache_find(msg->arg0);   
     if (win == NULL) {  /* 没有在缓存中找到窗口 */
         /*  尝试在窗口链表中寻找 */

@@ -1,5 +1,5 @@
-#ifndef _LIB_STDDEF_H
-#define _LIB_STDDEF_H
+#ifndef _XLIBC_STDDEF_H
+#define _XLIBC_STDDEF_H
 
 typedef unsigned long size_t;
 typedef unsigned long dma_addr_t;
@@ -70,7 +70,16 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
 #define MAX_PATH    256
 #endif
 
+#define ifloor(x)		((x) > 0 ? (int)(x) : (int)((x) - 0.9999999999))
+#define iround(x)		((x) > 0 ? (int)((x) + 0.5) : (int)((x) - 0.5))
+#define iceil(x)		((x) > 0 ? (int)((x) + 0.9999999999) : (int)(x))
+#define idiv255(x)		((((int)(x) + 1) * 257) >> 16)
 
+#define max(a,b)    (((a) > (b)) ? (a) : (b))
+#define min(a,b)    (((a) < (b)) ? (a) : (b))
+#define clamp(v, a, b)	min(max(a, v), b)
 
-#endif  /*_LIB_STDDEF_H*/
+#define abs(a)    ((a) > 0 ? (a) : -(a))
+
+#endif  /* _XLIBC_STDDEF_H */
 

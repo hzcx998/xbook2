@@ -744,7 +744,7 @@ int cmd_cat(int argc, char *argv[])
 	
     const char *path = (const char *)argv[1];
 
-	int fd = open(path, O_RDONLY);
+	int fd = open(path, O_RDONLY, 0);
 	if(fd == -1){
 		cprintf("cat: file %s not exist!\n", path);
 		return -1;

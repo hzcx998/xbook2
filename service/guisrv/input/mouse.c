@@ -85,7 +85,8 @@ static void __button_down(int btn)
 
                         /* 如果不是活动窗口，就切换成为活动窗口 */
                         gui_window_switch(window);
-
+                        
+                        input_mouse_set_state(MOUSE_CURSOR_NORMAL);
                         mouse_enter_state(input_mouse);
                         break;
                     case 1: /* 鼠标右键 */
@@ -143,7 +144,16 @@ static void __button_up(int btn)
     printf("[mouse ] x:%d, y:%d\n", input_mouse.x, input_mouse.y);
 #endif    
     /* 处于抓住窗口，所以就释放窗口 */
-    if (input_mouse.hold_window) {
+    if (input_mouse.hold_window && input_mouse.state == MOUSE_CURSOR_HOLD) {
+        #ifdef CONFIG_FAST_WINMOVE
+        /* 隐藏游走窗口 */
+        layer_set_z(input_mouse.walker, -1);
+        input_draw_walker_layer(input_mouse.walker, input_mouse.hold_window, 0);
+        /* 设置抓取窗口的位置 */
+        layer_set_xy(input_mouse.hold_window->layer, input_mouse.walker->x,
+            input_mouse.walker->y);
+        #endif
+        
         /* 更新窗口的位置 */
         input_mouse.hold_window->x = input_mouse.hold_window->layer->x;
         input_mouse.hold_window->y = input_mouse.hold_window->layer->y;
@@ -242,18 +252,33 @@ void __motion()
     if (layer_topest) {
         layer_set_xy(layer_topest, input_mouse.x, input_mouse.y);
         if (input_mouse.hold_window) {    /* 让抓住的窗口跟住鼠标移动 */
-            
-            input_mouse_set_state(MOUSE_CURSOR_HOLD);
             int wx = input_mouse.x - input_mouse.local_x;
             int wy = input_mouse.y - input_mouse.local_y;
+            
+            #ifdef CONFIG_FAST_WINMOVE
+            /* 如果移动前是普通的状态，就需要显示游走窗口 */
+            if (input_mouse.state == MOUSE_CURSOR_NORMAL) {
+                /* 显示游走图层 */
+                input_draw_walker_layer(input_mouse.walker, input_mouse.hold_window, 1);
+                layer_set_xy(input_mouse.walker, wx, wy);
+                layer_set_z(input_mouse.walker, input_mouse.layer->z);
+            }
+            #endif
+
+            input_mouse_set_state(MOUSE_CURSOR_HOLD);
             
             /* 修复窗口位置 */
             if (wx < GUI_WINCTL_WIDTH)
                 wx = GUI_WINCTL_WIDTH;
             if (wy < GUI_STATUSBAR_HEIGHT)
                 wy = GUI_STATUSBAR_HEIGHT;
-
+            #ifdef CONFIG_FAST_WINMOVE
+            /* 移动的是游走窗口 */
+            layer_set_xy(input_mouse.walker, wx, wy);
+            #else
             layer_set_xy(input_mouse.hold_window->layer, wx, wy);
+            #endif
+
         } else {
             gui_window_t *window;
             layer_t *layer;
@@ -439,9 +464,51 @@ void input_mouse_draw(mouse_cursor_state_t state)
 void input_mouse_set_state(mouse_cursor_state_t state)
 {
     if (input_mouse.state_changed == false) {
+        input_mouse.state = state;
         //printf("[mouse] change state %d to %d\n", input_mouse.state, state);
         input_mouse_draw(state);
         input_mouse.state_changed = true;
+    }
+}
+
+
+/**
+ * input_draw_walker_layer - 根据窗口绘制游走图层
+ * @walker: 移动的图层
+ * @window: 要移动的窗口
+ * @draw: 绘制窗口与否
+ */
+void input_draw_walker_layer(layer_t *walker, gui_window_t *window, int draw)
+{ 
+    GUI_COLOR color;
+    int width;
+
+    /* 先设置宽度 */
+    width = window->layer->width;
+    
+    /* 如果有绘制，就根据绘制窗口绘制容器 */
+    if (draw) {
+        color = COLOR_BLACK;
+
+        /* 绘制边框 */
+        layer_draw_rect(walker, 1, 1, width-1, 1, color);
+        layer_draw_rect(walker, 1, 1, 1, walker->height - 1, color);
+        layer_draw_rect(walker, width - 1, 1, 1, walker->height - 1, color);
+        layer_draw_rect(walker, 1, walker->height - 1, width - 1, 1, color);
+        color = COLOR_WHITE;
+        
+        layer_draw_rect(walker, 0, 0, width-1, 1, color);
+        layer_draw_rect(walker, 0, 0, 1, walker->height - 1, color);
+        layer_draw_rect(walker, width - 2, 0, 1, walker->height - 1, color);
+        layer_draw_rect(walker, 0, walker->height - 2, width - 1, 1, color);
+    } else {    /* 没有就清除容器 */
+        color = COLOR_NONE;
+        /* 先绘制边框 */
+        layer_draw_rect(walker, 0, 0, width, 2, color);
+        layer_draw_rect(walker, 0, 0, 2, walker->height, color);
+        layer_draw_rect(walker, width - 2, 0, 2, walker->height , color);
+        layer_draw_rect(walker, 0, walker->height - 2, width, 2, color);
+        layer_draw_rect(walker, 0, walker->height - 2, width, 2, color);
     }
 }
 
@@ -480,6 +547,17 @@ int init_mouse_input()
     
     /* 设置鼠标图层位置 */
     layer_set_xy(layer_topest, input_mouse.x, input_mouse.y);
+
+    /* 创建窗口游走时的图层 */
+    input_mouse.walker = create_layer(drv_screen.width, 20);
+    if (input_mouse.walker == NULL) {
+        printf("create window walker layer failed!\n");
+        return -1;
+    }
+    layer_draw_rect(input_mouse.walker, 0, 0, 
+        input_mouse.walker->width, input_mouse.walker->height, COLOR_NONE);
+    /* 隐藏图层 */
+    layer_set_z(input_mouse.walker, -1);
 
     return 0;
 }

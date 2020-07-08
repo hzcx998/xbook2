@@ -26,23 +26,39 @@ BIN_DIS = out.disasm
 ASM_FLAGS	= -f elf \
 			-I $(DIR_XLIBC)/include 
 
-C_FLAGS		= -c -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector \
-			-I $(DIR_XLIBC)/include \
-			-I $(DIR_SGI)/include \
-			-I $(DIR_PTHREAD)/include \
+C_FLAGS		= -c -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector
 			
 LDFLAGS		= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 
-OBJS =  main.o \
-		cond_sync.o \
 
+# dir
+INCDIRS			=	./
+INCDIRS			+=	$(DIR_XLIBC)/include
+INCDIRS			+=	$(DIR_SGI)/include
+INCDIRS			+=	$(DIR_PTHREAD)/include
+
+SRCDIRS		+=	./
+
+# 在每一个目录前面加一个-I 
+X_INCDIRS	:=	$(patsubst %, -I %, $(INCDIRS))
+
+# 替换成新的内容，存放到X_SRCDIRS中
+X_SRCDIRS	:=	$(patsubst %, %, $(SRCDIRS))
+
+# 找到C文件
+X_CFILES	:=	$(foreach dir, $(X_SRCDIRS), $(wildcard $(dir)/*.c))
+
+# 转换成对象文件。a.c -> .obj/a.o
+X_COBJS		:=	$(X_CFILES:.c=.o)
+
+# objects
+OBJS			= 	$(X_COBJS)
 
 # 被依赖库应放到后面。
 LIB_FILE := $(DIR_SGI)/sgi-0.0.1.a \
 			$(DIR_PTHREAD)/pthread-0.0.1.a \
 			$(DIR_XLIBC)/xlibc-0.0.1.a \
 			
-
 #First read here
 .PHONY: all dis
 
@@ -68,4 +84,4 @@ clean:
 	$(NASM) $(ASM_FLAGS) -o $@ $<
 	
 %.o: %.c
-	$(CC) $(C_FLAGS) -o $@ $<
+	$(CC) $(C_FLAGS) $(X_INCDIRS) -c -o $@ $<

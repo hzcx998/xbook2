@@ -244,7 +244,7 @@ static int __open(void *path, int flags)
     }
     if (flags & O_TRUNC) {
         mode |= FA_CREATE_ALWAYS;
-    } else if (flags & O_APPEDN) {
+    } else if (flags & O_APPEND) {
         mode |= FA_OPEN_APPEND;
     } else if (flags & O_CREAT) {
         mode |= FA_OPEN_ALWAYS;
@@ -517,12 +517,31 @@ static int __state(char *path, void *buf)
     if (finfo.fattrib & AM_RDO)
         mode &= ~S_IWRITE;
 
+    /* 目录和普通文件的区分 */
+    if (finfo.fattrib & AM_DIR)
+        mode |= S_IFDIR;
+    else
+        mode |= S_IFREG;
+
     stat->st_mode = mode;
     stat->st_size = finfo.fsize;
     stat->st_atime = (finfo.fdate << 16) | finfo.ftime;
     stat->st_ctime = stat->st_mtime = stat->st_atime;
     
     return 0;
+}
+
+static int __fstat(int idx, void *buf)
+{
+    if (ISBAD_FSAL_FIDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_I2F(idx);
+    if (!fp->flags)   /* file not used! */
+        return -1;
+    
+    /* 不支持 */
+
+    return -1;
 }
 
 static int __chmod(char *path, mode_t mode)
@@ -745,5 +764,6 @@ fsal_t fatfs_fsal = {
     .chdir      = __chdir,
     .ioctl      = __ioctl,
     .fcntl      = __fcntl,
+    .fstat      = __fstat,
     .extention  = (void *)&fatfs_extention,
 };

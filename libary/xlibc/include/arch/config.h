@@ -1,6 +1,10 @@
 #ifndef _LIB_ARCH_CONFIG_H
 #define _LIB_ARCH_CONFIG_H
 
+#define __LIB_32B__
+//#define __LIB_64B__
+
+
 #define LIB_ARCH_X86    1
 #define LIB_ARCH_X64    2
 

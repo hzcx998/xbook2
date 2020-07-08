@@ -1,5 +1,5 @@
-#ifndef _LIB_LIMITS_H
-#define _LIB_LIMITS_H
+#ifndef _XLIBC_LIMITS_H
+#define _XLIBC_LIMITS_H
 /***
 *limits.h - implementation dependent values
 *
@@ -13,11 +13,6 @@
 *       [Public]
 *
 ****/
-
-#pragma once
-
-#ifndef _INC_LIMITS
-#define _INC_LIMITS
 
 #define CHAR_BIT      8         /* number of bits in a char */
 #define SCHAR_MIN   (-128)      /* minimum signed char value */
@@ -42,9 +37,14 @@
 #define LONG_MIN    (-2147483647L - 1) /* minimum (signed) long value */
 #define LONG_MAX      2147483647L   /* maximum (signed) long value */
 #define ULONG_MAX     0xffffffffUL  /* maximum unsigned long value */
-#define LLONG_MAX     9223372036854775807i64       /* maximum signed long long int value */
-#define LLONG_MIN   (-9223372036854775807i64 - 1)  /* minimum signed long long int value */
-#define ULLONG_MAX    0xffffffffffffffffui64       /* maximum unsigned long long int value */
+#define LLONG_MAX     9223372036854775807       /* maximum signed long long int value */
+#define LLONG_MIN   (-9223372036854775807 - 1)  /* minimum signed long long int value */
+#define ULLONG_MAX    0xffffffffffffffff       /* maximum unsigned long long int value */
+
+
+#define INTMAX_MIN       INT_MIN
+#define INTMAX_MAX       INT_MAX
+#define UINTMAX_MAX      UINT_MAX
 
 #define _I8_MIN     (-127i8 - 1)    /* minimum signed 8 bit value */
 #define _I8_MAX       127i8         /* maximum signed 8 bit value */
@@ -88,7 +88,4 @@
 #endif  /* RSIZE_MAX */
 #endif  /* __STDC_WANT_SECURE_LIB__ */
 
-
-#endif  /* _INC_LIMITS */
-
-#endif  /* _LIB_LIMITS_H */
+#endif  /* _XLIBC_LIMITS_H */

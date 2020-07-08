@@ -1,9 +1,10 @@
-#include <stdio.h>
-#include <sys/res.h>
+/*
+ * libc/stdio/putchar.c
+ */
 
-int putchar(int ch)
+#include <stdio.h>
+
+int putchar(int c)
 {
-    if (res_write(RES_STDOUTNO, 0, &ch, 1) < 0) 
-        return -1;
-    return (int) ch;
+	return fputc(c, stdout);
 }

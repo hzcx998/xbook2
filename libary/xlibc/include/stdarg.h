@@ -12,4 +12,9 @@ typedef char *va_list;
 #define va_start(ap, A) \
     (void)((ap) = (char *)&(A) + _Bnd(A, _AUPBND))
 
+/*
+ * copy variable args
+ */
+#define va_copy(d, s)		__builtin_va_copy(d, s)
+
 #endif  /* _LIB_STDARG_H */

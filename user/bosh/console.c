@@ -442,7 +442,6 @@ void con_out_char(char ch)
             break;
 		default :
 			con_set_char(ch, cursor.x, cursor.y);
-
             move_cursor(cursor.x + 1, cursor.y);
             break;
 	}
@@ -512,7 +511,7 @@ void con_set_font_color(SGI_Argb color)
 
 int cprintf(const char *fmt, ...)
 {
-	char buf[STR_DEFAULT_LEN];
+	char buf[BUFSIZ];
 	va_list arg = (va_list)((char*)(&fmt) + 4); /*4是参数fmt所占堆栈中的大小*/
 	vsprintf(buf, fmt, arg);
 	

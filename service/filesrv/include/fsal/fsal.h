@@ -43,6 +43,7 @@ typedef struct {
     int (*chdir)(char *);
     int (*ioctl)(int, int, unsigned long);
     int (*fcntl)(int, int, long);
+    int (*fstat)(int, void *);
     void *extention;
 } fsal_t;
 
@@ -79,7 +80,7 @@ extern fsal_file_t *fsal_file_table;
 fsal_file_t *fsal_file_alloc();
 int fsal_file_free(fsal_file_t *file);
 
-/* 路径转换长度 */
+/* 路径转换长度，一般是路径的前缀。例如/root, c: */
 #define FASL_PATH_LEN   24
 
 /* 路径转换表项数

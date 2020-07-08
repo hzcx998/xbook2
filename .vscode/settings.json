@@ -96,6 +96,13 @@
         "iosfwd": "c",
         "unistd.h": "c",
         "ffconf.h": "c",
-        "cstdio": "c"
+        "cstdio": "c",
+        "malloc.h": "c",
+        "screen.h": "c",
+        "ft2build.h": "c",
+        "ftheader.h": "c",
+        "icon.h": "c",
+        "xui.h": "c",
+        "button.h": "c"
     }
 }

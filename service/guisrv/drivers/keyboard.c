@@ -8,6 +8,7 @@
 
 #include <drivers/keyboard.h>
 #include <input/keyboard.h>
+#include <guisrv.h>
 
 #ifndef  GUI_KEYBOARD_DEVICE_NAME 
 #define  GUI_KEYBOARD_DEVICE_NAME         "kbd"

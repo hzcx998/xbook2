@@ -486,6 +486,7 @@ struct file_map {
 
 struct file_map file_map_table[] = {
     {"c:/bin/bosh", 1, NULL},
+    {"c:/sbin/xui", 0, NULL},
 };
 
 int guisrv_execute()

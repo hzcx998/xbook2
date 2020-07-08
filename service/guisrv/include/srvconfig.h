@@ -8,5 +8,8 @@
 #define CONFIG_FONT_STANDARD
 #define CONFIG_FONT_SIMSUN
 
+/* 配置高效的窗口移动 */
+#define CONFIG_FAST_WINMOVE
+
 
 #endif  /* __GUISRV_CONFIG_H__ */

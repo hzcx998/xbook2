@@ -34,32 +34,6 @@ char* itoa(char ** ps, int val, int base)
 	return *ps;
 }
 
-int atoi(const char *src)
-{
-    int s = 0;
-    char is_minus = 0;
-  
-    while (*src == ' ') {
-			src++; 
-		}
-  
-	if (*src == '+' || *src == '-') {
-        if (*src == '-') {
-           is_minus = 1;
-        }
-        src++;
-    } else if (*src < '0' || *src > '9') {
-		 s = 2147483647;
-        return s;
-    }
-  
-    while (*src != '\0' && *src >= '0' && *src <= '9') {
-        s = s * 10 + *src - '0';
-        src++;
-    }
-    return s * (is_minus ? -1 : 1);
-}
-
 void *memset(void* src, uint8_t value, uint32_t size) 
 {
 	uint8_t* s = (uint8_t*)src;
@@ -103,11 +77,11 @@ char* strcpy(char* _dst, const char* _src) {
    return r;
 }
 
-char* strncpy(char* _dst, char* _src, int n) 
+char* strncpy(char* _dst, const char* _src, int n) 
 {
-  
+   char *s = (char *) _src;
    char* r = _dst;		      
-   while((*_dst++ = *_src++) && n > 0) n--;
+   while((*_dst++ = *s++) && n > 0) n--;
    return r;
 }
 

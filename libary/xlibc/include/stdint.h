@@ -37,4 +37,10 @@ typedef unsigned short	WORD;	/* 16-bit unsigned integer */
 typedef unsigned long	DWORD;	/* 32-bit unsigned integer */
 typedef WORD			WCHAR;	/* UTF-16 character type */
 #endif
+
+typedef long long          intmax_t;
+typedef unsigned long long uintmax_t;
+
+
+
 #endif  /*_LIB_STDINT_H*/

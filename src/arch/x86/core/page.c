@@ -679,6 +679,7 @@ int do_page_fault(trap_frame_t *frame)
         /* 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
         printk(KERN_DEBUG "user pid=%d name=%s access unmaped vmarea area .\n", cur->pid, cur->name);
         dump_trap_frame(frame);
+        print_task();
         do_vmarea_fault(addr);
         return -1;
     }
@@ -691,6 +692,7 @@ int do_page_fault(trap_frame_t *frame)
         printk(KERN_ALTER "do_page_fault: user access user unknown space .\n");
         printk(KERN_ALTER "page fault addr:%x\n", addr);
         dump_vmspace(cur->vmm);
+        print_task();
         trigger_force(TRIGHW, cur->pid);
         /* 发出信号退出 */
         //panic("send a signal SIGSEGV because unknown space!");

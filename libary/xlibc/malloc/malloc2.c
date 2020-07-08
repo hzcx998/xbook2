@@ -275,15 +275,15 @@ void free(void *ptr)
  * 
  * 分配内存后，置0
  */
-void *calloc(size_t count, size_t size)
+void *calloc(int n,size_t size)
 {
     size_t *new;
     size_t s, i;
-    new = malloc(count * size);
+    new = malloc(n * size);
     if(new)
     {
 		//因为申请的内存总是4的倍数，所以这里我们以4字节为单位初始化
-        s = ALIGN4(count * size) >> 2;
+        s = ALIGN4(n * size) >> 2;
         for(i = 0; i < s; ++i)
             new[i] = 0;
     }
@@ -304,6 +304,7 @@ void *calloc(size_t count, size_t size)
  */
 void *realloc(void *ptr, size_t size)
 {
+    
     size_t _size;
     struct __memory_block *block, *newBlock;
     void *newPtr;
@@ -341,7 +342,6 @@ void *realloc(void *ptr, size_t size)
 			flag = block;
 		}
 		/* 收缩完后，还是返回原来的空间 */
-
 	} else {	//如果当前block的数据区不能满足size
 
 		/*如果前继是unused的，后继是used的，并且如果合并后大小满足size，考虑合并 */
@@ -451,4 +451,27 @@ int malloc_usable_size(void *ptr)
 	struct __memory_block *current_block = (struct __memory_block *)(ptr - sizeof(struct __memory_block));
 	/* 返回块的大小和结构体的大小 */
 	return current_block->size + sizeof(struct __memory_block);
+}
+
+size_t getmsz(void *ptr)
+{
+    if (!ptr) {
+		return 0;
+	}
+	struct __memory_block *block;
+	//得到对应的block
+	block = __get_block(ptr);
+    return block->size;
+}
+
+int setmsz(void *ptr, size_t size)
+{
+    if (!ptr || !size) {
+		return -1;
+	}
+	struct __memory_block *block;
+	//得到对应的block
+	block = __get_block(ptr);
+    block->size = size;
+    return 0;
 }

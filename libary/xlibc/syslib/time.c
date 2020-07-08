@@ -21,6 +21,8 @@ unsigned long ktime(ktime_t *ktm)
 {
     return syscall1(int, SYS_KTIME, ktm);
 }
+
+#if 0
 /**
  * clock - 获取内核运行时钟数
  */
@@ -28,7 +30,7 @@ clock_t clock()
 {
     return syscall0(clock_t, SYS_GETTICKS);
 }
-
+#endif
 /**
  * gettimeofday - 获取当前的时间
  * @tv: 时间
@@ -40,7 +42,6 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
     return syscall2(int, SYS_GETTIMEOFDAY, tv, tz);
 }
-
 /**
  * clock_gettime - 获取时机
  * @clockid: 获取的类型

@@ -220,7 +220,7 @@ int LoadSRAM()
   /*-------------------------------------------------------------------*/
 
   // Open SRAM file
-  fd = open( szSaveName, O_RDONLY );
+  fd = open( szSaveName, O_RDONLY , 0);
   if ( fd == -1 ) {
       printf("[infones] open file %s failed!\n", szSaveName);
     return -1;
@@ -324,7 +324,7 @@ int InfoNES_ReadRom( const char *pszFileName )
   int fd;
 
   /* Open ROM file */
-  fd = open( pszFileName, O_RDONLY );
+  fd = open( pszFileName, O_RDONLY , 0);
   if ( fd == -1 ) {
       printf("[infones] open file %s failed!\n", pszFileName);
     return -1;
@@ -676,7 +676,7 @@ int InfoNES_SoundOpen( int samples_per_sync, int sample_rate )
 {
     
 #ifdef CONFIG_SOUND
-    soundFd = open(SOUND_DEVICE, O_RDWR);
+    soundFd = open(SOUND_DEVICE, O_RDWR, 0);
     if (soundFd < 0) {
         soundFd = 0;
         return 0;

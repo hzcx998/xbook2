@@ -34,6 +34,7 @@ enum filesrv_call_num {
     FILESRV_CHDIR,
     FILESRV_IOCTL,
     FILESRV_FCNTL,
+    FILESRV_FSTAT,
     FILESRV_CALL_NR,    /* 最大数量 */
 };
 /* 缓冲区最大长度 */

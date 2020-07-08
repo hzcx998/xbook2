@@ -116,6 +116,10 @@ int init_fsal()
         return -1;
     }
 
+    char path[MAX_PATH] = {0};
+    strcpy(path, "c:");
+    fsal_list_dir(path);
+
     return 0;
 #if 0
     /* 尝试创建文件系统 */
@@ -200,7 +204,6 @@ int init_fsal()
     
     fsif.close(retval);
 
-    char path[MAX_PATH] = {0};
     strcpy(path, "c:");
     fsal_list_dir(path);
 

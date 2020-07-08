@@ -11,7 +11,7 @@
 #include "clipboard.h"
 #include <sys/trigger.h>
 
-#define DEBUG_LEVEL 1
+#define DEBUG_LEVEL 0
 
 int con_open_window()
 {
@@ -240,7 +240,9 @@ int con_event_loop(char *buf, int count)
 
                     if (cmdman->cmd_pos >= buf + cmdman->cmd_len) { /* 在末尾 */
                         *cmdman->cmd_pos = event.key.keycode.code;
+  
                         screen.outc(event.key.keycode.code);
+                        
                     } else { 
                         /* 把后面的数据向后移动一个单位 ab1c|def */
                         for (q = buf + cmdman->cmd_len; q > cmdman->cmd_pos; q--) {
