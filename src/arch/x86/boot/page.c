@@ -5,7 +5,19 @@ void enable_paging(unsigned int paddr);
 
 void setup_paging()
 {
+    char *v = (char *)0xb8002;
+    *v = 'c';
+    *(v+1) = 0x05;
+
+    put_char('@');
+    put_char('#');
+
+
     print_str("setup_paging.\n");
+
+    v = (char *)0xb8002;
+    *v = 'd';
+    *(v+1) = 0x05;
 
     unsigned int *pgdir = (unsigned int *) PAGE_DIR_PHY_ADDR;
     unsigned int *pgtbl = (unsigned int *) PAGE_TBL_PHY_ADDR;
@@ -32,4 +44,8 @@ void setup_paging()
     /*  */
     enable_paging((unsigned int) pgdir);
     print_str("enable page mode done.\n");
+    
+    v = (char *)0xb8002;
+    *v = 'e';
+    *(v+1) = 0x05;
 }

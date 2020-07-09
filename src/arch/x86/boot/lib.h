@@ -9,5 +9,6 @@ char* itoa(int num,char* dst,int radix);
 char* uitoa(unsigned int num,char* dst,int radix);
 void print_int(int num);
 void print_hex(unsigned int num);
+void put_char(char ch);
 
 #endif  /* BOOT_LIB_H */

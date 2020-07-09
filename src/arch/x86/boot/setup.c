@@ -8,6 +8,7 @@
 #define KERNEL_FILE_ADDR    0x10000
 
 typedef void (*entry_point_t)();
+void put_char2(char ch);
 
 static int read_file(unsigned char *base, void *buffer, unsigned int offset, unsigned int size)
 {
@@ -36,6 +37,9 @@ void setup_kernel()
         
         /* 头文件检测出错 */
         print_str("setup_kernel: kernel file format not elf!\n");
+        char *v = (char *)0xb8002;
+        *v = 'q';
+        *(v+1) = 0x05;
         while (1);
     }
 
@@ -89,7 +93,9 @@ void setup_kernel()
         prog_header_off += prog_header_size;
         grog_idx++;
     }
-    
+    char *v = (char *)0xb8002;
+    *v = 'f';
+    *(v+1) = 0x05;
     entry_point_t entry_point = (entry_point_t)elf_header.e_entry;
     entry_point();    /* 跳转到入口执行 */
 }
@@ -99,11 +105,61 @@ void setup_kernel()
  */
 void setup_entry()
 {
+    char *v = (char *)0xb8002;
+    *v = 'a';
+    *(v+1) = 0x05;
+    
+    put_char2('Q');
+    put_char2('W');
+    put_char2('E');
+    put_char2('R');
+    
+    while (1)
+    {
+        /* code */
+    }
+    
+
+    
     /* 设置并启动分页机制 */
     setup_paging();
 
     /* 分析内核文件，并加载到内存 */
     setup_kernel();
 
+    
     print_str("error: kernel shold never be here!\n");
+}
+
+int cx = 0, cy = 0;
+
+/**
+ * put_char - 控制台上输出一个字符
+ * @console: 控制台
+ * @ch: 字符
+ */
+void put_char2(char ch)
+{
+
+	char *vram = (char *)(0xb8000 + 
+        (cy * 80 + cx) *2) ;
+
+    *vram++ = ch;
+    *vram++ = 0x07;
+
+    cx = cx + 2;
+    
+    if (cx == 0) {
+        *vram++ = 'E';
+        *vram = 0x05;
+        while (1)
+        {
+            /* code */
+        }
+        
+    }
+    if (cx > 80 - 1) {
+        cx = 0;
+        cy++;
+    }
 }

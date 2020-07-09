@@ -25,9 +25,9 @@ HDA_SZ		= 10321920
 HDB_SZ		= 10321920
 
 # environment dir
-LIBARY_DIR	= library
-SERVICE_DIR	= service
-USER_DIR	= user
+LIBARY_DIR	= ./library
+SERVICE_DIR	= ./service
+USER_DIR	= ./user
 
 #kernel disk
 LOADER_OFF 	= 2		
@@ -40,15 +40,15 @@ KERNEL_OFF 	= 100
 KERNEL_CNTS	= 512		# assume 512 kb, now just 256kb 
 
 # arch dir
-KERSRC		= src
-ARCH 		= $(KERSRC)/arch/x86
+KERNSRC		= src
+ARCH 		= $(KERNSRC)/arch/x86
 # kernel boot binary
 BOOT_BIN 	= $(ARCH)/boot/boot.bin
 LOADER_BIN 	= $(ARCH)/boot/loader.bin
 SETUP_BIN 	= $(ARCH)/boot/setup.bin
 
 # kernel file
-KERNEL_ELF 	= $(KERSRC)/kernel.elf
+KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 
 # 参数
 .PHONY: all kernel build debuild rom qemu qemudbg lib srv usr
@@ -84,7 +84,7 @@ build:
 
 # 清理环境。
 debuild: 
-	$(MAKE) -s -C  $(KERSRC) clean
+	$(MAKE) -s -C  $(KERNSRC) clean
 	$(MAKE) -s -C  $(FATFS_DIR) clean
 	$(MAKE) -s -C  $(LIBARY_DIR) clean
 	$(MAKE) -s -C  $(SERVICE_DIR) clean
