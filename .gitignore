@@ -60,3 +60,5 @@ dkms.conf
 
 # dir
 recycle
+
+!scripts/fixdep.exe

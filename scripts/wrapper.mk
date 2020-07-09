@@ -16,7 +16,7 @@ VPATH		:= $(srctree)
 export srctree objtree VPATH
 
 ROOT_DIR	:= .
-CP_FIXDEP	:= 0
+CP_FIXDEP	:= 1
 # config
 X_CONF_DIR	:=	$(obj)/include/config
 X_CONF_FILE	:=	$(srctree)/include/xconfigs.h
@@ -54,7 +54,7 @@ xend: $(ROOT_DIR)
 $(objtree)/fixdep$(SUFFIX): $(XBUILD_DIR)/fixdep.c
 	@$(ECHO) '$(ECHO_HOSTCC)' fixdep.c
 ifeq ($(strip $(HOSTOS)),windows)
-ifeq ($(strip $(CP_FIXDEP),0)
+ifeq ($(strip $(CP_FIXDEP)),0)
 	@$(HOSTCC) -o $@ $< -lwsock32
 else
 	@$(CP) $(XBUILD_DIR)/fixdep$(SUFFIX) $(objtree)/fixdep$(SUFFIX)

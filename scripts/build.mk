@@ -34,8 +34,9 @@ X_MODULE	=	$(MODULE)
 
 # X_NAME
 ifneq ($(NAME),)
+ifneq ($(origin CUSTOM_TARGET_CMD),undefined)
 X_NAME		=	$(obj)/$(NAME)
-ifeq ($(strip $(TARGET_TYPE)),binary)
+else ifeq ($(strip $(TARGET_TYPE)),binary)
 X_NAME		=	$(obj)/$(NAME)$(SUFFIX)
 else ifeq ($(strip $(TARGET_TYPE)),static)
 X_NAME		=	$(obj)/lib$(NAME).a
