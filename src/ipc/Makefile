@@ -1,4 +1,4 @@
-obj-y		+=		sharemem.o
-obj-y		+=		msgqueue.o
-obj-y		+=		sem.o
-obj-y		+=		pipe.o
+SRC	+= sharemem.c
+SRC	+= msgqueue.c
+SRC	+= sem.c
+SRC	+= pipe.c

@@ -1,3 +1,3 @@
-obj-y		+= null.o
-obj-y		+= ramdisk.o
-obj-y		+= vfloppy.o
+SRC	+= null.c
+SRC	+= ramdisk.c
+SRC	+= vfloppy.c

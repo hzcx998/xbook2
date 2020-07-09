@@ -33,7 +33,7 @@ MAKE_COLOR(BLACK, RED) | BRIGHT | FLASH
 
 #define COLOR_DEFAULT	(MAKE_COLOR(TEXT_BLACK, TEXT_WHITE))
 
-static int cursor_x = 0, cursor_y = 0;
+int cursor_x = 0, cursor_y = 0;
 
 void outb(unsigned int port, unsigned int data);
 
@@ -101,9 +101,9 @@ static void scroll_sceen(int direction)
  * @console: 控制台
  * @ch: 字符
  */
-static void put_char(char ch)
+void put_char(char ch)
 {
-	unsigned char *vram = (unsigned char *)(V_MEM_BASE + 
+	char *vram = (char *)(V_MEM_BASE + 
         (cursor_y * SCREEN_WIDTH + cursor_x) *2) ;
 	switch(ch){
         case '\r':

@@ -1,1 +1,1 @@
-obj-y		+= vbe.o
+SRC	+= vbe.c

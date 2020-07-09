@@ -32,4 +32,5 @@ void setup_paging()
     /*  */
     enable_paging((unsigned int) pgdir);
     print_str("enable page mode done.\n");
+    
 }

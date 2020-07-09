@@ -1,1 +1,1 @@
-obj-y		+= serial.o
+SRC	+= serial.c

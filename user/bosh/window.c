@@ -118,7 +118,7 @@ int con_event_loop(char *buf, int count)
         case SGI_MOUSE_BUTTON:
             if (event.button.state == SGI_PRESSED) {    // 按下
                 if (event.button.button == 0) {
-                    printf("[%s] left button pressed.\n", APP_NAME);
+                    //printf("[%s] left button pressed.\n", APP_NAME);
                     clipboard_start_select(event.button.x, event.button.y);
 
                 } else if (event.button.button == 2) {
@@ -126,7 +126,7 @@ int con_event_loop(char *buf, int count)
                 } 
             } else {
                 if (event.button.button == 0) {
-                    printf("[%s] left button released.\n", APP_NAME);
+                    //printf("[%s] left button released.\n", APP_NAME);
                     clipboard_end_select(event.button.x, event.button.y);
 
                 }

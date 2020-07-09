@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <sgi/sgi.h>
-#include <sys/time.h>
+#include <time.h>
 
 #include <InfoNES.h>
 #include <InfoNES_System.h>

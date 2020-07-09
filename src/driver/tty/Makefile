@@ -1,1 +1,1 @@
-obj-y		+= tty.o
+SRC	+= tty.c

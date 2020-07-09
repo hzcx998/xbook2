@@ -2,76 +2,31 @@
 # Copyright (c) 2020 Jason Hu, Zhu Yu
 # support bochs and vbox
 
-# tools
-MAKE		= make
-FATFS_DIR	= tools/fatfs
-FATFS_BIN	= $(FATFS_DIR)/fatfs
-DD			= dd
-
 # virtual machine
 BOCHS 		= bochs
 BOCHSDBG 	= bochsdbg
 VBOX_MANAGE = VBoxManage
 
-# development dir
-DEVELOP_DIR	= develop
+# scripts dir
+SCRIPTS_DIR	= scripts
 
 # bochs development dir
-BOCHS_DIR       = $(DEVELOP_DIR)/bochs/
+BOCHS_DIR       = $(SCRIPTS_DIR)/bochs/
 BXRC_WIN 		= $(BOCHS_DIR)bochsrc.win   # bochsrc for windows
 BXRC_LINUX 		= $(BOCHS_DIR)bochsrc.linux # bochsrc for linux
 VBOX_NAME	    = "xbook"                   # virtual box 虚拟机名称
 
-# images and rom
-FLOPPYA_IMG	= $(DEVELOP_DIR)/image/a.img
-HDA_IMG		= $(DEVELOP_DIR)/image/c.img
-HDB_IMG		= $(DEVELOP_DIR)/image/d.img
-ROM_DIR		= $(DEVELOP_DIR)/rom
-
-#kernel disk
-LOADER_OFF 	= 2		
-LOADER_CNTS = 8
-
-SETUP_OFF 	= 10		
-SETUP_CNTS 	= 90
-
-KERNEL_OFF 	= 100
-KERNEL_CNTS	= 512		# assume 512 kb, now just 256kb 
-
-# arch dir
-KERSRC		= src
-ARCH 		= $(KERSRC)/arch/x86
-# kernel boot binary
-BOOT_BIN 	= $(ARCH)/boot/boot.bin
-LOADER_BIN 	= $(ARCH)/boot/loader.bin
-SETUP_BIN 	= $(ARCH)/boot/setup.bin
-
-# kernel file
-KERNEL_ELF 	= $(KERSRC)/kernel.elf
-
 # 参数
-.PHONY: all kernel
+.PHONY: all bochs bochsdbg vbox
 
-# 默认所有动作
-all : kernel 
-	$(DD) if=$(BOOT_BIN) of=$(FLOPPYA_IMG) bs=512 count=1 conv=notrunc
-	$(DD) if=$(LOADER_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
-	$(DD) if=$(SETUP_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
-	$(DD) if=$(KERNEL_ELF) of=$(FLOPPYA_IMG) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
-	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) 10
-
-# 先写rom，在编译内核
-kernel:
-	@$(MAKE) -s -C ./src
-
-bochs: all
+bochs:
 ifeq ($(OS),Windows_NT)
 	$(BOCHS) -q -f $(BXRC_WIN)
 else
 	$(BOCHS) -q -f $(BXRC_LINUX)
 endif
 
-bochsdbg: all
+bochsdbg:
 ifeq ($(OS),Windows_NT)
 	$(BOCHSDBG) -q -f $(BXRC_WIN)
 else
@@ -79,6 +34,6 @@ else
 endif
 
 # virtual box
-vbox: all
+vbox:
 	$(VBOX_MANAGE) startvm $(VBOX_NAME) --type gui 
 	

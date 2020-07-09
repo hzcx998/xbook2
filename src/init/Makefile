@@ -1,1 +1,1 @@
-obj-y			+= 	main.o
+SRC	+= main.c

@@ -347,8 +347,6 @@ gui_window_t *gui_create_window(
     if (parent) {
         list_add_tail(&win->list, &parent->child_list);
     }
-
-    srvprint("create wind addr %x id %d\n", win, win->id);
     /* 添加到窗口链表 */
     list_add_tail(&win->window_list, &window_list_head);
     
@@ -534,9 +532,7 @@ gui_window_t *gui_window_get_by_id(unsigned int wid)
 {
     gui_window_t *win;
     list_for_each_owner (win, &window_list_head, window_list) {
-        printf("find win addr:%x id:%d width:%d height:%d\n", win, win->id, win->width, win->height);
         if (win->id == wid) {
-            printf("find win id:%d\n", wid);
             return win;
         }
     }

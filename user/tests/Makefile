@@ -1,6 +1,6 @@
 X_LIBS		+= xlibc-0.0.1.a sgi-0.0.1.a pthread-0.0.1.a
 
-NAME		:= test
+NAME		:= tests
 SRC			+= main.c cond_sync.c
 
 define CUSTOM_TARGET_CMD
