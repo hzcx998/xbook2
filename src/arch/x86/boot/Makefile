@@ -1,32 +1,41 @@
 # MIT License
 # Copyright (c) 2020 Jason Hu, Zhu Yu
 
-X_PREPARE	+= $(obj)/boot.bin $(obj)/loader.bin
-X_CLEAN		:= $(obj)/boot.bin $(obj)/loader.bin $(obj)/setup.elf 
+BOOT_BIN = boot.bin
+LOAD_BIN = loader.bin
+SETUP_BIN = setup.bin
 
-$(obj)/boot.bin: $(src)/boot.asm
-	@echo [BOOT.BIN] $@
-	@$(AS) -f bin -I $(obj)/ -o $@ $<
+PREPARE	+= $(BOOT_BIN) $(LOAD_BIN) $(SETUP_BIN)
 
-$(obj)/loader.bin: $(src)/loader.asm
-	@echo [LOADER.BIN] $@
-	@$(AS)  -f bin -I $(obj)/ -o $@ $<
+SETUP_OBJS = start.o setup.o lib.o page.o
 
-X_ASFLAGS	:= -f elf -I $(obj)/
-X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector
-X_INCDIRS	:=
-X_LDFLAGS	+= -e _start -Ttext 0x91000
-AS			:=	nasm
-LD			:=  ld -m elf_i386
+$(BOOT_BIN): boot.asm
+	@echo [NASM]  $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
+	@$(NASM) -o $@ $<
 
-export AS LD
+$(LOAD_BIN): loader.asm
+	@echo [NASM]  $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
+	@$(NASM) -o $@ $<
 
-SRC			+= start.asm setup.c lib.c page.c
-NAME		:= setup.bin
+# make setup elf
+setup.elf :  $(SETUP_OBJS)
+	@echo [LD]  $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
+	@$(LD) $(LDFLAGS) -no-pie -e _start -Ttext 0x91000 -o setup.elf $(SETUP_OBJS)  
 
+#$(SETUP_BIN) : setup.asm
+#	@echo [NASM]  $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
+#	@$(NASM) -o $@ $<
+$(SETUP_BIN) : setup.elf
+	@echo [OBJCOPY]  $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
+	@$(OBJCOPY) $(OBJCOPY_FLAGS) -O binary setup.elf $(SETUP_BIN)
 
-define CUSTOM_TARGET_CMD
-echo [SETUP.BIN] $@; \
-$(LD) $(X_LDFLAGS) -o $(obj)/setup.elf $(X_OBJS); \
-$(OC) -R .note -R .comment -S -O binary $(obj)/setup.elf $@
-endef
+%.o : %.c
+	@echo [CC]  $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
+	@$(CC) $(CFLAGS) -o $@ $<
+
+start.o : start.asm
+	@echo [NASM]  $(patsubst $(TOPDIR)/%,%,$(CURDIR))/$@
+	@$(NASM) -f elf -o $@ $<
+
+xclean:
+	$(RM) $(BOOT_BIN) $(LOAD_BIN) $(SETUP_BIN) setup.elf $(SETUP_OBJS)

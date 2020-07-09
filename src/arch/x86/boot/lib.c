@@ -33,7 +33,7 @@ MAKE_COLOR(BLACK, RED) | BRIGHT | FLASH
 
 #define COLOR_DEFAULT	(MAKE_COLOR(TEXT_BLACK, TEXT_WHITE))
 
-int cursor_x = 0, cursor_y = 0;
+static int cursor_x = 0, cursor_y = 0;
 
 void outb(unsigned int port, unsigned int data);
 
@@ -54,7 +54,7 @@ static void set_cursor(unsigned short cursor)
 static void flush()
 {
     /* 计算光标位置，并设置 */
-    //set_cursor(cursor_y * SCREEN_WIDTH + cursor_x);
+    set_cursor(cursor_y * SCREEN_WIDTH + cursor_x);
 }
 
 /**
@@ -101,9 +101,9 @@ static void scroll_sceen(int direction)
  * @console: 控制台
  * @ch: 字符
  */
-void put_char(char ch)
+static void put_char(char ch)
 {
-	char *vram = (char *)(V_MEM_BASE + 
+	unsigned char *vram = (unsigned char *)(V_MEM_BASE + 
         (cursor_y * SCREEN_WIDTH + cursor_x) *2) ;
 	switch(ch){
         case '\r':

@@ -1,1 +1,1 @@
-SRC	+= pci.c
+obj-y		+= pci.o

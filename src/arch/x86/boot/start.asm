@@ -44,20 +44,16 @@ _start:
 	mov byte [0xb8000+160*2+11], 0X07
 	mov byte [0xb8000+160*2+12], 'T'
 	mov byte [0xb8000+160*2+13], 0X07
-	mov byte [0xb8000+160*2+14], 'S'
-	mov byte [0xb8000+160*2+15], 0X07
 		
 	; jump to c code.
 	jmp setup_entry
 
 global outb
 outb:	; void outb(unsigned int port, unsigned int data);
-	push edx
-    mov		edx,[esp+8]
-	mov		al,[esp+12]
+	mov		edx,[esp+4]
+	mov		al,[esp+8]
 	out		dx,al
-	pop edx
-    ret
+	ret
 
 global enable_paging
 enable_paging:

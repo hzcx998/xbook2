@@ -1,1 +1,2 @@
-SRC	+= core/
+obj-y	+= boot/
+obj-y	+= core/

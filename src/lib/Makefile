@@ -1,7 +1,7 @@
-SRC	+= vsprintf.c
-SRC	+= string.c
-SRC	+= memops.c
-SRC	+= bitmap.c
-SRC	+= fifobuf.c
-SRC	+= fifoio.c
-SRC	+= trigger.c
+obj-y		+=	vsprintf.o
+obj-y		+=	string.o
+obj-y		+=	memops.o
+obj-y		+=	bitmap.o
+obj-y		+=	fifobuf.o
+obj-y		+=	fifoio.o
+obj-y		+=	trigger.o

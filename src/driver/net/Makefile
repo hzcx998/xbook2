@@ -1,1 +1,1 @@
-SRC	+= rtl8139.c
+obj-y		+= rtl8139.o

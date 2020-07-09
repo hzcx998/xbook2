@@ -1,1 +1,1 @@
-SRC	+= console.c
+obj-y	+= console.o

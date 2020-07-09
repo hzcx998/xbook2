@@ -1,2 +1,2 @@
-SRC	+= keyboard.c
-SRC	+= mouse.c
+obj-y		+= keyboard.o
+obj-y		+= mouse.o

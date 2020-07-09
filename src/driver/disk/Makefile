@@ -1,1 +1,1 @@
-SRC	+= ide.c
+obj-y	+= ide.o
