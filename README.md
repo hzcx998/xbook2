@@ -13,7 +13,7 @@ USER MODE:
 +---------------------------------+
 |shell | text edit | compiler     |
 +---------------------------------+  
-|netsrv | filesrv | libOS         |
+|netsrv | filesrv | guisrv| libOS |
 +---------------------------------+
 KERNEL MODE: 
 +---------------------------+
@@ -36,7 +36,7 @@ KERNEL MODE:
 IDE硬盘驱动，PS/2鼠标，键盘驱动，VBE视频驱动
 RTL8139网卡驱动，UART串口驱动
 
-FATFS文件系统，LWIP网络协议，SGI图形库
+FATFS文件系统，LWIP网络协议
 PTHREAD线程库
 ```
 
@@ -55,12 +55,8 @@ PTHREAD线程库
 > make debuild  # 清理环境
 > make run      # 编译并运行，默认使用qemu虚拟机运行
 > make qemu     # 使用qemu虚拟机运行
-> make bochs    # 使用bochs虚拟机运行
-> make vbox     # 使用virtual box虚拟机运行，需要配置虚拟机名字
+> make qemudbg  # 使用qemu虚拟机进行调试
 > make clean    # 清除编译产生的对象文件以及可执行文件
-> make dis      # 反汇编内核文件，可用于调试
-> make qemudbg  # 启动qemu的调试器
-> make bochsdbg # 启动bochs的调试器
 ```
 
 联系方式：
