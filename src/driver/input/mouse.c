@@ -366,6 +366,7 @@ iostatus_t mouse_read(device_object_t *device, io_request_t *ioreq)
     /* 参数正确 */
     if (ioreq->user_buffer && ioreq->parame.read.length == sizeof(input_event_t)) {
         input_event_t *even = (input_event_t *) ioreq->user_buffer;
+        
         if (input_even_get(&ext->evbuf, even)) {
             status = IO_FAILED;
         } else {
@@ -380,7 +381,6 @@ iostatus_t mouse_read(device_object_t *device, io_request_t *ioreq)
     ioreq->io_status.status = status;
     /* 调用完成请求 */
     io_complete_request(ioreq);
-
     return status;
 }
 

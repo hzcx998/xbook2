@@ -81,6 +81,7 @@ int sys_exec_raw(char *name, char **argv)
     char tmp_name[MAX_TASK_NAMELEN] = {0};
     strcpy(tmp_name, name);
 
+    vmm_unmap_space_maparea(cur->vmm);
     /* 释放虚拟空间地址管理，后面映射时重新加载镜像 */
     vmm_release_space(cur->vmm);
     
@@ -219,6 +220,7 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
 
     /* 取消空间映射 */
     // vmm_unmap_space(cur->vmm);
+    vmm_unmap_space_maparea(cur->vmm);
     /* 释放虚拟空间地址管理，后面映射时重新加载镜像 */
     vmm_release_space(cur->vmm);
 

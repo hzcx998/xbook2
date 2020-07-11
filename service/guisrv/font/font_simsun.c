@@ -1,7 +1,8 @@
-#include <font/font.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#include <font/font.h>
 
 #ifdef CONFIG_FONT_SIMSUN
 

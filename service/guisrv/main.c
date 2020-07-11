@@ -6,24 +6,16 @@
 #include <sys/ioctl.h>
 #include <sys/vmm.h>
 
-#include <drivers/screen.h>
-#include <drivers/mouse.h>
-#include <drivers/keyboard.h>
-
-#include <layer/draw.h>
-#include <layer/layer.h>
-
-#include <window/window.h>
-#include <environment/mouse.h>
-#include <environment/interface.h>
-#include <environment/statusbar.h>
-
-#include <input/keyboard.h>
-
-#include <event/msgque.h>
-
 #include <guisrv.h>
-#include <pthread.h>
+#include <console/console.h>
+#include <cmd/cmd.h>
+#include <drivers/screen.h>
+#include <drivers/keyboard.h>
+#include <drivers/mouse.h>
+#include <input/keyboard.h>
+#include <input/mouse.h>
+#include <font/font.h>
+#include <event/event.h>
 
 int init_guisrv()
 {
@@ -33,20 +25,31 @@ int init_guisrv()
         return -1;
     }
     
-    if (init_mouse_driver()) {
-        printf("[failed ] %s: init mouse driver failed!\n", SRV_NAME);
-        return -1;
-    }
-    
     if (init_keyboard_driver()) {
         printf("[failed ] %s: init keyboard driver failed!\n", SRV_NAME);
         return -1;
     }
     
-    if (init_msgque_event()) {
+    if (init_mouse_driver()) {
+        printf("[failed ] %s: init mouse driver failed!\n", SRV_NAME);
         return -1;
     }
     
+    if (init_keyboard_input()) {
+        printf("[failed ] %s: init keyboard input failed!\n", SRV_NAME);
+        return -1;
+    }
+    
+    if (init_mouse_input()) {
+        printf("[failed ] %s: init mouse input failed!\n", SRV_NAME);
+        return -1;
+    }
+
+    if (init_event() < 0)
+        return -1;
+
+    gui_init_font();
+
     return 0;
 }
 
@@ -57,16 +60,12 @@ int open_guisrv()
         printf("[failed ] %s: open screen driver failed!\n", SRV_NAME);
         return -1;
     }
-    if (drv_mouse.open()) {
-        printf("[failed ] %s: open mouse driver failed!\n", SRV_NAME);
-        return -1;
-    }
     if (drv_keyboard.open()) {
         printf("[failed ] %s: open keyboard driver failed!\n", SRV_NAME);
         return -1;
     }
-    if (event_msgque.open()) {
-        printf("[failed ] %s: open mesque event failed!\n", SRV_NAME);
+    if (drv_mouse.open()) {
+        printf("[failed ] %s: open mouse driver failed!\n", SRV_NAME);
         return -1;
     }
     return 0;
@@ -79,89 +78,37 @@ int close_guisrv()
         printf("[failed ] %s: close screen driver failed!\n", SRV_NAME);
         return -1;
     }
-    if (drv_mouse.close()) {
-        printf("[failed ] %s: close mouse driver failed!\n", SRV_NAME);
-        return -1;
-    }
     if (drv_keyboard.close()) {
         printf("[failed ] %s: close keyboard driver failed!\n", SRV_NAME);
         return -1;
     }
-    if (event_msgque.close()) {
-        printf("[failed ] %s: close msgque event failed!\n", SRV_NAME);
+    if (drv_mouse.close()) {
+        printf("[failed ] %s: close mouse driver failed!\n", SRV_NAME);
         return -1;
     }
-
     return 0;
-}
-
-int start_guisrv()
-{
-    /* init layer */
-    if (guisrv_init_layer()) {
-        printf("[failed ] %s: init window layer failed!\n", SRV_NAME);
-        return -1;
-    }
-    
-    if (init_gui_window()) {
-        printf("[failed ] %s: init window management failed!\n", SRV_NAME);
-        return -1;
-    }
-
-    return 0;
-}
-
-extern pthread_mutex_t guisrv_master_mutex;
-
-int loop_guisrv()
-{
-    while (1)
-    {
-        pthread_mutex_lock(&guisrv_master_mutex);
-
-        drv_mouse.read();
-        drv_keyboard.read(); 
-        // 接收消息队列，根据消息队列内容处理消息
-        event_msgque.read();
-
-        pthread_mutex_unlock(&guisrv_master_mutex);
-
-        /* 图形服务内部处理的部分就不需要在互斥中，不涉及到和接口相关的部分。 */
-        statusbar_manager.read();
-    }
 }
 
 void *gui_malloc(size_t size)
 {
     return malloc(size);
-
-    void *p = (void *)sbrk(0);
-    if (p == (void *) -1)
-        return NULL;
-
-    size = (size + 3) & (~3);
-    if (sbrk(size) == (void *) -1)
-        return NULL;
-    return p;
 }
 
 void gui_free(void *ptr)
 {
-    /* invalid */
     free(ptr);
 }
 
 /*
-GUI struct:
+GUISRV struct:
 +-----------------------+
-| graph environment     |
-| (system, user)        |
+| interface             |
 \                       /
 +-----------------------+
-| window manager        |
+|console | cmd | cursor |
 \                       /
 +-----------------------+
-| layer | input | event |
+| graph | input | font  |
 \                       /
 +-----------------------+
 | drivers               |
@@ -176,16 +123,12 @@ int main(int argc, char *argv[])
     if (open_guisrv())
         return -1;
     
-    if (start_guisrv() < 0)
-        return -1;
-    
-    init_env_display();
-
-    if (init_guisrv_interface() < 0) 
+    if (init_con_screen() < 0)
         return -1;
 
-    loop_guisrv();
+    cmd_loop();
 
+    srvprint("exit service.\n");
     if (close_guisrv()) {
         return -1;
     }

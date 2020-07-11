@@ -114,6 +114,31 @@ int vmm_unmap_space(vmm_t *vmm)
     return 0;
 }
 
+/**
+ * vmm_unmap_space_maparea - 释放映射区域
+ * @vmm: 虚拟内存管理
+ * 
+ * 取消虚拟区域地址映射
+ * 
+ * @return: 成功返回0， 失败返回-1
+ */
+int vmm_unmap_space_maparea(vmm_t *vmm)
+{
+    if (vmm == NULL)
+        return -1; 
+    /* 释放虚拟空间地址描述 */
+    vmspace_t *space = (vmspace_t *)vmm->vmspace_head;
+
+    /* 取消虚拟空间的地址映射 */
+    while (space != NULL) {
+        if (space->start >= VMS_MAP_START_ADDR &&
+            space->end <= VMS_MAP_START_ADDR + MAX_VMS_MAP_SIZE) {
+            unmap_pages_safe(space->start, space->end - space->start, space->flags & VMS_MAP_SHARED);
+        }
+        space = space->next;
+    }
+    return 0;
+}
 
 int vmm_exit(vmm_t *vmm)
 {

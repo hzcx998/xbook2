@@ -154,6 +154,7 @@ static int mem_group_init(
 	mem_group_t *group,
 	flags_t flags
 ) {
+    
 	// 把group添加到free链表
 	list_add(&group->list, &cache->free_groups);
 
@@ -195,6 +196,7 @@ static int mem_group_init(
 	group->free_count = cache->object_count;
 	group->flags =  flags;
 
+    
 	//dump_mem_group(group);
 	return 0;
 }
@@ -208,13 +210,15 @@ static int mem_group_init(
 static int create_mem_group(mem_cache_t *cache, flags_t flags)
 {
 	mem_group_t *group;
-
+    unsigned irqflags;
+    save_intr(irqflags);
     //printk("cache %s need a new group %x!\n", cache->name, cache->object_size);
 
 	/* 为内存组分配一个页 */
 	group = mem_cache_alloc_pages(1);
 	if (group == NULL) {
 		printk(KERN_ERR "alloc page for mem group failed!\n");
+        restore_intr(irqflags);
 		return -1;
 	}
 
@@ -222,13 +226,14 @@ static int create_mem_group(mem_cache_t *cache, flags_t flags)
 		printk(KERN_ERR "init mem group failed!\n");
 		goto free_group;
 	}
-	
+	restore_intr(irqflags);
 	// 创建成功
 	return 0;
 
 free_group:
 	// 释放对象组的页
 	mem_cache_free_pages(group);
+    restore_intr(irqflags);
 	return -1;
 }
 
@@ -414,9 +419,9 @@ void *kmalloc(size_t size)
 		// 指向下一个大小描述
 		cachesz++;
 	}
-	
 	//printk("des %x cache %x size %x\n", sizeDes, sizeDes->cachePtr, sizeDes->cachePtr->object_size);
-	return mem_cache_alloc_object(cachesz->mem_cache);
+	void *p = mem_cache_alloc_object(cachesz->mem_cache);
+    return p;
 }
 
 
@@ -520,6 +525,7 @@ void kfree(void *objcet)
 {
 	if (!objcet)
 		return;
+    
 	mem_cache_t *cache;
 	
 	// 获取对象所在的页
@@ -535,7 +541,6 @@ void kfree(void *objcet)
 
 	// 调用核心函数
 	mem_cache_free_object(cache, (void *)objcet);
-	
 }
 
 
@@ -573,7 +578,7 @@ static int group_destory(mem_cache_t *cache, mem_group_t *group)
 static int __mem_cache_shrink(mem_cache_t *cache)
 {
 	mem_group_t *group, *next;
-
+ 
 	int ret = 0;
 
 	list_for_each_owner_safe(group, next, &cache->free_groups, list) {

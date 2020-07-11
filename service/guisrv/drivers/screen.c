@@ -1,18 +1,22 @@
-#include <drivers/screen.h>
+
+#include <string.h>
+#include <stdio.h>
 #include <sys/res.h>
 #include <sys/ioctl.h>
 #include <sys/vmm.h>
-#include <string.h>
-#include <stdio.h>
-#include <guisrv.h>
 
-#include <layer/color.h>
+/// 程序本地头文件
+#include <guisrv.h>
+#include <drivers/screen.h>
 
 #define DEBUG_LOCAL 0
 
 #ifndef   GUI_SCREEN_DEVICE_NAME
 #define   GUI_SCREEN_DEVICE_NAME        "video"
 #endif
+
+
+drv_screen_t drv_screen = {0};
 
 /*
  * Color conversion interfaces
@@ -94,10 +98,21 @@ static  GUI_COLOR  R5G6B5_TO_GUI(SCREEN_COLOR screen_color)
 /* R8G8B8 color helper */
 static  SCREEN_COLOR  GUI_TO_R8G8B8(GUI_COLOR gui_color)
 {
-    return  gui_color;
+    return  gui_color & 0xffffff;
 }
 
 static  GUI_COLOR  R8G8B8_TO_GUI(SCREEN_COLOR screen_color) 
+{
+    return  screen_color | (0xff << 24);
+}
+
+/* R8G8B8 color helper */
+static  SCREEN_COLOR  GUI_TO_A8R8G8B8(GUI_COLOR gui_color)
+{
+    return  gui_color;
+}
+
+static  GUI_COLOR  A8R8G8B8_TO_GUI(SCREEN_COLOR screen_color) 
 {
     return  screen_color;
 }
@@ -157,8 +172,8 @@ static  int  screen_detect_var(drv_screen_t *screen)
         break;
 
     case 32:
-        screen->gui_to_screen_color = GUI_TO_R8G8B8;
-        screen->screen_to_gui_color = R8G8B8_TO_GUI;
+        screen->gui_to_screen_color = GUI_TO_A8R8G8B8;
+        screen->screen_to_gui_color = A8R8G8B8_TO_GUI;
         break;
 
     default:
@@ -604,9 +619,6 @@ static  int  screen_output_rect_fill(int left, int top, int right, int bottom, S
     return  1;
 }
 
-
-
-drv_screen_t drv_screen = {0};
 
 int init_screen_driver()
 {

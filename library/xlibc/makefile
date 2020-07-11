@@ -210,7 +210,7 @@ CHARSET_OBJS	= 	charset/charset.o \
 LOCALE_OBJS		= 	locale/localeconv.o \
 					locale/setlocale.o \
 
-MALLOC_OBJS		= 	malloc/malloc2.o \
+MALLOC_OBJS		= 	malloc/malloc.o \
 
 # objects
 OBJS			= 	$(ARCH_OBJS) $(ANSI_OBJS) $(STDIO_OBJS) \

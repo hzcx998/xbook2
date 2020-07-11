@@ -8,20 +8,290 @@
 #include  <errno.h>
 #include  <semaphore.h>
 #include  <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <sys/vmm.h>
 
 #include <srv/guisrv.h>
 
 #include <sys/srvcall.h>
 #include <sys/proc.h>
 #include <sys/res.h>
-#include <sgi/sgi.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/dir.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "cond_sem.h"
+#include <jpeglib.h>
+#include <jmorecfg.h>
+#include <jconfig.h>
+
+static  video_info_t    video_info;
+static  int  screen_output_pixel(int x, int y, uint32_t  color);
+
+/* R5G6B5 color helper */
+static  uint32_t  GUI_TO_R5G6B5(uint32_t gui_color)
+{
+    uint32_t  r, g, b;
+
+    b = gui_color&0xF8;
+    g = gui_color&0xFC00;
+    r = gui_color&0xF80000;
+
+    return  (b>>3)|(g>>5)|(r>>8);
+}
+
+int jpg_display(char * path)// **指定图片的路径就可以调用这个jpg的解析。**
+    {
+    //LCD_init();
+    /*
+    １.　分配并初始化一个jpeg解压对象
+    */
+    struct jpeg_decompress_struct dinfo; //定义了一个jpeg的解压对象
+
+    struct jpeg_error_mgr jerr; //定义一个错误变量
+    dinfo.err = jpeg_std_error(&jerr);
+
+    jpeg_create_decompress(&dinfo); //初始化这个解压对象
+
+    printf("create dec\n");
+    /*
+    2. 指定要解压缩的图像文件
+    */
+    FILE *infile;
+    infile = fopen(path, "r");
+    if (infile == NULL)
+    {
+        perror("fopen error");
+        return -1;
+    }
+
+    printf("openfile\n");
+    jpeg_stdio_src(&dinfo, infile); //为解压对象dinfo指定要解压的文件
+
+    /*
+    3. 调用jpeg_read_header()获取图像信息
+
+    */
+    if (jpeg_read_header(&dinfo, TRUE) != JPEG_HEADER_OK) {
+        fclose(infile);
+        return -1;
+    } 
+
+    printf("read header\n");
+
+    /*
+    4. 设置jpeg解压缩对象dinfo的一些参数，可采用默认参数
+    */
+    /*
+    5.调用jpeg_start_decompress()启动解压过程
+    jpeg_start_decompress(&dinfo); 
+    调用jpeg_start_decompress(&dinfo);函数之后，JPEG解压对象dinfo中下面这几个成员变量
+    将会比较有用：
+    output_width:  图像的输出宽度
+    output_height：　图像的输出高度
+    output_component：　每个像素的分量数，也即字节数，3/4字节
+    在调用jpeg_start_decompress(&dinfo); 之后往往需要为解压后的扫描线上的所有像素点分配存储空间，
+    output_width * output_components(一行的字节数，output_height行)
+
+    */
+
+    jpeg_start_decompress(&dinfo); 
+    
+    printf("buffer size: %x\n", dinfo.output_width * dinfo.output_components);
+    
+    unsigned char *buffer = malloc(dinfo.output_width * dinfo.output_components);
+    if (buffer == NULL) {
+        fclose(infile);
+        jpeg_destroy_decompress(&dinfo);
+        return -1;
+    }
+
+    
+    printf("alloc buf\n");
+    
+    printf("width %d, height %d, components %d.\n", dinfo.output_width, dinfo.output_height, dinfo.output_components);
+    
+    printf("start\n");
+    /*
+    ６.　读取一行或者多行扫描线数据并处理，通常的代码是这样的：
+
+    //output_scanline表示扫描的总行数
+    //output_height表示图像的总行数
+    while (dinfo.output_scanline < dinfo.output_height)
+    {
+    jpeg_read_scanlines(&dinfo, &buffer, 1);
+
+    //deal with scanlines . RGB/ARGB
+    }
+    */
+
+    //output_scanline表示扫描的总行数
+    //output_height表示图像的总行数
+    while (dinfo.output_scanline < dinfo.output_height)
+    {
+        unsigned char *buf1[1];
+        buf1[0] = buffer;
+
+        jpeg_read_scanlines(&dinfo, buf1, 1); //dinfo.output_scanline + 1
+
+        //deal with scanlines . RGB/ARGB
+        int x; //一行的像素点数量
+
+        unsigned char *p = buf1[0];
+        for (x = 0; x < dinfo.output_width; x++)
+        {
+            unsigned char r, g, b, a = 255;
+            uint32_t color;
+            if (dinfo.output_components == 3)
+            {
+                r = *p++;
+                g = *p++;
+                b = *p++;
+            } else if (dinfo.output_components == 4)
+            {
+                a = *p++;
+                r = *p++;
+                g = *p++;
+                b = *p++;
+            }
+            color = (a << 24) | (r << 16) | (g << 8) |(b) ;
+
+            screen_output_pixel(x, dinfo.output_scanline - 1 ,  GUI_TO_R5G6B5(color));
+            //LCD_DrawPoint(x, dinfo.output_scanline - 1 ,  color);
+            //SGI_DrawPixel(display, win, x, dinfo.output_scanline - 1, color);
+        }
+    }
+    
+    printf("read data\n");
+    /* 刷新显示区域 */
+    //SGI_UpdateWindow(display, win, 0, 0, 400, 300);
+    sleep(1);
+    
+    printf("update\n");
+    /*
+    7. 调用　jpeg_finish_decompress()完成解压过程
+    */
+    jpeg_finish_decompress(&dinfo);
+    //jpeg_abort(&dinfo);
+    
+    /*
+    ８.调用jpeg_destroy_decompress()释放jpeg解压对象dinfo
+    jpeg_destroy_decompress(&dinfo);
+    */
+    jpeg_destroy_decompress(&dinfo);
+
+    printf("finish\n");
+    //LCD_unint();
+    return 0;
+}
+
+static  unsigned int    video_ram_size  = 0;
+static  unsigned char  *video_ram_start = NULL;
+
+static  int  screen_output_pixel(int x, int y, uint32_t  color)
+{
+    /* User must write the right code */
+	int  offset = 0;
+
+    if ( x > (video_info.x_resolution-1) )
+        return  -1;
+
+    if ( y > (video_info.y_resolution-1) )
+        return  -1;
+
+    /* Output pixel */
+    switch( (video_info.bits_per_pixel) )
+    {
+        case  8:
+            offset = (video_info.x_resolution)*y+x;
+            if ( offset >= ((video_info.x_resolution)*(video_info.y_resolution)-1))
+                return  -1;
+
+    	    *(video_ram_start+offset) = (unsigned char)color;
+            break;
+
+        case  15:
+            offset = 2*((video_info.x_resolution)*y+x);
+            if ( offset >= ((video_info.x_resolution)*(video_info.y_resolution)*2-2))
+                return  -1;
+
+    	    *((short int*)((video_ram_start) + offset)) = (short int)color;
+            break;
+
+        case  16:
+            offset = 2*((video_info.x_resolution)*y+x);
+            if ( offset >= ((video_info.x_resolution)*(video_info.y_resolution)*2-2))
+                return  -1;
+
+    	    *((short int*)((video_ram_start) + offset)) = (short int)color;
+            break;
+
+        case  24:
+            offset = 3*((video_info.x_resolution)*y+x);
+            if ( offset >= ((video_info.x_resolution)*(video_info.y_resolution)*3-3))
+                return  -1;
+
+    	    *((video_ram_start) + offset + 0) = color&0xFF;
+    	    *((video_ram_start) + offset + 1) = (color&0xFF00) >> 8;
+    	    *((video_ram_start) + offset + 2) = (color&0xFF0000) >> 16;
+            break;
+
+        case  32:
+            offset = 4*((video_info.x_resolution)*y+x);
+            if ( offset >= ((video_info.x_resolution)*(video_info.y_resolution)*4-4))
+                return  -1;
+
+    	    *((int*)((video_ram_start) + offset)) = (int)color;
+            break;
+
+        default:
+            break;
+
+    }
+    return  0;
+}
+
+int main(int argc, char *argv[])
+{
+    char *pic_res;
+    if (argc < 2) {
+        printf("please input jpeg file path!\n");
+        return -1;
+    }
+
+    /* 映射显存 */
+    
+    int video_res = res_open("video", RES_DEV, 0 );
+    if ( video_res < 0 ) 
+        return  -1;
+
+    int ret = res_ioctl(video_res, VIDEOIO_GETINFO, (unsigned long) &video_info);
+    if ( ret < 0 ) {
+        res_close(video_res);
+        return  -1;
+    }
+        
+    video_ram_size = video_info.bytes_per_scan_line * video_info.y_resolution;
+    video_ram_start = res_mmap(video_res, video_ram_size, 0);
+    if (video_ram_start == NULL) {
+        printf("test: video mapped failed!\n");
+        res_close(video_res);
+        return -1;
+    }
+    /*if (open_window() < 0)
+        return -1;*/
+    if (jpg_display(argv[1]) < 0)
+        printf("display failed!\n");  
+    sleep(3);    
+
+    munmap(video_ram_start, video_ram_size);
+    res_close(video_res); 
+    //close_window();
+    return 0;   
+}
+
+
 #if 0
 
 #include <lua.h>
@@ -88,12 +358,12 @@ int main2(int argc, char *argv[])
 }
 #endif
 
+#if 0
 #include <stdio.h>
 #include <malloc.h>
 #include <unistd.h>
 #include <string.h>
 
-#if 1
 int main(int argc, char *argv[])
 {
     printf("hello, test.\n");

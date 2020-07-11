@@ -1,199 +1,230 @@
-#include <stdio.h>
-#include <malloc.h>
-#include <unistd.h>
-#include <string.h>
+/* $Header$ */
 
-//#define DEBUG_MEMOBJ
 
-#define MEMOBJ_NR   1024
+/* replace undef by define */
+#undef	 DEBUG		/* check assertions */
+#undef	 SLOWDEBUG	/* some extra test loops (requires DEBUG) */
 
-#define MEMOBJ_UNUSED   0   /* 未使用 */
-#define MEMOBJ_USING    1   /* 使用中 */
-#define MEMOBJ_FREE     2   /* 空闲，可重复利用 */
+#include	<stdlib.h>
+#include	<string.h>
+#include	<errno.h>
+#include	<unistd.h>
+#include	<const.h>
 
-typedef struct _memobject {
-    size_t size;
-    void *addr;
-    int flags;
-} memobject_t;
+#define DEBUG
 
-static memobject_t mobjs[MEMOBJ_NR]; 
+#ifdef DEBUG
+#define	ASSERT(b)	if (!(b)) assert_failed();
+#else
+#define	ASSERT(b)	/* empty */
+#endif
 
-static int is_memobj_init = 0;
+#if WORDSZ == 2
+#define	ptrint		int
+#else
+#define	ptrint		long
+#endif
 
-#define ALIGN(p,alignbytes) ((void*)(((unsigned long)p+alignbytes-1)&~(alignbytes-1)))
+#if	WORDSZ == 2
+#define BRKSIZE		1024
+#else
+#define BRKSIZE		4096
+#endif
+#define	PTRSIZE		((int) sizeof(void *))
+#define Align(x,a)	(((x) + (a - 1)) & ~(a - 1))
+#define NextSlot(p)	(* (void **) ((p) - PTRSIZE))
+#define NextFree(p)	(* (void **) (p))
 
-static size_t szalign(size_t size){
-    if(size % 8 ==0) return size;
-    return ((size >> 3) + 1) <<3;
+#ifdef DEBUG
+static void assert_failed()
+{
+	write(2, "assert failed in lib/malloc.c\n", 30);
+	abort();
 }
+#endif
 
-static void memobj_init() {
-    int i;
-    for (i = 0; i < MEMOBJ_NR; i++) {
-        mobjs[i].addr = NULL;
-        mobjs[i].size = 0;
-        mobjs[i].flags = 0;
-    }
-    is_memobj_init = 1;
-}
 
-static int memobj_add(void *addr, size_t size) {
-    int i;
-    for (i = 0; i < MEMOBJ_NR; i++) {
-        if (mobjs[i].flags == MEMOBJ_UNUSED) {
-            mobjs[i].addr = addr;
-            mobjs[i].size = size;
-            mobjs[i].flags = MEMOBJ_USING;
-            #ifdef DEBUG_MEMOBJ
-            printf("memobj add %d\n", i);
-            #endif
-            return 0;
-        }
-    }
-    return -1;    
-}
+/*
+ * A short explanation of the data structure and algorithms.
+ * An area returned by malloc() is called a slot. Each slot
+ * contains the number of bytes requested, but preceeded by
+ * an extra pointer to the next the slot in memory.
+ * '_bottom' and '_top' point to the first/last slot.
+ * More memory is asked for using brk() and appended to top.
+ * The list of free slots is maintained to keep malloc() fast.
+ * '_empty' points the the first free slot. Free slots are
+ * linked together by a pointer at the start of the
+ * user visable part, so just after the next-slot pointer.
+ * Free slots are merged together by free().
+ */
+static void *_bottom, *_top, *_empty;
 
-static memobject_t *memobj_getobj(void *addr) {
-    int i;
-    for (i = 0; i < MEMOBJ_NR; i++) {
-        if (mobjs[i].addr == addr && mobjs[i].size > 0 && mobjs[i].flags != MEMOBJ_UNUSED) {
-            return &mobjs[i];
-        }
-    }
-    return NULL;  
-}
+static int grow(size_t len)
+{
+  register char *p;
 
-static int memobj_del(void *addr) {
-    int i;
-    for (i = 0; i < MEMOBJ_NR; i++) {
-        if (mobjs[i].addr == addr && mobjs[i].size > 0 && mobjs[i].flags != MEMOBJ_UNUSED) {
-            /*mobjs[i].size = 0;
-            mobjs[i].addr = NULL;*/
-            mobjs[i].flags = MEMOBJ_FREE;
-            #ifdef DEBUG_MEMOBJ
-            printf("memobj del %d\n", i);
-            #endif
-            return 0;
-        }
-    }
-    return -1;    
-}
-
-static void *memobj_match(size_t size) {
-    int i;
-    for (i = 0; i < MEMOBJ_NR; i++) {
-        if (mobjs[i].flags == MEMOBJ_FREE) {
-            if (size <= mobjs[i].size) {
-                mobjs[i].flags = MEMOBJ_USING;
-                #ifdef DEBUG_MEMOBJ
-                printf("memobj match %d\n", i);
-                #endif
-                return mobjs[i].addr;
-            }
-        }
-    }
-    return NULL;    
+  ASSERT(NextSlot((char *)_top) == 0);
+  errno = ENOMEM;
+  if ((char *) _top + len < (char *) _top
+      || (p = (char *)Align((ptrint)_top + len, BRKSIZE)) < (char *) _top 
+      || brk(p) != 0)
+	return(0);
+  NextSlot((char *)_top) = p;
+  NextSlot(p) = 0;
+  free(_top);
+  _top = p;
+  return 1;
 }
 
 
-static void *malloc_intenal(size_t size, int _align){
-    size = szalign(size);
+void *
+malloc(size_t size)
+{
+  register char *prev, *p, *next, *new;
+  register unsigned len, ntries;
 
-    /* 匹配空闲对象 */
-    void *p;
-    p = memobj_match(size);
-    if (p)
-        return p;
-
-    p = sbrk(0);
-    if (sbrk(size) == (void *) -1)
-        return NULL;
-    
-    /* 地址对齐 */
-    void *addr = ALIGN(p,_align);
-    unsigned long off = addr - p;
-    if (sbrk(off) == (void *) -1)
-        return NULL;
-    #ifdef DEBUG_MEMOBJ
-    printf("malloc: old %p, new %p, off %x size %x\n", p, addr, off, size);
-    #endif
-    /* 添加到内存记录 */
-    if (!is_memobj_init)
-        memobj_init();
-
-    if (memobj_add(addr, size) < 0) {
-        sbrk(-(off + size));
-        return NULL;
-    }
-    return (void *) addr;
+  if (size == 0) return NULL;
+  errno = ENOMEM;
+  for (ntries = 0; ntries < 2; ntries++) {
+	if ((len = Align(size, PTRSIZE) + PTRSIZE) < 2 * PTRSIZE)
+		return NULL;
+	if (_bottom == 0) {
+		if ((p = sbrk(2 * PTRSIZE)) == (char *) -1)
+			return NULL;
+		p = (char *) Align((ptrint)p, PTRSIZE);
+		p += PTRSIZE;
+		_top = _bottom = p;
+		NextSlot(p) = 0;
+	}
+#ifdef SLOWDEBUG
+	for (p = _bottom; (next = NextSlot(p)) != 0; p = next)
+		ASSERT(next > p);
+	ASSERT(p == _top);
+#endif
+	for (prev = 0, p = _empty; p != 0; prev = p, p = NextFree(p)) {
+		next = NextSlot(p);
+		new = p + len;	/* easily overflows!! */
+		if (new > next || new <= p)
+			continue;		/* too small */
+		if (new + PTRSIZE < next) {	/* too big, so split */
+			/* + PTRSIZE avoids tiny slots on free list */
+			NextSlot(new) = next;
+			NextSlot(p) = new;
+			NextFree(new) = NextFree(p);
+			NextFree(p) = new;
+		}
+		if (prev)
+			NextFree(prev) = NextFree(p);
+		else
+			_empty = NextFree(p);
+		return p;
+	}
+	if (grow(len) == 0)
+		break;
+  }
+  ASSERT(ntries != 2);
+  return NULL;
 }
 
-void *malloc(size_t size){
-    return malloc_intenal(size, 8);
+void *
+realloc(void *oldp, size_t size)
+{
+  register char *prev, *p, *next, *new;
+  char *old = oldp;
+  register size_t len, n;
+
+  if (!old) return malloc(size);
+  else if (!size) {
+	free(oldp);
+	return NULL;
+  }
+  len = Align(size, PTRSIZE) + PTRSIZE;
+  next = NextSlot(old);
+  n = (int)(next - old);			/* old length */
+  /*
+   * extend old if there is any free space just behind it
+   */
+  for (prev = 0, p = _empty; p != 0; prev = p, p = NextFree(p)) {
+	if (p > next)
+		break;
+	if (p == next) {	/* 'next' is a free slot: merge */
+		NextSlot(old) = NextSlot(p);
+		if (prev)
+			NextFree(prev) = NextFree(p);
+		else
+			_empty = NextFree(p);
+		next = NextSlot(old);
+		break;
+	}
+  }
+  new = old + len;
+  /*
+   * Can we use the old, possibly extended slot?
+   */
+  if (new <= next && new >= old) {		/* it does fit */
+	if (new + PTRSIZE < next) {		/* too big, so split */
+		/* + PTRSIZE avoids tiny slots on free list */
+		NextSlot(new) = next;
+		NextSlot(old) = new;
+		free(new);
+	}
+	return old;
+  }
+  if ((new = malloc(size)) == NULL)		/* it didn't fit */
+	return NULL;
+  memcpy(new, old, n);				/* n < size */
+  free(old);
+  return new;
 }
 
-void *memalign (size_t boundary, size_t size) {
-    return malloc_intenal(size, boundary);
+void
+free(void *ptr)
+{
+  register char *prev, *next;
+  char *p = ptr;
+
+  if (!p) return;
+
+  ASSERT((char *)NextSlot(p) > p);
+  for (prev = 0, next = _empty; next != 0; prev = next, next = NextFree(next))
+	if (p < next)
+		break;
+  NextFree(p) = next;
+  if (prev)
+	NextFree(prev) = p;
+  else
+	_empty = p;
+  if (next) {
+	ASSERT((char *)NextSlot(p) <= next);
+	if (NextSlot(p) == next) {		/* merge p and next */
+		NextSlot(p) = NextSlot(next);
+		NextFree(p) = NextFree(next);
+	}
+  }
+  if (prev) {
+	ASSERT((char *)NextSlot(prev) <= p);
+	if (NextSlot(prev) == p) {		/* merge prev and p */
+		NextSlot(prev) = NextSlot(p);
+		NextFree(prev) = NextFree(p);
+	}
+  }
 }
 
-void *calloc(int n,size_t size){
-    void *p = malloc_intenal(size * n, 8);
-    if (p)
-        memset(p, 0, size * n);
-    return p;
+/**
+ * Only call malloc, boundary not used, it's not a good idea.
+ */
+void *
+memalign (size_t boundary, size_t size)
+{
+  return malloc(size);
 }
 
-/*free 函数实现*/
-void free(void *p){
-    if (!p)
-        return;
-
-    /* 获取原来的内存的长度 */
-    memobject_t *obj = memobj_getobj(p);
-    if (!obj)
-        return;
-    #ifdef DEBUG_MEMOBJ
-    printf("free: addr %p, size %x\n", obj->addr, obj->size);
-    #endif
-    if (memobj_del(p) < 0) {
-        return;
-    }
-}
-
-void *realloc(void *p, size_t size){
-    if (p == NULL && !size)
-        return NULL;
-    if (p == NULL)
-        return malloc(size);
-    if (!size) {
-        free(p);
-        return NULL;
-    }
-        
-    /* 获取原来的内存的长度 */
-    memobject_t *obj = memobj_getobj(p);
-    if (!obj)
-        return NULL;
-
-    if (obj->size >= size) { /* 缩小 */
-        #ifdef DEBUG_MEMOBJ
-        printf("realloc: shrink addr %x size %x -> %x\n", obj->addr, obj->size, size);
-        #endif
-        obj->size = size;
-        return obj->addr;
-    }
-    /* 扩大内存 */
-    void *q = malloc(size);
-    if (q == NULL) {
-        //printf("realloc2: alloc new failed!\n");
-        return NULL;
-    }
-        
-    memcpy(q, obj->addr, obj->size);
-    #ifdef DEBUG_MEMOBJ
-    printf("realloc: addr %x -> %x size %x -> %x\n", obj->addr, q, obj->size, size);
-    #endif
-    free(obj->addr);
-    return q;
+void *
+calloc(int num, size_t size)
+{
+  void *p;
+  p = malloc(num * size);
+  if (p)
+    memset(p, 0, num * size);
+  return p;
 }

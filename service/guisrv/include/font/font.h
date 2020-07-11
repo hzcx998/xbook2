@@ -4,8 +4,8 @@
 
 #include <types.h>
 #include <stdint.h>
-#include <srvconfig.h>
-
+#include <graph/color.h>
+#include <guisrv.h>
 
 /* 字体数量 */
 #define GUI_MAX_FONT_NR 10
@@ -40,5 +40,34 @@ extern void gui_register_font_standard();
 extern void gui_register_font_simsun();
 #endif
 
+void draw_word_ex(
+    int x,
+    int y,
+    char word,
+    GUI_COLOR color,
+    gui_font_t *font
+);
+
+void draw_text_ex(
+    int x,
+    int y,
+    char *text,
+    GUI_COLOR color,
+    gui_font_t *font
+);
+
+void draw_word(
+    int x,
+    int y,
+    char ch,
+    GUI_COLOR color
+);
+
+void draw_text(
+    int x,
+    int y,
+    char *text,
+    GUI_COLOR color
+);
 
 #endif   /* __GUISRV_FONT_FONT_H__ */

@@ -1,14 +1,14 @@
-#include <drivers/mouse.h>
-#include <drivers/screen.h>
+#include <string.h>
+#include <stdio.h>
 #include <sys/res.h>
 #include <sys/ioctl.h>
 #include <sys/vmm.h>
 #include <sys/input.h>
-#include <string.h>
-#include <stdio.h>
-#include <guisrv.h>
 
-#include <environment/mouse.h>
+#include <guisrv.h>
+#include <drivers/mouse.h>
+#include <drivers/screen.h>
+#include <input/mouse.h>
 
 #ifndef   GUI_MOUSE_DEVICE_NAME
 #define   GUI_MOUSE_DEVICE_NAME        "mouse"

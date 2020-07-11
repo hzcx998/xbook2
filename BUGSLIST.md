@@ -10,3 +10,8 @@
 1. sendto can work only 1 time.
 
 ```
+## <2020.7.11>
+```
+1. malloc problem, can't use it for work.
+
+```

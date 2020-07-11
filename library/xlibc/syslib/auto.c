@@ -1,4 +1,5 @@
 #include <sys/dir.h>
+#include <malloc.h>
 
 /**
  * _enter_preload - 进入预先加载
@@ -11,6 +12,7 @@ void _enter_preload(int argc, char *argv[])
 {
     /* 默认使用根目录 */
     __setcwd(ROOT_DIR_BUF);
+    //__do_init_mem();
 }
 
 /**

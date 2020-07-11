@@ -74,7 +74,6 @@ void schedule()
     task_t *next = get_next_task(cur);
     
     set_next_task(next);
-    restore_intr(flags);
 #if DEBUG_LOCAL == 1 
     printk(KERN_INFO "schedule: switch from %s-%d-%x-%d to %s-%d-%x-%d\n",
         cur->name, cur->pid, cur, cur->priority, next->name, next->pid, next, next->priority);
@@ -82,6 +81,8 @@ void schedule()
     /*dump_task_kstack(next->kstack);
     dump_task(next);*/
     switch_to(cur, next);
+    
+    restore_intr(flags);
 }
 
 void print_priority_queue(int prio)

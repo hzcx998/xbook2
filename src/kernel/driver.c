@@ -264,6 +264,7 @@ int driver_object_create(driver_func_t vine)
     
     /* 将驱动添加到系统中 */
     ASSERT(!list_find(&drvobj->list, &driver_list_head));
+    //printk("%s: <%x %x>\n", __func__,&drvobj->list, &driver_list_head);
     list_add_tail(&drvobj->list, &driver_list_head);
     spin_unlock_irqrestore(&driver_lock, flags);
 
@@ -444,6 +445,7 @@ iostatus_t io_create_device(
     spin_lock(&driver->device_lock);
     /* 设备创建好后，添加到驱动链表上 */
     ASSERT(!list_find(&devobj->list, &driver->device_list));
+    //printk("%s: <%x %x>\n", __func__,&devobj->list, &driver->device_list);
     list_add_tail(&devobj->list, &driver->device_list);
     spin_unlock(&driver->device_lock);
     
@@ -513,6 +515,8 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
     case DEVICE_TYPE_SERIAL_PORT:
     case DEVICE_TYPE_SCREEN:
     case DEVICE_TYPE_KEYBOARD:
+    case DEVICE_TYPE_MOUSE:
+    case DEVICE_TYPE_VIRTUAL_CHAR:
         spin_lock(&device->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
@@ -656,6 +660,8 @@ void io_complete_request(io_request_t *ioreq)
     case DEVICE_TYPE_SERIAL_PORT:
     case DEVICE_TYPE_SCREEN:
     case DEVICE_TYPE_KEYBOARD:
+    case DEVICE_TYPE_MOUSE:
+    case DEVICE_TYPE_VIRTUAL_CHAR:
         spin_unlock(&ioreq->devobj->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
@@ -706,6 +712,7 @@ iostatus_t io_device_queue_append(device_queue_t *queue, unsigned char *buf, int
         spin_unlock_irqrestore(&queue->lock, irqflags);
         return IO_FAILED;
     }
+    printk("%s: <%x %x>\n", __func__,&entry->list, &queue->list_head);
     
     list_add_tail(&entry->list, &queue->list_head);
     queue->entry_count++;
@@ -752,16 +759,17 @@ int io_device_queue_pickup2(device_queue_t *queue, unsigned char *buf, int bufle
 
 int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen, int flags)
 {
-    spin_lock(&queue->lock);
+    unsigned long irqflags;
+    spin_lock_irqsave(&queue->lock, irqflags);
     if (!queue->entry_count) {  /* 没有数据包 */
         if (flags & IO_NOWAIT) {    /* 不进行等待 */
-            spin_unlock(&queue->lock);
+            spin_unlock_irqrestore(&queue->lock, irqflags);
             return -1;    
         }
         wait_queue_add(&queue->wait_queue, current_task);
-        spin_unlock(&queue->lock);
+        spin_unlock_irqrestore(&queue->lock, irqflags);
         task_block(TASK_BLOCKED);
-        spin_lock(&queue->lock);
+        spin_lock_irqsave(&queue->lock, irqflags);
     }
     device_queue_entry_t *entry;
     entry = list_first_owner(&queue->list_head, device_queue_entry_t, list);
@@ -770,7 +778,7 @@ int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen
     int len = MIN(entry->length, buflen);
     memcpy(buf, entry->buf, len);
     kfree(entry);
-    spin_unlock(&queue->lock);
+    spin_unlock_irqrestore(&queue->lock, irqflags);
 #if DEBUG_LOCLA == 1
     printk(KERN_DEBUG "io_device_queue_get: pid=%d len=%d.\n",
         queue->wait_queue.task->pid, len);
@@ -980,7 +988,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
         if (ioreq->io_status.infomation) {  /* 有物理地址，说明获取成功，再做进一步设置 */
             /* 进行内存映射 */
             mapaddr = vmspace_mmap(0, ioreq->io_status.infomation, length, 
-                PROT_USER | PROT_WRITE, VMS_MAP_SHARED);
+                PROT_USER | PROT_WRITE, VMS_MAP_SHARED | VMS_MAP_REMAP);
         }
         io_request_free((ioreq));
         return mapaddr;
@@ -1051,6 +1059,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
     status = io_call_dirver(devobj, ioreq);
 
     if (!io_complete_check(ioreq, status)) {
+        //printk("io complete.\n");
         len = ioreq->io_status.infomation;
         /* 如果是内存缓冲区，就需要从内核缓冲区复制到用户空间 */
         if (devobj->flags & DO_BUFFERED_IO) { 
@@ -1069,6 +1078,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         /* 读取后，分发到已经其它在设备上的进程中去 */
 
         io_request_free((ioreq));
+        //printk("io ret.\n");
         return len;
     }
 #if DEBUG_LOCAL == 1

@@ -32,6 +32,9 @@ FILE * fopen(const char * path, const char * mode)
 		case 'a':
 			flags = O_WRONLY | O_CREAT | O_APPEND;
 			break;
+        case 'b':
+			flags |= O_BINARY;
+			break;
 		case '+':
 			plus = 1;
 			break;

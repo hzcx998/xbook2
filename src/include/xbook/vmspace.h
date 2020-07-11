@@ -4,6 +4,7 @@
 #include "vmm.h"
 #include "memcache.h"
 #include "stddef.h"
+#include <arch/page.h>
 
 /* map flags */
 #define VMS_MAP_FIXED       0x10       /* 映射固定位置 */
@@ -14,11 +15,16 @@
 
 #define MAX_VMS_STACK_SIZE  (16 * MB)   /* 最大栈拓展大小 */
 
+#define DEFAULT_STACK_SIZE  (PAGE_SIZE * 4)   /* 默认栈大小 */
+
 /* 最大可扩展的堆的大小,默认512MB */
 #define MAX_VMS_HEAP_SIZE    (512 * MB)
 
-/* 最大可扩展的堆的大小,默认128MB */
-#define MAX_VMS_MAP_SIZE    (128 * MB)
+/* 可映射起始地址 */
+#define VMS_MAP_START_ADDR  0x60000000
+
+/* 最大可映射的内存的大小,默认256MB */
+#define MAX_VMS_MAP_SIZE    (256 * MB)
 
 /* 虚拟内存地址空间描述 */
 typedef struct vmspace {

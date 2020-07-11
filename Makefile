@@ -9,14 +9,16 @@ FATFS_BIN	= $(FATFS_DIR)/fatfs
 TRUNC		= truncate
 RM			= rm
 DD			= dd
+MKDIR		= mkdir
 
 # virtual machine
 QEMU 		= qemu-system-i386
 
 # images and rom
-FLOPPYA_IMG	= develop/image/a.img
-HDA_IMG		= develop/image/c.img
-HDB_IMG		= develop/image/d.img
+IMAGE_DIR	= develop/image
+FLOPPYA_IMG	= $(IMAGE_DIR)/a.img
+HDA_IMG		= $(IMAGE_DIR)/c.img
+HDB_IMG		= $(IMAGE_DIR)/d.img
 ROM_DIR		= develop/rom
 
 # image size
@@ -25,7 +27,7 @@ HDA_SZ		= 10321920
 HDB_SZ		= 10321920
 
 # environment dir
-LIBARY_DIR	= ./library
+LIBRARY_DIR	= ./library
 SERVICE_DIR	= ./service
 USER_DIR	= ./user
 
@@ -73,11 +75,14 @@ clean:
 
 # 构建环境。镜像>工具>环境>rom
 build:
+	-$(MKDIR) $(IMAGE_DIR)
+	-$(MKDIR) $(ROM_DIR)/bin
+	-$(MKDIR) $(ROM_DIR)/sbin
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDB_IMG) 
 	$(MAKE) -s -C  $(FATFS_DIR)
-	$(MAKE) -s -C  $(LIBARY_DIR)
+	$(MAKE) -s -C  $(LIBRARY_DIR)
 	$(MAKE) -s -C  $(SERVICE_DIR)
 	$(MAKE) -s -C  $(USER_DIR)
 	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) 10
@@ -86,33 +91,33 @@ build:
 debuild: 
 	$(MAKE) -s -C  $(KERNSRC) clean
 	$(MAKE) -s -C  $(FATFS_DIR) clean
-	$(MAKE) -s -C  $(LIBARY_DIR) clean
+	$(MAKE) -s -C  $(LIBRARY_DIR) clean
 	$(MAKE) -s -C  $(SERVICE_DIR) clean
 	$(MAKE) -s -C  $(USER_DIR) clean
-	-$(RM) $(FLOPPYA_IMG)
-	-$(RM) $(HDA_IMG)
-	-$(RM) $(HDB_IMG)
-
+	-$(RM) -r $(ROM_DIR)/bin
+	-$(RM) -r $(ROM_DIR)/sbin
+	-$(RM) -r $(IMAGE_DIR)
+	
 # 写入rom
 rom: 
 	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) 10
 
+
 # 重新编译所有库
 lib: 
-	$(MAKE) -s -C  $(LIBARY_DIR) clean
-	$(MAKE) -s -C  $(LIBARY_DIR)
-
+	$(MAKE) -s -C  $(LIBRARY_DIR) clean
+	$(MAKE) -s -C  $(LIBRARY_DIR)
+	
 # 重新编译所有服务
 srv: 
 	$(MAKE) -s -C  $(SERVICE_DIR) clean
 	$(MAKE) -s -C  $(SERVICE_DIR)
 
-# 重新编译所有用户
-usr: 
-	$(MAKE) -s -C  $(SERVICE_DIR) clean
-	$(MAKE) -s -C  $(SERVICE_DIR)
-
-
+# 不清理编译
+usr:
+	$(MAKE) -s -C  $(USER_DIR) clean
+	$(MAKE) -s -C  $(USER_DIR)
+	
 #-hda $(HDA_IMG) -hdb $(HDB_IMG)
 # 网卡配置: 
 #	-net nic,vlan=0,model=rtl8139,macaddr=12:34:56:78:9a:be

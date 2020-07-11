@@ -38,50 +38,32 @@ C_FLAGS		= -c -fno-builtin -Wall -Wunused -fno-stack-protector -m32 \
 			-I $(DIR_PTHREAD)/include \
 
 DRIVERS_OBJS 	= 	drivers/screen.o \
-					drivers/mouse.o \
 					drivers/keyboard.o \
-
-LAYER_OBJS 	= 		layer/point.o \
-					layer/line.o \
-					layer/rect.o \
-					layer/bitmap.o \
-					layer/layer.o \
-					layer/char.o \
-					
-WINDOW_OBJS 	=	window/window.o \
-					window/point.o \
-					window/line.o \
-					window/rect.o \
-					window/bitmap.o \
-					window/char.o \
-					window/event.o \
-
-ENVIRONMENT_OBJS =	environment/desktop.o \
-					environment/winctl.o \
-					environment/statusbar.o \
-					environment/statusbar-time.o \
+					drivers/mouse.o \
 
 FONT_OBJS 		=	font/font.o \
 					font/font_simsun.o \
 					font/font_standard.o \
 
-WIDGET_OBJS		=	widget/widget.o \
-					widget/label.o \
-					widget/button.o \
-
-CORE_OBJS 		= 	core/interface.o \
-					core/display.o \
-
 INPUT_OBJS 		= 	input/keyboard.o \
 					input/mouse.o \
+					
+GRAPH_OBJS 		= 	graph/text.o \
+					graph/rect.o \
 
-EVENT_OBJS 		= 	event/msgque.o \
+CONSOLE_OBJS	= 	console/console.o \
+					console/cursor.o \
+					console/clipboard.o \
+
+CMD_OBJS		= 	cmd/cmd.o \
+
+EVENT_OBJS		= 	event/event.o \
 
 MAIN_OBJS 		= 	main.o \
-
-OBJS =  $(MAIN_OBJS) $(DRIVERS_OBJS) $(LAYER_OBJS) $(WINDOW_OBJS) \
-		$(FONT_OBJS) $(ENVIRONMENT_OBJS) $(WIDGET_OBJS) $(CORE_OBJS) \
-		$(INPUT_OBJS) $(EVENT_OBJS)
+					
+OBJS 			=  	$(MAIN_OBJS) $(DRIVERS_OBJS) $(FONT_OBJS) $(INPUT_OBJS) \
+					$(GRAPH_OBJS) $(CONSOLE_OBJS) $(CMD_OBJS) $(EVENT_OBJS) \
+					
 
 LIB_FILE 	:=  $(DIR_PTHREAD)/pthread-0.0.1.a \
 				$(DIR_XLIBC)/xlibc-0.0.1.a \

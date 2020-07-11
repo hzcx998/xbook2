@@ -394,9 +394,11 @@ unsigned long sys_vmspace_heap(unsigned long heap)
     }
     
     /* 检查是否超过堆的空间限制 */
-    if (heap > vmm->heap_start + MAX_VMS_HEAP_SIZE)
+    if (heap > vmm->heap_start + MAX_VMS_HEAP_SIZE) {
+        printk(KERN_ERR "%s: out of heap boundary!\n", __func__);
         goto the_end;
-
+    }
+        
     vmspace_t *find;
     /* 检查是否和已经存在的空间发生重叠 */
     if ((find = vmspace_find_intersection(vmm, old_heap, new_heap + PAGE_SIZE))) {
@@ -421,9 +423,10 @@ unsigned long sys_vmspace_heap(unsigned long heap)
     }
      
 set_heap:
-    /*printk(KERN_DEBUG "sys_vmspace_heap: set new heap %x old is %x\n",
-        heap, vmm->heap_end);*/
-
+#if DEBUG_LOCAL == 1   
+    printk(KERN_DEBUG "sys_vmspace_heap: set new heap %x old is %x\n",
+        heap, vmm->heap_end);
+#endif
     vmm->heap_end = heap; /* 记录新的堆值 */
         
 the_end:

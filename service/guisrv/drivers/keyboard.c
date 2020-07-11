@@ -1,14 +1,16 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/res.h>
 #include <sys/ioctl.h>
 #include <sys/vmm.h>
 #include <sys/input.h>
 
+/// 程序本地头文件
+#include <guisrv.h>
 #include <drivers/keyboard.h>
 #include <input/keyboard.h>
-#include <guisrv.h>
 
 #ifndef  GUI_KEYBOARD_DEVICE_NAME 
 #define  GUI_KEYBOARD_DEVICE_NAME         "kbd"
@@ -58,14 +60,12 @@ static  int  keyboard_read()
         case EV_KEY:         
             /* 图形服务先处理按键，然后再根据按键值传输给当前活动的窗口 */
             if ( (event.value) > 0 ) {  /* key presssed  */
-                input_keyboard.key_pressed(event.code);
-                
+                //printf("input key. %d\n", event.value);
+                //res_write(1, 0, "key\n", 4);
+                return input_keyboard.key_pressed(event.code);   
             } else {    /* key released  */
-                input_keyboard.key_released(event.code);
-                
+                return input_keyboard.key_released(event.code);
             }
-            return  0;
-
         default:
             break;
     }

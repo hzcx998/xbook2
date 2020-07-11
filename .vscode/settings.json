@@ -103,6 +103,8 @@
         "ftheader.h": "c",
         "icon.h": "c",
         "xui.h": "c",
-        "button.h": "c"
+        "button.h": "c",
+        "statusbar.h": "c",
+        "keyboard.h": "c"
     }
 }

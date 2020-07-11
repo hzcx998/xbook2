@@ -6,7 +6,7 @@
 #include <sys/vmm.h>
 
 /* This must be initialized data because commons can't have aliases.  */
-static void *__curbrk = 0;
+static void *__curbrk = NULL;
 
 /**
  * brk - 设置断点值

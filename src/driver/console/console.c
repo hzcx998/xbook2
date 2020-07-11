@@ -354,7 +354,12 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
 #if CON_TO_DEBUGER == 1
     /* 临时输出到内核输出 */
     buf = (uint8_t *)ioreq->system_buffer;
-    printk("%s", buf);
+    //printk("%s", buf);
+    uint8_t *p = buf;
+    while (*p) {
+        serial_putchar(*p);
+        p++;
+    }
 #endif
 
     ioreq->io_status.status = IO_SUCCESS;

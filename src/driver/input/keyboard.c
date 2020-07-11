@@ -944,6 +944,7 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *ext = device->device_extension;
 
+    
     iostatus_t status = IO_SUCCESS;
     
     /* 直接返回读取的数据 */

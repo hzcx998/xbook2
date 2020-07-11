@@ -274,7 +274,7 @@ int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
     vmm->arg_start = vmm->arg_end - PAGE_SIZE;
     
     vmm->stack_end = vmm->arg_start;
-    vmm->stack_start = vmm->stack_end - PAGE_SIZE * 1; /* 参数占用4个页 */
+    vmm->stack_start = vmm->stack_end - DEFAULT_STACK_SIZE; /* 栈大小 */
 
     /* 固定位置 */
     if (vmspace_mmap(vmm->arg_start, 0, vmm->arg_end - vmm->arg_start, PROT_USER | PROT_WRITE,
@@ -349,7 +349,9 @@ void proc_heap_init(task_t *task)
 void proc_map_space_init(task_t *task)
 {
     /* map默认在堆的末尾+10个页的位置 */
-    task->vmm->map_start = task->vmm->heap_start + MAX_VMS_HEAP_SIZE + PAGE_SIZE * 10;
+    //task->vmm->map_start = task->vmm->heap_start + MAX_VMS_HEAP_SIZE + PAGE_SIZE * 10;
+    task->vmm->map_start = (unsigned long) VMS_MAP_START_ADDR;
+    
     task->vmm->map_end = task->vmm->map_start + MAX_VMS_MAP_SIZE;
 }
 

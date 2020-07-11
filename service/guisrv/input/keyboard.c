@@ -1,210 +1,13 @@
-#include <drivers/keyboard.h>
-#include <input/keyboard.h>
 #include <stdio.h>
 #include <sys/input.h>
-#include <window/event.h>
+
+#include <drivers/keyboard.h>
+#include <input/keyboard.h>
+#include <event/event.h>
 
 #define DEBUG_LOCAL 0
 
 input_keyboard_t input_keyboard;
-
-/* Keyboard mapping table */
-static  const  unsigned char  map_table[] = {
-    KEY_ESCAPE,         SGIK_ESCAPE,
-    KEY_BACKSPACE,      SGIK_BACKSPACE,
-    KEY_TAB,            SGIK_TAB,
-    /* 0x00,            SGIK_BACK_TAB,*/
-
-    KEY_PAUSE,          SGIK_PAUSE,
-
-    KEY_PRINT,          SGIK_PRINT,
-    KEY_SYSREQ,         SGIK_SYSREQ,
-
-    KEY_CLEAR,          SGIK_CLEAR,
-
-    KEY_INSERT,         SGIK_INSERT,
-    KEY_ENTER,          SGIK_ENTER,
-    KEY_DELETE,         SGIK_DELETE,
-    KEY_KP_ENTER,        SGIK_ENTER,
-
-    KEY_LEFT,           SGIK_LEFT,
-    KEY_RIGHT,          SGIK_RIGHT,
-    KEY_UP,             SGIK_UP,
-    KEY_DOWN,           SGIK_DOWN,
-    KEY_HOME,           SGIK_HOME,
-    KEY_END,            SGIK_END,
-    KEY_PAGEUP,         SGIK_PAGEUP,
-    KEY_PAGEDOWN,       SGIK_PAGEDOWN,
-
-    KEY_KP0,            SGIK_INSERT,
-    KEY_KP_PERIOD,      SGIK_DELETE,
-    KEY_KP1,            SGIK_END,
-    KEY_KP2,            SGIK_DOWN,
-    KEY_KP3,            SGIK_PAGEDOWN,
-    KEY_KP4,            SGIK_LEFT,
-    KEY_KP5,            SGIK_5,
-    KEY_KP6,            SGIK_RIGHT,
-    KEY_KP7,            SGIK_HOME,
-    KEY_KP8,            SGIK_UP,
-    KEY_KP9,            SGIK_PAGEUP,
-
-    KEY_SPACE,          SGIK_SPACE,           /*   */
-    KEY_EXCLAIM,        SGIK_EXCLAIM,         /* ! */
-    KEY_QUOTEDBL,       SGIK_QUOTEDBL,        /* " */
-    KEY_HASH,           SGIK_HASH,            /* # */
-    KEY_DOLLAR,         SGIK_DOLLAR,          /* $ */
-    KEY_PERSENT,        SGIK_PERSENT,         /* % */
-    KEY_AMPERSAND,      SGIK_AMPERSAND,       /* & */
-    KEY_LEFTPAREN,      SGIK_LEFTPAREN,      /* ( */
-    KEY_RIGHTPAREN,     SGIK_RIGHTPAREN,     /* ) */
-    KEY_ASTERISK,       SGIK_ASTERISK,        /* * */
-    KEY_KP_MULTIPLY,       SGIK_ASTERISK,     /* * */
-    KEY_PLUS,           SGIK_PLUS,            /* + */
-    KEY_KP_PLUS,        SGIK_PLUS,            /* + */
-    KEY_COMMA,          SGIK_COMMA,           /* , */
-    KEY_MINUS,          SGIK_MINUS,           /* - */
-    KEY_KP_MINUS,       SGIK_MINUS,           /* - */
-    KEY_PERIOD,         SGIK_PERIOD,             /* . */
-    KEY_SLASH,          SGIK_SLASH,           /* / */
-    KEY_KP_DIVIDE,      SGIK_SLASH,           /* / */
-
-    KEY_0,              SGIK_0,               /* 0 */
-    KEY_1,              SGIK_1,               /* 1 */
-    KEY_2,              SGIK_2,               /* 2 */
-    KEY_3,              SGIK_3,               /* 3 */
-    KEY_4,              SGIK_4,               /* 4 */
-    KEY_5,              SGIK_5,               /* 5 */
-    KEY_6,              SGIK_6,               /* 6 */
-    KEY_7,              SGIK_7,               /* 7 */
-    KEY_8,              SGIK_8,               /* 8 */
-    KEY_9,              SGIK_9,               /* 9 */
-    KEY_KP0,            SGIK_0,               /* 0 */
-    KEY_KP1,            SGIK_1,               /* 1 */
-    KEY_KP2,            SGIK_2,               /* 2 */
-    KEY_KP3,            SGIK_3,               /* 3 */
-    KEY_KP4,            SGIK_4,               /* 4 */
-    KEY_KP5,            SGIK_5,               /* 5 */
-    KEY_KP6,            SGIK_6,               /* 6 */
-    KEY_KP7,            SGIK_7,               /* 7 */
-    KEY_KP8,            SGIK_8,               /* 8 */
-    KEY_KP9,            SGIK_9,               /* 9 */
-    KEY_COLON,          SGIK_COLON,           /* : */
-    KEY_SEMICOLON,      SGIK_SEMICOLON,       /* ; */
-    KEY_LESS,           SGIK_LESS,            /* < */
-    KEY_EQUALS,         SGIK_EQUALS,          /* = */
-    KEY_GREATER,        SGIK_GREATER,         /* > */
-    KEY_QUESTION,       SGIK_QUESTION,        /* ? */
-    KEY_AT,             SGIK_AT,              /* @ */
-    KEY_A,              SGIK_A,               /* A */
-    KEY_B,              SGIK_B,               /* B */
-    KEY_C,              SGIK_C,               /* C */
-    KEY_D,              SGIK_D,               /* D */
-    KEY_E,              SGIK_E,               /* E */
-    KEY_F,              SGIK_F,               /* F */
-    KEY_G,              SGIK_G,               /* G */
-    KEY_H,              SGIK_H,               /* H */
-    KEY_I,              SGIK_I,               /* I */
-    KEY_J,              SGIK_J,               /* J */
-    KEY_K,              SGIK_K,               /* K */
-    KEY_L,              SGIK_L,               /* L */
-    KEY_M,              SGIK_M,               /* M */
-    KEY_N,              SGIK_N,               /* N */
-    KEY_O,              SGIK_O,               /* O */
-    KEY_P,              SGIK_P,               /* P */
-    KEY_Q,              SGIK_Q,               /* Q */
-    KEY_R,              SGIK_R,               /* R */
-    KEY_S,              SGIK_S,               /* S */
-    KEY_T,              SGIK_T,               /* T */
-    KEY_U,              SGIK_U,               /* U */
-    KEY_V,              SGIK_V,               /* V */
-    KEY_W,              SGIK_W,               /* W */
-    KEY_X,              SGIK_X,               /* X */
-    KEY_Y,              SGIK_Y,               /* Y */
-    KEY_Z,              SGIK_Z,               /* Z */
-    KEY_a,              SGIK_a,               /* A */
-    KEY_b,              SGIK_b,               /* B */
-    KEY_c,              SGIK_c,               /* C */
-    KEY_d,              SGIK_d,               /* D */
-    KEY_e,              SGIK_e,               /* E */
-    KEY_f,              SGIK_f,               /* F */
-    KEY_g,              SGIK_g,               /* G */
-    KEY_h,              SGIK_h,               /* H */
-    KEY_i,              SGIK_i,               /* I */
-    KEY_j,              SGIK_j,               /* J */
-    KEY_k,              SGIK_k,               /* K */
-    KEY_l,              SGIK_l,               /* L */
-    KEY_m,              SGIK_m,               /* M */
-    KEY_n,              SGIK_n,               /* N */
-    KEY_o,              SGIK_o,               /* O */
-    KEY_p,              SGIK_p,               /* P */
-    KEY_q,              SGIK_q,               /* Q */
-    KEY_r,              SGIK_r,               /* R */
-    KEY_s,              SGIK_s,               /* S */
-    KEY_t,              SGIK_t,               /* T */
-    KEY_u,              SGIK_u,               /* U */
-    KEY_v,              SGIK_v,               /* V */
-    KEY_w,              SGIK_w,               /* W */
-    KEY_x,              SGIK_x,               /* X */
-    KEY_y,              SGIK_y,               /* Y */
-    KEY_z,              SGIK_z,               /* Z */
-    KEY_LEFTSQUAREBRACKET,  SGIK_LEFTSQUAREBRACKET,    /* [ */
-    KEY_BACKSLASH,      SGIK_BACKSLASH,      /* \ */
-    KEY_RIGHTSQUAREBRACKET, SGIK_RIGHTSQUAREBRACKET,   /* ] */
-    KEY_CARET,          SGIK_CARET,    /* ^ */
-    KEY_UNDERSCRE,      SGIK_UNDERSCRE,      /* _ */
-    KEY_BACKQUOTE,      SGIK_BACKQUOTE,           /* ` */
-
-    KEY_LEFTBRACKET,    SGIK_LEFTBRACKET,      /* { */
-    KEY_VERTICAL,       SGIK_VERTICAL,             /* | */
-    KEY_RIGHTBRACKET,   SGIK_RIGHTBRACKET,     /* } */
-    KEY_TILDE,          SGIK_TILDE,     /* ~ */
-    KEY_QUOTE,          SGIK_QUOTE,      /* ' */
-
-    KEY_F1,             SGIK_F1,
-    KEY_F2,             SGIK_F2,
-    KEY_F3,             SGIK_F3,
-    KEY_F4,             SGIK_F4,
-    KEY_F5,             SGIK_F5,
-    KEY_F6,             SGIK_F6,
-    KEY_F7,             SGIK_F7,
-    KEY_F8,             SGIK_F8,
-    KEY_F9,             SGIK_F9,
-    KEY_F10,            SGIK_F10,
-    KEY_F11,            SGIK_F11,
-    KEY_F12,            SGIK_F12,
-
-    KEY_LSHIFT,         SGIK_LSHIFT,
-    KEY_RSHIFT,         SGIK_RCTRL,
-
-    KEY_LCTRL,          SGIK_LCTRL,
-    KEY_RCTRL,          SGIK_RCTRL,
-
-    KEY_LALT,           SGIK_LALT,
-    KEY_RALT,           SGIK_RALT,
-
-    KEY_LMETA,          SGIK_LMETA,
-    KEY_RMETA,          SGIK_RMETA,
-
-    KEY_CAPSLOCK,       SGIK_CAPSLOCK,
-    KEY_NUMLOCK,        SGIK_NUMLOCK,
-    KEY_SCROLLOCK,      SGIK_SCROLLOCK,
-
-    0xFF,               SGIK_UNKNOWN
-};
-
-static unsigned char __scan_code_to_gui_value(int code)
-{
-    unsigned char  key_value = SGIK_UNKNOWN;
-    unsigned int   i         = 0;
-    for ( i = 0;  i < sizeof(map_table);  i += 2 ) {
-        if (map_table[i] == code) {
-            key_value = map_table[i + 1]; // 返回转换后的键值
-            break;
-        }
-    }
-    return key_value;
-}
-
 
 /* 特殊按键：
 ALT+TAB 切换窗口 */
@@ -227,6 +30,205 @@ int __process_special_key(int keycode, int press)
         }
     }
     return 0;
+}
+
+/* Keyboard mapping table */
+static  const  unsigned char  map_table[] = {
+    KEY_ESCAPE,         KEY_ESCAPE,
+    KEY_BACKSPACE,      KEY_BACKSPACE,
+    KEY_TAB,            KEY_TAB,
+    /* 0x00,            KEY_BACK_TAB,*/
+
+    KEY_PAUSE,          KEY_PAUSE,
+
+    KEY_PRINT,          KEY_PRINT,
+    KEY_SYSREQ,         KEY_SYSREQ,
+
+    KEY_CLEAR,          KEY_CLEAR,
+
+    KEY_INSERT,         KEY_INSERT,
+    KEY_ENTER,          KEY_ENTER,
+    KEY_DELETE,         KEY_DELETE,
+    KEY_KP_ENTER,       KEY_ENTER,
+
+    KEY_LEFT,           KEY_LEFT,
+    KEY_RIGHT,          KEY_RIGHT,
+    KEY_UP,             KEY_UP,
+    KEY_DOWN,           KEY_DOWN,
+    KEY_HOME,           KEY_HOME,
+    KEY_END,            KEY_END,
+    KEY_PAGEUP,         KEY_PAGEUP,
+    KEY_PAGEDOWN,       KEY_PAGEDOWN,
+
+    KEY_KP0,            KEY_INSERT,
+    KEY_KP_PERIOD,      KEY_DELETE,
+    KEY_KP1,            KEY_END,
+    KEY_KP2,            KEY_DOWN,
+    KEY_KP3,            KEY_PAGEDOWN,
+    KEY_KP4,            KEY_LEFT,
+    KEY_KP5,            KEY_5,
+    KEY_KP6,            KEY_RIGHT,
+    KEY_KP7,            KEY_HOME,
+    KEY_KP8,            KEY_UP,
+    KEY_KP9,            KEY_PAGEUP,
+
+    KEY_SPACE,          KEY_SPACE,           /*   */
+    KEY_EXCLAIM,        KEY_EXCLAIM,         /* ! */
+    KEY_QUOTEDBL,       KEY_QUOTEDBL,        /* " */
+    KEY_HASH,           KEY_HASH,            /* # */
+    KEY_DOLLAR,         KEY_DOLLAR,          /* $ */
+    KEY_PERSENT,        KEY_PERSENT,         /* % */
+    KEY_AMPERSAND,      KEY_AMPERSAND,       /* & */
+    KEY_LEFTPAREN,      KEY_LEFTPAREN,      /* ( */
+    KEY_RIGHTPAREN,     KEY_RIGHTPAREN,     /* ) */
+    KEY_ASTERISK,       KEY_ASTERISK,        /* * */
+    KEY_KP_MULTIPLY,       KEY_ASTERISK,     /* * */
+    KEY_PLUS,           KEY_PLUS,            /* + */
+    KEY_KP_PLUS,        KEY_PLUS,            /* + */
+    KEY_COMMA,          KEY_COMMA,           /* , */
+    KEY_MINUS,          KEY_MINUS,           /* - */
+    KEY_KP_MINUS,       KEY_MINUS,           /* - */
+    KEY_PERIOD,         KEY_PERIOD,             /* . */
+    KEY_SLASH,          KEY_SLASH,           /* / */
+    KEY_KP_DIVIDE,      KEY_SLASH,           /* / */
+
+    KEY_0,              KEY_0,               /* 0 */
+    KEY_1,              KEY_1,               /* 1 */
+    KEY_2,              KEY_2,               /* 2 */
+    KEY_3,              KEY_3,               /* 3 */
+    KEY_4,              KEY_4,               /* 4 */
+    KEY_5,              KEY_5,               /* 5 */
+    KEY_6,              KEY_6,               /* 6 */
+    KEY_7,              KEY_7,               /* 7 */
+    KEY_8,              KEY_8,               /* 8 */
+    KEY_9,              KEY_9,               /* 9 */
+    KEY_KP0,            KEY_0,               /* 0 */
+    KEY_KP1,            KEY_1,               /* 1 */
+    KEY_KP2,            KEY_2,               /* 2 */
+    KEY_KP3,            KEY_3,               /* 3 */
+    KEY_KP4,            KEY_4,               /* 4 */
+    KEY_KP5,            KEY_5,               /* 5 */
+    KEY_KP6,            KEY_6,               /* 6 */
+    KEY_KP7,            KEY_7,               /* 7 */
+    KEY_KP8,            KEY_8,               /* 8 */
+    KEY_KP9,            KEY_9,               /* 9 */
+    KEY_COLON,          KEY_COLON,           /* : */
+    KEY_SEMICOLON,      KEY_SEMICOLON,       /* ; */
+    KEY_LESS,           KEY_LESS,            /* < */
+    KEY_EQUALS,         KEY_EQUALS,          /* = */
+    KEY_GREATER,        KEY_GREATER,         /* > */
+    KEY_QUESTION,       KEY_QUESTION,        /* ? */
+    KEY_AT,             KEY_AT,              /* @ */
+    KEY_A,              KEY_A,               /* A */
+    KEY_B,              KEY_B,               /* B */
+    KEY_C,              KEY_C,               /* C */
+    KEY_D,              KEY_D,               /* D */
+    KEY_E,              KEY_E,               /* E */
+    KEY_F,              KEY_F,               /* F */
+    KEY_G,              KEY_G,               /* G */
+    KEY_H,              KEY_H,               /* H */
+    KEY_I,              KEY_I,               /* I */
+    KEY_J,              KEY_J,               /* J */
+    KEY_K,              KEY_K,               /* K */
+    KEY_L,              KEY_L,               /* L */
+    KEY_M,              KEY_M,               /* M */
+    KEY_N,              KEY_N,               /* N */
+    KEY_O,              KEY_O,               /* O */
+    KEY_P,              KEY_P,               /* P */
+    KEY_Q,              KEY_Q,               /* Q */
+    KEY_R,              KEY_R,               /* R */
+    KEY_S,              KEY_S,               /* S */
+    KEY_T,              KEY_T,               /* T */
+    KEY_U,              KEY_U,               /* U */
+    KEY_V,              KEY_V,               /* V */
+    KEY_W,              KEY_W,               /* W */
+    KEY_X,              KEY_X,               /* X */
+    KEY_Y,              KEY_Y,               /* Y */
+    KEY_Z,              KEY_Z,               /* Z */
+    KEY_a,              KEY_a,               /* A */
+    KEY_b,              KEY_b,               /* B */
+    KEY_c,              KEY_c,               /* C */
+    KEY_d,              KEY_d,               /* D */
+    KEY_e,              KEY_e,               /* E */
+    KEY_f,              KEY_f,               /* F */
+    KEY_g,              KEY_g,               /* G */
+    KEY_h,              KEY_h,               /* H */
+    KEY_i,              KEY_i,               /* I */
+    KEY_j,              KEY_j,               /* J */
+    KEY_k,              KEY_k,               /* K */
+    KEY_l,              KEY_l,               /* L */
+    KEY_m,              KEY_m,               /* M */
+    KEY_n,              KEY_n,               /* N */
+    KEY_o,              KEY_o,               /* O */
+    KEY_p,              KEY_p,               /* P */
+    KEY_q,              KEY_q,               /* Q */
+    KEY_r,              KEY_r,               /* R */
+    KEY_s,              KEY_s,               /* S */
+    KEY_t,              KEY_t,               /* T */
+    KEY_u,              KEY_u,               /* U */
+    KEY_v,              KEY_v,               /* V */
+    KEY_w,              KEY_w,               /* W */
+    KEY_x,              KEY_x,               /* X */
+    KEY_y,              KEY_y,               /* Y */
+    KEY_z,              KEY_z,               /* Z */
+    KEY_LEFTSQUAREBRACKET,  KEY_LEFTSQUAREBRACKET,    /* [ */
+    KEY_BACKSLASH,      KEY_BACKSLASH,      /* \ */
+    KEY_RIGHTSQUAREBRACKET, KEY_RIGHTSQUAREBRACKET,   /* ] */
+    KEY_CARET,          KEY_CARET,    /* ^ */
+    KEY_UNDERSCRE,      KEY_UNDERSCRE,      /* _ */
+    KEY_BACKQUOTE,      KEY_BACKQUOTE,           /* ` */
+
+    KEY_LEFTBRACKET,    KEY_LEFTBRACKET,      /* { */
+    KEY_VERTICAL,       KEY_VERTICAL,             /* | */
+    KEY_RIGHTBRACKET,   KEY_RIGHTBRACKET,     /* } */
+    KEY_TILDE,          KEY_TILDE,     /* ~ */
+    KEY_QUOTE,          KEY_QUOTE,      /* ' */
+
+    KEY_F1,             KEY_F1,
+    KEY_F2,             KEY_F2,
+    KEY_F3,             KEY_F3,
+    KEY_F4,             KEY_F4,
+    KEY_F5,             KEY_F5,
+    KEY_F6,             KEY_F6,
+    KEY_F7,             KEY_F7,
+    KEY_F8,             KEY_F8,
+    KEY_F9,             KEY_F9,
+    KEY_F10,            KEY_F10,
+    KEY_F11,            KEY_F11,
+    KEY_F12,            KEY_F12,
+
+    KEY_LSHIFT,         KEY_LSHIFT,
+    KEY_RSHIFT,         KEY_RCTRL,
+
+    KEY_LCTRL,          KEY_LCTRL,
+    KEY_RCTRL,          KEY_RCTRL,
+
+    KEY_LALT,           KEY_LALT,
+    KEY_RALT,           KEY_RALT,
+
+    KEY_LMETA,          KEY_LMETA,
+    KEY_RMETA,          KEY_RMETA,
+
+    KEY_CAPSLOCK,       KEY_CAPSLOCK,
+    KEY_NUMLOCK,        KEY_NUMLOCK,
+    KEY_SCROLLOCK,      KEY_SCROLLOCK,
+
+    0xFF,               KEY_UNKNOWN
+};
+/**
+ * 键值转换
+ */
+static unsigned char code_switch(int code)
+{
+    unsigned char  key_value = '?';
+    unsigned int   i         = 0;
+    for ( i = 0;  i < sizeof(map_table);  i += 2 ) {
+        if (map_table[i] == code) {
+            key_value = map_table[i + 1]; // 返回转换后的键值
+            break;
+        }
+    }
+    return key_value;
 }
 
 int __key_pressed(int keycode)
@@ -278,29 +280,19 @@ int __key_pressed(int keycode)
     
     /* 如果是一些特殊按键，就做预处理 */
     if (__process_special_key(keycode, 1))
-        return 0;
+        return -1;
 
-    /* 发送给指定窗口 */
-    if (current_window) {   /* 当前窗口有数据 */
-        if (current_window->display_id > 0) {   /* 发送给客户端窗口 */
-#if DEBUG_LOCAL == 1
-            printf("[keyboard] send event to client window.\n");
-#endif
-            /* 发送消息到窗口 */ 
-            gui_event_t event;
-            event.type = SGI_KEY;
-            event.key.state = SGI_PRESSED;
-            event.key.keycode.code = __scan_code_to_gui_value(keycode);
-            event.key.keycode.modify = input_keyboard.key_modify; /* 按键修饰 */
-            gui_window_send_event(current_window, &event);
-        } else {    /* 发送给服务端窗口 */
-#if DEBUG_LOCAL == 1
-            printf("[keyboard] send event to server window.\n");
-#endif
-        }   
-    }
-
-    return 0;
+    /* 使用按键,keydown, keycode, modify */
+    /*input_keyboard.keyevent.state = 0;
+    input_keyboard.keyevent.code = code_switch(keycode);
+    input_keyboard.keyevent.modify = input_keyboard.key_modify;
+    return 0;*/
+    gui_event e;
+    e.type = GUI_EVENT_KEY;
+    e.key.code = code_switch(keycode);
+    e.key.modify = input_keyboard.key_modify;
+    e.key.state = GUI_PRESSED;
+    return gui_event_add(&e);
 }
 
 int __key_released(int keycode)
@@ -334,28 +326,19 @@ int __key_released(int keycode)
 
     /* 如果是一些特殊按键，就做预处理 */
     if (__process_special_key(keycode, 0))
-        return 0;
+        return -1;
 
-    /* 发送给指定窗口 */
-    if (current_window) {   /* 当前窗口有数据 */
-        if (current_window->display_id > 0) {   /* 发送给客户端窗口 */
-#if DEBUG_LOCAL == 1
-            printf("[keyboard] send event to client window.\n");
-#endif
-            /* 发送消息到窗口 */
-            gui_event_t event;
-            event.type = SGI_KEY;
-            event.key.state = SGI_RELEASED;
-            event.key.keycode.code = __scan_code_to_gui_value(keycode);
-            event.key.keycode.modify = input_keyboard.key_modify; /* 按键修饰 */
-            gui_window_send_event(current_window, &event);
-        } else {    /* 发送给服务端窗口 */
-#if DEBUG_LOCAL == 1
-            printf("[keyboard] send event to server window.\n");
-#endif
-        }
-    }
-    return 0;
+    /* 使用按键,keyup, keycode, modify */
+    /*input_keyboard.keyevent.state = 1;
+    input_keyboard.keyevent.code = code_switch(keycode);
+    input_keyboard.keyevent.modify = input_keyboard.key_modify;
+    */
+    gui_event e;
+    e.type = GUI_EVENT_KEY;
+    e.key.code = code_switch(keycode);
+    e.key.modify = input_keyboard.key_modify;
+    e.key.state = GUI_RELEASED;
+    return gui_event_add(&e);
 }
 
 int init_keyboard_input()

@@ -1,5 +1,7 @@
-#include <font/font.h>
 #include <string.h>
+
+#include <font/font.h>
+#include <drivers/screen.h>
 
 /* 字体表，存放字体信息 */
 gui_font_t font_table[GUI_MAX_FONT_NR];
@@ -73,3 +75,4 @@ void gui_init_font()
     /* 选择一个默认字体 */
     gui_select_font("standard");
 }
+
