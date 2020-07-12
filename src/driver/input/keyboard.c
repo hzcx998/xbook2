@@ -1,12 +1,12 @@
 #include <xbook/debug.h>
 #include <xbook/bitops.h>
-#include <xbook/vsprintf.h>
+#include <vsprintf.h>
 #include <xbook/vine.h>
 #include <xbook/driver.h>
 #include <xbook/fifoio.h>
 #include <xbook/task.h>
 #include <xbook/spinlock.h>
-#include <xbook/math.h>
+#include <math.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>

@@ -10,7 +10,7 @@ task_t *process_create(char *name, char **argv);
 int proc_destroy(task_t *task, int thread);
 int proc_vmm_init(task_t *task);
 int proc_vmm_exit(task_t *task);
-int proc_build_arg(unsigned long arg_top, char *argv[], char **dest_argv[]);
+int proc_build_arg(unsigned long arg_top, unsigned long *arg_bottom, char *argv[], char **dest_argv[]);
 int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv);
 void proc_heap_init(task_t *task);
 void proc_map_space_init(task_t *task);

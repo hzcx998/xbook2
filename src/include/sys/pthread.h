@@ -1,7 +1,7 @@
 #ifndef _SYS_PTHREAD_H
 #define _SYS_PTHREAD_H
 
-#include <xbook/stddef.h>
+#include <stddef.h>
 
 typedef unsigned long pthread_t;
 

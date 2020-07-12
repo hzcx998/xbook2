@@ -4,9 +4,9 @@
 #include <arch/cpu.h>
 #include <arch/task.h>
 #include <xbook/task.h>
-#include <xbook/memops.h>
-#include <xbook/string.h>
-#include <xbook/assert.h>
+#include <string.h>
+#include <string.h>
+#include <assert.h>
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
 #include <xbook/spinlock.h>
@@ -18,7 +18,7 @@
 #include <xbook/rwlock.h>
 #include <xbook/vmm.h>
 #include <xbook/waitque.h>
-#include <xbook/math.h>
+#include <math.h>
 
 static pid_t next_pid;
 

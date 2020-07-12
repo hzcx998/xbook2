@@ -5,7 +5,7 @@
 #ifndef _XBOOK_BYTEORDER_H
 #define _XBOOK_BYTEORDER_H
 
-#include "stdint.h"
+#include <stdint.h>
 
 /**
  * swap16 - 16位的字节交换

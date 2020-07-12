@@ -7,7 +7,7 @@
 
 #include <xbook/semaphore.h>
 #include <xbook/task.h>
-#include <xbook/assert.h>
+#include <assert.h>
 
 typedef struct synclock {
 	task_t *holder;			// 锁的持有者

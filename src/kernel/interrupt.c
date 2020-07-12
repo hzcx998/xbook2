@@ -1,6 +1,6 @@
 #include <arch/interrupt.h>
-#include <xbook/stddef.h>
-#include <xbook/types.h>
+#include <stddef.h>
+#include <types.h>
 
 /* var: hardware_intr_contorller must be support in arch */
 extern struct hardware_intr_controller hardware_intr_contorller;

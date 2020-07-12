@@ -1,7 +1,7 @@
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
-#include <xbook/string.h>
-#include <xbook/memops.h>
+#include <string.h>
+#include <string.h>
 #include <xbook/sem.h>
 #include <sys/ipc.h>
 

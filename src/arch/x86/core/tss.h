@@ -1,7 +1,7 @@
 #ifndef _X86_TSS_H
 #define _X86_TSS_H
 
-#include <xbook/stdint.h>
+#include <stdint.h>
 
 /* 内核栈 */
 #define KERNEL_STATCK_TOP		0x8009f000

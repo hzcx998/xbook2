@@ -1,5 +1,5 @@
 #include <xbook/process.h>
-#include <xbook/string.h>
+#include <string.h>
 #include <xbook/pthread.h>
 #include <xbook/srvcall.h>
 #include <xbook/vmspace.h>
@@ -75,7 +75,7 @@ int sys_exec_raw(char *name, char **argv)
         return -1;
     }
     char **new_argv = NULL;
-    proc_build_arg((unsigned long) tmp_arg + PAGE_SIZE, argv, &new_argv);
+    proc_build_arg((unsigned long) tmp_arg + PAGE_SIZE, NULL, argv, &new_argv);
 
     /* 备份进程名 */
     char tmp_name[MAX_TASK_NAMELEN] = {0};
@@ -86,7 +86,7 @@ int sys_exec_raw(char *name, char **argv)
     vmm_release_space(cur->vmm);
     
     /* 加载镜像 */
-    if (proc_load_image(cur->vmm, &elf_header, rb)) {
+    if (proc_load_image(cur->vmm, &elf_header, rb) < 0) {
         printk(KERN_ERR "sys_exec_raw: load_image failed!\n");
         goto free_tmp_arg;
     }
@@ -98,7 +98,7 @@ int sys_exec_raw(char *name, char **argv)
     proc_make_trap_frame(cur);
 
     /* 初始化用户栈 */
-    if(proc_stack_init(cur, frame, new_argv)){
+    if(proc_stack_init(cur, frame, new_argv) < 0){
         /* !!!需要取消已经加载镜像虚拟地址映射 */
         goto free_loaded_image;
     }
@@ -178,7 +178,7 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
     struct Elf32_Ehdr elf_header;
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
     
-    if (raw_block_read_off(&rb, &elf_header, 0, sizeof(struct Elf32_Ehdr))) {
+    if (raw_block_read_off(&rb, &elf_header, 0, sizeof(struct Elf32_Ehdr)) < 0) {
         printk(KERN_ERR "sys_exec_file: read elf header failed!\n");
         goto free_tmp_rb;
     }
@@ -212,7 +212,7 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
         goto free_tmp_rb;
     }
     char **new_argv = NULL;
-    proc_build_arg((unsigned long) tmp_arg + PAGE_SIZE, argv, &new_argv);
+    proc_build_arg((unsigned long) tmp_arg + PAGE_SIZE, NULL, argv, &new_argv);
 
     /* 备份进程名 */
     char tmp_name[MAX_TASK_NAMELEN] = {0};
@@ -225,7 +225,7 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
     vmm_release_space(cur->vmm);
 
     /* 加载镜像 */
-    if (proc_load_image(cur->vmm, &elf_header, &rb)) {
+    if (proc_load_image(cur->vmm, &elf_header, &rb) < 0) {
         printk(KERN_ERR "sys_exec_file: load_image failed!\n");
         goto free_tmp_arg;
     }
@@ -237,7 +237,7 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
     proc_make_trap_frame(cur);
     
     /* 初始化用户栈 */
-    if(proc_stack_init(cur, frame, new_argv)){
+    if(proc_stack_init(cur, frame, new_argv) < 0){
         /* !!!需要取消已经加载镜像虚拟地址映射 */
         goto free_loaded_image;
     }

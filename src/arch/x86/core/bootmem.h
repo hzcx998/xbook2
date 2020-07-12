@@ -1,7 +1,7 @@
 #ifndef _X86_BOOTMEM_H
 #define _X86_BOOTMEM_H
 
-#include <xbook/stddef.h>
+#include <stddef.h>
 
 /* 
 bootmem是用于初始化内核内存空间以及其数据结构的一个简单

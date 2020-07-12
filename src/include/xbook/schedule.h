@@ -3,8 +3,8 @@
 #define _XBOOK_SCHEDULE_H
 
 #include "task.h"
-#include "list.h"
-#include "assert.h"
+#include <list.h>
+#include <assert.h>
 #include "debug.h"
 
 /*任务优先级 */

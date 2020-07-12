@@ -1,11 +1,11 @@
 #include <xbook/driver.h>
-#include <xbook/math.h>
+#include <math.h>
 #include <xbook/vine.h>
 #include <xbook/debug.h>
-#include <xbook/assert.h>
+#include <assert.h>
 #include <xbook/mdl.h>
 #include <xbook/clock.h>
-#include <xbook/string.h>
+#include <string.h>
 #include <xbook/vmspace.h>
 #include <sys/ioctl.h>
 #include <arch/pci.h>

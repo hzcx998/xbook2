@@ -1,7 +1,7 @@
 #include <xbook/msgqueue.h>
 #include <xbook/debug.h>
-#include <xbook/string.h>
-#include <xbook/math.h>
+#include <string.h>
+#include <math.h>
 #include <sys/ipc.h>
 
 /* debug msgq : 1 enable, 0 disable */

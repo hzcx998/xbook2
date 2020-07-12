@@ -12,7 +12,7 @@ enum {
 	EXIT_FAILURE	= 1,
 };
 
-void __attribute__((__noreturn__)) abort(void);
+void abort(void);
 #define exit    _exit
 
 #ifdef __cplusplus

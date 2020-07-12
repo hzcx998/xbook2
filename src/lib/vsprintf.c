@@ -1,6 +1,6 @@
-#include <xbook/vsprintf.h>
-#include <xbook/string.h>
-#include <xbook/memops.h>
+#include <vsprintf.h>
+#include <string.h>
+#include <string.h>
 
 
 #define ZEROPAD	1		/* pad with zero */

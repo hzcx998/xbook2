@@ -1,7 +1,7 @@
 #ifndef _SYS_PROC_H
 #define _SYS_PROC_H
 
-#include <xbook/types.h>
+#include <types.h>
 
 #define PROC_NAME_LEN 32
 

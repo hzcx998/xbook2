@@ -1,7 +1,7 @@
 #ifndef _XBOOK_TRIGGER_H
 #define _XBOOK_TRIGGER_H
 
-#include "types.h"
+#include <types.h>
 #include <sys/trigger.h>
 #include <arch/interrupt.h>
 

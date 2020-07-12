@@ -105,6 +105,9 @@
         "xui.h": "c",
         "button.h": "c",
         "statusbar.h": "c",
-        "keyboard.h": "c"
+        "keyboard.h": "c",
+        "fifoio.h": "c",
+        "timer.h": "c",
+        "exit.h": "c"
     }
 }

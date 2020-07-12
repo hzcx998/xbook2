@@ -106,13 +106,13 @@
 */
 #include <xbook/debug.h>
 #include <xbook/bitops.h>
-#include <xbook/vsprintf.h>
+#include <vsprintf.h>
 #include <xbook/vine.h>
 #include <xbook/driver.h>
-#include <xbook/assert.h>
+#include <assert.h>
 #include <xbook/byteorder.h>
 #include <xbook/spinlock.h>
-#include <xbook/math.h>
+#include <math.h>
 #include <xbook/waitqueue.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>

@@ -2,7 +2,7 @@
 #define _SYS_PROC_H
 
 #include "kfile.h"
-#include "types.h"
+#include <types.h>
 
 
 #define PROC_NAME_LEN 32

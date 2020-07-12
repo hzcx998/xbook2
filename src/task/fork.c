@@ -4,7 +4,7 @@
 #include <xbook/schedule.h>
 #include <xbook/process.h>
 #include <xbook/vmspace.h>
-#include <xbook/string.h>
+#include <string.h>
 
 #define DEBUG_LOCAL 0
 
@@ -44,18 +44,12 @@ static int copy_vm_struct(task_t *child, task_t *parent)
     child->vmm->data_start = parent->vmm->data_start;
     child->vmm->heap_start = parent->vmm->heap_start;
     child->vmm->map_start = parent->vmm->map_start;
-    child->vmm->share_start = parent->vmm->share_start;
     child->vmm->stack_start = parent->vmm->stack_start;
-    child->vmm->arg_start = parent->vmm->arg_start;
-    child->vmm->env_start = parent->vmm->env_start;
     child->vmm->code_end = parent->vmm->code_end;
     child->vmm->data_end = parent->vmm->data_end;
     child->vmm->heap_end = parent->vmm->heap_end;
     child->vmm->map_end = parent->vmm->map_end;
-    child->vmm->share_end = parent->vmm->share_end;
     child->vmm->stack_end = parent->vmm->stack_end;
-    child->vmm->arg_end = parent->vmm->arg_end;
-    child->vmm->env_end = parent->vmm->env_end;
     return 0;
 }
 

@@ -1,5 +1,5 @@
 #include <xbook/debug.h>
-#include <xbook/vsprintf.h>
+#include <vsprintf.h>
 #include <xbook/vine.h>
 #include <xbook/driver.h>
 #include <arch/io.h>

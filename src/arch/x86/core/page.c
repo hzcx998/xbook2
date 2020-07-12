@@ -2,9 +2,9 @@
 #include "pmem.h"
 #include "instruction.h"
 #include <xbook/debug.h>
-#include <xbook/math.h>
-#include <xbook/memops.h>
-#include <xbook/assert.h>
+#include <math.h>
+#include <string.h>
+#include <assert.h>
 #include <xbook/task.h>
 #include <xbook/vmspace.h>
 

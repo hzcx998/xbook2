@@ -1,8 +1,8 @@
 #ifndef _XLIBC_UTIME_H
 #define _XLIBC_UTIME_H
 
-#include "types.h"
-#include "stddef.h"
+#include <types.h>
+#include <stddef.h>
 
 struct utimbuf {
     time_t actime;      /* access time */

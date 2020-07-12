@@ -1,9 +1,9 @@
 #ifndef _LIB_STRING_H
 #define _LIB_STRING_H
 
-#include "types.h"
-#include "stdint.h"
-#include "stddef.h"
+#include <types.h>
+#include <stdint.h>
+#include <stddef.h>
 
 char* itoa(char ** ps, int val, int base);
 char *itoa16_align(char * str, int num);

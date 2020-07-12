@@ -1,7 +1,7 @@
 #include <xbook/debug.h>
-#include <xbook/stdarg.h>
-#include <xbook/vsprintf.h>
-#include <xbook/memops.h>
+#include <stdarg.h>
+#include <vsprintf.h>
+#include <string.h>
 #include <xbook/spinlock.h>
 #include <arch/interrupt.h>
 #include <arch/cpu.h>

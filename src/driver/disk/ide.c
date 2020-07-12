@@ -1,11 +1,11 @@
 #include <xbook/debug.h>
 #include <xbook/kernel.h>
-#include <xbook/const.h>
-#include <xbook/math.h>
+#include <const.h>
+#include <math.h>
 #include <xbook/softirq.h>
 #include <xbook/vine.h>
 #include <xbook/driver.h>
-#include <xbook/vsprintf.h>
+#include <vsprintf.h>
 #include <xbook/clock.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>

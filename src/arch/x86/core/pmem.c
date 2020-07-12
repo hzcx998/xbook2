@@ -2,9 +2,8 @@
 #include "page.h"
 #include "bootmem.h"
 #include <xbook/debug.h>
-#include <xbook/math.h>
-#include <xbook/memops.h>
-#include <xbook/const.h>
+#include <math.h>
+#include <string.h>
 
 extern unsigned int get_memory_size_from_hardware();
 

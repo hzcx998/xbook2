@@ -1,6 +1,6 @@
 #include <xbook/fifobuf.h>
-#include <xbook/math.h>
-#include <xbook/assert.h>
+#include <math.h>
+#include <assert.h>
 
 void fifo_buf_init(fifo_buf_t *fifo, unsigned char *buffer,
         unsigned int size)

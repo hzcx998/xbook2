@@ -1,8 +1,8 @@
 #ifndef _X86_TASK_H
 #define _X86_TASK_H
 
-#include <xbook/stddef.h>
-#include <xbook/memops.h>
+#include <stddef.h>
+#include <string.h>
 #include <xbook/debug.h>
 #include "tss.h"
 #include "interrupt.h"
