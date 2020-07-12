@@ -1,7 +1,7 @@
-X_LIBS		+= xlibc-0.0.1.a pthread-0.0.1.a pthread-0.0.1.a jpeg-9d.a
+X_LIBS		+= xlibc-0.0.1.a pthread-0.0.1.a pthread-0.0.1.a jpeg-9d.a zlib-1.2.11.a libpng-1.6.37.a
 
 NAME		:= tests
-SRC			+= main.c cond_sync.c
+SRC			+= main.c test_png.c test_jpg.c
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \
