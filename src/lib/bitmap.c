@@ -1,6 +1,6 @@
-#include <xbook/string.h>
+#include <string.h>
 #include <xbook/bitmap.h>
-#include <xbook/memops.h>
+#include <string.h>
 
 /*
  * bitmap_init - 初始化位图

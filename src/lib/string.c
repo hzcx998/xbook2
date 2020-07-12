@@ -1,6 +1,6 @@
-#include <xbook/string.h>
+#include <string.h>
 #include <xbook/memcache.h>
-#include <xbook/memops.h>
+#include <string.h>
 #include <xbook/debug.h>
 
 void string_init(string_t *string)

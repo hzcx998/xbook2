@@ -1,10 +1,10 @@
 #ifndef _XBOOK_WAIT_QUEUE_H
 #define _XBOOK_WAIT_QUEUE_H
 
-#include "list.h"
+#include <list.h>
 #include "debug.h"
 #include "spinlock.h"
-#include "assert.h"
+#include <assert.h>
 
 typedef struct wait_queue {
 	list_t wait_list;	// 记录所有被挂起的进程（等待中）的链表

@@ -2,7 +2,7 @@
 #ifndef _XBOOK_CLOCK_H
 #define _XBOOK_CLOCK_H
 
-#include "types.h"
+#include <types.h>
 #include <arch/time.h>
 
 /* 1 ticks 对应的毫秒数 */

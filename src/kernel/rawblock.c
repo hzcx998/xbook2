@@ -1,6 +1,6 @@
 #include <xbook/rawblock.h>
-#include <xbook/string.h>
-#include <xbook/math.h>
+#include <string.h>
+#include <math.h>
 #include <xbook/debug.h>
 #include <xbook/driver.h>
 

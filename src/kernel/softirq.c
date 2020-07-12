@@ -1,7 +1,7 @@
 #include <arch/interrupt.h>
 #include <xbook/debug.h>
 #include <xbook/softirq.h>
-#include <xbook/memops.h>
+#include <string.h>
 #include <xbook/bitops.h>
 
 /* 普通任务协助队列 */

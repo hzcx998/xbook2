@@ -1,5 +1,5 @@
 #include <xbook/debug.h>
-#include <xbook/math.h>
+#include <math.h>
 #include "bootmem.h"
 
 static boot_mem_t boot_mem_alloctor;

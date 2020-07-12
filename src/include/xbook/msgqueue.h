@@ -1,7 +1,7 @@
 #ifndef _XBOOK_MSG_QUEUE_H
 #define _XBOOK_MSG_QUEUE_H
 
-#include "list.h"
+#include <list.h>
 #include "waitqueue.h"
 #include "semaphore.h"
 

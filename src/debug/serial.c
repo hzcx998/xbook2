@@ -1,5 +1,5 @@
 #include <xbook/debug.h>
-#include <xbook/stdint.h>
+#include <stdint.h>
 #include <xbook/bitops.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>

@@ -29,10 +29,7 @@ void dump_vmm(vmm_t *vmm)
     printk(KERN_DEBUG "data: start=%x, end=%x\n", vmm->data_start, vmm->data_end);
     printk(KERN_DEBUG "heap: start=%x, end=%x\n", vmm->heap_start, vmm->heap_end);
     printk(KERN_DEBUG "map: start=%x, end=%x\n", vmm->map_start, vmm->map_end);
-    printk(KERN_DEBUG "share: start=%x, end=%x\n", vmm->share_start, vmm->share_end);
     printk(KERN_DEBUG "stack: start=%x, end=%x\n", vmm->stack_start, vmm->stack_end);
-    printk(KERN_DEBUG "arg: start=%x, end=%x\n", vmm->arg_start, vmm->arg_end);
-    printk(KERN_DEBUG "env: start=%x, end=%x\n", vmm->env_start, vmm->env_end);
 }
 
 
@@ -77,15 +74,8 @@ int vmm_release_space(vmm_t *vmm)
     vmm->heap_end = 0;
     vmm->map_start = 0;
     vmm->map_end = 0;
-    vmm->share_start = 0;
-    vmm->share_end = 0;
     vmm->stack_start = 0;
     vmm->stack_end = 0;
-    vmm->arg_start = 0;
-    vmm->arg_end = 0;
-    vmm->env_start = 0;
-    vmm->env_end = 0;
-
     return 0;
 }
 

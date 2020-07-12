@@ -1,6 +1,6 @@
 #include <xbook/clock.h>
-#include <xbook/assert.h>
-#include <xbook/math.h>
+#include <assert.h>
+#include <math.h>
 #include <xbook/softirq.h>
 #include <xbook/debug.h>
 #include <xbook/softirq.h>

@@ -1,7 +1,7 @@
 #include <xbook/pipe.h>
 #include <xbook/debug.h>
-#include <xbook/string.h>
-#include <xbook/math.h>
+#include <string.h>
+#include <math.h>
 #include <xbook/semaphore.h>
 #include <sys/ipc.h>
 

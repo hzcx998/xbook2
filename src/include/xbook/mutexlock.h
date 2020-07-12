@@ -24,7 +24,7 @@
 #define _XBOOK_MUTEX_LOCK_H
 
 #include "spinlock.h"
-#include "list.h"
+#include <list.h>
 
 /* 互斥锁结构 */
 typedef struct mutex_lock {

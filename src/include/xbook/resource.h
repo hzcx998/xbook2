@@ -1,8 +1,8 @@
 #ifndef _XBOOK_RESOURCE_H
 #define _XBOOK_RESOURCE_H
 
-#include "types.h"
-#include "stddef.h"
+#include <types.h>
+#include <stddef.h>
 
 /* 每个进程可持有的资源数量 */
 #define RES_NR    64

@@ -3,10 +3,10 @@
 #include <xbook/schedule.h>
 #include <xbook/rawblock.h>
 #include <xbook/elf32.h>
-#include <xbook/memops.h>
-#include <xbook/math.h>
+#include <string.h>
+#include <math.h>
 #include <xbook/vmspace.h>
-#include <xbook/string.h>
+#include <string.h>
 #include <xbook/resource.h>
 #include <xbook/pthread.h>
 #include <xbook/srvcall.h>
@@ -173,8 +173,16 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb)
 #endif
     return 0;
 }
-
-int proc_build_arg(unsigned long arg_top, char *argv[], char **dest_argv[])
+/**
+ * 构建一个参数栈，把参数放到一个固定的区域中，可以通过argv来索引到。
+ * @arg_top: 要存放到的参数栈顶位置
+ * @arg_bottom: 参数栈已经移动到的最低位置
+ * @argv: 要解析的参数
+ * @dest_argv: 存放到的参数位置
+ * 
+ * 返回参数个数
+ */
+int proc_build_arg(unsigned long arg_top, unsigned long *arg_bottom, char *argv[], char **dest_argv[])
 {
     int argc = 0;
     /* 填写参数到参数区域 */
@@ -201,6 +209,11 @@ int proc_build_arg(unsigned long arg_top, char *argv[], char **dest_argv[])
             // 预留argc
             arg_pos -= sizeof(unsigned long);
             
+            if (arg_bottom) { /* 传回参数栈最底部位置 */
+                /* 存放参数栈底部再下降unsigned long 大小个位置，避免覆盖 */
+                *arg_bottom = (unsigned long) (arg_pos - sizeof(unsigned long));
+            }
+
             /* 在下面把参数写入到栈中，可以直接在main函数中使用 */
             unsigned long top = arg_pos;
             /* 从下往上填写 */
@@ -242,6 +255,11 @@ int proc_build_arg(unsigned long arg_top, char *argv[], char **dest_argv[])
     // 预留argc
     arg_pos -= sizeof(unsigned long);
 
+    if (arg_bottom) {   /* 传回参数栈最底部位置 */
+        /* 存放参数栈底部再下降unsigned long 大小个位置，避免覆盖 */
+        *arg_bottom = (unsigned long) (arg_pos - sizeof(unsigned long));
+    }
+
     /* 在下面把参数写入到栈中，可以直接在main函数中使用 */
     
     unsigned long top = arg_pos;
@@ -269,19 +287,10 @@ int proc_build_arg(unsigned long arg_top, char *argv[], char **dest_argv[])
 int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
 {
     vmm_t *vmm = task->vmm;
-    /* 记录栈和参数信息到vmm里面 */
-    vmm->arg_end = USER_STACK_TOP; /* 栈占用1个页 */
-    vmm->arg_start = vmm->arg_end - PAGE_SIZE;
-    
-    vmm->stack_end = vmm->arg_start;
+
+    vmm->stack_end = USER_STACK_TOP;
     vmm->stack_start = vmm->stack_end - DEFAULT_STACK_SIZE; /* 栈大小 */
 
-    /* 固定位置 */
-    if (vmspace_mmap(vmm->arg_start, 0, vmm->arg_end - vmm->arg_start, PROT_USER | PROT_WRITE,
-        VMS_MAP_FIXED) == ((void *)-1)) {
-        return -1;
-    }
-    memset((void *) vmm->arg_start, 0, vmm->arg_end - vmm->arg_start);
     /* 固定位置，初始化时需要一个固定位置，向下拓展时才动态。 */
     if (vmspace_mmap(vmm->stack_start, 0, vmm->stack_end - vmm->stack_start , PROT_USER | PROT_WRITE,
         VMS_MAP_FIXED | VMS_MAP_STACK) == ((void *)-1)) {
@@ -291,13 +300,19 @@ int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
     
     int argc = 0;
     char **new_argv = NULL;
-    argc = proc_build_arg(vmm->arg_end, argv, &new_argv);
+    unsigned long arg_bottom = 0;
+    argc = proc_build_arg(vmm->stack_end, &arg_bottom, argv, &new_argv);
     /* 记录参数个数 */
     frame->ecx = argc;
     /* 记录参数个数 */
     frame->ebx = (unsigned int) new_argv;
      /* 记录栈顶 */
-    frame->esp = (unsigned long) vmm->stack_end;
+    if (!arg_bottom) {  /* 解析参数出错 */
+        vmspace_unmmap(vmm->stack_start, vmm->stack_end - vmm->stack_start);
+        return -1;
+    }
+    frame->esp = (unsigned long) arg_bottom; /* 栈位于参数的下面 */
+
     frame->ebp = frame->esp;
 #if 0 /* stack info */
     printk(KERN_DEBUG "task %s arg space: start %x end %x\n",

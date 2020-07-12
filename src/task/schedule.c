@@ -1,6 +1,6 @@
 #include <xbook/schedule.h>
 #include <xbook/task.h>
-#include <xbook/assert.h>
+#include <assert.h>
 #include <xbook/debug.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>

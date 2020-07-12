@@ -254,7 +254,6 @@ static  int  screen_output_pixel(int x, int y, uint32_t  color)
 
 int main(int argc, char *argv[])
 {
-    char *pic_res;
     if (argc < 2) {
         printf("please input jpeg file path!\n");
         return -1;

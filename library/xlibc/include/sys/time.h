@@ -2,7 +2,7 @@
 #define _SYS_TIME_H
 
 #include "ktime.h"
-#include "types.h"
+#include <types.h>
 //#include <time.h>
 
 #define CLOCK_REALTIME            1 /*系统统当前时间，从1970年1.1日算起*/

@@ -1,7 +1,7 @@
 #include "tss.h"
 #include "segment.h"
 #include "registers.h"
-#include <xbook/memops.h>
+#include <string.h>
 #include <xbook/task.h>
 
 /* tss对象 */

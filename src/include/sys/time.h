@@ -1,7 +1,7 @@
 #ifndef _SYS_TIME_H
 #define _SYS_TIME_H
 
-#include <xbook/types.h>
+#include <types.h>
 
 #define CLOCK_REALTIME            1 /*系统统当前时间，从1970年1.1日算起*/
 #define CLOCK_MONOTONIC           2 /*系统的启动时间，不能被设置*/

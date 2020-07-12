@@ -1,7 +1,7 @@
 #ifndef _XBOOK_VMAREA_H
 #define _XBOOK_VMAREA_H
 
-#include "stddef.h"
+#include <stddef.h>
 #include <arch/page.h>
 
 #define VMAREA_BASE     __VMAREA_BASE

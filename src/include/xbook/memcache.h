@@ -1,12 +1,12 @@
 #ifndef _XBOOK_MEMCACHE_H
 #define _XBOOK_MEMCACHE_H
 
-#include <xbook/types.h>
-#include <xbook/stddef.h>
+#include <types.h>
+#include <stddef.h>
 #include <xbook/config.h>
 #include <xbook/bitmap.h>
-#include <xbook/list.h>
-#include <xbook/const.h>
+#include <list.h>
+#include <const.h>
 
 /*
 当内存对象大小小于1024时，储存在一个页中。

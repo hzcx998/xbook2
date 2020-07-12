@@ -10,9 +10,9 @@
 #include <xbook/config.h>
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
-#include <xbook/string.h>
-#include <xbook/math.h>
-#include <xbook/memops.h>
+#include <string.h>
+#include <math.h>
+#include <string.h>
 #include <xbook/bitmap.h>
 
 /*

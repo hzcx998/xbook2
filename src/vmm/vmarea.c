@@ -1,9 +1,9 @@
 #include <arch/interrupt.h>
 #include <xbook/vmarea.h>
 #include <xbook/debug.h>
-#include <xbook/list.h>
+#include <list.h>
 #include <xbook/bitmap.h>
-#include <xbook/memops.h>
+#include <string.h>
 
 /* vir addr management bitmap */
 static bitmap_t vaddr_bitmap;
