@@ -1015,7 +1015,6 @@ int cmd_help(int argc, char **argv)
 	        "  exit        exit shell.\n"\
 	        "  mem         print memory info.\n"\
 	        "  ps          print tasks.\n"\
-            "  set         set shell info.\n"\
             "  date        show date.\n"\
             "  ls          list files.\n"\
             "  cd          change current work directory.\n"\
@@ -1035,7 +1034,6 @@ struct buildin_cmd {
 /* cmd table */
 struct buildin_cmd buildin_cmd_table[] = {
     {"cls", cmd_cls},
-    {"set", cmd_set},
     {"ps", cmd_ps},
     {"help", cmd_help},
     {"ver", cmd_ver},

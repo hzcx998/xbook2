@@ -119,7 +119,7 @@ int init_fsal()
     }
 
     char path[MAX_PATH] = {0};
-    strcpy(path, "/");
+    strcpy(path, "/root");
     fsal_list_dir(path);
 
     return 0;

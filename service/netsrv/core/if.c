@@ -23,12 +23,6 @@ unsigned char *srvbuf256;
 unsigned char *srvbuf_sockaddr;
 unsigned char *srvbuf32k;
 
-static int __nullfunc(srvarg_t *arg)
-{
-    SETSRV_RETVAL(arg, 0);
-    return 0;
-}
-
 static int __socket(srvarg_t *arg)
 {
     int domain      = GETSRV_DATA(arg, 1, int);

@@ -500,11 +500,6 @@ int cprintf(const char *fmt, ...)
 
 int con_loop()
 {
-    int j;
-    char *q;
-    int cx, cy;
-
-
     int rd;
     gui_event e;
     char buf[CON_RDPIPE_BUF_LEN];

@@ -108,14 +108,23 @@ rom:
 # 重新编译所有库
 lib: 
 	$(MAKE) -s -C  $(LIBRARY_DIR)
+
+lib_c: 
+	$(MAKE) -s -C  $(LIBRARY_DIR) clean
 	
 # 重新编译所有服务
 srv: 
 	$(MAKE) -s -C  $(SERVICE_DIR)
 
+srv_c: 
+	$(MAKE) -s -C  $(SERVICE_DIR) clean
+
 # 不清理编译
 usr:
 	$(MAKE) -s -C  $(USER_DIR)
+	
+usr_c:
+	$(MAKE) -s -C  $(USER_DIR) clean
 	
 #-hda $(HDA_IMG) -hdb $(HDB_IMG)
 # 网卡配置: 
@@ -133,7 +142,7 @@ usr:
 #	b.使用声霸卡：-soundhw sb16
 # 控制台串口调试： -serial stdio 
 QEMU_ARGUMENT = -m 256M \
-		-name "Xbook Development Platform for x86" \
+		-name "XBOOK Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 		-serial stdio
 

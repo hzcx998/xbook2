@@ -17,9 +17,11 @@
 #endif
 
 static  int  kbd_res  = 0;
+
+/*
 static  unsigned char  caps_lock_value = 0;    
 static  unsigned char  num_lock_value  = 0;
-
+*/
 drv_keyboard_t drv_keyboard = {0};
 
 static  int  keyboard_open(void)
