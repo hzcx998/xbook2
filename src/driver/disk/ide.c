@@ -10,6 +10,7 @@
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
+#include <xbook/kmalloc.h>
 #include <sys/ioctl.h>
 
 /* 配置开始 */

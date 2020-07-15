@@ -8,7 +8,7 @@
 #include <string.h>
 #include <xbook/vmspace.h>
 #include <sys/ioctl.h>
-#include <arch/pci.h>
+#include <xbook/pci.h>
 
 #define DEBUG_LOCAL 0   
 

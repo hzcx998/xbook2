@@ -3,6 +3,7 @@
 #include <xbook/process.h>
 #include <xbook/pthread.h>
 #include <arch/interrupt.h>
+#include <arch/task.h>
 
 #define DEBUG_LOCAL 0
 

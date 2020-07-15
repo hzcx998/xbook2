@@ -1,4 +1,3 @@
-#include <arch/interrupt.h>
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
 #include <xbook/softirq.h>

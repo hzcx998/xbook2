@@ -3,6 +3,7 @@
 #include <xbook/ktime.h>
 #include <xbook/task.h>
 #include <errno.h>
+#include <string.h>
 #include <arch/interrupt.h>
 #include <arch/time.h>
 

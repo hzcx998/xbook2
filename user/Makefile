@@ -14,3 +14,5 @@ AS			:=	nasm
 export AS
 
 MODULE      +=  tests
+MODULE      +=  hello
+MODULE      +=  bosh

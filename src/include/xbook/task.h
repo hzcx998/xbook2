@@ -2,7 +2,6 @@
 #define _XBOOK_TASK_H
 
 #include <arch/page.h>
-#include <arch/task.h>
 #include <sys/proc.h>
 #include <types.h>
 #include <list.h>
@@ -149,8 +148,6 @@ pid_t fork_pid();
 void print_task();
 
 void start_user();
-
-void dump_task_kstack(thread_stack_t *kstack);
 
 pid_t sys_get_pid();
 pid_t sys_get_ppid();

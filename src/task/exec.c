@@ -4,6 +4,7 @@
 #include <xbook/srvcall.h>
 #include <xbook/vmspace.h>
 #include <arch/interrupt.h>
+#include <arch/task.h>
 
 /**
  * exec使用新的镜像以及堆栈替换原有的内容。
@@ -40,6 +41,7 @@ int sys_exec_raw(char *name, char **argv)
         printk(KERN_ERR "sys_exec_raw: get raw block failed!\n");
         return -1;
     }
+#ifdef CONFIG_32BIT     /* 32位 elf 头解析 */
     /* 读取文件头 */
     struct Elf32_Ehdr elf_header;
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
@@ -61,6 +63,9 @@ int sys_exec_raw(char *name, char **argv)
         printk(KERN_ERR "sys_exec_raw: it is not a elf format file!\n", name);
         return -1;
     }
+#else   /* CONFIG_64BIT 64位 elf 头解析 */
+
+#endif
     /*
     int argc = 0;
     while (argv[argc]) {
@@ -173,7 +178,7 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
         return -1;
     }
     restore_intr(flags);
-    
+#ifdef CONFIG_32BIT     /* 32位 elf 头解析 */
     /* 读取文件头 */
     struct Elf32_Ehdr elf_header;
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
@@ -195,6 +200,9 @@ int sys_exec_file(char *name, kfile_t *file, char **argv)
         printk(KERN_ERR "sys_exec_file: it is not a elf format file!\n", name);
         goto free_tmp_rb;
     }
+#else   /* CONFIG_64BIT 64位 elf 头解析 */
+
+#endif
 #if DEBUG_LOCAL == 1
     int argc = 0;
     printk(KERN_DEBUG "%s: dump args:\n", __func__);

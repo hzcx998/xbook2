@@ -1,7 +1,7 @@
 #ifndef _LIB_ARCH_CONST_H
 #define _LIB_ARCH_CONST_H
 
-#include "config.h"
+#include <arch/config.h>
 
 #define KB      1024
 #define MB      (KB * 1024)

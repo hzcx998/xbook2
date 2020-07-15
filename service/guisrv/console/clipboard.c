@@ -5,7 +5,6 @@
 #include <ctype.h>
 #include <math.h>
 
-#include <cmd/cmd.h>
 #include <console/console.h>
 #include <console/cursor.h>
 #include <console/clipboard.h>
@@ -94,8 +93,10 @@ void clipboard_copy_select()
         focus_cursor();
         int buflen = strlen(clipboard.buf);
         if (buflen > 0) {
-            
-            cmdline_set(clipboard.buf, buflen);
+             
+            /* 对剪切板进行数据复制操作 */
+
+            //cmdline_set(clipboard.buf, buflen);
         }
     } else if (clipboard.state == CLIPBOARD_END) { /* 选择完毕，复制选中的内容 */
         /*printf("start: %d, %d end: %d, %d\n", clipboard.start_x, clipboard.start_y,

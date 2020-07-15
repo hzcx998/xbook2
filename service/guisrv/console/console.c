@@ -5,12 +5,13 @@
 #include <math.h>
 #include <sys/input.h>
 #include <sys/trigger.h>
+#include <pthread.h>
 
 /// 程序本地头文件
-#include <cmd/cmd.h>
 #include <console/cursor.h>
 #include <console/console.h>
 #include <console/clipboard.h>
+#include <console/if.h>
 #include <drivers/screen.h>
 #include <drivers/keyboard.h>
 #include <input/keyboard.h>
@@ -440,13 +441,10 @@ void con_out_str(char *str)
 */
 static void con_clear()
 {
-	//清空背景
-    draw_rect_fill(0, 0,
-        screen.width, screen.height, screen.background_color);
-
+    
 	//清空字符缓冲区
 	memset(screen.buffer, 0, screen.buflen);
-
+    
 	//修改字符缓冲区指针
 	screen.cur_pos = screen.buffer;
 
@@ -454,9 +452,12 @@ static void con_clear()
 	cursor.x = 0;
 	cursor.y = 0;
 
-	//绘制光标
-	draw_cursor();
-
+	//清空背景
+    draw_rect_fill(0, 0,
+        screen.width, screen.height, screen.background_color);
+    //绘制光标
+	//draw_cursor();
+    
     /* 显示鼠标 */
     input_mouse.old_color = drv_screen.gui_to_screen_color(screen.background_color);
     input_mouse.show(input_mouse.x, input_mouse.y);
@@ -471,7 +472,9 @@ static void con_clear_area(int x, int y, unsigned int width, unsigned int height
 	//清空背景
     draw_rect_fill(x, y,
         width, height, screen.background_color);
-
+    /* 显示鼠标 */
+    input_mouse.old_color = drv_screen.gui_to_screen_color(screen.background_color);
+    input_mouse.show(input_mouse.x, input_mouse.y);
 }
 
 void con_set_back_color(GUI_COLOR color)
@@ -495,213 +498,82 @@ int cprintf(const char *fmt, ...)
 	return 0;
 }
 
-int con_event_poll(char *buf, int pid)
+int con_loop()
 {
+    int j;
+    char *q;
+    int cx, cy;
+
+
+    int rd;
     gui_event e;
-    *buf = 0;
-    /* 获取事件 */
-    if (gui_event_poll(&e) < 0)
-        return -1;
-    switch (e.type)
-    {
-    case GUI_EVENT_KEY:
-        /* 只捕捉按下 */
-        if (e.key.state == GUI_PRESSED) {
-            *buf = e.key.code;
-            /* 组合按键 */
-            if (e.key.modify & GUI_KMOD_CTRL) {
-                /* ctrl + c -> 打断进程 */
-                if (e.key.code == KEY_C || e.key.code == KEY_c) {
-                    /* 激活pid的重软件触发器 */
-                    triggeron(TRIGLSOFT, pid);
-                    break;
-                }
-            }
-            /* 进行简单转换 */
-            switch (*buf)
+    char buf[CON_RDPIPE_BUF_LEN];
+    while (1) {
+        /* 获取事件 */
+        if (!gui_event_poll(&e)) {
+            switch (e.type)
             {
-            case KEY_ENTER:
-                *buf = '\n';
+            case GUI_NOEVENT:
+                break;
+            case GUI_EVENT_MOUSE_BUTTON:
+                if (e.button.state == GUI_PRESSED) {    // 按下
+                    if (e.button.button == 0) {
+                        //printf("[%s] left button pressed.\n", SRV_NAME);
+                        clipboard_start_select(e.button.x, e.button.y);
+
+                    } else if (e.button.button == 2) {
+                        clipboard_copy_select();
+                    } 
+                } else {
+                    if (e.button.button == 0) {
+                        //printf("[%s] left button released.\n", SRV_NAME);
+                        clipboard_end_select(e.button.x, e.button.y);
+                    }
+                }
+                
+                break;
+            case GUI_EVENT_MOUSE_MOTION:
+                clipboard_move_select(e.motion.x, e.motion.y);
+                
+                break;
+            case GUI_EVENT_KEY:
+                if (e.key.state == GUI_PRESSED) {
+                    /* 组合按键 */
+                    if (e.key.modify & GUI_KMOD_CTRL) {
+                        if (e.key.code == KEY_UP) {
+                            scroll_screen(CON_SCROLL_UP, 1, 0, 1);
+                            break;
+                        } else if (e.key.code == KEY_DOWN) {
+                            scroll_screen(CON_SCROLL_DOWN, 1, 0, 1);
+                            break;
+                        }
+                    }
+                    xcons_msg_t msg;
+                
+                    focus_cursor();
+                    
+                    /* 直接将按键发送给客户端 */
+                    
+                    msg.type = 0;
+                    msg.data = e.key.code;
+                    msg.ctrl = e.key.modify;
+                    guisrv_if_send_msg(&msg);
+                    break;
+                
+                }
                 break;
             default:
                 break;
             }
-        } else {
-            return -1;
         }
-        break;
-    default:
-        return -1;
-    }
-    return 0;
-}
-
-int con_event_loop(char *buf, int count)
-{
-    cmdman->cmd_pos = cmdman->cmd_line;
-    cmdman->cmd_len = 0;
-
-    int j;
-    char *q;
-    int cx, cy;
-    gui_event e;
-
-    while ((cmdman->cmd_pos - buf) < count) {
-        /* 获取事件 */
-        if (gui_event_poll(&e) < 0)
-            continue;
-        switch (e.type)
-        {
-        case GUI_NOEVENT:
-            break;
-        case GUI_EVENT_MOUSE_BUTTON:
-            if (e.button.state == GUI_PRESSED) {    // 按下
-                if (e.button.button == 0) {
-                    //printf("[%s] left button pressed.\n", SRV_NAME);
-                    clipboard_start_select(e.button.x, e.button.y);
-
-                } else if (e.button.button == 2) {
-                    clipboard_copy_select();
-                } 
-            } else {
-                if (e.button.button == 0) {
-                    //printf("[%s] left button released.\n", SRV_NAME);
-                    clipboard_end_select(e.button.x, e.button.y);
-                }
-            }
-            
-            break;
-        case GUI_EVENT_MOUSE_MOTION:
-            clipboard_move_select(e.motion.x, e.motion.y);
-            
-            break;
-        case GUI_EVENT_KEY:
-            if (e.key.state == GUI_PRESSED) {
-                /* 组合按键 */
-                if (e.key.modify & GUI_KMOD_CTRL) {
-                    if (e.key.code == KEY_UP) {
-                        scroll_screen(CON_SCROLL_UP, 1, 0, 1);
-                        break;
-                    } else if (e.key.code == KEY_DOWN) {
-                        scroll_screen(CON_SCROLL_DOWN, 1, 0, 1);
-                        break;
-                    }
-                }
-                /* 过滤一些按键 */
-                switch (e.key.code) {
-                case KEY_UP:
-                    clipboard_break_select();
-                    focus_cursor();
-                    /* 选择上一个的命令 */
-                    cmd_buf_select(-1);
-                    break;
-                case KEY_DOWN:
-                    clipboard_break_select();
-                    focus_cursor();
-                    /* 选择下一个命令 */
-                    cmd_buf_select(1);
-                    break;
-                case KEY_NUMLOCK:
-                case KEY_CAPSLOCK:
-                case KEY_SCROLLOCK:
-                case KEY_RSHIFT:
-                case KEY_LSHIFT:
-                case KEY_RCTRL:
-                case KEY_LCTRL:
-                case KEY_RALT:
-                case KEY_LALT:
-                    break;
-                case KEY_LEFT:
-                    clipboard_break_select();
-                    focus_cursor();
-                    if(cmdman->cmd_pos > buf){
-                        --cmdman->cmd_pos;
-                        move_cursor_off(-1, 0);
-                    }
-                    break;
-                case KEY_RIGHT:
-                    clipboard_break_select();
-                    focus_cursor();
-                    if ((cmdman->cmd_pos - buf) < cmdman->cmd_len) {
-                        move_cursor_off(1, 0);
-                        ++cmdman->cmd_pos;
-                    }
-                    break;
-                case KEY_ENTER:
-                    clipboard_break_select();
-                    focus_cursor();
-                    move_cursor_off(cmdman->cmd_len - (cmdman->cmd_pos - buf), 0);
-                    screen.outc('\n');
-                    buf[cmdman->cmd_len] = 0;
-                    /* 发送给命令行 */
-                    return 0;   /* 执行命令 */
-                case KEY_BACKSPACE:
-                    clipboard_break_select();
-                    focus_cursor();
-                    if(cmdman->cmd_pos > buf){
-                        if (cmdman->cmd_pos >= buf + cmdman->cmd_len) { /* 在末尾 */
-                            --cmdman->cmd_pos;
-                            *cmdman->cmd_pos = '\0';
-                            screen.outc('\b');
-                        
-                        } else {    /* 在中间 */
-                            --cmdman->cmd_pos;
-                            /* 获取现在的位置 */
-                            get_cursor(&cx, &cy);
-                            /* 去除后面的字符 */
-                            j = strlen(cmdman->cmd_pos);
-                            while (j--)
-                                screen.outc(' ');
-                            /* 移动回到原来的位置 */
-                            move_cursor(cx, cy);
-
-                            for (q = cmdman->cmd_pos; q < buf + cmdman->cmd_len; q++) {
-                                *q = *(q + 1);
-                            }
-                            /* 向前移动一个位置 */
-                            move_cursor_off(-1, 0);
-                            /* 获取现在的位置 */
-                            get_cursor(&cx, &cy);
-                            screen.outs(cmdman->cmd_pos);
-                            /* 移动回到原来的位置 */
-                            move_cursor(cx, cy);
-                        }
-                        cmdman->cmd_len--;
-                    }
-                    break;
-                default:
-                    clipboard_break_select();
-                    focus_cursor();
-                    
-                    if (cmdman->cmd_pos >= buf + cmdman->cmd_len) { /* 在末尾 */
-                        *cmdman->cmd_pos = e.key.code;
-
-                        screen.outc(e.key.code);
-                        
-                    } else { 
-                        /* 把后面的数据向后移动一个单位 ab1c|def */
-                        for (q = buf + cmdman->cmd_len; q > cmdman->cmd_pos; q--) {
-                            *q = *(q - 1);
-                            *(q - 1) = '\0';
-                        }
-                        
-                        get_cursor(&cx, &cy);
-
-                        /* 发送给命令行 */
-                        *cmdman->cmd_pos = e.key.code;
-                        screen.outs(cmdman->cmd_pos);
-                        move_cursor(cx + 1, cy);
-                    }
-                    cmdman->cmd_pos++;
-                    cmdman->cmd_len++;
-                    break;
-                }
-            }
-            break;
-        default:
-            break;
+        memset(buf, 0, CON_RDPIPE_BUF_LEN);
+        /* 获取管道信息 */
+        if ((rd = guisrv_if_recv_data(buf, CON_RDPIPE_BUF_LEN)) > 0) {
+            //printf("[%s] recv data %d %x\n", SRV_NAME, rd, *buf);
+            buf[CON_RDPIPE_BUF_LEN - 1] = 0;
+            screen.outs(buf);
         }
-        //input_mouse.show(e.motion.x, e.motion.y);
+        
     }
     return 0;
 }
@@ -734,6 +606,8 @@ int init_con_screen()
     screen.cur_pos = screen.buffer;
 
     init_con_cursor();
+
+    /*
     if (init_cmd_man() < 0) {
         free(screen.buffer);
         return -1;
@@ -747,10 +621,24 @@ int init_con_screen()
 
     memset(cmdman->cwd_cache, 0, MAX_PATH_LEN);
     getcwd(cmdman->cwd_cache, MAX_PATH_LEN);
-    
+    */
+    if (init_clipboard() < 0) {
+        free(screen.buffer);
+        return -1;
+    }
+
     /* 显示鼠标光标 */
     input_mouse.old_color = drv_screen.gui_to_screen_color(screen.background_color);
     input_mouse.show(input_mouse.x, input_mouse.y);
     
+    /* 开一个线程来接收服务 */
+    pthread_t thread_echo;
+    int retval = pthread_create(&thread_echo, NULL, guisrv_echo_thread, NULL);
+    if (retval == -1) {
+        exit_clipboard();
+        return -1;
+    }
+        
+
     return 0;
 }

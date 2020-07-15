@@ -30,6 +30,9 @@
 #define CON_SCROLL_UP   -1
 #define CON_SCROLL_DOWN 1
 
+
+#define CON_RDPIPE_BUF_LEN  1024
+
 typedef struct {
     char *buffer;       /* 字符缓冲区 */
     char *cur_pos;      /* 当前缓冲区的起始位置 */
@@ -92,6 +95,7 @@ static inline void con_set_char(char ch, int x, int y)
 
 int con_event_poll(char *buf, int pid);
 int con_event_loop(char *buf, int count);
+int con_loop();
 
 
 #endif  /* __TERMINAL_CONSOLE_H__ */

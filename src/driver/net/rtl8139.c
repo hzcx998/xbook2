@@ -114,9 +114,10 @@
 #include <xbook/spinlock.h>
 #include <math.h>
 #include <xbook/waitqueue.h>
+#include <xbook/kmalloc.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
-#include <arch/pci.h>
+#include <xbook/pci.h>
 #include <arch/atomic.h>
 #include <arch/cpu.h>
 #include <sys/ioctl.h>

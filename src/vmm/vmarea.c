@@ -1,8 +1,9 @@
 #include <arch/interrupt.h>
+#include <arch/ioremap.h>
 #include <xbook/vmarea.h>
 #include <xbook/debug.h>
-#include <list.h>
 #include <xbook/bitmap.h>
+#include <xbook/memcache.h>
 #include <string.h>
 
 /* vir addr management bitmap */

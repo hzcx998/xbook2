@@ -7,6 +7,7 @@
 
 #include <arch/page.h>
 #include <arch/interrupt.h>
+#include <arch/pmem.h>
 #include <xbook/config.h>
 #include <xbook/memcache.h>
 #include <xbook/debug.h>

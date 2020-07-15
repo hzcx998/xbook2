@@ -4,6 +4,7 @@
 #include <xbook/debug.h>
 #include <xbook/syscall.h>
 #include <arch/interrupt.h>
+#include <arch/task.h>
 
 /* 调试触发器：0不调试，1要调试 */
 #define DEBUG_LOCAL   0
@@ -207,21 +208,7 @@ int sys_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
  */
 int sys_trigger_return(unsigned int ebx, unsigned int ecx, unsigned int esi, unsigned int edi, trap_frame_t *frame)
 {
-    //printk("arg is %x %x %x %x %x\n", ebx, ecx, esi, edi, frame);
-
-    //printk("usr esp - 4:%x esp:%x\n", *(uint32_t *)(frame->esp - 4), *(uint32_t *)frame->esp);
-    
-    /* 原本trigger_frame是在用户栈esp-trigger_frameSize这个位置，但是由于调用了用户处理程序后，
-    函数会把返回地址弹出，也就是esp+4，所以，需要通过esp-4才能获取到trigger_frame */
-    trigger_frame_t *trigger_frame = (trigger_frame_t *)(frame->esp - 4);
-
-    /* 还原之前的中断栈 */
-    memcpy(frame, &trigger_frame->trap_frame, sizeof(trap_frame_t));
-#if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "sys_trigger_return: ret val 0x%x.\n", frame->eax);
-#endif
-    /* 会修改eax的值，返回eax的值 */
-    return frame->eax;
+    return trigger_return(frame);
 }
 
 /**
@@ -332,10 +319,6 @@ int do_trigger(trap_frame_t *frame)
                 case TRIGDBG: /* debug */
                     continue; /* not support now */
                 case TRIGLSOFT: /* light software */
-#if DEBUG_LOCAL == 1
-                    printk(KERN_DEBUG "do_trigger: light software trigger=%d\n", trig);
-#endif
-                    continue; /* do nothing */
                 case TRIGHSOFT: /* heavy software */
                 case TRIGHW: /* hardware */
 #if DEBUG_LOCAL == 1

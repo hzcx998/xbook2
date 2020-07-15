@@ -24,7 +24,6 @@
 
 #include "test.h"
 
-
 static  video_info_t    video_info;
 
 /* R5G6B5 color helper */
@@ -106,7 +105,7 @@ int  screen_output_pixel(int x, int y, uint32_t  color)
     }
     return  0;
 }
-
+#if 1
 int main(int argc, char *argv[])
 {
     if (argc < 3) {
@@ -156,7 +155,7 @@ int main(int argc, char *argv[])
     //close_window();
     return 0;   
 }
-
+#endif
 
 #if 0
 

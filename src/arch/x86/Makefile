@@ -1,1 +1,1 @@
-SRC	+= core/
+SRC	+= mach-i386/

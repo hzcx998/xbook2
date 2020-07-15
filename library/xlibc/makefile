@@ -212,12 +212,16 @@ LOCALE_OBJS		= 	locale/localeconv.o \
 
 MALLOC_OBJS		= 	malloc/malloc.o \
 
+XCONS_OBJS		= 	console/xcons.o \
+
+
 # objects
 OBJS			= 	$(ARCH_OBJS) $(ANSI_OBJS) $(STDIO_OBJS) \
 					$(SYSLIB_OBJS) $(STDLIB_OBJS) $(SOCKET_OBJS) \
 					$(TIME_OBJS) $(UNISTD_OBJS) $(MATH_OBJS) $(CTYPE_OBJS) \
 					$(ARPA_OBJS) $(STRING_OBJS) $(ENVIRON_OBJS) $(PATH_OBJS) \
-					$(CRYPTO_OBJS) $(CHARSET_OBJS) $(LOCALE_OBJS) $(MALLOC_OBJS)
+					$(CRYPTO_OBJS) $(CHARSET_OBJS) $(LOCALE_OBJS) $(MALLOC_OBJS) \
+					$(XCONS_OBJS)
 
 # out file
 LIBNAME = xlibc-0.0.1.a

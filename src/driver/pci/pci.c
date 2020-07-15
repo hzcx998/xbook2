@@ -1,5 +1,6 @@
 
-#include <arch/pci.h>
+#include <stddef.h>
+#include <xbook/pci.h>
 #include <arch/io.h>
 #include <xbook/debug.h>
 

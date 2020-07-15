@@ -1,7 +1,7 @@
 #ifndef _LIB_ARCH_ATOMIC_H
 #define _LIB_ARCH_ATOMIC_H
 
-#include "config.h"
+#include <arch/config.h>
 #include "xchg.h"
 
 /* 原子变量结构体 */

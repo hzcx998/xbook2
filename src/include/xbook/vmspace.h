@@ -4,6 +4,8 @@
 #include "vmm.h"
 #include "memcache.h"
 #include <stddef.h>
+#include <stdint.h>
+#include <types.h>
 #include <arch/page.h>
 
 /* map flags */

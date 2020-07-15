@@ -536,12 +536,10 @@ static  int  screen_output_rect_fill(int left, int top, int right, int bottom, S
     if ( left > (screen_width-1) )
         return  -1;
     if ( right > (screen_width-1) )
-        return  -1;
+        right = (screen_width-1);
 
     if ( top > (screen_height-1) )
         return  -1;
-
-
 
     switch( (bits_per_pixel) )
     {

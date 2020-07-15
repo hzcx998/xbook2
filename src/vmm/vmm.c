@@ -1,3 +1,4 @@
+#include <arch/pmem.h>
 #include <xbook/vmm.h>
 #include <xbook/debug.h>
 #include <xbook/vmspace.h>

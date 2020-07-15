@@ -1,6 +1,7 @@
 #include <xbook/fifoio.h>
 #include <assert.h>
 #include <math.h>
+#include <string.h>
 
 /**
  * fifo_io_init - io队列的初始化

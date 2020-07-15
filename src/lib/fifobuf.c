@@ -1,6 +1,8 @@
 #include <xbook/fifobuf.h>
+#include <xbook/kmalloc.h>
 #include <math.h>
 #include <assert.h>
+#include <string.h>
 
 void fifo_buf_init(fifo_buf_t *fifo, unsigned char *buffer,
         unsigned int size)

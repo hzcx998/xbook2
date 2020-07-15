@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/proc.h>
+#include <sys/trigger.h>
 #include <sys/kfile.h>
 
 /**
@@ -13,6 +14,9 @@
  */
 int execv(const char *path, const char *argv[])
 {
+    /* 设置轻软件触发器为忽略，避免在执行过程中被打断 */
+    trigger(TRIGLSOFT, TRIG_IGN);
+
     int rdbytes;
     int fd = open(path, O_RDONLY, 0);
     if (fd == -1) {
@@ -46,6 +50,9 @@ int execv(const char *path, const char *argv[])
             name = (char *) path;
         }
     }
+    /* 恢复默认 */
+    trigger(TRIGLSOFT, TRIG_DFL);
+
     execfile(name, &file, (char **) argv);
     return -1;
 }
