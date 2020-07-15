@@ -12,8 +12,8 @@
 /* 原始磁盘，不在上面挂载文件系统 */
 #define RAW_DISK    "ide0"
 
-#define PATH_GUISRV "c:/sbin/guisrv"
-#define PATH_NETSRV "c:/sbin/netsrv"
+#define PATH_GUISRV "/sbin/guisrv"
+#define PATH_NETSRV "/sbin/netsrv"
 
 /* 文件映射 */
 struct file_map {

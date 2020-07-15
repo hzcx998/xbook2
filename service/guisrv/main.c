@@ -8,7 +8,6 @@
 
 #include <guisrv.h>
 #include <console/console.h>
-#include <cmd/cmd.h>
 #include <drivers/screen.h>
 #include <drivers/keyboard.h>
 #include <drivers/mouse.h>

@@ -117,7 +117,7 @@ struct file_map {
 };
 
 struct file_map file_map_table[] = {
-    {"c:/bin/bosh", 1, NULL},
+    {"/bin/bosh", 1, NULL},
 };
 
 int guisrv_execute()

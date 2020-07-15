@@ -26,8 +26,8 @@
 /*
 File Service struct:
 +-----------------------+
-| 文件系统接口          |
-| 文件系统环境          |
+| 文件系统接口           |
+| 文件系统环境           |
 \                       /
 +-----------------------+
 | 文件系统抽象层         |
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         srvprint("execute failed, service stopped!\n");
         return -1;
     }
-    
+      
     /* 初始化驱动 */
     if (init_disk_driver() < 0) {
         srvprint("init disk driver failed, service stopped!\n");

@@ -101,6 +101,7 @@ int execute_cmd(int argc, char **argv)
         int pid;
         /* 检测文件是否存在，以及是否可执行，不然就返回命令错误 */
         if (access(argv[0], F_OK)) {
+            shell_printf("file %s not a exist!\n", argv[0]);
             return -1;
         } else {
             /* ----创建输出管道---- */
@@ -252,7 +253,7 @@ int execute_cmd(int argc, char **argv)
                 pid = execv((const char *) argv[0], (const char **) argv);
                 /* 如果执行出错就退出 */
                 if (pid == -1) {
-                    shell_printf("execv file %s failed!\n", argv[0]);
+                    shell_printf("file %s not executable!\n", argv[0]);
                     if (!daemon) {  /* 不是后台进程 */
                         res_close(pipe_out_wr);     /* 关闭输出写者 */
                         res_close(pipe_in_rd);      /* 关闭输入读者 */

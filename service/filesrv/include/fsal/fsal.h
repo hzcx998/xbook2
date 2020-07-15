@@ -83,41 +83,27 @@ int fsal_file_free(fsal_file_t *file);
 /* 路径转换长度，一般是路径的前缀。例如/root, c: */
 #define FASL_PATH_LEN   24
 
-/* 路径转换表项数
-映射后的路径：a, b, c, ... l.
- */
+/* 路径转换表项数 */
 #define FASL_PATH_NR   12
-
-#define FASL_DRIVE_MIN   'a'
-#define FASL_DRIVE_MAX   'l'
-
-#define FASL_DRV2I(drive)  ((drive) - FASL_DRIVE_MIN)
-#define FASL_I2DRV(idx)  ((idx) + FASL_DRIVE_MIN)
-
-#define FASL_BAD_DRIVE(drive) \
-        ((drive) < FASL_DRIVE_MIN || (drive) > FASL_DRIVE_MAX)   
 
 /* 路径转换 */
 typedef struct {
-    fsal_t *fsal;           /* 文件系统抽象 */
-    char path[FASL_PATH_LEN];
+    fsal_t *fsal;                   /* 文件系统抽象 */
+    char path[FASL_PATH_LEN];       /* 具体文件系统的文件路径名 */
+    char alpath[FASL_PATH_LEN];     /* 抽象层路径 */
 } fsal_path_t;
 
 extern fsal_path_t *fsal_path_table;
 
 #define FSAL_PATH_TABLE_SIZE   (sizeof(fsal_path_t) * FASL_PATH_NR)
 
-/* 文件指针转换成在表中的索引 */
-#define FSAL_P2I(path)  ((int) ((path) - fsal_path_table))
-/* 在表中的索引转换成文件指针 */
-#define FSAL_I2P(idx)  ((fsal_path_t *)(&fsal_path_table[(idx)]))
-
 int init_fsal_path_table();
-int fsal_path_insert(void *path, char drive, fsal_t *fsal);
+int fsal_path_insert(void *path, char *alpath, fsal_t *fsal);
 int fsal_path_remove(void *path);
 void fsal_path_print();
+fsal_path_t *fsal_path_alloc();
 
-fsal_path_t *fsal_path_find(void *path);
+fsal_path_t *fsal_path_find(void *alpath, int inmaster);
 int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path);
 
 int fsal_list_dir(char* path);
