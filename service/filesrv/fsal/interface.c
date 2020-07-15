@@ -11,7 +11,7 @@ static int __open(void *path, int flags)
     if (path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(path);
+    fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
         printf("path %s not found!\n", path);
         return -1;
@@ -111,7 +111,7 @@ static int __opendir(char *path)
     if (path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(path);
+    fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
         printf("path %s not found!\n", path);
         return -1;
@@ -126,9 +126,10 @@ static int __opendir(char *path)
 
     /* 转换路径 */
     char new_path[MAX_PATH] = {0};
-    if (fsal_path_switch(fpath, new_path, path) < 0)
+    if (fsal_path_switch(fpath, new_path, path) < 0) {
+        printf("path %s switch error!\n", path);
         return -1;
-
+    }
     /* 执行打开 */
     return fsal->opendir(new_path);
 }
@@ -162,7 +163,7 @@ static int __mkdir(char *path, mode_t mode)
     if (path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(path);
+    fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
         printf("path %s not found!\n", path);
         return -1;
@@ -189,7 +190,7 @@ static int __unlink(char *path)
     if (path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(path);
+    fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
         printf("path %s not found!\n", path);
         return -1;
@@ -216,7 +217,7 @@ static int __rename(char *old_path, char *new_path)
     if (old_path == NULL || new_path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(old_path);
+    fsal_path_t *fpath = fsal_path_find(old_path, 1);
     if (fpath == NULL) {
         printf("path %s not found!\n", old_path);
         return -1;
@@ -248,7 +249,7 @@ static int __state(char *path, void *buf)
     if (path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(path);
+    fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
         printf("path %s not found!\n", path);
         return -1;
@@ -287,7 +288,7 @@ static int __chmod(char *path, mode_t mode)
     if (path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(path);
+    fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
         printf("path %s not found!\n", path);
         return -1;
@@ -326,7 +327,7 @@ static int __utime(char *path, time_t actime, time_t modtime)
     if (path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(path);
+    fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
         printf("path %s not found!\n", path);
         return -1;
@@ -425,7 +426,7 @@ static int __rmdir(char *path)
     if (path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(path);
+    fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
         printf("path %s not found!\n", path);
         return -1;
@@ -452,7 +453,7 @@ static int __chdir(char *path)
     if (path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(path);
+    fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
         printf("path %s not found!\n", path);
         return -1;
@@ -515,7 +516,7 @@ int __mount(
     }
 
     /* 查看目标位置是否可用 */
-    if (fsal_path_find((void *) target) != NULL) {
+    if (fsal_path_find((void *) target, 0) != NULL) {
         printf("[%s] %s: target %s had mounted!\n", SRV_NAME, __func__, target);
         return -1;
     }
@@ -545,7 +546,7 @@ static int __unmount(char *path, unsigned long flags)
     if (path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(path);
+    fsal_path_t *fpath = fsal_path_find(path, 0);
     if (fpath == NULL) {
         printf("path %s not found!\n", path);
         return -1;

@@ -123,7 +123,7 @@ static int __mount(char *source, char *target, char *fstype, unsigned long flags
 #if DEBUG_LOCAL == 1
     printf("[%s] %s: mount disk %s to %s success.\n", SRV_NAME, __func__, source, target);
 #endif
-    if (fsal_path_insert((void *)p, *target, &fatfs_fsal)) {
+    if (fsal_path_insert((void *)p, target, &fatfs_fsal)) {
         printf("%s: %s: insert path %s failed!\n", SRV_NAME, __func__, p);
         free(fsobj);
         return -1;

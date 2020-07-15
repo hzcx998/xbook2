@@ -2,7 +2,10 @@
 #define _XBOOK_VMAREA_H
 
 #include <stddef.h>
+#include <list.h>
+#include <types.h>
 #include <arch/page.h>
+#include <arch/pmem.h>
 
 #define VMAREA_BASE     __VMAREA_BASE
 #define VMAREA_END      __VMAREA_END

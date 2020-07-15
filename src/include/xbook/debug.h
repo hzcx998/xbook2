@@ -3,13 +3,6 @@
 
 #include "kernel.h"
 
-/*
-debug methods：
-1 -> in text mode, in os.
-2 -> serial send to host machine console
-*/
-#define CONFIG_DEBUG_METHOD 2
-
 /* 默认是调试等级 */
 
 #define DEFAULT_LOG_MIN   0
@@ -20,7 +13,7 @@ debug methods：
 extern int printk_level;
 
 //内核打印函数的指针
-int (*printk)(const char *fmt, ...);
+int printk(const char *fmt, ...);
 
 /* pr_xxx came from linux kernel, thanks for it. */
 #define pr_fmt(fmt) fmt

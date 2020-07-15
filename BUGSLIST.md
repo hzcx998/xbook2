@@ -12,6 +12,6 @@
 ```
 ## <2020.7.11>
 ```
-1. malloc problem, can't use it for work.
+1. malloc problem, can't use it for work. <<< bug fixed -- 2020.7.13
 
 ```

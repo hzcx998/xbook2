@@ -1,8 +1,8 @@
 #ifndef _XBOOK_SHAREMEM_H
 #define _XBOOK_SHAREMEM_H
 
-#include "const.h"
-#include "../arch/atomic.h"
+#include <const.h>
+#include <arch/atomic.h>
 
 /* 最多有多少个共享内存 */
 #define MAX_SHARE_MEM_NR        128

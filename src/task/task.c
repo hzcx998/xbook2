@@ -1,8 +1,8 @@
 #include <arch/interrupt.h>
 #include <arch/page.h>
-#include <arch/general.h>
 #include <arch/cpu.h>
 #include <arch/task.h>
+#include <arch/pmem.h>
 #include <xbook/task.h>
 #include <string.h>
 #include <string.h>
@@ -32,19 +32,6 @@ task_t *task_idle;
 
 task_t *task_current;   /* 当前任务指针 */
 
-/**
- * KernelThread - 执行内核线程
- * @function: 要执行的线程
- * @arg: 参数
- * 
- * 改变当前的执行流，去执行我们选择的内核线程
- */
-static void kernel_thread(task_func_t *function, void *arg)
-{
-    enable_intr();  /* 在启动前需要打开中断，避免启动后不能产生时钟中断调度 */
-    function(arg);
-}
-
 /**  
  * new_pid - 分配一个pid
  */
@@ -67,36 +54,6 @@ static void roll_back_pid()
     --next_pid;
 }
 #endif
-
-void dump_task_kstack(thread_stack_t *kstack)
-{
-    printk(KERN_INFO "eip:%x func:%x arg:%x ebp:%x ebx:%x esi:%x edi:%x\n", 
-    kstack->eip, kstack->function, kstack->arg, kstack->ebp, kstack->ebx, kstack->esi, kstack->edi);
-}
-
-/**
- * make_task_stack - 创建一个线程
- * @task: 线程结构体
- * @function: 要去执行的函数
- * @arg: 参数
- */
-void make_task_stack(task_t *task, task_func_t *function, void *arg)
-{
-    /* 预留中断栈 */
-    task->kstack -= sizeof(trap_frame_t);
-    /* 预留线程栈 */
-    task->kstack -= sizeof(thread_stack_t);
-    thread_stack_t *thread_stack = (thread_stack_t *)task->kstack;
-
-    /* 填写线程栈信息 */
-    // 在kernel_thread中去改变执行流，从而可以传递一个参数
-    thread_stack->eip = kernel_thread;
-    thread_stack->function = function;
-    thread_stack->arg = arg;
-    thread_stack->ebp = thread_stack->ebx = \
-    thread_stack->esi = thread_stack->edi = 0;
-
-}
 
 /**
  * task_init - 初始化线程

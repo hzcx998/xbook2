@@ -65,6 +65,7 @@ int fsal_list_dir(char* path)
     int i;
     int dir = fsif.opendir(path);
     if (dir >= 0) {
+        //printf("opendir %s ok.\n", path);
         while (1) {
             /* 读取目录项 */
             if (fsif.readdir(dir, &de) < 0)
@@ -84,13 +85,14 @@ int fsal_list_dir(char* path)
         }
         fsif.closedir(dir);
     }
+    //printf("opendir %s failed!.\n", path);
     return dir;
 }
 
 int init_disk_mount()
 {
     /* 挂载文件系统 */
-    if (fsif.mount("ide1", "c", "fat16", 0) < 0) {
+    if (fsif.mount("ide1", "/root", "fat16", 0) < 0) {
         printf("[%s] %s: mount failed!\n", SRV_NAME, __func__);
         return -1;
     }
@@ -117,7 +119,7 @@ int init_fsal()
     }
 
     char path[MAX_PATH] = {0};
-    strcpy(path, "c:");
+    strcpy(path, "/root");
     fsal_list_dir(path);
 
     return 0;

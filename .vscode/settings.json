@@ -108,6 +108,8 @@
         "keyboard.h": "c",
         "fifoio.h": "c",
         "timer.h": "c",
-        "exit.h": "c"
+        "exit.h": "c",
+        "segment.h": "c",
+        "xcons.h": "c"
     }
 }

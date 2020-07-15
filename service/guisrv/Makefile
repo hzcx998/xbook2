@@ -54,15 +54,14 @@ GRAPH_OBJS 		= 	graph/text.o \
 CONSOLE_OBJS	= 	console/console.o \
 					console/cursor.o \
 					console/clipboard.o \
-
-CMD_OBJS		= 	cmd/cmd.o \
+					console/if.o \
 
 EVENT_OBJS		= 	event/event.o \
 
 MAIN_OBJS 		= 	main.o \
 					
 OBJS 			=  	$(MAIN_OBJS) $(DRIVERS_OBJS) $(FONT_OBJS) $(INPUT_OBJS) \
-					$(GRAPH_OBJS) $(CONSOLE_OBJS) $(CMD_OBJS) $(EVENT_OBJS) \
+					$(GRAPH_OBJS) $(CONSOLE_OBJS) $(EVENT_OBJS) \
 					
 
 LIB_FILE 	:=  $(DIR_PTHREAD)/pthread-0.0.1.a \

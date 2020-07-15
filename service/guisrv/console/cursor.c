@@ -209,4 +209,6 @@ void init_con_cursor()
     set_cursor_size();
     cursor.color = CON_CURSOR_COLOR;
     cursor.visual = 1;
+
+    draw_cursor();
 }

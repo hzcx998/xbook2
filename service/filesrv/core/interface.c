@@ -29,7 +29,7 @@ static int __open(srvarg_t *arg)
     }
     int flags = GETSRV_DATA(arg, 2, int);
     void *path = GETSRV_DATA(arg, 1, void *);
-    //printf("[%s] open path %s.\n", SRV_NAME, path);
+    //srvprint("open path %s.\n", path);
     int fi = fsif.open(path, flags);
     if (fi < 0) {
         printf("[%s] open path %s failed!\n", SRV_NAME, path);
@@ -116,6 +116,7 @@ static int __access(srvarg_t *arg)
             return -1;
     }
     void *filenpath = GETSRV_DATA(arg, 1, void *);
+    //srvprint("access %s\n", filenpath);
     int mode = GETSRV_DATA(arg, 2, int);
     if (mode == F_OK) {
         int fi = fsif.open(filenpath, O_RDONLY);
@@ -128,7 +129,6 @@ static int __access(srvarg_t *arg)
         SETSRV_RETVAL(arg, 0);   
         return 0; 
     }
-    //if ((mode & R_OK) | (mode & W_OK)) 
     return 0;
 }
 

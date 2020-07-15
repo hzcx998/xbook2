@@ -11,6 +11,7 @@
 #include <xbook/pthread.h>
 #include <xbook/srvcall.h>
 #include <arch/interrupt.h>
+#include <arch/task.h>
 #include <sys/pthread.h>
 
 #define DEBUG_LOCAL 0
@@ -278,60 +279,6 @@ int proc_build_arg(unsigned long arg_top, unsigned long *arg_bottom, char *argv[
     char** _argv = (char **) top;
     _argv[0] = NULL; /* 第一个参数就是空 */
     return argc;
-}
-
-/**
- * proc_stack_init - 初始化用户栈和参数
- * 
- */
-int proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
-{
-    vmm_t *vmm = task->vmm;
-
-    vmm->stack_end = USER_STACK_TOP;
-    vmm->stack_start = vmm->stack_end - DEFAULT_STACK_SIZE; /* 栈大小 */
-
-    /* 固定位置，初始化时需要一个固定位置，向下拓展时才动态。 */
-    if (vmspace_mmap(vmm->stack_start, 0, vmm->stack_end - vmm->stack_start , PROT_USER | PROT_WRITE,
-        VMS_MAP_FIXED | VMS_MAP_STACK) == ((void *)-1)) {
-        return -1;
-    }
-    memset((void *) vmm->stack_start, 0, vmm->stack_end - vmm->stack_start);
-    
-    int argc = 0;
-    char **new_argv = NULL;
-    unsigned long arg_bottom = 0;
-    argc = proc_build_arg(vmm->stack_end, &arg_bottom, argv, &new_argv);
-    /* 记录参数个数 */
-    frame->ecx = argc;
-    /* 记录参数个数 */
-    frame->ebx = (unsigned int) new_argv;
-     /* 记录栈顶 */
-    if (!arg_bottom) {  /* 解析参数出错 */
-        vmspace_unmmap(vmm->stack_start, vmm->stack_end - vmm->stack_start);
-        return -1;
-    }
-    frame->esp = (unsigned long) arg_bottom; /* 栈位于参数的下面 */
-
-    frame->ebp = frame->esp;
-#if 0 /* stack info */
-    printk(KERN_DEBUG "task %s arg space: start %x end %x\n",
-        (current_task)->name, vmm->arg_start, vmm->arg_end);
-    printk(KERN_DEBUG "task %s stack space: start %x end %x\n",
-        (current_task)->name, vmm->stack_start, vmm->stack_end);
-    
-    printk(KERN_DEBUG "stack %x argc %d argv %x\n", frame->esp, frame->ecx, frame->ebx);
-#endif
-#if 0 /* print args */
-    int i = 0;
-    while (new_argv[i]) {
-        printk("[%x %x]", new_argv[i], new_argv[i][0]);
-        
-        printk("%s ", new_argv[i]);
-        i++;
-    }
-#endif
-    return 0;
 }
 
 /**

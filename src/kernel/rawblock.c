@@ -3,6 +3,7 @@
 #include <math.h>
 #include <xbook/debug.h>
 #include <xbook/driver.h>
+#include <xbook/kmalloc.h>
 
 #define DEBUG_LOCAL 0
 

@@ -2,6 +2,8 @@
 #define _XBOOK_SOFTIRQ_H
 
 #include <arch/atomic.h>
+#include <types.h>
+#include <stddef.h>
 
 /* 软中断 */
 

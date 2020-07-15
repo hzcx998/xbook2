@@ -2,6 +2,8 @@
 #ifndef _XBOOK_ELF32_H
 #define _XBOOK_ELF32_H
 
+#include <stdint.h>
+
 /* 自定义的elf类型 */
 typedef uint32_t Elf32_Word, Elf32_Addr, Elf32_Off;
 typedef uint16_t Elf32_Half;

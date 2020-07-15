@@ -10,7 +10,6 @@
 
 #include <sys/srvcall.h>
 #include <srv/filesrv.h>
-#include <sys/drive.h>
 #include <sys/dir.h>
 
 /* 任务可以打开的目录数量 */
@@ -22,20 +21,6 @@ struct _dirdes __dirdes_table[_MAX_DIRDES_NR] = {{0, -1}, };
 /* default work dir */
 static char __current_work_dir[MAX_PATH_LEN];
 #endif
-
-/* 获取路径的磁盘符 */
-int __get_path_drive(const char *path)
-{
-    char *p = (char *) path;
-    if (ISBAD_DRIVE(*p)) {
-        return 0;
-    }
-    if (*(p + 1) != ':') {  /* 没有分隔符 */
-        return 0;
-    }
-    return *p;
-}
-
 
 /* 将最上层路径名称解析出来 */
 /**
@@ -127,11 +112,11 @@ void __make_abs_path(const char *path, char *abspath)
     判断是否有磁盘符，如果有，就说明是绝对路径，不然就是相对路径。
     如果是相对路径，那么就需要读取当前的工作目录
     */
-    if (!__get_path_drive(path)) {  /* 为0表示没有磁盘符 */
+    if (*path != '/') { /* 不是'/'，表明不是绝对路径 */
         /* 获取当前工作目录 */
         if (!getcwd(abspath, MAX_PATH)) {
             //printf("cwd:%s\n", abspath);
-            /* 检测当前工作目录是否是合格的目录，也就是说磁盘符后面
+            /* 检测当前工作目录是否是合格的目录
             必须要有一个'/'，表明是根目录 */
             char *p = strchr(abspath, '/');
             if (p != NULL) {    /* 找到一个'/' */
@@ -143,7 +128,7 @@ void __make_abs_path(const char *path, char *abspath)
         }
     }
 
-    /* 想要直接进入磁盘符的根目录'/' */
+    /* 想要直接进入根目录'/' */
     if (path[0] == '/' && path[1] == '\0') {
         //printf("will into root dir! path %s\n", abspath);
         /* 移除根目录后面的内容，其实就是在'/'后面添加一个字符串结束 */
@@ -182,10 +167,7 @@ void build_path(const char *path, char *out_path)
 
     /* 移动到第一个'/'处，也就是根目录处 */
     char *p = strchr(abs_path, '/');
-    /* 添加磁盘符 */
-    out_path[0] = abs_path[0];
-    out_path[1] = abs_path[1];
-    __wash_path(p, out_path + 2);
+    __wash_path(p, out_path);
 }
 
 int __chdir(char *path)
@@ -220,7 +202,7 @@ int chdir(const char *path)
         printf("chdir %s failed!\n", full_path);
         return -1;
     }
-        
+
     /* 设置路径为当前工作目录 */
     memset(__current_work_dir, 0, MAX_PATH_LEN);
     strcpy(__current_work_dir, full_path);

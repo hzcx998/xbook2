@@ -1,4 +1,5 @@
 #include <arch/interrupt.h>
+#include <xbook/kmalloc.h>
 #include <stddef.h>
 #include <types.h>
 

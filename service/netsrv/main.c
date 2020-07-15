@@ -179,7 +179,7 @@ void thread_socket_test(void *arg)
 {
     int sres;
     int ret;
-    int opt;
+    //int opt;
     struct sockaddr_in addr;
     size_t len;
 
@@ -418,7 +418,7 @@ udpecho_thread(void *arg)
     if (err == ERR_OK) {
       addr = netbuf_fromaddr(buf);
       port = netbuf_fromport(buf);
-
+      printf("addr %x port %d\n", addr, port);
 	  err = netconn_send(conn, buf);
       if(err != ERR_OK) {
           LWIP_DEBUGF(LWIP_DBG_ON, ("netconn_send failed: %d\n", (int)err));
@@ -462,7 +462,7 @@ static void socket_nonblocking(void *arg)
   int ret;
   u32_t opt;
   struct sockaddr_in addr;
-  int err;
+  //int err;
 
   LWIP_UNUSED_ARG(arg);
   /* set up address to connect to */
@@ -613,7 +613,7 @@ static void socket_timeoutrecv(void *arg)
 
 void socket_examples_init2(void)
 {
-  //sys_thread_new("socket_nonblocking", socket_nonblocking, NULL, 0, TCPIP_THREAD_PRIO+2);
+  sys_thread_new("socket_nonblocking", socket_nonblocking, NULL, 0, TCPIP_THREAD_PRIO+2);
   sys_thread_new("socket_timeoutrecv", socket_timeoutrecv, NULL, 0, TCPIP_THREAD_PRIO+1);
 }
 

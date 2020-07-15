@@ -26,8 +26,8 @@
 /*
 File Service struct:
 +-----------------------+
-| 文件系统接口          |
-| 文件系统环境          |
+| 文件系统接口           |
+| 文件系统环境           |
 \                       /
 +-----------------------+
 | 文件系统抽象层         |
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         srvprint("execute failed, service stopped!\n");
         return -1;
     }
-    
+      
     /* 初始化驱动 */
     if (init_disk_driver() < 0) {
         srvprint("init disk driver failed, service stopped!\n");
@@ -88,12 +88,13 @@ int main(int argc, char *argv[])
         if (srvcall_listen(SRV_FS, &srvarg)) {  
             continue;
         }
-
-#if DEBUG_LOCAL == 1
-        srvprint("srvcall seq=%d.\n", seq);
-#endif 
+ 
         /* 2.处理服务 */
         callnum = GETSRV_DATA(&srvarg, 0, int);
+
+#if DEBUG_LOCAL == 1
+        srvprint("srvcall seq=%d call num %d.\n", seq, callnum);
+#endif
         if (callnum >= 0 && callnum < FILESRV_CALL_NR) {
             filesrv_call_table[callnum](&srvarg);
         }

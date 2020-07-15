@@ -43,17 +43,11 @@ int init_srvcore()
     return 0;
 }
 
-const char *infones_argv[3] = {
-    "c:/infones",
-    "c:/mario.nes",
-    0
-};
-
 /* 文件映射表 */
 struct file_map file_map_table[] = {
     {PATH_GUISRV, 1, NULL},
     {PATH_NETSRV, 0, NULL},
-    {"c:/bin/tests", 0, NULL},
+    {"/bin/tests", 0, NULL},
 };
 
 /**

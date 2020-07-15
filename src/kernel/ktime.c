@@ -1,6 +1,7 @@
 #include <xbook/ktime.h>
 #include <xbook/clock.h>
 #include <xbook/task.h>
+#include <xbook/debug.h>
 
 ktime_t ktime;
 /* 每月对应的天数，2月的会在闰年是加1 */

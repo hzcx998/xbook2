@@ -163,11 +163,16 @@ int pipe_get(char *name, unsigned long flags)
                 if (pipe->writer) /* 写者已经存在，只能有一个写者 */
                     goto err;
                 pipe->writer = current_task;
-                
+#if DEBUG_LOCAL == 1                
+                pr_dbg("pipe writer pid %d\n", current_task->pid);
+#endif
             } else if (rw == 0) {
                 if (pipe->reader) /* 读者已经存在，只能有一个读者 */
                     goto err;
                 pipe->reader = current_task;  
+#if DEBUG_LOCAL == 1                
+                pr_dbg("pipe reader pid %d\n", current_task->pid);
+#endif                
                 /* 读者注册时，需要查看是否写者在等待同步中 */
                 if (pipe->writer && pipe->writer->state == TASK_BLOCKED && pipe->flags & PIPE_IN_WRITE) {
 #if DEBUG_LOCAL == 1
@@ -185,8 +190,14 @@ int pipe_get(char *name, unsigned long flags)
             /* 新分配的管道，读写者都不存在 */
             if (rw == 1) {
                 pipe->writer = current_task;
+#if DEBUG_LOCAL == 1                
+                pr_dbg("pipe writer pid %d\n", current_task->pid);
+#endif
             } else if (rw == 0) {
                 pipe->reader = current_task;    
+#if DEBUG_LOCAL == 1                
+                pr_dbg("pipe reader pid %d\n", current_task->pid);
+#endif                
             }
             retval = pipe->id; /* 返回管道id */
         }
@@ -278,10 +289,15 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
     }   
     semaphore_up(&pipe_mutex);
     
-    /* 写入的时候需要保证是写者写入 */
-    if (pipe->writer != current_task)
+    /* 写者不能为空 */
+    if (pipe->writer == NULL) 
         return -1;
     
+    if (pipeflg & IPC_NOERROR)  /* 没有错误，就是严格的，写者必须是当前进程 */
+        if (pipe->writer != current_task) 
+            return -1;
+    
+
     pipe->flags |= PIPE_IN_WRITE;   /* 管道进入写状态 */
     
     /* 检测读者是否就绪 */
@@ -303,8 +319,7 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
     /* 对管道进行操作 */
     mutex_lock(&pipe->mutex); /* 获取管道，只有一个进程可以进入管道 */
     unsigned long flags;
-    
-    
+
     int left_size = (int )size;
     int off = 0;
     unsigned char *buf = buffer;
@@ -322,6 +337,7 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
         
         /* 把数据存入缓冲区 */
         chunk = fifo_buf_put(pipe->fifo, buf + off, chunk);
+        
         off += chunk;
         left_size -= chunk;
 #if DEBUG_LOCAL == 1
@@ -383,7 +399,7 @@ int pipe_read(int pipeid, void *buffer, size_t size, int pipeflg)
     /* 参数检查 */
     if (buffer == NULL || !size)
         return -1;
-
+    
     pipe_t *pipe;
     /* get pipe table access */
     semaphore_down(&pipe_mutex);
@@ -396,10 +412,15 @@ int pipe_read(int pipeid, void *buffer, size_t size, int pipeflg)
     }
     semaphore_up(&pipe_mutex);
     
-    /* 读取的时候需要保证是读者读取 */
-    if (pipe->reader != current_task)
+    /* 读者不能为空 */
+    if (pipe->reader == NULL) {
         return -1;
-    
+    }
+
+    if (pipeflg & IPC_NOERROR)  /* 没有错误，就是严格的，读者必须是当前进程 */
+        if (pipe->reader != current_task) 
+            return -1;
+
     pipe->flags |= PIPE_IN_READ;   /* 管道进入读状态 */
     /* 检测读者是否就绪 */
     if (pipe->writer == NULL) {

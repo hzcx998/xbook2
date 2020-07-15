@@ -8,7 +8,6 @@
 
 #include <guisrv.h>
 #include <console/console.h>
-#include <cmd/cmd.h>
 #include <drivers/screen.h>
 #include <drivers/keyboard.h>
 #include <drivers/mouse.h>
@@ -125,8 +124,8 @@ int main(int argc, char *argv[])
     
     if (init_con_screen() < 0)
         return -1;
-
-    cmd_loop();
+    
+    con_loop();
 
     srvprint("exit service.\n");
     if (close_guisrv()) {
