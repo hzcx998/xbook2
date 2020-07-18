@@ -6,7 +6,7 @@ NAME		:= netsrv
 SRC			+= main.c core/ drivers/ lwip/
 
 define CUSTOM_TARGET_CMD
-echo [APP] $@ $(srctree)/../develop/rom/sbin; \
+echo [APP] $@ ; \
 $(LD) $(X_LDFLAGS) $(X_OBJS) -o $@ $(patsubst %, -L%, $(X_LIBDIRS)) --start-group $(patsubst %, -l:%, $(X_LIBS)) --end-group; \
 cp $@ $(srctree)/../develop/rom/sbin
 endef

@@ -1,24 +1,12 @@
-# 要执行的服务的路径
-XLIBC 		= ./xlibc
-PTHREAD 	= ./pthread
-JPEG 		= ./jpeg
-LIBPNG 		= ./libpng
-ZLIB 		= ./zlib
+sinclude ../scripts/env.mk
 
-.PHONY: all clean
+X_CFLAGS	:= -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99
 
-all: 
-	$(MAKE) -C $(XLIBC)
-	$(MAKE) -C $(PTHREAD)
-	$(MAKE) -C $(JPEG)
-	$(MAKE) -C $(LIBPNG)
-	$(MAKE) -C $(ZLIB)
+AS			:= nasm
+export AS
 
-clean: 
-	$(MAKE) -C $(XLIBC) clean
-	$(MAKE) -C $(PTHREAD) clean
-	$(MAKE) -C $(JPEG) clean
-	$(MAKE) -C $(LIBPNG) clean
-	$(MAKE) -C $(ZLIB) clean
-
-	
+MODULE		:= xlibc
+MODULE		+= pthread
+MODULE		+= zlib
+MODULE		+= libpng
+MODULE		+= jpeg
