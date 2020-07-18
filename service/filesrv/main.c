@@ -10,7 +10,6 @@
 #include <sys/ioctl.h>
 #include <sys/kfile.h>
 #include <sys/ipc.h>
-#include <ff.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -20,6 +19,7 @@
 #include <fsal/fsal.h>
 #include <core/filesrv.h>
 #include <core/if.h>
+#include "fatfs/ff.h"
 
 #define DEBUG_LOCAL 0
 

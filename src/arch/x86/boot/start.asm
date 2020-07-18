@@ -46,7 +46,7 @@ _start:
 	mov byte [0xb8000+160*2+13], 0X07
 	mov byte [0xb8000+160*2+14], 'S'
 	mov byte [0xb8000+160*2+15], 0X07
-		
+	;jmp $
 	; jump to c code.
 	jmp setup_entry
 

@@ -1,19 +1,17 @@
-# 要执行的服务的路径
-FILESRV 	= ./filesrv
-GUISRV 		= ./guisrv
-INITSRV 	= ./initsrv
-NETSRV 		= ./netsrv
+sinclude ../scripts/env.mk
 
-.PHONY: all clean
+X_ASFLAGS	+= -f elf -I $(DIR_XLIBC)/indlude 
+X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99
+X_INCDIRS	+= ../library/xlibc/include ../library/sgi/include ../library/pthread/include
 
-all: 
-	$(MAKE) -C $(INITSRV)
-	$(MAKE) -C $(FILESRV)
-	$(MAKE) -C $(GUISRV)
-	$(MAKE) -C $(NETSRV)
-	
-clean: 
-	$(MAKE) -C $(INITSRV) clean
-	$(MAKE) -C $(FILESRV) clean
-	$(MAKE) -C $(GUISRV) clean
-	$(MAKE) -C $(NETSRV) clean
+X_LDFLAGS	+= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
+X_LIBDIRS	+= $(srctree)/../library/xlibc $(srctree)/../library/pthread \
+
+AS			:=	nasm
+
+export AS
+
+MODULE      +=  initsrv
+MODULE      +=  filesrv
+MODULE      +=  netsrv
+MODULE      +=  guisrv

@@ -58,7 +58,11 @@
 #define PCI_BASS_ADDRESS3								0x1C
 #define PCI_BASS_ADDRESS4								0x20
 #define PCI_BASS_ADDRESS5								0x24
-/*...还要其他没有用到的，暂时不罗列*/
+#define PCI_CARD_BUS_POINTER							0x28
+#define PCI_SUBSYSTEM_ID							    0x2C
+#define PCI_EXPANSION_ROM_BASE_ADDR                     0x30
+#define PCI_CAPABILITY_LIST                             0x34
+#define PCI_RESERVED							        0x38
 #define PCI_MAX_LNT_MIN_GNT_IRQ_PIN_IRQ_LINE			0x3C
 
 /*IO地址和MEM地址的地址mask*/
@@ -103,9 +107,16 @@ typedef struct pci_device
     unsigned int class_code;		/*配置空间:Class Code*/
 	unsigned char revision_id;		/*配置空间:Revision ID*/
     unsigned char multi_function;	/*多功能标志*/
+    unsigned int card_bus_pointer;
+    unsigned short subsystem_vendor_id;
+    unsigned short subsystem_device_id;
+    unsigned int expansion_rom_base_addr;
+    unsigned int capability_list;
+    
     unsigned char irq_line;			/*配置空间:IRQ line*/
     unsigned char irq_pin;			/*配置空间:IRQ pin*/
-    
+    unsigned char min_gnt;
+    unsigned char max_lat;
     pci_device_bar_t bar[PCI_MAX_BAR];	/*有6个地址信息*/
 } pci_device_t;
 
@@ -114,6 +125,7 @@ unsigned int pci_device_get_mem_addr(pci_device_t *device);
 unsigned int pci_device_get_irq_line(pci_device_t *device);
 void pci_enable_bus_mastering(pci_device_t *device);
 pci_device_t* pci_get_device(unsigned int vendor_id, unsigned int device_id);
+pci_device_t* pci_get_device_by_class_code(unsigned int class, unsigned int sub_class, unsigned int progif);
 
 void pci_device_bar_dump(pci_device_bar_t *bar);
 void pci_device_dump(pci_device_t *device);

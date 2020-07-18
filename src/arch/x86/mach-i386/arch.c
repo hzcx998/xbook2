@@ -3,6 +3,7 @@
 #include <arch/tss.h>
 #include <arch/pmem.h>
 #include <arch/debug.h>
+#include <arch/pic.h>
 
 int init_arch()
 {	
@@ -17,6 +18,8 @@ int init_arch()
 
     /* init physic memory management */
     init_pmem();
+
+    init_pic();
 
 	return 0;
 }

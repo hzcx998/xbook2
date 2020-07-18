@@ -35,7 +35,7 @@ MAKE_COLOR(BLACK, RED) | BRIGHT | FLASH
 
 int cursor_x = 0, cursor_y = 0;
 
-void outb(unsigned int port, unsigned int data);
+extern void outb(unsigned int port, unsigned int data);
 
 static void set_cursor(unsigned short cursor)
 {
@@ -152,10 +152,12 @@ void put_char(char ch)
 
 void print_str(char *str)
 {
+#ifdef SHOW_SETUP_STRING
     while (*str) {
         put_char(*str);
         str++;
     }
+#endif    
 }
 
 void print_int(int num)

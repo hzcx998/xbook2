@@ -636,7 +636,7 @@ static int ide_polling(struct ide_channel* channel, unsigned int advanced_check)
 	// (II) Wait for BSY to be cleared:
 	// -------------------------------------------------
 	/* time */
-    i = 10000;
+    i = 0xf0000;
     while ((in8(ATA_REG_STATUS(channel)) & ATA_STATUS_BUSY) && i--); // Wait for BSY to be zero.
 	
     if (advanced_check) {
@@ -1222,7 +1222,7 @@ static int ide_handler(unsigned long irq, unsigned long data)
  * 
  * 根据磁盘数初始化对应的磁盘的信息
  */
-static void ide_probe(device_extension_t *ext, int id)
+static int ide_probe(device_extension_t *ext, int id)
 {
 	/* 初始化，并获取信息 */
 	int channelno = id / 2;	   // 一个ide通道上有两个硬盘,根据硬盘数量反推有几个ide通道
@@ -1264,7 +1264,8 @@ static void ide_probe(device_extension_t *ext, int id)
     ext->info = kmalloc(SECTOR_SIZE);
     if (ext->info == NULL) {
         printk("kmalloc for ide device info failed!\n");
-        return;
+        unregister_irq(channel->irqno, (void *)channel);
+        return -1;
     }
         
     /* 重置驱动器 */
@@ -1281,7 +1282,9 @@ static void ide_probe(device_extension_t *ext, int id)
     err = ide_polling(channel, 1);
     if (err) {
         ide_print_error(ext, err);
-        return;
+        unregister_irq(channel->irqno, (void *)channel);
+        kfree(ext->info);
+        return -1;
     }
     
     /* 读取到缓冲区中 */
@@ -1307,6 +1310,9 @@ static void ide_probe(device_extension_t *ext, int id)
 #if DEBUG_LOCAL == 1
     dump_ide_extension(ext);
 #endif
+    pr_dbg("probe IDE disk: base:%x irq:%d\n", channel->base, channel->irqno);
+
+    return 0;
 }
 
 static iostatus_t ide_enter(driver_object_t *driver)
@@ -1348,11 +1354,16 @@ static iostatus_t ide_enter(driver_object_t *driver)
                 devext->device_name.text, devext->device_object);
     #endif
             /* 填写设备扩展信息 */
-            ide_probe(devext, id);
+            if (ide_probe(devext, id) < 0) {
+                string_del(&devext->device_name); /* 删除驱动名 */
+                io_delete_device(devobj);
+                status = IO_FAILED;
+                continue;
+            }
         }
 	}
 
-    return IO_SUCCESS;
+    return status;
 }
 
 static iostatus_t ide_exit(driver_object_t *driver)

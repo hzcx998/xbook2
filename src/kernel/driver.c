@@ -22,6 +22,7 @@ driver_func_t driver_vine_table[] = {
     serial_driver_vine,                 /* char */
     console_driver_vine,                /* char */
     ide_driver_vine,                    /* disk */
+    //ahci_driver_vine,                   /* disk */
     rtl8139_driver_vine,                /* net */
     keyboard_driver_vine,               /* input */
     ramdisk_driver_vine,                /* disk */
@@ -45,7 +46,7 @@ iostatus_t default_device_dispatch(device_object_t *device, io_request_t *ioreq)
     io_complete_request(ioreq);
     return IO_SUCCESS;  /* 默认是表示执行成功 */
 }
-#if DEBUG_LOCAL == 1 /* print devices */
+#if DEBUG_LOCAL == 2 /* print devices */
 static void print_drivers()
 {
     driver_object_t *drvobj;
@@ -1262,11 +1263,29 @@ void init_driver_arch()
             printk(KERN_ERR "init_driver_arch: create one driver failed!\n");
         }
     }
- #if DEBUG_LOCAL == 1
+    
+ #if DEBUG_LOCAL == 2
     //print_drivers_mini();
     /* 输出所有驱动以及设备 */
     print_drivers();
 #endif
+#if 0
+    int sda = device_open("sata0", 0);
+    if (sda < 0)
+        panic(KERN_DEBUG "open sda failed!\n");
+    
+    char *buffer = kmalloc(PAGE_SIZE);
+    memset(buffer, 0xff, PAGE_SIZE);
+    printk(KERN_DEBUG "read len=%d\n", device_read(sda, buffer, SECTOR_SIZE, 0));
+    printk(KERN_DEBUG "%x %x\n", buffer[0], buffer[511]);
+
+    while (1)
+    {
+        /* code */
+    }
+#endif    
+
+
 #if 0    
     handle_t null = device_open("null", 0);
     if (null < 0)

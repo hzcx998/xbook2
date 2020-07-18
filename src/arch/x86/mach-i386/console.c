@@ -1,8 +1,7 @@
 #include <xbook/debug.h>
 #include <arch/io.h>
+#include <arch/debug.h>
 #include <arch/interrupt.h>
-
-#if CONFIG_DEBUG_METHOD == 1
 
 /*
 颜色生成方法
@@ -258,5 +257,3 @@ void init_console_debug()
     obj->y = 0;
     set_cursor(obj->y * SCREEN_WIDTH + obj->x);
 }
-
-#endif  /* CONFIG_DEBUG_METHOD */

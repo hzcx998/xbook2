@@ -5,8 +5,6 @@
 #include <arch/interrupt.h>
 #include <arch/config.h>
 
-#if CONFIG_DEBUG_METHOD == 2
-
 /* 串口的地址是IO地址 */
 #define COM1_BASE   0X3F8
 #define COM2_BASE   0X2F8
@@ -234,4 +232,3 @@ void init_serial_debug()
     out8(obj->scratch_reg, 0x00);
 
 }
-#endif  /* CONFIG_DEBUG_METHOD */

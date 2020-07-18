@@ -93,9 +93,7 @@ void setup_kernel()
         prog_header_off += prog_header_size;
         grog_idx++;
     }
-    char *v = (char *)0xb8002;
-    *v = 'f';
-    *(v+1) = 0x05;
+
     entry_point_t entry_point = (entry_point_t)elf_header.e_entry;
     entry_point();    /* 跳转到入口执行 */
 }
@@ -104,7 +102,7 @@ void setup_kernel()
  * setup_entry - 进入内核前的准备
  */
 void setup_entry()
-{
+{   
     /* 设置并启动分页机制 */
     setup_paging();
 

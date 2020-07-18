@@ -21,6 +21,11 @@ HDA_IMG		= $(IMAGE_DIR)/c.img
 HDB_IMG		= $(IMAGE_DIR)/d.img
 ROM_DIR		= develop/rom
 
+INITSRV_BIN	= $(ROM_DIR)/sbin/initsrv
+FILESRV_BIN	= $(ROM_DIR)/sbin/filesrv
+
+
+
 # image size
 FLOPPYA_SZ	= 1474560
 HDA_SZ		= 10321920
@@ -57,12 +62,14 @@ KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 # 参数
 .PHONY: all kernel build debuild rom qemu qemudbg lib srv usr
 
-# 默认所有动作
+# 默认所有动作，编译内核后，把引导、内核、init服务、文件服务和rom文件写入磁盘
 all : kernel 
 	$(DD) if=$(BOOT_BIN) of=$(FLOPPYA_IMG) bs=512 count=1 conv=notrunc
 	$(DD) if=$(LOADER_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
 	$(DD) if=$(SETUP_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
 	$(DD) if=$(KERNEL_ELF) of=$(FLOPPYA_IMG) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
+	$(DD) if=$(INITSRV_BIN) of=$(HDA_IMG) bs=512 seek=200 count=200 conv=notrunc
+	$(DD) if=$(FILESRV_BIN) of=$(HDA_IMG) bs=512 seek=400 count=400 conv=notrunc
 	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) 10
 
 # run启动虚拟机
@@ -141,11 +148,24 @@ usr_c:
 # 	a.使用蜂鸣器：-soundhw pcspk
 #	b.使用声霸卡：-soundhw sb16
 # 控制台串口调试： -serial stdio 
+
+# 磁盘配置：
+#	1. IDE DISK：-hda $(HDA_IMG) -hdb $(HDB_IMG)
+# 	2. AHCI DISK: -drive id=disk0,file=$(HDA_IMG),if=none \
+		-drive id=disk1,file=$(HDB_IMG),if=none \
+		-device ahci,id=ahci \
+		-device ide-drive,drive=disk0,bus=ahci.0 \
+		-device ide-drive,drive=disk1,bus=ahci.1 \
+
+
 QEMU_ARGUMENT = -m 256M \
 		-name "XBOOK Development Platform for x86" \
-		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
+		-fda $(FLOPPYA_IMG) \
+		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
+		-boot a \
 		-serial stdio
 
+#		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 #		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
 
 # qemu启动

@@ -1,5 +1,7 @@
-#ifndef BOOT_LIB_H
-#define BOOT_LIB_H
+#ifndef _BOOT_LIB_H
+#define _BOOT_LIB_H
+
+//#define SHOW_SETUP_STRING
 
 void print_str(char *str);
 void *memset(void* src, unsigned char value, unsigned int size);
@@ -11,4 +13,4 @@ void print_int(int num);
 void print_hex(unsigned int num);
 void put_char(char ch);
 
-#endif  /* BOOT_LIB_H */
+#endif  /* _BOOT_LIB_H */

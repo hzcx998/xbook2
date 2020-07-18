@@ -22,4 +22,6 @@ void __io_write(unsigned short port, void* buf, unsigned int n);
 #define io_read     __io_read
 #define io_write    __io_write
 
+#define io_mfence() 	__asm__ __volatile__ ("mfence	\n\t":::"memory")
+
 #endif  /* _ARCH_IO_H */

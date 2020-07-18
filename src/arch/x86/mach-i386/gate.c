@@ -162,7 +162,4 @@ void init_gate_descriptor()
     /* intr expection setting */
     init_intr_expection();
 
-    /* init pic controller */
-    init_pic();
-    
 }

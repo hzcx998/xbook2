@@ -18,9 +18,11 @@
 int kernel_main(void)
 {
     printk(KERN_INFO "welcome to xbook kernel.\n");
+    
     /* init memory cache for kernel */
     init_mem_caches();
     init_vmarea();
+    
     /* init irq description */
     init_irq_description();
     /* init softirq */
