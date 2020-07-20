@@ -3,7 +3,7 @@ X_LIBS		+= libxlibc-0.0.1.a
 X_INCDIRS	+= filesrv/include filesrv/fatfs
 
 NAME		:= filesrv
-SRC			+= core/ drivers/ fatfs/ fsal/ main.c 
+SRC			+= core/*.c drivers/*.c fatfs/*.c fsal/*.c main.c 
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

@@ -3,7 +3,7 @@ X_LIBS		+= libxlibc-0.0.1.a libpthread-0.0.1.a
 X_INCDIRS	+= guisrv/include/ 
 
 NAME		:= guisrv
-SRC			+= main.c console/ drivers/ event/ font/ graph/ input/
+SRC			+= main.c console/*.c drivers/*.c event/*.c font/*.c graph/*.c input/*.c
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

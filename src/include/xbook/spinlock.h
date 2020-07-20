@@ -64,7 +64,10 @@ typedef struct spinlock {
 
 /* while old value is 1， it means the lock had used，wait here. */
 #define spin_lock(lock) \
-    while (atomic_xchg(&(lock)->count, 1) == 1) 
+    do { \
+        if (atomic_xchg(&(lock)->count, 1) != 1) \
+            break; \
+    } while(1)
 
 #define spin_unlock(lock) \
     atomic_set(&(lock)->count, 0)
