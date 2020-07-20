@@ -1,4 +1,4 @@
-X_LIBS		+= xlibc-0.0.1.a
+X_LIBS		+= libxlibc-0.0.1.a
 
 X_INCDIRS	+= filesrv/include filesrv/fatfs
 

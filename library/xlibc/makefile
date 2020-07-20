@@ -8,9 +8,4 @@ SRC			+= stdlib/*.c string/*.c syslib/*.c time/*.c unistd/*.c
 SRC			+= syslib/syscall.asm
 
 TARGET_TYPE	:= static
-NAME		:= xlibc-0.0.1.a
-
-define CUSTOM_TARGET_CMD
-echo [LIB] $@; \
-$(AR) -rc  $@ $(X_OBJS)
-endef
+NAME		:= xlibc-0.0.1
