@@ -10,3 +10,4 @@ MODULE		+= pthread
 MODULE		+= zlib
 MODULE		+= libpng
 MODULE		+= jpeg
+
