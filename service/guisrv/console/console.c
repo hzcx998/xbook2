@@ -594,6 +594,10 @@ int init_con_screen()
     screen.clear_area = con_clear_area;
 
     screen.buflen = screen.rows * screen.columns * CON_FRAME_NR;
+
+    printf("[GUISRV]: alloc screen buffer rows %d columns %d frames %d size %x!\n", 
+        screen.rows ,screen.columns, CON_FRAME_NR,screen.buflen);
+    
     screen.buffer = malloc(screen.buflen);
     if (screen.buffer == NULL)
         return -1;
@@ -602,21 +606,6 @@ int init_con_screen()
 
     init_con_cursor();
 
-    /*
-    if (init_cmd_man() < 0) {
-        free(screen.buffer);
-        return -1;
-    }
-
-    if (init_clipboard() < 0) {
-        exit_cmd_man();
-        free(screen.buffer);
-        return -1;
-    }
-
-    memset(cmdman->cwd_cache, 0, MAX_PATH_LEN);
-    getcwd(cmdman->cwd_cache, MAX_PATH_LEN);
-    */
     if (init_clipboard() < 0) {
         free(screen.buffer);
         return -1;

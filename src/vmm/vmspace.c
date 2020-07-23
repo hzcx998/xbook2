@@ -2,7 +2,7 @@
 #include <xbook/task.h>
 #include <xbook/debug.h>
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 void dump_vmspace(vmm_t *vmm)
 {
@@ -363,8 +363,8 @@ unsigned long sys_vmspace_heap(unsigned long heap)
     unsigned long old_heap, new_heap;
     vmm_t *vmm = current_task->vmm;
 #if DEBUG_LOCAL == 1    
-    printk(KERN_DEBUG "%s: vmm heap start %x end %x new %x\n", 
-        __func__, vmm->heap_start, vmm->heap_end, heap);
+    printk(KERN_DEBUG "%s: task %s pid %d vmm heap start %x end %x new %x\n", 
+        __func__, current_task->name, current_task->pid, vmm->heap_start, vmm->heap_end, heap);
 #endif
     /* 如果堆比开始位置都小就退出 */
     if (heap < vmm->heap_start) {

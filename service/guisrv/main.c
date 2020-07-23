@@ -18,6 +18,8 @@
 
 int init_guisrv()
 {
+    printf("[GUISRV]: service start.\n");
+
     /* drivers */
     if (init_screen_driver()) {
         printf("[failed ] %s: init screen driver failed!\n", SRV_NAME);
@@ -121,10 +123,10 @@ int main(int argc, char *argv[])
 
     if (open_guisrv())
         return -1;
-    
+
     if (init_con_screen() < 0)
         return -1;
-    
+
     con_loop();
 
     srvprint("exit service.\n");

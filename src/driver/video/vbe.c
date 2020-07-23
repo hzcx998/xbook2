@@ -14,7 +14,7 @@
 
 #define DEV_NAME "video"
 
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 /* 将显存映射到内核，在内核态也可以操作显存 */
 #define MAP_VRAM_TO_KERN    1

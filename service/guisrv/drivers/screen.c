@@ -9,7 +9,7 @@
 #include <guisrv.h>
 #include <drivers/screen.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 #ifndef   GUI_SCREEN_DEVICE_NAME
 #define   GUI_SCREEN_DEVICE_NAME        "video"
@@ -146,9 +146,9 @@ static  int  screen_detect_var(drv_screen_t *screen)
  
     screen_width     = screen->width;
     screen_height    = screen->height;
-
-    //printf("video info: w:%d h:%d bpp:%d \n", screen->width, screen->height, video_info.bits_per_pixel);
-
+#if DEBUG_LOCAL == 1
+    printf("video info: w:%d h:%d bpp:%d \n", screen->width, screen->height, video_info.bits_per_pixel);
+#endif
     switch (video_info.bits_per_pixel) 
     {
     case 8:
@@ -192,6 +192,9 @@ static int screen_open(void)
         return  -1;
 
     video_ram_size = video_info.bytes_per_scan_line * video_info.y_resolution;
+#if DEBUG_LOCAL == 1
+    printf("%s: screen memory map size %x\n", SRV_NAME, video_ram_size);
+#endif
     video_ram_start = res_mmap(video_res, video_ram_size, 0);
     if (video_ram_start == NULL) {
         printf("%s: video mapped failed!\n", SRV_NAME);

@@ -276,7 +276,7 @@ load_kernel_file:
     pop dx
     ; 总共加载8次，每次加载128扇区，总过512kb
 	ret
-
+    
 ;把文件服务加载到内存中来
 load_filesrv_file:
     push dx
