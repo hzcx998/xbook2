@@ -92,7 +92,7 @@ int fsal_list_dir(char* path)
 int init_disk_mount()
 {
     /* 挂载文件系统 */
-    if (fsif.mount("ide1", "/root", "fat16", 0) < 0) {
+    if (fsif.mount(ROOT_DISK_NAME, ROOT_DIR_PATH, "fat32", 0) < 0) {
         printf("[%s] %s: mount failed!\n", SRV_NAME, __func__);
         return -1;
     }

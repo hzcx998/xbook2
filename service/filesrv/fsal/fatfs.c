@@ -20,7 +20,7 @@ typedef struct {
 fatfs_extention_t fatfs_extention;
 
 int fatfs_drv_map[FF_VOLUMES] = {
-    1,0,2,3,4,5,6,7,8,9
+    0,1,2,3,4,5,6,7,8,9
 };
 
 /**
@@ -30,8 +30,11 @@ static int __mount(char *source, char *target, char *fstype, unsigned long flags
 {
     /* 根据资源设备查找对应的磁盘路径 */
     int solt = disk_res_find(source);
-    if (solt < 0)
+    if (solt < 0) {
+        printf("[%s] %s: not find device %s.\n", SRV_NAME, __func__, source);
         return -1;
+    }
+        
 #if DEBUG_LOCAL == 1
     printf("[%s] %s: find device solt %d.\n", SRV_NAME, __func__, solt);
 #endif
@@ -56,16 +59,17 @@ static int __mount(char *source, char *target, char *fstype, unsigned long flags
 #endif
 
     /* 判断是否已经有文件系统在此系统上了 */
-    int res = res_open(source, RES_DEV, 0);
+    int res = drv_disk.open(solt);
     if (res < 0) {
+        printf("[%s] %s: not find device %s.\n", SRV_NAME, __func__, source);
         return -1;
     }
     unsigned char buf[512];
-    if (res_read(res, 0, buf, SECTOR_SIZE) < 0) {
-        res_close(res);
+    if (drv_disk.read(solt, 0, buf, SECTOR_SIZE) < 0) {
+        drv_disk.close(solt);
         return -1;
     }
-    res_close(res);
+    drv_disk.close(solt);
 
     char remkfs = 1;    /* 重新构建文件系统 */
     /* 查看是否已经有文件系统 */

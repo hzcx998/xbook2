@@ -2,7 +2,7 @@
 #include <xbook/task.h>
 #include <xbook/debug.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_LOCAL 1
 
 void dump_vmspace(vmm_t *vmm)
 {
@@ -395,7 +395,7 @@ unsigned long sys_vmspace_heap(unsigned long heap)
     
     /* 检查是否超过堆的空间限制 */
     if (heap > vmm->heap_start + MAX_VMS_HEAP_SIZE) {
-        printk(KERN_ERR "%s: out of heap boundary!\n", __func__);
+        printk(KERN_ERR "%s: %x out of heap boundary!\n", __func__, heap);
         goto the_end;
     }
         

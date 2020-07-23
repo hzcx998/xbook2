@@ -21,15 +21,13 @@ HDA_IMG		= $(IMAGE_DIR)/c.img
 HDB_IMG		= $(IMAGE_DIR)/d.img
 ROM_DIR		= develop/rom
 
-INITSRV_BIN	= $(ROM_DIR)/sbin/initsrv
-FILESRV_BIN	= $(ROM_DIR)/sbin/filesrv
-
-
-
 # image size
 FLOPPYA_SZ	= 1474560
-HDA_SZ		= 10321920
+HDA_SZ		= 40321920
 HDB_SZ		= 10321920
+
+# 默认大小为10M
+ROM_DISK_SZ	= 10
 
 # environment dir
 LIBRARY_DIR	= ./library
@@ -44,7 +42,10 @@ SETUP_OFF 	= 10
 SETUP_CNTS 	= 90
 
 KERNEL_OFF 	= 100
-KERNEL_CNTS	= 512		# assume 512 kb, now just 256kb 
+KERNEL_CNTS	= 512		# assume 256kb 
+
+FILESRV_OFF 	= 700
+FILESRV_CNTS	= 512		# assume 256kb 
 
 # arch dir
 
@@ -59,6 +60,9 @@ SETUP_BIN 	= $(ARCH)/boot/setup.bin
 # kernel file
 KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 
+# service file
+FILESRV_BIN	= $(ROM_DIR)/sbin/filesrv
+
 # 参数
 .PHONY: all kernel build debuild rom qemu qemudbg lib srv usr
 
@@ -68,9 +72,11 @@ all : kernel
 	$(DD) if=$(LOADER_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
 	$(DD) if=$(SETUP_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
 	$(DD) if=$(KERNEL_ELF) of=$(FLOPPYA_IMG) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
-	$(DD) if=$(INITSRV_BIN) of=$(HDA_IMG) bs=512 seek=200 count=200 conv=notrunc
-	$(DD) if=$(FILESRV_BIN) of=$(HDA_IMG) bs=512 seek=400 count=400 conv=notrunc
-	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) 10
+	$(DD) if=$(FILESRV_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(FILESRV_OFF) count=$(FILESRV_CNTS) conv=notrunc
+	$(FATFS_BIN) $(HDA_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
+
+#$(DD) if=$(INITSRV_BIN) of=$(HDA_IMG) bs=512 seek=200 count=200 conv=notrunc
+
 
 # run启动虚拟机
 run: qemu
@@ -89,12 +95,12 @@ build:
 	-$(MKDIR) $(ROM_DIR)/sbin
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
-	$(TRUNC) -s $(HDA_SZ) $(HDB_IMG) 
+	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG) 
 	$(MAKE) -s -C  $(FATFS_DIR)
 	$(MAKE) -s -C  $(LIBRARY_DIR)
 	$(MAKE) -s -C  $(SERVICE_DIR)
 	$(MAKE) -s -C  $(USER_DIR)
-	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) 10
+	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
 
 # 清理环境。
 debuild: 
@@ -109,8 +115,7 @@ debuild:
 	
 # 写入rom
 rom: 
-	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) 10
-
+	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
 
 # 重新编译所有库
 lib: 
@@ -161,7 +166,11 @@ usr_c:
 QEMU_ARGUMENT = -m 256M \
 		-name "XBOOK Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
-		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
+		-drive id=disk0,file=$(HDA_IMG),if=none \
+		-drive id=disk1,file=$(HDB_IMG),if=none \
+		-device ahci,id=ahci \
+		-device ide-drive,drive=disk0,bus=ahci.0 \
+		-device ide-drive,drive=disk1,bus=ahci.1 \
 		-boot a \
 		-serial stdio
 

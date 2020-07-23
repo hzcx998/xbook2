@@ -88,15 +88,15 @@ typedef struct pci_device_bar
     unsigned int length;	    /*地址的长度*/
 } pci_device_bar_t;
 
-#define PCI_DEVICE_STATUS_INVALID 		0
-#define PCI_DEVICE_STATUS_USING		 	1
+#define PCI_DEVICE_INVALID 		0
+#define PCI_DEVICE_USING		 	1
 
 /*
 PCI设备结构体，用于保存我们所需要的pci信息，并不是和硬件的一样
 */
 typedef struct pci_device
 {
-	char status; 		/*device status*/
+	int flags; 		/*device flags*/
 	
 	unsigned char bus;				/*bus总线号*/
 	unsigned char dev;				/*device号*/
@@ -104,6 +104,9 @@ typedef struct pci_device
 	
 	unsigned short vendor_id;		/*配置空间:Vendor ID*/
     unsigned short device_id;		/*配置空间:Device ID*/
+    unsigned short command;		    /*配置空间:Command*/
+    unsigned short status;		    /*配置空间:Status*/
+    
     unsigned int class_code;		/*配置空间:Class Code*/
 	unsigned char revision_id;		/*配置空间:Revision ID*/
     unsigned char multi_function;	/*多功能标志*/
@@ -125,7 +128,10 @@ unsigned int pci_device_get_mem_addr(pci_device_t *device);
 unsigned int pci_device_get_irq_line(pci_device_t *device);
 void pci_enable_bus_mastering(pci_device_t *device);
 pci_device_t* pci_get_device(unsigned int vendor_id, unsigned int device_id);
-pci_device_t* pci_get_device_by_class_code(unsigned int class, unsigned int sub_class, unsigned int progif);
+pci_device_t* pci_get_device_by_class_code(unsigned int class, unsigned int sub_class);
+
+pci_device_t *pci_locate_device(unsigned short vendor, unsigned short device);
+pci_device_t *pci_locate_class(unsigned short class, unsigned short _subclass);
 
 void pci_device_bar_dump(pci_device_bar_t *bar);
 void pci_device_dump(pci_device_t *device);

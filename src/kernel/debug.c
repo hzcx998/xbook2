@@ -97,13 +97,15 @@ int printk(const char *fmt, ...)
         }
     }
     if (show) {
+        #if PRINT_LEVEL_MSG == 1
         /* print level first */
         if (level >= 0) {
             char *q = printk_msg[level];
             while (*q)
                 debug_putchar(*q++);
         }
-
+        #endif
+        
         while (count-- > 0)
             debug_putchar(*p++);
     

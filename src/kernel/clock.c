@@ -8,7 +8,7 @@
 #include <xbook/schedule.h>
 #include <xbook/timer.h>
 #include <arch/interrupt.h>
-#include <arch/cpu.h>
+#include <xbook/cpu.h>
 #include <xbook/ktime.h>
 
 volatile clock_t systicks;
@@ -89,6 +89,21 @@ clock_t clock_delay_by_ticks(clock_t ticks)
     return ticks;
 }
 
+/**
+ * 根据ticks延迟
+ */
+void mdelay(time_t msec)
+{
+    clock_t ticks = MSEC_TO_TICKS(msec);
+    /* at least one ticket */
+    if (!ticks)
+        ticks = 1;
+
+    clock_t start = systicks;
+    while (sys_get_ticks() - start < ticks) {
+        cpu_pause();
+    }
+}
 
 /**
  * init_clock - 初始化时钟系统

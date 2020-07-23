@@ -36,7 +36,10 @@ entry:
     ; load kernel file from disk
 	call load_kernel_file
 
-    ;我们不再使用软盘，所以这里关闭软盘驱动
+    ; load filesrv from disk
+	call load_filesrv_file
+
+    ;我们不再使用软盘，所以这里关闭软盘驱动器
 	call kill_floppy_motor	
     
     ; get memory info
@@ -251,67 +254,48 @@ load_setup_file:
 	
 	ret
 
-
 ;在这个地方把elf格式的内核加载到一个内存，elf文件不能从头执行，
 ;必须把它的代码和数据部分解析出来，这个操作是进入保护模式之后进行的
 load_kernel_file:
+    push dx
+
 	;load kernel
-	;first block 128 sectors
-	;把内核文件加载到段为KERNEL_SEG（0x1000）的地方，也就是物理内存
-	;为0x10000的地方，一次性加载BLOCK_SIZE（128）个扇区
-	;写入参数
 	mov ax, KERNEL_SEG
 	mov si, KERNEL_OFF
+    mov dx, 4           ; 内核占用256kb，每次加载128扇区（512字节），因此需要加载4次
+.read_replay:
 	mov cx, BLOCK_SIZE
 	;调用读取一整个块的扇区数据函数，其实也就是循环读取128个扇区，只是
 	;把它做成函数，方便调用
 	call load_file_block
+	add ax, 0x1000
+    dec dx
+    cmp dx, 0
+    ja .read_replay
 	
-	;second block 128 sectors
-	;当读取完128个扇区后，我们的缓冲区位置要改变，也就是增加128*512=0x10000
-	;的空间，由于ax会给es，所以这个地方用改变段的位置，所以就是0x1000,
-	;扇区的位置是保留在si中的，上一次调用后，si递增了128，所以这里我们不对
-	;si操作
-	add ax, 0x1000
+    pop dx
+    ; 总共加载8次，每次加载128扇区，总过512kb
+	ret
+
+;把文件服务加载到内存中来
+load_filesrv_file:
+    push dx
+
+	;load filesrv
+	mov ax, FILESRV_SEG
+	mov si, FILESRV_OFF
+    mov dx, 4           ; 文件服务占用256kb，每次加载128扇区（512字节），因此需要加载4次
+.read_replay:
 	mov cx, BLOCK_SIZE
+	;调用读取一整个块的扇区数据函数，其实也就是循环读取128个扇区，只是
+	;把它做成函数，方便调用
 	call load_file_block
+	add ax, 0x1000
+    dec dx
+    cmp dx, 0
+    ja .read_replay
 	
-	;third block 128 sectors
-	;这个地方和上面同理
-	add ax, 0x1000
-	mov cx, BLOCK_SIZE
-	call load_file_block
-    
-    ;third block 128 sectors
-	;这个地方和上面同理
-	add ax, 0x1000
-	mov cx, BLOCK_SIZE
-	call load_file_block
-    
-    ;third block 128 sectors
-	;这个地方和上面同理
-	add ax, 0x1000
-	mov cx, BLOCK_SIZE
-	call load_file_block
-    
-    ;third block 128 sectors
-	;这个地方和上面同理
-	add ax, 0x1000
-	mov cx, BLOCK_SIZE
-	call load_file_block
-    
-    ;third block 128 sectors
-	;这个地方和上面同理
-	add ax, 0x1000
-	mov cx, BLOCK_SIZE
-	call load_file_block
-    
-    ;third block 128 sectors
-	;这个地方和上面同理
-	add ax, 0x1000
-	mov cx, BLOCK_SIZE
-	call load_file_block
-    
+    pop dx
     ; 总共加载8次，每次加载128扇区，总过512kb
 	ret
 

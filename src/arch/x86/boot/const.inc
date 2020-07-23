@@ -19,42 +19,54 @@ LOADER_SEG EQU 0x9000
 ;we read setup.bin from disk sector 10
 SETUP_OFF EQU 10	
 
-;we assume setup.bin size is 45kb(90 sectors)	
+;we assume setup.bin size is 36kb(72 sectors)	
 SETUP_CNTS EQU 90		
 
-;we read setup.bin to memory 0x91000 for 45kb
+;we read setup.bin to memory 0x91000 for 36kb
 ;so the segment is 0x9100, we are in real mode now.
 SETUP_SEG EQU 0x9100	
 
 SETUP_ADDR EQU 0x91000	
 
-
 ;---loader const----
 ;we read kernel.elf from disk sector 100 
 KERNEL_OFF EQU 100	
 
-;----we assume that kernel max is 512 kb (0x80000 byte)----
-; 内核文件的物理内存范围是0x10000~0x90000
+;----we assume that kernel max is 256 kb (0x40000 byte)----
+; 内核文件的物理内存范围是0x10000~0x50000
 
-;we read kernel.a to memory 0x10000
+;we read kernel.elf to memory 0x10000
 ;so the segment is 0x1000, we are in real mode now.
 KERNEL_SEG EQU 0x1000
 
-;kernel.a phy addr is KERNEL_SEG*16, 
+;kernel.elf phy addr is KERNEL_SEG*16, 
 ;0x1000*16 = 0x10000
 KERNEL_PHY_ADDR EQU KERNEL_SEG*16
+
+;we read filesrv from disk sector 700 
+FILESRV_OFF EQU 700	
+
+;----we assume that filesrv max is 256 kb (0x40000 byte)----
+; 内核文件的物理内存范围是0x50000~0x90000
+
+;we read filesrv to memory 0x50000
+;so the segment is 0x5000, we are in real mode now.
+FILESRV_SEG EQU 0x5000
+
+;filesrv phy addr is FILESRV_SEG*16, 
+;0x5000*16 = 0x50000
+FILESRV_PHY_ADDR EQU FILESRV_SEG*16
 
 ;we will read kernel from kerne.elf to 1M after we jmp to protect mode,
 ;so this is our kernel finally addr
 KERNEL_START_ADDR EQU 0x80100000
 
-;loader stack top is 0x90000
-LOADER_STACK_TOP EQU 0x90000
+;loader stack top is 0x9a000 ~ 0x9c000
+LOADER_STACK_TOP EQU 0x9c000
 
 ;we can read sector less than 128 sector. so I set block size,
 ;every time we load 128 sectors
 BLOCK_SIZE EQU 128
-
 
 ARDS_SEG	EQU		0x100	;ards start segment
 
@@ -109,7 +121,7 @@ VMODE_1280_1024_24          EQU 0x11B
 VMODE_VMWARE_800_600_24     EQU	0x140
 
 ; 使用的模式
-VBE_MODE	EQU	VMODE_800_600_16
+VBE_MODE	EQU	VMODE_640_480_16
 
 %endif  ; CONFIG_GRAPHIC
 

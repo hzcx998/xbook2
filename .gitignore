@@ -58,6 +58,30 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# develop
+develop/image/
+
+develop/rom/bin/
+develop/rom/sbin/
+
+# fixdep
+library/fixdep
+
+# service
+service/filesrv/filesrv
+service/fixdep
+service/guisrv/guisrv
+service/netsrv/netsrv
+
+#tools
+tools/fatfs/fatfs
+
+# user
+user/bosh/bosh
+user/fixdep
+user/hello/hello
+user/tests/tests
+
 # dir
 recycle
 
