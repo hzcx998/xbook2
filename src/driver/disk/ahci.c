@@ -1116,13 +1116,13 @@ static int ahci_handler(unsigned long irq, unsigned long data)
 static iostatus_t ahci_enter(driver_object_t *driver)
 {
     iostatus_t status = IO_SUCCESS;
-    printk(KERN_DEBUG "[ahci]: initializing ahci driver...\n");
+    printk(KERN_INFO "[ahci]: initializing ahci driver...\n");
 	if(!(ahci_pci = get_ahci_pci())) {
 		printk(KERN_ERR "[ahci]: no AHCI controllers present!\n");
 		status = IO_FAILED;
         return status;
 	}
-
+    
     if (register_irq(ahci_int, ahci_handler, IRQF_SHARED, "ahci", "ahci driver", (addr_t)driver) < 0) {
 		printk(KERN_ERR "[ahci]: register interrupt failed!\n");
 		/* 需要取消内存映射以及关闭ahci总线 */
@@ -1131,7 +1131,7 @@ static iostatus_t ahci_enter(driver_object_t *driver)
 	}
     ahci_init_hba(hba_mem);
     ahci_probe_ports(driver, hba_mem);
-    printk(KERN_DEBUG "[ahci]: initializing ahci driver done.\n");
+    printk(KERN_INFO "[ahci]: initializing ahci driver done.\n");
     //spin("ahci");
     return status;
 }
