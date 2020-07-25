@@ -172,7 +172,6 @@ QEMU_ARGUMENT = -m 256M \
 		-device ide-drive,drive=disk0,bus=ahci.0 \
 		-device ide-drive,drive=disk1,bus=ahci.1 \
 		-boot a \
-		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no \
 		-serial stdio
 
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
