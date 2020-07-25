@@ -8,6 +8,9 @@
 /* 1 ticks 对应的毫秒数 */
 #define MS_PER_TICKS (1000 / HZ)
 
+/* 毫秒转换成ticks */
+#define MSEC_TO_TICKS(msec) ((msec) / MS_PER_TICKS)
+
 extern volatile clock_t systicks;
 /* 基于systicks的时间 */
 #define time_after(unknown, known) ((long)(known) - (long)(unknown) < 0)
@@ -20,5 +23,6 @@ void clock_msleep(unsigned long msecond);
 void loop_delay(int t);
 clock_t sys_get_ticks();
 clock_t clock_delay_by_ticks(clock_t ticks);
+void mdelay(time_t msec);
 
 #endif  /* _XBOOK_CLOCK_H */

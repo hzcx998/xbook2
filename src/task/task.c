@@ -18,6 +18,7 @@
 #include <xbook/rwlock.h>
 #include <xbook/vmm.h>
 #include <xbook/waitque.h>
+#include <xbook/rawblock.h>
 #include <math.h>
 
 static pid_t next_pid;
@@ -28,7 +29,7 @@ static pid_t next_pid;
 LIST_HEAD(task_global_list);
 
 /* idle任务 */
-task_t *task_idle;
+task_t *task_kmain;
 
 task_t *task_current;   /* 当前任务指针 */
 
@@ -292,23 +293,23 @@ void task_yeild()
 
 
 /**
- * create_idle_thread - 为内核主线程设定身份
+ * create_kmain_thread - 创建内核主线程
  * 
  * 内核主线程就是从boot到现在的执行流。到最后会演变成idle
  * 在这里，我们需要给与它一个身份，他才可以进行多线程调度
  */
-static void create_idle_thread()
+static void create_kmain_thread()
 {
     // 当前运行的就是主线程
-    task_idle = (task_t *) KERNEL_STATCK_BOTTOM;
-    task_current = task_idle;   /* 设置当前任务 */
+    task_kmain = (task_t *) KERNEL_STATCK_BOTTOM;
+    task_current = task_kmain;   /* 设置当前任务 */
 
     /* 最开始设置为最佳优先级，这样才可以往后面运行。直到运行到最后，就变成IDLE优先级 */
-    task_init(task_idle, "idle", TASK_PRIO_BEST);
+    task_init(task_kmain, "kmain", TASK_PRIO_BEST);
 
     /* 设置为运行中 */
-    task_idle->state = TASK_RUNNING;
-    task_global_list_add(task_idle); /* 添加到全局任务 */
+    task_kmain->state = TASK_RUNNING;
+    task_global_list_add(task_kmain); /* 添加到全局任务 */
 }
 
 /**
@@ -712,15 +713,16 @@ void dump_task(task_t *task)
     //printk("vmm->vm_frame:%x priority:%d ticks:%d elapsed ticks:%d\n", task->vmm->page_storage, task->priority, task->ticks, task->elapsed_ticks);
     printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
-static char *init_argv[3] = {"initsrv", 0, 0};
+static char *init_argv[2] = {RB_USERSRV, 0};
 
 /**
  * start_user - 开启用户进程
  * 
- * 在初始化的最后调用，当前任务演变成idle任务，等待随时调动
+ * 在初始化的最后调用，当前任务演变成"idle"任务，等待随时调动
  */
 void start_user()
 {
+    printk(KERN_DEBUG "[task]: start user process.\n");
     /* 加载init进程 */
     task_t *proc = process_create(init_argv[0], init_argv);
     if (proc == NULL)
@@ -730,7 +732,7 @@ void start_user()
 	unsigned long flags;
     save_intr(flags);
     /* 当前任务降级，这样，其它任务才能运行到 */
-    task_idle->priority = TASK_PRIO_IDLE;
+    task_kmain->priority = TASK_PRIO_IDLE;
     
     restore_intr(flags);
     /* 调度到更高优先级的任务允许 */
@@ -740,7 +742,7 @@ void start_user()
     /* 其它进程可能在终端关闭状态阻塞，那么切换回来后就需要打开中才行 */
     enable_intr();
 
-    /* idle线程 */
+    /* kmain线程 */
 	while (1) {
 		/* 进程默认处于阻塞状态，如果被唤醒就会执行后面的操作，
 		直到再次被阻塞 */
@@ -748,21 +750,14 @@ void start_user()
 		cpu_idle();
 	};
 }
-#if 0   /* kthread test */
-void kthread_test(void *arg)
+
+void kthread_idle(void *arg)
 {
-    printk(KERN_DEBUG "kthread_test: start...\n");
-    int i = 0;
-    while (1)
-    {
-        printk(KERN_DEBUG "kthread_test: sleep %d\n", i);
-        sys_sleep(1);
-        i++;
-        if (i > 3)
-            kthread_exit(0);
+    printk(KERN_DEBUG "[task]: idle start...\n");
+    while (1) {
+        cpu_idle();
     }
 }
-#endif
 /**
  * init_tasks - 初始化多任务环境
  */
@@ -771,8 +766,8 @@ void init_tasks()
     init_schedule();
 
     next_pid = 0;
-
-    create_idle_thread();
+    /* 创建内核主线程 */
+    create_kmain_thread();
 
     new_pid(); /* 跳过pid1，预留给INIT进程 */
 
@@ -784,5 +779,7 @@ void init_tasks()
     kthread_start("test2", TASK_PRIO_RT, taskB, "NULL");
     kthread_start("test3", TASK_PRIO_RT, taskC, "NULL");*/
     //kthread_start("test4", 1, taskD, "NULL");
-    //kthread_start("test", TASK_PRIO_USER, kthread_test, NULL);
+
+    /* 创建idle线程 */
+    kthread_start("idle", TASK_PRIO_IDLE, kthread_idle, NULL);
 }

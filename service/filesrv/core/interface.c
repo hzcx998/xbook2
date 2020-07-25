@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <types.h>
+#include <sys/srvcall.h>
 #include <fsal/fsal.h>
 #include <core/if.h>
 #include <core/filesrv.h>

@@ -9,8 +9,9 @@
 #include <xbook/vmspace.h>
 #include <sys/ioctl.h>
 #include <xbook/pci.h>
+#include <xbook/config.h>
 
-#define DEBUG_LOCAL 0   
+#define DEBUG_LOCAL 0
 
 /* 驱动链表头 */
 LIST_HEAD(driver_list_head);
@@ -21,12 +22,14 @@ LIST_HEAD(driver_list_head);
 driver_func_t driver_vine_table[] = {
     serial_driver_vine,                 /* char */
     console_driver_vine,                /* char */
+#ifdef CONFIG_AHCI
+    ahci_driver_vine,                   /* disk */
+#else
     ide_driver_vine,                    /* disk */
-    //ahci_driver_vine,                   /* disk */
+#endif
     rtl8139_driver_vine,                /* net */
     keyboard_driver_vine,               /* input */
     ramdisk_driver_vine,                /* disk */
-    //vfloppy_driver_vine,                /* disk */
     vbe_driver_vine,                    /* video */
     mouse_driver_vine,                  /* input */
     tty_driver_vine,                    /* filter: tty */
@@ -713,8 +716,7 @@ iostatus_t io_device_queue_append(device_queue_t *queue, unsigned char *buf, int
         spin_unlock_irqrestore(&queue->lock, irqflags);
         return IO_FAILED;
     }
-    printk("%s: <%x %x>\n", __func__,&entry->list, &queue->list_head);
-    
+
     list_add_tail(&entry->list, &queue->list_head);
     queue->entry_count++;
     entry->buf = (unsigned char *) (entry + 1);
@@ -1264,25 +1266,36 @@ void init_driver_arch()
         }
     }
     
- #if DEBUG_LOCAL == 2
+#if DEBUG_LOCAL == 2
     //print_drivers_mini();
     /* 输出所有驱动以及设备 */
     print_drivers();
 #endif
+
 #if 0
     int sda = device_open("sata0", 0);
     if (sda < 0)
-        panic(KERN_DEBUG "open sda failed!\n");
-    
+        panic(KERN_DEBUG "open sda0 failed!\n");
+    /*
+    char *buffer;
+    for (i = 200; i <= 220; i++) {
+        char *buffer = kmalloc(PAGE_SIZE * i);
+        memset(buffer, 0, PAGE_SIZE);
+        printk(KERN_DEBUG "read on %d len=%d\n", i, device_read(sda, buffer, SECTOR_SIZE * i, i));
+        printk(KERN_DEBUG "%x %x\n", buffer[0], buffer[511]);
+        memset(buffer, i, PAGE_SIZE);
+        printk(KERN_DEBUG "write to %d len=%d\n", i, device_write(sda, buffer, SECTOR_SIZE * i, i));
+        kfree(buffer);
+    }*/
     char *buffer = kmalloc(PAGE_SIZE);
-    memset(buffer, 0xff, PAGE_SIZE);
-    printk(KERN_DEBUG "read len=%d\n", device_read(sda, buffer, SECTOR_SIZE, 0));
-    printk(KERN_DEBUG "%x %x\n", buffer[0], buffer[511]);
-
-    while (1)
-    {
-        /* code */
+    memset(buffer, 0, PAGE_SIZE);
+    printk(KERN_DEBUG "read on %d len=%d\n", 0, device_read(sda, buffer, SECTOR_SIZE, 0));
+    uint32_t *p = (uint32_t *) buffer;
+    for (i = 0; i < SECTOR_SIZE / sizeof(uint32_t); i++) {
+        printk("%x  ", p[i]);
     }
+
+    spin("ahci test.");
 #endif    
 
 

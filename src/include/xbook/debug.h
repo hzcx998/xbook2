@@ -10,6 +10,8 @@
 
 #define DEFAULT_LOG_LEVEL   7
 
+#define PRINT_LEVEL_MSG   0
+
 extern int printk_level;
 
 //内核打印函数的指针

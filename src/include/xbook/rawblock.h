@@ -3,6 +3,7 @@
 
 #include "driver.h"
 #include <list.h>
+#include <xbook/config.h>
 
 #define RAW_BLOCK_NAME_LEN 24
 
@@ -12,8 +13,9 @@
 
 #define RB_BLOCK_NR 256
 
-//#define RB_DEVICE   "vfloppy"
-#define RB_DEVICE   "ide0"
+#define RB_DEVICE   "vfloppy"
+
+#define RB_USERSRV   "filesrv"
 
 typedef struct raw_block {
     list_t list;                /* 所有块构成一个链表 */

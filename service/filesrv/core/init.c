@@ -1,6 +1,5 @@
 #include <sys/res.h>
 #include <sys/vmm.h>
-#include <sys/proc.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

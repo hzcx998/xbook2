@@ -9,8 +9,7 @@
 
 #define SECTORS_PER_BLOCK   256
 
-/* 原始磁盘，不在上面挂载文件系统 */
-#define RAW_DISK    "ide0"
+#define TTY_NAME    "tty0"
 
 #define PATH_GUISRV "/sbin/guisrv"
 #define PATH_NETSRV "/sbin/netsrv"

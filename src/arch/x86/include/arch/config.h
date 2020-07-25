@@ -8,5 +8,7 @@ debug methods：
 */
 #define CONFIG_DEBUG_METHOD 2
 
+/* 把控制台的信息同时输出到串口，用于调试 */
+#define CONFIG_CONS_TO_SERIAL 1
 
 #endif  /* _X86_CONFIG_H */

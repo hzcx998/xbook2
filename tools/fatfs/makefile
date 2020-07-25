@@ -3,15 +3,15 @@ RM			= rm
 
 # System environment variable.
 ifeq ($(OS),Windows_NT)
+	# !!! if you wanto complie this tools in windows, you need use gcc for windows
+	# and config your own path. Below is my path.
 	CC       = 	D:/Softwares/Mingw/bin/gcc.exe 		# need mingw gcc for windows
 	# need mingw include and libs
-	INCS     = 	-I"D:/Softwares/Dev-Cpp/MinGW64/include" \
-				-I"D:/Softwares/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" \
-				-I"D:/Softwares/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.8.1/include" \
+	INCS     = 	-I"D:/Softwares/Mingw/include" \
 				-DWIN32
 
-	LIBS 	= 	-L"D:/Softwares/Dev-Cpp/MinGW64/lib" \
-				-L"D:/Softwares/Dev-Cpp/MinGW64/x86_64-w64-mingw32/lib" -static-libgcc
+	LIBS 	= 	-L"D:/Softwares/Mingw/lib" \
+				-static-libgcc
 	
 	# out file
 	BIN = ./fatfs.exe
@@ -38,7 +38,6 @@ OBJS = 	main.o \
         ff.o \
         ffsystem.o \
         ffunicode.o \
-
 
 .PHONY: all clean
 

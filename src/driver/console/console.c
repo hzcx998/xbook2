@@ -3,6 +3,7 @@
 #include <xbook/vine.h>
 #include <xbook/driver.h>
 #include <arch/io.h>
+#include <arch/config.h>
 #include <sys/ioctl.h>
 
 #define DRV_NAME "vga-console"
@@ -11,9 +12,6 @@
 #define DEV_NAME "con"
 
 #define DEBUG_LOCAL 0
-
-/* 把控制台的信息输出内核调试输出 */
-#define CON_TO_DEBUGER   1
 
 #define DISPLAY_VRAM 0x800b8000
 
@@ -351,7 +349,7 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
         i--;
         buf++;
     }
-#if CON_TO_DEBUGER == 1
+#if CONFIG_CONS_TO_SERIAL == 1
     /* 临时输出到内核输出 */
     buf = (uint8_t *)ioreq->system_buffer;
     //printk("%s", buf);

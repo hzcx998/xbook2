@@ -14,16 +14,15 @@
 
 #define DEV_NAME "vfloppy"
 
-/* 512kb
+/* 1024kb
 虚拟软盘，即通过软盘引导时，从软盘读取到内存的数据
  */
-#define VFLOPPY_SECTORS     1024
+#define VFLOPPY_SECTORS     2048
 
 /* 软盘数据加载到的内存地址: 
-0x80010000：从这里开始的256kb是内核文件镜像
-0x80010000 + 256 * 1024：从这里开始的256kb是用户程序镜像
+0x80000000：从这里开始就是引导时软盘的数据起始
  */
-#define VFLOPPY_RAM     (0x80010000 + 256 * 1024)
+#define VFLOPPY_RAM     (0x80000000)
 
 #define DEBUG_LOCAL 0
 

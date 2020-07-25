@@ -1149,9 +1149,11 @@ static int rtl8139_handler(unsigned long irq, unsigned long data)
     //out16(ext->io_addr + INTR_STATUS, status);
     
     /* 如果一个状态位也没有，就退出 */
-    if (unlikely((status & rtl8139_intr_mask) == 0)) 
+    if (unlikely((status & rtl8139_intr_mask) == 0)) {
+        printk(KERN_DEBUG "[rtl8139]: no intr occur!\n");
         goto out;
-    //printk(KERN_DEBUG "int status:%x\n", status);
+    }
+    //printk(KERN_DEBUG "[rtl8139]: int status:%x\n", status);
 
     /* 如果网络没有运行的时候发生中断，那么就退出 */
     /*if (unlikely(!netif_running(dev))) {

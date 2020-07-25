@@ -17,4 +17,7 @@
 /* auto select timezone */
 #define CONFIG_TIMEZONE_AUTO 0 	
 
+/* ahci */
+#define CONFIG_AHCI 
+
 #endif   /* _XBOOK_CONFIG_H */

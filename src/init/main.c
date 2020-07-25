@@ -49,7 +49,8 @@ int kernel_main(void)
     
     /* init raw block */
     init_raw_block();
-
+    
+    //spin("test");
     start_user();
 
     return 0;    

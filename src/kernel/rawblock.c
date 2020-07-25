@@ -112,7 +112,7 @@ int raw_block_upload(raw_block_t *block)
     /* 小于1个块 */
     if (count < RB_BLOCK_NR) {
 #if DEBUG_LOCAL == 1
-        printk(KERN_DEBUG "raw_block_upload: count=%d\n", count);
+        printk(KERN_DEBUG "raw_block_upload: buf=%x off=%d count=%d\n", block->vaddr, off, count);
 #endif
         if (device_read(block->handle, block->vaddr, count * SECTOR_SIZE, off) < 0) 
             return -1;
@@ -121,6 +121,9 @@ int raw_block_upload(raw_block_t *block)
         int chunk = count & 0xff;   /* 取256以下的数据数量 */
         unsigned char *p = block->vaddr;
         while (count > 0) {
+#if DEBUG_LOCAL == 1
+        printk(KERN_DEBUG "raw_block_upload: buf=%x off=%d count=%d\n", p, off, chunk);
+#endif
             if (device_read(block->handle, p, chunk * SECTOR_SIZE, off) < 0)
                 return -1;
             
@@ -245,53 +248,21 @@ int raw_block_write_off(raw_block_t *rb, void *buffer, unsigned long offset, uns
     }
     return 0;
 }
-typedef struct {
-    char *name;
-    unsigned long off;
-    unsigned long cnt;
-    unsigned long size;
-} raw_block_info_t;
 
-#define MAX_RBI_NR  2
-/* raw block info table
-需要添加新原始块时，就添加到这个表中即可。
-最大文件大小依据MAX_MEM_CACHE_SIZE而定
- */
-raw_block_info_t rbi_table[MAX_RBI_NR] = {
-    {"initsrv", 200, 200, 1024*100},
-    {"filesrv", 400, 400, 1024*200},
-};
+#define FILESRV_FILE_VADDR   0x80050000
+
+/* 构建文件服务块 */
+raw_block_t filesrv_rawblock;
 
 void init_raw_block()
 {
-    handle_t rbdev = device_open(RB_DEVICE, 0);
-    if (rbdev < 0)
-        panic("init_raw_block: open raw block device failed!\n");
-        
-    raw_block_info_t *rbi;
-    /* 构建原始块信息 */
-    int n;
-    for (n = 0; n < MAX_RBI_NR; n++) {
-        rbi = &rbi_table[n];
-        printk(KERN_INFO "raw block name:%s\n", rbi->name);
-        raw_block_t *rb = raw_block_alloc(rbdev, rbi->name);
-        if (rb == NULL)
-            panic(KERN_EMERG "raw block alloc for %s failed!\n", rbi->name);
-        if (raw_block_init(rb, rbi->off, rbi->cnt, rbi->size))
-            panic(KERN_EMERG "raw block init for %s failed!\n", rbi->name);
-        if (raw_block_upload(rb))
-            panic(KERN_EMERG "raw block upload for %s failed!\n", rbi->name);
-        #if 0
-        unsigned int *buf = kmalloc(SECTOR_SIZE);
-        if (buf == NULL)
-            panic(KERN_EMERG "kmalloc for buf faled!\n");
-        int read = raw_block_read(rb, buf, SECTOR_SIZE);
-        printk("read bytes:%d\n", read);
-        int i;
-        for (i = 0; i < SECTOR_SIZE / 4; i++) {
-            printk("%x ", buf[i]);
-        }
-        #endif
-    }
-
+    filesrv_rawblock.handle = -1;   /* no handle */
+    filesrv_rawblock.offset = 0;    /* no disk off */
+    filesrv_rawblock.count = 512;   /* 512 sector, 256 kb */   
+    filesrv_rawblock.vaddr = (unsigned char *) FILESRV_FILE_VADDR;   /* 512 sector, 256 kb */   
+    filesrv_rawblock.memsz = filesrv_rawblock.count * SECTOR_SIZE;   /* 512 sector, 256 kb */   
+    filesrv_rawblock.pos = 0;       /* 512 sector, 256 kb */   
+    memset(filesrv_rawblock.name, 0, RAW_BLOCK_NAME_LEN);
+    strcpy(filesrv_rawblock.name, RB_USERSRV);
+    list_add_tail(&filesrv_rawblock.list, &raw_block_list);
 }

@@ -9,6 +9,9 @@
 #include <stdint.h>
 #include <sys/list.h>
 
+#define ROOT_DISK_NAME  "disk0"
+#define ROOT_DIR_PATH  "/root"
+
 typedef struct {
     list_t list;                    /* 系统抽象的链表 */
     char *name;                     /* 文件系统抽象层名字 */

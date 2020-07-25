@@ -98,8 +98,8 @@ static pci_device_t *pci_alloc_device()
 {
 	int i;
 	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
-		if (pci_device_table[i].status == PCI_DEVICE_STATUS_INVALID) {
-			pci_device_table[i].status = PCI_DEVICE_STATUS_USING;
+		if (pci_device_table[i].flags == PCI_DEVICE_INVALID) {
+			pci_device_table[i].flags = PCI_DEVICE_USING;
 			return &pci_device_table[i];
 		}
 	}
@@ -111,7 +111,7 @@ static int pci_free_device(pci_device_t *device)
 	int i;
 	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
 		if (&pci_device_table[i] == device) {
-			device->status = PCI_DEVICE_STATUS_INVALID;
+			device->flags = PCI_DEVICE_INVALID;
 			return 0;
 		}
 	}
@@ -122,7 +122,7 @@ static int pci_free_device(pci_device_t *device)
 
 void pci_device_dump(pci_device_t *device)
 {
-	//printk("status:      %d\n", device->status);
+	//printk("status:      %d\n", device->flags);
     
     printk(KERN_DEBUG "pci_device_dump: vendor id:      0x%x\n", device->vendor_id);
     printk(KERN_DEBUG "pci_device_dump: device id:      0x%x\n", device->device_id);
@@ -159,22 +159,28 @@ static void pci_scan_device(unsigned char bus, unsigned char device, unsigned ch
     if (vendor_id == 0xffff) {
         return;
     }
+    
+	/*alloc a pci device to store info*/
+	pci_device_t *pci_dev = pci_alloc_device();
+	if(pci_dev == NULL){
+		return;
+	}
+
 	/*pci_read_config header type*/
     val = pci_read_config(bus, device, function, PCI_BIST_HEADER_TYPE_LATENCY_TIMER_CACHE_LINE);
     unsigned char header_type = ((val >> 16));
 	/*pci_read_config command*/
     val = pci_read_config(bus, device, function, PCI_STATUS_COMMAND);
+
+    pci_dev->command = val & 0xffff;
+    pci_dev->status = (val >> 16) & 0xffff;
+    
    // unsigned int command = val & 0xffff;
 	/*pci_read_config class code and revision id*/
     val = pci_read_config(bus, device, function, PCI_CLASS_CODE_REVISION_ID);
     unsigned int classcode = val >> 8;
     unsigned char revision_id = val & 0xff;
 	
-	/*alloc a pci device to store info*/
-	pci_device_t *pci_dev = pci_alloc_device();
-	if(pci_dev == NULL){
-		return;
-	}
 	/*init pci device*/
     pci_device_init(pci_dev, bus, device, function, vendor_id, device_id, classcode, revision_id, (header_type & 0x80));
 	
@@ -252,28 +258,69 @@ pci_device_t* pci_get_device(unsigned int vendor_id, unsigned int device_id)
 	
 	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
 		device = &pci_device_table[i];
-		if (device->vendor_id == vendor_id && device->device_id == device_id) {
+        
+		if (device->flags == PCI_DEVICE_USING &&
+            device->vendor_id == vendor_id && 
+            device->device_id == device_id) {
 			return device;
 		}
 	}
     return NULL;
 }
 
-pci_device_t* pci_get_device_by_class_code(unsigned int class, unsigned int sub_class, unsigned int progif)
+pci_device_t* pci_get_device_by_class_code(unsigned int class, unsigned int sub_class)
 {
 	int i;
 	pci_device_t* device;
 	
     /* 构建类代码 */
-    unsigned int class_code = ((class & 0xff) << 16) | ((sub_class & 0xff) << 8) | (progif & 0xff);
+    unsigned int class_code = ((class & 0xff) << 16) | ((sub_class & 0xff) << 8);
 
 	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
 		device = &pci_device_table[i];
-		if (device->class_code == class_code) {
+		if (device->flags == PCI_DEVICE_USING &&
+            (device->class_code & 0xffff00) == class_code) {
 			return device;
 		}
 	}
     return NULL;
+}
+
+/* Search for a pci device based on vendor and device ID */
+pci_device_t *pci_locate_device(unsigned short vendor, unsigned short device)
+{
+	if(vendor == 0xFFFF || device == 0xFFFF)
+		return NULL;
+
+    pci_device_t* tmp;
+	int i;
+	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
+		tmp = &pci_device_table[i];
+		if (tmp->flags == PCI_DEVICE_USING &&
+            tmp->vendor_id == vendor && 
+            tmp->device_id == device) {
+			return tmp;
+		}
+	}
+	return NULL;
+}
+
+pci_device_t *pci_locate_class(unsigned short class, unsigned short _subclass)
+{
+	if(class == 0xFFFF || _subclass == 0xFFFF)
+		return NULL;
+	pci_device_t *tmp;
+	/* 构建类代码 */
+    unsigned int class_code = ((class & 0xff) << 16) | ((_subclass & 0xff) << 8);
+    int i;
+	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
+		tmp = &pci_device_table[i];
+		if (tmp->flags == PCI_DEVICE_USING &&
+            (tmp->class_code & 0xffff00) == class_code) {
+			return tmp;
+		}
+	}
+	return NULL;
 }
 
 void pci_enable_bus_mastering(pci_device_t *device)
@@ -338,7 +385,7 @@ static unsigned int pic_get_device_connected()
 	pci_device_t *device;
 	for (i = 0; i < PCI_MAX_BAR; i++) {
 		device = &pci_device_table[i];
-        if (device->status != PCI_DEVICE_STATUS_USING) {
+        if (device->flags != PCI_DEVICE_USING) {
             break;
         }
     }
@@ -350,7 +397,7 @@ void init_pci()
     /*init pci device table*/
 	int i;
 	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
-		pci_device_table[i].status = PCI_DEVICE_STATUS_INVALID;
+		pci_device_table[i].flags = PCI_DEVICE_INVALID;
 	}
 
 	/*scan all pci buses*/

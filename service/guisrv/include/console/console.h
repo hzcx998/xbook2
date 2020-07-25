@@ -30,7 +30,6 @@
 #define CON_SCROLL_UP   -1
 #define CON_SCROLL_DOWN 1
 
-
 #define CON_RDPIPE_BUF_LEN  1024
 
 typedef struct {
@@ -39,8 +38,8 @@ typedef struct {
     size_t buflen;      /* 缓冲区长度：最大长度 */
     short width;    /* 窗口宽度 */
     short height;   /* 窗口高度 */
-    char columns;   /* 窗口列数 */
-    char rows;      /* 窗口行数 */
+    short columns;   /* 窗口列数 */
+    short rows;      /* 窗口行数 */
     char char_width;    /* 字符宽度 */
     char char_height;   /* 字符高度 */
     int columns_width;   /* 总列宽度 */

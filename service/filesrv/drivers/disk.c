@@ -3,8 +3,10 @@
 #include <core/filesrv.h>
 #include <drivers/disk.h>
 #include <sys/res.h>
-
 #include <ffconf.h>
+#include <string.h>
+#include <arch/atomic.h>
+#include <sys/res.h>
 #include <string.h>
 
 /* 探测设备，储存起来 */
@@ -44,6 +46,9 @@ int disk_probe_device(device_type_t type)
         /* 填信息并添加到链表 */
         disk->devent = devent;
         disk->handle = -1;
+        atomic_set(&disk->ref, 0);
+        /* 设置虚拟磁盘名字 */
+        sprintf(disk->virname, "disk%d", next_disk_solt);
         disk->solt = next_disk_solt++;
         list_add_tail(&disk->list, &disk_list_head);
         
@@ -61,8 +66,8 @@ void disk_info_print()
 {
     disk_info_t *disk;
     list_for_each_owner (disk, &disk_list_head, list) {
-        srvprint("probe device:%s type:%d\n",
-            disk->devent.de_name, disk->devent.de_type);
+        srvprint("probe device:%s -> vir:%s type:%d\n",
+            disk->devent.de_name, disk->virname, disk->devent.de_type);
     }
 }
 
@@ -74,14 +79,27 @@ int disk_res_find(char *name)
 {
     disk_info_t *disk;
     list_for_each_owner (disk, &disk_list_head, list) {
-        if (!strcmp(disk->devent.de_name, name)) {
+        if (!strcmp(disk->virname, name)) {
             return disk->solt;
         }
     }
     return -1;
 }
 
-
+/**
+ * disk_res_find - 查找磁盘
+ * 
+ */
+disk_info_t *disk_res_find_info(char *name)
+{
+    disk_info_t *disk;
+    list_for_each_owner (disk, &disk_list_head, list) {
+        if (!strcmp(disk->virname, name)) {
+            return disk;
+        }
+    }
+    return NULL;
+}
 
 static int __open(int solt)
 {
@@ -90,11 +108,14 @@ static int __open(int solt)
     disk_info_t *disk;
     list_for_each_owner (disk, &disk_list_head, list) {
         if (disk->solt == solt) {
-            disk->handle = res_open(disk->devent.de_name, RES_DEV, 0);
-            if (disk->handle < 0)
-                return -1;
-            /* 添加到插槽缓存 */
-            disk_solt_cache[solt] = disk->handle;
+            if (atomic_get(&disk->ref) == 0) {
+                disk->handle = res_open(disk->devent.de_name, RES_DEV, 0);
+                if (disk->handle < 0)
+                    return -1;
+                /* 添加到插槽缓存 */
+                disk_solt_cache[solt] = disk->handle;
+            }
+            atomic_inc(&disk->ref);
             return 0;
         }
     }
@@ -108,20 +129,25 @@ static int __close(int solt)
     disk_info_t *disk;
     list_for_each_owner (disk, &disk_list_head, list) {
         if (disk->solt == solt) {
-            
-            /* 关闭设备 */
-            if (res_close(disk->handle) != 0) 
-                return -1;
+            if (atomic_get(&disk->ref) == 1) {
+                /* 关闭设备 */
+                if (res_close(disk->handle) != 0) 
+                    return -1;
 
-            /* 从缓存中删除 */
-            int i;
-            for (i = 0; i < DISK_SOLT_NR; i++) {
-                if (disk_solt_cache[i] == disk->handle) {
-                    disk_solt_cache[i] = -1;
-                    break;
-                } 
+                /* 从缓存中删除 */
+                int i;
+                for (i = 0; i < DISK_SOLT_NR; i++) {
+                    if (disk_solt_cache[i] == disk->handle) {
+                        disk_solt_cache[i] = -1;
+                        break;
+                    } 
+                }
+                disk->handle = -1;
+            } else if (atomic_get(&disk->ref) == 0) {
+                srvprint("close device %d without open!\n", solt);
+                return -1;
             }
-            disk->handle = -1;
+            atomic_dec(&disk->ref);
             return 0;
         }
     }
