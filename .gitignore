@@ -85,4 +85,5 @@ user/tests/tests
 # dir
 recycle
 
+# need commit to git
 !scripts/fixdep.exe

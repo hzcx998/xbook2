@@ -64,7 +64,7 @@ KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 FILESRV_BIN	= $(ROM_DIR)/sbin/filesrv
 
 # 参数
-.PHONY: all kernel build debuild rom qemu qemudbg lib srv usr
+.PHONY: all kernel build debuild rom qemu qemudbg lib srv usr lib_c srv_c usr_c
 
 # 默认所有动作，编译内核后，把引导、内核、init服务、文件服务和rom文件写入磁盘
 all : kernel 

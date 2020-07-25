@@ -60,13 +60,14 @@ enum syscall_num {
     SYS_USLEEP,
     SYSCALL_NR,
 };
-unsigned long __syscall0(unsigned long num);
-unsigned long __syscall1(unsigned long num, unsigned long arg0);
-unsigned long __syscall2(unsigned long num, unsigned long arg0,
+
+extern unsigned long __syscall0(unsigned long num);
+extern unsigned long __syscall1(unsigned long num, unsigned long arg0);
+extern unsigned long __syscall2(unsigned long num, unsigned long arg0,
         unsigned long arg1);
-unsigned long __syscall3(unsigned long num, unsigned long arg0,
+extern unsigned long __syscall3(unsigned long num, unsigned long arg0,
         unsigned long arg1, unsigned long arg2);
-unsigned long __syscall4(unsigned long num, unsigned long arg0,
+extern unsigned long __syscall4(unsigned long num, unsigned long arg0,
         unsigned long arg1, unsigned long arg2, unsigned long arg3);
 
 /* 进行宏定义 */

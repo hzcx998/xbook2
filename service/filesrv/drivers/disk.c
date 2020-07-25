@@ -3,8 +3,10 @@
 #include <core/filesrv.h>
 #include <drivers/disk.h>
 #include <sys/res.h>
-
 #include <ffconf.h>
+#include <string.h>
+#include <arch/atomic.h>
+#include <sys/res.h>
 #include <string.h>
 
 /* 探测设备，储存起来 */

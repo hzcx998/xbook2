@@ -567,6 +567,7 @@ int con_loop()
             //printf("[%s] recv data %d %x\n", SRV_NAME, rd, *buf);
             buf[CON_RDPIPE_BUF_LEN - 1] = 0;
             screen.outs(buf);
+            printf(buf);
         }
         
     }
