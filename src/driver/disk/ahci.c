@@ -1101,10 +1101,10 @@ iostatus_t ahci_write(device_object_t *device, io_request_t *ioreq)
  */
 static int ahci_handler(unsigned long irq, unsigned long data)
 {
-    pr_dbg("ahci: interrupt occur!\n");
     int i;
 	for(i=0;i<32;i++) {
 		if(hba_mem->interrupt_status & (1 << i)) {
+            pr_dbg("ahci: interrupt %d occur!\n", i);
 			hba_mem->ports[i].interrupt_status = ~0;
 			hba_mem->interrupt_status = (1 << i);
 			ahci_flush_commands((struct hba_port *)&hba_mem->ports[i]);

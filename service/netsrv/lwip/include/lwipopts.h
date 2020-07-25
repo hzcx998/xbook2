@@ -42,8 +42,6 @@
 
 #define TCP_SND_BUF             2048
 
-//#define MEMP_MEM_MALLOC 1
-
 /* use os's timeval */
 #define LWIP_TIMEVAL_PRIVATE 0
 

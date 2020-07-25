@@ -42,11 +42,37 @@ PTHREAD线程库
 
 开发环境准备（Windows/Linux）：  
 ```
+整体思路：
 1. 用git从仓库克隆源码或者直接下载源码。
 2. 配置最基础的工具集：gcc, nasm, ld, dd, rm, objdump, objcopy。
 3. 配置虚拟机：qemu（默认），bochs，virtual box， vmware任选其一。
 5. 进入xbook2的根目录目录，打开终端或者命令行，输入命令make build先构建环境，然后make run编译运行。
 ```
+
+## Windows环境搭建
+```
+1.下载我提取的工具包：http://www.book-os.org/tools/BuildTools-v5.rar
+2.下载Mingw，官网下载或进QQ群下载：http://www.mingw.org/
+3.解压工具包和Mingw后配置环境变量到系统环境变量Path里面
+4.修改源码tools/fatfs/Makefile的Windows中gcc和头文件环境的路径为你Mingw的路径。
+5.下载qemu最新版：https://www.qemu.org/ 下载后安装，配置安装目录环境变量到系统环境变量Path里面
+    或者下载我提取的版本：http://www.book-os.org/tools/Qemu-i386.rar
+    下载后配置解压目录环境变量到系统环境变量Path里面
+```
+
+## Linux环境搭建
+```
+1.安装gcc, nasm: 
+    Ubuntu/Kali Linux: apt-get install gcc nasm
+    Red hot/Fedora/Centos: yum install gcc nasm
+    
+2.安装qemu虚拟机：
+    Ubuntu/Kali Linux: aapt-get install qemu*
+    Red hot/Fedora/Centos: yum install qemu*
+    
+```
+
+
 
 编译使用命令：
 ```

@@ -45,7 +45,7 @@ int init_srvcore()
 /* 文件映射表 */
 struct file_map file_map_table[] = {
     {PATH_GUISRV, 1, NULL},
-    {PATH_NETSRV, 0, NULL},
+    {PATH_NETSRV, 1, NULL},
     {"/bin/tests", 0, NULL},
 };
 

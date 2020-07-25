@@ -112,15 +112,12 @@ static u32_t cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 
 static void *__malloc(size_t size)
 {
-    void *addr = sbrk(0);
-    if (sbrk(size) == NULL)
-        return NULL;
-    return addr;
+    return malloc(size);
 }
 
 static void __free(void *ptr)
 {
-    
+    free(ptr);
 }
 
 /*-----------------------------------------------------------------------------------*/

@@ -64,7 +64,7 @@ KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 FILESRV_BIN	= $(ROM_DIR)/sbin/filesrv
 
 # 参数
-.PHONY: all kernel build debuild rom qemu qemudbg lib srv usr lib_c srv_c usr_c
+.PHONY: all kernel build debuild rom qemu qemudbg lib srv usr
 
 # 默认所有动作，编译内核后，把引导、内核、init服务、文件服务和rom文件写入磁盘
 all : kernel 
@@ -172,6 +172,7 @@ QEMU_ARGUMENT = -m 256M \
 		-device ide-drive,drive=disk0,bus=ahci.0 \
 		-device ide-drive,drive=disk1,bus=ahci.1 \
 		-boot a \
+		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no \
 		-serial stdio
 
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \

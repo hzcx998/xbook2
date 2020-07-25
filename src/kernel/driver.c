@@ -716,8 +716,7 @@ iostatus_t io_device_queue_append(device_queue_t *queue, unsigned char *buf, int
         spin_unlock_irqrestore(&queue->lock, irqflags);
         return IO_FAILED;
     }
-    printk("%s: <%x %x>\n", __func__,&entry->list, &queue->list_head);
-    
+
     list_add_tail(&entry->list, &queue->list_head);
     queue->entry_count++;
     entry->buf = (unsigned char *) (entry + 1);
