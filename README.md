@@ -67,7 +67,7 @@ PTHREAD线程库
     Red hot/Fedora/Centos: yum install gcc nasm
     
 2.安装qemu虚拟机：
-    Ubuntu/Kali Linux: aapt-get install qemu*
+    Ubuntu/Kali Linux: apt-get install qemu*
     Red hot/Fedora/Centos: yum install qemu*
     
 ```
