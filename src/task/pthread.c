@@ -131,7 +131,8 @@ task_t *pthread_start(task_func_t *func, void *arg,
     task->vmm = parent->vmm;    /*共享内存 */
     task->res = parent->res;    /* 共享资源 */
     task->triggers = parent->triggers; /* 共享触发器 */
-
+    task->fileman = parent->fileman; /* 共享文件管理 */
+    
     /* 中断栈框 */
     proc_make_trap_frame(task);
 

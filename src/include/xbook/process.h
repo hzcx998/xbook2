@@ -20,6 +20,9 @@ int proc_release(task_t *task);
 int proc_trigger_init(task_t *task);
 int proc_pthread_init(task_t *task);
 
+int proc_res_init(task_t *task);
+int proc_res_exit(task_t *task);
+
 int thread_release_resource(task_t *task);
 
 int sys_fork();

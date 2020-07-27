@@ -5,7 +5,7 @@
 #include <xbook/softirq.h>
 #include <xbook/vine.h>
 #include <xbook/driver.h>
-#include <vsprintf.h>
+#include <string.h>
 #include <xbook/clock.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>

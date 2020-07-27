@@ -13,6 +13,7 @@
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <sys/pthread.h>
+#include <fsal/fsal.h>
 
 #define DEBUG_LOCAL 0
 
@@ -362,6 +363,7 @@ int proc_res_init(task_t *task)
     resource_init(task->res);
     return 0;
 }
+
 int proc_res_exit(task_t *task)
 {
     if (task->res == NULL)
@@ -485,6 +487,15 @@ task_t *process_create(char *name, char **argv)
     if (proc_res_init(task)) {
         proc_trigger_exit(task);
         proc_vmm_exit(task);
+        kfree(task);
+        return NULL;
+    }
+
+    /* 创建文件描述表 */
+    if (fs_fd_init(task) < 0) {
+        proc_trigger_exit(task);
+        proc_vmm_exit(task);
+        proc_res_exit(task);
         kfree(task);
         return NULL;
     }

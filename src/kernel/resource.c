@@ -33,6 +33,8 @@ res_item_t *res_to_item(int res)
 int install_res(unsigned long flags, unsigned long handle)
 {
     resource_t *res = current_task->res;
+    if (!res)
+        return -1;
     int i;
     for (i = 0; i < RES_NR; i++) {
         if (!res->table[i].flags)
@@ -44,6 +46,9 @@ int install_res(unsigned long flags, unsigned long handle)
     }
     res->table[i].flags = flags;
     res->table[i].handle = handle;
+    #if DEBUG_LOCAL == 1
+        printk(KERN_DEBUG "__getres_device: install ok!\n");
+    #endif
     return i;
 }
 
@@ -60,6 +65,8 @@ int uninstall_res(int idx)
         return -1;
     }
     resource_t *res = current_task->res;
+    if (!res)
+        return -1;
     res_item_t *item = &res->table[idx];
     
     item->flags = 0;
@@ -88,6 +95,7 @@ int __getres_device(char *name, unsigned long resflg)
         device_close(handle);
         return -1;
     }
+    
     return res;
 }
 
@@ -525,10 +533,6 @@ int sys_ctlres(int res, unsigned int cmd, unsigned long arg)
  */
 void *sys_mmap(int res, size_t length, int flags)
 {
-#if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "%s: res index %d cmd=%d arg=%x.\n",
-        __func__, res, cmd, arg);
-#endif  
     res_item_t *item = res_to_item(res);
     if (item == NULL)
         return NULL;

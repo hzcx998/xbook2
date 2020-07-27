@@ -18,6 +18,12 @@ typedef long time_t;
 typedef int clockid_t;
 typedef unsigned long addr_t;
 
+typedef unsigned long ino_t;
+typedef unsigned long nlink_t;
+typedef unsigned int uid_t;
+typedef unsigned int gid_t;
+typedef unsigned long useconds_t;
+
 /* 在线程中作为形参 */
 typedef void task_func_t(void *);
 

@@ -14,6 +14,7 @@
 #include <xbook/driver.h>
 #include <xbook/ktime.h>
 #include <xbook/srvcall.h>
+#include <xbook/fs.h>
 
 int kernel_main(void)
 {
@@ -50,7 +51,11 @@ int kernel_main(void)
     /* init raw block */
     init_raw_block();
     
-    //spin("test");
+
+    /* init fs */
+    init_fs();
+    
+    spin("test");
     start_user();
 
     return 0;    

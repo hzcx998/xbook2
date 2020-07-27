@@ -1,6 +1,5 @@
 #include <xbook/debug.h>
 #include <stdarg.h>
-#include <vsprintf.h>
 #include <string.h>
 #include <xbook/spinlock.h>
 #include <arch/interrupt.h>

@@ -32,7 +32,7 @@ SETUP_ADDR EQU 0x91000
 ;we read kernel.elf from disk sector 100 
 KERNEL_OFF EQU 100	
 
-;----we assume that kernel max is 256 kb (0x40000 byte)----
+;----we assume that kernel max is 512 kb (0x80000 byte)----
 ; 内核文件的物理内存范围是0x10000~0x50000
 
 ;we read kernel.elf to memory 0x10000
@@ -42,20 +42,6 @@ KERNEL_SEG EQU 0x1000
 ;kernel.elf phy addr is KERNEL_SEG*16, 
 ;0x1000*16 = 0x10000
 KERNEL_PHY_ADDR EQU KERNEL_SEG*16
-
-;we read filesrv from disk sector 700 
-FILESRV_OFF EQU 700	
-
-;----we assume that filesrv max is 256 kb (0x40000 byte)----
-; 内核文件的物理内存范围是0x50000~0x90000
-
-;we read filesrv to memory 0x50000
-;so the segment is 0x5000, we are in real mode now.
-FILESRV_SEG EQU 0x5000
-
-;filesrv phy addr is FILESRV_SEG*16, 
-;0x5000*16 = 0x50000
-FILESRV_PHY_ADDR EQU FILESRV_SEG*16
 
 ;we will read kernel from kerne.elf to 1M after we jmp to protect mode,
 ;so this is our kernel finally addr

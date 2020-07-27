@@ -19,6 +19,8 @@
 #include <xbook/vmm.h>
 #include <xbook/waitque.h>
 #include <xbook/rawblock.h>
+#include <xbook/process.h>
+#include <fsal/fsal.h>
 #include <math.h>
 
 static pid_t next_pid;
@@ -115,6 +117,8 @@ void task_init(task_t *task, char *name, int priority)
     /* 用户线程 */
     task->pthread = NULL;
 
+    task->fileman = NULL;
+
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;
 }
@@ -175,6 +179,19 @@ task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg)
     // 初始化线程
     task_init(task, name, priority);
     
+    /* 创建资源 */
+    if (proc_res_init(task) < 0) {
+        kfree(task);
+        return NULL;
+    }
+
+    /* 创建文件描述表 */
+    if (fs_fd_init(task) < 0) {
+        proc_res_exit(task);
+        kfree(task);
+        return NULL;
+    }
+
     //printk("alloc a task at %x\n", task);
     // 创建一个线程
     make_task_stack(task, func, arg);
@@ -306,7 +323,15 @@ static void create_kmain_thread()
 
     /* 最开始设置为最佳优先级，这样才可以往后面运行。直到运行到最后，就变成IDLE优先级 */
     task_init(task_kmain, "kmain", TASK_PRIO_BEST);
+    /* 创建资源 */
+    if (proc_res_init(task_kmain) < 0) {
+        panic("init kmain res failed!\n");
+    }
 
+    if (fs_fd_init(task_kmain) < 0) {
+        panic("init kmain fs fd failed!\n");
+    }
+    
     /* 设置为运行中 */
     task_kmain->state = TASK_RUNNING;
     task_global_list_add(task_kmain); /* 添加到全局任务 */

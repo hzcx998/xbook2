@@ -419,7 +419,10 @@ void kthread_exit(int status)
 
     /* 释放内核资源 */
     thread_release_resource(cur);
-
+    
+    /* 释放资源 */
+    proc_res_exit(cur);
+    
     /* 内核线程没有实际的父进程，因此把自己过继给init进程 */
     cur->parent_pid = INIT_PROC_PID;
 

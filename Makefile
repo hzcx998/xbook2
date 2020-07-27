@@ -42,10 +42,7 @@ SETUP_OFF 	= 10
 SETUP_CNTS 	= 90
 
 KERNEL_OFF 	= 100
-KERNEL_CNTS	= 512		# assume 256kb 
-
-FILESRV_OFF 	= 700
-FILESRV_CNTS	= 512		# assume 256kb 
+KERNEL_CNTS	= 1024		# assume 512kb 
 
 # arch dir
 
@@ -60,9 +57,6 @@ SETUP_BIN 	= $(ARCH)/boot/setup.bin
 # kernel file
 KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 
-# service file
-FILESRV_BIN	= $(ROM_DIR)/sbin/filesrv
-
 # 参数
 .PHONY: all kernel build debuild rom qemu qemudbg lib srv usr
 
@@ -72,10 +66,10 @@ all : kernel
 	$(DD) if=$(LOADER_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
 	$(DD) if=$(SETUP_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
 	$(DD) if=$(KERNEL_ELF) of=$(FLOPPYA_IMG) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
-	$(DD) if=$(FILESRV_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(FILESRV_OFF) count=$(FILESRV_CNTS) conv=notrunc
 	$(FATFS_BIN) $(HDA_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
 
 #$(DD) if=$(INITSRV_BIN) of=$(HDA_IMG) bs=512 seek=200 count=200 conv=notrunc
+#$(DD) if=$(FILESRV_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(FILESRV_OFF) count=$(FILESRV_CNTS) conv=notrunc
 
 
 # run启动虚拟机
