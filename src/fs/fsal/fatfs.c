@@ -280,6 +280,7 @@ static int __close(int idx)
     fres = f_close(&fp->file.fatfs);
     if (fres != FR_OK) {
         fp->flags = flags; /* 恢复文件信息 */
+        pr_err("[fatfs]: close file failed!\n");
         return -1;
     }
     return 0;
@@ -730,7 +731,8 @@ static int __access(const char *path, int mode)
     if (mode == F_OK) {
         FRESULT fr;
         FIL fil;
-        fr = f_open(&fil, path, mode);
+        fr = f_open(&fil, path,  FA_OPEN_EXISTING | FA_READ);
+        //printk(KERN_DEBUG "[fatfs]: %s: path %s fr %d\n", __func__, path, fr);
         if (fr != FR_OK) {
             return -1;
         }

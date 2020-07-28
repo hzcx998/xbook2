@@ -730,7 +730,6 @@ int sys_getver(char *buf, int len)
     return 0;
 }
 
-
 void dump_task(task_t *task)
 {
     printk("----Task----\n");
@@ -738,7 +737,7 @@ void dump_task(task_t *task)
     //printk("vmm->vm_frame:%x priority:%d ticks:%d elapsed ticks:%d\n", task->vmm->page_storage, task->priority, task->ticks, task->elapsed_ticks);
     printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
-static char *init_argv[2] = {RB_USERSRV, 0};
+static char *init_argv[2] = {"/sbin/init", 0};
 
 /**
  * start_user - 开启用户进程
@@ -749,9 +748,9 @@ void start_user()
 {
     printk(KERN_DEBUG "[task]: start user process.\n");
     /* 加载init进程 */
-    task_t *proc = process_create(init_argv[0], init_argv);
+    task_t *proc = start_process(init_argv[0], init_argv);
     if (proc == NULL)
-        panic("kernel start initsrv failed! please check initsrv!\n");
+        panic("kernel start process failed! please check initsrv!\n");
     
     /* 降级期间不允许产生中断 */
 	unsigned long flags;

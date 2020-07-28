@@ -103,9 +103,10 @@ static int __open(int solt)
     list_for_each_owner (disk, &disk_list_head, list) {
         if (disk->solt == solt) {
             if (atomic_get(&disk->ref) == 0) {
-                disk->handle = sys_getres(disk->devent.de_name, RES_DEV, 0);
+                disk->handle = device_open(disk->devent.de_name, 0);
                 if (disk->handle < 0)
                     return -1;
+                printk("[diskman]: %s: get disk handle %d\n", __func__, disk->handle);
                 /* 添加到插槽缓存 */
                 disk_solt_cache[solt] = disk->handle;
             }
@@ -127,7 +128,7 @@ static int __close(int solt)
         if (disk->solt == solt) {
             if (atomic_get(&disk->ref) == 1) {
                 /* 关闭设备 */
-                if (sys_putres(disk->handle) != 0) 
+                if (device_close(disk->handle) != 0) 
                     return -1;
 
                 /* 从缓存中删除 */
@@ -155,7 +156,7 @@ static int __read(int solt, off_t off, void *buffer, size_t size)
 {
     if (IS_BAD_SOLT(solt))
         return -1;
-    if (sys_readres(SOLT_TO_HANDLE(solt), off, buffer, size) < 0)
+    if (device_read(SOLT_TO_HANDLE(solt), buffer, size, off) < 0)
         return -1;
     return 0;
 }
@@ -164,7 +165,7 @@ static int __write(int solt, off_t off, void *buffer, size_t size)
 {
     if (IS_BAD_SOLT(solt))
         return -1;
-    if (sys_writeres(SOLT_TO_HANDLE(solt), off, buffer, size) < 0)
+    if (device_write(SOLT_TO_HANDLE(solt), buffer, size, off) < 0)
         return -1;
     return 0;
 }
@@ -173,7 +174,7 @@ static int __ioctl(int solt, unsigned int cmd, unsigned long arg)
 {
     if (IS_BAD_SOLT(solt))
         return -1;
-    if (sys_ctlres(SOLT_TO_HANDLE(solt), cmd, arg) < 0)
+    if (device_devctl(SOLT_TO_HANDLE(solt), cmd, arg) < 0)
         return -1;
     return 0;
 }

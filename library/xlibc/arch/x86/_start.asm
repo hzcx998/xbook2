@@ -10,14 +10,17 @@ extern main
 global _start
 _start:
     ; save arg
+    push edx
 	push ebx
 	push ecx
 	call _enter_preload
     ;restore
     pop ecx
     pop ebx
+    pop edx
 
     ; put arg on stack
+    push edx
     push ebx
     push ecx
     ; call main func

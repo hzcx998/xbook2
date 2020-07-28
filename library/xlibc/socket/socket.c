@@ -9,7 +9,7 @@
 #include <srv/netsrv.h>
 #include <arpa/inet.h>
 #include <sys/filedes.h>
-
+#if 0
 static int __close(int sockfd)
 {
     DEFINE_SRVARG(srvarg);
@@ -766,3 +766,5 @@ __ipaddr_aton(const char *cp, ip_addr_t *addr)
   }
   return (1);
 }
+
+#endif

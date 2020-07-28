@@ -324,8 +324,11 @@ int sys_readres(int res, off_t off, void *buffer, size_t count)
         res, buffer, count);
     #endif   
     res_item_t *item = res_to_item(res);
-    if (item == NULL)
+    if (item == NULL) {
+        printk(KERN_ERR "sys_readres: res item null!\n");
         return -1;
+    }
+        
     int retval = 0;
     switch (item->flags & RES_MASTER_MASK)
     {
@@ -340,6 +343,7 @@ int sys_readres(int res, off_t off, void *buffer, size_t count)
         retval = __readres_ipc(item, off, buffer, count);
         break;
     default:
+        printk(KERN_ERR "sys_readres: res %d unknown flags!\n", item->handle);
         return -1;  /* error type */
     }
     #if DEBUG_LOCAL == 2
@@ -365,8 +369,11 @@ int sys_writeres(int res, off_t off, void *buffer, size_t count)
         res, buffer, count);
     #endif    
     res_item_t *item = res_to_item(res);
-    if (item == NULL)
+    if (item == NULL) {
+        printk(KERN_ERR "sys_writeres: res item null!\n");
         return -1;
+    }
+        
     #if DEBUG_LOCAL == 2
     printk(KERN_DEBUG "sys_writeres: devno=%x.\n", item->handle);
     #endif    
@@ -383,6 +390,7 @@ int sys_writeres(int res, off_t off, void *buffer, size_t count)
         retval = __writeres_ipc(item, off, buffer, count);
         break;
     default:
+        printk(KERN_ERR "sys_writeres: res %d unknown flags!\n", item->handle);
         return -1;  /* error type */
     }
     #if DEBUG_LOCAL == 2

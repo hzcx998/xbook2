@@ -5,6 +5,8 @@
 #include <xbook/schedule.h>
 #include <xbook/process.h>
 #include <xbook/vmspace.h>
+#include <fsal/fsal.h>
+
 #include <string.h>
 
 #define DEBUG_LOCAL 0
@@ -137,6 +139,16 @@ static int copy_res(task_t *child, task_t *parent)
     return 0;
 }
 
+static int copy_file(task_t *child, task_t *parent)
+{
+    if (fs_fd_init(child) < 0)
+        return -1;
+
+    /* 复制文件描述符 */
+    return fs_fd_copy(parent, child);
+}
+
+
 /**
  * copy_pthread_desc - 复制线程描述结构
  * 
@@ -184,6 +196,9 @@ static int copy_task(task_t *child, task_t *parent)
     /* 6.复制线程描述 */
     if (copy_pthread_desc(child, parent))
         return -1;
+
+    if (copy_file(child, parent) < 0)
+        return -1; 
 
     fork_bulid_child_stack(child);
     // printk(KERN_DEBUG "child heap is [%x,%x]\n", child->vmm->heap_start, child->vmm->heap_end);

@@ -113,7 +113,7 @@ guisrv_func_t guisrv_call_table[] = {
 struct file_map {
     char *path;     /* 路径 */
     char execute;   /* 是否需要执行 */
-    const char **argv;
+    char *const *argv;
 };
 
 struct file_map file_map_table[] = {

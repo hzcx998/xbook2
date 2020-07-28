@@ -120,6 +120,6 @@ int fs_fd_exit(task_t *task);
 int local_fd_install(int global_fd);
 int local_fd_uninstall(int local_fd);
 int fd_local_to_global(int local_fd);
-
+int fs_fd_copy(task_t *src, task_t *dest);
 
 #endif  /* __FILESRV_FSAL_H__ */

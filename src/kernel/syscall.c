@@ -8,6 +8,11 @@
 #include <xbook/clock.h>
 #include <xbook/waitque.h>
 #include <xbook/srvcall.h>
+#include <xbook/fs.h>
+#include <xbook/driver.h>
+#include <sys/stat.h>
+#include <dirent.h>
+
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -17,8 +22,6 @@ void init_syscall()
     /* 进程管理 */
     syscall_table[SYS_EXIT] = sys_exit;
     syscall_table[SYS_FORK] = sys_fork;
-    syscall_table[SYS_EXECR] = sys_exec_raw;
-    syscall_table[SYS_EXECF] = sys_exec_file;
     syscall_table[SYS_WAITPID] = sys_waitpid;
     syscall_table[SYS_GETPID] = sys_get_pid;
     syscall_table[SYS_GETPPID] = sys_get_ppid;
@@ -80,4 +83,32 @@ void init_syscall()
     syscall_table[SYS_GETVER] = sys_getver;
     syscall_table[SYS_MSTATE] = sys_mstate;    
     syscall_table[SYS_USLEEP] = sys_usleep;    
+    /* 文件系统 */
+    syscall_table[SYS_OPEN] = sys_open;
+    syscall_table[SYS_CLOSE] = sys_close;
+    syscall_table[SYS_READ] = sys_read;
+    syscall_table[SYS_WRITE] = sys_write;
+    syscall_table[SYS_LSEEK] = sys_lseek;
+    syscall_table[SYS_ACCESS] = sys_access;
+    syscall_table[SYS_UNLINK] = sys_unlink;
+    syscall_table[SYS_FTRUNCATE] = sys_ftruncate;
+    syscall_table[SYS_FSYNC] = sys_fsync;
+    syscall_table[SYS_IOCTL] = sys_ioctl;
+    syscall_table[SYS_FCNTL] = sys_fcntl;
+    syscall_table[SYS_TELL] = sys_tell;
+    syscall_table[SYS_MKDIR] = sys_mkdir;
+    syscall_table[SYS_RMDIR] = sys_rmdir;
+    syscall_table[SYS_RENAME] = sys_rename;
+    syscall_table[SYS_CHDIR] = sys_chdir;
+    syscall_table[SYS_GETCWD] = sys_getcwd;
+    syscall_table[SYS_EXECVE] = sys_execve;
+    syscall_table[SYS_STAT] = sys_stat;
+    syscall_table[SYS_FSTAT] = sys_fstat;
+    syscall_table[SYS_CHMOD] = sys_chmod;
+    syscall_table[SYS_FCHMOD] = sys_fchmod;
+    syscall_table[SYS_OPENDIR] = sys_opendir;
+    syscall_table[SYS_CLOSEDIR] = sys_closedir;
+    syscall_table[SYS_READDIR] = sys_readdir;
+    syscall_table[SYS_REWINDDIR] = sys_rewinddir;
+
 }

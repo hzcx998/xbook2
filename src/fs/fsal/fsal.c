@@ -300,6 +300,25 @@ int fs_fd_exit(task_t *task)
     return 0;
 }
 
+int fs_fd_copy(task_t *src, task_t *dest)
+{
+    if (!src->fileman || !dest->fileman) {
+        return -1;
+    }
+    printk("[fs]: fd copy from %s to %s\n", src->name, dest->name);
+
+    /* 复制工作目录 */
+    memcpy(dest->fileman->cwd, src->fileman->cwd, MAX_PATH);
+    int i;
+    for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
+        if (src->fileman->fds[i] >= 0) {
+            dest->fileman->fds[i] = src->fileman->fds[i]; 
+            printk("[fs]: fds[%d]=%d\n", i, src->fileman->fds[i]);
+        }
+    }
+    return 0;
+}
+
 int fd_alloc()
 {
     task_t *cur = current_task;
@@ -335,7 +354,7 @@ int local_fd_install(int global_fd)
         return -1;
     task_t *cur = current_task;
     cur->fileman->fds[fd] = global_fd;
-    return 0;
+    return fd;
 }
 
 int local_fd_uninstall(int local_fd)

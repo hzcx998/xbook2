@@ -33,7 +33,6 @@ fatfs文件系统磁盘映射表
 4, handle
 */
 
-
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
 /*-----------------------------------------------------------------------*/
@@ -94,8 +93,6 @@ DSTATUS disk_initialize (
     return stat;
 }
 
-
-
 /*-----------------------------------------------------------------------*/
 /* Read Sector(s)                                                        */
 /*-----------------------------------------------------------------------*/
@@ -113,7 +110,9 @@ DRESULT disk_read (
 	DRESULT res = RES_OK;
     if (drv_disk.read(fatfs_drv_map[pdrv], sector, (void *) buff, count * FF_MIN_SS) < 0) {
         res = RES_ERROR;
+
         printk("%s: read disk solt %d failed!\n", __func__, fatfs_drv_map[pdrv]);
+        printk("%s: sector %d buf %x count %d\n", __func__, sector, buff, count);
     }
     return res;
 }

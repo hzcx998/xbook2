@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 #ifndef BUFSIZ
-#define BUFSIZ		(4096)
+#define BUFSIZ		(4096*2)
 #endif
 
 #ifndef L_tmpnam

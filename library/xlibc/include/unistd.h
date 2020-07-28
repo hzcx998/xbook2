@@ -91,10 +91,14 @@ int chdir(const char *path);
 int getcwd(char *buf, int bufsz);
 int chdrive(const char *path);
 
-int execv(const char *path, const char *argv[]);
-int execl(const char *path, const char *arg, ...);
-
+int execve(const char *pathname, char *const argv[], char *const envp[]);
+int execle(const char *pathname, char *const envp[], const char *arg, ...);
+int execv(const char *pathname, char *const argv[]);
+int execl(const char *pathname, const char *arg, ...);
+int execvp(const char *filename, char *const argv[]);
+int execlp(const char *filename, const char *arg, ...);
 int usleep(useconds_t usec);
 
+#define environ _environ
 
 #endif  /* _LIB_UNISTD_H */

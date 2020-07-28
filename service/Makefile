@@ -11,6 +11,6 @@ AS			:=	nasm
 
 export AS
 
-MODULE      +=  filesrv
+MODULE      +=  init
 MODULE      +=  netsrv
 MODULE      +=  guisrv

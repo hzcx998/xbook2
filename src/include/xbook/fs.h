@@ -32,5 +32,6 @@ int sys_rmdir(const char *path);
 int sys_rename(const char *source, const char *target);
 int sys_chdir(const char *path);
 int sys_getcwd(char *buf, int bufsz);
+long sys_tell(int fd);
 
 #endif /* _XBOOK_FS_H */

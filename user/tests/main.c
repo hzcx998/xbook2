@@ -108,6 +108,34 @@ int  screen_output_pixel(int x, int y, uint32_t  color)
 #if 1
 int main(int argc, char *argv[])
 {
+    #if 0
+    int fd;
+    fd = open("/res/pic2.png", O_RDONLY, 0);
+    printf("open fd %d\n", fd);
+    fd = open("/res/pic2.png", O_RDONLY, 0);
+    printf("open fd %d\n", fd);
+    fd = open("/res/pic2.png", O_RDONLY, 0);
+    printf("open fd %d\n", fd);
+    
+
+    FILE *fp = fopen("/res/pic2.png", "r");
+    if (fp == NULL) {
+        printf("file open failed!\n");
+        return -1;
+    }
+    printf("open done fp %x fd %d!\n", fp, fp->fd);
+    
+    char buf[512];
+    if (fread(buf, 1, 512, fp) < 0) {
+        printf("file read failed!\n");
+        return -1;
+    }
+    printf("test done!\n");
+    
+    fclose(fp);
+    return 0;
+    #endif
+
     if (argc < 3) {
         printf("please input file type 'jpg' or 'png' + file.\n");
         return -1;

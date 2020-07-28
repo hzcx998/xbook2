@@ -26,6 +26,12 @@ int init_fs()
     int fd = sys_open("/root/kfs", O_CREAT | O_RDWR, 0);
     if (fd < 0)
         return -1;
+    
+    int fd1 = sys_open("/root/kfs", O_CREAT | O_RDWR, 0);
+    if (fd1 < 0)
+        return -1;
+    printk("fd %d fd1 %d.\n", fd, fd1);
+
     int wr = sys_write(fd, "hello", 5);
     printk("write file:%d %d bytes.\n", fd, wr);
     sys_close(fd);
@@ -37,6 +43,9 @@ int init_fs()
     printk("read file:%d %d bytes.\n", fd, rd);
     sys_close(fd);
     printk("data:%s\n", buf);
+
+
+
 
     dir_t dir = sys_opendir("/");
     if (dir < 0) {

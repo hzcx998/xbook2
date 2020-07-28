@@ -37,4 +37,7 @@ int init_fsal_dir_table();
 fsal_dir_t *fsal_dir_alloc();
 int fsal_dir_free(fsal_dir_t *dir);
 
+void build_path(const char *path, char *out_path);
+void wash_path(char *old_path, char *new_path);
+
 #endif  /* __FILESRV_FSAL_DIR_H__ */

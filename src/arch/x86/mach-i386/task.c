@@ -5,6 +5,7 @@
 #include <xbook/trigger.h>
 #include <xbook/vmspace.h>
 #include <xbook/process.h>
+#include <xbook/debug.h>
 #include <string.h>
 
 void __user_trap_frame_init(trap_frame_t *frame)
@@ -234,7 +235,7 @@ int __fork_bulid_child_stack(task_t *child)
  * __proc_stack_init - 初始化用户栈和参数
  * 
  */
-int __proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
+int __proc_stack_init(task_t *task, trap_frame_t *frame, char **argv, char **envp)
 {
     vmm_t *vmm = task->vmm;
 
@@ -249,13 +250,20 @@ int __proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
     memset((void *) vmm->stack_start, 0, vmm->stack_end - vmm->stack_start);
     
     int argc = 0;
-    char **new_argv = NULL;
+    char **new_envp = NULL;
     unsigned long arg_bottom = 0;
-    argc = proc_build_arg(vmm->stack_end, &arg_bottom, argv, &new_argv);
+    argc = proc_build_arg(vmm->stack_end, &arg_bottom, envp, &new_envp);
+    
+    char **new_argv = NULL;
+    argc = proc_build_arg(arg_bottom, &arg_bottom, argv, &new_argv);
+
     /* 记录参数个数 */
     frame->ecx = argc;
-    /* 记录参数个数 */
+    /* 记录参数地址 */
     frame->ebx = (unsigned int) new_argv;
+    /* 记录环境地址 */
+    frame->edx = (unsigned int) new_envp;
+
      /* 记录栈顶 */
     if (!arg_bottom) {  /* 解析参数出错 */
         vmspace_unmmap(vmm->stack_start, vmm->stack_end - vmm->stack_start);

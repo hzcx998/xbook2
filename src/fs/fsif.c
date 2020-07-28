@@ -1,6 +1,7 @@
 #include <fsal/fsal.h>
 #include <xbook/fs.h>
 #include <xbook/task.h>
+#include <xbook/debug.h>
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
@@ -9,6 +10,7 @@
 
 int sys_open(const char *path, int flags, int mode)
 {
+    printk("[fs]: %s: path=%s flags=%x\n", __func__, path, flags);
     int gfd = fsif.open((void *)path, flags);
     if (gfd < 0)
         return -1;
@@ -27,6 +29,7 @@ int sys_close(int fd)
 
 int sys_read(int fd, void *buffer, size_t nbytes)
 {
+    printk("[fs]: %s: fd=%d buf=%x bytes=%d\n", __func__, fd, buffer, nbytes);
     int gfd = fd_local_to_global(fd);
     if (gfd < 0)
         return -1;
@@ -67,6 +70,7 @@ int sys_lseek(int fd, off_t offset, int whence)
 
 int sys_access(const char *path, int mode)
 {
+    printk("%s: path: %s\n", __func__, path);
     return fsif.access(path, mode);
 }
 
@@ -136,18 +140,18 @@ int sys_chdir(const char *path)
     task_t *cur = current_task;
     if (!cur->fileman)
         return -1;
-    /* 只能改变到目录中 */
-    struct stat buf;
-    if (sys_stat(path, &buf) < 0)
-        return -1;
     
-    /* 检测是否为目录 */
-    if (!S_ISDIR(buf.st_mode)) {
-        return -1;  /* not dir */
+    printk("%s: path:%s\n", __func__, path);
+    /* 打开目录 */
+    dir_t dir = sys_opendir(path);
+    if (dir < 0) {
+        return -1;
     }
+    sys_closedir(dir);
 
     /* 保存路径 */
     int len = strlen(path);
+    memset(cur->fileman->cwd, 0, MAX_PATH);
     memcpy(cur->fileman->cwd, path, min(len, MAX_PATH));
     return 0;
 }
@@ -157,12 +161,13 @@ int sys_getcwd(char *buf, int bufsz)
     task_t *cur = current_task;
     if (!cur->fileman)
         return -1;
-    memcpy(buf, cur->fileman->cwd, bufsz);
+    memcpy(buf, cur->fileman->cwd, min(bufsz, MAX_PATH));
     return 0;
 }
 
 dir_t sys_opendir(const char *path)
 {
+    printk("path: %s\n", path);
     return fsif.opendir((char *) path);
 }
 int sys_closedir(dir_t dir)
