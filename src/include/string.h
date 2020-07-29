@@ -51,13 +51,5 @@ void* memmove(void* dst,const void* src,unsigned int count);
 #define bzero(str, n) memset(str, 0, n) 
 
 
-#define STR_DEFAULT_LEN 256
-
-int vsprintf(char *buf, const char *fmt, va_list args);
-int vsnprintf(char *buf, int buflen, const char *fmt, va_list args);
-int sprintf(char *buf, const char *fmt, ...);
-int snprintf(char *buf, int buflen, const char *fmt, ...);
-
-
 #endif  /* _XBOOK_STRING_H */
 

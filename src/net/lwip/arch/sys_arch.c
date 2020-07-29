@@ -50,10 +50,14 @@
 #include <lwip/debug.h>
 #include <lwip/sys.h>
 #include <sys/time.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+
+#include <xbook/task.h>
+#include <xbook/semaphore.h>
+#include <xbook/ktime.h>
+#include <xbook/mutexlock.h>
 
 #if 0
 u32_t sys_now()
@@ -62,6 +66,8 @@ u32_t sys_now()
 }
 #endif
 
+#define DEBUG_LOCAL 0
+
 #define UMAX(a, b)      ((a) > (b) ? (a) : (b))
 
 static struct timeval starttime;
@@ -69,7 +75,7 @@ static struct timeval starttime;
 #if !NO_SYS
 
 static struct sys_thread *threads = NULL;
-static pthread_mutex_t threads_mutex = PTHREAD_MUTEX_INITIALIZER;
+static DEFINE_MUTEX_LOCK(threads_mutex);
 
 struct sys_mbox_msg {
   struct sys_mbox_msg *next;
@@ -88,14 +94,12 @@ struct sys_mbox {
 };
 
 struct sys_sem {
-  unsigned int c;
-  pthread_cond_t cond;
-  pthread_mutex_t mutex;
+  semaphore_t sem;
 };
 
 struct sys_thread {
   struct sys_thread *next;
-  pthread_t pthread;
+  task_t *kthread;
 };
 
 #if SYS_LIGHTWEIGHT_PROT
@@ -107,33 +111,30 @@ static int lwprot_count = 0;
 static struct sys_sem *sys_sem_new_internal(u8_t count);
 static void sys_sem_free_internal(struct sys_sem *sem);
 
-static u32_t cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex,
-                       u32_t timeout);
-
 static void *__malloc(size_t size)
 {
-    return malloc(size);
+    return kmalloc(size);
 }
 
 static void __free(void *ptr)
 {
-    free(ptr);
+    kfree(ptr);
 }
 
 /*-----------------------------------------------------------------------------------*/
 static struct sys_thread * 
-introduce_thread(pthread_t id)
+introduce_thread(task_t *kthread)
 {
   struct sys_thread *thread;
 
   thread = (struct sys_thread *)__malloc(sizeof(struct sys_thread));
 
   if (thread != NULL) {
-    pthread_mutex_lock(&threads_mutex);
+    mutex_lock(&threads_mutex);
     thread->next = threads;
-    thread->pthread = id;
+    thread->kthread = kthread;
     threads = thread;
-    pthread_mutex_unlock(&threads_mutex);
+    mutex_unlock(&threads_mutex);
   }
 
   return thread;
@@ -142,26 +143,23 @@ introduce_thread(pthread_t id)
 sys_thread_t
 sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksize, int prio)
 {
-  int code;
-  pthread_t tmp;
+  task_t *thread;
   struct sys_thread *st = NULL;
-  LWIP_UNUSED_ARG(name);
+  //LWIP_UNUSED_ARG(name);
   LWIP_UNUSED_ARG(stacksize);
-  LWIP_UNUSED_ARG(prio);
+  //LWIP_UNUSED_ARG(prio);
+  
+  thread = kthread_start((char *)name, prio, function, arg);
 
-  code = pthread_create(&tmp,
-                        NULL, 
-                        (void *(*)(void *)) 
-                        function, 
-                        arg);
-  
-  if (0 == code) {
-    st = introduce_thread(tmp);
+  if (NULL != thread) {
+    st = introduce_thread(thread);
   }
-  
+  #if DEBUG_LOCAL == 1
+  printk("%s: thread %x\n", __func__, thread);
+  #endif
   if (NULL == st) {
-    LWIP_DEBUGF(SYS_DEBUG, ("sys_thread_new: pthread_create %d, st = 0x%lx",
-                       code, (unsigned long)st));
+    LWIP_DEBUGF(SYS_DEBUG, ("sys_thread_new: kthread_start %x, st = 0x%lx",
+                       thread, (unsigned long)st));
     abort();
   }
   return st;
@@ -172,11 +170,13 @@ sys_mbox_new(struct sys_mbox **mb, int size)
 {
   struct sys_mbox *mbox;
   LWIP_UNUSED_ARG(size);
-
   mbox = (struct sys_mbox *)__malloc(sizeof(struct sys_mbox));
   if (mbox == NULL) {
     return ERR_MEM;
   }
+  #if DEBUG_LOCAL == 1
+  printk("%s: mb: %x -> mbox: %x\n", __func__, mb, mbox);
+  #endif
   mbox->first = mbox->last = 0;
   mbox->not_empty = sys_sem_new_internal(0);
   mbox->not_full = sys_sem_new_internal(0);
@@ -195,7 +195,9 @@ sys_mbox_free(struct sys_mbox **mb)
     struct sys_mbox *mbox = *mb;
     SYS_STATS_DEC(mbox.used);
     sys_arch_sem_wait(&mbox->mutex, 0);
-    
+    #if DEBUG_LOCAL == 1
+    printk("%s: mb: %x -> mbox: %x\n", __func__, mb, mbox);
+    #endif
     sys_sem_free_internal(mbox->not_empty);
     sys_sem_free_internal(mbox->not_full);
     sys_sem_free_internal(mbox->mutex);
@@ -212,7 +214,9 @@ sys_mbox_trypost(struct sys_mbox **mb, void *msg)
   struct sys_mbox *mbox;
   LWIP_ASSERT("invalid mbox", (mb != NULL) && (*mb != NULL));
   mbox = *mb;
-
+  #if DEBUG_LOCAL == 1
+  printk("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
+  #endif
   sys_arch_sem_wait(&mbox->mutex, 0);
 
   LWIP_DEBUGF(SYS_DEBUG, ("sys_mbox_trypost: mbox %p msg %p\n",
@@ -249,7 +253,9 @@ sys_mbox_post(struct sys_mbox **mb, void *msg)
   struct sys_mbox *mbox;
   LWIP_ASSERT("invalid mbox", (mb != NULL) && (*mb != NULL));
   mbox = *mb;
-
+  #if DEBUG_LOCAL == 1
+  printk("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
+  #endif
   sys_arch_sem_wait(&mbox->mutex, 0);
 
   LWIP_DEBUGF(SYS_DEBUG, ("sys_mbox_post: mbox %p msg %p\n", (void *)mbox, (void *)msg));
@@ -285,7 +291,9 @@ sys_arch_mbox_tryfetch(struct sys_mbox **mb, void **msg)
   struct sys_mbox *mbox;
   LWIP_ASSERT("invalid mbox", (mb != NULL) && (*mb != NULL));
   mbox = *mb;
-
+  #if DEBUG_LOCAL == 1
+  printk("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
+  #endif
   sys_arch_sem_wait(&mbox->mutex, 0);
 
   if (mbox->first == mbox->last) {
@@ -319,7 +327,9 @@ sys_arch_mbox_fetch(struct sys_mbox **mb, void **msg, u32_t timeout)
   struct sys_mbox *mbox;
   LWIP_ASSERT("invalid mbox", (mb != NULL) && (*mb != NULL));
   mbox = *mb;
-
+  #if DEBUG_LOCAL == 1
+  printk("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
+  #endif
   /* The mutex lock is quick so we don't bother with the timeout
      stuff here. */
   sys_arch_sem_wait(&mbox->mutex, 0);
@@ -368,9 +378,7 @@ sys_sem_new_internal(u8_t count)
 
   sem = (struct sys_sem *)__malloc(sizeof(struct sys_sem));
   if (sem != NULL) {
-    sem->c = count;
-    pthread_cond_init(&(sem->cond), NULL);
-    pthread_mutex_init(&(sem->mutex), NULL);
+    semaphore_init(&(sem->sem), count);
   }
   return sem;
 }
@@ -383,76 +391,58 @@ sys_sem_new(struct sys_sem **sem, u8_t count)
   if (*sem == NULL) {
     return ERR_MEM;
   }
+  #if DEBUG_LOCAL == 1
+  printk("%s: sem %x *sem %x\n", __func__, sem, *sem);
+  #endif
   return ERR_OK;
 }
 /*-----------------------------------------------------------------------------------*/
-static u32_t
-cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex, u32_t timeout)
-{
-  time_t tdiff;
-  time_t sec, usec;
-  struct timeval rtime1, rtime2;
-  struct timespec ts;
-  int retval;
 
-  if (timeout > 0) {
-    /* Get a timestamp and add the timeout value. */
-    gettimeofday(&rtime1, NULL);
-    sec = rtime1.tv_sec;
-    usec = rtime1.tv_usec;
-    usec += timeout % 1000 * 1000;
-    sec += (int)(timeout / 1000) + (int)(usec / 1000000);
-    usec = usec % 1000000;
-    ts.tv_nsec = usec * 1000;
-    ts.tv_sec = sec;
-
-    retval = pthread_cond_timedwait(cond, mutex, &ts);
-
-    if (retval == ETIMEDOUT) {
-      return SYS_ARCH_TIMEOUT;
-    } else {
-      /* Calculate for how long we waited for the cond. */
-      gettimeofday(&rtime2, NULL);
-      tdiff = (rtime2.tv_sec - rtime1.tv_sec) * 1000 +
-        (rtime2.tv_usec - rtime1.tv_usec) / 1000;
-
-      if (tdiff <= 0) {
-        return 0;
-      }
-      return (u32_t)tdiff;
-    }
-  } else {
-    pthread_cond_wait(cond, mutex);
-    return 0;
-  }
-}
-/*-----------------------------------------------------------------------------------*/
+/**
+ * sys_arch_sem_wait - 等待信号量 
+ * @s: 信号量指针（指向信号量地址的指针）
+ * @timeout: 超时的最大值（毫秒为单位）
+ * 
+ * 如果timeout为0，则函数会移植阻塞，直到信号量到来;
+ * 如果超时不为0，则表示函数阻塞的最大毫秒数，在这种情况下，
+ * 返回值为在该信号量上面等待的时间（毫秒），若在timeout内没有
+ * 等待到信号量，则返回值为SYS_ARCH_TIMEOUT，若信号量在调用函数时
+ * 已经可用，则函数不会发生任何阻塞，返回值为0
+ */
 u32_t
 sys_arch_sem_wait(struct sys_sem **s, u32_t timeout)
 {
-  u32_t time_needed = 0;
   struct sys_sem *sem;
   LWIP_ASSERT("invalid sem", (s != NULL) && (*s != NULL));
   sem = *s;
-
-  pthread_mutex_lock(&(sem->mutex));
-  while (sem->c <= 0) {
-    if (timeout > 0) {
-      time_needed = cond_wait(&(sem->cond), &(sem->mutex), timeout);
-
-      if (time_needed == SYS_ARCH_TIMEOUT) {
-        pthread_mutex_unlock(&(sem->mutex));
-        return SYS_ARCH_TIMEOUT;
-      }
-      /*      pthread_mutex_unlock(&(sem->mutex));
-              return time_needed; */
-    } else {
-      cond_wait(&(sem->cond), &(sem->mutex), 0);
-    }
+  #if DEBUG_LOCAL == 1
+  printk("%s: sem %x *sem %x timeout %x\n", __func__, s, sem, timeout);
+  #endif
+  clock_t wait_ticks;
+  clock_t start, end;
+  
+  int err;
+  /* 如果有信号可用，直接返回 */
+  if (!semaphore_try_down(&sem->sem)) {
+    return 0;
   }
-  sem->c--;
-  pthread_mutex_unlock(&(sem->mutex));
-  return (u32_t)time_needed;
+  /* 将毫秒等待数转换成时钟滴答数 */
+  wait_ticks = 0;
+  if (timeout != 0) {
+    wait_ticks = MSEC_TO_TICKS(timeout);
+    if (wait_ticks < 1)
+      wait_ticks = 1;
+    else if (wait_ticks > 65535)
+      wait_ticks = 65535;
+  }
+  start = sys_now();
+  /* 尝试获取信号量 */
+  err = semaphore_down_timeout(&sem->sem, wait_ticks);
+  end = sys_now();
+  if (err == 0)
+    return (u32_t) (end - start);
+  else 
+    return SYS_ARCH_TIMEOUT;
 }
 /*-----------------------------------------------------------------------------------*/
 void
@@ -462,23 +452,18 @@ sys_sem_signal(struct sys_sem **s)
   LWIP_ASSERT("invalid sem", (s != NULL) && (*s != NULL));
   sem = *s;
 
-  pthread_mutex_lock(&(sem->mutex));
-  sem->c++;
-
-  if (sem->c > 1) {
-    sem->c = 1;
-  }
-
-  pthread_cond_broadcast(&(sem->cond));
-  pthread_mutex_unlock(&(sem->mutex));
+  #if DEBUG_LOCAL == 1
+  printk("%s: sem %x *sem %x \n", __func__, s, sem);
+  #endif
+  semaphore_up(&(sem->sem));
 }
 /*-----------------------------------------------------------------------------------*/
 static void
 sys_sem_free_internal(struct sys_sem *sem)
 {
-  pthread_cond_destroy(&(sem->cond));
-  pthread_mutex_destroy(&(sem->mutex));
+  semaphore_destroy(&sem->sem);
   __free(sem);
+  sem = NULL;
 }
 /*-----------------------------------------------------------------------------------*/
 void
@@ -486,7 +471,11 @@ sys_sem_free(struct sys_sem **sem)
 {
   if ((sem != NULL) && (*sem != SYS_SEM_NULL)) {
     SYS_STATS_DEC(sem.used);
+    #if DEBUG_LOCAL == 1
+    printk("%s: sem %x *sem %x \n", __func__, sem, *sem);
+    #endif
     sys_sem_free_internal(*sem);
+    *sem = NULL;
   }
 }
 #endif /* !NO_SYS */
@@ -494,22 +483,24 @@ sys_sem_free(struct sys_sem **sem)
 u32_t
 sys_now(void)
 {
+#if 1    
   struct timeval tv;
   u32_t sec, usec, msec;
-  gettimeofday(&tv, NULL);
+  sys_gettimeofday(&tv, NULL);
 
   sec = (u32_t)(tv.tv_sec - starttime.tv_sec);
   usec = (u32_t)(tv.tv_usec - starttime.tv_usec);
   msec = sec * 1000 + usec / 1000;
-
-  //return clock();
   return msec;
+#else
+  return sys_get_ticks();
+#endif
 }
 /*-----------------------------------------------------------------------------------*/
 void
 sys_init(void)
 {
-  gettimeofday(&starttime, NULL);
+  sys_gettimeofday(&starttime, NULL);
 }
 /*-----------------------------------------------------------------------------------*/
 #if SYS_LIGHTWEIGHT_PROT
@@ -586,7 +577,7 @@ sys_jiffies(void)
     unsigned long sec;
     long usec;
 
-    gettimeofday(&tv,NULL);
+    sys_gettimeofday(&tv,NULL);
     sec = tv.tv_sec - starttime.tv_sec;
     usec = tv.tv_usec;
 

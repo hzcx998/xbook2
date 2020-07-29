@@ -12,6 +12,7 @@
 #include <arch/cpu.h>
 #include <xbook/kmalloc.h>
 #include <sys/ioctl.h>
+#include <stdio.h>
 
 /* 配置开始 */
 #define DEBUG_LOCAL 0

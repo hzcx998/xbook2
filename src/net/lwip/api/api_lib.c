@@ -286,7 +286,6 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   LWIP_ERROR("netconn_accept: invalid pointer",    (new_conn != NULL),                  return ERR_ARG;);
   *new_conn = NULL;
   LWIP_ERROR("netconn_accept: invalid conn",       (conn != NULL),                      return ERR_ARG;);
-
   LWIP_ERROR("netconn_accept: invalid acceptmbox", sys_mbox_valid(&conn->acceptmbox),   return ERR_ARG;);
 
   err = conn->last_err;

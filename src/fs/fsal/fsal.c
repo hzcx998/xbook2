@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
+#include <stdio.h>
 
 #include <xbook/kmalloc.h>
 #include <xbook/debug.h>

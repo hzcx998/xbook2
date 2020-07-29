@@ -1,11 +1,10 @@
 
-#ifndef __NETSRV_DRIVERS_NETCARD_H
-#define __NETSRV_DRIVERS_NETCARD_H
+#ifndef _XBOOK_NETCARD_H
+#define _XBOOK_NETCARD_H
 
-
-#include <sys/res.h>
-#include <sys/list.h>
+#include <list.h>
 #include <types.h>
+#include <xbook/driver.h>
 
 /* 磁盘驱动器 */
 typedef struct {
@@ -13,6 +12,7 @@ typedef struct {
     int solt;           /* 插槽位置 */
     int handle;         /* 资源句柄 */
     devent_t devent;    /* 设备项 */
+    char virname[DEVICE_NAME_LEN];        /* 虚拟网卡名字 */
 } netcard_info_t;
 
 /* 支持2个网卡 */
@@ -33,4 +33,4 @@ void netcard_info_print();
 int init_netcard_driver();
 int netcard_res_find(char *name);
 
-#endif  /* __NETSRV_DRIVERS_NETCARD_H */
+#endif  /* _XBOOK_NETCARD_H */

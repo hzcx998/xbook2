@@ -1126,8 +1126,7 @@ int init_cmd_man()
 
     memset(cmdman->cwd_cache, 0, MAX_PATH_LEN);
     getcwd(cmdman->cwd_cache, MAX_PATH_LEN);
-    printf("[bosh]: get cwd %s\n", cmdman->cwd_cache);
-
+    
     chdir("/");
     
     environ = shell_environment;

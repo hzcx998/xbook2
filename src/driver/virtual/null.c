@@ -8,6 +8,7 @@
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>
+#include <stdio.h>
 
 #define DRV_NAME "virt-null"
 #define DRV_VERSION "0.1"

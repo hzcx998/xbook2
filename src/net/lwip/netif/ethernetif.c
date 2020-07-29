@@ -55,15 +55,11 @@
 #include "netif/etharp.h"
 #include "netif/ppp_oe.h"
 
-#include <sys/res.h>
-#include <sys/ioctl.h>
-#include <sys/proc.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <drivers/netcard.h>
-#include <core/netsrv.h>
-
+#include <sys/ioctl.h>
+#include <xbook/driver.h>
+#include <xbook/netcard.h>
+#include <xbook/debug.h>
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'
@@ -83,7 +79,6 @@
 struct ethernetif {
   struct eth_addr *ethaddr;
   /* Add whatever per-interface state that is needed here. */
-  int ethres;       /* ethernet resource */
   int netsolt;      /* netcard solt */
 };
 
@@ -101,35 +96,23 @@ static void
 low_level_init(struct netif *netif)
 {
     struct ethernetif *ethernetif = netif->state;
-#if 0    
-    /* 打开一个网络设备 */
-    ethernetif->ethres = res_open(ETHDEVNAME, RES_DEV, 0);
-    if (ethernetif->ethres < 0) {
-        srvprint("lwip: open driver %s not exist! yeild cpu.\n", ETHDEVNAME);
-        while (1) {
-            sched_yeild();
-        }
-        return;
-    }
-#endif
 
-    ethernetif->netsolt = 0;
+    /* 查找第一张网卡 */
+    ethernetif->netsolt = netcard_res_find("netcard0");
+    if (ethernetif->netsolt < 0) {
+        printk("[lwip]: can't found netcard, stop TCP/IP service.\n");
+        spin("low_level_init");
+    }
     if (drv_netcard.open(ethernetif->netsolt) < 0) {
-        srvprint("lwip: open netcard driver %d not exist! yeild cpu.\n", ethernetif->netsolt);
-        while (1) {
-            sched_yeild();
-        }
+        printk("[lwip]: open netcard failed!\n");
+        spin("low_level_init");
         return;
     }
     u8_t mac_addr[ETHARP_HWADDR_LEN] = {0};
 #if 1
     drv_netcard.ioctl(ethernetif->netsolt, NETIO_GETMAC, (unsigned long) &mac_addr[0]);
+    printk("mac: %x %x %x %x %x %x\n", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
 #endif
-    
-#if 0
-    res_ioctl(ethernetif->ethres, NETIO_GETMAC, (unsigned long) &mac_addr[0]);
-#endif
-  srvprint("mac: %x %x %x %x %x %x\n", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 

@@ -6,6 +6,7 @@
 #include <xbook/mdl.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
+#include <stdio.h>
 
 #define DRV_NAME "uart-serial"
 #define DRV_VERSION "0.1"

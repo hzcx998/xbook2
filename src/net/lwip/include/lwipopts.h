@@ -29,39 +29,31 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __ARCH_SYS_ARCH_H__
-#define __ARCH_SYS_ARCH_H__
+#ifndef __LWIPOPTS_H__
+#define __LWIPOPTS_H__
 
-#include <errno.h>
-#include <semaphore.h>
+#define NO_SYS                     0
+#define LWIP_SOCKET               (NO_SYS==0)
+#define LWIP_NETCONN              (NO_SYS==0)
 
-typedef u32_t sys_prot_t;
+#define MEM_ALIGNMENT           4
 
-typedef sem_t* sys_sem_t;
-#define SYS_SEM_NULL NULL
-#define sys_sem_valid(sem) (((sem) != NULL) && (*(sem) != NULL))
-#define sys_sem_set_invalid(sem) do { if((sem) != NULL) { *(sem) = NULL; }}while(0)
+#define MEM_SIZE               10240
 
-/* let sys.h use binary semaphores for mutexes */
-#define LWIP_COMPAT_MUTEX 1
+#define TCP_SND_BUF             2048
 
-#ifndef MAX_QUEUE_ENTRIES
-#define MAX_QUEUE_ENTRIES 100
-#endif
-struct lwip_mbox {
-  sys_sem_t sem;
-  sys_sem_t mutex;
-  void* q_mem[MAX_QUEUE_ENTRIES];
-  u32_t head, tail;
-  u32_t msg_num; 
-};
-typedef struct lwip_mbox sys_mbox_t;
-#define SYS_MBOX_NULL NULL
-#define sys_mbox_valid(mbox) (((mbox) != NULL) && ((mbox)->sem != NULL))
-#define sys_mbox_set_invalid(mbox) ((mbox)->sem = NULL)
+/* use os's timeval */
+#define LWIP_TIMEVAL_PRIVATE 0
 
+#define LWIP_DNS    0
 
-typedef pthread_t sys_thread_t;
+#define LWIP_DHCP    0
 
-#endif /* __ARCH_SYS_ARCH_H__ */
+#include <xbook/schedule.h>
+/* tcpip core thread prio is usr  prio in xbook kernel
+the thread is won't be blocked by func, so it must can't
+rt prio！
+ */
+#define TCPIP_THREAD_PRIO TASK_PRIO_USER    
 
+#endif /* __LWIPOPTS_H__ */

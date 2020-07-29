@@ -21,6 +21,7 @@
 #include <xbook/task.h>
 #include <assert.h>
 #include <sys/ioctl.h>
+#include <stdio.h>
 
 /* 配置开始 */
 #define DEBUG_LOCAL 0

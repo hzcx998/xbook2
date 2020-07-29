@@ -5,6 +5,7 @@
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
 #include <arch/debug.h>
+#include <stdio.h>
 
 char *printk_msg[] = {
     "emege: ",

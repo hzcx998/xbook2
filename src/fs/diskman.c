@@ -3,6 +3,7 @@
 #include <xbook/resource.h>
 #include <xbook/kmalloc.h>
 #include <string.h>
+#include <stdio.h>
 
 LIST_HEAD(disk_list_head);
 
