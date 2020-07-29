@@ -10,6 +10,7 @@
 #include <xbook/srvcall.h>
 #include <xbook/fs.h>
 #include <xbook/driver.h>
+#include <xbook/net.h>
 #include <sys/stat.h>
 #include <dirent.h>
 
@@ -110,5 +111,23 @@ void init_syscall()
     syscall_table[SYS_CLOSEDIR] = sys_closedir;
     syscall_table[SYS_READDIR] = sys_readdir;
     syscall_table[SYS_REWINDDIR] = sys_rewinddir;
+    /* socket 套接字 */
+    syscall_table[SYS_SOCKET] = sys_socket;
+    syscall_table[SYS_BIND] = sys_bind;
+    syscall_table[SYS_CONNECT] = sys_connect;
+    syscall_table[SYS_LISTEN] = sys_listen;
+    syscall_table[SYS_ACCEPT] = sys_accept;
+    syscall_table[SYS_SEND] = sys_send;
+    syscall_table[SYS_RECV] = sys_recv;
+    syscall_table[SYS_SENDTO] = sys_sendto;
+    syscall_table[SYS_RECVFROM] = sys_recvfrom;
+    syscall_table[SYS_SHUTDOWN] = sys_shutdown;
+    syscall_table[SYS_GETPEERNAME] = sys_getpeername;
+    syscall_table[SYS_GETSOCKNAME] = sys_getsockname;
+    syscall_table[SYS_GETSOCKOPT] = sys_getsockopt;
+    syscall_table[SYS_SETSOCKOPT] = sys_setsockopt;
+    syscall_table[SYS_IOCTLSOCKET] = sys_ioctlsocket;
+    syscall_table[SYS_SELECT] = sys_select;
+
 
 }

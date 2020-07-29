@@ -396,8 +396,9 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) returning new sock=%d addr=", s, newsock));
   ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F"\n", port));
-
+  
   sock_set_errno(sock, 0);
+  
   return newsock;
 }
 

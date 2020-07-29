@@ -1,7 +1,9 @@
 X_LIBS		+= libxlibc-0.0.1.a libpthread-0.0.1.a libjpeg-9d.a libzlib-1.2.11.a libpng-1.6.37.a
 
 NAME		:= tests
-SRC			+= main.c test_png.c test_jpg.c
+SRC			+= main.c test_png.c test_jpg.c libvideo.c
+SRC			+= socket_test.c
+
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

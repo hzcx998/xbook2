@@ -131,6 +131,24 @@ enum syscall_num {
     SYS_CLOSEDIR,
     SYS_READDIR,
     SYS_REWINDDIR,
+/// sockets 套接字
+    SYS_SOCKET,
+    SYS_BIND,
+    SYS_CONNECT,
+    SYS_LISTEN,
+    SYS_ACCEPT,
+    SYS_SEND,
+    SYS_RECV,
+    SYS_SENDTO,
+    SYS_RECVFROM,
+    SYS_SHUTDOWN,
+    SYS_GETPEERNAME,
+    SYS_GETSOCKNAME,
+    SYS_GETSOCKOPT,
+    SYS_SETSOCKOPT,
+    SYS_IOCTLSOCKET,
+    SYS_SELECT,
+    
     SYSCALL_NR,
 };
 

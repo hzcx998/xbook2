@@ -56,4 +56,10 @@ rt prio！
  */
 #define TCPIP_THREAD_PRIO TASK_PRIO_USER    
 
+/* 不打开lwip的socket, connect等宏 */
+#define LWIP_COMPAT_SOCKETS 0
+
+/* 使用系统的内存分配 */
+#define MEM_LIBC_MALLOC 1
+
 #endif /* __LWIPOPTS_H__ */
