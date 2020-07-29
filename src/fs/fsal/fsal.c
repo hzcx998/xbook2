@@ -12,6 +12,9 @@
 #include <xbook/debug.h>
 #include <xbook/fs.h>
 
+#define DEBUG_LOCAL 0
+
+
 /* 文件表指针 */
 fsal_file_t *fsal_file_table;
 
@@ -126,151 +129,6 @@ int init_fsal()
     fsal_list_dir(path);
 
     return 0;
-#if 0
-    /* 尝试创建文件系统 */
-    if (fatfs_fsal.mkfs("0:", 0) < 0) {
-        printk("[%s] %s: make fatfs failed!\n", FS_MODEL_NAME, __func__);
-        return -1;
-    }
-#endif
-    
-    //fsal_mount("ide0", "c", "fat32", 0);
-    //fsal_unmount("c", 0);
-
-#if 0
-    /* 把fatfs的0:路径挂载到c驱动器下面 */
-    if (fatfs_fsal.mount("0:", 'c',0) < 0) {
-        printk("[%s] %s: mount fatfs failed!\n", FS_MODEL_NAME, __func__);
-        return -1;
-    }
-#endif
-/*
-    if (fsif.mkfs("ide1", "fat16", 0) < 0) {
-        printk("[%s] %s: mkfs failed!\n", FS_MODEL_NAME, __func__);
-        return -1;
-    }
-*/
-    
-
-    // fsal_path_print();
-#if 0
-    if (fsif.unmount("c:", 0) < 0) {
-        printk("[%s] %s: unmount failed!\n", FS_MODEL_NAME, __func__);
-        return -1;
-    }
-
-    fsal_path_print();
-#endif
-#if 0
-    if (fatfs_fsal.unmount("0:", 0) < 0) {
-        printk("[%s] %s: unmount fatfs failed!\n", FS_MODEL_NAME, __func__);
-        return -1;
-    }
-    
-    fsal_path_print();
-    
-#endif
-    int retval = fsif.open("c:/bin", O_CREAT | O_RDWR);
-    if (retval < 0) {
-        printk("[%s] %s: open file failed!\n", FS_MODEL_NAME, __func__);
-        return -1;
-    }
-    printk("[%s] %s: open file %d ok.\n", FS_MODEL_NAME, __func__, retval);
-#if 0 
-    retval = fatfs_fsal.close(retval);
-    if (retval < 0) {
-        printk("[%s] %s: close file failed!\n", FS_MODEL_NAME, __func__);
-        return -1;
-    }
-#endif
-    char *str = "hello, fatfs!\n";
-
-    int wrbytes = fsif.write(retval, str, strlen(str));
-    if (wrbytes < 0)
-        return -1;
-
-    if (fsif.fsync(retval) < 0)
-        printk("[%s] %s: sync file %d failed!\n", FS_MODEL_NAME, __func__);
-
-    printk("[%s] %s: write bytes %d ok.\n", FS_MODEL_NAME, __func__, wrbytes);
-
-    int seekval = fsif.lseek(retval, 0, SEEK_SET);
-    printk("[%s] %s: seek pos %d ok.\n", FS_MODEL_NAME, __func__, seekval);
-
-    char buf[16] = {0};
-    int rdbytes = fsif.read(retval, buf, 16);
-    if (rdbytes < 0)
-        return -1;
-    printk("[%s] %s: read bytes %d ok. str:%s\n", FS_MODEL_NAME, __func__, rdbytes, buf);
-    /*
-    if (fsif.truncate(retval, 100) < 0)
-        printk("truncate failed!\n");
-    */
-    
-    fsif.close(retval);
-
-    strcpy(path, "c:");
-    fsal_list_dir(path);
-
-    fsif.mkdir("c:/usr", 0);
-    fsif.mkdir("c:/usr/share", 0);
-    fsif.mkdir("c:/lib", 0);
-    
-    memset(path, 0, MAX_PATH);
-    strcpy(path, "c:");
-    fsal_list_dir(path);
-
-    fsif.unlink("c:/usr/share");
-    fsif.unlink("c:/usr");
-    //fsif.unlink("c:/test");
-
-    memset(path, 0, MAX_PATH);
-    strcpy(path, "c:");
-    fsal_list_dir(path);
-
-    fsif.rename("c:/lib", "c:/usr2");
-    fsif.rename("c:/usr2", "c:/usr3");
-    
-    memset(path, 0, MAX_PATH);
-    strcpy(path, "c:");
-    fsal_list_dir(path);
-
-    fstate_t state;
-    if (!fsif.state("c:/bin", &state)) {
-        printk("file name:%s size:%d date:%x time:%x\n", state.d_name, state.d_size, state.d_date, state.d_time);
-    }
-    fsif.utime("c:/bin", 0, 0x12345678);
-    if (!fsif.state("c:/bin", &state)) {
-        printk("file name:%s size:%d date:%x time:%x\n", state.d_name, state.d_size, state.d_date, state.d_time);
-    }
-
-    int fidx = fsif.open("c:/bin", O_RDONLY);
-    if (fidx < 0) {
-        printk("[%s] %s: open file failed!\n", FS_MODEL_NAME, __func__);
-        return -1;
-    }
-    printk("read file:");
-    char ch;
-    while (!fsif.feof(fidx)) {
-        fsif.read(fidx, &ch, 1);
-        printk("%c", ch);
-    }
-    printk("file size:%d pos:%d\n", fsif.fsize(fidx), fsif.ftell(fidx));
-
-    fsif.read(fidx, &ch, 1);
-
-    printk("file error:%d\n", fsif.ferror(fidx));
-
-    fsif.rewind(fidx);
-    printk("file pos:%d\n", fsif.ftell(fidx));
-    
-    fsif.rmdir("c:/usr3");
-
-    memset(path, 0, MAX_PATH);
-    strcpy(path, "c:");
-    fsal_list_dir(path);
-
-    return 0;
 }
 
 
@@ -305,15 +163,18 @@ int fs_fd_copy(task_t *src, task_t *dest)
     if (!src->fileman || !dest->fileman) {
         return -1;
     }
+    #if DEBUG_LOCAL == 1
     printk("[fs]: fd copy from %s to %s\n", src->name, dest->name);
-
+    #endif
     /* 复制工作目录 */
     memcpy(dest->fileman->cwd, src->fileman->cwd, MAX_PATH);
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         if (src->fileman->fds[i] >= 0) {
             dest->fileman->fds[i] = src->fileman->fds[i]; 
+            #if DEBUG_LOCAL == 1
             printk("[fs]: fds[%d]=%d\n", i, src->fileman->fds[i]);
+            #endif
         }
     }
     return 0;

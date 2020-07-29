@@ -269,7 +269,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
                 char finalpath[MAX_PATH] = {0};
                 wash_path(newpath, finalpath);
 
-                #if DEBUG_LOCAL == 0
+                #if DEBUG_LOCAL == 1
                 printk(KERN_DEBUG "execute: merged path: %s from %s\n", finalpath, p);
                 #endif
                 /* 尝试执行 */

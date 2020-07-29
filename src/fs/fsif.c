@@ -8,9 +8,11 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#define DEBUG_LOCAL 0
+
 int sys_open(const char *path, int flags, int mode)
 {
-    printk("[fs]: %s: path=%s flags=%x\n", __func__, path, flags);
+    //printk("[fs]: %s: path=%s flags=%x\n", __func__, path, flags);
     int gfd = fsif.open((void *)path, flags);
     if (gfd < 0)
         return -1;
@@ -29,7 +31,7 @@ int sys_close(int fd)
 
 int sys_read(int fd, void *buffer, size_t nbytes)
 {
-    printk("[fs]: %s: fd=%d buf=%x bytes=%d\n", __func__, fd, buffer, nbytes);
+    //printk("[fs]: %s: fd=%d buf=%x bytes=%d\n", __func__, fd, buffer, nbytes);
     int gfd = fd_local_to_global(fd);
     if (gfd < 0)
         return -1;
@@ -70,7 +72,7 @@ int sys_lseek(int fd, off_t offset, int whence)
 
 int sys_access(const char *path, int mode)
 {
-    printk("%s: path: %s\n", __func__, path);
+    //printk("%s: path: %s\n", __func__, path);
     return fsif.access(path, mode);
 }
 
@@ -141,7 +143,7 @@ int sys_chdir(const char *path)
     if (!cur->fileman)
         return -1;
     
-    printk("%s: path:%s\n", __func__, path);
+    //printk("%s: path:%s\n", __func__, path);
     /* 打开目录 */
     dir_t dir = sys_opendir(path);
     if (dir < 0) {
@@ -167,7 +169,6 @@ int sys_getcwd(char *buf, int bufsz)
 
 dir_t sys_opendir(const char *path)
 {
-    printk("path: %s\n", path);
     return fsif.opendir((char *) path);
 }
 int sys_closedir(dir_t dir)

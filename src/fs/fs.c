@@ -21,7 +21,7 @@ int init_fs()
     if (init_fsal() < 0) {
         panic("init fsal failed, service stopped!\n");
     }
-
+#if 0
     /* test */
     int fd = sys_open("/root/kfs", O_CREAT | O_RDWR, 0);
     if (fd < 0)
@@ -60,6 +60,6 @@ int init_fs()
         printk("dir: %s\n", dirent.d_name);
     } while (1);
     sys_closedir(dir);
-
+#endif
     return 0;
 }
