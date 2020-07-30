@@ -77,10 +77,12 @@ service/netsrv/netsrv
 tools/fatfs/fatfs
 
 # user
-user/bosh/bosh
 user/fixdep
+user/bosh/bosh
 user/hello/hello
 user/tests/tests
+user/socket_server/socket_server
+user/socket_client/socket_client
 
 # dir
 recycle
