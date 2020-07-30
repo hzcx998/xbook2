@@ -13,8 +13,8 @@ struct _sockarg {
     int len;                    /* 缓冲区长度 */
     unsigned int flags;         /* 标志 */
     struct sockaddr *to_from;   /* 传输目的地或者传输源 */
-    int tolen;                  /* 套接字结构长度 */
-    int *fromlen;               /* 来源套接字结构长度 */
+    socklen_t tolen;                  /* 套接字结构长度 */
+    socklen_t *fromlen;               /* 来源套接字结构长度 */
 };
 
 struct _sockfd_set {

@@ -7,67 +7,105 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <lwip/sockets.h>
 
 #define DEBUG_LOCAL 0
 
 int sys_open(const char *path, int flags, int mode)
 {
     //printk("[fs]: %s: path=%s flags=%x\n", __func__, path, flags);
-    int gfd = fsif.open((void *)path, flags);
-    if (gfd < 0)
+    int fileres = fsif.open((void *)path, flags);
+    if (fileres < 0)
         return -1;
-    return local_fd_install(gfd);
+    return local_fd_install(fileres, FILE_FD_NORMAL);
 }
 
 int sys_close(int fd)
 {
-    int gfd = fd_local_to_global(fd);
-    if (gfd < 0)
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
-    if (fsif.close(gfd) < 0)
-        return -1;
+    if (ffd->flags & FILE_FD_NORMAL) {
+        if (fsif.close(ffd->handle) < 0)
+            return -1;    
+    } else if (ffd->flags & FILE_FD_SOCKET) {
+        #if DEBUG_LOCAL == 1
+        printk("[FS]: %s: close fd %d socket %d.\n", __func__, fd, ffd->handle);
+        #endif
+        if (lwip_close(ffd->handle) < 0)
+            return -1;
+    }
     return local_fd_uninstall(fd);
 }
 
 int sys_read(int fd, void *buffer, size_t nbytes)
 {
     //printk("[fs]: %s: fd=%d buf=%x bytes=%d\n", __func__, fd, buffer, nbytes);
-    int gfd = fd_local_to_global(fd);
-    if (gfd < 0)
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
-    return fsif.read(gfd, buffer, nbytes);
+    if (ffd->flags & FILE_FD_NORMAL) {
+        return fsif.read(ffd->handle, buffer, nbytes);
+    } else if (ffd->flags & FILE_FD_SOCKET) {
+        return lwip_read(ffd->handle, buffer, nbytes);  
+    }
+    return -1;
 }
 
 int sys_write(int fd, void *buffer, size_t nbytes)
 {
-    int gfd = fd_local_to_global(fd);
-    if (gfd < 0)
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
-    return fsif.write(gfd, buffer, nbytes);
+
+    if (ffd->flags & FILE_FD_NORMAL) {
+        return fsif.write(ffd->handle, buffer, nbytes);
+    } else if (ffd->flags & FILE_FD_SOCKET) {
+        /* 由于lwip_write实现原因，需要内核缓冲区中转 */
+        void *tmpbuffer = kmalloc(nbytes);
+        if (tmpbuffer == NULL)
+            return -1;
+        memcpy(tmpbuffer, buffer, nbytes);
+        int wr = lwip_write(ffd->handle, tmpbuffer, nbytes);  
+        kfree(tmpbuffer);
+        return wr;
+    }
+    return -1;
 }
 
 int sys_ioctl(int fd, int cmd, unsigned long arg)
 {
-    int gfd = fd_local_to_global(fd);
-    if (gfd < 0)
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
-    return fsif.ioctl(gfd, cmd, arg);
+    if (ffd->flags & FILE_FD_NORMAL) {
+        return fsif.ioctl(ffd->handle, cmd, arg);
+    }
+    return -1;
 }
 
 int sys_fcntl(int fd, int cmd, long arg)
 {
-    int gfd = fd_local_to_global(fd);
-    if (gfd < 0)
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
-    return fsif.fcntl(gfd, cmd, arg);
+    if (ffd->flags & FILE_FD_NORMAL) {
+        return fsif.fcntl(ffd->handle, cmd, arg);
+    } else if (ffd->flags & FILE_FD_SOCKET) {
+        return lwip_fcntl(ffd->handle, cmd, arg);  
+    }
+    return -1;
 }
 
 int sys_lseek(int fd, off_t offset, int whence)
 {
-    int gfd = fd_local_to_global(fd);
-    if (gfd < 0)
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
-    return fsif.lseek(gfd, offset, whence);
+    if (ffd->flags & FILE_FD_NORMAL) {
+        return fsif.lseek(ffd->handle, offset, whence);
+    }
+    return -1;
 }
 
 int sys_access(const char *path, int mode)
@@ -83,17 +121,35 @@ int sys_unlink(const char *path)
 
 int sys_ftruncate(int fd, off_t offset)
 {
-    return fsif.ftruncate(fd, offset);
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+        return -1;
+    if (ffd->flags & FILE_FD_NORMAL) {
+        return fsif.ftruncate(ffd->handle, offset);
+    }
+    return -1;
 }
 
 int sys_fsync(int fd)
 {
-    return fsif.fsync(fd);
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+        return -1;
+    if (ffd->flags & FILE_FD_NORMAL) {
+        return fsif.fsync(fd);
+    }
+    return -1;
 }
 
 long sys_tell(int fd)
 {
-    return fsif.ftell(fd);
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+        return -1;
+    if (ffd->flags & FILE_FD_NORMAL) {
+        return fsif.ftell(fd);
+    }
+    return -1;
 }
 
 int sys_stat(const char *path, struct stat *buf)
@@ -103,10 +159,13 @@ int sys_stat(const char *path, struct stat *buf)
 
 int sys_fstat(int fd, struct stat *buf)
 {
-    int gfd = fd_local_to_global(fd);
-    if (gfd < 0)
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
-    return fsif.fstat(gfd, buf);
+    if (ffd->flags & FILE_FD_NORMAL) {
+        return fsif.fstat(ffd->handle, buf);
+    }
+    return -1;
 }
 
 int sys_chmod(const char *path, mode_t mode)
@@ -116,10 +175,13 @@ int sys_chmod(const char *path, mode_t mode)
 
 int sys_fchmod(int fd, mode_t mode)
 {
-    int gfd = fd_local_to_global(fd);
-    if (gfd < 0)
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
-    return fsif.fchmod(gfd, mode);
+    if (ffd->flags & FILE_FD_NORMAL) {
+        return fsif.fchmod(ffd->handle, mode);
+    }
+    return -1;
 }
 
 int sys_mkdir(const char *path, mode_t mode)

@@ -16,3 +16,5 @@ export AS
 MODULE      +=  tests
 MODULE      +=  hello
 MODULE      +=  bosh
+MODULE      +=  socket_client
+MODULE      +=  socket_server

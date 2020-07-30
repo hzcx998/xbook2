@@ -270,8 +270,8 @@ struct _sockarg {
     int len;                    /* 缓冲区长度 */
     unsigned int flags;         /* 标志 */
     struct sockaddr *to_from;   /* 传输目的地或者传输源 */
-    int tolen;                  /* 套接字结构长度 */
-    int *fromlen;               /* 来源套接字结构长度 */
+    socklen_t tolen;                  /* 套接字结构长度 */
+    socklen_t *fromlen;               /* 来源套接字结构长度 */
 };
 
 struct _sockfd_set {
@@ -288,9 +288,9 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 int send(int sockfd, const void *buf, int len, int flags);
 int recv(int sockfd, void *buf, int len, unsigned int flags);
 int sendto(int sockfd, const void *buf, int len, unsigned int flags,
-    const struct sockaddr *to, int tolen);
+    const struct sockaddr *to, socklen_t tolen);
 int recvfrom(int sockfd, void *buf, int len, unsigned int flags,
-    struct sockaddr *from, int *fromlen);
+    struct sockaddr *from, socklen_t *fromlen);
 int shutdown(int sockfd, int how);
 int getpeername(int sockfd, struct sockaddr *serv_addr, socklen_t *addrlen);
 int getsockname(int sockfd, struct sockaddr *my_addr, socklen_t *addrlen);

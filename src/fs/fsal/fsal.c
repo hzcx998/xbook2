@@ -135,14 +135,14 @@ int init_fsal()
 
 int fs_fd_init(task_t *task)
 {
-    
     task->fileman = kmalloc(sizeof(file_man_t));
     if (task->fileman == NULL) {
         return -1;
     }
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
-        task->fileman->fds[i] = -1; /* no file */
+        task->fileman->fds[i].handle = -1; /* no file */
+        task->fileman->fds[i].flags = 0; /* no file */
     }
     memset(task->fileman->cwd, 0, MAX_PATH);
     strcpy(task->fileman->cwd, "/");
@@ -171,10 +171,12 @@ int fs_fd_copy(task_t *src, task_t *dest)
     memcpy(dest->fileman->cwd, src->fileman->cwd, MAX_PATH);
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
-        if (src->fileman->fds[i] >= 0) {
-            dest->fileman->fds[i] = src->fileman->fds[i]; 
+        if (src->fileman->fds[i].flags != 0) {
+            dest->fileman->fds[i].handle = src->fileman->fds[i].handle;
+            dest->fileman->fds[i].flags = src->fileman->fds[i].flags;
+             
             #if DEBUG_LOCAL == 1
-            printk("[fs]: fds[%d]=%d\n", i, src->fileman->fds[i]);
+            printk("[fs]: fds[%d]=%d\n", i, src->fileman->fds[i].handle);
             #endif
         }
     }
@@ -186,8 +188,9 @@ int fd_alloc()
     task_t *cur = current_task;
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
-        if (cur->fileman->fds[i] == -1) {
-            cur->fileman->fds[i] = 0;     /* alloced */
+        if (cur->fileman->fds[i].flags == 0) {
+            cur->fileman->fds[i].flags = 1;     /* alloced */
+            cur->fileman->fds[i].handle = -1;
             return i;
         }
     }
@@ -199,23 +202,33 @@ int fd_free(int fd)
     task_t *cur = current_task;
     if (OUT_RANGE(fd, 0, LOCAL_FILE_OPEN_NR))
         return -1;
-    if (cur->fileman->fds[fd] == -1) {
+    if (cur->fileman->fds[fd].flags == 0) {
         return -1;
     }
-    cur->fileman->fds[fd] = -1;
+    cur->fileman->fds[fd].handle = -1;
+    cur->fileman->fds[fd].flags = 0;
     return 0;
 }
 
-int local_fd_install(int global_fd)
+/**
+ * local_fd_install - 安装到进程本地文件描述符表
+ * @resid: 资源信息
+ * @flags: 安装标志，一般用于确定是什么类型的资源
+ */
+int local_fd_install(int resid, unsigned int flags)
 {
-    if (OUT_RANGE(global_fd, 0, FSAL_FILE_OPEN_NR))
+    if (OUT_RANGE(resid, 0, FSAL_FILE_OPEN_NR))
         return -1;
 
     int fd = fd_alloc();
     if (fd < 0)
         return -1;
     task_t *cur = current_task;
-    cur->fileman->fds[fd] = global_fd;
+    cur->fileman->fds[fd].handle = resid;
+    cur->fileman->fds[fd].flags |= flags;
+    #if DEBUG_LOCAL == 1
+    printf("[FS]: %s: install fd=%d handle=%d\n", __func__, fd, resid);
+    #endif
     return fd;
 }
 
@@ -226,11 +239,26 @@ int local_fd_uninstall(int local_fd)
     return fd_free(local_fd);
 }
 
-int fd_local_to_global(int local_fd)
+file_fd_t *fd_local_to_file(int local_fd)
 {
     if (OUT_RANGE(local_fd, 0, LOCAL_FILE_OPEN_NR))
-        return -1;
+        return NULL;
 
     task_t *cur = current_task;
-    return cur->fileman->fds[local_fd];
+    return &cur->fileman->fds[local_fd];
 }
+
+int handle_to_local_fd(int handle, unsigned int flags)
+{
+    task_t *cur = current_task;
+    file_fd_t *fdptr;
+    int i;
+    for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
+        fdptr = &cur->fileman->fds[i];
+        if ((fdptr->handle == handle) && (fdptr->flags & flags)) {
+            return i;   /* find the local fd */
+        }
+    }
+    return -1;
+}
+ 

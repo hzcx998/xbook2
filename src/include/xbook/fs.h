@@ -4,10 +4,22 @@
 #define LOCAL_FILE_OPEN_NR  128
 
 #include <stddef.h>
+#include <stdint.h>
 #include <types.h>
 
+
+#define FILE_FD_ALLOC   0X01    /* alloced */
+#define FILE_FD_NORMAL  0X02    /* is normal file */
+#define FILE_FD_DEVICE  0X04    /* is a device */
+#define FILE_FD_SOCKET  0X08    /* is a socket */
+
 typedef struct {
-    int fds[LOCAL_FILE_OPEN_NR];
+    int handle;         /* 对象句柄 */
+    uint32_t flags;     /* 对象的标志 */
+} file_fd_t;
+
+typedef struct {
+    file_fd_t fds[LOCAL_FILE_OPEN_NR];
     char cwd[MAX_PATH];
 } file_man_t;
 

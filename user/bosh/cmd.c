@@ -195,7 +195,6 @@ int execute_cmd(int argc, char **argv)
                 /* ----输入管道---- */
                 if (!shell_event_poll(&key, pid)) {
                     int wrret = res_write(pipe_in_wr, 0, &key, 1);
-                    //printf("write ret:%d\n", wrret);
                     if (wrret < 0) {
                         shell_printf("%s: write key %d to pipe failed!\n", APP_NAME, key);
                     }

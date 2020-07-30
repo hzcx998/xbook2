@@ -275,9 +275,11 @@ int pipe_put(int pipeid)
 int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
 {
     /* 参数检查 */
-    if (buffer == NULL || !size)
+    if (buffer == NULL || !size) {
+        printk(KERN_ERR "%s: arg error!\n");
         return -1;
-
+    }
+        
     pipe_t *pipe;
     /* get pipe table access */
     semaphore_down(&pipe_mutex);
@@ -290,13 +292,16 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
     semaphore_up(&pipe_mutex);
     
     /* 写者不能为空 */
-    if (pipe->writer == NULL) 
+    if (pipe->writer == NULL) {
+        printk(KERN_ERR "%s: no writer!\n");
         return -1;
-    
+    }
+        
     if (pipeflg & IPC_NOERROR)  /* 没有错误，就是严格的，写者必须是当前进程 */
-        if (pipe->writer != current_task) 
+        if (pipe->writer != current_task) {
+            printk(KERN_ERR "%s: writer no current task!\n");
             return -1;
-    
+        }
 
     pipe->flags |= PIPE_IN_WRITE;   /* 管道进入写状态 */
     
@@ -324,6 +329,7 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
     int off = 0;
     unsigned char *buf = buffer;
     int chunk = 0;
+    int wrsize = 0;
     /* 只要还有数据，就不停地写入，直到写完为止 */
     while (left_size > 0) {
         /* 对已有数据的检测，必须是在关闭中断下检测，不能被打断 */
@@ -340,6 +346,7 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
         
         off += chunk;
         left_size -= chunk;
+        wrsize += chunk;
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "pipe_write: actually write %d bytes.\n", chunk);
 #endif
@@ -361,7 +368,7 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
             if (pipeflg & IPC_NOWAIT) { /* 如果是不需要等待，就直接返回 */
                 pipe->flags &= ~PIPE_IN_WRITE;   /* 管道离开写状态 */
                 mutex_unlock(&pipe->mutex); /* 释放管道 */
-#if DEBUG_LOCAL == 1
+#if DEBUG_LOCAL == 0
                 printk(KERN_DEBUG "pipe_write: write with no wait, return.\n");
 #endif               
                 return -1;
@@ -379,8 +386,7 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
     pipe->flags &= ~PIPE_IN_WRITE;   /* 管道离开写状态 */
     
     mutex_unlock(&pipe->mutex); /* 释放管道 */
-
-    return 0;
+    return wrsize;
 }
 
 /**

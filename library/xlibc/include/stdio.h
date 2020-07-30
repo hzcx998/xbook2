@@ -102,6 +102,8 @@ int putchar(int c);
 int putc(int c, FILE * f);
 int fputc(int c, FILE * f);
 int fputs(const char * s, FILE * f);
+int puts(const char *str);
+
 int ungetc(int c, FILE * f);
 
 int setvbuf(FILE * f, char * buf, int mode, size_t size);

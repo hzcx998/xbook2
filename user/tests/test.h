@@ -34,6 +34,8 @@ int jpg_display(char * path);
 /* ---- socket test ---- */
 int socket_test(int argc, char *argv[]);
 int socket_test2(int argc, char *argv[]);
+int socket_test3(int argc, char *argv[]);
+int socket_test4(int argc, char *argv[]);
 /* ----socket test end ----*/
 
 

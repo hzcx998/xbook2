@@ -173,6 +173,7 @@ int __getres_ipc(char *name, unsigned long resflg, unsigned long arg)
 int __writeres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
 {
     void *shmaddr;
+    int retval = -1;
     /* 根据从类型进行不同的操作 */
     switch (item->flags & RES_SLAVER_MASK)
     {
@@ -183,23 +184,21 @@ int __writeres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
         }
         /* 保存映射后的地址 */
         *(size_t *)count = (size_t )shmaddr;
+        retval = 0;
         break;
     case IPC_SEM:
-        if (sem_down(item->handle, off))
-            return -1;
+        retval = sem_down(item->handle, off);
         break;
     case IPC_MSG:
-        if (msg_queue_send(item->handle, buffer, count, off))
-            return -1;
+        retval = msg_queue_send(item->handle, buffer, count, off);
         break;
     case IPC_PIPE:
-        if (pipe_write(item->handle, buffer, count, off))
-            return -1;
+        retval = pipe_write(item->handle, buffer, count, off);
         break;
     default:
-        return -1;
+        break;
     }
-    return 0;
+    return retval;
 }
 
 int __readres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)

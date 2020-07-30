@@ -43,7 +43,7 @@ int recv(int sockfd, void *buf, int len, unsigned int flags)
 }
 
 int sendto(int sockfd, const void *buf, int len, unsigned int flags,
-    const struct sockaddr *to, int tolen)
+    const struct sockaddr *to, socklen_t tolen)
 {
     struct _sockarg arg;
     arg.buf = (void *)buf;
@@ -55,7 +55,7 @@ int sendto(int sockfd, const void *buf, int len, unsigned int flags,
 }
 
 int recvfrom(int sockfd, void *buf, int len, unsigned int flags,
-    struct sockaddr *from, int *fromlen)
+    struct sockaddr *from, socklen_t *fromlen)
 {
     struct _sockarg arg;
     arg.buf = (void *)buf;

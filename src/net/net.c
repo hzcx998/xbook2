@@ -19,6 +19,8 @@ extern void ethernetif_input(struct netif *netif);
 struct netif rtl8139_netif;
 void
 httpserver_init();
+void socket_examples_init(void);
+
 /**
  * 0： 仅虚拟机和主机通信
  * 1： 虚拟机和主机以及外网通信
@@ -37,7 +39,7 @@ void lwip_init_task(void)
     #if CONFIG_LEVEL == 0
     IP4_ADDR(&ipaddr, 192,168,0,105);
     IP4_ADDR(&gateway, 192,168,0,1);
-    IP4_ADDR(&netmask, 255,255,255, 0);
+    IP4_ADDR(&netmask, 255,255,0, 0);
     #elif CONFIG_LEVEL == 1
     IP4_ADDR(&gateway, 169,254,177,48);
     IP4_ADDR(&netmask, 255,255,0,0);
@@ -56,9 +58,9 @@ void lwip_init_task(void)
     netif_set_default(&rtl8139_netif);
     netif_set_up(&rtl8139_netif);
 #if CONFIG_LEVEL == 2
-    printf("[%s] %s: dhcp start.\n", SRV_NAME, __func__);
+    printk("[%s] %s: dhcp start.\n", SRV_NAME, __func__);
     dhcp_start(&rtl8139_netif);
-    printf("[%s] %s: dhcp done.\n", SRV_NAME, __func__);
+    printk("[%s] %s: dhcp done.\n", SRV_NAME, __func__);
 #endif
 }
 
@@ -74,6 +76,7 @@ void netin_kthread(void *arg)
     lwip_init_task();
 
     httpserver_init();
+    //socket_examples_init();
     while(1) {
         /* 检测输入，如果没有收到数据就会阻塞。 */
         ethernetif_input(&rtl8139_netif);
@@ -196,5 +199,187 @@ void
 httpserver_init()
 {
   sys_thread_new("http_server_netconn", httpserver_thread, NULL, DEFAULT_THREAD_STACKSIZE, TASK_PRIO_USER);
+}
+#endif
+
+
+#if LWIP_SOCKET
+
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+
+#include <string.h>
+#include <stdio.h>
+
+#ifndef SOCK_TARGET_HOST
+#define SOCK_TARGET_HOST  "192.168.0.104"
+#endif
+
+#ifndef SOCK_TARGET_PORT
+#define SOCK_TARGET_PORT  8080
+#endif
+char zrxbuf[1024];
+
+/** This is an example function that tests
+    blocking-connect and nonblocking--recv-write . */
+static void socket_nonblocking(void *arg)
+{
+  int s;
+  int ret;
+  u32_t opt;
+  struct sockaddr_in addr;
+  int err;
+
+  LWIP_UNUSED_ARG(arg);
+  /* set up address to connect to */
+  memset(&addr, 0, sizeof(addr));
+  addr.sin_len = sizeof(addr);
+  addr.sin_family = AF_INET;
+  addr.sin_port = PP_HTONS(SOCK_TARGET_PORT);
+  addr.sin_addr.s_addr = inet_addr(SOCK_TARGET_HOST);
+  
+  /* create the socket */
+  //s = socket(AF_INET, SOCK_STREAM, 0);
+  //LWIP_ASSERT("s >= 0", s >= 0);
+
+  /* connect */
+  do
+  {
+      s = lwip_socket(AF_INET, SOCK_STREAM, 0);
+      LWIP_ASSERT("s >= 0", s >= 0);
+      ret = lwip_connect(s, (struct sockaddr*)&addr, sizeof(addr));
+	  printk("socket connect result [%d]\n", ret);
+	  if(ret != 0)
+      {
+         lwip_close(s);
+	  }
+  }while(ret != 0);
+  
+  /* should have an error: "inprogress" */
+  if(ret != 0)
+  {
+     ret = lwip_close(s);
+     while(1)
+     {
+         printk("socket connect error\n");
+		 sys_msleep(1000);
+     }
+  }
+  
+  /* nonblocking */
+  opt = 1;
+  ret = lwip_ioctl(s, FIONBIO, &opt);
+  LWIP_ASSERT("ret == 0", ret == 0);
+
+  /* write should fail, too */
+  while(1)
+  {
+        ret = lwip_read(s, zrxbuf, 1024);
+        if (ret > 0) {
+        /* should return 0: closed */
+        printk("socket recv a data\n");        
+		}
+        printk("socket recv [%d]\n", ret);
+		
+        ret = lwip_write(s, "test", 4);
+        if(ret>0)
+        {
+            printk("socket send %d data\n",ret);
+		}
+		else
+		{
+            ret = lwip_close(s);
+			printk("socket closed %d\n",ret);
+			while(1) sys_msleep(1000);
+		}
+
+		sys_msleep(1000);
+		
+  }
+}
+
+/** This is an example function that tests
+    the recv function (timeout etc.). */
+char rxbuf[1024];
+char sndbuf[64];
+static void socket_timeoutrecv(void *arg)
+{
+  int s;
+  int ret;
+  int opt;
+  struct sockaddr_in addr;
+  size_t len;
+
+  LWIP_UNUSED_ARG(arg);
+  /* set up address to connect to */
+  memset(&addr, 0, sizeof(addr));
+  addr.sin_len = sizeof(addr);
+  addr.sin_family = AF_INET;
+  addr.sin_port = PP_HTONS(SOCK_TARGET_PORT);
+  addr.sin_addr.s_addr = inet_addr(SOCK_TARGET_HOST);
+
+  /* first try blocking: */
+
+  /* create the socket */
+  //s = socket(AF_INET, SOCK_STREAM, 0);
+  //LWIP_ASSERT("s >= 0", s >= 0);
+
+  /* connect */
+  do
+  {
+      s = lwip_socket(AF_INET, SOCK_STREAM, 0);
+      LWIP_ASSERT("s >= 0", s >= 0);
+      ret = lwip_connect(s, (struct sockaddr*)&addr, sizeof(addr));
+	  printk("socket connect result [%d]\n", ret);
+	  if(ret != 0)
+      {
+         lwip_close(s);
+	  }
+  }while(ret != 0);
+  /* should succeed */
+  if(ret != 0)
+  {
+     printk("socket connect error %d\n", ret);
+     ret = lwip_close(s);
+     while(1) sys_msleep(1000);
+  }
+
+  /* set recv timeout (100 ms) */
+  opt = 100;
+  ret = lwip_setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &opt, sizeof(int));
+
+  while(1)
+  {
+      len = 0;
+      ret = lwip_recv(s, zrxbuf, 1024, 0);
+      if (ret > 0) {
+          /* should return 0: closed */
+          //printk("socket recv a data\n"); 
+          len = ret;
+      }
+      printk("read [%d] data\n", ret); 
+
+	  len = sprintf(sndbuf,"Client:I receive [%d] data\n", len);
+      ret = lwip_send(s, sndbuf, len, 0);
+      if(ret>0)
+      {
+          printk("socket send %d data\n",ret);
+	  }
+	  else
+	  {
+          ret = lwip_close(s);
+	      printk("socket closed %d\n",ret);
+		  while(1) sys_msleep(1000);
+	  }
+
+	  //sys_msleep(1000);
+		
+  }
+}
+
+void socket_examples_init(void)
+{
+  //sys_thread_new("socket_nonblocking", socket_nonblocking, NULL, 0, TCPIP_THREAD_PRIO+2);
+  sys_thread_new("socket_timeoutrecv", socket_timeoutrecv, NULL, 0, TCPIP_THREAD_PRIO);
 }
 #endif
