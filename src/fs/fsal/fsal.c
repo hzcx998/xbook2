@@ -143,6 +143,8 @@ int fs_fd_init(task_t *task)
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         task->fileman->fds[i].handle = -1; /* no file */
         task->fileman->fds[i].flags = 0; /* no file */
+        task->fileman->fds[i].offset = 0;
+        
     }
     memset(task->fileman->cwd, 0, MAX_PATH);
     strcpy(task->fileman->cwd, "/");
@@ -174,6 +176,7 @@ int fs_fd_copy(task_t *src, task_t *dest)
         if (src->fileman->fds[i].flags != 0) {
             dest->fileman->fds[i].handle = src->fileman->fds[i].handle;
             dest->fileman->fds[i].flags = src->fileman->fds[i].flags;
+            dest->fileman->fds[i].offset = src->fileman->fds[i].offset;
              
             #if DEBUG_LOCAL == 1
             printk("[fs]: fds[%d]=%d\n", i, src->fileman->fds[i].handle);
@@ -191,6 +194,8 @@ int fd_alloc()
         if (cur->fileman->fds[i].flags == 0) {
             cur->fileman->fds[i].flags = 1;     /* alloced */
             cur->fileman->fds[i].handle = -1;
+            cur->fileman->fds[i].offset = 0;
+            
             return i;
         }
     }
@@ -207,6 +212,8 @@ int fd_free(int fd)
     }
     cur->fileman->fds[fd].handle = -1;
     cur->fileman->fds[fd].flags = 0;
+    cur->fileman->fds[fd].offset = 0;
+    
     return 0;
 }
 

@@ -6,36 +6,32 @@
 int main(int argc, char *argv[])
 {
     /* 打开tty，用来进行基础地输入输出 */
-    int tty0 = res_open("tty0", RES_DEV, 0);
+    int tty0 = open("tty0", O_DEVEX, 0);
     if (tty0 < 0) {
         return -1;
     }
-    int tty1 = res_open("tty0", RES_DEV, 0);
+    int tty1 = open("tty0", O_DEVEX, 0);
     if (tty1 < 0) {
-        res_close(tty0);
+        close(tty0);
         return -1;
     }
     
-    int tty2 = res_open("tty0", RES_DEV, 0);
+    int tty2 = open("tty0", O_DEVEX, 0);
     if (tty2 < 0) {
-        res_close(tty1);
-        res_close(tty0);
+        close(tty1);
+        close(tty0);
         return -1;
     }
-    int fd;
-    fd = open("/res/test.txt", O_RDWR, 0);
-    fd = open("/res/test.txt", O_RDWR, 0);
-    fd = open("/res/test.txt", O_RDWR, 0);
-    fd = 0;
+
     //res_ioctl(RES_STDINNO, TTYIO_CLEAR, 0);
     printf("start 'init' service, in user mode now.\n");
     /* 创建一个子进程 */
     int pid = fork();
     if (pid < 0) {
         printf("[INIT]: fork process error! stop service.\n");
-        res_close(tty2);
-        res_close(tty1);
-        res_close(tty0);
+        close(tty2);
+        close(tty1);
+        close(tty0);
         return -1;
     }
     if (pid > 0) {

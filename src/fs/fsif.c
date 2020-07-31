@@ -2,22 +2,45 @@
 #include <xbook/fs.h>
 #include <xbook/task.h>
 #include <xbook/debug.h>
+#include <xbook/driver.h>
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <lwip/sockets.h>
+#include <xbook/pipe.h>
 
 #define DEBUG_LOCAL 0
 
 int sys_open(const char *path, int flags, int mode)
 {
-    //printk("[fs]: %s: path=%s flags=%x\n", __func__, path, flags);
-    int fileres = fsif.open((void *)path, flags);
-    if (fileres < 0)
-        return -1;
-    return local_fd_install(fileres, FILE_FD_NORMAL);
+    int handle;
+    if (O_DEVEX & flags) {
+        /* 去掉根目录 */
+        char *p = (char *) path;
+        if (*p == '/')
+            p++;
+        handle = device_open(p, mode);
+        if (handle < 0)
+            return -1;
+        return local_fd_install(handle, FILE_FD_DEVICE);
+    } else if (O_PIPE & flags) {
+        /* 去掉根目录 */
+        char *p = (char *) path;
+        if (*p == '/')
+            p++;
+        handle = pipe_get(p, flags);
+        if (handle < 0)
+            return -1;
+        return local_fd_install(handle, FILE_FD_SOCKET);
+    } else {
+        //printk("[fs]: %s: path=%s flags=%x\n", __func__, path, flags);
+        handle = fsif.open((void *)path, flags);
+        if (handle < 0)
+            return -1;
+        return local_fd_install(handle, FILE_FD_NORMAL);
+    }
 }
 
 int sys_close(int fd)
@@ -34,22 +57,35 @@ int sys_close(int fd)
         #endif
         if (lwip_close(ffd->handle) < 0)
             return -1;
+    } else if (ffd->flags & FILE_FD_DEVICE) {
+        if (device_close(ffd->handle) < 0)
+            return -1;
+    } else if (ffd->flags & FILE_FD_PIPE) {
+        if (pipe_put(ffd->handle) < 0)
+            return -1;        
     }
     return local_fd_uninstall(fd);
 }
 
 int sys_read(int fd, void *buffer, size_t nbytes)
 {
-    //printk("[fs]: %s: fd=%d buf=%x bytes=%d\n", __func__, fd, buffer, nbytes);
+    // printk("[fs]: %s: fd=%d buf=%x bytes=%d\n", __func__, fd, buffer, nbytes);
     file_fd_t *ffd = fd_local_to_file(fd);
     if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
+    int retval = -1;
     if (ffd->flags & FILE_FD_NORMAL) {
-        return fsif.read(ffd->handle, buffer, nbytes);
+        retval = fsif.read(ffd->handle, buffer, nbytes);
     } else if (ffd->flags & FILE_FD_SOCKET) {
-        return lwip_read(ffd->handle, buffer, nbytes);  
+        retval = lwip_read(ffd->handle, buffer, nbytes);  
+    } else if (ffd->flags & FILE_FD_DEVICE) {
+        retval = device_read(ffd->handle, buffer, nbytes, ffd->offset);  
+        if (retval > 0)
+            ffd->offset += (retval / SECTOR_SIZE);
+    } else if (ffd->flags & FILE_FD_PIPE) {
+        retval = pipe_read(ffd->handle, buffer, nbytes, 0);  
     }
-    return -1;
+    return retval;
 }
 
 int sys_write(int fd, void *buffer, size_t nbytes)
@@ -57,20 +93,25 @@ int sys_write(int fd, void *buffer, size_t nbytes)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
-
+    int retval = -1;
     if (ffd->flags & FILE_FD_NORMAL) {
-        return fsif.write(ffd->handle, buffer, nbytes);
+        retval = fsif.write(ffd->handle, buffer, nbytes);
     } else if (ffd->flags & FILE_FD_SOCKET) {
         /* 由于lwip_write实现原因，需要内核缓冲区中转 */
         void *tmpbuffer = kmalloc(nbytes);
         if (tmpbuffer == NULL)
             return -1;
         memcpy(tmpbuffer, buffer, nbytes);
-        int wr = lwip_write(ffd->handle, tmpbuffer, nbytes);  
+        retval = lwip_write(ffd->handle, tmpbuffer, nbytes);  
         kfree(tmpbuffer);
-        return wr;
+    } else if (ffd->flags & FILE_FD_DEVICE) {
+        retval = device_write(ffd->handle, buffer, nbytes, ffd->offset);  
+        if (retval > 0)
+            ffd->offset += (retval / SECTOR_SIZE);
+    } else if (ffd->flags & FILE_FD_PIPE) {
+        retval = pipe_write(ffd->handle, buffer, nbytes, 0);  
     }
-    return -1;
+    return retval;
 }
 
 int sys_ioctl(int fd, int cmd, unsigned long arg)
@@ -80,6 +121,10 @@ int sys_ioctl(int fd, int cmd, unsigned long arg)
         return -1;
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.ioctl(ffd->handle, cmd, arg);
+    } else if (ffd->flags & FILE_FD_DEVICE) {
+        return device_devctl(ffd->handle, cmd, arg);
+    } else if (ffd->flags & FILE_FD_PIPE) {
+        return pipe_ctl(ffd->handle, cmd, arg);
     }
     return -1;
 }
@@ -104,6 +149,9 @@ int sys_lseek(int fd, off_t offset, int whence)
         return -1;
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.lseek(ffd->handle, offset, whence);
+    } else if (ffd->flags & FILE_FD_DEVICE) {
+        ffd->offset = offset;
+        return 0;
     }
     return -1;
 }

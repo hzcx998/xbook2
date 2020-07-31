@@ -297,8 +297,10 @@ static int __read(int idx, void *buf, size_t size)
     FRESULT fr;
     UINT br;
     fr = f_read(&fp->file.fatfs, buf, size, &br);
-    if (fr != FR_OK)
+    if (fr != FR_OK) {
+        pr_err("[FATFS]: f_read: err %d\n", fr);
         return -1;
+    }
     return br;
 }
 
