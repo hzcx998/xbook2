@@ -148,7 +148,8 @@ enum syscall_num {
     SYS_SETSOCKOPT,
     SYS_IOCTLSOCKET,
     SYS_SELECT,
-    
+    SYS_DUP,
+    SYS_DUP2,
     SYSCALL_NR,
 };
 

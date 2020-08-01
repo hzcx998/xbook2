@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fsal/dir.h>
+#include <fsal/fsal.h>
 
 /**
  * exec使用新的镜像以及堆栈替换原有的内容。
@@ -165,6 +166,8 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     /* 如果是从一个多线程执行的，那么就会有线程结构体，由于在close_other_threads
     的时候，把thread_count置0，因此，在此需要重新初始化线程描述（将thread_count置1） */
     pthread_desc_init(cur->pthread);
+
+    fs_fd_reinit(cur);
 
     /* 解除服务调用绑定 */
     sys_srvcall_unbind(-1);

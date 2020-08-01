@@ -119,8 +119,10 @@ int fs_fd_init(task_t *task);
 int fs_fd_exit(task_t *task);
 int local_fd_install(int resid, unsigned int flags);
 int local_fd_uninstall(int local_fd);
+int local_fd_install_to(int resid, int newfd, unsigned int flags);
 file_fd_t *fd_local_to_file(int local_fd);
 int handle_to_local_fd(int handle, unsigned int flags);
 int fs_fd_copy(task_t *src, task_t *dest);
+int fs_fd_reinit(task_t *cur);
 
 #endif  /* __FILESRV_FSAL_H__ */

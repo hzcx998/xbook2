@@ -7,6 +7,7 @@
 #include <srv/guisrv.h>
 
 #include <xcons.h>
+#include <unistd.h>
 
 /* 控制台连接状态 */
 int __xcons_connect_status = -1;
@@ -36,7 +37,7 @@ int xcons_connect()
         goto rollback_connect;
     }
 
-    int pipeid = res_open("guisrv-pipe", RES_IPC | IPC_PIPE | IPC_CREAT | IPC_WRITER, 0);
+    int pipeid = open("guisrv-pipe", O_PIPE | O_WRONLY, 0);
     if (pipeid < 0) {
         goto rollback_msg;
     }
@@ -83,7 +84,7 @@ int xcons_close()
         res_close(__xcons_msgid);
     }
     if (__xcons_pipeid >= 0)
-        res_close(__xcons_pipeid);
+        close(__xcons_pipeid);
 
     __xcons_connect_status = -1;
     return 0;
@@ -129,7 +130,7 @@ int xcons_xmit_data(void *buf, size_t buflen)
 {
     if (__xcons_connect_status < 0)
         return -1;
-    return res_write(__xcons_pipeid, 0, buf, buflen);
+    return write(__xcons_pipeid, buf, buflen);
 }
 
 int xcons_clear()

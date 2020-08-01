@@ -128,6 +128,8 @@ void init_syscall()
     syscall_table[SYS_SETSOCKOPT] = sys_setsockopt;
     syscall_table[SYS_IOCTLSOCKET] = sys_ioctlsocket;
     syscall_table[SYS_SELECT] = sys_select;
-
+    syscall_table[SYS_DUP] = sys_dup;
+    syscall_table[SYS_DUP2] = sys_dup2;
+    
 
 }

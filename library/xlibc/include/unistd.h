@@ -78,12 +78,10 @@ int fsync(int fd);
 int ioctl(int fd, int cmd, unsigned long arg);
 int fcntl(int fd, int cmd, long arg);
 
-int _eof(int fd);
-int _error(int fd);
-long tell(int fd);
-size_t _size(int fd);
-// int rewind(int fd);
+int dup(int fd);
+int dup2(int oldfd, int newfd);
 
+long tell(int fd);
 
 int mkdir(const char *path, mode_t mode);
 int rmdir(const char *path);
@@ -91,7 +89,6 @@ int _rename(const char *source, const char *target);
 
 int chdir(const char *path);
 int getcwd(char *buf, int bufsz);
-int chdrive(const char *path);
 
 int execve(const char *pathname, char *const argv[], char *const envp[]);
 int execle(const char *pathname, char *const envp[], const char *arg, ...);

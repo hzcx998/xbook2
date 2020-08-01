@@ -177,10 +177,37 @@ int fs_fd_copy(task_t *src, task_t *dest)
             dest->fileman->fds[i].handle = src->fileman->fds[i].handle;
             dest->fileman->fds[i].flags = src->fileman->fds[i].flags;
             dest->fileman->fds[i].offset = src->fileman->fds[i].offset;
-             
+            
             #if DEBUG_LOCAL == 1
             printk("[fs]: fds[%d]=%d\n", i, src->fileman->fds[i].handle);
             #endif
+
+            /* 增加资源的引用计数 */
+            fsif_grow(i);
+        }
+    }
+    return 0;
+}
+
+/**
+ * fs_fd_reinit - 重新初始化只保留前3个fd
+ * 
+ */
+int fs_fd_reinit(task_t *cur)
+{
+    if (!cur->fileman) {
+        return -1;
+    }
+    /* 从第4个项开始需要关闭掉 */
+    int i;
+    for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
+        if (cur->fileman->fds[i].flags != 0) {  /* 已经占用，需要关闭 */
+            #if DEBUG_LOCAL == 1
+            pr_dbg("[FS]: %s: fd=%d, flags=%x handle=%d\n", __func__, i, 
+                cur->fileman->fds[i].flags, cur->fileman->fds[i].handle);
+            #endif
+            if (i >= 3)
+                sys_close(i);
         }
     }
     return 0;
@@ -237,6 +264,30 @@ int local_fd_install(int resid, unsigned int flags)
     printf("[FS]: %s: install fd=%d handle=%d\n", __func__, fd, resid);
     #endif
     return fd;
+}
+
+/**
+ * local_fd_install - 安装到进程本地文件描述符表
+ * @resid: 资源信息
+ * @flags: 安装标志，一般用于确定是什么类型的资源
+ */
+int local_fd_install_to(int resid, int newfd, unsigned int flags)
+{
+    if (OUT_RANGE(resid, 0, FSAL_FILE_OPEN_NR))
+        return -1;
+
+    if (OUT_RANGE(newfd, 0, LOCAL_FILE_OPEN_NR))
+        return -1;
+
+    task_t *cur = current_task;
+    cur->fileman->fds[newfd].handle = resid;
+    cur->fileman->fds[newfd].flags = FILE_FD_ALLOC;
+    cur->fileman->fds[newfd].flags |= flags;
+    cur->fileman->fds[newfd].offset = 0;
+    #if DEBUG_LOCAL == 1
+    printf("[FS]: %s: install fd=%d handle=%d\n", __func__, newfd, resid);
+    #endif
+    return newfd;
 }
 
 int local_fd_uninstall(int local_fd)

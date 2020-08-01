@@ -33,12 +33,14 @@ static int __connect(srvarg_t *arg)
     }
     
     /* 打开读取管道 */
-    int pipeid = res_open("guisrv-pipe", RES_IPC | IPC_PIPE | IPC_READER | IPC_CREAT | IPC_EXCL, 0);
+    int pipeid = open("guisrv-pipe", O_PIPE | O_CREAT | O_RDONLY, 0);
     if (pipeid < 0) {
         printf("[%s] open read pipe failed!\n", SRV_NAME);
         goto pipe_error;
     }
     
+    ioctl(pipeid, IPC_SET, IPC_NOWAIT);
+
     /* 记录消息id */
     guisrv_msgid = msgid;
     guisrv_pipeid = pipeid;
@@ -64,7 +66,7 @@ static int __close(srvarg_t *arg)
     guisrv_msgid = -1;
 
     /* 删除管道 */
-    res_close(guisrv_pipeid);
+    close(guisrv_pipeid);
     guisrv_pipeid = -1;
 
     SETSRV_RETVAL(arg, 0);
@@ -99,7 +101,7 @@ int guisrv_if_recv_data(void *buf, int buflen)
     if (guisrv_pipeid < 0) {
         return -1;
     }
-    return res_read(guisrv_pipeid, IPC_NOWAIT, buf, buflen);
+    return read(guisrv_pipeid, buf, buflen);
 }
 
 /* 调用表 */

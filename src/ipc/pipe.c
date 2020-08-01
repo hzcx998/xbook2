@@ -79,6 +79,9 @@ pipe_t *pipe_alloc(char *name)
             /* 设置管道名字 */
             memset(pipe->name, 0, PIPE_NAME_LEN);
             strcpy(pipe->name, name);
+            atomic_set(&pipe->readref, 0);
+            atomic_set(&pipe->writeref, 0);
+            
 #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "pipe_alloc: pipe id=%d\n", pipe->id);
 #endif
@@ -160,26 +163,31 @@ int pipe_get(char *name, unsigned long flags)
             }
             /* 根据读写标志设定读写者 */
             if (rw == 1) {
-                if (pipe->writer) /* 写者已经存在，只能有一个写者 */
-                    goto err;
-                pipe->writer = current_task;
-#if DEBUG_LOCAL == 1                
-                pr_dbg("pipe writer pid %d\n", current_task->pid);
-#endif
-            } else if (rw == 0) {
-                if (pipe->reader) /* 读者已经存在，只能有一个读者 */
-                    goto err;
-                pipe->reader = current_task;  
-#if DEBUG_LOCAL == 1                
-                pr_dbg("pipe reader pid %d\n", current_task->pid);
-#endif                
-                /* 读者注册时，需要查看是否写者在等待同步中 */
-                if (pipe->writer && pipe->writer->state == TASK_BLOCKED && pipe->flags & PIPE_IN_WRITE) {
-#if DEBUG_LOCAL == 1
-                    printk(KERN_DEBUG "pipe_get: reader register, writer sync wait, wake up writer.\n");
-#endif                    
-                    task_unblock(pipe->writer); /* 唤醒写者 */
+                /* 没有写者就设置写者 */
+                if (pipe->writer == NULL && !atomic_get(&pipe->writeref)) {
+                    pipe->writer = current_task;                  
+                    #if DEBUG_LOCAL == 1                
+                    pr_dbg("pipe writer pid %d\n", current_task->pid);
+                    #endif
                 }
+                atomic_inc(&pipe->writeref);
+            } else if (rw == 0) {
+                /* 没有读者就设置读者 */
+                if (pipe->reader == NULL && !atomic_get(&pipe->readref)) {
+                    pipe->reader = current_task;
+                    
+                    #if DEBUG_LOCAL == 1                
+                    pr_dbg("pipe reader pid %d\n", current_task->pid);
+                    #endif                
+                    /* 读者注册时，需要查看是否写者在等待同步中 */
+                    if (pipe->writer && pipe->writer->state == TASK_BLOCKED && pipe->flags & PIPE_IN_WRITE) {
+                        #if DEBUG_LOCAL == 1
+                        printk(KERN_DEBUG "pipe_get: reader register, writer sync wait, wake up writer.\n");
+                        #endif                    
+                        task_unblock(pipe->writer); /* 唤醒写者 */
+                    }
+                }
+                atomic_inc(&pipe->readref);
             }
             retval = pipe->id; /* 已经存在，那么就返回已经存在的管道的id */
         } else { /* 不存在则创建一个新的 */
@@ -190,11 +198,13 @@ int pipe_get(char *name, unsigned long flags)
             /* 新分配的管道，读写者都不存在 */
             if (rw == 1) {
                 pipe->writer = current_task;
+                atomic_set(&pipe->writeref, 1);
 #if DEBUG_LOCAL == 1                
                 pr_dbg("pipe writer pid %d\n", current_task->pid);
 #endif
             } else if (rw == 0) {
-                pipe->reader = current_task;    
+                pipe->reader = current_task;
+                atomic_set(&pipe->readref, 1);
 #if DEBUG_LOCAL == 1                
                 pr_dbg("pipe reader pid %d\n", current_task->pid);
 #endif                
@@ -204,7 +214,7 @@ int pipe_get(char *name, unsigned long flags)
     }
 err:
     semaphore_up(&pipe_mutex);
-
+    //printk("[PIPE]: create pipe %d\n", retval);
     /* 没有创建标志，直接返回错误 */
     return retval;
 }
@@ -231,15 +241,22 @@ int pipe_put(int pipeid)
 
         /* 管道的读者和写者都无的时候，才真正释放管道 */
         if (current_task == pipe->reader) { /* 是读者 */
-            pipe->reader = NULL;    /* 取消读者身份 */
-#if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "pipe_put: reader closed, free pipe=%d.\n", pipe->id);
-#endif
+            atomic_dec(&pipe->readref);
+            if (atomic_get(&pipe->readref) == 0) {
+                pipe->reader = NULL;    /* 取消读者身份 */
+                #if DEBUG_LOCAL == 1
+                printk(KERN_DEBUG "pipe_put: reader closed, free pipe=%d.\n", pipe->id);
+                #endif
+            }
+            
         } else if (current_task == pipe->writer) { /* 是写者 */
-            pipe->writer = NULL;    /* 取消写者身份 */
-#if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "pipe_put: writer closed, free pipe=%d.\n", pipe->id);
-#endif
+            atomic_dec(&pipe->writeref);
+            if (atomic_get(&pipe->writeref) == 0) {
+                pipe->writer = NULL;    /* 取消写者身份 */
+                #if DEBUG_LOCAL == 1
+                printk(KERN_DEBUG "pipe_put: writer closed, free pipe=%d.\n", pipe->id);
+                #endif
+            }
         }
         /* 如果读写者都为空，那么才真正释放管道 */
         if (pipe->reader == NULL && pipe->writer == NULL) {
@@ -279,7 +296,6 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
         printk(KERN_ERR "%s: arg error!\n");
         return -1;
     }
-        
     pipe_t *pipe;
     /* get pipe table access */
     semaphore_down(&pipe_mutex);
@@ -297,7 +313,7 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
         return -1;
     }
         
-    if (pipeflg & IPC_NOERROR)  /* 没有错误，就是严格的，写者必须是当前进程 */
+    if (pipe->flags & (IPC_NOERROR << 24))  /* 没有错误，就是严格的，写者必须是当前进程 */
         if (pipe->writer != current_task) {
             printk(KERN_ERR "%s: writer no current task!\n");
             return -1;
@@ -310,7 +326,7 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "pipe_write: reader not ready.\n");
 #endif        
-        if (!(pipeflg & IPC_NOSYNC)) { /* 需要同步等待写者注册 */
+        if (!(pipe->flags & (IPC_NOSYNC << 24))) { /* 需要同步等待写者注册 */
 #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "pipe_write: need sync for reader.\n");
 #endif
@@ -319,7 +335,7 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
     }
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "pipe_write: id=%d buffer=%x size=%d flags=%x\n",
-        pipeid, buffer, size, pipeflg);
+        pipeid, buffer, size, pipe->flags);
 #endif
     /* 对管道进行操作 */
     mutex_lock(&pipe->mutex); /* 获取管道，只有一个进程可以进入管道 */
@@ -365,10 +381,10 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
         //save_intr(flags);
         /* 如果fifo缓冲区为已经满了，并且还需要写入数据，就进入抉择阶段 */
         if (fifo_buf_avali(pipe->fifo) <= 0 && left_size > 0) {
-            if (pipeflg & IPC_NOWAIT) { /* 如果是不需要等待，就直接返回 */
+            if (pipe->flags & (IPC_NOWAIT << 24)) { /* 如果是不需要等待，就直接返回 */
                 pipe->flags &= ~PIPE_IN_WRITE;   /* 管道离开写状态 */
                 mutex_unlock(&pipe->mutex); /* 释放管道 */
-#if DEBUG_LOCAL == 0
+#if DEBUG_LOCAL == 1
                 printk(KERN_DEBUG "pipe_write: write with no wait, return.\n");
 #endif               
                 return -1;
@@ -386,6 +402,9 @@ int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg)
     pipe->flags &= ~PIPE_IN_WRITE;   /* 管道离开写状态 */
     
     mutex_unlock(&pipe->mutex); /* 释放管道 */
+#if DEBUG_LOCAL == 1
+    printk("[PIPE]: %s: size=%d\n", __func__, wrsize);
+#endif
     return wrsize;
 }
 
@@ -412,18 +431,18 @@ int pipe_read(int pipeid, void *buffer, size_t size, int pipeflg)
     pipe = pipe_find_by_id(pipeid);
     if (pipe == NULL) {  /* not found message */
         semaphore_up(&pipe_mutex);    
-        printk(KERN_DEBUG "pipe_read: not found message queue!\n");
-        
+        printk(KERN_ERR "pipe_read: not found message queue!\n");
         return -1;
     }
     semaphore_up(&pipe_mutex);
     
     /* 读者不能为空 */
     if (pipe->reader == NULL) {
+        printk(KERN_ERR "pipe_read: reader null!\n");
         return -1;
     }
 
-    if (pipeflg & IPC_NOERROR)  /* 没有错误，就是严格的，读者必须是当前进程 */
+    if (pipe->flags & (IPC_NOERROR << 16))  /* 没有错误，就是严格的，读者必须是当前进程 */
         if (pipe->reader != current_task) 
             return -1;
 
@@ -433,16 +452,14 @@ int pipe_read(int pipeid, void *buffer, size_t size, int pipeflg)
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "pipe_read: writer not ready.\n");
 #endif        
-        if (pipeflg & IPC_NOSYNC) { /* 需要同步等待写者注册 */
-#if DEBUG_LOCAL == 1
-            printk(KERN_DEBUG "pipe_read: don't need sync for reader.\n");
-#endif      
+        if (pipe->flags & (IPC_NOSYNC << 16)) { /* 需要同步等待写者注册 */
+            printk(KERN_DEBUG "pipe_read: don't need sync for reader.\n");  
             return -1;
         }
     }
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "pipe_read: id=%d buffer=%x size=%d flags=%x\n",
-        pipeid, buffer, size, pipeflg);
+        pipeid, buffer, size, pipe->flags);
 #endif
     /* 对管道进行操作 */
     mutex_lock(&pipe->mutex); /* 获取管道，只有一个进程可以进入管道 */
@@ -451,13 +468,13 @@ int pipe_read(int pipeid, void *buffer, size_t size, int pipeflg)
     save_intr(flags); /* 对已有数据的检测需要关闭中断 */
     /* 如果缓冲区里面没有数据，就进入抉择截断 */
     if (fifo_buf_len(pipe->fifo) <= 0) {
-        if (pipeflg & IPC_NOWAIT) { /* 如果是不需要等待，就直接返回 */
+        if (pipe->flags & (IPC_NOWAIT << 16)) { /* 如果是不需要等待，就直接返回 */
             pipe->flags &= ~PIPE_IN_READ;   /* 管道离开读状态 */
             restore_intr(flags);
             mutex_unlock(&pipe->mutex); /* 释放管道 */
 #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "pipe_read: read with no wait, return.\n");
-#endif               
+#endif
             return -1;
         }
 #if DEBUG_LOCAL == 1
@@ -472,12 +489,14 @@ int pipe_read(int pipeid, void *buffer, size_t size, int pipeflg)
     }
     restore_intr(flags); /* 完成对已有数据检测 */
     /* 被唤醒后，肯定有数据了 */
+    int rdsize = 0;
     int chunk = MIN(size, PIPE_SIZE); /* 获取一次能读取的数据量 */
     chunk = MIN(chunk, fifo_buf_len(pipe->fifo)); /* 获取能读取的数据量 */
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "pipe_read: will read %d bytes.\n", chunk);
 #endif
     chunk = fifo_buf_get(pipe->fifo, buffer, chunk);
+    rdsize += chunk;
 #if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "pipe_read: actually read %d bytes.\n", chunk);
 #endif   
@@ -495,8 +514,10 @@ int pipe_read(int pipeid, void *buffer, size_t size, int pipeflg)
     pipe->flags &= ~PIPE_IN_READ;   /* 管道离开读状态 */
     
     mutex_unlock(&pipe->mutex); /* 释放管道 */
-
-    return chunk;
+#if DEBUG_LOCAL == 1
+    printk("[PIPE]: %s: size=%d\n", __func__, rdsize);
+#endif
+    return rdsize;
 }
 
 /**
@@ -534,6 +555,37 @@ int pipe_set_rdwr(int pipeid, unsigned long arg)
     return -1;
 }
 
+int pipe_set_flags(int pipeid, unsigned int cmd, unsigned long arg)
+{
+    pipe_t *pipe;
+    /* get pipe table access */
+    semaphore_down(&pipe_mutex);
+    pipe = pipe_find_by_id(pipeid);
+    if (pipe) {  /* 管道存在 */
+        /* 设置期间，不允许读写 */
+        mutex_lock(&pipe->mutex);
+        /* 对管道进行设置 */
+        if (pipe->reader == current_task) { /* 是读端设置 */
+            pipe->flags |= (arg & 0xff) << 16;
+        } else if (pipe->writer == current_task) { /* 是写端设置 */
+            pipe->flags |= (arg & 0xff) << 24;
+        } else {
+            printk(KERN_NOTICE "%s: arg error!\n", __func__);
+            mutex_unlock(&pipe->mutex);
+            semaphore_up(&pipe_mutex);
+            /* 参数出错 */
+            return -1;
+        }
+        
+        mutex_unlock(&pipe->mutex);
+        semaphore_up(&pipe_mutex);        
+        return 0;
+    }
+    semaphore_up(&pipe_mutex);
+    /* 没有找到管道 */
+    return -1;
+}
+
 /**
  * pipe_ctl - 管道控制
  * @pipeid: 管道id
@@ -550,6 +602,9 @@ int pipe_ctl(int pipeid, unsigned int cmd, unsigned long arg)
     case IPC_SETRW:
         retval = pipe_set_rdwr(pipeid, arg);
         break;
+    case IPC_SET:
+        retval = pipe_set_flags(pipeid, cmd, arg);
+        break;
     default:
         retval = -1;
         break;
@@ -557,6 +612,45 @@ int pipe_ctl(int pipeid, unsigned int cmd, unsigned long arg)
     return retval;
 }
 
+
+/**
+ * pipe_grow - 增加管道引用计数
+ * @pipeid: 管道id
+ * 
+ * @return: 成功返回0，失败返回-1
+ */
+int pipe_grow(int pipeid)
+{
+    pipe_t *pipe;
+    /* get pipe table access */
+    semaphore_down(&pipe_mutex);
+    pipe = pipe_find_by_id(pipeid);
+
+    if (pipe) {  /* 管道存在 */
+        /* 增长期间，不允许读写 */
+        mutex_lock(&pipe->mutex);
+
+        /* 管道的读者和写者都无的时候，才真正释放管道 */
+        if (current_task == pipe->reader && atomic_get(&pipe->readref) > 0) { /* 是读者 */
+            atomic_inc(&pipe->readref);
+        } else if (current_task == pipe->writer && atomic_get(&pipe->writeref) > 0) { /* 是写者 */
+            atomic_inc(&pipe->writeref);
+        } else {  
+            pr_dbg("[PIPE]: %s: %s: not reader or writer!\n", __func__, current_task->name);
+            mutex_unlock(&pipe->mutex);
+            semaphore_up(&pipe_mutex);        
+            return -1;
+        }
+
+        mutex_unlock(&pipe->mutex);
+        semaphore_up(&pipe_mutex);        
+        return 0;
+    }
+    pr_dbg("[PIPE]: %s: %s: pipe not found!\n", __func__, current_task->name);     
+    semaphore_up(&pipe_mutex);
+    /* 没有找到管道 */
+    return -1;
+}
 
 /**
  * init_pipe - 初始化管道

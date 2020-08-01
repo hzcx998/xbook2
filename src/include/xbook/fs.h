@@ -47,5 +47,9 @@ int sys_rename(const char *source, const char *target);
 int sys_chdir(const char *path);
 int sys_getcwd(char *buf, int bufsz);
 long sys_tell(int fd);
+int sys_dup(int oldfd);
+int sys_dup2(int oldfd, int newfd);
+
+int fsif_grow(int fd);
 
 #endif /* _XBOOK_FS_H */

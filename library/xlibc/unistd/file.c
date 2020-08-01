@@ -96,3 +96,13 @@ int fstat(int fd, struct stat *buf)
 {
     return syscall2(int, SYS_FSTAT, fd, buf);
 }
+
+int dup(int fd)
+{
+    return syscall1(int, SYS_DUP, fd);
+}
+
+int dup2(int oldfd, int newfd)
+{
+    return syscall2(int, SYS_DUP2, oldfd, newfd);
+}

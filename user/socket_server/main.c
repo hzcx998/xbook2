@@ -26,7 +26,7 @@ int main()
     listen(listenSocket,5);
  
     int connfd=0;
-    int len=sizeof(struct sockaddr_in);
+    socklen_t len=sizeof(struct sockaddr_in);
     connfd=accept(listenSocket,(struct sockaddr*)&addrClient,&len);
     char *ipStr=inet_ntoa(addrClient.sin_addr);
     printf("connect is %s\n",ipStr);
