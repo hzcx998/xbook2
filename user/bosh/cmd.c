@@ -109,7 +109,7 @@ int execute_cmd(int argc, char **argv)
         char out_pipename[IPC_NAME_LEN] = {0};
         sprintf(out_pipename, "shell-stdout%d", unid);
         /* 创建管道 */
-        int pipe_out_rd = open(out_pipename, O_PIPE | O_CREAT | O_RDONLY, 0);
+        int pipe_out_rd = open(out_pipename, O_FIFO | O_CREAT | O_RDONLY, 0);
         if (pipe_out_rd < 0) {
             shell_printf("%s: open stdout read pipe failed!\n", APP_NAME);
             return -1;
@@ -123,16 +123,13 @@ int execute_cmd(int argc, char **argv)
         char in_pipename[IPC_NAME_LEN] = {0};
         sprintf(in_pipename, "shell-stdin%d", unid);
         /* 创建管道 */
-        int pipe_in_wr = open(in_pipename, O_PIPE | O_CREAT | O_WRONLY, 0);
+        int pipe_in_wr = open(in_pipename, O_FIFO | O_CREAT | O_WRONLY, 0);
         if (pipe_in_wr < 0) {
             shell_printf("%s: open stdin write pipe failed!\n", APP_NAME);
             close(pipe_out_rd);     /* 关闭输出读者 */
             return -1;
         }
 
-        /* 非阻塞 */
-        //ioctl(pipe_in_wr, IPC_SET, IPC_NOWAIT);
-        
         char buf[513] = {0};
         char key;
         /* 创建一个进程 */
@@ -218,14 +215,14 @@ int execute_cmd(int argc, char **argv)
             int pipe_in_rd;
             if (!daemon) {  /* 不是后台 */
                 /* ---- 打开输出管道 ---- */
-                pipe_out_wr = open(out_pipename, O_PIPE | O_WRONLY, 0);
+                pipe_out_wr = open(out_pipename, O_FIFO | O_WRONLY, 0);
                 if (pipe_out_wr < 0) {
                     shell_printf("%s: open stdout write pipe failed!\n", APP_NAME);
                     return -1;
                 }
  
                 /* ---- 打开输入管道 ---- */
-                pipe_in_rd = open(in_pipename, O_PIPE | O_RDONLY, 0);
+                pipe_in_rd = open(in_pipename, O_FIFO | O_RDONLY, 0);
                 if (pipe_in_rd < 0) {
                     shell_printf("%s: open stdin read pipe failed!\n", APP_NAME);
                     close(pipe_out_wr);  /* 关闭输出写者 */

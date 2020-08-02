@@ -4,7 +4,7 @@
 #include <xbook/sharemem.h>
 #include <xbook/sem.h>
 #include <xbook/msgqueue.h>
-#include <xbook/pipe.h>
+#include <xbook/fifo.h>
 #include <xbook/driver.h>
 #include <xbook/clock.h>
 #include <sys/res.h>
@@ -150,9 +150,9 @@ int __getres_ipc(char *name, unsigned long resflg, unsigned long arg)
         }
     } else if (resflg & IPC_PIPE) { /* 管道 */
 #if DEBUG_LOCAL == 1
-        printk(KERN_DEBUG "__getres_ipc: pipe resuource.\n");
+        printk(KERN_DEBUG "__getres_ipc: fifo resuource.\n");
 #endif        
-        handle = pipe_get(name, resflg & RES_LOCAL_MASK);
+        handle = fifo_get(name, resflg & RES_LOCAL_MASK);
         if (handle == -1)
             return -1;
         /* 消除从类型中的其它类型 */
@@ -163,7 +163,7 @@ int __getres_ipc(char *name, unsigned long resflg, unsigned long arg)
             #if DEBUG_LOCAL == 1
             printk(KERN_DEBUG "__getres_ipc: install res failed!\n");
             #endif
-            pipe_put(handle);
+            fifo_put(handle);
             return -1;
         }
     }
@@ -193,7 +193,7 @@ int __writeres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
         retval = msg_queue_send(item->handle, buffer, count, off);
         break;
     case IPC_PIPE:
-        retval = pipe_write(item->handle, buffer, count, off);
+        retval = fifo_write(item->handle, buffer, count, off);
         break;
     default:
         break;
@@ -220,7 +220,7 @@ int __readres_ipc(res_item_t *item, off_t off, void *buffer, size_t count)
         read_bytes = msg_queue_recv(item->handle, buffer, count, *msgtype, off);
         return read_bytes;
     case IPC_PIPE:
-        read_bytes = pipe_read(item->handle, buffer, count, off);
+        read_bytes = fifo_read(item->handle, buffer, count, off);
         return read_bytes;
     default:
         return -1;
@@ -289,7 +289,7 @@ int sys_putres(int res)
         switch (item->flags & RES_SLAVER_MASK)
         {
         case IPC_PIPE: /* 管道在释放时需要释放管道 */
-            pipe_put(item->handle);
+            fifo_put(item->handle);
             break;
         default:
             break;
@@ -511,7 +511,7 @@ int sys_ctlres(int res, unsigned int cmd, unsigned long arg)
                 /* 根据从类型进行不同的操作 */
                 switch (item->flags & RES_SLAVER_MASK) {
                 case IPC_PIPE:
-                    retval = pipe_ctl(item->handle, cmd, arg);
+                    retval = fifo_ctl(item->handle, cmd, arg);
                     break;    
                 default:
                     retval = -1;
@@ -610,7 +610,7 @@ void resource_copy(resource_t *dst, resource_t *src)
                 
                 switch (item->flags & RES_SLAVER_MASK) {
                 case IPC_PIPE: /* 只复制管道ipc资源和表项 */ 
-                    //printk("copy pipe ipc!\n");
+                    //printk("copy fifo ipc!\n");
                     dst->table[i].flags = item->flags;  /* 复制项 */
                     dst->table[i].handle = item->handle;  /* 复制项 */
                     break;
@@ -653,7 +653,7 @@ void resource_release(resource_t *res)
                 switch (item->flags & RES_SLAVER_MASK)
                 {
                 case IPC_PIPE:
-                    pipe_put(item->handle);
+                    fifo_put(item->handle);
                     break;
                 default:
                     break;

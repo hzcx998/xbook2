@@ -9,7 +9,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <lwip/sockets.h>
-#include <xbook/pipe.h>
+#include <xbook/fifo.h>
 #include <sys/ipc.h>
 
 #define DEBUG_LOCAL 0
@@ -28,7 +28,7 @@ int sys_open(const char *path, int flags, int mode)
         if (handle < 0)
             return -1;
         fd = local_fd_install(handle, FILE_FD_DEVICE);
-    } else if (O_PIPE & flags) {
+    } else if (O_FIFO & flags) {
         /* 去掉根目录 */
         char *p = (char *) path;
         if (*p == '/')
@@ -46,10 +46,10 @@ int sys_open(const char *path, int flags, int mode)
         } else if (flags & O_WRONLY) {
             new_flags |= IPC_WRITER;
         }
-        handle = pipe_get(p, new_flags);
+        handle = fifo_get(p, new_flags);
         if (handle < 0)
             return -1;
-        fd = local_fd_install(handle, FILE_FD_PIPE);
+        fd = local_fd_install(handle, FILE_FD_FIFO);
     } else {
         //printk("[fs]: %s: path=%s flags=%x\n", __func__, path, flags);
         handle = fsif.open((void *)path, flags);
@@ -77,8 +77,8 @@ int sys_close(int fd)
     } else if (ffd->flags & FILE_FD_DEVICE) {
         if (device_close(ffd->handle) < 0)
             return -1;
-    } else if (ffd->flags & FILE_FD_PIPE) {
-        if (pipe_put(ffd->handle) < 0)
+    } else if (ffd->flags & FILE_FD_FIFO) {
+        if (fifo_put(ffd->handle) < 0)
             return -1;        
     }
     return local_fd_uninstall(fd);
@@ -101,8 +101,8 @@ int sys_read(int fd, void *buffer, size_t nbytes)
         retval = device_read(ffd->handle, buffer, nbytes, ffd->offset);  
         if (retval > 0)
             ffd->offset += (retval / SECTOR_SIZE);
-    } else if (ffd->flags & FILE_FD_PIPE) {
-        retval = pipe_read(ffd->handle, buffer, nbytes, 0);  
+    } else if (ffd->flags & FILE_FD_FIFO) {
+        retval = fifo_read(ffd->handle, buffer, nbytes, 0);  
     }
     return retval;
 }
@@ -133,9 +133,9 @@ int sys_write(int fd, void *buffer, size_t nbytes)
         retval = device_write(ffd->handle, buffer, nbytes, ffd->offset);  
         if (retval > 0)
             ffd->offset += (retval / SECTOR_SIZE);
-    } else if (ffd->flags & FILE_FD_PIPE) {
+    } else if (ffd->flags & FILE_FD_FIFO) {
         
-        retval = pipe_write(ffd->handle, buffer, nbytes, 0);  
+        retval = fifo_write(ffd->handle, buffer, nbytes, 0);  
     }
     return retval;
 }
@@ -149,8 +149,8 @@ int sys_ioctl(int fd, int cmd, unsigned long arg)
         return fsif.ioctl(ffd->handle, cmd, arg);
     } else if (ffd->flags & FILE_FD_DEVICE) {
         return device_devctl(ffd->handle, cmd, arg);
-    } else if (ffd->flags & FILE_FD_PIPE) {
-        return pipe_ctl(ffd->handle, cmd, arg);
+    } else if (ffd->flags & FILE_FD_FIFO) {
+        return fifo_ctl(ffd->handle, cmd, arg);
     }
     return -1;
 }
@@ -340,8 +340,8 @@ int fsif_grow(int fd)
         if (device_grow(ffd->handle) < 0)
             return -1;
         
-    } else if (ffd->flags & FILE_FD_PIPE) {
-        if (pipe_grow(ffd->handle) < 0)
+    } else if (ffd->flags & FILE_FD_FIFO) {
+        if (fifo_grow(ffd->handle) < 0)
             return -1;
     } else if (ffd->flags & FILE_FD_SOCKET) {
         
@@ -374,8 +374,8 @@ int sys_dup(int oldfd)
     } else if (ffd->flags & FILE_FD_DEVICE) {
         
         newfd = local_fd_install(ffd->handle, FILE_FD_DEVICE);
-    } else if (ffd->flags & FILE_FD_PIPE) {
-        newfd = local_fd_install(ffd->handle, FILE_FD_PIPE);
+    } else if (ffd->flags & FILE_FD_FIFO) {
+        newfd = local_fd_install(ffd->handle, FILE_FD_FIFO);
     } else if (ffd->flags & FILE_FD_SOCKET) {
         
     }
@@ -417,9 +417,9 @@ int sys_dup2(int oldfd, int newfd)
     } else if (ffd->flags & FILE_FD_DEVICE) {
         
         newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_DEVICE);
-    } else if (ffd->flags & FILE_FD_PIPE) {
+    } else if (ffd->flags & FILE_FD_FIFO) {
         
-        newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_PIPE);
+        newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_FIFO);
     } else if (ffd->flags & FILE_FD_SOCKET) {
         
     }

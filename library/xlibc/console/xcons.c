@@ -37,7 +37,7 @@ int xcons_connect()
         goto rollback_connect;
     }
 
-    int pipeid = open("guisrv-pipe", O_PIPE | O_WRONLY, 0);
+    int pipeid = open("guisrv-pipe", O_FIFO | O_WRONLY, 0);
     if (pipeid < 0) {
         goto rollback_msg;
     }

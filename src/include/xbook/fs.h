@@ -12,7 +12,8 @@
 #define FILE_FD_NORMAL  0X02    /* is normal file */
 #define FILE_FD_DEVICE  0X04    /* is a device */
 #define FILE_FD_SOCKET  0X08    /* is a socket */
-#define FILE_FD_PIPE    0X10    /* is a pipe */
+#define FILE_FD_FIFO    0X10    /* is a fifo */
+#define FILE_FD_PIPE    0X20    /* is a pipe */
 
 typedef struct {
     int handle;         /* 对象句柄 */

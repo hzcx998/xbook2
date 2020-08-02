@@ -5,8 +5,8 @@
 #define MAXLINE 4096
 int socket_test(int argc, char *argv[])
 {
-    int sockfd, n; 
-    char recvline[4096], sendline[4096]; 
+    int sockfd; 
+    char sendline[4096]; 
     struct sockaddr_in servaddr; 
     
     if( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -42,6 +42,7 @@ int socket_test(int argc, char *argv[])
     printf("recv: %s\n", sendline);
     close(sockfd); 
     exit(0);
+    return 0;
 }
 
 int socket_test2(int argc, char *argv[])
@@ -73,8 +74,6 @@ int socket_test2(int argc, char *argv[])
         return -1;
     }
 
-    struct sockaddr client_addr;
-    socklen_t client_len;
     int client_fd;
     while (1) {
         client_fd = accept(fd, NULL, NULL);
@@ -100,7 +99,6 @@ int socket_test3(int argc, char *argv[])
 {
     printf("socket3 test start!\n");
         
-    int err;
     /* udp连接 */
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd < 0) {
@@ -115,7 +113,7 @@ int socket_test3(int argc, char *argv[])
     serv_addr.sin_port = htons(8080);
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_len = sizeof(struct sockaddr_in);
-    bind(fd, &serv_addr, sizeof(struct sockaddr_in));
+    bind(fd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr_in));
     
     memset(&serv_addr, 0, sizeof(struct sockaddr_in));
     serv_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
@@ -125,7 +123,6 @@ int socket_test3(int argc, char *argv[])
 
     struct sockaddr src;
     socklen_t len;
-    int client_fd;
     while (1) {
         
         char buf[BUF_LEN] = "hello! Test!\n";

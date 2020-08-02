@@ -10,7 +10,7 @@
 #include <xbook/msgqueue.h>
 #include <xbook/sem.h>
 #include <xbook/syscall.h>
-#include <xbook/pipe.h>
+#include <xbook/fifo.h>
 #include <xbook/driver.h>
 #include <xbook/ktime.h>
 #include <xbook/srvcall.h>
@@ -34,7 +34,7 @@ int kernel_main(void)
     init_share_mem();
     init_msg_queue();
     init_sem();
-    init_pipe();
+    init_fifo();
 
     init_syscall();
     init_srvcall();
