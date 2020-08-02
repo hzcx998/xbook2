@@ -33,7 +33,7 @@ static int __connect(srvarg_t *arg)
     }
     
     /* 打开读取管道 */
-    int pipeid = open("guisrv-pipe", O_PIPE | O_CREAT | O_RDONLY, 0);
+    int pipeid = open("guisrv-pipe", O_FIFO | O_CREAT | O_RDONLY, 0);
     if (pipeid < 0) {
         printf("[%s] open read pipe failed!\n", SRV_NAME);
         goto pipe_error;
