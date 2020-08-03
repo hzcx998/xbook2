@@ -171,6 +171,9 @@ int fifo_get(char *name, unsigned long flags)
                     #endif
                 }
                 atomic_inc(&fifo->writeref);
+                if (flags & IPC_NOWAIT) {
+                    fifo->flags |= (IPC_NOWAIT << 24);
+                }
             } else if (rw == 0) {
                 /* 没有读者就设置读者 */
                 if (fifo->reader == NULL && !atomic_get(&fifo->readref)) {
@@ -188,6 +191,9 @@ int fifo_get(char *name, unsigned long flags)
                     }
                 }
                 atomic_inc(&fifo->readref);
+                if (flags & IPC_NOWAIT) {
+                    fifo->flags |= (IPC_NOWAIT << 16);
+                }
             }
             retval = fifo->id; /* 已经存在，那么就返回已经存在的管道的id */
         } else { /* 不存在则创建一个新的 */
@@ -199,16 +205,23 @@ int fifo_get(char *name, unsigned long flags)
             if (rw == 1) {
                 fifo->writer = current_task;
                 atomic_set(&fifo->writeref, 1);
+                if (flags & IPC_NOWAIT) {
+                    fifo->flags |= (IPC_NOWAIT << 24);
+                }
 #if DEBUG_LOCAL == 1                
                 pr_dbg("fifo writer pid %d\n", current_task->pid);
 #endif
             } else if (rw == 0) {
                 fifo->reader = current_task;
                 atomic_set(&fifo->readref, 1);
+                if (flags & IPC_NOWAIT) {
+                    fifo->flags |= (IPC_NOWAIT << 16);
+                }
 #if DEBUG_LOCAL == 1                
                 pr_dbg("fifo reader pid %d\n", current_task->pid);
 #endif                
             }
+            
             retval = fifo->id; /* 返回管道id */
         }
     }

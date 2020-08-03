@@ -47,6 +47,9 @@ int sys_open(const char *path, int flags, int mode)
         } else if (flags & O_WRONLY) {
             new_flags |= IPC_WRITER;
         }
+        if (flags & O_NONBLOCK) {
+            new_flags |= IPC_NOWAIT;
+        }
         handle = fifo_get(p, new_flags);
         if (handle < 0)
             return -1;
