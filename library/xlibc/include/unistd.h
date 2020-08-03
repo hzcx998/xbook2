@@ -102,4 +102,6 @@ int usleep(useconds_t usec);
 
 #define environ _environ
 
+int pipe(int fd[2]);
+
 #endif  /* _LIB_UNISTD_H */

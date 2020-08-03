@@ -38,6 +38,8 @@ int do_active_trigger(pid_t pid, int trig, pid_t toucher)
     /* 重软件和硬件触发器都会让进程退出，所以这里需要唤醒停止中的进程，
     以保证进程能够执行到 */
     case TRIGHSOFT:
+    case TRIGLSOFT:
+    case TRIGALARM:
     case TRIGHW:
         /* 如果是重软件或者硬件触发器，就需要唤醒休眠的任务，因为需要立即执行或者终止运行 */
         if (task->state == TASK_BLOCKED ||

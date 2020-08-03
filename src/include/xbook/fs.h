@@ -13,7 +13,8 @@
 #define FILE_FD_DEVICE  0X04    /* is a device */
 #define FILE_FD_SOCKET  0X08    /* is a socket */
 #define FILE_FD_FIFO    0X10    /* is a fifo */
-#define FILE_FD_PIPE    0X20    /* is a pipe */
+#define FILE_FD_PIPE0   0X20    /* is a pipe0: read */
+#define FILE_FD_PIPE1   0X40    /* is a pipe1: write */
 
 typedef struct {
     int handle;         /* 对象句柄 */
@@ -50,6 +51,8 @@ int sys_getcwd(char *buf, int bufsz);
 long sys_tell(int fd);
 int sys_dup(int oldfd);
 int sys_dup2(int oldfd, int newfd);
+int sys_pipe(int fd[2]);
+
 
 int fsif_grow(int fd);
 

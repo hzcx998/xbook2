@@ -14,6 +14,7 @@
 #include <arch/const.h>
 #include <time.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <xcons.h>
 #include <sys/stat.h>
 #include <sys/trigger.h>
@@ -78,6 +79,25 @@ int cmd_parse(char * cmd_str, char **argv, char token)
 	return argc;
 }
 
+int do_daemon(const char *pathname, char *const *argv)
+{
+    int pid = fork();
+    if (pid == -1)
+        return -1;
+    if (pid == 0) {
+        /* 子进程执行程序 */
+        pid = execv(pathname, (char *const *) argv);
+        /* 如果执行出错就退出 */
+        if (pid == -1) {
+            shell_printf("file %s not executable!\n", argv[0]);
+            exit(pid);  /* 退出 */
+        }
+    }
+    /* 父进程直接返回 */
+    return 0;
+
+}
+
 int execute_cmd(int argc, char **argv)
 {
     if (argc < 1)
@@ -98,53 +118,47 @@ int execute_cmd(int argc, char **argv)
     }
     /* 先执行内建命令，再选择磁盘中的命令 */
     if (do_buildin_cmd(argc, argv)) {
+        /* 如果是后台程序，直接运行 */
+        if (daemon) {
+            return do_daemon((const char *) argv[0], (char *const *) argv);
+        }
         /* 在末尾添加上结束参数 */
         argv[argc] = NULL;
         int pid;
     
-        /* ----创建输出管道---- */
-
-        /* 获取一个"唯一"id" */
-        unid_t unid = res_unid(1);
-        char out_pipename[IPC_NAME_LEN] = {0};
-        sprintf(out_pipename, "shell-stdout%d", unid);
-        /* 创建管道 */
-        int pipe_out_rd = open(out_pipename, O_FIFO | O_CREAT | O_RDONLY, 0);
-        if (pipe_out_rd < 0) {
-            shell_printf("%s: open stdout read pipe failed!\n", APP_NAME);
+        int recv_pipe[2];   /* 接收数据的管道 */
+        int xmit_pipe[2];   /* 传输数据的管道 */
+        /* 创建发送和接收的管道 */
+        if (pipe(recv_pipe) < 0) {
+            shell_printf("%s: create recv pipe failed!\n", APP_NAME);
             return -1;
         }
-
-        /* 非阻塞 */
-        ioctl(pipe_out_rd, IPC_SET, IPC_NOWAIT);
-
-        /* ----创建输入管道---- */
-        unid = res_unid(2);
-        char in_pipename[IPC_NAME_LEN] = {0};
-        sprintf(in_pipename, "shell-stdin%d", unid);
-        /* 创建管道 */
-        int pipe_in_wr = open(in_pipename, O_FIFO | O_CREAT | O_WRONLY, 0);
-        if (pipe_in_wr < 0) {
-            shell_printf("%s: open stdin write pipe failed!\n", APP_NAME);
-            close(pipe_out_rd);     /* 关闭输出读者 */
+        if (pipe(xmit_pipe) < 0) {
+            shell_printf("%s: create xmit pipe failed!\n", APP_NAME);
+            close(recv_pipe[0]);
+            close(recv_pipe[1]);
             return -1;
         }
-
+        
         char buf[513] = {0};
         char key;
         /* 创建一个进程 */
         pid = fork();
         if (pid == -1) {  /* fork失败 */
             shell_printf("%s: fork child failed!\n", APP_NAME);
-            close(pipe_out_rd);     /* 关闭输出读者 */
-            close(pipe_in_wr);      /* 关闭输入写者 */
+            close(recv_pipe[0]);
+            close(recv_pipe[1]);
+            close(xmit_pipe[0]);
+            close(xmit_pipe[1]);
+            
             return -1;
         } else if (pid > 0) {  /* 父进程 */
-            if (daemon) {
-                close(pipe_out_rd);     /* 关闭输出读者 */
-                close(pipe_in_wr);      /* 关闭输入写者 */
-                return -1;
-            }
+            /* 关闭不用的管道端口 */
+            close(recv_pipe[1]);
+            close(xmit_pipe[0]);
+
+            /* 非阻塞 */
+            ioctl(recv_pipe[0], F_SETFL, O_NONBLOCK);
 
             int rdbytes;
 #if DEBUG_LOCAL == 1                
@@ -171,22 +185,21 @@ int execute_cmd(int argc, char **argv)
 #if DEBUG_LOCAL == 1                                  
                             shell_printf("%s: wait child process success!\n", APP_NAME);
 #endif
-                            close(pipe_out_rd);     /* 关闭输出读者 */
-                            close(pipe_in_wr);      /* 关闭输入写者 */
-
+                            close(recv_pipe[0]);     /* 关闭输出读者 */
+                            close(xmit_pipe[1]);      /* 关闭输入写者 */
                             return 0;
                         } else {
                             shell_printf("%s: wait child process failed!\n", APP_NAME);
-                            close(pipe_out_rd);     /* 关闭输出读者 */
-                            close(pipe_in_wr);      /* 关闭输入写者 */
+                            close(recv_pipe[0]);     /* 关闭输出读者 */
+                            close(xmit_pipe[1]);      /* 关闭输入写者 */
                             return -1;
                         }
                     }
                 }
 
-                /* ----输出管道---- */
+                /* ----接收管道---- */
                 memset(buf, 0, 513);
-                rdbytes = read(pipe_out_rd, buf, 512);
+                rdbytes = read(recv_pipe[0], buf, 512);
                 if (rdbytes > 0) { 
 #if DEBUG_LOCAL == 1
                     shell_printf("%s: read bytes %d\n", APP_NAME, rdbytes);
@@ -198,7 +211,7 @@ int execute_cmd(int argc, char **argv)
 
                 /* ----输入管道---- */
                 if (!shell_event_poll(&key, pid)) {
-                    int wrret = write(pipe_in_wr, &key, 1);
+                    int wrret = write(xmit_pipe[1], &key, 1);
                     if (wrret < 0) {
                         shell_printf("%s: write key %d to pipe failed!\n", APP_NAME, key);
                     }
@@ -209,58 +222,36 @@ int execute_cmd(int argc, char **argv)
             /* 设置为忽略，避免在初始化过程中被打断 */
             trigger(TRIGLSOFT, TRIG_IGN);
 
-            close(pipe_out_rd);     /* 关闭输出读者 */
-            close(pipe_in_wr);      /* 关闭输入写者 */
-            int pipe_out_wr;
-            int pipe_in_rd;
-            if (!daemon) {  /* 不是后台 */
-                /* ---- 打开输出管道 ---- */
-                pipe_out_wr = open(out_pipename, O_FIFO | O_WRONLY, 0);
-                if (pipe_out_wr < 0) {
-                    shell_printf("%s: open stdout write pipe failed!\n", APP_NAME);
-                    return -1;
-                }
- 
-                /* ---- 打开输入管道 ---- */
-                pipe_in_rd = open(in_pipename, O_FIFO | O_RDONLY, 0);
-                if (pipe_in_rd < 0) {
-                    shell_printf("%s: open stdin read pipe failed!\n", APP_NAME);
-                    close(pipe_out_wr);  /* 关闭输出写者 */
-                    return -1;
-                }
+            /* 关闭不用的管道端口 */
+            close(recv_pipe[0]);
+            close(xmit_pipe[1]);
 
-                int new_res;
-                /* 把输出管道重定向到标准输出资源 */
-                new_res = dup2(pipe_out_wr, RES_STDOUTNO); 
-                if (new_res < 0) {
-                    shell_printf("%s: redirect pipe to stdout failed!\n", APP_NAME);
-                    close(pipe_out_wr);     /* 关闭输出写者 */
-                    close(pipe_in_rd);      /* 关闭输入读者 */
-                    exit(pid);  /* 退出 */
-                }
-                close(pipe_out_wr);
-                pipe_out_wr = new_res;
-  
-                /* 把输入管道重定向到标准输入资源 */
-                new_res = dup2(pipe_in_rd, RES_STDINNO); 
-                if (new_res < 0) {
-                    shell_printf("%s: redirect pipe to stdin failed!\n", APP_NAME);
-                    close(pipe_out_wr);     /* 关闭输出写者 */
-                    close(pipe_in_rd);      /* 关闭输入读者 */
-                    exit(pid);  /* 退出 */
-                }
-                close(pipe_in_rd);
-                pipe_in_rd = new_res;
+            int new_fd;
+            /* 把输出管道重定向到标准输出资源 */
+            new_fd = dup2(recv_pipe[1], RES_STDOUTNO); 
+            if (new_fd < 0) {
+                shell_printf("%s: redirect pipe to stdout failed!\n", APP_NAME);
+                close(recv_pipe[1]);
+                close(xmit_pipe[0]);
+                exit(pid);  /* 退出 */
             }
+            close(recv_pipe[1]);
+   
+            /* 把输入管道重定向到标准输入资源 */
+            new_fd = dup2(xmit_pipe[0], RES_STDINNO); 
+            if (new_fd < 0) {
+                shell_printf("%s: redirect pipe to stdin failed!\n", APP_NAME);
+                close(xmit_pipe[0]);
+                exit(pid);  /* 退出 */
+            }
+            close(xmit_pipe[0]);
+            /* 恢复默认触发 */
+            trigger(TRIGLSOFT, TRIG_DFL);
             /* 子进程执行程序 */
             pid = execv((const char *) argv[0], (char *const *) argv);
             /* 如果执行出错就退出 */
             if (pid == -1) {
                 shell_printf("file %s not executable!\n", argv[0]);
-                if (!daemon) {  /* 不是后台进程 */
-                    close(pipe_out_wr);     /* 关闭输出写者 */
-                    close(pipe_in_rd);      /* 关闭输入读者 */
-                }    
                 exit(pid);  /* 退出 */
             }
         }

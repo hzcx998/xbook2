@@ -630,7 +630,6 @@ int fifo_grow(int fifoid)
         /* 增长期间，不允许读写 */
         mutex_lock(&fifo->mutex);
 
-        /* 管道的读者和写者都无的时候，才真正释放管道 */
         if (current_task == fifo->reader && atomic_get(&fifo->readref) > 0) { /* 是读者 */
             atomic_inc(&fifo->readref);
         } else if (current_task == fifo->writer && atomic_get(&fifo->writeref) > 0) { /* 是写者 */

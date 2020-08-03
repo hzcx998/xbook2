@@ -3,6 +3,7 @@ X_LIBS		+= libxlibc-0.0.1.a libpthread-0.0.1.a libjpeg-9d.a libzlib-1.2.11.a lib
 NAME		:= tests
 SRC			+= main.c test_png.c test_jpg.c libvideo.c
 SRC			+= socket_test.c
+SRC			+= pipe_test.c
 
 
 define CUSTOM_TARGET_CMD

@@ -23,6 +23,7 @@ int shell_event_poll(char *buf, int pid)
     if (msg.ctrl & XCONS_KMOD_CTRL) {
         /* ctrl + c -> 打断进程 */
         if (msg.data == KEY_C || msg.data == KEY_c) {
+            printf("trig\n");
             /* 激活pid的轻软件触发器，可捕捉 */
             triggeron(TRIGLSOFT, pid);
         }

@@ -23,6 +23,7 @@ typedef unsigned long nlink_t;
 typedef unsigned int uid_t;
 typedef unsigned int gid_t;
 typedef unsigned long useconds_t;
+typedef long kobjid_t; /* kernel object id */
 
 typedef signed char				s8_t;
 typedef unsigned char			u8_t;

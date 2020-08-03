@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <lwip/sockets.h>
 #include <xbook/fifo.h>
+#include <xbook/pipe.h>
 #include <sys/ipc.h>
 
 #define DEBUG_LOCAL 0
@@ -80,6 +81,12 @@ int sys_close(int fd)
     } else if (ffd->flags & FILE_FD_FIFO) {
         if (fifo_put(ffd->handle) < 0)
             return -1;        
+    } else if (ffd->flags & FILE_FD_PIPE0) {
+        if (pipe_close(ffd->handle, 0) < 0)
+            return -1;  
+    } else if (ffd->flags & FILE_FD_PIPE1) {
+        if (pipe_close(ffd->handle, 1) < 0)
+            return -1;
     }
     return local_fd_uninstall(fd);
 }
@@ -103,6 +110,8 @@ int sys_read(int fd, void *buffer, size_t nbytes)
             ffd->offset += (retval / SECTOR_SIZE);
     } else if (ffd->flags & FILE_FD_FIFO) {
         retval = fifo_read(ffd->handle, buffer, nbytes, 0);  
+    } else if ((ffd->flags & FILE_FD_PIPE0)) {
+        retval = pipe_read(ffd->handle, buffer, nbytes);  
     }
     return retval;
 }
@@ -134,8 +143,9 @@ int sys_write(int fd, void *buffer, size_t nbytes)
         if (retval > 0)
             ffd->offset += (retval / SECTOR_SIZE);
     } else if (ffd->flags & FILE_FD_FIFO) {
-        
         retval = fifo_write(ffd->handle, buffer, nbytes, 0);  
+    } else if ((ffd->flags & FILE_FD_PIPE1)) {
+        retval = pipe_write(ffd->handle, buffer, nbytes);  
     }
     return retval;
 }
@@ -151,6 +161,10 @@ int sys_ioctl(int fd, int cmd, unsigned long arg)
         return device_devctl(ffd->handle, cmd, arg);
     } else if (ffd->flags & FILE_FD_FIFO) {
         return fifo_ctl(ffd->handle, cmd, arg);
+    } else if (ffd->flags & FILE_FD_PIPE0) {
+        return pipe_ioctl(ffd->handle, cmd, arg, 0);
+    } else if (ffd->flags & FILE_FD_PIPE1) {
+        return pipe_ioctl(ffd->handle, cmd, arg, 1);
     }
     return -1;
 }
@@ -164,6 +178,10 @@ int sys_fcntl(int fd, int cmd, long arg)
         return fsif.fcntl(ffd->handle, cmd, arg);
     } else if (ffd->flags & FILE_FD_SOCKET) {
         return lwip_fcntl(ffd->handle, cmd, arg);  
+    } else if (ffd->flags & FILE_FD_PIPE0) {
+        return pipe_ioctl(ffd->handle, cmd, arg, 0);
+    } else if (ffd->flags & FILE_FD_PIPE1) {
+        return pipe_ioctl(ffd->handle, cmd, arg, 1);
     }
     return -1;
 }
@@ -343,6 +361,12 @@ int fsif_grow(int fd)
     } else if (ffd->flags & FILE_FD_FIFO) {
         if (fifo_grow(ffd->handle) < 0)
             return -1;
+    } else if (ffd->flags & FILE_FD_PIPE0) {
+        if (pipe_grow(ffd->handle, 0) < 0)
+            return -1;
+    } else if (ffd->flags & FILE_FD_PIPE1) {
+        if (pipe_grow(ffd->handle, 1) < 0)
+            return -1;
     } else if (ffd->flags & FILE_FD_SOCKET) {
         
     }
@@ -370,14 +394,16 @@ int sys_dup(int oldfd)
 
     /* 安装 */
     if (ffd->flags & FILE_FD_NORMAL) {
-        
     } else if (ffd->flags & FILE_FD_DEVICE) {
-        
         newfd = local_fd_install(ffd->handle, FILE_FD_DEVICE);
     } else if (ffd->flags & FILE_FD_FIFO) {
         newfd = local_fd_install(ffd->handle, FILE_FD_FIFO);
     } else if (ffd->flags & FILE_FD_SOCKET) {
-        
+
+    } else if (ffd->flags & FILE_FD_PIPE0) {
+        newfd = local_fd_install(ffd->handle, FILE_FD_PIPE0);
+    } else if (ffd->flags & FILE_FD_PIPE1) {
+        newfd = local_fd_install(ffd->handle, FILE_FD_PIPE1);
     }
     return newfd;
 }
@@ -421,7 +447,37 @@ int sys_dup2(int oldfd, int newfd)
         
         newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_FIFO);
     } else if (ffd->flags & FILE_FD_SOCKET) {
-        
+
+    } else if (ffd->flags & FILE_FD_PIPE0) {
+        newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_PIPE0);
+    } else if (ffd->flags & FILE_FD_PIPE1) {
+        newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_PIPE1);
     }
     return newfd;
+}
+
+int sys_pipe(int fd[2])
+{
+    if (!fd)
+        return -1;
+    
+    pipe_t *pipe = create_pipe();
+    if (pipe == NULL)
+        return -1;
+    /* read */
+    int rfd = local_fd_install(pipe->id, FILE_FD_PIPE0);
+    if (rfd < 0) {
+        destroy_pipe(pipe);
+        return -1;
+    }
+    /* write */
+    int wfd = local_fd_install(pipe->id, FILE_FD_PIPE1);
+    if (wfd < 0) {
+        local_fd_uninstall(rfd);
+        destroy_pipe(pipe);
+        return -1;
+    }
+    fd[0] = rfd;
+    fd[1] = wfd;
+    return 0;
 }
