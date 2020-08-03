@@ -110,6 +110,13 @@
         "timer.h": "c",
         "exit.h": "c",
         "segment.h": "c",
-        "xcons.h": "c"
+        "xcons.h": "c",
+        "*.tcc": "c",
+        "optional": "c",
+        "fstream": "c",
+        "istream": "c",
+        "ostream": "c",
+        "sstream": "c",
+        "streambuf": "c"
     }
 }

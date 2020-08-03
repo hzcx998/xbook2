@@ -100,7 +100,7 @@ struct ethernetif {
 static void
 low_level_init(struct netif *netif)
 {
-    struct ethernetif *ethernetif = netif->state;
+    struct ethernetif *ethernetif = netif->state;   //netif->state points to state information for the device.
 #if 0    
     /* 打开一个网络设备 */
     ethernetif->ethres = res_open(ETHDEVNAME, RES_DEV, 0);
@@ -113,6 +113,7 @@ low_level_init(struct netif *netif)
     }
 #endif
 
+    //open a netcard.
     ethernetif->netsolt = 0;
     if (drv_netcard.open(ethernetif->netsolt) < 0) {
         srvprint("lwip: open netcard driver %d not exist! yeild cpu.\n", ethernetif->netsolt);
@@ -123,7 +124,7 @@ low_level_init(struct netif *netif)
     }
     u8_t mac_addr[ETHARP_HWADDR_LEN] = {0};
 #if 1
-    drv_netcard.ioctl(ethernetif->netsolt, NETIO_GETMAC, (unsigned long) &mac_addr[0]);
+    drv_netcard.ioctl(ethernetif->netsolt, NETIO_GETMAC, (unsigned long) &mac_addr[0]);   //get MAC hardware address from netcard.
 #endif
     
 #if 0
@@ -133,16 +134,16 @@ low_level_init(struct netif *netif)
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
-    /* set MAC hardware address */
+    /* set MAC hardware address in netif*/
     int i;
     for (i = 0; i < ETHARP_HWADDR_LEN; i++) {
         netif->hwaddr[i] = mac_addr[i];
     }
 
-  /* maximum transfer unit */
+  /* set maximum transfer unit */
   netif->mtu = ETH_MTU;
   
-  /* device capabilities */
+  /* set device capabilities */
   /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
   netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
  
