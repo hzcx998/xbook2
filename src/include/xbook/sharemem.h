@@ -2,6 +2,7 @@
 #define _XBOOK_SHAREMEM_H
 
 #include <const.h>
+#include <types.h>
 #include <arch/atomic.h>
 
 /* 最多有多少个共享内存 */
@@ -34,7 +35,12 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg);
 int share_mem_unmap(const void *shmaddr, int shmflg);
 
 void init_share_mem();
+int share_mem_grow(int shmid);
+share_mem_t *share_mem_find_by_addr(addr_t addr);
 
-
+int sys_shmem_get(char *name, unsigned long size, unsigned long flags);
+int sys_shmem_put(int shmid);
+void *sys_shmem_map(int shmid, void *shmaddr, int shmflg);
+int sys_shmem_unmap(const void *shmaddr, int shmflg);
 
 #endif   /* _XBOOK_SHAREMEM_H */

@@ -42,4 +42,6 @@ int socket_test4(int argc, char *argv[]);
 int pipe_test(int argc, char *argv[]);
 /* ----socket test end ----*/
 
+int shm_test(int argc, char *argv[]);
+
 #endif // _TEST_H

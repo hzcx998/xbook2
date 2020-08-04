@@ -105,6 +105,18 @@ enum syscall_num {
     SYS_DUP,
     SYS_DUP2,
     SYS_PIPE,
+    SYS_SHMGET,
+    SYS_SHMPUT,
+    SYS_SHMMAP,
+    SYS_SHMUNMAP,
+    SYS_SEMGET,
+    SYS_SEMPUT,
+    SYS_SEMDOWN,
+    SYS_SEMUP,
+    SYS_MSGGET,
+    SYS_MSGPUT,
+    SYS_MSGSEND,
+    SYS_MSGRECV,
     SYSCALL_NR,
 };
 

@@ -26,7 +26,7 @@ static int __connect(srvarg_t *arg)
         goto connect_error;
     }
     /* 创建一个消息队列，用来发送事件给客户端 */
-    int msgid = res_open("guisrv-msg", RES_IPC | IPC_MSG | IPC_CREAT | IPC_EXCL, 0);
+    int msgid = msgget("guisrv-msg", IPC_CREAT | IPC_EXCL);
     if (msgid < 0) {
         printf("[%s] open msg queue failed!\n", SRV_NAME);
         goto connect_error;
@@ -61,8 +61,7 @@ static int __close(srvarg_t *arg)
         return -1;
     }
     /* 删除消息队列 */
-    res_ioctl(guisrv_msgid, IPC_DEL, 0);
-    res_close(guisrv_msgid);
+    msgput(guisrv_msgid);
     guisrv_msgid = -1;
 
     /* 删除管道 */
@@ -91,7 +90,7 @@ int guisrv_if_send_msg(xcons_msg_t *msg)
         return -1;
     }
     //printf("send data %x\n", msg->data);
-    if (res_write(guisrv_msgid, IPC_NOWAIT, msg, sizeof(xcons_msg_t) - sizeof(long)) < 0)
+    if (msgsend(guisrv_msgid, msg, sizeof(xcons_msg_t) - sizeof(long), IPC_NOWAIT) < 0)
         return -1;
     return 0;
 }

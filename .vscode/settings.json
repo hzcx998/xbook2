@@ -116,6 +116,7 @@
         "dir.h": "c",
         "fstype.h": "c",
         "net.h": "c",
-        "socket.h": "c"
+        "socket.h": "c",
+        "test.h": "c"
     }
 }

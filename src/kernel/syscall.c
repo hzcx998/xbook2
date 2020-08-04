@@ -11,6 +11,9 @@
 #include <xbook/fs.h>
 #include <xbook/driver.h>
 #include <xbook/net.h>
+#include <xbook/sharemem.h>
+#include <xbook/sem.h>
+#include <xbook/msgqueue.h>
 #include <sys/stat.h>
 #include <dirent.h>
 
@@ -132,5 +135,17 @@ void init_syscall()
     syscall_table[SYS_DUP2] = sys_dup2;
     syscall_table[SYS_PIPE] = sys_pipe;
     
-
+    syscall_table[SYS_SHMGET] = sys_shmem_get;
+    syscall_table[SYS_SHMPUT] = sys_shmem_put;
+    syscall_table[SYS_SHMMAP] = sys_shmem_map;
+    syscall_table[SYS_SHMUNMAP] = sys_shmem_unmap;
+    syscall_table[SYS_SEMGET] = sys_sem_get;
+    syscall_table[SYS_SEMPUT] = sys_sem_put;
+    syscall_table[SYS_SEMDOWN] = sys_sem_down;
+    syscall_table[SYS_SEMUP] = sys_sem_up;
+    syscall_table[SYS_MSGGET] = sys_msgque_get;
+    syscall_table[SYS_MSGPUT] = sys_msgque_put;
+    syscall_table[SYS_MSGSEND] = sys_msgque_send;
+    syscall_table[SYS_MSGRECV] = sys_msgque_recv;
+     
 }

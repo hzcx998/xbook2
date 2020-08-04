@@ -5,6 +5,7 @@
 #include <xbook/schedule.h>
 #include <xbook/process.h>
 #include <xbook/vmspace.h>
+#include <xbook/sharemem.h>
 #include <fsal/fsal.h>
 
 #include <string.h>
@@ -56,6 +57,21 @@ static int copy_vm_struct(task_t *child, task_t *parent)
     return 0;
 }
 
+/**
+ * 复制共享内存，共享内存有可能是以其他形式存在的，并不是shmid这种。
+ */
+static int copy_share_mem(vmspace_t *vmspace)
+{
+    /* 转换成物理地址 */
+    addr_t phyaddr = addr_v2p(vmspace->start);  
+    /* 查找共享内存 */
+    share_mem_t *shm = share_mem_find_by_addr(phyaddr);
+    if (shm == NULL) { 
+        return 0; /* 虽然没找到，但也返回0，只有增长引用计数失败才返回-1 */
+    }
+    return share_mem_grow(shm->id);
+}
+
 static int copy_vm_vmspace(task_t *child, task_t *parent)
 {
     /* 空间头 */
@@ -69,11 +85,17 @@ static int copy_vm_vmspace(task_t *child, task_t *parent)
             printk(KERN_ERR "copy_vm_vmspace: kmalloc for space failed!\n");
             return -1;
         }
-            
+        
         /* 复制空间信息 */
         *space = *p;
         /* 把下一个空间置空，后面加入链表 */
         space->next = NULL;
+
+        /* 如果空间是共享内存，就需要增长共享内存的links */
+        if (space->flags & VMS_MAP_SHARED) {
+            if (copy_share_mem(space) < 0)
+                return -1;
+        }
 
         /* 如果空间表头是空，那么就让空间表头指向第一个space */
         if (tail == NULL)

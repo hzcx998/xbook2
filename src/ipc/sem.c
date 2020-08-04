@@ -255,3 +255,23 @@ void init_sem()
 #endif 
     // spin(":)");
 }
+
+int sys_sem_get(char *name, int value, int semflg)
+{
+    return sem_get(name, value, semflg);
+}
+
+int sys_sem_put(int semid)
+{
+    return sem_put(semid);
+}
+
+int sys_sem_down(int semid, int semflg)
+{
+    return sem_down(semid, semflg);
+}
+
+int sys_sem_up(int semid)
+{
+    return sem_up(semid);
+}

@@ -1,6 +1,8 @@
 #ifndef _SYS_IPC_H
 #define _SYS_IPC_H
 
+#include <types.h>
+
 /* IPC local flags */
 #define IPC_CREAT   0x01        /* create a ipc */
 #define IPC_EXCL    0x02        /* must open a not exist ipc */
@@ -26,11 +28,23 @@
 
 #define IPC_NAME_LEN   24       /* ipc name len */
 
-
 /* message buf */
 typedef struct {
     long type;      /* msg type */
     char text[1];   /* msg text */
 } kmsgbuf_t;
+
+int shmget(char *name, unsigned long size, unsigned long flags);
+int shmput(int shmid);
+void *shmmap(int shmid, void *shmaddr, int shmflg);
+int shmunmap(const void *shmaddr, int shmflg);
+int semget(char *name, int value, int semflg);
+int semput(int semid);
+int semdown(int semid, int semflg);
+int semup(int semid);
+int msgget(char *name, unsigned long flags);
+int msgput(int msgid);
+int msgsend(int msgid, void *msgbuf, size_t size, int msgflg);
+int msgrecv(int msgid, void *msgbuf, size_t msgsz, int msgflg);
 
 #endif   /* _SYS_IPC_H */

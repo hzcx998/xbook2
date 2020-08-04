@@ -15,7 +15,6 @@ int __xcons_connect_status = -1;
 int __xcons_msgid = -1;
 int __xcons_pipeid = -1;
 
-
 int xcons_connect()
 {
     if (__xcons_connect_status >= 0)    /* 不能重复连接 */
@@ -32,7 +31,7 @@ int xcons_connect()
     }
     /* 链接服务成功 */
     /* 打开消息队列，接收服务的消息 */
-    int msgid = res_open("guisrv-msg", RES_IPC | IPC_MSG | IPC_CREAT, 0);
+    int msgid = msgget("guisrv-msg", IPC_CREAT);
     if (msgid < 0) {
         goto rollback_connect;
     }
@@ -80,8 +79,7 @@ int xcons_close()
         return -1;
     }
     if (__xcons_msgid >= 0) {
-        res_ioctl(__xcons_msgid, IPC_DEL, 0);
-        res_close(__xcons_msgid);
+        /* 不删除消息队列 */
     }
     if (__xcons_pipeid >= 0)
         close(__xcons_pipeid);
@@ -98,7 +96,7 @@ int xcons_next_msg(xcons_msg_t *m)
     xcons_msg_t msg;
     msg.type = 0;
     /* 接收一个消息 */
-    if (res_read(__xcons_msgid, 0, &msg, sizeof(xcons_msg_t) - sizeof(long)) < 0) {
+    if (msgrecv(__xcons_msgid, &msg, sizeof(xcons_msg_t) - sizeof(long), 0) < 0) {
         return -1;
     }
     
@@ -116,7 +114,7 @@ int xcons_poll_msg(xcons_msg_t *m)
     xcons_msg_t msg;
     msg.type = 0;
     /* 接收一个消息 */
-    if (res_read(__xcons_msgid, IPC_NOWAIT, &msg, sizeof(xcons_msg_t) - sizeof(long)) < 0) {
+    if (msgrecv(__xcons_msgid, &msg, sizeof(xcons_msg_t) - sizeof(long), IPC_NOWAIT) < 0) {
         return -1;
     }
     
