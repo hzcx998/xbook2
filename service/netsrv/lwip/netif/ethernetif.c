@@ -195,7 +195,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
   
-  LINK_STATS_INC(link.xmit);
+  LINK_STATS_INC(link.xmit);   //协议栈内部的数据统计
 
   return retval;
 }
