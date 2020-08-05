@@ -370,13 +370,13 @@ int sys_devscan(devent_t *de, device_type_t type, devent_t *out)
 {
     if (!out)
         return -1;
-    driver_object_t *drvobj;
-    device_object_t *devobj;
+    driver_object_t *drvobj;   //驱动对象
+    device_object_t *devobj;   //驱动对应设备对象
     int flags = 0;  /* 标记可迭代对象 */
     spin_lock(&driver_lock);
     /* 遍历所有的驱动 */
     list_for_each_owner (drvobj, &driver_list_head, list) {
-        list_for_each_owner (devobj, &drvobj->device_list, list) {
+        list_for_each_owner (devobj, &drvobj->device_list, list) {   //遍历驱动下的设备
             if (devobj->type == type) { /* 设备类型 */   
                 /* 搜索是第一个设备 */
                 if (de == NULL) {
@@ -387,7 +387,6 @@ int sys_devscan(devent_t *de, device_type_t type, devent_t *out)
                     return 0;
                 } else {
                     if (flags) {    /* 可以选择下一个设备，就直接返回下一个设备 */
-                    
                         memset(out->de_name, 0, DEVICE_NAME_LEN);
                         strcpy(out->de_name, devobj->name.text);
                         out->de_type = type;

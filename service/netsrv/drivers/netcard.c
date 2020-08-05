@@ -167,9 +167,11 @@ int init_netcard_driver()
 
     if (netcard_probe_device(DEVICE_TYPE_NETWORK) < 0)
         return -1;
+    
     int i;
-    for (i = 0; i < NETCARD_SOLT_NR; i++)
+    for (i = 0; i < NETCARD_SOLT_NR; i++) {
         netcard_solt_cache[i] = -1;
+    }
 
     netcard_info_print();
 
