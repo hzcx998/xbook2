@@ -43,6 +43,7 @@ void init_socket_test(void);
 void socket_examples_init(void);
 
 struct netif rtl8139_netif;
+struct netif e1000_netif;     //e1000 netcard interface
 
 /**
  * 0： 仅虚拟机和主机通信
@@ -51,18 +52,21 @@ struct netif rtl8139_netif;
 */
 #define CONFIG_LEVEL 0
 
+/**************************************************
+ * lwip_init_task - 初始化协议栈内核，注册网络接口
+***************************************************/
 void lwip_init_task(void)
 {
     struct ip_addr ipaddr, netmask, gateway;
-#if NO_SYS == 1
+#if NO_SYS == 1   //判断有无操作系统层
     lwip_init();
 #else
     tcpip_init(NULL, NULL);
 #endif
     #if CONFIG_LEVEL == 0
-    IP4_ADDR(&ipaddr, 192,168,0,105);
-    IP4_ADDR(&gateway, 192,168,0,1);
-    IP4_ADDR(&netmask, 255,255,255, 0);
+    IP4_ADDR(&ipaddr, 192,168,0,105);   //IP地址
+    IP4_ADDR(&gateway, 192,168,0,1);   //网关地址
+    IP4_ADDR(&netmask, 255,255,255, 0);   //子网掩码
     #elif CONFIG_LEVEL == 1
     IP4_ADDR(&gateway, 169,254,177,48);
     IP4_ADDR(&netmask, 255,255,0,0);
@@ -76,10 +80,10 @@ void lwip_init_task(void)
 #if NO_SYS == 1
     netif_add(&rtl8139_netif, &ipaddr, &netmask, &gateway, NULL, ethernetif_init, ethernet_input);
 #else    
-    netif_add(&rtl8139_netif, &ipaddr, &netmask, &gateway, NULL, ethernetif_init, tcpip_input);
+    netif_add(&rtl8139_netif, &ipaddr, &netmask, &gateway, NULL, ethernetif_init, tcpip_input);   //注册结构结构rtl8139_netif
 #endif    
-    netif_set_default(&rtl8139_netif);
-    netif_set_up(&rtl8139_netif);
+    netif_set_default(&rtl8139_netif);   //配置协议栈默认网络接口为rtl8139_netif
+    netif_set_up(&rtl8139_netif);   //使能该网络接口
 #if CONFIG_LEVEL == 2
     printf("[%s] %s: dhcp start.\n", SRV_NAME, __func__);
     dhcp_start(&rtl8139_netif);

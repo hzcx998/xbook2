@@ -7,10 +7,10 @@
 void init_srvcall();
 
 
-#define SRVCALL_LISTEN      1
-#define SRVCALL_PENDING     2
-#define SRVCALL_ACK         3
-#define SRVCALL_FINISH      4
+#define SRVCALL_LISTEN      1   //监听状态
+#define SRVCALL_PENDING     2   //等待状态
+#define SRVCALL_ACK         3   //应答状态
+#define SRVCALL_FINISH      4   //终止
 
 #define SRVCALL_NR  4
 #define IS_BAD_SRVCALL(port) \
