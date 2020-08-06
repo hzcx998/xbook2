@@ -91,6 +91,8 @@ void __build_trigger_frame(int trig, void *_act, trap_frame_t *frame)
     /* 传递给handler的参数 */
     trigger_frame->trig = trig;
     
+    trigger_frame->oldmask = current_task->triggers->blocked;
+
     /* 把中断栈保存到信号栈中 */
     memcpy(&trigger_frame->trap_frame, frame, sizeof(trap_frame_t));
 
@@ -306,7 +308,14 @@ int __trigger_return(trap_frame_t *frame)
     /* 原本trigger_frame是在用户栈esp-trigger_frameSize这个位置，但是由于调用了用户处理程序后，
     函数会把返回地址弹出，也就是esp+4，所以，需要通过esp-4才能获取到trigger_frame */
     trigger_frame_t *trigger_frame = (trigger_frame_t *)(frame->esp - 4);
-
+    trigset_t oldset = trigger_frame->oldmask;
+    
+    triggers_t *trigger = current_task->triggers; 
+    spin_lock_irq(&trigger->trig_lock);
+    trigger->blocked = oldset;
+    trigger_calc_left(trigger);
+    spin_unlock_irq(&trigger->trig_lock);
+    
     /* 还原之前的中断栈 */
     memcpy(frame, &trigger_frame->trap_frame, sizeof(trap_frame_t));
 #if DEBUG_LOCAL == 1

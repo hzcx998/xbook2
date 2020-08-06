@@ -31,12 +31,16 @@ typedef void (*trighandler_t) (int);
 #define IS_BAD_TRIGGER(trig) \
     (trig < 1 || trig > TRIGUSR1)
   
-#define TA_ONCE          (1 << 0)    /* 只执行一次 */
+#define TA_ONCE             (1 << 0)    /* 只执行一次 */
+#define TA_ONCSHOT          TA_ONCE    /* 只执行一次 */
+#define TA_NOMASK           (1 << 1)    /* 执行期间没有屏蔽 */
+#define TA_NODEFFER         TA_NOMASK
 
 /* 触发器行为 */
 typedef struct {
     trighandler_t handler;      /* 行为处理函数 */
     unsigned long flags;        /* 行为标志 */
+    trigset_t mask;             /* 屏蔽位 */
 } trig_action_t;
 
 int trigaddset(trigset_t *set, int trig);

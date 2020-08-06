@@ -42,7 +42,7 @@ int trigemptyset(trigset_t *set)
  */
 int trigfillset(trigset_t *set)
 {
-    *set = 0xffffffff;  /* 全部置1 */ 
+    *set = 0xffffffffUL;  /* 全部置1 */ 
     return 0;
 }
 
@@ -55,6 +55,16 @@ int trigismember(trigset_t *set,int trig)
     if (IS_BAD_TRIGGER(trig))
         return 0;
     return (*set & (1 << trig));
+}
+
+/**
+ * trigismember - 判断触发器是否置1
+ * @set: 触发器集
+ */
+int trigorset(trigset_t *set, trigset_t *setb)
+{
+    *set |= *setb;
+    return 0;
 }
 
 /**
@@ -76,9 +86,21 @@ int trigisempty(trigset_t *set)
  */
 int trigisfull(trigset_t *set)
 {
-    if (*set == 0xffffffff) {
+    if (*set == 0xffffffffUL) {
         return 1;
     } else {
         return 0;
     }
+}
+
+/**
+ * trigdelsetmask - 触发器集删除一个触发器屏蔽
+ * @set: 触发器遮罩
+ * @trig: 触发器
+ */
+int trigmask(int trig)
+{
+    if (IS_BAD_TRIGGER(trig))
+        return -1;
+    return (1 << trig);
 }

@@ -140,7 +140,15 @@ void task_unblock(task_t *task);
 void task_yeild();
 
 #define task_sleep() task_block(TASK_BLOCKED) 
-#define task_wakeup(task) task_unblock(task) 
+
+static inline void task_wakeup(task_t *task)
+{
+    if ((task->state == TASK_BLOCKED) || 
+        (task->state == TASK_WAITING) ||
+        (task->state == TASK_STOPPED)) {    
+        task_unblock(task);
+    }
+}
 
 #define sys_sched_yeild     task_yeild
 

@@ -31,11 +31,14 @@ typedef void (*trighandler_t) (int);
     (trig < 1 || trig > TRIGMAX)
   
 #define TA_ONCSHOT          (1 << 0)    /* 只执行一次 */
+#define TA_NOMASK           (1 << 1)    /* 执行期间没有屏蔽 */
+#define TA_NODEFFER         TA_NOMASK
 
 /* 触发器行为 */
 typedef struct {
     trighandler_t handler;      /* 行为处理函数 */
     unsigned long flags;        /* 行为标志 */
+    trigset_t mask;             /* 屏蔽位 */
 } trig_action_t;
 
 int trigaddset(trigset_t *set, int trig);
@@ -47,5 +50,8 @@ int trigfillset(trigset_t *set);
 int trigismember(trigset_t *set, int trig);
 int trigisfull(trigset_t *set);
 int trigisempty(trigset_t *set);
+
+int trigorset(trigset_t *set, trigset_t *setb);
+int trigmask(int trig);
 
 #endif   /* _SYS_TRIGGER_H */

@@ -981,7 +981,7 @@ int cmd_trig(int argc, char **argv)
                 return -1;
             } else {
                 //printf("send trigger %d to pid %d\n", trigno, pid);
-                if (triggeron(pid, trigno) == -1) {
+                if (triggeron(trigno, pid) == -1) {
                     shell_printf("trig: pid %d failed.\n", pid);
                     return -1;
                 }
@@ -989,7 +989,7 @@ int cmd_trig(int argc, char **argv)
         }
     } else {
         //printf("send trigger %d tp pid %d\n", trigno, pid);
-        if (triggeron(pid, trigno) == -1) {
+        if (triggeron(trigno, pid) == -1) {
             shell_printf("trig: pid %d failed.\n", pid);	
             return -1;
         }
