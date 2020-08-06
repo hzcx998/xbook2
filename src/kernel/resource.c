@@ -302,7 +302,7 @@ int sys_putres(int res)
 /**
  * sys_readres - 读取资源
  * @res: 资源
- * @off: 数据便宜（对于磁盘而言才有意义）
+ * @off: 数据偏移（对于磁盘而言才有意义）
  * @buffer: 缓冲区
  * @count: 数据量
  * 
