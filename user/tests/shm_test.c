@@ -5,7 +5,7 @@
 int shm_test(int argc, char *argv[])
 {
     printf("----shm test----\n");
-    
+
     int shmid = shmget("shm-test", 4096, IPC_CREAT | IPC_EXCL);
     if (shmid < 0) {
         printf("get shm failed!\n");

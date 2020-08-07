@@ -84,8 +84,8 @@ void __build_trigger_frame(int trig, void *_act, trap_frame_t *frame)
 
     /* 获取信号栈框，在用户的esp栈下面 */
     trigger_frame_t *trigger_frame = (trigger_frame_t *)((frame->esp - sizeof(trigger_frame_t)) & -8UL);
-
-    /*printk("trap frame %x, signal frame esp %x, %x\n", 
+    /*
+    printk("trap frame %x, signal frame esp %x, %x\n", 
     frame->esp, frame->esp - sizeof(trigger_frame_t), (frame->esp - sizeof(trigger_frame_t)) & -8UL);
     */
     /* 传递给handler的参数 */
@@ -105,14 +105,14 @@ void __build_trigger_frame(int trig, void *_act, trap_frame_t *frame)
     int 0x40
      */
     trigger_frame->ret_code[0] = 0xb8; /* 给eax赋值的机器码 */
-    *(int *)(trigger_frame->ret_code + 1) = SYS_TRIGRET;    /* 把系统调用号填进去 */
-    *(short *)(trigger_frame->ret_code + 5) = 0x40cd;      /* int对应的指令是0xcd，系统调用中断号是0x40 */
+    *(uint32_t *)(trigger_frame->ret_code + 1) = SYS_TRIGRET;    /* 把系统调用号填进去 */
+    *(uint16_t *)(trigger_frame->ret_code + 5) = 0x40cd;      /* int对应的指令是0xcd，系统调用中断号是0x40 */
     
     /* 设置中断栈的eip成为用户设定的处理函数 */
-    frame->eip = (unsigned long)act->handler;
+    frame->eip = (unsigned int)act->handler;
 
     /* 设置运行时的栈 */
-    frame->esp = (unsigned long)trigger_frame;
+    frame->esp = (unsigned int)trigger_frame;
 
     /* 设置成用户态的段寄存器 */
     frame->ds = frame->es = frame->fs = frame->gs = USER_DATA_SEL;

@@ -148,4 +148,6 @@ void init_syscall()
     syscall_table[SYS_MSGSEND] = sys_msgque_send;
     syscall_table[SYS_MSGRECV] = sys_msgque_recv;
      
+    syscall_table[SYS_TRIGPENDING] = sys_trigger_pending;
+    syscall_table[SYS_TRIGPROCMASK] = sys_trigger_proc_mask;
 }

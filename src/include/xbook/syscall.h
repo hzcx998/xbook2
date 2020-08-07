@@ -126,6 +126,8 @@ enum syscall_num {
     SYS_MSGPUT,
     SYS_MSGSEND,
     SYS_MSGRECV,
+    SYS_TRIGPENDING,
+    SYS_TRIGPROCMASK,
     SYSCALL_NR,
 };
 

@@ -32,6 +32,8 @@ int sys_trigger_active(int trig, pid_t pid);
 int sys_trigger_handler(int trig, trighandler_t handler);
 int sys_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact);
 int sys_trigger_return(unsigned int ebx, unsigned int ecx, unsigned int esi, unsigned int edi, trap_frame_t *frame);
+int sys_trigger_proc_mask(int how, trigset_t *set, trigset_t *oldset);
+int sys_trigger_pending(trigset_t *set);
 
 /**
  * trigger_calc_left - 计算是否还有信号需要处理

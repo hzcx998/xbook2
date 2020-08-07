@@ -626,15 +626,15 @@ static inline int do_protection_fault(vmspace_t * space, unsigned long addr, int
 		/* 只有设置写属性正确才能返回 */
 		int ret = make_page_writable(addr);
 		if (ret) {
-            printk(KERN_ALTER "do_protection_fault: touch TRIGHW trigger because page not writable!");    
-            trigger_force(TRIGHW, current_task->pid);    
+            printk(KERN_ALTER "do_protection_fault: touch TRIGSYS trigger because page not writable!");    
+            trigger_force(TRIGSYS, current_task->pid);    
             return -1;
         }
 			
 		/* 虽然写入的写标志，但是还是会出现缺页故障，在此则处理一下缺页 */
 		if (handle_no_page(addr, space->page_prot)) {
-            printk(KERN_ALTER "do_protection_fault: touch TRIGHW trigger because hand no page failed!");
-            trigger_force(TRIGHW, current_task->pid);
+            printk(KERN_ALTER "do_protection_fault: touch TRIGSYS trigger because hand no page failed!");
+            trigger_force(TRIGSYS, current_task->pid);
 			return -1; 
         }
 
@@ -643,8 +643,8 @@ static inline int do_protection_fault(vmspace_t * space, unsigned long addr, int
 		printk(KERN_DEBUG "no write protection\n");
 	}
     //ForceSignal(SIGSEGV, SysGetPid());
-	printk(KERN_ALTER "do_protection_fault: touch TRIGHW trigger because page protection!");
-    trigger_force(TRIGHW, current_task->pid);
+	printk(KERN_ALTER "do_protection_fault: touch TRIGSYS trigger because page protection!");
+    trigger_force(TRIGSYS, current_task->pid);
     //panic(KERN_ERR "page protection fault!\n");
     return -1;
 }
@@ -695,7 +695,7 @@ int do_page_fault(trap_frame_t *frame)
         printk(KERN_ALTER "page fault addr:%x\n", addr);
         dump_vmspace(cur->vmm);
         print_task();
-        trigger_force(TRIGHW, cur->pid);
+        trigger_force(TRIGSYS, cur->pid);
         /* 发出信号退出 */
         //panic("send a signal SIGSEGV because unknown space!");
         return -1;
@@ -712,12 +712,12 @@ int do_page_fault(trap_frame_t *frame)
                 //printk(KERN_DEBUG "expand stack at %x\n", addr);
             } else {    /* 不是可拓展栈 */
                 printk("task name=%s pid=%d\n", cur->name, cur->pid);
-                printk(KERN_ALTER "do_page_fault: touch TRIGHW trigger because unknown space!\n");
+                printk(KERN_ALTER "do_page_fault: touch TRIGSYS trigger because unknown space!\n");
                 printk(KERN_ALTER "page fault addr:%x\n", addr);
                 dump_trap_frame(frame);
                 //dump_vmspace(cur->vmm);
         
-                trigger_force(TRIGHW, cur->pid);
+                trigger_force(TRIGSYS, cur->pid);
                 /* 发出信号退出 */
                 //panic("send a signal SIGSEGV because addr %x without space!", addr); 
                 return -1;  

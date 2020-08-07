@@ -23,9 +23,19 @@ int shell_event_poll(char *buf, int pid)
     if (msg.ctrl & XCONS_KMOD_CTRL) {
         /* ctrl + c -> 打断进程 */
         if (msg.data == KEY_C || msg.data == KEY_c) {
-            printf("trig\n");
+            printf("term\n");
             /* 激活pid的轻软件触发器，可捕捉 */
             triggeron(TRIGLSOFT, pid);
+        }
+        if (msg.data == KEY_Z || msg.data == KEY_z) {
+            printf("pause\n");
+            /* 激活pid的轻软件触发器，可捕捉 */
+            triggeron(TRIGPAUSE, pid);
+        }
+        if (msg.data == KEY_X || msg.data == KEY_x) {
+            printf("resume\n");
+            /* 激活pid的轻软件触发器，可捕捉 */
+            triggeron(TRIGRESUM, pid);
         }
     }
     

@@ -5,6 +5,7 @@ SRC			+= main.c test_png.c test_jpg.c libvideo.c
 SRC			+= socket_test.c
 SRC			+= pipe_test.c
 SRC			+= shm_test.c
+SRC			+= trig_test.c
 
 
 define CUSTOM_TARGET_CMD

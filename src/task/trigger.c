@@ -237,11 +237,12 @@ static int handle_trigger(trap_frame_t *frame, int trig)
 
 #if DEBUG_LOCAL == 1
     /* 处理自定义函数 */
-    printk(KERN_DEBUG "handle_trigger: handle trig=%d.\n", trig);
+    printk(KERN_DEBUG "handle_trigger: handle trig=%d frame %x.\n", trig, frame);
 #endif    
+    
     /* 构建用户触发器栈框，返回时就可以处理用户自定义函数 */
     build_trigger_frame(trig, act, frame);
-    
+
     /* 执行完信号后需要把触发器行为设置为默认的行为 */
     if (act->flags & TA_ONCSHOT) {
         act->handler = TRIG_DFL;
@@ -282,18 +283,15 @@ int do_trigger(trap_frame_t *frame)
     unsigned long flags;
     save_intr(flags);
 #if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "do_trigger: pid=%d start.\n", cur->pid);
+    printk(KERN_DEBUG "do_trigger: pid=%d frame %x start.\n", cur->pid, frame);
 #endif
     for (trig = 1; trig <= TRIGMAX; trig++) {
         have_trig = 0;
-        spin_lock_irq(&trigger->trig_lock);
         have_trig = trigismember(&trigger->set, trig) && !trigismember(&trigger->blocked, trig);
-        spin_unlock_irq(&trigger->trig_lock);
-
         /* 如果触发器激活了，就处理 */
         if (have_trig) {
 #if DEBUG_LOCAL == 1
-                printk(KERN_DEBUG "do_trigger: trigger=%d\n", trig);
+                printk(KERN_DEBUG "do_trigger: pid=%d trigger=%d\n", cur->pid, trig);
 #endif
             /* 处理后置0 */
 #if DEBUG_LOCAL == 1
@@ -327,7 +325,6 @@ int do_trigger(trap_frame_t *frame)
                 {
                 case TRIGUSR0: /* user0 */
                 case TRIGUSR1: /* user1 */
-                case TRIGALARM: /* alarm */
                 case TRIGRESUM: /* 在设置恢复触发器的时候就唤醒任务了 */
 #if DEBUG_LOCAL == 1
                 printk(KERN_DEBUG "do_trigger: user or resume.\n");
@@ -345,9 +342,10 @@ int do_trigger(trap_frame_t *frame)
                     continue; /* not support now */
                 case TRIGLSOFT: /* light software */
                 case TRIGHSOFT: /* heavy software */
-                case TRIGHW: /* hardware */
+                case TRIGSYS: /* system */
+                case TRIGALARM: /* alarm */
 #if DEBUG_LOCAL == 1
-                    printk(KERN_DEBUG "do_trigger: heavy software or hardware trigger=%d\n", trig);
+                    printk(KERN_DEBUG "do_trigger: software or system trigger=%d\n", trig);
 #endif
                     /* 避免本次未能退出，故再添加一次触发 */
                     trigaddset(&trigger->set, trig);
@@ -373,6 +371,63 @@ int do_trigger(trap_frame_t *frame)
 #endif
     return 0;
 }
+
+
+/**
+ * sys_trigger_proc_mask - 设置进程的触发器阻塞集
+ * @how: 怎么设置阻塞
+ * @set: 阻塞集
+ * @oldset: 旧阻塞集
+ * 
+ * 如果set不为空，就要设置新集，如果oldset不为空，就要把旧集复制过去
+ * 
+ * return: 成功返回0，失败返回-1
+ */
+int sys_trigger_proc_mask(int how, trigset_t *set, trigset_t *oldset)
+{
+    triggers_t *trigger = current_task->triggers;
+
+    spin_lock_irq(&trigger->trig_lock);
+
+    if (oldset != NULL) {
+        *oldset = trigger->blocked;
+    }
+
+    if (how == TRIG_BLOCK) {
+        if (set != NULL) {
+            trigger->blocked |= *set;
+            trigdelset(&trigger->blocked, TRIGHSOFT);
+            trigdelset(&trigger->blocked, TRIGPAUSE);
+        }
+    } else if (how == TRIG_UNBLOCK) {
+        if (set != NULL) {
+            trigger->blocked &= ~*set;
+        }
+    } else if (how == TRIG_SETMASK) {
+        if (set != NULL) {
+            trigger->blocked = *set;
+            trigdelset(&trigger->blocked, TRIGHSOFT);
+            trigdelset(&trigger->blocked, TRIGPAUSE);
+        }
+    } else {
+        spin_unlock_irq(&trigger->trig_lock);
+        return -1;
+    }
+    spin_unlock_irq(&trigger->trig_lock);
+    return 0;
+}
+
+int sys_trigger_pending(trigset_t *set)
+{
+    if (set == NULL)
+        return -1;
+    triggers_t *trigger = current_task->triggers;
+    spin_lock_irq(&trigger->trig_lock);
+    *set = trigger->set;
+    spin_unlock_irq(&trigger->trig_lock);
+    return 0;
+}
+
 
 void trigger_init(triggers_t *triggers)
 {

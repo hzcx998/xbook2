@@ -11,7 +11,7 @@ typedef void (*trighandler_t) (int);
 
 #define TRIG_NR         8   /* 触发器的数量 */
 
-#define TRIGHW          1   /* hardware trigger，硬件触发器 */
+#define TRIGSYS         1   /* system trigger，系统触发器 */
 #define TRIGDBG         2   /* debug trigger，调试触发器 */
 #define TRIGPAUSE       3   /* pause trigger，暂停触发器 */
 #define TRIGRESUM       4   /* resume trigger，恢复触发器 */
@@ -36,6 +36,11 @@ typedef void (*trighandler_t) (int);
 #define TA_NOMASK           (1 << 1)    /* 执行期间没有屏蔽 */
 #define TA_NODEFFER         TA_NOMASK
 
+/* trigprocmask的how参数值 */
+#define TRIG_BLOCK   1 //在阻塞触发器集中加上给定的触发器集
+#define TRIG_UNBLOCK 2 //从阻塞触发器集中删除指定的触发器集
+#define TRIG_SETMASK 3 //设置阻塞触发器集(触发器屏蔽码)
+
 /* 触发器行为 */
 typedef struct {
     trighandler_t handler;      /* 行为处理函数 */
@@ -56,6 +61,9 @@ int trigisempty(trigset_t *set);
 int trigger(int trig, trighandler_t handler);
 int trigger_action(int trig, trig_action_t *act, trig_action_t *oldact);
 int triggeron(int trig, pid_t pid);
+int trigprocmask(int how, trigset_t *set, trigset_t *oldset);
+int trigpending(trigset_t *set);
 
+int trigmask(int trig);
 
 #endif   /* _SYS_TRIGGER_H */

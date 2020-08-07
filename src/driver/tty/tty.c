@@ -133,7 +133,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                 }
             }
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
-            trigger_force(TRIGHW, current_task->pid);
+            trigger_force(TRIGSYS, current_task->pid);
         }
     }
     ioreq->io_status.status = status;

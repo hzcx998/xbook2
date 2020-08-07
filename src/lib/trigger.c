@@ -93,11 +93,6 @@ int trigisfull(trigset_t *set)
     }
 }
 
-/**
- * trigdelsetmask - 触发器集删除一个触发器屏蔽
- * @set: 触发器遮罩
- * @trig: 触发器
- */
 int trigmask(int trig)
 {
     if (IS_BAD_TRIGGER(trig))

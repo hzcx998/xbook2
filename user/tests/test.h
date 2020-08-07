@@ -44,4 +44,6 @@ int pipe_test(int argc, char *argv[]);
 
 int shm_test(int argc, char *argv[]);
 
+int trig_test(int argc, char *argv[]);
+
 #endif // _TEST_H
