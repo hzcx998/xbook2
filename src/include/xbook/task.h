@@ -99,11 +99,11 @@ extern list_t task_global_list;
         ((trap_frame_t *) (((unsigned char *) (task) + \
         TASK_KSTACK_SIZE) - sizeof(trap_frame_t)))
 
-/* 判断任务是否为主线程 */
+/* 判断是否在通过个线程组 */
 #define IN_SAME_THREAD_GROUP(a, b) \
         ((a)->tgid == (b)->tgid)
 
-/* 判断任务是否为单线程 */
+/* 判断任务是否为单线程，也就是主进程 */
 #define IN_SINGAL_THREAD(task) \
         (((task)->pthread && (atomic_get(&(task)->pthread->thread_count) <= 1))  || \
         (task)->pthread == NULL)

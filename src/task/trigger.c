@@ -286,7 +286,6 @@ int do_trigger(trap_frame_t *frame)
     printk(KERN_DEBUG "do_trigger: pid=%d frame %x start.\n", cur->pid, frame);
 #endif
     for (trig = 1; trig <= TRIGMAX; trig++) {
-        have_trig = 0;
         have_trig = trigismember(&trigger->set, trig) && !trigismember(&trigger->blocked, trig);
         /* 如果触发器激活了，就处理 */
         if (have_trig) {
