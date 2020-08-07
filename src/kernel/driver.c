@@ -1058,7 +1058,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         printk(KERN_ERR "device_read: alloc io request packet failed!\n");
         return -1;
     }
-    status = io_call_dirver(devobj, ioreq);
+    status = io_call_dirver(devobj, ioreq);   //调用设备驱动的功能函数
 
     if (!io_complete_check(ioreq, status)) {
         //printk("io complete.\n");
