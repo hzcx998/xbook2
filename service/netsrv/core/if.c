@@ -502,7 +502,7 @@ void *netsrv_if_thread(void *arg)
         srvprint("srvcall seq=%d callnum %d.\n", seq, callnum);
 #endif 
         if (callnum >= 0 && callnum < NETSRV_CALL_NR) {
-            netsrv_call_table[callnum](&srvarg);
+            netsrv_call_table[callnum](&srvarg);   //执行相应的服务
         }
         seq++;
 
