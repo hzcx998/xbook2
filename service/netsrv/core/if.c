@@ -515,7 +515,6 @@ void *netsrv_if_thread(void *arg)
 
 int init_netsrv_if()
 {
-    
     srvbuf_sockaddr = malloc(SRVBUF_SOCKADDR);
     if (srvbuf_sockaddr == NULL) {
         return -1;
@@ -527,6 +526,7 @@ int init_netsrv_if()
         return -1;
     }
     memset(srvbuf256, 0, SRVBUF_256);
+
     srvbuf32k = malloc(SRVBUF_32K);
     if (srvbuf32k == NULL) {
         return -1;
