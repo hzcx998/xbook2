@@ -490,10 +490,6 @@ int cmd_ver(int argc, char **argv)
 
 int cmd_exit(int argc, char **argv)
 {
-    if (xcons_close() < 0) {
-        printf("xcons close failed!\n");
-        return -1;
-    }
     exit_cmd_man();
     exit(0);
     return 0; 
@@ -1076,7 +1072,7 @@ void cmd_loop()
     while (1) {
         print_prompt();
         memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
-        if (shell_event_loop() < 0)
+        if (shell_readline() < 0)
             break;
         /* 如果什么也没有输入，就回到开始处 */
 		if(cmdman->cmd_line[0] == 0)

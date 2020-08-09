@@ -1,7 +1,6 @@
 #ifndef _XLIBC_XCONSOLE_H
 #define _XLIBC_XCONSOLE_H
 
-
 #define XCONS_KMOD_SHIFT_L    0x01
 #define XCONS_KMOD_SHIFT_R    0x02
 #define XCONS_KMOD_SHIFT      (XCONS_KMOD_SHIFT_L | XCONS_KMOD_SHIFT_R)
@@ -15,18 +14,7 @@
 #define XCONS_KMOD_NUM	    0x80
 #define XCONS_KMOD_CAPS	    0x100
 
-typedef struct {
-    long type;
-    int data;   /* 传递的数据 */        
-    int ctrl;   /* 控制 */
-} xcons_msg_t;
-
-
-int xcons_connect();
-int xcons_close();
-int xcons_next_msg(xcons_msg_t *m);
-int xcons_poll_msg(xcons_msg_t *m);
-int xcons_xmit_data(void *buf, size_t buflen);
 int xcons_clear();
-
+int xcons_getkey(int *buf, int flags);
+int xcons_putstr(void *buf, int len);
 #endif  /* _XLIBC_XCONSOLE_H */

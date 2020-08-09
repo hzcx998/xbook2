@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+#include <gui/console/console.h>
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -150,4 +151,8 @@ void init_syscall()
      
     syscall_table[SYS_TRIGPENDING] = sys_trigger_pending;
     syscall_table[SYS_TRIGPROCMASK] = sys_trigger_proc_mask;
+
+    syscall_table[SYS_XCONGET] = sys_xcon_get;
+    syscall_table[SYS_XCONCLEAR] = sys_xcon_clear;
+    syscall_table[SYS_XCONPUT] = sys_xcon_put;
 }

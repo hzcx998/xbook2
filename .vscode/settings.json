@@ -117,6 +117,10 @@
         "fstype.h": "c",
         "net.h": "c",
         "socket.h": "c",
-        "test.h": "c"
+        "test.h": "c",
+        "text.h": "c",
+        "font.h": "c",
+        "event.h": "c",
+        "cursor.h": "c"
     }
 }

@@ -31,7 +31,7 @@ ROM_DISK_SZ	= 10
 
 # environment dir
 LIBRARY_DIR	= ./library
-SERVICE_DIR	= ./service
+SYSTEM_DIR	= ./system
 USER_DIR	= ./user
 
 #kernel disk
@@ -58,7 +58,7 @@ SETUP_BIN 	= $(ARCH)/boot/setup.bin
 KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 
 # 参数
-.PHONY: all kernel build debuild rom qemu qemudbg lib srv usr
+.PHONY: all kernel build debuild rom qemu qemudbg lib sys usr
 
 # 默认所有动作，编译内核后，把引导、内核、init服务、文件服务和rom文件写入磁盘
 all : kernel 
@@ -67,10 +67,6 @@ all : kernel
 	$(DD) if=$(SETUP_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
 	$(DD) if=$(KERNEL_ELF) of=$(FLOPPYA_IMG) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
 	$(FATFS_BIN) $(HDA_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
-
-#$(DD) if=$(INITSRV_BIN) of=$(HDA_IMG) bs=512 seek=200 count=200 conv=notrunc
-#$(DD) if=$(FILESRV_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(FILESRV_OFF) count=$(FILESRV_CNTS) conv=notrunc
-
 
 # run启动虚拟机
 run: qemu
@@ -92,7 +88,7 @@ build:
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG) 
 	$(MAKE) -s -C  $(FATFS_DIR)
 	$(MAKE) -s -C  $(LIBRARY_DIR)
-	$(MAKE) -s -C  $(SERVICE_DIR)
+	$(MAKE) -s -C  $(SYSTEM_DIR)
 	$(MAKE) -s -C  $(USER_DIR)
 	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
 
@@ -101,7 +97,7 @@ debuild:
 	$(MAKE) -s -C  $(KERNSRC) clean
 	$(MAKE) -s -C  $(FATFS_DIR) clean
 	$(MAKE) -s -C  $(LIBRARY_DIR) clean
-	$(MAKE) -s -C  $(SERVICE_DIR) clean
+	$(MAKE) -s -C  $(SYSTEM_DIR) clean
 	$(MAKE) -s -C  $(USER_DIR) clean
 	-$(RM) -r $(ROM_DIR)/bin
 	-$(RM) -r $(ROM_DIR)/sbin
@@ -118,12 +114,12 @@ lib:
 lib_c: 
 	$(MAKE) -s -C  $(LIBRARY_DIR) clean
 	
-# 重新编译所有服务
-srv: 
-	$(MAKE) -s -C  $(SERVICE_DIR)
+# 重新编译所有系统程序
+sys: 
+	$(MAKE) -s -C  $(SYSTEM_DIR)
 
-srv_c: 
-	$(MAKE) -s -C  $(SERVICE_DIR) clean
+sys_c: 
+	$(MAKE) -s -C  $(SYSTEM_DIR) clean
 
 # 不清理编译
 usr:

@@ -128,6 +128,9 @@ enum syscall_num {
     SYS_MSGRECV,
     SYS_TRIGPENDING,
     SYS_TRIGPROCMASK,
+    SYS_XCONGET,
+    SYS_XCONCLEAR,
+    SYS_XCONPUT,
     SYSCALL_NR,
 };
 

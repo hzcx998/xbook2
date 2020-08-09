@@ -11,29 +11,26 @@
 
 int shell_event_poll(char *buf, int pid)
 {
-    xcons_msg_t msg;
-    memset(&msg, 0, sizeof(xcons_msg_t));
+    int keybuf[2];
+
     *buf = 0;
     /* 获取事件 */
-    if (xcons_poll_msg(&msg) < 0)
+    if (xcons_getkey(keybuf, 1) < 0)
         return -1;
 
-    *buf = msg.data;
+    *buf = keybuf[0];
     /* 组合按键 */
-    if (msg.ctrl & XCONS_KMOD_CTRL) {
+    if (keybuf[1] & XCONS_KMOD_CTRL) {
         /* ctrl + c -> 打断进程 */
-        if (msg.data == KEY_C || msg.data == KEY_c) {
-            printf("term\n");
+        if (keybuf[0] == KEY_C || keybuf[0] == KEY_c) {
             /* 激活pid的轻软件触发器，可捕捉 */
             triggeron(TRIGLSOFT, pid);
         }
-        if (msg.data == KEY_Z || msg.data == KEY_z) {
-            printf("pause\n");
+        if (keybuf[0] == KEY_Z || keybuf[0] == KEY_z) {
             /* 激活pid的轻软件触发器，可捕捉 */
             triggeron(TRIGPAUSE, pid);
         }
-        if (msg.data == KEY_X || msg.data == KEY_x) {
-            printf("resume\n");
+        if (keybuf[0] == KEY_X || keybuf[0] == KEY_x) {
             /* 激活pid的轻软件触发器，可捕捉 */
             triggeron(TRIGRESUM, pid);
         }
@@ -43,21 +40,21 @@ int shell_event_poll(char *buf, int pid)
 }
 
 
-int shell_event_loop()
+int shell_readline()
 {
     cmdman->cmd_pos = cmdman->cmd_line;
     cmdman->cmd_len = 0;
 
     char *buf = cmdman->cmd_line;
 
-    xcons_msg_t msg;
+    int keybuf[2];
     while ((cmdman->cmd_pos - buf) < CMD_LINE_LEN) {
-        memset(&msg, 0, sizeof(xcons_msg_t));
-        if (xcons_next_msg(&msg) < 0)
-            continue;
         
+        if (xcons_getkey(keybuf, 0) < 0)
+            continue;
+
         /* 过滤一些按键 */
-        switch (msg.data) {
+        switch (keybuf[0]) {
         case KEY_UP:
         case KEY_DOWN:
         case KEY_LEFT:
@@ -85,8 +82,8 @@ int shell_event_loop()
             }
             break;
         default:
-            *cmdman->cmd_pos = msg.data;
-            shell_putchar(msg.data);
+            *cmdman->cmd_pos = keybuf[0];
+            shell_putchar(keybuf[0]);
             cmdman->cmd_pos++;
             cmdman->cmd_len++;
             break;
@@ -98,7 +95,9 @@ int shell_event_loop()
 void shell_putchar(char ch)
 {
     char s[2] = {ch, 0};
-    xcons_xmit_data(s, 1);
+    //xcons_xmit_data(s, 1);
+    xcons_putstr(s, 1);
+
 }
 
 int shell_printf(const char *fmt, ...)
@@ -108,6 +107,7 @@ int shell_printf(const char *fmt, ...)
 	vsprintf(buf, fmt, arg);
 	
     /* 输出到控制台 */
-    xcons_xmit_data(buf, strlen(buf));
-	return 0;
+    //xcons_xmit_data(buf, strlen(buf));
+	xcons_putstr(buf, strlen(buf));
+    return 0;
 }

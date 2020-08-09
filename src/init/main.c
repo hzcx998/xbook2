@@ -16,6 +16,7 @@
 #include <xbook/srvcall.h>
 #include <xbook/fs.h>
 #include <xbook/net.h>
+#include <xbook/gui.h>
 
 int kernel_main(void)
 {
@@ -55,7 +56,8 @@ int kernel_main(void)
     /* init fs */
     init_fs();
 
-    init_net();
+    init_gui();
+    //init_net();
     //spin("test");
     start_user();
 
