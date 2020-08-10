@@ -35,7 +35,7 @@ int netcard_probe_device(device_type_t type)
         if (sys_devscan(p, type, &devent))
             break;
 #if DEBUG_LOCAL == 1
-        printk("%s: %s: probe device %s\n", SRV_NAME, __func__, devent.de_name);
+        printk("[net]: %s: probe device %s\n", __func__, devent.de_name);
 #endif    
         /* 添加到磁盘数组 */
         /* 创建一个设备信息 */
@@ -64,7 +64,7 @@ void netcard_info_print()
 {
     netcard_info_t *netcard;
     list_for_each_owner (netcard, &netcard_list_head, list) {
-        pr_info("[NET]: probe device:%s -> vir:%s type:%d\n",
+        pr_info("[net]: probe device:%s -> vir:%s type:%d\n",
             netcard->devent.de_name, netcard->virname, netcard->devent.de_type);
     }
 }

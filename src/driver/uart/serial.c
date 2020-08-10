@@ -185,9 +185,10 @@ static uint8_t uart_recv(device_extension_t *devext)
  */
 static int uart_send(device_extension_t *devext, uint8_t data)
 {
+    int timeout = 100000;
     /* 如果发送的时候不持有传输状态，就不能发送 */
     while (!(in8(devext->line_status_reg) & 
-        LINE_STATUS_EMPTY_TRANSMITTER_HOLDING));
+        LINE_STATUS_EMPTY_TRANSMITTER_HOLDING) && timeout--);
 
     /* 往数据端口写入数据 */
     out8(devext->data_reg, data);

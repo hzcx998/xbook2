@@ -43,11 +43,12 @@ int kernel_main(void)
     init_ktime();
 
     init_tasks();
+    
     init_clock();
     
     /* enable interrupt */
     enable_intr();
-    
+
     init_driver_arch();
     
     /* init raw block */

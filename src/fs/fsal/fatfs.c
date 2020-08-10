@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 
 
-#define DEBUG_LOCAL 1
+#define DEBUG_LOCAL 0
 
 
 typedef struct {

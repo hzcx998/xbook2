@@ -23,8 +23,8 @@ ROM_DIR		= develop/rom
 
 # image size
 FLOPPYA_SZ	= 1474560
-HDA_SZ		= 40321920
-HDB_SZ		= 10321920
+HDA_SZ		= 33554432
+HDB_SZ		= 12582912
 
 # 默认大小为10M
 ROM_DISK_SZ	= 10
@@ -91,7 +91,7 @@ build:
 	$(MAKE) -s -C  $(SYSTEM_DIR)
 	$(MAKE) -s -C  $(USER_DIR)
 	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
-
+	
 # 清理环境。
 debuild: 
 	$(MAKE) -s -C  $(KERNSRC) clean
@@ -145,7 +145,7 @@ usr_c:
 # 控制台串口调试： -serial stdio 
 
 # 磁盘配置：
-#	1. IDE DISK：-hda $(HDA_IMG) -hdb $(HDB_IMG)
+#	1. IDE DISK：-hda $(HDA_IMG) -hdb $(HDB_IMG) \
 # 	2. AHCI DISK: -drive id=disk0,file=$(HDA_IMG),if=none \
 		-drive id=disk1,file=$(HDB_IMG),if=none \
 		-device ahci,id=ahci \

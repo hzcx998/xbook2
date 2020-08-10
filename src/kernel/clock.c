@@ -124,4 +124,5 @@ void init_clock()
 	if (register_irq(IRQ0_CLOCK, &clock_handler, IRQF_DISABLED, "clockirq", "kclock", 0))
         printk("register failed!\n");
 
+    printk(KERN_INFO "[clock] init done\n");
 }

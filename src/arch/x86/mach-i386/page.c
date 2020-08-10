@@ -667,7 +667,7 @@ int do_page_fault(trap_frame_t *frame)
 
     addr = read_cr2(); /* cr2 saved the fault addr */
     //printk(KERN_DEBUG "page fault addr:%x\n", addr);
-    
+
     /* in kernel page fault */
     if (!(frame->error_code & PG_ERR_USER) && addr >= PAGE_OFFSET) {
         printk("task name=%s pid=%d\n", cur->name, cur->pid);

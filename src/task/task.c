@@ -806,4 +806,5 @@ void init_tasks()
 
     /* 创建idle线程 */
     kthread_start("idle", TASK_PRIO_IDLE, kthread_idle, NULL);
+    printk(KERN_INFO "[task]: init done\n");
 }

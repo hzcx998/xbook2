@@ -107,7 +107,7 @@ static int __open(int solt)
                 disk->handle = device_open(disk->devent.de_name, 0);
                 if (disk->handle < 0)
                     return -1;
-                printk("[diskman]: %s: get disk handle %d\n", __func__, disk->handle);
+                //printk("[diskman]: %s: get disk handle %d\n", __func__, disk->handle);
                 /* 添加到插槽缓存 */
                 disk_solt_cache[solt] = disk->handle;
             }
