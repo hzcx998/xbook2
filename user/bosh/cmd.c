@@ -710,67 +710,318 @@ int cmd_pwd(int argc, char **argv)
     return 0;
 }
 
+int cmd_copy(int argc, char **argv)
+{
+	if(argc < 3){
+		shell_printf("cp: command syntax is incorrect.\n");	
+		return -1;
+	}
+
+	if(!strcmp(argv[1], ".") || !strcmp(argv[1], "..")){
+		shell_printf("cp: src pathnamne can't be . or .. \n");	
+		return -1;
+	}
+	if(!strcmp(argv[2], ".") || !strcmp(argv[2], "..")){
+		shell_printf("cp: dst pathname can't be . or .. \n");	
+		return -1;
+	}
+
+    /* 如果2者相等则不能进行操作 */
+    if (!strcmp(argv[1], argv[2])) {
+        shell_printf("cp: source file and dest file must be differern!\n");	
+		return -1;
+    }
+    /* 复制逻辑：
+        1. 打开两个文件，不存在则创建，已经存在则截断
+        2. 复制数据
+        3.关闭文件
+     */
+    int fdrd = open(argv[1], O_RDONLY, 0);
+    if (fdrd == -1) {
+        shell_printf("cp: open file %s failed!\n", argv[1]);
+        return -1;
+    }
+    /* 如果文件已经存在则截断 */
+    int fdwr = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, 0);
+    if (fdwr == -1) {
+        shell_printf("cp: open file %s failed!\n", argv[2]);
+        close(fdrd);
+        return -1;
+    }
+
+    struct stat fstat;
+
+    if (stat(argv[1], &fstat) < 0) {
+        shell_printf("mv: get file %s state failed!\n", argv[1]);
+        close(fdrd);
+        close(fdwr);
+        return -1;
+    }
+
+    /* 每次操作512字节 */
+    char *buf = malloc(fstat.st_size);
+    if (buf == NULL) {
+        shell_printf("cp: malloc for size %d failed!\n", fstat.st_size);
+        goto err;
+    }
+
+    char *p = buf;
+    int size = fstat.st_size;
+    int readBytes;
+
+    /* 每次读取64kb */
+    int chunk = (size & 0xffff) + 1;
+    
+    /* 如果chunk为0，就设置块大小 */
+    if (chunk == 0) {
+        chunk = 0xffff;
+        size -= 0xffff;
+    }
+        
+    while (size > 0) {  
+        readBytes = read(fdrd, p, chunk);
+        //printf("read:%d\n", readBytes);
+        if (readBytes == -1) {  /* 应该检查是错误还是结束 */
+            goto failed; 
+        }
+        if (write(fdwr, p, readBytes) == -1) {
+            goto failed;  
+        }
+        p += chunk;
+        size -= 0xffff;
+        chunk = 0xffff;
+    }
+
+    /* 设置模式和原来文件一样 */
+    chmod(argv[2], fstat.st_mode);
+
+    free(buf);
+    /* 复制结束 */
+    close(fdrd);
+    close(fdwr);
+    return 0;
+failed:
+    shell_printf("cp: transmit data error!\n");
+    free(buf);
+err:
+    /* 复制结束 */
+    close(fdrd);
+    close(fdwr);
+    return -1;
+}
+
+int cmd_move(int argc, char *argv[])
+{
+	if(argc < 3){
+		shell_printf("mv: command syntax is incorrect.\n");	
+		return -1;
+	}
+
+	if(!strcmp(argv[1], ".") || !strcmp(argv[1], "..")){
+		shell_printf("mv: src pathnamne can't be . or .. \n");	
+		return -1;
+	}
+	if(!strcmp(argv[2], ".") || !strcmp(argv[2], "..")){
+		shell_printf("mv: dst pathname can't be . or .. \n");	
+		return -1;
+	}
+
+    /* 如果2者相等则不能进行操作 */
+    if (!strcmp(argv[1], argv[2])) {
+        shell_printf("mv: source file and dest file must be differern!\n");	
+		return -1;
+    }
+    /* 复制逻辑：
+        1. 打开两个文件，不存在则创建，已经存在则截断
+        2. 复制数据
+        3.关闭文件
+     */
+    int fdrd = open(argv[1], O_RDONLY, 0);
+    if (fdrd == -1) {
+        shell_printf("mv: open file %s failed!\n", argv[1]);
+        return -1;
+    }
+    /* 如果文件已经存在则截断 */
+    int fdwr = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, 0);
+    if (fdwr == -1) {
+        shell_printf("mv: open file %s failed!\n", argv[2]);
+        close(fdrd);
+        return -1;
+    }
+
+    struct stat fstat;
+
+    if (stat(argv[1], &fstat) < 0) {
+        shell_printf("mv: get file %s state failed!\n", argv[1]);
+        close(fdrd);
+        close(fdwr);
+        return -1;
+    }
+
+    /* 每次操作512字节 */
+    char *buf = malloc(fstat.st_size);
+    if (buf == NULL) {
+        shell_printf("mv: malloc for size %d failed!\n", fstat.st_size);
+        goto err;
+    }
+
+    char *p = buf;
+    int size = fstat.st_size;
+    int readBytes;
+
+    /* 每次读取64kb */
+    int chunk = (size & 0xffff) + 1;
+
+    if (chunk == 0) {
+        chunk = 0xffff;
+        size -= 0xffff;
+    }    
+    while (size > 0) {  
+        readBytes = read(fdrd, p, chunk);
+        //printf("read:%d\n", readBytes);
+        if (readBytes == -1) {  /* 应该检查是错误还是结束 */
+            goto failed; 
+        }
+        if (write(fdwr, p, readBytes) == -1) {
+            goto failed;  
+        }
+        p += chunk;
+        size -= 0xffff;
+        chunk = 0xffff;
+    }
+
+    /* 设置模式和原来文件一样 */
+    chmod(argv[2], fstat.st_mode);
+    
+    free(buf);
+    /* 复制结束 */
+    close(fdrd);
+    close(fdwr);
+
+    /* 移动后删除源文件 */
+    if(remove(argv[1]) == 0){
+        //shell_printf("mv: delete source file %s success.\n", argv[1]);
+    }else{
+        shell_printf("mv: delete source file %s faild!\n", argv[1]);
+        /* 删除复制后的文件 */
+        remove(argv[2]);
+    }
+
+    return 0;
+failed:
+    printf("mv: transmit data error!\n");
+    free(buf);
+err:
+    /* 复制结束 */
+    close(fdrd);
+    close(fdwr);
+    return -1;
+}
+
+int cmd_rename(int argc, char *argv[])
+{
+	if(argc < 3){
+		shell_printf("rename: command syntax is incorrect.\n");	
+		return -1;
+	}
+
+	if(!strcmp(argv[1], ".") || !strcmp(argv[1], "..")){
+		shell_printf("rename: pathnamne can't be . or .. \n");	
+		return -1;
+	}
+	if(!strcmp(argv[2], ".") || !strcmp(argv[2], "..")){
+		shell_printf("rename: new name can't be . or .. \n");	
+		return -1;
+	}
+
+	if(!rename(argv[1], argv[2])){
+		//shell_printf("rename: %s to %s sucess!\n", argv[1], argv[2]);	
+		return 0;
+	}else{
+        shell_printf("rename: %s to %s faild!\n", argv[1], argv[2]);	
+		return -1;
+	}
+
+    return 0;
+}
+
+int cmd_mkdir(int argc, char *argv[])
+{
+	int ret = -1;
+	if(argc != 2){
+		shell_printf("mkdir: no argument support!\n");
+	}else{
+    
+        if(mkdir(argv[1], 0) == 0){
+            //shell_printf("mkdir: create a dir %s success.\n", argv[1]);
+            ret = 0;
+        }else{
+            shell_printf("mkdir: create directory %s faild!\n", argv[1]);
+        }
+	}
+	return ret;
+}
+
+int cmd_rmdir(int argc, char *argv[])
+{
+	int ret = -1;
+	if(argc != 2){
+		shell_printf("mkdir: no argument support!\n");
+	}else{
+		
+        if(rmdir(argv[1]) == 0){
+            //shell_printf("rmdir: remove %s success.\n", argv[1]);
+            ret = 0;
+        }else{
+            shell_printf("rmdir: remove %s faild!\n", argv[1]);
+        }
+		
+	}
+	return ret;
+}
+
+int cmd_rm(int argc, char *argv[])
+{
+	int ret = -1;
+	if(argc != 2){
+		shell_printf("rm: no argument support!\n");
+	}else{
+        if(remove(argv[1]) == 0){
+            //shell_printf("rm: delete %s success.\n", argv[1]);
+            ret = 0;
+        }else{
+            shell_printf("rm: delete %s faild!\n", argv[1]);
+        }
+	}
+	return ret;
+}
 
 /*
-cat: print a file
+touch: create a file
 */
-int cmd_cat(int argc, char *argv[])
+static int cmd_touch(int argc, char *argv[])
 {
-	/* 如果没有参数，就接收输入，输入类型：管道，文件，设备 */
-    if (argc == 1) {
-        /*  */
-        /*char buf;
-        while (read(STDIN_FILENO, &buf, 1) > 0) {
-            shell_printf("%c", buf);
-        }*/
-
-        /* 只接受4096字节输入 */
-        char *buf = malloc(4096 + 1);
-        memset(buf, 0, 4096 + 1);
-        int readBytes = read(STDIN_FILENO, buf, 4096);
-        //printf("read fd0:%d\n", readBytes);
-        if (readBytes > 0) {            
-            char *p = buf;
-            while (readBytes--) {
-                shell_printf("%c", *p);
-                p++;
-            }
-        }
-        free(buf);
-        return 0;
+	//printf("argc: %d\n", argc);
+	if(argc == 1){	//只有一个参数，自己的名字，退出
+		shell_printf("touch: please input filename!\n");
+		return 0;
 	}
 	if(argc > 2){
-		shell_printf("cat: only support 2 argument!\n");
+		shell_printf("touch: only support 2 argument!\n");
 		return -1;
 	}
 	
     const char *path = (const char *)argv[1];
 
-	int fd = open(path, O_RDONLY, 0);
+	int fd = open(path, O_CREAT | O_RDWR, 0);
 	if(fd == -1){
-		shell_printf("cat: file %s not exist!\n", path);
-		return -1;
+		shell_printf("touch: fd %d error\n", fd);
+		return 0;
 	}
-	
-	struct stat fstat;
-	stat(path, &fstat);
-	
-	char *buf = (char *)malloc(fstat.st_size);
-	
-	int bytes = read(fd, buf, fstat.st_size);
-	//printf("read %s fd%d:%d\n", path,  fd, bytes);
+
 	close(fd);
-	
-	int i = 0;
-	while(i < bytes){
-		shell_printf("%c", buf[i]);
-		i++;
-	}
-	free(buf);
-	//printf("\n");
 	return 0;
 }
-
 
 /**
  * cmd_trig - trig命令
@@ -1032,8 +1283,14 @@ struct buildin_cmd buildin_cmd_table[] = {
     {"ls", cmd_ls},
     {"cd", cmd_cd},
     {"pwd", cmd_pwd},
-    {"cat", cmd_cat},
     {"trig", cmd_trig},
+    {"cp", cmd_copy},
+    {"mv", cmd_move},
+    {"rn", cmd_rename},
+    {"mkdir", cmd_mkdir},
+    {"rmdir", cmd_rmdir},
+    {"rm", cmd_rm},
+    {"touch", cmd_touch},
 };
 
 int do_buildin_cmd(int cmd_argc, char **cmd_argv)
@@ -1068,7 +1325,6 @@ char *cmd_argv[MAX_ARG_NR] = {0};
 
 void cmd_loop()
 {
-    
     while (1) {
         print_prompt();
         memset(cmdman->cmd_line, 0, CMD_LINE_LEN);

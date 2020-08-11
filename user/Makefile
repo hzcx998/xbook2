@@ -18,3 +18,5 @@ MODULE      +=  hello
 MODULE      +=  bosh
 MODULE      +=  socket_client
 MODULE      +=  socket_server
+MODULE      +=  echo
+MODULE      +=  cat
