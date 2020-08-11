@@ -69,11 +69,11 @@ PTHREAD线程库
 ```
 1.安装gcc, nasm: 
     Ubuntu/Kali Linux: sudo apt-get install gcc nasm
-    Red hot/Fedora/Centos: sudo yum install gcc nasm
+    Red hat/Fedora/Centos: sudo yum install gcc nasm
     
 2.安装qemu虚拟机：
     Ubuntu/Kali Linux: sudo apt-get install qemu-system-x86
-    Red hot/Fedora/Centos: sudo yum install qemu-system-x86
+    Red hat/Fedora/Centos: sudo yum install qemu-system-x86
     
 ```
 
