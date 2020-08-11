@@ -13,24 +13,26 @@
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <sys/pthread.h>
+#include <fsal/fsal.h>
+#include <unistd.h>
 
 #define DEBUG_LOCAL 0
 
 /**
  * load_segment - 加载段
- * @rb: 文件描述符
+ * @fd: 文件描述符
  * @offset: 
  * @file_sz: 段大小
  * @vaddr: 虚拟地址
  * 
  * 加载一个段到内存
  */
-static int load_segment(raw_block_t *rb, unsigned long offset, unsigned long file_sz,
+static int load_segment(int fd, unsigned long offset, unsigned long file_sz,
     unsigned long mem_sz, unsigned long vaddr)
 {
     /*
-    printk(PART_TIP "load_segment:rb %d off %x size %x mem %x vaddr %x\n",
-        rb, offset, file_sz, mem_sz, vaddr);
+    printk(PART_TIP "load_segment:fd %d off %x size %x mem %x vaddr %x\n",
+        fd, offset, file_sz, mem_sz, vaddr);
     */
     /* 获取虚拟地址的页对齐地址 */
     unsigned long vaddr_page = vaddr & PAGE_ADDR_MASK;
@@ -66,7 +68,8 @@ static int load_segment(raw_block_t *rb, unsigned long offset, unsigned long fil
     //printk(KERN_DEBUG "task %s space: addr %x page %d\n",(current_task)->name, vaddr_page, occupy_pages);
 
     /* 读取数据到内存中 */
-    if (raw_block_read_off(rb, (void *)vaddr, offset, file_sz)) {
+    sys_lseek(fd, offset, SEEK_SET);
+    if (sys_read(fd, (void *)vaddr, file_sz) != file_sz) {
         return -1;
     }
 
@@ -76,22 +79,24 @@ static int load_segment(raw_block_t *rb, unsigned long offset, unsigned long fil
 /**
  * proc_load_image - 加载文件镜像
  */
-int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb)
+int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
 {
     struct Elf32_Phdr prog_header;
     /* 获取程序头起始偏移 */
     Elf32_Off prog_header_off = elf_header->e_phoff;
     Elf32_Half prog_header_size = elf_header->e_phentsize;
-    
-    //printk(KERN_DEBUG "prog offset %x size %d\n", prog_header_off, prog_header_size);
+    #if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "prog offset %x size %d\n", prog_header_off, prog_header_size);
+    #endif
     Elf32_Off prog_end;
     /* 遍历所有程序头 */
     unsigned long grog_idx = 0;
     while (grog_idx < elf_header->e_phnum) {
         memset(&prog_header, 0, prog_header_size);
-
+        
         /* 读取程序头 */
-        if (raw_block_read_off(rb, (void *)&prog_header, prog_header_off, prog_header_size)) {
+        sys_lseek(fd, prog_header_off, SEEK_SET);
+        if (sys_read(fd, (void *)&prog_header, prog_header_size) != prog_header_size) {
             return -1;
         }
 #if DEBUG_LOCAL == 1
@@ -108,7 +113,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, raw_block_t *rb)
             filesz用于读取磁盘上的数据，而memsz用于内存中的扩展，
             因此filesz<=memsz
              */
-            if (load_segment(rb, prog_header.p_offset, 
+            if (load_segment(fd, prog_header.p_offset, 
                     prog_header.p_filesz, prog_header.p_memsz, prog_header.p_vaddr)) {
                 return -1;
             }
@@ -362,6 +367,7 @@ int proc_res_init(task_t *task)
     resource_init(task->res);
     return 0;
 }
+
 int proc_res_exit(task_t *task)
 {
     if (task->res == NULL)
@@ -399,6 +405,8 @@ int proc_release(task_t *task)
     if (proc_trigger_exit(task))
         return -1;
     if (proc_res_exit(task))
+        return -1;
+    if (fs_fd_exit(task))
         return -1;
     if (proc_pthread_exit(task))
         return -1;
@@ -449,17 +457,18 @@ void proc_make_trap_frame(task_t *task)
 /* 构建用户进程初始上下文信息 */
 void proc_entry(void* arg)
 {
-    char **argv = (char **) arg;
-    sys_exec_raw(argv[0], argv);
+    const char **argv = (const char **) arg;
+    sys_execve(argv[0], argv, NULL);
+    panic("[task]: start process %s failed!\n", argv[0]);
 }
 
 /**
  * 
- * process_create - 创建一个进程
+ * start_process - 创建一个进程
  * @name: 进程名字
  * @arg: 线程参数
  */
-task_t *process_create(char *name, char **argv)
+task_t *start_process(char *name, char **argv)
 {
     // 创建一个新的线程结构体
     task_t *task = (task_t *) kmalloc(TASK_KSTACK_SIZE);
@@ -485,6 +494,15 @@ task_t *process_create(char *name, char **argv)
     if (proc_res_init(task)) {
         proc_trigger_exit(task);
         proc_vmm_exit(task);
+        kfree(task);
+        return NULL;
+    }
+
+    /* 创建文件描述表 */
+    if (fs_fd_init(task) < 0) {
+        proc_trigger_exit(task);
+        proc_vmm_exit(task);
+        proc_res_exit(task);
         kfree(task);
         return NULL;
     }

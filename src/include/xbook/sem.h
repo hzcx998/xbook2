@@ -31,4 +31,9 @@ int sem_up(int semid);
 
 void init_sem();
 
+int sys_sem_get(char *name, int value, int semflg);
+int sys_sem_put(int semid);
+int sys_sem_down(int semid, int semflg);
+int sys_sem_up(int semid);
+
 #endif   /* _XBOOK_SEM_H */

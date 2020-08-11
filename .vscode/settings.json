@@ -110,6 +110,17 @@
         "timer.h": "c",
         "exit.h": "c",
         "segment.h": "c",
-        "xcons.h": "c"
+        "xcons.h": "c",
+        "fs.h": "c",
+        "list.h": "c",
+        "dir.h": "c",
+        "fstype.h": "c",
+        "net.h": "c",
+        "socket.h": "c",
+        "test.h": "c",
+        "text.h": "c",
+        "font.h": "c",
+        "event.h": "c",
+        "cursor.h": "c"
     }
 }

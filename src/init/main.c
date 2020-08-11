@@ -10,10 +10,13 @@
 #include <xbook/msgqueue.h>
 #include <xbook/sem.h>
 #include <xbook/syscall.h>
-#include <xbook/pipe.h>
+#include <xbook/fifo.h>
 #include <xbook/driver.h>
 #include <xbook/ktime.h>
 #include <xbook/srvcall.h>
+#include <xbook/fs.h>
+#include <xbook/net.h>
+#include <xbook/gui.h>
 
 int kernel_main(void)
 {
@@ -32,7 +35,7 @@ int kernel_main(void)
     init_share_mem();
     init_msg_queue();
     init_sem();
-    init_pipe();
+    init_fifo();
 
     init_syscall();
     init_srvcall();
@@ -40,16 +43,22 @@ int kernel_main(void)
     init_ktime();
 
     init_tasks();
+    
     init_clock();
     
     /* enable interrupt */
     enable_intr();
-    
+
     init_driver_arch();
     
     /* init raw block */
-    init_raw_block();
-    
+    //init_raw_block();
+
+    /* init fs */
+    init_fs();
+
+    init_gui();
+    //init_net();
     //spin("test");
     start_user();
 

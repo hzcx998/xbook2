@@ -98,3 +98,20 @@ int triggeron(int trig, pid_t pid)
 {
     return syscall2(int, SYS_TRIGGERON, trig, pid);
 }
+
+int trigprocmask(int how, trigset_t *set, trigset_t *oldset)
+{
+    return syscall3(int, SYS_TRIGPROCMASK, how, set, oldset);
+}
+
+int trigpending(trigset_t *set)
+{
+    return syscall1(int, SYS_TRIGPENDING, set);
+}
+
+int trigmask(int trig)
+{
+    if (IS_BAD_TRIGGER(trig))
+        return -1;
+    return (1 << trig);
+}

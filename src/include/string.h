@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <types.h>
+#include <stdarg.h>
 
 char* itoa(char ** ps, int val, int base);
 int atoi(const char *src);
@@ -48,6 +49,7 @@ void *memset32(void* src, unsigned int value, unsigned int size);
 void* memmove(void* dst,const void* src,unsigned int count);
 
 #define bzero(str, n) memset(str, 0, n) 
+
 
 #endif  /* _XBOOK_STRING_H */
 

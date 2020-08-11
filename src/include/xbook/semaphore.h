@@ -5,10 +5,8 @@
 #include <xbook/waitqueue.h>
 #include <xbook/schedule.h>
 #include <xbook/task.h>
-
-/**
- * 当前这种信号量的值可以是很多，不仅仅局限于二元（0,1）
- */
+#include <xbook/kmalloc.h>
+#include <xbook/clock.h>
 
 typedef struct semaphor {
 	atomic_t counter;			// 统计资源的原子变量
@@ -34,6 +32,18 @@ static inline void semaphore_init(semaphore_t *sema, int value)
 	atomic_set(&sema->counter, value);
 	/* 初始化等待队列 */
 	wait_queue_init(&sema->waiter);
+}
+
+/**
+ * semaphore_Init - 信号量初始化
+ * @sema: 信号量
+ * @value: 初始值
+ */
+static inline void semaphore_destroy(semaphore_t *sema)
+{
+    if (atomic_get(&sema->counter) > 0)
+        wait_queue_wakeup_all(&sema->waiter);
+    atomic_set(&sema->counter, 0);
 }
 
 /**
@@ -125,6 +135,34 @@ static inline void semaphore_up(semaphore_t *sema)
 		__semaphore_up(sema);
 	}
     restore_intr(flags);
+}
+
+/**
+ * semaphore_down_timeout - 信号量down超时
+ * @sema: 信号量
+ * @ticks: 超时的ticks数量
+ * 
+ * 如果没有超时则返回剩余的ticks数量, 超时则返回 < 0
+ */
+static inline int semaphore_down_timeout(semaphore_t *sema, clock_t ticks)
+{
+    if (!ticks) {   /* 一直阻塞等待 */
+        semaphore_down(sema);
+        return 0;
+    }
+    clock_t start = sys_get_ticks();
+    clock_t end = start;
+    clock_t t = ticks;
+    while (t > 0) {
+        end = sys_get_ticks();;
+        if (end > start) {
+            t -= (end - start);
+            start = end;
+        }
+        if (!semaphore_try_down(sema))
+            return 0;
+    }
+    return -1;
 }
 
 #endif   /*_BOOK_semaphore__H*/

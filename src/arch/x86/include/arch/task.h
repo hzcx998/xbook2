@@ -63,7 +63,7 @@ void __make_task_stack(task_t *task, task_func_t *function, void *arg);
 
 int __fork_bulid_child_stack(task_t *child);
 
-int __proc_stack_init(task_t *task, trap_frame_t *frame, char **argv);
+int __proc_stack_init(task_t *task, trap_frame_t *frame, char **argv, char **envp);
 
 int __trigger_return(trap_frame_t *frame);
 

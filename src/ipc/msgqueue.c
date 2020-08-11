@@ -419,3 +419,24 @@ void init_msg_queue()
     }
 #endif
 }
+
+int sys_msgque_get(char *name, unsigned long flags)
+{
+    return msg_queue_get(name, flags);
+}
+
+int sys_msgque_put(int msgid)
+{
+    return msg_queue_put(msgid);
+}
+
+int sys_msgque_send(int msgid, void *msgbuf, size_t size, int msgflg)
+{
+    return msg_queue_send(msgid, msgbuf, size, msgflg);
+}
+
+int sys_msgque_recv(int msgid, void *msgbuf, size_t msgsz, int msgflg)
+{
+    long *msgtype = (long *) msgbuf;
+    return msg_queue_recv(msgid, msgbuf, msgsz, *msgtype, msgflg);
+}

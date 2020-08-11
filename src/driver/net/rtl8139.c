@@ -106,7 +106,7 @@
 */
 #include <xbook/debug.h>
 #include <xbook/bitops.h>
-#include <vsprintf.h>
+#include <string.h>
 #include <xbook/vine.h>
 #include <xbook/driver.h>
 #include <assert.h>

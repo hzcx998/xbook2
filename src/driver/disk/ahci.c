@@ -5,7 +5,7 @@
 #include <xbook/softirq.h>
 #include <xbook/vine.h>
 #include <xbook/driver.h>
-#include <vsprintf.h>
+#include <string.h>
 #include <xbook/clock.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
@@ -21,9 +21,10 @@
 #include <xbook/task.h>
 #include <assert.h>
 #include <sys/ioctl.h>
+#include <stdio.h>
 
 /* 配置开始 */
-#define DEBUG_LOCAL 0
+/* #define DEBUG_AHCI */
 
 /* 配置结束 */
 
@@ -424,9 +425,9 @@ pci_device_t *get_ahci_pci (void)
 	if(!ahci) ahci = pci_locate_device(0x8086, 0x2922);
 	if(!ahci)
 		return NULL;
-    
+    #ifdef DEBUG_AHCI
     pr_dbg("[ahci]: device vendorID %x deviceID %x class code %x\n", ahci->vendor_id, ahci->device_id, ahci->class_code);
-	
+	#endif
     //pci_device_dump(ahci);
     
 	hba_mem = (void *)(addr_t)ahci->bar[5].base_addr;
@@ -438,10 +439,11 @@ pci_device_t *get_ahci_pci (void)
         return NULL;
     }
     flush_tlb();    // 刷新快表
-
+    #ifdef DEBUG_AHCI
 	pr_dbg("[ahci]: mapping hba_mem to %x -> %x\n", hba_mem, ahci->bar[5].base_addr);
 	pr_dbg("[ahci]: using interrupt %d\n", ahci->irq_line);
-	ahci_int = ahci->irq_line;
+	#endif
+    ahci_int = ahci->irq_line;
 
 	return ahci;
 }
@@ -491,7 +493,9 @@ void ahci_init_hba(struct hba_memory *abar)
 	abar->global_host_control |= HBA_GHC_AHCI_ENABLE;
 	abar->global_host_control |= HBA_GHC_INTERRUPT_ENABLE;
     mdelay(20);
+    #ifdef DEBUG_AHCI
 	printk(KERN_INFO "[ahci]: caps: %x %x ver:%x ctl: %x\n", abar->capability, abar->ext_capabilities, abar->version, abar->global_host_control);
+    #endif
 }
 
 
@@ -567,8 +571,10 @@ void ahci_reset_device(struct hba_memory *abar, struct hba_port *port, device_ex
 {
 	/* TODO: This needs to clear out old commands and lock properly so that new commands can't get sent
 	 * while the device is resetting */
-	printk(KERN_NOTICE "[ahci]: device %d: sending COMRESET and reinitializing\n", dev->idx);
-	ahci_stop_port_command_engine(port);
+	#ifdef DEBUG_AHCI
+    printk(KERN_NOTICE "[ahci]: device %d: sending COMRESET and reinitializing\n", dev->idx);
+	#endif
+    ahci_stop_port_command_engine(port);
 	port->sata_error = ~0;
 	/* power on, spin up */
 	port->command |= 2;
@@ -688,16 +694,18 @@ int ahci_device_identify_ahci(struct hba_memory *abar,
 	}
 
 	ahci_send_command(port, 0);
-
+    #ifdef DEBUG_AHCI
     printk(KERN_DEBUG "[AHCI]: port %d sata active %x command issue %x\n", dev->idx, port->sata_active, port->command_issue);
-	timeout = AHCI_CMD_TIMEOUT;
+	#endif
+    timeout = AHCI_CMD_TIMEOUT;
 	while(--timeout)
 	{
 		if(!((port->sata_active | port->command_issue) & 1))
 			break;
 	}
+    #ifdef DEBUG_AHCI
     printk(KERN_DEBUG "[AHCI]: port %d sata active %x command issue %x\n", dev->idx, port->sata_active, port->command_issue);
-	
+	#endif
 	if(!timeout)
 	{
 		printk(KERN_ERR "[ahci]: device %d: identify 2: port hung\n", dev->idx);
@@ -709,9 +717,11 @@ int ahci_device_identify_ahci(struct hba_memory *abar,
 	
 	memcpy(&dev->identify, (void *)dma.v, sizeof(struct ata_identify));
 	free_dma_buffer(&dma);
+    #ifdef DEBUG_AHCI
 	printk(KERN_INFO "[ahci]: device %d: num sectors=%d: %x, %x\n", dev->idx,
 			dev->identify.lba48_addressable_sectors, dev->identify.ss_2);
-	return 1;
+	#endif
+    return 1;
 }
 
 uint32_t ahci_check_type(volatile struct hba_port *port)
@@ -750,8 +760,10 @@ uint32_t ahci_check_type(volatile struct hba_port *port)
 
 int ahci_initialize_device(struct hba_memory *abar, device_extension_t *dev)
 {
+    #ifdef DEBUG_AHCI
 	printk(KERN_INFO "[ahci]: initializing device %d\n", dev->idx);
-	struct hba_port *port = (struct hba_port *)&abar->ports[dev->idx];
+	#endif
+    struct hba_port *port = (struct hba_port *)&abar->ports[dev->idx];
 	ahci_stop_port_command_engine(port);
 	port->sata_error = ~0;
 	/* power on, spin up */
@@ -766,29 +778,33 @@ int ahci_initialize_device(struct hba_memory *abar, device_extension_t *dev)
 	while(port->command & (1 << 15)) cpu_pause();
 	port->command &= ~((1 << 27) | (1 << 26) | 1); /* clear some bits */
 	ahci_flush_commands(port);
-
+    #ifdef DEBUG_AHCI
     pr_dbg("[AHCI]: step1: port %d sata status %x control %x.\n", dev->idx, 
         port->sata_status, port->sata_control);
+    #endif        
     /* start reset sata */
 	port->sata_control |= 1;
 	mdelay(20);
-    
+    #ifdef DEBUG_AHCI
     pr_dbg("[AHCI]: step2: port %d sata status %x control %x.\n", dev->idx, 
         port->sata_status, port->sata_control);
+    #endif
     /* close DET, after init sata device done. */
 	port->sata_control &= (~1);
 	mdelay(10);
-    
+    #ifdef DEBUG_AHCI
     pr_dbg("[AHCI]: step3: port %d sata status %x control %x.\n", dev->idx, 
         port->sata_status, port->sata_control);
-    
+    #endif
 	while(!(port->sata_status & 1)) cpu_pause();
 	port->sata_error = ~0;
 	port->command |= (1 << 28); /* set interface to active */
 	while((port->sata_status >> 8) != 1) cpu_pause();
 	port->interrupt_status = ~0; /* clear pending interrupts */
 	port->interrupt_enable = AHCI_DEFAULT_INT; /* we want some interrupts */
-	pr_dbg("[AHCI]: map command list dma addr and fis dma addr start.\n");
+	#ifdef DEBUG_AHCI
+    pr_dbg("[AHCI]: map command list dma addr and fis dma addr start.\n");
+    #endif
     /* map memory */
 	addr_t clb_phys, fis_phys;
 	
@@ -825,9 +841,9 @@ int ahci_initialize_device(struct hba_memory *abar, device_extension_t *dev)
 	port->fis_base_h = 0;
  	ahci_start_port_command_engine(port);
 	port->sata_error = ~0;
-
+    #ifdef DEBUG_AHCI
     pr_dbg("[AHCI]: map command list dma addr and fis dma addr done.\n");
-
+    #endif
 	return ahci_device_identify_ahci(abar, port, dev);
 }
 
@@ -856,13 +872,17 @@ iostatus_t ahci_create_device(driver_object_t *driver, device_extension_t *dev)
 void ahci_probe_ports(driver_object_t *driver, struct hba_memory *abar)
 {
 	uint32_t pi = abar->port_implemented;
+    #ifdef DEBUG_AHCI
 	printk(KERN_DEBUG "[ahci]: ports implemented: %x\n", pi);
-	int i=0;
+	#endif
+    int i=0;
 	while(i < 32) {
 		if(pi & 1) {
 			uint32_t type = ahci_check_type(&abar->ports[i]);
 			if(type == AHCI_DEV_SATA) { /* SATA device */
+                #ifdef DEBUG_AHCI
 				printk(KERN_DEBUG "[ahci]: detected SATA device on port %d\n", i);
+                #endif
                 /* 创建设备扩展 */
 				ports[i] = kmalloc(sizeof(device_extension_t));
 				ports[i]->type = type;
@@ -870,7 +890,9 @@ void ahci_probe_ports(driver_object_t *driver, struct hba_memory *abar)
                 mutexlock_init(&(ports[i]->lock));
 				if(ahci_initialize_device(abar, ports[i])) {
 					/* create one device on port i */
+                    #ifdef DEBUG_AHCI
                     printk(KERN_DEBUG "[ahci]: success to initialize device %d, disabling port\n", i);
+                    #endif
 			        if (ahci_create_device(driver, ports[i]) < 0) {
                         printk(KERN_ERR "[ahci]: failed to create device %d, disabling port\n", i);    
                     } 
@@ -1047,7 +1069,7 @@ iostatus_t ahci_read(device_object_t *device, io_request_t *ioreq)
     long len;
     iostatus_t status = IO_SUCCESS;
     sector_t sectors = DIV_ROUND_UP(ioreq->parame.read.length, SECTOR_SIZE);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_AHCI
     printk(KERN_DEBUG "ahci_read: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.read.offset);
 #endif    
@@ -1058,7 +1080,7 @@ iostatus_t ahci_read(device_object_t *device, io_request_t *ioreq)
         status = IO_FAILED;
         len = 0;
     }
-    loop_delay(1);
+    //loop_delay(1);
 
     ioreq->io_status.status = status;
     ioreq->io_status.infomation = len;
@@ -1073,7 +1095,7 @@ iostatus_t ahci_write(device_object_t *device, io_request_t *ioreq)
     long len;
     iostatus_t status = IO_SUCCESS;
     sector_t sectors = DIV_ROUND_UP(ioreq->parame.write.length, SECTOR_SIZE);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_AHCI
     printk(KERN_DEBUG "ahci_write: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.write.offset);
 #endif    
@@ -1175,7 +1197,7 @@ iostatus_t ahci_driver_vine(driver_object_t *driver)
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_AHCI
     printk(KERN_DEBUG "ahci_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

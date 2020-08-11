@@ -57,6 +57,8 @@ typedef struct _video_info {
 /* even */
 #define EVENIO_GETLED     DEVCTL_CODE('e', 1) /* get led states */
 
-
+/* pipe */
+#define PIPEIO_SETRW        DEVCTL_CODE('p', 1) /* set reader or writer */
+#define PIPEIO_SETOPS       DEVCTL_CODE('p', 2) /* set operations */
 
 #endif   /* _SYS_IOCTL_H */

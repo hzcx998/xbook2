@@ -1,6 +1,6 @@
 #include <xbook/debug.h>
 #include <xbook/bitops.h>
-#include <vsprintf.h>
+#include <string.h>
 #include <xbook/vine.h>
 #include <xbook/driver.h>
 #include <xbook/task.h>
@@ -8,6 +8,7 @@
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>
+#include <stdio.h>
 
 #define DRV_NAME "virtual-ramdisk"
 #define DRV_VERSION "0.1"

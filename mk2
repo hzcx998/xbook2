@@ -2,6 +2,18 @@
 # Copyright (c) 2020 Jason Hu, Zhu Yu
 # support bochs and vbox
 
+FATFS_DIR	= tools/fatfs
+FATFS_BIN	= $(FATFS_DIR)/fatfs
+
+# images and rom
+IMAGE_DIR	= develop/image
+HDA_VHD		= $(IMAGE_DIR)/hda.vhd
+ROM_DIR		= develop/rom
+
+# 默认大小为40M
+ROM_DISK_SZ	= 40
+
+
 # virtual machine
 BOCHS 		= bochs
 BOCHSDBG 	= bochsdbg
@@ -34,6 +46,8 @@ else
 endif
 
 # virtual box
-vbox:
+vbox: vbox_disk
 	$(VBOX_MANAGE) startvm $(VBOX_NAME) --type gui 
-	
+
+vbox_disk:
+	$(FATFS_BIN) $(HDA_VHD) $(ROM_DIR) $(ROM_DISK_SZ)

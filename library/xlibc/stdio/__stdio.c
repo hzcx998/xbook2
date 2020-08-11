@@ -13,17 +13,17 @@ static FILE * __stderr = NULL;
 
 static ssize_t __tty_stdin_read(FILE * f, unsigned char * buf, size_t size)
 {
-	return res_read(0, 0, (void *) buf, size);
+	return read(0, (void *) buf, size);
 }
 
 static ssize_t __tty_stdout_write(FILE * f, const unsigned char * buf, size_t size)
 {
-	return res_write(1, 0, (void *) buf, size);
+	return write(1, (void *) buf, size);
 }
 
 static ssize_t __tty_stderr_write(FILE * f, const unsigned char * buf, size_t size)
 {
-	return res_write(2, 0, (void *) buf, size);
+	return write(2, (void *) buf, size);
 }
 
 static ssize_t __tty_null_read(FILE * f, unsigned char * buf, size_t size)

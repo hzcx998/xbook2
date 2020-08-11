@@ -5,11 +5,8 @@
 
 typedef struct _dirdes {
     int flags;      /* 文件描述符的标志 */
-    int diridx;    /* 文件索引 */
+    dir_t diridx;    /* 文件索引 */
 } DIR;
-
-
-
 
 DIR *opendir(const char *path);
 int closedir(DIR *dir);

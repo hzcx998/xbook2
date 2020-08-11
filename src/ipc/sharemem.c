@@ -60,22 +60,25 @@ static share_mem_t *share_mem_find_by_id(int shmid)
 }
 
 /**
- * share_mem_find_by_id - 通过id查找共享内存
- * @id: 共享内存的id
+ * share_mem_find_by_addr - 通过物理地址查找共享内存
+ * @id: 共享内存的物理地址
  * 
  * @return: 如果共享内存已经在共享内存表中，就返回共享内存指针，
  *          没有则返回NULL
  */
-static share_mem_t *share_mem_find_by_addr(unsigned long addr)
+share_mem_t *share_mem_find_by_addr(addr_t addr)
 {
     share_mem_t *shm;
     int i;
     for (i = 0; i < MAX_SHARE_MEM_NR; i++) {
         shm = &share_mem_table[i];
-        /* id相同并且正在使用，才找到 */
-        if (shm->name[0] != '\0' && shm->page_addr == addr) { 
-            return shm;
+        if (shm->name[0] != '\0') {
+            /* id相同并且正在使用，才找到 */
+            if (shm->page_addr == addr) { 
+                return shm;
+            }
         }
+        
     }
     return NULL;
 }
@@ -307,13 +310,11 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
         printk(KERN_DEBUG "share_mem_unmap: not fond space\n");
         return -1;
     }
-
-#if 0
-    if (sp->start != addr)  /* 找到空间后，但还要是一样的起始地址才可以 */
-        return -1;
-#endif
-
+    
     addr = addr_v2p(addr); /* 通过用户虚拟地址获取物理地址 */
+#if DEBUG_SHM == 1
+    printk(KERN_DEBUG "%s: shmaddr :%x physical addr:%x\n", __func__, shmaddr, addr);
+#endif
     semaphore_down(&share_mem_mutex);
     share_mem_t *shm = share_mem_find_by_addr(addr);
     semaphore_up(&share_mem_mutex);
@@ -323,9 +324,14 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
         /* 取消虚拟空间映射 */
         retval = do_vmspace_unmap(cur->vmm, sp->start, sp->end - sp->start);
     }
-    if (!retval) {  /* 减少链接数 */
-        if (shm) 
+    if (retval != -1) {  /* 减少链接数 */
+        if (shm) {
+            #if DEBUG_SHM == 1
+            pr_dbg("[shm]: shm addr=%x links=%d.\n", addr, atomic_get(&shm->links));
+            #endif
             atomic_dec(&shm->links);
+        }
+         
     } else {
         printk(KERN_ERR "share_mem_unmap: do unmap at %x failed!\n", addr);
     }
@@ -347,13 +353,19 @@ int share_mem_put(int shmid)
     share_mem_t *shm;
     semaphore_down(&share_mem_mutex);
     shm = share_mem_find_by_id(shmid);
-    
-    if (shm) {  /* 共享内存存在 */
+    /* 共享内存存在，并且链接次数为0才真正释放 */
+    if (shm) {  
 #if DEBUG_SHM == 1
         printk(KERN_INFO "shm links %d.\n", atomic_get(&shm->links));
 #endif
-        
-        share_mem_free(shm);
+        if (atomic_get(&shm->links) <= 0) {
+            
+            #if DEBUG_SHM == 1
+            pr_dbg("[shm]: destroy shm %d, links %d\n", shmid, atomic_get(&shm->links));
+            #endif
+            share_mem_free(shm);
+        }
+            
         semaphore_up(&share_mem_mutex);
         return 0;
     }
@@ -419,4 +431,52 @@ void init_share_mem()
     }
 #endif 
     // spin(":)");
+}
+
+/**
+ * share_mem_grow - 增长计数
+ * 
+ * @shmid: 共享内存id
+ * 
+ * @return: 成功返回0，失败返回-1
+ */
+int share_mem_grow(int shmid)
+{
+    share_mem_t *shm;
+    semaphore_down(&share_mem_mutex);
+    shm = share_mem_find_by_id(shmid);
+    if (shm) {
+        #if DEBUG_LOCAL == 1
+        pr_dbg("[shm]: shmid=%d before grow links=%d.\n", shmid, atomic_get(&shm->links));
+        #endif
+        atomic_inc(&shm->links);
+        #if DEBUG_LOCAL == 1
+        pr_dbg("[shm]: shmid=%d after grow links=%d.\n", shmid, atomic_get(&shm->links));
+        #endif
+        semaphore_up(&share_mem_mutex);
+        return 0;
+    }
+    semaphore_up(&share_mem_mutex);
+    /* 没有找到共享区域 */
+    return -1;
+}
+
+int sys_shmem_get(char *name, unsigned long size, unsigned long flags)
+{
+    return share_mem_get(name, size, flags);
+}
+
+int sys_shmem_put(int shmid)
+{
+    return share_mem_put(shmid);
+}
+
+void *sys_shmem_map(int shmid, void *shmaddr, int shmflg)
+{
+    return share_mem_map(shmid, shmaddr, shmflg);
+}
+
+int sys_shmem_unmap(const void *shmaddr, int shmflg)
+{
+    return share_mem_unmap(shmaddr, shmflg);
 }

@@ -8,8 +8,8 @@
 #include	<stdlib.h>
 #include	<string.h>
 #include	<errno.h>
-#include	<unistd.h>
 #include	<const.h>
+#include	<unistd.h>
 
 #define DEBUG
 
