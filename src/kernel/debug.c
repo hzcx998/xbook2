@@ -1,11 +1,11 @@
 #include <xbook/debug.h>
 #include <stdarg.h>
-#include <vsprintf.h>
 #include <string.h>
 #include <xbook/spinlock.h>
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
 #include <arch/debug.h>
+#include <stdio.h>
 
 char *printk_msg[] = {
     "emege: ",

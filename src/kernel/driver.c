@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <xbook/pci.h>
 #include <xbook/config.h>
+#include <xbook/vmarea.h>
 
 #define DEBUG_LOCAL 0
 
@@ -989,8 +990,12 @@ void *device_mmap(handle_t handle, size_t length, int flags)
 #endif
         if (ioreq->io_status.infomation) {  /* 有物理地址，说明获取成功，再做进一步设置 */
             /* 进行内存映射 */
-            mapaddr = vmspace_mmap(0, ioreq->io_status.infomation, length, 
-                PROT_USER | PROT_WRITE, VMS_MAP_SHARED | VMS_MAP_REMAP);
+            if (flags & IO_KERNEL)
+                mapaddr = ioremap(ioreq->io_status.infomation, length);
+            else
+                mapaddr = vmspace_mmap(0, ioreq->io_status.infomation, length, 
+                    PROT_USER | PROT_WRITE, VMS_MAP_SHARED | VMS_MAP_REMAP);
+
         }
         io_request_free((ioreq));
         return mapaddr;

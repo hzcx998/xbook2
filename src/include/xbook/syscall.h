@@ -6,44 +6,7 @@
 来执行内核提供的部分操作。
 对于元内核，至少需要为用户提供进程，内存管理，进程间通信，时间管理，设备管理
 相应的系统调用接口。
-
-当同一类型的事物多样复杂时，使用资源管理接口。
-由于是以一种资源的形式提供给用户，所以，命名就很重要了。
-类型+名字的形式是比较不错的。
-
-资源管理：可以被用户直接使用的资源。
-控制管理：用与对进程的执行的管理和控制。
-
-进程管理：
-fork
-execr
-execf
-exit
-wait
-getpid
-getppid
-trigger
-triggeron
-triggeract
-...
-
-内存管理：
-heap
-
-时间管理：
-标准c时间管理方式。
-
-IPC和设备：
-getres(type, name, flags)
-puttres(res)
-ctlres(res, cmd, arg)
-readres(res, arg, buffer, size)
-writeres(res, arg, buffer, size)
-
-内核其它资源：
-
 */
-
 typedef void * syscall_t;
 
 enum syscall_num {
@@ -104,6 +67,70 @@ enum syscall_num {
     SYS_GETVER,
     SYS_MSTATE,
     SYS_USLEEP,
+/// 文件系统
+    SYS_OPEN,
+    SYS_CLOSE,
+    SYS_READ,
+    SYS_WRITE,
+    SYS_LSEEK,
+    SYS_ACCESS,
+    SYS_UNLINK,
+    SYS_FTRUNCATE,
+    SYS_FSYNC,
+    SYS_IOCTL,
+    SYS_FCNTL,
+    SYS_TELL,
+    SYS_MKDIR,
+    SYS_RMDIR,
+    SYS_RENAME,
+    SYS_GETCWD,
+    SYS_CHDIR,
+    SYS_EXECVE,
+    SYS_STAT,
+    SYS_FSTAT,
+    SYS_CHMOD,
+    SYS_FCHMOD,
+    SYS_OPENDIR,
+    SYS_CLOSEDIR,
+    SYS_READDIR,
+    SYS_REWINDDIR,
+/// sockets 套接字
+    SYS_SOCKET,
+    SYS_BIND,
+    SYS_CONNECT,
+    SYS_LISTEN,
+    SYS_ACCEPT,
+    SYS_SEND,
+    SYS_RECV,
+    SYS_SENDTO,
+    SYS_RECVFROM,
+    SYS_SHUTDOWN,
+    SYS_GETPEERNAME,
+    SYS_GETSOCKNAME,
+    SYS_GETSOCKOPT,
+    SYS_SETSOCKOPT,
+    SYS_IOCTLSOCKET,
+    SYS_SELECT,
+    SYS_DUP,
+    SYS_DUP2,
+    SYS_PIPE,
+    SYS_SHMGET,
+    SYS_SHMPUT,
+    SYS_SHMMAP,
+    SYS_SHMUNMAP,
+    SYS_SEMGET,
+    SYS_SEMPUT,
+    SYS_SEMDOWN,
+    SYS_SEMUP,
+    SYS_MSGGET,
+    SYS_MSGPUT,
+    SYS_MSGSEND,
+    SYS_MSGRECV,
+    SYS_TRIGPENDING,
+    SYS_TRIGPROCMASK,
+    SYS_XCONGET,
+    SYS_XCONCLEAR,
+    SYS_XCONPUT,
     SYSCALL_NR,
 };
 

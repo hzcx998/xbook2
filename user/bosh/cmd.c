@@ -14,6 +14,7 @@
 #include <arch/const.h>
 #include <time.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <xcons.h>
 #include <sys/stat.h>
 #include <sys/trigger.h>
@@ -23,6 +24,8 @@
 #include "shell.h"
 
 cmd_man_t *cmdman; 
+
+extern char **environ;
 
 #define DEBUG_LOCAL 0
 
@@ -76,6 +79,25 @@ int cmd_parse(char * cmd_str, char **argv, char token)
 	return argc;
 }
 
+int do_daemon(const char *pathname, char *const *argv)
+{
+    int pid = fork();
+    if (pid == -1)
+        return -1;
+    if (pid == 0) {
+        /* 子进程执行程序 */
+        pid = execv(pathname, (char *const *) argv);
+        /* 如果执行出错就退出 */
+        if (pid == -1) {
+            shell_printf("file %s not executable!\n", argv[0]);
+            exit(pid);  /* 退出 */
+        }
+    }
+    /* 父进程直接返回 */
+    return 0;
+
+}
+
 int execute_cmd(int argc, char **argv)
 {
     if (argc < 1)
@@ -96,170 +118,141 @@ int execute_cmd(int argc, char **argv)
     }
     /* 先执行内建命令，再选择磁盘中的命令 */
     if (do_buildin_cmd(argc, argv)) {
+        /* 如果是后台程序，直接运行 */
+        if (daemon) {
+            return do_daemon((const char *) argv[0], (char *const *) argv);
+        }
         /* 在末尾添加上结束参数 */
         argv[argc] = NULL;
         int pid;
-        /* 检测文件是否存在，以及是否可执行，不然就返回命令错误 */
-        if (access(argv[0], F_OK)) {
-            shell_printf("file %s not a exist!\n", argv[0]);
+    
+        int recv_pipe[2];   /* 接收数据的管道 */
+        int xmit_pipe[2];   /* 传输数据的管道 */
+        /* 创建发送和接收的管道 */
+        if (pipe(recv_pipe) < 0) {
+            shell_printf("%s: create recv pipe failed!\n", APP_NAME);
             return -1;
-        } else {
-            /* ----创建输出管道---- */
+        }
+        if (pipe(xmit_pipe) < 0) {
+            shell_printf("%s: create xmit pipe failed!\n", APP_NAME);
+            close(recv_pipe[0]);
+            close(recv_pipe[1]);
+            return -1;
+        }
+        
+        char buf[513] = {0};
+        char key;
+        /* 创建一个进程 */
+        pid = fork();
+        if (pid == -1) {  /* fork失败 */
+            shell_printf("%s: fork child failed!\n", APP_NAME);
+            close(recv_pipe[0]);
+            close(recv_pipe[1]);
+            close(xmit_pipe[0]);
+            close(xmit_pipe[1]);
+            
+            return -1;
+        } else if (pid > 0) {  /* 父进程 */
+            /* 关闭不用的管道端口 */
+            close(recv_pipe[1]);
+            close(xmit_pipe[0]);
 
-            /* 获取一个"唯一"id" */
-            unid_t unid = res_unid(1);
-            char out_pipename[IPC_NAME_LEN] = {0};
-            sprintf(out_pipename, "shell-stdout%d", unid);
-            /* 创建管道 */
-            int pipe_out_rd = res_open(out_pipename, RES_IPC | IPC_PIPE | IPC_CREAT | IPC_EXCL | IPC_READER, 0);
-            if (pipe_out_rd < 0) {
-                shell_printf("%s: open stdout read pipe failed!\n", APP_NAME);
-                return -1;
-            }
+            /* 非阻塞 */
+            ioctl(recv_pipe[0], F_SETFL, O_NONBLOCK);
 
-            /* ----创建输入管道---- */
-            unid = res_unid(2);
-            char in_pipename[IPC_NAME_LEN] = {0};
-            sprintf(in_pipename, "shell-stdin%d", unid);
-            /* 创建管道 */
-            int pipe_in_wr = res_open(in_pipename, RES_IPC | IPC_PIPE | IPC_CREAT | IPC_EXCL | IPC_WRITER, 0);
-            if (pipe_in_wr < 0) {
-                shell_printf("%s: open stdin write pipe failed!\n", APP_NAME);
-                res_close(pipe_out_rd);     /* 关闭输出读者 */
-                return -1;
-            }
-
-            char buf[513] = {0};
-            char key;
-            /* 创建一个进程 */
-            pid = fork();
-            if (pid == -1) {  /* fork失败 */
-                shell_printf("%s: fork child failed!\n", APP_NAME);
-                res_close(pipe_out_rd);     /* 关闭输出读者 */
-                res_close(pipe_in_wr);      /* 关闭输入写者 */
-                return -1;
-            } else if (pid > 0) {  /* 父进程 */
-                if (daemon) {
-                    res_close(pipe_out_rd);     /* 关闭输出读者 */
-                    res_close(pipe_in_wr);      /* 关闭输入写者 */
-                    return -1;
-                }
-
-                int rdbytes;
+            int rdbytes;
 #if DEBUG_LOCAL == 1                
-                shell_printf("%s: parent wait child %d\n", APP_NAME, pid);
+            shell_printf("%s: parent wait child %d\n", APP_NAME, pid);
 #endif
-                int child_exit = 0;
-                while (1) {
-                    
-                    /* shell程序等待子进程退出 */
-                    int waitret = waitpid(-1, &status, WNOHANG);
-                    /* 没有子进程 */
-                    if (waitret > 0) {
+            int child_exit = 0;
+            while (1) {
+                
+                /* shell程序等待子进程退出 */
+                int waitret = waitpid(-1, &status, WNOHANG);
+                /* 没有子进程 */
+                if (waitret > 0) {
 #if DEBUG_LOCAL == 1                        
-                        shell_printf("%s: pid %d exit with %x.\n", APP_NAME, waitret, status);
+                    shell_printf("%s: pid %d exit with %x.\n", APP_NAME, waitret, status);
 #endif
-                        /* 子进程成功退出 */
-                        child_exit = 1;
-                    } else if (waitret < 0) {
-                        /* 此时可能还有管道数据尚未处理完，因此还需要继续处理 */
-                        if (rdbytes > 0) {
-                            rdbytes = -1;   /* 并不退出 */
-                        } else {
-                            if (child_exit > 0) {
+                    /* 子进程成功退出 */
+                    child_exit = 1;
+                } else if (waitret < 0) {
+                    /* 此时可能还有管道数据尚未处理完，因此还需要继续处理 */
+                    if (rdbytes > 0) {
+                        rdbytes = -1;   /* 并不退出 */
+                    } else {
+                        if (child_exit > 0) {
 #if DEBUG_LOCAL == 1                                  
-                                shell_printf("%s: wait child process success!\n", APP_NAME);
+                            shell_printf("%s: wait child process success!\n", APP_NAME);
 #endif
-                                res_close(pipe_out_rd);     /* 关闭输出读者 */
-                                res_close(pipe_in_wr);      /* 关闭输入写者 */
-
-                                return 0;
-                            } else {
-                                shell_printf("%s: wait child process failed!\n", APP_NAME);
-                                res_close(pipe_out_rd);     /* 关闭输出读者 */
-                                res_close(pipe_in_wr);      /* 关闭输入写者 */
-                                return -1;
-                            }
+                            close(recv_pipe[0]);     /* 关闭输出读者 */
+                            close(xmit_pipe[1]);      /* 关闭输入写者 */
+                            return 0;
+                        } else {
+                            shell_printf("%s: wait child process failed!\n", APP_NAME);
+                            close(recv_pipe[0]);     /* 关闭输出读者 */
+                            close(xmit_pipe[1]);      /* 关闭输入写者 */
+                            return -1;
                         }
                     }
+                }
 
-                    /* ----输出管道---- */
-                    memset(buf, 0, 513);
-                    rdbytes = res_read(pipe_out_rd, IPC_NOWAIT, buf, 512);
-                    if (rdbytes > 0) { 
+                /* ----接收管道---- */
+                memset(buf, 0, 513);
+                rdbytes = read(recv_pipe[0], buf, 512);
+                if (rdbytes > 0) { 
 #if DEBUG_LOCAL == 1
-                        shell_printf("%s: read bytes %d\n", APP_NAME, rdbytes);
+                    shell_printf("%s: read bytes %d\n", APP_NAME, rdbytes);
 #endif
-                        /* 输出子进程传递来的数据 */
-                        shell_printf(buf);
-                    }
-
-                    /* ----输入管道---- */
-                    if (!shell_event_poll(&key, pid)) {
-                        int wrret = res_write(pipe_in_wr, 0, &key, 1);
-                        //printf("write ret:%d\n", wrret);
-                        if (wrret < 0) {
-                            shell_printf("%s: write key %d to pipe failed!\n", APP_NAME, key);
-                        }
-                    }
+                    /* 输出子进程传递来的数据 */
+                    shell_printf(buf);
+                    printf(buf);
                 }
 
-            } else {    /* 子进程 */
-                /* 设置为忽略，避免在初始化过程中被打断 */
-                trigger(TRIGLSOFT, TRIG_IGN);
-
-                res_close(pipe_out_rd);     /* 关闭输出读者 */
-                res_close(pipe_in_wr);      /* 关闭输入写者 */
-                int pipe_out_wr;
-                int pipe_in_rd;
-                if (!daemon) {  /* 不是后台 */
-                    /* ---- 打开输出管道 ---- */
-                    pipe_out_wr = res_open(out_pipename, RES_IPC | IPC_PIPE | IPC_CREAT | IPC_WRITER, 0);
-                    if (pipe_out_wr < 0) {
-                        shell_printf("%s: open stdout write pipe failed!\n", APP_NAME);
-                        return -1;
+                /* ----输入管道---- */
+                if (!shell_event_poll(&key, pid)) {
+                    int wrret = write(xmit_pipe[1], &key, 1);
+                    if (wrret < 0) {
+                        shell_printf("%s: write key %d to pipe failed!\n", APP_NAME, key);
                     }
-
-                    /* ---- 打开输入管道 ---- */
-                    pipe_in_rd = res_open(in_pipename, RES_IPC | IPC_PIPE | IPC_CREAT | IPC_READER, 0);
-                    if (pipe_in_rd < 0) {
-                        shell_printf("%s: open stdin read pipe failed!\n", APP_NAME);
-                        res_close(pipe_out_wr);  /* 关闭输出写者 */
-                        return -1;
-                    }
-                    int new_res;
-                    /* 把输出管道重定向到标准输出资源 */
-                    new_res = res_redirect(pipe_out_wr, RES_STDOUTNO); 
-                    if (new_res < 0) {
-                        shell_printf("%s: redirect pipe to stdout failed!\n", APP_NAME);
-                        res_close(pipe_out_wr);     /* 关闭输出写者 */
-                        res_close(pipe_in_rd);      /* 关闭输入读者 */
-                        exit(pid);  /* 退出 */
-                    }
-                    pipe_out_wr = new_res;
-
-                    /* 把输入管道重定向到标准输入资源 */
-                    new_res = res_redirect(pipe_in_rd, RES_STDINNO); 
-                    if (new_res < 0) {
-                        shell_printf("%s: redirect pipe to stdin failed!\n", APP_NAME);
-                        res_close(pipe_out_wr);     /* 关闭输出写者 */
-                        res_close(pipe_in_rd);      /* 关闭输入读者 */
-                        exit(pid);  /* 退出 */
-                    }
-                    pipe_in_rd = new_res;
                 }
+            }
 
-                /* 子进程执行程序 */
-                pid = execv((const char *) argv[0], (const char **) argv);
-                /* 如果执行出错就退出 */
-                if (pid == -1) {
-                    shell_printf("file %s not executable!\n", argv[0]);
-                    if (!daemon) {  /* 不是后台进程 */
-                        res_close(pipe_out_wr);     /* 关闭输出写者 */
-                        res_close(pipe_in_rd);      /* 关闭输入读者 */
-                    }    
-                    exit(pid);  /* 退出 */
-                }
+        } else {    /* 子进程 */
+            /* 设置为忽略，避免在初始化过程中被打断 */
+            trigger(TRIGLSOFT, TRIG_IGN);
+
+            /* 关闭不用的管道端口 */
+            close(recv_pipe[0]);
+            close(xmit_pipe[1]);
+
+            int new_fd;
+            /* 把输出管道重定向到标准输出资源 */
+            new_fd = dup2(recv_pipe[1], RES_STDOUTNO); 
+            if (new_fd < 0) {
+                shell_printf("%s: redirect pipe to stdout failed!\n", APP_NAME);
+                close(recv_pipe[1]);
+                close(xmit_pipe[0]);
+                exit(pid);  /* 退出 */
+            }
+            close(recv_pipe[1]);
+   
+            /* 把输入管道重定向到标准输入资源 */
+            new_fd = dup2(xmit_pipe[0], RES_STDINNO); 
+            if (new_fd < 0) {
+                shell_printf("%s: redirect pipe to stdin failed!\n", APP_NAME);
+                close(xmit_pipe[0]);
+                exit(pid);  /* 退出 */
+            }
+            close(xmit_pipe[0]);
+            /* 恢复默认触发 */
+            trigger(TRIGLSOFT, TRIG_DFL);
+            /* 子进程执行程序 */
+            pid = execv((const char *) argv[0], (char *const *) argv);
+            /* 如果执行出错就退出 */
+            if (pid == -1) {
+                shell_printf("file %s not executable!\n", argv[0]);
+                exit(pid);  /* 退出 */
             }
         }
     }
@@ -497,10 +490,6 @@ int cmd_ver(int argc, char **argv)
 
 int cmd_exit(int argc, char **argv)
 {
-    if (xcons_close() < 0) {
-        printf("xcons close failed!\n");
-        return -1;
-    }
     exit_cmd_man();
     exit(0);
     return 0; 
@@ -721,67 +710,318 @@ int cmd_pwd(int argc, char **argv)
     return 0;
 }
 
+int cmd_copy(int argc, char **argv)
+{
+	if(argc < 3){
+		shell_printf("cp: command syntax is incorrect.\n");	
+		return -1;
+	}
+
+	if(!strcmp(argv[1], ".") || !strcmp(argv[1], "..")){
+		shell_printf("cp: src pathnamne can't be . or .. \n");	
+		return -1;
+	}
+	if(!strcmp(argv[2], ".") || !strcmp(argv[2], "..")){
+		shell_printf("cp: dst pathname can't be . or .. \n");	
+		return -1;
+	}
+
+    /* 如果2者相等则不能进行操作 */
+    if (!strcmp(argv[1], argv[2])) {
+        shell_printf("cp: source file and dest file must be differern!\n");	
+		return -1;
+    }
+    /* 复制逻辑：
+        1. 打开两个文件，不存在则创建，已经存在则截断
+        2. 复制数据
+        3.关闭文件
+     */
+    int fdrd = open(argv[1], O_RDONLY, 0);
+    if (fdrd == -1) {
+        shell_printf("cp: open file %s failed!\n", argv[1]);
+        return -1;
+    }
+    /* 如果文件已经存在则截断 */
+    int fdwr = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, 0);
+    if (fdwr == -1) {
+        shell_printf("cp: open file %s failed!\n", argv[2]);
+        close(fdrd);
+        return -1;
+    }
+
+    struct stat fstat;
+
+    if (stat(argv[1], &fstat) < 0) {
+        shell_printf("mv: get file %s state failed!\n", argv[1]);
+        close(fdrd);
+        close(fdwr);
+        return -1;
+    }
+
+    /* 每次操作512字节 */
+    char *buf = malloc(fstat.st_size);
+    if (buf == NULL) {
+        shell_printf("cp: malloc for size %d failed!\n", fstat.st_size);
+        goto err;
+    }
+
+    char *p = buf;
+    int size = fstat.st_size;
+    int readBytes;
+
+    /* 每次读取64kb */
+    int chunk = (size & 0xffff) + 1;
+    
+    /* 如果chunk为0，就设置块大小 */
+    if (chunk == 0) {
+        chunk = 0xffff;
+        size -= 0xffff;
+    }
+        
+    while (size > 0) {  
+        readBytes = read(fdrd, p, chunk);
+        //printf("read:%d\n", readBytes);
+        if (readBytes == -1) {  /* 应该检查是错误还是结束 */
+            goto failed; 
+        }
+        if (write(fdwr, p, readBytes) == -1) {
+            goto failed;  
+        }
+        p += chunk;
+        size -= 0xffff;
+        chunk = 0xffff;
+    }
+
+    /* 设置模式和原来文件一样 */
+    chmod(argv[2], fstat.st_mode);
+
+    free(buf);
+    /* 复制结束 */
+    close(fdrd);
+    close(fdwr);
+    return 0;
+failed:
+    shell_printf("cp: transmit data error!\n");
+    free(buf);
+err:
+    /* 复制结束 */
+    close(fdrd);
+    close(fdwr);
+    return -1;
+}
+
+int cmd_move(int argc, char *argv[])
+{
+	if(argc < 3){
+		shell_printf("mv: command syntax is incorrect.\n");	
+		return -1;
+	}
+
+	if(!strcmp(argv[1], ".") || !strcmp(argv[1], "..")){
+		shell_printf("mv: src pathnamne can't be . or .. \n");	
+		return -1;
+	}
+	if(!strcmp(argv[2], ".") || !strcmp(argv[2], "..")){
+		shell_printf("mv: dst pathname can't be . or .. \n");	
+		return -1;
+	}
+
+    /* 如果2者相等则不能进行操作 */
+    if (!strcmp(argv[1], argv[2])) {
+        shell_printf("mv: source file and dest file must be differern!\n");	
+		return -1;
+    }
+    /* 复制逻辑：
+        1. 打开两个文件，不存在则创建，已经存在则截断
+        2. 复制数据
+        3.关闭文件
+     */
+    int fdrd = open(argv[1], O_RDONLY, 0);
+    if (fdrd == -1) {
+        shell_printf("mv: open file %s failed!\n", argv[1]);
+        return -1;
+    }
+    /* 如果文件已经存在则截断 */
+    int fdwr = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, 0);
+    if (fdwr == -1) {
+        shell_printf("mv: open file %s failed!\n", argv[2]);
+        close(fdrd);
+        return -1;
+    }
+
+    struct stat fstat;
+
+    if (stat(argv[1], &fstat) < 0) {
+        shell_printf("mv: get file %s state failed!\n", argv[1]);
+        close(fdrd);
+        close(fdwr);
+        return -1;
+    }
+
+    /* 每次操作512字节 */
+    char *buf = malloc(fstat.st_size);
+    if (buf == NULL) {
+        shell_printf("mv: malloc for size %d failed!\n", fstat.st_size);
+        goto err;
+    }
+
+    char *p = buf;
+    int size = fstat.st_size;
+    int readBytes;
+
+    /* 每次读取64kb */
+    int chunk = (size & 0xffff) + 1;
+
+    if (chunk == 0) {
+        chunk = 0xffff;
+        size -= 0xffff;
+    }    
+    while (size > 0) {  
+        readBytes = read(fdrd, p, chunk);
+        //printf("read:%d\n", readBytes);
+        if (readBytes == -1) {  /* 应该检查是错误还是结束 */
+            goto failed; 
+        }
+        if (write(fdwr, p, readBytes) == -1) {
+            goto failed;  
+        }
+        p += chunk;
+        size -= 0xffff;
+        chunk = 0xffff;
+    }
+
+    /* 设置模式和原来文件一样 */
+    chmod(argv[2], fstat.st_mode);
+    
+    free(buf);
+    /* 复制结束 */
+    close(fdrd);
+    close(fdwr);
+
+    /* 移动后删除源文件 */
+    if(remove(argv[1]) == 0){
+        //shell_printf("mv: delete source file %s success.\n", argv[1]);
+    }else{
+        shell_printf("mv: delete source file %s faild!\n", argv[1]);
+        /* 删除复制后的文件 */
+        remove(argv[2]);
+    }
+
+    return 0;
+failed:
+    printf("mv: transmit data error!\n");
+    free(buf);
+err:
+    /* 复制结束 */
+    close(fdrd);
+    close(fdwr);
+    return -1;
+}
+
+int cmd_rename(int argc, char *argv[])
+{
+	if(argc < 3){
+		shell_printf("rename: command syntax is incorrect.\n");	
+		return -1;
+	}
+
+	if(!strcmp(argv[1], ".") || !strcmp(argv[1], "..")){
+		shell_printf("rename: pathnamne can't be . or .. \n");	
+		return -1;
+	}
+	if(!strcmp(argv[2], ".") || !strcmp(argv[2], "..")){
+		shell_printf("rename: new name can't be . or .. \n");	
+		return -1;
+	}
+
+	if(!rename(argv[1], argv[2])){
+		//shell_printf("rename: %s to %s sucess!\n", argv[1], argv[2]);	
+		return 0;
+	}else{
+        shell_printf("rename: %s to %s faild!\n", argv[1], argv[2]);	
+		return -1;
+	}
+
+    return 0;
+}
+
+int cmd_mkdir(int argc, char *argv[])
+{
+	int ret = -1;
+	if(argc != 2){
+		shell_printf("mkdir: no argument support!\n");
+	}else{
+    
+        if(mkdir(argv[1], 0) == 0){
+            //shell_printf("mkdir: create a dir %s success.\n", argv[1]);
+            ret = 0;
+        }else{
+            shell_printf("mkdir: create directory %s faild!\n", argv[1]);
+        }
+	}
+	return ret;
+}
+
+int cmd_rmdir(int argc, char *argv[])
+{
+	int ret = -1;
+	if(argc != 2){
+		shell_printf("mkdir: no argument support!\n");
+	}else{
+		
+        if(rmdir(argv[1]) == 0){
+            //shell_printf("rmdir: remove %s success.\n", argv[1]);
+            ret = 0;
+        }else{
+            shell_printf("rmdir: remove %s faild!\n", argv[1]);
+        }
+		
+	}
+	return ret;
+}
+
+int cmd_rm(int argc, char *argv[])
+{
+	int ret = -1;
+	if(argc != 2){
+		shell_printf("rm: no argument support!\n");
+	}else{
+        if(remove(argv[1]) == 0){
+            //shell_printf("rm: delete %s success.\n", argv[1]);
+            ret = 0;
+        }else{
+            shell_printf("rm: delete %s faild!\n", argv[1]);
+        }
+	}
+	return ret;
+}
 
 /*
-cat: print a file
+touch: create a file
 */
-int cmd_cat(int argc, char *argv[])
+static int cmd_touch(int argc, char *argv[])
 {
-	/* 如果没有参数，就接收输入，输入类型：管道，文件，设备 */
-    if (argc == 1) {
-        /*  */
-        /*char buf;
-        while (read(STDIN_FILENO, &buf, 1) > 0) {
-            shell_printf("%c", buf);
-        }*/
-
-        /* 只接受4096字节输入 */
-        char *buf = malloc(4096 + 1);
-        memset(buf, 0, 4096 + 1);
-        int readBytes = read(STDIN_FILENO, buf, 4096);
-        //printf("read fd0:%d\n", readBytes);
-        if (readBytes > 0) {            
-            char *p = buf;
-            while (readBytes--) {
-                shell_printf("%c", *p);
-                p++;
-            }
-        }
-        free(buf);
-        return 0;
+	//printf("argc: %d\n", argc);
+	if(argc == 1){	//只有一个参数，自己的名字，退出
+		shell_printf("touch: please input filename!\n");
+		return 0;
 	}
 	if(argc > 2){
-		shell_printf("cat: only support 2 argument!\n");
+		shell_printf("touch: only support 2 argument!\n");
 		return -1;
 	}
 	
     const char *path = (const char *)argv[1];
 
-	int fd = open(path, O_RDONLY, 0);
+	int fd = open(path, O_CREAT | O_RDWR, 0);
 	if(fd == -1){
-		shell_printf("cat: file %s not exist!\n", path);
-		return -1;
+		shell_printf("touch: fd %d error\n", fd);
+		return 0;
 	}
-	
-	struct stat fstat;
-	stat(path, &fstat);
-	
-	char *buf = (char *)malloc(fstat.st_size);
-	
-	int bytes = read(fd, buf, fstat.st_size);
-	//printf("read %s fd%d:%d\n", path,  fd, bytes);
+
 	close(fd);
-	
-	int i = 0;
-	while(i < bytes){
-		shell_printf("%c", buf[i]);
-		i++;
-	}
-	free(buf);
-	//printf("\n");
 	return 0;
 }
-
 
 /**
  * cmd_trig - trig命令
@@ -988,7 +1228,7 @@ int cmd_trig(int argc, char **argv)
                 return -1;
             } else {
                 //printf("send trigger %d to pid %d\n", trigno, pid);
-                if (triggeron(pid, trigno) == -1) {
+                if (triggeron(trigno, pid) == -1) {
                     shell_printf("trig: pid %d failed.\n", pid);
                     return -1;
                 }
@@ -996,7 +1236,7 @@ int cmd_trig(int argc, char **argv)
         }
     } else {
         //printf("send trigger %d tp pid %d\n", trigno, pid);
-        if (triggeron(pid, trigno) == -1) {
+        if (triggeron(trigno, pid) == -1) {
             shell_printf("trig: pid %d failed.\n", pid);	
             return -1;
         }
@@ -1043,8 +1283,14 @@ struct buildin_cmd buildin_cmd_table[] = {
     {"ls", cmd_ls},
     {"cd", cmd_cd},
     {"pwd", cmd_pwd},
-    {"cat", cmd_cat},
     {"trig", cmd_trig},
+    {"cp", cmd_copy},
+    {"mv", cmd_move},
+    {"rn", cmd_rename},
+    {"mkdir", cmd_mkdir},
+    {"rmdir", cmd_rmdir},
+    {"rm", cmd_rm},
+    {"touch", cmd_touch},
 };
 
 int do_buildin_cmd(int cmd_argc, char **cmd_argv)
@@ -1079,11 +1325,10 @@ char *cmd_argv[MAX_ARG_NR] = {0};
 
 void cmd_loop()
 {
-    
     while (1) {
         print_prompt();
         memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
-        if (shell_event_loop() < 0)
+        if (shell_readline() < 0)
             break;
         /* 如果什么也没有输入，就回到开始处 */
 		if(cmdman->cmd_line[0] == 0)
@@ -1114,6 +1359,12 @@ void cmd_loop()
     }
 }
 
+char *shell_environment[3] = {
+    "/bin",
+    "/sbin",
+    NULL
+};
+
 int init_cmd_man()
 {
     cmdman = malloc(SIZE_CMD_MAN);
@@ -1123,6 +1374,10 @@ int init_cmd_man()
 
     memset(cmdman->cwd_cache, 0, MAX_PATH_LEN);
     getcwd(cmdman->cwd_cache, MAX_PATH_LEN);
+    
+    chdir("/");
+    
+    environ = shell_environment;
 
     return 0;
 }

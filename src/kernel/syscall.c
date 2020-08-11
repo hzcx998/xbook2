@@ -8,6 +8,16 @@
 #include <xbook/clock.h>
 #include <xbook/waitque.h>
 #include <xbook/srvcall.h>
+#include <xbook/fs.h>
+#include <xbook/driver.h>
+#include <xbook/net.h>
+#include <xbook/sharemem.h>
+#include <xbook/sem.h>
+#include <xbook/msgqueue.h>
+#include <sys/stat.h>
+#include <dirent.h>
+
+#include <gui/console/console.h>
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -17,8 +27,6 @@ void init_syscall()
     /* 进程管理 */
     syscall_table[SYS_EXIT] = sys_exit;
     syscall_table[SYS_FORK] = sys_fork;
-    syscall_table[SYS_EXECR] = sys_exec_raw;
-    syscall_table[SYS_EXECF] = sys_exec_file;
     syscall_table[SYS_WAITPID] = sys_waitpid;
     syscall_table[SYS_GETPID] = sys_get_pid;
     syscall_table[SYS_GETPPID] = sys_get_ppid;
@@ -80,4 +88,71 @@ void init_syscall()
     syscall_table[SYS_GETVER] = sys_getver;
     syscall_table[SYS_MSTATE] = sys_mstate;    
     syscall_table[SYS_USLEEP] = sys_usleep;    
+    /* 文件系统 */
+    syscall_table[SYS_OPEN] = sys_open;
+    syscall_table[SYS_CLOSE] = sys_close;
+    syscall_table[SYS_READ] = sys_read;
+    syscall_table[SYS_WRITE] = sys_write;
+    syscall_table[SYS_LSEEK] = sys_lseek;
+    syscall_table[SYS_ACCESS] = sys_access;
+    syscall_table[SYS_UNLINK] = sys_unlink;
+    syscall_table[SYS_FTRUNCATE] = sys_ftruncate;
+    syscall_table[SYS_FSYNC] = sys_fsync;
+    syscall_table[SYS_IOCTL] = sys_ioctl;
+    syscall_table[SYS_FCNTL] = sys_fcntl;
+    syscall_table[SYS_TELL] = sys_tell;
+    syscall_table[SYS_MKDIR] = sys_mkdir;
+    syscall_table[SYS_RMDIR] = sys_rmdir;
+    syscall_table[SYS_RENAME] = sys_rename;
+    syscall_table[SYS_CHDIR] = sys_chdir;
+    syscall_table[SYS_GETCWD] = sys_getcwd;
+    syscall_table[SYS_EXECVE] = sys_execve;
+    syscall_table[SYS_STAT] = sys_stat;
+    syscall_table[SYS_FSTAT] = sys_fstat;
+    syscall_table[SYS_CHMOD] = sys_chmod;
+    syscall_table[SYS_FCHMOD] = sys_fchmod;
+    syscall_table[SYS_OPENDIR] = sys_opendir;
+    syscall_table[SYS_CLOSEDIR] = sys_closedir;
+    syscall_table[SYS_READDIR] = sys_readdir;
+    syscall_table[SYS_REWINDDIR] = sys_rewinddir;
+    /* socket 套接字 */
+    syscall_table[SYS_SOCKET] = sys_socket;
+    syscall_table[SYS_BIND] = sys_bind;
+    syscall_table[SYS_CONNECT] = sys_connect;
+    syscall_table[SYS_LISTEN] = sys_listen;
+    syscall_table[SYS_ACCEPT] = sys_accept;
+    syscall_table[SYS_SEND] = sys_send;
+    syscall_table[SYS_RECV] = sys_recv;
+    syscall_table[SYS_SENDTO] = sys_sendto;
+    syscall_table[SYS_RECVFROM] = sys_recvfrom;
+    syscall_table[SYS_SHUTDOWN] = sys_shutdown;
+    syscall_table[SYS_GETPEERNAME] = sys_getpeername;
+    syscall_table[SYS_GETSOCKNAME] = sys_getsockname;
+    syscall_table[SYS_GETSOCKOPT] = sys_getsockopt;
+    syscall_table[SYS_SETSOCKOPT] = sys_setsockopt;
+    syscall_table[SYS_IOCTLSOCKET] = sys_ioctlsocket;
+    syscall_table[SYS_SELECT] = sys_select;
+    syscall_table[SYS_DUP] = sys_dup;
+    syscall_table[SYS_DUP2] = sys_dup2;
+    syscall_table[SYS_PIPE] = sys_pipe;
+    
+    syscall_table[SYS_SHMGET] = sys_shmem_get;
+    syscall_table[SYS_SHMPUT] = sys_shmem_put;
+    syscall_table[SYS_SHMMAP] = sys_shmem_map;
+    syscall_table[SYS_SHMUNMAP] = sys_shmem_unmap;
+    syscall_table[SYS_SEMGET] = sys_sem_get;
+    syscall_table[SYS_SEMPUT] = sys_sem_put;
+    syscall_table[SYS_SEMDOWN] = sys_sem_down;
+    syscall_table[SYS_SEMUP] = sys_sem_up;
+    syscall_table[SYS_MSGGET] = sys_msgque_get;
+    syscall_table[SYS_MSGPUT] = sys_msgque_put;
+    syscall_table[SYS_MSGSEND] = sys_msgque_send;
+    syscall_table[SYS_MSGRECV] = sys_msgque_recv;
+     
+    syscall_table[SYS_TRIGPENDING] = sys_trigger_pending;
+    syscall_table[SYS_TRIGPROCMASK] = sys_trigger_proc_mask;
+
+    syscall_table[SYS_XCONGET] = sys_xcon_get;
+    syscall_table[SYS_XCONCLEAR] = sys_xcon_clear;
+    syscall_table[SYS_XCONPUT] = sys_xcon_put;
 }

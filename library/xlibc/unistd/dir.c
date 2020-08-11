@@ -11,16 +11,12 @@
 #include <sys/srvcall.h>
 #include <srv/filesrv.h>
 #include <sys/dir.h>
+#include <sys/syscall.h>
 
 /* 任务可以打开的目录数量 */
 #define _MAX_DIRDES_NR     32
 
 struct _dirdes __dirdes_table[_MAX_DIRDES_NR] = {{0, -1}, }; 
-
-#if 1
-/* default work dir */
-static char __current_work_dir[MAX_PATH_LEN];
-#endif
 
 /* 将最上层路径名称解析出来 */
 /**
@@ -59,7 +55,7 @@ char *__parse_path_afterward(char *path, char *name)
 void __wash_path(char *old_path, char *new_path)
 {
     assert(old_path[0] == '/');
-    char name[DIR_NAME_LEN] = {0};    
+    char name[MAX_PATH_LEN] = {0};    
     char* sub_path = old_path;
     sub_path = __parse_path_afterward(sub_path, name);
     if (name[0] == 0) { // 若只有"/",直接将"/"存入new_path后返回 
@@ -92,7 +88,7 @@ void __wash_path(char *old_path, char *new_path)
         }  // 若name为当前目录".",无须处理new_path
 
         /* 继续遍历下一层路径 */
-        memset(name, 0, DIR_NAME_LEN);
+        memset(name, 0, MAX_PATH_LEN);
         if (sub_path) {
 	        sub_path = __parse_path_afterward(sub_path, name);
         }
@@ -130,22 +126,18 @@ void __make_abs_path(const char *path, char *abspath)
 
     /* 想要直接进入根目录'/' */
     if (path[0] == '/' && path[1] == '\0') {
-        //printf("will into root dir! path %s\n", abspath);
-        /* 移除根目录后面的内容，其实就是在'/'后面添加一个字符串结束 */
-        char *q = strchr(abspath, '/');
-        if (q != NULL) {
-            //printf("sub dir %s\n", q);
-            q[1] = '\0';
-        }
+        //printf("will into root dir!\n");
+        abspath[0] = '/';
+        abspath[1] = '\0';
     } else {
         /* 不是进入根目录。如果是相对路径，就会和工作路径拼合，
         不是的话就是绝对路径。
         */
         strcat(abspath, path);
 
-        /* 只有磁盘符，例如c: , 那么就需要在这个后面添加一个'/' */
+        /* 没有'/'，那么就需要在这个后面添加一个'/' */
         if (strchr(abspath, '/') == NULL) {
-            //printf("path %s only drive, add a '/'.\n", pathname);
+            printf("path %s only drive, add a '/'.\n", path);
             strcat(abspath, "/");
         }
     }
@@ -170,52 +162,24 @@ void build_path(const char *path, char *out_path)
     __wash_path(p, out_path);
 }
 
-int __chdir(char *path)
-{
-    DEFINE_SRVARG(srvarg);
-    SETSRV_ARG(&srvarg, 0, FILESRV_CHDIR, 0);
-    SETSRV_ARG(&srvarg, 1, path, strlen(path) + 1);
-    SETSRV_RETVAL(&srvarg, -1);
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (GETSRV_RETVAL(&srvarg, int) == -1) {
-            return -1;
-        }
-        return 0;
-    }
-    return -1;
-}
-
-void __setcwd(char *path)
-{
-    memset(__current_work_dir, 0, MAX_PATH_LEN);
-    strcpy(__current_work_dir, path);
-    __current_work_dir[MAX_PATH_LEN - 1] = '\0';
-}
-
 int chdir(const char *path)
 {
-    char full_path[MAX_PATH] = {0};
-    build_path(path, full_path);
-
-    /* 发起改变目录请求 */
-    if (__chdir(full_path) < 0) {
-        printf("chdir %s failed!\n", full_path);
-        return -1;
+    const char *p;
+    /* is root dir, do nothing */
+    if (!(*path == '/' && *(path+1) == '\0')) {
+        char full_path[MAX_PATH] = {0};
+        build_path(path, full_path);
+        p = (const char *) full_path;
+    } else {
+        p = path;
     }
-
-    /* 设置路径为当前工作目录 */
-    memset(__current_work_dir, 0, MAX_PATH_LEN);
-    strcpy(__current_work_dir, full_path);
-    __current_work_dir[MAX_PATH_LEN - 1] = '\0';
-    return 0;
+    
+    return syscall1(int, SYS_CHDIR, p);
 }
 
 int getcwd(char *buf, int bufsz)
 {
-    /* 检测路径是否合法 */
-    memset(buf, 0, bufsz);
-    memcpy(buf, __current_work_dir, MIN(MAX_PATH_LEN, bufsz));
-    return 0;
+    return syscall2(int, SYS_GETCWD, buf, bufsz);
 }
 
 static struct _dirdes *__alloc_dirdes()
@@ -247,25 +211,19 @@ DIR *opendir(const char *path)
 
     char *p = (char *) full_path;
 
-    DEFINE_SRVARG(srvarg);
-    SETSRV_ARG(&srvarg, 0, FILESRV_OPENDIR, 0);
-    SETSRV_ARG(&srvarg, 1, p, strlen(p) + 1);
-    SETSRV_RETVAL(&srvarg, -1);
-
     /* 文件描述符地址 */
     struct _dirdes *_dir = __alloc_dirdes();
     if (_dir == NULL) {
+        printf("alloc dirdes failed!\n");
         return NULL;        
     }
-    
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (GETSRV_RETVAL(&srvarg, int) == -1) {
-            return NULL;
-        }
-        _dir->diridx = GETSRV_RETVAL(&srvarg, int);
-        return _dir;
+    dir_t diridx = syscall1(int, SYS_OPENDIR, p);
+    if (diridx < 0) {
+        __free_dirdes(_dir);
+        return NULL;
     }
-    return NULL;
+    _dir->diridx = diridx;
+    return _dir;
 }
 
 int closedir(DIR *dir)
@@ -275,18 +233,15 @@ int closedir(DIR *dir)
 
     if (dir->flags == 0)
         return -1;
-    DEFINE_SRVARG(srvarg);
-    SETSRV_ARG(&srvarg, 0, FILESRV_CLOSEDIR, 0);
-    SETSRV_ARG(&srvarg, 1, dir->diridx, 0);
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (GETSRV_RETVAL(&srvarg, int) == -1) {
-            return -1;
-        }
-        __free_dirdes(dir);
-        return 0;
-    }
+    
+    if (syscall1(int, SYS_CLOSEDIR, dir->diridx) < 0)
+        return -1;
+
+    __free_dirdes(dir);
     return -1;
 }
+
+static struct dirent __dirent_buf;
 
 struct dirent *readdir(DIR *dir)
 {
@@ -295,22 +250,10 @@ struct dirent *readdir(DIR *dir)
 
     if (dir->flags == 0)
         return NULL;
-
-    static struct dirent de;
-    DEFINE_SRVARG(srvarg);
-    SETSRV_ARG(&srvarg, 0, FILESRV_READDIR, 0);
-    SETSRV_ARG(&srvarg, 1, dir->diridx, 0);
-    SETSRV_ARG(&srvarg, 2, &de, sizeof(struct dirent));
-    SETSRV_IO(&srvarg, (SRVIO_USER << 2));
-    SETSRV_RETVAL(&srvarg, -1);
-
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (GETSRV_RETVAL(&srvarg, int) == -1) {
-            return NULL;
-        }
-        return &de;
-    }
-    return NULL;
+    memset(&__dirent_buf, 0, sizeof(struct dirent));
+    if (syscall2(int, SYS_READDIR, dir->diridx, &__dirent_buf) < 0)
+        return NULL;
+    return &__dirent_buf;
 }
 
 int rewinddir(DIR *dir)
@@ -319,17 +262,8 @@ int rewinddir(DIR *dir)
         return -1;
     if (dir->flags == 0)
         return -1;
-    DEFINE_SRVARG(srvarg);
-    SETSRV_ARG(&srvarg, 0, FILESRV_REWINDDIR, 0);
-    SETSRV_ARG(&srvarg, 1, dir->diridx, 0);
-    SETSRV_RETVAL(&srvarg, -1);
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (GETSRV_RETVAL(&srvarg, int) == -1) {
-            return -1;
-        }
-        return 0;
-    }
-    return -1;
+
+    return syscall1(int, SYS_REWINDDIR, dir->diridx);
 }
 
 int mkdir(const char *path, mode_t mode)
@@ -338,21 +272,9 @@ int mkdir(const char *path, mode_t mode)
         return -1;
     char full_path[MAX_PATH] = {0};
     build_path(path, full_path);
+    const char *p = (const char *) full_path;
 
-    char *p = (char *) full_path;
-    DEFINE_SRVARG(srvarg);
-    SETSRV_ARG(&srvarg, 0, FILESRV_MKDIR, 0);
-    SETSRV_ARG(&srvarg, 1, p, strlen(p) + 1);
-    SETSRV_ARG(&srvarg, 2, mode, 0);
-    SETSRV_RETVAL(&srvarg, -1);
-
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (GETSRV_RETVAL(&srvarg, int) == -1) {
-            return -1;
-        }
-        return 0;
-    }
-    return -1;
+    return syscall2(int, SYS_MKDIR, p, mode);
 }
 
 int rmdir(const char *path)
@@ -361,20 +283,9 @@ int rmdir(const char *path)
         return -1;
     char full_path[MAX_PATH] = {0};
     build_path(path, full_path);
+    const char *p = (const char *) full_path;
 
-    char *p = (char *) full_path;
-    DEFINE_SRVARG(srvarg);
-    SETSRV_ARG(&srvarg, 0, FILESRV_RMDIR, 0);
-    SETSRV_ARG(&srvarg, 1, p, strlen(p) + 1);
-    SETSRV_RETVAL(&srvarg, -1);
-
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (GETSRV_RETVAL(&srvarg, int) == -1) {
-            return -1;
-        }
-        return 0;
-    }
-    return -1;
+    return syscall1(int, SYS_RMDIR, p);
 }
 
 int _rename(const char *source, const char *target)
@@ -386,16 +297,8 @@ int _rename(const char *source, const char *target)
     char full_path1[MAX_PATH] = {0};
     build_path(target, full_path1);
 
-    DEFINE_SRVARG(srvarg);
-    SETSRV_ARG(&srvarg, 0, FILESRV_RENAME, 0);
-    SETSRV_ARG(&srvarg, 1, full_path0, strlen(full_path0) + 1);
-    SETSRV_ARG(&srvarg, 2, full_path1, strlen(full_path1) + 1);
-    SETSRV_RETVAL(&srvarg, -1);
-    if (!srvcall(SRV_FS, &srvarg)) {
-        if (GETSRV_RETVAL(&srvarg, int) == -1) {
-            return -1;
-        }
-        return 0;
-    }
-    return -1;
+    const char *src = (const char *) full_path0;
+    const char *dest = (const char *) full_path1;
+
+    return syscall2(int, SYS_RENAME, src, dest);
 }

@@ -65,5 +65,24 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
     #endif
 #endif
 
+#ifndef MAX_PATH
+#define MAX_PATH    256
+#endif
+
+#define IN_RANGE(x, a, b) (((x) >= (a)) && ((x) < (b)))
+#define OUT_RANGE(x, a, b) (((x) < (a)) || ((x) >= (b)))
+
+#define ifloor(x)		((x) > 0 ? (int)(x) : (int)((x) - 0.9999999999))
+#define iround(x)		((x) > 0 ? (int)((x) + 0.5) : (int)((x) - 0.5))
+#define iceil(x)		((x) > 0 ? (int)((x) + 0.9999999999) : (int)(x))
+#define idiv255(x)		((((int)(x) + 1) * 257) >> 16)
+
+#define max(a,b)    (((a) > (b)) ? (a) : (b))
+#define min(a,b)    (((a) < (b)) ? (a) : (b))
+#define clamp(v, a, b)	min(max(a, v), b)
+
+#define abs(a)    ((a) > 0 ? (a) : -(a))
+
+
 #endif  /*_XBOOK_STDDEF_H*/
 

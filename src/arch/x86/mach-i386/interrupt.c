@@ -47,9 +47,9 @@ void intr_general_handler(unsigned int esp)
 	case EP_INTERRUPT:
     case EP_DOUBLE_FAULT:
 #if DEBUG_LOCAL == 1
-		printk(KERN_ALTER "intr_general_handler: touch TRIGHW trigger because a expection occur!\n");
+		printk(KERN_ALTER "intr_general_handler: touch TRIGHW trigger because a expection %d occur!\n", frame->vec_no);
 #endif
-		trigger_force(TRIGHW, current_task->pid);
+		trigger_force(TRIGSYS, current_task->pid);
 		return;
 	case EP_DEBUG:
     case EP_BREAKPOINT:

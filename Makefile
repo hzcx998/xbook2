@@ -23,15 +23,15 @@ ROM_DIR		= develop/rom
 
 # image size
 FLOPPYA_SZ	= 1474560
-HDA_SZ		= 40321920
-HDB_SZ		= 10321920
+HDA_SZ		= 33554432
+HDB_SZ		= 12582912
 
 # 默认大小为10M
 ROM_DISK_SZ	= 10
 
 # environment dir
 LIBRARY_DIR	= ./library
-SERVICE_DIR	= ./service
+SYSTEM_DIR	= ./system
 USER_DIR	= ./user
 
 #kernel disk
@@ -42,10 +42,7 @@ SETUP_OFF 	= 10
 SETUP_CNTS 	= 90
 
 KERNEL_OFF 	= 100
-KERNEL_CNTS	= 512		# assume 256kb 
-
-FILESRV_OFF 	= 700
-FILESRV_CNTS	= 512		# assume 256kb 
+KERNEL_CNTS	= 1024		# assume 512kb 
 
 # arch dir
 
@@ -60,11 +57,8 @@ SETUP_BIN 	= $(ARCH)/boot/setup.bin
 # kernel file
 KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 
-# service file
-FILESRV_BIN	= $(ROM_DIR)/sbin/filesrv
-
 # 参数
-.PHONY: all kernel build debuild rom qemu qemudbg lib srv usr
+.PHONY: all kernel build debuild rom qemu qemudbg lib sys usr
 
 # 默认所有动作，编译内核后，把引导、内核、init服务、文件服务和rom文件写入磁盘
 all : kernel 
@@ -72,11 +66,7 @@ all : kernel
 	$(DD) if=$(LOADER_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
 	$(DD) if=$(SETUP_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
 	$(DD) if=$(KERNEL_ELF) of=$(FLOPPYA_IMG) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
-	$(DD) if=$(FILESRV_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(FILESRV_OFF) count=$(FILESRV_CNTS) conv=notrunc
 	$(FATFS_BIN) $(HDA_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
-
-#$(DD) if=$(INITSRV_BIN) of=$(HDA_IMG) bs=512 seek=200 count=200 conv=notrunc
-
 
 # run启动虚拟机
 run: qemu
@@ -98,16 +88,16 @@ build:
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG) 
 	$(MAKE) -s -C  $(FATFS_DIR)
 	$(MAKE) -s -C  $(LIBRARY_DIR)
-	$(MAKE) -s -C  $(SERVICE_DIR)
+	$(MAKE) -s -C  $(SYSTEM_DIR)
 	$(MAKE) -s -C  $(USER_DIR)
 	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
-
+	
 # 清理环境。
 debuild: 
 	$(MAKE) -s -C  $(KERNSRC) clean
 	$(MAKE) -s -C  $(FATFS_DIR) clean
 	$(MAKE) -s -C  $(LIBRARY_DIR) clean
-	$(MAKE) -s -C  $(SERVICE_DIR) clean
+	$(MAKE) -s -C  $(SYSTEM_DIR) clean
 	$(MAKE) -s -C  $(USER_DIR) clean
 	-$(RM) -r $(ROM_DIR)/bin
 	-$(RM) -r $(ROM_DIR)/sbin
@@ -124,12 +114,12 @@ lib:
 lib_c: 
 	$(MAKE) -s -C  $(LIBRARY_DIR) clean
 	
-# 重新编译所有服务
-srv: 
-	$(MAKE) -s -C  $(SERVICE_DIR)
+# 重新编译所有系统程序
+sys: 
+	$(MAKE) -s -C  $(SYSTEM_DIR)
 
-srv_c: 
-	$(MAKE) -s -C  $(SERVICE_DIR) clean
+sys_c: 
+	$(MAKE) -s -C  $(SYSTEM_DIR) clean
 
 # 不清理编译
 usr:
@@ -155,7 +145,7 @@ usr_c:
 # 控制台串口调试： -serial stdio 
 
 # 磁盘配置：
-#	1. IDE DISK：-hda $(HDA_IMG) -hdb $(HDB_IMG)
+#	1. IDE DISK：-hda $(HDA_IMG) -hdb $(HDB_IMG) \
 # 	2. AHCI DISK: -drive id=disk0,file=$(HDA_IMG),if=none \
 		-drive id=disk1,file=$(HDB_IMG),if=none \
 		-device ahci,id=ahci \
@@ -173,7 +163,7 @@ QEMU_ARGUMENT = -m 256M \
 		-device ide-drive,drive=disk1,bus=ahci.1 \
 		-boot a \
 		-serial stdio \
-		
+
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 #		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
 

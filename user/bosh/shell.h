@@ -6,7 +6,7 @@
 #define APP_NAME "bosh"
 
 int shell_event_poll(char *buf, int pid);
-int shell_event_loop();
+int shell_readline();
 void shell_putchar(char ch);
 int shell_printf(const char *fmt, ...);
 

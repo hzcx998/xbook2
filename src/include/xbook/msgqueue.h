@@ -45,5 +45,9 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
 
 void init_msg_queue();
 
+int sys_msgque_get(char *name, unsigned long flags);
+int sys_msgque_put(int msgid);
+int sys_msgque_send(int msgid, void *msgbuf, size_t size, int msgflg);
+int sys_msgque_recv(int msgid, void *msgbuf, size_t msgsz, int msgflg);
 
 #endif   /* _XBOOK_MSG_QUEUE_H */

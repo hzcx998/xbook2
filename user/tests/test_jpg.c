@@ -30,7 +30,7 @@ int jpg_display(char * path)// **指定图片的路径就可以调用这个jpg�
     infile = fopen(path, "r");
     if (infile == NULL)
     {
-        perror("fopen error!");
+        printf("fopen error!");
         return -1;
     }
 

@@ -7,59 +7,44 @@
 #include <sys/proc.h>
 #include <sys/trigger.h>
 #include <sys/kfile.h>
+#include <sys/syscall.h>
 
-/**
- * execv - 执行程序，替换当前进程镜像
- * 
- */
-int execv(const char *path, const char *argv[])
+extern char **environ;
+
+int execve(const char *pathname, char *const argv[], char *const envp[])
 {
-    /* 设置轻软件触发器为忽略，避免在执行过程中被打断 */
-    trigger(TRIGLSOFT, TRIG_IGN);
-
-    int rdbytes;
-    int fd = open(path, O_RDONLY, 0);
-    if (fd == -1) {
-        return -1;
-    }
-    
-    int filesz = lseek(fd, 0, SEEK_END);
-
-    unsigned char *buf = malloc(filesz);
-    if (buf == NULL) {
-        close(fd);
-        return -1;
-    }
-    lseek(fd, 0, SEEK_SET);
-    rdbytes = read(fd, buf, filesz);    
-    if (rdbytes != filesz) {
-        close(fd);
-        free(buf);
-        return -1;
-    }
-    close(fd);
-    kfile_t file;
-    file.file = buf;
-    file.size = rdbytes;
-    char *name = strrchr(path, '/');
-    if (name == NULL) {
-        name = (char *) path;
-    } else {
-        name++;
-        if (name[0] == 0) { /* 后面没有名字 */
-            name = (char *) path;
-        }
-    }
-    /* 恢复默认 */
-    trigger(TRIGLSOFT, TRIG_DFL);
-
-    execfile(name, &file, (char **) argv);
-    return -1;
+	return syscall3(int, SYS_EXECVE, pathname, argv, envp);
 }
 
-int execl(const char *path, const char *arg, ...)
+int execle(const char *pathname, char *const envp[], const char *arg, ...)
+{
+    va_list parg = (va_list)(&arg);
+	const char **p = (const char **) parg;
+	return execve(pathname, (char *const *) p, envp);
+}
+
+int execv(const char *pathname, char *const argv[])
+{
+    return execve(pathname, argv, environ);
+}
+
+int execl(const char *pathname, const char *arg, ...)
 {
 	va_list parg = (va_list)(&arg);
 	const char **p = (const char **) parg;
-	return execv(path, p);
+	return execv(pathname, (char *const *)p);
+}
+
+int execvp(const char *filename, char *const argv[])
+{
+    /* TODO: 将文件名转换成路径名：
+    读取系统变量PATH，进行转换 */
+    return execv(filename, argv);
+}
+
+int execlp(const char *filename, const char *arg, ...)
+{
+    va_list parg = (va_list)(&arg);
+	const char **p = (const char **) parg;
+    return execvp(filename, (char *const *)p);
 }

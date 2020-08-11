@@ -3,41 +3,39 @@
 
 #include "mutexlock.h"
 #include "fifobuf.h"
-#include "task.h"
+#include "waitqueue.h"
+#include <list.h>
+#include <stdint.h>
+#include <types.h>
 
-/* 管道名字长度 */
-#define PIPE_NAME_LEN      24
+#define PIPE_SIZE   4096
 
-/* 管道大小 */
-#define PIPE_SIZE      		4096
-
-/* 支持的管道数量 */
-#define PIPE_NR			128
-
-/* 管道标志 */
-#define PIPE_IN_READ	0x01
-#define PIPE_IN_WRITE	0x02
-
-
+/* pipe flags */
+enum {
+    PIPE_NOWAIT = 0x01,
+};
 
 
 /* 管道结构 */
 typedef struct {
-	unsigned short id;					/* 管道id */
-	fifo_buf_t *fifo;					/* 先入先出缓冲区 */
-	task_t *reader, *writer;				/* 读者与写者 */
-	unsigned char flags;				/* 标志位 */
-	mutexlock_t mutex;					/* 保证同一个时刻要么是读，要么是写 */
-	char name[PIPE_NAME_LEN];			/* 名字 */
+    list_t list;                /* 链表 */
+    kobjid_t id;                /* id号 */
+	fifo_buf_t *fifo;           /* 数据缓冲区 */
+	uint16_t flags;		        /* 管道标志 */
+    uint8_t rdflags;		    /* 读端标志 */
+    uint8_t wrflags;		    /* 写端标志 */
+    atomic_t read_count;        /* 读引用计数 */
+    atomic_t write_count;       /* 写引用计数 */
+	mutexlock_t mutex;          /* 读写互斥 */
+    wait_queue_t wait_queue;    /* 等待队列 */
 } pipe_t;
 
-pipe_t *pipe_alloc(char *name);
-int pipe_free(pipe_t *pipe);
-int pipe_get(char *name, unsigned long flags);
-int pipe_put(int pipeid);
-int pipe_write(int pipeid, void *buffer, size_t size, int pipeflg);
-int pipe_read(int pipeid, void *buffer, size_t size, int pipeflg);
-int pipe_ctl(int pipeid, unsigned int cmd, unsigned long arg);
-void init_pipe();
+pipe_t *create_pipe();
+int destroy_pipe(pipe_t *pipe);
+int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes);
+int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes);
+int pipe_close(kobjid_t pipeid, int rw);
+int pipe_ioctl(kobjid_t pipeid, unsigned int cmd, unsigned long arg, int rw);
+int pipe_grow(kobjid_t pipeid, int rw);
 
-#endif   /* _XBOOK_PIPE_H */
+#endif  /* _XBOOK_PIPE_H */

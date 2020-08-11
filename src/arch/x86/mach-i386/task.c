@@ -5,6 +5,7 @@
 #include <xbook/trigger.h>
 #include <xbook/vmspace.h>
 #include <xbook/process.h>
+#include <xbook/debug.h>
 #include <string.h>
 
 void __user_trap_frame_init(trap_frame_t *frame)
@@ -83,13 +84,15 @@ void __build_trigger_frame(int trig, void *_act, trap_frame_t *frame)
 
     /* 获取信号栈框，在用户的esp栈下面 */
     trigger_frame_t *trigger_frame = (trigger_frame_t *)((frame->esp - sizeof(trigger_frame_t)) & -8UL);
-
-    /*printk("trap frame %x, signal frame esp %x, %x\n", 
+    /*
+    printk("trap frame %x, signal frame esp %x, %x\n", 
     frame->esp, frame->esp - sizeof(trigger_frame_t), (frame->esp - sizeof(trigger_frame_t)) & -8UL);
     */
     /* 传递给handler的参数 */
     trigger_frame->trig = trig;
     
+    trigger_frame->oldmask = current_task->triggers->blocked;
+
     /* 把中断栈保存到信号栈中 */
     memcpy(&trigger_frame->trap_frame, frame, sizeof(trap_frame_t));
 
@@ -102,14 +105,14 @@ void __build_trigger_frame(int trig, void *_act, trap_frame_t *frame)
     int 0x40
      */
     trigger_frame->ret_code[0] = 0xb8; /* 给eax赋值的机器码 */
-    *(int *)(trigger_frame->ret_code + 1) = SYS_TRIGRET;    /* 把系统调用号填进去 */
-    *(short *)(trigger_frame->ret_code + 5) = 0x40cd;      /* int对应的指令是0xcd，系统调用中断号是0x40 */
+    *(uint32_t *)(trigger_frame->ret_code + 1) = SYS_TRIGRET;    /* 把系统调用号填进去 */
+    *(uint16_t *)(trigger_frame->ret_code + 5) = 0x40cd;      /* int对应的指令是0xcd，系统调用中断号是0x40 */
     
     /* 设置中断栈的eip成为用户设定的处理函数 */
-    frame->eip = (unsigned long)act->handler;
+    frame->eip = (unsigned int)act->handler;
 
     /* 设置运行时的栈 */
-    frame->esp = (unsigned long)trigger_frame;
+    frame->esp = (unsigned int)trigger_frame;
 
     /* 设置成用户态的段寄存器 */
     frame->ds = frame->es = frame->fs = frame->gs = USER_DATA_SEL;
@@ -234,7 +237,7 @@ int __fork_bulid_child_stack(task_t *child)
  * __proc_stack_init - 初始化用户栈和参数
  * 
  */
-int __proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
+int __proc_stack_init(task_t *task, trap_frame_t *frame, char **argv, char **envp)
 {
     vmm_t *vmm = task->vmm;
 
@@ -249,13 +252,20 @@ int __proc_stack_init(task_t *task, trap_frame_t *frame, char **argv)
     memset((void *) vmm->stack_start, 0, vmm->stack_end - vmm->stack_start);
     
     int argc = 0;
-    char **new_argv = NULL;
+    char **new_envp = NULL;
     unsigned long arg_bottom = 0;
-    argc = proc_build_arg(vmm->stack_end, &arg_bottom, argv, &new_argv);
+    argc = proc_build_arg(vmm->stack_end, &arg_bottom, envp, &new_envp);
+    
+    char **new_argv = NULL;
+    argc = proc_build_arg(arg_bottom, &arg_bottom, argv, &new_argv);
+
     /* 记录参数个数 */
     frame->ecx = argc;
-    /* 记录参数个数 */
+    /* 记录参数地址 */
     frame->ebx = (unsigned int) new_argv;
+    /* 记录环境地址 */
+    frame->edx = (unsigned int) new_envp;
+
      /* 记录栈顶 */
     if (!arg_bottom) {  /* 解析参数出错 */
         vmspace_unmmap(vmm->stack_start, vmm->stack_end - vmm->stack_start);
@@ -298,7 +308,14 @@ int __trigger_return(trap_frame_t *frame)
     /* 原本trigger_frame是在用户栈esp-trigger_frameSize这个位置，但是由于调用了用户处理程序后，
     函数会把返回地址弹出，也就是esp+4，所以，需要通过esp-4才能获取到trigger_frame */
     trigger_frame_t *trigger_frame = (trigger_frame_t *)(frame->esp - 4);
-
+    trigset_t oldset = trigger_frame->oldmask;
+    
+    triggers_t *trigger = current_task->triggers; 
+    spin_lock_irq(&trigger->trig_lock);
+    trigger->blocked = oldset;
+    trigger_calc_left(trigger);
+    spin_unlock_irq(&trigger->trig_lock);
+    
     /* 还原之前的中断栈 */
     memcpy(frame, &trigger_frame->trap_frame, sizeof(trap_frame_t));
 #if DEBUG_LOCAL == 1

@@ -10,14 +10,14 @@ ARCH		:= arch/x86
 
 X_ASFLAGS	+= -f elf -I $(ARCH)/include/
 X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector
-X_INCDIRS	+= include/ $(ARCH)/include/
+X_INCDIRS	+= include/ $(ARCH)/include/ net/lwip/include/ net/lwip/include/ipv4/
 X_LDFLAGS	+= -no-pie -e kernel_start -Ttext 0x80100000
 
 AS			:=	nasm
-LD			:=  ld -m elf_i386
+LD			:=  ld -m elf_i386 -s
 export AS LD
 
-SRC			+= $(ARCH)/ init/ ipc/ task/ vmm/ driver/ lib/ kernel/
+SRC			+= $(ARCH)/ init/ ipc/ task/ vmm/ driver/ lib/ kernel/ fs/ net/ gui/
 
 NAME		:= kernel.elf
 

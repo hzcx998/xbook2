@@ -64,23 +64,13 @@ develop/image/
 develop/rom/bin/
 develop/rom/sbin/
 
+develop/bochs/
+
 # fixdep
 library/fixdep
 
-# service
-service/filesrv/filesrv
-service/fixdep
-service/guisrv/guisrv
-service/netsrv/netsrv
-
 #tools
 tools/fatfs/fatfs
-
-# user
-user/bosh/bosh
-user/fixdep
-user/hello/hello
-user/tests/tests
 
 # dir
 recycle

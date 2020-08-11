@@ -17,10 +17,11 @@
 #endif
 
 /* 驱动状态：0~15位是内核使用，16~23位自定义 */
-#define IO_SUCCESS             (0 << 0)    /* 成功 */
+#define IO_SUCCESS             0            /* 成功 */
 #define IO_FAILED              (1 << 0)    /* 失败 */        
 #define IO_PENDING             (1 << 1)    /* 未决 */
 #define IO_NOWAIT              (1 << 2)    /* 不需要等待 */
+#define IO_KERNEL              (1 << 3)    /* 内核IO */
 
 /* 系统可以打开的设备数量，可以根据设备数调节 */
 #define DEVICE_HANDLE_NR        32

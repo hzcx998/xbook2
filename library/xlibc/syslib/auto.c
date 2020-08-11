@@ -1,6 +1,9 @@
 #include <sys/dir.h>
 #include <malloc.h>
 
+/* 环境变量指针，全局 */
+char **_environ;
+
 /**
  * _enter_preload - 进入预先加载
  * 
@@ -8,11 +11,12 @@
  * 初始化（不需要初始化），就需要在此进行初始化。
  * 简单的说，用户不知道要初始化，但是其实需要初始化。
  */
-void _enter_preload(int argc, char *argv[])
+void _enter_preload(int argc, char *const argv[], char *const envp[])
 {
-    /* 默认使用根目录 */
-    __setcwd(ROOT_DIR_BUF);
-    //__do_init_mem();
+    /* 设置environ全局变量 */
+    _environ = (char **)envp;
+    /* 设置C语言的环境变量 */
+    
 }
 
 /**

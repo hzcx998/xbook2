@@ -36,9 +36,6 @@ entry:
     ; load kernel file from disk
 	call load_kernel_file
 
-    ; load filesrv from disk
-	call load_filesrv_file
-
     ;我们不再使用软盘，所以这里关闭软盘驱动器
 	call kill_floppy_motor	
     
@@ -262,7 +259,7 @@ load_kernel_file:
 	;load kernel
 	mov ax, KERNEL_SEG
 	mov si, KERNEL_OFF
-    mov dx, 4           ; 内核占用256kb，每次加载128扇区（512字节），因此需要加载4次
+    mov dx, 8           ; 内核占用512kb，每次加载128扇区（64kb），因此需要加载8次
 .read_replay:
 	mov cx, BLOCK_SIZE
 	;调用读取一整个块的扇区数据函数，其实也就是循环读取128个扇区，只是
@@ -277,29 +274,6 @@ load_kernel_file:
     ; 总共加载8次，每次加载128扇区，总过512kb
 	ret
     
-;把文件服务加载到内存中来
-load_filesrv_file:
-    push dx
-
-	;load filesrv
-	mov ax, FILESRV_SEG
-	mov si, FILESRV_OFF
-    mov dx, 4           ; 文件服务占用256kb，每次加载128扇区（512字节），因此需要加载4次
-.read_replay:
-	mov cx, BLOCK_SIZE
-	;调用读取一整个块的扇区数据函数，其实也就是循环读取128个扇区，只是
-	;把它做成函数，方便调用
-	call load_file_block
-	add ax, 0x1000
-    dec dx
-    cmp dx, 0
-    ja .read_replay
-	
-    pop dx
-    ; 总共加载8次，每次加载128扇区，总过512kb
-	ret
-
-
 ;Global Descriptor Table,GDT
 ;gdt[0] always null
 ;1个gdt描述符的内容是8字节，可以根据那个描述得结构来分析这个结构体里面的内容

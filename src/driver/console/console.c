@@ -1,10 +1,11 @@
 #include <xbook/debug.h>
-#include <vsprintf.h>
+#include <string.h>
 #include <xbook/vine.h>
 #include <xbook/driver.h>
 #include <arch/io.h>
 #include <arch/config.h>
 #include <sys/ioctl.h>
+#include <stdio.h>
 
 #define DRV_NAME "vga-console"
 #define DRV_VERSION "0.1"

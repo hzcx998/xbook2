@@ -19,6 +19,8 @@
 #include <xbook/vmm.h>
 #include <xbook/waitque.h>
 #include <xbook/rawblock.h>
+#include <xbook/process.h>
+#include <fsal/fsal.h>
 #include <math.h>
 
 static pid_t next_pid;
@@ -115,6 +117,8 @@ void task_init(task_t *task, char *name, int priority)
     /* 用户线程 */
     task->pthread = NULL;
 
+    task->fileman = NULL;
+
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;
 }
@@ -175,6 +179,19 @@ task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg)
     // 初始化线程
     task_init(task, name, priority);
     
+    /* 创建资源 */
+    if (proc_res_init(task) < 0) {
+        kfree(task);
+        return NULL;
+    }
+
+    /* 创建文件描述表 */
+    if (fs_fd_init(task) < 0) {
+        proc_res_exit(task);
+        kfree(task);
+        return NULL;
+    }
+
     //printk("alloc a task at %x\n", task);
     // 创建一个线程
     make_task_stack(task, func, arg);
@@ -306,7 +323,15 @@ static void create_kmain_thread()
 
     /* 最开始设置为最佳优先级，这样才可以往后面运行。直到运行到最后，就变成IDLE优先级 */
     task_init(task_kmain, "kmain", TASK_PRIO_BEST);
+    /* 创建资源 */
+    if (proc_res_init(task_kmain) < 0) {
+        panic("init kmain res failed!\n");
+    }
 
+    if (fs_fd_init(task_kmain) < 0) {
+        panic("init kmain fs fd failed!\n");
+    }
+    
     /* 设置为运行中 */
     task_kmain->state = TASK_RUNNING;
     task_global_list_add(task_kmain); /* 添加到全局任务 */
@@ -705,7 +730,6 @@ int sys_getver(char *buf, int len)
     return 0;
 }
 
-
 void dump_task(task_t *task)
 {
     printk("----Task----\n");
@@ -713,7 +737,7 @@ void dump_task(task_t *task)
     //printk("vmm->vm_frame:%x priority:%d ticks:%d elapsed ticks:%d\n", task->vmm->page_storage, task->priority, task->ticks, task->elapsed_ticks);
     printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
-static char *init_argv[2] = {RB_USERSRV, 0};
+static char *init_argv[2] = {"/sbin/init", 0};
 
 /**
  * start_user - 开启用户进程
@@ -724,9 +748,9 @@ void start_user()
 {
     printk(KERN_DEBUG "[task]: start user process.\n");
     /* 加载init进程 */
-    task_t *proc = process_create(init_argv[0], init_argv);
+    task_t *proc = start_process(init_argv[0], init_argv);
     if (proc == NULL)
-        panic("kernel start initsrv failed! please check initsrv!\n");
+        panic("kernel start process failed! please check initsrv!\n");
     
     /* 降级期间不允许产生中断 */
 	unsigned long flags;
@@ -782,4 +806,5 @@ void init_tasks()
 
     /* 创建idle线程 */
     kthread_start("idle", TASK_PRIO_IDLE, kthread_idle, NULL);
+    printk(KERN_INFO "[task]: init done\n");
 }

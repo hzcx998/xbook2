@@ -11,6 +11,7 @@
 #include "timer.h"
 #include "alarm.h"
 #include "pthread.h"
+#include "fs.h"
 
 /* task state */
 typedef enum task_state {
@@ -79,6 +80,7 @@ typedef struct _task {
     alarm_t alarm;                      /* 闹钟 */
     long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
+    file_man_t *fileman;                /* 文件管理 */
     unsigned int stack_magic;           /* 任务的魔数 */
 } task_t;
 
@@ -97,11 +99,11 @@ extern list_t task_global_list;
         ((trap_frame_t *) (((unsigned char *) (task) + \
         TASK_KSTACK_SIZE) - sizeof(trap_frame_t)))
 
-/* 判断任务是否为主线程 */
+/* 判断是否在通过个线程组 */
 #define IN_SAME_THREAD_GROUP(a, b) \
         ((a)->tgid == (b)->tgid)
 
-/* 判断任务是否为单线程 */
+/* 判断任务是否为单线程，也就是主进程 */
 #define IN_SINGAL_THREAD(task) \
         (((task)->pthread && (atomic_get(&(task)->pthread->thread_count) <= 1))  || \
         (task)->pthread == NULL)
@@ -138,7 +140,15 @@ void task_unblock(task_t *task);
 void task_yeild();
 
 #define task_sleep() task_block(TASK_BLOCKED) 
-#define task_wakeup(task) task_unblock(task) 
+
+static inline void task_wakeup(task_t *task)
+{
+    if ((task->state == TASK_BLOCKED) || 
+        (task->state == TASK_WAITING) ||
+        (task->state == TASK_STOPPED)) {    
+        task_unblock(task);
+    }
+}
 
 #define sys_sched_yeild     task_yeild
 
@@ -161,5 +171,8 @@ unsigned long task_sleep_by_ticks(clock_t ticks);
 void close_one_thread(task_t *thread);
 void close_other_threads(task_t *thread);
 void pthread_exit(void *status);
+
+
+
 
 #endif   /* _XBOOK_TASK_H */

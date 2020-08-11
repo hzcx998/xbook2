@@ -1,12 +1,13 @@
 #include <xbook/debug.h>
 #include <xbook/bitops.h>
-#include <vsprintf.h>
+#include <string.h>
 #include <xbook/vine.h>
 #include <xbook/driver.h>
 #include <xbook/task.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>
+#include <stdio.h>
 
 #define DRV_NAME "virtual-tty"
 #define DRV_VERSION "0.1"
@@ -132,7 +133,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                 }
             }
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
-            trigger_force(TRIGHW, current_task->pid);
+            trigger_force(TRIGSYS, current_task->pid);
         }
     }
     ioreq->io_status.status = status;
