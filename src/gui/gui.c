@@ -11,7 +11,8 @@
 #include <xbook/gui.h>
 #include <xbook/task.h>
 
-void gui_kthread(void *arg)
+/* 主要是处理输入事件 */
+void kgui_thread(void *arg)
 {
     con_loop();
 }
@@ -42,6 +43,6 @@ void init_gui()
     if (gui_init_console() < 0)
         panic("init gui console failed!\n");
 
-    if (kthread_start("kgui", TASK_PRIO_USER, gui_kthread, NULL) == NULL)
+    if (kthread_start("kgui", TASK_PRIO_USER, kgui_thread, NULL) == NULL)
         panic("start kgui thread failed!\n");
 }
