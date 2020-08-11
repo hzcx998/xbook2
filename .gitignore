@@ -69,22 +69,8 @@ develop/bochs/
 # fixdep
 library/fixdep
 
-# service
-service/filesrv/filesrv
-service/fixdep
-service/guisrv/guisrv
-service/netsrv/netsrv
-
 #tools
 tools/fatfs/fatfs
-
-# user
-user/fixdep
-user/bosh/bosh
-user/hello/hello
-user/tests/tests
-user/socket_server/socket_server
-user/socket_client/socket_client
 
 # dir
 recycle
