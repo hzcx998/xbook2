@@ -237,6 +237,8 @@ MODULE_PARM_DESC(debug, "Debug level (0=none,...,16=all)");
  *
  * e1000_init_module is the first routine called when the driver is
  * loaded. All it does is register with the PCI subsystem.
+ * 
+ * e1000_init_module - 注册到PCI子系统中
  **/
 
 static int __init
