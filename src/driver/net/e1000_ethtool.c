@@ -28,7 +28,7 @@
 
 /* ethtool support for e1000 */
 
-#include "e1000.h"
+#include <e1000.h>
 
 #ifdef	SIOCETHTOOL
 #include <asm/uaccess.h>

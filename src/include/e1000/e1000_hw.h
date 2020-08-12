@@ -34,7 +34,7 @@
 #define E1000_E1000_HW_H
 
 #include "e1000_osdep.h"
-
+#include <stdint.h>
 
 /* Forward declarations of structures used by the shared code */
 struct e1000_hw;
