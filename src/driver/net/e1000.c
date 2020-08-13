@@ -30,3 +30,7 @@
 #define ETH_FRAME_LEN 1514 /*不含CRC校验和的最大以太网数据长度*/
 
 /*PCI e1000 配置空间寄存器*/
+#define E1000_VENDOR_ID 0x8086   //厂商ID
+#define E1000_DEVICE_ID 0x100e   //设备ID
+
+/*定义接收和传输缓冲区的大小*/
