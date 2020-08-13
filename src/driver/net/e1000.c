@@ -16,6 +16,11 @@
 #include <arch/cpu.h>
 #include <sys/ioctl.h>
 
+#include <net/e1000_hw.h>
+#include <net/e1000_osdep.h>
+#include <net/e1000.h>
+#include <net/kcompat.h>
+
 #define DRV_VERSION "v0.1"
 #define DRV_NAME "net-e1000" DRV_VERSION
 
@@ -28,9 +33,3 @@
 #define ETH_ZLEN 60 /*不含CRC校验的数据最小长度*/
 #define ETH_DATA_LEN 1500 /*帧内数据的最大长度*/
 #define ETH_FRAME_LEN 1514 /*不含CRC校验和的最大以太网数据长度*/
-
-/*PCI e1000 配置空间寄存器*/
-#define E1000_VENDOR_ID 0x8086   //厂商ID
-#define E1000_DEVICE_ID 0x100e   //设备ID
-
-/*定义接收和传输缓冲区的大小*/
