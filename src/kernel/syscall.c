@@ -18,6 +18,7 @@
 #include <dirent.h>
 
 #include <gui/console/console.h>
+#include <gui/layer.h>
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -155,4 +156,17 @@ void init_syscall()
     syscall_table[SYS_XCONGET] = sys_xcon_get;
     syscall_table[SYS_XCONCLEAR] = sys_xcon_clear;
     syscall_table[SYS_XCONPUT] = sys_xcon_put;
+
+    syscall_table[SYS_LAYERNEW] = sys_new_layer;
+    syscall_table[SYS_LAYERDEL] = sys_del_layer;
+    syscall_table[SYS_LAYERZ] = sys_layer_z;
+    syscall_table[SYS_LAYERMOVE] = sys_layer_move;
+    syscall_table[SYS_LAYEROUTP] = sys_layer_outp;
+    syscall_table[SYS_LAYERINP] = sys_layer_inp;
+    syscall_table[SYS_LAYERLINE] = sys_layer_line;
+    syscall_table[SYS_LAYERRECT] = sys_layer_rect;
+    syscall_table[SYS_LAYERRECTFILL] = sys_layer_rect_fill;
+    syscall_table[SYS_LAYERPIXMAP] = sys_layer_pixmap;
+    syscall_table[SYS_LAYERREFRESH] = sys_layer_refresh;
+    syscall_table[SYS_GUIINFO] = sys_gui_info;
 }

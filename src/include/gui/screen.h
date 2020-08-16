@@ -6,7 +6,7 @@
 typedef struct {
     int width;  
     int height;
-    
+    int bpp;        /* bits per pixel */
     /* 颜色转换 */
     SCREEN_COLOR   (*gui_to_screen_color)(GUI_COLOR  gui_color);
     GUI_COLOR      (*screen_to_gui_color)(SCREEN_COLOR  screen_color);

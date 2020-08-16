@@ -121,6 +121,8 @@
         "text.h": "c",
         "font.h": "c",
         "event.h": "c",
-        "cursor.h": "c"
+        "cursor.h": "c",
+        "mouse.h": "c",
+        "graph.h": "c"
     }
 }

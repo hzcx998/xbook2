@@ -141,7 +141,8 @@ static  int  screen_detect_var(gui_screen_t *screen)
     
     bits_per_pixel   = video_info.bits_per_pixel;
     bytes_per_pixel  = (video_info.bits_per_pixel+7)/8;
- 
+    screen->bpp = bits_per_pixel;
+    
     screen_width     = screen->width;
     screen_height    = screen->height;
 #if DEBUG_LOCAL == 1

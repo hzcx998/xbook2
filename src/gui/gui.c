@@ -6,6 +6,7 @@
 #include <gui/text.h>
 #include <gui/rect.h>
 #include <gui/console/console.h>
+#include <gui/layer.h>
 
 #include <xbook/debug.h>
 #include <xbook/gui.h>
@@ -39,6 +40,11 @@ void init_gui()
         panic("open gui keyboard failed!\n");
 
     pr_info("[gui]: init done.\n");
+
+    if (gui_init_layer() < 0)
+        panic("init gui layer failed!\n");
+
+
 
     if (gui_init_console() < 0)
         panic("init gui console failed!\n");

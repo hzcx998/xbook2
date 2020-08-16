@@ -5,7 +5,7 @@ X_INCDIRS	:= xlibc/include
 SRC			:= arch/x86/*.asm arch/wordsize-32/*.c 
 SRC			+= ansi/*.c arpa/*.c charset/*.c console/*.c crypto/*.c ctype/*.c
 SRC			+= environ/*.c locale/*.c malloc/*.c math/*.c socket/*.c stdio/*.c
-SRC			+= stdlib/*.c string/*.c syslib/*.c time/*.c unistd/*.c
+SRC			+= stdlib/*.c string/*.c syslib/*.c time/*.c unistd/*.c graph/*.c
 SRC			+= syslib/syscall.asm
 
 TARGET_TYPE	:= static

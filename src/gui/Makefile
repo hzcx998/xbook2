@@ -2,5 +2,7 @@ SRC	+= lowlevel/*.c
 SRC	+= font/*.c
 SRC	+= graph/*.c
 SRC	+= console/*.c
+SRC	+= input/*.c
+SRC	+= layer/*.c
 SRC	+= gui.c
 SRC	+= event.c

@@ -21,4 +21,11 @@ extern gui_mouse_t gui_mouse;
 
 int gui_init_mouse();
 
+void gui_mouse_show(int x, int y);
+void gui_mouse_button_down(int btn);
+void gui_mouse_button_up(int btn);
+void gui_mouse_motion();
+
+int init_mouse_layer();
+
 #endif  /* __GUISRV_DRIVER_MOUSE_H__ */

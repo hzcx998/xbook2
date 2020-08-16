@@ -34,5 +34,7 @@ extern gui_keyboard_t gui_keyboard;
 
 int gui_init_keyboard();
 
+int gui_key_pressed(int keycode);
+int gui_key_released(int keycode);
 
 #endif  /* __GUISRV_DRIVER_KEYBOARD_H__ */
