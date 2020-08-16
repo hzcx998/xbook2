@@ -61,7 +61,7 @@ struct net_device_status {
 };
 
 /* 设备拓展内容 */
-typedef struct _e1000_extension {
+typedef struct _e1000_82540em_extension {
     device_object_t *device_object;   //设备对象
 
     uint32_t io_addr;   //IO基地址
@@ -83,7 +83,7 @@ typedef struct _e1000_extension {
     spinlock_t rx_lock;   //接收锁
 
     device_queue_t rx_queue;   //接收队列
-}e1000_extension_t;
+}e1000_82540em_extension_t;
 
 /**
  * 1. 申请pci结构(pci_device_t)并初始化厂商号和设备号
@@ -91,7 +91,7 @@ typedef struct _e1000_extension {
  * 3. 申请设备io空间，在pci_device中登记io空间基地址
  * 4. 申请中断，并在pci_device中登记中断号
 **/
-static int e1000_82540em_get_pci_info(e1000_extension_t* ext)
+static int e1000_82540em_get_pci_info(e1000_82540em_extension_t* ext)
 {
     /* get pci device*/
     pci_device_t* pci_device = pci_get_device(E1000_VENDOR_ID, E1000_DEV_ID_82540EM);
@@ -128,17 +128,46 @@ static int e1000_82540em_get_pci_info(e1000_extension_t* ext)
     return 0;
 }
 
-static int e1000_82540em_init(e1000_extension_t* ext);
+static int e1000_82540em_init_board(e1000_82540em_extension_t* ext)
+{
+    /* check for missing/broken hardware*/
+    /* 检查丢失/损坏的硬件 */
+
+    /* 判断是什么芯片，这里暂时默认为82540EM芯片 */
+
+    /* 网卡加电，启动*/
+}
+
+static int e1000_82540em_init(e1000_82540em_extension_t* ext)
+{
+    static int board_idx = -1;
+
+    ASSERT(ext);
+
+    board_idx++;
+
+    pci_device_t* pdev = ext->pci_device;
+
+    /* 对版本进行检测，仅支持82540em网卡 */
+    if(pdev->vendor_id != E1000_VENDOR_ID && pdev->device_id != E1000_DEV_ID_82540EM) {
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "this deiver only support 82540em netcard.\n");
+#endif
+    return -1;
+    }
+
+    /* 初始化版本设定 */
+}
 
 static iostatus_t e1000_enter(driver_object_t* driver)
 {
     iostatus_t status;
 
     device_object_t *devobj;
-    e1000_extension_t* devext;
+    e1000_82540em_extension_t* devext;
     
     /* 初始化一些其他内容-初始化devobj(未扩展的内容) */
-    status = io_create_device(driver, sizeof(e1000_extension_t), DEV_NAME, DEVICE_TYPE_PHYSIC_NETCARD, &devobj);
+    status = io_create_device(driver, sizeof(e1000_82540em_extension_t), DEV_NAME, DEVICE_TYPE_PHYSIC_NETCARD, &devobj);
 
     if(status != IO_SUCCESS) {
         printk(KERN_DEBUG KERN_ERR "e1000_enter: create device failed!\n");
@@ -148,7 +177,7 @@ static iostatus_t e1000_enter(driver_object_t* driver)
     /* neither io mode*/
     devobj->flags = 0;
 
-    devext = (e1000_extension_t*)devobj->device_extension;
+    devext = (e1000_82540em_extension_t*)devobj->device_extension;
     devext->device_object = devobj;
 
     /*初始化接收队列，用内核队列结构保存，等待被读取*/
