@@ -91,7 +91,7 @@ typedef struct _e1000_extension {
  * 3. 申请设备io空间，在pci_device中登记io空间基地址
  * 4. 申请中断，并在pci_device中登记中断号
 **/
-static int e1000_get_pci_info(e1000_extension_t* ext)
+static int e1000_82540em_get_pci_info(e1000_extension_t* ext)
 {
     /* get pci device*/
     pci_device_t* pci_device = pci_get_device(E1000_VENDOR_ID, E1000_DEV_ID_82540EM);
@@ -128,7 +128,9 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
     return 0;
 }
 
-static iostatus_t e1000_entry(driver_object_t* driver)
+static int e1000_82540em_init(e1000_extension_t* ext);
+
+static iostatus_t e1000_enter(driver_object_t* driver)
 {
     iostatus_t status;
 
@@ -139,7 +141,7 @@ static iostatus_t e1000_entry(driver_object_t* driver)
     status = io_create_device(driver, sizeof(e1000_extension_t), DEV_NAME, DEVICE_TYPE_PHYSIC_NETCARD, &devobj);
 
     if(status != IO_SUCCESS) {
-        printk(KERN_DEBUG KERN_ERR "e1000_entry: create device failed!\n");
+        printk(KERN_DEBUG KERN_ERR "e1000_enter: create device failed!\n");
         return status;
     }
 
@@ -151,4 +153,11 @@ static iostatus_t e1000_entry(driver_object_t* driver)
 
     /*初始化接收队列，用内核队列结构保存，等待被读取*/
     io_device_queue_init(&devext->rx_queue);
+
+    /* 申请并初始化pci_device_t*/
+    if(e1000_82540em_get_pci_info(devext)) {
+        status = IO_FAILED;
+        io_delete_device(devobj);
+        return status;
+    }
 }
