@@ -85,6 +85,12 @@ typedef struct _e1000_extension {
     device_queue_t rx_queue;   //接收队列
 }e1000_extension_t;
 
+/**
+ * 1. 申请pci结构(pci_device_t)并初始化厂商号和设备号
+ * 2. 启动总线控制
+ * 3. 申请设备io空间，在pci_device中登记io空间基地址
+ * 4. 申请中断，并在pci_device中登记中断号
+**/
 static int e1000_get_pci_info(e1000_extension_t* ext)
 {
     /* get pci device*/
@@ -95,8 +101,7 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
     }
     ext->pci_device = pci_device;
 #if DEBUG_LOCAL == 1    
-	
-    printk(KERN_DEBUG "find e1000_82540em device, vendor id: 0x%x, device id: 0x%x\n",\
+    printk(KERN_DEBUG "find E1000_82540EM device, vendor id: 0x%x, device id: 0x%x\n",\
             device->vendor_id, device->device_id);
 #endif
     /* enable bus mastering */
