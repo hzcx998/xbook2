@@ -26,6 +26,7 @@
 #define DRV_NAME "net-e1000" DRV_VERSION
 
 #define DEV_NAME "e1000"
+#define E1000_VENDOR_ID 0x8086
 
 #define DEBUG_LOCAL 0
 
@@ -59,7 +60,8 @@ struct net_device_status {
     unsigned long collisions;       /* 碰撞次数 */
 };
 
-typedef struct _device_extension {
+/* 设备拓展内容 */
+typedef struct _e1000_extension {
     device_object_t *device_object;   //设备对象
 
     uint32_t io_addr;   //IO基地址
@@ -71,9 +73,77 @@ typedef struct _device_extension {
 
     uint32_t dev_features;   //设备结构特征
 
-    uint8_t *rx_buffer;   //接受缓冲区
-    uint8_t *rx_ring;   //接受环
+    uint8_t *rx_buffer;   //接收缓冲区
+    uint8_t *rx_ring;   //接收环
     uint8_t current_rx;
     flags_t rx_flags;
     dma_addr_t rx_ring_dma;   //dma物理地址
-};
+
+    spinlock_t lock;   //普通锁
+    spinlock_t rx_lock;   //接收锁
+
+    device_queue_t rx_queue;   //接收队列
+}e1000_extension_t;
+
+static int e1000_get_pci_info(e1000_extension_t* ext)
+{
+    /* get pci device*/
+    pci_device_t* pci_device = pci_get_device(E1000_VENDOR_ID, E1000_DEV_ID_82540EM);
+    if(pci_device == NULL) {
+        printk(KERN_DEBUG "E1000_82540EM init failed: pci_get_device.\n");
+        return -1;
+    }
+    ext->pci_device = pci_device;
+#if DEBUG_LOCAL == 1    
+	
+    printk(KERN_DEBUG "find e1000_82540em device, vendor id: 0x%x, device id: 0x%x\n",\
+            device->vendor_id, device->device_id);
+#endif
+    /* enable bus mastering */
+    pci_enable_bus_mastering(pci_device);
+
+    /* get io address */
+    ext->io_addr = pci_device_get_io_addr(pci_device);
+    if(ext->io_addr == 0) {
+        printk(KERN_DEBUG "E1000_82540EM init failed: INVALID pci device io address.\n");
+        return -1;
+    }
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "E1000_81540EM io address: 0x%x\n", ext->io_addr);
+#endif
+    /* get irq */
+    ext->irq = pci_device_get_irq_line(pci_device);
+    if(ext->irq == 0xff) {
+        printk(KERN_DEBUG "E1000_82540EM init failed: INVALID irq.\n");
+        return -1;
+    }
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "E1000_82540EM irq: %d\n", ext->irq);
+#endif
+    return 0;
+}
+
+static iostatus_t e1000_entry(driver_object_t* driver)
+{
+    iostatus_t status;
+
+    device_object_t *devobj;
+    e1000_extension_t* devext;
+    
+    /* 初始化一些其他内容-初始化devobj(未扩展的内容) */
+    status = io_create_device(driver, sizeof(e1000_extension_t), DEV_NAME, DEVICE_TYPE_PHYSIC_NETCARD, &devobj);
+
+    if(status != IO_SUCCESS) {
+        printk(KERN_DEBUG KERN_ERR "e1000_entry: create device failed!\n");
+        return status;
+    }
+
+    /* neither io mode*/
+    devobj->flags = 0;
+
+    devext = (e1000_extension_t*)devobj->device_extension;
+    devext->device_object = devobj;
+
+    /*初始化接收队列，用内核队列结构保存，等待被读取*/
+    io_device_queue_init(&devext->rx_queue);
+}
