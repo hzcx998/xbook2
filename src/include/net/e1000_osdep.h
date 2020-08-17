@@ -34,6 +34,8 @@
 #ifndef _E1000_OSDEP_H_
 #define _E1000_OSDEP_H_
 
+#include <linux/pci_regs.h>
+
 #if 0
 #include <linux/types.h>
 #include <linux/pci.h>
