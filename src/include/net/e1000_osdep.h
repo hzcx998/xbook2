@@ -35,10 +35,13 @@
 #define _E1000_OSDEP_H_
 
 //#include <linux/pci_regs.h>
-#include <xbook/pci.h>
 #include <arch/io.h>
-#include <net/kcompat.h>
+#include <arch/time.h>
+#include <xbook/pci.h>
 #include <xbook/debug.h>
+#include <xbook/clock.h>
+#include <xbook/timer.h>
+#include <net/kcompat.h>
 
 #if 0
 #include <linux/types.h>
@@ -51,7 +54,8 @@
 
 #define usec_delay(x) udelay(x)
 #ifndef msec_delay
-#define msec_delay(x) msleep(x)
+//#define msec_delay(x) msleep(x)
+#define msec_delay(x) mdelay(x)
 
 /* Some workarounds require millisecond delays and are run during interrupt
  * context.  Most notably, when establishing link, the phy may need tweaking
