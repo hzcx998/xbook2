@@ -34,7 +34,11 @@
 #ifndef _E1000_OSDEP_H_
 #define _E1000_OSDEP_H_
 
-#include <linux/pci_regs.h>
+//#include <linux/pci_regs.h>
+#include <xbook/pci.h>
+#include <arch/io.h>
+#include <net/kcompat.h>
+#include <xbook/debug.h>
 
 #if 0
 #include <linux/types.h>
@@ -43,7 +47,6 @@
 #include <asm/io.h>
 #include <linux/interrupt.h>
 #include <linux/sched.h>
-#include "kcompat.h"
 #endif
 
 #define usec_delay(x) udelay(x)
@@ -58,7 +61,7 @@
 #define msec_delay_irq(x) mdelay(x)
 #endif
 
-#define PCI_COMMAND_REGISTER   PCI_COMMAND
+#define PCI_COMMAND_REGISTER   PCI_STATUS_COMMAND
 #define CMD_MEM_WRT_INVALIDATE PCI_COMMAND_INVALIDATE
 
 typedef enum {
@@ -67,6 +70,8 @@ typedef enum {
 #undef TRUE
     TRUE = 1
 } boolean_t;
+
+#define DBG 0
 
 #define MSGOUT(S, A, B)	printk(KERN_DEBUG S "\n", A, B)
 
@@ -84,23 +89,59 @@ typedef enum {
 #define DEBUGOUT7 DEBUGOUT3
 
 
-#define E1000_WRITE_REG(a, reg, value) ( \
+//#define E1000_WRITE_REG(a, reg, value) ( \
     writel((value), ((a)->hw_addr + \
         (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg))))
+#define E1000_WRITE_REG(a, reg, value) ( \
+    out32( \
+            ( \
+                (a)->hw_addr + \
+                (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) \
+            ), \
+            (value) \
+        ) \
+)
 
-#define E1000_READ_REG(a, reg) ( \
+//#define E1000_READ_REG(a, reg) ( \
     readl((a)->hw_addr + \
         (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg)))
+#define E1000_READ_REG(a, reg) ( \
+    in32( \
+            ( \
+                (a)->hw_addr + \
+                (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) \
+            ) \
+        ) \
+)
 
-#define E1000_WRITE_REG_ARRAY(a, reg, offset, value) ( \
+//#define E1000_WRITE_REG_ARRAY(a, reg, offset, value) ( \
     writel((value), ((a)->hw_addr + \
         (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) + \
         ((offset) << 2))))
+#define E1000_WRITE_REG_ARRAY ( \
+    out32( \  
+            ( \
+                (a)->hw_addr + \
+                (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) + \
+                ((offset) << 2) \
+            ), \
+            (value) \
+        ) \
+)
 
-#define E1000_READ_REG_ARRAY(a, reg, offset) ( \
+//#define E1000_READ_REG_ARRAY(a, reg, offset) ( \
     readl((a)->hw_addr + \
         (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) + \
         ((offset) << 2)))
+#define E1000_READ_REG_ARRAY(a, reg, offset) ( \
+    in32( \  
+            ( \
+                (a)->hw_addr + \
+                (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) + \
+                ((offset) << 2) \
+            ) \
+        ) \
+)
 
 #define E1000_WRITE_FLUSH(a) E1000_READ_REG(a, STATUS)
 
