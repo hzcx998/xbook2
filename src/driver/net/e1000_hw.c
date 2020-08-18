@@ -32,6 +32,11 @@
 
 #include <net/e1000_hw.h>
 #include <net/e1000_osdep.h>
+#include <xbook/debug.h>
+
+#ifndef DEBUG_LOCAL
+#define DEBUG_LOCAL 0
+#endif
 
 static int32_t e1000_set_phy_type(struct e1000_hw *hw);
 static void e1000_phy_init_script(struct e1000_hw *hw);
@@ -362,7 +367,10 @@ e1000_reset_hw(struct e1000_hw *hw)
     uint32_t manc;
     uint32_t led_ctrl;
 
-    DEBUGFUNC("e1000_reset_hw");
+    //DEBUGFUNC("e1000_reset_hw");
+#if DEBUG_LOCAL == 1
+    printk(KERN_DEBUG "e1000_reset_hw.\n");
+#endif
 
     /* For 82542 (rev 2.0), disable MWI before issuing a device reset */
     if(hw->mac_type == e1000_82542_rev2_0) {

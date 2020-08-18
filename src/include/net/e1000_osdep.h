@@ -55,7 +55,7 @@
 #define usec_delay(x) udelay(x)
 #ifndef msec_delay
 //#define msec_delay(x) msleep(x)
-#define msec_delay(x) mdelay(x)
+#define msec_delay(x) mdelay(x)   //可能有问题，应该是msleep(x)
 
 /* Some workarounds require millisecond delays and are run during interrupt
  * context.  Most notably, when establishing link, the phy may need tweaking
