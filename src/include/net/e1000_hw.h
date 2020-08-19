@@ -33,7 +33,7 @@
 #ifndef E1000_E1000_HW_H
 #define E1000_E1000_HW_H
 
-#include "e1000_osdep.h"
+#include <net/e1000_osdep.h>
 #include <stdint.h>
 
 /* Forward declarations of structures used by the shared code */
@@ -42,6 +42,7 @@ struct e1000_hw_stats;
 
 /* Enumerated types specific to the e1000 hardware */
 /* Media Access Controlers */
+/* 网卡类型 */
 typedef enum {
     e1000_undefined = 0,
     e1000_82542_rev2_0,
@@ -60,6 +61,7 @@ typedef enum {
     e1000_num_macs
 } e1000_mac_type;
 
+/* eeprom类型 */
 typedef enum {
     e1000_eeprom_uninitialized = 0,
     e1000_eeprom_spi,
@@ -92,6 +94,7 @@ typedef enum {
 } e1000_fc_type;
 
 /* PCI bus types */
+/* PCI总线类型 */
 typedef enum {
     e1000_bus_type_unknown = 0,
     e1000_bus_type_pci,
@@ -219,6 +222,7 @@ typedef enum {
     e1000_dsp_config_undefined = 0xFF
 } e1000_dsp_config;
 
+/* 网卡信息 */
 struct e1000_phy_info {
     e1000_cable_length cable_length;
     e1000_10bt_ext_dist_enable extended_10bt_distance;
@@ -230,11 +234,13 @@ struct e1000_phy_info {
     e1000_1000t_rx_status remote_rx;
 };
 
+/* 网卡状态 */
 struct e1000_phy_stats {
     uint32_t idle_errors;
     uint32_t receive_errors;
 };
 
+/* eeprom信息 */
 struct e1000_eeprom_info {
     e1000_eeprom_type type;
     uint16_t word_size;
@@ -324,6 +330,7 @@ void e1000_pci_set_mwi(struct e1000_hw *hw);
 void e1000_pci_clear_mwi(struct e1000_hw *hw);
 void e1000_read_pci_cfg(struct e1000_hw *hw, uint32_t reg, uint16_t * value);
 void e1000_write_pci_cfg(struct e1000_hw *hw, uint32_t reg, uint16_t * value);
+
 /* Port I/O is only supported on 82544 and newer */
 uint32_t e1000_io_read(struct e1000_hw *hw, unsigned long port);
 uint32_t e1000_read_reg_io(struct e1000_hw *hw, uint32_t offset);

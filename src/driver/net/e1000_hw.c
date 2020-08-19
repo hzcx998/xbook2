@@ -91,6 +91,8 @@ uint16_t e1000_igp_cable_length_table[IGP01E1000_AGC_LENGTH_TABLE_SIZE] =
  * Set the phy type member in the hw struct.
  *
  * hw - Struct containing variables accessed by shared code
+ * 
+ * e1000_set_phy_type - 根据hw->phy_id和hw->mac_type确定phy_type
  *****************************************************************************/
 int32_t
 e1000_set_phy_type(struct e1000_hw *hw)
@@ -125,6 +127,8 @@ e1000_set_phy_type(struct e1000_hw *hw)
  * IGP phy init script - initializes the GbE PHY
  *
  * hw - Struct containing variables accessed by shared code
+ * 
+ * e1000_phy_init_script - 物理网卡设备初始化(hw结构中的数据全部得到)
  *****************************************************************************/
 static void
 e1000_phy_init_script(struct e1000_hw *hw)
@@ -143,11 +147,11 @@ e1000_phy_init_script(struct e1000_hw *hw)
         ret_val = e1000_read_phy_reg(hw, 0x2F5B, &phy_saved_data);
 
         /* Disabled the PHY transmitter */
-        e1000_write_phy_reg(hw, 0x2F5B, 0x0003);
+        e1000_write_phy_reg(hw, 0x2F5B, 0x0003);   //0000_0000_0000_0011
 
         msec_delay(20);
 
-        e1000_write_phy_reg(hw,0x0000,0x0140);
+        e1000_write_phy_reg(hw,0x0000,0x0140);   //(E1000_CTRL) = 0000_0001_0100_0000
 
         msec_delay(5);
 
@@ -222,6 +226,8 @@ e1000_phy_init_script(struct e1000_hw *hw)
  * Set the mac type member in the hw struct.
  *
  * hw - Struct containing variables accessed by shared code
+ * 
+ * e1000_set_mac_type - 根据hw->device_id确定网卡(mac)类型
  *****************************************************************************/
 int32_t
 e1000_set_mac_type(struct e1000_hw *hw)
@@ -318,6 +324,8 @@ e1000_set_mac_type(struct e1000_hw *hw)
  * Set media type and TBI compatibility.
  *
  * hw - Struct containing variables accessed by shared code
+ * 
+ * e1000_set_media_type - 根据mac_type确定hw中的媒体类型(media_type)
  * **************************************************************************/
 void
 e1000_set_media_type(struct e1000_hw *hw)
@@ -357,6 +365,8 @@ e1000_set_media_type(struct e1000_hw *hw)
  * Reset the transmit and receive units; mask and clear all interrupts.
  *
  * hw - Struct containing variables accessed by shared code
+ * 
+ * e1000_reset_hw - 网卡重启
  *****************************************************************************/
 int32_t
 e1000_reset_hw(struct e1000_hw *hw)
@@ -508,6 +518,14 @@ e1000_reset_hw(struct e1000_hw *hw)
  * multicast table, and VLAN filter table. Calls routines to setup link
  * configuration and flow control settings. Clears all on-chip counters. Leaves
  * the transmit and receive units disabled and uninitialized.
+ * 
+ * e1000_init_hw - 网卡重置，处于未初始化状态
+ *                 1.初始化接收地址寄存器(receive address registers)
+ *                 2.初始化多播表(multicast table)
+ *                 3.初始化VLAN筛选器表(VLAN filter table)
+ *                 4.设置link configuration和flow control
+ *                 5.清除片上计数器
+ *                 6.禁用和初始化发送和接受单元
  *****************************************************************************/
 int32_t
 e1000_init_hw(struct e1000_hw *hw)
@@ -535,7 +553,7 @@ e1000_init_hw(struct e1000_hw *hw)
     DEBUGOUT("Initializing the IEEE VLAN\n");
     E1000_WRITE_REG(hw, VET, 0);
 
-    e1000_clear_vfta(hw);
+    e1000_clear_vfta(hw);   //清除VLAN筛选器表(vlan filter table)
 
     /* For 82542 (rev 2.0), disable MWI and put the receiver into reset */
     if(hw->mac_type == e1000_82542_rev2_0) {
@@ -549,6 +567,7 @@ e1000_init_hw(struct e1000_hw *hw)
     /* Setup the receive address. This involves initializing all of the Receive
      * Address Registers (RARs 0 - 15).
      */
+    /* 设置接收地址，初始化所有的接收地址寄存器(receive address register) */
     e1000_init_rx_addrs(hw);
 
     /* For 82542 (rev 2.0), take the receiver out of reset and enable MWI */
@@ -561,6 +580,7 @@ e1000_init_hw(struct e1000_hw *hw)
     }
 
     /* Zero out the Multicast HASH table */
+    /* 多播hash表清零 */
     DEBUGOUT("Zeroing the MTA\n");
     for(i = 0; i < E1000_MC_TBL_SIZE; i++)
         E1000_WRITE_REG_ARRAY(hw, MTA, i, 0);
@@ -601,9 +621,11 @@ e1000_init_hw(struct e1000_hw *hw)
     }
 
     /* Call a subroutine to configure the link and setup flow control. */
+    /* 配置link，设置流控制 */
     ret_val = e1000_setup_link(hw);
 
     /* Set the transmit descriptor write-back policy */
+    /* 设置发送描述符的写回策略 */
     if(hw->mac_type > e1000_82544) {
         ctrl = E1000_READ_REG(hw, TXDCTL);
         ctrl = (ctrl & ~E1000_TXDCTL_WTHRESH) | E1000_TXDCTL_FULL_TX_DESC_WB;
@@ -615,6 +637,7 @@ e1000_init_hw(struct e1000_hw *hw)
      * because the symbol error count will increment wildly if there
      * is no link.
      */
+    /* 统计寄存器中的值清零 */
     e1000_clear_hw_cntrs(hw);
 
     return ret_val;
