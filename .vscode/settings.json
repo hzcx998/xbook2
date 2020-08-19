@@ -123,6 +123,7 @@
         "event.h": "c",
         "cursor.h": "c",
         "mouse.h": "c",
-        "graph.h": "c"
+        "graph.h": "c",
+        "waitqueue.h": "c"
     }
 }

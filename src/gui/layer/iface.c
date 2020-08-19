@@ -3,6 +3,7 @@
 #include <gui/shape.h>
 #include <gui/screen.h>
 #include <xbook/mutexlock.h>
+#include <xbook/task.h>
 
 DEFINE_MUTEX_LOCK(layer_mutex); /* 图层管理互斥 */
 
@@ -18,6 +19,7 @@ int sys_new_layer(int x, int y, uint32_t width, uint32_t height)
     }
     layer_draw_rect_fill(l, 0, 0, l->width, l->height, COLOR_WHITE);
     layer_set_xy(l, x, y);
+    l->extension = current_task;
     mutex_unlock(&layer_mutex);
     return l->id;
 }
@@ -61,7 +63,7 @@ int sys_del_layer(int id)
     if (l == NULL) {
         return -1;
     }
-
+    l->extension = NULL;
     destroy_layer(l);
     mutex_unlock(&layer_mutex);
     return 0;

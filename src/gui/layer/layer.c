@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <xbook/kmalloc.h>
 #include <xbook/debug.h>
+#include <xbook/msgpool.h>
+#include <xbook/task.h>
 
 #include <arch/page.h>
 
@@ -17,8 +19,12 @@ LIST_HEAD(layer_list_head);
 LIST_HEAD(layer_show_list_head);
 int top_layer_z = -1;    /* 顶层图层的Z轴 */
 layer_t *layer_topest = NULL;   /* topest layer */
+layer_t *layer_focused = NULL;   /* focused layer */
 uint16_t *layer_map = NULL; /* layer z map */
 int layer_next_id = 0;  /* next layer id */
+
+/* window top layer, keep window as topest */
+int layer_win_top = 0;  
 
 /**
  * create_layer - 创建一个图层
@@ -50,7 +56,7 @@ layer_t *create_layer(int width, int height)
     layer->width = width;
     layer->height = height;
     layer->z = -1;          /* 不显示的图层 */
-    layer->extension= NULL;
+    layer->extension = NULL;
     INIT_LIST_HEAD(&layer->list);
 
     /* 添加到链表末尾 */
@@ -508,8 +514,99 @@ layer_t *layer_get_by_z(int z)
     }
     return NULL;
 }
+int layer_get_win_top()
+{
+    return layer_win_top;
+}
 
+int layer_set_win_top(int top)
+{
+    layer_win_top = top;
+    return 0;
+}
 
+void layer_set_focus(layer_t *layer)
+{
+    layer_focused = layer;
+}
+
+layer_t *layer_get_focus()
+{
+    return layer_focused;
+}
+
+int sys_layer_set_focus(int ly)
+{
+    printk("[gui]: set layer focus %d\n", ly);
+    layer_t *layer = layer_find_by_id(ly);
+    if (layer == NULL)
+        return -1;
+    
+    layer_set_focus(layer);
+    return 0;
+}
+
+int sys_layer_get_focus()
+{
+    return layer_get_focus()->id;
+}
+
+int gui_dispatch_mouse_msg(g_msg_t *msg)
+{
+    layer_t *layer;
+    int local_mx, local_my;
+    int val = -1;
+    /* 查看点击的位置，看是否是一个 */
+    list_for_each_owner_reverse (layer, &layer_show_list_head, list) {
+        if (layer == layer_topest)
+            continue;
+        if (layer->extension == NULL)
+            continue;
+        local_mx = msg->data0 - layer->x;
+        local_my = msg->data1 - layer->y;
+        if (local_mx >= 0 && local_mx < layer->width && 
+            local_my >= 0 && local_my < layer->height) {
+            
+            /* 发送消息 */
+            g_msg_t m;
+            memset(&m, 0, sizeof(g_msg_t));
+            m.id        = msg->id;
+            m.target    = layer->id;
+            m.data0     = local_mx;
+            m.data1     = local_my;
+            m.data2     = msg->data0;
+            m.data3     = msg->data1;
+            
+            task_t *task = (task_t *)layer->extension;
+            val = msgpool_try_push(task->gmsgpool, &m);
+            break;
+        }
+    }
+
+    return val;
+}
+
+int gui_dispatch_key_msg(g_msg_t *msg)
+{
+    layer_t *layer = layer_focused;
+    int val = -1;
+    /* 发送给聚焦图层 */
+    if (layer) {
+        if (layer->extension == NULL)
+            return -1;
+        
+        /* 发送消息 */
+        g_msg_t m;
+        memset(&m, 0, sizeof(g_msg_t));
+        m.id        = msg->id;
+        m.target    = layer->id;
+        m.data0     = msg->data0;
+        m.data1     = msg->data1;
+        task_t *task = (task_t *)layer->extension;
+        val = msgpool_try_push(task->gmsgpool, &m);
+    }
+    return val;
+}
 
 int gui_init_layer()
 {
@@ -524,7 +621,7 @@ int gui_init_layer()
     INIT_LIST_HEAD(&layer_list_head);
 
     layer_topest = NULL;
-
+    layer_focused = NULL;
     if (init_mouse_layer() < 0) {
         kfree(layer_map);
         return -1;

@@ -16,6 +16,7 @@
 #include <gui/rect.h>
 #include <gui/layer.h>
 #include <gui/draw.h>
+#include <gui/message.h>
 
 #define MOUSE_LAYER_W   32
 #define MOUSE_LAYER_H   32
@@ -97,7 +98,7 @@ void gui_mouse_button_down(int btn)
     printf("[mouse ] x:%d, y:%d\n", gui_mouse.x, gui_mouse.y);
 #endif    
     //gui_mouse.show(gui_mouse.x, gui_mouse.y);
-
+/*
     gui_event e;
     e.type = GUI_EVENT_MOUSE_BUTTON;
     e.button.button = btn;
@@ -105,7 +106,28 @@ void gui_mouse_button_down(int btn)
     e.button.x = gui_mouse.x;
     e.button.y = gui_mouse.y;
     gui_event_add(&e);
+  */
   
+    g_msg_t m;
+    memset(&m, 0, sizeof(g_msg_t));
+    switch (btn)
+    {
+    case 0:
+        m.id    = GM_MOUSE_LBTN_DOWN;
+        break;
+    case 1:
+        m.id    = GM_MOUSE_MBTN_DOWN;
+        break;
+    case 2:
+        m.id    = GM_MOUSE_RBTN_DOWN;
+        break;
+    default:
+        m.id    = GM_NONE;
+        break;
+    }
+    m.data0     = gui_mouse.x;
+    m.data1     = gui_mouse.y;
+    gui_push_msg(&m);
 }
 
 void gui_mouse_button_up(int btn)
@@ -115,7 +137,7 @@ void gui_mouse_button_up(int btn)
     printf("[mouse ] x:%d, y:%d\n", gui_mouse.x, gui_mouse.y);
 #endif   
     //gui_mouse.show(gui_mouse.x, gui_mouse.y);
-
+/*
     gui_event e;
     e.type = GUI_EVENT_MOUSE_BUTTON;
     e.button.button = btn;
@@ -123,6 +145,28 @@ void gui_mouse_button_up(int btn)
     e.button.x = gui_mouse.x;
     e.button.y = gui_mouse.y;
     gui_event_add(&e);
+*/
+
+    g_msg_t m;
+    memset(&m, 0, sizeof(g_msg_t));
+    switch (btn)
+    {
+    case 0:
+        m.id    = GM_MOUSE_LBTN_UP;
+        break;
+    case 1:
+        m.id    = GM_MOUSE_MBTN_UP;
+        break;
+    case 2:
+        m.id    = GM_MOUSE_RBTN_UP;
+        break;
+    default:
+        m.id    = GM_NONE;
+        break;
+    }
+    m.data0     = gui_mouse.x;
+    m.data1     = gui_mouse.y;
+    gui_push_msg(&m);
 }
 
 void gui_mouse_motion()
@@ -147,13 +191,21 @@ void gui_mouse_motion()
     /* 移动鼠标 */
     //gui_mouse.show(gui_mouse.x, gui_mouse.y);
 
-
+/*
     gui_event e;
     e.type = GUI_EVENT_MOUSE_MOTION;
     e.button.state = GUI_NOSTATE;
     e.button.x = gui_mouse.x;
     e.button.y = gui_mouse.y;
     gui_event_add(&e);
+    */
+    
+    g_msg_t m;
+    memset(&m, 0, sizeof(g_msg_t));
+    m.id        = GM_MOUSE_MOTION;
+    m.data0     = gui_mouse.x;
+    m.data1     = gui_mouse.y;
+    gui_push_msg(&m);
 }
 
 int init_mouse_layer()

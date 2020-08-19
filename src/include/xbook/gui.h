@@ -3,4 +3,7 @@
 
 void init_gui();
 
+int sys_g_init(void);
+int sys_g_quit(void);
+
 #endif /* _XBOOK_GUI_H */

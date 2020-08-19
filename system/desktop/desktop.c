@@ -167,6 +167,8 @@ int init_desktop()
     /* refresh desktop */
     g_layer_refresh(layer, 0, 0, desktop_width, desktop_height);
     
+    g_layer_set_focus(layer);   /* set as focus layer */
+
     /* 加载背景图片 */
     if (jpg_display(BG_PIC_PATH) < 0) {
         printf("show background pic %s failed!\n", BG_PIC_PATH);

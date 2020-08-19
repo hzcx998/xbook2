@@ -14,11 +14,13 @@
 #include <xbook/sharemem.h>
 #include <xbook/sem.h>
 #include <xbook/msgqueue.h>
+#include <xbook/gui.h>
 #include <sys/stat.h>
 #include <dirent.h>
 
 #include <gui/console/console.h>
 #include <gui/layer.h>
+#include <gui/message.h>
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -169,4 +171,13 @@ void init_syscall()
     syscall_table[SYS_LAYERPIXMAP] = sys_layer_pixmap;
     syscall_table[SYS_LAYERREFRESH] = sys_layer_refresh;
     syscall_table[SYS_GUIINFO] = sys_gui_info;
+    syscall_table[SYS_LAYERGETWINTOP] = sys_layer_get_win_top;
+    syscall_table[SYS_LAYERSETWINTOP] = sys_layer_set_win_top;
+    syscall_table[SYS_GINIT] = sys_g_init;
+    syscall_table[SYS_GQUIT] = sys_g_quit;
+    syscall_table[SYS_GGETMSG] = sys_g_get_msg;
+    syscall_table[SYS_GTRYGETMSG] = sys_g_try_get_msg;
+    syscall_table[SYS_LAYERSETFOCUS] = sys_layer_set_focus;
+    syscall_table[SYS_LAYERGETFOCUS] = sys_layer_get_focus;
+    
 }

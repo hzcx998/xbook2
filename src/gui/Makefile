@@ -6,3 +6,4 @@ SRC	+= input/*.c
 SRC	+= layer/*.c
 SRC	+= gui.c
 SRC	+= event.c
+SRC	+= message.c

@@ -17,5 +17,8 @@ int init_taskbar()
     g_layer_rect_fill(layer, 0, 0, desktop_width, TASKBAR_HEIGHT, GC_GREEN);
     g_layer_refresh(layer, 0, 0, desktop_width, TASKBAR_HEIGHT);
     
+    /* set task bar as win top, thus win should be lower than task bar layer */
+    g_layer_set_wintop(layer);
+    
     return 0;
 }

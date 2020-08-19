@@ -1,7 +1,8 @@
-#ifndef __GUISRV_DRIVER_MOUSE_H__
-#define __GUISRV_DRIVER_MOUSE_H__
+#ifndef _GUI_INPUT_MOUSE_H
+#define _GUI_INPUT_MOUSE_H
 
 #include <gui/color.h>
+#include <gui/message.h>
 
 typedef struct _gui_mouse {
     int            (*open)(void);
@@ -28,4 +29,4 @@ void gui_mouse_motion();
 
 int init_mouse_layer();
 
-#endif  /* __GUISRV_DRIVER_MOUSE_H__ */
+#endif  /* _GUI_INPUT_MOUSE_H */

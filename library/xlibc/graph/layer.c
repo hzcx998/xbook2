@@ -118,3 +118,59 @@ int g_gui_info(unsigned int *width, unsigned int *height, unsigned int *bpp)
 {
     return syscall3(int, SYS_GUIINFO, width, height, bpp);
 }
+
+int g_layer_get_wintop()
+{
+    return syscall0(int, SYS_LAYERGETWINTOP);
+}
+
+int g_layer_set_wintop(int top)
+{
+    return syscall1(int, SYS_LAYERSETWINTOP, top);
+}
+
+int g_layer_get_focus()
+{
+    return syscall0(int, SYS_LAYERGETFOCUS);
+}
+
+int g_layer_set_focus(int ly)
+{
+    return syscall1(int, SYS_LAYERSETFOCUS, ly);
+}
+int g_init(void)
+{
+    int val = syscall0(int, SYS_GINIT);
+    return val;
+}
+
+int g_quit(void)
+{
+    int val = syscall0(int, SYS_GQUIT);
+    
+    return val;
+}
+
+int g_set_routine(int (*routine)(g_msg_t *))
+{
+
+    return 0;
+}
+
+int g_get_msg(g_msg_t *msg)
+{
+    int val = syscall1(int, SYS_GGETMSG, msg);
+    
+    return val;
+}
+
+int g_try_get_msg(g_msg_t *msg)
+{
+    int val = syscall1(int, SYS_GTRYGETMSG, msg);
+    return val;
+}
+
+int g_dispatch_msg(g_msg_t *msg)
+{
+    return 0;
+}

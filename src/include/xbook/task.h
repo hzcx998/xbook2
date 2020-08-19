@@ -12,6 +12,7 @@
 #include "alarm.h"
 #include "pthread.h"
 #include "fs.h"
+#include "msgpool.h"
 
 /* task state */
 typedef enum task_state {
@@ -81,6 +82,7 @@ typedef struct _task {
     long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
     file_man_t *fileman;                /* 文件管理 */
+    msgpool_t *gmsgpool;                /* 任务的图形消息池 */
     unsigned int stack_magic;           /* 任务的魔数 */
 } task_t;
 

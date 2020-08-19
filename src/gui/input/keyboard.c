@@ -11,6 +11,8 @@
 #include <sys/input.h>
 
 #include <gui/console/console.h>
+#include <gui/message.h>
+#include <gui/mouse.h>
 
 /* 特殊按键：
 ALT+TAB 切换窗口 */
@@ -291,12 +293,22 @@ int gui_key_pressed(int keycode)
     gui_keyboard.keyevent.modify = gui_keyboard.key_modify;
     return 0;*/
 
+    
+    
+    g_msg_t m;
+    memset(&m, 0, sizeof(g_msg_t));
+    m.id        = GM_KEY_DOWN;
+    m.data0     = keycode;
+    m.data1     = gui_keyboard.key_modify;
+    return gui_push_msg(&m);
+
+    /*
     gui_event e;
     e.type = GUI_EVENT_KEY;
     e.key.code = code_switch(keycode);
     e.key.modify = gui_keyboard.key_modify;
     e.key.state = GUI_PRESSED;
-    return gui_event_add(&e);
+    return gui_event_add(&e);*/
 }
 
 int gui_key_released(int keycode)
@@ -337,10 +349,18 @@ int gui_key_released(int keycode)
     gui_keyboard.keyevent.code = code_switch(keycode);
     gui_keyboard.keyevent.modify = gui_keyboard.key_modify;
     */
+
+    g_msg_t m;
+    memset(&m, 0, sizeof(g_msg_t));
+    m.id        = GM_KEY_UP;
+    m.data0     = keycode;
+    m.data1     = gui_keyboard.key_modify;
+    return gui_push_msg(&m);
+/*
     gui_event e;
     e.type = GUI_EVENT_KEY;
     e.key.code = code_switch(keycode);
     e.key.modify = gui_keyboard.key_modify;
     e.key.state = GUI_RELEASED;
-    return gui_event_add(&e);
+    return gui_event_add(&e);*/
 }

@@ -1,5 +1,7 @@
-#ifndef __GUISRV_DRIVER_KEYBOARD_H__
-#define __GUISRV_DRIVER_KEYBOARD_H__
+#ifndef _GUI_INPUT_KEYBOARD_H
+#define _GUI_INPUT_KEYBOARD_H
+
+#include <gui/message.h>
 
 #define GUI_KMOD_SHIFT_L    0x01
 #define GUI_KMOD_SHIFT_R    0x02
@@ -37,4 +39,5 @@ int gui_init_keyboard();
 int gui_key_pressed(int keycode);
 int gui_key_released(int keycode);
 
-#endif  /* __GUISRV_DRIVER_KEYBOARD_H__ */
+
+#endif  /* _GUI_INPUT_KEYBOARD_H */

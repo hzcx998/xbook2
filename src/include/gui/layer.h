@@ -5,6 +5,7 @@
 #include <list.h>
 #include "color.h"
 #include "shape.h"
+#include "message.h"
 
 typedef struct _layer {
     int id;                /* 图层id标识 */
@@ -34,6 +35,9 @@ void layer_refresh_all();
 
 layer_t *layer_find_by_id(int id);
 
+int layer_get_win_top();
+int layer_set_win_top(int top);
+
 int sys_new_layer(int x, int y, uint32_t width, uint32_t height);
 int sys_layer_z(int id, int z);
 int sys_layer_move(int id, int x, int y);
@@ -48,5 +52,14 @@ int sys_layer_pixmap(int id, gui_pixmap_t *p);
 int sys_layer_refresh(int id, gui_region_t *p);
 
 int sys_gui_info(uint32_t *width, uint32_t *height, uint32_t *bpp);
+
+#define sys_layer_get_win_top layer_get_win_top
+#define sys_layer_set_win_top layer_set_win_top
+
+int gui_dispatch_key_msg(g_msg_t *msg);
+int gui_dispatch_mouse_msg(g_msg_t *msg);
+
+int sys_layer_set_focus(int ly);
+int sys_layer_get_focus();
 
 #endif  /* _GUI_LAYER_H */
