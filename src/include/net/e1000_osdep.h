@@ -55,7 +55,7 @@
 #define usec_delay(x) udelay(x)
 #ifndef msec_delay
 //#define msec_delay(x) msleep(x)
-#define msec_delay(x) mdelay(x)   //可能有问题，应该是msleep(x)
+#define msec_delay(x) mdelay(x)
 
 /* Some workarounds require millisecond delays and are run during interrupt
  * context.  Most notably, when establishing link, the phy may need tweaking
@@ -122,7 +122,7 @@ typedef enum {
     writel((value), ((a)->hw_addr + \
         (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) + \
         ((offset) << 2))))
-#define E1000_WRITE_REG_ARRAY ( \
+#define E1000_WRITE_REG_ARRAY(a, reg, offset, value) ( \
     out32( \  
             ( \
                 (a)->hw_addr + \
