@@ -44,6 +44,8 @@
 	
 */
 
+#include <stdint.h>
+
 #define PCI_CONFIG_ADDR	0xCF8	/*PCI配置空间地址端口*/
 #define PCI_CONFIG_DATA	0xCFC	/*PCI配置空间数据端口*/
 
@@ -91,6 +93,14 @@
 #define PCI_MAX_FUN 8		/*PCI设备总共有8个功能号*/
 
 #define PCI_MAX_DEVICE_NR 256	/*系统最大支持检测多少个设备*/
+
+/* PCI设备ID */
+struct pci_device_id
+{
+	uint32_t vendor, device;   //vendor and device id or PCI_ANY_ID
+	uint32_t subvendor, subdevice;   //subsystem's id or PCI_ANY_ID
+	uint32_t class, class_mask;
+};
 
 /*PCI地址bar结构体，保存Bass Address （0~5）的信息*/
 typedef struct pci_device_bar
