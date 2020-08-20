@@ -94,6 +94,10 @@
 
 #define PCI_MAX_DEVICE_NR 256	/*系统最大支持检测多少个设备*/
 
+#ifndef PCI_ANY_ID
+#define PCI_ANY_ID (~0)
+#endif
+
 /* PCI设备ID */
 struct pci_device_id
 {
