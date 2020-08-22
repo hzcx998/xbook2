@@ -51,21 +51,16 @@ void kgui_thread(void *arg)
             /* 鼠标消息发送到鼠标指针所在的图层 */
             gui_dispatch_mouse_msg(&msg);
             break;
-        case GM_COUNTER:
-            break;
-        case GM_TIMER:
-            break;
         default:
+            /* 默认派发方式，发送消息给指定的目标 */
+            gui_dispatch_target_msg(&msg);
             break;
         }
-        
-        
         /* 根据图层信息选择对应的鼠标图层，键盘图层，并发送消息 */
         /*printk("msg: target=%d id=%x data0=%x data1=%x data2=%x data3=%x\n", 
             msg.target, msg.id, msg.data0, msg.data1, msg.data2, msg.data3);
         */
     }
-    
 }
 
 void init_gui()
@@ -83,7 +78,6 @@ void init_gui()
     if (gui_init_msg() < 0)
         panic("init gui msg failed!\n");
     
-
     gui_init_font();
 
     if (gui_screen.open() < 0)
@@ -93,16 +87,15 @@ void init_gui()
     if (gui_mouse.open() < 0)
         panic("open gui keyboard failed!\n");
 
-    pr_info("[gui]: init done.\n");
-
     if (gui_init_layer() < 0)
         panic("init gui layer failed!\n");
 
-
-
+    /*
     if (gui_init_console() < 0)
         panic("init gui console failed!\n");
+    */
 
+    /* 启动gui线程 */
     if (kthread_start("kgui", TASK_PRIO_USER, kgui_thread, NULL) == NULL)
         panic("start kgui thread failed!\n");
 }

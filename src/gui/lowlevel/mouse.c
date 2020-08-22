@@ -143,15 +143,6 @@ int gui_init_mouse()
     
     gui_mouse.open = mouse_open;
     gui_mouse.close = mouse_close;
-
     gui_mouse.read = mouse_read;
-    gui_mouse.x = gui_screen.width / 2;
-    gui_mouse.y = gui_screen.height / 2;
-    gui_mouse.last_x = gui_mouse.x;
-    gui_mouse.last_y = gui_mouse.y;
-    gui_mouse.button_down   = gui_mouse_button_down;
-    gui_mouse.button_up     = gui_mouse_button_up;
-    gui_mouse.motion     = gui_mouse_motion;
-    gui_mouse.show     = gui_mouse_show;
     return 0;
 }

@@ -7,7 +7,7 @@ FATFS_BIN	= $(FATFS_DIR)/fatfs
 
 # images and rom
 IMAGE_DIR	= develop/image
-HDA_VHD		= $(IMAGE_DIR)/hda.vhd
+HDA_VHD		= $(IMAGE_DIR)/sda.vhd
 ROM_DIR		= develop/rom
 
 # 默认大小为40M

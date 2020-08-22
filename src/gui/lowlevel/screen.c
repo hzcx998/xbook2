@@ -620,6 +620,25 @@ static  int  screen_output_rect_fill(int left, int top, int right, int bottom, S
     return  1;
 }
 
+int sys_screen_get(g_screen_t *screen)
+{
+    if (screen) {
+        *screen = gui_screen.screen;
+        return 0;
+    }
+    return -1;
+}
+
+int sys_screen_set_window_region(gui_region_t *region)
+{
+    if (region) {
+        gui_screen.screen.window_region = *region;
+        return 0;
+    }
+    return -1;
+}
+
+
 int gui_init_screen()
 {
     int ret = 0;
@@ -640,5 +659,11 @@ int gui_init_screen()
     gui_screen.output_hline = screen_output_hline;
     gui_screen.output_rect_fill = screen_output_rect_fill;
     
+    /* 初始化屏幕信息 */
+    gui_screen.screen.width = gui_screen.width;
+    gui_screen.screen.height = gui_screen.height;
+    gui_screen.screen.bits_per_pixel = gui_screen.bpp;
+    gui_region_init(&gui_screen.screen.window_region);
+
     return 0;
 }

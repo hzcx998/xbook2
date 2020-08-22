@@ -1,13 +1,13 @@
 #include <xbook/msgpool.h>
 #include <xbook/task.h>
 #include <gui/message.h>
-#include <gui/message.h>
+#include <gui/layer.h>
 
 msgpool_t *gui_msgpool = NULL;
 
 int gui_init_msg()
 {
-    gui_msgpool = msgpool_create(sizeof(g_msg_t), GUI_MSG_NR);
+    gui_msgpool = msgpool_create(sizeof(g_msg_t), GUI_MSG_NR * 2);
     if (gui_msgpool == NULL)
         return -1;
     return 0;
@@ -49,4 +49,20 @@ int sys_g_try_get_msg(g_msg_t *msg)
     if (!cur->gmsgpool)
         return -1;
     return msgpool_try_pop(cur->gmsgpool, msg);
+}
+
+/**
+ * 邮寄消息给系统消息池
+ */
+int sys_g_post_msg(g_msg_t *msg)
+{
+    return gui_push_msg(msg);
+}
+
+/**
+ * 直接发送消息给指定的目标
+ */
+int sys_g_send_msg(g_msg_t *msg)
+{
+    return gui_dispatch_target_msg(msg);
 }

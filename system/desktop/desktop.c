@@ -1,5 +1,5 @@
 #include "desktop.h"
-#include <graph.h>
+#include <gapi.h>
 #include <stdio.h>
 #include <malloc.h>
 
@@ -7,8 +7,6 @@
 #include <jmorecfg.h>
 #include <jconfig.h>
 
-uint32_t desktop_width, desktop_height;
-uint32_t gui_bpp;
 int desktop_layer;
 
 int jpg_display(char * path)// **指定图片的路径就可以调用这个jpg的解析。**
@@ -127,7 +125,7 @@ int jpg_display(char * path)// **指定图片的路径就可以调用这个jpg�
         }
     }
     g_layer_pixmap(desktop_layer, 0, 0, dinfo.output_width, dinfo.output_height, pixbuf, 4);
-    g_layer_refresh(desktop_layer, 0, 0, desktop_width, desktop_height);
+    g_layer_refresh(desktop_layer, 0, 0, g_screen.width, g_screen.height);
     
     /*
     7. 调用　jpeg_finish_decompress()完成解压过程
@@ -149,13 +147,8 @@ int jpg_display(char * path)// **指定图片的路径就可以调用这个jpg�
 
 int init_desktop()
 {
-    
-    g_gui_info(&desktop_width, &desktop_height, &gui_bpp);
-    if (!desktop_width || !desktop_height)
-        return -1;
-
     /* 桌面 */
-    int layer = g_layer_new(0, 0, desktop_width, desktop_height);
+    int layer = g_layer_new(0, 0, g_screen.width, g_screen.height);
     if (layer < 0) {
         printf("[desktop]: new desktop layer failed!\n");
         return -1;
@@ -163,9 +156,9 @@ int init_desktop()
     desktop_layer = layer;
     g_layer_z(layer, 0);    /* 0 is desktop */
     /* draw desktop */
-    g_layer_rect_fill(layer, 0, 0, desktop_width, desktop_height, GC_GRAY);
+    g_layer_rect_fill(layer, 0, 0, g_screen.width, g_screen.height, GC_GRAY);
     /* refresh desktop */
-    g_layer_refresh(layer, 0, 0, desktop_width, desktop_height);
+    g_layer_refresh(layer, 0, 0, g_screen.width, g_screen.height);
     
     g_layer_set_focus(layer);   /* set as focus layer */
 

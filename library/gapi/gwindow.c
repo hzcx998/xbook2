@@ -1,9 +1,10 @@
-#include "desktop.h"
-#include "gwindow.h"
-#include <graph.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
+
+#include <gwindow.h>
+#include <glayer.h>
+#include <gscreen.h>
 
 LIST_HEAD(gwindow_list_head);
 
@@ -202,10 +203,10 @@ int g_maxim_window(int win)
         gw->backup.width = gw->width;
         gw->backup.height = gw->height;
         
-        rect.x = 0;
-        rect.y = TASKBAR_HEIGHT;
-        rect.width = desktop_width;
-        rect.height = desktop_height - TASKBAR_HEIGHT;
+        rect.x = g_screen.window_region.left;
+        rect.y = g_screen.window_region.top;
+        rect.width = g_screen.window_region.right;
+        rect.height = g_screen.window_region.bottom - g_screen.window_region.top;
         gw->flags |= GW_MAXIM;  /* 最大化状态 */
     }
     if (g_layer_resize(gw->layer, rect.x, rect.y, rect.width, rect.height) < 0)

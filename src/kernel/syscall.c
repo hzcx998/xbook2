@@ -21,6 +21,7 @@
 #include <gui/console/console.h>
 #include <gui/layer.h>
 #include <gui/message.h>
+#include <gui/screen.h>
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -158,7 +159,7 @@ void init_syscall()
     syscall_table[SYS_XCONGET] = sys_xcon_get;
     syscall_table[SYS_XCONCLEAR] = sys_xcon_clear;
     syscall_table[SYS_XCONPUT] = sys_xcon_put;
-
+    /* gui */
     syscall_table[SYS_LAYERNEW] = sys_new_layer;
     syscall_table[SYS_LAYERDEL] = sys_del_layer;
     syscall_table[SYS_LAYERZ] = sys_layer_z;
@@ -170,7 +171,6 @@ void init_syscall()
     syscall_table[SYS_LAYERRECTFILL] = sys_layer_rect_fill;
     syscall_table[SYS_LAYERPIXMAP] = sys_layer_pixmap;
     syscall_table[SYS_LAYERREFRESH] = sys_layer_refresh;
-    syscall_table[SYS_GUIINFO] = sys_gui_info;
     syscall_table[SYS_LAYERGETWINTOP] = sys_layer_get_win_top;
     syscall_table[SYS_LAYERSETWINTOP] = sys_layer_set_win_top;
     syscall_table[SYS_GINIT] = sys_g_init;
@@ -179,5 +179,13 @@ void init_syscall()
     syscall_table[SYS_GTRYGETMSG] = sys_g_try_get_msg;
     syscall_table[SYS_LAYERSETFOCUS] = sys_layer_set_focus;
     syscall_table[SYS_LAYERGETFOCUS] = sys_layer_get_focus;
-    
+    syscall_table[SYS_LAYERSETREGION] = sys_layer_set_region;
+    syscall_table[SYS_GPOSTMSG] = sys_g_post_msg;
+    syscall_table[SYS_GSENDMSG] = sys_g_send_msg;
+    syscall_table[SYS_LAYERSETFLG] = sys_layer_set_flags;
+    syscall_table[SYS_LAYERRESIZE] = sys_layer_resize;
+    syscall_table[SYS_LAYERFOCUS] = sys_layer_focus;
+    syscall_table[SYS_LAYERFOCUSWINTOP] = sys_layer_focus_win_top;
+    syscall_table[SYS_GSCREENGET] = sys_screen_get;
+    syscall_table[SYS_GSCREENSETWINRG] = sys_screen_set_window_region;
 }

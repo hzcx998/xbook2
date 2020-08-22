@@ -17,7 +17,10 @@
 /* auto select timezone */
 #define CONFIG_TIMEZONE_AUTO 0 	
 
-/* ahci */
+/* ahci disk driver */
 #define CONFIG_AHCI 
+
+/* waker layer for fast gui */
+#define CONFIG_WAKER_LAYER
 
 #endif   /* _XBOOK_CONFIG_H */

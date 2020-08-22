@@ -1,9 +1,7 @@
-#ifndef _GUI_MESSAGE_H
-#define _GUI_MESSAGE_H
+#ifndef _GAPI_MESSAGE_H
+#define _GAPI_MESSAGE_H
 
 #include <stdint.h>
-
-#define GUI_MSG_NR      64
 
 /* GUI message */
 enum {
@@ -30,8 +28,9 @@ enum {
     GM_GET_FOCUS,
     GM_LOST_FOCUS,
     GM_MOVE,
-    GM_NR
+    GM_NR,
 };
+
 
 typedef struct {
     uint32_t id;        /* 消息id */
@@ -42,14 +41,15 @@ typedef struct {
     uint32_t data3;
 } g_msg_t;
 
-int gui_init_msg();
-int gui_push_msg(g_msg_t *msg);
-int gui_pop_msg(g_msg_t *msg);
+int g_init_msg();
+int g_set_routine(int (*routine)(g_msg_t *));
+int g_get_msg(g_msg_t *msg);
+int g_dispatch_msg(g_msg_t *msg);
+int g_try_get_msg(g_msg_t *msg);
+int g_post_msg(g_msg_t *msg);
+int g_send_msg(g_msg_t *msg);
+int g_post_quit_msg(int target);
 
-int sys_g_get_msg(g_msg_t *msg);
-int sys_g_try_get_msg(g_msg_t *msg);
+#define g_is_quit_msg(msg) ((msg)->id == GM_QUIT)
 
-int sys_g_post_msg(g_msg_t *msg);
-int sys_g_send_msg(g_msg_t *msg);
-
-#endif /* _GUI_MESSAGE_H */
+#endif /* _GAPI_MESSAGE_H */

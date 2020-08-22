@@ -1,9 +1,10 @@
-#ifndef _G_WINDOW_H
-#define _G_WINDOW_H
+#ifndef _GAPI_WINDOW_H
+#define _GAPI_WINDOW_H
 
 #include <stdint.h>
 #include <sys/list.h>
-#include <graph.h>
+#include "gcolor.h"
+#include "gshape.h"
 
 #define GW_TITLE_LEN    64
 
@@ -19,8 +20,6 @@ enum {
     GW_MAXIM        = (1 << 0),
 };
 
-#define g_api
-
 /* 图形窗口结构 */
 typedef struct {
     list_t wlist;       /* 进程的窗口链表，一个进程可以有多个窗口 */
@@ -35,11 +34,11 @@ typedef struct {
     char title[GW_TITLE_LEN];   /* 窗口的标题 */
 } g_window_t;
 
-g_api int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height);
-g_api int g_del_window(int win);
+int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height);
+int g_del_window(int win);
+int g_show_window(int win);
 
-g_api int g_show_window(int win);
-g_api int g_update_window(int win);
+int g_update_window(int win);
 
 int g_hide_window(int win);
 g_window_t *g_find_window(int win);
@@ -47,4 +46,4 @@ int g_resize_window(int win, uint32_t width, uint32_t height);
 int g_focus_window(int win, int turn);
 int g_maxim_window(int win);
 
-#endif  /* _G_WINDOW_H */
+#endif  /* _GAPI_WINDOW_H */
