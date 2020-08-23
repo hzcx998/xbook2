@@ -365,8 +365,6 @@ e1000_set_media_type(struct e1000_hw *hw)
  * Reset the transmit and receive units; mask and clear all interrupts.
  *
  * hw - Struct containing variables accessed by shared code
- * 
- * e1000_reset_hw - 网卡重启
  *****************************************************************************/
 int32_t
 e1000_reset_hw(struct e1000_hw *hw)
