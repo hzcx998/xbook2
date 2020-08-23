@@ -16,6 +16,7 @@
 #include <arch/cpu.h>
 #include <sys/ioctl.h>
 #include <stddef.h>
+#include <sys/res.h>
 
 #include <net/e1000_hw.h>
 #include <net/e1000_osdep.h>
@@ -61,29 +62,71 @@ struct net_device_status {
 };
 
 /* 设备拓展内容 */
-typedef struct _e1000_82540em_extension {
+typedef struct _e1000_extension {
     device_object_t *device_object;   //设备对象
+
+    timer_t tx_fifo_stall_timer;
+    timer_t watchdog_timer;
+    timer_t phy_info_timer;
+    
+    /* TX */
+	struct e1000_desc_ring tx_ring;
+	spinlock_t tx_lock;
+	uint32_t txd_cmd;
+	uint32_t tx_int_delay;
+	uint32_t tx_abs_int_delay;
+	uint32_t gotcl;
+	uint64_t gotcl_old;
+	uint64_t tpt_old;
+	uint64_t colc_old;
+	uint32_t tx_fifo_head;
+	uint32_t tx_head_addr;
+	uint32_t tx_fifo_size;
+	atomic_t tx_fifo_stall;
+	boolean_t pcix_82544;
+
+    /* RX */
+	struct e1000_desc_ring rx_ring;
+	uint64_t hw_csum_err;
+	uint64_t hw_csum_good;
+	uint32_t rx_int_delay;
+	uint32_t rx_abs_int_delay;
+	boolean_t rx_csum;
+	uint32_t gorcl;
+	uint64_t gorcl_old;
+
+    struct e1000_hw hw;
+    uint32_t part_num;
 
     uint32_t io_addr;   //IO基地址
     int drv_flags;   //驱动标志
     uint32_t irq;
-    uint8_t mac_addr[6];
     flags_t flags;
-    pci_device_t *pci_device;
+
+    pci_device_t* pci_device;
 
     uint32_t dev_features;   //设备结构特征
 
-    uint8_t *rx_buffer;   //接收缓冲区
-    uint8_t *rx_ring;   //接收环
-    uint8_t current_rx;
-    flags_t rx_flags;
-    dma_addr_t rx_ring_dma;   //dma物理地址
+    uint32_t rx_buffer_len;
+    uint32_t max_frame_size;
+    uint32_t min_frame_size;
+    
+    spinlock_t stats_lock;
+    spinlock_t tx_lock;
+    atomic_t irq_sem;
+
+    // uint8_t *rx_buffer;   //接收缓冲区
+    // uint8_t *rx_ring;   //接收环
+    // uint8_t current_rx;
+    // flags_t rx_flags;
+    // dma_addr_t rx_ring_dma;   //dma物理地址
 
     spinlock_t lock;   //普通锁
     spinlock_t rx_lock;   //接收锁
 
     device_queue_t rx_queue;   //接收队列
-}e1000_82540em_extension_t;
+
+}e1000_extension_t;
 
 /**
  * 1. 申请pci结构(pci_device_t)并初始化厂商号和设备号
@@ -91,10 +134,10 @@ typedef struct _e1000_82540em_extension {
  * 3. 申请设备io空间，在pci_device中登记io空间基地址
  * 4. 申请中断，并在pci_device中登记中断号
 **/
-static int e1000_82540em_get_pci_info(e1000_82540em_extension_t* ext)
+static int e1000_get_pci_info(e1000_extension_t* ext)
 {
     /* get pci device*/
-    pci_device_t* pci_device = pci_get_device(E1000_VENDOR_ID, E1000_DEV_ID_82540EM);
+    pci_device_t* pci_device = pci_get_device(PCI_VENDOR_ID_INTEL, E1000_DEV_ID_82540EM);
     if(pci_device == NULL) {
         printk(KERN_DEBUG "E1000_82540EM init failed: pci_get_device.\n");
         return -1;
@@ -104,11 +147,13 @@ static int e1000_82540em_get_pci_info(e1000_82540em_extension_t* ext)
     printk(KERN_DEBUG "find E1000_82540EM device, vendor id: 0x%x, device id: 0x%x\n",\
             device->vendor_id, device->device_id);
 #endif
+
     /* enable bus mastering */
     pci_enable_bus_mastering(pci_device);
 
     /* get io address */
     ext->io_addr = pci_device_get_io_addr(pci_device);
+    ext->hw.io_base = pci_device_get_io_addr(pci_device);
     if(ext->io_addr == 0) {
         printk(KERN_DEBUG "E1000_82540EM init failed: INVALID pci device io address.\n");
         return -1;
@@ -128,46 +173,236 @@ static int e1000_82540em_get_pci_info(e1000_82540em_extension_t* ext)
     return 0;
 }
 
-static int e1000_82540em_init_board(e1000_82540em_extension_t* ext)
+/* e1000_82547_tx_stall - timer call_back */
+static void e1000_82547_tx_fifo_stall(unsigned long data)
 {
-    /* check for missing/broken hardware*/
-    /* 检查丢失/损坏的硬件 */
+    e1000_extension_t* ext = (e1000_extension_t*)data;
+    uint32_t tctl;
 
-    /* 判断是什么芯片，这里暂时默认为82540EM芯片 */
+    if(atomic_get(&ext->tx_fifo_stall)) {
+		if((E1000_READ_REG(&ext->hw, TDT) ==
+		    E1000_READ_REG(&ext->hw, TDH)) &&
+		   (E1000_READ_REG(&ext->hw, TDFT) ==
+		    E1000_READ_REG(&ext->hw, TDFH)) &&
+		   (E1000_READ_REG(&ext->hw, TDFTS) ==
+		    E1000_READ_REG(&ext->hw, TDFHS))) {
+			tctl = E1000_READ_REG(&ext->hw, TCTL);
+			E1000_WRITE_REG(&ext->hw, TCTL,
+					tctl & ~E1000_TCTL_EN);
+			E1000_WRITE_REG(&ext->hw, TDFT,
+					ext->tx_head_addr);
+			E1000_WRITE_REG(&ext->hw, TDFH,
+					ext->tx_head_addr);
+			E1000_WRITE_REG(&ext->hw, TDFTS,
+					ext->tx_head_addr);
+			E1000_WRITE_REG(&ext->hw, TDFHS,
+					ext->tx_head_addr);
+			E1000_WRITE_REG(&ext->hw, TCTL, tctl);
+			E1000_WRITE_FLUSH(&ext->hw);
 
-    /* 网卡加电，启动*/
+			ext->tx_fifo_head = 0;
+			atomic_set(&ext->tx_fifo_stall, 0);
+			//netif_wake_queue(netdev);
+		} else {
+			timer_mod(&ext->tx_fifo_stall_timer, systicks + 1);
+		}
+	}
 }
 
-static int e1000_82540em_init(e1000_82540em_extension_t* ext)
+static int e1000_sw_init(e1000_extension_t* ext)
 {
-    static int board_idx = -1;
+    struct e1000_hw* hw = &ext->hw;
+    pci_device_t* pdev = ext->pci_device;
+
+    /* pci config space info */
+    hw->vendor_id = pdev->vendor_id;
+    hw->device_id = pdev->device_id;
+    hw->subsystem_vendor_id = pdev->subsystem_vendor_id;
+    hw->subsystem_id = pdev->subsystem_device_id;
+    hw->revision_id = pdev->revision_id;
+    hw->pci_cmd_word = pdev->command;
+
+    ext->rx_buffer_len = E1000_RXBUFFER_2048;
+    //error
+    hw->max_frame_size = ENET_HEADER_SIZE + ETHERNET_FCS_SIZE;
+    hw->min_frame_size = MINIMUM_ETHERNET_FRAME_SIZE;
+
+    /* identify the MAC，根据pci_device_id确定mac类型 */
+    if(e1000_set_mac_type(hw)) {
+        printk(KERN_DEBUG "Unknown MAC type\n");
+        return -1;
+    }
+
+    /* initialize eeprom parameters，根据mac类型确定eeprom信息*/
+    e1000_init_eeprom_params(hw);
+
+    switch(hw->mac_type) {
+        default:
+            break;
+        case e1000_82541:
+        case e1000_82547:
+        case e1000_82541_rev_2:
+        case e1000_82547_rev_2:
+            hw->phy_init_script = 1;
+            break;
+    }
+
+    /* 根据mac_type确定media_type*/
+    e1000_set_media_type(hw);
+
+    hw->wait_autoneg_complete = FALSE;
+    hw->tbi_compatibility_en = TRUE;
+    hw->adaptive_ifs = TRUE;
+
+    /* copper options 根据media_type确定mdix,disable_polarity_correction,master_slave*/
+    if(hw->media_type == e1000_media_type_copper) {
+        hw->mdix = AUTO_ALL_MODES;
+        hw->disable_polarity_correction = FALSE;
+        hw->master_slave = E1000_MASTER_SLAVE;
+    }
+
+    atomic_set(&ext->irq_sem, 1);
+    spinlock_init(&ext->stats_lock);
+    spinlock_init(&ext->tx_lock);
+
+    return 0;
+}
+
+static int e1000_init_board(e1000_extension_t* ext)
+{
+    /* setup the private structrue */
+    if(e1000_sw_init(ext)) {
+        return -1;
+    }
+
+    //初始化网卡信息、LED、media、recv_reg、hash_table、link、statistics_reg
+    //if(e1000_init_hw(&ext->hw) != E1000_SUCCESS) {
+    //    printk(KERN_DEBUG "e1000_init_hw failed\n");
+    //    return -1;
+    //}
+
+    /* 网卡复位 */
+    if(e1000_reset_hw(&ext->hw) != E1000_SUCCESS) {
+        printk(KERN_DEBUG "e1000_reset_hw failed\n");
+        return -1;
+    }
+
+    /* 确保eeprom良好 */
+    if(e1000_validate_eeprom_checksum(&ext->hw) < 0) {
+        printk(KERN_DEBUG "the eeprom checksum is not valid\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int e1000_reset(e1000_extension_t* ext)
+{
+    uint32_t pba;
+
+	/* Repartition Pba for greater than 9k mtu
+	 * To take effect CTRL.RST is required.
+	 */
+    if(ext->hw.mac_type < e1000_82547) {
+        if(ext->rx_buffer_len > E1000_RXBUFFER_8192) {
+            pba = E1000_PBA_40K;
+        } else {
+            pba = E1000_PBA_48K;
+        }
+    } else {
+        if(ext->rx_buffer_len > E1000_RXBUFFER_8192) {
+            pba = E1000_PBA_22K;
+        } else {
+            pba = E1000_PBA_30K;
+        }
+        ext->tx_fifo_head = 0;
+        ext->tx_head_addr = pba << E1000_TX_HEAD_ADDR_SHIFT;
+        ext->tx_fifo_size = 
+            (E1000_PBA_40K - pba) << E1000_PBA_BYTES_SHIFT;
+        atomic_set(&ext->tx_fifo_stall, 0);
+    }
+    E1000_WRITE_REG(&ext->hw, PBA, pba);
+}
+
+static int e1000_init(e1000_extension_t* ext)
+{
+    uint16_t eeprom_data;
 
     ASSERT(ext);
 
-    board_idx++;
-
     pci_device_t* pdev = ext->pci_device;
+
 
     /* 对版本进行检测，仅支持82540em网卡 */
     if(pdev->vendor_id != E1000_VENDOR_ID && pdev->device_id != E1000_DEV_ID_82540EM) {
 #if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "this deiver only support 82540em netcard.\n");
+        printk(KERN_DEBUG "this deiver only support 82540em netcard.\n");
 #endif
-    return -1;
+        return -1;
     }
 
     /* 初始化版本设定 */
+    if(e1000_init_board(ext)) {
+        return -1;
+    }
+
+    /* 复制网卡中的mac地址*/
+    if(e1000_read_mac_addr(&ext->hw)) {
+        printk(KERN_DEBUG "EEPEOM read error\n");
+        return -1;
+    }
+    //打印mac地址
+    printk(KERN_DEBUG "e1000_mac_addr:");
+    for(int i=0; i<5; i++) {
+        printk(KERN_DEBUG "%d-", ext->hw.mac_addr[i]);
+    }
+    printk(KERN_DEBUG "%d\n", ext->hw.mac_addr[5]);
+
+    e1000_read_part_num(&ext->hw, &(ext->part_num));
+
+    /* 获取总线类型和速度 */
+    e1000_get_bus_info(&ext->hw);
+
+    //定时器设置
+
+    //通知系统网卡不可用
+
+    /* Initial Wake on LAN setting
+	 * If APM wake is enabled in the EEPROM,
+	 * enable the ACPI Magic Packet filter
+	 */
+	switch(ext->hw.mac_type) {
+	case e1000_82542_rev2_0:
+	case e1000_82542_rev2_1:
+	case e1000_82543:
+		break;
+	case e1000_82546:
+	case e1000_82546_rev_3:
+		if((E1000_READ_REG(&ext->hw, STATUS) & E1000_STATUS_FUNC_1)
+		   && (ext->hw.media_type == e1000_media_type_copper)) {
+			e1000_read_eeprom(&ext->hw,
+				EEPROM_INIT_CONTROL3_PORT_B, 1, &eeprom_data);
+			break;
+		}
+		/* Fall Through */
+	default:
+		e1000_read_eeprom(&ext->hw,
+			EEPROM_INIT_CONTROL3_PORT_A, 1, &eeprom_data);
+		break;
+	}
+
+    /* reset the hardware with the new setting */
 }
 
 static iostatus_t e1000_enter(driver_object_t* driver)
 {
     iostatus_t status;
 
-    device_object_t *devobj;
-    e1000_82540em_extension_t* devext;
+    device_object_t* devobj;
+    e1000_extension_t* devext;
     
     /* 初始化一些其他内容-初始化devobj(未扩展的内容) */
-    status = io_create_device(driver, sizeof(e1000_82540em_extension_t), DEV_NAME, DEVICE_TYPE_PHYSIC_NETCARD, &devobj);
+    status = io_create_device(driver, sizeof(e1000_extension_t), DEV_NAME, DEVICE_TYPE_PHYSIC_NETCARD, &devobj);
 
     if(status != IO_SUCCESS) {
         printk(KERN_DEBUG KERN_ERR "e1000_enter: create device failed!\n");
@@ -177,14 +412,15 @@ static iostatus_t e1000_enter(driver_object_t* driver)
     /* neither io mode*/
     devobj->flags = 0;
 
-    devext = (e1000_82540em_extension_t*)devobj->device_extension;
+    devext = (e1000_extension_t*)devobj->device_extension;   //设备扩展部分位于devobj的尾部
     devext->device_object = devobj;
+    devext->hw.back = devext;
 
     /*初始化接收队列，用内核队列结构保存，等待被读取*/
     io_device_queue_init(&devext->rx_queue);
 
-    /* 申请并初始化pci_device_t*/
-    if(e1000_82540em_get_pci_info(devext)) {
+    /* 申请并初始化pci_device_t，io_addr、中断号*/
+    if(e1000_get_pci_info(devext)) {
         status = IO_FAILED;
         io_delete_device(devobj);
         return status;
