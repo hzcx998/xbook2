@@ -99,7 +99,7 @@ typedef enum {
 #define E1000_WRITE_REG(a, reg, value) ( \
     out32( \
             ( \
-                (a)->hw_addr + \
+                (a)->io_base + \
                 (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) \
             ), \
             (value) \
@@ -112,7 +112,7 @@ typedef enum {
 #define E1000_READ_REG(a, reg) ( \
     in32( \
             ( \
-                (a)->hw_addr + \
+                (a)->io_base + \
                 (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) \
             ) \
         ) \
@@ -125,7 +125,7 @@ typedef enum {
 #define E1000_WRITE_REG_ARRAY(a, reg, offset, value) ( \
     out32( \  
             ( \
-                (a)->hw_addr + \
+                (a)->io_base + \
                 (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) + \
                 ((offset) << 2) \
             ), \
@@ -140,7 +140,7 @@ typedef enum {
 #define E1000_READ_REG_ARRAY(a, reg, offset) ( \
     in32( \  
             ( \
-                (a)->hw_addr + \
+                (a)->io_base + \
                 (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) + \
                 ((offset) << 2) \
             ) \
