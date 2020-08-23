@@ -67,6 +67,12 @@
 #include <linux/reboot.h>
 #endif
 
+#include <xbook/timer.h>
+#include <xbook/spinlock.h>
+#include <xbook/driver.h>
+#include <xbook/pci.h>
+#include <stddef.h>
+
 #ifdef NETIF_F_TSO
 #include <net/checksum.h>
 #endif
@@ -88,12 +94,15 @@
 
 #include "kcompat.h"
 
+#define PCI_VENDOR_ID_INTEL 0x8086
+
 #define INTEL_E1000_ETHERNET_DEVICE(device_id) {\
 	PCI_DEVICE(PCI_VENDOR_ID_INTEL, device_id)}
 
 struct e1000_adapter;
 
-#include "e1000_hw.h"
+//#include "e1000_hw.h"
+#include <net/e1000_hw.h>
 
 #ifdef DBG
 #define E1000_DBG(args...) printk(KERN_DEBUG "e1000: " args)
@@ -198,9 +207,12 @@ struct e1000_desc_ring {
 /* board specific private data structure */
 
 struct e1000_adapter {
-	struct timer_list tx_fifo_stall_timer;
-	struct timer_list watchdog_timer;
-	struct timer_list phy_info_timer;
+	//struct timer_list tx_fifo_stall_timer;
+	timer_t tx_fifo_stall_timer;
+	//struct timer_list watchdog_timer;
+	timer_t watchdog_timer;
+	//struct timer_list phy_info_timer;
+	timer_t phy_info_timer;
 #ifdef NETIF_F_HW_VLAN_TX
 	struct vlan_group *vlgrp;
 #endif
@@ -212,13 +224,14 @@ struct e1000_adapter {
 	uint32_t en_mng_pt;
 	uint16_t link_speed;
 	uint16_t link_duplex;
-	spinlock_t stats_lock;
+	spinlock_t stats_lock;   //different from Linux
 	atomic_t irq_sem;
-	struct work_struct tx_timeout_task;
+	//struct work_struct tx_timeout_task;   //different from Linux
 	uint8_t fc_autoneg;
 
 #ifdef ETHTOOL_PHYS_ID
-	struct timer_list blink_timer;
+	//struct timer_list blink_timer;
+	timer_t blink_timer;
 	unsigned long led_status;
 #endif
 
@@ -252,9 +265,11 @@ struct e1000_adapter {
 	uint32_t itr;
 
 	/* OS defined structs */
-	struct net_device *netdev;
-	struct pci_dev *pdev;
-	struct net_device_stats net_stats;
+	//struct net_device *netdev;
+	device_object_t *netdev;
+	//struct pci_dev *pdev;
+	pci_device_t *pdev;
+	//struct net_device_stats net_stats;
 
 	/* structs defined in e1000_hw.h */
 	struct e1000_hw hw;

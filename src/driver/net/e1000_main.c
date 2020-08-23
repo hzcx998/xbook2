@@ -26,7 +26,8 @@
 
 *******************************************************************************/
 
-#include "e1000.h"
+#include <net/e1000.h>
+#include <pci.h>
 
 /* Change Log
  * 5.6.10	11/23/04
@@ -94,7 +95,7 @@ static struct pci_device_id e1000_pci_tbl[] = {
 	INTEL_E1000_ETHERNET_DEVICE(0x1009),
 	INTEL_E1000_ETHERNET_DEVICE(0x100C),
 	INTEL_E1000_ETHERNET_DEVICE(0x100D),
-	INTEL_E1000_ETHERNET_DEVICE(0x100E),
+	INTEL_E1000_ETHERNET_DEVICE(0x100E),   //use
 	INTEL_E1000_ETHERNET_DEVICE(0x100F),
 	INTEL_E1000_ETHERNET_DEVICE(0x1010),
 	INTEL_E1000_ETHERNET_DEVICE(0x1011),
@@ -123,11 +124,11 @@ static struct pci_device_id e1000_pci_tbl[] = {
 	{0,}
 };
 
-MODULE_DEVICE_TABLE(pci, e1000_pci_tbl);
+//MODULE_DEVICE_TABLE(pci, e1000_pci_tbl);
 
 int e1000_up(struct e1000_adapter *adapter);
 void e1000_down(struct e1000_adapter *adapter);
-void e1000_reset(struct e1000_adapter *adapter);
+int e1000_reset(struct e1000_adapter *adapter);
 int e1000_set_spd_dplx(struct e1000_adapter *adapter, uint16_t spddplx);
 int e1000_setup_tx_resources(struct e1000_adapter *adapter);
 int e1000_setup_rx_resources(struct e1000_adapter *adapter);
@@ -139,8 +140,8 @@ void e1000_update_stats(struct e1000_adapter *adapter);
 
 static int e1000_init_module(void);
 static void e1000_exit_module(void);
-static int e1000_probe(struct pci_dev *pdev, const struct pci_device_id *ent);
-static void __devexit e1000_remove(struct pci_dev *pdev);
+static int e1000_probe(pci_device_t *pdev, const struct pci_device_id *ent);
+static void e1000_remove(pci_device_t *pdev);
 static int e1000_sw_init(struct e1000_adapter *adapter);
 static int e1000_open(struct net_device *netdev);
 static int e1000_close(struct net_device *netdev);
@@ -370,7 +371,7 @@ e1000_down(struct e1000_adapter *adapter)
 	}
 }
 
-void
+int
 e1000_reset(struct e1000_adapter *adapter)
 {
 	uint32_t pba;

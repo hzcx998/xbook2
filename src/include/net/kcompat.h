@@ -90,6 +90,11 @@
 	.subvendor = PCI_ANY_ID, .subdevice = PCI_ANY_ID
 #endif
 
+// #ifndef PCI_DEVICE
+// #define PCI_DEVICE(vend, dev) \
+// 	.vendoe = (vend), .device = (dev)
+// #endif
+
 /*****************************************************************************/
 /* Installations with ethtool version without eeprom, adapter id, or statistics
  * support */
