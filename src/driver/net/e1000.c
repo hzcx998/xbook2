@@ -21,7 +21,6 @@
 #include <net/e1000_hw.h>
 #include <net/e1000_osdep.h>
 #include <net/e1000.h>
-#include <net/kcompat.h>
 
 #define DRV_VERSION "v0.1"
 #define DRV_NAME "net-e1000" DRV_VERSION
