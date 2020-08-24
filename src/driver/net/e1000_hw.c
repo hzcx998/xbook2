@@ -3389,7 +3389,7 @@ e1000_acquire_eeprom(struct e1000_hw *hw)
         usec_delay(1);
     }
 
-    DEBUGFUNC("e1000_acquire_eeprom done\n");
+    //DEBUGFUNC("e1000_acquire_eeprom done\n");
 
     return E1000_SUCCESS;
 }
@@ -3650,6 +3650,8 @@ e1000_validate_eeprom_checksum(struct e1000_hw *hw)
         DEBUGOUT("EEPROM Checksum Invalid\n");
         return -E1000_ERR_EEPROM;
     }
+
+    DEBUGFUNC("e1000_validate_eeprom_checksum done\n");
 }
 
 /******************************************************************************
