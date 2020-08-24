@@ -116,7 +116,6 @@ typedef struct _e1000_extension {
     uint32_t min_frame_size;
     
     spinlock_t stats_lock;
-    spinlock_t tx_lock;
     atomic_t irq_sem;
 
     // uint8_t *rx_buffer;   //接收缓冲区
@@ -140,7 +139,7 @@ typedef struct _e1000_extension {
 **/
 static int e1000_get_pci_info(e1000_extension_t* ext)
 {
-    /* get pci device*/
+    /* get pci device */
     pci_device_t* pci_device = pci_get_device(PCI_VENDOR_ID_INTEL, E1000_DEV_ID_82540EM);
     if(pci_device == NULL) {
         printk(KERN_DEBUG "E1000_82540EM init failed: pci_get_device.\n");
@@ -346,6 +345,8 @@ int e1000_reset(e1000_extension_t* ext)
 
     e1000_reset_adaptive(&ext->hw);
     e1000_phy_get_info(&ext->hw, &ext->phy_info);
+
+    return 0;
 }
 
 static int e1000_init(e1000_extension_t* ext)
@@ -421,7 +422,7 @@ static int e1000_init(e1000_extension_t* ext)
     /* reset the hardware with the new setting */
     e1000_reset(ext);
 
-    strcpy(&net_dev->name, "eth%d");
+    strcpy(net_dev->name.text, "eth%d");
 
     //设备加入设备链表
 
@@ -483,4 +484,18 @@ iostatus_t e1000_driver_vine(driver_object_t* driver)
     printk(KERN_DEBUG "e1000_driver_vim: driver name=%s\n", driver->name.text);
     
     return status;
+}
+
+void
+e1000_pci_clear_mwi(struct e1000_hw *hw)
+{
+	e1000_extension_t *ext = hw->back;
+    uint32_t value;
+    uint16_t cmd;
+
+    cmd = ext->hw.pci_cmd_word & (~(PCI_COMMAND_INVALIDATE));
+    value = pci_device_read(ext->pci_device, PCI_STATUS_COMMAND);
+    value &= cmd;
+    
+	pci_device_write(ext->pci_device, PCI_STATUS_COMMAND, value);
 }
