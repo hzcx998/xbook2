@@ -379,7 +379,7 @@ e1000_reset_hw(struct e1000_hw *hw)
     uint32_t manc;
     uint32_t led_ctrl;
 
-    DEBUGFUNC("e1000_reset_hw start\n");
+    DEBUGFUNC("e1000_reset_hw start");
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "e1000_reset_hw.\n");
 #endif
@@ -411,15 +411,15 @@ e1000_reset_hw(struct e1000_hw *hw)
     msec_delay(10);
 
     ctrl = E1000_READ_REG(hw, CTRL);
-    printk(KERN_DEBUG "ctrl = %d\n", ctrl);
+    // printk(KERN_DEBUG "ctrl = %d\n", ctrl);
 
     /* Must reset the PHY before resetting the MAC */
     if((hw->mac_type == e1000_82541) || (hw->mac_type == e1000_82547)) {
         E1000_WRITE_REG(hw, CTRL, (ctrl | E1000_CTRL_PHY_RST));
         msec_delay(5);
     }
-    ctrl = E1000_READ_REG(hw, CTRL);
-    printk(KERN_DEBUG "ctrl_ = %d\n", ctrl);
+    // ctrl = E1000_READ_REG(hw, CTRL);
+    // printk(KERN_DEBUG "ctrl_ = %d\n", ctrl);
 
     /* Issue a global reset to the MAC.  This will reset the chip's
      * transmit, receive, DMA, and link units.  It will not effect
@@ -3638,6 +3638,7 @@ e1000_validate_eeprom_checksum(struct e1000_hw *hw)
 
     for(i = 0; i < (EEPROM_CHECKSUM_REG + 1); i++) {
         if(e1000_read_eeprom(hw, i, 1, &eeprom_data) < 0) {
+            printk(KERN_DEBUG "i=%d\n", i);
             DEBUGOUT("EEPROM Read Error\n");
             return -E1000_ERR_EEPROM;
         }
