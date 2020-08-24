@@ -17,6 +17,7 @@
 #include <sys/ioctl.h>
 #include <stddef.h>
 #include <sys/res.h>
+#include <xbook/vmarea.h>
 
 #include <net/e1000_hw.h>
 #include <net/e1000_osdep.h>
@@ -139,6 +140,8 @@ typedef struct _e1000_extension {
 **/
 static int e1000_get_pci_info(e1000_extension_t* ext)
 {
+    unsigned long mmio_start = 0;
+    int mmio_len;
     /* get pci device */
     pci_device_t* pci_device = pci_get_device(PCI_VENDOR_ID_INTEL, E1000_DEV_ID_82540EM);
     if(pci_device == NULL) {
@@ -154,9 +157,19 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
     /* enable bus mastering */
     pci_enable_bus_mastering(pci_device);
 
+    /* get mem_addr */
+    mmio_start = pci_device_get_mem_addr(pci_device);
+    mmio_len = pci_device_get_mem_len(pci_device);
+
+    printk(KERN_DEBUG "mmio_start=%x\n", mmio_start);
+    printk(KERN_DEBUG "mmio_len=%x\n", mmio_len);
+
+    ext->hw.hw_addr = (uint8_t*)ioremap(mmio_start, mmio_len);
+
     /* get io address */
     ext->io_addr = pci_device_get_io_addr(pci_device);
     ext->hw.io_base = pci_device_get_io_addr(pci_device);
+    printk(KERN_DEBUG "io_base = %d\n", ext->hw.io_base);
     if(ext->io_addr == 0) {
         printk(KERN_DEBUG "E1000_82540EM init failed: INVALID pci device io address.\n");
         return -1;
