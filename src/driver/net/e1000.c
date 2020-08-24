@@ -437,7 +437,7 @@ static int e1000_init(e1000_extension_t* ext)
     /* reset the hardware with the new setting */
     e1000_reset(ext);
 
-    strcpy(net_dev->name.text, "eth%d");
+    //strcpy(net_dev->name.text, "eth%d");
 
     //设备加入设备链表
 
@@ -487,12 +487,27 @@ static iostatus_t e1000_enter(driver_object_t* driver)
     return status;
 }
 
+static iostatus_t e1000_exit(driver_object_t* driver)
+{
+    /* 遍历所有对象 */
+    device_object_t* devobj;
+    device_object_t* next;
+    /* 由于涉及要释放devobj，所以需要使用safe版本 */
+    list_for_each_owner_safe (devobj, next, &driver->device_list, list) {
+        io_delete_device(devobj);   //删除每一个设备
+    }
+
+    string_del(&driver->name);   //删除驱动名
+    return IO_SUCCESS;
+}
+
 iostatus_t e1000_driver_vine(driver_object_t* driver)
 {
     iostatus_t status = IO_SUCCESS;
 
     /* 绑定驱动信息 */
     driver->driver_enter = e1000_enter;
+    driver->driver_exit = e1000_exit;
 
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);

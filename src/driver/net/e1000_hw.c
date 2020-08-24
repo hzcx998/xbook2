@@ -543,6 +543,7 @@ e1000_init_hw(struct e1000_hw *hw)
     uint16_t pcix_stat_hi_word;
     uint16_t cmd_mmrbc;
     uint16_t stat_mmrbc;
+    
     DEBUGFUNC("e1000_init_hw");
 
     /* Initialize Identification LED */
@@ -799,6 +800,9 @@ e1000_setup_link(struct e1000_hw *hw)
             E1000_WRITE_REG(hw, FCRTH, hw->fc_high_water);
         }
     }
+    
+    DEBUGFUNC("e1000_setup_link done\n");
+
     return ret_val;
 }
 
@@ -3075,6 +3079,8 @@ e1000_phy_get_info(struct e1000_hw *hw,
         return e1000_phy_igp_get_info(hw, phy_info);
     else
         return e1000_phy_m88_get_info(hw, phy_info);
+    
+    DEBUGFUNC("e1000_phy_get_info done\n");
 }
 
 int32_t
@@ -3984,6 +3990,8 @@ e1000_init_rx_addrs(struct e1000_hw *hw)
         E1000_WRITE_REG_ARRAY(hw, RA, (i << 1), 0);
         E1000_WRITE_REG_ARRAY(hw, RA, ((i << 1) + 1), 0);
     }
+    
+    DEBUGFUNC("e1000_init_rx_addrs done\n");
 }
 
 /******************************************************************************
@@ -4273,6 +4281,9 @@ e1000_id_led_init(struct e1000_hw * hw)
             break;
         }
     }
+    
+    DEBUGFUNC("e1000_id_led_init done\n");
+
     return E1000_SUCCESS;
 }
 
@@ -4569,6 +4580,8 @@ e1000_reset_adaptive(struct e1000_hw *hw)
     } else {
         DEBUGOUT("Not in Adaptive IFS mode!\n");
     }
+    
+    DEBUGFUNC("e1000_reset_adaptive done\n");
 }
 
 /******************************************************************************
