@@ -437,7 +437,7 @@ e1000_reset_hw(struct e1000_hw *hw)
         case e1000_82541_rev_2:
             /* These controllers can't ack the 64-bit write when issuing the
              * reset, so use IO-mapping as a workaround to issue the reset */
-            E1000_WRITE_REG(hw, CTRL, (ctrl | E1000_CTRL_RST));
+            E1000_WRITE_REG_IO(hw, CTRL, (ctrl | E1000_CTRL_RST));
             break;
         case e1000_82545_rev_3:
         case e1000_82546_rev_3:
@@ -3349,7 +3349,7 @@ e1000_acquire_eeprom(struct e1000_hw *hw)
     struct e1000_eeprom_info *eeprom = &hw->eeprom;
     uint32_t eecd, i=0;
 
-    DEBUGFUNC("e1000_acquire_eeprom");
+    // DEBUGFUNC("e1000_acquire_eeprom");
 
     eecd = E1000_READ_REG(hw, EECD);
 
@@ -3453,7 +3453,7 @@ e1000_release_eeprom(struct e1000_hw *hw)
 {
     uint32_t eecd;
 
-    DEBUGFUNC("e1000_release_eeprom");
+    // DEBUGFUNC("e1000_release_eeprom");
 
     eecd = E1000_READ_REG(hw, EECD);
 
@@ -3553,7 +3553,7 @@ e1000_read_eeprom(struct e1000_hw *hw,
     struct e1000_eeprom_info *eeprom = &hw->eeprom;
     uint32_t i = 0;
 
-    DEBUGFUNC("e1000_read_eeprom");
+    // DEBUGFUNC("e1000_read_eeprom");
     /* A check for invalid values:  offset too large, too many words, and not
      * enough words.
      */
@@ -3613,7 +3613,7 @@ e1000_read_eeprom(struct e1000_hw *hw,
     /* End this read operation */
     e1000_release_eeprom(hw);
 
-    DEBUGFUNC("e1000_read_eeprom done\n");
+    // DEBUGFUNC("e1000_read_eeprom done\n");
 
     return E1000_SUCCESS;
 }
@@ -3645,14 +3645,14 @@ e1000_validate_eeprom_checksum(struct e1000_hw *hw)
         checksum += eeprom_data;
     }
 
+    DEBUGFUNC("e1000_validate_eeprom_checksum done\n");
+    
     if(checksum == (uint16_t) EEPROM_SUM)
         return E1000_SUCCESS;
     else {
         DEBUGOUT("EEPROM Checksum Invalid\n");
         return -E1000_ERR_EEPROM;
     }
-
-    DEBUGFUNC("e1000_validate_eeprom_checksum done\n");
 }
 
 /******************************************************************************
@@ -3916,6 +3916,8 @@ e1000_read_part_num(struct e1000_hw *hw,
     }
     /* Save word 1 in lower half of part_num */
     *part_num |= eeprom_data;
+    
+    DEBUGFUNC("e1000_read_part_num done");
 
     return E1000_SUCCESS;
 }
@@ -3949,6 +3951,9 @@ e1000_read_mac_addr(struct e1000_hw * hw)
 
     for(i = 0; i < NODE_ADDRESS_SIZE; i++)
         hw->mac_addr[i] = hw->perm_mac_addr[i];
+    
+    DEBUGFUNC("e1000_read_mac_addr done\n");
+    
     return E1000_SUCCESS;
 }
 
@@ -4693,6 +4698,8 @@ e1000_get_bus_info(struct e1000_hw *hw)
 {
     uint32_t status;
 
+    DEBUGFUNC("e1000_get_bus_info");
+
     if(hw->mac_type < e1000_82543) {
         hw->bus_type = e1000_bus_type_unknown;
         hw->bus_speed = e1000_bus_speed_unknown;
@@ -4728,6 +4735,8 @@ e1000_get_bus_info(struct e1000_hw *hw)
     }
     hw->bus_width = (status & E1000_STATUS_BUS64) ?
                     e1000_bus_width_64 : e1000_bus_width_32;
+    
+    DEBUGFUNC("e1000_get_bus_info done\n");
 }
 /******************************************************************************
  * Reads a value from one of the devices registers using port I/O (as opposed
@@ -4736,16 +4745,16 @@ e1000_get_bus_info(struct e1000_hw *hw)
  * hw - Struct containing variables accessed by shared code
  * offset - offset to read from
  *****************************************************************************/
-// uint32_t
-// e1000_read_reg_io(struct e1000_hw *hw,
-//                   uint32_t offset)
-// {
-//     unsigned long io_addr = hw->io_base;
-//     unsigned long io_data = hw->io_base + 4;
+uint32_t
+e1000_read_reg_io(struct e1000_hw *hw,
+                  uint32_t offset)
+{
+    unsigned long io_addr = hw->io_base;
+    unsigned long io_data = hw->io_base + 4;
 
-//     e1000_io_write(hw, io_addr, offset);
-//     return e1000_io_read(hw, io_data);
-// }
+    e1000_io_write(hw, io_addr, offset);
+    return e1000_io_read(hw, io_data);
+}
 
 /******************************************************************************
  * Writes a value to one of the devices registers using port I/O (as opposed to
@@ -4755,18 +4764,29 @@ e1000_get_bus_info(struct e1000_hw *hw)
  * offset - offset to write to
  * value - value to write
  *****************************************************************************/
-// void
-// e1000_write_reg_io(struct e1000_hw *hw,
-//                    uint32_t offset,
-//                    uint32_t value)
-// {
-//     unsigned long io_addr = hw->io_base;
-//     unsigned long io_data = hw->io_base + 4;
+void
+e1000_write_reg_io(struct e1000_hw *hw,
+                   uint32_t offset,
+                   uint32_t value)
+{
+    unsigned long io_addr = hw->io_base;
+    unsigned long io_data = hw->io_base + 4;
 
-//     e1000_io_write(hw, io_addr, offset);
-//     e1000_io_write(hw, io_data, value);
+    e1000_io_write(hw, io_addr, offset);
+    e1000_io_write(hw, io_data, value);
+}
+
+// uint32_t
+// e1000_io_read(struct e1000_hw *hw, unsigned long port)
+// {
+// 	return in32(port);
 // }
 
+// void
+// e1000_io_write(struct e1000_hw *hw, unsigned long port, uint32_t value)
+// {
+// 	out32(value, port);
+// }
 
 /******************************************************************************
  * Estimates the cable length.

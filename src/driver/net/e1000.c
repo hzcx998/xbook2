@@ -316,6 +316,8 @@ int e1000_reset(e1000_extension_t* ext)
 {
     uint32_t pba;
 
+    DEBUGFUNC("e1000_reset");
+
 	/* Repartition Pba for greater than 9k mtu
 	 * To take effect CTRL.RST is required.
 	 */
@@ -358,6 +360,8 @@ int e1000_reset(e1000_extension_t* ext)
 
     e1000_reset_adaptive(&ext->hw);
     e1000_phy_get_info(&ext->hw, &ext->phy_info);
+
+    DEBUGFUNC("e1000_reset done\n");
 
     return 0;
 }
@@ -521,4 +525,16 @@ void e1000_pci_set_mwi(struct e1000_hw* hw)
     value &= cmd;
 
     pci_device_write(ext->pci_device, PCI_STATUS_COMMAND, value);
+}
+
+uint32_t
+e1000_io_read(struct e1000_hw *hw, unsigned long port)
+{
+	return in32(port);
+}
+
+void
+e1000_io_write(struct e1000_hw *hw, unsigned long port, uint32_t value)
+{
+	out32(value, port);
 }
