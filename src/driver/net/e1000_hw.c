@@ -410,7 +410,7 @@ e1000_reset_hw(struct e1000_hw *hw)
 
     /* Must reset the PHY before resetting the MAC */
     if((hw->mac_type == e1000_82541) || (hw->mac_type == e1000_82547)) {
-        E1000_WRITE_REG_IO(hw, CTRL, (ctrl | E1000_CTRL_PHY_RST));
+        E1000_WRITE_REG(hw, CTRL, (ctrl | E1000_CTRL_PHY_RST));
         msec_delay(5);
     }
 
@@ -430,7 +430,7 @@ e1000_reset_hw(struct e1000_hw *hw)
         case e1000_82541_rev_2:
             /* These controllers can't ack the 64-bit write when issuing the
              * reset, so use IO-mapping as a workaround to issue the reset */
-            E1000_WRITE_REG_IO(hw, CTRL, (ctrl | E1000_CTRL_RST));
+            E1000_WRITE_REG(hw, CTRL, (ctrl | E1000_CTRL_RST));
             break;
         case e1000_82545_rev_3:
         case e1000_82546_rev_3:
@@ -599,21 +599,23 @@ e1000_init_hw(struct e1000_hw *hw)
     default:
         /* Workaround for PCI-X problem when BIOS sets MMRBC incorrectly. */
         if(hw->bus_type == e1000_bus_type_pcix) {
-            e1000_read_pci_cfg(hw, PCIX_COMMAND_REGISTER, &pcix_cmd_word);
-            e1000_read_pci_cfg(hw, PCIX_STATUS_REGISTER_HI,
-                &pcix_stat_hi_word);
-            cmd_mmrbc = (pcix_cmd_word & PCIX_COMMAND_MMRBC_MASK) >>
-                PCIX_COMMAND_MMRBC_SHIFT;
-            stat_mmrbc = (pcix_stat_hi_word & PCIX_STATUS_HI_MMRBC_MASK) >>
-                PCIX_STATUS_HI_MMRBC_SHIFT;
-            if(stat_mmrbc == PCIX_STATUS_HI_MMRBC_4K)
-                stat_mmrbc = PCIX_STATUS_HI_MMRBC_2K;
-            if(cmd_mmrbc > stat_mmrbc) {
-                pcix_cmd_word &= ~PCIX_COMMAND_MMRBC_MASK;
-                pcix_cmd_word |= stat_mmrbc << PCIX_COMMAND_MMRBC_SHIFT;
-                e1000_write_pci_cfg(hw, PCIX_COMMAND_REGISTER,
-                    &pcix_cmd_word);
-            }
+            // e1000_read_pci_cfg(hw, PCIX_COMMAND_REGISTER, &pcix_cmd_word);
+            // e1000_read_pci_cfg(hw, PCIX_STATUS_REGISTER_HI,
+            //     &pcix_stat_hi_word);
+            // cmd_mmrbc = (pcix_cmd_word & PCIX_COMMAND_MMRBC_MASK) >>
+            //     PCIX_COMMAND_MMRBC_SHIFT;
+            // stat_mmrbc = (pcix_stat_hi_word & PCIX_STATUS_HI_MMRBC_MASK) >>
+            //     PCIX_STATUS_HI_MMRBC_SHIFT;
+            // if(stat_mmrbc == PCIX_STATUS_HI_MMRBC_4K)
+            //     stat_mmrbc = PCIX_STATUS_HI_MMRBC_2K;
+            // if(cmd_mmrbc > stat_mmrbc) {
+            //     pcix_cmd_word &= ~PCIX_COMMAND_MMRBC_MASK;
+            //     pcix_cmd_word |= stat_mmrbc << PCIX_COMMAND_MMRBC_SHIFT;
+            //     e1000_write_pci_cfg(hw, PCIX_COMMAND_REGISTER,
+            //         &pcix_cmd_word);
+            // }
+            printk(KERN_DEBUG "don't support pci-x");
+            return -1;
         }
         break;
     }
@@ -4716,16 +4718,16 @@ e1000_get_bus_info(struct e1000_hw *hw)
  * hw - Struct containing variables accessed by shared code
  * offset - offset to read from
  *****************************************************************************/
-uint32_t
-e1000_read_reg_io(struct e1000_hw *hw,
-                  uint32_t offset)
-{
-    unsigned long io_addr = hw->io_base;
-    unsigned long io_data = hw->io_base + 4;
+// uint32_t
+// e1000_read_reg_io(struct e1000_hw *hw,
+//                   uint32_t offset)
+// {
+//     unsigned long io_addr = hw->io_base;
+//     unsigned long io_data = hw->io_base + 4;
 
-    e1000_io_write(hw, io_addr, offset);
-    return e1000_io_read(hw, io_data);
-}
+//     e1000_io_write(hw, io_addr, offset);
+//     return e1000_io_read(hw, io_data);
+// }
 
 /******************************************************************************
  * Writes a value to one of the devices registers using port I/O (as opposed to
@@ -4735,17 +4737,17 @@ e1000_read_reg_io(struct e1000_hw *hw,
  * offset - offset to write to
  * value - value to write
  *****************************************************************************/
-void
-e1000_write_reg_io(struct e1000_hw *hw,
-                   uint32_t offset,
-                   uint32_t value)
-{
-    unsigned long io_addr = hw->io_base;
-    unsigned long io_data = hw->io_base + 4;
+// void
+// e1000_write_reg_io(struct e1000_hw *hw,
+//                    uint32_t offset,
+//                    uint32_t value)
+// {
+//     unsigned long io_addr = hw->io_base;
+//     unsigned long io_data = hw->io_base + 4;
 
-    e1000_io_write(hw, io_addr, offset);
-    e1000_io_write(hw, io_data, value);
-}
+//     e1000_io_write(hw, io_addr, offset);
+//     e1000_io_write(hw, io_data, value);
+// }
 
 
 /******************************************************************************
