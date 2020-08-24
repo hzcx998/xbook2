@@ -462,4 +462,26 @@ static iostatus_t e1000_enter(driver_object_t* driver)
         io_delete_device(devobj);
         return status;
     }
+
+    if(e1000_init(devext)) {
+        status = IO_FAILED;
+        io_delete_device(devobj);
+        return status;
+    }
+
+    return status;
+}
+
+iostatus_t e1000_driver_vine(driver_object_t* driver)
+{
+    iostatus_t status = IO_SUCCESS;
+
+    /* 绑定驱动信息 */
+    driver->driver_enter = e1000_enter;
+
+    /* 初始化驱动名字 */
+    string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
+    printk(KERN_DEBUG "e1000_driver_vim: driver name=%s\n", driver->name.text);
+    
+    return status;
 }
