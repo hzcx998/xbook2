@@ -41,7 +41,6 @@
 #include <xbook/debug.h>
 #include <xbook/clock.h>
 #include <xbook/timer.h>
-#include <net/kcompat.h>
 
 #if 0
 #include <linux/types.h>
