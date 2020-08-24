@@ -317,6 +317,8 @@ e1000_set_mac_type(struct e1000_hw *hw)
         break;
     }
 
+    DEBUGFUNC("e1000_set_mac_type done\n");
+
     return E1000_SUCCESS;
 }
 
@@ -359,6 +361,8 @@ e1000_set_media_type(struct e1000_hw *hw)
             hw->media_type = e1000_media_type_fiber;
         }
     }
+
+    DEBUGFUNC("e1000_set_media_type done\n");
 }
 
 /******************************************************************************
@@ -375,7 +379,7 @@ e1000_reset_hw(struct e1000_hw *hw)
     uint32_t manc;
     uint32_t led_ctrl;
 
-    //DEBUGFUNC("e1000_reset_hw");
+    DEBUGFUNC("e1000_reset_hw start\n");
 #if DEBUG_LOCAL == 1
     printk(KERN_DEBUG "e1000_reset_hw.\n");
 #endif
@@ -503,6 +507,7 @@ e1000_reset_hw(struct e1000_hw *hw)
             e1000_pci_set_mwi(hw);
     }
 
+    DEBUGFUNC("e1000_reset_hw done\n");
     return E1000_SUCCESS;
 }
 
@@ -3079,6 +3084,8 @@ e1000_validate_mdi_setting(struct e1000_hw *hw)
         hw->mdix = 1;
         return -E1000_ERR_CONFIG;
     }
+
+    DEBUGFUNC("e1000_validate_mdi_settings done\n");
     return E1000_SUCCESS;
 }
 
@@ -3188,6 +3195,7 @@ e1000_init_eeprom_params(struct e1000_hw *hw)
             }
         }
     }
+    DEBUGFUNC("e1000_init_eeprom_params done\n");
 }
 
 /******************************************************************************
@@ -3344,7 +3352,7 @@ e1000_acquire_eeprom(struct e1000_hw *hw)
 
     /* Request EEPROM Access */
     if(hw->mac_type > e1000_82544) {
-        eecd |= E1000_EECD_REQ;
+        eecd |= E1000_EECD_REQ;//0100_0000
         E1000_WRITE_REG(hw, EECD, eecd);
         eecd = E1000_READ_REG(hw, EECD);
         while((!(eecd & E1000_EECD_GNT)) &&
@@ -3377,6 +3385,8 @@ e1000_acquire_eeprom(struct e1000_hw *hw)
         E1000_WRITE_REG(hw, EECD, eecd);
         usec_delay(1);
     }
+
+    DEBUGFUNC("e1000_acquire_eeprom done\n");
 
     return E1000_SUCCESS;
 }
@@ -3599,6 +3609,8 @@ e1000_read_eeprom(struct e1000_hw *hw,
 
     /* End this read operation */
     e1000_release_eeprom(hw);
+
+    DEBUGFUNC("e1000_read_eeprom done\n");
 
     return E1000_SUCCESS;
 }

@@ -361,9 +361,7 @@ static int e1000_init(e1000_extension_t* ext)
 
     /* 对版本进行检测，仅支持82540em网卡 */
     if(pdev->vendor_id != E1000_VENDOR_ID && pdev->device_id != E1000_DEV_ID_82540EM) {
-#if DEBUG_LOCAL == 1
         printk(KERN_DEBUG "this deiver only support 82540em netcard.\n");
-#endif
         return -1;
     }
 
