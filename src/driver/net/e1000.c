@@ -95,7 +95,12 @@ typedef struct _e1000_extension {
 	uint32_t gorcl;
 	uint64_t gorcl_old;
 
+    /* structs defined in e1000_hw.h */
     struct e1000_hw hw;
+    struct e1000_hw_stats stats;
+    struct e1000_phy_info phy_info;
+    struct e1000_phy_stats phy_stats;
+
     uint32_t part_num;
 
     uint32_t io_addr;   //IO基地址
@@ -322,10 +327,31 @@ int e1000_reset(e1000_extension_t* ext)
         atomic_set(&ext->tx_fifo_stall, 0);
     }
     E1000_WRITE_REG(&ext->hw, PBA, pba);
+
+    /* flow control settings */
+    ext->hw.fc_high_water = (pba << E1000_PBA_BYTES_SHIFT) - E1000_FC_HIGH_DIFF;
+    ext->hw.fc_low_water = (pba << E1000_PBA_BYTES_SHIFT) - E1000_FC_LOW_DIFF;
+    ext->hw.fc_pause_time = E1000_FC_PAUSE_TIME;
+    ext->hw.fc = ext->hw.original_fc;
+
+    e1000_reset_hw(&ext->hw);
+    if(ext->hw.mac_type >= e1000_82544) {
+        E1000_WRITE_REG(&ext->hw, WUC, 0);
+    }
+    if(e1000_init_hw(&ext->hw)) {
+        printk(KERN_DEBUG "Hardware error\n");
+    }
+
+    /* Enable h/w to recognize an 802.1Q VLAN Ethernet packet */
+    E1000_WRITE_REG(&ext->hw, VET, ETHERNET_IEEE_VLAN_TYPE);
+
+    e1000_reset_adaptive(&ext->hw);
+    e1000_phy_get_info(&ext->hw, &ext->phy_info);
 }
 
 static int e1000_init(e1000_extension_t* ext)
 {
+    device_object_t* net_dev;
     uint16_t eeprom_data;
 
     ASSERT(ext);
@@ -367,6 +393,8 @@ static int e1000_init(e1000_extension_t* ext)
 
     //通知系统网卡不可用
 
+    //参数检查
+
     /* Initial Wake on LAN setting
 	 * If APM wake is enabled in the EEPROM,
 	 * enable the ACPI Magic Packet filter
@@ -392,6 +420,15 @@ static int e1000_init(e1000_extension_t* ext)
 	}
 
     /* reset the hardware with the new setting */
+    e1000_reset(ext);
+
+    strcpy(&net_dev->name, "eth%d");
+
+    //设备加入设备链表
+
+    printk(KERN_DEBUG "Intel(R) PRO/1000 Network Connection\n");
+
+    return 0;
 }
 
 static iostatus_t e1000_enter(driver_object_t* driver)
