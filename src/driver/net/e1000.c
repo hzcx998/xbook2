@@ -486,10 +486,9 @@ iostatus_t e1000_driver_vine(driver_object_t* driver)
     return status;
 }
 
-void
-e1000_pci_clear_mwi(struct e1000_hw *hw)
+void e1000_pci_clear_mwi(struct e1000_hw* hw)
 {
-	e1000_extension_t *ext = hw->back;
+	e1000_extension_t* ext = hw->back;
     uint32_t value;
     uint16_t cmd;
 
@@ -498,4 +497,17 @@ e1000_pci_clear_mwi(struct e1000_hw *hw)
     value &= cmd;
     
 	pci_device_write(ext->pci_device, PCI_STATUS_COMMAND, value);
+}
+
+void e1000_pci_set_mwi(struct e1000_hw* hw)
+{
+    e1000_extension_t* ext = hw->back;
+    uint32_t value;
+    uint16_t cmd;
+
+    cmd = ext->hw.pci_cmd_word | PCI_COMMAND_INVALIDATE;
+    value = pci_device_read(ext->pci_device, PCI_STATUS_COMMAND);
+    value &= cmd;
+
+    pci_device_write(ext->pci_device, PCI_STATUS_COMMAND, value);
 }
