@@ -374,6 +374,17 @@ unsigned int pci_device_get_mem_addr(pci_device_t *device)
     return 0;
 }
 
+unsigned int pci_device_get_mem_len(pci_device_t *device)
+{
+    int i;
+    for(i=0; i<PCI_MAX_BAR; i++) {
+        if(device->bar[i].type == PCI_BAR_TYPE_MEM) {
+            return device->bar[i].length;
+        }
+    }
+    return 0;
+}
+
 unsigned int pci_device_get_irq_line(pci_device_t *device)
 {
     return device->irq_line;

@@ -151,6 +151,7 @@ typedef struct pci_device
 
 unsigned int pci_device_get_io_addr(pci_device_t *device);
 unsigned int pci_device_get_mem_addr(pci_device_t *device);
+unsigned int pci_device_get_mem_len(pci_device_t *device);
 unsigned int pci_device_get_irq_line(pci_device_t *device);
 void pci_enable_bus_mastering(pci_device_t *device);
 pci_device_t* pci_get_device(unsigned int vendor_id, unsigned int device_id);
