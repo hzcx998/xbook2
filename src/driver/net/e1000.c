@@ -31,6 +31,10 @@
 
 #define DEBUG_LOCAL 0
 
+#ifndef NET_IP_ALIGN
+#define NET_IP_ALIGN 2
+#endif
+
 /*以太网的情况*/
 #define ETH_ALEN 6 /*以太网地址，即MAC地址，6字节*/
 #define ETH_ZLEN 60 /*不含CRC校验的数据最小长度*/
@@ -142,6 +146,7 @@ static void e1000_set_multi(device_object_t* netdev);
 static void e1000_enter_82542_rst(e1000_extension_t* ext);
 static void e1000_leave_82542_rst(e1000_extension_t* ext);
 static void e1000_clean_rx_ring(e1000_extension_t* ext);
+static void e1000_alloc_rx_buffers(e1000_extension_t* ext);
 
 /**
  * 1. 申请pci结构(pci_device_t)并初始化厂商号和设备号
@@ -839,7 +844,7 @@ static void e1000_set_multi(device_object_t* netdev)
     }
 
     /* clear the old setting from the multicast hash table */
-    for(=0; i<E1000_NUM_MTA_REGISTERS; i++) {
+    for(i=0; i<E1000_NUM_MTA_REGISTERS; i++) {
         E1000_WRITE_REG_ARRAY(hw, MTA, i, 0);
     }
 
@@ -881,6 +886,11 @@ static void e1000_leave_82542_rst(e1000_extension_t* ext)
     if(ext->hw.pci_cmd_word & PCI_COMMAND_INVALIDATE) {
         e1000_pci_set_mwi(&ext->hw);
     }
+
+    //判断网卡工作
+
+    e1000_configure_rx(ext);
+    e1000_alloc_rx_buffers(ext);
 }
 
 /**
@@ -931,4 +941,51 @@ static void e1000_configure_rx(e1000_extension_t* ext)
 
     /* enable receives */
     E1000_WRITE_REG(&ext->hw, RCTL, rctl);
+}
+
+/**
+ * e1000_alloc_rx_buffers - Replace used receive buffers
+ * @ext: address of board private structure
+ **/
+static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
+{
+    struct e1000_desc_ring* rx_ring = &ext->rx_ring;
+    struct e1000_rx_desc* rx_desc;
+    struct e1000_buffer* buffer_info;
+    uint8_t* buffer;
+    unsigned int i;
+
+    i = rx_ring->next_to_use;
+    buffer_info = &rx_ring->buffer_info[i];   //i=0
+
+    while(!buffer_info->buffer) {
+        buffer = kmalloc(ext->rx_buffer_len + NET_IP_ALIGN);
+
+        if(unlikely(!buffer)) {
+            break;
+        }
+
+        /* make buffer alignment 2 beyond a 16 byte boundary
+         * this will result in a 16 byte alinged IP header after
+         * the 14 byte MAC header is removed
+         */
+
+        //在skb中登记netdev
+
+        buffer_info->buffer = buffer;
+        buffer_info->length = ext->rx_buffer_len;
+        buffer_info->dma = v2p(buffer);
+
+        rx_desc = E1000_RX_DESC(*rx_ring, i);
+        rx_desc->buffer_addr = cpu_to_le32(buffer_info->dma);
+
+        if(unlikely((i & ~(E1000_RX_BUFFER_WRITE - 1)) == i)) {
+            E1000_WRITE_REG(&ext->hw, RDT, i);
+        }
+
+        if(unlikely(++i == rx_ring->count)) i = 0;
+        buffer_info = &rx_ring->buffer_info[i];
+    }
+
+    rx_ring->next_to_use = i;
 }
