@@ -446,6 +446,65 @@ static int e1000_init(e1000_extension_t* ext)
     return 0;
 }
 
+static inline void
+e1000_free_tx_resource(struct e1000_buffer* buffer_info)
+{
+    if(buffer_info->tx_buffer) {
+        kfree(buffer_info->tx_buffer);
+        buffer_info->tx_buffer = NULL;
+    }
+}
+
+/**
+ * e1000_clean_tx_ring - Free Tx Buffers
+ * @adapter: board private structure
+ **/
+
+static void e1000_clean_tx_ring(e1000_extension_t* ext)
+{
+    struct e1000_desc_ring* tx_ring = &ext->tx_ring;
+    struct e1000_buffer* buffer_info;
+    unsigned long size;
+    unsigned int i;
+
+    /* free all the tx ring buffers*/
+    for(i=0; i<tx_ring->count; i++) {
+        buffer_info = &tx_ring->buffer_info[i];
+        e1000_free_tx_resource(buffer_info);
+    }
+
+    size = sizeof(struct e1000_buffer) * tx_ring->count;
+    memset(tx_ring->buffer_info, 0, size);
+
+    /* zero out the descriptor ring */
+    memset(tx_ring->desc, 0, tx_ring->size);
+
+    tx_ring->next_to_use = 0;
+    tx_ring->next_to_clean = 0;
+
+    /* zero out tx descrptor regester */
+    E1000_WRITE_REG(&ext->hw, TDH, 0);
+    E1000_WRITE_REG(&ext->hw, TDT, 0);
+}
+
+/**
+ * e1000_free_tx_resources - Free Tx Resources
+ * @adapter: board private structure
+ *
+ * Free all transmit software resources
+ **/
+void e1000_free_tx_resources(e1000_extension_t* ext)
+{
+    e1000_clean_tx_ring(ext);
+    
+    vfree(ext->tx_ring.buffer_info);
+    ext->tx_ring.buffer_info = NULL;
+    
+    kfree(ext->tx_ring.desc);
+    
+    ext->tx_ring.desc = NULL;
+}
+
 /**
  * e1000_setup_tx_resources - allocate Tx resources (Descriptors)
  * @ext: board private structure
@@ -456,7 +515,7 @@ static int e1000_init(e1000_extension_t* ext)
 int e1000_setup_tx_resources(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* txdr = &ext->tx_ring;
-    pci_device_t* pdev = ext->pci_device;
+    // pci_device_t* pdev = ext->pci_device;
     int size;
 
     size = sizeof(struct e1000_buffer*) * txdr->count;
@@ -487,6 +546,44 @@ int e1000_setup_tx_resources(e1000_extension_t* ext)
     return 0;
 }
 
+/**
+ * e1000_setup_rx_resources - allocate Rx resources (Descriptors)
+ * @adapter: board private structure
+ *
+ * Returns 0 on success, negative on failure
+ **/
+int e1000_setup_rx_resources(e1000_extension_t* ext)
+{
+    struct e1000_desc_ring* rxdr = &ext->rx_ring;
+    int size;
+
+    size = sizeof(struct e1000_buffer) * rxdr->count;
+    rxdr->buffer_info = vmalloc(size);
+    if(!rxdr->buffer_info) {
+        printk(KERN_DEBUG "unable to allocate memory for the recieve descriptor ring\n");
+        return -1;
+    }
+    memset(rxdr->buffer_info, 0, size);
+
+    /* round up to mearset 4K */
+    rxdr->size = rxdr->count * sizeof(struct e1000_rx_desc);
+    E1000_ROUNDUP(rxdr->size, 4096);
+
+    /* 分配DMA空间 */
+    rxdr->desc = kmalloc(rxdr->size);
+    if(!rxdr->desc) {
+        printk(KERN_DEBUG "unable to allocate memory for the recieve descriptor ring\n");
+        return -1;
+    }
+    rxdr->dma = v2p(rxdr->desc);
+    memset(rxdr->desc, 0, rxdr->size);
+
+    rxdr->next_to_clean = 0;
+    rxdr->next_to_use = 0;
+
+    return 0;
+}
+
 static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
 {
     e1000_extension_t* ext = device->device_extension;
@@ -500,7 +597,12 @@ static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
 
     /* allocate receive descriptors */
     /* 分配接受描述符 */
+    if((err = e1000_setup_rx_resources(ext))) {
+        goto err_setup_rx;
+    }
 
+err_setup_rx:
+    e1000_free_tx_resources(ext);
 err_setup_tx:
     e1000_reset(ext);
 }
