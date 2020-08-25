@@ -446,6 +446,13 @@ static int e1000_init(e1000_extension_t* ext)
     return 0;
 }
 
+/**
+ * e1000_setup_tx_resources - allocate Tx resources (Descriptors)
+ * @ext: board private structure
+ *
+ * Return 0 on success, negative on failure
+ **/
+
 int e1000_setup_tx_resources(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* txdr = &ext->tx_ring;
@@ -465,14 +472,19 @@ int e1000_setup_tx_resources(e1000_extension_t* ext)
     E1000_ROUNDUP(txdr->size, 4096);
 
     /* 申请DMA空间 */
-
-    txdr->desc = kmalloc(size);
-    if(txdr->desc == NULL) {
-        printk(KERN_DEBUG "kmalloc for e1000 tx buffer failed!\n");
-        kfree(txdr->desc);
+    txdr->desc = kmalloc(txdr->size);
+    if(!txdr->desc) {
+        printk(KERN_DEBUG "unable to allocate memory the transmit descriptor ring\n");
+        vfree(txdr->buffer_info);
         return -1;
     }
     txdr->dma = v2p(txdr->desc);
+    memset(txdr->desc, 0, txdr->size);
+
+    txdr->next_to_use = 0;
+    txdr->next_to_clean = 0;
+
+    return 0;
 }
 
 static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
@@ -482,6 +494,15 @@ static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
 
     /* allocate transmit descriptors */
     /* 分配传输描述符 */
+    if((err = e1000_setup_tx_resources(ext))) {
+        goto err_setup_tx;
+    }
+
+    /* allocate receive descriptors */
+    /* 分配接受描述符 */
+
+err_setup_tx:
+    e1000_reset(ext);
 }
 
 static iostatus_t e1000_enter(driver_object_t* driver)
