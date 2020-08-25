@@ -34,4 +34,6 @@ long long atoll(const char * nptr);
 double atof(const char * nptr);
 long atol(const char * nptr);
 
+int abs(int const i);
+long int labs(long int const i);
 #endif  /* _LIB_STDLIB_H */
