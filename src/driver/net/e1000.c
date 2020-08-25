@@ -851,8 +851,10 @@ static void e1000_set_multi(device_object_t* netdev)
     /* load any remaining address into the hash table */
 
     if(hw->mac_type == e1000_82542_rev2_0) {
-
+        e1000_leave_82542_rst(ext);
     }
+
+    spin_unlock_irqrestore(&ext->tx_lock, flags);
 }
 
 /* The 82542 2.0 (revision 2) needs to have the receive unit in reset
