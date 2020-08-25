@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <utime.h>
@@ -46,4 +47,7 @@ int shm_test(int argc, char *argv[]);
 
 int trig_test(int argc, char *argv[]);
 
+/* ---- xlibc test ---- */
+int xlibc_test(int argc,char *argv[]);
+/* ---- xlibc test end ---- */
 #endif // _TEST_H

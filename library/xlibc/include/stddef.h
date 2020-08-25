@@ -79,7 +79,8 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 #define clamp(v, a, b)	min(max(a, v), b)
 
-#define abs(a)    ((a) > 0 ? (a) : -(a))
+// This macroshould not be used.A use like abs(a++) will make a wrong result.Use abs() and labs()
+// #define abs(a)    ((a) > 0 ? (a) : -(a))
 
 #endif  /* _XLIBC_STDDEF_H */
 
