@@ -446,6 +446,44 @@ static int e1000_init(e1000_extension_t* ext)
     return 0;
 }
 
+int e1000_setup_tx_resources(e1000_extension_t* ext)
+{
+    struct e1000_desc_ring* txdr = &ext->tx_ring;
+    pci_device_t* pdev = ext->pci_device;
+    int size;
+
+    size = sizeof(struct e1000_buffer*) * txdr->count;
+    txdr->buffer_info = vmalloc(size);
+    if(!txdr->buffer_info) {
+        printk(KERN_DEBUG "Unable to allocate memory for the transmit desciptor ring\n");
+        return -1;
+    }
+    memset(txdr->buffer_info, 0, size);
+
+    /* round up to nearest 4K */
+    txdr->size = txdr->count * sizeof(struct e1000_tx_desc);
+    E1000_ROUNDUP(txdr->size, 4096);
+
+    /* 申请DMA空间 */
+
+    txdr->desc = kmalloc(size);
+    if(txdr->desc == NULL) {
+        printk(KERN_DEBUG "kmalloc for e1000 tx buffer failed!\n");
+        kfree(txdr->desc);
+        return -1;
+    }
+    txdr->dma = v2p(txdr->desc);
+}
+
+static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
+{
+    e1000_extension_t* ext = device->device_extension;
+    int err;
+
+    /* allocate transmit descriptors */
+    /* 分配传输描述符 */
+}
+
 static iostatus_t e1000_enter(driver_object_t* driver)
 {
     iostatus_t status;
