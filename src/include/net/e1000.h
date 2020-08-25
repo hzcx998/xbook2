@@ -172,7 +172,7 @@ struct e1000_adapter;
 struct e1000_buffer {
 	struct sk_buff *skb;
 	uint8_t* buffer;
-	uint64_t dma;
+	uint32_t dma;
 	unsigned long time_stamp;
 	uint16_t length;
 	uint16_t next_to_watch;
