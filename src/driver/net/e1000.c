@@ -95,6 +95,9 @@ typedef struct _e1000_extension {
 	uint32_t gorcl;
 	uint64_t gorcl_old;
 
+    /* Interrupt Throttle Rate */
+	uint32_t itr;
+
     /* structs defined in e1000_hw.h */
     struct e1000_hw hw;
     struct e1000_hw_stats stats;
@@ -131,6 +134,14 @@ typedef struct _e1000_extension {
     device_queue_t rx_queue;   //接收队列
 
 }e1000_extension_t;
+
+void e1000_free_rx_resources(e1000_extension_t* ext);
+
+static void e1000_configure_rx(e1000_extension_t* ext);
+static void e1000_set_multi(device_object_t* netdev);
+static void e1000_enter_82542_rst(e1000_extension_t* ext);
+static void e1000_leave_82542_rst(e1000_extension_t* ext);
+static void e1000_clean_rx_ring(e1000_extension_t* ext);
 
 /**
  * 1. 申请pci结构(pci_device_t)并初始化厂商号和设备号
@@ -449,9 +460,9 @@ static int e1000_init(e1000_extension_t* ext)
 static inline void
 e1000_free_tx_resource(struct e1000_buffer* buffer_info)
 {
-    if(buffer_info->tx_buffer) {
-        kfree(buffer_info->tx_buffer);
-        buffer_info->tx_buffer = NULL;
+    if(buffer_info->buffer) {
+        kfree(buffer_info->buffer);
+        buffer_info->buffer = NULL;
     }
 }
 
@@ -503,6 +514,52 @@ void e1000_free_tx_resources(e1000_extension_t* ext)
     kfree(ext->tx_ring.desc);
     
     ext->tx_ring.desc = NULL;
+}
+
+static void e1000_clean_rx_ring(e1000_extension_t* ext)
+{
+    struct e1000_desc_ring* rx_ring = &ext->rx_ring;
+    struct e1000_buffer* buffer_info;
+    unsigned long size;
+    unsigned int i;
+
+    /* free all the rx ring buffers */
+    for(i=0; i<rx_ring->count; i++) {
+        buffer_info = &rx_ring->buffer_info;
+        if(buffer_info->buffer) {
+            kfree(buffer_info->buffer);
+            buffer_info->buffer = NULL;
+        }
+    }
+
+    size = sizeof(struct e1000_buffer) * rx_ring->count;
+    memset(rx_ring->buffer_info, 0, size);
+
+    memset(rx_ring->desc, 0, rx_ring->size);
+
+    rx_ring->next_to_clean = 0;
+    rx_ring->next_to_use = 0;
+
+    E1000_WRITE_REG(&ext->hw, RDH, 0);
+    E1000_WRITE_REG(&ext->hw, RDT, 0);
+}
+
+/**
+ * e1000_free_rx_resources - Free Rx Resources
+ * @adapter: board private structure
+ *
+ * Free all receive software resources
+ **/
+void e1000_free_rx_resources(e1000_extension_t* ext)
+{
+    struct e1000_desc_ring* rx_ring = &ext->rx_ring;
+    
+    e1000_clean_rx_ring(ext);
+    
+    vfree(rx_ring->buffer_info);
+    rx_ring->buffer_info = NULL;
+
+    rx_ring->desc = NULL;
 }
 
 /**
@@ -584,6 +641,24 @@ int e1000_setup_rx_resources(e1000_extension_t* ext)
     return 0;
 }
 
+int e1000_up(e1000_extension_t* ext)
+{
+    device_object_t* net_dev = ext->device_object;
+
+    /* hardware has been reset, we need to reload some things */
+
+    /* reset the PHY if it was previously powered down */
+    if(ext->hw.media_type == e1000_media_type_copper) {
+        uint16_t mii_reg;
+        e1000_read_phy_reg(&ext->hw, PHY_CTRL, &mii_reg);
+        if(mii_reg & MII_CR_POWER_DOWN) {
+            e1000_phy_reset(&ext->hw);
+        }
+    }
+
+    
+}
+
 static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
 {
     e1000_extension_t* ext = device->device_extension;
@@ -601,6 +676,8 @@ static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
         goto err_setup_rx;
     }
 
+err_up:
+    e1000_free_rx_resources(ext);
 err_setup_rx:
     e1000_free_tx_resources(ext);
 err_setup_tx:
@@ -713,4 +790,145 @@ void
 e1000_io_write(struct e1000_hw *hw, unsigned long port, uint32_t value)
 {
 	out32(value, port);
+}
+
+/**
+ * e1000_set_multi - Multicast and Promiscuous mode set
+ * @netdev: network interface device structure
+ *
+ * The set_multi entry point is called whenever the multicast address
+ * list or the network interface flags are updated.  This routine is
+ * responsible for configuring the hardware for proper multicast,
+ * promiscuous mode, and all-multi behavior.
+ **/
+
+static void e1000_set_multi(device_object_t* netdev)
+{
+    e1000_extension_t* ext = netdev->device_extension;
+    struct e1000_hw* hw = &ext->hw;
+    uint32_t rctl;
+    uint32_t hash_value;
+    int i;
+    unsigned long flags;
+
+    /* check for promiscuous and all multicast modes */
+    /* 检查混杂和所有多播模式 */
+    spin_lock_irqsave(&ext->tx_lock, flags);
+
+    rctl = E1000_READ_REG(hw, RCTL);
+
+    //启用混杂模式
+    rctl |= (E1000_RCTL_UPE | E1000_RCTL_MPE);
+
+    E1000_WRITE_REG(hw, RCTL, rctl);
+
+    /* 82542 2.0 needs to be in reset to write receive address registers */
+
+    if(hw->mac_type == e1000_82542_rev2_0) {
+        e1000_enter_82542_rst(ext);
+    }
+
+    /** load the first 14 multicast address into the exact filters 1-14 
+     * RAR 0 is used for the station MAC address
+     * if there are not 14 addresses, go ahead and clear the filters
+     * **/
+    //在1-14接收地址寄存器清零
+    for(i=1; i<E1000_RAR_ENTRIES; i++) {
+        E1000_WRITE_REG_ARRAY(hw, RA, i << 1, 0);
+        E1000_WRITE_REG_ARRAY(hw, RA, (i << 1) + 1, 0);
+    }
+
+    /* clear the old setting from the multicast hash table */
+    for(=0; i<E1000_NUM_MTA_REGISTERS; i++) {
+        E1000_WRITE_REG_ARRAY(hw, MTA, i, 0);
+    }
+
+    /* load any remaining address into the hash table */
+
+    if(hw->mac_type == e1000_82542_rev2_0) {
+
+    }
+}
+
+/* The 82542 2.0 (revision 2) needs to have the receive unit in reset
+ * and memory write and invalidate disabled for certain operations
+ */
+static void e1000_enter_82542_rst(e1000_extension_t* ext)
+{
+    uint32_t rctl;
+
+    e1000_pci_clear_mwi(&ext->hw);
+
+    rctl = E1000_READ_REG(&ext->hw, RCTL);
+    rctl |= E1000_RCTL_RST;
+    E1000_WRITE_REG(&ext->hw, RCTL, rctl);
+    E1000_WRITE_FLUSH(&ext->hw);
+    mdelay(5);
+
+    e1000_clean_rx_ring(ext);
+}
+
+static void e1000_leave_82542_rst(e1000_extension_t* ext)
+{
+    uint32_t rctl;
+
+    rctl = E1000_READ_REG(&ext->hw, RCTL);
+    rctl &= ~E1000_RCTL_RST;
+    E1000_WRITE_REG(&ext->hw, RCTL, rctl);
+    E1000_WRITE_FLUSH(&ext->hw);
+    mdelay(5);
+
+    if(ext->hw.pci_cmd_word & PCI_COMMAND_INVALIDATE) {
+        e1000_pci_set_mwi(&ext->hw);
+    }
+}
+
+/**
+ * e1000_configure_rx - Configure 8254x Receive Unit after Reset
+ * @adapter: board private structure
+ *
+ * Configure the Rx unit of the MAC after a reset.
+ **/
+
+static void e1000_configure_rx(e1000_extension_t* ext)
+{
+    uint64_t rdba = ext->rx_ring.dma;
+    uint32_t rdlen = ext->rx_ring.count * sizeof(struct e1000_rx_desc);
+    uint32_t rctl;
+    uint32_t rxcsum;
+
+    /* disable receives while setting up the descriptors */
+    rctl = E1000_READ_REG(&ext->hw, RCTL);
+    E1000_WRITE_REG(&ext->hw, RCTL, rctl & ~E1000_RCTL_EN);
+
+    /* set the receive delay timer register */
+    E1000_WRITE_REG(&ext->hw, RDTR, ext->rx_int_delay);
+
+    if(ext->hw.mac_type >= e1000_82540) {
+        E1000_WRITE_REG(&ext->hw, RADV, ext->rx_abs_int_delay);
+        if(ext->itr > 1) {
+            E1000_WRITE_REG(&ext->hw, ITR, 1000000000/(ext->itr*256));
+        }
+    }
+
+    /* setup the base and length of the rx descriptor ring */
+    E1000_WRITE_REG(&ext->hw, RDBAL, (rdba & 0x00000000ffffffffUll));
+    E1000_WRITE_REG(&ext->hw, RDBAH, (rdba >> 32));
+
+    E1000_WRITE_REG(&ext->hw, RDLEN, rdlen);
+
+    /* setup the hw rx head and tail descriptor pointers */
+    E1000_WRITE_REG(&ext->hw, RDH, 0);
+    E1000_WRITE_REG(&ext->hw, RDT, 0);
+
+    /* enable 82543 receive checksum offload TCP and UDP */
+    if((ext->hw.mac_type >= e1000_82543) &&
+        (ext->rx_csum == TRUE)) {
+        rxcsum = E1000_READ_REG(&ext->hw, RXCSUM);
+        rxcsum |= E1000_RXCSUM_TUOFL;
+        E1000_WRITE_REG(&ext->hw, RXCSUM, rxcsum);
+    }
+
+    /* enable receives */
+    E1000_WRITE_REG(&ext->hw, RCTL, rctl);
 }
