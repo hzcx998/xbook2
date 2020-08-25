@@ -171,7 +171,7 @@ struct e1000_adapter;
  * so a DMA handle can be stored along with the buffer */
 struct e1000_buffer {
 	struct sk_buff *skb;
-	uint8_t* tx_buffer;
+	uint8_t* buffer;
 	uint64_t dma;
 	unsigned long time_stamp;
 	uint16_t length;
