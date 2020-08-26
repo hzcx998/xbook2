@@ -145,6 +145,7 @@ void e1000_free_rx_resources(e1000_extension_t* ext);
 
 static void e1000_configure_tx(e1000_extension_t* ext);
 static void e1000_configure_rx(e1000_extension_t* ext);
+static void e1000_setup_rctl(e1000_extension_t* ext);
 static void e1000_set_multi(device_object_t* netdev);
 static void e1000_enter_82542_rst(e1000_extension_t* ext);
 static void e1000_leave_82542_rst(e1000_extension_t* ext);
@@ -665,6 +666,8 @@ int e1000_up(e1000_extension_t* ext)
     }
 
     e1000_set_multi(netdev);
+
+    e1000_configure_tx(ext);
 }
 
 static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
@@ -1071,4 +1074,49 @@ static void e1000_configure_tx(e1000_extension_t* ext)
        ext->hw.bus_type == e1000_bus_type_pcix) {
         ext->pcix_82544 = 1;
     }
+}
+
+/**
+ * e1000_setup_rctl - configure the receive control register
+ * @ext: Board private structure
+ **/
+
+static void e1000_setup_rctl(e1000_extension_t* ext)
+{
+    uint32_t rctl;
+
+    rctl = E1000_READ_REG(&ext->hw, RCTL);
+
+    rctl &= ~(3 << E1000_RCTL_MO_SHIFT);
+
+    rctl |= E1000_RCTL_EN | E1000_RCTL_BAM |
+        E1000_RCTL_LBM_NO | E1000_RCTL_RDMTS_HALF |
+        (ext->hw.mc_filter_type << E1000_RCTL_MO_SHIFT);
+    
+    if(ext->hw.tbi_compatibility_on == 1){
+        rctl |= E1000_RCTL_SBP;
+    } else {
+        rctl &= ~E1000_RCTL_SBP;
+    }
+
+    /* setup buffer sizes */
+    rctl &= ~(E1000_RCTL_SZ_4096);
+    rctl |= (E1000_RCTL_BSEX | E1000_RCTL_LPE);
+    switch(ext->rx_buffer_len) {
+        default:
+            rctl |= E1000_RCTL_SZ_2048;
+            rctl &= ~(E1000_RCTL_BSEX | E1000_RCTL_LPE);
+            break;
+        case E1000_RXBUFFER_4096:
+            rctl |= E1000_RCTL_SZ_4096;
+            break;
+        case E1000_RXBUFFER_8192:
+            rctl |= E1000_RCTL_SZ_8192;
+            break;
+        case E1000_RXBUFFER_16384:
+            rctl |= E1000_RCTL_SZ_16384;
+            break;
+    }
+
+    E1000_WRITE_REG(&ext->hw, RCTL, rctl);
 }
