@@ -14,6 +14,18 @@
 #include <xbook/task.h>
 #include <string.h>
 
+/*
+当执行fork的时候，会把子进程的msgpool重置。
+由于图层是基于消息机制的，只要进程没有收到消息，
+那么它就不会和进程产生进一步的交互。
+当执行exec的时候，把当前进程的msgpool释放掉，
+需要子进程调用g_init才会创建msgpool。
+当执行exit的时候，把进程的msgpool释放掉。
+
+图层资源是用户自己管理的，因此在退出运行之前，需要执行
+g_quit来退出图形。
+*/
+
 /* 主要是处理输入事件 */
 void kgui_thread(void *arg)
 {
@@ -105,20 +117,11 @@ int sys_g_init(void)
     task_t *cur = current_task;
     if (cur->gmsgpool)
         return -1;
-    cur->gmsgpool = msgpool_create(sizeof(g_msg_t), GUI_MSG_NR);
-    if (!cur->gmsgpool)
-        return -1;  /* create failed! */
-    
-    return 0;
+    return gui_msgpool_init(cur);
 }
 
 int sys_g_quit(void)
 {
     task_t *cur = current_task;
-    if (cur->gmsgpool) {
-        msgpool_destroy(cur->gmsgpool);
-        cur->gmsgpool = NULL;
-    }
-
-    return 0;
+    return gui_msgpool_exit(cur);
 }

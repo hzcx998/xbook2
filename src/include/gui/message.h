@@ -2,6 +2,7 @@
 #define _GUI_MESSAGE_H
 
 #include <stdint.h>
+#include <xbook/task.h>
 
 #define GUI_MSG_NR      64
 
@@ -30,6 +31,10 @@ enum {
     GM_GET_FOCUS,
     GM_LOST_FOCUS,
     GM_MOVE,
+    GM_WINDOW_CREATE,
+    GM_WINDOW_CLOSE,
+    GM_HIDE,
+    GM_SHOW,
     GM_NR
 };
 
@@ -45,6 +50,9 @@ typedef struct {
 int gui_init_msg();
 int gui_push_msg(g_msg_t *msg);
 int gui_pop_msg(g_msg_t *msg);
+
+int gui_msgpool_init(task_t *task);
+int gui_msgpool_exit(task_t *task);
 
 int sys_g_get_msg(g_msg_t *msg);
 int sys_g_try_get_msg(g_msg_t *msg);

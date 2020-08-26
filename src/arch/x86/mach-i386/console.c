@@ -229,7 +229,9 @@ static void put_char(struct console_object *obj, char ch)
  */
 void console_putchar(char ch)
 {
+    #ifdef CONFIG_PRINT_CONSOLE
     put_char(&console_object, ch);    
+    #endif /* CONFIG_PRINT_CONSOLE */
 }
 
 /**

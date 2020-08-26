@@ -5,22 +5,17 @@
 #include <xbook/mutexlock.h>
 #include <xbook/task.h>
 
-DEFINE_MUTEX_LOCK(layer_mutex); /* 图层管理互斥 */
-
 int sys_new_layer(int x, int y, uint32_t width, uint32_t height)
 {
     if (!width || !height)
         return -1;
-    mutex_lock(&layer_mutex);
     layer_t *l = create_layer(width, height);
     if (l == NULL) {
-        mutex_unlock(&layer_mutex);
         return -1;
     }
     layer_draw_rect_fill(l, 0, 0, l->width, l->height, COLOR_WHITE);
     layer_set_xy(l, x, y);
     l->extension = current_task;
-    mutex_unlock(&layer_mutex);
     return l->id;
 }
 
@@ -28,14 +23,11 @@ int sys_layer_z(int id, int z)
 {
     if (id < 0)
         return -1;
-    mutex_lock(&layer_mutex);
     layer_t *l = layer_find_by_id(id);
     if (l == NULL) {
-        mutex_unlock(&layer_mutex);
         return -1;
     }
     layer_set_z(l, z);
-    mutex_unlock(&layer_mutex);
     return 0;
 }
 
@@ -67,7 +59,6 @@ int sys_del_layer(int id)
 {
     if (id < 0)
         return -1;
-    mutex_lock(&layer_mutex);
     layer_t *l = layer_find_by_id(id);
     if (l == NULL) {
         return -1;
@@ -75,7 +66,6 @@ int sys_del_layer(int id)
     l->extension = NULL;
     destroy_layer(l);
     
-    mutex_unlock(&layer_mutex);
     return 0;
 }
 
@@ -174,6 +164,8 @@ int sys_layer_set_region(int id, int type, gui_region_t *rg)
         l->drag_rg = *rg;
     } else if (type == LAYER_REGION_RESIZE) {
         l->resize_rg = *rg;
+    } else if (type == LAYER_REGION_RESIZEMIN) {
+        l->resizemin_rg = *rg;
     }
     return 0;
 }
@@ -209,7 +201,30 @@ int sys_layer_set_win_top(int id)
 
 int sys_layer_get_win_top()
 {
-    return layer_get_win_top()->z;
+    layer_t *layer = layer_get_win_top();
+    if (layer) {
+        return layer->z;
+    } else 
+        return -1;
+}
+
+int sys_layer_set_desktop(int id)
+{
+    layer_t *layer = layer_find_by_id(id);
+    if (layer == NULL)
+        return -1;
+    
+    layer_set_desktop(layer);
+    return 0;
+}
+
+int sys_layer_get_desktop()
+{
+    layer_t *layer = layer_get_win_top();
+    if (layer)
+        return layer->id;
+    else 
+        return -1;
 }
 
 int sys_layer_resize(int id, gui_rect_t *rect)

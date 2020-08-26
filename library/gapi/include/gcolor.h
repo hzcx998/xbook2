@@ -18,4 +18,6 @@
 #define GC_YELLOW     GC_RGB(255, 255, 0)
 #define GC_NONE       GC_ARGB(0, 0, 0, 0)
 
+typedef unsigned int g_color_t;
+
 #endif /* _GAPI_COLOR_H */

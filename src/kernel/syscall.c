@@ -188,4 +188,6 @@ void init_syscall()
     syscall_table[SYS_LAYERFOCUSWINTOP] = sys_layer_focus_win_top;
     syscall_table[SYS_GSCREENGET] = sys_screen_get;
     syscall_table[SYS_GSCREENSETWINRG] = sys_screen_set_window_region;
+    syscall_table[SYS_LAYERGETDESKTOP] = sys_layer_get_desktop;
+    syscall_table[SYS_LAYERSETDESKTOP] = sys_layer_set_desktop;
 }

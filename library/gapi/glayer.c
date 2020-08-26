@@ -1,15 +1,67 @@
 #include <sys/syscall.h>
 #include <glayer.h>
 #include <gshape.h>
+#include <gfont.h>
+
+/* 图层id都大于0，因此0表示没有图层 */
+static int _g_layer_table[G_LAYER_NR] = {0,};
+static int _g_layer_desktop = -1;
+
+static int g_layer_alloc_solt()
+{
+    int i;
+    for (i = 0; i < G_LAYER_NR; i++) {
+        if (!_g_layer_table[i])
+            return i;
+    }
+    return -1;
+}
+
+static int g_layer_free_solt(int id)
+{
+    int i;
+    for (i = 0; i < G_LAYER_NR; i++) {
+        if (_g_layer_table[i] == id) {
+            _g_layer_table[i] = 0;
+            return i;
+        }
+    }
+    return -1;
+}
 
 int g_layer_new(int x, int y, uint32_t width, uint32_t height)
 {
-    return syscall4(int, SYS_LAYERNEW, x, y, width, height);
+    int solt = g_layer_alloc_solt();
+    if (solt < 0)
+        return -1;
+    int id = syscall4(int, SYS_LAYERNEW, x, y, width, height);
+    if (id < 0) {
+        return -1;
+    }
+    _g_layer_table[solt] = id;
+    return id;
 }
 
 int g_layer_del(int layer)
 {
-    return syscall1(int, SYS_LAYERDEL, layer);
+    if (g_layer_z(layer, -1) < 0)
+        return -1;
+    int retval = syscall1(int, SYS_LAYERDEL, layer);
+    if (retval < 0)
+        return -1;
+    return g_layer_free_solt(layer);
+}
+
+int g_layer_del_all()
+{
+    int i;
+    for (i = 0; i < G_LAYER_NR; i++) {
+        if (_g_layer_table[i] > 0) {
+            if (g_layer_del(_g_layer_table[i]) < 0)
+                return -1;
+        }
+    }
+    return 0;
 }
 
 int g_layer_move(int layer, int x, int y)
@@ -105,6 +157,18 @@ int g_layer_set_wintop(int top)
     return syscall1(int, SYS_LAYERSETWINTOP, top);
 }
 
+int g_layer_get_desktop()
+{
+    if (_g_layer_desktop == -1)
+        _g_layer_desktop = syscall0(int, SYS_LAYERGETDESKTOP);
+    return _g_layer_desktop;
+}
+
+int g_layer_set_desktop(int id)
+{
+    return syscall1(int, SYS_LAYERSETDESKTOP, id);
+}
+
 int g_layer_get_focus()
 {
     return syscall0(int, SYS_LAYERGETFOCUS);
@@ -143,4 +207,87 @@ int g_layer_set_region(int layer, int type, int left, int top, int right, int bo
 int g_layer_focus_win_top()
 {
     return syscall0(int, SYS_LAYERFOCUSWINTOP);
+}
+
+
+static void g_draw_word_bit(
+    int layer,
+    int x,
+    int y,
+    uint32_t color,
+    uint8_t *data)
+{
+	unsigned int i;
+	uint8_t d /* data */;
+	for (i = 0; i < 16; i++) {
+		d = data[i];
+		if ((d & 0x80) != 0)
+            g_layer_outp(layer, x + 0, y + i, color);
+		if ((d & 0x40) != 0)
+            g_layer_outp(layer, x + 1, y + i, color);
+		if ((d & 0x20) != 0)
+             g_layer_outp(layer, x + 2, y + i, color);
+		if ((d & 0x10) != 0)
+            g_layer_outp(layer, x + 3, y + i, color);
+		if ((d & 0x08) != 0)
+            g_layer_outp(layer, x + 4, y + i, color);
+		if ((d & 0x04) != 0)
+            g_layer_outp(layer, x + 5, y + i, color);
+		if ((d & 0x02) != 0)
+            g_layer_outp(layer, x + 6, y + i, color);
+		if ((d & 0x01) != 0)
+            g_layer_outp(layer, x + 7, y + i, color);
+	}	
+}
+
+void g_draw_word_ex(
+    int layer,
+    int x,
+    int y,
+    char word,
+    uint32_t color,
+    g_font_t *font)
+{
+    if (!font)
+        return;
+    if (font->addr)
+        g_draw_word_bit(layer, x, y, color, font->addr + word * font->char_height);
+}
+
+void g_draw_text_ex(
+    int layer,
+    int x,
+    int y,
+    char *text,
+    uint32_t color,
+    g_font_t *font)
+{
+    if (!font)
+        return;
+
+    while (*text) {
+        g_draw_word_ex(layer, x, y, *text, color, font);
+		x += font->char_width;
+        text++;
+	}
+}
+
+void g_layer_word(
+    int layer,
+    int x,
+    int y,
+    char ch,
+    uint32_t color)
+{
+    g_draw_word_ex(layer, x, y, ch, color, g_current_font);
+}
+
+void g_layer_text(
+    int layer,
+    int x,
+    int y,
+    char *text,
+    uint32_t color)
+{
+    g_draw_text_ex(layer, x, y, text, color, g_current_font);
 }

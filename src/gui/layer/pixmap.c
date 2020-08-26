@@ -29,5 +29,4 @@ void layer_draw_pixmap(layer_t *layer, int x, int y, uint32_t width, uint32_t he
             }
         }
     } 
-    
 }

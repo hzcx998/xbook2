@@ -15,17 +15,26 @@
 
 #define DEBUG_LOCAL 0
 
+//#define LAYER_DEBUG
+
 /* 所有图层都挂载到该链表 */
 LIST_HEAD(layer_list_head);
 /* 所有显示中的图层挂载到该链表上 */
 LIST_HEAD(layer_show_list_head);
 /* 顶层图层的Z轴 */
 int top_layer_z = -1;    
-layer_t *layer_topest = NULL;   /* topest layer */
+
 layer_t *layer_wintop = NULL;   /* win top layer */
+layer_t *layer_desktop = NULL;   /* desktop layer */
 layer_t *layer_focused = NULL;   /* focused layer */
 uint16_t *layer_map = NULL; /* layer z map */
 int layer_next_id = 0;  /* 图层id */
+
+/* 图层链表管理的自旋锁 */
+DEFINE_SPIN_LOCK(layer_list_spin_lock);
+
+/* 图层全局变量自旋锁 */
+DEFINE_SPIN_LOCK(layer_val_lock);
 
 /**
  * create_layer - 创建一个图层
@@ -50,9 +59,13 @@ layer_t *create_layer(int width, int height)
     }
 
     memset(layer, 0, sizeof(layer_t));
+    spin_lock(&layer_val_lock);
     layer->id = layer_next_id;
     layer_next_id++;
+    spin_unlock(&layer_val_lock);
     layer->buffer = buffer;
+    layer->x = 0;
+    layer->y = 0;
     layer->width = width;
     layer->height = height;
     layer->z = -1;          /* 不显示的图层 */
@@ -61,12 +74,17 @@ layer_t *create_layer(int width, int height)
     
     gui_region_init(&layer->drag_rg);
     gui_region_init(&layer->resize_rg);
-
+    gui_region_init(&layer->resizemin_rg);
+    
     INIT_LIST_HEAD(&layer->list);
 
+    spinlock_init(&layer->mutex);
+
+    spin_lock(&layer_list_spin_lock);
     /* 添加到链表末尾 */
     list_add_tail(&layer->global_list, &layer_list_head);
-
+    spin_unlock(&layer_list_spin_lock);
+    
     INIT_LIST_HEAD(&layer->widget_list_head);
     return layer;
 }
@@ -77,10 +95,14 @@ layer_t *create_layer(int width, int height)
 layer_t *layer_find_by_id(int id)
 {
     layer_t *l;
+    spin_lock(&layer_list_spin_lock);
     list_for_each_owner (l, &layer_list_head, global_list) {
-        if (l->id == id)
+        if (l->id == id) {
+            spin_unlock(&layer_list_spin_lock);
             return l;
+        }
     }
+    spin_unlock(&layer_list_spin_lock);
     return NULL;
 }
 
@@ -89,14 +111,22 @@ layer_t *layer_find_by_id(int id)
  */
 layer_t *layer_find_by_z(int z)
 {
+    spin_lock(&layer_val_lock);
     if (z > top_layer_z || z < 0) {
+        spin_unlock(&layer_val_lock);
         return NULL;
     }
+    spin_unlock(&layer_val_lock);
+    
     layer_t *l;
+    spin_lock(&layer_list_spin_lock);
     list_for_each_owner (l, &layer_show_list_head, list) {
-        if (l->z == z)
+        if (l->z == z) {
+            spin_unlock(&layer_list_spin_lock);
             return l;
+        }
     }
+    spin_unlock(&layer_list_spin_lock);
     return NULL;
 }
 
@@ -127,6 +157,7 @@ static void layer_refresh_map(int left, int top, int right, int buttom, int z0)
     
     layer_t *layer;
     GUI_COLOR color;
+    spin_lock(&layer_list_spin_lock);
     /* 刷新高度为[Z0-top]区间的图层 */
     list_for_each_owner (layer, &layer_show_list_head, list) {
         if (layer->z >= z0) {
@@ -158,6 +189,7 @@ static void layer_refresh_map(int left, int top, int right, int buttom, int z0)
             }
         }
     }
+    spin_unlock(&layer_list_spin_lock);
 }
 
 /**
@@ -182,14 +214,21 @@ void layer_set_z(layer_t *layer, int z)
 {
     layer_t *tmp = NULL;
     layer_t *old_layer = NULL;
-    int old_z = layer->z;                
+    int old_z = layer->z;
+    
+    layer_mutex_lock(layer);
+
+    spin_lock(&layer_list_spin_lock);
     /* 已经存在与现实链表中，就说明只是调整一下高度而已。 */
     if (list_find(&layer->list, &layer_show_list_head)) {
+        spin_unlock(&layer_list_spin_lock);
 #if DEBUG_LOCAL == 1    
         printk("layer z:%d set new z:%d\n", layer->z, z);
 #endif
         /* 设置为正，就是要调整高度 */
         if (z >= 0) {
+            spin_lock(&layer_val_lock);
+    
             /* 修复Z轴 */
             if (z > top_layer_z) {
 #if DEBUG_LOCAL == 1                
@@ -200,32 +239,41 @@ void layer_set_z(layer_t *layer, int z)
             }
             /* 如果要调整到最高的图层位置 */
             if (z == top_layer_z) {
+                spin_unlock(&layer_val_lock);
+    
 #if DEBUG_LOCAL == 1                
                 printk("layer z:%d set new z:%d same with top %d\n", layer->z, z, top_layer_z);
 #endif
+                spin_lock(&layer_list_spin_lock);
+
                 /* 先从链表中移除 */
                 list_del_init(&layer->list);
-
+                
                 /* 把图层后面的图层往下面降 */
                 list_for_each_owner (tmp, &layer_show_list_head, list) {
                     if (tmp->z > layer->z) {
                         tmp->z--;
                     }
                 }
+                
                 layer->z = z;
                 /* 添加到链表末尾 */
                 list_add_tail(&layer->list, &layer_show_list_head);
+                spin_unlock(&layer_list_spin_lock);
 
                 /* 刷新新图层[z, z] */
                 layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
                 layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
 
             } else {    /* 不是最高图层，那么就和其它图层交换 */
-                
+                spin_unlock(&layer_val_lock);
+    
                 if (z > layer->z) { /* 如果新高度比原来的高度高 */
 #if DEBUG_LOCAL == 1
                     printk("layer z:%d < new z:%d \n", layer->z, z, top_layer_z);
 #endif
+                    spin_lock(&layer_list_spin_lock);
+
                     /* 先从链表中移除 */
                     list_del_init(&layer->list);
 
@@ -238,6 +286,7 @@ void layer_set_z(layer_t *layer, int z)
                             tmp->z--; /* 等上一步判断图层高度后，再减小图层高度 */
                         }
                     }
+
                     /* 添加到新图层高度的位置 */
                     if (old_layer) {
 #if DEBUG_LOCAL == 1
@@ -245,6 +294,7 @@ void layer_set_z(layer_t *layer, int z)
 #endif                        
                         layer->z = z;
                         list_add_after(&layer->list, &old_layer->list);
+                        spin_unlock(&layer_list_spin_lock);
 
                         /* 刷新新图层[z, z] */
                         layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
@@ -252,11 +302,15 @@ void layer_set_z(layer_t *layer, int z)
                 
                     } else {
                         printk("[error ] not found the old layer on %d\n", z);
+                        spin_unlock(&layer_list_spin_lock);
+
                     }
                 } else if (z < layer->z) { /* 如果新高度比原来的高度低 */
 #if DEBUG_LOCAL == 1                
                     printk("layer z:%d > new z:%d \n", layer->z, z, top_layer_z);
-#endif
+#endif  
+                    spin_lock(&layer_list_spin_lock);
+
                     /* 先从链表中移除 */
                     list_del_init(&layer->list);
                         
@@ -269,6 +323,7 @@ void layer_set_z(layer_t *layer, int z)
                             tmp->z++; /* 等上一步判断图层高度后，再增加图层高度 */
                         }
                     }
+
                     /* 添加到新图层高度的位置 */
                     if (old_layer) {
 #if DEBUG_LOCAL == 1
@@ -276,12 +331,15 @@ void layer_set_z(layer_t *layer, int z)
 #endif                        
                         layer->z = z;
                         list_add_before(&layer->list, &old_layer->list);
+                        spin_unlock(&layer_list_spin_lock);
 
                         /* 刷新新图层[z + 1, old z] */
                         layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z + 1);
                         layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z + 1, old_z);
                     } else {
                         printk("[error ] not found the old layer on %d\n", z);
+                        spin_unlock(&layer_list_spin_lock);
+
                     }
                 }
             }
@@ -289,8 +347,12 @@ void layer_set_z(layer_t *layer, int z)
 #if DEBUG_LOCAL == 1
             printk("layer z:%d will be hided.\n", layer->z);
 #endif
+            spin_lock(&layer_list_spin_lock);
+
             /* 先从链表中移除 */
             list_del_init(&layer->list);
+            spin_unlock(&layer_val_lock);
+    
             if (top_layer_z > old_z) {  /* 旧图层必须在顶图层下面 */
                 /* 把位于当前图层后面的图层的高度都向下降1 */
                 list_for_each_owner (tmp, &layer_show_list_head, list) {
@@ -299,10 +361,12 @@ void layer_set_z(layer_t *layer, int z)
                     }
                 }   
             }
-            
+            spin_unlock(&layer_list_spin_lock);
+
             /* 由于隐藏了一个图层，那么，图层顶层的高度就需要减1 */
             top_layer_z--;
-
+            spin_unlock(&layer_val_lock);
+    
             /* 刷新图层, [0, layer->z - 1] */
             layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, 0);
             layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, 0, old_z - 1);
@@ -310,8 +374,11 @@ void layer_set_z(layer_t *layer, int z)
             layer->z = -1;  /* 隐藏图层后，高度变为-1 */
         }
     } else {    /* 插入新图层 */
+        spin_unlock(&layer_list_spin_lock);
         /* 设置为正，就要显示，那么会添加到显示队列 */
         if (z >= 0) {
+            spin_lock(&layer_val_lock);
+    
             /* 修复Z轴 */
             if (z > top_layer_z) {
                 top_layer_z++;      /* 图层顶增加 */
@@ -322,24 +389,33 @@ void layer_set_z(layer_t *layer, int z)
             } else {
                 top_layer_z++;      /* 图层顶增加 */
             }
-
+            
             /* 如果新高度就是最高的图层，就直接插入到图层队列末尾 */
             if (z == top_layer_z) {
+                spin_unlock(&layer_val_lock);
+    
 #if DEBUG_LOCAL == 1
                 printk("add a layer %d to tail\n", z);
 #endif
                 layer->z = z;
+                spin_lock(&layer_list_spin_lock);
+
                 /* 直接添加到显示队列 */
                 list_add_tail(&layer->list, &layer_show_list_head);
+                spin_unlock(&layer_list_spin_lock);
 
                 /* 刷新新图层[z, z] */
                 layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
                 layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
 
             } else {
+                spin_unlock(&layer_val_lock);
+    
 #if DEBUG_LOCAL == 1
                 printk("add a layer %d to midlle or head\n", z);
-#endif                
+#endif               
+                spin_lock(&layer_list_spin_lock);
+
                 /* 查找和当前图层一样高度的图层 */
                 list_for_each_owner(tmp, &layer_show_list_head, list) {
                     if (tmp->z == z) {
@@ -359,10 +435,12 @@ void layer_set_z(layer_t *layer, int z)
                     layer->z = z;
                     /* 插入到旧图层前面 */
                     list_add_before(&layer->list, &old_layer->list);
-                        
+                
                 } else {    /* 没有找到旧图层 */
                     printk("[error ] not found old layer!\n");
                 }
+                spin_unlock(&layer_list_spin_lock);
+
                 /* 刷新新图层[z, z] */
                 layer_refresh_map(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
                 layer_refresh_by_z(layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
@@ -371,6 +449,8 @@ void layer_set_z(layer_t *layer, int z)
         }
         /* 小于0就是要隐藏起来的图层，但是由于不在图层链表中，就不处理 */
     }
+    layer_mutex_unlock(layer);
+
 }
 
 /**
@@ -383,10 +463,16 @@ int destroy_layer(layer_t *layer)
 {
     if (layer == NULL)
         return -1;
+    spin_lock(&layer_list_spin_lock);
     /* 先从链表中删除 */
     list_del_init(&layer->global_list);
+    spin_unlock(&layer_list_spin_lock);
+    layer_mutex_lock(layer);
+    
     /* 释放缓冲区 */
     kfree(layer->buffer);
+    layer_mutex_unlock(layer);
+
     /* 释放图层 */
     kfree(layer);
     return 0;
@@ -441,6 +527,8 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
     
     layer_t *layer;
     GUI_COLOR color;
+
+    spin_lock(&layer_list_spin_lock);
     /* 刷新高度为[Z0-Z1]区间的图层 */
     list_for_each_owner (layer, &layer_show_list_head, list) {
         if (layer->z >= z0 && layer->z <= z1) {
@@ -467,13 +555,17 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
                     if (layer_map[(screen_y * gui_screen.width + screen_x)] == layer->z) {
                         /* 获取图层中的颜色 */
                         color = layer->buffer[layer_y * layer->width + layer_x];
-                        /* 写入到显存 */
-                        gui_screen.output_pixel(screen_x, screen_y, gui_screen.gui_to_screen_color(color));
+                        if ((color >> 24) & 0xff) {
+                            /* 写入到显存 */
+                            gui_screen.output_pixel(screen_x, screen_y, gui_screen.gui_to_screen_color(color));
+                        }
+                        
                     }
                 }
             }
         }
     }
+    spin_unlock(&layer_list_spin_lock);
 }
 
 
@@ -485,12 +577,39 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
  */
 void layer_refresh(layer_t *layer, int left, int top, int right, int buttom)
 {
+    layer_mutex_lock(layer);
     if (layer->z >= 0) {
         layer_refresh_map(layer->x + left, layer->y + top, layer->x + right,
             layer->y + buttom, layer->z);
         layer_refresh_by_z(layer->x + left, layer->y + top, layer->x + right,
             layer->y + buttom, layer->z, layer->z);
     }
+    layer_mutex_unlock(layer);
+}
+
+/**
+ * 刷新图层以及其下面的所有图层
+ */
+void layer_refresh_under(layer_t *layer, int left, int top, int right, int buttom)
+{
+    layer_mutex_lock(layer);
+    if (layer->z >= 0) {
+        layer_refresh_map(layer->x + left, layer->y + top, layer->x + right,
+            layer->y + buttom, 0);
+        layer_refresh_by_z(layer->x + left, layer->y + top, layer->x + right,
+            layer->y + buttom, 0, layer->z);
+    }
+    layer_mutex_unlock(layer);
+}
+
+void layer_refresh_under_rect(layer_t *layer, int x, int y, uint32_t width, uint32_t height)
+{
+    layer_refresh_under(layer, x, y, x + width, y + height);
+}
+
+void layer_refresh_rect(layer_t *layer, int x, int y, uint32_t width, uint32_t height)
+{
+    layer_refresh(layer, x, y, x + width, y + height);
 }
 
 void layer_refresh_all()
@@ -512,6 +631,8 @@ void layer_set_xy(layer_t *layer, int x, int y)
 {
     int old_x = layer->x;
     int old_y = layer->y;
+    layer_mutex_lock(layer);
+
     /* 显示中的图层才可以刷新 */
     layer->x = x;
     layer->y = y;
@@ -526,6 +647,8 @@ void layer_set_xy(layer_t *layer, int x, int y)
         /* 刷新新位置 */
         layer_refresh_by_z(x, y, x + layer->width, y + layer->height, layer->z, layer->z);
     }
+    layer_mutex_unlock(layer);
+
 }
 
 /**
@@ -542,7 +665,6 @@ int layer_reset_size(layer_t *layer, int x, int y, uint32_t width, uint32_t heig
         return -1;
     
     if (!layer->buffer) {
-        
         kfree(buffer);
         return -1;
     }
@@ -550,6 +672,7 @@ int layer_reset_size(layer_t *layer, int x, int y, uint32_t width, uint32_t heig
     layer_draw_rect_fill(layer, 0, 0, layer->width, layer->height, COLOR_NONE);
     /* 重新设置位置才能完整刷新图层 */
     layer_set_xy(layer, x, y);
+    layer_mutex_lock(layer);
 
     /* 重新绑定缓冲区 */
     kfree(layer->buffer);
@@ -557,9 +680,11 @@ int layer_reset_size(layer_t *layer, int x, int y, uint32_t width, uint32_t heig
     layer->buffer = buffer;
     layer->width = width;
     layer->height = height;
+    layer_mutex_unlock(layer);
 
     return 0;
 }
+
 /**
  * 获取顶层窗口，就是一个非窗口图层，但是又是最高窗口图层的上一个图层
  * 往往通过这个图层来确定下一个新插入的窗口图层的高度
@@ -577,7 +702,31 @@ int layer_set_win_top(layer_t *layer)
 {
     if (!layer)
         return -1;
+    spin_lock(&layer_val_lock);
     layer_wintop = layer;
+    spin_unlock(&layer_val_lock);
+    
+    return 0;
+}
+
+/**
+ * 获取桌面图层，桌面图层是用来显示桌面内容的，并且是窗口的统领者
+ */
+layer_t *layer_get_desktop()
+{
+    return layer_desktop;
+}
+/**
+ * 设置桌面图层，桌面图层是用来显示桌面内容的，并且是窗口的统领者
+ */
+int layer_set_desktop(layer_t *layer)
+{
+    if (!layer)
+        return -1;
+    spin_lock(&layer_val_lock);
+    layer_desktop = layer;
+    spin_unlock(&layer_val_lock);
+    
     return 0;
 }
 
@@ -586,7 +735,11 @@ int layer_set_win_top(layer_t *layer)
  */
 void layer_set_focus(layer_t *layer)
 {
+    spin_lock(&layer_val_lock);
+    
     layer_focused = layer;
+    spin_unlock(&layer_val_lock);
+    
 }
 
 /**
@@ -604,7 +757,9 @@ int layer_set_flags(layer_t *layer, uint32_t flags)
 {
     if (!layer)
         return -1;
+    layer_mutex_lock(layer);
     layer->flags = flags;
+    layer_mutex_unlock(layer);
     return 0;
 }
 
@@ -630,6 +785,7 @@ int layer_try_focus(layer_t *layer)
                 /* 发送失焦消息给旧聚焦图层 */
                 m.id        = GM_LOST_FOCUS;
                 m.target    = focused->id;
+                m.data0     = 0;    /* 0表示发送者为内核 */
                 val = msgpool_try_push(task->gmsgpool, &m);
             }
         }
@@ -645,6 +801,7 @@ int layer_try_focus(layer_t *layer)
             /* 发送消息给新聚焦图层 */
             m.id        = GM_GET_FOCUS;
             m.target    = layer->id;
+            m.data0     = 0;    /* 0表示发送者为内核 */
             val = msgpool_try_push(task->gmsgpool, &m);
         }
     }
@@ -764,8 +921,18 @@ int layer_calc_resize(layer_t *layer, int mx, int my, gui_rect_t *out_rect)
         return -1;
     }
     /* 对调整后的矩形进行判断，看是否符合要求 */
-    if (rect.width < 0 || rect.height < 0) {
+    if (rect.width <= 0 || rect.height <= 0)
+    {
         return -1;  /* invalid rect */
+    }
+    
+    if (gui_region_valid(&layer->resizemin_rg)) {
+        if (rect.width < layer->resizemin_rg.right) {
+            rect.width = layer->resizemin_rg.right;
+        }
+        if (rect.height < layer->resizemin_rg.bottom) {
+            rect.height = layer->resizemin_rg.bottom;
+        }
     }
     *out_rect = *((gui_rect_t *)&rect); /* 转换矩形 */
     return 0;
@@ -791,32 +958,35 @@ static int gui_dispatch_mouse_filter_msg(g_msg_t *msg)
             gui_rect_t rect;
             if (!layer_calc_resize(gui_mouse.resize_layer, msg->data0, msg->data1, &rect)) {
                 /* 发送一个调整大小消息 */
-                #if 1
+                #ifdef LAYER_DEBUG
                 printk("[gui]: up -> layer resize from (%d, %d), (%d, %d)",
                     gui_mouse.resize_layer->x, gui_mouse.resize_layer->y,
                     gui_mouse.resize_layer->width, gui_mouse.resize_layer->height);
                 printk(" to (%d, %d), (%d, %d)\n",
                     rect.x, rect.y, rect.width, rect.height);
-                #endif
+                #endif /* LAYER_DEBUG */
                 layer_try_resize(gui_mouse.resize_layer, &rect);
+                
+                #ifdef CONFIG_SHADE_LAYER
+                layer_set_z(gui_mouse.shade, -1); /* 隐藏遮罩图层 */
+                #endif /* CONFIG_SHADE_LAYER */
             }
             gui_mouse.resize_layer = NULL;
             /* 设置鼠标状态 */
             gui_mouse_set_state(MOUSE_NORMAL);
             gui_mouse.click_point.x = -1;
             gui_mouse.click_point.y = -1;      
+            return 0;
         }
 
         if (gui_mouse.drag_layer) { /* 处于抓取时弹起 */
             if (gui_mouse.state == MOUSE_HOLD) {
-                #ifdef CONFIG_WAKER_LAYER
-                /* 隐藏游走窗口 */
-                layer_set_z(gui_mouse.walker, -1);
-                gui_draw_walker_layer(gui_mouse.walker, gui_mouse.drag_layer, 0);
+                #ifdef CONFIG_SHADE_LAYER
+                layer_set_z(gui_mouse.shade, -1); /* 隐藏遮罩图层 */
                 /* 设置抓取窗口的位置 */
-                layer_set_xy(gui_mouse.drag_layer, gui_mouse.walker->x,
-                    gui_mouse.walker->y);
-                #endif /* CONFIG_WAKER_LAYER */
+                layer_set_xy(gui_mouse.drag_layer, gui_mouse.shade_rect.x,
+                    gui_mouse.shade_rect.y);
+                #endif /* CONFIG_SHADE_LAYER */
 
                 /* 发送窗口移动消息 */
                 task_t *task = (task_t *)gui_mouse.drag_layer->extension;
@@ -829,28 +999,42 @@ static int gui_dispatch_mouse_filter_msg(g_msg_t *msg)
                     m.data1 = gui_mouse.drag_layer->y;
                     msgpool_try_push(task->gmsgpool, &m);
                 }
+                
             }
             gui_mouse.drag_layer = NULL;
 
             /* 设置鼠标状态 */
             gui_mouse_set_state(MOUSE_NORMAL);
+            return -1; /* 消息还需要进一步处理 */
         }
     }
     if (msg->id == GM_MOUSE_MOTION) {
         if (gui_mouse.resize_layer) {
+            #ifdef CONFIG_SHADE_LAYER
+            /* 擦除上一次绘制的内容 */
+            if (gui_rect_valid(&gui_mouse.shade_rect)) {
+                gui_draw_shade_layer(gui_mouse.shade, &gui_mouse.shade_rect, 0);
+            }
+            #endif
+            
             /* 实时调整大小 */
             gui_rect_t rect;
             if (!layer_calc_resize(gui_mouse.resize_layer, msg->data0, msg->data1, &rect)) {
-                #if 0
+                #ifdef LAYER_DEBUG
                 printk("[gui]: layer resize from (%d, %d), (%d, %d)",
                     gui_mouse.resize_layer->x, gui_mouse.resize_layer->y,
                     gui_mouse.resize_layer->width, gui_mouse.resize_layer->height);
                 printk(" to (%d, %d), (%d, %d)\n",
-                    rect.x, rect.y, rect.width, rect.height);
-                //layer_reset_size(gui_mouse.resize_layer, rect.x, rect.y, rect.width, rect.height);
-                //gui_mouse.click_point.x = msg->data0;
-                //gui_mouse.click_point.y = msg->data1;     
-                #endif
+                    rect.x, rect.y, rect.width, rect.height);     
+                #endif /* LAYER_DEBUG */
+                #ifdef CONFIG_SHADE_LAYER
+                gui_draw_shade_layer(gui_mouse.shade, &rect, 1); /* 绘制新内容 */
+                gui_rect_copy(&gui_mouse.shade_rect, &rect); /* 保存新区域 */
+                if (gui_mouse.shade->z < 0) { /* 没显示就显示 */
+                    layer_set_z(gui_mouse.shade, sys_layer_get_win_top());
+                }
+                #endif /* CONFIG_SHADE_LAYER */
+
                 return 0;
             }
         }
@@ -858,17 +1042,25 @@ static int gui_dispatch_mouse_filter_msg(g_msg_t *msg)
         if (gui_mouse.drag_layer) {
             int wx = gui_mouse.x - gui_mouse.local_x;
             int wy = gui_mouse.y - gui_mouse.local_y;
-            
-            #ifdef CONFIG_WAKER_LAYER
-            /* 如果移动前是普通的状态，就需要显示游走窗口 */
-            if (gui_mouse.state == MOUSE_NORMAL) {
-                /* 显示游走图层 */
-                gui_draw_walker_layer(gui_mouse.walker, gui_mouse.drag_layer, 1);
-                layer_set_xy(gui_mouse.walker, wx, wy);
-                /* 游走图层位于窗口的顶部 */
-                layer_set_z(gui_mouse.walker, sys_layer_get_win_top());
+            #ifdef CONFIG_SHADE_LAYER
+            /* 擦除上一次绘制的内容 */
+            if (gui_rect_valid(&gui_mouse.shade_rect)) {
+                gui_draw_shade_layer(gui_mouse.shade, &gui_mouse.shade_rect, 0);
             }
-            #endif /* CONFIG_WAKER_LAYER */
+            #endif
+
+            gui_rect_t rect;
+            rect.x = wx;
+            rect.y = wy;
+            rect.width = gui_mouse.drag_layer->width;
+            rect.height = gui_mouse.drag_layer->height;
+            #ifdef CONFIG_SHADE_LAYER
+            gui_draw_shade_layer(gui_mouse.shade, &rect, 1); /* 绘制新内容 */
+            gui_rect_copy(&gui_mouse.shade_rect, &rect); /* 保存新区域 */
+            if (gui_mouse.shade->z < 0) { /* 没显示就显示 */
+                layer_set_z(gui_mouse.shade, sys_layer_get_win_top());
+            }
+            #endif /* CONFIG_SHADE_LAYER */
 
             gui_mouse_set_state(MOUSE_HOLD);
 
@@ -876,7 +1068,7 @@ static int gui_dispatch_mouse_filter_msg(g_msg_t *msg)
             /* 移动的是游走窗口 */
             layer_set_xy(gui_mouse.walker, wx, wy);
             #else
-            layer_set_xy(gui_mouse.drag_layer, wx, wy);
+            //layer_set_xy(gui_mouse.drag_layer, wx, wy);
             #endif /* CONFIG_WAKER_LAYER */
             
             return 0;
@@ -900,19 +1092,22 @@ static void gui_mouse_hover_action(layer_t *layer, g_msg_t *msg, int lcmx, int l
             m.data2     = msg->data0;
             m.data3     = msg->data1;
             msgpool_try_push(task->gmsgpool, &m);
-            
-            /* 对于hover来说，就是离开 */
-            m.id        = GM_LAYER_LEAVE;
-            m.target    = gui_mouse.hover->id;
-            m.data0     = msg->data0 - gui_mouse.hover->x;
-            m.data1     = msg->data1 - gui_mouse.hover->y;
-            msgpool_try_push(task->gmsgpool, &m);
-            /* 如果进入了不同的图层，那么，当为调整图层大小时，就需要取消这个状态 */
-            if (gui_mouse.state != MOUSE_NORMAL) {
-                gui_mouse_set_state(MOUSE_NORMAL);
-                //printk("resize layer %d out!\n", layer->id);
-                gui_mouse.click_point.x = -1;
-                gui_mouse.click_point.y = -1;
+
+            task = (task_t *) gui_mouse.hover->extension;
+            if (task) {/* 对于hover来说，就是离开 */
+                m.id        = GM_LAYER_LEAVE;
+                m.target    = gui_mouse.hover->id;
+                m.data0     = msg->data0 - gui_mouse.hover->x;
+                m.data1     = msg->data1 - gui_mouse.hover->y;
+                msgpool_try_push(task->gmsgpool, &m);
+
+                /* 如果进入了不同的图层，那么，当为调整图层大小时，就需要取消这个状态 */
+                if (gui_mouse.state != MOUSE_NORMAL) {
+                    gui_mouse_set_state(MOUSE_NORMAL);
+                    //printk("resize layer %d out!\n", layer->id);
+                    gui_mouse.click_point.x = -1;
+                    gui_mouse.click_point.y = -1;
+                }
             }
         }
     }
@@ -996,7 +1191,7 @@ int gui_dispatch_mouse_msg(g_msg_t *msg)
     int local_mx, local_my;
     /* 从上往下检测鼠标所在图层，并进行对应的事件处理 */
     list_for_each_owner_reverse (layer, &layer_show_list_head, list) {
-        if (layer == layer_topest)
+        if (layer == gui_mouse.layer)
             continue;
         if (layer->extension == NULL)
             continue;
@@ -1033,7 +1228,10 @@ int gui_dispatch_mouse_msg(g_msg_t *msg)
 
 int gui_dispatch_key_msg(g_msg_t *msg)
 {
+    spin_lock(&layer_val_lock);
     layer_t *layer = layer_focused;
+    spin_unlock(&layer_val_lock);
+
     int val = -1;
     /* 发送给聚焦图层 */
     if (layer) {
@@ -1084,46 +1282,6 @@ int layer_focus_win_top()
     return -1;
 }
 
-/**
- * gui_draw_walker_layer - 根据图层绘制游走图层
- * @walker: 移动的图层
- * @layer: 要移动的图层
- * @draw: 绘制图层与否
- */
-void gui_draw_walker_layer(layer_t *walker, layer_t *layer, int draw)
-{ 
-    GUI_COLOR color;
-    int width;
-
-    /* 先设置宽度 */
-    width = layer->width;
-    
-    /* 如果有绘制，就根据绘制窗口绘制容器 */
-    if (draw) {
-        color = COLOR_BLACK;
-
-        /* 绘制边框 */
-        layer_draw_rect_fill(walker, 1, 1, width-1, 1, color);
-        layer_draw_rect_fill(walker, 1, 1, 1, walker->height - 1, color);
-        layer_draw_rect_fill(walker, width - 1, 1, 1, walker->height - 1, color);
-        layer_draw_rect_fill(walker, 1, walker->height - 1, width - 1, 1, color);
-        color = COLOR_WHITE;
-        
-        layer_draw_rect_fill(walker, 0, 0, width-1, 1, color);
-        layer_draw_rect_fill(walker, 0, 0, 1, walker->height - 1, color);
-        layer_draw_rect_fill(walker, width - 2, 0, 1, walker->height - 1, color);
-        layer_draw_rect_fill(walker, 0, walker->height - 2, width - 1, 1, color);
-    } else {    /* 没有就清除容器 */
-        color = COLOR_NONE;
-        /* 先绘制边框 */
-        layer_draw_rect_fill(walker, 0, 0, width, 2, color);
-        layer_draw_rect_fill(walker, 0, 0, 2, walker->height, color);
-        layer_draw_rect_fill(walker, width - 2, 0, 2, walker->height , color);
-        layer_draw_rect_fill(walker, 0, walker->height - 2, width, 2, color);
-        layer_draw_rect_fill(walker, 0, walker->height - 2, width, 2, color);
-    }
-}
-
 int gui_init_layer()
 {
     /* 分配地图空间 */
@@ -1136,12 +1294,18 @@ int gui_init_layer()
     INIT_LIST_HEAD(&layer_show_list_head);
     INIT_LIST_HEAD(&layer_list_head);
 
-    layer_topest = NULL;
     layer_focused = NULL;
     if (init_mouse_layer() < 0) {
         kfree(layer_map);
         return -1;
     }
-    
+    /*
+    layer_t *test = create_layer(300, 200);
+    layer_set_z(test, 0);
+    layer_draw_rect_fill(test, 10, 10, 1, 1, COLOR_RED);
+    layer_draw_rect(test, 10, 20, 1, 1, COLOR_RED);
+    layer_refresh_rect(test, 10, 10, 1, 1);
+    spin("test");*/
+
     return 0;
 }

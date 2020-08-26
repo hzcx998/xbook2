@@ -54,4 +54,26 @@ static inline int gui_region_valid(gui_region_t *rg)
         ((rg)->left <= (x) && (x) < (rg)->right && \
         (rg)->top <= (y) && (y) < (rg)->bottom)
 
+static inline void gui_rect_init(gui_rect_t *rect)
+{
+    rect->x = 0;
+    rect->y = 0;
+    rect->width = 0;
+    rect->height = 0;
+}
+
+/**
+ * check rect whether valid
+ */
+static inline int gui_rect_valid(gui_rect_t *rect)
+{
+    if (rect->width > 0 && rect->height > 0)
+        return 1;
+    return 0;
+} 
+
+static inline void gui_rect_copy(gui_rect_t *rect0, gui_rect_t *rect1)
+{
+    *rect0 = *rect1;
+} 
 #endif  /* _GUI_SHAPE_H */

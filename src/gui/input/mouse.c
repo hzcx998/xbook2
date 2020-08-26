@@ -509,6 +509,84 @@ void gui_mouse_layer_move()
         gui_mouse.y + gui_mouse.lyoff.y);
 }
 
+/**
+ * 在遮罩图层里面绘制一个矩形，矩形位置和大小就是缩放中的窗口
+ */
+void gui_draw_shade_layer(layer_t *shade, gui_rect_t *rect, int draw)
+{ 
+    if (!shade || !rect)
+        return;
+    if (rect->x < 0)
+        rect->x = 0;
+    if (rect->y < 0)
+        rect->y = 0;
+    if (rect->width > shade->width)
+        rect->width = shade->width;
+    if (rect->height > shade->height)
+        rect->height = shade->height;
+    GUI_COLOR color;
+
+    /* 如果有绘制，就根据绘制窗口绘制容器 */
+    if (draw) {
+        color = COLOR_BLACK;
+
+        /* 绘制边框 */
+        layer_draw_rect_fill(shade, rect->x + 1, rect->y + 1,
+            rect->width-1, 1, color);
+        layer_draw_rect_fill(shade, rect->x + 1, rect->y + 1,
+            1, rect->height - 1, color);
+        layer_draw_rect_fill(shade, rect->x + rect->width - 1, rect->y + 1,
+            1, rect->height - 1, color);
+        layer_draw_rect_fill(shade, rect->x + 1, rect->y + rect->height - 1,
+            rect->width - 1, 1, color);
+
+        color = COLOR_WHITE;
+        
+        layer_draw_rect_fill(shade, rect->x, rect->y,
+            rect->width-1, 1, color);
+        layer_draw_rect_fill(shade, rect->x, rect->y, 1,
+            rect->height - 1, color);
+        layer_draw_rect_fill(shade, rect->x + rect->width - 2, rect->y,
+            1, rect->height - 1, color);
+        layer_draw_rect_fill(shade, rect->x, rect->y + rect->height - 2,
+            rect->width - 1, 1, color);
+
+        layer_refresh_rect(shade, rect->x, rect->y,
+            rect->width, 2);
+        layer_refresh_rect(shade, rect->x, rect->y,
+            2, rect->height);
+        layer_refresh_rect(shade, rect->x + rect->width - 2, rect->y,
+            2, rect->height);
+        layer_refresh_rect(shade, rect->x, rect->y + rect->height - 2,
+            rect->width, 2);
+        
+    } else {    /* 没有就清除容器 */
+        color = COLOR_NONE;
+        /* 先绘制边框 */
+        layer_draw_rect_fill(shade, rect->x, rect->y,
+            rect->width, 2, color);
+        layer_draw_rect_fill(shade, rect->x, rect->y,
+            2, rect->height, color);
+        layer_draw_rect_fill(shade, rect->x + rect->width - 2, rect->y,
+            2, rect->height, color);
+        layer_draw_rect_fill(shade, rect->x, rect->y + rect->height - 2,
+            rect->width, 2, color);
+        layer_draw_rect_fill(shade, rect->x, rect->y + rect->height - 2,
+            rect->width, 2, color);
+
+        /* 刷新时需要刷新当前图层以及其一下的图层，才能擦除留痕 */
+        layer_refresh_under_rect(shade, rect->x, rect->y,
+            rect->width, 2);
+        layer_refresh_under_rect(shade, rect->x, rect->y,
+            2, rect->height);
+        layer_refresh_under_rect(shade, rect->x + rect->width - 2, rect->y,
+            2, rect->height);
+        layer_refresh_under_rect(shade, rect->x, rect->y + rect->height - 2,
+            rect->width, 2);
+        
+    }
+}
+
 int init_mouse_layer()
 {
     gui_mouse.x = gui_screen.width / 2;
@@ -537,18 +615,18 @@ int init_mouse_layer()
     gui_mouse_layer_move();
     layer_set_z(gui_mouse.layer, 0);
 
-    #ifdef CONFIG_WAKER_LAYER
-    /* 创建窗口游走时的图层 */
-    gui_mouse.walker = create_layer(gui_screen.width, 20);
-    if (gui_mouse.walker == NULL) {
-        printk("create window walker layer failed!\n");
+    #ifdef CONFIG_SHADE_LAYER
+    gui_mouse.shade = create_layer(gui_screen.width, gui_screen.height);
+    if (gui_mouse.shade == NULL) {
+        printk("create window shade layer failed!\n");
         return -1;
     }
-    layer_draw_rect_fill(gui_mouse.walker, 0, 0, 
-        gui_mouse.walker->width, gui_mouse.walker->height, COLOR_NONE);
+    layer_draw_rect_fill(gui_mouse.shade, 0, 0, 
+        gui_mouse.shade->width, gui_mouse.shade->height, COLOR_NONE);
     /* 隐藏图层 */
-    layer_set_z(gui_mouse.walker, -1);
-    #endif
+    layer_set_z(gui_mouse.shade, -1);
+    gui_rect_init(&gui_mouse.shade_rect);
+    #endif /* CONFIG_SHADE_LAYER */
 
     return 0;
 }

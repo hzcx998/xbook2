@@ -8,6 +8,9 @@
 #include "gmessage.h"
 #include "gscreen.h"
 #include "gwindow.h"
+#include "gfont.h"
+#include "gtouch.h"
+#include "gkeycode.h"
 
 int g_init(void);
 int g_quit(void);

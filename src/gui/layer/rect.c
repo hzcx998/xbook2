@@ -9,10 +9,12 @@ void layer_draw_rect_fill(layer_t *layer, int x, int y, int width, int height, G
             layer_put_point(layer, x + i, y + j, color);
         }
     }
+
 }
 
 void layer_draw_rect(layer_t *layer, int x, int y, int width, int height, GUI_COLOR color)
 {
+
     /* left */
     layer_put_vline(layer, x, y, y + height - 1, color);
     /* right */
@@ -21,4 +23,5 @@ void layer_draw_rect(layer_t *layer, int x, int y, int width, int height, GUI_CO
     layer_put_hline(layer, x, x + width - 1, y, color);
     /* bottom */
     layer_put_hline(layer, x, x + width - 1, y + height - 1, color);
+
 }

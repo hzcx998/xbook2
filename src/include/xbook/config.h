@@ -20,7 +20,7 @@
 /* ahci disk driver */
 #define CONFIG_AHCI 
 
-/* waker layer for fast gui */
-#define CONFIG_WAKER_LAYER
+/* shade layer */
+#define CONFIG_SHADE_LAYER
 
 #endif   /* _XBOOK_CONFIG_H */

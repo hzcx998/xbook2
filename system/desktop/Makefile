@@ -1,9 +1,9 @@
 X_LIBS		+= libxlibc-0.0.1.a libjpeg-9d.a libgapi-0.1.0.a
 
-X_INCDIRS	+= ../library/jpeg ../library/xlibc/include ../library/gapi/include
+X_INCDIRS	+= ../library/jpeg ../library/xlibc/include ../library/gapi/include desktop
 
 NAME		:= desktop
-SRC			+= main.c desktop.c taskbar.c
+SRC			+= main.c desktop.c taskbar.c winctl.c
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

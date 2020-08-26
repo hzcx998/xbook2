@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#define TASKBAR_HEIGHT 28
-
 extern uint32_t desktop_width, desktop_height;
 
 int init_desktop();

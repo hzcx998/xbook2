@@ -3,6 +3,8 @@
 
 #include <gapi.h>
 #include <gscreen.h>
+#include <glayer.h>
+#include <gfont.h>
 
 int g_init(void)
 {
@@ -16,12 +18,20 @@ int g_init(void)
     
     g_init_msg();
     
+    if (g_init_font() < 0)
+        return -1;
+
     return val;
 }
 
 int g_quit(void)
 {
-    int val = syscall0(int, SYS_GQUIT);
-    
-    return val;
+    /* 先关闭窗口 */
+    if (g_del_window_all() < 0)
+        return -1;
+    /* 再关闭图层 */
+    if (g_layer_del_all() < 0)
+        return -1;
+
+    return syscall0(int, SYS_GQUIT);
 }

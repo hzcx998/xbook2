@@ -19,17 +19,20 @@ void layer_put_hline(layer_t *layer, int left, int right, int top, GUI_COLOR col
 
 void layer_draw_line(layer_t *layer, int x0, int y0, int x1, int y1, GUI_COLOR color)
 {
+
     if (x0 == x1) { /* 垂直的线 */
         if (y0 < y1) 
             layer_put_vline(layer, x0, y0, y1, color);
         else 
             layer_put_vline(layer, x0, y1, y0, color);
+
         return;
     } else if (y0 == y1) {  /* 水平的直线 */
         if (x0 < x1) 
             layer_put_hline(layer, x0, x1, y0, color);
         else 
             layer_put_hline(layer, x1, x0, y0, color);
+
         return;
     }
     int i, x, y, len, dx, dy;
@@ -57,15 +60,12 @@ void layer_draw_line(layer_t *layer, int x0, int y0, int x1, int y1, GUI_COLOR c
 		} else {
 			dy = ((y1 - y0 - 1) << 10)/len;
 		}
-		
-		
 	}else{
 		len = dy + 1;
 		if(y0 > y1){
 			dy = -1024;
 		} else {
 			dy = 1024;
-			
 		}
 		if(x0 <= x1){
 			dx = ((x1 - x0 + 1) << 10)/len;

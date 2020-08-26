@@ -162,11 +162,15 @@ int init_desktop()
     
     g_layer_set_focus(layer);   /* set as focus layer */
 
+    g_layer_set_desktop(layer);   /* set as focus layer */
+    
     /* 加载背景图片 */
+    #if 1
     if (jpg_display(BG_PIC_PATH) < 0) {
         printf("show background pic %s failed!\n", BG_PIC_PATH);
     }
-
+    #endif
+    printf("[desktop]: desktop layer=%d\n", desktop_layer);
     return 0;
 }
 

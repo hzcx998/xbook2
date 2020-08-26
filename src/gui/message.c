@@ -27,6 +27,30 @@ int gui_pop_msg(g_msg_t *msg)
     return msgpool_pop(gui_msgpool, msg);
 }
 
+
+/**
+ * 初始化用户消息池
+ */
+int gui_msgpool_init(task_t *task)
+{
+    task->gmsgpool = msgpool_create(sizeof(g_msg_t), GUI_MSG_NR);
+    if (!task->gmsgpool)
+        return -1;  /* create failed! */
+    return 0;
+}
+
+/**
+ * 退出用户消息池
+ */
+int gui_msgpool_exit(task_t *task)
+{
+    if (task->gmsgpool) {
+        msgpool_destroy(task->gmsgpool);
+        task->gmsgpool = NULL;
+    }
+    return 0;
+}
+
 /**
  * 获取消息，如果没有就阻塞等待
  * 

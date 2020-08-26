@@ -28,6 +28,10 @@ enum {
     GM_GET_FOCUS,
     GM_LOST_FOCUS,
     GM_MOVE,
+    GM_WINDOW_CREATE,
+    GM_WINDOW_CLOSE,
+    GM_HIDE,
+    GM_SHOW,
     GM_NR,
 };
 
@@ -42,14 +46,37 @@ typedef struct {
 } g_msg_t;
 
 int g_init_msg();
-int g_set_routine(int (*routine)(g_msg_t *));
+int g_set_msg_routine(int (*routine)(g_msg_t *));
 int g_get_msg(g_msg_t *msg);
 int g_dispatch_msg(g_msg_t *msg);
 int g_try_get_msg(g_msg_t *msg);
 int g_post_msg(g_msg_t *msg);
 int g_send_msg(g_msg_t *msg);
 int g_post_quit_msg(int target);
+int g_translate_msg(g_msg_t *msg);
 
 #define g_is_quit_msg(msg) ((msg)->id == GM_QUIT)
+
+/* 获取消息的数据 */
+#define g_msg_get_type(msg) ((msg)->id)
+#define g_msg_get_target(msg) ((msg)->target)
+
+#define g_msg_get_mouse_x(msg) ((msg)->data0)
+#define g_msg_get_mouse_y(msg) ((msg)->data1)
+#define g_msg_get_mouse_x_global(msg) ((msg)->data2)
+#define g_msg_get_mouse_y_global(msg) ((msg)->data3)
+
+#define g_msg_get_move_x(msg) ((msg)->data0)
+#define g_msg_get_move_y(msg) ((msg)->data1)
+
+#define g_msg_get_resize_x(msg) ((msg)->data0)
+#define g_msg_get_resize_y(msg) ((msg)->data1)
+#define g_msg_get_resize_width(msg) ((msg)->data2)
+#define g_msg_get_resize_height(msg) ((msg)->data3)
+
+#define g_msg_get_key_code(msg) ((msg)->data0)
+#define g_msg_get_key_modify(msg) ((msg)->data1)
+
+#define g_msg_get_sender(msg) ((msg)->data0)
 
 #endif /* _GAPI_MESSAGE_H */

@@ -7,6 +7,7 @@
 #include <xbook/vmspace.h>
 #include <xbook/sharemem.h>
 #include <fsal/fsal.h>
+#include <gui/message.h>
 
 #include <string.h>
 
@@ -170,6 +171,15 @@ static int copy_file(task_t *child, task_t *parent)
     return fs_fd_copy(parent, child);
 }
 
+static int copy_gmsgpool(task_t *child, task_t *parent)
+{
+    /* 父进程有图形消息池，才设置子进程的图形消息池 */
+    if (parent->gmsgpool) {
+        child->gmsgpool = NULL; /* 先把子进程的消息池指针去掉，因为和父进程一样 */
+        return gui_msgpool_init(child);
+    }
+    return 0;
+}
 
 /**
  * copy_pthread_desc - 复制线程描述结构
@@ -222,6 +232,8 @@ static int copy_task(task_t *child, task_t *parent)
     if (copy_file(child, parent) < 0)
         return -1; 
 
+    if (copy_gmsgpool(child, parent) < 0)
+        return -1;
     fork_bulid_child_stack(child);
     // printk(KERN_DEBUG "child heap is [%x,%x]\n", child->vmm->heap_start, child->vmm->heap_end);
     return 0;
