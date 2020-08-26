@@ -72,6 +72,10 @@ typedef struct _e1000_extension {
     timer_t tx_fifo_stall_timer;
     timer_t watchdog_timer;
     timer_t phy_info_timer;
+
+    uint32_t wol;
+    uint16_t link_speed;
+    uint16_t link_duplex;
     
     /* TX */
 	struct e1000_desc_ring tx_ring;
@@ -140,9 +144,11 @@ typedef struct _e1000_extension {
 }e1000_extension_t;
 
 int e1000_up(e1000_extension_t* ext);
+void e1000_down(e1000_extension_t* ext);
 
 void e1000_free_rx_resources(e1000_extension_t* ext);
 
+static iostatus_t e1000_close(device_object_t* device, io_request_t* ioreq);
 static void e1000_configure_tx(e1000_extension_t* ext);
 static void e1000_configure_rx(e1000_extension_t* ext);
 static void e1000_setup_rctl(e1000_extension_t* ext);
@@ -339,6 +345,34 @@ static int e1000_init_board(e1000_extension_t* ext)
     }
 
     return 0;
+}
+
+void e1000_down(e1000_extension_t* ext)
+{
+    device_object_t* netdev = ext->device_object;
+
+    e1000_irq_disable(ext);
+    unregister_irq(ext->irq, ext);
+    timer_del(&ext->tx_fifo_stall_timer);
+    timer_del(&ext->watchdog_timer);
+    timer_del(&ext->phy_info_timer);
+    ext->link_speed = 0;
+    ext->link_duplex = 0;
+    
+    //停止向网络接口发送数据
+
+    e1000_reset(ext);
+    e1000_clean_tx_ring(ext);
+    e1000_clean_rx_ring(ext);
+
+    /* if wol is not enabled
+     * power down the phy so no link is implied when inter face is down */
+    if(!ext->wol && ext->hw.media_type == e1000_media_type_copper) {
+        uint16_t mii_reg;
+        e1000_read_phy_reg(&ext->hw, PHY_CTRL, &mii_reg);
+        mii_reg |= MII_CR_POWER_DOWN;
+        e1000_write_phy_reg(&ext->hw, PHY_CTRL, mii_reg);
+    }
 }
 
 int e1000_reset(e1000_extension_t* ext)
@@ -660,6 +694,18 @@ int e1000_setup_rx_resources(e1000_extension_t* ext)
 }
 
 /**
+ * e1000_irq_disable - Mask off interrupt generation on the NIC
+ * @ext: board private structure
+ **/
+
+static inline void
+e1000_irq_disable(e1000_extension_t* ext)
+{
+    E1000_WRITE_REG(&ext->hw, IMC, ~0);
+    E1000_WRITE_FLUSH(&ext->hw);
+}
+
+/**
  * e1000_irq_enable - Enable default interrupt generation settings
  * @adapter: board private structure
  **/
@@ -725,6 +771,8 @@ static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
         goto err_up;
     }
 
+    io_complete_request(ioreq);
+
 err_up:
     e1000_free_rx_resources(ext);
 err_setup_rx:
@@ -733,6 +781,32 @@ err_setup_tx:
     e1000_reset(ext);
 
     return err;
+}
+
+/**
+ * e1000_close - Disables a network interface
+ * @device: network interface device structure
+ *
+ * Returns 0, this is not allowed to fail
+ *
+ * The close entry point is called when an interface is de-activated
+ * by the OS.  The hardware is still under the drivers control, but
+ * needs to be disabled.  A global MAC reset is issued to stop the
+ * hardware, and all transmit and receive resources are freed.
+ **/
+
+static iostatus_t e1000_close(device_object_t* device, io_request_t* ioreq)
+{
+    e1000_extension_t* ext;
+
+    e1000_down(ext);
+
+    e1000_free_tx_resources(ext);
+    e1000_free_rx_resources(ext);
+
+    io_complete_request(ioreq);
+
+    return 0;
 }
 
 static iostatus_t e1000_enter(driver_object_t* driver)
@@ -797,6 +871,9 @@ iostatus_t e1000_driver_vine(driver_object_t* driver)
     /* 绑定驱动信息 */
     driver->driver_enter = e1000_enter;
     driver->driver_exit = e1000_exit;
+
+    driver->dispatch_function[IOREQ_OPEN] = e1000_open;
+    driver->dispatch_function[IOREQ_CLOSE] = e1000_close;
 
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
