@@ -155,6 +155,7 @@ static void e1000_setup_rctl(e1000_extension_t* ext);
 static void e1000_set_multi(device_object_t* netdev);
 static void e1000_enter_82542_rst(e1000_extension_t* ext);
 static void e1000_leave_82542_rst(e1000_extension_t* ext);
+static void e1000_clean_tx_ring(e1000_extension_t* ext);
 static void e1000_clean_rx_ring(e1000_extension_t* ext);
 static void e1000_alloc_rx_buffers(e1000_extension_t* ext);
 static int e1000_intr(unsigned long irq, unsigned long data);
@@ -166,6 +167,9 @@ static boolean_t e1000_clean_rx_irq(e1000_extension_t* ext,
 #else
 static boolean_t e1000_clean_rx_irq(e1000_extension_t* ext);
 #endif
+
+static inline void e1000_irq_disable(e1000_extension_t* ext);
+
 
 /**
  * 1. 申请pci结构(pci_device_t)并初始化厂商号和设备号
