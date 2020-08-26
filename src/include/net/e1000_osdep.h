@@ -92,12 +92,12 @@ typedef enum {
 #define DEBUGOUT3 DEBUGOUT2
 #define DEBUGOUT7 DEBUGOUT3
 
-static inline writel(uint32_t val, uint32_t addr)
+static inline int writel(uint32_t val, uint32_t addr)
 {
     (*(volatile uint32_t*)(addr)) = val;
 }
 
-static inline readl(uint32_t addr)
+static inline int readl(uint32_t addr)
 {
     return (*(volatile uint32_t*)(addr));
 }
