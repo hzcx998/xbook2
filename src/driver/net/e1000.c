@@ -151,6 +151,15 @@ static void e1000_enter_82542_rst(e1000_extension_t* ext);
 static void e1000_leave_82542_rst(e1000_extension_t* ext);
 static void e1000_clean_rx_ring(e1000_extension_t* ext);
 static void e1000_alloc_rx_buffers(e1000_extension_t* ext);
+static int e1000_intr(unsigned long irq, unsigned long data);
+static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext);
+#ifdef CONFIG_E1000_NAPI
+static int e1000_clean(struct net_device *netdev, int *budget);
+static boolean_t e1000_clean_rx_irq(e1000_extension_t* ext,
+                                    int *work_done, int work_to_do);
+#else
+static boolean_t e1000_clean_rx_irq(e1000_extension_t* ext);
+#endif
 
 /**
  * 1. 申请pci结构(pci_device_t)并初始化厂商号和设备号
@@ -653,6 +662,7 @@ int e1000_setup_rx_resources(e1000_extension_t* ext)
 int e1000_up(e1000_extension_t* ext)
 {
     device_object_t* netdev = ext->device_object;
+    int err;
 
     /* hardware has been reset, we need to reload some things */
 
@@ -668,6 +678,15 @@ int e1000_up(e1000_extension_t* ext)
     e1000_set_multi(netdev);
 
     e1000_configure_tx(ext);
+    e1000_setup_rctl(ext);
+    e1000_configure_rx(ext);
+    e1000_alloc_rx_buffers(ext);
+
+    if((err = register_irq(ext->irq, e1000_intr, IRQF_SHARED, "IRQ-Network", DEV_NAME, (unsigned int)ext))) {
+        return err;
+    }
+
+    timer_mod(&ext->watchdog_timer, systicks);
 }
 
 static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
@@ -1119,4 +1138,237 @@ static void e1000_setup_rctl(e1000_extension_t* ext)
     }
 
     E1000_WRITE_REG(&ext->hw, RCTL, rctl);
+}
+
+/**
+ * e1000_intr - Interrupt Handler
+ * @irq: interrupt number
+ * @data: pointer to a network interface device structure
+ **/
+
+static int e1000_intr(unsigned long irq, unsigned long data)
+{
+    e1000_extension_t* ext = (e1000_extension_t*)data;
+    struct e1000_hw* hw = &ext->hw;
+    uint32_t icr = E1000_READ_REG(hw, ICR);
+#ifndef CONFIG_E1000_NAPI
+    unsigned int i;
+#endif
+
+    if(unlikely(!icr)) {
+        return -1;
+    }
+
+    if(unlikely(icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC))) {
+        hw->get_link_status = 1;
+        timer_mod(&ext->watchdog_timer, systicks);
+    }
+    for(i=0; i<E1000_MAX_INTR; i++) {
+        if(unlikely(!e1000_clean_rx_irq(ext) & 
+           !e1000_clean_tx_irq(ext))) {
+            break;
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * e1000_rx_checksum - Receive Checksum Offload for 82543
+ * @adapter: board private structure
+ * @rx_desc: receive descriptor
+ * @sk_buff: socket buffer with received data
+ **/
+
+static inline void
+e1000_rx_checksum(e1000_extension_t* ext, 
+                  struct e1000_rx_desc* rx_desc)
+{
+    /* 82543 or new only */
+    if(unlikely((ext->hw.mac_type < e1000_82543) || 
+    (rx_desc->status & E1000_RXD_STAT_IXSM) || 
+    (!(rx_desc->status & E1000_RXD_STAT_TCPCS)))) {
+        return;
+    }
+
+    /* at this point we know the hardware did the tcp checksum */
+    /* now look at the tcp checksum error bit */
+    if(rx_desc->errors & E1000_RXD_ERR_TCPE) {
+        /* let the stack verify checksum errors */
+        ext->hw_csum_err++;
+    } else {
+        ext->hw_csum_good++;
+    }
+}
+
+static boolean_t
+#ifdef CONFIG_E1000_NAPI
+e1000_clean_rx_irq(e1000_extension_t* ext, int* work_done,
+                   int work_to_do)
+#else
+e1000_clean_rx_irq(e1000_extension_t* ext)
+#endif
+{
+    struct e1000_desc_ring* rx_ring = &ext->rx_ring;
+    device_object_t* netdev = ext->device_object;
+    pci_device_t* pci_dev = ext->pci_device;
+    struct e1000_rx_desc* rx_desc;
+    struct e1000_buffer* buffer_info;
+    uint8_t* buffer;
+    unsigned long flags;
+    uint32_t length;
+    uint8_t last_byte;
+    unsigned int i;
+    boolean_t cleaned = FALSE;
+
+    i = rx_ring->next_to_clean;
+    rx_desc = E1000_RX_DESC(*rx_ring, i);
+
+    while(rx_desc->status & E1000_RXD_STAT_DD) {
+        buffer_info = &rx_ring->buffer_info[i];
+#ifdef CONFIG_E1000_NAPI
+        if(*work_done >= work_to_do) {
+            break;
+        }
+        (*work_done)++;
+#endif
+        cleaned = TRUE;
+
+        buffer = buffer_info->buffer;
+        length = le16_to_cpu(rx_desc->length);
+
+        if(unlikely(!(rx_desc->status & E1000_RXD_STAT_EOP))) {
+            /* all receives must fit into a single buffer */
+            printk(KERN_DEBUG "%s: receive packet consumed multiple buffers", netdev->name);
+            kfree(buffer);
+            goto next_desc;
+        }
+
+        if(unlikely(rx_desc->errors & E1000_RXD_ERR_FRAME_ERR_MASK)) {
+            last_byte = *(buffer + length - 1);
+            if(TBI_ACCEPT(&ext->hw, rx_desc->status,
+                          rx_desc->errors, length, last_byte)) {
+                spin_lock_irqsave(&ext->stats_lock, flags);
+                e1000_tbi_adjust_stats(&ext->hw, 
+                                       &ext->stats, 
+                                       length, buffer);
+                spin_unlock_irqrestore(&ext->stats_lock, flags);
+                length--;
+            } else {
+                kfree(buffer);
+                goto next_desc;
+            }
+        }
+
+        /* receive checksum offload */
+        e1000_rx_checksum(ext, rx_desc);
+
+        //跳过以太网报头，未处理
+
+#ifdef CONFIG_E1000_NAPI
+#ifdef NETIF_F_HW_VLAN_TX
+		if(unlikely(adapter->vlgrp &&
+			    (rx_desc->status & E1000_RXD_STAT_VP))) {
+			vlan_hwaccel_receive_skb(skb, adapter->vlgrp,
+					le16_to_cpu(rx_desc->special) &
+					E1000_RXD_SPC_VLAN_MASK);
+		} else {
+			netif_receive_skb(skb);
+		}
+#else
+		netif_receive_skb(skb);
+#endif
+#else /* CONFIG_E1000_NAPI */
+#ifdef NETIF_F_HW_VLAN_TX
+		if(unlikely(adapter->vlgrp &&
+			    (rx_desc->status & E1000_RXD_STAT_VP))) {
+			vlan_hwaccel_rx(skb, adapter->vlgrp,
+					le16_to_cpu(rx_desc->special) &
+					E1000_RXD_SPC_VLAN_MASK);
+		} else {
+			netif_rx(skb);
+		}
+#else
+		/* 网络接口发送数据包 */
+        io_device_queue_append(&ext->rx_queue, buffer, rx_desc->length);
+#endif
+#endif /* CONFIG_E1000_NAPI */
+
+next_desc:
+        rx_desc->status = 0;
+        buffer_info->buffer = NULL;
+        if(unlikely(++i == rx_ring->count)) {
+            i = 0;
+        }
+        rx_desc = E1000_RX_DESC(*rx_ring, i);
+    }
+
+    rx_ring->next_to_clean = i;
+
+    e1000_alloc_rx_buffers(ext);
+
+    return cleaned;
+}
+
+static inline void
+e1000_unmap_and_free_tx_resource(e1000_extension_t* ext, 
+            struct e1000_buffer* buffer_info)
+{
+    if(buffer_info->dma) {
+        buffer_info->dma = 0;
+    }
+    if(buffer_info->buffer) {
+        kfree(buffer_info->buffer);
+        buffer_info->buffer = NULL;
+    }
+}
+
+/**
+ * e1000_clean_tx_irq - Reclaim resources after transmit completes
+ * @ext: board private structure
+ **/
+
+static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
+{
+    struct e1000_desc_ring* tx_ring = &ext->tx_ring;
+    device_object_t* netdev = ext->device_object;
+    struct e1000_tx_desc* tx_desc;
+    struct e1000_tx_desc* eop_desc;
+    struct e1000_buffer* buffer_info;
+    unsigned int i, eop;
+    boolean_t cleaned = FALSE;
+
+    i = tx_ring->next_to_clean;
+    eop = tx_ring->buffer_info[i].next_to_watch;
+    eop_desc = E1000_TX_DESC(*tx_ring, eop);
+
+    while(eop_desc->upper.data & cpu_to_le32(E1000_TXD_STAT_DD)) {
+        for(cleaned = FALSE; !cleaned; ) {
+            tx_desc = E1000_TX_DESC(*tx_ring, i);
+            buffer_info = &tx_ring->buffer_info[i];
+
+            e1000_unmap_and_free_tx_resource(ext, buffer_info);
+            tx_desc->buffer_addr = 0;
+            tx_desc->lower.data = 0;
+            tx_desc->upper.data = 0;
+
+            cleaned = (i == eop);
+            if(unlikely(++i == tx_ring->count)) {
+                i = 0;
+            }
+        }
+
+        eop = tx_ring->buffer_info[i].next_to_watch;
+        eop_desc = E1000_TX_DESC(*tx_ring, eop);
+    }
+
+    tx_ring->next_to_clean = 0;
+
+    spin_lock(&ext->tx_lock);
+
+    //判断网络接口是否暂停，暂停就唤醒。未处理。
+
+    spin_unlock(&ext->tx_lock);
+
+    return cleaned;
 }

@@ -126,6 +126,9 @@
         "fstream": "c",
         "istream": "c",
         "ostream": "c",
-        "*.rh": "c"
+        "*.rh": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c"
     }
 }
