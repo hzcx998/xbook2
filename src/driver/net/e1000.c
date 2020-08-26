@@ -659,6 +659,18 @@ int e1000_setup_rx_resources(e1000_extension_t* ext)
     return 0;
 }
 
+/**
+ * e1000_irq_enable - Enable default interrupt generation settings
+ * @adapter: board private structure
+ **/
+
+static inline void
+e1000_irq_enable(e1000_extension_t* ext)
+{
+    E1000_WRITE_REG(&ext->hw, IMS, IMS_ENABLE_MASK);
+    E1000_WRITE_FLUSH(&ext->hw);
+}
+
 int e1000_up(e1000_extension_t* ext)
 {
     device_object_t* netdev = ext->device_object;
@@ -687,6 +699,9 @@ int e1000_up(e1000_extension_t* ext)
     }
 
     timer_mod(&ext->watchdog_timer, systicks);
+    e1000_irq_enable(ext);
+
+    return 0;
 }
 
 static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
