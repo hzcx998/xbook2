@@ -721,12 +721,18 @@ static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
         goto err_setup_rx;
     }
 
+    if((err = e1000_up(ext))) {
+        goto err_up;
+    }
+
 err_up:
     e1000_free_rx_resources(ext);
 err_setup_rx:
     e1000_free_tx_resources(ext);
 err_setup_tx:
     e1000_reset(ext);
+
+    return err;
 }
 
 static iostatus_t e1000_enter(driver_object_t* driver)
