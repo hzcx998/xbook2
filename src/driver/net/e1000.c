@@ -139,8 +139,11 @@ typedef struct _e1000_extension {
 
 }e1000_extension_t;
 
+int e1000_up(e1000_extension_t* ext);
+
 void e1000_free_rx_resources(e1000_extension_t* ext);
 
+static void e1000_configure_tx(e1000_extension_t* ext);
 static void e1000_configure_rx(e1000_extension_t* ext);
 static void e1000_set_multi(device_object_t* netdev);
 static void e1000_enter_82542_rst(e1000_extension_t* ext);
@@ -648,7 +651,7 @@ int e1000_setup_rx_resources(e1000_extension_t* ext)
 
 int e1000_up(e1000_extension_t* ext)
 {
-    device_object_t* net_dev = ext->device_object;
+    device_object_t* netdev = ext->device_object;
 
     /* hardware has been reset, we need to reload some things */
 
@@ -661,7 +664,7 @@ int e1000_up(e1000_extension_t* ext)
         }
     }
 
-    
+    e1000_set_multi(netdev);
 }
 
 static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
@@ -990,4 +993,82 @@ static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
     }
 
     rx_ring->next_to_use = i;
+}
+
+/**
+ * e1000_configure_tx - Configure 8254x Transmit Unit after Reset
+ * @ext: board private structure
+ *
+ * Configure the Tx unit of the MAC after a reset.
+ **/
+static void e1000_configure_tx(e1000_extension_t* ext)
+{
+    uint64_t tdba = ext->tx_ring.dma;
+    uint32_t tdlen = ext->tx_ring.count * sizeof(struct e1000_tx_desc);
+    uint32_t tctl, tipg;
+
+    E1000_WRITE_REG(&ext->hw, TDBAL, (tdba & 0x00000000ffffffffUll));
+    E1000_WRITE_REG(&ext->hw, TDBAH, (tdba >> 32));
+
+    E1000_WRITE_REG(&ext->hw, TDLEN, tdlen);
+
+    /* setup the hw tx head and tail descriptor pointers */
+    E1000_WRITE_REG(&ext->hw, TDH, 0);
+    E1000_WRITE_REG(&ext->hw, TDT, 0);
+
+    /* set the default values for the tx inter packet gap timer */
+    switch(ext->hw.mac_type) {
+        case e1000_82542_rev2_0:
+        case e1000_82542_rev2_1:
+            tipg = DEFAULT_82542_TIPG_IPGT;
+            tipg |= DEFAULT_82542_TIPG_IPGR1 << E1000_TIPG_IPGR1_SHIFT;
+            tipg |= DEFAULT_82542_TIPG_IPGR2 << E1000_TIPG_IPGR2_SHIFT;
+            break;
+        default:
+            if(ext->hw.media_type == e1000_media_type_fiber ||
+               ext->hw.media_type == e1000_media_type_internal_serdes) {
+               tipg = DEFAULT_82543_TIPG_IPGT_FIBER;
+            } else {
+                tipg = DEFAULT_82543_TIPG_IPGT_COPPER;
+            }
+            tipg |= DEFAULT_82543_TIPG_IPGR1 << E1000_TIPG_IPGR1_SHIFT;
+            tipg |= DEFAULT_82543_TIPG_IPGR2 << E1000_TIPG_IPGR2_SHIFT;
+    }
+    E1000_WRITE_REG(&ext->hw, TIPG, tipg);
+
+    /* set the tx interrupt delay register */
+    E1000_WRITE_REG(&ext->hw, TIDV, ext->tx_int_delay);
+    if(ext->hw.mac_type >= e1000_82540) {
+        E1000_WRITE_REG(&ext->hw, TADV, ext->tx_abs_int_delay);
+    }
+
+    /* program the transmit control register */
+    tctl = E1000_READ_REG(&ext->hw, TCTL);
+
+    tctl &= ~E1000_TCTL_CT;
+    tctl |= E1000_TCTL_EN | E1000_TCTL_PSP |
+        (E1000_COLLISION_THRESHOLD << E1000_CT_SHIFT);
+    
+    E1000_WRITE_REG(&ext->hw, TCTL, tctl);
+
+    /* 设置碰撞距离 */
+    e1000_config_collision_dist(&ext->hw);
+
+    /* setup transmit descriptor settings for eop descriptor */
+    ext->txd_cmd = E1000_TXD_CMD_IDE | E1000_TXD_CMD_EOP |
+        E1000_TXD_CMD_IFCS;
+    
+    if(ext->hw.mac_type < e1000_82543) {
+        ext->txd_cmd |= E1000_TXD_CMD_RPS;
+    } else {
+        ext->txd_cmd |= E1000_TXD_CMD_RS;
+    }
+
+    /* cache if we're 82544 running in pci-x because we'll 
+     * need this to apply a workaround later in the send path. 
+     */
+    if(ext->hw.mac_type == e1000_82544 &&
+       ext->hw.bus_type == e1000_bus_type_pcix) {
+        ext->pcix_82544 = 1;
+    }
 }
