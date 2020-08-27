@@ -830,6 +830,33 @@ static iostatus_t e1000_close(device_object_t* device, io_request_t* ioreq)
     return IO_SUCCESS;
 }
 
+static iostatus_t e1000_devctl(device_object_t* device, io_request_t* ioreq)
+{
+    unsigned int ctlcode = ioreq->parame.devctl.code;
+    unsigned long arg = ioreq->parame.devctl.arg;
+    e1000_extension_t* ext = (e1000_extension_t*)device->device_extension;
+    iostatus_t status;
+    unsigned char* mac;
+    int i;
+
+    switch(ctlcode) {
+        case NETIO_GETMAC:
+            mac = (unsigned char*)arg;
+            for(i=0; i<6; i++) {
+                *mac++ = ext->hw.mac_addr[i];
+            }
+            status = IO_SUCCESS;
+            break;
+        default:
+            status = IO_FAILED;
+            break;
+    }
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = 0;
+    io_complete_request(ioreq);
+    return status;
+}
+
 static iostatus_t e1000_enter(driver_object_t* driver)
 {
     iostatus_t status;
@@ -895,6 +922,7 @@ iostatus_t e1000_driver_vine(driver_object_t* driver)
 
     driver->dispatch_function[IOREQ_OPEN] = e1000_open;
     driver->dispatch_function[IOREQ_CLOSE] = e1000_close;
+    driver->dispatch_function[IOREQ_DEVCTL] = e1000_devctl;
 
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
