@@ -28,7 +28,7 @@ driver_func_t driver_vine_table[] = {
 #else
     ide_driver_vine,                    /* disk */
 #endif
-    //rtl8139_driver_vine,                /* net */
+    rtl8139_driver_vine,                /* net */
     e1000_driver_vine,
     keyboard_driver_vine,               /* input */
     ramdisk_driver_vine,                /* disk */

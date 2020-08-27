@@ -30,6 +30,7 @@ void socket_examples_init(void);
 
 void lwip_init_task(void)
 {
+    printk(KERN_DEBUG "lwip_init_task start\n");
     struct ip_addr ipaddr, netmask, gateway;
 #if NO_SYS == 1
     lwip_init();
@@ -62,6 +63,7 @@ void lwip_init_task(void)
     dhcp_start(&rtl8139_netif);
     printk("[%s] %s: dhcp done.\n", SRV_NAME, __func__);
 #endif
+    printk(KERN_DEBUG "lwip_init_task done\n");
 }
 
 /**

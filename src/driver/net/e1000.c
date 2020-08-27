@@ -143,7 +143,7 @@ typedef struct _e1000_extension {
 
 }e1000_extension_t;
 
-int e1000_up(e1000_extension_t* ext);
+iostatus_t e1000_up(e1000_extension_t* ext);
 void e1000_down(e1000_extension_t* ext);
 
 void e1000_free_rx_resources(e1000_extension_t* ext);
@@ -612,7 +612,7 @@ void e1000_free_rx_resources(e1000_extension_t* ext)
     
     e1000_clean_rx_ring(ext);
     
-    vfree(rx_ring->buffer_info);
+    kfree(rx_ring->buffer_info);
     rx_ring->buffer_info = NULL;
 
     rx_ring->desc = NULL;
@@ -625,16 +625,18 @@ void e1000_free_rx_resources(e1000_extension_t* ext)
  * Return 0 on success, negative on failure
  **/
 
-int e1000_setup_tx_resources(e1000_extension_t* ext)
+iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* txdr = &ext->tx_ring;
     // pci_device_t* pdev = ext->pci_device;
     int size;
 
+    DEBUGFUNC("e1000_setup_tx_rexources start");
+
     size = sizeof(struct e1000_buffer*) * txdr->count;
-    txdr->buffer_info = vmalloc(size);
+    txdr->buffer_info = kmalloc(size);
     if(!txdr->buffer_info) {
-        printk(KERN_DEBUG "Unable to allocate memory for the transmit desciptor ring\n");
+        printk(KERN_DEBUG "---Unable to allocate memory for the transmit desciptor ring\n");
         return -1;
     }
     memset(txdr->buffer_info, 0, size);
@@ -647,7 +649,7 @@ int e1000_setup_tx_resources(e1000_extension_t* ext)
     txdr->desc = kmalloc(txdr->size);
     if(!txdr->desc) {
         printk(KERN_DEBUG "unable to allocate memory the transmit descriptor ring\n");
-        vfree(txdr->buffer_info);
+        kfree(txdr->buffer_info);
         return -1;
     }
     txdr->dma = v2p(txdr->desc);
@@ -656,7 +658,9 @@ int e1000_setup_tx_resources(e1000_extension_t* ext)
     txdr->next_to_use = 0;
     txdr->next_to_clean = 0;
 
-    return 0;
+    DEBUGFUNC("e1000_setup_tx_resources done\n");
+
+    return IO_SUCCESS;
 }
 
 /**
@@ -665,13 +669,15 @@ int e1000_setup_tx_resources(e1000_extension_t* ext)
  *
  * Returns 0 on success, negative on failure
  **/
-int e1000_setup_rx_resources(e1000_extension_t* ext)
+iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* rxdr = &ext->rx_ring;
     int size;
 
+    DEBUGFUNC("e1000_setup_rx_resources start");
+
     size = sizeof(struct e1000_buffer) * rxdr->count;
-    rxdr->buffer_info = vmalloc(size);
+    rxdr->buffer_info = kmalloc(size);
     if(!rxdr->buffer_info) {
         printk(KERN_DEBUG "unable to allocate memory for the recieve descriptor ring\n");
         return -1;
@@ -693,8 +699,10 @@ int e1000_setup_rx_resources(e1000_extension_t* ext)
 
     rxdr->next_to_clean = 0;
     rxdr->next_to_use = 0;
+    
+    DEBUGFUNC("e1000_setup_rx_resources done\n");
 
-    return 0;
+    return IO_SUCCESS;
 }
 
 /**
@@ -721,10 +729,10 @@ e1000_irq_enable(e1000_extension_t* ext)
     E1000_WRITE_FLUSH(&ext->hw);
 }
 
-int e1000_up(e1000_extension_t* ext)
+iostatus_t e1000_up(e1000_extension_t* ext)
 {
     device_object_t* netdev = ext->device_object;
-    int err;
+    iostatus_t err;
 
     /* hardware has been reset, we need to reload some things */
 
@@ -751,13 +759,14 @@ int e1000_up(e1000_extension_t* ext)
     timer_mod(&ext->watchdog_timer, systicks);
     e1000_irq_enable(ext);
 
-    return 0;
+    return IO_SUCCESS;
 }
 
 static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
 {
+    DEBUGFUNC("e1000_open start");
     e1000_extension_t* ext = device->device_extension;
-    int err;
+    iostatus_t err;
 
     /* allocate transmit descriptors */
     /* 分配传输描述符 */
@@ -775,7 +784,13 @@ static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
         goto err_up;
     }
 
+    ioreq->io_status.status = IO_SUCCESS;
+    ioreq->io_status.infomation = 0;
     io_complete_request(ioreq);
+    
+    DEBUGFUNC("e1000_open done\n");
+
+    return err;
 
 err_up:
     e1000_free_rx_resources(ext);
@@ -808,9 +823,11 @@ static iostatus_t e1000_close(device_object_t* device, io_request_t* ioreq)
     e1000_free_tx_resources(ext);
     e1000_free_rx_resources(ext);
 
+    ioreq->io_status.status = IO_SUCCESS;
+    ioreq->io_status.infomation = 0;
     io_complete_request(ioreq);
 
-    return 0;
+    return IO_SUCCESS;
 }
 
 static iostatus_t e1000_enter(driver_object_t* driver)
