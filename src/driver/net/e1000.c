@@ -830,6 +830,41 @@ static iostatus_t e1000_close(device_object_t* device, io_request_t* ioreq)
     return IO_SUCCESS;
 }
 
+static iostatus_t e1000_read(device_object_t* device, io_request_t* ioreq)
+{
+    unsigned long len;
+    e1000_extension_t* ext = device->device_extension;
+    iostatus_t status = IO_SUCCESS;
+
+    uint8_t* buf = (uint8_t*)ioreq->user_buffer;
+    int flags = 0;
+
+    len = ioreq->parame.read.length;
+
+    if(ioreq->parame.read.offset & DEV_NOWAIT) {
+        flags |= IO_NOWAIT;
+    }
+
+    /* 从网络接收队列中获取一个包 */
+    len = io_device_queue_pickup(&ext->rx_ring.buffer_info->buffer, buf, len, flags);
+    if(len < 0) {
+        status = IO_FAILED;
+    }
+
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = len;
+
+    io_complete_request(ioreq);
+    return status;
+}
+
+static iostatus_t e1000_write(device_object_t* device, io_request_t* ioreq)
+{
+    unsigned long len = ioreq->parame.write.length;
+
+    uint8_t* buf = (uint8_t*)ioreq->user_buffer;
+}
+
 static iostatus_t e1000_devctl(device_object_t* device, io_request_t* ioreq)
 {
     unsigned int ctlcode = ioreq->parame.devctl.code;
