@@ -868,7 +868,13 @@ static iostatus_t e1000_write(device_object_t* device, io_request_t* ioreq)
 
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = len;
-    
+
+    if(e1000_transmit(device->device_extension, buf, len)) {
+        len = -1;
+    }
+
+    ioreq->io_status.status = IO_SUCCESS;
+    ioreq->io_status.infomation = len;
     io_complete_request(ioreq);
 
     return IO_SUCCESS;
