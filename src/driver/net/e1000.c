@@ -145,6 +145,7 @@ typedef struct _e1000_extension {
 
 iostatus_t e1000_up(e1000_extension_t* ext);
 void e1000_down(e1000_extension_t* ext);
+int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len);
 
 void e1000_free_rx_resources(e1000_extension_t* ext);
 
@@ -846,7 +847,8 @@ static iostatus_t e1000_read(device_object_t* device, io_request_t* ioreq)
     }
 
     /* 从网络接收队列中获取一个包 */
-    len = io_device_queue_pickup(&ext->rx_ring.buffer_info->buffer, buf, len, flags);
+    //len = io_device_queue_pickup(&ext->rx_ring.buffer_info->buffer, buf, len, flags);
+    len = io_device_queue_pickup(&ext->rx_queue, buf, len, flags);
     if(len < 0) {
         status = IO_FAILED;
     }
@@ -863,6 +865,13 @@ static iostatus_t e1000_write(device_object_t* device, io_request_t* ioreq)
     unsigned long len = ioreq->parame.write.length;
 
     uint8_t* buf = (uint8_t*)ioreq->user_buffer;
+
+    ioreq->io_status.status = IO_SUCCESS;
+    ioreq->io_status.infomation = len;
+    
+    io_complete_request(ioreq);
+
+    return IO_SUCCESS;
 }
 
 static iostatus_t e1000_devctl(device_object_t* device, io_request_t* ioreq)
@@ -957,6 +966,8 @@ iostatus_t e1000_driver_vine(driver_object_t* driver)
 
     driver->dispatch_function[IOREQ_OPEN] = e1000_open;
     driver->dispatch_function[IOREQ_CLOSE] = e1000_close;
+    driver->dispatch_function[IOREQ_READ] = e1000_read;
+    driver->dispatch_function[IOREQ_WRITE] = e1000_write;
     driver->dispatch_function[IOREQ_DEVCTL] = e1000_devctl;
 
     /* 初始化驱动名字 */
@@ -1348,6 +1359,7 @@ static int e1000_intr(unsigned long irq, unsigned long data)
     for(i=0; i<E1000_MAX_INTR; i++) {
         if(unlikely(!e1000_clean_rx_irq(ext) & 
            !e1000_clean_tx_irq(ext))) {
+            printk(KERN_DEBUG "!!!\n");
             break;
         }
     }
@@ -1404,7 +1416,9 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
     boolean_t cleaned = FALSE;
 
     i = rx_ring->next_to_clean;
+    /* 获取接收描述符 */
     rx_desc = E1000_RX_DESC(*rx_ring, i);
+    // printk(KERN_DEBUG "rx_desc_length = %d\n", rx_desc->length);
 
     while(rx_desc->status & E1000_RXD_STAT_DD) {
         buffer_info = &rx_ring->buffer_info[i];
@@ -1472,6 +1486,7 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
 		}
 #else
 		/* 网络接口发送数据包 */
+        printk(KERN_DEBUG "len = %d-buffer:%s\n", rx_desc->length, buffer);
         io_device_queue_append(&ext->rx_queue, buffer, rx_desc->length);
 #endif
 #endif /* CONFIG_E1000_NAPI */
@@ -1553,4 +1568,153 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
     spin_unlock(&ext->tx_lock);
 
     return cleaned;
+}
+
+#define E1000_MAX_TXD_PWR 12
+#define E1000_MAX_DATA_PER_TXD (1<<E1000_MAX_TXD_PWR)
+#define TXD_USE_COUNT(S, X) (((S) >> (X)) + 1 )
+#define E1000_TX_FLAGS_CSUM		0x00000001
+#define E1000_TX_FLAGS_VLAN		0x00000002
+#define E1000_TX_FLAGS_TSO		0x00000004
+#define E1000_TX_FLAGS_VLAN_MASK	0xffff0000
+#define E1000_TX_FLAGS_VLAN_SHIFT	16
+
+static inline int
+e1000_tx_map(e1000_extension_t* ext, 
+             uint8_t* buffer, 
+             unsigned int first, 
+             unsigned int max_per_txd, 
+             int length)
+{
+    struct e1000_desc_ring* tx_ring = &ext->tx_ring;
+    struct e1000_buffer* buffer_info;
+    unsigned int len = length;
+    unsigned int offset = 0, size, count = 0, i;
+
+    i = tx_ring->next_to_use;
+
+    while(len) {
+        buffer_info = &tx_ring->buffer_info[i];
+        size = min(len, max_per_txd);
+        if(unlikely(ext->pcix_82544 && 
+           !((unsigned long)(buffer + offset + size -1) & 4) &&
+           size > 4)) {
+            size -= 4;
+        }
+
+        buffer_info->length = size;
+        buffer_info->dma = v2p(buffer + offset);
+        buffer_info->time_stamp = systicks;
+
+        len -= size;
+        offset += size;
+        count++;
+        if(unlikely(++i == tx_ring->count)) {
+            i = 0;
+        }
+    }
+
+    i = (i == 0) ? tx_ring->count - 1 : i - 1;
+    tx_ring->buffer_info[i].buffer = buffer;
+    tx_ring->buffer_info[first].next_to_watch = i;
+
+    return count;
+}
+
+static inline void
+e1000_tx_queue(e1000_extension_t* ext, int count, int tx_flags)
+{
+    struct e1000_desc_ring* tx_ring = &ext->tx_ring;
+    struct e1000_tx_desc* tx_desc = NULL;
+    struct e1000_buffer* buffer_info;
+    uint32_t txd_upper = 0, txd_lower = E1000_TXD_CMD_IFCS;
+    unsigned int i;
+
+    if(likely(tx_flags & E1000_TX_FLAGS_TSO)) {
+        txd_lower |= E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D |
+                     E1000_TXD_CMD_TSE;
+        txd_upper |= (E1000_TXD_POPTS_IXSM | E1000_TXD_POPTS_TXSM) << 8;
+    }
+
+    if(likely(tx_flags & E1000_TX_FLAGS_CSUM)) {
+        txd_lower |= E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
+        txd_upper |= E1000_TXD-E1000_TXD_POPTS_TXSM << 8;
+    }
+
+    if(unlikely(tx_flags & E1000_TX_FLAGS_VLAN)) {
+        txd_lower |= E1000_TXD_CMD_VLE;
+        txd_upper |= (tx_flags & E1000_TX_FLAGS_VLAN_MASK);
+    }
+
+    i = tx_ring->next_to_use;
+
+    while(count--) {
+        buffer_info = &tx_ring->buffer_info[i];
+        tx_desc = E1000_TX_DESC(*tx_ring, i);
+        tx_desc->buffer_addr = cpu_to_le32(buffer_info->dma);
+        tx_desc->lower.data = cpu_to_le32(txd_lower | buffer_info->length);
+        tx_desc->upper.data = cpu_to_le32(txd_upper);
+        if(unlikely(++i) == tx_ring->count) {
+            i = 0;
+        }
+    }
+
+    tx_desc->lower.data |= cpu_to_le32(ext->txd_cmd);
+	
+    /* Force memory writes to complete before letting h/w
+	 * know there are new descriptors to fetch.  (Only
+	 * applicable for weak-ordered memory model archs,
+	 * such as IA-64). */
+    wmb();
+
+    tx_ring->next_to_use = i;
+    E1000_WRITE_REG(&ext->hw, TDT, i);
+}
+
+int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
+{
+    uint32_t entry;
+    struct e1000_desc_ring* tx_ring = &ext->tx_ring;
+    struct e1000_desc* tx_desc;
+    struct e1000_desc* eop_desc;
+    struct e1000_bufer* buffer_info;
+    unsigned int i, eop;
+
+    unsigned int first, max_per_txd = E1000_MAX_DATA_PER_TXD;
+    unsigned int max_txd_pwr = E1000_MAX_TXD_PWR;
+    unsigned int tx_flags = 0;
+    unsigned int length = len;
+    unsigned long flags;
+    unsigned int nr_frags = 0;
+    unsigned int mss = 0;
+    int count = 0;
+
+    if(unlikely(len <= 0)) {
+        kfree(buf);
+        return 0;
+    }
+
+    count += TXD_USE_COUNT(len, max_txd_pwr);
+
+    if(ext->pcix_82544) {
+        count++;
+    }
+
+    spin_lock_irqsave(&ext->tx_lock, flags);
+
+    if(unlikely(E1000_DESC_UNUSED(&ext->tx_ring) < count + 2)) {
+        spin_unlock_irqrestore(&ext->tx_lock, flags);
+        return -1;
+    }
+
+    spin_unlock_irqrestore(&ext->tx_lock, flags);
+
+    first = ext->tx_ring.next_to_use;
+
+    //int count_ = e1000_tx_map(ext, buf, first, max_per_txd, length);
+    e1000_tx_queue(ext, 
+        e1000_tx_map(ext, buf, first, max_per_txd, length), 
+        tx_flags);
+    
+    return 0;
 }
