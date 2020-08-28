@@ -666,7 +666,7 @@ iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
 
 /**
  * e1000_setup_rx_resources - allocate Rx resources (Descriptors)
- * @adapter: board private structure
+ * @ext: board private structure
  *
  * Returns 0 on success, negative on failure
  **/
@@ -1121,7 +1121,7 @@ static void e1000_leave_82542_rst(e1000_extension_t* ext)
 
 /**
  * e1000_configure_rx - Configure 8254x Receive Unit after Reset
- * @adapter: board private structure
+ * @ext: board private structure
  *
  * Configure the Rx unit of the MAC after a reset.
  **/
@@ -1365,7 +1365,6 @@ static int e1000_intr(unsigned long irq, unsigned long data)
     for(i=0; i<E1000_MAX_INTR; i++) {
         if(unlikely(!e1000_clean_rx_irq(ext) & 
            !e1000_clean_tx_irq(ext))) {
-            printk(KERN_DEBUG "!!!\n");
             break;
         }
     }
@@ -1493,7 +1492,7 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
 #else
 		/* 网络接口发送数据包 */
         printk(KERN_DEBUG "len = %d-buffer:%s\n", rx_desc->length, buffer);
-        io_device_queue_append(&ext->rx_queue, buffer, rx_desc->length);
+        io_device_queue_append(&ext->rx_queue, buffer + 4, rx_desc->length);
 #endif
 #endif /* CONFIG_E1000_NAPI */
 
@@ -1644,7 +1643,7 @@ e1000_tx_queue(e1000_extension_t* ext, int count, int tx_flags)
 
     if(likely(tx_flags & E1000_TX_FLAGS_CSUM)) {
         txd_lower |= E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
-        txd_upper |= E1000_TXD-E1000_TXD_POPTS_TXSM << 8;
+        txd_upper |= E1000_TXD_POPTS_TXSM << 8;
     }
 
     if(unlikely(tx_flags & E1000_TX_FLAGS_VLAN)) {
