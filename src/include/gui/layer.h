@@ -20,6 +20,7 @@ enum {
     LAYER_WINDOW    = (1 << 0),   /* 窗口标志 */
     LAYER_FLOAT     = (1 << 1),   /* 浮动块标志 */
     LAYER_FIXED     = (1 << 2),   /* 固定位置标志 */
+    LAYER_EXT_BUF   = (1 << 2),   /* 扩展内存，使用缓冲区专用内存 */
     
 };
 

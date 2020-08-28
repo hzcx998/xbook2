@@ -12,7 +12,7 @@
 #include <InfoNES_System.h>
 #include <InfoNES_pAPU.h>
 
-#define CONFIG_SOUND
+//#define CONFIG_SOUND
 
 #ifdef CONFIG_SOUND
 #define SOUND_DEVICE "buzzer"
@@ -601,7 +601,7 @@ void InfoNES_LoadFrame()
     g_window_pixmap(g_win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT, (g_color_t *) graphBuffer);
     g_refresh_window_rect(g_win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT);
 
-    #if 0
+    #ifndef CONFIG_SOUND
     /* 延迟 */
     clock_t start;
     start = getticks();

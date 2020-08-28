@@ -30,6 +30,8 @@ layer_t *layer_focused = NULL;   /* focused layer */
 uint16_t *layer_map = NULL; /* layer z map */
 int layer_next_id = 0;  /* 图层id */
 
+mem_cache_t layer_buffer_memcache;  /* 图层缓冲区内存分配器 */
+
 /* 图层链表管理的自旋锁 */
 DEFINE_SPIN_LOCK(layer_list_spin_lock);
 
@@ -46,9 +48,17 @@ DEFINE_SPIN_LOCK(layer_val_lock);
 layer_t *create_layer(int width, int height)
 {
     size_t bufsz = width * height * sizeof(GUI_COLOR);
+    printk("buf size: %d\n", bufsz);
+    uint32_t flags = 0;
     GUI_COLOR *buffer = kmalloc(bufsz);
-    if (buffer == NULL)
-        return NULL;
+    if (buffer == NULL) {
+        flags |= LAYER_EXT_BUF;
+        buffer = mem_cache_alloc_object(&layer_buffer_memcache);
+        if (buffer == NULL) {
+            return NULL;
+        }
+    }
+        
 
     memset(buffer, 0, width * height * sizeof(GUI_COLOR));
     layer_t *layer = kmalloc(sizeof(layer_t));
@@ -69,7 +79,7 @@ layer_t *create_layer(int width, int height)
     layer->width = width;
     layer->height = height;
     layer->z = -1;          /* 不显示的图层 */
-    layer->flags = 0;
+    layer->flags = flags;
     layer->extension = NULL;
     
     gui_region_init(&layer->drag_rg);
@@ -484,8 +494,13 @@ int destroy_layer(layer_t *layer)
     spin_unlock(&layer_list_spin_lock);
     layer_mutex_lock(layer);
     
-    /* 释放缓冲区 */
-    kfree(layer->buffer);
+    if (layer->flags & LAYER_EXT_BUF) {
+        mem_cache_free_object(&layer_buffer_memcache, layer->buffer);
+    } else {
+        /* 释放缓冲区 */
+        kfree(layer->buffer);
+    }
+    layer->buffer = NULL;
     layer_mutex_unlock(layer);
 
     /* 释放图层 */
@@ -670,24 +685,37 @@ int layer_reset_size(layer_t *layer, int x, int y, uint32_t width, uint32_t heig
 {
     if (!layer || !width || !height)
         return -1;
-    size_t bufsz = width * height * sizeof(GUI_COLOR);
-    uint32_t *buffer = kmalloc(bufsz);
-    if (buffer == NULL)
-        return -1;
-    
+
     if (!layer->buffer) {
-        kfree(buffer);
         return -1;
     }
+    char ext_buf = 0;
+    size_t bufsz = width * height * sizeof(GUI_COLOR);
+    uint32_t *buffer = kmalloc(bufsz);
+    if (buffer == NULL) {
+        ext_buf = 1;
+        buffer = mem_cache_alloc_object(&layer_buffer_memcache);
+        if (buffer == NULL) {
+            return -1;
+        }
+    }
+
     /* 先将原来位置里面的内容绘制成透明 */
     layer_draw_rect_fill(layer, 0, 0, layer->width, layer->height, COLOR_NONE);
     /* 重新设置位置才能完整刷新图层 */
     layer_set_xy(layer, x, y);
     layer_mutex_lock(layer);
-
-    /* 重新绑定缓冲区 */
-    kfree(layer->buffer);
+    if (layer->flags & LAYER_EXT_BUF) {
+        mem_cache_free_object(&layer_buffer_memcache, layer->buffer);
+        layer->flags &= ~LAYER_EXT_BUF;
+    } else {
+        /* 重新绑定缓冲区 */
+        kfree(layer->buffer);
+    }
     layer->buffer = NULL;
+    if (ext_buf) {
+        layer->flags |= LAYER_EXT_BUF;
+    }
     layer->buffer = buffer;
     layer->width = width;
     layer->height = height;
@@ -769,7 +797,7 @@ int layer_set_flags(layer_t *layer, uint32_t flags)
     if (!layer)
         return -1;
     layer_mutex_lock(layer);
-    layer->flags = flags;
+    layer->flags |= flags;
     layer_mutex_unlock(layer);
     return 0;
 }
@@ -1295,17 +1323,22 @@ int layer_focus_win_top()
 
 int gui_init_layer()
 {
+    size_t maxsz = gui_screen.width * gui_screen.height * sizeof(uint16_t);
     /* 分配地图空间 */
-    layer_map = kmalloc(gui_screen.width * gui_screen.height * sizeof(uint16_t));
+    layer_map = kmalloc(maxsz);
     if (layer_map == NULL) {
         return -1;
     }
-    memset(layer_map, 0, gui_screen.width * gui_screen.height * sizeof(uint16_t));
+    memset(layer_map, 0, maxsz);
 
     INIT_LIST_HEAD(&layer_show_list_head);
     INIT_LIST_HEAD(&layer_list_head);
 
     layer_focused = NULL;
+    
+    maxsz = gui_screen.width * gui_screen.height * sizeof(uint32_t) + PAGE_SIZE;
+    mem_cache_init(&layer_buffer_memcache, "layer_buffer", maxsz, 0);
+    
     if (init_mouse_layer() < 0) {
         kfree(layer_map);
         return -1;
