@@ -33,6 +33,7 @@ driver_func_t driver_vine_table[] = {
     ramdisk_driver_vine,                /* disk */
     vbe_driver_vine,                    /* video */
     mouse_driver_vine,                  /* input */
+    buzzer_driver_vine,                 /* sound */
     tty_driver_vine,                    /* filter: tty */
     null_driver_vine,                   /* filter: null */
 };
@@ -522,9 +523,12 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
     case DEVICE_TYPE_KEYBOARD:
     case DEVICE_TYPE_MOUSE:
     case DEVICE_TYPE_VIRTUAL_CHAR:
+    case DEVICE_TYPE_BEEP:
         spin_lock(&device->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
+    case DEVICE_TYPE_NETWORK:
+    case DEVICE_TYPE_PHYSIC_NETCARD:
         mutex_lock(&device->lock.mutexlock);
         break;
     default:
@@ -667,9 +671,12 @@ void io_complete_request(io_request_t *ioreq)
     case DEVICE_TYPE_KEYBOARD:
     case DEVICE_TYPE_MOUSE:
     case DEVICE_TYPE_VIRTUAL_CHAR:
+    case DEVICE_TYPE_BEEP:
         spin_unlock(&ioreq->devobj->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
+    case DEVICE_TYPE_NETWORK:
+    case DEVICE_TYPE_PHYSIC_NETCARD:
         mutex_unlock(&ioreq->devobj->lock.mutexlock);
         break;
     default:
@@ -1276,6 +1283,27 @@ void init_driver_arch()
     /* 输出所有驱动以及设备 */
     print_drivers();
 #endif
+
+#if 0
+    handle_t beep = device_open("buzzer", 0);
+    if (beep < 0)
+        panic(KERN_DEBUG "open buzzer failed!\n");
+    
+    device_devctl(beep, SNDIO_PLAY, 0);
+    //int i;
+    for (i = 20; i < 20000; i++) {
+        device_devctl(beep, SNDIO_SETFREQ, i);
+        udelay(5000);
+    }
+    device_devctl(beep, SNDIO_STOP, 0);
+
+    device_close(beep);
+    while (1)
+    {
+        /* code */
+    }
+#endif
+
 
 #if 0
     int sda = device_open("sata0", 0);

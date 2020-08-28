@@ -57,6 +57,7 @@ void layer_refresh_under_rect(layer_t *layer, int x, int y, uint32_t width, uint
 #define layer_flush(layer) layer_refresh((layer), 0, 0, layer->width, layer->height)
 
 layer_t *layer_find_by_id(int id);
+layer_t *layer_find_by_id_without_lock(int id);
 layer_t *layer_find_by_z(int z);
 
 layer_t *layer_get_win_top();

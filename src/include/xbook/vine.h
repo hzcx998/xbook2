@@ -16,5 +16,6 @@ extern iostatus_t vfloppy_driver_vine(driver_object_t *driver);
 extern iostatus_t vbe_driver_vine(driver_object_t *driver);
 extern iostatus_t mouse_driver_vine(driver_object_t *driver);
 extern iostatus_t ahci_driver_vine(driver_object_t *driver);
+extern iostatus_t buzzer_driver_vine(driver_object_t *driver);
 
 #endif  /* _XBOOK_VINE_H */

@@ -11,6 +11,7 @@
 #include "gfont.h"
 #include "gtouch.h"
 #include "gkeycode.h"
+#include "gtimer.h"
 
 int g_init(void);
 int g_quit(void);

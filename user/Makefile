@@ -14,6 +14,7 @@ AS			:=	nasm
 
 export AS
 
+MODULE      +=  vt100
 MODULE      +=  tests
 MODULE      +=  hello
 MODULE      +=  bosh
@@ -22,3 +23,4 @@ MODULE      +=  socket_server
 MODULE      +=  echo
 MODULE      +=  cat
 MODULE      +=  win
+MODULE      +=  infones

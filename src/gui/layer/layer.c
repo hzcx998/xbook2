@@ -105,6 +105,21 @@ layer_t *layer_find_by_id(int id)
     spin_unlock(&layer_list_spin_lock);
     return NULL;
 }
+/**
+ * 通过图层的唯一id返回图层结构的内存地址
+ * 
+ * 没有加锁的版本，需要在关闭中断的情况下调用
+ */
+layer_t *layer_find_by_id_without_lock(int id)
+{
+    layer_t *l;
+    list_for_each_owner (l, &layer_list_head, global_list) {
+        if (l->id == id) {
+            return l;
+        }
+    }
+    return NULL;
+}
 
 /**
  * 查找z时只在显示队列中查找
@@ -182,7 +197,7 @@ static void layer_refresh_map(int left, int top, int right, int buttom, int z0)
                     screen_x = layer->x + layer_x;
                     /* 获取图层中的颜色 */
                     color = layer->buffer[layer_y * layer->width + layer_x];
-                    if (color & 0xff000000) {   /* 不是全透明的，就把高度写入到地图中 */
+                    if ((color >> 24) & 0xff) {   /* 不是全透明的，就把高度写入到地图中 */
                         layer_map[(screen_y * gui_screen.width + screen_x)] = layer->z;
                     }
                 }
@@ -555,11 +570,8 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
                     if (layer_map[(screen_y * gui_screen.width + screen_x)] == layer->z) {
                         /* 获取图层中的颜色 */
                         color = layer->buffer[layer_y * layer->width + layer_x];
-                        if ((color >> 24) & 0xff) {
-                            /* 写入到显存 */
-                            gui_screen.output_pixel(screen_x, screen_y, gui_screen.gui_to_screen_color(color));
-                        }
-                        
+                        /* 写入到显存 */
+                        gui_screen.output_pixel(screen_x, screen_y, gui_screen.gui_to_screen_color(color));
                     }
                 }
             }
@@ -567,7 +579,6 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
     }
     spin_unlock(&layer_list_spin_lock);
 }
-
 
 /**
  * layer_refresh - 刷新图层

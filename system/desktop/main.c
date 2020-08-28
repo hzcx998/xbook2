@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <gapi.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
 #include <desktop.h>
 #include <winctl.h>
 #include <taskbar.h>
@@ -21,6 +23,21 @@ int main(int argc, char *argv[])
     if (init_taskbar() < 0) {
         return -1;
     }
+#if 0
+    /* 声音测试 */
+    int beep = open("buzzer", O_DEVEX, 0);
+    if (beep < 0) {
+        printf("[desktop]: open buzzer failed!\n");
+        return -1;
+    }
+    ioctl(beep, SNDIO_PLAY, 0);
+    int i;
+    for (i = 20; i < 20000; i+=5) {
+        ioctl(beep, SNDIO_SETFREQ, i);
+        mdelay(10);
+    }
+    ioctl(beep, SNDIO_STOP, 0);
+#endif
 #if 0    
     int win = g_new_window("hello", 100, 200, 400, 300);
     if (win < 0)
@@ -47,7 +64,11 @@ int main(int argc, char *argv[])
         return -1;
     }
     if (!pid) { /* 子进程就执行其他程序 */
-        execv("win", NULL);
+        char *arg[3];
+        arg[0] = "infones";
+        arg[1] = "/res/mario.nes";
+        arg[2] = 0; 
+        execv(arg[0], arg);
         return -1;
     }
 #endif    

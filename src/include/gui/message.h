@@ -23,7 +23,6 @@ enum {
     GM_MOUSE_MBTN_UP,
     GM_MOUSE_MBTN_DBLCLK,
     GM_MOUSE_WHEEL,
-    GM_COUNTER,
     GM_TIMER,
     GM_LAYER_ENTER,
     GM_LAYER_LEAVE,
@@ -35,6 +34,7 @@ enum {
     GM_WINDOW_CLOSE,
     GM_HIDE,
     GM_SHOW,
+    GM_PAINT,
     GM_NR
 };
 

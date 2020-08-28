@@ -9,10 +9,27 @@
 
 LIST_HEAD(timer_list_head);
 
+unsigned long timer_id_next = 1; /* 从1开始，0是无效的id */
+
+void timer_init(
+    timer_t *timer,
+    unsigned long timeout,
+    unsigned long arg,
+    timer_callback_t callback)
+{
+    INIT_LIST_HEAD(&timer->list);
+    timer->timeout = timeout;
+    timer->arg = arg;
+    timer->id = timer_id_next++;
+    timer->callback = callback;
+}
+
 void timer_add(timer_t *timer)
 {
     unsigned long flags;
     save_intr(flags);
+    if (!timer->id) /* 无效id，重新分配 */
+        timer->id = timer_id_next++;
     /* 定时器必须不在队列中 */
     ASSERT(!list_find(&timer->list, &timer_list_head));
     list_add_tail(&timer->list, &timer_list_head);
@@ -29,6 +46,18 @@ void timer_del(timer_t *timer)
     restore_intr(flags);
 }
 
+int timer_alive(timer_t *timer)
+{
+    int alive = 0; 
+    unsigned long flags;
+    save_intr(flags);
+    /* 定时器必须在队列中 */
+    if (list_find(&timer->list, &timer_list_head))
+        alive = 1;
+    restore_intr(flags);
+    return alive;
+}
+
 void timer_mod(timer_t *timer, unsigned long timeout)
 {
     unsigned long flags;
@@ -41,7 +70,9 @@ int timer_cancel(timer_t *timer)
 {
     int retval = -1;
     if (timer) {
-        timer_del(timer);
+        if (timer_alive(timer)) {
+            timer_del(timer);
+        }
         retval = 0;
     }
     return retval;

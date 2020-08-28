@@ -7,3 +7,4 @@ SRC	+= input/
 SRC	+= tty/
 SRC	+= virtual/
 SRC	+= video/
+SRC	+= sound/

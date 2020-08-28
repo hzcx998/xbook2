@@ -20,7 +20,6 @@ enum {
     GM_MOUSE_MBTN_UP,
     GM_MOUSE_MBTN_DBLCLK,
     GM_MOUSE_WHEEL,
-    GM_COUNTER,
     GM_TIMER,
     GM_LAYER_ENTER,
     GM_LAYER_LEAVE,
@@ -32,6 +31,7 @@ enum {
     GM_WINDOW_CLOSE,
     GM_HIDE,
     GM_SHOW,
+    GM_PAINT,
     GM_NR,
 };
 
@@ -78,5 +78,15 @@ int g_translate_msg(g_msg_t *msg);
 #define g_msg_get_key_modify(msg) ((msg)->data1)
 
 #define g_msg_get_sender(msg) ((msg)->data0)
+
+#define g_msg_get_paint_x(msg) ((msg)->data0)
+#define g_msg_get_paint_y(msg) ((msg)->data1)
+#define g_msg_get_paint_width(msg) ((msg)->data2)
+#define g_msg_get_paint_height(msg) ((msg)->data3)
+
+#define g_msg_get_timer_id(msg) ((msg)->data0)
+#define g_msg_get_timer_time(msg) ((msg)->data1)
+
+
 
 #endif /* _GAPI_MESSAGE_H */

@@ -3,6 +3,7 @@
 #include <gwindow.h>
 #include <gtouch.h>
 #include <gkeycode.h>
+#include <gtimer.h>
 #include <stdio.h>
 
 int (*_g_msg_routine_call) (g_msg_t *msg);
@@ -20,6 +21,8 @@ static int g_filter_msg(g_msg_t *msg)
         return -1;
     int val = -1; /* -1表示没有过滤，0表示已经过滤 */
     g_point_t po;
+    uint32_t tmrid;
+    g_timer_t *timer;
     switch (g_msg_get_type(msg))
     {
     case GM_MOUSE_MOTION:
@@ -88,6 +91,7 @@ static int g_filter_msg(g_msg_t *msg)
         po.x = -1;
         po.y = -1;
         g_touch_state_check_group(&win->touch_list, &po);
+        val = -1;
         break;
     case GM_MOVE:   /* 窗口移动 */
         win->x = g_msg_get_move_x(msg);
@@ -134,7 +138,17 @@ static int g_filter_msg(g_msg_t *msg)
         g_touch_state_check_group(&win->touch_list, &po);
         g_show_window(win->layer);
         val = 0;
-        break;   
+        break;
+    case GM_TIMER:
+        tmrid = g_msg_get_timer_id(msg);
+        timer = g_timer_find_by_timer(tmrid);
+        if (timer) {
+            if (timer->handler) {
+                timer->handler(win->layer, msg->id, timer->id, g_msg_get_timer_time(msg));
+                val = 0;
+            }
+        }
+        break;
     default:
         break;
     }

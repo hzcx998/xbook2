@@ -1,6 +1,9 @@
 #ifndef _GAPI_SHAPE_H
 #define _GAPI_SHAPE_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 typedef struct {
     int x, y;
 } g_point_t;
@@ -71,5 +74,21 @@ static inline int g_rect_valid(g_rect_t *rect)
         ((rect)->x <= (_x) && (_x) < ((rect)->x + (rect)->width) && \
         (rect)->y <= (_y) && (_y) < ((rect)->y + (rect)->height))
         
+
+static inline void g_rect_set(g_rect_t *rect, int x, int y, uint32_t width, uint32_t height)
+{
+    rect->x = x;
+    rect->y = y;
+    rect->width = width;
+    rect->height = height;
+}
+
+static inline void g_rect_merge(g_rect_t *rect1, g_rect_t *rect2)
+{
+    rect1->x = min(rect1->x, rect2->x);
+    rect1->y = min(rect1->y, rect2->y);
+    rect1->width = max(rect1->width, rect2->width);
+    rect1->height = max(rect1->height, rect2->height);
+}
 
 #endif /* _GAPI_SHAPE_H */

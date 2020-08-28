@@ -39,10 +39,14 @@ typedef struct {
     /* 窗口的位置和大小（和图层同步） */
     int x;              
     int y;       
-    uint32_t width;
+    uint32_t width;     
     uint32_t height;
+    uint32_t win_width;     /* 窗体宽度 */
+    uint32_t win_height;    /* 窗体高度 */
     g_rect_t backup;    /* 窗口信息备份，当使用最大化功能时需要 */
     g_region_t body_region; /* 窗体区域 */
+    g_rect_t invalid_rect;  /* 脏矩形 */
+    
     char title[GW_TITLE_LEN];   /* 窗口的标题 */
 } g_window_t;
 
@@ -50,8 +54,6 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height);
 int g_del_window(int win);
 int g_del_window_all();
 int g_show_window(int win);
-
-int g_update_window(int win);
 
 int g_hide_window(int win);
 g_window_t *g_find_window(int win);
@@ -62,4 +64,31 @@ int g_maxim_window(int win);
 int g_enable_window_resize(int win);
 int g_disable_window_resize(int win);
 int g_set_window_minresize(int win, uint32_t min_width, uint32_t min_height);
+
+int g_window_put_point(int win, int x, int y, g_color_t color);
+int g_window_get_point(int win, int x, int y, g_color_t *color);
+int g_window_rect_fill(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color);
+int g_window_rect(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color);
+int g_window_pixmap(int win, int x, int y, uint32_t width, uint32_t height, g_color_t *pixmap);
+int g_refresh_window_rect(int win, int x, int y, uint32_t width, uint32_t height);
+int g_refresh_window_region(int win, int left, int top, int right, int bottom);
+
+int g_update_window(int win);
+int g_invalid_rect(int win, int x, int y, uint32_t width, uint32_t height);
+int g_invalid_window(int win);
+int g_get_invalid(int win, int *x, int *y, uint32_t *width, uint32_t *height);
+
+int g_window_char(
+    int win,
+    int x,
+    int y,
+    char ch,
+    uint32_t color);
+int g_window_text(
+    int win,
+    int x,
+    int y,
+    char *text,
+    uint32_t color);
+
 #endif  /* _GAPI_WINDOW_H */

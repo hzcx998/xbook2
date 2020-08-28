@@ -56,6 +56,9 @@ typedef struct _video_info {
 /* even */
 #define EVENIO_GETLED     DEVCTL_CODE('e', 1) /* get led states */
 
-
+/* sound */
+#define SNDIO_PLAY          DEVCTL_CODE('s', 1) /* play */
+#define SNDIO_STOP          DEVCTL_CODE('s', 2) /* stop play */
+#define SNDIO_SETFREQ       DEVCTL_CODE('s', 3) /* set play freq */
 
 #endif   /* _SYS_IOCTL_H */

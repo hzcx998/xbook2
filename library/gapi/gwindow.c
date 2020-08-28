@@ -27,9 +27,9 @@ g_window_t *g_find_window(int win)
 /**
  * 绘制窗口样式
  * @turn: 是否为聚焦状态，1为聚焦，0为失焦
- * 
+ * @body: 是否重绘窗体背景：1为重绘，0为不重绘
  */
-static void g_paint_window(g_window_t *gw, int turn)
+static void __g_paint_window(g_window_t *gw, int turn, int body)
 {
     uint32_t back, board, front, font;
     if (turn) {
@@ -43,9 +43,12 @@ static void g_paint_window(g_window_t *gw, int turn)
         front = GW_OFF_FRONT_COLOR;
         font = GW_OFF_FONT_COLOR;
     }
-    g_layer_rect_fill(gw->layer, 0, 0, gw->width, gw->height, back);
+    if (body)
+        g_layer_rect_fill(gw->layer, 0, 0, gw->width, gw->height, back);
     g_layer_rect(gw->layer, 0, 0, gw->width, gw->height, board);
-    g_layer_line(gw->layer, 0, GW_TITLE_BAR_HIGHT, gw->width, GW_TITLE_BAR_HIGHT, board);
+    
+    g_layer_rect_fill(gw->layer, 0, gw->body_region.top - 1, gw->width, 1, board);
+    //g_layer_line(gw->layer, 0, GW_TITLE_BAR_HIGHT, gw->width, GW_TITLE_BAR_HIGHT, board);
 
     g_layer_text(gw->layer, gw->width / 2 - (strlen(gw->title) * 
         g_current_font->char_width) / 2, (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
@@ -53,6 +56,10 @@ static void g_paint_window(g_window_t *gw, int turn)
 
     g_touch_set_idel_color_group(&gw->touch_list, front);
     g_touch_paint_group(&gw->touch_list);
+    if (body) {
+        g_invalid_window(gw->layer);
+        g_update_window(gw->layer);
+    }
 }
 
 static int g_window_close_btn_handler(void *arg)
@@ -179,7 +186,9 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height)
     gw->y = y;
     gw->width = lw;
     gw->height = lh;
-    
+    gw->win_width = width;
+    gw->win_height = height;
+
     list_add_tail(&gw->wlist, &_g_window_list_head);
     init_list(&gw->touch_list);
     /* 添加触碰块 */
@@ -200,7 +209,9 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height)
     gw->body_region.right = gw->width - 1;
     gw->body_region.bottom = gw->height - 1;
 
-    g_paint_window(gw, 1);
+    g_rect_init(&gw->invalid_rect); /* 初始化脏矩形区域 */
+
+    __g_paint_window(gw, 1, 1); /* 绘制整个窗口 */
 
     /* 给桌面发送创建窗口消息 */
     g_msg_t m;
@@ -288,13 +299,16 @@ int g_resize_window(int win, uint32_t width, uint32_t height)
         g_layer_set_region(gw->layer, LAYER_REGION_RESIZE, 4, 4, width-4, height - 4);
     }
     
+    gw->win_width = width - 2;
+    gw->win_height = height - GW_TITLE_BAR_HIGHT - 1;
+
     /* 设置窗体区域 */
     gw->body_region.left = 1;
-    gw->body_region.top = GW_TITLE_BAR_HIGHT;
+    gw->body_region.top = GW_TITLE_BAR_HIGHT + 1;
     gw->body_region.right = gw->width-1;
     gw->body_region.bottom = gw->height-1;
 
-    g_paint_window(gw, 1);
+    __g_paint_window(gw, 1, 1);
     /* TODO: 重绘内容 */
 
     g_layer_refresh(gw->layer, 0, 0, width, height);
@@ -310,7 +324,7 @@ int g_focus_window(int win, int turn)
     g_window_t *gw = g_find_window(win);
     if (!gw)
         return -1;
-    g_paint_window(gw, turn);
+    __g_paint_window(gw, turn, 0);
     g_layer_refresh(gw->layer, 0, 0, gw->width, gw->height);
     /* 发送聚焦/丢焦消息给桌面 */
     g_msg_t m;
@@ -409,17 +423,6 @@ int g_hide_window(int win)
 }
 
 /**
- * 更新整个窗口，包括窗口样式
-*/
-int g_update_window(int win)
-{
-    g_window_t *gw = g_find_window(win);
-    if (!gw)
-        return -1;
-    return g_layer_refresh(gw->layer, 0, 0, gw->width, gw->height);
-}
-
-/**
  * 窗口执行最大化操作。
  * 如果不是最大化，那么进行最大化。
  * 如果已经是最大化，那么就恢复之前窗口的大小和位置。
@@ -440,7 +443,7 @@ int g_maxim_window(int win)
 
         /* 恢复原来的窗体信息 */    
         gw->body_region.left = 1;
-        gw->body_region.top = GW_TITLE_BAR_HIGHT;
+        gw->body_region.top = GW_TITLE_BAR_HIGHT + 1;
         gw->body_region.right = gw->width-1;
         gw->body_region.bottom = gw->height-1;
         
@@ -463,7 +466,7 @@ int g_maxim_window(int win)
     
         /* 设置窗体区域为整个图层 */    
         gw->body_region.left = 0;
-        gw->body_region.top = GW_TITLE_BAR_HIGHT;
+        gw->body_region.top = GW_TITLE_BAR_HIGHT + 1;
         gw->body_region.right = gw->width;
         gw->body_region.bottom = gw->height; 
 
@@ -478,11 +481,203 @@ int g_maxim_window(int win)
     if (g_layer_resize(gw->layer, rect.x, rect.y, rect.width, rect.height) < 0)
         return -1;
 
-    /* 已经发送了重新调整大小的信息 */
-
     if (g_layer_focus(gw->layer) < 0) {
         /* TODO: 恢复原来的大小 */
         return -1;
     }
+    return 0;
+}
+
+static int _g_window_put_point(g_window_t *gw, int x, int y, g_color_t color)
+{
+    if (x < 0 || y < 0 || x >= gw->win_width || y >= gw->win_height) {
+        return -1;
+    }
+    g_layer_outp(gw->layer, gw->body_region.left + x, gw->body_region.top + y, color);
+    return 0;
+}
+
+int g_window_put_point(int win, int x, int y, g_color_t color)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    _g_window_put_point(gw, x, y, color);
+    return 0;
+}
+
+int g_window_get_point(int win, int x, int y, g_color_t *color)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    if (x < 0 || y < 0 || x >= gw->body_region.right || x >= gw->body_region.bottom) {
+        return -1;
+    }
+    g_layer_inp(gw->layer, gw->body_region.left + x, gw->body_region.top + y, color);
+    return 0;
+}
+
+int g_window_rect_fill(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    
+    int i, j;
+    for (j = 0; j < height; j++) {
+        for (i = 0; i < width; i++) {
+            _g_window_put_point(gw, x + i, y + j, color);
+        }
+    }
+    return 0;
+}
+
+int g_window_rect(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color)
+{
+    g_window_rect_fill(win, x, y, width, 1, color);
+    g_window_rect_fill(win, x, y + height - 1, width, 1, color);
+    g_window_rect_fill(win, x, y, 1, height, color);
+    g_window_rect_fill(win, x + width - 1, y, 1, height, color);
+    return 0;
+}
+
+int g_window_pixmap(int win, int x, int y, uint32_t width, uint32_t height, g_color_t *pixmap)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    
+    g_layer_pixmap(win, gw->body_region.left + x, gw->body_region.top + y, width, height, pixmap, 4);
+    return 0;
+}
+
+/**
+ * 刷新窗口矩形区域
+ * 
+ */
+int g_refresh_window_rect(int win, int x, int y, uint32_t width, uint32_t height)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    
+    g_layer_refresh_rect(win, gw->body_region.left + x, gw->body_region.top + y, width, height);
+    return 0;
+}
+
+/**
+ * 刷新窗口矩形区域
+ * 
+ */
+int g_refresh_window_region(int win, int left, int top, int right, int bottom)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    
+    g_layer_refresh(win, gw->body_region.left + left, gw->body_region.top + top,
+        gw->body_region.left + right, gw->body_region.top + bottom);
+    return 0;
+}
+
+/**
+ * 检测脏矩形，如果有就发送GM_PAINT消息
+ */
+int g_update_window(int win)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    if (g_rect_valid(&gw->invalid_rect)) { /* 脏矩形有效 */
+        /* 发送GM_PAINT重绘消息 */
+        g_msg_t m;
+        m.id = GM_PAINT;
+        m.target = gw->layer;
+        g_send_msg(&m);
+    }
+    return 0;
+}
+
+/**
+ * 设置脏矩形，部分
+ * 
+ */
+int g_invalid_rect(int win, int x, int y, uint32_t width, uint32_t height)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    if (g_rect_valid(&gw->invalid_rect)) { /* 脏矩形有效 */
+        /* 合并脏区域 */
+        g_rect_t rect = {x, y, width, height};
+        g_rect_merge(&gw->invalid_rect, &rect);
+    } else {
+        /* 直接设置脏矩形 */
+        g_rect_set(&gw->invalid_rect, x, y, width, height);
+    }
+    return 0;
+}
+
+/**
+ * 设置脏矩形，整个窗口
+ */
+int g_invalid_window(int win)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    g_rect_set(&gw->invalid_rect, 0, 0, gw->win_width, gw->win_height);
+    return 0;  
+}
+
+/**
+ * 获取脏矩形，这个必须是在GM_PAINT中调用
+ */
+int g_get_invalid(int win, int *x, int *y, uint32_t *width, uint32_t *height)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    if (x)
+        *x = gw->invalid_rect.x;
+    if (y)
+        *y = gw->invalid_rect.y;
+    if (width)
+        *width = gw->invalid_rect.width;
+    if (height)
+        *height = gw->invalid_rect.height;
+    
+    g_rect_init(&gw->invalid_rect);
+    return 0;
+}
+
+int g_window_char(
+    int win,
+    int x,
+    int y,
+    char ch,
+    uint32_t color)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    
+    g_layer_word(gw->layer, gw->body_region.left + x, gw->body_region.top + y, ch, color);
+    return 0;
+}
+
+int g_window_text(
+    int win,
+    int x,
+    int y,
+    char *text,
+    uint32_t color)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    
+    g_layer_text(gw->layer, gw->body_region.left + x, gw->body_region.top + y, text, color);
     return 0;
 }

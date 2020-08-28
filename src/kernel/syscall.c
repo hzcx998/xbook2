@@ -22,6 +22,7 @@
 #include <gui/layer.h>
 #include <gui/message.h>
 #include <gui/screen.h>
+#include <gui/timer.h>
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -190,4 +191,7 @@ void init_syscall()
     syscall_table[SYS_GSCREENSETWINRG] = sys_screen_set_window_region;
     syscall_table[SYS_LAYERGETDESKTOP] = sys_layer_get_desktop;
     syscall_table[SYS_LAYERSETDESKTOP] = sys_layer_set_desktop;
+    syscall_table[SYS_GNEWTIMER] = sys_gui_new_timer;
+    syscall_table[SYS_GMODIFYTIMER] = sys_gui_modify_timer;
+    syscall_table[SYS_GDELTIMER] = sys_gui_del_timer;
 }

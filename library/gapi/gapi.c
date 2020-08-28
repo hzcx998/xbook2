@@ -26,6 +26,10 @@ int g_init(void)
 
 int g_quit(void)
 {
+    /* 关闭定时器 */
+    if (g_del_timer_all() < 0)
+        return 0;
+        
     /* 先关闭窗口 */
     if (g_del_window_all() < 0)
         return -1;
