@@ -279,6 +279,8 @@ static int e1000_sw_init(e1000_extension_t* ext)
     hw->pci_cmd_word = pdev->command;
 
     ext->rx_buffer_len = E1000_RXBUFFER_2048;
+    ext->rx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
+    ext->tx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
     //error
     hw->max_frame_size = ENET_HEADER_SIZE + ETHERNET_FCS_SIZE;
     hw->min_frame_size = MINIMUM_ETHERNET_FRAME_SIZE;
@@ -463,9 +465,9 @@ static int e1000_init(e1000_extension_t* ext)
     //打印mac地址
     printk(KERN_DEBUG "e1000_mac_addr:");
     for(int i=0; i<5; i++) {
-        printk(KERN_DEBUG "%d-", ext->hw.mac_addr[i]);
+        printk(KERN_DEBUG "%x-", ext->hw.mac_addr[i]);
     }
-    printk(KERN_DEBUG "%d\n", ext->hw.mac_addr[5]);
+    printk(KERN_DEBUG "%x\n", ext->hw.mac_addr[5]);
 
     e1000_read_part_num(&ext->hw, &(ext->part_num));
 
@@ -654,6 +656,7 @@ iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
         return -1;
     }
     txdr->dma = v2p(txdr->desc);
+    printk(KERN_DEBUG "-------txdr_size = %d\n", txdr->size);
     memset(txdr->desc, 0, txdr->size);
 
     txdr->next_to_use = 0;
@@ -670,6 +673,7 @@ iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
  *
  * Returns 0 on success, negative on failure
  **/
+
 iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* rxdr = &ext->rx_ring;
@@ -696,6 +700,7 @@ iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
         return -1;
     }
     rxdr->dma = v2p(rxdr->desc);
+    printk(KERN_DEBUG "---------rxdr_size = %d\n", rxdr->size);
     memset(rxdr->desc, 0, rxdr->size);
 
     rxdr->next_to_clean = 0;
@@ -1492,7 +1497,7 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
 #else
 		/* 网络接口发送数据包 */
         printk(KERN_DEBUG "len = %d-buffer:%s\n", rx_desc->length, buffer);
-        io_device_queue_append(&ext->rx_queue, buffer + 4, rx_desc->length);
+        io_device_queue_append(&ext->rx_queue, buffer, rx_desc->length);
 #endif
 #endif /* CONFIG_E1000_NAPI */
 
