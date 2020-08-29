@@ -265,6 +265,15 @@ static void e1000_82547_tx_fifo_stall(unsigned long data)
 	}
 }
 
+/**
+ * e1000_sw_init - Initialize general software structures (struct e1000_adapter)
+ * @ext: board private structure to initialize
+ *
+ * e1000_sw_init initializes the Adapter private data structure.
+ * Fields are initialized based on PCI device information and
+ * OS network device settings (MTU size).
+ **/
+
 static int e1000_sw_init(e1000_extension_t* ext)
 {
     struct e1000_hw* hw = &ext->hw;
@@ -279,11 +288,13 @@ static int e1000_sw_init(e1000_extension_t* ext)
     hw->pci_cmd_word = pdev->command;
 
     ext->rx_buffer_len = E1000_RXBUFFER_2048;
-    ext->rx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
-    ext->tx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
+    // ext->rx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
+    // ext->tx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
+    ext->rx_ring.count = 128;
+    ext->tx_ring.count = 128;
     //error
-    hw->max_frame_size = ENET_HEADER_SIZE + ETHERNET_FCS_SIZE;
-    hw->min_frame_size = MINIMUM_ETHERNET_FRAME_SIZE;
+    // hw->max_frame_size = ENET_HEADER_SIZE + ETHERNET_FCS_SIZE;
+    // hw->min_frame_size = MINIMUM_ETHERNET_FRAME_SIZE;
 
     /* identify the MAC，根据pci_device_id确定mac类型 */
     if(e1000_set_mac_type(hw)) {
@@ -322,6 +333,7 @@ static int e1000_sw_init(e1000_extension_t* ext)
     atomic_set(&ext->irq_sem, 1);
     spinlock_init(&ext->stats_lock);
     spinlock_init(&ext->tx_lock);
+    spinlock_init(&ext->lock);
 
     return 0;
 }
@@ -527,7 +539,7 @@ e1000_free_tx_resource(struct e1000_buffer* buffer_info)
 
 /**
  * e1000_clean_tx_ring - Free Tx Buffers
- * @adapter: board private structure
+ * @ext: board private structure
  **/
 
 static void e1000_clean_tx_ring(e1000_extension_t* ext)
@@ -559,10 +571,11 @@ static void e1000_clean_tx_ring(e1000_extension_t* ext)
 
 /**
  * e1000_free_tx_resources - Free Tx Resources
- * @adapter: board private structure
+ * @ext: board private structure
  *
  * Free all transmit software resources
  **/
+
 void e1000_free_tx_resources(e1000_extension_t* ext)
 {
     e1000_clean_tx_ring(ext);
@@ -605,7 +618,7 @@ static void e1000_clean_rx_ring(e1000_extension_t* ext)
 
 /**
  * e1000_free_rx_resources - Free Rx Resources
- * @adapter: board private structure
+ * @ext: board private structure
  *
  * Free all receive software resources
  **/
@@ -700,7 +713,6 @@ iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
         return -1;
     }
     rxdr->dma = v2p(rxdr->desc);
-    printk(KERN_DEBUG "---------rxdr_size = %d\n", rxdr->size);
     memset(rxdr->desc, 0, rxdr->size);
 
     rxdr->next_to_clean = 0;
@@ -725,7 +737,7 @@ e1000_irq_disable(e1000_extension_t* ext)
 
 /**
  * e1000_irq_enable - Enable default interrupt generation settings
- * @adapter: board private structure
+ * @ext: board private structure
  **/
 
 static inline void
@@ -1353,6 +1365,9 @@ static void e1000_setup_rctl(e1000_extension_t* ext)
 static int e1000_intr(unsigned long irq, unsigned long data)
 {
     e1000_extension_t* ext = (e1000_extension_t*)data;
+
+    // spin_lock(&ext->lock);
+
     struct e1000_hw* hw = &ext->hw;
     uint32_t icr = E1000_READ_REG(hw, ICR);
 #ifndef CONFIG_E1000_NAPI
@@ -1360,6 +1375,7 @@ static int e1000_intr(unsigned long irq, unsigned long data)
 #endif
 
     if(unlikely(!icr)) {
+        // spin_unlock(&ext->lock);
         return -1;
     }
 
@@ -1374,14 +1390,15 @@ static int e1000_intr(unsigned long irq, unsigned long data)
         }
     }
 
+    // spin_unlock(&ext->lock);
+
     return 0;
 }
 
 /**
  * e1000_rx_checksum - Receive Checksum Offload for 82543
- * @adapter: board private structure
+ * @ext: board private structure
  * @rx_desc: receive descriptor
- * @sk_buff: socket buffer with received data
  **/
 
 static inline void
@@ -1544,12 +1561,16 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
     struct e1000_buffer* buffer_info;
     unsigned int i, eop;
     boolean_t cleaned = FALSE;
+    int flags;
+
+    // spin_lock_irqsave(&ext->tx_lock, flags);
 
     i = tx_ring->next_to_clean;
     eop = tx_ring->buffer_info[i].next_to_watch;
     eop_desc = E1000_TX_DESC(*tx_ring, eop);
 
     while(eop_desc->upper.data & cpu_to_le32(E1000_TXD_STAT_DD)) {
+        printk(KERN_DEBUG "!!!!!!!!!!!\n");
         for(cleaned = FALSE; !cleaned; ) {
             tx_desc = E1000_TX_DESC(*tx_ring, i);
             buffer_info = &tx_ring->buffer_info[i];
@@ -1566,16 +1587,13 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
         }
 
         eop = tx_ring->buffer_info[i].next_to_watch;
+        printk(KERN_DEBUG "i=%d---next_to_watch=%d\n", i, eop);
         eop_desc = E1000_TX_DESC(*tx_ring, eop);
     }
 
-    tx_ring->next_to_clean = 0;
+    tx_ring->next_to_clean = i;
 
-    spin_lock(&ext->tx_lock);
-
-    //判断网络接口是否暂停，暂停就唤醒。未处理。
-
-    spin_unlock(&ext->tx_lock);
+    // spin_unlock_irqrestore(&ext->tx_lock, flags);
 
     return cleaned;
 }
@@ -1628,6 +1646,7 @@ e1000_tx_map(e1000_extension_t* ext,
     tx_ring->buffer_info[i].buffer = buffer;
     tx_ring->buffer_info[first].next_to_watch = i;
 
+
     return count;
 }
 
@@ -1661,7 +1680,7 @@ e1000_tx_queue(e1000_extension_t* ext, int count, int tx_flags)
     while(count--) {
         buffer_info = &tx_ring->buffer_info[i];
         tx_desc = E1000_TX_DESC(*tx_ring, i);
-        tx_desc->buffer_addr = cpu_to_le32(buffer_info->dma);
+        tx_desc->buffer_addr = cpu_to_le64(buffer_info->dma);
         tx_desc->lower.data = cpu_to_le32(txd_lower | buffer_info->length);
         tx_desc->upper.data = cpu_to_le32(txd_upper);
         if(unlikely(++i) == tx_ring->count) {
@@ -1695,12 +1714,16 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
     unsigned int tx_flags = 0;
     unsigned int length = len;
     unsigned long flags;
+    unsigned long intr_flags;
     unsigned int nr_frags = 0;
     unsigned int mss = 0;
     int count = 0;
 
+    save_intr(intr_flags);
+
     if(unlikely(len <= 0)) {
         kfree(buf);
+        restore_intr(flags);
         return 0;
     }
 
@@ -1726,5 +1749,7 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
         e1000_tx_map(ext, buf, first, max_per_txd, length), 
         tx_flags);
     
+    restore_intr(intr_flags);
+
     return 0;
 }
