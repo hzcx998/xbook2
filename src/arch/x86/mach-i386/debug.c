@@ -5,6 +5,10 @@
  * init_kernel_debug
  * 
  */
+
+//define "debug_putchar"
+void (*debug_putchar)(char ch);
+
 void init_kernel_debug()
 {
 
