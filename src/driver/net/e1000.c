@@ -287,12 +287,14 @@ static int e1000_sw_init(e1000_extension_t* ext)
     hw->revision_id = pdev->revision_id;
     hw->pci_cmd_word = pdev->command;
 
+    ext->tx_abs_int_delay = 100;
+
     ext->rx_buffer_len = E1000_RXBUFFER_2048;
     // ext->rx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
     // ext->tx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
     ext->rx_ring.count = 128;
     // ext->tx_ring.count = 128;
-    ext->tx_ring.count = 10;
+    ext->tx_ring.count = 100;
     //error
     // hw->max_frame_size = ENET_HEADER_SIZE + ETHERNET_FCS_SIZE;
     // hw->min_frame_size = MINIMUM_ETHERNET_FRAME_SIZE;
@@ -697,7 +699,7 @@ iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
 
     DEBUGFUNC("e1000_setup_rx_resources start");
 
-    size = sizeof(struct e1000_buffer) * rxdr->count;
+    size = sizeof(struct e1000_buffer) * rxdr->count + 1;
     rxdr->buffer_info = kmalloc(size);
     if(!rxdr->buffer_info) {
         printk(KERN_DEBUG "unable to allocate memory for the recieve descriptor ring\n");
@@ -717,6 +719,7 @@ iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
     }
     rxdr->dma = v2p(rxdr->desc);
     memset(rxdr->desc, 0, rxdr->size);
+    printk(KERN_DEBUG "-------rxdr_dma = %x rxdr_size = %d\n", rxdr->dma, rxdr->size);
 
     rxdr->next_to_clean = 0;
     rxdr->next_to_use = 0;
@@ -1067,7 +1070,7 @@ static void e1000_set_multi(device_object_t* netdev)
     rctl = E1000_READ_REG(hw, RCTL);
 
     //启用混杂模式
-    rctl |= (E1000_RCTL_UPE | E1000_RCTL_MPE);
+    rctl &= ~(E1000_RCTL_UPE | E1000_RCTL_MPE);
 
     E1000_WRITE_REG(hw, RCTL, rctl);
 
@@ -1256,6 +1259,7 @@ static void e1000_configure_tx(e1000_extension_t* ext)
     E1000_WRITE_REG(&ext->hw, TDLEN, tdlen);
 
     /* setup the hw tx head and tail descriptor pointers */
+    /* 设置传送描述符头尾指针 */
     E1000_WRITE_REG(&ext->hw, TDH, 0);
     E1000_WRITE_REG(&ext->hw, TDT, 0);
 
@@ -1389,6 +1393,7 @@ static int e1000_intr(unsigned long irq, unsigned long data)
         hw->get_link_status = 1;
         timer_mod(&ext->watchdog_timer, systicks);
     }
+
     for(i=0; i<E1000_MAX_INTR; i++) {
         if(unlikely(!e1000_clean_rx_irq(ext) & 
            !e1000_clean_tx_irq(ext))) {
@@ -1438,7 +1443,7 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* rx_ring = &ext->rx_ring;
     device_object_t* netdev = ext->device_object;
-    pci_device_t* pci_dev = ext->pci_device;
+    // pci_device_t* pci_dev = ext->pci_device;
     struct e1000_rx_desc* rx_desc;
     struct e1000_buffer* buffer_info;
     uint8_t* buffer;
@@ -1449,11 +1454,13 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
     boolean_t cleaned = FALSE;
 
     i = rx_ring->next_to_clean;
+    // printk(KERN_DEBUG "rx_ring->next_to_clean = %d\n", i);
     /* 获取接收描述符 */
     rx_desc = E1000_RX_DESC(*rx_ring, i);
     // printk(KERN_DEBUG "rx_desc_length = %d\n", rx_desc->length);
 
     while(rx_desc->status & E1000_RXD_STAT_DD) {
+        printk(KERN_DEBUG "i = %d\n", i);
         buffer_info = &rx_ring->buffer_info[i];
 #ifdef CONFIG_E1000_NAPI
         if(*work_done >= work_to_do) {
@@ -1465,6 +1472,7 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
 
         buffer = buffer_info->buffer;
         length = le16_to_cpu(rx_desc->length);
+        // printk(KERN_DEBUG "length = %d------rx_desc->length = %d\n", length, rx_desc->length);
 
         if(unlikely(!(rx_desc->status & E1000_RXD_STAT_EOP))) {
             /* all receives must fit into a single buffer */
@@ -1474,6 +1482,7 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
         }
 
         if(unlikely(rx_desc->errors & E1000_RXD_ERR_FRAME_ERR_MASK)) {
+            printk(KERN_DEBUG "AAAAAAA\n");
             last_byte = *(buffer + length - 1);
             if(TBI_ACCEPT(&ext->hw, rx_desc->status,
                           rx_desc->errors, length, last_byte)) {
@@ -1492,37 +1501,19 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
         /* receive checksum offload */
         e1000_rx_checksum(ext, rx_desc);
 
-        //跳过以太网报头，未处理
+        //跳过以太网报头
+        int offset = 8;
+        printk(KERN_DEBUG "buffer:%x\n", *(buffer+30));
+        for(int j=0; j<length; j++) {
+            printk(KERN_DEBUG "%-08x ", *(buffer+j));
+            if(!((j + 1) % 16)) {
+                printk(KERN_DEBUG "\n");
+            }
+        }
 
-#ifdef CONFIG_E1000_NAPI
-#ifdef NETIF_F_HW_VLAN_TX
-		if(unlikely(adapter->vlgrp &&
-			    (rx_desc->status & E1000_RXD_STAT_VP))) {
-			vlan_hwaccel_receive_skb(skb, adapter->vlgrp,
-					le16_to_cpu(rx_desc->special) &
-					E1000_RXD_SPC_VLAN_MASK);
-		} else {
-			netif_receive_skb(skb);
-		}
-#else
-		netif_receive_skb(skb);
-#endif
-#else /* CONFIG_E1000_NAPI */
-#ifdef NETIF_F_HW_VLAN_TX
-		if(unlikely(adapter->vlgrp &&
-			    (rx_desc->status & E1000_RXD_STAT_VP))) {
-			vlan_hwaccel_rx(skb, adapter->vlgrp,
-					le16_to_cpu(rx_desc->special) &
-					E1000_RXD_SPC_VLAN_MASK);
-		} else {
-			netif_rx(skb);
-		}
-#else
-		/* 网络接口发送数据包 */
-        // printk(KERN_DEBUG "len = %d-buffer:%s\n", rx_desc->length, buffer);
-        io_device_queue_append(&ext->rx_queue, buffer, rx_desc->length);
-#endif
-#endif /* CONFIG_E1000_NAPI */
+    	/* 网络接口发送数据包 */
+        printk(KERN_DEBUG "len = %d\n\n", length);
+        io_device_queue_append(&ext->rx_queue, buffer + offset, length - ETHERNET_FCS_SIZE);
 
 next_desc:
         rx_desc->status = 0;
@@ -1570,15 +1561,15 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
     int flags;
 
     // spin_lock_irqsave(&ext->tx_lock, flags);
-    spin_lock(&ext->tx_lock);
+    // spin_lock(&ext->tx_lock);
 
     i = tx_ring->next_to_clean;
     eop = tx_ring->buffer_info[i].next_to_watch;
     eop_desc = E1000_TX_DESC(*tx_ring, eop);
 
     while(eop_desc->upper.data & cpu_to_le32(E1000_TXD_STAT_DD)) {
-        printk(KERN_DEBUG "next_to_watch = %d\n", eop);
-        printk(KERN_DEBUG "!!!!!!!!!!!\n");
+        // printk(KERN_DEBUG "next_to_watch = %d\n", eop);
+        // printk(KERN_DEBUG "!!!!!!!!!!!\n");
         for(cleaned = FALSE; !cleaned; ) {
             tx_desc = E1000_TX_DESC(*tx_ring, i);
             buffer_info = &tx_ring->buffer_info[i];
@@ -1596,14 +1587,14 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
 
         eop = tx_ring->buffer_info[i].next_to_watch;
         // printk(KERN_DEBUG "i=%d---next_to_watch=%d\n", i, eop);
-        printk(KERN_DEBUG "-------i=%d\n", i);
+        // printk(KERN_DEBUG "-------i=%d\n", i);
         eop_desc = E1000_TX_DESC(*tx_ring, eop);
     }
 
     tx_ring->next_to_clean = i;
 
     // spin_unlock_irqrestore(&ext->tx_lock, flags);
-    spin_unlock(&ext->tx_lock);
+    // spin_unlock(&ext->tx_lock);
 
     return cleaned;
 }
@@ -1708,7 +1699,6 @@ e1000_tx_queue(e1000_extension_t* ext, int count, int tx_flags)
     wmb();
 
     tx_ring->next_to_use = i;
-    printk(KERN_DEBUG "e1000_tx_queue: next_to_use = %d\n", tx_ring->next_to_use);
     E1000_WRITE_REG(&ext->hw, TDT, i);
 }
 
@@ -1725,10 +1715,11 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
     int count = 0;
 
     save_intr(intr_flags);
+    // spin_lock(&ext->tx_lock);
 
     if(unlikely(len <= 0)) {
         kfree(buf);
-        restore_intr(flags);
+        restore_intr(intr_flags);
         return 0;
     }
 
@@ -1750,12 +1741,13 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
     first = ext->tx_ring.next_to_use;
 
     //int count_ = e1000_tx_map(ext, buf, first, max_per_txd, length);
-    // printk(KERN_DEBUG "transmit---tx_length=%d, tx_buf:%s\n", length, buf);
+    // printk(KERN_DEBUG "transmit---tx_length=%d\n", length);
     e1000_tx_queue(ext, 
         e1000_tx_map(ext, buf, first, max_per_txd, length), 
         tx_flags);
     
     restore_intr(intr_flags);
+    // spin_unlock(&ext->tx_lock);
 
     return 0;
 }
