@@ -291,7 +291,8 @@ static int e1000_sw_init(e1000_extension_t* ext)
     // ext->rx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
     // ext->tx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
     ext->rx_ring.count = 128;
-    ext->tx_ring.count = 128;
+    // ext->tx_ring.count = 128;
+    ext->tx_ring.count = 10;
     //error
     // hw->max_frame_size = ENET_HEADER_SIZE + ETHERNET_FCS_SIZE;
     // hw->min_frame_size = MINIMUM_ETHERNET_FRAME_SIZE;
@@ -644,12 +645,14 @@ void e1000_free_rx_resources(e1000_extension_t* ext)
 iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* txdr = &ext->tx_ring;
+    printk(KERN_DEBUG "tx_ring->count = %d\n", txdr->count);
     // pci_device_t* pdev = ext->pci_device;
     int size;
 
     DEBUGFUNC("e1000_setup_tx_rexources start");
 
-    size = sizeof(struct e1000_buffer*) * txdr->count;
+    size = sizeof(struct e1000_buffer) * txdr->count + 1;
+    printk(KERN_DEBUG "-------size = %d\n", size);
     txdr->buffer_info = kmalloc(size);
     if(!txdr->buffer_info) {
         printk(KERN_DEBUG "---Unable to allocate memory for the transmit desciptor ring\n");
@@ -669,7 +672,7 @@ iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
         return -1;
     }
     txdr->dma = v2p(txdr->desc);
-    printk(KERN_DEBUG "-------txdr_size = %d\n", txdr->size);
+    printk(KERN_DEBUG "-------txdr_dma = %x txdr_size = %d\n", txdr->dma, txdr->size);
     memset(txdr->desc, 0, txdr->size);
 
     txdr->next_to_use = 0;
@@ -1220,9 +1223,10 @@ static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
         buffer_info->dma = v2p(buffer);
 
         rx_desc = E1000_RX_DESC(*rx_ring, i);
-        rx_desc->buffer_addr = cpu_to_le32(buffer_info->dma);
+        rx_desc->buffer_addr = cpu_to_le64(buffer_info->dma);
 
         if(unlikely((i & ~(E1000_RX_BUFFER_WRITE - 1)) == i)) {
+            wmb();
             E1000_WRITE_REG(&ext->hw, RDT, i);
         }
 
@@ -1239,6 +1243,7 @@ static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
  *
  * Configure the Tx unit of the MAC after a reset.
  **/
+
 static void e1000_configure_tx(e1000_extension_t* ext)
 {
     uint64_t tdba = ext->tx_ring.dma;
@@ -1366,7 +1371,7 @@ static int e1000_intr(unsigned long irq, unsigned long data)
 {
     e1000_extension_t* ext = (e1000_extension_t*)data;
 
-    // spin_lock(&ext->lock);
+    // spin_lock(&ext->tx_lock);
 
     struct e1000_hw* hw = &ext->hw;
     uint32_t icr = E1000_READ_REG(hw, ICR);
@@ -1376,6 +1381,7 @@ static int e1000_intr(unsigned long irq, unsigned long data)
 
     if(unlikely(!icr)) {
         // spin_unlock(&ext->lock);
+        // spin_unlock(&ext->tx_lock);
         return -1;
     }
 
@@ -1390,7 +1396,7 @@ static int e1000_intr(unsigned long irq, unsigned long data)
         }
     }
 
-    // spin_unlock(&ext->lock);
+    // spin_unlock(&ext->tx_lock);
 
     return 0;
 }
@@ -1513,7 +1519,7 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
 		}
 #else
 		/* 网络接口发送数据包 */
-        printk(KERN_DEBUG "len = %d-buffer:%s\n", rx_desc->length, buffer);
+        // printk(KERN_DEBUG "len = %d-buffer:%s\n", rx_desc->length, buffer);
         io_device_queue_append(&ext->rx_queue, buffer, rx_desc->length);
 #endif
 #endif /* CONFIG_E1000_NAPI */
@@ -1564,12 +1570,14 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
     int flags;
 
     // spin_lock_irqsave(&ext->tx_lock, flags);
+    spin_lock(&ext->tx_lock);
 
     i = tx_ring->next_to_clean;
     eop = tx_ring->buffer_info[i].next_to_watch;
     eop_desc = E1000_TX_DESC(*tx_ring, eop);
 
     while(eop_desc->upper.data & cpu_to_le32(E1000_TXD_STAT_DD)) {
+        printk(KERN_DEBUG "next_to_watch = %d\n", eop);
         printk(KERN_DEBUG "!!!!!!!!!!!\n");
         for(cleaned = FALSE; !cleaned; ) {
             tx_desc = E1000_TX_DESC(*tx_ring, i);
@@ -1587,13 +1595,15 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
         }
 
         eop = tx_ring->buffer_info[i].next_to_watch;
-        printk(KERN_DEBUG "i=%d---next_to_watch=%d\n", i, eop);
+        // printk(KERN_DEBUG "i=%d---next_to_watch=%d\n", i, eop);
+        printk(KERN_DEBUG "-------i=%d\n", i);
         eop_desc = E1000_TX_DESC(*tx_ring, eop);
     }
 
     tx_ring->next_to_clean = i;
 
     // spin_unlock_irqrestore(&ext->tx_lock, flags);
+    spin_unlock(&ext->tx_lock);
 
     return cleaned;
 }
@@ -1681,9 +1691,10 @@ e1000_tx_queue(e1000_extension_t* ext, int count, int tx_flags)
         buffer_info = &tx_ring->buffer_info[i];
         tx_desc = E1000_TX_DESC(*tx_ring, i);
         tx_desc->buffer_addr = cpu_to_le64(buffer_info->dma);
-        tx_desc->lower.data = cpu_to_le32(txd_lower | buffer_info->length);
+        tx_desc->lower.data = 
+            cpu_to_le32(txd_lower | buffer_info->length);
         tx_desc->upper.data = cpu_to_le32(txd_upper);
-        if(unlikely(++i) == tx_ring->count) {
+        if(unlikely(++i == tx_ring->count)) {
             i = 0;
         }
     }
@@ -1697,18 +1708,12 @@ e1000_tx_queue(e1000_extension_t* ext, int count, int tx_flags)
     wmb();
 
     tx_ring->next_to_use = i;
+    printk(KERN_DEBUG "e1000_tx_queue: next_to_use = %d\n", tx_ring->next_to_use);
     E1000_WRITE_REG(&ext->hw, TDT, i);
 }
 
 int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
 {
-    uint32_t entry;
-    struct e1000_desc_ring* tx_ring = &ext->tx_ring;
-    struct e1000_desc* tx_desc;
-    struct e1000_desc* eop_desc;
-    struct e1000_bufer* buffer_info;
-    unsigned int i, eop;
-
     unsigned int first, max_per_txd = E1000_MAX_DATA_PER_TXD;
     unsigned int max_txd_pwr = E1000_MAX_TXD_PWR;
     unsigned int tx_flags = 0;
@@ -1745,6 +1750,7 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
     first = ext->tx_ring.next_to_use;
 
     //int count_ = e1000_tx_map(ext, buf, first, max_per_txd, length);
+    // printk(KERN_DEBUG "transmit---tx_length=%d, tx_buf:%s\n", length, buf);
     e1000_tx_queue(ext, 
         e1000_tx_map(ext, buf, first, max_per_txd, length), 
         tx_flags);

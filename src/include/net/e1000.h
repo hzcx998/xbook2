@@ -170,9 +170,9 @@ struct e1000_adapter;
 /* wrapper around a pointer to a socket buffer,
  * so a DMA handle can be stored along with the buffer */
 struct e1000_buffer {
-	struct sk_buff *skb;
+	//struct sk_buff *skb;
 	uint8_t* buffer;
-	uint32_t dma;
+	uint64_t dma;
 	unsigned long time_stamp;
 	uint16_t length;
 	uint16_t next_to_watch;
