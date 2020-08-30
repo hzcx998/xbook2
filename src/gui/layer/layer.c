@@ -48,7 +48,6 @@ DEFINE_SPIN_LOCK(layer_val_lock);
 layer_t *create_layer(int width, int height)
 {
     size_t bufsz = width * height * sizeof(GUI_COLOR);
-    printk("buf size: %d\n", bufsz);
     uint32_t flags = 0;
     GUI_COLOR *buffer = kmalloc(bufsz);
     if (buffer == NULL) {

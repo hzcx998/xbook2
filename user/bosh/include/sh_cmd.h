@@ -11,10 +11,21 @@
 #define CMD_BUF_NR    20
 
 typedef struct {
+    int flags;                  /* 标志 */
+    char cmdbuf[CMD_LINE_LEN];  /* 命令行缓冲区 */
+    
+} cmd_buf_t;
+
+typedef struct {
     char cwd_cache[MAX_PATH_LEN];   /* 当前工作目录 */
     char cmd_line[CMD_LINE_LEN];    /* 通用命令行 */
+    cmd_buf_t cmd_bufs[CMD_BUF_NR]; /* 历史命令行 */
+    
     char *cmd_pos;                  /* 在命令行中的位置 */
     int cmd_len;                    /* 命令行的长度 */
+    
+    int cur_cmd_buf;                /* 当前命令缓冲区   */
+    int next_cmd_buf;               /* 下一个被使用的命令缓冲区   */
 } cmd_man_t;
 
 #define SIZE_CMD_MAN    sizeof(cmd_man_t)
@@ -31,6 +42,9 @@ void print_cmdline();
 int cmd_buf_select(int dir);
 void cmd_buf_insert();
 int cmdline_set(char *buf, int buflen);
-void cmd_loop();
+void cmd_buf_copy();
+int cmd_buf_select(int dir);
+int cmdline_set(char *buf, int buflen);
+int cmdline_check();
 
 #endif  /* _BOSH_CMD_H */

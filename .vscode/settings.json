@@ -126,6 +126,9 @@
         "graph.h": "c",
         "waitqueue.h": "c",
         "glayer.h": "c",
-        "gscreen.h": "c"
+        "gscreen.h": "c",
+        "cstdlib": "c",
+        "sh_clipboard.h": "c",
+        "sh_window.h": "c"
     }
 }

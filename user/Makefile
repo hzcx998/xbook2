@@ -14,10 +14,10 @@ AS			:=	nasm
 
 export AS
 
+MODULE      +=  bosh
 MODULE      +=  vt100
 MODULE      +=  tests
 MODULE      +=  hello
-MODULE      +=  bosh
 MODULE      +=  socket_client
 MODULE      +=  socket_server
 MODULE      +=  echo

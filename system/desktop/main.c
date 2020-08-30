@@ -65,9 +65,9 @@ int main(int argc, char *argv[])
     }
     if (!pid) { /* 子进程就执行其他程序 */
         char *arg[3];
-        arg[0] = "infones";
+        arg[0] = "bosh";
         arg[1] = "/res/mario.nes";
-        arg[2] = 0; 
+        arg[2] = 0;
         execv(arg[0], arg);
         return -1;
     }

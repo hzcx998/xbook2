@@ -48,6 +48,7 @@ int gui_msgpool_exit(task_t *task)
         msgpool_destroy(task->gmsgpool);
         task->gmsgpool = NULL;
     }
+    /* 销毁其绑定的图层 */
     return 0;
 }
 

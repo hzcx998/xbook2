@@ -183,13 +183,18 @@ int g_try_get_msg(g_msg_t *msg)
     return val;
 }
 
+/**
+ * 派发消息
+ * 用户处理的返回>0，系统处理的返回0
+*/
 int g_dispatch_msg(g_msg_t *msg)
 {
     if (!g_filter_msg(msg))
         return 0;
     if (_g_msg_routine_call) {
-        if (!_g_msg_routine_call(msg))
-            return 0;
+        int retval = _g_msg_routine_call(msg);
+        if (retval > 0)
+            return retval;
     }
     /* 默认处理方式 */
     return g_default_msg_proc(msg);

@@ -6,27 +6,14 @@
 
 int main(int argc, char *argv[])
 {
+    
 	/* 如果没有参数，就接收输入，输入类型：管道，文件，设备 */
     if (argc == 1) {
         /*  */
-        /*char buf;
+        char buf = 0;
         while (read(STDIN_FILENO, &buf, 1) > 0) {
-            printf("%c", buf);
-        }*/
-
-        /* 只接受4096字节输入 */
-        char *buf = malloc(4096 + 1);
-        memset(buf, 0, 4096 + 1);
-        int readBytes = read(STDIN_FILENO, buf, 4096);
-        //printf("read fd0:%d\n", readBytes);
-        if (readBytes > 0) {            
-            char *p = buf;
-            while (readBytes--) {
-                printf("%c", *p);
-                p++;
-            }
+            write(STDOUT_FILENO, &buf, 1);
         }
-        free(buf);
         return 0;
 	}
 	if(argc > 2){

@@ -34,4 +34,6 @@ long long atoll(const char * nptr);
 double atof(const char * nptr);
 long atol(const char * nptr);
 
+void atexit(void (*func)(void));
+
 #endif  /* _LIB_STDLIB_H */

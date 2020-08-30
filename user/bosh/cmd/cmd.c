@@ -20,12 +20,20 @@
 #include <sys/trigger.h>
 
 /// 程序本地头文件
-#include "cmd.h"
-#include "shell.h"
+#include <sh_cmd.h>
+#include <sh_shell.h>
+#include <sh_console.h>
+#include <sh_cursor.h>
+#include <sh_window.h>
+#include <sh_shell.h>
 
 cmd_man_t *cmdman; 
 
 extern char **environ;
+
+/* 全局shell变量，当执行子进程时，子进程的pid和要传输给子进程的键值 */
+int shell_child_pid = -1;
+int shell_child_key = -1;
 
 #define DEBUG_LOCAL 0
 
@@ -118,12 +126,14 @@ int execute_cmd(int argc, char **argv)
     }
     /* 先执行内建命令，再选择磁盘中的命令 */
     if (do_buildin_cmd(argc, argv)) {
+        /* 在末尾添加上结束参数 */
+        argv[argc] = NULL;
+        
         /* 如果是后台程序，直接运行 */
         if (daemon) {
             return do_daemon((const char *) argv[0], (char *const *) argv);
         }
-        /* 在末尾添加上结束参数 */
-        argv[argc] = NULL;
+        
         int pid;
     
         int recv_pipe[2];   /* 接收数据的管道 */
@@ -141,7 +151,6 @@ int execute_cmd(int argc, char **argv)
         }
         
         char buf[513] = {0};
-        char key;
         /* 创建一个进程 */
         pid = fork();
         if (pid == -1) {  /* fork失败 */
@@ -164,6 +173,7 @@ int execute_cmd(int argc, char **argv)
 #if DEBUG_LOCAL == 1                
             shell_printf("%s: parent wait child %d\n", APP_NAME, pid);
 #endif
+            shell_child_pid = pid;
             int child_exit = 0;
             while (1) {
                 
@@ -185,13 +195,16 @@ int execute_cmd(int argc, char **argv)
 #if DEBUG_LOCAL == 1                                  
                             shell_printf("%s: wait child process success!\n", APP_NAME);
 #endif
+                            
                             close(recv_pipe[0]);     /* 关闭输出读者 */
                             close(xmit_pipe[1]);      /* 关闭输入写者 */
+                            shell_child_pid = -1;
                             return 0;
                         } else {
                             shell_printf("%s: wait child process failed!\n", APP_NAME);
                             close(recv_pipe[0]);     /* 关闭输出读者 */
                             close(xmit_pipe[1]);      /* 关闭输入写者 */
+                            shell_child_pid = -1;
                             return -1;
                         }
                     }
@@ -208,14 +221,18 @@ int execute_cmd(int argc, char **argv)
                     shell_printf(buf);
                     printf(buf);
                 }
-
+                #if 1
                 /* ----输入管道---- */
-                if (!shell_event_poll(&key, pid)) {
-                    int wrret = write(xmit_pipe[1], &key, 1);
+                if (poll_window() == 1) {
+                    printf("write key %x:%c\n", shell_child_key, shell_child_key);
+                    int wrret = write(xmit_pipe[1], &shell_child_key, 1);
                     if (wrret < 0) {
-                        shell_printf("%s: write key %d to pipe failed!\n", APP_NAME, key);
+                        shell_printf("%s: write key %x:%c to pipe failed!\n", APP_NAME,
+                            shell_child_key, shell_child_key);
                     }
+                    shell_child_key = -1;
                 }
+                #endif
             }
 
         } else {    /* 子进程 */
@@ -248,14 +265,10 @@ int execute_cmd(int argc, char **argv)
             /* 恢复默认触发 */
             trigger(TRIGLSOFT, TRIG_DFL);
             /* 子进程执行程序 */
-            pid = execv((const char *) argv[0], (char *const *) argv);
-            /* 如果执行出错就退出 */
-            if (pid == -1) {
-                shell_printf("file %s not executable!\n", argv[0]);
-                exit(pid);  /* 退出 */
-            }
+            exit(execv((const char *) argv[0], (char *const *) argv));
         }
     }
+    shell_child_pid = -1;
     return 0;
 }
 
@@ -269,8 +282,7 @@ int cmd_cls(int argc, char **argv)
 		return -1;
 	}
 
-    xcons_clear();
-
+    con_screen.clear();
     return 0;
 }
 
@@ -490,8 +502,7 @@ int cmd_ver(int argc, char **argv)
 
 int cmd_exit(int argc, char **argv)
 {
-    exit_cmd_man();
-    exit(0);
+    exit_shell();
     return 0; 
 }
 
@@ -1028,19 +1039,19 @@ static int cmd_touch(int argc, char *argv[])
  * 1.命令格式：
  * trig [参数] [进程号]
  * 2.命令功能：
- * 发送指定的信号到相应进程。不指定型号将发送SIGTERM（15）终止指定进程。
+ * 发送指定的信号到相应进程。不指定型号将发送LSOFT（6）终止指定进程。
  * 3.命令参数：
  * -l  信号，若果不加信号的编号参数，则使用“-l”参数会列出全部的信号名称
  * -s  指定发送信号
  * 
  * 4.举例：
  * trig 10          // 默认方式杀死进程10
- * trig -9 10       // 用SIGtrig杀死进程10
- * trig -SIGtrig 10 // 用SIGtrig杀死进程10
- * trig -trig 10    // 用SIGtrig杀死进程10
+ * trig -5 10       // 用TRIGHSOFT杀死进程10
+ * trig -TRIGHSOFT 10 // 用TRIGHSOFT杀死进程10
+ * trig -HSOFT 10    // 用TRIGHSOFT杀死进程10
  * trig -l          // 列出所有信号
- * trig -l trig     // 列出trig对应的信号值
- * trig -l SIGtrig  // 列出trig对应的信号值
+ * trig -l HSOFT     // 列出trig对应的信号值
+ * trig -l TRIGHSOFT  // 列出trig对应的信号值
  * 就实现以上命令，足矣。
  * 
  */
@@ -1323,40 +1334,54 @@ void print_cmdline()
 }
 char *cmd_argv[MAX_ARG_NR] = {0};
 
-void cmd_loop()
+int cmdline_check()
 {
-    while (1) {
-        print_prompt();
-        memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
-        if (shell_readline() < 0)
-            break;
-        /* 如果什么也没有输入，就回到开始处 */
-		if(cmdman->cmd_line[0] == 0)
-			continue;
 
-        /* 处理数据 */
-        //printf("cmd: %s\n", cmd_line);
-        /* 记录历史缓冲区 */
-        //cmd_buf_insert();
-        
-        int argnum = -1;
-        argnum = cmd_parse(cmdman->cmd_line, cmd_argv, ' ');
-        if(argnum == -1){
-            shell_printf("%s: num of arguments exceed %d\n", APP_NAME, MAX_ARG_NR);
-            continue;
-        }
-#if 0
-        /* 打印参数 */
-        int i;
-        for (i = 0; i < argnum; i++) {
-            printf("arg[%d]=%s\n", i, cmd_argv[i]);
-        }
-#endif
-        if (execute_cmd(argnum, cmd_argv)) {
-            //shell_printf("%s: execute cmd %s falied!\n", APP_NAME, cmd_argv[0]);
-        }
-        
+    /* 如果什么也没有输入，就回到开始处 */
+    if(cmdman->cmd_line[0] == 0)
+        return -1;
+
+    /* 记录历史缓冲区 */
+    cmd_buf_insert();
+
+    /* 重置命令参数 */
+    cmdman->cmd_pos = cmdman->cmd_line;
+    cmdman->cmd_len = 0;
+
+    /* 处理数据 */
+    //printf("cmd: %s\n", cmd_line);
+    /* 记录历史缓冲区 */
+    //cmd_buf_insert();
+    
+    int argnum = -1;
+    argnum = cmd_parse(cmdman->cmd_line, cmd_argv, ' ');
+    
+    if(argnum == -1){
+        shell_printf("%s: num of arguments exceed %d\n", APP_NAME, MAX_ARG_NR);
+        memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
+        return -1;
     }
+#if 0
+    /* 打印参数 */
+    int i;
+    for (i = 0; i < argnum; i++) {
+        printf("arg[%d]=%s\n", i, cmd_argv[i]);
+    }
+#endif
+    /* 修改消息路由 */
+    g_set_msg_routine(process_window2);
+
+    if (execute_cmd(argnum, cmd_argv) < 0) {
+        //shell_printf("%s: execute cmd %s falied!\n", APP_NAME, cmd_argv[0]);
+        memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
+        g_set_msg_routine(process_window);
+    
+        return -1;
+    }
+    memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
+    g_set_msg_routine(process_window);
+
+    return 0;
 }
 
 char *shell_environment[3] = {
@@ -1364,6 +1389,138 @@ char *shell_environment[3] = {
     "/sbin",
     NULL
 };
+
+/**
+ * cmd_buf_insert - 插入一个命令到历史缓冲区中
+ * 
+ */
+void cmd_buf_insert()
+{
+    /* 比较命令是否已经在缓冲区当中了，如果是，就直接返回 */
+    cmd_buf_t *cmdbuf = &cmdman->cmd_bufs[0];
+    int i;
+    for (i = 0; i < CMD_BUF_NR; i++) {
+        if (cmdbuf->flags > 0) {
+            if (!strcmp(cmdbuf->cmdbuf, cmdman->cmd_line)) {
+                return;
+            }
+        }
+        cmdbuf++;
+    }
+
+    /* 选择下一个即将插入的缓冲区 */
+    cmdbuf = &cmdman->cmd_bufs[cmdman->next_cmd_buf];
+    memset(cmdbuf->cmdbuf, 0, CMD_LINE_LEN);
+    memcpy(cmdbuf->cmdbuf, cmdman->cmd_line, CMD_LINE_LEN);
+    cmdbuf->flags = 1;
+
+    /* 指向下一个缓冲区 */
+    cmdman->next_cmd_buf++;
+    cmdman->cur_cmd_buf = cmdman->next_cmd_buf;
+    /* 形成一个环形 */
+    if (cmdman->next_cmd_buf >= CMD_BUF_NR)
+        cmdman->next_cmd_buf = 0;
+}
+
+void cmd_buf_copy()
+{
+    cmd_buf_t *cmdbuf = &cmdman->cmd_bufs[cmdman->cur_cmd_buf];
+    memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
+    memcpy(cmdman->cmd_line, cmdbuf->cmdbuf, CMD_LINE_LEN);
+}
+
+/**
+ * cmd_buf_select - 选择一个历史命令
+ * @dir: 选择方向：-1向上选择，1向下选择
+ * 
+ */
+int cmd_buf_select(int dir)
+{
+    int temp;
+    cmd_buf_t *cmdbuf;
+    if (dir == -1) {    /* 向上获取一个历史命令 */
+        temp = cmdman->cur_cmd_buf - 1;
+        if (temp < 0) {
+            temp = CMD_BUF_NR - 1;
+        }
+    } else if (dir == 1) {  /* 向下获取一个历史命令 */
+        temp = cmdman->cur_cmd_buf + 1;
+        if (temp >= CMD_BUF_NR) {
+            temp = 0;
+        }
+    } else {
+        return -1;
+    }
+    cmdbuf = &cmdman->cmd_bufs[temp];
+    if (cmdbuf->flags > 0) {
+        /* 选定 */
+        cmdman->cur_cmd_buf = temp;
+        /* 回写命令 */
+
+        /* 计算一下原有命令占用的终端列数 */
+        int cmdlen = strlen(cmdman->cmd_line);
+        int cwdlen = strlen(cmdman->cwd_cache);
+        int total = cmdlen + cwdlen + 1; /* 多算一个字符 */
+        int lines = DIV_ROUND_UP(total, con_screen.columns);
+        /* 如果原来是多行，那么就需要往上移动lines-1行 */
+        if (lines > 1)
+            cursor.y -= (lines - 1);
+        /* 光标所在的位置 */
+        int y = cursor.y * con_screen.char_height;
+        /* 要多清除一行的内容 */
+        con_screen.clear_area(0, y, con_screen.width, (lines + 1) * con_screen.char_height);
+        /* 清除total个字符 */
+        con_set_chars(' ', total, 0, cursor.y);
+        /* 移动到行首 */
+        move_cursor(0, cursor.y);
+        /* 打印提示符和当前命令行 */
+        print_prompt();
+        cmd_buf_copy();
+        print_cmdline();
+        /* 计算命令行的长度和当前字符的位置 */
+        cmdman->cmd_len = strlen(cmdman->cmd_line);
+        cmdman->cmd_pos = cmdman->cmd_line + cmdman->cmd_len; /* 末尾位置 */
+        return 0;
+    }
+    return -1;
+}
+
+/**
+ * cmdline_set - 设置命令行内容 
+ */
+int cmdline_set(char *buf, int buflen)
+{
+    /* 计算一下原有命令占用的终端列数 */
+    int cmdlen = strlen(cmdman->cmd_line);
+    int cwdlen = strlen(cmdman->cwd_cache);
+    int total = cmdlen + cwdlen + 1; /* 多算一个字符 */
+    int lines = DIV_ROUND_UP(total, con_screen.columns);
+    /* 如果原来是多行，那么就需要往上移动lines-1行 */
+    if (lines > 1)
+        cursor.y -= (lines - 1);
+    /* 光标所在的位置 */
+    int y = cursor.y * con_screen.char_height;
+    /* 要多清除一行的内容 */
+    con_screen.clear_area(0, y, con_screen.width, (lines + 1) * con_screen.char_height);
+    /* 清除total个字符 */
+    con_set_chars(' ', total, 0, cursor.y);
+    /* 移动到行首 */
+    move_cursor(0, cursor.y);
+    /* 打印提示符和当前命令行 */
+    print_prompt();
+    /* 复制命令行内容 */
+    memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
+    memcpy(cmdman->cmd_line, buf, min(CMD_LINE_LEN, buflen));
+    print_cmdline();
+    /* 计算命令行的长度和当前字符的位置 */
+    cmdman->cmd_len = strlen(cmdman->cmd_line);
+    cmdman->cmd_pos = cmdman->cmd_line + cmdman->cmd_len; /* 末尾位置 */
+
+    /* 手动刷新屏幕 */
+    sh_window_update(0, 0, con_screen.width, con_screen.height);
+
+    return -1;
+}
 
 int init_cmd_man()
 {
@@ -1375,9 +1532,19 @@ int init_cmd_man()
     memset(cmdman->cwd_cache, 0, MAX_PATH_LEN);
     getcwd(cmdman->cwd_cache, MAX_PATH_LEN);
     
+    memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
+
+    cmdman->cur_cmd_buf = 0;
+    cmdman->next_cmd_buf = 0;
+
+    cmdman->cmd_pos = cmdman->cmd_line;
+    cmdman->cmd_len = 0;
+
     chdir("/");
     
     environ = shell_environment;
+
+    print_prompt();
 
     return 0;
 }
