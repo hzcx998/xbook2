@@ -1,5 +1,5 @@
 {
-    "C_Cpp.errorSquiggles": "Disabled",
+    //"C_Cpp.errorSquiggles": "Disabled",
     "files.associations": {
         "*.C": "c",
         "debug.h": "c",
@@ -121,6 +121,14 @@
         "text.h": "c",
         "font.h": "c",
         "event.h": "c",
-        "cursor.h": "c"
+        "cursor.h": "c",
+        "*.tcc": "c",
+        "fstream": "c",
+        "istream": "c",
+        "ostream": "c",
+        "*.rh": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c"
     }
 }

@@ -11,8 +11,8 @@ typedef struct _srvcall {
     int state;                  /* 状态 */
     task_t *holder;             /* 服务持有者 */
     task_t *caller;             /* 服务调用者 */
-    spinlock_t spin;            /* 自选锁 */
-    srvarg_t arg;          /* 参数 */
+    spinlock_t spin;            /* 自旋锁 */
+    srvarg_t arg;               /* 参数 */
     wait_queue_t wait_queue;    /* 等待队列 */
 } srvcall_t;
 

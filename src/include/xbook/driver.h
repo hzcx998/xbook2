@@ -158,7 +158,7 @@ typedef struct _device_queue_entry {
 typedef struct _device_object
 {
     list_t list;                        /* 设备在驱动中的链表 */
-    device_type_t type;                /* 设备类型 */
+    device_type_t type;                 /* 设备类型 */
     struct _driver_object *driver;      /* 设备所在的驱动 */
     void *device_extension;             /* 设备扩展，自定义 */
     unsigned int flags;                 /* 设备标志 */

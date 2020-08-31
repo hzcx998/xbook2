@@ -30,6 +30,7 @@ void socket_examples_init(void);
 
 void lwip_init_task(void)
 {
+    printk(KERN_DEBUG "lwip_init_task start\n");
     struct ip_addr ipaddr, netmask, gateway;
 #if NO_SYS == 1
     lwip_init();
@@ -37,7 +38,7 @@ void lwip_init_task(void)
     tcpip_init(NULL, NULL);
 #endif
     #if CONFIG_LEVEL == 0
-    IP4_ADDR(&ipaddr, 192,168,0,105);
+    IP4_ADDR(&ipaddr, 172,17,1,1);
     IP4_ADDR(&gateway, 192,168,0,1);
     IP4_ADDR(&netmask, 255,255,0, 0);
     #elif CONFIG_LEVEL == 1
@@ -62,6 +63,7 @@ void lwip_init_task(void)
     dhcp_start(&rtl8139_netif);
     printk("[%s] %s: dhcp done.\n", SRV_NAME, __func__);
 #endif
+    printk(KERN_DEBUG "lwip_init_task done\n");
 }
 
 /**
