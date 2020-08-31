@@ -12,6 +12,7 @@
 #include <lwip/timers.h>
 #include <lwip/udp.h>
 #include <lwip/tcpip.h>
+#include <lwip/dhcp.h>
 
 extern err_t ethernetif_init(struct netif *netif);
 extern void ethernetif_input(struct netif *netif);
@@ -38,7 +39,8 @@ void lwip_init_task(void)
     tcpip_init(NULL, NULL);
 #endif
     #if CONFIG_LEVEL == 0
-    IP4_ADDR(&ipaddr, 172,17,1,1);
+    //IP4_ADDR(&ipaddr, 172,17,1,1);
+    IP4_ADDR(&ipaddr, 192,168,0,105);
     IP4_ADDR(&gateway, 192,168,0,1);
     IP4_ADDR(&netmask, 255,255,0, 0);
     #elif CONFIG_LEVEL == 1
@@ -59,9 +61,14 @@ void lwip_init_task(void)
     netif_set_default(&rtl8139_netif);
     netif_set_up(&rtl8139_netif);
 #if CONFIG_LEVEL == 2
-    printk("[%s] %s: dhcp start.\n", SRV_NAME, __func__);
+    printk("[%s] %s: dhcp start.\n", "net", __func__);
     dhcp_start(&rtl8139_netif);
-    printk("[%s] %s: dhcp done.\n", SRV_NAME, __func__);
+    while (rtl8139_netif.dhcp->state != DHCP_BOUND)
+    {
+        
+    }
+    
+    printk("[%s] %s: dhcp done.\n", "net", __func__);
 #endif
     printk(KERN_DEBUG "lwip_init_task done\n");
 }

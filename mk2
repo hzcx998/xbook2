@@ -7,7 +7,7 @@ FATFS_BIN	= $(FATFS_DIR)/fatfs
 
 # images and rom
 IMAGE_DIR	= develop/image
-HDA_VHD		= $(IMAGE_DIR)/hda.vhd
+HDA_VHD		= $(IMAGE_DIR)/c.vhd
 ROM_DIR		= develop/rom
 
 # 默认大小为40M
@@ -26,7 +26,7 @@ SCRIPTS_DIR	= scripts
 BOCHS_DIR       = $(SCRIPTS_DIR)/bochs/
 BXRC_WIN 		= $(BOCHS_DIR)bochsrc.win   # bochsrc for windows
 BXRC_LINUX 		= $(BOCHS_DIR)bochsrc.linux # bochsrc for linux
-VBOX_NAME	    = "xbook"                   # virtual box 虚拟机名称
+VBOX_NAME	    = "xbook2"                   # virtual box 虚拟机名称
 
 # 参数
 .PHONY: all bochs bochsdbg vbox

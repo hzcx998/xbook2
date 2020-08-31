@@ -459,7 +459,8 @@ static int e1000_init(e1000_extension_t* ext)
     }
     //打印mac地址
     printk(KERN_DEBUG "e1000_mac_addr:");
-    for(int i=0; i<5; i++) {
+    int i;
+    for(i=0; i<5; i++) {
         printk(KERN_DEBUG "%x-", ext->hw.mac_addr[i]);
     }
     printk(KERN_DEBUG "%x\n", ext->hw.mac_addr[5]);
