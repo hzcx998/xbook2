@@ -30,13 +30,15 @@ static inline uint32_t swap32(uint32_t data)
         ((data & 0xFF0000) >> 8) | ((data & 0xFF000000) >> 24);
 }
 
-static inline uint32_t swap64(uint32_t data)
-{
-    return (uint64_t)((data & 0xFF) << 56) | ((data & 0xFF00) << 40) | \
-            ((data & 0xFF0000) << 24) | ((data & 0xFF000000) << 8) | \
-            ((data & 0xFF00000000) >> 8) | ((data & 0xFF0000000000) >> 24) | \
-            ((data & 0xFF000000000000) >> 40) | ((data & 0xFF00000000000000) >> 56);
-}
+/*
+// static inline uint32_t swap64(uint32_t data)
+// {
+//     return (uint64_t)((data & 0xFF) << 56) | ((data & 0xFF00) << 40) | \
+//             ((data & 0xFF0000) << 24) | ((data & 0xFF000000) << 8) | \
+//             ((data & 0xFF00000000) >> 8) | ((data & 0xFF0000000000) >> 24) | \
+//             ((data & 0xFF000000000000) >> 40) | ((data & 0xFF00000000000000) >> 56);
+// }
+*/
 
 /**
  * GetEndianness - 获取CPU字序
@@ -68,14 +70,14 @@ static inline uint16_t cpu_to_le16(uint16_t data)
     }
 }
 
-static inline uint64_t cpu_to_le64(uint64_t data)
-{
-    if(get_cpu_endian()) {
-        return swap64(data);
-    } else {
-        return data;
-    }
-}
+// static inline uint64_t cpu_to_le64(uint64_t data)
+// {
+//     if(get_cpu_endian()) {
+//         return swap64(data);
+//     } else {
+//         return data;
+//     }
+// }
 
 /**
  * cpu_to_le32 - cpu字序转换成小端字序

@@ -34,7 +34,6 @@
 #ifndef _E1000_OSDEP_H_
 #define _E1000_OSDEP_H_
 
-//#include <linux/pci_regs.h>
 #include <arch/io.h>
 #include <arch/time.h>
 #include <xbook/pci.h>
@@ -42,15 +41,6 @@
 #include <xbook/clock.h>
 #include <xbook/timer.h>
 #include <stdint.h>
-
-#if 0
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <asm/io.h>
-#include <linux/interrupt.h>
-#include <linux/sched.h>
-#endif
 
 #define usec_delay(x) udelay(x)
 #ifndef msec_delay
@@ -92,19 +82,32 @@ typedef enum {
 #define DEBUGOUT3 DEBUGOUT2
 #define DEBUGOUT7 DEBUGOUT3
 
-static inline int writel(uint32_t val, uint32_t addr)
+// static inline void writel(uint32_t val, uint32_t addr)
+// {
+//     (*(volatile uint32_t*)(addr)) = val;
+// }
+
+static inline void writel(uint32_t val, uint8_t* addr)
 {
+    // uint32_t addr_ = (uint32_t*)addr;
     (*(volatile uint32_t*)(addr)) = val;
 }
 
-static inline int readl(uint32_t addr)
+// static inline uint32_t readl(uint32_t addr)
+// {
+//     return (*(volatile uint32_t*)(addr));
+// }
+
+static inline uint32_t readl(void* addr)
 {
+    // uint32_t addr_ = (uint32_t*)addr;
     return (*(volatile uint32_t*)(addr));
 }
 
 #define E1000_WRITE_REG(a, reg, value) ( \
     writel((value), ((a)->hw_addr + \
         (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg))))
+/*
 // #define E1000_WRITE_REG(a, reg, value) ( \
 //     out32( \
 //             ( \
@@ -114,10 +117,12 @@ static inline int readl(uint32_t addr)
 //             (value) \
 //         ) \
 // )
+*/
 
 #define E1000_READ_REG(a, reg) ( \
     readl((a)->hw_addr + \
         (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg)))
+/*
 // #define E1000_READ_REG(a, reg) ( \
 //     in32( \
 //             ( \
@@ -126,11 +131,13 @@ static inline int readl(uint32_t addr)
 //             ) \
 //         ) \
 // )
+*/
 
 #define E1000_WRITE_REG_ARRAY(a, reg, offset, value) ( \
     writel((value), ((a)->hw_addr + \
         (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) + \
         ((offset) << 2))))
+/*
 // #define E1000_WRITE_REG_ARRAY(a, reg, offset, value) ( \
 //     out32( \  
 //             ( \
@@ -141,11 +148,13 @@ static inline int readl(uint32_t addr)
 //             (value) \
 //         ) \
 // )
+*/
 
 #define E1000_READ_REG_ARRAY(a, reg, offset) ( \
     readl((a)->hw_addr + \
         (((a)->mac_type >= e1000_82543) ? E1000_##reg : E1000_82542_##reg) + \
         ((offset) << 2)))
+/*
 // #define E1000_READ_REG_ARRAY(a, reg, offset) ( \
 //     in32( \  
 //             ( \
@@ -155,6 +164,7 @@ static inline int readl(uint32_t addr)
 //             ) \
 //         ) \
 // )
+*/
 
 #define E1000_WRITE_FLUSH(a) E1000_READ_REG(a, STATUS)
 
