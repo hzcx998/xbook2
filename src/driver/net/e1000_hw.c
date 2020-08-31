@@ -524,14 +524,6 @@ e1000_reset_hw(struct e1000_hw *hw)
  * multicast table, and VLAN filter table. Calls routines to setup link
  * configuration and flow control settings. Clears all on-chip counters. Leaves
  * the transmit and receive units disabled and uninitialized.
- * 
- * e1000_init_hw - 网卡重置，处于未初始化状态
- *                 1.初始化接收地址寄存器(receive address registers)
- *                 2.初始化多播表(multicast table)
- *                 3.初始化VLAN筛选器表(VLAN filter table)
- *                 4.设置link configuration和flow control
- *                 5.清除片上计数器
- *                 6.禁用和初始化发送和接受单元
  *****************************************************************************/
 int32_t
 e1000_init_hw(struct e1000_hw *hw)
@@ -2537,7 +2529,6 @@ e1000_read_phy_reg(struct e1000_hw *hw,
     uint32_t ret_val;
 
     DEBUGFUNC("e1000_read_phy_reg");
-
 
     if(hw->phy_type == e1000_phy_igp &&
        (reg_addr > MAX_PHY_MULTI_PAGE_REG)) {

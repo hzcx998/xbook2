@@ -42,28 +42,28 @@
 #define ETH_FRAME_LEN 1514 /*不含CRC校验和的最大以太网数据长度*/
 
 /*  设备状态 */
-struct net_device_status {
-    /* 错误记录 */
-    unsigned long tx_errors;         /* 传输错误记录 */
-    unsigned long tx_aborted_errors;  /* 传输故障记录 */
-    unsigned long tx_carrier_errors;  /* 传输携带错误记录 */
-    unsigned long tx_window_errors;   /* 传输窗口错误记录 */
-    unsigned long tx_fifo_errors;     /* 传输fifo错误记录 */
-    unsigned long tx_dropped;        /* 传输丢弃记录 */
+// struct net_device_status {
+//     /* 错误记录 */
+//     unsigned long tx_errors;         /* 传输错误记录 */
+//     unsigned long tx_aborted_errors;  /* 传输故障记录 */
+//     unsigned long tx_carrier_errors;  /* 传输携带错误记录 */
+//     unsigned long tx_window_errors;   /* 传输窗口错误记录 */
+//     unsigned long tx_fifo_errors;     /* 传输fifo错误记录 */
+//     unsigned long tx_dropped;        /* 传输丢弃记录 */
 
-    unsigned long rx_errors;         /* 接收错误 */    
-    unsigned long rx_length_errors;   /* 接收长度错误 */
-    unsigned long rx_missed_errors;   /* 接收丢失错误 */
-    unsigned long rx_fifo_errors;     /* 接收Fifo错误 */
-    unsigned long rx_crc_errors;      /* 接收CRC错误 */
-    unsigned long rx_frame_errors;    /* 接收帧错误 */
-    unsigned long rx_dropped;        /* 接收丢弃记录 */
-    /* 正确记录 */
-    unsigned long tx_packets;        /* 传输包数量 */
-    unsigned long tx_bytes;          /* 传输字节数量 */
+//     unsigned long rx_errors;         /* 接收错误 */    
+//     unsigned long rx_length_errors;   /* 接收长度错误 */
+//     unsigned long rx_missed_errors;   /* 接收丢失错误 */
+//     unsigned long rx_fifo_errors;     /* 接收Fifo错误 */
+//     unsigned long rx_crc_errors;      /* 接收CRC错误 */
+//     unsigned long rx_frame_errors;    /* 接收帧错误 */
+//     unsigned long rx_dropped;        /* 接收丢弃记录 */
+//     /* 正确记录 */
+//     unsigned long tx_packets;        /* 传输包数量 */
+//     unsigned long tx_bytes;          /* 传输字节数量 */
     
-    unsigned long collisions;       /* 碰撞次数 */
-};
+//     unsigned long collisions;       /* 碰撞次数 */
+// };
 
 /* 设备拓展内容 */
 typedef struct _e1000_extension {
@@ -143,12 +143,31 @@ typedef struct _e1000_extension {
 
 }e1000_extension_t;
 
+iostatus_t e1000_driver_vine(driver_object_t* driver);
+
 iostatus_t e1000_up(e1000_extension_t* ext);
 void e1000_down(e1000_extension_t* ext);
+int e1000_reset(e1000_extension_t* ext);
 int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len);
+iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext);
+iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext);
 
 void e1000_free_rx_resources(e1000_extension_t* ext);
+void e1000_free_tx_resources(e1000_extension_t* ext);
+void e1000_pci_clear_mwi(struct e1000_hw* hw);
+void e1000_pci_set_mwi(struct e1000_hw* hw);
 
+static iostatus_t e1000_enter(driver_object_t* driver);
+static iostatus_t e1000_exit(driver_object_t* driver);
+static iostatus_t e1000_read(device_object_t* device, io_request_t* ioreq);
+static iostatus_t e1000_write(device_object_t* device, io_request_t* ioreq);
+static iostatus_t e1000_devctl(device_object_t* device, io_request_t* ioreq);
+static int e1000_init(e1000_extension_t* ext);
+static int e1000_get_pci_info(e1000_extension_t* ext);
+static void e1000_82547_tx_fifo_stall(unsigned long data);
+static int e1000_sw_init(e1000_extension_t* ext);
+static int e1000_init_board(e1000_extension_t* ext);
+static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq);
 static iostatus_t e1000_close(device_object_t* device, io_request_t* ioreq);
 static void e1000_configure_tx(e1000_extension_t* ext);
 static void e1000_configure_rx(e1000_extension_t* ext);
@@ -170,6 +189,9 @@ static boolean_t e1000_clean_rx_irq(e1000_extension_t* ext);
 #endif
 
 static inline void e1000_irq_disable(e1000_extension_t* ext);
+
+uint32_t e1000_io_read(struct e1000_hw *hw, unsigned long port);
+void e1000_io_write(struct e1000_hw *hw, unsigned long port, uint32_t value);
 
 
 /**
@@ -201,15 +223,15 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
     mmio_start = pci_device_get_mem_addr(pci_device);
     mmio_len = pci_device_get_mem_len(pci_device);
 
-    printk(KERN_DEBUG "mmio_start=%x\n", mmio_start);
-    printk(KERN_DEBUG "mmio_len=%x\n", mmio_len);
+    // printk(KERN_DEBUG "mmio_start=%x\n", mmio_start);
+    // printk(KERN_DEBUG "mmio_len=%x\n", mmio_len);
 
     ext->hw.hw_addr = (uint8_t*)ioremap(mmio_start, mmio_len);
 
     /* get io address */
     ext->io_addr = pci_device_get_io_addr(pci_device);
     ext->hw.io_base = pci_device_get_io_addr(pci_device);
-    printk(KERN_DEBUG "io_base = %d\n", ext->hw.io_base);
+    // printk(KERN_DEBUG "io_base = %d\n", ext->hw.io_base);
     if(ext->io_addr == 0) {
         printk(KERN_DEBUG "E1000_82540EM init failed: INVALID pci device io address.\n");
         return -1;
@@ -229,7 +251,11 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
     return 0;
 }
 
-/* e1000_82547_tx_stall - timer call_back */
+/**
+ * e1000_82547_tx_stall - timer call_back 
+ * @data: pointer to ext cast into an unsigned long
+ **/
+
 static void e1000_82547_tx_fifo_stall(unsigned long data)
 {
     e1000_extension_t* ext = (e1000_extension_t*)data;
@@ -266,7 +292,7 @@ static void e1000_82547_tx_fifo_stall(unsigned long data)
 }
 
 /**
- * e1000_sw_init - Initialize general software structures (struct e1000_adapter)
+ * e1000_sw_init - Initialize general software structures (e1000_extension_t)
  * @ext: board private structure to initialize
  *
  * e1000_sw_init initializes the Adapter private data structure.
@@ -290,12 +316,8 @@ static int e1000_sw_init(e1000_extension_t* ext)
     ext->tx_abs_int_delay = 0;
 
     ext->rx_buffer_len = E1000_RXBUFFER_2048;
-    // ext->rx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
-    // ext->tx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
     ext->rx_ring.count = 128;
-    // ext->tx_ring.count = 128;
     ext->tx_ring.count = 128;
-    //error
     // hw->max_frame_size = ENET_HEADER_SIZE + ETHERNET_FCS_SIZE;
     // hw->min_frame_size = MINIMUM_ETHERNET_FRAME_SIZE;
 
@@ -341,18 +363,17 @@ static int e1000_sw_init(e1000_extension_t* ext)
     return 0;
 }
 
+/**
+ * e1000_init_board - 初始化网卡设置
+ * @ext: board private structure
+ **/
+
 static int e1000_init_board(e1000_extension_t* ext)
 {
     /* setup the private structrue */
     if(e1000_sw_init(ext)) {
         return -1;
     }
-
-    //初始化网卡信息、LED、media、recv_reg、hash_table、link、statistics_reg
-    //if(e1000_init_hw(&ext->hw) != E1000_SUCCESS) {
-    //    printk(KERN_DEBUG "e1000_init_hw failed\n");
-    //    return -1;
-    //}
 
     /* 网卡复位 */
     if(e1000_reset_hw(&ext->hw) != E1000_SUCCESS) {
@@ -381,8 +402,6 @@ void e1000_down(e1000_extension_t* ext)
     ext->link_speed = 0;
     ext->link_duplex = 0;
     
-    //停止向网络接口发送数据
-
     e1000_reset(ext);
     e1000_clean_tx_ring(ext);
     e1000_clean_rx_ring(ext);
@@ -451,6 +470,11 @@ int e1000_reset(e1000_extension_t* ext)
     return 0;
 }
 
+/**
+ * e1000_init - 初始化
+ * @ext: board private structure
+ **/
+
 static int e1000_init(e1000_extension_t* ext)
 {
     device_object_t* net_dev;
@@ -489,12 +513,6 @@ static int e1000_init(e1000_extension_t* ext)
     /* 获取总线类型和速度 */
     e1000_get_bus_info(&ext->hw);
 
-    //定时器设置
-
-    //通知系统网卡不可用
-
-    //参数检查
-
     /* Initial Wake on LAN setting
 	 * If APM wake is enabled in the EEPROM,
 	 * enable the ACPI Magic Packet filter
@@ -522,14 +540,17 @@ static int e1000_init(e1000_extension_t* ext)
     /* reset the hardware with the new setting */
     e1000_reset(ext);
 
-    //strcpy(net_dev->name.text, "eth%d");
-
-    //设备加入设备链表
-
     printk(KERN_DEBUG "Intel(R) PRO/1000 Network Connection\n");
 
     return 0;
 }
+
+/**
+ * e1000_free_rx_resources - Free Rx Resources
+ * @ext: board private structure
+ *
+ * Free all receive software resources
+ **/
 
 static inline void
 e1000_free_tx_resource(struct e1000_buffer* buffer_info)
@@ -591,6 +612,11 @@ void e1000_free_tx_resources(e1000_extension_t* ext)
     ext->tx_ring.desc = NULL;
 }
 
+/**
+ * e1000_clean_rx_ring - Free Rx Buffers
+ * @ext: board private structure
+ **/
+
 static void e1000_clean_rx_ring(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* rx_ring = &ext->rx_ring;
@@ -625,6 +651,7 @@ static void e1000_clean_rx_ring(e1000_extension_t* ext)
  *
  * Free all receive software resources
  **/
+
 void e1000_free_rx_resources(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* rx_ring = &ext->rx_ring;
@@ -647,14 +674,14 @@ void e1000_free_rx_resources(e1000_extension_t* ext)
 iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* txdr = &ext->tx_ring;
-    printk(KERN_DEBUG "tx_ring->count = %d\n", txdr->count);
+    // printk(KERN_DEBUG "tx_ring->count = %d\n", txdr->count);
     // pci_device_t* pdev = ext->pci_device;
     int size;
 
     DEBUGFUNC("e1000_setup_tx_rexources start");
 
     size = sizeof(struct e1000_buffer) * txdr->count + 1;
-    printk(KERN_DEBUG "-------size = %d\n", size);
+    // printk(KERN_DEBUG "-------size = %d\n", size);
     txdr->buffer_info = kmalloc(size);
     if(!txdr->buffer_info) {
         printk(KERN_DEBUG "---Unable to allocate memory for the transmit desciptor ring\n");
@@ -674,7 +701,7 @@ iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
         return -1;
     }
     txdr->dma = v2p(txdr->desc);
-    printk(KERN_DEBUG "-------txdr_dma = %x txdr_size = %d\n", txdr->dma, txdr->size);
+    // printk(KERN_DEBUG "-------txdr_dma = %x txdr_size = %d\n", txdr->dma, txdr->size);
     memset(txdr->desc, 0, txdr->size);
 
     txdr->next_to_use = 0;
@@ -719,7 +746,7 @@ iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
     }
     rxdr->dma = v2p(rxdr->desc);
     memset(rxdr->desc, 0, rxdr->size);
-    printk(KERN_DEBUG "-------rxdr_dma = %x rxdr_size = %d\n", rxdr->dma, rxdr->size);
+    // printk(KERN_DEBUG "-------rxdr_dma = %x rxdr_size = %d\n", rxdr->dma, rxdr->size);
 
     rxdr->next_to_clean = 0;
     rxdr->next_to_use = 0;
@@ -753,6 +780,11 @@ e1000_irq_enable(e1000_extension_t* ext)
     E1000_WRITE_FLUSH(&ext->hw);
 }
 
+/**
+ * e1000_up - 启动网卡
+ * @ext: board private structure
+ **/
+
 iostatus_t e1000_up(e1000_extension_t* ext)
 {
     device_object_t* netdev = ext->device_object;
@@ -785,6 +817,20 @@ iostatus_t e1000_up(e1000_extension_t* ext)
 
     return IO_SUCCESS;
 }
+
+/**
+ * e1000_open - Called when a network interface is made active
+ * @device: network interface device structure
+ * @ioreq: I/O request
+ *
+ * Returns 0 on success, negative value on failure
+ *
+ * The open entry point is called when a network interface is made
+ * active by the system (IFF_UP).  At this point all resources needed
+ * for transmit and receive operations are allocated, the interrupt
+ * handler is registered with the OS, the watchdog timer is started,
+ * and the stack is notified that the interface is ready.
+ **/
 
 static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
 {
@@ -829,6 +875,7 @@ err_setup_tx:
 /**
  * e1000_close - Disables a network interface
  * @device: network interface device structure
+ * @ioreq: I/O request
  *
  * Returns 0, this is not allowed to fail
  *
@@ -1040,14 +1087,12 @@ void e1000_pci_set_mwi(struct e1000_hw* hw)
     pci_device_write(ext->pci_device, PCI_STATUS_COMMAND, value);
 }
 
-uint32_t
-e1000_io_read(struct e1000_hw *hw, unsigned long port)
+uint32_t e1000_io_read(struct e1000_hw *hw, unsigned long port)
 {
 	return in32(port);
 }
 
-void
-e1000_io_write(struct e1000_hw *hw, unsigned long port, uint32_t value)
+void e1000_io_write(struct e1000_hw *hw, unsigned long port, uint32_t value)
 {
 	out32(value, port);
 }
@@ -1077,7 +1122,7 @@ static void e1000_set_multi(device_object_t* netdev)
 
     rctl = E1000_READ_REG(hw, RCTL);
 
-    //启用混杂模式
+    //禁用混杂模式
     // rctl |= (E1000_RCTL_UPE | E1000_RCTL_MPE);
     rctl &= ~E1000_RCTL_MPE;
     rctl &= ~E1000_RCTL_UPE;
@@ -1146,8 +1191,6 @@ static void e1000_leave_82542_rst(e1000_extension_t* ext)
         e1000_pci_set_mwi(&ext->hw);
     }
 
-    //判断网卡工作
-
     e1000_configure_rx(ext);
     e1000_alloc_rx_buffers(ext);
 }
@@ -1206,6 +1249,7 @@ static void e1000_configure_rx(e1000_extension_t* ext)
  * e1000_alloc_rx_buffers - Replace used receive buffers
  * @ext: address of board private structure
  **/
+
 static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* rx_ring = &ext->rx_ring;
@@ -1228,8 +1272,6 @@ static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
          * this will result in a 16 byte alinged IP header after
          * the 14 byte MAC header is removed
          */
-
-        //在skb中登记netdev
 
         buffer_info->buffer = buffer;
         buffer_info->length = ext->rx_buffer_len;
@@ -1296,7 +1338,7 @@ static void e1000_configure_tx(e1000_extension_t* ext)
     /* set the tx interrupt delay register */
     E1000_WRITE_REG(&ext->hw, TIDV, ext->tx_int_delay);
     if(ext->hw.mac_type >= e1000_82540) {
-        printk(KERN_DEBUG "ext->tx_abs_int_delay = %d\n", ext->tx_abs_int_delay);
+        // printk(KERN_DEBUG "ext->tx_abs_int_delay = %d\n", ext->tx_abs_int_delay);
         E1000_WRITE_REG(&ext->hw, TADV, ext->tx_abs_int_delay);
     }
 
@@ -1386,8 +1428,6 @@ static int e1000_intr(unsigned long irq, unsigned long data)
 {
     e1000_extension_t* ext = (e1000_extension_t*)data;
 
-    // spin_lock(&ext->tx_lock);
-
     struct e1000_hw* hw = &ext->hw;
     uint32_t icr = E1000_READ_REG(hw, ICR);
 #ifndef CONFIG_E1000_NAPI
@@ -1395,8 +1435,6 @@ static int e1000_intr(unsigned long irq, unsigned long data)
 #endif
 
     if(unlikely(!icr)) {
-        // spin_unlock(&ext->lock);
-        // spin_unlock(&ext->tx_lock);
         return -1;
     }
 
@@ -1411,8 +1449,6 @@ static int e1000_intr(unsigned long irq, unsigned long data)
             break;
         }
     }
-
-    // spin_unlock(&ext->tx_lock);
 
     return 0;
 }
@@ -1443,6 +1479,11 @@ e1000_rx_checksum(e1000_extension_t* ext,
         ext->hw_csum_good++;
     }
 }
+
+/**
+ * e1000_clean_rx_irq - Send received data up the network stack
+ * @ext: board private structure
+ **/
 
 static boolean_t
 #ifdef CONFIG_E1000_NAPI
@@ -1569,15 +1610,13 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
     boolean_t cleaned = FALSE;
     int flags;
 
-    // spin_lock_irqsave(&ext->tx_lock, flags);
-    // spin_lock(&ext->tx_lock);
 
     i = tx_ring->next_to_clean;
     eop = tx_ring->buffer_info[i].next_to_watch;
     eop_desc = E1000_TX_DESC(*tx_ring, eop);
 
     while(eop_desc->upper.data & cpu_to_le32(E1000_TXD_STAT_DD)) {
-        printk(KERN_DEBUG "i = %d\n", i);
+        // printk(KERN_DEBUG "i = %d\n", i);
         // printk(KERN_DEBUG "next_to_watch = %d\n", eop);
         // printk(KERN_DEBUG "!!!!!!!!!!!\n");
         for(cleaned = FALSE; !cleaned; ) {
@@ -1603,8 +1642,6 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
 
     tx_ring->next_to_clean = i;
 
-    // spin_unlock_irqrestore(&ext->tx_lock, flags);
-    // spin_unlock(&ext->tx_lock);
 
     return cleaned;
 }
