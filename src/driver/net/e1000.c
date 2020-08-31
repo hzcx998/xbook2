@@ -164,7 +164,6 @@ static iostatus_t e1000_write(device_object_t* device, io_request_t* ioreq);
 static iostatus_t e1000_devctl(device_object_t* device, io_request_t* ioreq);
 static int e1000_init(e1000_extension_t* ext);
 static int e1000_get_pci_info(e1000_extension_t* ext);
-static void e1000_82547_tx_fifo_stall(unsigned long data);
 static int e1000_sw_init(e1000_extension_t* ext);
 static int e1000_init_board(e1000_extension_t* ext);
 static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq);
@@ -249,46 +248,6 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
     printk(KERN_DEBUG "E1000_82540EM irq: %d\n", ext->irq);
 #endif
     return 0;
-}
-
-/**
- * e1000_82547_tx_stall - timer call_back 
- * @data: pointer to ext cast into an unsigned long
- **/
-
-static void e1000_82547_tx_fifo_stall(unsigned long data)
-{
-    e1000_extension_t* ext = (e1000_extension_t*)data;
-    uint32_t tctl;
-
-    if(atomic_get(&ext->tx_fifo_stall)) {
-		if((E1000_READ_REG(&ext->hw, TDT) ==
-		    E1000_READ_REG(&ext->hw, TDH)) &&
-		   (E1000_READ_REG(&ext->hw, TDFT) ==
-		    E1000_READ_REG(&ext->hw, TDFH)) &&
-		   (E1000_READ_REG(&ext->hw, TDFTS) ==
-		    E1000_READ_REG(&ext->hw, TDFHS))) {
-			tctl = E1000_READ_REG(&ext->hw, TCTL);
-			E1000_WRITE_REG(&ext->hw, TCTL,
-					tctl & ~E1000_TCTL_EN);
-			E1000_WRITE_REG(&ext->hw, TDFT,
-					ext->tx_head_addr);
-			E1000_WRITE_REG(&ext->hw, TDFH,
-					ext->tx_head_addr);
-			E1000_WRITE_REG(&ext->hw, TDFTS,
-					ext->tx_head_addr);
-			E1000_WRITE_REG(&ext->hw, TDFHS,
-					ext->tx_head_addr);
-			E1000_WRITE_REG(&ext->hw, TCTL, tctl);
-			E1000_WRITE_FLUSH(&ext->hw);
-
-			ext->tx_fifo_head = 0;
-			atomic_set(&ext->tx_fifo_stall, 0);
-			//netif_wake_queue(netdev);
-		} else {
-			timer_mod(&ext->tx_fifo_stall_timer, systicks + 1);
-		}
-	}
 }
 
 /**
@@ -392,8 +351,6 @@ static int e1000_init_board(e1000_extension_t* ext)
 
 void e1000_down(e1000_extension_t* ext)
 {
-    device_object_t* netdev = ext->device_object;
-
     e1000_irq_disable(ext);
     unregister_irq(ext->irq, ext);
     timer_del(&ext->tx_fifo_stall_timer);
@@ -477,7 +434,6 @@ int e1000_reset(e1000_extension_t* ext)
 
 static int e1000_init(e1000_extension_t* ext)
 {
-    device_object_t* net_dev;
     uint16_t eeprom_data;
 
     ASSERT(ext);
@@ -626,7 +582,7 @@ static void e1000_clean_rx_ring(e1000_extension_t* ext)
 
     /* free all the rx ring buffers */
     for(i=0; i<rx_ring->count; i++) {
-        buffer_info = &rx_ring->buffer_info;
+        buffer_info = rx_ring->buffer_info;
         if(buffer_info->buffer) {
             kfree(buffer_info->buffer);
             buffer_info->buffer = NULL;
@@ -887,7 +843,7 @@ err_setup_tx:
 
 static iostatus_t e1000_close(device_object_t* device, io_request_t* ioreq)
 {
-    e1000_extension_t* ext;
+    e1000_extension_t* ext = device->device_extension;
 
     e1000_down(ext);
 
@@ -1112,7 +1068,6 @@ static void e1000_set_multi(device_object_t* netdev)
     e1000_extension_t* ext = netdev->device_extension;
     struct e1000_hw* hw = &ext->hw;
     uint32_t rctl;
-    uint32_t hash_value;
     int i;
     unsigned long flags;
 
@@ -1610,14 +1565,11 @@ e1000_unmap_and_free_tx_resource(e1000_extension_t* ext,
 static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* tx_ring = &ext->tx_ring;
-    device_object_t* netdev = ext->device_object;
     struct e1000_tx_desc* tx_desc;
     struct e1000_tx_desc* eop_desc;
     struct e1000_buffer* buffer_info;
     unsigned int i, eop;
     boolean_t cleaned = FALSE;
-    int flags;
-
 
     i = tx_ring->next_to_clean;
     eop = tx_ring->buffer_info[i].next_to_watch;
@@ -1650,7 +1602,6 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
     }
 
     tx_ring->next_to_clean = i;
-
 
     return cleaned;
 }
@@ -1769,12 +1720,9 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
     unsigned int length = len;
     unsigned long flags;
     unsigned long intr_flags;
-    unsigned int nr_frags = 0;
-    unsigned int mss = 0;
     int count = 0;
 
     save_intr(intr_flags);
-    // spin_lock(&ext->tx_lock);
 
     if(unlikely(len <= 0)) {
         kfree(buf);
@@ -1806,7 +1754,6 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
         tx_flags);
     
     restore_intr(intr_flags);
-    // spin_unlock(&ext->tx_lock);
 
     return 0;
 }
