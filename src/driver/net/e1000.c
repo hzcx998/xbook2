@@ -287,14 +287,14 @@ static int e1000_sw_init(e1000_extension_t* ext)
     hw->revision_id = pdev->revision_id;
     hw->pci_cmd_word = pdev->command;
 
-    ext->tx_abs_int_delay = 100;
+    ext->tx_abs_int_delay = 0;
 
     ext->rx_buffer_len = E1000_RXBUFFER_2048;
     // ext->rx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
     // ext->tx_ring.count = ext->rx_buffer_len / sizeof(struct e1000_buffer);
     ext->rx_ring.count = 128;
     // ext->tx_ring.count = 128;
-    ext->tx_ring.count = 100;
+    ext->tx_ring.count = 128;
     //error
     // hw->max_frame_size = ENET_HEADER_SIZE + ETHERNET_FCS_SIZE;
     // hw->min_frame_size = MINIMUM_ETHERNET_FRAME_SIZE;
@@ -892,6 +892,14 @@ static iostatus_t e1000_write(device_object_t* device, io_request_t* ioreq)
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = len;
 
+    // for(int i=0; i<len; i++) {
+    //     printk(KERN_DEBUG "%-4x ", *(buf+i));
+    //     if(!((i + 1) % 16)) {
+    //         printk(KERN_DEBUG "\n");
+    //     }
+    // }
+    // printk(KERN_DEBUG "len = %d\n", len);
+
     if(e1000_transmit(device->device_extension, buf, len)) {
         len = -1;
     }
@@ -1070,7 +1078,9 @@ static void e1000_set_multi(device_object_t* netdev)
     rctl = E1000_READ_REG(hw, RCTL);
 
     //启用混杂模式
-    rctl &= ~(E1000_RCTL_UPE | E1000_RCTL_MPE);
+    // rctl |= (E1000_RCTL_UPE | E1000_RCTL_MPE);
+    rctl &= ~E1000_RCTL_MPE;
+    rctl &= ~E1000_RCTL_UPE;
 
     E1000_WRITE_REG(hw, RCTL, rctl);
 
@@ -1286,6 +1296,7 @@ static void e1000_configure_tx(e1000_extension_t* ext)
     /* set the tx interrupt delay register */
     E1000_WRITE_REG(&ext->hw, TIDV, ext->tx_int_delay);
     if(ext->hw.mac_type >= e1000_82540) {
+        printk(KERN_DEBUG "ext->tx_abs_int_delay = %d\n", ext->tx_abs_int_delay);
         E1000_WRITE_REG(&ext->hw, TADV, ext->tx_abs_int_delay);
     }
 
@@ -1460,7 +1471,7 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
     // printk(KERN_DEBUG "rx_desc_length = %d\n", rx_desc->length);
 
     while(rx_desc->status & E1000_RXD_STAT_DD) {
-        printk(KERN_DEBUG "i = %d\n", i);
+        // printk(KERN_DEBUG "i = %d\n", i);
         buffer_info = &rx_ring->buffer_info[i];
 #ifdef CONFIG_E1000_NAPI
         if(*work_done >= work_to_do) {
@@ -1501,19 +1512,17 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
         /* receive checksum offload */
         e1000_rx_checksum(ext, rx_desc);
 
-        //跳过以太网报头
-        int offset = 8;
-        printk(KERN_DEBUG "buffer:%x\n", *(buffer+30));
-        for(int j=0; j<length; j++) {
-            printk(KERN_DEBUG "%-08x ", *(buffer+j));
-            if(!((j + 1) % 16)) {
-                printk(KERN_DEBUG "\n");
-            }
-        }
+        // for(int j=0; j<length; j++) {
+        //     printk(KERN_DEBUG "%-4x ", *(buffer+j));
+        //     if(!((j + 1) % 16)) {
+        //         printk(KERN_DEBUG "\n");
+        //     }
+        // }
 
     	/* 网络接口发送数据包 */
-        printk(KERN_DEBUG "len = %d\n\n", length);
-        io_device_queue_append(&ext->rx_queue, buffer + offset, length - ETHERNET_FCS_SIZE);
+        // printk(KERN_DEBUG "len = %d\n\n", length - 4);
+        io_device_queue_append(&ext->rx_queue, buffer, length - ETHERNET_FCS_SIZE);
+        // io_device_queue_append(&ext->rx_queue, buffer, length);
 
 next_desc:
         rx_desc->status = 0;
@@ -1539,7 +1548,7 @@ e1000_unmap_and_free_tx_resource(e1000_extension_t* ext,
         buffer_info->dma = 0;
     }
     if(buffer_info->buffer) {
-        kfree(buffer_info->buffer);
+        //kfree(buffer_info->buffer);
         buffer_info->buffer = NULL;
     }
 }
@@ -1568,6 +1577,7 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
     eop_desc = E1000_TX_DESC(*tx_ring, eop);
 
     while(eop_desc->upper.data & cpu_to_le32(E1000_TXD_STAT_DD)) {
+        printk(KERN_DEBUG "i = %d\n", i);
         // printk(KERN_DEBUG "next_to_watch = %d\n", eop);
         // printk(KERN_DEBUG "!!!!!!!!!!!\n");
         for(cleaned = FALSE; !cleaned; ) {
@@ -1633,6 +1643,7 @@ e1000_tx_map(e1000_extension_t* ext,
 
         buffer_info->length = size;
         buffer_info->dma = v2p(buffer + offset);
+        // printk(KERN_DEBUG "tx_buffer_info->dma = %d\n", buffer_info->dma);
         buffer_info->time_stamp = systicks;
 
         len -= size;
