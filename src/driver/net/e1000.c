@@ -1204,7 +1204,8 @@ static void e1000_leave_82542_rst(e1000_extension_t* ext)
 
 static void e1000_configure_rx(e1000_extension_t* ext)
 {
-    uint64_t rdba = ext->rx_ring.dma;
+    uint32_t rdba = ext->rx_ring.dma;
+    printk(KERN_DEBUG "rdba = %x\n", rdba);
     uint32_t rdlen = ext->rx_ring.count * sizeof(struct e1000_rx_desc);
     uint32_t rctl;
     uint32_t rxcsum;
@@ -1224,8 +1225,10 @@ static void e1000_configure_rx(e1000_extension_t* ext)
     }
 
     /* setup the base and length of the rx descriptor ring */
-    E1000_WRITE_REG(&ext->hw, RDBAL, (rdba & 0x00000000ffffffffUll));
-    E1000_WRITE_REG(&ext->hw, RDBAH, (rdba >> 32));
+    // E1000_WRITE_REG(&ext->hw, RDBAL, (rdba & 0x00000000ffffffffUll));
+    E1000_WRITE_REG(&ext->hw, RDBAL, rdba);
+    // E1000_WRITE_REG(&ext->hw, RDBAH, (rdba >> 32));
+    E1000_WRITE_REG(&ext->hw, RDBAH, 0);
 
     E1000_WRITE_REG(&ext->hw, RDLEN, rdlen);
 
@@ -1278,7 +1281,8 @@ static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
         buffer_info->dma = v2p(buffer);
 
         rx_desc = E1000_RX_DESC(*rx_ring, i);
-        rx_desc->buffer_addr = cpu_to_le64(buffer_info->dma);
+        rx_desc->buffer_addr_low = cpu_to_le32(buffer_info->dma); //------
+        rx_desc->buffer_addr_high = 0;
 
         if(unlikely((i & ~(E1000_RX_BUFFER_WRITE - 1)) == i)) {
             wmb();
@@ -1301,12 +1305,16 @@ static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
 
 static void e1000_configure_tx(e1000_extension_t* ext)
 {
-    uint64_t tdba = ext->tx_ring.dma;
+    uint32_t tdba = ext->tx_ring.dma;
+    // printk(KERN_DEBUG "tdba = %x\n", tdba);
     uint32_t tdlen = ext->tx_ring.count * sizeof(struct e1000_tx_desc);
     uint32_t tctl, tipg;
 
-    E1000_WRITE_REG(&ext->hw, TDBAL, (tdba & 0x00000000ffffffffUll));
-    E1000_WRITE_REG(&ext->hw, TDBAH, (tdba >> 32));
+    // E1000_WRITE_REG(&ext->hw, TDBAL, (tdba & 0xffffffffUll));
+    // printk(KERN_DEBUG "tdba_low = %x\n", (tdba & 0xffffffffUll));
+    E1000_WRITE_REG(&ext->hw, TDBAL, tdba);
+    // printk(KERN_DEBUG "tdba >> 32 = %x\n", tdba >> 32);
+    E1000_WRITE_REG(&ext->hw, TDBAH, 0);
 
     E1000_WRITE_REG(&ext->hw, TDLEN, tdlen);
 
@@ -1624,7 +1632,8 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
             buffer_info = &tx_ring->buffer_info[i];
 
             e1000_unmap_and_free_tx_resource(ext, buffer_info);
-            tx_desc->buffer_addr = 0;
+            tx_desc->buffer_addr_low = 0;
+            tx_desc->buffer_addr_high = 0;
             tx_desc->lower.data = 0;
             tx_desc->upper.data = 0;
 
@@ -1729,7 +1738,9 @@ e1000_tx_queue(e1000_extension_t* ext, int count, int tx_flags)
     while(count--) {
         buffer_info = &tx_ring->buffer_info[i];
         tx_desc = E1000_TX_DESC(*tx_ring, i);
-        tx_desc->buffer_addr = cpu_to_le64(buffer_info->dma);
+        // tx_desc->buffer_addr = cpu_to_le32(buffer_info->dma);   //------
+        tx_desc->buffer_addr_low = cpu_to_le32(buffer_info->dma);
+        tx_desc->buffer_addr_high = 0;
         tx_desc->lower.data = 
             cpu_to_le32(txd_lower | buffer_info->length);
         tx_desc->upper.data = cpu_to_le32(txd_upper);

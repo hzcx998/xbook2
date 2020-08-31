@@ -30,6 +30,7 @@ static inline uint32_t swap32(uint32_t data)
         ((data & 0xFF0000) >> 8) | ((data & 0xFF000000) >> 24);
 }
 
+/*
 // static inline uint32_t swap64(uint32_t data)
 // {
 //     return (uint64_t)((data & 0xFF) << 56) | ((data & 0xFF00) << 40) | \
@@ -37,6 +38,7 @@ static inline uint32_t swap32(uint32_t data)
 //             ((data & 0xFF00000000) >> 8) | ((data & 0xFF0000000000) >> 24) | \
 //             ((data & 0xFF000000000000) >> 40) | ((data & 0xFF00000000000000) >> 56);
 // }
+*/
 
 /**
  * GetEndianness - 获取CPU字序

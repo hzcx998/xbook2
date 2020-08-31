@@ -457,7 +457,9 @@ int32_t e1000_set_d3_lplu_state(struct e1000_hw *hw, boolean_t active);
 
 /* Receive Descriptor */
 struct e1000_rx_desc {
-    uint64_t buffer_addr; /* Address of the descriptor's data buffer */
+    // uint64_t buffer_addr; /* Address of the descriptor's data buffer */
+    uint32_t buffer_addr_low;
+    uint32_t buffer_addr_high;
     uint16_t length;     /* Length of data DMAed into data buffer */
     uint16_t csum;       /* Packet checksum */
     uint8_t status;      /* Descriptor status */
@@ -497,7 +499,9 @@ struct e1000_rx_desc {
 
 /* Transmit Descriptor */
 struct e1000_tx_desc {
-    uint64_t buffer_addr;       /* Address of the descriptor's data buffer */
+    // uint64_t buffer_addr;       /* Address of the descriptor's data buffer */
+    uint32_t buffer_addr_low;
+    uint32_t buffer_addr_high;
     union {
         uint32_t data;
         struct {
