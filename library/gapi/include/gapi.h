@@ -12,6 +12,7 @@
 #include "gtouch.h"
 #include "gkeycode.h"
 #include "gtimer.h"
+#include "gbitmap.h"
 
 int g_init(void);
 int g_quit(void);

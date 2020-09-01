@@ -75,6 +75,7 @@ int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
 
     if (atomic_get(&pipe->read_count) <= 0) 
         return -1;
+    
     //
     mutex_lock(&pipe->mutex);
     /* 没有数据就要检查写端状态，如果关闭则返回0，不然就读取阻塞，等待有数据后，读取数据返回 */

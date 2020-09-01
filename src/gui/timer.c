@@ -62,6 +62,18 @@ gui_timer_t *gui_timer_find_by_id(uint32_t timer)
     return NULL;
 }
 
+int gui_timer_del_by_layer(int layer_id)
+{
+    gui_timer_t *gtmr, *next;
+    list_for_each_owner_safe (gtmr, next, &gui_timer_list_head, list) {
+        if (gtmr->layer == layer_id) {
+            sys_gui_del_timer(gtmr->timer.id);
+        }
+    }
+    return 0;
+}
+
+
 int sys_gui_modify_timer(uint32_t timer, uint32_t msec)
 {
     gui_timer_t *gtmr;

@@ -131,6 +131,23 @@ layer_t *layer_find_by_id_without_lock(int id)
 }
 
 /**
+ * 通过图层的扩展内容返回图层结构的内存地址
+ */
+layer_t *layer_find_by_extension(void *extension)
+{
+    layer_t *l;
+    spin_lock(&layer_list_spin_lock);
+    list_for_each_owner (l, &layer_list_head, global_list) {
+        if (l->extension == extension) {
+            spin_unlock(&layer_list_spin_lock);
+            return l;
+        }
+    }
+    spin_unlock(&layer_list_spin_lock);
+    return NULL;
+}
+
+/**
  * 查找z时只在显示队列中查找
  */
 layer_t *layer_find_by_z(int z)
@@ -181,7 +198,7 @@ static void layer_refresh_map(int left, int top, int right, int buttom, int z0)
     
     layer_t *layer;
     GUI_COLOR color;
-    spin_lock(&layer_list_spin_lock);
+    //spin_lock(&layer_list_spin_lock);
     /* 刷新高度为[Z0-top]区间的图层 */
     list_for_each_owner (layer, &layer_show_list_head, list) {
         if (layer->z >= z0) {
@@ -205,15 +222,14 @@ static void layer_refresh_map(int left, int top, int right, int buttom, int z0)
                 for(layer_x = layer_left; layer_x < layer_right; layer_x++){
                     screen_x = layer->x + layer_x;
                     /* 获取图层中的颜色 */
-                    color = layer->buffer[layer_y * layer->width + layer_x];
-                    if ((color >> 24) & 0xff) {   /* 不是全透明的，就把高度写入到地图中 */
+                    if ((layer->buffer[layer_y * layer->width + layer_x] >> 24) & 0xff) {   /* 不是全透明的，就把高度写入到地图中 */
                         layer_map[(screen_y * gui_screen.width + screen_x)] = layer->z;
                     }
                 }
             }
         }
     }
-    spin_unlock(&layer_list_spin_lock);
+    //spin_unlock(&layer_list_spin_lock);
 }
 
 /**
@@ -557,7 +573,7 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
     layer_t *layer;
     GUI_COLOR color;
 
-    spin_lock(&layer_list_spin_lock);
+    //spin_lock(&layer_list_spin_lock);
     /* 刷新高度为[Z0-Z1]区间的图层 */
     list_for_each_owner (layer, &layer_show_list_head, list) {
         if (layer->z >= z0 && layer->z <= z1) {
@@ -583,15 +599,16 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
                     /* 照着map中的z进行刷新 */			
                     if (layer_map[(screen_y * gui_screen.width + screen_x)] == layer->z) {
                         /* 获取图层中的颜色 */
-                        color = layer->buffer[layer_y * layer->width + layer_x];
+                        //color = ;
                         /* 写入到显存 */
-                        gui_screen.output_pixel(screen_x, screen_y, gui_screen.gui_to_screen_color(color));
+                        gui_screen.output_pixel(screen_x, screen_y, gui_screen.gui_to_screen_color(
+                            layer->buffer[layer_y * layer->width + layer_x]));
                     }
                 }
             }
         }
     }
-    spin_unlock(&layer_list_spin_lock);
+    //spin_unlock(&layer_list_spin_lock);
 }
 
 /**
@@ -602,14 +619,12 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
  */
 void layer_refresh(layer_t *layer, int left, int top, int right, int buttom)
 {
-    layer_mutex_lock(layer);
     if (layer->z >= 0) {
         layer_refresh_map(layer->x + left, layer->y + top, layer->x + right,
             layer->y + buttom, layer->z);
         layer_refresh_by_z(layer->x + left, layer->y + top, layer->x + right,
             layer->y + buttom, layer->z, layer->z);
     }
-    layer_mutex_unlock(layer);
 }
 
 /**
@@ -617,14 +632,12 @@ void layer_refresh(layer_t *layer, int left, int top, int right, int buttom)
  */
 void layer_refresh_under(layer_t *layer, int left, int top, int right, int buttom)
 {
-    layer_mutex_lock(layer);
     if (layer->z >= 0) {
         layer_refresh_map(layer->x + left, layer->y + top, layer->x + right,
             layer->y + buttom, 0);
         layer_refresh_by_z(layer->x + left, layer->y + top, layer->x + right,
             layer->y + buttom, 0, layer->z);
     }
-    layer_mutex_unlock(layer);
 }
 
 void layer_refresh_under_rect(layer_t *layer, int x, int y, uint32_t width, uint32_t height)
@@ -1306,6 +1319,7 @@ int gui_dispatch_target_msg(g_msg_t *msg)
     }
     return val;
 }
+
 
 int layer_focus_win_top()
 {

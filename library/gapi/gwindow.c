@@ -46,7 +46,7 @@ static void __g_paint_window(g_window_t *gw, int turn, int body)
     if (body)
         g_layer_rect_fill(gw->layer, 0, 0, gw->width, gw->height, back);
     g_layer_rect(gw->layer, 0, 0, gw->width, gw->height, board);
-    
+
     g_layer_rect_fill(gw->layer, 0, gw->body_region.top - 1, gw->width, 1, board);
     //g_layer_line(gw->layer, 0, GW_TITLE_BAR_HIGHT, gw->width, GW_TITLE_BAR_HIGHT, board);
 
@@ -291,6 +291,7 @@ int g_resize_window(int win, uint32_t width, uint32_t height)
         return -1;
     if (!width || !height)
         return -1;
+    //printf("window resize from (%d, %d) to (%d, %d)\n", gw->width, gw->height, width, height);
     gw->width = width;
     gw->height = height;
     g_layer_set_region(gw->layer, LAYER_REGION_DRAG, 0, 0, width, GW_TITLE_BAR_HIGHT);
@@ -304,7 +305,7 @@ int g_resize_window(int win, uint32_t width, uint32_t height)
 
     /* 设置窗体区域 */
     gw->body_region.left = 1;
-    gw->body_region.top = GW_TITLE_BAR_HIGHT + 1;
+    gw->body_region.top = GW_TITLE_BAR_HIGHT;
     gw->body_region.right = gw->width-1;
     gw->body_region.bottom = gw->height-1;
 
@@ -443,7 +444,7 @@ int g_maxim_window(int win)
 
         /* 恢复原来的窗体信息 */    
         gw->body_region.left = 1;
-        gw->body_region.top = GW_TITLE_BAR_HIGHT + 1;
+        gw->body_region.top = GW_TITLE_BAR_HIGHT;
         gw->body_region.right = gw->width-1;
         gw->body_region.bottom = gw->height-1;
         
@@ -466,7 +467,7 @@ int g_maxim_window(int win)
     
         /* 设置窗体区域为整个图层 */    
         gw->body_region.left = 0;
-        gw->body_region.top = GW_TITLE_BAR_HIGHT + 1;
+        gw->body_region.top = GW_TITLE_BAR_HIGHT;
         gw->body_region.right = gw->width;
         gw->body_region.bottom = gw->height; 
 
@@ -551,6 +552,45 @@ int g_window_pixmap(int win, int x, int y, uint32_t width, uint32_t height, g_co
     g_layer_pixmap(win, gw->body_region.left + x, gw->body_region.top + y, width, height, pixmap, 4);
     return 0;
 }
+
+int g_window_paint(int win, int x, int y, g_bitmap_t *bmp)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    g_rect_t rect;
+    rect.x = x + gw->body_region.left;
+    rect.y = y + gw->body_region.top;
+    rect.width = bmp->width;
+    rect.height = bmp->height;
+    return g_layer_sync_bitmap(
+        gw->layer,
+        &rect,
+        bmp->buffer,
+        &gw->body_region);
+    //return g_layer_paint(win, gw->body_region.left + x, gw->body_region.top + y, bmp);
+}
+
+int g_window_paint_ex(int win, int x, int y, g_bitmap_t *bmp)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    g_rect_t rect;
+    rect.x = x + gw->body_region.left;
+    rect.y = y + gw->body_region.top;
+    rect.width = bmp->width;
+    rect.height = bmp->height;
+    return g_layer_sync_bitmap_ex(
+        gw->layer,
+        &rect,
+        bmp->buffer,
+        &gw->body_region);
+    // g_layer_paint(win, gw->body_region.left + x, gw->body_region.top + y, bmp);
+}
+
+
+
 
 /**
  * 刷新窗口矩形区域

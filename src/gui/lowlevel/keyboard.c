@@ -7,7 +7,6 @@
 
 /// 程序本地头文件
 #include <gui/keyboard.h>
-#include <gui/event.h>
 #include <sys/input.h>
 
 #ifndef  GUI_KEYBOARD_DEVICE_NAME 

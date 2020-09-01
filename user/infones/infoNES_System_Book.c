@@ -13,6 +13,7 @@
 #include <InfoNES_pAPU.h>
 
 //#define CONFIG_SOUND
+//#define CONFIG_QEMU
 
 #ifdef CONFIG_SOUND
 #define SOUND_DEVICE "buzzer"
@@ -57,7 +58,7 @@ int waveptr;
 int wavflag;
 int sound_fd;
 
-
+g_bitmap_t *screen_bitmap;
 int g_win;
 /* 绘制缓冲区 */
 DWORD graphBuffer[NES_DISP_WIDTH*NES_DISP_HEIGHT];
@@ -91,6 +92,9 @@ int main(int argc, char **argv)
 void exit_application()
 {
     InfoNES_Fin(); /* 结束nes */
+
+    /* 应该在退出时检测 */
+    g_del_bitmap(screen_bitmap);
 
     g_quit();   /* 退出图形 */
 
@@ -135,6 +139,12 @@ void start_application( char *filename )
         return;
     }
     
+    screen_bitmap = g_new_bitmap(NES_DISP_WIDTH, NES_DISP_HEIGHT);
+    if (screen_bitmap == NULL) {
+        printf("[infones] new bitmap failed!\n");
+        g_quit();
+        return;
+    }
     /* 注册消息回调函数 */
     g_set_msg_routine(win_proc);
 
@@ -576,7 +586,7 @@ void InfoNES_LoadFrame()
   //register guchar* pBuf;
 
   //pBuf = pbyRgbBuf;
-
+#if 0
     register DWORD *q = graphBuffer;
     // Exchange 16-bit to 24-bit  
   for ( register int y = 0; y < NES_DISP_HEIGHT; y++ )
@@ -600,13 +610,39 @@ void InfoNES_LoadFrame()
     /* 绘制到窗口中 */
     g_window_pixmap(g_win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT, (g_color_t *) graphBuffer);
     g_refresh_window_rect(g_win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT);
+#else
+    register DWORD *q = screen_bitmap->buffer;
+    // Exchange 16-bit to 24-bit  
+  for ( register int y = 0; y < NES_DISP_HEIGHT; y++ )
+  {
+    for ( register int x = 0; x < NES_DISP_WIDTH; x++ )
+    {  
+      WORD wColor = WorkFrame[ ( y << 8 ) + x ];
+	  
+      *q = (guchar)( ( wColor & 0x7c00 ) >> 7 )<<16;
+        *q |= (guchar)( ( wColor & 0x03e0 ) >> 2 )<<8;
+        *q |= (guchar)( ( wColor & 0x001f ) << 3 );
+        *q |= (0xff << 24);
+        q++;
+      //*(pBuf++) = (guchar)( ( wColor & 0x7c00 ) >> 7 );
+      
+      //*(pBuf++) = (guchar)( ( wColor & 0x03e0 ) >> 2 );
+      
+      //*(pBuf++) = (guchar)( ( wColor & 0x001f ) << 3 );
+    }
+  }
+    /* 已经绘制好内容了，直接绘制到窗口 */
+    g_window_paint(g_win, 0, 0, screen_bitmap);
+#endif
 
     #ifndef CONFIG_SOUND
+    #ifndef CONFIG_QEMU
     /* 延迟 */
     clock_t start;
     start = getticks();
     while ((getticks() - start) < 1 * HZ_PER_CLOCKS);
     #endif
+    #endif /* CONFIG_SOUND */
 }
 
 int PollEvent(void)

@@ -135,17 +135,46 @@ int poll_window()
 
 void sh_window_rect_fill(int x, int y, uint32_t width, uint32_t height, uint32_t color)
 {
+    #if 1
+    g_bitmap_t *bmp = g_new_bitmap(width, height);
+    if (!bmp)
+        return;
+    g_rectfill(bmp, 0, 0, width, height, color);
+    g_window_paint_ex(sh_window.win, x, y, bmp);
+    g_del_bitmap(bmp);
+
+    #else
     g_window_rect_fill(sh_window.win, x, y, width, height, color);
+    #endif
 }
 
 void sh_window_rect(int x, int y, uint32_t width, uint32_t height, uint32_t color)
 {
+    #if 1
+    g_bitmap_t *bmp = g_new_bitmap(width, height);
+    if (!bmp)
+        return;
+    g_rect(bmp, 0, 0, width, height, color);
+    g_window_paint_ex(sh_window.win, x, y, bmp);
+    g_del_bitmap(bmp);
+    #else
     g_window_rect(sh_window.win, x, y, width, height, color);
+    #endif
 }
 
 void sh_window_char(int x, int y, char ch, uint32_t color)
 {
+    #if 1
+    g_bitmap_t *bmp = g_new_bitmap(8, 16);
+    if (!bmp)
+        return;
+    g_char(bmp, 0, 0, ch, color);
+    //g_window_paint()
+    g_window_paint_ex(sh_window.win, x, y, bmp);
+    g_del_bitmap(bmp);
+    #else 
     g_window_char(sh_window.win, x, y, ch, color);
+    #endif
 }
 
 void sh_window_update(int left, int top, int right, int bottom)

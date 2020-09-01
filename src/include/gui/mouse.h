@@ -73,7 +73,6 @@ typedef struct _gui_mouse {
     void (*motion)(void);
     void (*button_down)(int);
     void (*button_up)(int);
-    void (*show)(int , int );
 } gui_mouse_t;
 
 extern gui_mouse_t gui_mouse;

@@ -10,6 +10,7 @@
 #include <xbook/resource.h>
 #include <xbook/pthread.h>
 #include <xbook/srvcall.h>
+#include <xbook/gui.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <sys/pthread.h>
@@ -409,7 +410,7 @@ int proc_release(task_t *task)
         return -1;
     if (fs_fd_exit(task))
         return -1;
-    if (gui_msgpool_exit(task))
+    if (gui_user_exit(task))
         return -1;
     if (proc_pthread_exit(task))
         return -1;

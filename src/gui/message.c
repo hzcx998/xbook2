@@ -2,6 +2,7 @@
 #include <xbook/task.h>
 #include <gui/message.h>
 #include <gui/layer.h>
+#include <gui/timer.h>
 
 msgpool_t *gui_msgpool = NULL;
 
@@ -33,6 +34,9 @@ int gui_pop_msg(g_msg_t *msg)
  */
 int gui_msgpool_init(task_t *task)
 {
+    if (task->gmsgpool) /* 已经存在，则不能重新创建 */
+        return -1;
+
     task->gmsgpool = msgpool_create(sizeof(g_msg_t), GUI_MSG_NR);
     if (!task->gmsgpool)
         return -1;  /* create failed! */
@@ -44,11 +48,12 @@ int gui_msgpool_init(task_t *task)
  */
 int gui_msgpool_exit(task_t *task)
 {
+
     if (task->gmsgpool) {
         msgpool_destroy(task->gmsgpool);
         task->gmsgpool = NULL;
     }
-    /* 销毁其绑定的图层 */
+
     return 0;
 }
 
@@ -91,3 +96,17 @@ int sys_g_send_msg(g_msg_t *msg)
 {
     return gui_dispatch_target_msg(msg);
 }
+
+int gui_send_quit_msg(task_t *task)
+{
+    if (!task)
+        return -1;
+    g_msg_t m;
+    m.id = GM_QUIT;
+    layer_t *layer = layer_find_by_extension(task);
+    if (!layer)
+        return -1;
+    m.target = layer->id;
+    return gui_dispatch_target_msg(&m);
+}
+

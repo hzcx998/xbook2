@@ -5,6 +5,8 @@
 #include <xbook/mutexlock.h>
 #include <xbook/task.h>
 
+DEFINE_MUTEX_LOCK(layer_refresh_lock);
+
 int sys_new_layer(int x, int y, uint32_t width, uint32_t height)
 {
     if (!width || !height)
@@ -142,13 +144,15 @@ int sys_layer_pixmap(int id, gui_pixmap_t *p)
 int sys_layer_refresh(int id, gui_region_t *p)
 {
     if (id < 0 || !p)
-        return -1;
+        return -1; 
     layer_t *l = layer_find_by_id(id);
     if (l == NULL) {
         return -1;
     }
-    layer_refresh(l, p->left, p->top, p->right, p->bottom);
+    mutex_lock(&layer_refresh_lock);
 
+    layer_refresh(l, p->left, p->top, p->right, p->bottom);
+    mutex_unlock(&layer_refresh_lock);
     return 0;
 }
 
@@ -252,4 +256,37 @@ int sys_layer_focus(int id)
 int sys_layer_focus_win_top()
 {
     return layer_focus_win_top();
+}
+
+int sys_layer_sync_bitmap(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region)
+{
+    if (lyid < 0)
+        return -1;
+    layer_t *l = layer_find_by_id(lyid);
+    if (l == NULL) {
+        return -1;
+    }
+    //printk("b ");
+    layer_sync_bitmap(l, rect, bitmap, region);
+    
+    mutex_lock(&layer_refresh_lock);
+    layer_refresh_rect(l, rect->x, rect->y, rect->width, rect->height);
+    mutex_unlock(&layer_refresh_lock);
+ 
+    return 0;
+}
+
+/**
+ * 扩展的时候不刷新，需要异步刷新
+ */
+int sys_layer_sync_bitmap_ex(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region)
+{
+    if (lyid < 0)
+        return -1;
+    layer_t *l = layer_find_by_id(lyid);
+    if (l == NULL) {
+        return -1;
+    }
+    layer_sync_bitmap(l, rect, bitmap, region);
+    return 0;
 }

@@ -18,7 +18,6 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-#include <gui/console/console.h>
 #include <gui/layer.h>
 #include <gui/message.h>
 #include <gui/screen.h>
@@ -157,9 +156,6 @@ void init_syscall()
     syscall_table[SYS_TRIGPENDING] = sys_trigger_pending;
     syscall_table[SYS_TRIGPROCMASK] = sys_trigger_proc_mask;
 
-    syscall_table[SYS_XCONGET] = sys_xcon_get;
-    syscall_table[SYS_XCONCLEAR] = sys_xcon_clear;
-    syscall_table[SYS_XCONPUT] = sys_xcon_put;
     /* gui */
     syscall_table[SYS_LAYERNEW] = sys_new_layer;
     syscall_table[SYS_LAYERDEL] = sys_del_layer;
@@ -194,4 +190,6 @@ void init_syscall()
     syscall_table[SYS_GNEWTIMER] = sys_gui_new_timer;
     syscall_table[SYS_GMODIFYTIMER] = sys_gui_modify_timer;
     syscall_table[SYS_GDELTIMER] = sys_gui_del_timer;
+    syscall_table[SYS_LAYERSYNCBMP] = sys_layer_sync_bitmap;
+    syscall_table[SYS_LAYERSYNCBMPEX] = sys_layer_sync_bitmap_ex;
 }

@@ -2,6 +2,7 @@
 #include <glayer.h>
 #include <gshape.h>
 #include <gfont.h>
+#include <gbitmap.h>
 
 /* 图层id都大于0，因此0表示没有图层 */
 static int _g_layer_table[G_LAYER_NR] = {0,};
@@ -147,6 +148,16 @@ int g_layer_refresh(int layer, int left, int top, int right, int bottom)
     return syscall2(int, SYS_LAYERREFRESH, layer, &p);
 }
 
+int g_layer_paint(int layer, int x, int y, g_bitmap_t *bitmap)
+{
+    if (layer < 0)
+        return -1;
+    g_layer_pixmap(layer, x, y, bitmap->width, bitmap->height, bitmap->buffer, 4);
+    /* refresh */
+    g_layer_refresh_rect(layer, x, y, bitmap->width, bitmap->height);
+    return 0;
+}
+
 int g_layer_get_wintop()
 {
     return syscall0(int, SYS_LAYERGETWINTOP);
@@ -290,4 +301,24 @@ void g_layer_text(
     uint32_t color)
 {
     g_draw_text_ex(layer, x, y, text, color, g_current_font);
+}
+
+int g_layer_sync_bitmap(
+    int layer,
+    g_rect_t *rect,
+    g_color_t *bitmap,
+    g_region_t *region)
+{
+    syscall4(int, SYS_LAYERSYNCBMP, layer, rect, bitmap, region);
+    return 0;
+}
+
+int g_layer_sync_bitmap_ex(
+    int layer,
+    g_rect_t *rect,
+    g_color_t *bitmap,
+    g_region_t *region)
+{
+    syscall4(int, SYS_LAYERSYNCBMPEX, layer, rect, bitmap, region);
+    return 0;
 }

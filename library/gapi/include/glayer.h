@@ -2,6 +2,8 @@
 #define _GAPI_LAYER_H
 
 #include <stdint.h>
+#include <gbitmap.h>
+#include <gshape.h>
 
 typedef int g_layer_t;
 
@@ -36,6 +38,8 @@ int g_layer_rect_fill(int layer, int x, int y, int width, int height, uint32_t c
 int g_layer_pixmap(int layer, int x, int y, int width, int height, uint32_t *pixels, int bps);
 int g_layer_refresh(int layer, int left, int top, int right, int bottom);
 
+int g_layer_paint(int layer, int x, int y, g_bitmap_t *bitmap);
+
 void g_layer_word(
     int layer,
     int x,
@@ -49,7 +53,7 @@ void g_layer_text(
     char *text,
     uint32_t color);
 
-#define g_layer_refresh_rect(l, x, y, w, h) g_layer_refresh((l), (x), (y), (x + w), (y + h))
+#define g_layer_refresh_rect(l, x, y, w, h) g_layer_refresh((l), (x), (y), ((x) + (w)), ((y) + (h)))
 
 int g_layer_get_wintop();
 int g_layer_set_wintop(int top);
@@ -69,4 +73,16 @@ int g_layer_focus_win_top();
 int g_layer_get_desktop();
 int g_layer_set_desktop(int id);
 
+int g_layer_sync_bitmap(
+    int layer,
+    g_rect_t *rect,
+    g_color_t *bitmap,
+    g_region_t *region);
+
+int g_layer_sync_bitmap_ex(
+    int layer,
+    g_rect_t *rect,
+    g_color_t *bitmap,
+    g_region_t *region);
+    
 #endif /* _GAPI_LAYER_H */

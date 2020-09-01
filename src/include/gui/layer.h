@@ -60,6 +60,7 @@ void layer_refresh_under_rect(layer_t *layer, int x, int y, uint32_t width, uint
 layer_t *layer_find_by_id(int id);
 layer_t *layer_find_by_id_without_lock(int id);
 layer_t *layer_find_by_z(int z);
+layer_t *layer_find_by_extension(void *extension);
 
 layer_t *layer_get_win_top();
 int layer_set_win_top(layer_t *layer);
@@ -77,6 +78,8 @@ int layer_reset_size(layer_t *layer, int x, int y, uint32_t width, uint32_t heig
 int layer_try_focus(layer_t *layer);
 int layer_try_resize(layer_t *layer, gui_rect_t *prect);
 int layer_focus_win_top();
+
+void layer_sync_bitmap(layer_t *layer, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
 
 int sys_new_layer(int x, int y, uint32_t width, uint32_t height);
 int sys_layer_z(int id, int z);
@@ -109,6 +112,8 @@ int sys_layer_focus_win_top();
 
 int sys_layer_set_desktop(int id);
 int sys_layer_get_desktop();
+int sys_layer_sync_bitmap(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
+int sys_layer_sync_bitmap_ex(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
 
 static inline void layer_mutex_lock(layer_t *layer)
 {

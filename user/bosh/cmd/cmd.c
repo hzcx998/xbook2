@@ -182,34 +182,12 @@ int execute_cmd(int argc, char **argv)
                 /* 没有子进程 */
                 if (waitret > 0) {
 #if DEBUG_LOCAL == 1                        
-                    shell_printf("%s: pid %d exit with %x.\n", APP_NAME, waitret, status);
+                    printf("%s: pid %d exit with %x.\n", APP_NAME, waitret, status);
 #endif
                     /* 子进程成功退出 */
                     child_exit = 1;
-                } else if (waitret < 0) {
-                    /* 此时可能还有管道数据尚未处理完，因此还需要继续处理 */
-                    if (rdbytes > 0) {
-                        rdbytes = -1;   /* 并不退出 */
-                    } else {
-                        if (child_exit > 0) {
-#if DEBUG_LOCAL == 1                                  
-                            shell_printf("%s: wait child process success!\n", APP_NAME);
-#endif
-                            
-                            close(recv_pipe[0]);     /* 关闭输出读者 */
-                            close(xmit_pipe[1]);      /* 关闭输入写者 */
-                            shell_child_pid = -1;
-                            return 0;
-                        } else {
-                            shell_printf("%s: wait child process failed!\n", APP_NAME);
-                            close(recv_pipe[0]);     /* 关闭输出读者 */
-                            close(xmit_pipe[1]);      /* 关闭输入写者 */
-                            shell_child_pid = -1;
-                            return -1;
-                        }
-                    }
+                    
                 }
-
                 /* ----接收管道---- */
                 memset(buf, 0, 513);
                 rdbytes = read(recv_pipe[0], buf, 512);
@@ -219,12 +197,23 @@ int execute_cmd(int argc, char **argv)
 #endif
                     /* 输出子进程传递来的数据 */
                     shell_printf(buf);
-                    printf(buf);
+                    //printf(buf);
                 }
+                if (child_exit == 1) {
+                    /* 此时可能还有管道数据尚未处理完，因此还需要继续处理 */
+                    if (rdbytes <= 0) {
+                        close(recv_pipe[0]);     /* 关闭输出读者 */
+                        close(xmit_pipe[1]);      /* 关闭输入写者 */
+                        shell_child_pid = -1;    
+                        //printf("child %d exit with %d\n", child_exit, status);                    
+                        return 0;
+                    }
+                }
+
                 #if 1
                 /* ----输入管道---- */
                 if (poll_window() == 1) {
-                    printf("write key %x:%c\n", shell_child_key, shell_child_key);
+                    //printf("write key %x:%c\n", shell_child_key, shell_child_key);
                     int wrret = write(xmit_pipe[1], &shell_child_key, 1);
                     if (wrret < 0) {
                         shell_printf("%s: write key %x:%c to pipe failed!\n", APP_NAME,
@@ -233,6 +222,7 @@ int execute_cmd(int argc, char **argv)
                     shell_child_key = -1;
                 }
                 #endif
+                
             }
 
         } else {    /* 子进程 */
@@ -1380,7 +1370,6 @@ int cmdline_check()
     }
     memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
     g_set_msg_routine(process_window);
-
     return 0;
 }
 

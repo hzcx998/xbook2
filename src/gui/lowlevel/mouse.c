@@ -8,7 +8,6 @@
 /// 程序本地头文件
 #include <gui/mouse.h>
 #include <gui/screen.h>
-#include <gui/event.h>
 #include <sys/input.h>
 
 #ifndef   GUI_MOUSE_DEVICE_NAME

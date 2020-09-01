@@ -5,39 +5,25 @@
 int win_proc(g_msg_t *msg);
 
 int rate_progress = 0;
-
+int fps = 0;
 #define RATE_BAR_LEN    360
 
 void timer_handler(int layer, uint32_t msgid, uint32_t tmrid, uint32_t time)
 {
-    //printf("[win]: timer msgid=%d tmrid=%x layer=%d time=%x\n", msgid, tmrid, layer, time);
+
+    g_set_timer(layer, tmrid, 1000, timer_handler);
     
-    int w = RATE_BAR_LEN / 100;
-    w *= rate_progress;
-    rate_progress += 1;
-    
-    if (rate_progress <= 100) {
-        g_set_timer(layer, tmrid, 50, timer_handler);
-    } else {
-        g_del_timer(layer, tmrid);
-    }
-    
-    /* 绘制进度条 */
-    g_window_rect_fill(layer, 0, 0, RATE_BAR_LEN, 240, GC_RED);
-    g_window_rect_fill(layer, 0, 0, w, 240, GC_YELLOW);
-    g_refresh_window_rect(layer, 0, 0, RATE_BAR_LEN, 240);
-    w = RATE_BAR_LEN / 100;
-    w *= rate_progress;
-    rate_progress += 1;
-    g_window_rect_fill(layer, 0, 0, w, 240, GC_YELLOW);
-    g_refresh_window_rect(layer, 0, 0, RATE_BAR_LEN, 240);
+    printf("[win]: fps=%d!\n", fps);
+    fps = 0;
     
 }
 
+g_bitmap_t *screen_bitmap;
 int main(int argc, char *argv[]) 
 {
-    printf("win start.\n");
+    
 restart: 
+    printf("win start.\n");
     /* 初始化 */
     if (g_init() < 0)
         return -1;
@@ -52,26 +38,13 @@ restart:
     
     g_show_window(win);
 
-    int win1 = g_new_window("win", 200, 100, 360, 240);
-    if (win1 < 0)
-        return -1;
-    
-    //g_enable_window_resize(win1, 200, 100);
-    /* 设置窗口界面 */
-    
-    g_show_window(win1);
-
     /* 注册消息回调函数 */
     g_set_msg_routine(win_proc);
     
-    uint32_t tmrid = g_set_timer(win1, 0, 1000, NULL);
-    printf("set timer id=%d.\n", tmrid);
-    uint32_t tmrid1 = g_set_timer(win1, 0x1000, 50, timer_handler);
+    uint32_t tmrid1 = g_set_timer(win, 0x1000, 1000, timer_handler);
     printf("set timer id=%d.\n", tmrid1);
     
-    if (!g_del_timer(win1, tmrid))
-        printf("del timer id=%d ok.\n", tmrid);
-
+    
     uint32_t color = GC_RGB(0, 0, 0);
     int i = 0;
     g_msg_t msg;
@@ -105,7 +78,6 @@ restart:
     goto restart;
     return 0;
 }
-
 int win_proc(g_msg_t *msg)
 {
     int x, y;
@@ -113,7 +85,7 @@ int win_proc(g_msg_t *msg)
     int keycode, keymod;
     int win;
     static uint32_t color = GC_RED;
-
+    
     switch (g_msg_get_type(msg))
     {
     case GM_KEY_DOWN:
@@ -156,7 +128,7 @@ int win_proc(g_msg_t *msg)
     case GM_MOUSE_WHEEL:
         x = g_msg_get_mouse_x(msg);
         y = g_msg_get_mouse_y(msg);
-        printf("[win]: mouse %d, %d\n", x, y);
+        //printf("[win]: mouse %d, %d\n", x, y);
         break;
     case GM_PAINT:
         win = g_msg_get_target(msg);
@@ -168,20 +140,32 @@ int win_proc(g_msg_t *msg)
         g_window_rect_fill(layer, w-100, h-100, 100, 50, GC_BLUE);
         g_window_rect_fill(layer, w-50, h-50, 100, 50, GC_GREEN);
         */
-        g_refresh_window_rect(win, x, y, w, h);
+        //g_window_rect_fill(win, x, y, w, h, color);
+        #if 1
+        screen_bitmap = g_new_bitmap(w, h);
+        if (screen_bitmap == NULL)
+            break;
+        if (fps % 10 == 0 || fps == 0)
+            printf("size: %d %d\n", w, h);
+        g_rectfill(screen_bitmap, 0, 0, w, h, color);
+        g_window_paint(win, 0, 0, screen_bitmap);
+        //g_refresh_window_rect(win, 0, 0, w, h);
         
-        /*
-        g_window_rect_fill(win, 0, 0, 360, 240, color);
+        g_del_bitmap(screen_bitmap);
+        screen_bitmap = NULL;
+        #endif
+        //g_window_rect_fill(win,x, y, w, h, color);
+
+        /* 图形绘制更导致绘图变慢 */
+        //g_refresh_window_rect(win, x, y, w, h);
+        
         g_invalid_window(win);
         g_update_window(win);
         color += 0x05040302;
-        */
+        fps++;
+        break;  
+    
 
-        break;  
-    case GM_TIMER:
-        printf("[win1]: get timer!\n");
-        
-        break;  
     default:
         break;
     }

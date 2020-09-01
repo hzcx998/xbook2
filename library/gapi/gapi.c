@@ -26,6 +26,8 @@ int g_init(void)
 
 int g_quit(void)
 {
+    g_del_bitmap_all(); // 删除位图资源
+
     /* 关闭定时器 */
     if (g_del_timer_all() < 0)
         return 0;

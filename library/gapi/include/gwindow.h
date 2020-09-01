@@ -5,6 +5,7 @@
 #include <sys/list.h>
 #include "gcolor.h"
 #include "gshape.h"
+#include "gbitmap.h"
 
 #define GW_TITLE_LEN    64
 
@@ -72,6 +73,8 @@ int g_window_rect(int win, int x, int y, uint32_t width, uint32_t height, g_colo
 int g_window_pixmap(int win, int x, int y, uint32_t width, uint32_t height, g_color_t *pixmap);
 int g_refresh_window_rect(int win, int x, int y, uint32_t width, uint32_t height);
 int g_refresh_window_region(int win, int left, int top, int right, int bottom);
+int g_window_paint(int win, int x, int y, g_bitmap_t *bmp);
+int g_window_paint_ex(int win, int x, int y, g_bitmap_t *bmp);
 
 int g_update_window(int win);
 int g_invalid_rect(int win, int x, int y, uint32_t width, uint32_t height);

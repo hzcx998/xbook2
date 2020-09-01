@@ -1,17 +1,17 @@
 #include <gui/screen.h>
 #include <gui/keyboard.h>
 #include <gui/mouse.h>
-#include <gui/event.h>
 #include <gui/font.h>
 #include <gui/text.h>
 #include <gui/rect.h>
-#include <gui/console/console.h>
 #include <gui/layer.h>
 #include <gui/message.h>
+#include <gui/timer.h>
 
 #include <xbook/debug.h>
 #include <xbook/gui.h>
 #include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <string.h>
 
 /*
@@ -68,7 +68,6 @@ void kgui_thread(void *arg)
             gui_dispatch_target_msg(&msg);
             break;
         }
-        /* 根据图层信息选择对应的鼠标图层，键盘图层，并发送消息 */
         /*printk("msg: target=%d id=%x data0=%x data1=%x data2=%x data3=%x\n", 
             msg.target, msg.id, msg.data0, msg.data1, msg.data2, msg.data3);
         */
@@ -83,9 +82,6 @@ void init_gui()
         panic("init gui keyboard failed!\n");
     if (gui_init_mouse() < 0)
         panic("init gui keyboard failed!\n");
-
-    if (gui_init_event() < 0)
-        panic("init gui event failed!\n");
 
     if (gui_init_msg() < 0)
         panic("init gui msg failed!\n");
@@ -102,26 +98,69 @@ void init_gui()
     if (gui_init_layer() < 0)
         panic("init gui layer failed!\n");
 
-    /*
-    if (gui_init_console() < 0)
-        panic("init gui console failed!\n");
-    */
-
     /* 启动gui线程 */
     if (kthread_start("kgui", TASK_PRIO_USER, kgui_thread, NULL) == NULL)
         panic("start kgui thread failed!\n");
 }
 
+int gui_user_init(task_t *task)
+{
+    if (task->gmsgpool)
+        return -1;
+    return gui_msgpool_init(task);
+}
+
 int sys_g_init(void)
 {
     task_t *cur = current_task;
-    if (cur->gmsgpool)
+    return gui_user_init(cur);
+}
+
+int gui_user_exit(task_t *task)
+{
+    /* 根据任务查找图层 */
+    layer_t *layer;
+    do {
+        
+        layer = layer_find_by_extension(task);
+        
+        if (layer) {
+            /* 删除图层对应的定时器 */
+            gui_timer_del_by_layer(layer->id);
+            /* 隐藏图层 */
+            sys_layer_z(layer->id, -1);
+
+            /* 如果是窗口，就需要发送关闭窗口消息给桌面进程 */
+            #if 1
+            if (layer->flags & LAYER_WINDOW) {
+                g_msg_t m;
+                layer_t *desktop_ly = layer_get_desktop(); /* send to desktop */
+                if (desktop_ly) {
+                    m.id = GM_WINDOW_CLOSE;
+                    m.target = desktop_ly->id;
+                    m.data0 = layer->id; /* layer id */
+                    gui_dispatch_target_msg(&m);
+                }
+            }
+            #endif
+            /* 删除图层节点 */
+            sys_del_layer(layer->id);
+
+            /* 聚焦窗口 */
+            sys_layer_focus_win_top();
+
+        }
+    } while (layer != NULL);
+      
+    if (gui_msgpool_exit(task) < 0)
         return -1;
-    return gui_msgpool_init(cur);
+    
+    return 0;
 }
 
 int sys_g_quit(void)
 {
     task_t *cur = current_task;
-    return gui_msgpool_exit(cur);
+    
+    return gui_user_exit(cur);
 }

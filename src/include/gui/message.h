@@ -54,6 +54,8 @@ int gui_pop_msg(g_msg_t *msg);
 int gui_msgpool_init(task_t *task);
 int gui_msgpool_exit(task_t *task);
 
+int gui_send_quit_msg(task_t *task);
+
 int sys_g_get_msg(g_msg_t *msg);
 int sys_g_try_get_msg(g_msg_t *msg);
 

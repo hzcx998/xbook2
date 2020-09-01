@@ -682,7 +682,6 @@ int con_get_key(int kcode, int kmod)
         cmdman->cmd_len++;
         break;
     }
-    
     return 0;
 }
 extern int shell_child_pid;
@@ -695,7 +694,7 @@ extern int shell_child_key;
  */
 int con_xmit_key(int kcode, int kmod)
 {
-    printf("kcode:%c kmod:%x\n", kcode, kmod);
+    //printf("kcode:%c kmod:%x\n", kcode, kmod);
     /* 组合按键 */
     if (kmod & GKMOD_CTRL) {
         if (kcode == GK_C || kcode == GK_c) {
@@ -767,6 +766,7 @@ int init_console()
     }
 
     return 0;
+
 label_exit_clipboard:
     exit_clipboard();
 label_free_buffer:
