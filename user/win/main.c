@@ -74,7 +74,11 @@ restart:
         /* 有外部消息则处理消息 */
         g_dispatch_msg(&msg);
     }
+    printf("will exit soon\n");
+
     g_quit();
+    printf("gui exit ok\n");
+    
     goto restart;
     return 0;
 }

@@ -7,6 +7,11 @@
 #include <desktop.h>
 #include <winctl.h>
 #include <taskbar.h>
+#include <icon.h>
+
+/* 桌面在创建的时候打开shell，助于调试开发 */
+//#define DESKTOP_LAUNCH_BOSH
+
 
 int layer_proc(g_msg_t *msg);
 
@@ -18,11 +23,20 @@ int main(int argc, char *argv[])
         return -1;
 
     if (init_desktop() < 0) {
+        g_quit();
         return -1;
     }
+
     if (init_taskbar() < 0) {
+        g_quit();
         return -1;
     }
+
+    if (init_icon()) {
+        g_quit();
+        return -1;
+    }
+
 #if 0
     /* 声音测试 */
     int beep = open("buzzer", O_DEVEX, 0);
@@ -56,22 +70,9 @@ int main(int argc, char *argv[])
 
     g_show_window(win2);
 #endif
-#if 1
-    int pid = fork();
-    if (pid < 0) {
-        printf("[desktop]: fork failed!\n");
-        g_quit();
-        return -1;
-    }
-    if (!pid) { /* 子进程就执行其他程序 */
-        char *arg[3];
-        arg[0] = "bosh";
-        arg[1] = "/res/mario.nes";
-        arg[2] = 0;
-        execv(arg[0], arg);
-        return -1;
-    }
-#endif    
+#ifdef DESKTOP_LAUNCH_BOSH
+    desktop_launch_app("bosh");
+#endif
     /* 注册消息回调函数 */
     g_set_msg_routine(layer_proc);
     
@@ -171,17 +172,33 @@ int layer_proc(g_msg_t *msg)
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
         g_touch_state_check_group(&taskbar.touch_list, &po);
+        g_touch_state_check_group(&icon_man.touch_list, &po);
+        
         break;
     /* 标题栏的按钮处理 */
     case GM_MOUSE_LBTN_DOWN:
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_click_check_group(&taskbar.touch_list, &po, 1);
+        g_touch_click_check_group(&taskbar.touch_list, &po, 0);
+        g_touch_click_check_group(&icon_man.touch_list, &po, 0);
+        
         break;
     case GM_MOUSE_LBTN_UP:
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_click_check_group(&taskbar.touch_list, &po, 0);
+        g_touch_click_check_group(&taskbar.touch_list, &po, 1);
+        g_touch_click_check_group(&icon_man.touch_list, &po, 1);
+        break;
+    /* 标题栏的按钮处理 */
+    case GM_MOUSE_RBTN_DOWN:
+        po.x = g_msg_get_mouse_x(msg);
+        po.y = g_msg_get_mouse_y(msg);
+        g_touch_click_check_group(&taskbar.touch_list, &po, 4);
+        break;
+    case GM_MOUSE_RBTN_UP:
+        po.x = g_msg_get_mouse_x(msg);
+        po.y = g_msg_get_mouse_y(msg);
+        g_touch_click_check_group(&taskbar.touch_list, &po, 5);
         break;
     default:
         break;

@@ -131,7 +131,6 @@ int gui_user_exit(task_t *task)
             sys_layer_z(layer->id, -1);
 
             /* 如果是窗口，就需要发送关闭窗口消息给桌面进程 */
-            #if 1
             if (layer->flags & LAYER_WINDOW) {
                 g_msg_t m;
                 layer_t *desktop_ly = layer_get_desktop(); /* send to desktop */
@@ -142,7 +141,6 @@ int gui_user_exit(task_t *task)
                     gui_dispatch_target_msg(&m);
                 }
             }
-            #endif
             /* 删除图层节点 */
             sys_del_layer(layer->id);
 

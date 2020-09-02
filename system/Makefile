@@ -2,10 +2,11 @@ sinclude ../scripts/env.mk
 
 X_ASFLAGS	+= -f elf -I $(DIR_XLIBC)/indlude 
 X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99
-X_INCDIRS	+= ../library/xlibc/include ../library/jpeg ../library/libgapi/include
+X_INCDIRS	+= ../library/xlibc/include ../library/jpeg ../library/libpng ../library/gapi/include \
+				../library/zlib
 
 X_LDFLAGS	:= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
-X_LIBDIRS	+= ../library/xlibc ../library/jpeg ../library/gapi
+X_LIBDIRS	+= ../library/xlibc ../library/jpeg ../library/libpng ../library/gapi ../library/zlib
 
 AS			:=	nasm
 

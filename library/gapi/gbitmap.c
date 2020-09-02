@@ -1,4 +1,5 @@
 #include <gbitmap.h>
+#include <glayer.h>
 #include <malloc.h>
 
 LIST_HEAD(__g_bitmap_list_head);
@@ -13,6 +14,10 @@ g_bitmap_t *g_new_bitmap(unsigned int width, unsigned int height)
     if (bitmap->buffer == NULL) {
         free(bitmap);
         return NULL;
+    }
+    int i;
+    for (i = 0; i < width * height; i++) {
+        bitmap->buffer[i] = 0;  // 清0
     }
     bitmap->width = width;
     bitmap->height = height;
@@ -176,9 +181,9 @@ void g_rect_ex(g_bitmap_t *bmp, int x1, int y1, int x2, int y2, g_color_t color)
     /* left */
     g_vline(bmp, x1, y1, y2, color);
     /* right */
-    g_vline(bmp, x1, y1, y2, color);
+    g_vline(bmp, x2, y1, y2, color);
     /* top */
-    g_hline(bmp, x1, x2, y1, color);
+    g_hline(bmp, x1, y1, x2, color);
     /* bottom */
     g_hline(bmp, x1, x2, y2, color);
 }
@@ -246,8 +251,7 @@ void g_char_ex(
         return;
     if (!font->addr)
         return;
-    g_bitmap_clear(bmp);
-
+    
     uint8_t *data = font->addr + ch * font->char_height;
     unsigned int i;
 	uint8_t d /* data */;
@@ -283,4 +287,33 @@ void g_char(
         return;
     
     g_char_ex(bmp, x, y, ch, color, g_current_font);
+}
+
+void g_text(
+    g_bitmap_t *bmp, 
+    int x,
+    int y,
+    char *text,
+    g_color_t color)
+{
+    if (!bmp)
+        return;
+    while (*text) {
+        g_char(bmp, x, y, *text, color);
+        x += 8;
+        text++;
+    }
+}
+
+int g_bitmap_sync(
+    g_bitmap_t *bmp,
+    int layer,
+    int x,
+    int y)
+{
+    g_rect_t rect = {x, y, bmp->width, bmp->height};
+    g_region_t regn;
+    g_region_init(&regn);
+    g_layer_sync_bitmap(layer, &rect, bmp->buffer, &regn);
+    return 0;
 }

@@ -1603,6 +1603,8 @@ int g_register_font_simsun()
 	font.addr = font_data_simsun;
 	font.char_width = 8;
 	font.char_height = 16;
+    font.word_space = 0;
+	font.line_space = 0;
 	if(g_register_font(&font) == -1){
 		return -1;
 	}

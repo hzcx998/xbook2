@@ -39,18 +39,31 @@ void layer_sync_bitmap(layer_t *layer, gui_rect_t *rect, GUI_COLOR *bitmap, gui_
     /* TODO: 进行矩形裁剪后再刷新 */
     int x, y, i, j;
     GUI_COLOR c;
-    for (j = 0; j < rect->height; j++) {
-        y = rect->y + j;
-        if (y < region->top || y >= region->bottom)
-            continue;
-        for (i = 0; i < rect->width; i++) {
-            x = rect->x + i;
-            if (x < region->left || x >= region->right)
+    if (gui_region_valid(region)) {
+        for (j = 0; j < rect->height; j++) {
+            y = rect->y + j;
+            if (y < region->top || y >= region->bottom)
                 continue;
-            
-            c = bitmap[j * rect->width + i];
-            if ((c >> 24) & 0xff) { /* 不透明才填充 */
-                layer_put_point(layer, x, y, c);
+            for (i = 0; i < rect->width; i++) {
+                x = rect->x + i;
+                if (x < region->left || x >= region->right)
+                    continue;
+                
+                c = bitmap[j * rect->width + i];
+                if ((c >> 24) & 0xff) { /* 不透明才填充 */
+                    layer_put_point(layer, x, y, c);
+                }
+            }
+        }
+    } else {
+        for (j = 0; j < rect->height; j++) {
+            y = rect->y + j;
+            for (i = 0; i < rect->width; i++) {
+                x = rect->x + i;
+                c = bitmap[j * rect->width + i];
+                if ((c >> 24) & 0xff) { /* 不透明才填充 */
+                    layer_put_point(layer, x, y, c);
+                }
             }
         }
     }

@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include <sys/syscall.h>
 
 #include <gapi.h>
@@ -26,8 +27,7 @@ int g_init(void)
 
 int g_quit(void)
 {
-    g_del_bitmap_all(); // 删除位图资源
-
+    
     /* 关闭定时器 */
     if (g_del_timer_all() < 0)
         return 0;
@@ -35,6 +35,9 @@ int g_quit(void)
     /* 先关闭窗口 */
     if (g_del_window_all() < 0)
         return -1;
+    
+    g_del_bitmap_all(); // 删除位图资源
+
     /* 再关闭图层 */
     if (g_layer_del_all() < 0)
         return -1;

@@ -43,6 +43,7 @@ static void __g_paint_window(g_window_t *gw, int turn, int body)
         front = GW_OFF_FRONT_COLOR;
         font = GW_OFF_FONT_COLOR;
     }
+    #if 0
     if (body)
         g_layer_rect_fill(gw->layer, 0, 0, gw->width, gw->height, back);
     g_layer_rect(gw->layer, 0, 0, gw->width, gw->height, board);
@@ -53,7 +54,32 @@ static void __g_paint_window(g_window_t *gw, int turn, int body)
     g_layer_text(gw->layer, gw->width / 2 - (strlen(gw->title) * 
         g_current_font->char_width) / 2, (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
         gw->title, font);
-
+    #else
+    /* 需要清空位图 */
+    g_bitmap_clear(gw->wbmp);
+    if (body)
+        g_rectfill(gw->wbmp, 0, 0, gw->width, gw->height, back);
+    g_rect(gw->wbmp, 0, 0, gw->width, gw->height, board);
+    g_rectfill(gw->wbmp, 0, gw->body_region.top - 1, gw->width, 1, board);
+    g_text(gw->wbmp, gw->width / 2 - (strlen(gw->title) * 
+        g_current_font->char_width) / 2, (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
+        gw->title, font);
+    #if 0
+    g_rect_t rect;
+    rect.x = 0;
+    rect.y = 0;
+    rect.width = gw->width;
+    rect.height = gw->height;
+    
+    g_region_t regn;
+    regn.left = 0;
+    regn.top = 0;
+    regn.right = gw->width;
+    regn.bottom = gw->height;
+    g_layer_sync_bitmap(gw->layer, &rect, gw->wbmp->buffer, &regn);
+    #endif
+    g_bitmap_sync(gw->wbmp, gw->layer, 0, 0);
+    #endif
     g_touch_set_idel_color_group(&gw->touch_list, front);
     g_touch_paint_group(&gw->touch_list);
     if (body) {
@@ -129,19 +155,19 @@ int g_window_bind_touch(g_window_t *gw)
         
     g_touch_set_location(gtc_close, 16, 4);
     g_touch_set_color(gtc_close, GW_OFF_FRONT_COLOR, GC_RED);
-    g_touch_set_handler(gtc_close, g_window_close_btn_handler);
+    g_touch_set_handler(gtc_close, 0, g_window_close_btn_handler);
     g_touch_set_layer(gtc_close, gw->layer, &gw->touch_list);
     gtc_close->extension = gw;
     
     g_touch_set_location(gtc_minim, 16 + 16 * 1 + 8 * 1, 4);
     g_touch_set_color(gtc_minim, GW_OFF_FRONT_COLOR, GC_YELLOW);
-    g_touch_set_handler(gtc_minim, g_window_minim_btn_handler);
+    g_touch_set_handler(gtc_minim, 0, g_window_minim_btn_handler);
     g_touch_set_layer(gtc_minim, gw->layer, &gw->touch_list);
     gtc_minim->extension = gw;
 
     g_touch_set_location(gtc_maxim, 16 + 16 * 2 + 8 * 2, 4);
     g_touch_set_color(gtc_maxim, GW_OFF_FRONT_COLOR, GC_GREEN);
-    g_touch_set_handler(gtc_maxim, g_window_maxim_btn_handler);
+    g_touch_set_handler(gtc_maxim, 0, g_window_maxim_btn_handler);
     g_touch_set_layer(gtc_maxim, gw->layer, &gw->touch_list);
     gtc_maxim->extension = gw;
 
@@ -189,10 +215,17 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height)
     gw->win_width = width;
     gw->win_height = height;
 
+    gw->wbmp = g_new_bitmap(gw->width, gw->height);
+    if (gw->wbmp == NULL) {
+        g_layer_del(ly);
+        return 0;
+    }
+
     list_add_tail(&gw->wlist, &_g_window_list_head);
     init_list(&gw->touch_list);
     /* 添加触碰块 */
     if (g_window_bind_touch(gw) < 0) {
+        g_del_bitmap(gw->wbmp);
         list_del(&gw->wlist);
         g_layer_del(ly);
         return -1;
@@ -219,6 +252,7 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height)
     m.target = g_layer_get_desktop(); /* send to desktop */
     m.data0 = ly; /* layer id */
     if (g_send_msg(&m) < 0) {
+        g_del_bitmap(gw->wbmp);
         g_touch_del_group(&gw->touch_list);
         list_del(&gw->wlist);
         g_layer_del(ly);
@@ -294,6 +328,15 @@ int g_resize_window(int win, uint32_t width, uint32_t height)
     //printf("window resize from (%d, %d) to (%d, %d)\n", gw->width, gw->height, width, height);
     gw->width = width;
     gw->height = height;
+
+    /* 调整窗口位图大小 */
+    g_bitmap_t *bmp = g_new_bitmap(gw->width, gw->height);
+    if (bmp == NULL)
+        return -1;
+    g_del_bitmap(gw->wbmp);
+    gw->wbmp = bmp;
+
+    /* 设置拖拽区域 */
     g_layer_set_region(gw->layer, LAYER_REGION_DRAG, 0, 0, width, GW_TITLE_BAR_HIGHT);
 
     if (gw->flags & GW_RESIZE) { /* 需要有调整大小标志才能进行调整 */
@@ -363,6 +406,7 @@ int g_del_window(int win)
     }
     g_touch_del_group(&gw->touch_list);
     list_del(&gw->wlist);
+    g_del_bitmap(gw->wbmp);
     free(gw);
     g_layer_focus_win_top(); /* 删除后需要聚焦顶层窗口 */
     return 0;

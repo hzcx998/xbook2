@@ -57,4 +57,17 @@ void g_char_ex(
 
 void g_bitmap_clear(g_bitmap_t *bmp);
 
+void g_text(
+    g_bitmap_t *bmp, 
+    int x,
+    int y,
+    char *text,
+    g_color_t color);
+
+int g_bitmap_sync(
+    g_bitmap_t *bmp,
+    int layer,
+    int x,
+    int y);
+    
 #endif /* _GAPI_PIXMAP_H */

@@ -25,39 +25,52 @@ static g_color_t winctl_icon_data[12 * 12] = {
 winctl_manager_t winctl_manager;
 winctl_t *winctl_last;  /* 上一个窗口控制 */
 
-int winctl_btn_handler(void *arg)
+int winctl_lbtn_handler(void *arg)
 {
     g_touch_t *gtch = (g_touch_t *) arg;
     winctl_t *winctl = (winctl_t *) gtch->extension;
 
     g_msg_t m;
     /* 当有窗口创建的时候，就会有聚焦消息，那么winctl_last肯定存在。 */
-    if (winctl_last) {
-        if (winctl_last == winctl) { 
-            /* 隐藏/显示 */
-            if (winctl->ishidden) { /* 是一个隐藏的窗口，就显示 */
-                m.id = GM_SHOW;
-                m.target = winctl->layer;
-                m.data0 = 0;
-                g_send_msg(&m);
-            } else {    /* 已经是聚焦的窗口，那么再次点击就隐藏 */
-                m.id = GM_HIDE;
-                m.target = winctl->layer;
-                m.data0 = 0;
-                g_send_msg(&m);
-            }
-        } else {
-            /* 显示 */
-            if (winctl->ishidden) { /* 是一个隐藏的窗口，就显示 */
-                m.id = GM_SHOW;
-                m.target = winctl->layer;
-                m.data0 = 0;
-                g_send_msg(&m);
-            } else { /* 需要切换到一个新的窗口 */
-                g_layer_focus(winctl->layer); /* 直接聚焦图层 */
-            }
+
+    if (winctl_last == winctl) { 
+        /* 隐藏/显示 */
+        if (winctl->ishidden) { /* 是一个隐藏的窗口，就显示 */
+            m.id = GM_SHOW;
+            m.target = winctl->layer;
+            m.data0 = 0;
+            g_send_msg(&m);
+        } else {    /* 已经是聚焦的窗口，那么再次点击就隐藏 */
+            m.id = GM_HIDE;
+            m.target = winctl->layer;
+            m.data0 = 0;
+            g_send_msg(&m);
+        }
+    } else {
+        /* 显示 */
+        if (winctl->ishidden) { /* 是一个隐藏的窗口，就显示 */
+            m.id = GM_SHOW;
+            m.target = winctl->layer;
+            m.data0 = 0;
+            g_send_msg(&m);
+        } else { /* 需要切换到一个新的窗口 */
+            g_layer_focus(winctl->layer); /* 直接聚焦图层 */
         }
     }
+    return 0;
+}
+
+int winctl_rbtn_handler(void *arg)
+{
+    g_touch_t *gtch = (g_touch_t *) arg;
+    winctl_t *winctl = (winctl_t *) gtch->extension;
+
+    /* 发送退出消息给窗口 */
+    g_msg_t m;
+    m.id = GM_QUIT;
+    m.target = winctl->layer;
+    g_post_msg(&m);
+    winctl_last = NULL;
 
     return 0;
 }
@@ -79,7 +92,9 @@ winctl_t *create_winctl(g_layer_t layer)
     }
 
     g_touch_set_color(winctl->button, winctl_manager.back_color, winctl_manager.back_color + 0x00404040);
-    g_touch_set_handler(winctl->button, winctl_btn_handler);
+    g_touch_set_handler(winctl->button, 0, winctl_lbtn_handler);
+    g_touch_set_handler(winctl->button, 2, winctl_rbtn_handler);
+    
     g_touch_set_layer(winctl->button, taskbar.layer, &taskbar.touch_list);
     winctl->button->extension = winctl;
     

@@ -47,7 +47,7 @@ typedef struct {
     g_rect_t backup;    /* 窗口信息备份，当使用最大化功能时需要 */
     g_region_t body_region; /* 窗体区域 */
     g_rect_t invalid_rect;  /* 脏矩形 */
-    
+    g_bitmap_t *wbmp;       /* 窗口绘制时的位图 */
     char title[GW_TITLE_LEN];   /* 窗口的标题 */
 } g_window_t;
 

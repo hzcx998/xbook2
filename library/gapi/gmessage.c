@@ -42,7 +42,7 @@ static int g_filter_msg(g_msg_t *msg)
     case GM_MOUSE_LBTN_DOWN:
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_click_check_group(&win->touch_list, &po, 1);
+        g_touch_click_check_group(&win->touch_list, &po, 0);
         if (g_region_in(&win->body_region, po.x, po.y)) {
             /* 进行坐标转换 */
             g_msg_get_mouse_x(msg) = po.x - win->body_region.left;
@@ -54,7 +54,7 @@ static int g_filter_msg(g_msg_t *msg)
     case GM_MOUSE_LBTN_UP:
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_click_check_group(&win->touch_list, &po, 0);
+        g_touch_click_check_group(&win->touch_list, &po, 1);
         if (g_region_in(&win->body_region, po.x, po.y)) {
             /* 进行坐标转换 */
             g_msg_get_mouse_x(msg) = po.x - win->body_region.left;
