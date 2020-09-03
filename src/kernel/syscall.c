@@ -14,10 +14,14 @@
 #include <xbook/sharemem.h>
 #include <xbook/sem.h>
 #include <xbook/msgqueue.h>
+#include <xbook/gui.h>
 #include <sys/stat.h>
 #include <dirent.h>
 
-#include <gui/console/console.h>
+#include <gui/layer.h>
+#include <gui/message.h>
+#include <gui/screen.h>
+#include <gui/timer.h>
 
 /* 系统调用表 */ 
 syscall_t syscall_table[SYSCALL_NR];
@@ -152,7 +156,39 @@ void init_syscall()
     syscall_table[SYS_TRIGPENDING] = sys_trigger_pending;
     syscall_table[SYS_TRIGPROCMASK] = sys_trigger_proc_mask;
 
-    syscall_table[SYS_XCONGET] = sys_xcon_get;
-    syscall_table[SYS_XCONCLEAR] = sys_xcon_clear;
-    syscall_table[SYS_XCONPUT] = sys_xcon_put;
+    /* gui */
+    syscall_table[SYS_LAYERNEW] = sys_new_layer;
+    syscall_table[SYS_LAYERDEL] = sys_del_layer;
+    syscall_table[SYS_LAYERZ] = sys_layer_z;
+    syscall_table[SYS_LAYERMOVE] = sys_layer_move;
+    syscall_table[SYS_LAYEROUTP] = sys_layer_outp;
+    syscall_table[SYS_LAYERINP] = sys_layer_inp;
+    syscall_table[SYS_LAYERLINE] = sys_layer_line;
+    syscall_table[SYS_LAYERRECT] = sys_layer_rect;
+    syscall_table[SYS_LAYERRECTFILL] = sys_layer_rect_fill;
+    syscall_table[SYS_LAYERREFRESH] = sys_layer_refresh;
+    syscall_table[SYS_LAYERGETWINTOP] = sys_layer_get_win_top;
+    syscall_table[SYS_LAYERSETWINTOP] = sys_layer_set_win_top;
+    syscall_table[SYS_GINIT] = sys_g_init;
+    syscall_table[SYS_GQUIT] = sys_g_quit;
+    syscall_table[SYS_GGETMSG] = sys_g_get_msg;
+    syscall_table[SYS_GTRYGETMSG] = sys_g_try_get_msg;
+    syscall_table[SYS_LAYERSETFOCUS] = sys_layer_set_focus;
+    syscall_table[SYS_LAYERGETFOCUS] = sys_layer_get_focus;
+    syscall_table[SYS_LAYERSETREGION] = sys_layer_set_region;
+    syscall_table[SYS_GPOSTMSG] = sys_g_post_msg;
+    syscall_table[SYS_GSENDMSG] = sys_g_send_msg;
+    syscall_table[SYS_LAYERSETFLG] = sys_layer_set_flags;
+    syscall_table[SYS_LAYERRESIZE] = sys_layer_resize;
+    syscall_table[SYS_LAYERFOCUS] = sys_layer_focus;
+    syscall_table[SYS_LAYERFOCUSWINTOP] = sys_layer_focus_win_top;
+    syscall_table[SYS_GSCREENGET] = sys_screen_get;
+    syscall_table[SYS_GSCREENSETWINRG] = sys_screen_set_window_region;
+    syscall_table[SYS_LAYERGETDESKTOP] = sys_layer_get_desktop;
+    syscall_table[SYS_LAYERSETDESKTOP] = sys_layer_set_desktop;
+    syscall_table[SYS_GNEWTIMER] = sys_gui_new_timer;
+    syscall_table[SYS_GMODIFYTIMER] = sys_gui_modify_timer;
+    syscall_table[SYS_GDELTIMER] = sys_gui_del_timer;
+    syscall_table[SYS_LAYERSYNCBMP] = sys_layer_sync_bitmap;
+    syscall_table[SYS_LAYERSYNCBMPEX] = sys_layer_sync_bitmap_ex;
 }

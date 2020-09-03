@@ -5,6 +5,7 @@
 #include <xbook/syscall.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
+#include <gui/message.h>
 
 /* 调试触发器：0不调试，1要调试 */
 #define DEBUG_LOCAL   0

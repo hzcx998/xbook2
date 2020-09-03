@@ -22,15 +22,15 @@ unsigned long ktime(ktime_t *ktm)
     return syscall1(int, SYS_KTIME, ktm);
 }
 
-#if 0
+
 /**
- * clock - 获取内核运行时钟数
+ * getticks - 获取内核运行时钟数
  */
-clock_t clock()
+clock_t getticks()
 {
     return syscall0(clock_t, SYS_GETTICKS);
 }
-#endif
+
 /**
  * gettimeofday - 获取当前的时间
  * @tv: 时间
@@ -90,4 +90,19 @@ int usleep(useconds_t usec)
 
     _set_errno(retv);
     return -1;
+}
+
+
+/**
+ * 根据ticks延迟
+ */
+void mdelay(time_t msec)
+{
+    clock_t ticks = MSEC_TO_TICKS(msec);
+    /* at least one ticket */
+    if (!ticks)
+        ticks = 1;
+
+    clock_t start = getticks();
+    while (getticks() - start < ticks) {}
 }

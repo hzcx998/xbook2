@@ -4,6 +4,9 @@
 /* 环境变量指针，全局 */
 char **_environ;
 
+/* 退出之前需要执行的回调函数 */
+extern void __atexit_callback();
+
 /**
  * _enter_preload - 进入预先加载
  * 
@@ -26,6 +29,6 @@ void _enter_preload(int argc, char *const argv[], char *const envp[])
  */
 void _exit_cleanup()
 {
-
+    __atexit_callback();
 
 }

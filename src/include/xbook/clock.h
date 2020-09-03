@@ -11,6 +11,9 @@
 /* 毫秒转换成ticks */
 #define MSEC_TO_TICKS(msec) ((msec) / MS_PER_TICKS)
 
+/* ticks转换成毫秒 */
+#define TICKS_to_MSEC(ticks) ((ticks) * MS_PER_TICKS)
+
 extern volatile clock_t systicks;
 /* 基于systicks的时间 */
 #define time_after(unknown, known) ((long)(known) - (long)(unknown) < 0)

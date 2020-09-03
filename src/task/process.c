@@ -10,10 +10,12 @@
 #include <xbook/resource.h>
 #include <xbook/pthread.h>
 #include <xbook/srvcall.h>
+#include <xbook/gui.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <sys/pthread.h>
 #include <fsal/fsal.h>
+#include <gui/message.h>
 #include <unistd.h>
 
 #define DEBUG_LOCAL 0
@@ -407,6 +409,8 @@ int proc_release(task_t *task)
     if (proc_res_exit(task))
         return -1;
     if (fs_fd_exit(task))
+        return -1;
+    if (gui_user_exit(task))
         return -1;
     if (proc_pthread_exit(task))
         return -1;

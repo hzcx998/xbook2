@@ -17,7 +17,10 @@
 /* auto select timezone */
 #define CONFIG_TIMEZONE_AUTO 0 	
 
-/* ahci */
+/* ahci disk driver */
 #define CONFIG_AHCI 
+
+/* shade layer */
+#define CONFIG_SHADE_LAYER
 
 #endif   /* _XBOOK_CONFIG_H */

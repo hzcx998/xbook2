@@ -7,4 +7,8 @@ SRC	+= trigger.c
 SRC	+= stdio.c
 SRC	+= abort.c
 SRC	+= inet.c
+<<<<<<< HEAD
 SRC	+= rand.c
+=======
+SRC	+= msgpool.c
+>>>>>>> develop

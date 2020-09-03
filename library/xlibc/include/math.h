@@ -4,20 +4,6 @@
 #include <arch/config.h>
 #include <stddef.h>
 
-
-/* max() & min() */
-#define	MAX(a,b)	((a) > (b) ? (a) : (b))
-#define	MIN(a,b)	((a) < (b) ? (a) : (b))
-
-/* 除后上入 */
-#define DIV_ROUND_UP(X, STEP) ((X + STEP - 1) / (STEP))
-
-/* 除后下舍 */
-#define DIV_ROUND_DOWN(X, STEP) ((X) / (STEP))
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif
 /*
     File:       math.h
 
@@ -113,6 +99,8 @@ M_FLOAT sinh(M_FLOAT);
 M_FLOAT sqrt(float);
 M_FLOAT tan(M_FLOAT);
 M_FLOAT tanh(M_FLOAT);
+M_FLOAT fmax(M_FLOAT x, M_FLOAT y);
+M_FLOAT fmin(M_FLOAT x, M_FLOAT y);
 
 #ifdef __LIB_32B__
 #define acosf(x)    acos(x)
@@ -138,6 +126,8 @@ M_FLOAT tanh(M_FLOAT);
 #define sqrtf(x)    sqrt(x)
 #define tanf(x)     tan(x)
 #define tanhf(x)    tanh(x)
+#define fmaxf(x, y) fmax(x, y)
+#define fminf(x, y) fmin(x, y)
 #endif /* __LIB_32B__ */
 
 extern const M_FLOAT MATH_PI;

@@ -118,7 +118,9 @@ void task_init(task_t *task, char *name, int priority)
     task->pthread = NULL;
 
     task->fileman = NULL;
-
+    
+    task->gmsgpool = NULL;
+    
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;
 }

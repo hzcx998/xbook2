@@ -734,7 +734,6 @@ static int __access(const char *path, int mode)
         FRESULT fr;
         FIL fil;
         fr = f_open(&fil, path,  FA_OPEN_EXISTING | FA_READ);
-        //printk(KERN_DEBUG "[fatfs]: %s: path %s fr %d\n", __func__, path, fr);
         if (fr != FR_OK) {
             return -1;
         }
