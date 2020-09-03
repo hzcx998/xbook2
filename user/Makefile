@@ -14,6 +14,7 @@ AS			:=	nasm
 
 export AS
 
+MODULE      +=  gato
 MODULE      +=  bosh
 MODULE      +=  vt100
 MODULE      +=  tests

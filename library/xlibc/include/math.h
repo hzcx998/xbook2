@@ -113,6 +113,8 @@ M_FLOAT sinh(M_FLOAT);
 M_FLOAT sqrt(float);
 M_FLOAT tan(M_FLOAT);
 M_FLOAT tanh(M_FLOAT);
+M_FLOAT fmax(M_FLOAT x, M_FLOAT y);
+M_FLOAT fmin(M_FLOAT x, M_FLOAT y);
 
 #ifdef __LIB_32B__
 #define acosf(x)    acos(x)
@@ -138,6 +140,8 @@ M_FLOAT tanh(M_FLOAT);
 #define sqrtf(x)    sqrt(x)
 #define tanf(x)     tan(x)
 #define tanhf(x)    tanh(x)
+#define fmaxf(x, y) fmax(x, y)
+#define fminf(x, y) fmin(x, y)
 #endif /* __LIB_32B__ */
 
 extern const M_FLOAT MATH_PI;
