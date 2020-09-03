@@ -166,7 +166,6 @@ void init_syscall()
     syscall_table[SYS_LAYERLINE] = sys_layer_line;
     syscall_table[SYS_LAYERRECT] = sys_layer_rect;
     syscall_table[SYS_LAYERRECTFILL] = sys_layer_rect_fill;
-    syscall_table[SYS_LAYERPIXMAP] = sys_layer_pixmap;
     syscall_table[SYS_LAYERREFRESH] = sys_layer_refresh;
     syscall_table[SYS_LAYERGETWINTOP] = sys_layer_get_win_top;
     syscall_table[SYS_LAYERSETWINTOP] = sys_layer_set_win_top;

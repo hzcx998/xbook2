@@ -6,6 +6,7 @@ SRC			+= socket_test.c
 SRC			+= pipe_test.c
 SRC			+= shm_test.c
 SRC			+= trig_test.c
+SRC			+= math_test.c
 
 
 define CUSTOM_TARGET_CMD

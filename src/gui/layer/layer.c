@@ -1336,9 +1336,12 @@ int layer_focus_win_top()
 
 int gui_init_layer()
 {
-    size_t maxsz = gui_screen.width * gui_screen.height * sizeof(uint16_t);
+    size_t maxsz = gui_screen.width * gui_screen.height * sizeof(uint32_t) + PAGE_SIZE;
+    mem_cache_init(&layer_buffer_memcache, "layer_buffer", maxsz, 0);
+    
+    maxsz = gui_screen.width * gui_screen.height * sizeof(uint16_t);
     /* 分配地图空间 */
-    layer_map = kmalloc(maxsz);
+    layer_map = mem_cache_alloc_object(&layer_buffer_memcache);
     if (layer_map == NULL) {
         return -1;
     }
@@ -1348,9 +1351,6 @@ int gui_init_layer()
     INIT_LIST_HEAD(&layer_list_head);
 
     layer_focused = NULL;
-    
-    maxsz = gui_screen.width * gui_screen.height * sizeof(uint32_t) + PAGE_SIZE;
-    mem_cache_init(&layer_buffer_memcache, "layer_buffer", maxsz, 0);
     
     if (init_mouse_layer() < 0) {
         kfree(layer_map);

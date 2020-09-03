@@ -1,12 +1,10 @@
 #define _XOPEN_SOURCE 600
 
 
-#define W 600
-#define H 500
-
 //#include <SDL2/SDL.h>
 #include <time.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <sys/time.h>
 #include <gapi.h>
@@ -22,18 +20,34 @@ static int gWindow = -1;
 static g_bitmap_t *gSurface = NULL;
 #endif
 
-extern int sample(surface_t *base, float fps);
-
 static void frambuffer_init()
 {
+    printf("frambuffer_init.\n");
+    
     #if 0
     SDL_Init(SDL_INIT_VIDEO);
     gWindow = SDL_CreateWindow("SDL", 100, 100, W, H, SDL_WINDOW_SHOWN);
     gSurface = SDL_GetWindowSurface(gWindow);
     #else
-    g_init();
+    if (g_init() < 0) {
+        printf("gui init failed!\n");
+        exit(-1);
+    }
+    printf("gui new window start.\n");
+        
     gWindow = g_new_window("gato", 100, 100, W, H);
+    if (gWindow < 0) {
+        printf("gui new window failed!\n");
+        g_quit();
+        exit(-1);
+    }
+    g_show_window(gWindow);
     gSurface = g_new_bitmap(W, H);
+    if (gSurface == NULL) {
+        printf("gui new bitmap failed!\n");
+        g_quit();
+        exit(-1);
+    }
     #endif
 }
 
@@ -112,13 +126,10 @@ int main(int argc, char *argv[])
         g_msg_t m;
         while (!g_try_get_msg(&m)) 
         {
-            switch (g_msg_get_type(&m))
-            {
-            case GM_QUIT:
-                exit(EXIT_SUCCESS);
-                break;
-            }
-
+            if (g_is_quit_msg(&m))
+                goto exit_main;
+            /* 有外部消息则处理消息 */
+            g_dispatch_msg(&m);
         }
         #endif
 
@@ -126,12 +137,13 @@ int main(int argc, char *argv[])
         #if 0
         SDL_UpdateWindowSurface(gWindow);
         #else
-        g_bitmap_sync(gSurface, gWindow, 0, 0);
+        g_window_paint(gWindow,  0, 0, gSurface);
         #endif
         clock_gettime(CLOCK_MONOTONIC, &time2);
         unsigned long long mtime = (time2.tv_sec - time1.tv_sec) * 1000000 + (time2.tv_nsec - time1.tv_nsec) / 1000;
         fps =  1000000.0f / mtime;
     }
+exit_main:
     frambuffer_close();
 #endif
     return 0;

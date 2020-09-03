@@ -219,7 +219,7 @@ httpserver_init()
 #define SOCK_TARGET_PORT  8080
 #endif
 char zrxbuf[1024];
-
+#if 0
 /** This is an example function that tests
     blocking-connect and nonblocking--recv-write . */
 static void socket_nonblocking(void *arg)
@@ -228,7 +228,6 @@ static void socket_nonblocking(void *arg)
   int ret;
   u32_t opt;
   struct sockaddr_in addr;
-  int err;
 
   LWIP_UNUSED_ARG(arg);
   /* set up address to connect to */
@@ -297,7 +296,7 @@ static void socket_nonblocking(void *arg)
 		
   }
 }
-
+#endif
 /** This is an example function that tests
     the recv function (timeout etc.). */
 char rxbuf[1024];

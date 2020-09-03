@@ -14,6 +14,8 @@ AS			:=	nasm
 
 export AS
 
+MODULE      +=  cal
+MODULE      +=  invader
 MODULE      +=  gato
 MODULE      +=  bosh
 MODULE      +=  vt100

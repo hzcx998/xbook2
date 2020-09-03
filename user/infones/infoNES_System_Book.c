@@ -65,6 +65,8 @@ DWORD graphBuffer[NES_DISP_WIDTH*NES_DISP_HEIGHT];
 
 int win_proc(g_msg_t *msg);
 
+#define DEF_NES_FILE    "/res/nes/mario.nes"
+
 int main(int argc, char **argv)
 {
   /*-------------------------------------------------------------------*/
@@ -82,7 +84,10 @@ int main(int argc, char **argv)
     printf("infones: arg %s\n", argv[ 1 ]);
     start_application( argv[ 1 ] );
   } else {
-    printf("infoNES: too few arguments!\n");  
+    /* 打开图形管理界面 */
+    start_application( DEF_NES_FILE);
+    printf("infoNES: too few arguments!\n");
+
   }
   //printf("arg error!\n");
   //while(1);

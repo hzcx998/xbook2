@@ -129,18 +129,6 @@ int sys_layer_rect_fill(int id, gui_rect_t *p, uint32_t color)
     return 0;
 }
 
-int sys_layer_pixmap(int id, gui_pixmap_t *p)
-{
-    if (id < 0 || !p)
-        return -1;
-    layer_t *l = layer_find_by_id(id);
-    if (l == NULL) {
-        return -1;
-    }
-    layer_draw_pixmap(l, p->rect.x, p->rect.y, p->rect.width, p->rect.height, p->pixles, p->bps);
-    return 0;
-}
-
 int sys_layer_refresh(int id, gui_region_t *p)
 {
     if (id < 0 || !p)

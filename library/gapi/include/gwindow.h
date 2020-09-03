@@ -70,7 +70,6 @@ int g_window_put_point(int win, int x, int y, g_color_t color);
 int g_window_get_point(int win, int x, int y, g_color_t *color);
 int g_window_rect_fill(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color);
 int g_window_rect(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color);
-int g_window_pixmap(int win, int x, int y, uint32_t width, uint32_t height, g_color_t *pixmap);
 int g_refresh_window_rect(int win, int x, int y, uint32_t width, uint32_t height);
 int g_refresh_window_region(int win, int left, int top, int right, int bottom);
 int g_window_paint(int win, int x, int y, g_bitmap_t *bmp);

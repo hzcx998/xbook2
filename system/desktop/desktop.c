@@ -330,7 +330,7 @@ int init_desktop()
 
     g_layer_set_desktop(layer);   /* set as focus layer */
     
-    desktop_bitmap = g_new_bitmap(g_screen.width, g_screen.height);
+    desktop_bitmap = g_new_bitmap(800, 600);
     if (desktop_bitmap == NULL)
         return -1;
     

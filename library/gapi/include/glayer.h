@@ -35,10 +35,10 @@ int g_layer_inp(int layer, int x, int y, uint32_t *color);
 int g_layer_line(int layer, int x0, int y0, int x1, int y1, uint32_t color);
 int g_layer_rect(int layer, int x, int y, int width, int height, uint32_t color);
 int g_layer_rect_fill(int layer, int x, int y, int width, int height, uint32_t color);
-int g_layer_pixmap(int layer, int x, int y, int width, int height, uint32_t *pixels, int bps);
 int g_layer_refresh(int layer, int left, int top, int right, int bottom);
 
-int g_layer_paint(int layer, int x, int y, g_bitmap_t *bitmap);
+int g_layer_paint(int layer, int x, int y, g_bitmap_t *bmp);
+int g_layer_paint_ex(int layer, int x, int y, g_bitmap_t *bmp);
 
 void g_layer_word(
     int layer,

@@ -4,20 +4,6 @@
 #include <arch/config.h>
 #include <stddef.h>
 
-
-/* max() & min() */
-#define	MAX(a,b)	((a) > (b) ? (a) : (b))
-#define	MIN(a,b)	((a) < (b) ? (a) : (b))
-
-/* 除后上入 */
-#define DIV_ROUND_UP(X, STEP) ((X + STEP - 1) / (STEP))
-
-/* 除后下舍 */
-#define DIV_ROUND_DOWN(X, STEP) ((X) / (STEP))
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif
 /*
     File:       math.h
 

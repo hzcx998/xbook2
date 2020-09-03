@@ -4,7 +4,7 @@ X_CFLAGS	:= -fno-builtin -fno-PIE -m32 -fno-stack-protector -std=gnu99
 X_INCDIRS	+= gato/include
 NAME		:= gato
 
-SRC			+= examples/ui.c examples/main.c render/*.c image/image.c
+SRC			+= examples/ui.c render/*.c image/image.c
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

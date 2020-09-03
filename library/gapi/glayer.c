@@ -126,18 +126,6 @@ int g_layer_rect_fill(int layer, int x, int y, int width, int height, uint32_t c
     return syscall3(int, SYS_LAYERRECTFILL, layer, &p, color);
 }
 
-int g_layer_pixmap(int layer, int x, int y, int width, int height, uint32_t *pixels, int bps)
-{
-    g_pixmap_t p;
-    p.rect.x = x;
-    p.rect.y = y;
-    p.rect.width = width;
-    p.rect.height = height;
-    p.pixles = pixels;
-    p.bps = bps;
-    return syscall2(int, SYS_LAYERPIXMAP, layer, &p);
-}
-
 int g_layer_refresh(int layer, int left, int top, int right, int bottom)
 {
     g_region_t p;
@@ -148,14 +136,42 @@ int g_layer_refresh(int layer, int left, int top, int right, int bottom)
     return syscall2(int, SYS_LAYERREFRESH, layer, &p);
 }
 
-int g_layer_paint(int layer, int x, int y, g_bitmap_t *bitmap)
+int g_layer_paint(int layer, int x, int y, g_bitmap_t *bmp)
 {
     if (layer < 0)
         return -1;
-    g_layer_pixmap(layer, x, y, bitmap->width, bitmap->height, bitmap->buffer, 4);
-    /* refresh */
-    g_layer_refresh_rect(layer, x, y, bitmap->width, bitmap->height);
-    return 0;
+
+    g_rect_t rect;
+    rect.x = x;
+    rect.y = y;
+    rect.width = bmp->width;
+    rect.height = bmp->height;
+    g_region_t regn;
+    g_region_init(&regn);
+    return g_layer_sync_bitmap(
+        layer,
+        &rect,
+        bmp->buffer,
+        &regn);
+}
+
+int g_layer_paint_ex(int layer, int x, int y, g_bitmap_t *bmp)
+{
+    if (layer < 0)
+        return -1;
+
+    g_rect_t rect;
+    rect.x = x;
+    rect.y = y;
+    rect.width = bmp->width;
+    rect.height = bmp->height;
+    g_region_t regn;
+    g_region_init(&regn);
+    return g_layer_sync_bitmap_ex(
+        layer,
+        &rect,
+        bmp->buffer,
+        &regn);
 }
 
 int g_layer_get_wintop()

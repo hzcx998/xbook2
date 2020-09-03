@@ -587,16 +587,6 @@ int g_window_rect(int win, int x, int y, uint32_t width, uint32_t height, g_colo
     return 0;
 }
 
-int g_window_pixmap(int win, int x, int y, uint32_t width, uint32_t height, g_color_t *pixmap)
-{
-    g_window_t *gw = g_find_window(win);
-    if (!gw)
-        return -1;
-    
-    g_layer_pixmap(win, gw->body_region.left + x, gw->body_region.top + y, width, height, pixmap, 4);
-    return 0;
-}
-
 int g_window_paint(int win, int x, int y, g_bitmap_t *bmp)
 {
     g_window_t *gw = g_find_window(win);
@@ -612,7 +602,6 @@ int g_window_paint(int win, int x, int y, g_bitmap_t *bmp)
         &rect,
         bmp->buffer,
         &gw->body_region);
-    //return g_layer_paint(win, gw->body_region.left + x, gw->body_region.top + y, bmp);
 }
 
 int g_window_paint_ex(int win, int x, int y, g_bitmap_t *bmp)
@@ -630,11 +619,7 @@ int g_window_paint_ex(int win, int x, int y, g_bitmap_t *bmp)
         &rect,
         bmp->buffer,
         &gw->body_region);
-    // g_layer_paint(win, gw->body_region.left + x, gw->body_region.top + y, bmp);
 }
-
-
-
 
 /**
  * 刷新窗口矩形区域

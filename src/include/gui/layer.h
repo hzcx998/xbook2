@@ -91,7 +91,6 @@ int sys_layer_inp(int id, gui_point_t *p, uint32_t *color);
 int sys_layer_line(int id, gui_line_t *p, uint32_t color);
 int sys_layer_rect(int id, gui_rect_t *p, uint32_t color);
 int sys_layer_rect_fill(int id, gui_rect_t *p, uint32_t color);
-int sys_layer_pixmap(int id, gui_pixmap_t *p);
 int sys_layer_refresh(int id, gui_region_t *p);
 
 int gui_dispatch_key_msg(g_msg_t *msg);

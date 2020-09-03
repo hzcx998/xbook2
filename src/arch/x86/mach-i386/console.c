@@ -176,6 +176,9 @@ static void scroll_sceen(struct console_object *obj, int direction)
  */
 static void put_char(struct console_object *obj, char ch)
 {
+    #ifndef CONFIG_PRINT_CONSOLE
+    return;
+    #endif
 	unsigned char *vram = (unsigned char *)(V_MEM_BASE + 
         (obj->originalAddr + obj->y * SCREEN_WIDTH + obj->x) *2) ;
 	switch(ch){
@@ -229,9 +232,8 @@ static void put_char(struct console_object *obj, char ch)
  */
 void console_putchar(char ch)
 {
-    #ifdef CONFIG_PRINT_CONSOLE
-    put_char(&console_object, ch);    
-    #endif /* CONFIG_PRINT_CONSOLE */
+    
+    put_char(&console_object, ch);
 }
 
 /**

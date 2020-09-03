@@ -46,4 +46,7 @@ int shm_test(int argc, char *argv[]);
 
 int trig_test(int argc, char *argv[]);
 
+int math_test(int argc, char *argv[]);
+
+
 #endif // _TEST_H

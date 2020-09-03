@@ -4,7 +4,6 @@
 
 #include "layer.h"
 #include "color.h"
-void layer_draw_pixmap(layer_t *layer, int x, int y, uint32_t width, uint32_t height, GUI_COLOR *buffer, int bps);
 
 int layer_put_point(layer_t *layer, int x, int y, GUI_COLOR color);
 int layer_get_point(layer_t *layer, int x, int y, GUI_COLOR *color);
@@ -31,5 +30,7 @@ void layer_draw_rect(
     int height,
     GUI_COLOR color
 );
+
+void layer_sync_bitmap(layer_t *layer, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
 
 #endif  /* _GUI_DRAW_H */

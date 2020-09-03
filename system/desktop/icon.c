@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <dirent.h>
+
+#include <iniparser.h>
 
 #include "icon.h"
 #include "desktop.h"
@@ -55,13 +58,11 @@ static int icon_click_handler(void *arg)
     
     if (icon->selected == false) {
         icon->selected = true;
-        printf("icon select!\n");
         /* 将文字置红 */
         g_text(icon->char_bmp, x, 2, icon->text, GC_RED);
     
     } else {
         icon->selected = false;
-        printf("icon selected!\n");
         /* 将文字置红 */
         g_text(icon->char_bmp, x, 2, icon->text, GC_WHITE);
 
@@ -221,6 +222,8 @@ void icon_show_all()
     }
 }
 
+#define ICON_CONFIG_PATH    "/etc/icon.ini"
+
 /**
  * 读取配置文件，并创建图标
  * 
@@ -229,13 +232,13 @@ int icon_read_config()
 {
     int i;
     icon_t *icon;
-    char *icon_path, *bin_path, *text_path;
-
+    char *icon_path, *bin_path, *icon_name;
+  
     for (i = 0; i < ICON_NR; i++) {
         icon_path = icon_table[i][0];
         bin_path = icon_table[i][1];
-        text_path = icon_table[i][2];
-        icon = new_icon(icon_path, bin_path, text_path);
+        icon_name = icon_table[i][2];
+        icon = new_icon(icon_path, bin_path, icon_name);
         if (icon == NULL) {
             printf("[desktop]: load icon pic path:%s bin path:%s failed!\n", icon_path, bin_path);
         }

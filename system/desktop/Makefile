@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibc-0.0.1.a libjpeg-9d.a libgapi-0.1.0.a libpng-1.6.37.a libzlib-1.2.11.a 
+X_LIBS		+= libxlibc-0.0.1.a libjpeg-9d.a libgapi-0.1.0.a libpng-1.6.37.a libzlib-1.2.11.a libiniparser-3.1.a
 
 X_INCDIRS	+= desktop 
 

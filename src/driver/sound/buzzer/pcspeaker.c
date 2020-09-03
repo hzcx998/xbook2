@@ -149,10 +149,6 @@ enum CtrlModeBits {
 
 #define TIMER_FREQ     1193180 	/* 时钟的频率 */
 
-typedef struct _device_extension {
-    device_object_t *device_object; /* 设备对象 */
-} device_extension_t;
-
 /**
  * buzzer_on - 播放声音
  * 
@@ -203,7 +199,7 @@ static void buzzer_set_freq(uint32_t frequence)
  	out8(PIT_COUNTER2, (uint8_t) (div));
  	out8(PIT_COUNTER2, (uint8_t) (div >> 8));
 }
-
+#if 0
 /**
  * buzzer_beep - 发出声音
  * @freq: 发声频率
@@ -218,8 +214,7 @@ static void buzzer_beep(uint32_t freq)
     /* 播放 */
     buzzer_on();
 }
-
-
+#endif
 
 static iostatus_t rtl8139_open(device_object_t *device, io_request_t *ioreq)
 {
@@ -251,9 +246,6 @@ static iostatus_t buzzer_write(device_object_t *device, io_request_t *ioreq)
 iostatus_t buzzer_devctl(device_object_t *device, io_request_t *ioreq)
 {
     unsigned int ctlcode = ioreq->parame.devctl.code;
-    device_extension_t *extension;
-
-    extension = device->device_extension;
 
     iostatus_t status;
     
@@ -285,10 +277,9 @@ iostatus_t buzzer_devctl(device_object_t *device, io_request_t *ioreq)
 static iostatus_t buzzer_enter(driver_object_t *driver)
 {
     iostatus_t status;
-    device_extension_t *extension;
     device_object_t *devobj;
     /* 初始化一些其它内容 */
-    status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_BEEP, &devobj);
+    status = io_create_device(driver, 0, DEV_NAME, DEVICE_TYPE_BEEP, &devobj);
     if (status != IO_SUCCESS) {
         printk(KERN_ERR "buzzer_enter: create device failed!\n");
         return status;
@@ -297,9 +288,6 @@ static iostatus_t buzzer_enter(driver_object_t *driver)
     /* neighter io mode */
     devobj->flags = 0;
 
-    extension = (device_extension_t *)devobj->device_extension;
-    extension->device_object = devobj;
-    
     return status;
 }
 

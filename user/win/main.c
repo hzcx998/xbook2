@@ -21,9 +21,6 @@ void timer_handler(int layer, uint32_t msgid, uint32_t tmrid, uint32_t time)
 g_bitmap_t *screen_bitmap;
 int main(int argc, char *argv[]) 
 {
-    
-restart: 
-    printf("win start.\n");
     /* 初始化 */
     if (g_init() < 0)
         return -1;
@@ -42,29 +39,12 @@ restart:
     g_set_msg_routine(win_proc);
     
     uint32_t tmrid1 = g_set_timer(win, 0x1000, 1000, timer_handler);
-    printf("set timer id=%d.\n", tmrid1);
-    
-    
+
     uint32_t color = GC_RGB(0, 0, 0);
     int i = 0;
     g_msg_t msg;
     while (1)
     {
-        #if 0
-        i++;
-        if (i % 1000 == 0) {
-
-        color = GC_RGB(i * 5, i * 10, i * 15);;
-        /* 刷新图层 */
-        g_layer_rect_fill(win, 0, 0, 360, 240, color);
-        g_layer_refresh_rect(win, 0, 0, 360, 240);
-
-        /* 刷新图层 */
-        g_layer_rect_fill(win1, 0, 0, 360, 240, color);
-        g_layer_refresh_rect(win1, 0, 0, 360, 240);
-        
-        }
-        #endif
         /* 获取消息，一般消息返回0，退出消息返回-1 */
         if (g_try_get_msg(&msg) < 0)
             continue;
@@ -74,12 +54,9 @@ restart:
         /* 有外部消息则处理消息 */
         g_dispatch_msg(&msg);
     }
-    printf("will exit soon\n");
 
     g_quit();
-    printf("gui exit ok\n");
-    
-    goto restart;
+
     return 0;
 }
 int win_proc(g_msg_t *msg)
@@ -105,7 +82,6 @@ int win_proc(g_msg_t *msg)
         if (keycode == GK_SPACE) {
             printf("[win]: down space\n");
         }
-
         break;
     case GM_KEY_UP:
         keycode = g_msg_get_key_code(msg);
