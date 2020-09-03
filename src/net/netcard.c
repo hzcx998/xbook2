@@ -164,11 +164,12 @@ static int __ioctl(int solt, unsigned int cmd, unsigned long arg)
 
 int init_netcard_driver()
 {
+    int ref = 0;
     if (netcard_probe_device(DEVICE_TYPE_PHYSIC_NETCARD) < 0)
-        return -1;
+        ref++;
 
     if (netcard_probe_device(DEVICE_TYPE_NETWORK) < 0)
-        return -1;
+        ref++;
     
     int i;
     for (i = 0; i < NETCARD_SOLT_NR; i++) {
@@ -182,6 +183,9 @@ int init_netcard_driver()
     drv_netcard.read = __read;
     drv_netcard.write = __write;
     drv_netcard.ioctl = __ioctl;
+
+    if (ref >= 2)   /* 网卡探测失败 */
+        return -1;
 
     return 0;
 }

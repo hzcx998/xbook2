@@ -1,6 +1,6 @@
-#include<stdlib.h>
+#include <stdlib.h>
 
 long int labs(long int const i)
 {
-	return i>0?i:-i;
+	return i > 0 ? i : -i;
 }

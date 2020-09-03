@@ -75,10 +75,6 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
 // This macroshould not be used.A use like abs(a++) will make a wrong result.Use abs() and labs()
 // #define abs(a)    ((a) > 0 ? (a) : -(a))
 
-/* max() & min() */
-#define	MAX(a,b)	((a) > (b) ? (a) : (b))
-#define	MIN(a,b)	((a) < (b) ? (a) : (b))
-
 /* 除后上入 */
 #define DIV_ROUND_UP(X, STEP) ((X + STEP - 1) / (STEP))
 

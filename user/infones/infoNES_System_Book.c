@@ -172,7 +172,6 @@ int win_proc(g_msg_t *msg)
     uint32_t w, h;
     int keycode;
     int win;
-    static uint32_t color = GC_RED;
 
     switch (g_msg_get_type(msg))
     {
@@ -616,7 +615,7 @@ void InfoNES_LoadFrame()
     g_window_pixmap(g_win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT, (g_color_t *) graphBuffer);
     g_refresh_window_rect(g_win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT);
 #else
-    register DWORD *q = screen_bitmap->buffer;
+    register DWORD *q = (DWORD *) screen_bitmap->buffer;
     // Exchange 16-bit to 24-bit  
   for ( register int y = 0; y < NES_DISP_HEIGHT; y++ )
   {

@@ -80,8 +80,8 @@ void lwip_init_task(void)
  */
 void netin_kthread(void *arg) 
 {
-    printk("[NETIN]: init start.\n");
-#if 1    
+    printk("[netin]: init start.\n");
+
     lwip_init_task();
 
     httpserver_init();
@@ -90,21 +90,23 @@ void netin_kthread(void *arg)
         /* 检测输入，如果没有收到数据就会阻塞。 */
         ethernetif_input(&rtl8139_netif);
 		//todo: add your own user code here
+        //printf("netcard input.\n");
 	}
-#endif
 }
 
 /* 网络初始化 */
 void init_net(void)
 {
-    printk("[NET]: init start.\n");
-    if (init_netcard_driver() < 0)
+    printk("[net]: init start.\n");
+    if (init_netcard_driver() < 0) {
         pr_err("init netcard driver failed!\n");
-
+        return;
+    }
+        
     /* 打开一个线程来读取网络数据包 */
     task_t * netin = kthread_start("netin", TASK_PRIO_RT, netin_kthread, NULL);
     if (netin == NULL) {
-        pr_err("[NET]: start kthread netin failed!\n");
+        pr_err("[net]: start kthread netin failed!\n");
     }
 }
 

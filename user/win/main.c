@@ -38,10 +38,8 @@ int main(int argc, char *argv[])
     /* 注册消息回调函数 */
     g_set_msg_routine(win_proc);
     
-    uint32_t tmrid1 = g_set_timer(win, 0x1000, 1000, timer_handler);
+    g_set_timer(win, 0x1000, 1000, timer_handler);
 
-    uint32_t color = GC_RGB(0, 0, 0);
-    int i = 0;
     g_msg_t msg;
     while (1)
     {

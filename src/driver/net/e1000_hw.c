@@ -39,7 +39,7 @@
 #endif
 
 static int32_t e1000_set_phy_type(struct e1000_hw *hw);
-static void e1000_phy_init_script(struct e1000_hw *hw);
+static uint32_t e1000_phy_init_script(struct e1000_hw *hw);
 static int32_t e1000_setup_copper_link(struct e1000_hw *hw);
 static int32_t e1000_setup_fiber_serdes_link(struct e1000_hw *hw);
 static int32_t e1000_adjust_serdes_amplitude(struct e1000_hw *hw);
@@ -130,10 +130,10 @@ e1000_set_phy_type(struct e1000_hw *hw)
  * 
  * e1000_phy_init_script - 物理网卡设备初始化(hw结构中的数据全部得到)
  *****************************************************************************/
-static void
+static uint32_t
 e1000_phy_init_script(struct e1000_hw *hw)
 {
-    uint32_t ret_val;
+    uint32_t ret_val = 0;
     uint16_t phy_saved_data;
 
     DEBUGFUNC("e1000_phy_init_script");
@@ -220,6 +220,7 @@ e1000_phy_init_script(struct e1000_hw *hw)
             }
         }
     }
+    return ret_val;
 }
 
 /******************************************************************************
@@ -503,7 +504,7 @@ e1000_reset_hw(struct e1000_hw *hw)
 
     /* Clear any pending interrupt events. */
     icr = E1000_READ_REG(hw, ICR);
-
+    icr = icr; /* avoid define but not used waring. */
     /* If MWI was previously enabled, reenable it. */
     if(hw->mac_type == e1000_82542_rev2_0) {
         if(hw->pci_cmd_word & CMD_MEM_WRT_INVALIDATE)
@@ -531,10 +532,10 @@ e1000_init_hw(struct e1000_hw *hw)
     uint32_t ctrl;
     uint32_t i;
     int32_t ret_val;
-    uint16_t pcix_cmd_word;
-    uint16_t pcix_stat_hi_word;
-    uint16_t cmd_mmrbc;
-    uint16_t stat_mmrbc;
+    // uint16_t pcix_cmd_word;
+    // uint16_t pcix_stat_hi_word;
+    // uint16_t cmd_mmrbc;
+    // uint16_t stat_mmrbc;
     
     DEBUGFUNC("e1000_init_hw");
 
@@ -4541,6 +4542,8 @@ e1000_clear_hw_cntrs(struct e1000_hw *hw)
     temp = E1000_READ_REG(hw, MGTPRC);
     temp = E1000_READ_REG(hw, MGTPDC);
     temp = E1000_READ_REG(hw, MGTPTC);
+
+    temp = temp; /* avoid define but not used waring. */
 }
 
 /******************************************************************************

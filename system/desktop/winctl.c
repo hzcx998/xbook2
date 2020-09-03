@@ -5,7 +5,7 @@
 #include <malloc.h>
 
 #define DEBUG_LOCAL 0
-
+#if 0
 /* 默认的图标数据 */
 static g_color_t winctl_icon_data[12 * 12] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
@@ -21,6 +21,7 @@ static g_color_t winctl_icon_data[12 * 12] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };
+#endif
 
 winctl_manager_t winctl_manager;
 winctl_t *winctl_last;  /* 上一个窗口控制 */

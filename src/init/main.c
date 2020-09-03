@@ -59,6 +59,7 @@ int kernel_main(void)
 
     init_gui();
     init_net();
+    
     //spin("test");
     start_user();
 
