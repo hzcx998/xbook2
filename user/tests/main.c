@@ -9,7 +9,8 @@ int main(int argc, char *argv[])
 	//trig_test(argc, argv);
 
     //trig_test(argc, argv);
-    math_test(argc, argv);
+    //math_test(argc, argv);
+    http_test(argc, argv);
     
     return 0;
 }

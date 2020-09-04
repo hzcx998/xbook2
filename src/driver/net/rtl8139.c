@@ -884,7 +884,7 @@ static void rtl8139_other_interrupt(device_extension_t *ext,
         pci_cmd_status = pci_device_read(ext->pci_device, PCI_STATUS_COMMAND);
         pci_device_write(ext->pci_device, PCI_STATUS_COMMAND, pci_cmd_status);
 		/* 只需要高16位 */
-        printk(KERN_DEBUG "PCI Bus error %x\n", pci_cmd_status >> 16);
+        printk(KERN_ERR "PCI Bus error %x\n", pci_cmd_status >> 16);
 	}
 }
 

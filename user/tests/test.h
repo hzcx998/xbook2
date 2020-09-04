@@ -52,5 +52,7 @@ int xlibc_test(int argc,char *argv[]);
 /* ---- xlibc test end ---- */
 int math_test(int argc, char *argv[]);
 
+int http_test(int argc, char **argv);
+
 
 #endif // _TEST_H

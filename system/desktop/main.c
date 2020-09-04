@@ -10,7 +10,7 @@
 #include <icon.h>
 
 /* 桌面在创建的时候打开shell，助于调试开发 */
-#define DESKTOP_LAUNCH_BOSH
+//#define DESKTOP_LAUNCH_BOSH
 
 int layer_proc(g_msg_t *msg);
 

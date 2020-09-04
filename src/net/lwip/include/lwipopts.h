@@ -46,7 +46,7 @@
 
 #define LWIP_DNS    1
 
-#define LWIP_DHCP    0
+#define LWIP_DHCP    1
 
 #include <xbook/schedule.h>
 /* tcpip core thread prio is usr  prio in xbook kernel
@@ -63,5 +63,9 @@ rt prio！
 
 #define MEMP_NUM_NETCONN 10 //能够同时激活的超时连接数目(NO_SYS==0有戏)
 
+#define LWIP_NETIF_LOOPBACK 1
+#define LWIP_LOOPBACK_MAX_PBUFS 4
+#define LWIP_NETIF_LOOPBACK_MULTITHREADING 1
+#define LWIP_HAVE_LOOPIF 1
 
 #endif /* __LWIPOPTS_H__ */

@@ -165,6 +165,6 @@ VMODE_1920_1080_32          EQU 0x192
 
 ; 使用的模式
 VBE_MODE	EQU	VMODE_800_600_16
-
+; my test computer: 1366 * 768
 %endif  ; CONFIG_GRAPHIC
 

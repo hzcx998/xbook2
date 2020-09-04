@@ -39,6 +39,10 @@ typedef enum task_state {
 /* init 进程的pid */
 #define INIT_PROC_PID       1
 
+#define TASK_MIN_TIMESLICE  1
+#define TASK_MAX_TIMESLICE  100
+
+
 /* 线程的标志 */
 enum thread_flags {
     THREAD_FLAG_DETACH              = (1 << 0),     /* 线程分离标志，表示自己释放资源 */
@@ -140,6 +144,8 @@ void task_activate(task_t *task);
 void task_block(task_state_t state);
 void task_unblock(task_t *task);
 void task_yeild();
+
+void task_set_timeslice(task_t *task, uint32_t timeslice);
 
 #define task_sleep() task_block(TASK_BLOCKED) 
 

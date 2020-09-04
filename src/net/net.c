@@ -40,9 +40,17 @@ void lwip_init_task(void)
 #endif
     #if CONFIG_LEVEL == 0
     //IP4_ADDR(&ipaddr, 172,17,1,1);
-    IP4_ADDR(&ipaddr, 192,168,0,105);
-    IP4_ADDR(&gateway, 192,168,0,1);
+    #if 0
+    IP4_ADDR(&ipaddr, 192,168,56,105);
+    IP4_ADDR(&gateway, 192,168,56,1);
+    IP4_ADDR(&netmask, 255,255,255, 0);
+    #else
+    IP4_ADDR(&ipaddr, 169,254,146,177);
+    IP4_ADDR(&gateway, 169,254,146,176);
     IP4_ADDR(&netmask, 255,255,0, 0);
+
+    #endif
+    
     #elif CONFIG_LEVEL == 1
     IP4_ADDR(&gateway, 169,254,177,48);
     IP4_ADDR(&netmask, 255,255,0,0);
@@ -80,34 +88,35 @@ void lwip_init_task(void)
  */
 void netin_kthread(void *arg) 
 {
-    printk("[netin]: init start.\n");
-
+    printk("[NETIN]: init start.\n");
+#if 1    
     lwip_init_task();
-
+ 
     httpserver_init();
     //socket_examples_init();
     while(1) {
         /* 检测输入，如果没有收到数据就会阻塞。 */
         ethernetif_input(&rtl8139_netif);
 		//todo: add your own user code here
-        //printf("netcard input.\n");
 	}
+#endif
 }
 
 /* 网络初始化 */
 void init_net(void)
 {
-    printk("[net]: init start.\n");
+    printk("[NET]: init start.\n");
     if (init_netcard_driver() < 0) {
         pr_err("init netcard driver failed!\n");
         return;
     }
         
     /* 打开一个线程来读取网络数据包 */
-    task_t * netin = kthread_start("netin", TASK_PRIO_RT, netin_kthread, NULL);
+    task_t * netin = kthread_start("netin", TASK_PRIO_USER, netin_kthread, NULL);
     if (netin == NULL) {
-        pr_err("[net]: start kthread netin failed!\n");
+        pr_err("[NET]: start kthread netin failed!\n");
     }
+    task_set_timeslice(netin, 2);
 }
 
 #if LWIP_NETCONN
@@ -124,6 +133,25 @@ const static char http_index_html[] = "<html><head><title>Congrats!</title></hea
 static void
 httpserver_serve(struct netconn *conn)
 {
+
+    ip_addr_t ipaddr;
+    memset(&ipaddr, 0, sizeof(ip_addr_t));
+
+    /* 获取主机域名 */
+    netconn_gethostbyname("www.book-os.org", &ipaddr);
+    printk("!!!ip: %x %s\n", ipaddr.addr, ipaddr_ntoa(&ipaddr));
+    ip_addr_t ipaddr2;
+    ipaddr2.addr = ntohl(ipaddr.addr);
+    printk("!!!ip: %x %s\n", ipaddr.addr, ipaddr_ntoa(&ipaddr2));
+
+    memset(&ipaddr, 0, sizeof(ip_addr_t));
+    
+    netconn_gethostbyname("www.baidu.org", &ipaddr);
+    printk("!!!ip: %x %s\n", ipaddr.addr, ipaddr_ntoa(&ipaddr));
+    ipaddr2.addr = ntohl(ipaddr.addr);
+    printk("!!!ip: %x %s\n", ipaddr.addr, ipaddr_ntoa(&ipaddr2));
+
+
   struct netbuf *inbuf;
   char *buf;
   u16_t buflen;
@@ -230,7 +258,7 @@ httpserver_init()
 #define SOCK_TARGET_PORT  8080
 #endif
 char zrxbuf[1024];
-#if 0
+
 /** This is an example function that tests
     blocking-connect and nonblocking--recv-write . */
 static void socket_nonblocking(void *arg)
@@ -239,6 +267,7 @@ static void socket_nonblocking(void *arg)
   int ret;
   u32_t opt;
   struct sockaddr_in addr;
+  int err;
 
   LWIP_UNUSED_ARG(arg);
   /* set up address to connect to */
@@ -307,7 +336,7 @@ static void socket_nonblocking(void *arg)
 		
   }
 }
-#endif
+
 /** This is an example function that tests
     the recv function (timeout etc.). */
 char rxbuf[1024];
