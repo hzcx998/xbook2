@@ -69,12 +69,13 @@ int main(int argc, char *argv[])
 
     g_show_window(win2);
 #endif
+
+    /* 注册消息回调函数 */
+    g_set_msg_routine(layer_proc);
+
 #ifdef DESKTOP_LAUNCH_BOSH
     desktop_launch_app("bosh");
 #endif
-    /* 注册消息回调函数 */
-    g_set_msg_routine(layer_proc);
-    
     g_msg_t msg;
     while (1)
     {
@@ -121,6 +122,13 @@ int layer_proc(g_msg_t *msg)
             destroy_winctl(winctl);
             winctl_paint(NULL);
             winctl_last = NULL; /* 有窗口关闭的时候需要清空 */
+        }
+        break;
+    case GM_WINDOW_ICON:
+        layer = g_msg_get_sender(msg);
+        winctl = winctl_find_by_layer(layer);
+        if (winctl) {
+            winctl_set_icon(winctl);
         }
         break;
     case GM_GET_FOCUS:

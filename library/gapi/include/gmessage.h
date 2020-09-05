@@ -32,6 +32,7 @@ enum {
     GM_HIDE,
     GM_SHOW,
     GM_PAINT,
+    GM_WINDOW_ICON,
     GM_NR,
 };
 

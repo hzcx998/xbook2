@@ -25,6 +25,7 @@ g_touch_t *g_new_touch(unsigned int width, unsigned int height)
     tch->color_idle = GC_GRAY;
     tch->color_on = GC_BLUE;
     tch->extension = NULL;
+    tch->bmp = NULL;
     init_list(&tch->list);
     return tch;
 }
@@ -33,6 +34,10 @@ int g_del_touch(g_touch_t *tch)
 {
     if (!tch)
         return -1;
+    if (tch->bmp) {
+        g_del_bitmap(tch->bmp);
+        tch->bmp = NULL;
+    }
     list_del(&tch->list);
     free(tch);
     return 0;
@@ -65,6 +70,12 @@ int g_touch_paint(g_touch_t *tch)
     g_bitmap_sync(bmp, tch->layer, tch->rect.x, tch->rect.y);
     g_del_bitmap(bmp);
     #endif
+    if (tch->bmp) {
+        int x = tch->rect.x + tch->rect.width / 2 - tch->bmp->width / 2;
+        int y = tch->rect.y + tch->rect.height / 2 - tch->bmp->height / 2;
+        /* 居中显示 */
+        g_bitmap_sync(tch->bmp, tch->layer, x, y);    
+    }
     return 0;
 }
 

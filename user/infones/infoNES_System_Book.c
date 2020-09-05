@@ -153,6 +153,8 @@ void start_application( char *filename )
     /* 注册消息回调函数 */
     g_set_msg_routine(win_proc);
 
+    g_set_window_icon(g_win, "res/icon/infones.png");
+
     /* 设置窗口界面 */
     g_show_window(g_win);
 

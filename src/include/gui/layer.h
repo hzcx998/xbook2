@@ -34,6 +34,7 @@ typedef struct _layer {
     list_t global_list;         /* 在全局图层链表中的一个节点 */
     list_t widget_list_head;    /* 子控件链表 */
     void *extension;            /* 图层拓展 */
+    void *ext_buf0;             /* 拓展缓冲区 */
     gui_region_t drag_rg;       /* 拖拽区域 */
     gui_region_t resize_rg;     /* 调整大小区域 */
     gui_region_t resizemin_rg;  /* 最小的调整大小区域 */
@@ -81,6 +82,16 @@ int layer_focus_win_top();
 
 void layer_sync_bitmap(layer_t *layer, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
 
+static inline void layer_mutex_lock(layer_t *layer)
+{
+    spin_lock(&layer->mutex);
+}
+
+static inline void layer_mutex_unlock(layer_t *layer)
+{
+    spin_unlock(&layer->mutex);
+}
+
 int sys_new_layer(int x, int y, uint32_t width, uint32_t height);
 int sys_layer_z(int id, int z);
 int sys_layer_move(int id, int x, int y);
@@ -113,15 +124,7 @@ int sys_layer_set_desktop(int id);
 int sys_layer_get_desktop();
 int sys_layer_sync_bitmap(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
 int sys_layer_sync_bitmap_ex(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
-
-static inline void layer_mutex_lock(layer_t *layer)
-{
-    spin_lock(&layer->mutex);
-}
-
-static inline void layer_mutex_unlock(layer_t *layer)
-{
-    spin_unlock(&layer->mutex);
-}
+int sys_gui_get_icon(int lyid, char *path, uint32_t len);
+int sys_gui_set_icon(int lyid, char *path, uint32_t len);
 
 #endif  /* _GUI_LAYER_H */

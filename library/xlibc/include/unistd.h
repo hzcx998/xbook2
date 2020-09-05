@@ -105,5 +105,6 @@ int usleep(useconds_t usec);
 int pipe(int fd[2]);
 
 #include <sys/proc.h>
+#include <getopt.h>
 
 #endif  /* _LIB_UNISTD_H */

@@ -191,4 +191,7 @@ void init_syscall()
     syscall_table[SYS_GDELTIMER] = sys_gui_del_timer;
     syscall_table[SYS_LAYERSYNCBMP] = sys_layer_sync_bitmap;
     syscall_table[SYS_LAYERSYNCBMPEX] = sys_layer_sync_bitmap_ex;
+    syscall_table[SYS_GGETICONPATH] = sys_gui_get_icon;
+    syscall_table[SYS_GSETICONPATH] = sys_gui_set_icon;
+    
 }

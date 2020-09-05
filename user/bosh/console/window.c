@@ -22,6 +22,8 @@ int init_window()
 
     g_show_window(win);
     
+    g_set_window_icon(win, "/res/icon/bosh.png");
+
     /* 注册消息回调函数 */
     g_set_msg_routine(process_window);
     

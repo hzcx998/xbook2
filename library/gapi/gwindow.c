@@ -750,3 +750,28 @@ int g_window_text(
     g_layer_text(gw->layer, gw->body_region.left + x, gw->body_region.top + y, text, color);
     return 0;
 }
+
+
+/**
+ * 隐藏指定窗口，从桌面消失，变成隐藏状态
+*/
+int g_set_window_icon(int win, char *path)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    
+    /* 设置图标缓冲区 */
+    g_set_icon_path(gw->layer, path);
+    
+    /* 给桌面发送关闭窗口消息 */
+    g_msg_t m;
+    m.id = GM_WINDOW_ICON;
+    m.target = g_layer_get_desktop(); /* send to desktop */
+    m.data0 = gw->layer; /* layer id */
+    if (g_send_msg(&m) < 0) {
+        return -1;
+    }
+
+    return 0;
+}

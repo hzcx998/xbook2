@@ -39,5 +39,6 @@ void winctl_get_focus(winctl_t *winctl);
 void winctl_lost_focus(winctl_t *winctl);
 
 void winctl_paint(winctl_t *winctl);
+int winctl_set_icon(winctl_t *winctl);
 
 #endif  /* _WINCTL_H */
