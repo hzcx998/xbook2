@@ -278,3 +278,39 @@ int sys_layer_sync_bitmap_ex(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_
     layer_sync_bitmap(l, rect, bitmap, region);
     return 0;
 }
+
+int sys_gui_get_icon(int lyid, char *path, uint32_t len)
+{
+    if (lyid < 0)
+        return -1;
+    layer_t *l = layer_find_by_id(lyid);
+    if (l == NULL) {
+        return -1;
+    }
+    if (l->ext_buf0 && path) {  /* 扩展缓冲区0 */
+        memcpy(path, l->ext_buf0, min(len, MAX_PATH));
+        /* 释放缓冲区 */
+        kfree(l->ext_buf0);
+        l->ext_buf0 = NULL;
+        return 0;
+    }
+    return -1;
+}
+
+int sys_gui_set_icon(int lyid, char *path, uint32_t len)
+{
+    if (lyid < 0)
+        return -1;
+    layer_t *l = layer_find_by_id(lyid);
+    if (l == NULL) {
+        return -1;
+    }
+    if (l->ext_buf0 || !path || !len)
+        return -1;
+    l->ext_buf0 = kmalloc(MAX_PATH);
+    if (l->ext_buf0 == NULL)
+        return -1;
+    memset(l->ext_buf0, 0, MAX_PATH);
+    memcpy(l->ext_buf0, path, min(len, MAX_PATH));
+    return 0;
+}

@@ -1,4 +1,5 @@
 #include <winctl.h>
+#include <icon.h>
 #include <taskbar.h>
 #include <desktop.h>
 #include <stdio.h>
@@ -91,6 +92,14 @@ winctl_t *create_winctl(g_layer_t layer)
         free(winctl);
         return NULL;
     }
+    
+    /* 创建图标位图 */
+    winctl->button->bmp = g_new_bitmap(ICON_SIZE, ICON_SIZE);
+    if (winctl->button->bmp == NULL) {
+        g_del_touch(winctl->button);
+        free(winctl);
+        return NULL;
+    }
 
     g_touch_set_color(winctl->button, winctl_manager.back_color, winctl_manager.back_color + 0x00404040);
     g_touch_set_handler(winctl->button, 0, winctl_lbtn_handler);
@@ -104,6 +113,12 @@ winctl_t *create_winctl(g_layer_t layer)
     winctl->isfocus = false; /* 默认不聚焦 */
     list_add_tail(&winctl->list, &winctl_manager.winctl_list_head);
 
+    /* 使用默认的位图 */
+    g_rectfill(winctl->button->bmp, 0, 0, ICON_SIZE/2, ICON_SIZE/2, GC_RED);
+    g_rectfill(winctl->button->bmp, ICON_SIZE/2, 0, ICON_SIZE/2, ICON_SIZE/2, GC_YELLOW);
+    g_rectfill(winctl->button->bmp, 0, ICON_SIZE/2, ICON_SIZE/2, ICON_SIZE/2, GC_BLUE);
+    g_rectfill(winctl->button->bmp, ICON_SIZE/2, ICON_SIZE/2, ICON_SIZE/2, ICON_SIZE/2, GC_GREEN);
+
     return winctl;
 }
 
@@ -111,6 +126,9 @@ int destroy_winctl(winctl_t *winctl)
 {
     if (!winctl)
         return -1;
+    g_del_bitmap(winctl->button->bmp);
+    winctl->button->bmp = NULL;
+
     list_del(&winctl->list);
     if (g_del_touch(winctl->button) < 0)
         return -1;
@@ -136,6 +154,33 @@ void winctl_get_focus(winctl_t *winctl)
     winctl->button->color_idle = winctl_manager.active_color;
 }
 
+int winctl_set_icon(winctl_t *winctl)
+{
+    char icon_path[MAX_PATH] = {0,};
+    /* 获取图标路径 */
+    if (g_get_icon_path(winctl->layer, icon_path, MAX_PATH) < 0) {
+        return -1;
+    }
+    /* 追加到窗口控制上 */
+    //printf("[winctl]: set icon path:%s\n", icon_path);
+    
+    g_bitmap_clear(winctl->button->bmp);
+
+    /* 如果加载图片失败，就使用默认位图 */
+    if (png_load_bitmap(icon_path, winctl->button->bmp->buffer) < 0) {
+        /* 使用默认的位图 */
+        g_rectfill(winctl->button->bmp, 0, 0, ICON_SIZE/2, ICON_SIZE/2, GC_RED);
+        g_rectfill(winctl->button->bmp, ICON_SIZE/2, 0, ICON_SIZE/2, ICON_SIZE/2, GC_YELLOW);
+        g_rectfill(winctl->button->bmp, 0, ICON_SIZE/2, ICON_SIZE/2, ICON_SIZE/2, GC_BLUE);
+        g_rectfill(winctl->button->bmp, ICON_SIZE/2, ICON_SIZE/2, ICON_SIZE/2, ICON_SIZE/2, GC_GREEN);
+    }
+    
+    /* 绘制 */
+    g_touch_paint(winctl->button);
+    return 0; 
+}
+
+    
 void winctl_lost_focus(winctl_t *winctl)
 {
     winctl->isfocus = false;

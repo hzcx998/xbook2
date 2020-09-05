@@ -5,6 +5,7 @@
 #include "gcolor.h"
 #include "gmessage.h"
 #include "glayer.h"
+#include "gbitmap.h"
 
 #include <sys/list.h>
 
@@ -29,6 +30,7 @@ typedef struct {
     g_touch_handler_t handler[3]; /* 鼠标按键触发事件后执行的函数 */
     g_layer_t layer; /* 所在图层 */
     void *extension;    /* 扩展内容 */
+    g_bitmap_t *bmp;    /* 要显示的位图 */
 } g_touch_t;
 
 g_touch_t *g_new_touch(unsigned int width, unsigned int height);

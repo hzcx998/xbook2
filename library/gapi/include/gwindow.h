@@ -92,5 +92,6 @@ int g_window_text(
     int y,
     char *text,
     uint32_t color);
+int g_set_window_icon(int win, char *path);
 
 #endif  /* _GAPI_WINDOW_H */

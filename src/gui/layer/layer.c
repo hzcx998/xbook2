@@ -80,7 +80,8 @@ layer_t *create_layer(int width, int height)
     layer->z = -1;          /* 不显示的图层 */
     layer->flags = flags;
     layer->extension = NULL;
-    
+    layer->ext_buf0 = NULL;
+
     gui_region_init(&layer->drag_rg);
     gui_region_init(&layer->resize_rg);
     gui_region_init(&layer->resizemin_rg);
@@ -508,7 +509,11 @@ int destroy_layer(layer_t *layer)
     list_del_init(&layer->global_list);
     spin_unlock(&layer_list_spin_lock);
     layer_mutex_lock(layer);
-    
+    if (layer->ext_buf0) {  /* 缓冲区存在且未释放，就释放 */
+        kfree(layer->ext_buf0);
+        layer->ext_buf0 = NULL;
+    }
+
     if (layer->flags & LAYER_EXT_BUF) {
         mem_cache_free_object(&layer_buffer_memcache, layer->buffer);
     } else {

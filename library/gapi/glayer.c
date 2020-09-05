@@ -3,6 +3,7 @@
 #include <gshape.h>
 #include <gfont.h>
 #include <gbitmap.h>
+#include <string.h>
 
 /* 图层id都大于0，因此0表示没有图层 */
 static int _g_layer_table[G_LAYER_NR] = {0,};
@@ -337,4 +338,15 @@ int g_layer_sync_bitmap_ex(
 {
     syscall4(int, SYS_LAYERSYNCBMPEX, layer, rect, bitmap, region);
     return 0;
+}
+
+int g_get_icon_path(int layer, char *path, uint32_t len)
+{
+    return syscall3(int, SYS_GGETICONPATH, layer, path, len);
+}
+
+int g_set_icon_path(int layer, char *path)
+{
+    uint32_t len = strlen(path);
+    return syscall3(int, SYS_GSETICONPATH, layer, path, len);
 }

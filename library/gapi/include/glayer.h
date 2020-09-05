@@ -84,5 +84,8 @@ int g_layer_sync_bitmap_ex(
     g_rect_t *rect,
     g_color_t *bitmap,
     g_region_t *region);
-    
+
+int g_get_icon_path(int layer, char *path, uint32_t len);
+int g_set_icon_path(int layer, char *path);
+
 #endif /* _GAPI_LAYER_H */
