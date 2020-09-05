@@ -9,6 +9,7 @@ SRC			+= trig_test.c
 SRC			+= xlibc_test.c
 SRC			+= math_test.c
 SRC			+= http_test.c
+SRC			+= getopt_test.c
 
 
 define CUSTOM_TARGET_CMD

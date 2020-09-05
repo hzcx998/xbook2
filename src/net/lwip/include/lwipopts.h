@@ -48,6 +48,9 @@
 
 #define LWIP_DHCP    1
 
+#define LWIP_ARP 1
+#define DHCP_DOES_ARP_CHECK 1
+
 #include <xbook/schedule.h>
 /* tcpip core thread prio is usr  prio in xbook kernel
 the thread is won't be blocked by func, so it must can't

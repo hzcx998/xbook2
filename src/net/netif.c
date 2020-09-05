@@ -1,6 +1,9 @@
 #include <xbook/net.h>
 #include <xbook/debug.h>
 #include <lwip/sockets.h>
+#include <lwip/err.h>
+#include <lwip/dns.h>
+
 #include <fsal/fsal.h>
 #include <string.h>
 
@@ -317,4 +320,12 @@ int sys_select(int maxfdp, struct _sockfd_set *fd_sets, struct timeval *timeout)
         }
     }
     return nready;
+}
+
+int sys_dns_setserver(uint8_t numdns, const char *str)
+{
+    ip_addr_t dnsserver;
+    ip4_addr_set_u32(&dnsserver, ipaddr_addr(str));
+    dns_setserver((u8_t) numdns, &dnsserver);
+    return 0;
 }

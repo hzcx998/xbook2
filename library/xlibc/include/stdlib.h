@@ -6,6 +6,7 @@
 #include "malloc.h"
 #include "exit.h"
 #include "stdint.h"
+#include "environ.h"
 
 #define RAND_MAX 0x7fff
 
