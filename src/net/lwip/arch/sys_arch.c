@@ -152,6 +152,7 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
   thread = kthread_start((char *)name, prio, function, arg);
 
   if (NULL != thread) {
+    task_set_timeslice(thread, 1);
     st = introduce_thread(thread);
   }
   #if DEBUG_LOCAL == 1

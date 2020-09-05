@@ -10,6 +10,17 @@
  
 int main()
 {
+    int sockfd = socket(AF_INET,SOCK_STREAM,0);
+    if (sockfd < 0)
+        return -1;
+    struct sockaddr myaddr;
+    struct sockaddr_in *paddr; 
+    socklen_t socklen;
+    getsockname(sockfd, &myaddr, &socklen);
+    paddr = (struct sockaddr_in *) &myaddr;
+    printf("ip:%x port:%d\n", paddr->sin_addr.s_addr, paddr->sin_port);
+    return -1;
+    
     //创建一个socket
     int clientSocket=socket(AF_INET,SOCK_STREAM,0);
     

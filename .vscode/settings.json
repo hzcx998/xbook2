@@ -1,5 +1,5 @@
 {
-    "C_Cpp.errorSquiggles": "Disabled",
+    //"C_Cpp.errorSquiggles": "Disabled",
     "files.associations": {
         "*.C": "c",
         "debug.h": "c",
@@ -121,6 +121,25 @@
         "text.h": "c",
         "font.h": "c",
         "event.h": "c",
-        "cursor.h": "c"
+        "cursor.h": "c",
+<<<<<<< HEAD
+        "*.tcc": "c",
+        "fstream": "c",
+        "istream": "c",
+        "ostream": "c",
+        "*.rh": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c"
+=======
+        "mouse.h": "c",
+        "graph.h": "c",
+        "waitqueue.h": "c",
+        "glayer.h": "c",
+        "gscreen.h": "c",
+        "cstdlib": "c",
+        "sh_clipboard.h": "c",
+        "sh_window.h": "c"
+>>>>>>> develop
     }
 }

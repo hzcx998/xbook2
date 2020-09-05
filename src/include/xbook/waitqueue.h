@@ -34,9 +34,9 @@ void wait_queue_wakeup_all(wait_queue_t *wait_queue);
 
 static inline int wait_queue_length(wait_queue_t *wait_queue)
 {
-    spin_lock(&wait_queue->lock);
+    //spin_lock(&wait_queue->lock);
     int len = list_length(&wait_queue->wait_list);
-    spin_unlock(&wait_queue->lock);
+    //spin_unlock(&wait_queue->lock);
     return len;
 }
 

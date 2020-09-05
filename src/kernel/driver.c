@@ -29,10 +29,12 @@ driver_func_t driver_vine_table[] = {
     ide_driver_vine,                    /* disk */
 #endif
     rtl8139_driver_vine,                /* net */
+    e1000_driver_vine,
     keyboard_driver_vine,               /* input */
     ramdisk_driver_vine,                /* disk */
     vbe_driver_vine,                    /* video */
     mouse_driver_vine,                  /* input */
+    buzzer_driver_vine,                 /* sound */
     tty_driver_vine,                    /* filter: tty */
     null_driver_vine,                   /* filter: null */
 };
@@ -371,13 +373,13 @@ int sys_devscan(devent_t *de, device_type_t type, devent_t *out)
 {
     if (!out)
         return -1;
-    driver_object_t *drvobj;
-    device_object_t *devobj;
+    driver_object_t *drvobj;   //驱动对象
+    device_object_t *devobj;   //驱动对应设备对象
     int flags = 0;  /* 标记可迭代对象 */
     spin_lock(&driver_lock);
     /* 遍历所有的驱动 */
     list_for_each_owner (drvobj, &driver_list_head, list) {
-        list_for_each_owner (devobj, &drvobj->device_list, list) {
+        list_for_each_owner (devobj, &drvobj->device_list, list) {   //遍历驱动下的设备
             if (devobj->type == type) { /* 设备类型 */   
                 /* 搜索是第一个设备 */
                 if (de == NULL) {
@@ -388,7 +390,6 @@ int sys_devscan(devent_t *de, device_type_t type, devent_t *out)
                     return 0;
                 } else {
                     if (flags) {    /* 可以选择下一个设备，就直接返回下一个设备 */
-                    
                         memset(out->de_name, 0, DEVICE_NAME_LEN);
                         strcpy(out->de_name, devobj->name.text);
                         out->de_type = type;
@@ -522,9 +523,12 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
     case DEVICE_TYPE_KEYBOARD:
     case DEVICE_TYPE_MOUSE:
     case DEVICE_TYPE_VIRTUAL_CHAR:
+    case DEVICE_TYPE_BEEP:
         spin_lock(&device->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
+    case DEVICE_TYPE_NETWORK:
+    case DEVICE_TYPE_PHYSIC_NETCARD:
         mutex_lock(&device->lock.mutexlock);
         break;
     default:
@@ -667,9 +671,12 @@ void io_complete_request(io_request_t *ioreq)
     case DEVICE_TYPE_KEYBOARD:
     case DEVICE_TYPE_MOUSE:
     case DEVICE_TYPE_VIRTUAL_CHAR:
+    case DEVICE_TYPE_BEEP:
         spin_unlock(&ioreq->devobj->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
+    case DEVICE_TYPE_NETWORK:
+    case DEVICE_TYPE_PHYSIC_NETCARD:
         mutex_unlock(&ioreq->devobj->lock.mutexlock);
         break;
     default:
@@ -732,49 +739,23 @@ iostatus_t io_device_queue_append(device_queue_t *queue, unsigned char *buf, int
     return IO_SUCCESS;
 }
 
-int io_device_queue_pickup2(device_queue_t *queue, unsigned char *buf, int buflen, int flags)
-{
-    unsigned long irqflags;
-    spin_lock_irqsave(&queue->lock, irqflags);
-    if (!queue->entry_count) {  /* 没有数据包 */
-        if (flags & IO_NOWAIT) {    /* 不进行等待 */
-            spin_unlock_irqrestore(&queue->lock, irqflags);
-            return -1;    
-        }
-        wait_queue_add(&queue->wait_queue, current_task);
-        spin_unlock_irqrestore(&queue->lock, irqflags);
-        task_block(TASK_BLOCKED);
-        spin_lock_irqsave(&queue->lock, irqflags);
-    }
-    device_queue_entry_t *entry;
-    entry = list_first_owner(&queue->list_head, device_queue_entry_t, list);
-    list_del(&entry->list);
-    queue->entry_count--;
-    int len = MIN(entry->length, buflen);
-    memcpy(buf, entry->buf, len);
-    kfree(entry);
-    spin_unlock_irqrestore(&queue->lock, irqflags);
-#if DEBUG_LOCLA == 1
-    printk(KERN_DEBUG "io_device_queue_get: pid=%d len=%d.\n",
-        queue->wait_queue.task->pid, len);
-#endif            
-    return len;
-}
-
 int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen, int flags)
 {
     unsigned long irqflags;
+
     spin_lock_irqsave(&queue->lock, irqflags);
     if (!queue->entry_count) {  /* 没有数据包 */
         if (flags & IO_NOWAIT) {    /* 不进行等待 */
             spin_unlock_irqrestore(&queue->lock, irqflags);
             return -1;    
         }
+        printk("!!!block wait\n");
         wait_queue_add(&queue->wait_queue, current_task);
         spin_unlock_irqrestore(&queue->lock, irqflags);
         task_block(TASK_BLOCKED);
-        spin_lock_irqsave(&queue->lock, irqflags);
+        spin_lock_irqsave(&queue->lock, irqflags);   
     }
+    
     device_queue_entry_t *entry;
     entry = list_first_owner(&queue->list_head, device_queue_entry_t, list);
     list_del(&entry->list);
@@ -1064,7 +1045,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         printk(KERN_ERR "device_read: alloc io request packet failed!\n");
         return -1;
     }
-    status = io_call_dirver(devobj, ioreq);
+    status = io_call_dirver(devobj, ioreq);   //调用设备驱动的功能函数
 
     if (!io_complete_check(ioreq, status)) {
         //printk("io complete.\n");
@@ -1276,6 +1257,27 @@ void init_driver_arch()
     /* 输出所有驱动以及设备 */
     print_drivers();
 #endif
+
+#if 0
+    handle_t beep = device_open("buzzer", 0);
+    if (beep < 0)
+        panic(KERN_DEBUG "open buzzer failed!\n");
+    
+    device_devctl(beep, SNDIO_PLAY, 0);
+    //int i;
+    for (i = 20; i < 20000; i++) {
+        device_devctl(beep, SNDIO_SETFREQ, i);
+        udelay(5000);
+    }
+    device_devctl(beep, SNDIO_STOP, 0);
+
+    device_close(beep);
+    while (1)
+    {
+        /* code */
+    }
+#endif
+
 
 #if 0
     int sda = device_open("sata0", 0);

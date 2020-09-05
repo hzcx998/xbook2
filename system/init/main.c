@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    //res_ioctl(RES_STDINNO, TTYIO_CLEAR, 0);
     printf("start 'init' service, in user mode now.\n");
+    
     /* 创建一个子进程 */
     int pid = fork();
     if (pid < 0) {
@@ -47,7 +47,8 @@ int main(int argc, char *argv[])
     }
     /* 配置环境变量 */
     char *const envp[3] = {"/bin", "/sbin", NULL}; 
-    /* 执行shell */
-    exit(execve("/bin/bosh", NULL, envp));
+    /* 执行shell
+    启动桌面 */
+    exit(execve("/sbin/desktop", NULL, envp));
     return 0;
 }

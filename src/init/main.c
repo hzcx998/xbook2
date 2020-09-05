@@ -51,14 +51,12 @@ int kernel_main(void)
 
     init_driver_arch();
     
-    /* init raw block */
-    //init_raw_block();
-
     /* init fs */
     init_fs();
 
     init_gui();
-    //init_net();
+    init_net();
+    
     //spin("test");
     start_user();
 

@@ -26,8 +26,8 @@ typedef enum _device_type {
     DEVICE_TYPE_KEYBOARD,                /* 键盘设备 */
     DEVICE_TYPE_MOUSE,                   /* 鼠标设备 */
     DEVICE_TYPE_NULL,                    /* 空设备 */
-    DEVICE_TYPE_PORT,                   /* 端口设备 */
-    DEVICE_TYPE_SERIAL_PORT,            /* 串口设备 */
+    DEVICE_TYPE_PORT,                    /* 端口设备 */
+    DEVICE_TYPE_SERIAL_PORT,             /* 串口设备 */
     DEVICE_TYPE_PARALLEL_PORT,           /* 并口设备 */
     DEVICE_TYPE_PHYSIC_NETCARD,          /* 物理网卡设备 */
     DEVICE_TYPE_PRINTER,                 /* 打印机设备 */

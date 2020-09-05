@@ -44,6 +44,8 @@
 	
 */
 
+#include <stdint.h>
+
 #define PCI_CONFIG_ADDR	0xCF8	/*PCI配置空间地址端口*/
 #define PCI_CONFIG_DATA	0xCFC	/*PCI配置空间数据端口*/
 
@@ -65,6 +67,18 @@
 #define PCI_RESERVED							        0x38
 #define PCI_MAX_LNT_MIN_GNT_IRQ_PIN_IRQ_LINE			0x3C
 
+#define  PCI_COMMAND_IO		0x1	/* Enable response in I/O space */
+#define  PCI_COMMAND_MEMORY	0x2	/* Enable response in Memory space */
+#define  PCI_COMMAND_MASTER	0x4	/* Enable bus mastering */
+#define  PCI_COMMAND_SPECIAL	0x8	/* Enable response to special cycles */
+#define  PCI_COMMAND_INVALIDATE	0x10	/* Use memory write and invalidate */
+#define  PCI_COMMAND_VGA_PALETTE 0x20	/* Enable palette snooping */
+#define  PCI_COMMAND_PARITY	0x40	/* Enable parity checking */
+#define  PCI_COMMAND_WAIT	0x80	/* Enable address/data stepping */
+#define  PCI_COMMAND_SERR	0x100	/* Enable SERR */
+#define  PCI_COMMAND_FAST_BACK	0x200	/* Enable back-to-back writes */
+#define  PCI_COMMAND_INTX_DISABLE 0x400 /* INTx Emulation Disable */
+
 /*IO地址和MEM地址的地址mask*/
 #define PCI_BASE_ADDR_MEM_MASK           (~0x0FUL)
 #define PCI_BASE_ADDR_IO_MASK            (~0x03UL)
@@ -79,6 +93,18 @@
 #define PCI_MAX_FUN 8		/*PCI设备总共有8个功能号*/
 
 #define PCI_MAX_DEVICE_NR 256	/*系统最大支持检测多少个设备*/
+
+#ifndef PCI_ANY_ID
+#define PCI_ANY_ID (~0)
+#endif
+
+/* PCI设备ID */
+struct pci_device_id
+{
+	uint32_t vendor, device;   //vendor and device id or PCI_ANY_ID
+	uint32_t subvendor, subdevice;   //subsystem's id or PCI_ANY_ID
+	uint32_t class, class_mask;
+};
 
 /*PCI地址bar结构体，保存Bass Address （0~5）的信息*/
 typedef struct pci_device_bar
@@ -125,6 +151,7 @@ typedef struct pci_device
 
 unsigned int pci_device_get_io_addr(pci_device_t *device);
 unsigned int pci_device_get_mem_addr(pci_device_t *device);
+unsigned int pci_device_get_mem_len(pci_device_t *device);
 unsigned int pci_device_get_irq_line(pci_device_t *device);
 void pci_enable_bus_mastering(pci_device_t *device);
 pci_device_t* pci_get_device(unsigned int vendor_id, unsigned int device_id);

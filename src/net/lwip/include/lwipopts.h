@@ -44,9 +44,9 @@
 /* use os's timeval */
 #define LWIP_TIMEVAL_PRIVATE 0
 
-#define LWIP_DNS    0
+#define LWIP_DNS    1
 
-#define LWIP_DHCP    0
+#define LWIP_DHCP    1
 
 #include <xbook/schedule.h>
 /* tcpip core thread prio is usr  prio in xbook kernel

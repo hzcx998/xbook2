@@ -41,14 +41,7 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
         #define NULL ((void *)0)
 #endif
 #endif
-
-#ifndef __cplusplus
-//#define bool _Bool      //C语言下实现Bool
-#define bool char      
-
-#define true 1
-#define false 0
-#endif
+#include <stdbool.h>
 
 #ifndef BOOLEAN
 #ifndef __cplusplus
@@ -81,6 +74,16 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
 
 // This macroshould not be used.A use like abs(a++) will make a wrong result.Use abs() and labs()
 // #define abs(a)    ((a) > 0 ? (a) : -(a))
+
+/* 除后上入 */
+#define DIV_ROUND_UP(X, STEP) ((X + STEP - 1) / (STEP))
+
+/* 除后下舍 */
+#define DIV_ROUND_DOWN(X, STEP) ((X) / (STEP))
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif
 
 #endif  /* _XLIBC_STDDEF_H */
 

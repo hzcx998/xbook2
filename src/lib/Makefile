@@ -7,3 +7,5 @@ SRC	+= trigger.c
 SRC	+= stdio.c
 SRC	+= abort.c
 SRC	+= inet.c
+SRC	+= rand.c
+SRC	+= msgpool.c

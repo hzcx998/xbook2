@@ -116,16 +116,16 @@ low_level_init(struct netif *netif)
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
-    /* set MAC hardware address */
+    /* set MAC hardware address in netif*/
     int i;
     for (i = 0; i < ETHARP_HWADDR_LEN; i++) {
         netif->hwaddr[i] = mac_addr[i];
     }
 
-  /* maximum transfer unit */
+  /* set maximum transfer unit */
   netif->mtu = ETH_MTU;
   
-  /* device capabilities */
+  /* set device capabilities */
   /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
   netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
  
@@ -177,7 +177,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
   
-  LINK_STATS_INC(link.xmit);
+  LINK_STATS_INC(link.xmit);   //协议栈内部的数据统计
 
   return retval;
 }

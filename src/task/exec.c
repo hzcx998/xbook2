@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <fsal/dir.h>
 #include <fsal/fsal.h>
+#include <gui/message.h>
 
 /**
  * exec使用新的镜像以及堆栈替换原有的内容。
@@ -168,6 +169,9 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     pthread_desc_init(cur->pthread);
 
     fs_fd_reinit(cur);
+
+    /* 替换新镜像后前，都需要退出原来的图形消息池，“新”进程需要重新初始化 */
+    gui_msgpool_exit(cur);
 
     /* 解除服务调用绑定 */
     sys_srvcall_unbind(-1);

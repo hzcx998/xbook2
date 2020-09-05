@@ -4,6 +4,8 @@
 #include <xbook/kmalloc.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/ioctl.h>
+#include <xbook/clock.h>
 
 /* 探测设备，储存起来 */
 
@@ -31,6 +33,7 @@ int netcard_probe_device(device_type_t type)
     devent_t *p = NULL;
     devent_t devent;
     netcard_info_t *netcard;
+    int card_found = 0;
     do {
         if (sys_devscan(p, type, &devent))
             break;
@@ -51,8 +54,10 @@ int netcard_probe_device(device_type_t type)
         list_add_tail(&netcard->list, &netcard_list_head);
         
         p = &devent;
+        card_found++;
     } while (1);
-
+    if (!card_found)
+        return -1;
     return 0;
 }
 
@@ -137,7 +142,7 @@ static int __read(int solt, void *buffer, size_t size)
 {
     if (IS_BAD_SOLT(solt))
         return -1;
-    int len = device_read(SOLT_TO_HANDLE(solt), buffer, size, 0);
+    int len = device_read(SOLT_TO_HANDLE(solt), buffer, size, DEV_NOWAIT);
     if (len <= 0)
         return -1;
     return len;
@@ -164,14 +169,19 @@ static int __ioctl(int solt, unsigned int cmd, unsigned long arg)
 
 int init_netcard_driver()
 {
-    if (netcard_probe_device(DEVICE_TYPE_PHYSIC_NETCARD) < 0)
-        return -1;
+    int card_found_err = 0;
+    if (netcard_probe_device(DEVICE_TYPE_PHYSIC_NETCARD) < 0) {
+        card_found_err++;
+    }
 
-    if (netcard_probe_device(DEVICE_TYPE_NETWORK) < 0)
-        return -1;
+    if (netcard_probe_device(DEVICE_TYPE_NETWORK) < 0) {
+        card_found_err++;
+    }
+    printk("[net]: netcard found err %d\n", card_found_err);
     int i;
-    for (i = 0; i < NETCARD_SOLT_NR; i++)
+    for (i = 0; i < NETCARD_SOLT_NR; i++) {
         netcard_solt_cache[i] = -1;
+    }
 
     netcard_info_print();
 
@@ -180,6 +190,9 @@ int init_netcard_driver()
     drv_netcard.read = __read;
     drv_netcard.write = __write;
     drv_netcard.ioctl = __ioctl;
+
+    if (card_found_err == 2)
+        return -1;
 
     return 0;
 }

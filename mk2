@@ -7,7 +7,9 @@ FATFS_BIN	= $(FATFS_DIR)/fatfs
 
 # images and rom
 IMAGE_DIR	= develop/image
-HDA_VHD		= $(IMAGE_DIR)/hda.vhd
+HDA_VHD		= $(IMAGE_DIR)/sata0.vhd
+HDA_VMDK	= $(IMAGE_DIR)/c-flat.vmdk
+
 ROM_DIR		= develop/rom
 
 # 默认大小为40M
@@ -29,7 +31,7 @@ BXRC_LINUX 		= $(BOCHS_DIR)bochsrc.linux # bochsrc for linux
 VBOX_NAME	    = "xbook"                   # virtual box 虚拟机名称
 
 # 参数
-.PHONY: all bochs bochsdbg vbox
+.PHONY: all bochs bochsdbg vbox vmware
 
 bochs:
 ifeq ($(OS),Windows_NT)
@@ -51,3 +53,6 @@ vbox: vbox_disk
 
 vbox_disk:
 	$(FATFS_BIN) $(HDA_VHD) $(ROM_DIR) $(ROM_DISK_SZ)
+
+vmware:
+	$(FATFS_BIN) $(HDA_VMDK) $(ROM_DIR) $(ROM_DISK_SZ)

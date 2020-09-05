@@ -346,7 +346,9 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
     printk(KERN_DEBUG "console_write: %s\n", buf);
 #endif
     while (i > 0) {
+        #ifdef CONFIG_PRINT_CONSOLE
         vga_outchar(device->device_extension, *buf);
+        #endif /* CONFIG_PRINT_CONSOLE */
         i--;
         buf++;
     }

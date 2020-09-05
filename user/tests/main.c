@@ -8,7 +8,9 @@ int main(int argc, char *argv[])
     //shm_test(argc, argv);
 	//trig_test(argc, argv);
 
-	xlibc_test(argc,argv);
+    //trig_test(argc, argv);
+    //math_test(argc, argv);
+    http_test(argc, argv);
     
     return 0;
 }

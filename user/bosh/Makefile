@@ -1,7 +1,9 @@
-X_LIBS		+= libxlibc-0.0.1.a
+X_LIBS		+= libxlibc-0.0.1.a libgapi-0.1.0.a
+
+X_INCDIRS	+= bosh/include
 
 NAME		:= bosh
-SRC			+= main.c cmd.c shell.c
+SRC			+= main.c cmd/cmd.c console/*.c
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

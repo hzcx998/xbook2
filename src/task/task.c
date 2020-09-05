@@ -118,7 +118,9 @@ void task_init(task_t *task, char *name, int priority)
     task->pthread = NULL;
 
     task->fileman = NULL;
-
+    
+    task->gmsgpool = NULL;
+    
     /* task stack magic */
     task->stack_magic = TASK_STACK_MAGIC;
 }
@@ -140,6 +142,17 @@ void task_global_list_add(task_t *task)
     ASSERT(!list_find(&task->global_list, &task_global_list));
     // 添加到全局队列
     list_add_tail(&task->global_list, &task_global_list);
+}
+
+void task_set_timeslice(task_t *task, uint32_t timeslice)
+{
+    if (task) {
+        if (timeslice < TASK_MIN_TIMESLICE)
+            timeslice = TASK_MIN_TIMESLICE;
+        if (timeslice > TASK_MAX_TIMESLICE)
+            timeslice = TASK_MAX_TIMESLICE;
+        task->timeslice = timeslice;
+    }
 }
 
 /**

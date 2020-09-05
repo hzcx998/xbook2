@@ -12,6 +12,7 @@
 #include "alarm.h"
 #include "pthread.h"
 #include "fs.h"
+#include "msgpool.h"
 
 /* task state */
 typedef enum task_state {
@@ -37,6 +38,10 @@ typedef enum task_state {
 
 /* init 进程的pid */
 #define INIT_PROC_PID       1
+
+#define TASK_MIN_TIMESLICE  1
+#define TASK_MAX_TIMESLICE  100
+
 
 /* 线程的标志 */
 enum thread_flags {
@@ -81,6 +86,7 @@ typedef struct _task {
     long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
     file_man_t *fileman;                /* 文件管理 */
+    msgpool_t *gmsgpool;                /* 任务的图形消息池 */
     unsigned int stack_magic;           /* 任务的魔数 */
 } task_t;
 
@@ -138,6 +144,8 @@ void task_activate(task_t *task);
 void task_block(task_state_t state);
 void task_unblock(task_t *task);
 void task_yeild();
+
+void task_set_timeslice(task_t *task, uint32_t timeslice);
 
 #define task_sleep() task_block(TASK_BLOCKED) 
 

@@ -13,6 +13,15 @@
 #define CLOCKS_PER_SEC  (100 * 5)   /* 1秒的时钟数 */
 #define HZ_PER_CLOCKS   (CLOCKS_PER_SEC / 100)   /* 每个时钟的HZ数 */
 
+/* 1 ticks 对应的毫秒数 */
+#define MS_PER_TICKS (1000 / CLOCKS_PER_SEC)
+
+/* 毫秒转换成ticks */
+#define MSEC_TO_TICKS(msec) ((msec) / MS_PER_TICKS)
+
+/* ticks转换成毫秒 */
+#define TICKS_to_MSEC(ticks) ((ticks) * MS_PER_TICKS)
+
 struct timeval {
     long tv_sec;         /* seconds */
     long tv_usec;        /* and microseconds */
@@ -33,10 +42,10 @@ struct timespec {
 
 int gettimeofday(struct timeval *tv, struct timezone *tz);
 int clock_gettime(clockid_t clockid, struct timespec *ts);
-
+clock_t getticks();
 unsigned long alarm(unsigned long second);
 unsigned long ktime(ktime_t *ktm);
-//clock_t clock();
+void mdelay(time_t msec);
 
 /* 获取文件的日期 */
 #define FILE_TIME_HOU(data) ((unsigned int)((data >> 11) & 0x1f))

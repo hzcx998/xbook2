@@ -39,9 +39,6 @@
 #define TTYIO_DETACH        DEVCTL_CODE('t', 3)
 #define TTYIO_COMBINE       DEVCTL_CODE('t', 4)
 
-
-
-
 /* net */
 #define NETIO_GETMAC        DEVCTL_CODE('n', 1)
 #define NETIO_SETMAC        DEVCTL_CODE('n', 2)
@@ -60,5 +57,10 @@ typedef struct _video_info {
 /* pipe */
 #define PIPEIO_SETRW        DEVCTL_CODE('p', 1) /* set reader or writer */
 #define PIPEIO_SETOPS       DEVCTL_CODE('p', 2) /* set operations */
+
+/* sound */
+#define SNDIO_PLAY          DEVCTL_CODE('s', 1) /* play */
+#define SNDIO_STOP          DEVCTL_CODE('s', 2) /* stop play */
+#define SNDIO_SETFREQ       DEVCTL_CODE('s', 3) /* set play freq */
 
 #endif   /* _SYS_IOCTL_H */

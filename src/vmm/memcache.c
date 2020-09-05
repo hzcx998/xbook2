@@ -406,7 +406,7 @@ void *kmalloc(size_t size)
 {
 	// 如果越界了就返回空
 	if (size > MAX_MEM_CACHE_SIZE) {
-		printk(KERN_NOTICE "kmalloc size %d too big!", size);
+		// printk(KERN_NOTICE "kmalloc size %d too big!", size);
 		return NULL;
 	}
 	
