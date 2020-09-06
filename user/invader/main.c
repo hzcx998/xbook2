@@ -215,7 +215,7 @@ int init_window(int width, int height)
 	if (g_init() == -1) {
 		return -1;
 	}
-	window.win = g_new_window(WINDOW_NAME, 100, 100, window.width, window.height);
+	window.win = g_new_window(WINDOW_NAME, 100, 100, window.width, window.height, GW_NO_MAXIM);
     if (window.win < 0) {
         g_quit();
         return -1;

@@ -137,7 +137,7 @@ void start_application( char *filename )
         return;
     }
 
-    g_win = g_new_window(title, 10, 100, NES_DISP_WIDTH, NES_DISP_HEIGHT);
+    g_win = g_new_window(title, 10, 100, NES_DISP_WIDTH, NES_DISP_HEIGHT, GW_NO_MAXIM);
     if (g_win < 0) {
         printf("[infones] create window failed!\n");
         g_quit();

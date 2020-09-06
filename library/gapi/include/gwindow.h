@@ -23,7 +23,8 @@ enum {
     GW_MAXIM        = (1 << 0),
     GW_RESIZE       = (1 << 1),
     GW_RESIZE_EX    = (1 << 2),
-    
+    GW_NO_MAXIM     = (1 << 3), /* 没有最大化按钮 */
+    GW_NO_MINIM     = (1 << 4), /* 没有最小化按钮 */
 };
 
 #define GW_BTN_SIZE 16
@@ -51,7 +52,7 @@ typedef struct {
     char title[GW_TITLE_LEN];   /* 窗口的标题 */
 } g_window_t;
 
-int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height);
+int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height, uint32_t flags);
 int g_del_window(int win);
 int g_del_window_all();
 int g_show_window(int win);
