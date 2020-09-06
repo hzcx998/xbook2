@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     if (g_init() < 0)
         return -1;
 
-    int win = g_new_window("win", 400, 200, 360, 240);
+    int win = g_new_window("win", 400, 200, 360, 240, 0);
     if (win < 0)
         return -1;
         

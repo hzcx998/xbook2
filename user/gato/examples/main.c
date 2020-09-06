@@ -35,7 +35,7 @@ static void frambuffer_init()
     }
     printf("gui new window start.\n");
         
-    gWindow = g_new_window("gato", 100, 100, W, H);
+    gWindow = g_new_window("gato", 100, 100, W, H, GW_NO_MAXIM);
     if (gWindow < 0) {
         printf("gui new window failed!\n");
         g_quit();

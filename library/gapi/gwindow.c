@@ -143,41 +143,60 @@ static int g_window_maxim_btn_handler(void *arg)
  */
 int g_window_bind_touch(g_window_t *gw)
 {
-    g_touch_t *gtc_close = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
+    g_touch_t *gtc_close;
+    g_touch_t *gtc_minim;
+    g_touch_t *gtc_maxim;
+
+    gtc_close = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
     if (gtc_close == NULL)
-        goto step_1;
-    g_touch_t *gtc_minim = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
-    if (gtc_minim == NULL)
-        goto step_2;
-    g_touch_t *gtc_maxim = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
-    if (gtc_maxim == NULL)
-        goto step_3;
-        
-    g_touch_set_location(gtc_close, 16, 4);
+        return -1;
+
+    if (!(gw->flags & GW_NO_MINIM)) {
+        gtc_minim = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
+        if (gtc_minim == NULL) {
+            free(gtc_close);
+            return -1;
+        }
+    }
+
+    if (!(gw->flags & GW_NO_MAXIM)) {
+        gtc_maxim = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
+        if (gtc_maxim == NULL) {
+            if (!(gw->flags & GW_NO_MINIM))
+                free(gtc_minim);
+            free(gtc_close);
+            return -1;
+        }
+    }
+
+    int x = 16;
+    int y = 4;
+
+    g_touch_set_location(gtc_close, x, y);
     g_touch_set_color(gtc_close, GW_OFF_FRONT_COLOR, GC_RED);
     g_touch_set_handler(gtc_close, 0, g_window_close_btn_handler);
     g_touch_set_layer(gtc_close, gw->layer, &gw->touch_list);
     gtc_close->extension = gw;
     
-    g_touch_set_location(gtc_minim, 16 + 16 * 1 + 8 * 1, 4);
-    g_touch_set_color(gtc_minim, GW_OFF_FRONT_COLOR, GC_YELLOW);
-    g_touch_set_handler(gtc_minim, 0, g_window_minim_btn_handler);
-    g_touch_set_layer(gtc_minim, gw->layer, &gw->touch_list);
-    gtc_minim->extension = gw;
+    if (!(gw->flags & GW_NO_MINIM)) {
+        x += 16 + 8;
+        g_touch_set_location(gtc_minim, x, y);
+        g_touch_set_color(gtc_minim, GW_OFF_FRONT_COLOR, GC_YELLOW);
+        g_touch_set_handler(gtc_minim, 0, g_window_minim_btn_handler);
+        g_touch_set_layer(gtc_minim, gw->layer, &gw->touch_list);
+        gtc_minim->extension = gw;
+    }
 
-    g_touch_set_location(gtc_maxim, 16 + 16 * 2 + 8 * 2, 4);
-    g_touch_set_color(gtc_maxim, GW_OFF_FRONT_COLOR, GC_GREEN);
-    g_touch_set_handler(gtc_maxim, 0, g_window_maxim_btn_handler);
-    g_touch_set_layer(gtc_maxim, gw->layer, &gw->touch_list);
-    gtc_maxim->extension = gw;
+    if (!(gw->flags & GW_NO_MAXIM)) {
+        x += 16 + 8;
+        g_touch_set_location(gtc_maxim, x, y);
+        g_touch_set_color(gtc_maxim, GW_OFF_FRONT_COLOR, GC_GREEN);
+        g_touch_set_handler(gtc_maxim, 0, g_window_maxim_btn_handler);
+        g_touch_set_layer(gtc_maxim, gw->layer, &gw->touch_list);
+        gtc_maxim->extension = gw;
+    }
 
     return 0;
-step_3:
-    free(gtc_minim);
-step_2:
-    free(gtc_close);
-step_1:
-    return -1;
 }
 
 /**
@@ -186,7 +205,7 @@ step_1:
  * @height: 窗体高度
  * 
  */
-int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height)
+int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height, uint32_t flags)
 {
     if (!title || !width || !height)
         return -1;
@@ -207,7 +226,7 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height)
     memset(gw->title, 0, GW_TITLE_LEN);
     strcpy(gw->title, title);
     gw->layer = ly;
-    gw->flags = 0;
+    gw->flags = flags;
     gw->x = x;
     gw->y = y;
     gw->width = lw;
