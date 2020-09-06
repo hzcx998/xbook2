@@ -1,15 +1,26 @@
 /*
- * libc/stdio/ungetc.c
+ * ungetc.c - push a character back onto an input stream
  */
+/* $Header: ungetc.c,v 1.3 90/03/28 16:33:05 eck Exp $ */
 
-#include <stdio.h>
+#include	<stdio.h>
+#include	"loc_incl.h"
 
-int ungetc(int c, FILE * f)
+int
+ungetc(int ch, FILE *stream)
 {
-	unsigned char ch = c & 0xff;
+	unsigned char *p;
 
-	if(fifo_put(f->fifo_read, &ch, 1) != 1)
+	if (ch == EOF  || !io_testflag(stream,_IOREADING))
 		return EOF;
-
+	if (stream->_ptr == stream->_buf) {
+		if (stream->_count != 0) return EOF;
+		stream->_ptr++;
+	}
+	stream->_count++;
+	p = --(stream->_ptr);		/* ??? Bloody vax assembler !!! */
+	/* ungetc() in sscanf() shouldn't write in rom */
+	if (*p != (unsigned char) ch)
+		*p = (unsigned char) ch;
 	return ch;
 }

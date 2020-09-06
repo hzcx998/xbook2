@@ -1,21 +1,23 @@
 /*
- * libc/stdio/fprintf.c
+ * fprintf - write output on a stream
  */
+/* $Header: fprintf.c,v 1.3 89/12/18 15:01:54 eck Exp $ */
 
-#include <stdarg.h>
-#include <sizes.h>
-#include <stdio.h>
+#include	<stdio.h>
+#include	<stdarg.h>
+#include	"loc_incl.h"
 
-int fprintf(FILE * f, const char * fmt, ...)
+int
+fprintf(FILE *stream, const char *format, ...)
 {
 	va_list ap;
-	char buf[SZ_4K];
-	int rv;
+	int retval;
+	
+	va_start(ap, format);
 
-	va_start(ap, fmt);
-	rv = vsnprintf(buf, SZ_4K, fmt, ap);
+	retval = _doprnt (format, ap, stream);
+
 	va_end(ap);
 
-	rv = (fputs(buf, f) < 0) ? 0 : rv;
-	return rv;
+	return retval;
 }

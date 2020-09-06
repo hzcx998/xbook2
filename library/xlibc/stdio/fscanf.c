@@ -1,29 +1,23 @@
 /*
- * libc/stdio/fscanf.c
+ * fscanf.c - read formatted input from stream
  */
+/* $Header: fscanf.c,v 1.1 89/05/30 13:29:17 eck Exp $ */
 
-#include <sizes.h>
-#include <string.h>
-#include <stdio.h>
-#include <malloc.h>
+#include	<stdio.h>
+#include	<stdarg.h>
+#include	"loc_incl.h"
 
-int fscanf(FILE * f, const char * fmt, ...)
+int
+fscanf(FILE *stream, const char *format, ...)
 {
 	va_list ap;
-	char * buf;
-	int rv;
+	int retval;
 
-	buf = malloc(SZ_4K);
-	if(!buf)
-		return 0;
+	va_start(ap, format);
 
-	memset(buf, 0, SZ_4K);
-	fread(buf, 1, SZ_4K, f);
+	retval = _doscan(stream, format, ap);
 
-	va_start(ap, fmt);
-	rv = vsscanf(buf, fmt, ap);
 	va_end(ap);
 
-	free(buf);
-	return rv;
+	return retval;
 }

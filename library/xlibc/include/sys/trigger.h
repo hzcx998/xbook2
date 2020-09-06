@@ -66,4 +66,7 @@ int trigpending(trigset_t *set);
 
 int trigmask(int trig);
 
+int trigblock(int block);
+int trigsetmask(int mask);
+
 #endif   /* _SYS_TRIGGER_H */

@@ -2,8 +2,6 @@
 #include <sys/proc.h>
 #include <sys/trigger.h>
 
-extern void _exit_cleanup();
-
 /**
  * _exit() - exit process
  * 
@@ -13,7 +11,6 @@ extern void _exit_cleanup();
  */
 void _exit(int status)
 {
-    _exit_cleanup();
     syscall1(int , SYS_EXIT, status);
 }
 

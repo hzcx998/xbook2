@@ -39,4 +39,6 @@ int abs(int const i);
 long int labs(long int const i);
 void atexit(void (*func)(void));
 
+int system(const char * cmd);
+
 #endif  /* _LIB_STDLIB_H */

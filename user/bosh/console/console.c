@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <math.h>
 #include <gapi.h>
 #include <sys/input.h>
@@ -703,6 +704,21 @@ int con_xmit_key(int kcode, int kmod)
                 
             return 0;   /* 特殊按键处理 */
         }
+    }
+    /* 过滤一些按键 */
+    switch (kcode) {
+    case GK_NUMLOCK:
+    case GK_CAPSLOCK:
+    case GK_SCROLLOCK:
+    case GK_RSHIFT:
+    case GK_LSHIFT:
+    case GK_RCTRL:
+    case GK_LCTRL:
+    case GK_RALT:
+    case GK_LALT:
+        return 0;   /* 特殊按键处理 */
+    default:
+        break;
     }
     shell_child_key = kcode;
     return 1;

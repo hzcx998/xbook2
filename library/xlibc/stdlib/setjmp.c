@@ -1,4 +1,6 @@
 #include <setjmp.h>
+
+#if 0
 /*
  * 演示版本，只为理解逻辑含义。
  * 假设它可以把栈的一个连续的空间复制到jmp_buf数据对象中，并且能保存足够数量的调用环境。
@@ -28,3 +30,4 @@ int setjmp(jmp_buf env)
     memcpy((char *)&env[2], (char *)env[1] + _JBOFF, _JBMOV);
     return 0;
 }
+#endif

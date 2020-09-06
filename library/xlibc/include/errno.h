@@ -101,7 +101,7 @@ extern int *_errno(void);
 errno_t _set_errno(int value);
 errno_t _get_errno(int *value);
 
-void perror(char *str);
+// void perror(char *str);
 char *strerror(int errnum);
 
 #endif  /* _LIB_ERRNO_H */

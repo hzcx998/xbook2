@@ -14,6 +14,7 @@ AS			:=	nasm
 
 export AS
 
+MODULE      +=  lua
 MODULE      +=  cal
 MODULE      +=  invader
 MODULE      +=  gato
