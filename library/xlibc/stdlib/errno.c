@@ -76,7 +76,7 @@ char *strerror(int errnum)
     }
     return __errno_string[0];
 }
-
+#if 0
 void perror(char *str)
 {
     char *error = strerror(__errno);
@@ -84,3 +84,4 @@ void perror(char *str)
     res_write(RES_STDERRNO, 0, ": ", 2);
     res_write(RES_STDERRNO, 0, error, strlen(error));
 }
+#endif

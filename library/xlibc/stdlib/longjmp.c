@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 #include <string.h>
-
+#if 0
 static void dummy(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j)
 {
 }
@@ -26,3 +26,4 @@ void longjmp(jmp_buf env, int val)
     env[0] = val ? val :1;
     dojmp(env);
 }
+#endif

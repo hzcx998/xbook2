@@ -1,22 +1,23 @@
 /*
- * libc/stdio/printf.c
+ * printf - write on the standard output stream
  */
+/* $Header: printf.c,v 1.3 89/12/18 15:03:08 eck Exp $ */
 
-#include <stdarg.h>
-#include <sizes.h>
-#include <stdio.h>
+#include	<stdio.h>
+#include	<stdarg.h>
+#include	"loc_incl.h"
 
-int printf(const char * fmt, ...)
+int
+printf(const char *format, ...)
 {
 	va_list ap;
-	char buf[SZ_1K] = {0};
-	int rv;
+	int retval;
 
-	va_start(ap, fmt);
-	rv = vsnprintf(buf, SZ_4K, fmt, ap);
+	va_start(ap, format);
+
+	retval = _doprnt(format, ap, stdout);
+
 	va_end(ap);
 
-	rv = (fputs(buf, stdout) < 0) ? 0 : rv;
-	fflush(stdout);
-	return rv;
+	return retval;
 }

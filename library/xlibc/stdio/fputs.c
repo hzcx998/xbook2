@@ -1,11 +1,18 @@
 /*
- * libc/stdio/fputs.c
+ * fputs - print a string
  */
+/* $Header: fputs.c,v 1.2 89/12/18 15:02:01 eck Exp $ */
 
-#include <string.h>
-#include <stdio.h>
+#include	<stdio.h>
 
-int fputs(const char * s, FILE * f)
+int
+fputs(register const char *s, register FILE *stream)
 {
-	return ((__stdio_write(f, (unsigned char *)s, strlen(s)) <= 0) ? EOF : 0);
+	register int i = 0;
+
+	while (*s) 
+		if (putc(*s++, stream) == EOF) return EOF;
+		else i++;
+
+	return i;
 }

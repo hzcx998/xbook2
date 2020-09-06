@@ -1,31 +1,27 @@
 /*
- * libc/stdio/fgets.c
+ * fgets.c - get a string from a file
  */
+/* $Header: fgets.c,v 1.3 89/12/18 15:01:11 eck Exp $ */
 
-#include <stddef.h>
-#include <stdio.h>
+#include	<stdio.h>
 
-char * fgets(char * s, int n, FILE * f)
+char *
+fgets(char *s, register int n, register FILE *stream)
 {
-	char * p = s;
-	char * ret = NULL;
-	ssize_t res = 0;
+	register int ch;
+	register char *ptr;
 
-	while(n-- > 1)
-	{
-		res = __stdio_read(f, (unsigned char *)p, 1);
-
-		if(res == 0)
-			break;
-
-		else if(res < 0)
-			return NULL;
-
-		ret = s;
-		if(*p++ == '\n')
+	ptr = s;
+	while (--n > 0 && (ch = getc(stream)) != EOF) {
+		*ptr++ = ch;
+		if ( ch == '\n')
 			break;
 	}
-
-	*p = 0;
-	return ret;
+	if (ch == EOF) {
+		if (feof(stream)) {
+			if (ptr == s) return NULL;
+		} else return NULL;
+	}
+	*ptr = '\0';
+	return s;
 }

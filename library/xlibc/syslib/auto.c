@@ -30,5 +30,5 @@ void _enter_preload(int argc, char *const argv[], char *const envp[])
 void _exit_cleanup()
 {
     __atexit_callback();
-
+    
 }

@@ -1,7 +1,11 @@
 #ifndef _XLIBC_STDDEF_H
 #define _XLIBC_STDDEF_H
 
+
+#ifndef _SIZE_T
+#define	_SIZE_T
 typedef unsigned long size_t;
+#endif /* _SIZE_T */
 typedef unsigned long dma_addr_t;
 
 #ifndef _WCHAR_T_DEFINED   
