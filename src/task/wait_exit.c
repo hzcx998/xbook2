@@ -294,7 +294,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
         /* 处理zombie子进程 */
         if ((child_pid = deal_zombie_child(parent)) > 0) {
             restore_intr(flags);
-            printk("[task]: parent %d deal zombie child %d\n", parent->pid, child_pid);
+            //printk("[task]: parent %d deal zombie child %d\n", parent->pid, child_pid);
             return child_pid;
         }
 

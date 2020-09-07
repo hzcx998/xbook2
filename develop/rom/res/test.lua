@@ -1,4 +1,4 @@
---[[
+
 print(type("Hello world"))      --> string
 print(type(10.4*3))             --> number
 print(type(print))              --> function
@@ -65,7 +65,6 @@ print(coroutine.running())
 
 print("----------")
 
---]]
 
 -- 以附加的方式打开只写文件
 file = io.open("res/wr.lua", "w+")
