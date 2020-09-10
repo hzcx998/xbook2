@@ -35,7 +35,7 @@ char * partition(char * lo, char * hi, int (*comp)(const void *, const void *), 
     return j;
 }
 
-void sort(char * lo, char * hi, int (*comp)(const void *, const void *), size_t width) {
+static void sort(char * lo, char * hi, int (*comp)(const void *, const void *), size_t width) {
     char * p;
     if (lo >= hi)    return;
  

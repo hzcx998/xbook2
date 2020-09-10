@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-int fflush(void *file)
+int system(const char * cmd)
 {
     return 0;
 }
