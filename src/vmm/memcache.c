@@ -155,7 +155,7 @@ static int mem_group_init(
 	mem_group_t *group,
 	flags_t flags
 ) {
-    
+
 	// 把group添加到free链表
 	list_add(&group->list, &cache->free_groups);
 
@@ -165,7 +165,7 @@ static int mem_group_init(
 	// 设定位图
 	group->map.byte_length = DIV_ROUND_UP(cache->object_count, 8);
 	group->map.bits = (unsigned char *)map;	
-	
+
 	bitmap_init(&group->map);
 
 	mem_node_t *node; 
@@ -180,6 +180,7 @@ static int mem_group_init(
 		MEM_NODE_MARK_CHACHE_GROUP(node, cache, group);
 	} else {
 		unsigned int pages = DIV_ROUND_UP(cache->object_count * cache->object_size, PAGE_SIZE); 
+
 		group->objects = mem_cache_alloc_pages(pages);
 		if (group->objects == NULL) {
 			printk(KERN_ERR "alloc page for mem objects failed\n");
@@ -213,7 +214,7 @@ static int create_mem_group(mem_cache_t *cache, flags_t flags)
 	mem_group_t *group;
     unsigned irqflags;
     save_intr(irqflags);
-    //printk("cache %s need a new group %x!\n", cache->name, cache->object_size);
+    // printk("cache %s need a new group %x!\n", cache->name, cache->object_size);
 
 	/* 为内存组分配一个页 */
 	group = mem_cache_alloc_pages(1);
@@ -222,12 +223,14 @@ static int create_mem_group(mem_cache_t *cache, flags_t flags)
         restore_intr(irqflags);
 		return -1;
 	}
+    // printk("cache %s alloc group ok %x!\n", cache->name, group);
 
 	if (mem_group_init(cache, group, flags)) {
 		printk(KERN_ERR "init mem group failed!\n");
 		goto free_group;
 	}
-	restore_intr(irqflags);
+
+    restore_intr(irqflags);
 	// 创建成功
 	return 0;
 

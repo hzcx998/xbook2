@@ -18,6 +18,8 @@ static SDL_Surface *gSurface = NULL;
 #else
 static int gWindow = -1;
 static g_bitmap_t *gSurface = NULL;
+
+static int mouse_x, mouse_y;
 #endif
 
 static void frambuffer_init()
@@ -62,6 +64,14 @@ static void frambuffer_close()
     g_quit();
     #endif
 }
+
+static void motion_get_xy(int *x, int *y)
+{
+    *x = mouse_x;
+    *y = mouse_y;
+}
+
+
 // #define PROFILE
 
 #ifdef PROFILE
@@ -130,6 +140,15 @@ int main(int argc, char *argv[])
                 goto exit_main;
             /* 有外部消息则处理消息 */
             g_dispatch_msg(&m);
+            switch (g_msg_get_type(&m))
+            {
+            case GM_MOUSE_MOTION:
+                mouse_x = g_msg_get_mouse_x(&m);
+                mouse_y = g_msg_get_mouse_y(&m);
+                break;
+            default:
+                break;
+            }
         }
         #endif
 

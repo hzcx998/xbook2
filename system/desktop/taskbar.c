@@ -16,6 +16,8 @@ int init_taskbar()
     
     init_list(&taskbar.touch_list);
 
+    printf("[desktop]: alloc taskbar layer start.\n");
+
     int layer = g_layer_new(0, 0, taskbar.width, taskbar.height);
     if (layer < 0) {
         printf("[desktop]: new taskbar layer failed!\n");

@@ -195,6 +195,8 @@ typedef uint16_t stbir_uint16;
 typedef uint32_t stbir_uint32;
 #endif
 
+#define STB_IMAGE_RESIZE_STATIC
+
 #ifndef STBIRDEF
 #ifdef STB_IMAGE_RESIZE_STATIC
 #define STBIRDEF static

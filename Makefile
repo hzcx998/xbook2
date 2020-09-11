@@ -153,7 +153,7 @@ usr_c:
 		-device ide-drive,drive=disk1,bus=ahci.1 \
 
 
-QEMU_ARGUMENT = -m 256M \
+QEMU_ARGUMENT = -m 512M \
 		-name "XBOOK Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
 		-drive id=disk0,file=$(HDA_IMG),if=none \

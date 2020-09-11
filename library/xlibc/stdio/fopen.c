@@ -76,6 +76,7 @@ fopen(const char *name, const char *mode)
 	while (*mode) {
 		switch(*mode++) {
 		case 'b':
+            rwmode |= O_BINARY;
 			continue;
 		case '+':
 			rwmode = O_RDWR;

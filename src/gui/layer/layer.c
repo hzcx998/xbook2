@@ -53,12 +53,19 @@ DEFINE_SPIN_LOCK(layer_val_lock);
 layer_t *create_layer(int width, int height)
 {
     size_t bufsz = width * height * sizeof(GUI_COLOR);
+    if (bufsz > layer_buffer_memcache.object_size) {
+        printk(KERN_ERR "[gui]: alloc layer buffer size=%x too large!\n", bufsz);
+        return NULL;
+    }
     uint32_t flags = 0;
     GUI_COLOR *buffer = kmalloc(bufsz);
     if (buffer == NULL) {
+        printk(KERN_NOTICE "[gui]: alloc layer buffer in kmalloc failed! try mem cache.\n");
+        
         flags |= LAYER_EXT_BUF;
         buffer = mem_cache_alloc_object(&layer_buffer_memcache);
         if (buffer == NULL) {
+            printk(KERN_ERR "[gui]: alloc layer buffer in layer buffer memcache failed!\n");
             return NULL;
         }
     }
@@ -1385,6 +1392,7 @@ int layer_focus_win_top()
 int gui_init_layer()
 {
     size_t maxsz = gui_screen.width * gui_screen.height * sizeof(uint32_t) + PAGE_SIZE;
+    printk(KERN_DEBUG "max layer buffer size=%x %dMB\n", maxsz, maxsz/ MB);
     mem_cache_init(&layer_buffer_memcache, "layer_buffer", maxsz, 0);
     
     maxsz = gui_screen.width * gui_screen.height * sizeof(uint16_t);
