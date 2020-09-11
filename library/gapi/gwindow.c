@@ -43,20 +43,10 @@ static void __g_paint_window(g_window_t *gw, int turn, int body)
         front = GW_OFF_FRONT_COLOR;
         font = GW_OFF_FONT_COLOR;
     }
-    #if 0
-    if (body)
-        g_layer_rect_fill(gw->layer, 0, 0, gw->width, gw->height, back);
-    g_layer_rect(gw->layer, 0, 0, gw->width, gw->height, board);
-
-    g_layer_rect_fill(gw->layer, 0, gw->body_region.top - 1, gw->width, 1, board);
-    //g_layer_line(gw->layer, 0, GW_TITLE_BAR_HIGHT, gw->width, GW_TITLE_BAR_HIGHT, board);
-
-    g_layer_text(gw->layer, gw->width / 2 - (strlen(gw->title) * 
-        g_current_font->char_width) / 2, (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
-        gw->title, font);
-    #else
+   
     /* 需要清空位图 */
     g_bitmap_clear(gw->wbmp);
+    #if 0
     if (body)
         g_rectfill(gw->wbmp, 0, 0, gw->width, gw->height, back);
     g_rect(gw->wbmp, 0, 0, gw->width, gw->height, board);
@@ -64,23 +54,46 @@ static void __g_paint_window(g_window_t *gw, int turn, int body)
     g_text(gw->wbmp, gw->width / 2 - (strlen(gw->title) * 
         g_current_font->char_width) / 2, (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
         gw->title, font);
-    #if 0
-    g_rect_t rect;
-    rect.x = 0;
-    rect.y = 0;
-    rect.width = gw->width;
-    rect.height = gw->height;
+    #else
+    if (body)
+        g_rectfill(gw->wbmp, 1, 1, gw->width - 2, gw->height - 2, back);
     
-    g_region_t regn;
-    regn.left = 0;
-    regn.top = 0;
-    regn.right = gw->width;
-    regn.bottom = gw->height;
-    g_layer_sync_bitmap(gw->layer, &rect, gw->wbmp->buffer, &regn);
+    g_rectfill(gw->wbmp, 1, gw->body_region.top - 1, gw->width - 2, 1, board);
+
+    /* 基础圆角 */
+    g_rectfill(gw->wbmp, 2, 0, gw->width - 4, 1, board);
+    g_rectfill(gw->wbmp, 0, gw->height - 1, gw->width, 1, board);
+    g_rectfill(gw->wbmp, 0, 2, 1, gw->height - 4, board);
+    g_rectfill(gw->wbmp, gw->width - 1, 2, 1, gw->height - 4, board);
+
+    uint32_t none_color = GC_ARGB(0, 0, 0, 0);
+    /* 左上角 */
+    g_putpixel(gw->wbmp, 2, 0, none_color);
+    g_putpixel(gw->wbmp, 3, 0, none_color);
+    g_putpixel(gw->wbmp, 0, 2, none_color);
+    g_putpixel(gw->wbmp, 0, 3, none_color);
+    g_putpixel(gw->wbmp, 1, 1, none_color);
+    g_putpixel(gw->wbmp, 2, 1, board);
+    g_putpixel(gw->wbmp, 1, 2, board);
+
+    /* 右上角 */
+    g_putpixel(gw->wbmp, gw->width - 3, 0, none_color);
+    g_putpixel(gw->wbmp, gw->width - 4, 0, none_color);
+    g_putpixel(gw->wbmp, gw->width - 1, 2, none_color);
+    g_putpixel(gw->wbmp, gw->width - 1, 3, none_color);
+    g_putpixel(gw->wbmp, gw->width - 2, 1, none_color);
+    /* 填充边框 */
+    g_putpixel(gw->wbmp, gw->width - 3, 1, board);
+    g_putpixel(gw->wbmp, gw->width - 2, 2, board);
+    
+    g_text(gw->wbmp, gw->width / 2 - (strlen(gw->title) * 
+        g_current_font->char_width) / 2, (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
+        gw->title, font);
+    
     #endif
     g_bitmap_sync(gw->wbmp, gw->layer, 0, 0);
-    #endif
-    g_touch_set_idel_color_group(&gw->touch_list, front);
+
+    g_touch_set_idel_color_group(&gw->touch_list, board);
     g_touch_paint_group(&gw->touch_list);
     if (body) {
         g_invalid_window(gw->layer);
@@ -277,6 +290,10 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height, uin
         g_layer_del(ly);
         return -1;
     }
+    
+    if (flags & GW_SHOW)
+        g_show_window(gw->layer);
+
     return ly;
 }
 

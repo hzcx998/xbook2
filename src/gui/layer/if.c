@@ -15,7 +15,7 @@ int sys_new_layer(int x, int y, uint32_t width, uint32_t height)
     if (l == NULL) {
         return -1;
     }
-    layer_draw_rect_fill(l, 0, 0, l->width, l->height, COLOR_WHITE);
+    //layer_draw_rect_fill(l, 0, 0, l->width, l->height, COLOR_WHITE);
     layer_set_xy(l, x, y);
     l->extension = current_task;
     return l->id;

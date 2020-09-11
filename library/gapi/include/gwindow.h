@@ -9,22 +9,23 @@
 
 #define GW_TITLE_LEN    64
 
-#define GW_ON_BACK_COLOR  GC_ARGB(128, 245, 245, 245)
+#define GW_ON_BACK_COLOR  GC_ARGB(225, 245, 245, 245)
 #define GW_ON_BOARD_COLOR GC_RGB(200, 200, 200)
 #define GW_ON_FRONT_COLOR GC_RGB(230, 230, 230)
 #define GW_ON_FONT_COLOR  GC_RGB(25, 25, 25)
 
-#define GW_OFF_BACK_COLOR  GC_ARGB(128, 235, 235, 235)
-#define GW_OFF_BOARD_COLOR GC_RGB(190, 190, 190)
-#define GW_OFF_FRONT_COLOR GC_RGB(210, 210, 210)
-#define GW_OFF_FONT_COLOR  GC_RGB(128, 128, 128)
+#define GW_OFF_BACK_COLOR  GC_ARGB(225, 225, 225, 225)
+#define GW_OFF_BOARD_COLOR GC_RGB(180, 180, 180)
+#define GW_OFF_FRONT_COLOR GC_RGB(200, 200, 200)
+#define GW_OFF_FONT_COLOR  GC_RGB(118, 118, 118)
 
 enum {
-    GW_MAXIM        = (1 << 0),
-    GW_RESIZE       = (1 << 1),
-    GW_RESIZE_EX    = (1 << 2),
+    GW_MAXIM        = (1 << 0), /* 处于最大化状态 */
+    GW_RESIZE       = (1 << 1), /* 处于调整大小状态 */
+    GW_RESIZE_EX    = (1 << 2), /* 记录大小调整信息中 */
     GW_NO_MAXIM     = (1 << 3), /* 没有最大化按钮 */
     GW_NO_MINIM     = (1 << 4), /* 没有最小化按钮 */
+    GW_SHOW         = (1 << 5), /* 创建时显示 */
 };
 
 #define GW_BTN_SIZE 16

@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     if (g_init() < 0)
         return -1;
 
-    int win = g_new_window("win", 400, 200, 360, 240, 0);
+    int win = g_new_window("win", 400, 200, 360, 240, GW_SHOW);
     if (win < 0)
         return -1;
         
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     g_set_window_minresize(win, 200, 100);
     /* 设置窗口界面 */
     
-    g_show_window(win);
+    //g_show_window(win);
 
     /* 注册消息回调函数 */
     g_set_msg_routine(win_proc);
