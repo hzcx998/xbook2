@@ -15,7 +15,9 @@
 
 #define DEBUG_LOCAL 0
 
-//#define LAYER_DEBUG
+#define LAYER_DEBUG
+
+// #define LAYER_ALPAH /* 是否拥有透明图层 */
 
 /* 所有图层都挂载到该链表 */
 LIST_HEAD(layer_list_head);
@@ -30,6 +32,9 @@ layer_t *layer_focused = NULL;   /* focused layer */
 uint16_t *layer_map = NULL; /* layer z map */
 int layer_next_id = 0;  /* 图层id */
 
+#ifdef LAYER_ALPAH
+uint32_t *screen_backup_buffer; /*  */
+#endif
 mem_cache_t layer_buffer_memcache;  /* 图层缓冲区内存分配器 */
 
 /* 图层链表管理的自旋锁 */
@@ -178,6 +183,9 @@ layer_t *layer_find_by_z(int z)
  */
 static void layer_refresh_map(int left, int top, int right, int buttom, int z0)
 {
+    #ifdef LAYER_ALPAH  /* 透明图层不需要map */
+    return;
+    #endif         
     /* 在图层中的位置 */
     int layer_left, layer_top, layer_right, layer_buttom;
 
@@ -577,11 +585,14 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
     
     layer_t *layer;
     GUI_COLOR color;
+    gui_color_t *src_rgb, *dst_rgb;
+    spin_lock(&layer_list_spin_lock);
 
-    //spin_lock(&layer_list_spin_lock);
     /* 刷新高度为[Z0-Z1]区间的图层 */
     list_for_each_owner (layer, &layer_show_list_head, list) {
+        #ifndef LAYER_ALPAH /* 全部图层都要进行计算 */
         if (layer->z >= z0 && layer->z <= z1) {
+        #endif
             /* 获取刷新范围 */
             layer_left = left - layer->x;
             layer_top = top - layer->y;
@@ -596,24 +607,57 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
                 layer_right = layer->width;
             if (layer_buttom > layer->height)
                 layer_buttom = layer->height;
-            
+            /* TODO: 进行范围剪切，如果不在刷新范围内就不处理 */
+
             for(layer_y = layer_top; layer_y < layer_buttom; layer_y++){
                 screen_y = layer->y + layer_y;
                 for(layer_x = layer_left; layer_x < layer_right; layer_x++){
                     screen_x = layer->x + layer_x;
-                    /* 照着map中的z进行刷新 */			
+                    
+                    #ifndef LAYER_ALPAH
+                    /* 照着map中的z进行刷新 */
                     if (layer_map[(screen_y * gui_screen.width + screen_x)] == layer->z) {
+                    #endif
                         /* 获取图层中的颜色 */
-                        //color = ;
+                        #ifndef LAYER_ALPAH
                         /* 写入到显存 */
                         gui_screen.output_pixel(screen_x, screen_y, gui_screen.gui_to_screen_color(
                             layer->buffer[layer_y * layer->width + layer_x]));
+                        #else   /* 根据透明度计算rgb值，算法：AlphaBlend */
+                        src_rgb = (gui_color_t *) &layer->buffer[layer_y * layer->width + layer_x];
+                        
+                        dst_rgb = (gui_color_t *) (screen_backup_buffer + (screen_y * gui_screen.width ) + screen_x);
+
+                        dst_rgb->red = (((src_rgb->red) * src_rgb->alpha + 
+                            (dst_rgb->red) *(0xff - src_rgb->alpha)) >> 8)&0xffU;
+                        dst_rgb->green = (((src_rgb->green) * src_rgb->alpha + 
+                            (dst_rgb->green) *(0xff - src_rgb->alpha)) >> 8)&0xffU;
+                        dst_rgb->blue = (((src_rgb->blue) * src_rgb->alpha + 
+                            (dst_rgb->blue) *(0xff - src_rgb->alpha)) >> 8)&0xffU;
+                        dst_rgb->alpha = (((src_rgb->alpha) * src_rgb->alpha + 
+                            (dst_rgb->alpha) *(0xff - src_rgb->alpha)) >> 8)&0xffU;
+                    
+                        
+                        #endif
+                    #ifndef LAYER_ALPAH
                     }
+                    #endif
                 }
             }
+        #ifndef LAYER_ALPAH
+        }
+        #endif
+    }
+    spin_unlock(&layer_list_spin_lock);
+
+    #ifdef LAYER_ALPAH  /* 将指定区域刷新到屏幕 */
+    for (screen_y = top; screen_y <= buttom; screen_y++) {
+        for (screen_x = left; screen_x <= right; screen_x++) {
+            gui_screen.output_pixel(screen_x, screen_y, gui_screen.gui_to_screen_color(
+                screen_backup_buffer[screen_y * gui_screen.width + screen_x]));
         }
     }
-    //spin_unlock(&layer_list_spin_lock);
+    #endif
 }
 
 /**
@@ -685,7 +729,7 @@ void layer_set_xy(layer_t *layer, int x, int y)
         /* 刷新新位置 */
         layer_refresh_map(x, y, x + layer->width, y + layer->height, layer->z);
 
-        /* 刷新原来位置 */
+        /* 刷新新的位置 */
         layer_refresh_by_z(old_x, old_y, old_x + layer->width, old_y + layer->height, 0, layer->z - 1);
         /* 刷新新位置 */
         layer_refresh_by_z(x, y, x + layer->width, y + layer->height, layer->z, layer->z);
@@ -1325,7 +1369,6 @@ int gui_dispatch_target_msg(g_msg_t *msg)
     return val;
 }
 
-
 int layer_focus_win_top()
 {
     /* 聚焦到最高的窗口图层 */
@@ -1351,6 +1394,13 @@ int gui_init_layer()
         return -1;
     }
     memset(layer_map, 0, maxsz);
+    #ifdef LAYER_ALPAH /* 分配屏幕缓冲区 */
+    screen_backup_buffer = mem_cache_alloc_object(&layer_buffer_memcache);
+    if (screen_backup_buffer == NULL) {
+        return -1;
+    }
+    memset(screen_backup_buffer, 0, maxsz);
+    #endif
 
     INIT_LIST_HEAD(&layer_show_list_head);
     INIT_LIST_HEAD(&layer_list_head);

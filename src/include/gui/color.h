@@ -6,6 +6,13 @@
 #define SCREEN_COLOR uint32_t
 #define GUI_COLOR   uint32_t
 
+typedef struct {
+    uint8_t blue;
+    uint8_t green;
+    uint8_t red;
+    uint8_t alpha;
+} gui_color_t;
+
 #define COLOR_NO_ALPHA   255
 
 #define __ARGB(a, r, g, b) (((a) << 24) | ((r) << 16) | ((g) << 8) | (b)) 

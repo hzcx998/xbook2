@@ -55,11 +55,10 @@ int kernel_main(void)
     init_fs();
 
     init_gui();
-    init_net();
+    // init_net();
     
     //spin("test");
     start_user();
 
     return 0;    
 }
-
