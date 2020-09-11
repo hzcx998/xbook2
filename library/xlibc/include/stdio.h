@@ -157,9 +157,4 @@ _PROTOTYPE (FILE *fdopen, (int _fildes, const char *_types) );
 #define L_cuserid 255	/* required by POSIX */
 #endif
 
-#ifdef _MINIX
-_PROTOTYPE(FILE *popen, (const char *_command, const char *_type));
-_PROTOTYPE(int pclose, (FILE *_stream));
-#endif
-
 #endif /* _STDIO_H */

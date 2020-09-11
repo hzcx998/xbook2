@@ -22,9 +22,6 @@
 
 #define USE_THREAD  0
 
-/* 把小键盘上的数值修复成主键盘上的值 */
-//#define CONFIG_PAD_FIX
-
 /* 键盘控制器端口 */
 enum kbd_controller_port {
     KBC_READ_DATA   = 0x60,     /* 读取数据端口(R) */
