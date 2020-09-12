@@ -427,6 +427,7 @@ void gui_draw_shade_layer(layer_t *shade, gui_rect_t *rect, int draw)
 { 
     if (!shade || !rect)
         return;
+    #if 0   /* shade can out of screen */
     if (rect->x < 0)
         rect->x = 0;
     if (rect->y < 0)
@@ -435,6 +436,7 @@ void gui_draw_shade_layer(layer_t *shade, gui_rect_t *rect, int draw)
         rect->width = shade->width;
     if (rect->height > shade->height)
         rect->height = shade->height;
+    #endif
     GUI_COLOR color;
 
     /* 如果有绘制，就根据绘制窗口绘制容器 */
