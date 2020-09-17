@@ -22,6 +22,8 @@ surface_t *surface_image_load(char const *filename, int w, int h)
             s->pixels[i * s->width + j] = (color_t){c.r, c.g, c.b, c.a};
         }
     }
+    if (image)
+        free(image);
     return s;
 }
 

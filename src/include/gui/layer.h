@@ -20,8 +20,8 @@ enum {
     LAYER_WINDOW    = (1 << 0),   /* 窗口标志 */
     LAYER_FLOAT     = (1 << 1),   /* 浮动块标志 */
     LAYER_FIXED     = (1 << 2),   /* 固定位置标志 */
-    LAYER_EXT_BUF   = (1 << 2),   /* 扩展内存，使用缓冲区专用内存 */
-    
+    LAYER_EXT_BUF   = (1 << 3),   /* 扩展内存，使用缓冲区专用内存 */
+    LAYER_EXT_BUF2  = (1 << 4),   /* 扩展内存，使用缓冲区专用内存，最大内存 */
 };
 
 typedef struct _layer {
@@ -45,6 +45,7 @@ int gui_init_layer();
 
 layer_t *create_layer(int width, int height);
 int destroy_layer(layer_t *layer);
+void layer_clear(layer_t *layer);
 void layer_set_xy(layer_t *layer, int x, int y);
 void layer_set_z(layer_t *layer, int z);
 void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1);

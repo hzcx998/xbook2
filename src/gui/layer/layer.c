@@ -36,6 +36,7 @@ int layer_next_id = 0;  /* 图层id */
 uint32_t *screen_backup_buffer; /*  */
 #endif
 mem_cache_t layer_buffer_memcache;  /* 图层缓冲区内存分配器 */
+mem_cache_t layer_buffer_memcache_ex;  /* 图层缓冲区内存分配器 */
 
 /* 图层链表管理的自旋锁 */
 DEFINE_SPIN_LOCK(layer_list_spin_lock);
@@ -53,7 +54,7 @@ DEFINE_SPIN_LOCK(layer_val_lock);
 layer_t *create_layer(int width, int height)
 {
     size_t bufsz = width * height * sizeof(GUI_COLOR);
-    if (bufsz > layer_buffer_memcache.object_size) {
+    if (bufsz > layer_buffer_memcache_ex.object_size) {
         printk(KERN_ERR "[gui]: alloc layer buffer size=%x too large!\n", bufsz);
         return NULL;
     }
@@ -62,12 +63,20 @@ layer_t *create_layer(int width, int height)
     if (buffer == NULL) {
         printk(KERN_NOTICE "[gui]: alloc layer buffer in kmalloc failed! try mem cache.\n");
         
-        flags |= LAYER_EXT_BUF;
+        
         buffer = mem_cache_alloc_object(&layer_buffer_memcache);
         if (buffer == NULL) {
             printk(KERN_ERR "[gui]: alloc layer buffer in layer buffer memcache failed!\n");
-            return NULL;
+            buffer = mem_cache_alloc_object(&layer_buffer_memcache_ex);
+            if (buffer == NULL) {
+                printk(KERN_ERR "[gui]: alloc layer buffer in layer buffer memcache ex failed!\n");
+                return NULL;
+            }
+            flags |= LAYER_EXT_BUF2;
+        } else {
+            flags |= LAYER_EXT_BUF;
         }
+        
     }
         
 
@@ -531,6 +540,8 @@ int destroy_layer(layer_t *layer)
 
     if (layer->flags & LAYER_EXT_BUF) {
         mem_cache_free_object(&layer_buffer_memcache, layer->buffer);
+    } else if (layer->flags & LAYER_EXT_BUF2) {
+        mem_cache_free_object(&layer_buffer_memcache_ex, layer->buffer);
     } else {
         /* 释放缓冲区 */
         kfree(layer->buffer);
@@ -542,6 +553,13 @@ int destroy_layer(layer_t *layer)
     kfree(layer);
     return 0;
 }
+
+void layer_clear(layer_t *layer)
+{
+    if (layer && layer->buffer)
+        memset(layer->buffer, 0, layer->width * layer->height * sizeof(uint32_t));
+}
+
 
 /**
  * print_layers - 打印所有图层信息
@@ -761,11 +779,18 @@ int layer_reset_size(layer_t *layer, int x, int y, uint32_t width, uint32_t heig
     size_t bufsz = width * height * sizeof(GUI_COLOR);
     uint32_t *buffer = kmalloc(bufsz);
     if (buffer == NULL) {
-        ext_buf = 1;
+        
         buffer = mem_cache_alloc_object(&layer_buffer_memcache);
         if (buffer == NULL) {
-            return -1;
+            buffer = mem_cache_alloc_object(&layer_buffer_memcache_ex);
+            if (buffer == NULL) {
+                return -1;
+            }
+            ext_buf = 2;
+        } else {
+            ext_buf = 1;
         }
+        
     }
 
     /* 先将原来位置里面的内容绘制成透明 */
@@ -776,13 +801,18 @@ int layer_reset_size(layer_t *layer, int x, int y, uint32_t width, uint32_t heig
     if (layer->flags & LAYER_EXT_BUF) {
         mem_cache_free_object(&layer_buffer_memcache, layer->buffer);
         layer->flags &= ~LAYER_EXT_BUF;
+    } else if (layer->flags & LAYER_EXT_BUF2) {
+        mem_cache_free_object(&layer_buffer_memcache_ex, layer->buffer);
+        layer->flags &= ~LAYER_EXT_BUF2;
     } else {
         /* 重新绑定缓冲区 */
         kfree(layer->buffer);
     }
     layer->buffer = NULL;
-    if (ext_buf) {
+    if (ext_buf == 1) {
         layer->flags |= LAYER_EXT_BUF;
+    } else if (ext_buf == 2) {
+        layer->flags |= LAYER_EXT_BUF2;
     }
     layer->buffer = buffer;
     layer->width = width;
@@ -1165,6 +1195,7 @@ static int gui_dispatch_mouse_filter_msg(g_msg_t *msg)
             gui_draw_shade_layer(gui_mouse.shade, &rect, 1); /* 绘制新内容 */
             gui_rect_copy(&gui_mouse.shade_rect, &rect); /* 保存新区域 */
             if (gui_mouse.shade->z < 0) { /* 没显示就显示 */
+                layer_clear(gui_mouse.shade);
                 layer_set_z(gui_mouse.shade, sys_layer_get_win_top());
             }
             #endif /* CONFIG_SHADE_LAYER */
@@ -1394,6 +1425,7 @@ int gui_init_layer()
     size_t maxsz = gui_screen.width * gui_screen.height * sizeof(uint32_t) + PAGE_SIZE;
     printk(KERN_DEBUG "max layer buffer size=%x %dMB\n", maxsz, maxsz/ MB);
     mem_cache_init(&layer_buffer_memcache, "layer_buffer", maxsz, 0);
+    mem_cache_init(&layer_buffer_memcache_ex, "layer_buffer_ex", 8 * MB, 0);
     
     maxsz = gui_screen.width * gui_screen.height * sizeof(uint16_t);
     /* 分配地图空间 */
