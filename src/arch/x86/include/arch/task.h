@@ -23,7 +23,6 @@ typedef struct thread_stack {
     void *arg;  // 线程携带的参数
 } thread_stack_t;
 
-
 /* init task local stack */
 #define __init_task_lock_stack(stack, entry, func, arg) \
         do {                                            \

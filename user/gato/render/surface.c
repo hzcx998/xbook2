@@ -1,5 +1,6 @@
-#include <malloc.h>
+#include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "surface.h"
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
@@ -72,6 +73,15 @@ void surface_clear(surface_t *s, color_t c, int x, int y, int w, int h)
     }
 }
 
+void surface_pixel_set(surface_t *s, color_t color, int x, int y)
+{
+    if (x >= 0 && x < s->width && y >= 0 && y < s->height)
+    {
+        color_t *c = s->pixels + y * s->width + x;
+        blend(c, &color);
+    }
+}
+
 surface_t *surface_copy(surface_t *s)
 {
     surface_t *d = surface_alloc(s->width, s->height);
@@ -102,17 +112,23 @@ void surface_blit(surface_t *d, surface_t *s, int x, int y)
     for (int i = ys; i <= ye; i++)
     {
         color_t *dl = d->pixels + i * d->width;
-        color_t *sl = s->pixels + (i - y) * s->width;
+        color_t *sl = s->pixels + (i - y) * s->width - x;
 
         for (int j = xs; j <= xe; j++)
         {
-            blend(&dl[j], &sl[j - x]);
+            blend(&dl[j], &sl[j]);
         }
     }
 }
 
 void surface_blit_with_opacity(surface_t *d, surface_t *s, int x, int y, int a)
 {
+    if (a == 255)
+    {
+        surface_blit(d, s, x, y);
+        return;
+    }
+
     int xs = clamp(x, 0, d->width - 1);
     int xe = clamp(x + s->width - 1, 0, d->width - 1);
     int ys = clamp(y, 0, d->height - 1);
@@ -143,7 +159,7 @@ void surface_clip(surface_t *d, surface_t *s, int x, int y)
         {
             color_t *dc = &d->pixels[i * d->width + j];
             color_t *sc = &s->pixels[(i - y) * s->width + j - x];
-            if(dc->a)
+            if (dc->a)
                 *dc = *sc;
         }
     }
@@ -206,9 +222,31 @@ void surface_cover(surface_t *d, surface_t *s, int x, int y)
     int ye = clamp(y + s->height - 1, 0, d->height - 1);
     for (int i = ys; i <= ye; i++)
     {
+        color_t *dc = d->pixels + i * d->width;
+        color_t *sc = s->pixels + (i - y) * s->width - x;
+
         for (int j = xs; j <= xe; j++)
         {
-            d->pixels[i * d->width + j] = s->pixels[(i - y) * s->width + j - x];
+            dc[j] = sc[j];
+        }
+    }
+}
+
+void surface_composite_out(surface_t *d, surface_t *s, int x, int y)
+{
+    int xs = clamp(x, 0, d->width - 1);
+    int xe = clamp(x + s->width - 1, 0, d->width - 1);
+    int ys = clamp(y, 0, d->height - 1);
+    int ye = clamp(y + s->height - 1, 0, d->height - 1);
+
+    for (int i = ys; i <= ye; i++)
+    {
+        color_t *dc = d->pixels + i * d->width;
+        color_t *sc = s->pixels + (i - y) * s->width - x;
+
+        for (int j = xs; j <= xe; j++)
+        {
+            dc[j].a = idiv255(dc[j].a * (255 - sc[j].a));
         }
     }
 }
@@ -305,4 +343,17 @@ void surface_filter_blur(struct surface_t *s, int radius)
 
     if (radius > 0)
         expblur(pixels, width, height, 4, radius);
+}
+
+void surface_filter_opacity(struct surface_t *s, int a)
+{
+    float fa = a / 255.0;
+    for (int i = 0; i < s->height; i++)
+    {
+        for (int j = 0; j < s->width; j++)
+        {
+            color_t *c = &s->pixels[i * s->width + j];
+            c->a = c->a * fa;
+        }
+    }
 }

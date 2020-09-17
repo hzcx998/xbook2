@@ -1,6 +1,6 @@
 #pragma once
 
-#define idiv255(x)		((((int)(x) + 1) * 257) >> 16)
+#define idiv255(x) ((((int)(x) + 1) * 257) >> 16)
 
 typedef struct color_t
 {
@@ -11,9 +11,10 @@ typedef struct color_t
 } color_t;
 
 //https://en.wikipedia.org/wiki/Alpha_compositing
-static inline void blend(color_t * restrict d, color_t * restrict s)
+static inline void blend(color_t *restrict d, color_t *restrict s)
 {
-    if (s->a == 255)
+    //TODO: perf: d->a == 255
+    if (s->a == 255 || d->a == 0)
     {
         *(int *)d = *(int *)s;
     }
@@ -24,14 +25,14 @@ static inline void blend(color_t * restrict d, color_t * restrict s)
         float f = a1 + a2 - a1 * a2 / 255.0;
         float f1 = a2 / f;
 
-        d->b +=  (s->b - d->b) * f1;
+        d->b += (s->b - d->b) * f1;
         d->g += (s->g - d->g) * f1;
         d->r += (s->r - d->r) * f1;
         d->a = f;
     }
 }
 
-static inline void blend_with_opacity(color_t * restrict d, color_t * restrict s, int a)
+static inline void blend_with_opacity(color_t *restrict d, color_t *restrict s, int a)
 {
     a = idiv255(a * s->a);
     if (a == 255)
@@ -45,7 +46,7 @@ static inline void blend_with_opacity(color_t * restrict d, color_t * restrict s
         float f = a1 + a2 - a1 * a2 / 255.0;
         float f1 = a2 / f;
 
-        d->b +=  (s->b - d->b) * f1;
+        d->b += (s->b - d->b) * f1;
         d->g += (s->g - d->g) * f1;
         d->r += (s->r - d->r) * f1;
         d->a = f;

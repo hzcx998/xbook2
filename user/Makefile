@@ -1,7 +1,7 @@
 sinclude ../scripts/env.mk
 
 X_ASFLAGS	+= -f elf -I $(DIR_XLIBC)/indlude 
-X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=c99
+X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=c99 -O2
 X_INCDIRS	+= ../library/xlibc/include ../library/pthread/include ../library/jpeg \
 				../library/libpng ../library/zlib ../library/gapi/include \ 
 

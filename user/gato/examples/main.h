@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
         #if 0
         SDL_UpdateWindowSurface(gWindow);
         #else
-        g_window_paint(gWindow,  0, 0, gSurface);
+        //g_window_paint(gWindow,  0, 0, gSurface);
         #endif
         clock_gettime(CLOCK_MONOTONIC, &time2);
         unsigned long long mtime = (time2.tv_sec - time1.tv_sec) * 1000000 + (time2.tv_nsec - time1.tv_nsec) / 1000;

@@ -88,8 +88,8 @@ typedef struct edge_t
 
 typedef struct context_t
 {
-    struct color_t fill_color, stroke_color;
-    float thickness;
+    float width;
+
     int close;
     edge_t *es;
     expand_point_t *e_ps;
