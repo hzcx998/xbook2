@@ -31,16 +31,14 @@ g_window_t *g_find_window(int win)
  */
 static void __g_paint_window(g_window_t *gw, int turn, int body)
 {
-    uint32_t back, board, front, font;
+    uint32_t back, board, font;
     if (turn) {
         back = GW_ON_BACK_COLOR;
         board = GW_ON_BOARD_COLOR;
-        front = GW_ON_FRONT_COLOR;
         font = GW_ON_FONT_COLOR;
     } else {
         back = GW_OFF_BACK_COLOR;
         board = GW_OFF_BOARD_COLOR;
-        front = GW_OFF_FRONT_COLOR;
         font = GW_OFF_FONT_COLOR;
     }
    
@@ -63,8 +61,8 @@ static void __g_paint_window(g_window_t *gw, int turn, int body)
     /* 基础圆角 */
     g_rectfill(gw->wbmp, 2, 0, gw->width - 4, 1, board);
     g_rectfill(gw->wbmp, 0, gw->height - 1, gw->width, 1, board);
-    g_rectfill(gw->wbmp, 0, 2, 1, gw->height - 4, board);
-    g_rectfill(gw->wbmp, gw->width - 1, 2, 1, gw->height - 4, board);
+    g_rectfill(gw->wbmp, 0, 2, 1, gw->height - 2, board);
+    g_rectfill(gw->wbmp, gw->width - 1, 2, 1, gw->height - 2, board);
 
     uint32_t none_color = GC_ARGB(0, 0, 0, 0);
     /* 左上角 */

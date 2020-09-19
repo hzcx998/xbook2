@@ -1,3 +1,7 @@
+#include <arch/config.h>
+
+#ifdef X86_CONSOLE_HW
+
 #include <xbook/debug.h>
 #include <arch/io.h>
 #include <arch/debug.h>
@@ -237,9 +241,9 @@ void console_putchar(char ch)
 }
 
 /**
- * init_console_debug - 初始化控制台调试驱动
+ * init_console_hw - 初始化控制台调试驱动
  */
-void init_console_debug()
+void init_console_hw()
 {
     struct console_object *obj = &console_object;
 
@@ -261,3 +265,4 @@ void init_console_debug()
     obj->y = 0;
     set_cursor(obj->y * SCREEN_WIDTH + obj->x);
 }
+#endif

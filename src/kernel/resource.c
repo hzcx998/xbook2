@@ -432,7 +432,7 @@ int resource_rediret(int old_res, int new_res)
     /* 2.将旧资源的内容复制到新资源位置上 */
     retval = resource_item_copy(new_res, old_res);
     if (retval < 0) {
-        printk(KERN_CRIT "%s: copy res from %d to %d failed!\n", __func__, old_res, old_res);
+        printk(KERN_ERR "%s: copy res from %d to %d failed!\n", __func__, old_res, old_res);
         return -1;
     }
 
@@ -441,7 +441,7 @@ int resource_rediret(int old_res, int new_res)
     if (!retval) {
         retval = new_res;   /* 指向新的资源 */
     } else {
-        printk(KERN_CRIT "%s: get res %d failed!\n", __func__, old_res);
+        printk(KERN_ERR "%s: get res %d failed!\n", __func__, old_res);
         return -1;
     }
     return retval;

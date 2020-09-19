@@ -5,10 +5,19 @@
 
 /* 默认是调试等级 */
 
-#define DEFAULT_LOG_MIN   0
-#define DEFAULT_LOG_MAX   7
+#define KERN_EMERG      "<0>"      /* system is unuseable */
+#define KERN_ERR        "<1>"      /* error condition */
+#define KERN_WARING     "<2>"      /* waring condition */
+#define KERN_NOTICE     "<3>"      /* normal significant */
+#define KERN_INFO       "<4>"      /* infomational */
+#define KERN_DEBUG      "<5>"      /* debug message */
 
-#define DEFAULT_LOG_LEVEL   7
+/* 默认是调试等级 */
+
+#define DEFAULT_LOG_MIN   0
+#define DEFAULT_LOG_MAX   5
+
+#define DEFAULT_LOG_LEVEL  5
 
 #define PRINT_LEVEL_MSG   0
 

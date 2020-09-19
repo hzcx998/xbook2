@@ -1,3 +1,7 @@
+#include <arch/config.h>
+
+#ifdef X86_SERIAL_HW
+
 #include <xbook/debug.h>
 #include <stdint.h>
 #include <xbook/bitops.h>
@@ -170,13 +174,13 @@ void serial_putchar(char ch)
 }
 
 /**
- * init_serial_debug - 串口初始化子程序
+ * init_serial_hw - 串口初始化子程序
  * @obj: 指向私有数据的指针
  * @id: 串口的id
  * 
  * @return: 成功返回0，失败返回-1
  */
-void init_serial_debug()
+void init_serial_hw()
 {
     struct serial_object *obj = &serial_object;
     char irq;
@@ -233,3 +237,4 @@ void init_serial_debug()
     out8(obj->scratch_reg, 0x00);
 
 }
+#endif
