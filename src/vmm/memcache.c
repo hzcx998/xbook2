@@ -68,6 +68,9 @@ static cache_size_t cache_size[] = {
 /* 最开始的groupcache */
 mem_cache_t mem_cache_table[MAX_MEM_CACHE_NR];
 
+/* 大内存对象链表 */
+LIST_HEAD(large_mem_object_list);
+
 void dump_mem_cache(mem_cache_t *cache)
 {
 	printk("----Mem Cache----\n");
@@ -410,7 +413,22 @@ void *kmalloc(size_t size)
 	// 如果越界了就返回空
 	if (size > MAX_MEM_CACHE_SIZE) {
 		// printk(KERN_NOTICE "kmalloc size %d too big!", size);
-		return NULL;
+        
+        if (size > MAX_MEM_OBJECT_SIZE)
+            return NULL;
+        /* 使用首适配分配法 */
+        large_mem_object_t *obj = kmalloc(sizeof(large_mem_object_t));
+        if (obj == NULL)
+            return NULL;
+        obj->size = size;
+        obj->addr = mem_cache_alloc_pages(DIV_ROUND_UP(size, PAGE_SIZE));
+        if (obj->addr == NULL) {
+            kfree(obj);
+            return NULL;
+        }
+        list_add(&obj->list, &large_mem_object_list);
+        printk(KERN_DEBUG "[memcache]: alloc large mem object %x\n", obj->addr);
+		return obj->addr;
 	}
 	
 	cache_size_t *cachesz = &cache_size[0];
@@ -525,26 +543,40 @@ void mem_cache_free_object(mem_cache_t *cache, void *object)
  * kfree - 释放一个对象占用的内存
  * @object: 对象的指针
  */
-void kfree(void *objcet)
+void kfree(void *object)
 {
-	if (!objcet)
+	if (!object)
 		return;
     
 	mem_cache_t *cache;
 	
 	// 获取对象所在的页
-	mem_node_t *node = addr2page(v2p(objcet));
+	mem_node_t *node = addr2page(v2p(object));
 
 	CHECK_MEM_NODE(node);
 	
 	// 转换成group cache
 	cache = MEM_NODE_GET_CACHE(node);
-
+    if (cache == NULL) {
+        /* 采用首适配释放 */
+        large_mem_object_t *obj;
+        list_for_each_owner (obj, &large_mem_object_list, list) {
+            if (obj->addr == object) {
+                
+                list_del(&obj->list);
+                mem_cache_free_pages(obj->addr);
+                kfree(obj);
+                printk(KERN_DEBUG "[memcache]: free large mem object %x\n", object);
+                return;
+            }
+        }
+        return;
+    }
 	//dump_mem_cache(cache);
 	//printk("get object group cache %x\n", cache);
 
 	// 调用核心函数
-	mem_cache_free_object(cache, (void *)objcet);
+	mem_cache_free_object(cache, (void *)object);
 }
 
 
@@ -738,7 +770,5 @@ int init_mem_caches()
     printk("total:%d free:%d used:%d\n", total_size, free_size, total_size - free_size);
 	
 #endif
-
-
 	return 0;
 }

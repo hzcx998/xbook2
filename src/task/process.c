@@ -361,29 +361,6 @@ int proc_trigger_exit(task_t *task)
     return 0;
 }
 
-int proc_res_init(task_t *task)
-{
-    task->res = kmalloc(sizeof(resource_t));
-    if (task->res == NULL)
-        return -1;
-    resource_init(task->res);
-    return 0;
-}
-
-int proc_res_exit(task_t *task)
-{
-    if (task->res == NULL)
-        return -1;
-
-    /* 释放资源中的设备资源 */
-    resource_release(task->res);
-
-    kfree(task->res);
-    task->res = NULL;
-    return 0;
-}
-
-
 int proc_pthread_init(task_t *task)
 {
     task->pthread = kmalloc(sizeof(pthread_desc_t));
@@ -405,8 +382,6 @@ int proc_release(task_t *task)
     if (proc_vmm_exit(task))
         return -1; 
     if (proc_trigger_exit(task))
-        return -1;
-    if (proc_res_exit(task))
         return -1;
     if (fs_fd_exit(task))
         return -1;
@@ -495,18 +470,10 @@ task_t *start_process(char *name, char **argv)
         return NULL;
     }
 
-    if (proc_res_init(task)) {
-        proc_trigger_exit(task);
-        proc_vmm_exit(task);
-        kfree(task);
-        return NULL;
-    }
-
     /* 创建文件描述表 */
     if (fs_fd_init(task) < 0) {
         proc_trigger_exit(task);
         proc_vmm_exit(task);
-        proc_res_exit(task);
         kfree(task);
         return NULL;
     }

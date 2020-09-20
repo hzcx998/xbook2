@@ -8,9 +8,12 @@ int rate_progress = 0;
 int fps = 0;
 #define RATE_BAR_LEN    360
 
+#define WIDTH   1920
+#define HEIGHT  1080
+
+
 void timer_handler(int layer, uint32_t msgid, uint32_t tmrid, uint32_t time)
 {
-
     g_set_timer(layer, tmrid, 1000, timer_handler);
     
     printf("[win]: fps=%d!\n", fps);
@@ -25,7 +28,7 @@ int main(int argc, char *argv[])
     if (g_init() < 0)
         return -1;
 
-    int win = g_new_window("win", 400, 200, 360, 240, GW_SHOW);
+    int win = g_new_window("win", 0, 0, WIDTH, HEIGHT, GW_SHOW);
     if (win < 0)
         return -1;
         

@@ -9,7 +9,7 @@ endif
 ARCH		:= arch/x86
 
 X_ASFLAGS	+= -f elf -I $(ARCH)/include/
-X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -O2
+X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -O2 -fno-strict-aliasing
 X_INCDIRS	+= include/ $(ARCH)/include/ net/lwip/include/ net/lwip/include/ipv4/
 X_LDFLAGS	+= -no-pie -e kernel_start -Ttext 0x80100000
 

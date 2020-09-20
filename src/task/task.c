@@ -102,9 +102,6 @@ void task_init(task_t *task, char *name, int priority)
     /* no triger */
     task->triggers = NULL;
     
-    /* no resource */
-    task->res = NULL;
-    
     /* no timer */
     task->sleep_timer = NULL;
     
@@ -192,15 +189,8 @@ task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg)
     // 初始化线程
     task_init(task, name, priority);
     
-    /* 创建资源 */
-    if (proc_res_init(task) < 0) {
-        kfree(task);
-        return NULL;
-    }
-
     /* 创建文件描述表 */
     if (fs_fd_init(task) < 0) {
-        proc_res_exit(task);
         kfree(task);
         return NULL;
     }
@@ -336,10 +326,6 @@ static void create_kmain_thread()
 
     /* 最开始设置为最佳优先级，这样才可以往后面运行。直到运行到最后，就变成IDLE优先级 */
     task_init(task_kmain, "kmain", TASK_PRIO_BEST);
-    /* 创建资源 */
-    if (proc_res_init(task_kmain) < 0) {
-        panic("init kmain res failed!\n");
-    }
 
     if (fs_fd_init(task_kmain) < 0) {
         panic("init kmain fs fd failed!\n");

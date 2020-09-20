@@ -120,8 +120,8 @@ int sys_srvcall_unbind(int port)
 #endif
         int i;
         for (i = 0; i < SRVCALL_NR; i++) {
-            if (srvcall_table[port].holder == current_task) {
-                srvcall_table[port].holder = NULL;
+            if (srvcall_table[(uint32_t)port].holder == current_task) {
+                srvcall_table[(uint32_t)port].holder = NULL;
                 return 0;
             }
         }

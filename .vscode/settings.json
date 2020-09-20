@@ -129,6 +129,7 @@
         "gscreen.h": "c",
         "cstdlib": "c",
         "sh_clipboard.h": "c",
-        "sh_window.h": "c"
+        "sh_window.h": "c",
+        "shape.h": "c"
     }
 }

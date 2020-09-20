@@ -32,6 +32,8 @@
 	#define MAX_MEM_CACHE_SIZE (128*1024)
 #endif
 
+#define MAX_MEM_OBJECT_SIZE     (24 * MB)
+
 typedef struct mem_group {
     list_t list;           // 指向cache中的某个链表（full, partial, free）
     bitmap_t map;          // 管理对象分配状态的位图
@@ -62,10 +64,16 @@ typedef struct cache_size {
     mem_cache_t *mem_cache;      // 指向对应cache的指针
 } cache_size_t;
 
+typedef struct {
+    list_t list;    /* 链表 */
+    size_t size;    /* 内存大小 */
+    void *addr;     /* 虚拟地址 */
+} large_mem_object_t;
+
 int init_mem_caches();
 
 void *kmalloc(size_t size);
-void kfree(void *objcet);
+void kfree(void *object);
 int ksharink();
 
 int mem_cache_init(mem_cache_t *cache, char *name, size_t size, flags_t flags);

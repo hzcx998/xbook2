@@ -7,7 +7,6 @@
 #include <list.h>
 #include "vmm.h"
 #include "trigger.h"
-#include "resource.h"
 #include "timer.h"
 #include "alarm.h"
 #include "pthread.h"
@@ -80,7 +79,6 @@ typedef struct _task {
     list_t global_list;                 /* 全局任务队列，用来查找所有存在的任务 */
     priority_queue_t *prio_queue;       /* 所在的优先级队列 */
     triggers_t *triggers;               /* 触发器, 内核线程没有触发器 */
-    resource_t *res;                    /* 设备资源 */
     timer_t *sleep_timer;               /* 休眠时的定时器 */
     alarm_t alarm;                      /* 闹钟 */
     long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */

@@ -4,6 +4,7 @@
 #include <gui/screen.h>
 #include <xbook/mutexlock.h>
 #include <xbook/task.h>
+#include <string.h>
 
 DEFINE_MUTEX_LOCK(layer_refresh_lock);
 

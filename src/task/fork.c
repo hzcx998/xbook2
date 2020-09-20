@@ -149,19 +149,6 @@ static int copy_trigger(task_t *child, task_t *parent)
     return 0;
 }
 
-static int copy_res(task_t *child, task_t *parent)
-{
-    child->res = kmalloc(sizeof(resource_t));
-    if (child->res == NULL)
-        return -1;
-    memset(child->res, 0, sizeof(resource_t));
-    resource_init(child->res);
-    /* 更新资源引用 */
-    //dump_resource(parent->res);
-    resource_copy(child->res, parent->res);
-    return 0;
-}
-
 static int copy_file(task_t *child, task_t *parent)
 {
     if (fs_fd_init(child) < 0)
@@ -221,10 +208,6 @@ static int copy_task(task_t *child, task_t *parent)
     if (copy_trigger(child, parent))
         return -1;
 
-    /* 5.复制资源 */
-    if (copy_res(child, parent))
-        return -1;
-        
     /* 6.复制线程描述 */
     if (copy_pthread_desc(child, parent))
         return -1;

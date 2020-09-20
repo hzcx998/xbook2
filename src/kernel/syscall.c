@@ -66,6 +66,7 @@ void init_syscall()
     syscall_table[SYS_MUNMAP] = sys_munmap;
     
     /* 设备资源管理 */
+    #if 0
     syscall_table[SYS_GETRES] = sys_getres;
     syscall_table[SYS_PUTRES] = sys_putres;
     syscall_table[SYS_READRES] = sys_readres;
@@ -73,7 +74,7 @@ void init_syscall()
     syscall_table[SYS_CTLRES] = sys_ctlres;
     syscall_table[SYS_DEVSCAN] = sys_devscan;
     syscall_table[SYS_MMAP] = sys_mmap;
-    
+    #endif
     syscall_table[SYS_ALARM] = sys_alarm;
     syscall_table[SYS_KTIME] = sys_get_ktime;
     syscall_table[SYS_GETTICKS] = sys_get_ticks;

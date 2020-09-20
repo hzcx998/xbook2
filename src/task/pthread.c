@@ -129,7 +129,6 @@ task_t *pthread_start(task_func_t *func, void *arg,
 #endif
 
     task->vmm = parent->vmm;    /*共享内存 */
-    task->res = parent->res;    /* 共享资源 */
     task->triggers = parent->triggers; /* 共享触发器 */
     task->fileman = parent->fileman; /* 共享文件管理 */
     
