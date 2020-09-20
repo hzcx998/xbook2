@@ -31,3 +31,4 @@ MODULE      +=  echo
 MODULE      +=  cat
 MODULE      +=  win
 MODULE      +=  infones
+MODULE      +=  c4
