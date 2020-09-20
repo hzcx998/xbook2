@@ -1,6 +1,10 @@
 #ifndef _LIB_STRING_H
 #define _LIB_STRING_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <types.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -45,6 +49,10 @@ static inline __attribute__((always_inline)) int fls(int x)
 	return x ? sizeof(x) * 8 - __builtin_clz(x) : 0;
 }
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /*_LIB_STDINT_H*/
 

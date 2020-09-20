@@ -280,7 +280,7 @@ int test_png_main(int argc, char **argv)
                                     }
                 color = (a << 24) | (r << 16) | (g << 8) |(b) ;
 
-                screen_output_pixel(x, y ,  color);
+                //screen_output_pixel(x, y ,  color);
             
             }
         }

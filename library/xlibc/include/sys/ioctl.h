@@ -1,6 +1,10 @@
 #ifndef _SYS_IOCTL_H
 #define _SYS_IOCTL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* 设备控制码：
 0~15位：命令（0-0x7FFF系统保留，0x8000-0xffff用户自定义）
 16~31位：设备类型
@@ -60,5 +64,9 @@ typedef struct _video_info {
 #define SNDIO_PLAY          DEVCTL_CODE('s', 1) /* play */
 #define SNDIO_STOP          DEVCTL_CODE('s', 2) /* stop play */
 #define SNDIO_SETFREQ       DEVCTL_CODE('s', 3) /* set play freq */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* _SYS_IOCTL_H */

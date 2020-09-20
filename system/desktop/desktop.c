@@ -15,7 +15,7 @@ int desktop_layer;
 g_bitmap_t *desktop_bitmap;
 
 // **指定图片的路径就可以调用这个jpg的解析。**
-int jpg_load_bitmap(char * path, uint32_t *bitmap)
+int jpg_load_bitmap(char * path, uint32_t *bitmap, uint32_t width, uint32_t height)
 {
     /*
     １.　分配并初始化一个jpeg解压对象
@@ -102,7 +102,7 @@ int jpg_load_bitmap(char * path, uint32_t *bitmap)
         int x; //一行的像素点数量
 
         unsigned char *p = buf1[0];
-        for (x = 0; x < dinfo.output_width; x++)
+        for (x = 0; x < dinfo.output_width && x < width && dinfo.output_scanline < height; x++)
         {
             unsigned char r, g, b, a = 255;
             uint32_t color;
@@ -309,7 +309,7 @@ int desktop_launch_app(char *path)
     return 0;
 }
 
-#define BG_PIC_PATH "/res/pic1.jpg"
+#define BG_PIC_PATH "/res/bg.jpg"
 
 int init_desktop()
 {
@@ -330,13 +330,13 @@ int init_desktop()
 
     g_layer_set_desktop(layer);   /* set as focus layer */
     
-    desktop_bitmap = g_new_bitmap(800, 600);
+    desktop_bitmap = g_new_bitmap(g_screen.width, g_screen.height);
     if (desktop_bitmap == NULL)
         return -1;
     
     /* 加载背景图片 */
     #if 1
-    if (jpg_load_bitmap(BG_PIC_PATH, desktop_bitmap->buffer) < 0)
+    if (jpg_load_bitmap(BG_PIC_PATH, desktop_bitmap->buffer, g_screen.width, g_screen.height) < 0)
         return -1;
         g_bitmap_sync(desktop_bitmap, desktop_layer, 0, 0);
     #if 0

@@ -114,7 +114,7 @@ int jpg_display(char * path)// **指定图片的路径就可以调用这个jpg�
             }
             color = (a << 24) | (r << 16) | (g << 8) |(b) ;
 
-            screen_output_pixel(x, dinfo.output_scanline - 1 ,  color);
+            //screen_output_pixel(x, dinfo.output_scanline - 1 ,  color);
             //LCD_DrawPoint(x, dinfo.output_scanline - 1 ,  color);
             //SGI_DrawPixel(display, win, x, dinfo.output_scanline - 1, color);
         }

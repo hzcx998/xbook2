@@ -1,6 +1,10 @@
 #ifndef _SYS_STAT_H
 #define _SYS_STAT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <types.h>
@@ -25,5 +29,9 @@ int stat(const char *path, struct stat *buf);
 int fstat(int fd, struct stat *buf);
 int chmod(const char *path, mode_t mode);
 int fchmod(int fd, mode_t mode);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _SYS_STAT_H */

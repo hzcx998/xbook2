@@ -5,7 +5,6 @@
 #include <ctype.h>
 #include <math.h>
 #include <sys/ipc.h>
-#include <sys/res.h>
 #include <sys/wait.h>
 #include <sys/proc.h>
 #include <sys/sys.h>
@@ -15,7 +14,6 @@
 #include <time.h>
 #include <dirent.h>
 #include <fcntl.h>
-#include <xcons.h>
 #include <sys/stat.h>
 #include <sys/trigger.h>
 
@@ -235,7 +233,7 @@ int execute_cmd(int argc, char **argv)
 
             int new_fd;
             /* 把输出管道重定向到标准输出资源 */
-            new_fd = dup2(recv_pipe[1], RES_STDOUTNO); 
+            new_fd = dup2(recv_pipe[1], STDOUT_FILENO); 
             if (new_fd < 0) {
                 shell_printf("%s: redirect pipe to stdout failed!\n", APP_NAME);
                 close(recv_pipe[1]);
@@ -245,7 +243,7 @@ int execute_cmd(int argc, char **argv)
             close(recv_pipe[1]);
    
             /* 把输入管道重定向到标准输入资源 */
-            new_fd = dup2(xmit_pipe[0], RES_STDINNO); 
+            new_fd = dup2(xmit_pipe[0], STDIN_FILENO); 
             if (new_fd < 0) {
                 shell_printf("%s: redirect pipe to stdin failed!\n", APP_NAME);
                 close(xmit_pipe[0]);

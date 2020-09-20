@@ -1,6 +1,10 @@
 #ifndef _XLIBC_STDBOOL_H
 #define _XLIBC_STDBOOL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _STDBOOL
 #define _STDBOOL
 
@@ -15,5 +19,9 @@
 #endif /* __cplusplus */
 
 #endif /* _STDBOOL */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _XLIBC_STDBOOL_H */

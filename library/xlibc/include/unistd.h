@@ -1,6 +1,10 @@
 #ifndef _LIB_UNISTD_H
 #define _LIB_UNISTD_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <types.h>
 #include <stddef.h>
 
@@ -106,5 +110,9 @@ int pipe(int fd[2]);
 
 #include <sys/proc.h>
 #include <getopt.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _LIB_UNISTD_H */

@@ -7,6 +7,7 @@ AS			:= nasm
 export AS
 
 MODULE		:= xlibc
+MODULE		:= xlibcpp
 MODULE		+= pthread
 MODULE		+= zlib
 MODULE		+= libpng

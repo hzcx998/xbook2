@@ -1,6 +1,10 @@
 #ifndef _SYS_TRIGGER_H
 #define _SYS_TRIGGER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <types.h>
 
 /* 触发器集 */
@@ -68,5 +72,9 @@ int trigmask(int trig);
 
 int trigblock(int block);
 int trigsetmask(int mask);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* _SYS_TRIGGER_H */

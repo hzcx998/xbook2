@@ -9,6 +9,10 @@
 #ifndef _STDIO_H
 #define	_STDIO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Focus point of all stdio activity.
  */
@@ -155,6 +159,10 @@ _PROTOTYPE (FILE *fdopen, (int _fildes, const char *_types) );
 #define	fileno(stream)		((stream)->_fd)
 #define L_ctermid 255	/* required by POSIX */
 #define L_cuserid 255	/* required by POSIX */
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* _STDIO_H */

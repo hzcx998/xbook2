@@ -2,6 +2,10 @@
 #ifndef _XLIBC_ASSERT_H
 #define _XLIBC_ASSERT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -43,6 +47,10 @@ static inline void assert_fail(const char *expr, const char *file, int line)
 #else
 #define assert(expr)  ASSERT_VOID_CAST(0)
 #endif
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif  /* _XLIBC_ASSERT_H */

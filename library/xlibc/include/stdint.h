@@ -1,6 +1,10 @@
 #ifndef _LIB_STDINT_H
 #define _LIB_STDINT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef unsigned long long uint64_t;
 typedef signed long long int64_t;
 typedef unsigned int    uint32_t;
@@ -41,6 +45,10 @@ typedef WORD			WCHAR;	/* UTF-16 character type */
 typedef long long          intmax_t;
 typedef unsigned long long uintmax_t;
 
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif  /*_LIB_STDINT_H*/

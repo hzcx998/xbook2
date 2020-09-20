@@ -1,6 +1,10 @@
 #ifndef _LIB_STDLIB_H
 #define _LIB_STDLIB_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "stddef.h"
 #include "types.h"
 #include "malloc.h"
@@ -38,5 +42,9 @@ long int labs(long int const i);
 void atexit(void (*func)(void));
 
 int system(const char * cmd);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _LIB_STDLIB_H */

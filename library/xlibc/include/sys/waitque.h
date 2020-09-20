@@ -1,6 +1,9 @@
 #ifndef _SYS_WAITQUE_H
 #define _SYS_WAITQUE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* 附带变量操作 */
 #define WAITQUE_ADD     1   /* 增加操作 */
 #define WAITQUE_SUB     2   /* 减少操作 */
@@ -21,5 +24,9 @@ int waitque_create();
 int waitque_destroy(int handle);
 int waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long value);
 int waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* _SYS_WAITQUE_H */

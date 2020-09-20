@@ -2,6 +2,10 @@
 #ifndef _LIB_ERRNO_H
 #define _LIB_ERRNO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define EPERM        1  /* Operation not permitted */
 #define ENOFILE      2  /* No such file or directory */
 #define ENOENT       2
@@ -103,5 +107,9 @@ errno_t _get_errno(int *value);
 
 // void perror(char *str);
 char *strerror(int errnum);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _LIB_ERRNO_H */

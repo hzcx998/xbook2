@@ -1,6 +1,10 @@
 #ifndef _LIB_ARCH_CONFIG_H
 #define _LIB_ARCH_CONFIG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define __LIB_32B__
 //#define __LIB_64B__
 
@@ -18,6 +22,10 @@
 
 #endif
 
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif  /* _LIB_ARCH_CONFIG_H */

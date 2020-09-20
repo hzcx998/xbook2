@@ -9,7 +9,7 @@ extern uint32_t desktop_width, desktop_height;
 int init_desktop();
 int init_taskbar();
 
-int jpg_load_bitmap(char * path, uint32_t *bitmap);
+int jpg_load_bitmap(char * path, uint32_t *bitmap, uint32_t width, uint32_t height);
 int png_load_bitmap(const char *filename, uint32_t *bitmap);
 
 int desktop_launch_app(char *path);

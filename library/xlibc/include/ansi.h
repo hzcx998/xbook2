@@ -21,6 +21,10 @@
 #ifndef _ANSI_H
 #define _ANSI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if __STDC__ == 1
 #define _ANSI		31459	/* compiler claims full ANSI conformance */
 #endif
@@ -54,5 +58,9 @@
 #define _SIZET		int
 
 #endif /* _ANSI */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ANSI_H */

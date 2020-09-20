@@ -2,6 +2,10 @@
 #ifndef _XLIBC_FCNTL_H
 #define _XLIBC_FCNTL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 enum {
@@ -9,5 +13,9 @@ enum {
     F_GETFL,
 };
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _XLIBC_FCNTL_H */

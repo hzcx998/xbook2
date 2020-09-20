@@ -1,9 +1,11 @@
 #ifndef _SYS_PROC_H
 #define _SYS_PROC_H
 
-#include "kfile.h"
-#include <types.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+#include <types.h>
 
 #define PROC_NAME_LEN 32
 
@@ -24,8 +26,6 @@ pid_t fork();
 void _exit(int status);
 int wait(int *status);
 int waitpid(pid_t pid, int *status, int options);
-int execraw(char *name, char *argv[]);
-int execfile(char *name, kfile_t *file, char *argv[]);
 pid_t getpid();
 pid_t getppid();
 pid_t gettid();
@@ -33,5 +33,9 @@ unsigned long sleep(unsigned long second);
 void sched_yeild();
 int tstate(tstate_t *ts, int *idx);
 int getver(char *buf, int len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _SYS_PROC_H */

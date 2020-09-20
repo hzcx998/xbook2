@@ -130,6 +130,9 @@
         "cstdlib": "c",
         "sh_clipboard.h": "c",
         "sh_window.h": "c",
-        "shape.h": "c"
+        "shape.h": "c",
+        "iostream": "c",
+        "ostream": "c",
+        "new": "c"
     }
 }

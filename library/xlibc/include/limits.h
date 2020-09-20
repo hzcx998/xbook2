@@ -1,5 +1,6 @@
 #ifndef _XLIBC_LIMITS_H
 #define _XLIBC_LIMITS_H
+
 /***
 *limits.h - implementation dependent values
 *
@@ -13,6 +14,10 @@
 *       [Public]
 *
 ****/
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define CHAR_BIT      8         /* number of bits in a char */
 #define SCHAR_MIN   (-128)      /* minimum signed char value */
@@ -87,5 +92,9 @@
 #define RSIZE_MAX    (SIZE_MAX >> 1)
 #endif  /* RSIZE_MAX */
 #endif  /* __STDC_WANT_SECURE_LIB__ */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _XLIBC_LIMITS_H */

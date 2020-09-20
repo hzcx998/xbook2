@@ -352,16 +352,9 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
         i--;
         buf++;
     }
-#if CONFIG_CONS_TO_SERIAL == 1
-    /* 临时输出到内核输出 */
-    buf = (uint8_t *)ioreq->system_buffer;
-    //printk("%s", buf);
-    uint8_t *p = buf;
-    while (*p) {
-        serial_putchar(*p);
-        p++;
-    }
-#endif
+    buf = (uint8_t *)ioreq->system_buffer; 
+    // print to kernel
+    printk(buf);
 
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = len;
