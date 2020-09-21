@@ -31,7 +31,7 @@ KERNEL MODE:
 +---------------------------+
 ```
 截图：
-![desktop0](https://github.com/hzcx998/xbook2/blob/master/develop/screenshoot/desktop0.png)
+![desktop0](https://gitee.com/hzcx998/xbook2/blob/master/develop/screenshoot/desktop0.png)
 
 系统功能列表：
 ```
