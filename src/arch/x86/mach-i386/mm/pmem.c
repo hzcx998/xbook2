@@ -118,6 +118,46 @@ unsigned long __get_total_page_nr()
     return total_pmem_size / PAGE_SIZE;
 }
 
+
+unsigned long __alloc_pages(unsigned long count)
+{
+    mem_node_t *node = get_free_mem_node();
+    if (node == NULL)
+        return 0;
+    
+    int index = node - mem_node_table;
+
+    /* 如果分配的页数超过范围 */
+    if (index + count > mem_node_count)
+        return 0; 
+
+    /* 第一次分配的时候设置引用为1 */
+    node->reference = 1;
+    node->count = (unsigned int)count;
+    node->flags = 0;
+    node->cache = NULL;
+    node->group = NULL;
+
+    return (long)__mem_node2page(node);
+}
+
+int __free_pages(unsigned long page)
+{
+    mem_node_t *node = __page2mem_node((unsigned long)page);
+
+    if (node == NULL)
+        return -1;
+    
+    __atomic_dec(&node->reference);
+
+	if (node->reference == 0) {
+        node->count = 0;
+		node->flags = 0;
+        return 0;
+	}
+    return -1;
+}
+
 /**
  * init_pmem - 初始化物理内存管理以及一些相关设定
  */

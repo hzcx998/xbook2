@@ -10,50 +10,6 @@
 #include <xbook/task.h>
 #include <xbook/vmspace.h>
 
-extern mem_node_t *mem_node_table;
-extern unsigned int mem_node_count;
-extern unsigned int mem_node_base;
-
-unsigned long __alloc_pages(unsigned long count)
-{
-    mem_node_t *node = get_free_mem_node();
-    if (node == NULL)
-        return 0;
-    
-    int index = node - mem_node_table;
-
-    /* 如果分配的页数超过范围 */
-    if (index + count > mem_node_count)
-        return 0; 
-
-    /* 第一次分配的时候设置引用为1 */
-    node->reference = 1;
-    node->count = (unsigned int)count;
-    node->flags = 0;
-    node->cache = NULL;
-    node->group = NULL;
-
-    return (long)__mem_node2page(node);
-}
-
-int __free_pages(unsigned long page)
-{
-    mem_node_t *node = __page2mem_node((unsigned long)page);
-
-    if (node == NULL)
-        return -1;
-    
-    __atomic_dec(&node->reference);
-
-	if (node->reference == 0) {
-        node->count = 0;
-		node->flags = 0;
-        return 0;
-	}
-    return -1;
-}
-
-
 /*
  * __page_link - 物理地址和虚拟地址链接起来
  * @va: 虚拟地址
