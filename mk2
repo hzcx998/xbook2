@@ -3,7 +3,13 @@
 # support bochs and vbox
 
 FATFS_DIR	= tools/fatfs
-FATFS_BIN	= $(FATFS_DIR)/fatfs
+
+# System environment variable.
+ifeq ($(OS),Windows_NT)
+	FATFS_BIN		:= fatfs
+else
+	FATFS_BIN		:= $(FATFS_DIR)/fatfs
+endif
 
 # images and rom
 IMAGE_DIR	= develop/image
