@@ -5,7 +5,14 @@ all:
 # tools
 MAKE		= make
 FATFS_DIR	= tools/fatfs
-FATFS_BIN	= $(FATFS_DIR)/fatfs
+
+# System environment variable.
+ifeq ($(OS),Windows_NT)
+	FATFS_BIN		:= fatfs
+else
+	FATFS_BIN		:= $(FATFS_DIR)/fatfs
+endif
+
 TRUNC		= truncate
 RM			= rm
 DD			= dd
@@ -58,7 +65,7 @@ SETUP_BIN 	= $(ARCH)/boot/setup.bin
 KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 
 # 参数
-.PHONY: all kernel build debuild rom qemu qemudbg lib sys usr
+.PHONY: all kernel build debuild qemu qemudbg lib sys usr
 
 # 默认所有动作，编译内核后，把引导、内核、init服务、文件服务和rom文件写入磁盘
 all : kernel 
@@ -86,12 +93,15 @@ build:
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG) 
+ifeq ($(OS),Windows_NT)
+else
 	$(MAKE) -s -C  $(FATFS_DIR)
+endif
 	$(MAKE) -s -C  $(LIBRARY_DIR)
 	$(MAKE) -s -C  $(SYSTEM_DIR)
 	$(MAKE) -s -C  $(USER_DIR)
-	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
-	
+	$(FATFS_BIN) $(HDA_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
+
 # 清理环境。
 debuild: 
 	$(MAKE) -s -C  $(KERNSRC) clean
@@ -103,10 +113,6 @@ debuild:
 	-$(RM) -r $(ROM_DIR)/sbin
 	-$(RM) -r $(IMAGE_DIR)
 	
-# 写入rom
-rom: 
-	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
-
 # 重新编译所有库
 lib: 
 	$(MAKE) -s -C  $(LIBRARY_DIR)
