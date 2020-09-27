@@ -32,9 +32,9 @@ int init_taskbar()
     g_layer_set_wintop(layer);
     g_region_t rg;
     rg.left = 0;
-    rg.top = taskbar.height;
+    rg.top = 0;
     rg.right = g_screen.width;
-    rg.bottom = g_screen.height;
+    rg.bottom = g_screen.height - taskbar.height;
     
     /* gui 系统必须做的事情 */
     g_screen_set_window_region(&rg);

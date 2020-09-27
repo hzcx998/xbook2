@@ -655,6 +655,7 @@ int g_window_paint_ex(int win, int x, int y, g_bitmap_t *bmp)
         &gw->body_region);
 }
 
+
 /**
  * 刷新窗口矩形区域
  * 

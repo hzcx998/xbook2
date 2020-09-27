@@ -4,6 +4,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 /* 附带变量操作 */
 #define WAITQUE_ADD     1   /* 增加操作 */
 #define WAITQUE_SUB     2   /* 减少操作 */

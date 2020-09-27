@@ -133,6 +133,7 @@
         "shape.h": "c",
         "iostream": "c",
         "ostream": "c",
-        "new": "c"
+        "new": "c",
+        "lvgl.h": "c"
     }
 }

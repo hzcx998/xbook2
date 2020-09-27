@@ -173,6 +173,9 @@ enum {
     GK_POWER,   /* power */
     GK_EURO,   /* euro */
     GK_UNDO,   /* undo */
+    GK_LBTN,    /* mouse left btn */
+    GK_MBTN,    /* mouse middle btn */
+    GK_RBTN,    /* mouse right btn */
     GK_LAST       /* last one */        
 };
 

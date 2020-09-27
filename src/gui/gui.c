@@ -40,6 +40,7 @@ void kgui_thread(void *arg)
         
         /* 获取系统消息 */
         if (gui_pop_msg(&msg) < 0) {
+            task_yeild(); /* 让出cpu */
             continue;
         }
         switch (msg.id)

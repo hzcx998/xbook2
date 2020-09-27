@@ -16,6 +16,8 @@ AS			:=	nasm
 
 export AS
 
+MODULE      +=  lvgl
+MODULE      +=  microui
 MODULE      +=  cpptests
 MODULE      +=  lua
 MODULE      +=  cal
