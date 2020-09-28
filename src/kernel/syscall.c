@@ -162,11 +162,6 @@ void init_syscall()
     syscall_table[SYS_LAYERDEL] = sys_del_layer;
     syscall_table[SYS_LAYERZ] = sys_layer_z;
     syscall_table[SYS_LAYERMOVE] = sys_layer_move;
-    syscall_table[SYS_LAYEROUTP] = sys_layer_outp;
-    syscall_table[SYS_LAYERINP] = sys_layer_inp;
-    syscall_table[SYS_LAYERLINE] = sys_layer_line;
-    syscall_table[SYS_LAYERRECT] = sys_layer_rect;
-    syscall_table[SYS_LAYERRECTFILL] = sys_layer_rect_fill;
     syscall_table[SYS_LAYERREFRESH] = sys_layer_refresh;
     syscall_table[SYS_LAYERGETWINTOP] = sys_layer_get_win_top;
     syscall_table[SYS_LAYERSETWINTOP] = sys_layer_set_win_top;
@@ -192,7 +187,7 @@ void init_syscall()
     syscall_table[SYS_GDELTIMER] = sys_gui_del_timer;
     syscall_table[SYS_LAYERSYNCBMP] = sys_layer_sync_bitmap;
     syscall_table[SYS_LAYERSYNCBMPEX] = sys_layer_sync_bitmap_ex;
+    syscall_table[SYS_LAYERCOPYBMP] = sys_layer_copy_bitmap;
     syscall_table[SYS_GGETICONPATH] = sys_gui_get_icon;
     syscall_table[SYS_GSETICONPATH] = sys_gui_set_icon;
-    syscall_table[SYS_LAYERCOPYBMP] = sys_layer_copy_bitmap;
 }

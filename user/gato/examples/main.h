@@ -80,14 +80,21 @@ static void motion_get_xy(int *x, int *y)
 
 int main(int argc, char *argv[])
 {
+    #if 0
     struct timespec time1 = {0, 0};
     struct timespec time2 = {0, 0};
+    #endif
+    struct timeval time1 = {0, 0};
+    struct timeval time2 = {0, 0};
+    int fps = 0;
+    gettimeofday(&time1, NULL);
+
 #ifdef PROFILE
     ProfilerStart("test.prof"); //开启性能分析
     atexit(ProfilerStop);
 #endif
     frambuffer_init();
-    float fps = 0;
+    // float fps = 0;
 
 #if 0
     surface_t *surface = surface_alloc(W, H);
@@ -120,7 +127,9 @@ int main(int argc, char *argv[])
     #endif
     while (1)
     {
+        #if 0
         clock_gettime(CLOCK_MONOTONIC, &time1);
+        #endif
         #if 0
         SDL_Event e;
         while (SDL_PollEvent(&e))
@@ -152,15 +161,25 @@ int main(int argc, char *argv[])
         }
         #endif
 
-        sample(surface, fps);
+        sample(surface, (float)fps);
         #if 0
         SDL_UpdateWindowSurface(gWindow);
         #else
         g_window_paint(gWindow,  0, 0, gSurface);
         #endif
+        fps++;
+        gettimeofday(&time2, NULL);
+        unsigned long long mtime = (time2.tv_sec - time1.tv_sec) * 1000000 + (time2.tv_usec - time1.tv_usec);
+        if (mtime > 1000000) {
+            printf("fps %d\n", fps);
+            fps = 0;
+            time1 = time2;
+        }
+        #if 0
         clock_gettime(CLOCK_MONOTONIC, &time2);
         unsigned long long mtime = (time2.tv_sec - time1.tv_sec) * 1000000 + (time2.tv_nsec - time1.tv_nsec) / 1000;
         fps =  1000000.0f / mtime;
+        #endif
     }
 exit_main:
     frambuffer_close();

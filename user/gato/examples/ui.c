@@ -7,7 +7,7 @@
 
 static void sample(surface_t *base, float fps)
 {
-	printf("fps %f\n", fps);
+	//printf("fps %f\n", fps);
 	static surface_t *image = 0;
 
 	if (image == 0)
