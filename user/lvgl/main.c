@@ -151,6 +151,7 @@ int main(int argc, char **argv)
             break;
         usleep(5000);
     }
+    printf("lvgl exit!\n");
     g_quit();
     return 0;
 }

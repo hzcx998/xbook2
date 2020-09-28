@@ -162,7 +162,7 @@ int winctl_set_icon(winctl_t *winctl)
         return -1;
     }
     /* 追加到窗口控制上 */
-    //printf("[winctl]: set icon path:%s\n", icon_path);
+    printf("[winctl]: set icon path:%s\n", icon_path);
     
     g_bitmap_clear(winctl->button->bmp);
 
@@ -199,11 +199,9 @@ void winctl_paint(winctl_t *winctl)
     } else {
 
         /* 先刷新背景，再显示 */
-        g_layer_rect_fill(winctl_manager.layer, 0, 0, 
-            taskbar.width, taskbar.height, taskbar.color);
-        g_layer_refresh(winctl_manager.layer, 0, 0, 
-            taskbar.width, taskbar.height);
-        
+        g_rectfill(taskbar.render, 0, 0, taskbar.width, taskbar.height, taskbar.color);
+        g_bitmap_sync(taskbar.render, winctl_manager.layer, 0, 0);
+
         int x = 4, y = 4;
         g_touch_t *gtch;
         list_for_each_owner (gtch, &taskbar.touch_list, list) {

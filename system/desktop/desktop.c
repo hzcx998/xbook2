@@ -169,7 +169,7 @@ int png_decode_data(const char *filename, png_pic_data_t *out) //取出png文件
 	png_infop	info_ptr;//png图像信息句柄
 	FILE *fp;
 	if (check_is_png(&fp, filename) != 0) {
-		printf("file is not png ...\n");
+		printf("file %s is not png ...\n", filename);
 		return -1;
 	}
 	printf("launcher[%s] ...\n", PNG_LIBPNG_VER_STRING); //打印当前libpng版本号
@@ -321,18 +321,17 @@ int init_desktop()
     }
     desktop_layer = layer;
     g_layer_z(layer, 0);    /* 0 is desktop */
-    /* draw desktop */
-    g_layer_rect_fill(layer, 0, 0, g_screen.width, g_screen.height, GC_GRAY);
-    /* refresh desktop */
-    g_layer_refresh(layer, 0, 0, g_screen.width, g_screen.height);
-    
-    g_layer_set_focus(layer);   /* set as focus layer */
 
-    g_layer_set_desktop(layer);   /* set as focus layer */
     
     desktop_bitmap = g_new_bitmap(g_screen.width, g_screen.height);
     if (desktop_bitmap == NULL)
         return -1;
+    
+    g_rectfill(desktop_bitmap, 0, 0, g_screen.width, g_screen.height, GC_GRAY);
+    g_bitmap_sync(desktop_bitmap, layer, 0, 0);
+    g_layer_set_focus(layer);   /* set as focus layer */
+
+    g_layer_set_desktop(layer);   /* set as focus layer */
     
     /* 加载背景图片 */
     #if 1

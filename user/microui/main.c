@@ -10,6 +10,8 @@ static char logbuf[64000];
 static int logbuf_updated = 0;
 static float bg[3] = {90, 95, 100};
 
+static int win_exit_flag = 0;
+
 static void write_log(const char *text)
 {
 	if (logbuf[0])
@@ -376,8 +378,11 @@ static bool_t ex_tp_read(mu_Context *ctx)
     if (g_try_get_msg(&msg) < 0)
         return FALSE;
     
-    if (g_is_quit_msg(&msg))
-        g_quit();
+    if (g_is_quit_msg(&msg)) {
+        win_exit_flag = 1;
+        return FALSE;
+    }
+        
     /* 有外部消息则处理消息 */
     g_dispatch_msg(&msg);
     
@@ -444,8 +449,9 @@ int main()
 	{
         
 		/* handle events */
-		while (ex_tp_read(ctx))
-			;
+		while (ex_tp_read(ctx));
+        if (win_exit_flag)
+            break;
 		/* process frame */
 		process_frame(ctx);
 		/* render */
@@ -495,6 +501,7 @@ int main()
 		r_draw_icon(MU_ICON_CLOSE, rect, color);
 		r_present();
 	}
+    g_quit();
 
 	return 0;
 }

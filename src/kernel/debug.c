@@ -2,10 +2,13 @@
 #include <stdarg.h>
 #include <string.h>
 #include <xbook/spinlock.h>
+#include <xbook/config.h>
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
 #include <arch/debug.h>
 #include <stdio.h>
+
+#include <gui/console.h>
 
 /*
 color fmt: \e[b;fm
@@ -45,6 +48,8 @@ char *printk_msg[] = {
 
 int printk_level = DEFAULT_LOG_LEVEL;
 
+int print_gui_console = 0;
+
 //停机并输出大量信息
 void panic(const char *fmt, ...)
 {
@@ -56,7 +61,10 @@ void panic(const char *fmt, ...)
 	vsprintf(buf, fmt, arg);
 
 	pr_emerg("\npanic: %s", buf);
-	disable_intr();
+    #ifdef CONFIG_GUI_PRINT
+    gui_con_screen.outs("system panic!!!\n");
+	#endif
+    disable_intr();
 	while(1){
 		cpu_idle();
 	}
@@ -75,6 +83,9 @@ void assertion_failure(char *exp, char *file, char *baseFile, int line)
 void spin(char * functionName)
 {
 	printk(KERN_NOTICE "spinning in %s", functionName);
+    #ifdef CONFIG_GUI_PRINT
+    gui_con_screen.outs("system spin!!!\n");
+    #endif
 	disable_intr();
 	while(1){
 		cpu_idle();
@@ -83,8 +94,9 @@ void spin(char * functionName)
 
 void debug_putstr(char *str, int count)
 {
-    while (count-- > 0 && *str){
-        debug_putchar(*str++);
+    char *s = str;
+    while (count-- > 0 && *s){
+        debug_putchar(*s++);
     }
 }
 
@@ -100,8 +112,7 @@ int printk(const char *fmt, ...)
     unsigned long flags;
     save_intr(flags);
     int i;
-	char buf[256];
-    memset(buf, 0, 256);
+	char buf[256] = {0,};
 	va_list arg = (va_list)((char*)(&fmt) + 4); /*4是参数fmt所占堆栈中的大小*/
 	i = vsprintf(buf, fmt, arg);
 
@@ -136,6 +147,13 @@ int printk(const char *fmt, ...)
         }
         
         debug_putstr(p, count);
+        /* 如果配置了图形控制台，那么就打印到图形控制台 */
+
+        #ifdef CONFIG_GUI_PRINT
+        if (print_gui_console && level < 2 && level >= 0)
+            gui_con_screen.outs(p);
+        #endif
+
         /* 清除颜色 */
         debug_putstr(DEBUG_NONE_COLOR, 4);    
     }

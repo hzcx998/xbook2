@@ -81,52 +81,6 @@ int g_layer_set_flags(int layer, uint32_t flags)
     return syscall2(int, SYS_LAYERSETFLG, layer, flags);
 }
 
-int g_layer_outp(int layer, int x, int y, uint32_t color)
-{
-    g_point_t p;
-    p.x = x;
-    p.y = y;
-    return syscall3(int, SYS_LAYEROUTP, layer, &p, color);
-}
-
-int g_layer_inp(int layer, int x, int y, uint32_t *color)
-{
-    g_point_t p;
-    p.x = x;
-    p.y = y;
-    return syscall3(int, SYS_LAYERINP, layer, &p, color);
-}
-
-int g_layer_line(int layer, int x0, int y0, int x1, int y1, uint32_t color)
-{
-    g_line_t p;
-    p.x0 = x0;
-    p.y0 = y0;
-    p.x1 = x1;
-    p.y1 = y1;
-    return syscall3(int, SYS_LAYERLINE, layer, &p, color);
-}
-
-int g_layer_rect(int layer, int x, int y, int width, int height, uint32_t color)
-{
-    g_rect_t p;
-    p.x = x;
-    p.y = y;
-    p.width = width;
-    p.height = height;
-    return syscall3(int, SYS_LAYERRECT, layer, &p, color);
-}
-
-int g_layer_rect_fill(int layer, int x, int y, int width, int height, uint32_t color)
-{
-    g_rect_t p;
-    p.x = x;
-    p.y = y;
-    p.width = width;
-    p.height = height;
-    return syscall3(int, SYS_LAYERRECTFILL, layer, &p, color);
-}
-
 int g_layer_refresh(int layer, int left, int top, int right, int bottom)
 {
     g_region_t p;
@@ -238,88 +192,6 @@ int g_layer_focus_win_top()
 }
 
 
-static void g_draw_word_bit(
-    int layer,
-    int x,
-    int y,
-    uint32_t color,
-    uint8_t *data)
-{
-	unsigned int i;
-	uint8_t d /* data */;
-	for (i = 0; i < 16; i++) {
-		d = data[i];
-		if ((d & 0x80) != 0)
-            g_layer_outp(layer, x + 0, y + i, color);
-		if ((d & 0x40) != 0)
-            g_layer_outp(layer, x + 1, y + i, color);
-		if ((d & 0x20) != 0)
-             g_layer_outp(layer, x + 2, y + i, color);
-		if ((d & 0x10) != 0)
-            g_layer_outp(layer, x + 3, y + i, color);
-		if ((d & 0x08) != 0)
-            g_layer_outp(layer, x + 4, y + i, color);
-		if ((d & 0x04) != 0)
-            g_layer_outp(layer, x + 5, y + i, color);
-		if ((d & 0x02) != 0)
-            g_layer_outp(layer, x + 6, y + i, color);
-		if ((d & 0x01) != 0)
-            g_layer_outp(layer, x + 7, y + i, color);
-	}	
-}
-
-void g_draw_word_ex(
-    int layer,
-    int x,
-    int y,
-    char word,
-    uint32_t color,
-    g_font_t *font)
-{
-    if (!font)
-        return;
-    if (font->addr)
-        g_draw_word_bit(layer, x, y, color, font->addr + word * font->char_height);
-}
-
-void g_draw_text_ex(
-    int layer,
-    int x,
-    int y,
-    char *text,
-    uint32_t color,
-    g_font_t *font)
-{
-    if (!font)
-        return;
-
-    while (*text) {
-        g_draw_word_ex(layer, x, y, *text, color, font);
-		x += font->char_width;
-        text++;
-	}
-}
-
-void g_layer_word(
-    int layer,
-    int x,
-    int y,
-    char ch,
-    uint32_t color)
-{
-    g_draw_word_ex(layer, x, y, ch, color, g_current_font);
-}
-
-void g_layer_text(
-    int layer,
-    int x,
-    int y,
-    char *text,
-    uint32_t color)
-{
-    g_draw_text_ex(layer, x, y, text, color, g_current_font);
-}
-
 int g_layer_sync_bitmap(
     int layer,
     g_rect_t *rect,
@@ -337,6 +209,16 @@ int g_layer_sync_bitmap_ex(
     g_region_t *region)
 {
     syscall4(int, SYS_LAYERSYNCBMPEX, layer, rect, bitmap, region);
+    return 0;
+}
+
+int g_layer_copy_bitmap(
+    int layer,
+    g_rect_t *rect,
+    g_color_t *bitmap,
+    g_region_t *region)
+{
+    syscall4(int, SYS_LAYERCOPYBMP, layer, rect, bitmap, region);
     return 0;
 }
 

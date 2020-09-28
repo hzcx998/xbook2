@@ -68,32 +68,16 @@ int g_enable_window_resize(int win);
 int g_disable_window_resize(int win);
 int g_set_window_minresize(int win, uint32_t min_width, uint32_t min_height);
 
-int g_window_put_point(int win, int x, int y, g_color_t color);
-int g_window_get_point(int win, int x, int y, g_color_t *color);
-int g_window_rect_fill(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color);
-int g_window_rect(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color);
 int g_refresh_window_rect(int win, int x, int y, uint32_t width, uint32_t height);
 int g_refresh_window_region(int win, int left, int top, int right, int bottom);
 int g_window_paint(int win, int x, int y, g_bitmap_t *bmp);
 int g_window_paint_ex(int win, int x, int y, g_bitmap_t *bmp);
-
+int g_window_paint_copy(int win, int x, int y, g_bitmap_t *bmp);
 int g_update_window(int win);
 int g_invalid_rect(int win, int x, int y, uint32_t width, uint32_t height);
 int g_invalid_window(int win);
 int g_get_invalid(int win, int *x, int *y, uint32_t *width, uint32_t *height);
 
-int g_window_char(
-    int win,
-    int x,
-    int y,
-    char ch,
-    uint32_t color);
-int g_window_text(
-    int win,
-    int x,
-    int y,
-    char *text,
-    uint32_t color);
 int g_set_window_icon(int win, char *path);
 
 #endif  /* _GAPI_WINDOW_H */

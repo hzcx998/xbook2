@@ -125,5 +125,5 @@ int sys_layer_sync_bitmap(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_reg
 int sys_layer_sync_bitmap_ex(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
 int sys_gui_get_icon(int lyid, char *path, uint32_t len);
 int sys_gui_set_icon(int lyid, char *path, uint32_t len);
-
+int sys_layer_copy_bitmap(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
 #endif  /* _GUI_LAYER_H */

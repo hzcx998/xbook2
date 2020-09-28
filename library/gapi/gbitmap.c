@@ -312,8 +312,6 @@ int g_bitmap_sync(
     int y)
 {
     g_rect_t rect = {x, y, bmp->width, bmp->height};
-    g_region_t regn;
-    g_region_init(&regn);
-    g_layer_sync_bitmap(layer, &rect, bmp->buffer, &regn);
+    g_layer_sync_bitmap(layer, &rect, bmp->buffer, NULL);
     return 0;
 }

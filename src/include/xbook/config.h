@@ -23,4 +23,7 @@
 /* shade layer */
 #define CONFIG_SHADE_LAYER
 
+/* gui console print */
+#define CONFIG_GUI_PRINT
+
 #endif   /* _XBOOK_CONFIG_H */

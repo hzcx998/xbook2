@@ -32,5 +32,6 @@ void layer_draw_rect(
 );
 
 void layer_sync_bitmap(layer_t *layer, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
+void layer_copy_bitmap(layer_t *layer, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
 
 #endif  /* _GUI_DRAW_H */

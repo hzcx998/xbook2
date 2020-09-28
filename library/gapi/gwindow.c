@@ -567,60 +567,6 @@ int g_maxim_window(int win)
     return 0;
 }
 
-static int _g_window_put_point(g_window_t *gw, int x, int y, g_color_t color)
-{
-    if (x < 0 || y < 0 || x >= gw->win_width || y >= gw->win_height) {
-        return -1;
-    }
-    g_layer_outp(gw->layer, gw->body_region.left + x, gw->body_region.top + y, color);
-    return 0;
-}
-
-int g_window_put_point(int win, int x, int y, g_color_t color)
-{
-    g_window_t *gw = g_find_window(win);
-    if (!gw)
-        return -1;
-    _g_window_put_point(gw, x, y, color);
-    return 0;
-}
-
-int g_window_get_point(int win, int x, int y, g_color_t *color)
-{
-    g_window_t *gw = g_find_window(win);
-    if (!gw)
-        return -1;
-    if (x < 0 || y < 0 || x >= gw->body_region.right || x >= gw->body_region.bottom) {
-        return -1;
-    }
-    g_layer_inp(gw->layer, gw->body_region.left + x, gw->body_region.top + y, color);
-    return 0;
-}
-
-int g_window_rect_fill(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color)
-{
-    g_window_t *gw = g_find_window(win);
-    if (!gw)
-        return -1;
-    
-    int i, j;
-    for (j = 0; j < height; j++) {
-        for (i = 0; i < width; i++) {
-            _g_window_put_point(gw, x + i, y + j, color);
-        }
-    }
-    return 0;
-}
-
-int g_window_rect(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color)
-{
-    g_window_rect_fill(win, x, y, width, 1, color);
-    g_window_rect_fill(win, x, y + height - 1, width, 1, color);
-    g_window_rect_fill(win, x, y, 1, height, color);
-    g_window_rect_fill(win, x + width - 1, y, 1, height, color);
-    return 0;
-}
-
 int g_window_paint(int win, int x, int y, g_bitmap_t *bmp)
 {
     g_window_t *gw = g_find_window(win);
@@ -655,6 +601,26 @@ int g_window_paint_ex(int win, int x, int y, g_bitmap_t *bmp)
         &gw->body_region);
 }
 
+/**
+ * g_window_paint_copy - 从窗口中复制绘制内容到bmp中
+ * 
+ */
+int g_window_paint_copy(int win, int x, int y, g_bitmap_t *bmp)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    g_rect_t rect;
+    rect.x = x + gw->body_region.left;
+    rect.y = y + gw->body_region.top;
+    rect.width = bmp->width;
+    rect.height = bmp->height;
+    return g_layer_copy_bitmap(
+        gw->layer,
+        &rect,
+        bmp->buffer,
+        &gw->body_region);
+}
 
 /**
  * 刷新窗口矩形区域
@@ -755,37 +721,6 @@ int g_get_invalid(int win, int *x, int *y, uint32_t *width, uint32_t *height)
     g_rect_init(&gw->invalid_rect);
     return 0;
 }
-
-int g_window_char(
-    int win,
-    int x,
-    int y,
-    char ch,
-    uint32_t color)
-{
-    g_window_t *gw = g_find_window(win);
-    if (!gw)
-        return -1;
-    
-    g_layer_word(gw->layer, gw->body_region.left + x, gw->body_region.top + y, ch, color);
-    return 0;
-}
-
-int g_window_text(
-    int win,
-    int x,
-    int y,
-    char *text,
-    uint32_t color)
-{
-    g_window_t *gw = g_find_window(win);
-    if (!gw)
-        return -1;
-    
-    g_layer_text(gw->layer, gw->body_region.left + x, gw->body_region.top + y, text, color);
-    return 0;
-}
-
 
 /**
  * 隐藏指定窗口，从桌面消失，变成隐藏状态

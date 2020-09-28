@@ -14,7 +14,7 @@ int init_window()
     if (g_init() < 0)
         return -1;
 
-    int win = g_new_window(APP_NAME, 100, 100, SH_WIN_WIDTH, SH_WIN_HEIGHT, GW_NO_MAXIM);
+    int win = g_new_window(APP_NAME, 300, 100, SH_WIN_WIDTH, SH_WIN_HEIGHT, GW_NO_MAXIM);
     if (win < 0)
         return -1;
 

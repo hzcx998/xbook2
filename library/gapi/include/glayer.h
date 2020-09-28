@@ -30,28 +30,10 @@ int g_layer_del_all();
 int g_layer_move(int layer, int x, int y);
 int g_layer_z(int layer, int z);
 
-int g_layer_outp(int layer, int x, int y, uint32_t color);
-int g_layer_inp(int layer, int x, int y, uint32_t *color);
-int g_layer_line(int layer, int x0, int y0, int x1, int y1, uint32_t color);
-int g_layer_rect(int layer, int x, int y, int width, int height, uint32_t color);
-int g_layer_rect_fill(int layer, int x, int y, int width, int height, uint32_t color);
 int g_layer_refresh(int layer, int left, int top, int right, int bottom);
 
 int g_layer_paint(int layer, int x, int y, g_bitmap_t *bmp);
 int g_layer_paint_ex(int layer, int x, int y, g_bitmap_t *bmp);
-
-void g_layer_word(
-    int layer,
-    int x,
-    int y,
-    char ch,
-    uint32_t color);
-void g_layer_text(
-    int layer,
-    int x,
-    int y,
-    char *text,
-    uint32_t color);
 
 #define g_layer_refresh_rect(l, x, y, w, h) g_layer_refresh((l), (x), (y), ((x) + (w)), ((y) + (h)))
 
@@ -80,6 +62,12 @@ int g_layer_sync_bitmap(
     g_region_t *region);
 
 int g_layer_sync_bitmap_ex(
+    int layer,
+    g_rect_t *rect,
+    g_color_t *bitmap,
+    g_region_t *region);
+
+int g_layer_copy_bitmap(
     int layer,
     g_rect_t *rect,
     g_color_t *bitmap,

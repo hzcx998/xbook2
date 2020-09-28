@@ -15,7 +15,7 @@
 
 #define DEBUG_LOCAL 0
 
-#define LAYER_DEBUG
+// #define LAYER_DEBUG
 
 // #define LAYER_ALPAH /* 是否拥有透明图层 */
 

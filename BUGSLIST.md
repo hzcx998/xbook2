@@ -25,3 +25,7 @@ spinning in assertion failure()
 
 ## <2020.9.27>
 1. 鼠标一直移动就会出现BUG
+
+## <2020.9.28>
+1. gato在linux下面编译生成的代码和win不一样。
+2. 鼠标在linux环境qemu启动有故障

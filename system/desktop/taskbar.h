@@ -14,6 +14,7 @@ typedef struct {
     uint32_t height;
     g_color_t color;
     list_t touch_list;
+    g_bitmap_t *render;
 } taskbar_t;
 
 extern taskbar_t taskbar;

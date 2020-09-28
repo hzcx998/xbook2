@@ -7,6 +7,7 @@
 #include <gui/layer.h>
 #include <gui/message.h>
 #include <gui/timer.h>
+#include <gui/console.h>
 
 #include <xbook/debug.h>
 #include <xbook/gui.h>
@@ -95,6 +96,9 @@ void init_gui()
         panic("open gui keyboard failed!\n");
     if (gui_mouse.open() < 0)
         panic("open gui keyboard failed!\n");
+
+    if (gui_init_console() < 0)
+        panic("init gui console failed!\n");
 
     if (gui_init_layer() < 0)
         panic("init gui layer failed!\n");

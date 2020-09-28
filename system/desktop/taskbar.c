@@ -24,10 +24,19 @@ int init_taskbar()
         return -1;
     }
     taskbar.layer = layer;
+
+    taskbar.render = g_new_bitmap(taskbar.width, taskbar.height);
+    if (taskbar.render == NULL) {
+        printf("[desktop]: new taskbar bitmap failed!\n");
+        g_layer_del(layer);
+        return -1;
+    }
+
     g_layer_z(layer, 1);    /* layer z = 1 */
-    g_layer_rect_fill(layer, 0, 0, taskbar.width, taskbar.height, taskbar.color);
-    g_layer_refresh(layer, 0, 0, taskbar.width, taskbar.height);
     
+    g_rectfill(taskbar.render, 0, 0, taskbar.render->width, taskbar.render->height, GC_GRAY);
+    g_bitmap_sync(taskbar.render, layer, 0, 0);
+
     /* set task bar as win top, thus win should be lower than task bar layer */
     g_layer_set_wintop(layer);
     g_region_t rg;

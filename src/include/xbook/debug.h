@@ -22,6 +22,7 @@
 #define PRINT_LEVEL_MSG   0
 
 extern int printk_level;
+extern int print_gui_console;
 
 //内核打印函数的指针
 int printk(const char *fmt, ...);

@@ -280,6 +280,21 @@ int sys_layer_sync_bitmap_ex(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_
     return 0;
 }
 
+/**
+ * 扩展的时候不刷新，需要异步刷新
+ */
+int sys_layer_copy_bitmap(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region)
+{
+    if (lyid < 0)
+        return -1;
+    layer_t *l = layer_find_by_id(lyid);
+    if (l == NULL) {
+        return -1;
+    }
+    layer_copy_bitmap(l, rect, bitmap, region);
+    return 0;
+}
+
 int sys_gui_get_icon(int lyid, char *path, uint32_t len)
 {
     if (lyid < 0)
