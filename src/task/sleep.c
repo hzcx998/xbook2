@@ -2,7 +2,7 @@
 #include <xbook/timer.h>
 #include <xbook/clock.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_TASK_SLEEP
 
 /**
  * sleep_task_timeout - 休眠任务超时
@@ -13,7 +13,7 @@
  */
 static void sleep_task_timeout(unsigned long arg)
 {
-#if DEBUG_LOCAL == 1 
+#ifdef DEBUG_TASK_SLEEP 
     printk(KERN_DEBUG "sleep_task_timeout: wakeup\n");
 #endif    
     task_t *task = (task_t *)arg;
@@ -39,7 +39,7 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
     DEFINE_TIMER(sleep_timer, ticks, (unsigned long )current_task, sleep_task_timeout);
     current_task->sleep_timer = &sleep_timer;    /* 绑定休眠定时器 */
     timer_add(&sleep_timer);
-#if DEBUG_LOCAL == 1 
+#ifdef DEBUG_TASK_SLEEP 
     printk(KERN_DEBUG "task_sleep_by_ticks: start pid=%d\n", current_task->pid);
 #endif    
     task_block(TASK_BLOCKED);   /* 阻塞自己 */
@@ -48,12 +48,12 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
     current_task->sleep_timer = NULL;           /* 解绑休眠定时器 */
     /* 有可能还在休眠中就被唤醒了，那么就检查定时器是否已经被执行过了 */
     if (sleep_timer.timeout > 0) { /* 非正常唤醒 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TASK_SLEEP
         printk(KERN_DEBUG "task_sleep_by_ticks: not del\n");
 #endif
         timer_del(&sleep_timer);    /* 取消定时器 */
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TASK_SLEEP
     printk(KERN_DEBUG "task_sleep_by_ticks: end pid=%d timeout=%d\n",
         current_task->pid, sleep_timer.timeout);
 #endif

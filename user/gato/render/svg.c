@@ -1,7 +1,9 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "svg.h"
+#include "render.h"
 
 static inline int svg_isspace(char c)
 {
@@ -233,7 +235,7 @@ static int get_int(svg_parser_t *parser, int *i)
     }
 }
 
-int svg_cmd_transform(svg_cmd_t *cmd, svg_style_t style)
+static int svg_cmd_transform(svg_cmd_t *cmd, svg_style_t style)
 {
 #define MIRROR_X(f, v)
 #define MIRROR_X(f, v)
@@ -347,7 +349,7 @@ int svg_cmd_transform(svg_cmd_t *cmd, svg_style_t style)
     return 1;
 }
 
-int svg_cmd_parser(svg_parser_t *parser, svg_cmd_t *cmd)
+static int svg_cmd_parser(svg_parser_t *parser, svg_cmd_t *cmd)
 {
 
     token_t t = peek_token(parser);
@@ -484,14 +486,14 @@ int svg_cmd_parser(svg_parser_t *parser, svg_cmd_t *cmd)
     return 1;
 }
 
-void svg_parser_init(svg_parser_t *parser, const char *buf)
+static void svg_parser_init(svg_parser_t *parser, const char *buf)
 {
     parser->buf = buf;
     parser->len = strlen(parser->buf);
     parser->index = 0;
 }
 
-void svg_parser()
+static void svg_parser()
 {
     svg_parser_t *parser = &(svg_parser_t){
         0};
@@ -510,4 +512,174 @@ void svg_parser()
             printf("%c \n", cmd.cmd);
         }
     }
+}
+
+void svg_to(context_t *ctx, const char *buf, svg_style_t style)
+{
+	point_t pos;
+	point_t mirror;
+	svg_parser_t *parser = &(svg_parser_t){0};
+
+	svg_parser_init(parser, buf);
+	svg_cmd_t cmd;
+
+	while (svg_cmd_parser(parser, &cmd) == 1)
+	{
+		svg_cmd_transform(&cmd, style);
+		switch (cmd.cmd)
+		{
+		case 'M':
+			if (cmd.short_format)
+			{
+				ctx->line_to(ctx, cmd.M.x, cmd.M.y);
+				pos = (point_t){cmd.M.x, cmd.M.y};
+			}
+			else
+			{
+				ctx->move_to(ctx, cmd.M.x, cmd.M.y);
+				pos = (point_t){cmd.M.x, cmd.M.y};
+			}
+
+			break;
+		case 'L':
+			ctx->line_to(ctx, cmd.M.x, cmd.M.y);
+			pos = (point_t){cmd.L.x, cmd.L.y};
+			break;
+		case 'H':
+			ctx->line_to(ctx, cmd.H.x, pos.y);
+			pos.x = cmd.H.x;
+			break;
+		case 'V':
+			ctx->line_to(ctx, pos.x, cmd.V.y);
+			pos.y = cmd.V.y;
+			break;
+		case 'C':
+			ctx->cubic_bezto(ctx, pos, (point_t){cmd.C.x1, cmd.C.y1}, (point_t){cmd.C.x2, cmd.C.y2}, (point_t){cmd.C.x, cmd.C.y});
+			mirror = (point_t){cmd.C.x2, cmd.C.y2};
+			pos = (point_t){cmd.C.x, cmd.C.y};
+			break;
+		case 'S':
+		{
+			point_t p = point_add_point(pos, point_sub_point(pos, mirror));
+			ctx->cubic_bezto(ctx, pos, p, (point_t){cmd.S.x2, cmd.S.y2}, (point_t){cmd.S.x, cmd.S.y});
+			mirror = (point_t){cmd.S.x2, cmd.S.y2};
+			pos = (point_t){cmd.S.x, cmd.S.y};
+			break;
+		}
+		case 'Q':
+			ctx->quad_bezto(ctx, pos, (point_t){cmd.Q.x1, cmd.Q.y1}, (point_t){cmd.Q.x, cmd.Q.y});
+			mirror = (point_t){cmd.Q.x1, cmd.Q.y1};
+			pos = (point_t){cmd.Q.x, cmd.Q.y};
+			break;
+		case 'T':
+		{
+			point_t p = point_add_point(pos, point_sub_point(pos, mirror));
+			ctx->quad_bezto(ctx, pos, p, (point_t){cmd.T.x, cmd.T.y});
+			mirror = p;
+			pos = (point_t){cmd.T.x, cmd.T.y};
+			break;
+		}
+		case 'A':
+			ctx->arc_to(ctx, cmd.A.rx, cmd.A.ry, cmd.A.rotation, cmd.A.large, cmd.A.sweep, pos, (point_t){cmd.A.x, cmd.A.y});
+			pos = (point_t){cmd.A.x, cmd.A.y};
+			break;
+		case 'm':
+			ctx->move_to(ctx, pos.x + cmd.m.dx, pos.y + cmd.m.dy);
+			pos = point_add_point(pos, (point_t){cmd.m.dx, cmd.m.dy});
+			break;
+
+		case 'l':
+			ctx->line_to(ctx, pos.x + cmd.l.dx, pos.y + cmd.l.dy);
+			pos = point_add_point(pos, (point_t){cmd.l.dx, cmd.l.dy});
+			break;
+		case 'h':
+			ctx->line_to(ctx, pos.x + cmd.h.dx, pos.y);
+			pos.x += cmd.h.dx;
+			break;
+		case 'v':
+			ctx->line_to(ctx, pos.x, pos.y + cmd.v.dy);
+			pos.y += cmd.v.dy;
+			break;
+		case 'c':
+			ctx->cubic_bezto(ctx, pos, point_add_point(pos, (point_t){cmd.c.dx1, cmd.c.dy1}), point_add_point(pos, (point_t){cmd.c.dx2, cmd.c.dy2}), point_add_point(pos, (point_t){cmd.c.dx, cmd.c.dy}));
+			mirror = point_add_point(pos, (point_t){cmd.c.dx2, cmd.c.dy2});
+			pos = point_add_point(pos, (point_t){cmd.c.dx, cmd.c.dy});
+			break;
+		case 's':
+		{
+			point_t p = point_add_point(pos, point_sub_point(pos, mirror));
+			ctx->cubic_bezto(ctx, pos, p, point_add_point(pos, (point_t){cmd.s.dx2, cmd.s.dy2}), point_add_point(pos, (point_t){cmd.s.dx, cmd.s.dy}));
+			mirror = point_add_point(pos, (point_t){cmd.s.dx2, cmd.s.dy2});
+			pos = point_add_point(pos, (point_t){cmd.s.dx, cmd.s.dy});
+			break;
+		}
+		case 'q':
+			ctx->quad_bezto(ctx, pos, point_add_point(pos, (point_t){cmd.q.dx1, cmd.q.dy1}), point_add_point(pos, (point_t){cmd.q.dx, cmd.q.dy}));
+			mirror = point_add_point(pos, (point_t){cmd.q.dx1, cmd.q.dy1});
+			pos = point_add_point(pos, (point_t){cmd.q.dx, cmd.q.dy});
+			break;
+		case 't':
+		{
+			point_t p = point_add_point(pos, point_sub_point(pos, mirror));
+			ctx->quad_bezto(ctx, pos, p, point_add_point(pos, (point_t){cmd.t.dx, cmd.t.dy}));
+			mirror = p;
+			pos = point_add_point(pos, (point_t){cmd.t.dx, cmd.t.dy});
+			break;
+		}
+		case 'a':
+			ctx->arc_to(ctx, cmd.a.rx, cmd.a.ry, cmd.a.rotation, cmd.a.large, cmd.a.sweep, pos, point_add_point(pos, (point_t){cmd.a.dx, cmd.a.dy}));
+			pos = point_add_point(pos, (point_t){cmd.a.dx, cmd.a.dy});
+			break;
+		case 'Z':
+		case 'z':
+			ctx->close_path(ctx);
+			break;
+		default:
+			break;
+		}
+
+		if (cmd.cmd != 'C' && cmd.cmd != 'c' && cmd.cmd != 'S' && cmd.cmd != 's' && cmd.cmd != 'Q' && cmd.cmd != 'q' && cmd.cmd != 'T' && cmd.cmd != 't')
+		{
+			mirror = pos;
+		}
+	}
+}
+
+
+surface_t *surface_svg_get(char *path, float vb_w, float vb_h, float w, float h, color_t color)
+{
+	context_t *ctx = &(context_t){0};
+
+	surface_t *base = surface_alloc(w, h);
+	context_init(ctx, base);
+
+	svg_style_t style = (svg_style_t){
+		scale : w / vb_w,
+		translate_x : 0,
+		translate_y : 0,
+	};
+	svg_to(ctx, path, style);
+	ctx->render(ctx, 0, 0, (style_t){
+		fill_color : color
+	});
+	context_exit(ctx);
+
+	return base;
+}
+
+void draw_svg(surface_t *base, char *path, float vb_w, float vb_h, float w, float h, int x, int y, color_t color)
+{
+	context_t *ctx = &(context_t){0};
+	context_init(ctx, base);
+
+	svg_style_t style = (svg_style_t){
+		scale : w / vb_w,
+		translate_x : x,
+		translate_y : y,
+	};
+	svg_to(ctx, path, style);
+	ctx->render(ctx, x, y, (style_t){
+		fill_color : color
+	});
+	context_exit(ctx);
 }

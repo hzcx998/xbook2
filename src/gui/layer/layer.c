@@ -13,7 +13,7 @@
 #include <gui/draw.h>
 #include <gui/mouse.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_GUI_LAYER
 
 // #define LAYER_DEBUG
 
@@ -267,7 +267,7 @@ void layer_set_z(layer_t *layer, int z)
     /* 已经存在与现实链表中，就说明只是调整一下高度而已。 */
     if (list_find(&layer->list, &layer_show_list_head)) {
         spin_unlock(&layer_list_spin_lock);
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_GUI_LAYER    
         printk("layer z:%d set new z:%d\n", layer->z, z);
 #endif
         /* 设置为正，就是要调整高度 */
@@ -276,7 +276,7 @@ void layer_set_z(layer_t *layer, int z)
     
             /* 修复Z轴 */
             if (z > top_layer_z) {
-#if DEBUG_LOCAL == 1                
+#ifdef DEBUG_GUI_LAYER                
                 printk("layer z:%d set new z:%d but above top %d\n", layer->z, z, top_layer_z);
 #endif        
                 z = top_layer_z;
@@ -286,7 +286,7 @@ void layer_set_z(layer_t *layer, int z)
             if (z == top_layer_z) {
                 spin_unlock(&layer_val_lock);
     
-#if DEBUG_LOCAL == 1                
+#ifdef DEBUG_GUI_LAYER                
                 printk("layer z:%d set new z:%d same with top %d\n", layer->z, z, top_layer_z);
 #endif
                 spin_lock(&layer_list_spin_lock);
@@ -314,7 +314,7 @@ void layer_set_z(layer_t *layer, int z)
                 spin_unlock(&layer_val_lock);
     
                 if (z > layer->z) { /* 如果新高度比原来的高度高 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_GUI_LAYER
                     printk("layer z:%d < new z:%d \n", layer->z, z, top_layer_z);
 #endif
                     spin_lock(&layer_list_spin_lock);
@@ -334,7 +334,7 @@ void layer_set_z(layer_t *layer, int z)
 
                     /* 添加到新图层高度的位置 */
                     if (old_layer) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_GUI_LAYER
                         printk("find old layer:%x z%d\n", old_layer, old_layer->z + 1);
 #endif                        
                         layer->z = z;
@@ -351,7 +351,7 @@ void layer_set_z(layer_t *layer, int z)
 
                     }
                 } else if (z < layer->z) { /* 如果新高度比原来的高度低 */
-#if DEBUG_LOCAL == 1                
+#ifdef DEBUG_GUI_LAYER                
                     printk("layer z:%d > new z:%d \n", layer->z, z, top_layer_z);
 #endif  
                     spin_lock(&layer_list_spin_lock);
@@ -371,7 +371,7 @@ void layer_set_z(layer_t *layer, int z)
 
                     /* 添加到新图层高度的位置 */
                     if (old_layer) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_GUI_LAYER
                         printk("find old layer:%x z%d\n", old_layer, old_layer->z - 1);
 #endif                        
                         layer->z = z;
@@ -389,7 +389,7 @@ void layer_set_z(layer_t *layer, int z)
                 }
             }
         } else { /* 小于0就是要隐藏起来的图层 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_GUI_LAYER
             printk("layer z:%d will be hided.\n", layer->z);
 #endif
             spin_lock(&layer_list_spin_lock);
@@ -428,7 +428,7 @@ void layer_set_z(layer_t *layer, int z)
             if (z > top_layer_z) {
                 top_layer_z++;      /* 图层顶增加 */
                 z = top_layer_z;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_GUI_LAYER
                 printk("insert a layer at top z %d\n", z);
 #endif
             } else {
@@ -439,7 +439,7 @@ void layer_set_z(layer_t *layer, int z)
             if (z == top_layer_z) {
                 spin_unlock(&layer_val_lock);
     
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_GUI_LAYER
                 printk("add a layer %d to tail\n", z);
 #endif
                 layer->z = z;
@@ -456,7 +456,7 @@ void layer_set_z(layer_t *layer, int z)
             } else {
                 spin_unlock(&layer_val_lock);
     
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_GUI_LAYER
                 printk("add a layer %d to midlle or head\n", z);
 #endif               
                 spin_lock(&layer_list_spin_lock);
@@ -538,12 +538,12 @@ void layer_clear(layer_t *layer)
  */
 void print_layers()
 {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_GUI_LAYER
     printk("layer top z:%d\n", top_layer_z);
 #endif
     layer_t *layer;
     list_for_each_owner (layer, &layer_show_list_head, list) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_GUI_LAYER
         printk("layer addr:%x buffer:%x width:%d height:%d x:%d y:%d z:%d\n",
             layer, layer->buffer, layer->width, layer->height, layer->x, layer->y, layer->z);
 #endif

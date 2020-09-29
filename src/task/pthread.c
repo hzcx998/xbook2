@@ -5,7 +5,7 @@
 #include <arch/interrupt.h>
 #include <arch/task.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_PTHREAD
 
 /* 用户线程 */
 
@@ -66,7 +66,7 @@ int wait_one_hangging_thread(task_t *parent, pid_t pid, int *status)
     list_for_each_owner_safe (child, next, &task_global_list, global_list) {
         if (child->pid == pid) { /* find a child process we ordered */
             if (child->state == TASK_HANGING) { /* child is hanging, destroy it  */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
                 printk(KERN_NOTICE "wait_one_hangging_thread: pid=%d find a hanging thread %d \n",
                     parent->pid, pid);
 #endif              
@@ -96,7 +96,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
 {
     /* 创建线程的父进程 */
     task_t *parent = current_task;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
     printk(KERN_DEBUG "pthread_start: pid=%d routine=%x arg=%x stackaddr=%x stacksize=%x detach=%d\n",
         parent->pid, func, arg, attr->stackaddr, attr->stacksize, attr->detachstate);
 #endif
@@ -123,7 +123,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     task->parent_pid = parent->pid; /* 父进程是创建者 */
     task->pthread = parent->pthread;    /* 指向父进程的线程管理 */
     
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
     printk(KERN_DEBUG "pthread_start: new thread pid=%d tgid=%x parent pid=%d\n",
         task->pid, task->tgid, task->parent_pid);
 #endif
@@ -159,7 +159,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
 
     atomic_inc(&task->pthread->thread_count);   /* 增加一个线程 */
     if (atomic_get(&task->pthread->thread_count) > PTHREAD_MAX_NR) { /* 超过最大线程数量，就不能创建 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_NOTICE "pthread_start: pid=%d tgid=%d the number of thread out of range!\n",
             parent->pid, parent->tgid);
 #endif
@@ -168,7 +168,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
         restore_intr(flags);
         return NULL;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
     printk(KERN_NOTICE "pthread_start: thread count %d\n", atomic_get(&task->pthread->thread_count));
 #endif
 
@@ -218,7 +218,7 @@ void pthread_exit(void *status)
 
     /* 子线程退出 */
     if (cur->flags & THREAD_FLAG_DETACH) {    /* 不需要同步等待，"自己释放资源" */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "pthread_exit: pid=%d detached.\n", cur->pid);
 #endif        
         /* 有可能启动时是joinable的，但是执行过程中变成detach状态，
@@ -241,11 +241,11 @@ void pthread_exit(void *status)
         cur->parent_pid = INIT_PROC_PID;
 
     } else {    /* 需要同步释放 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "pthread_exit: pid=%d joinable.\n", cur->pid);
 #endif    
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
     printk(KERN_DEBUG "pthread_exit: pid=%d tgid=%d ppid=%d.\n", cur->pid, cur->tgid, cur->parent_pid);
 #endif
     task_t *parent = find_task_by_pid(cur->parent_pid); 
@@ -253,7 +253,7 @@ void pthread_exit(void *status)
         /* 查看父进程状态 */
         if (parent->state == TASK_WAITING) {
             restore_intr(flags);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
             printk(KERN_DEBUG "pthread_exit: pid=%d parent %d waiting...\n", cur->pid, parent->pid);
 #endif    
 
@@ -262,7 +262,7 @@ void pthread_exit(void *status)
             task_block(TASK_HANGING);   /* 把自己挂起 */
         } else { /* 父进程没有 */
             restore_intr(flags);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
             printk(KERN_DEBUG "pthread_exit: pid=%d parent %d not waiting, zombie!\n", cur->pid, parent->pid);
 #endif    
             //printk("parent not waiting, zombie!\n");
@@ -270,7 +270,7 @@ void pthread_exit(void *status)
         }
     } else {
         /* 没有父进程，变成不可被收养的孤儿+僵尸进程 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
             printk(KERN_DEBUG "pthread_exit: pid=%d no parent! zombie!\n", cur->pid);
 #endif    
         //printk("no parent!\n");
@@ -335,12 +335,12 @@ int pthread_join(pthread_t thread, void **thread_return)
         restore_intr(flags);
         return -1;  /* 没找到线程 */
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
     printk(KERN_DEBUG "pthread_join: pid=%d join thread %d\n", waiter->pid, thread);
 #endif
     /* 线程存在，查看其是否为分离状态 */
     if (find->flags & THREAD_FLAG_DETACH) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "pthread_join: pid=%d join the %d was detached, just return.\n", waiter->pid, thread);
 #endif  
         restore_intr(flags);
@@ -349,7 +349,7 @@ int pthread_join(pthread_t thread, void **thread_return)
  
     /* 么有线程等待中才能等待 */
     if (find->flags & THREAD_FLAG_JOINED) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "pthread_join: pid=%d the thread %d had joined by thread %d, return.\n",
             waiter->pid, find->pid, find->parent_pid);
 #endif 
@@ -369,7 +369,7 @@ int pthread_join(pthread_t thread, void **thread_return)
         status = 0;
         pid = wait_one_hangging_thread(waiter, find->pid, &status);
         
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "pthread_join: pid=%d wait pid=%d status=%x\n",
             waiter->pid, pid, status);
 #endif
@@ -381,7 +381,7 @@ int pthread_join(pthread_t thread, void **thread_return)
         if (!(waiter->flags & THREAD_FLAG_JOINING)) {
             break;
         }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "pthread_join: pid=%d waiting...\n", waiter->pid);
 #endif        
         restore_intr(flags);
@@ -393,7 +393,7 @@ int pthread_join(pthread_t thread, void **thread_return)
     /* 回写状态 */
     if (thread_return != NULL) {
         *thread_return = (void *)status;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "pthread_join: pid=%d thread %d exit, will return status=%x\n",
             waiter->pid, thread, *thread_return);
 #endif
@@ -430,14 +430,14 @@ int sys_thread_cancel(pthread_t thread)
     save_intr(flags);
     task = find_task_by_pid(thread);
     if (task == NULL) { /* 没找到 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_ERR "sys_thread_cancel: pid=%d not find thread %d!\n",
             current_task->pid, thread);
 #endif 
         restore_intr(flags);
         return -1;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
     printk(KERN_ERR "sys_thread_cancel: pid=%d set thread %d cancelation point.\n",
         current_task->pid, thread);
 #endif
@@ -447,12 +447,12 @@ int sys_thread_cancel(pthread_t thread)
         /* 查看是否为自己取消自己 */
         if (task == task_current) { /* 是自己 */
             restore_intr(flags);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
             printk(KERN_DEBUG "sys_thread_cancel: pid=%d cancel self.\n", current_task->pid);
 #endif 
             pthread_exit((void *) THREAD_FLAG_CANCEL_ASYCHRONOUS); /* 退出线程运行 */
         } else {    /* 取消其它线程 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
             printk(KERN_DEBUG "sys_thread_cancel: pid=%d will cancel thread %d.\n",
                 current_task->pid, thread);
 #endif 
@@ -485,7 +485,7 @@ int sys_thread_setcancelstate(int state, int *oldstate)
 {
     task_t *cur = current_task;
     if (oldstate != NULL) {  /* 保存原来的类型 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcancelstate: pid=%d fetch oldstate.\n",
             current_task->pid);
 #endif 
@@ -497,13 +497,13 @@ int sys_thread_setcancelstate(int state, int *oldstate)
     }
     if (state == PTHREAD_CANCEL_DISABLE) {
         cur->flags |= THREAD_FLAG_CANCEL_DISABLE;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcancelstate: pid=%d set cancel disable.\n",
             current_task->pid);
 #endif 
     } else if (state == PTHREAD_CANCEL_ENABLE) {
         cur->flags &= ~THREAD_FLAG_CANCEL_DISABLE;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcancelstate: pid=%d set cancel enable.\n",
             current_task->pid);
 #endif
@@ -525,7 +525,7 @@ int sys_thread_setcanceltype(int type, int *oldtype)
 {
     task_t *cur = current_task;
     if (oldtype != NULL) {  /* 保存原来的类型 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcanceltype: pid=%d fetch oldtype.\n",
             current_task->pid);
 #endif 
@@ -537,13 +537,13 @@ int sys_thread_setcanceltype(int type, int *oldtype)
     }
     if (type == PTHREAD_CANCEL_ASYCHRONOUS) {
         cur->flags |= THREAD_FLAG_CANCEL_ASYCHRONOUS;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcanceltype: pid=%d set cancel asychronous.\n",
             current_task->pid);
 #endif 
     } else if (type == PTHREAD_CANCEL_DEFFERED) {
         cur->flags &= ~THREAD_FLAG_CANCEL_ASYCHRONOUS;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcanceltype: pid=%d set cancel deffered.\n",
             current_task->pid);
 #endif 

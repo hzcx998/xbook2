@@ -1,6 +1,9 @@
 #ifndef _X86_DEBUG_H
 #define _X86_DEBUG_H
 
+#define DEBUG_TASK
+
+
 // void (*debug_putchar) (char ch);
 // 
 // Note: this mean you define "debug_putchar" variable in the head file;
@@ -15,5 +18,6 @@
 
 void init_kernel_debug();
 void debug_putchar(char ch);
+
 
 #endif  /* _X86_DEBUG_H */

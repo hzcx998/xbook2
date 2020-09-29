@@ -12,7 +12,7 @@
 */
 
 
-#define DEBUG_LOCAL 0
+#define DEBUG_FATFS_DRIVER
 
 FILE *drv_file;
 void *drv_buf;
@@ -40,7 +40,7 @@ int drv_init(char *path, int disk_sz)
     strcpy(disk_path, path);
 
     if (rom_disk) { /* new one */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_DRIVER
         printf("fatfs: a rom disk.\n");
 #endif
         drv_file = fopen(disk_path, "wb+");    
@@ -49,12 +49,12 @@ int drv_init(char *path, int disk_sz)
             return -1;
         }
     } else {    /* can open old disk */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_DRIVER
         printf("fatfs: a traditional disk.\n");
 #endif
         drv_file = fopen(disk_path, "rb+");    
         if (drv_file == NULL) { /* 文件存在则继续，不存在则失败 */
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_FATFS_DRIVER
             printf("fatfs: create a new disk.\n");
     #endif
             drv_file = fopen(disk_path, "wb+");    
@@ -68,7 +68,7 @@ int drv_init(char *path, int disk_sz)
     fseek(drv_file, 0, SEEK_END);
     int filesz = ftell(drv_file);
     if (filesz <= 0) { /* 创建一个新的镜像文件 */
-#if DEBUG_LOCAL == 1        
+#ifdef DEBUG_FATFS_DRIVER        
         printf("fatfs: build a new disk.\n");
 #endif
         /* 文件大小是参数中的大小 */
@@ -97,7 +97,7 @@ int drv_init(char *path, int disk_sz)
         disk_size = filesz;
         disk_sectors = filesz / SECTOR_SIZE;
     }
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_FATFS_DRIVER    
     printf("fatfs: disk size=%d setctors=%d.\n", disk_size, disk_sectors);
 #endif
     if (drv_buf == NULL) {
@@ -113,7 +113,7 @@ int drv_init(char *path, int disk_sz)
     
     fseek(drv_file, 0, SEEK_END);
     filesz = ftell(drv_file);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_DRIVER
     printf("fatfs: disk size is %d, %d MB\n", filesz, filesz / (1024*1024));
 #endif
     rewind(drv_file);
@@ -129,7 +129,7 @@ int drv_init(char *path, int disk_sz)
     /* 如果没有引导，说明需要创建文件系统 */
     if (!(bootbuf[510] == 0x55 && bootbuf[511] == 0xAA)) {
         mkfs_flags = 1;
-#if DEBUG_LOCAL == 1   
+#ifdef DEBUG_FATFS_DRIVER   
         printf("fatfs: need make fs on disk.\n");
 #endif
     }
@@ -146,7 +146,7 @@ int drv_open()
         open_ref++;
         return 0;
     }
-#if DEBUG_LOCAL == 1   
+#ifdef DEBUG_FATFS_DRIVER   
     printf("fatfs: do open driver.\n");
 #endif    
     /* 加载磁盘数据到内存 */
@@ -168,7 +168,7 @@ int drv_close()
     if (open_ref > 0) {
         return 0;
     }
-#if DEBUG_LOCAL == 1   
+#ifdef DEBUG_FATFS_DRIVER   
     printf("fatfs: do close driver.\n");
 #endif
     rewind(drv_file);

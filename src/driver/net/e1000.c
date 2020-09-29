@@ -29,7 +29,7 @@
 #define DEV_NAME "e1000"
 #define E1000_VENDOR_ID 0x8086
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 #ifndef NET_IP_ALIGN
 #define NET_IP_ALIGN 2
@@ -210,7 +210,7 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
         return -1;
     }
     ext->pci_device = pci_device;
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
     printk(KERN_DEBUG "find E1000_82540EM device, vendor id: 0x%x, device id: 0x%x\n",\
             device->vendor_id, device->device_id);
 #endif
@@ -235,7 +235,7 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
         printk(KERN_DEBUG "E1000_82540EM init failed: INVALID pci device io address.\n");
         return -1;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "E1000_81540EM io address: 0x%x\n", ext->io_addr);
 #endif
     /* get irq */
@@ -244,7 +244,7 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
         printk(KERN_DEBUG "E1000_82540EM init failed: INVALID irq.\n");
         return -1;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "E1000_82540EM irq: %d\n", ext->irq);
 #endif
     return 0;

@@ -34,9 +34,7 @@
 #include <net/e1000_osdep.h>
 #include <xbook/debug.h>
 
-#ifndef DEBUG_LOCAL
-#define DEBUG_LOCAL 0
-#endif
+// #define DEBUG_DRV
 
 static int32_t e1000_set_phy_type(struct e1000_hw *hw);
 static uint32_t e1000_phy_init_script(struct e1000_hw *hw);
@@ -381,7 +379,7 @@ e1000_reset_hw(struct e1000_hw *hw)
     uint32_t led_ctrl;
 
     DEBUGFUNC("e1000_reset_hw start");
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "e1000_reset_hw.\n");
 #endif
 

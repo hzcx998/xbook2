@@ -6,15 +6,15 @@
 #include <xbook/vmm.h>
 #include <string.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_VMM
 
 static int do_copy_share_page(addr_t vaddr, vmm_t *child, vmm_t *parent)
 {
     /* 保存物理地址 */
     addr_t paddr = addr_v2p(vaddr);
-    #if DEBUG_LOCAL == 1
+    
     pr_dbg("[vmm]: copy share page at vaddr %x phy addr %x\n", vaddr, paddr);   
-    #endif
+    
     /* 2.切换到子进程空间 */
     vmm_active(child);
 

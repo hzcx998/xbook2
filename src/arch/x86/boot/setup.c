@@ -2,7 +2,7 @@
 #include "page.h"
 #include "elf32.h"
 
-#define DEBUG_LOCAL 0
+#define DEBUG_SETUP
 
 /* 内核文件被加载到物理内存的地址 */
 #define KERNEL_FILE_ADDR    0x10000
@@ -47,13 +47,13 @@ void setup_kernel()
     /* 获取程序头起始偏移 */
     Elf32_Off prog_header_off = elf_header.e_phoff;
     Elf32_Half prog_header_size = elf_header.e_phentsize;
-#if DEBUG_LOCAL == 1    
+    #ifdef DEBUG_SETUP
     print_str("program header: offset:");
     print_int(prog_header_off);
     print_str(" size:");
     print_int(prog_header_size);
     print_str("\n");
-#endif
+    #endif
     /* 遍历所有程序头 */
     unsigned long grog_idx = 0;
     while (grog_idx < elf_header.e_phnum) {
@@ -61,7 +61,7 @@ void setup_kernel()
         
         /* 读取程序头 */
         read_file(file, (void *)&prog_header, prog_header_off, prog_header_size);
-#if DEBUG_LOCAL == 1        
+#ifdef DEBUG_SETUP      
         print_str("segment : vma:");
         print_hex(prog_header.p_vaddr);
         print_str(" file offset:");

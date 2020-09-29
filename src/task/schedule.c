@@ -5,7 +5,7 @@
 #include <arch/interrupt.h>
 #include <arch/task.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_SCHED
 
 extern task_t *task_idle;
 
@@ -74,7 +74,7 @@ void schedule()
     task_t *next = get_next_task(cur);
     
     set_next_task(next);
-#if DEBUG_LOCAL == 1 
+#ifdef DEBUG_SCHED 
     printk(KERN_INFO "schedule: switch from %s-%d-%x-%d to %s-%d-%x-%d\n",
         cur->name, cur->pid, cur, cur->priority, next->name, next->pid, next, next->priority);
 #endif

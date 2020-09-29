@@ -5,7 +5,7 @@
 #include <arch/memory.h>
 #include <xbook/debug.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_PCI
 
 pci_device_t pci_device_table[PCI_MAX_DEVICE_NR];	/*device table*/
 
@@ -230,7 +230,7 @@ static void pci_scan_device(unsigned char bus, unsigned char device, unsigned ch
     pci_dev->min_gnt = (val >> 16) & 0xff;
     pci_dev->max_lat = (val >> 24) & 0xff;
     
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PCI
     printk(KERN_DEBUG "pci_scan_device: pci device at bus: %d, device: %d function: %d\n", 
         bus, device, function);
     pci_device_dump(pci_dev);
@@ -326,14 +326,14 @@ pci_device_t *pci_locate_class(unsigned short class, unsigned short _subclass)
 void pci_enable_bus_mastering(pci_device_t *device)
 {
     unsigned int val = pci_read_config(device->bus, device->dev, device->function, PCI_STATUS_COMMAND);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PCI
     printk(KERN_DEBUG "pci_enable_bus_mastering: before command: %x\n", val);    
 #endif
 	val |= 4;
     pci_write_config(device->bus, device->dev, device->function, PCI_STATUS_COMMAND, val);
 
     val = pci_read_config(device->bus, device->dev, device->function, PCI_STATUS_COMMAND);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PCI
     printk(KERN_DEBUG "pci_enable_bus_mastering: after command: %x\n", val);    
 #endif
 }

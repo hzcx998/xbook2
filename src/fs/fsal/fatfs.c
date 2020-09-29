@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_FATFS
 
 
 typedef struct {
@@ -36,7 +36,7 @@ static int __mount(char *source, char *target, char *fstype, unsigned long flags
         return -1;
     }
         
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS
     pr_dbg("[%s] %s: find device solt %d.\n", FS_MODEL_NAME, __func__, solt);
 #endif
     /* 转换成fatfs的物理驱动器 */
@@ -55,7 +55,7 @@ static int __mount(char *source, char *target, char *fstype, unsigned long flags
     /* 构建挂载路径 */
     char path[3] = {pdrv + '0', ':', 0};
 
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS
     pr_dbg("[%s] %s: find fatfs drive[%d] %s \n", FS_MODEL_NAME, __func__, pdrv, path);
 #endif
 
@@ -76,7 +76,7 @@ static int __mount(char *source, char *target, char *fstype, unsigned long flags
     /* 查看是否已经有文件系统 */
     if (buf[510] == 0x55 && buf[511] == 0xaa) {
         remkfs = 0; /* 不需要创建文件系统 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS
         pr_dbg("[%s] %s: had filesystem on disk %s \n", FS_MODEL_NAME, __func__, source);
 #endif
         /* 强制要求格式化磁盘 */
@@ -98,7 +98,7 @@ static int __mount(char *source, char *target, char *fstype, unsigned long flags
         } else if (!strcmp(fstype, "exfat")) {
             parm.fmt = FM_EXFAT;
         }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS
         pr_dbg("[%s] %s: make new fs %s on disk %s \n", FS_MODEL_NAME, __func__, fstype, source);
 #endif            
         /* 在磁盘上创建文件系统 */
@@ -125,7 +125,7 @@ static int __mount(char *source, char *target, char *fstype, unsigned long flags
         return -1;
     }
     fatfs_extention.fsobj = fsobj;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS
     pr_dbg("[%s] %s: mount disk %s to %s success.\n", FS_MODEL_NAME, __func__, source, target);
 #endif
     if (fsal_path_insert((void *)p, target, &fatfs_fsal)) {
@@ -133,7 +133,7 @@ static int __mount(char *source, char *target, char *fstype, unsigned long flags
         kfree(fsobj);
         return -1;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS
     pr_dbg("[%s] %s: insert path  %s to %s success.\n", FS_MODEL_NAME, __func__, p, target);
 #endif
     return 0;
@@ -150,7 +150,7 @@ static int __unmount(char *path, unsigned long flags)
     FRESULT res;
     const TCHAR *p = (const TCHAR *) path;
     fatfs_extention_t *ext = &fatfs_extention;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS
     pr_dbg("[%s] %s: unmount path %s \n", FS_MODEL_NAME, __func__, p);
 #endif
     res = f_unmount(p);
@@ -158,7 +158,7 @@ static int __unmount(char *path, unsigned long flags)
         pr_dbg("%s: %s: unmount on path %s failed, code %d.\n", FS_MODEL_NAME, __func__, p, res);
         return -1;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS
     pr_dbg("[%s] %s: fatfs unmount path %s success.\n", FS_MODEL_NAME, __func__, p);
 #endif
     if (fsal_path_remove((void *) p)) {
@@ -181,7 +181,7 @@ static int __mkfs(char *source, char *fstype, unsigned long flags)
     int solt = disk_res_find(source);
     if (solt < 0)
         return -1;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS
     pr_dbg("[%s] %s: find device solt %d.\n", FS_MODEL_NAME, __func__, solt);
 #endif
     /* 转换成fatfs的物理驱动器 */
@@ -200,7 +200,7 @@ static int __mkfs(char *source, char *fstype, unsigned long flags)
     /* 构建挂载路径 */
     char path[3] = {pdrv + '0', ':', 0};
 
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS
     pr_dbg("[%s] %s: find fatfs drive[%d] %s \n", FS_MODEL_NAME, __func__, pdrv, path);
 #endif
     FRESULT res;        /* API result code */
@@ -215,7 +215,7 @@ static int __mkfs(char *source, char *fstype, unsigned long flags)
     } else if (!strcmp(fstype, "exfat")) {
         parm.fmt = FM_EXFAT;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS
     pr_dbg("[%s] %s: make new fs %s on disk %s \n", FS_MODEL_NAME, __func__, fstype, source);
 #endif
     /* 在磁盘上创建文件系统 */

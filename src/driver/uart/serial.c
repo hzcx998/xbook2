@@ -16,7 +16,7 @@
 /* 传输方法：0->user, 1->buffered, 2->direct  */
 #define TRANS_METHOD 1
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 /* 串口的地址是IO地址 */
 #define COM1_BASE   0X3F8
@@ -207,7 +207,7 @@ iostatus_t serial_read(device_object_t *device, io_request_t *ioreq)
         i--;
         buf++;
     }
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
     buf = (uint8_t *)ioreq->system_buffer; 
     printk(KERN_DEBUG "serial_write: %s\n", buf);
 #endif
@@ -226,7 +226,7 @@ iostatus_t serial_write(device_object_t *device, io_request_t *ioreq)
     
     uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
     int i = len;
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
     printk(KERN_DEBUG "serial_write: %s\n", buf);
 #endif
     while (i > 0) {
@@ -251,7 +251,7 @@ iostatus_t serial_devctl(device_object_t *device, io_request_t *ioreq)
     switch (ctlcode)
     {
     case DEVCTL_CODE_TEST:
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "serial_devctl: code=%x arg=%x\n", ctlcode, ioreq->parame.devctl.arg);
 #endif
         status = IO_SUCCESS;
@@ -293,7 +293,7 @@ static iostatus_t serial_enter(driver_object_t *driver)
         devext = (device_extension_t *)devobj->device_extension;
         string_new(&devext->device_name, devname, DEVICE_NAME_LEN);
         devext->device_object = devobj;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "serial_enter: device extension: device name=%s object=%x\n",
             devext->device_name.text, devext->device_object);
 #endif        
@@ -338,7 +338,7 @@ static iostatus_t serial_enter(driver_object_t *driver)
 
         /* irq号 */
         devext->irq = irq;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "serial_enter: com%d, base:%x irq:%d\n", id, iobase, irq);
 #endif  /* DEBUG_SERIAL */
         
@@ -405,7 +405,7 @@ iostatus_t serial_driver_vine(driver_object_t *driver)
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "serial_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

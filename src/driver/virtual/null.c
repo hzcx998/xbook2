@@ -15,12 +15,12 @@
 
 #define DEV_NAME "null"
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 iostatus_t null_read(device_object_t *device, io_request_t *ioreq)
 {
     iostatus_t status = IO_SUCCESS;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "null_read: data:\n");
 #endif
     int len = ioreq->parame.read.length;
@@ -39,7 +39,7 @@ iostatus_t null_read(device_object_t *device, io_request_t *ioreq)
 iostatus_t null_write(device_object_t *device, io_request_t *ioreq)
 {
     iostatus_t status = IO_SUCCESS;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "null_write: data:\n");
     int len = ioreq->parame.write.length;
     unsigned char *data = (unsigned char *) ioreq->user_buffer;
@@ -95,7 +95,7 @@ iostatus_t null_driver_vine(driver_object_t *driver)
 
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "null_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

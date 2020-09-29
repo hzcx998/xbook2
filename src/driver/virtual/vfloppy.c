@@ -24,7 +24,7 @@
  */
 #define VFLOPPY_RAM     (0x80000000)
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 typedef struct _device_extension {
     device_object_t *device_object; /* 设备对象 */
@@ -42,7 +42,7 @@ iostatus_t vfloppy_read(device_object_t *device, io_request_t *ioreq)
     /* 判断越界 */
     if (off + (length / SECTOR_SIZE)  >= extension->sectors) {
 		status = IO_FAILED;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "vfloppy_read: read disk offset=%d counts=%d failed!\n",
             off, (length / SECTOR_SIZE));
 #endif
@@ -51,7 +51,7 @@ iostatus_t vfloppy_read(device_object_t *device, io_request_t *ioreq)
 		/* 进行磁盘读取 */
 		memcpy(ioreq->user_buffer, extension->buffer + off * SECTOR_SIZE, length);
         ioreq->io_status.infomation = length;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "vfloppy_read: read disk offset=%d counts=%d ok.\n",
             off, (length / SECTOR_SIZE));
 #endif
@@ -70,7 +70,7 @@ iostatus_t vfloppy_write(device_object_t *device, io_request_t *ioreq)
     unsigned long length = ioreq->parame.write.length;
     /* 判断越界 */
     if (off + (length / SECTOR_SIZE)  >= extension->sectors) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "vfloppy_write: write disk offset=%d counts=%d failed!\n",
             off, (length / SECTOR_SIZE));
 #endif
@@ -80,7 +80,7 @@ iostatus_t vfloppy_write(device_object_t *device, io_request_t *ioreq)
 		/* 进行磁盘写入 */
 		memcpy(extension->buffer + off * SECTOR_SIZE, ioreq->user_buffer, length);
         ioreq->io_status.infomation = length;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "vfloppy_write: write disk offset=%d counts=%d ok.\n",
             off, (length / SECTOR_SIZE));
 #endif
@@ -99,7 +99,7 @@ iostatus_t vfloppy_devctl(device_object_t *device, io_request_t *ioreq)
     {    
     case DISKIO_GETSIZE:
         ioreq->io_status.infomation = extension->sectors;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "vfloppy_devctl: get disk sectors=%d\n", extension->sectors);
 #endif
         break;
@@ -107,7 +107,7 @@ iostatus_t vfloppy_devctl(device_object_t *device, io_request_t *ioreq)
         /* 清空缓冲区 */
         memset(extension->buffer, 0, extension->buflen);
         ioreq->io_status.infomation = 0;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "vfloppy_devctl: clear disk sectors=%d\n", extension->sectors);
 #endif        
         break;
@@ -172,7 +172,7 @@ iostatus_t vfloppy_driver_vine(driver_object_t *driver)
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "vfloppy_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

@@ -16,6 +16,7 @@
 
 #define DEV_NAME "buzzer"
 
+// #define DEBUG_DRV
 
 /*
 PPI （Programmable Peripheral Interface）
@@ -318,7 +319,7 @@ iostatus_t buzzer_driver_vine(driver_object_t *driver)
 
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "buzzer_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

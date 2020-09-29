@@ -22,7 +22,7 @@
 /* 一个8个tty设备数 */
 #define TTY_DEVICE_NR       8
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 /* 设备共有的资源 */
 typedef struct _device_public {
@@ -63,7 +63,7 @@ iostatus_t tty_open(device_object_t *device, io_request_t *ioreq)
     } else { /* 打开成功 */
         if (extension->hold_pid == -1) {    /* 首次打开，持有者就是打开者 */
             extension->hold_pid = current_task->pid;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
             printk(KERN_DEBUG "tty_open: open tty=%d.\n", extension->device_id);
 #endif        
         }
@@ -85,7 +85,7 @@ iostatus_t tty_close(device_object_t *device, io_request_t *ioreq)
             status = IO_FAILED;
         extension->con = -1;
         extension->hold_pid = -1;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "tty_close: close tty=%d.\n", extension->device_id);
 #endif
     } else {
@@ -122,7 +122,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                                 ioreq->io_status.infomation = sizeof(event);
                                 *(unsigned int *) ioreq->user_buffer = event.code;
                                 status = IO_SUCCESS;
-#if DEBUG_LOCAL == 1                                
+#ifdef DEBUG_DRV                                
                                 printk(KERN_DEBUG "tty: read keycode %x\n", event.code);
 #endif
                             }
@@ -229,7 +229,7 @@ static iostatus_t tty_enter(driver_object_t *driver)
         devobj->flags = 0;
         extension = (device_extension_t *)devobj->device_extension;
         extension->device_object = devobj;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "tty_enter: device extension: device name=%s object=%x\n",
             devext->device_name.text, devext->device_object);
 #endif
@@ -275,7 +275,7 @@ iostatus_t tty_driver_vine(driver_object_t *driver)
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "tty_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

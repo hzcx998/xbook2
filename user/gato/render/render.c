@@ -8,64 +8,14 @@
 #include "render.h"
 
 #include "surface.h"
-#include "consolas-font.h"
 #include "image.h"
+#include "macro.h"
 
-#define M_PI 3.14159265358979323846
-#define PI 3.14159265359f
-
-//https://www.jianshu.com/p/5198d8aa80c1
-#define KAPPA90 (0.5522847493f)
-#define fclampf(v, a, b) fminf(fmaxf(a, v), b)
-
-#define min(a, b) ({typeof(a) _amin = (a); typeof(b) _bmin = (b); (void)(&_amin == &_bmin); _amin < _bmin ? _amin : _bmin; })
-#define max(a, b) ({typeof(a) _amax = (a); typeof(b) _bmax = (b); (void)(&_amax == &_bmax); _amax > _bmax ? _amax : _bmax; })
-
-static point_t constant_point_add_point(point_t p1, point_t p2, float ratio)
+typedef struct active_edge_t
 {
-	return (point_t){(p1.x + p2.x) * ratio, (p1.y + p2.y) * ratio};
-}
-
-static point_t point_sub_point(point_t p1, point_t p2)
-{
-	return (point_t){(p1.x - p2.x), (p1.y - p2.y)};
-}
-
-static point_t point_add_point(point_t p1, point_t p2)
-{
-	return (point_t){(p1.x + p2.x), (p1.y + p2.y)};
-}
-
-static point_t point_min(point_t min, point_t p)
-{
-	return (point_t){fminf(min.x, p.x), fminf(min.y, p.y)};
-}
-
-static point_t point_max(point_t min, point_t p)
-{
-	return (point_t){fmaxf(min.x, p.x), fmaxf(min.y, p.y)};
-}
-
-static point_t unit_point(point_t p1)
-{
-	float l = sqrtf(p1.x * p1.x + p1.y * p1.y);
-	return (point_t){(p1.x / l), (p1.y / l)};
-}
-
-static float point_cross_point(point_t p1, point_t p2)
-{
-	return p1.x * p2.y - p1.y * p2.x;
-}
-
-static float point_dot_point(point_t p1, point_t p2)
-{
-	return p1.x * p2.x + p1.y * p2.y;
-}
-
-static point_t point_mul_factor(point_t p1, float factor)
-{
-	return (point_t){(p1.x * factor), (p1.y * factor)};
-}
+	float x;
+	int dir;
+} active_edge_t;
 
 static float capsule_sdf(point_t p, point_t a, point_t b, float r)
 {
@@ -102,21 +52,13 @@ static int cmp_edge(const void *restrict p, const void *restrict q)
 	return 0;
 }
 
-typedef struct active_edge_t
-{
-	float x;
-	int dir;
-} active_edge_t;
-
 static int cmp_info(const void *restrict p, const void *restrict q)
 {
 	active_edge_t *restrict a = (active_edge_t *)p;
 	active_edge_t *restrict b = (active_edge_t *)q;
 
 	if (a->x != b->x)
-	{
 		return a->x > b->x ? 1 : -1;
-	}
 
 	return 0;
 }
@@ -142,9 +84,7 @@ static void fill_scanline(context_t *ctx, int *scanline, float x0, float x1, int
 		scanline[i0++] += w * 51; // 51 == 255/5
 
 		if (w == 1.0f)
-		{
 			break;
-		}
 	}
 
 	while (i0 <= i1)
@@ -160,15 +100,11 @@ static void fill_scanline(context_t *ctx, int *scanline, float x0, float x1, int
 		scanline[i1--] += w * 51; // 51 == 255/5
 
 		if (w == 1.0f)
-		{
 			break;
-		}
 	}
 
 	for (int i = i0; i <= i1; i++)
-	{
 		scanline[i] += 51; // 51 == 255/5
-	}
 }
 
 static void rasterize_sorted_edges(context_t *ctx, edge_t es[], int elen, color_t color)
@@ -201,10 +137,6 @@ static void rasterize_sorted_edges(context_t *ctx, edge_t es[], int elen, color_
 					{
 						a[count].x = e.start.x + (scan_y - e.start.y) * (e.end.x - e.start.x) / (e.end.y - e.start.y);
 						a[count].dir = e.dir;
-						// draw_sdf_line(ctx->s, point_sub_point(e[i].start, ctx->origin), point_sub_point(e[i].start, ctx->origin), RGB(0xff0000), 3);
-						// draw_sdf_line(ctx->s, point_sub_point(e[i].end, ctx->origin), point_sub_point(e[i].end, ctx->origin), RGB(0xff0000), 3);
-						// draw_sdf_line(ctx->s, point_sub_point(e[i].start,ctx->origin), point_sub_point(e[i].end,ctx->origin), RGB(0xffff00), 3);
-
 						count++;
 
 						if (count >= na_edge)
@@ -261,29 +193,15 @@ static void rasterize_sorted_edges(context_t *ctx, edge_t es[], int elen, color_
 		int a = color.a;
 		for (int x = 0; x < width; x++)
 		{
-			color_t *d = &dl[x];
-			c.a = idiv255(a * scanline[x]);
-			blend(d, &c);
+			dl[x] = c;
+			dl[x].a = scanline[x];
 		}
 	}
 
+	if (a)
+		free(a);
 	if (scanline)
-	{
 		free(scanline);
-		scanline = NULL;
-	}
-}
-
-static void context_init(context_t *ctx, surface_t *base)
-{
-	*ctx = (context_t){0};
-	ctx->base = base;
-	ctx->min.y = ctx->min.x = 1000000;
-	ctx->max.y = ctx->max.x = -1000000;
-	ctx->se_ps = 1024;
-	ctx->ses = 1024;
-	ctx->e_ps = malloc(sizeof(expand_point_t) * 1024);
-	ctx->es = malloc(sizeof(edge_t) * 1024);
 }
 
 static void context_surface_set(context_t *ctx, surface_t *s)
@@ -303,22 +221,6 @@ static void context_reset(context_t *ctx)
 static void context_clear(context_t *ctx)
 {
 	ctx->nes = 0;
-}
-
-static void context_exit(context_t *ctx)
-{
-	if (ctx->s)
-		surface_free(ctx->s);
-
-	if (ctx->e_ps)
-	{
-		free(ctx->e_ps);
-	}
-	if (ctx->es)
-	{
-		free(ctx->es);
-	}
-	*ctx = (context_t){0};
 }
 
 static void context_line_width_set(context_t *ctx, float line_width)
@@ -407,7 +309,6 @@ static void add_point(context_t *ctx, float x, float y, enum point_path_type_t p
 
 	ctx->min = point_min(ctx->min, (point_t){x, y});
 	ctx->max = point_max(ctx->max, (point_t){x, y});
-	// draw_sdf_line(ctx->s, (point_t){x,y}, (point_t){x,y}, (color_t){0, 0, 255, 255}, 2);
 }
 
 static void add_edge(context_t *ctx, point_t a, point_t b)
@@ -415,16 +316,10 @@ static void add_edge(context_t *ctx, point_t a, point_t b)
 	int dir = 0;
 
 	if (a.y < b.y)
-	{
 		dir = 1;
-	}
 	else
-	{
 		dir = -1;
-	}
-	// draw_sdf_line(ctx->s, a, b, (color_t){0, 0, 0, 255}, 1);
-	// draw_sdf_line(ctx->s, a, a, (color_t){0, 0, 255, 255}, 2);
-	// draw_sdf_line(ctx->s, b, b, (color_t){0, 0, 255, 255}, 2);
+
 	ctx->min = point_min(ctx->min, a);
 	ctx->min = point_min(ctx->min, b);
 	ctx->max = point_max(ctx->max, a);
@@ -600,16 +495,12 @@ static void arc_to(context_t *ctx, float rx, float ry, float rotation, int large
 	if (sweep)
 	{
 		if (da < 0)
-		{
 			da = ((da < 0) ? 1 : -1) * 2 * M_PI + da;
-		}
 	}
 	else
 	{
 		if (da > 0)
-		{
 			da = -2 * M_PI + da;
-		}
 	}
 
 	int n = fabsf(da) * 2.0 / M_PI;
@@ -638,137 +529,6 @@ static void arc_to(context_t *ctx, float rx, float ry, float rotation, int large
 					point_add_point(c, unit_c2arc(rx, ry, rotation, v1)),
 					point_add_point(c, unit_c2arc(rx, ry, rotation, v2)),
 					point_add_point(c, unit_c2arc(rx, ry, rotation, h2)));
-	}
-}
-
-static void svg_to(context_t *ctx, const char *buf, svg_style_t style)
-{
-	point_t pos;
-	point_t mirror;
-	svg_parser_t *parser = &(svg_parser_t){0};
-
-	svg_parser_init(parser, buf);
-	svg_cmd_t cmd;
-
-	while (svg_cmd_parser(parser, &cmd) == 1)
-	{
-		svg_cmd_transform(&cmd, style);
-		switch (cmd.cmd)
-		{
-		case 'M':
-			if (cmd.short_format)
-			{
-				line_to(ctx, cmd.M.x, cmd.M.y);
-				pos = (point_t){cmd.M.x, cmd.M.y};
-			}
-			else
-			{
-				move_to(ctx, cmd.M.x, cmd.M.y);
-				pos = (point_t){cmd.M.x, cmd.M.y};
-			}
-
-			break;
-		case 'L':
-			line_to(ctx, cmd.M.x, cmd.M.y);
-			pos = (point_t){cmd.L.x, cmd.L.y};
-			break;
-		case 'H':
-			line_to(ctx, cmd.H.x, pos.y);
-			pos.x = cmd.H.x;
-			break;
-		case 'V':
-			line_to(ctx, pos.x, cmd.V.y);
-			pos.y = cmd.V.y;
-			break;
-		case 'C':
-			cubic_bezto(ctx, pos, (point_t){cmd.C.x1, cmd.C.y1}, (point_t){cmd.C.x2, cmd.C.y2}, (point_t){cmd.C.x, cmd.C.y});
-			mirror = (point_t){cmd.C.x2, cmd.C.y2};
-			pos = (point_t){cmd.C.x, cmd.C.y};
-			break;
-		case 'S':
-		{
-			point_t p = point_add_point(pos, point_sub_point(pos, mirror));
-			cubic_bezto(ctx, pos, p, (point_t){cmd.S.x2, cmd.S.y2}, (point_t){cmd.S.x, cmd.S.y});
-			mirror = (point_t){cmd.S.x2, cmd.S.y2};
-			pos = (point_t){cmd.S.x, cmd.S.y};
-			break;
-		}
-		case 'Q':
-			quad_bezto(ctx, pos, (point_t){cmd.Q.x1, cmd.Q.y1}, (point_t){cmd.Q.x, cmd.Q.y});
-			mirror = (point_t){cmd.Q.x1, cmd.Q.y1};
-			pos = (point_t){cmd.Q.x, cmd.Q.y};
-			break;
-		case 'T':
-		{
-			point_t p = point_add_point(pos, point_sub_point(pos, mirror));
-			quad_bezto(ctx, pos, p, (point_t){cmd.T.x, cmd.T.y});
-			mirror = p;
-			pos = (point_t){cmd.T.x, cmd.T.y};
-			break;
-		}
-		case 'A':
-			arc_to(ctx, cmd.A.rx, cmd.A.ry, cmd.A.rotation, cmd.A.large, cmd.A.sweep, pos, (point_t){cmd.A.x, cmd.A.y});
-			pos = (point_t){cmd.A.x, cmd.A.y};
-			break;
-		case 'm':
-			move_to(ctx, pos.x + cmd.m.dx, pos.y + cmd.m.dy);
-			pos = point_add_point(pos, (point_t){cmd.m.dx, cmd.m.dy});
-			break;
-
-		case 'l':
-			line_to(ctx, pos.x + cmd.l.dx, pos.y + cmd.l.dy);
-			pos = point_add_point(pos, (point_t){cmd.l.dx, cmd.l.dy});
-			break;
-		case 'h':
-			line_to(ctx, pos.x + cmd.h.dx, pos.y);
-			pos.x += cmd.h.dx;
-			break;
-		case 'v':
-			line_to(ctx, pos.x, pos.y + cmd.v.dy);
-			pos.y += cmd.v.dy;
-			break;
-		case 'c':
-			cubic_bezto(ctx, pos, point_add_point(pos, (point_t){cmd.c.dx1, cmd.c.dy1}), point_add_point(pos, (point_t){cmd.c.dx2, cmd.c.dy2}), point_add_point(pos, (point_t){cmd.c.dx, cmd.c.dy}));
-			mirror = point_add_point(pos, (point_t){cmd.c.dx2, cmd.c.dy2});
-			pos = point_add_point(pos, (point_t){cmd.c.dx, cmd.c.dy});
-			break;
-		case 's':
-		{
-			point_t p = point_add_point(pos, point_sub_point(pos, mirror));
-			cubic_bezto(ctx, pos, p, point_add_point(pos, (point_t){cmd.s.dx2, cmd.s.dy2}), point_add_point(pos, (point_t){cmd.s.dx, cmd.s.dy}));
-			mirror = point_add_point(pos, (point_t){cmd.s.dx2, cmd.s.dy2});
-			pos = point_add_point(pos, (point_t){cmd.s.dx, cmd.s.dy});
-			break;
-		}
-		case 'q':
-			quad_bezto(ctx, pos, point_add_point(pos, (point_t){cmd.q.dx1, cmd.q.dy1}), point_add_point(pos, (point_t){cmd.q.dx, cmd.q.dy}));
-			mirror = point_add_point(pos, (point_t){cmd.q.dx1, cmd.q.dy1});
-			pos = point_add_point(pos, (point_t){cmd.q.dx, cmd.q.dy});
-			break;
-		case 't':
-		{
-			point_t p = point_add_point(pos, point_sub_point(pos, mirror));
-			quad_bezto(ctx, pos, p, point_add_point(pos, (point_t){cmd.t.dx, cmd.t.dy}));
-			mirror = p;
-			pos = point_add_point(pos, (point_t){cmd.t.dx, cmd.t.dy});
-			break;
-		}
-		case 'a':
-			arc_to(ctx, cmd.a.rx, cmd.a.ry, cmd.a.rotation, cmd.a.large, cmd.a.sweep, pos, point_add_point(pos, (point_t){cmd.a.dx, cmd.a.dy}));
-			pos = point_add_point(pos, (point_t){cmd.a.dx, cmd.a.dy});
-			break;
-		case 'Z':
-		case 'z':
-			close_path(ctx);
-			break;
-		default:
-			break;
-		}
-
-		if (cmd.cmd != 'C' && cmd.cmd != 'c' && cmd.cmd != 'S' && cmd.cmd != 's' && cmd.cmd != 'Q' && cmd.cmd != 'q' && cmd.cmd != 'T' && cmd.cmd != 't')
-		{
-			mirror = pos;
-		}
 	}
 }
 
@@ -1087,8 +847,6 @@ static void render(context_t *ctx, float x, float y, style_t style)
 {
 	color_t fill_color = style.fill_color;
 	color_t stroke_color = style.stroke_color;
-	fill_color.a = 255;
-	stroke_color.a = 255;
 	surface_t *shadow = NULL;
 	surface_t *bg = NULL;
 	surface_t *copy_fill = NULL;
@@ -1108,11 +866,12 @@ static void render(context_t *ctx, float x, float y, style_t style)
 
 	if (context_fill(ctx, fill_color))
 	{
+		assert(ctx->s);
 		copy_fill = surface_copy(ctx->s);
 		origin_fill = ctx->origin;
 	}
 
-	if (copy_stroke && copy_fill)
+	if (copy_stroke)
 	{
 		shape = surface_copy(copy_stroke);
 		surface_mono(shape, fill_color);
@@ -1124,11 +883,6 @@ static void render(context_t *ctx, float x, float y, style_t style)
 	{
 		shape = surface_copy(copy_fill);
 		origin_shape = origin_fill;
-	}
-	else if (copy_stroke)
-	{
-		shape = surface_copy(copy_stroke);
-		origin_shape = origin_stroke;
 	}
 
 	if (copy_stroke || copy_fill)
@@ -1192,9 +946,7 @@ static void render(context_t *ctx, float x, float y, style_t style)
 			surface_blit(base, bg, origin_shape.x - origin.x, origin_shape.y - origin.y);
 
 		if (shadow && (!bg))
-		{
 			surface_composite_out(base, copy_fill, origin_shape.x - origin.x, origin_shape.y - origin.y);
-		}
 
 		if (copy_fill != base)
 			surface_blit_with_opacity(base, copy_fill, origin_shape.x - origin.x, origin_shape.y - origin.y, style.fill_color.a);
@@ -1219,286 +971,32 @@ static void render(context_t *ctx, float x, float y, style_t style)
 		surface_free(shadow);
 }
 
-void draw_line(surface_t *base, point_t p0, point_t p1, style_t style)
+void context_init(context_t *ctx, surface_t *base)
 {
-	context_t *ctx = &(context_t){0};
-
-	context_init(ctx, base);
-
-	move_to(ctx, p0.x, p0.y);
-	line_to(ctx, p1.x, p1.y);
-	render(ctx, 0, 0, style);
-	context_exit(ctx);
+	*ctx = (context_t){0};
+	ctx->base = base;
+	ctx->min.y = ctx->min.x = 1000000;
+	ctx->max.y = ctx->max.x = -1000000;
+	ctx->se_ps = 1024;
+	ctx->ses = 1024;
+	ctx->e_ps = malloc(sizeof(expand_point_t) * 1024);
+	ctx->es = malloc(sizeof(edge_t) * 1024);
+	ctx->move_to = move_to;
+	ctx->line_to = line_to;
+	ctx->cubic_bezto = cubic_bezto;
+	ctx->quad_bezto = quad_bezto;
+	ctx->arc_to = arc_to;
+	ctx->close_path = close_path;
+	ctx->render = render;
 }
 
-void draw_polyline(surface_t *base, point_t *p, int n, style_t style)
+void context_exit(context_t *ctx)
 {
-	context_t *ctx = &(context_t){0};
-
-	context_init(ctx, base);
-
-	move_to(ctx, p[0].x, p[0].y);
-
-	for (int i = 1; i < n; i++)
-	{
-		line_to(ctx, p[i].x, p[i].y);
-	}
-
-	render(ctx, 0, 0, style);
-	context_exit(ctx);
-}
-
-void draw_polygon(surface_t *base, point_t *p, int n, style_t style)
-{
-	context_t *ctx = &(context_t){0};
-
-	context_init(ctx, base);
-
-	move_to(ctx, p[0].x, p[0].y);
-
-	for (int i = 1; i < n; i++)
-	{
-		line_to(ctx, p[i].x, p[i].y);
-	}
-	close_path(ctx);
-	render(ctx, 0, 0, style);
-	context_exit(ctx);
-}
-
-void draw_bezier(surface_t *base, point_t p0, point_t p1, point_t p2, point_t p3, style_t style)
-{
-	context_t *ctx = &(context_t){0};
-
-	context_init(ctx, base);
-	move_to(ctx, p0.x, p0.y);
-	cubic_bezto(ctx, p0, p1, p2, p3);
-	render(ctx, 0, 0, style);
-	context_exit(ctx);
-}
-
-void draw_arc(surface_t *base, float x, float y, float radius, float a1, float a2, style_t style)
-{
-	context_t *ctx = &(context_t){0};
-
-	context_init(ctx, base);
-
-	a1 = a1 * M_PI / 180;
-	a2 = a2 * M_PI / 180;
-
-	int n = (fabsf(a2 - a1) * 2.0 / M_PI);
-	float begin = fminf(a1, a2);
-	float end = fmaxf(a1, a2);
-	float step = M_PI / 2;
-	point_t p = (point_t){x, y};
-	point_t h1 = (point_t){radius * cosf(begin), radius * sinf(begin)}, h2;
-
-	move_to(ctx, p.x + h1.x, p.y + h1.y);
-	for (int i = 0; i < n; i++, begin += step)
-	{
-		h2 = (point_t){-h1.y, h1.x};
-
-		point_t v1 = point_add_point(p, point_add_point(h1, point_mul_factor(h2, KAPPA90)));
-		point_t v2 = point_add_point(p, point_add_point(h2, point_mul_factor(h1, KAPPA90)));
-
-		cubic_bezto(ctx, point_add_point(p, h1), v1, v2, point_add_point(p, h2));
-
-		h1 = h2;
-	}
-
-	if (begin < end)
-	{
-		float a = end - begin;
-		h2 = (point_t){cosf(a) * h1.x - sinf(a) * h1.y, sinf(a) * h1.x + cosf(a) * h1.y};
-		float h = 4.0 * tanf(a / 4) / 3.0;
-
-		point_t v1 = point_add_point(p, point_add_point(h1, point_mul_factor((point_t){-h1.y, h1.x}, h)));
-		point_t v2 = point_add_point(p, point_add_point(h2, point_mul_factor((point_t){h2.y, -h2.x}, h)));
-		cubic_bezto(ctx, point_add_point(p, h1), v1, v2, point_add_point(p, h2));
-	}
-
-	render(ctx, x, y, style);
-	context_exit(ctx);
-}
-
-void draw_circle(surface_t *base, float x, float y, float radius, style_t style)
-{
-	context_t *ctx = &(context_t){0};
-
-	context_init(ctx, base);
-
-	cubic_bezto(ctx, (point_t){x + radius, y},
-				(point_t){x + radius, y + radius * KAPPA90},
-				(point_t){x + radius * KAPPA90, y + radius},
-				(point_t){x, y + radius});
-	cubic_bezto(ctx, (point_t){x, y + radius},
-				(point_t){x - radius * KAPPA90, y + radius},
-				(point_t){x - radius, y + radius * KAPPA90},
-				(point_t){x - radius, y});
-	cubic_bezto(ctx, (point_t){x - radius, y},
-				(point_t){x - radius, y - radius * KAPPA90},
-				(point_t){x - radius * KAPPA90, y - radius},
-				(point_t){x, y - radius});
-	cubic_bezto(ctx, (point_t){x, y - radius},
-				(point_t){x + radius * KAPPA90, y - radius},
-				(point_t){x + radius, y - radius * KAPPA90},
-				(point_t){x + radius, y});
-	close_path(ctx);
-	render(ctx, x, y, style);
-	context_exit(ctx);
-}
-
-void draw_ellipse(surface_t *base, float x, float y, float w, float h, style_t style)
-{
-	context_t *ctx = &(context_t){0};
-
-	context_init(ctx, base);
-
-	cubic_bezto(ctx, (point_t){x + w, y},
-				(point_t){x + w, y + h * KAPPA90},
-				(point_t){x + w * KAPPA90, y + h},
-				(point_t){x, y + h});
-	cubic_bezto(ctx, (point_t){x, y + h},
-				(point_t){x - w * KAPPA90, y + h},
-				(point_t){x - w, y + h * KAPPA90},
-				(point_t){x - w, y});
-	cubic_bezto(ctx, (point_t){x - w, y},
-				(point_t){x - w, y - h * KAPPA90},
-				(point_t){x - w * KAPPA90, y - h},
-				(point_t){x, y - h});
-	cubic_bezto(ctx, (point_t){x, y - h},
-				(point_t){x + w * KAPPA90, y - h},
-				(point_t){x + w, y - h * KAPPA90},
-				(point_t){x + w, y});
-	close_path(ctx);
-	render(ctx, x, y, style);
-	context_exit(ctx);
-}
-
-void draw_rectage(surface_t *base, float x, float y, float w, float h, float radius, style_t style)
-{
-	context_t *ctx = &(context_t){0};
-
-	context_init(ctx, base);
-
-	//FIXME: unable to add two same points
-	if (radius != 0.0)
-	{
-
-		if (style.border_radius[1])
-		{
-			move_to(ctx, x + w - radius, y);
-			cubic_bezto(ctx, (point_t){x + w - radius, y},
-						(point_t){x + w - radius * (1 - KAPPA90), y},
-						(point_t){x + w, y + radius * (1 - KAPPA90)},
-						(point_t){x + w, y + radius});
-		}
-		else
-		{
-			move_to(ctx, x + w, y);
-		}
-
-		if (style.border_radius[2])
-		{
-			line_to(ctx, x + w, y + h - radius);
-			cubic_bezto(ctx, (point_t){x + w, y + h - radius},
-						(point_t){x + w, y + h - radius * (1 - KAPPA90)},
-						(point_t){x + w - radius * (1 - KAPPA90), y + h},
-						(point_t){x + w - radius, y + h});
-		}
-		else
-		{
-			line_to(ctx, x + w, y + h);
-		}
-
-		if (style.border_radius[3])
-		{
-			line_to(ctx, x + radius, y + h);
-			cubic_bezto(ctx, (point_t){x + radius, y + h},
-						(point_t){x + radius * (1 - KAPPA90), y + h},
-						(point_t){x, y + h - radius * (1 - KAPPA90)},
-						(point_t){x, y + h - radius});
-		}
-		else
-		{
-			line_to(ctx, x, y + h);
-		}
-
-		if (style.border_radius[0])
-		{
-			line_to(ctx, x, y + radius);
-			cubic_bezto(ctx, (point_t){x, y + radius},
-						(point_t){x, y + radius * (1 - KAPPA90)},
-						(point_t){x + radius * (1 - KAPPA90), y},
-						(point_t){x + radius, y});
-		}
-		else
-		{
-			line_to(ctx, x, y);
-		}
-	}
-	else
-	{
-		move_to(ctx, x, y);
-		line_to(ctx, x + w, y);
-		line_to(ctx, x + w, y + h);
-		line_to(ctx, x, y + h);
-	}
-
-	close_path(ctx);
-	render(ctx, x, y, style);
-	context_exit(ctx);
-}
-
-void draw_svg(surface_t *base, char *path, float vb_w, float vb_h, float w, float h, int x, int y, color_t color)
-{
-	context_t *ctx = &(context_t){0};
-	context_init(ctx, base);
-	context_cap_style_set(ctx, CAP_BUTT);
-	context_join_style_set(ctx, JOIN_BEVEL);
-
-	svg_style_t style = (svg_style_t){
-		scale : w / vb_w,
-		translate_x : x,
-		translate_y : y,
-	};
-	svg_to(ctx, path, style);
-	render(ctx, x, y, (style_t){
-		fill_color : color
-	});
-	context_exit(ctx);
-}
-
-void draw_text(surface_t *base, int x, int y, char *c, float size, color_t color)
-{
-	context_t *ctx = &(context_t){0};
-	context_init(ctx, base);
-	context_cap_style_set(ctx, CAP_BUTT);
-	context_join_style_set(ctx, JOIN_BEVEL);
-
-	float scale = size * 16 / (2048);
-
-	svg_style_t style = (svg_style_t){
-		.scale = scale,
-		.translate_x = x + 0 * scale,
-		.translate_y = y + 1521 * scale,
-		.mirror_y = 1,
-	};
-
-	for (int i = 0; i < strlen(c); i++, style.translate_x += 1126 * scale)
-	{
-		svg_to(ctx, consolas_font[c[i]], style);
-	}
-
-	render(ctx, x, y, (style_t){
-		fill_color : color
-	});
-	context_exit(ctx);
-}
-
-void draw_image(surface_t *base, const char *file, int x, int y, int w, int h)
-{
-	surface_clear(base, RGB(0xEAEBED), 0, 0, base->width, base->height);
-	surface_t *s = surface_image_load(file, w, h);
-	surface_blit(base, s, x, y);
-	surface_free(s);
+	if (ctx->s)
+		surface_free(ctx->s);
+	if (ctx->e_ps)
+		free(ctx->e_ps);
+	if (ctx->es)
+		free(ctx->es);
+	*ctx = (context_t){0};
 }

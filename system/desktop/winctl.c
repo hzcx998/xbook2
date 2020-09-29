@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <malloc.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_WINCTL
 #if 0
 /* 默认的图标数据 */
 static g_color_t winctl_icon_data[12 * 12] = {

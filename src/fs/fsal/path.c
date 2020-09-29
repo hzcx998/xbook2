@@ -11,7 +11,7 @@ fsal_path_t *fsal_path_table;
 /* 主路径 */
 fsal_path_t *fsal_master_path;
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_FSPATH
 
 /**
  * init_fsal_path_table - 初始化路径转换表
@@ -150,7 +150,7 @@ int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path)
     if (!fpath || !new_path || !old_path)
         return -1;
 
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_FSPATH
     srvprint("old path: %s\n", old_path);
     #endif
 
@@ -167,18 +167,18 @@ int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path)
     /* 获取文件系统主目录 /root/bin /c/bin -> /bin */
     start = strchr(start, '/');
     if (start == NULL) {    /* 只有磁盘主目录,/root */
-        #if DEBUG_LOCAL == 1
+        #ifdef DEBUG_FSPATH
         srvprint("only / for path %s\n", new_path);
         #endif
         /* 判断是否为主路径，并且顶层后面有名字，而且这个名字和主目录的名字不一样，才是主目录下面的其它目录 */
         if (fpath == fsal_master_path && *(top_level + 1) && strcmp(fpath->alpath, top_level)) {
-            #if DEBUG_LOCAL == 1
+            #ifdef DEBUG_FSPATH
             srvprint("%s not master path %s, append to tail.\n", top_level, fpath->alpath);
             #endif
             /* 追加后续路径 */
             strcat(new_path, top_level);
         }
-        #if DEBUG_LOCAL == 1
+        #ifdef DEBUG_FSPATH
         srvprint("final path %s\n", new_path);
         #endif
         
@@ -186,18 +186,18 @@ int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path)
     } else {    /* 后面有其它路径，/root/ or /root/abc */
         if (*(start + 1) == 0) {    /* 后面只有1个'/' */
             *start = 0; /* 截断 */
-            #if DEBUG_LOCAL == 1
+            #ifdef DEBUG_FSPATH
             srvprint("only / 2 for path %s\n", new_path);
             #endif
             /* 判断是否为主路径，并且顶层后面有名字，而且这个名字和主目录的名字不一样，才是主目录下面的其它目录 */
             if (fpath == fsal_master_path && *(top_level + 1)  && strcmp(fpath->alpath, top_level)) {
-                #if DEBUG_LOCAL == 1
+                #ifdef DEBUG_FSPATH
                 srvprint("%s not master path %s, append to tail.\n", top_level, fpath->alpath);
                 #endif
                 /* 追加后续路径 */
                 strcat(new_path, top_level);
             }
-            #if DEBUG_LOCAL == 1
+            #ifdef DEBUG_FSPATH
             srvprint("final path %s\n", new_path);
             #endif
             
@@ -207,7 +207,7 @@ int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path)
         /* 如果顶层路径不是挂载目录的话，那么就把起始位置设置成顶层路径
         如果已经是挂载路径了，那么就沿用当前已经解析的位置 */
         if (fsal_path_find(top_level, 0) == NULL) {
-            #if DEBUG_LOCAL == 1
+            #ifdef DEBUG_FSPATH
             srvprint("not a mount path %s\n", top_level);
             #endif
             start = top_level;
@@ -215,7 +215,7 @@ int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path)
         
     }
     /* /root/ or /root/abc */
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_FSPATH
     srvprint("real path %s.\n", start);
     #endif
 #if 0    
@@ -227,7 +227,7 @@ int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path)
 
     /* 复制文件路径内容 */
     strcat(new_path, start);
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_FSPATH
     srvprint("final path %s\n", new_path);
     #endif
     return 0;

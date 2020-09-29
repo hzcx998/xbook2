@@ -4,7 +4,7 @@
 #include <xbook/waitqueue.h>
 #include <xbook/spinlock.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_SRVCALL
 
 typedef struct _srvcall {
     int port;
@@ -30,7 +30,7 @@ static int copy_srvarg_buffer(srvarg_t *dst, srvarg_t *src, int srvio, int new_b
             if (srvio == SRVIO_USER) {      /* 有效：SRVIO_USER */
                 if (src->io & (1 << i)) {   /* SRVIO_USER */
                     if (dst->data[i] && src->data[i]) {    
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
                         printk(KERN_DEBUG "%s: data[%d],size=%d dst:%x src:%x\n", __func__, i, src->size[i], dst->data[i], src->data[i]);   
 #endif
                         /* 需要将数据复制回到用户缓冲区，缓冲区长度由源指定 */
@@ -38,7 +38,7 @@ static int copy_srvarg_buffer(srvarg_t *dst, srvarg_t *src, int srvio, int new_b
                     }
                 }
                 if (new_buf) {  /* 需要将内核缓冲区释放 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
                     printk(KERN_DEBUG "%s: data%d free buffer: %x size %d\n", __func__, i, src->data[i], src->size[i]);   
 #endif
                     kfree((void *) src->data[i]);
@@ -50,7 +50,7 @@ static int copy_srvarg_buffer(srvarg_t *dst, srvarg_t *src, int srvio, int new_b
                     if (dst->data[i] == 0) {
                         return -1;
                     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
                     printk(KERN_DEBUG "%s: data%d alloc buffer: %x size %d\n", __func__, i, dst->data[i], dst->size[i]);
 #endif
                     memset((void *) dst->data[i], 0, dst->size[i]);
@@ -96,7 +96,7 @@ int sys_srvcall_bind(int port)
     /* 必须是绑定一个未绑定的端口 */
     if (srvcall_table[port].holder != NULL)
         return -1;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
     printk(KERN_DEBUG "%s: task=%d bind port=%d.\n", __func__, current_task->pid, port);
 #endif
     srvcall_table[port].holder = current_task;
@@ -115,7 +115,7 @@ int sys_srvcall_unbind(int port)
     if (IS_BAD_SRVCALL(port) && port != -1)
         return -1;
     if (port == -1) {   /* 寻找当前进程绑定的端口 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
         printk(KERN_DEBUG "%s: task=%d unbind used port.\n", __func__, current_task->pid);
 #endif
         int i;
@@ -130,7 +130,7 @@ int sys_srvcall_unbind(int port)
         /* 不是当前任务解绑就返回 */
         if (srvcall_table[port].holder != current_task)
             return -1;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
         printk(KERN_DEBUG "%s: task=%d unbind port=%d.\n", __func__, current_task->pid, port);
 #endif
         srvcall_table[port].holder = NULL;
@@ -154,7 +154,7 @@ int sys_srvcall_listen(int port, srvarg_t *arg)
 
     spin_lock(&call->spin);
 
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
     printk(KERN_DEBUG "%s: task=%d listen port=%d, wait.\n", __func__, current_task->pid, port);
 #endif
     call->state = SRVCALL_LISTEN;   /* 处于监听状态 */
@@ -166,7 +166,7 @@ int sys_srvcall_listen(int port, srvarg_t *arg)
     COPY_SRVARG(arg, &call->arg);
 
     spin_unlock(&call->spin);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
     printk(KERN_DEBUG "%s: task=%d listen port=%d, args: %x %x\n", 
     __func__, current_task->pid, port, arg->data[0], arg->data[1]);
 #endif
@@ -215,7 +215,7 @@ int sys_srvcall_ack(int port, srvarg_t *arg)
     if (call->holder != current_task)
         return -1;
     spin_lock(&call->spin);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
     printk(KERN_DEBUG "%s: task=%d ack port=%d.\n", __func__, current_task->pid, port);
 #endif
     /* 处于应答状态 */
@@ -229,7 +229,7 @@ int sys_srvcall_ack(int port, srvarg_t *arg)
     /* 从进程中复制到内核 */
     if (call->caller) {
         if (call->caller->state == TASK_BLOCKED) {  
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
     printk(KERN_DEBUG "%s: task=%d ack port=%d. unblock task=%d\n", __func__, 
         current_task->pid, port, call->caller->pid);
 #endif
@@ -246,7 +246,7 @@ int sys_srvcall_ack(int port, srvarg_t *arg)
         spin_unlock(&call->spin);
     }
     
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
     printk(KERN_DEBUG "%s: task=%d ack port=%d. done\n", __func__, 
         current_task->pid, port);
 #endif
@@ -272,7 +272,7 @@ int sys_srvcall(int port, srvarg_t *arg)
         spin_lock(&call->spin);
 
         if (call->state == SRVCALL_LISTEN) {   /* 服务正在监听 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
             printk(KERN_DEBUG "%s: task=%d call port=%d. in listen...\n", __func__, 
                 current_task->pid, port);
 #endif
@@ -288,7 +288,7 @@ int sys_srvcall(int port, srvarg_t *arg)
             task_unblock(call->holder);
 
             if (call->state != SRVCALL_ACK) {    /* 只要还没应答，就可以阻塞 */  
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
                 printk(KERN_DEBUG "%s: task=%d call port=%d. block.\n", __func__, 
                     current_task->pid, port);
 #endif
@@ -297,7 +297,7 @@ int sys_srvcall(int port, srvarg_t *arg)
                 task_block(TASK_BLOCKED);
                 spin_lock(&call->spin);
             }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
             printk(KERN_DEBUG "%s: task=%d call port=%d. copy to user.\n", __func__, 
                 current_task->pid, port);
 #endif
@@ -309,14 +309,14 @@ int sys_srvcall(int port, srvarg_t *arg)
 
             /* 复制缓冲区 */
             call->state = SRVCALL_FINISH;    /* 调用完成 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
             printk(KERN_DEBUG "%s: task=%d call port=%d. finished.\n", __func__, 
                 current_task->pid, port);
 #endif
             spin_unlock(&call->spin);
             /* 完成后需要唤醒服务进程 */
             if (call->holder->state == TASK_BLOCKED) {  
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
             printk(KERN_DEBUG "%s: task=%d call port=%d. unblock holder=%d\n", __func__, 
                 current_task->pid, port, call->holder->pid);
 #endif
@@ -325,7 +325,7 @@ int sys_srvcall(int port, srvarg_t *arg)
             
             break;
         }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_SRVCALL
         /*printk(KERN_DEBUG "%s: task=%d call port=%d. not listen\n", __func__, 
             current_task->pid, port);*/
 #endif

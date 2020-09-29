@@ -318,7 +318,7 @@ int __trigger_return(trap_frame_t *frame)
     
     /* 还原之前的中断栈 */
     memcpy(frame, &trigger_frame->trap_frame, sizeof(trap_frame_t));
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TASK
     printk(KERN_DEBUG "sys_trigger_return: ret val 0x%x.\n", frame->eax);
 #endif
     /* 会修改eax的值，返回eax的值 */

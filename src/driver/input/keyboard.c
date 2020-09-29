@@ -16,7 +16,7 @@
 
 #define DEV_NAME "kbd"
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 #define DEV_FIFO_BUF_LEN     64
 
@@ -955,7 +955,7 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
         if (input_even_get(&ext->evbuf, even)) {
             status = IO_FAILED;
         } else {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
             printk(KERN_DEBUG "key even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
             printk(KERN_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
 #endif        
@@ -1022,13 +1022,13 @@ void kbd_thread(void *arg) {
             e.code = scan_code_to_even_code(key & KBD_KEY_MASK);
 
             input_even_put(&ext->evbuf, &e);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
             printk(KERN_DEBUG "key even set: type=%d code=%x value=%d\n", e.type, e.code, e.value);
             printk(KERN_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
 #endif
             /* 解析成输入数据并放到缓冲区中 */
             ext->keycode = key;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "kbd_thread: key:%c\n", key);
 #endif
         }
@@ -1121,7 +1121,7 @@ iostatus_t keyboard_driver_vine(driver_object_t *driver)
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "keyboard_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

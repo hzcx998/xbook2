@@ -88,9 +88,11 @@ surface_t *surface_copy(surface_t *s)
 
     for (int i = 0; i < d->height; i++)
     {
+        color_t *dc = &d->pixels[i * d->width];
+        color_t *sc = &s->pixels[i * d->width];
         for (int j = 0; j < d->width; j++)
         {
-            d->pixels[i * d->width + j] = s->pixels[i * d->width + j];
+            dc[j] = sc[j];
         }
     }
     return d;
@@ -145,39 +147,6 @@ void surface_blit_with_opacity(surface_t *d, surface_t *s, int x, int y, int a)
     }
 }
 
-void surface_clip(surface_t *d, surface_t *s, int x, int y)
-{
-    int xs = clamp(x, 0, d->width - 1);
-    int xe = clamp(x + s->width - 1, 0, d->width - 1);
-    int ys = clamp(y, 0, d->height - 1);
-    int ye = clamp(y + s->height - 1, 0, d->height - 1);
-
-    surface_mono(d, RGB(0x000000));
-    for (int i = ys; i <= ye; i++)
-    {
-        for (int j = xs; j <= xe; j++)
-        {
-            color_t *dc = &d->pixels[i * d->width + j];
-            color_t *sc = &s->pixels[(i - y) * s->width + j - x];
-            if (dc->a)
-                *dc = *sc;
-        }
-    }
-
-    for (int i = 0; i < ys; i++)
-        for (int j = 0; j < d->width; j++)
-            d->pixels[i * d->width + j].a = 0;
-    for (int i = ye + 1; i < d->height; i++)
-        for (int j = 0; j < d->width; j++)
-            d->pixels[i * d->width + j].a = 0;
-    for (int i = 0; i < d->height; i++)
-        for (int j = 0; j < xs; j++)
-            d->pixels[i * d->width + j].a = 0;
-    for (int i = 0; i < d->height; i++)
-        for (int j = xe + 1; j < d->width; j++)
-            d->pixels[i * d->width + j].a = 0;
-}
-
 void surface_mask(surface_t *d, surface_t *s, int x, int y)
 {
     int xs = clamp(x, 0, d->width - 1);
@@ -188,15 +157,17 @@ void surface_mask(surface_t *d, surface_t *s, int x, int y)
     surface_mono(d, RGB(0x000000));
     for (int i = ys; i <= ye; i++)
     {
+        color_t *dc = &d->pixels[i * d->width];
+        color_t *sc = &s->pixels[(i - y) * s->width - x];
+
         for (int j = xs; j <= xe; j++)
         {
-            color_t *dc = &d->pixels[i * d->width + j];
-            color_t *sc = &s->pixels[(i - y) * s->width + j - x];
-
-            dc->r = sc->r;
-            dc->g = sc->g;
-            dc->b = sc->b;
-            dc->a = dc->a * sc->a / 255.0; //TODO:
+            color_t *dt = dc + j;
+            color_t *st = sc + j;
+            dt->r = st->r;
+            dt->g = st->g;
+            dt->b = st->b;
+            dt->a = dt->a * st->a / 255.0; //TODO:
         }
     }
 
@@ -255,15 +226,13 @@ void surface_mono(surface_t *s, color_t color)
 {
     for (int i = 0; i < s->height; i++)
     {
+        color_t *sc = &s->pixels[i * s->width];
+
         for (int j = 0; j < s->width; j++)
         {
-            color_t *c = &s->pixels[i * s->width + j];
-            // if (c->a != 0)
-            {
-                c->r = color.r;
-                c->g = color.g;
-                c->b = color.b;
-            }
+            int a = sc[j].a;
+            sc[j] = color;
+            sc[j].a = a;
         }
     }
 }
@@ -347,13 +316,17 @@ void surface_filter_blur(struct surface_t *s, int radius)
 
 void surface_filter_opacity(struct surface_t *s, int a)
 {
+    if (a == 255)
+        return;
+
     float fa = a / 255.0;
     for (int i = 0; i < s->height; i++)
     {
+        color_t *sc = &s->pixels[i * s->width];
+
         for (int j = 0; j < s->width; j++)
         {
-            color_t *c = &s->pixels[i * s->width + j];
-            c->a = c->a * fa;
+            sc[j].a = sc[j].a * fa;
         }
     }
 }

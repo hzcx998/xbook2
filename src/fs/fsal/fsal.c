@@ -13,7 +13,7 @@
 #include <xbook/debug.h>
 #include <xbook/fs.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_FSAL
 
 
 /* 文件表指针 */
@@ -166,7 +166,7 @@ int fs_fd_copy(task_t *src, task_t *dest)
     if (!src->fileman || !dest->fileman) {
         return -1;
     }
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_FSAL
     printk("[fs]: fd copy from %s to %s\n", src->name, dest->name);
     #endif
     /* 复制工作目录 */
@@ -178,7 +178,7 @@ int fs_fd_copy(task_t *src, task_t *dest)
             dest->fileman->fds[i].flags = src->fileman->fds[i].flags;
             dest->fileman->fds[i].offset = src->fileman->fds[i].offset;
             
-            #if DEBUG_LOCAL == 1
+            #ifdef DEBUG_FSAL
             printk("[fs]: fds[%d]=%d\n", i, src->fileman->fds[i].handle);
             #endif
 
@@ -202,7 +202,7 @@ int fs_fd_reinit(task_t *cur)
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         if (cur->fileman->fds[i].flags != 0) {  /* 已经占用，需要关闭 */
-            #if DEBUG_LOCAL == 1
+            #ifdef DEBUG_FSAL
             pr_dbg("[FS]: %s: fd=%d, flags=%x handle=%d\n", __func__, i, 
                 cur->fileman->fds[i].flags, cur->fileman->fds[i].handle);
             #endif
@@ -260,7 +260,7 @@ int local_fd_install(int resid, unsigned int flags)
     task_t *cur = current_task;
     cur->fileman->fds[fd].handle = resid;
     cur->fileman->fds[fd].flags |= flags;
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_FSAL
     printf("[FS]: %s: install fd=%d handle=%d\n", __func__, fd, resid);
     #endif
     return fd;
@@ -284,7 +284,7 @@ int local_fd_install_to(int resid, int newfd, unsigned int flags)
     cur->fileman->fds[newfd].flags = FILE_FD_ALLOC;
     cur->fileman->fds[newfd].flags |= flags;
     cur->fileman->fds[newfd].offset = 0;
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_FSAL
     printf("[FS]: %s: install fd=%d handle=%d\n", __func__, newfd, resid);
     #endif
     return newfd;

@@ -15,7 +15,7 @@
 #include <stdio.h>
 
 /* 配置开始 */
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 /* 配置结束 */
 
@@ -483,7 +483,7 @@ static unsigned char ide_print_error(device_extension_t *ext, unsigned char err)
 
    return err;
 }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
 static void dump_ide_channel(struct ide_channel *channel)
 {
 	printk(KERN_DEBUG "dump_ide_channel: ext:%x base:%x irq:%d\n", channel, channel->base, channel->irqno);
@@ -866,7 +866,7 @@ static int pio_data_transfer(device_extension_t *ext,
 	short i;
 	unsigned char error;
 	if (rw == IDE_READ) {	
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk("PIO read->");
 #endif
 		for (i = 0; i < count; i++) {
@@ -880,7 +880,7 @@ static int pio_data_transfer(device_extension_t *ext,
 			buf += SECTOR_SIZE;
 		}
 	} else {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk("PIO write->");
 #endif
 		for (i = 0; i < count; i++) {
@@ -973,7 +973,7 @@ static int ata_type_transfer(device_extension_t *ext,
 		/* 选择并发送命令 */
 		select_cmd(rw, mode, dma, &cmd);
 
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
 			printk("lba mode %d num %d io %d %d %d %d %d %d->",
 				mode, lba, lbaIO[0], lbaIO[1], lbaIO[2], lbaIO[3], lbaIO[4], lbaIO[5]);
 			printk("rw %d dma %d cmd %x head %d\n",
@@ -1145,7 +1145,7 @@ iostatus_t ide_read(device_object_t *device, io_request_t *ioreq)
     long len;
     iostatus_t status = IO_SUCCESS;
     sector_t sectors = DIV_ROUND_UP(ioreq->parame.read.length, SECTOR_SIZE);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "ide_read: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.read.offset);
 #endif    
@@ -1171,7 +1171,7 @@ iostatus_t ide_write(device_object_t *device, io_request_t *ioreq)
     long len;
     iostatus_t status = IO_SUCCESS;
     sector_t sectors = DIV_ROUND_UP(ioreq->parame.write.length, SECTOR_SIZE);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "ide_write: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.write.offset);
 #endif    
@@ -1251,7 +1251,7 @@ static int ide_probe(device_extension_t *ext, int id)
         register_irq(channel->irqno, ide_handler, IRQF_DISABLED, "harddisk", DEV_NAME, (unsigned long)channel);
     }
     
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     dump_ide_channel(channel);
 #endif
 
@@ -1308,7 +1308,7 @@ static int ide_probe(device_extension_t *ext, int id)
     ext->capabilities = ext->info->Capabilities0;
     ext->signature = ext->info->General_Config;
     ext->reserved = 1;	/* 设备存在 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     dump_ide_extension(ext);
 #endif
     pr_dbg("probe IDE disk: base:%x irq:%d\n", channel->base, channel->irqno);
@@ -1350,7 +1350,7 @@ static iostatus_t ide_enter(driver_object_t *driver)
             devext = (device_extension_t *)devobj->device_extension;
             string_new(&devext->device_name, devname, DEVICE_NAME_LEN);
             devext->device_object = devobj;
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_DRV
             printk(KERN_DEBUG "ide_enter: device extension: device name=%s object=%x\n",
                 devext->device_name.text, devext->device_object);
     #endif
@@ -1405,7 +1405,7 @@ iostatus_t ide_driver_vine(driver_object_t *driver)
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "ide_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

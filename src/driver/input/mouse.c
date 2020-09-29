@@ -16,7 +16,7 @@
 
 #define DEV_NAME "mouse"
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 #define DEV_FIFO_BUF_LEN     64
 
@@ -201,7 +201,7 @@ static int mouse_parse(device_extension_t *extension)
 		extension->mouse_data.byte2 = extension->raw_data;
 		extension->phase = 1;
 
-#if DEBUG_LOCAL == 1		
+#ifdef DEBUG_DRV		
         printk(KERN_DEBUG "(B:%x, X:%d, Y:%d)\n", 
             extension->mouse_data.byte0, (char)extension->mouse_data.byte1,
             (char)extension->mouse_data.byte2);
@@ -367,7 +367,7 @@ iostatus_t mouse_read(device_object_t *device, io_request_t *ioreq)
         if (input_even_get(&ext->evbuf, even)) {
             status = IO_FAILED;
         } else {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
             printk(KERN_DEBUG "mouse even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
             printk(KERN_DEBUG "mouse even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
 #endif        
@@ -504,7 +504,7 @@ iostatus_t mouse_driver_vine(driver_object_t *driver)
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "mouse_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

@@ -127,7 +127,7 @@
 
 #define DEV_NAME "rtl8139"
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 /*备注以太网的情况*/
 #define ETH_ALEN 6 /*以太网地址，即MAC地址，6字节*/
@@ -617,11 +617,11 @@ static int rtl8139_get_pci_info(device_extension_t *ext)
     /* get pci device */
     pci_device_t *device = pci_get_device(RTL8139_VENDOR_ID, RTL8139_DEVICE_ID);
     if (device == NULL) {
-        printk(KERN_DEBUG "RTL8139 init failed: not find pci device.\n");
+        printk(KERN_ERR "RTL8139 init failed: not find pci device.\n");
         return -1;
     }
 	ext->pci_device = device;
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
 	
     printk(KERN_DEBUG "find rtl8139 device, vendor id: 0x%x, device id: 0x%x\n",\
             device->vendor_id, device->device_id);
@@ -632,10 +632,10 @@ static int rtl8139_get_pci_info(device_extension_t *ext)
     /* get io address */
     ext->io_addr = pci_device_get_io_addr(device);
     if (ext->io_addr == 0) {
-        printk(KERN_DEBUG "RTL8139 init failed: INVALID pci device io address.\n");
+        printk(KERN_ERR "RTL8139 init failed: INVALID pci device io address.\n");
         return -1;
     }
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
     printk(KERN_DEBUG "rlt8139 io address: 0x%x\n", ext->io_addr);
 #endif
     /* get irq */
@@ -644,7 +644,7 @@ static int rtl8139_get_pci_info(device_extension_t *ext)
         printk(KERN_DEBUG "RTL8139 init failed: INVALID irq.\n");
         return -1;
     }
-#if DEBUG_LOCAL == 1    	
+#ifdef DEBUG_DRV    	
     printk(KERN_DEBUG "rlt8139 irq: %d\n", ext->irq);
 #endif
     return 0;
@@ -677,11 +677,11 @@ int rtl8139_transmit(device_extension_t *ext, uint8_t *buf, uint32 len)
     /* 如果还有剩余的传输项 */
     if (atomic_get(&ext->tx_free_counts) > 0) {
         //printk(KERN_DEBUG "!TX\n");
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "Start TX, free %d\n", atomic_get(&ext->tx_free_counts));
 #endif
 
-#if DEBUG_LOCAL == 3
+#ifdef DEBUG_DRV
         
         printk("\n");
         printk(KERN_DEBUG "Transmit frame size %d, contents:\n", length);
@@ -726,13 +726,13 @@ int rtl8139_transmit(device_extension_t *ext, uint8_t *buf, uint32 len)
 
         /* 减少传输项数量 */
         atomic_dec(&ext->tx_free_counts);
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "Start OK, free %d\n", atomic_get(&ext->tx_free_counts));
 #endif        
         //printk(KERN_DEBUG "~TX\n");
     } else {
         // 停止传输 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "Stop Tx packet!\n");
 #endif
         //netif_stop_queue (dev);
@@ -741,7 +741,7 @@ int rtl8139_transmit(device_extension_t *ext, uint8_t *buf, uint32 len)
     }
     restore_intr(flags);
 
-#if DEBUG_LOCAL == 2 
+#ifdef DEBUG_DRV 
     printk(KERN_DEBUG "Queued Tx packet size %d to slot %d\n",
 		    length, entry);
 #endif
@@ -750,12 +750,12 @@ int rtl8139_transmit(device_extension_t *ext, uint8_t *buf, uint32 len)
 
 static int rtl8139_tx_interrupt(device_extension_t *ext)
 {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "TX\n");
 #endif
     /* 空闲数量小于传输描述符数量才能进行处理 */
     while (atomic_get(&ext->tx_free_counts) < NUM_TX_DESC) {
-#if DEBUG_LOCAL == 2        
+#ifdef DEBUG_DRV        
         printk(KERN_DEBUG "TX, free %d\n", atomic_get(&ext->tx_free_counts));
 #endif
         /* 获取第一个脏传输 */
@@ -827,18 +827,18 @@ static int rtl8139_tx_interrupt(device_extension_t *ext)
             mb();
             // 唤醒队列 
 		    //netif_wake_queue (dev);
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
             printk(KERN_DEBUG "Wake up queue!\n");
 #endif        
         }
 
         /* 空闲数量又增加 */
         atomic_inc(&ext->tx_free_counts);
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "OK, free %d\n", atomic_get(&ext->tx_free_counts));
 #endif
     }
-#if DEBUG_LOCAL == 2    
+#ifdef DEBUG_DRV    
     printk(KERN_DEBUG "TX, end free %d\n", atomic_get(&ext->tx_free_counts));
 #endif
     return 0;
@@ -853,7 +853,7 @@ static void rtl8139_other_interrupt(device_extension_t *ext,
 {
     ASSERT(ext != NULL);
 
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "Abnormal interrupt, status %x\n", status);
 #endif
     /* Update the error count.
@@ -891,7 +891,7 @@ static void rtl8139_other_interrupt(device_extension_t *ext,
 static void rtl8139_rx_error(u32 rx_status, device_extension_t *ext)
 {
     u8 tmp8;
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
     printk(KERN_NOTICE "Ethernet frame had errors, status %x\n", rx_status);
 #endif
     ext->stats.rx_errors++;
@@ -956,14 +956,14 @@ static void rtl8139_isr_ack(device_extension_t *ext)
 
 static int rtl8139_rx_interrupt(device_extension_t *ext)
 {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "RX\n");
 #endif
     int received = 0;
     unsigned char *rx_ring = ext->rx_ring;
     unsigned int current_rx = ext->current_rx;
     unsigned int rx_size = 0;
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "In %s(), current %x BufAddr %x, free to %x, Cmd %x\n",
 		    __func__, (u16)current_rx,
 		    in16(ext->io_addr + RX_BUF_ADDR),
@@ -988,7 +988,7 @@ static int rtl8139_rx_interrupt(device_extension_t *ext)
         /* 接收的大小在高16位 */
         rx_size = rx_status >> 16;
 
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "Rx packet status: ");
         if (rx_status & 1) printk(KERN_DEBUG "ROK ");
         if (rx_status & (1<<1)) printk(KERN_DEBUG "FAE ");
@@ -1014,7 +1014,7 @@ static int rtl8139_rx_interrupt(device_extension_t *ext)
         }
         //printk(KERN_DEBUG "%x\n", rx_ring[ring_offset + pkt_size - 1]);
         
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "%s() status %x, size %x, cur %x\n",
 			  __func__, rx_status, rx_size, current_rx);
 #endif
@@ -1068,7 +1068,7 @@ static int rtl8139_rx_interrupt(device_extension_t *ext)
 keep_pkt:
 
 /* 如果要打印收到的数据，就可以在此打印 */
-#if DEBUG_LOCAL == 3
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "Receive frame size %d, contents: \n", pkt_size);
         int i;
         for (i = 0; i < pkt_size; i++) {
@@ -1080,7 +1080,7 @@ keep_pkt:
 
         /* Malloc up new buffer, compatible with net-2e. */
 		/* Omit the four octet CRC from the length. */
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "RX: upload packet.\n");
 #endif    
         /* 接受数据包 */
@@ -1113,7 +1113,7 @@ keep_pkt:
     /* 如果没有接收到或者大小出错，上面的ACK就不会执行到，在这里再次调用 */
     if (unlikely(!received || rx_size == 0xfff0))
         rtl8139_isr_ack(ext);
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "Done %s(), current %04x BufAddr %04x, free to %04x, Cmd %02x\n",
 		    __func__, current_rx,
 		    in16(ext->io_addr + RX_BUF_ADDR),
@@ -1200,7 +1200,7 @@ static int rtl8139_handler(unsigned long irq, unsigned long data)
 
 out:
     spin_unlock(&ext->lock);
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "exiting interrupt, intr_status=%x\n",
 		   in16(ext->io_addr + INTR_STATUS));
 #endif    
@@ -1246,14 +1246,14 @@ static int rtl8139_init_board(device_extension_t *ext)
     
     /* if unknown chip, assume array element #0, original RTL-8139 in this case */
 	i = 0;
-#if DEBUG_LOCAL == 1	
+#ifdef DEBUG_DRV	
     printk(KERN_DEBUG "unknown chip version, assuming RTL-8139\n");
 	printk(KERN_DEBUG "TxConfig = 0x%x\n", in32(ext->io_addr + TX_CONFIG));
 #endif 
 	ext->chipset = 0;
 
 chip_match:
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "chipset id (%x) == index %d, '%s'\n",
             version, i, rtl_chip_info[i].name);
 #endif
@@ -1293,7 +1293,7 @@ static void rtl8139_init_ring(device_extension_t *ext)
 
 static void __set_rx_mode(device_extension_t *ext)
 {
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
 	printk(KERN_DEBUG "rtl8139_set_rx_mode(%x) done -- Rx config %x\n",
 		    ext->flags,
             in32(ext->io_addr + RX_CONFIG));
@@ -1464,7 +1464,7 @@ static int rtl8139_init(device_extension_t *ext)
     /* 如果是增强的版本，输出提示信息 */
     if (pdev->vendor_id  == RTL8139_VENDOR_ID &&
 	    pdev->device_id == RTL8139_DEVICE_ID && pdev->revision_id >= 0x20) {
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
 		printk(KERN_DEBUG "This (id %04x:%04x rev %02x) is an enhanced 8139C+ chip, use 8139cp\n",
 		        pdev->vendor_id, pdev->device_id, pdev->revision_id);
 #endif		
@@ -1482,7 +1482,7 @@ static int rtl8139_init(device_extension_t *ext)
     for (i = 0; i < ETH_ALEN; i++) {
         ext->mac_addr[i] = in8(ext->io_addr + MAC0 + i);
     }
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
     printk(KERN_DEBUG "mac addr: %x:%x:%x:%x:%x:%x\n", ext->mac_addr[0], ext->mac_addr[1],
             ext->mac_addr[2], ext->mac_addr[3], 
             ext->mac_addr[4], ext->mac_addr[5]);
@@ -1554,7 +1554,7 @@ static iostatus_t rtl8139_close(device_object_t *device, io_request_t *ioreq)
     device_extension_t *ext = device->device_extension;
 
     /* 先停止队列传输 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "Shutting down ethercard, status was %x\n",
 		    in16(ext->io_addr + INTR_STATUS));
 #endif    
@@ -1606,7 +1606,7 @@ static iostatus_t rtl8139_read(device_object_t *device, io_request_t *ioreq)
     uint8_t *buf = (uint8_t *)ioreq->user_buffer; 
     int flags = 0;
 
-#if DEBUG_LOCAL == 2    
+#ifdef DEBUG_DRV    
     printk(KERN_DEBUG "rtl8139_write: receive data=%x len=%d flags=%x\n",
         buf, ioreq->parame.read.length, ioreq->parame.read.offset);
 #endif
@@ -1620,7 +1620,7 @@ static iostatus_t rtl8139_read(device_object_t *device, io_request_t *ioreq)
     if (len < 0)
         status = IO_FAILED;
 
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
     if (len > 0) {
         buf = (uint8_t *)ioreq->user_buffer; 
         dump_buffer(buf, 32, 1);
@@ -1639,7 +1639,7 @@ static iostatus_t rtl8139_write(device_object_t *device, io_request_t *ioreq)
     unsigned long len = ioreq->parame.write.length;
     
     uint8_t *buf = (uint8_t *)ioreq->user_buffer; 
-#if DEBUG_LOCAL == 2    
+#ifdef DEBUG_DRV    
     printk(KERN_DEBUG "rtl8139_write: transmit data=%x len=%d flags=%x\n",
         buf, ioreq->parame.write.length, ioreq->parame.write.offset);
 #endif
@@ -1672,7 +1672,7 @@ static iostatus_t rtl8139_devctl(device_object_t *device, io_request_t *ioreq)
         *mac++ = extension->mac_addr[3];
         *mac++ = extension->mac_addr[4];
         *mac++ = extension->mac_addr[5];
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "rtl8139_devctl: copy mac addr to addr %x\n", ioreq->parame.devctl.arg);
 #endif
         status = IO_SUCCESS;
@@ -1753,7 +1753,7 @@ iostatus_t rtl8139_driver_vine(driver_object_t *driver)
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "rtl8139_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

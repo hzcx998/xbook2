@@ -14,7 +14,7 @@
 
 #define DEV_NAME "video"
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 /* 将显存映射到内核，在内核态也可以操作显存 */
 #define MAP_VRAM_TO_KERN    1
@@ -104,7 +104,7 @@ mmap(int res, size_t length, int flags);
 munmap(void *addr, size_t length);
 */
 
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
 void dump_vbe_info_block(struct vbe_info_block *info)
 {
     if (info == NULL)
@@ -153,7 +153,7 @@ void dump_vbe_mode_info_block(struct vbe_mode_info_block *info)
     printk(KERN_DEBUG "physical address for flat memory frame buffer:%x\n", info->phyBasePtr);
     printk(KERN_DEBUG "bytesPerScanLine:%x\n", info->bytesPerScanLine);
 }
-#endif  /* DEBUG_LOCAL */
+#endif  /* DEBUG_DRV */
 
 
 iostatus_t vbe_devctl(device_object_t *device, io_request_t *ioreq)
@@ -195,7 +195,7 @@ iostatus_t vbe_mmap(device_object_t *device, io_request_t *ioreq)
     extension = device->device_extension;
 
     ioreq->io_status.infomation = 0;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "%s: length=%x mode len=%x\n", __func__, 
         ioreq->parame.mmap.length, extension->mode_info->bytesPerScanLine *
         extension->mode_info->yResolution);
@@ -205,7 +205,7 @@ iostatus_t vbe_mmap(device_object_t *device, io_request_t *ioreq)
             extension->mode_info->yResolution) {
         
         ioreq->io_status.infomation = (unsigned long) extension->mode_info->phyBasePtr;    /* 返回物理地址 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "%s: get phy addr:%x\n", __func__, ioreq->io_status.infomation);
 #endif    
         status = IO_SUCCESS;
@@ -236,7 +236,7 @@ static iostatus_t vbe_enter(driver_object_t *driver)
     extension->vbe_info = (struct vbe_info_block *)VBE_INFO_ADDR;
     extension->mode_info = (struct vbe_mode_info_block *)VBE_MODE_ADDR;
     
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     
     printk(KERN_DEBUG "%s: %s: sizeof vbe info block %d mode block %d\n", 
         DRV_NAME, __func__, sizeof(struct vbe_info_block), sizeof(struct vbe_mode_info_block));
@@ -257,12 +257,12 @@ static iostatus_t vbe_enter(driver_object_t *driver)
             DRV_NAME, __func__);
         return status;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "%s: %s: " "video ram size: %x bytes\n", 
         DRV_NAME, __func__, video_ram_size);
     printk(KERN_DEBUG "%s: %s: " "mapped virtual addr in kernel: %x.\n", 
         DRV_NAME, __func__, extension->vir_base_addr);
-#endif  /*  DEBUG_LOCAL */
+#endif  /*  DEBUG_DRV */
 #endif  /* MAP_VRAM_TO_KERN */
  
     return status;
@@ -298,7 +298,7 @@ iostatus_t vbe_driver_vine(driver_object_t *driver)
     */
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "vbe_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

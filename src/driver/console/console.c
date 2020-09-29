@@ -12,7 +12,7 @@
 
 #define DEV_NAME "con"
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 #define DISPLAY_VRAM 0x800b8000
 
@@ -323,7 +323,7 @@ iostatus_t console_read(device_object_t *device, io_request_t *ioreq)
         i--;
         buf++;
     }
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV  
     buf = (uint8_t *)ioreq->system_buffer; 
     printk(KERN_DEBUG "console_read: %s\n", buf);
 #endif
@@ -342,19 +342,17 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
     
     uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
     int i = len;
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
     printk(KERN_DEBUG "console_write: %s\n", buf);
 #endif
     while (i > 0) {
-        #ifdef CONFIG_PRINT_CONSOLE
         vga_outchar(device->device_extension, *buf);
-        #endif /* CONFIG_PRINT_CONSOLE */
         i--;
         buf++;
     }
     buf = (uint8_t *)ioreq->system_buffer; 
     // print to kernel
-    printk(buf);
+    printk("%s", buf);
 
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = len;
@@ -425,7 +423,7 @@ static iostatus_t console_enter(driver_object_t *driver)
         devext = (device_extension_t *)devobj->device_extension;
         string_new(&devext->device_name, devname, DEVICE_NAME_LEN);
         devext->device_object = devobj;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "console_enter: device extension: device name=%s object=%x\n",
             devext->device_name.text, devext->device_object);
 #endif
@@ -481,7 +479,7 @@ iostatus_t console_driver_vine(driver_object_t *driver)
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printk(KERN_DEBUG "console_driver_vine: driver name=%s\n",
         driver->name.text);
 #endif

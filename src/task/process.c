@@ -18,7 +18,7 @@
 #include <gui/message.h>
 #include <unistd.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_PROC
 
 /**
  * load_segment - 加载段
@@ -87,7 +87,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
     /* 获取程序头起始偏移 */
     Elf32_Off prog_header_off = elf_header->e_phoff;
     Elf32_Half prog_header_size = elf_header->e_phentsize;
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_PROC
     printk(KERN_DEBUG "prog offset %x size %d\n", prog_header_off, prog_header_size);
     #endif
     Elf32_Off prog_end;
@@ -101,7 +101,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
         if (sys_read(fd, (void *)&prog_header, prog_header_size) != prog_header_size) {
             return -1;
         }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PROC
         printk(KERN_DEBUG "proc_load_image: read prog header off %x vaddr %x filesz %x memsz %x\n", 
             prog_header.p_offset, prog_header.p_vaddr, prog_header.p_filesz, prog_header.p_memsz);
 #endif        
@@ -129,7 +129,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
                 */
             }
             prog_end = prog_header.p_vaddr + prog_header.p_memsz;
-#if DEBUG_LOCAL == 1            
+#ifdef DEBUG_PROC            
             printk(KERN_DEBUG "seg start:%x end:%x\n", prog_header.p_vaddr, prog_end);
 #endif        
 
@@ -138,7 +138,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
             if (prog_header.p_flags == ELF32_PHDR_CODE) {
                 vmm->code_start = prog_header.p_vaddr;
                 vmm->code_end = prog_end;
-#if DEBUG_LOCAL == 1  
+#ifdef DEBUG_PROC  
                 printk(KERN_DEBUG "code start:%x end:%x\n", vmm->code_start, vmm->code_end);
 #endif
                 /*堆默认在代码的后面的一个页后面 */
@@ -150,7 +150,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
             } else if (prog_header.p_flags == ELF32_PHDR_DATA) {
                 vmm->data_start = prog_header.p_vaddr;
                 vmm->data_end = prog_end;
-#if DEBUG_LOCAL == 1                  
+#ifdef DEBUG_PROC                  
                 printk(KERN_DEBUG "data start:%x end:%x\n", vmm->data_start, vmm->data_end);
 #endif
                 /*堆默认在数据的后面的一个页后面 */
@@ -176,7 +176,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
         prog_header_off += prog_header_size;
         grog_idx++;
     }
-#if DEBUG_LOCAL == 1 
+#ifdef DEBUG_PROC 
     printk(KERN_DEBUG "heap start:%x\n", vmm->heap_start);
 #endif
     return 0;
@@ -295,7 +295,7 @@ int proc_build_arg(unsigned long arg_top, unsigned long *arg_bottom, char *argv[
 void proc_heap_init(task_t *task)
 {
     return;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PROC
     printk(KERN_DEBUG "task=%d dump vmspace.\n", task->pid);
     dump_vmspace(task->vmm);
 

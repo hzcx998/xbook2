@@ -33,8 +33,6 @@ extern char **environ;
 int shell_child_pid = -1;
 int shell_child_key = -1;
 
-#define DEBUG_LOCAL 0
-
 /**
  * cmd_parse - 从输入的命令行解析参数
  * @cmd_str: 命令行缓冲
@@ -168,7 +166,7 @@ int execute_cmd(int argc, char **argv)
             ioctl(recv_pipe[0], F_SETFL, O_NONBLOCK);
 
             int rdbytes;
-#if DEBUG_LOCAL == 1                
+#ifdef DEBUG_CMD                
             shell_printf("%s: parent wait child %d\n", APP_NAME, pid);
 #endif
             shell_child_pid = pid;
@@ -179,7 +177,7 @@ int execute_cmd(int argc, char **argv)
                 int waitret = waitpid(-1, &status, WNOHANG);
                 /* 没有子进程 */
                 if (waitret > 0) {
-#if DEBUG_LOCAL == 1                        
+#ifdef DEBUG_CMD                        
                     printf("%s: pid %d exit with %x.\n", APP_NAME, waitret, status);
 #endif
                     /* 子进程成功退出 */
@@ -190,7 +188,7 @@ int execute_cmd(int argc, char **argv)
                 memset(buf, 0, 513);
                 rdbytes = read(recv_pipe[0], buf, 512);
                 if (rdbytes > 0) { 
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_CMD
                     shell_printf("%s: read bytes %d\n", APP_NAME, rdbytes);
 #endif
                     /* 输出子进程传递来的数据 */

@@ -13,7 +13,7 @@
 #include <xbook/pipe.h>
 #include <sys/ipc.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_FSIF
 
 int sys_open(const char *path, int flags, int mode)
 {
@@ -73,7 +73,7 @@ int sys_close(int fd)
         if (fsif.close(ffd->handle) < 0)
             return -1;    
     } else if (ffd->flags & FILE_FD_SOCKET) {
-        #if DEBUG_LOCAL == 1
+        #if DEBUG_FSIF
         printk("[FS]: %s: close fd %d socket %d.\n", __func__, fd, ffd->handle);
         #endif
         if (lwip_close(ffd->handle) < 0)

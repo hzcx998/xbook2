@@ -12,7 +12,7 @@
 #include <xbook/config.h>
 #include <xbook/vmarea.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRIVER
 
 /* 驱动链表头 */
 LIST_HEAD(driver_list_head);
@@ -52,7 +52,7 @@ iostatus_t default_device_dispatch(device_object_t *device, io_request_t *ioreq)
     io_complete_request(ioreq);
     return IO_SUCCESS;  /* 默认是表示执行成功 */
 }
-#if DEBUG_LOCAL == 2 /* print devices */
+#ifdef DEBUG_DRIVER /* print devices */
 static void print_drivers()
 {
     driver_object_t *drvobj;
@@ -281,7 +281,7 @@ int driver_object_create(driver_func_t vine)
 int driver_object_delete(driver_object_t *driver)
 {
     iostatus_t status = IO_SUCCESS;
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRIVER    
     printk(KERN_DEBUG "driver_object_delete: driver %s delete start.\n",
         driver->name.text);
 #endif
@@ -303,7 +303,7 @@ int driver_object_delete(driver_object_t *driver)
 
     /* 释放掉驱动对象 */
     kfree(driver);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_DEBUG "driver_object_delete: driver delete done.\n");
 #endif
 
@@ -457,7 +457,7 @@ iostatus_t io_create_device(
     
     /* 把设备地址保存到device里面 */
     *device = devobj;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_DEBUG "io_create_device: create device done.\n");
 #endif
     return IO_SUCCESS;
@@ -594,7 +594,7 @@ io_request_t *io_build_sync_request(
                 return NULL;
             }
             ioreq->flags |= IOREQ_BUFFERED_IO;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
             printk(KERN_DEBUG "io_build_sync_request: system buffer.\n");
 #endif
         } else if (devobj->flags & DO_DIRECT_IO) {
@@ -604,11 +604,11 @@ io_request_t *io_build_sync_request(
                 return NULL;    
             }
             /* 分配内存描述列表 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
             printk(KERN_DEBUG "io_build_sync_request: direct buffer.\n");
 #endif
         } else {    /* 直接使用用户地址 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
             printk(KERN_DEBUG "io_build_sync_request: user buffer.\n");
 #endif
         }
@@ -921,7 +921,7 @@ int device_close(handle_t handle)
         return 0;
     }
 rollback_ref:
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_DEBUG "device_close: do dispatch failed!\n");
 #endif
     io_device_increase_reference(devobj);
@@ -967,7 +967,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
     if (!io_complete_check(ioreq, status)) {
         void *mapaddr = NULL;
         /* 对获取的物理地址进行映射 */
-#if DEBUG_LOCAL == 1        
+#ifdef DEBUG_DRIVER        
         printk(KERN_DEBUG "%s: get device phy addr:%x\n", __func__, ioreq->io_status.infomation);
 #endif
         if (ioreq->io_status.infomation) {  /* 有物理地址，说明获取成功，再做进一步设置 */
@@ -982,7 +982,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
         io_request_free((ioreq));
         return mapaddr;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_DEBUG "%s: do dispatch failed!\n", __func__);
 #endif
     io_request_free((ioreq));
@@ -1070,7 +1070,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         //printk("io ret.\n");
         return len;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_ERR "device_read: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
@@ -1123,7 +1123,7 @@ ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset)
         io_request_free((ioreq));
         return len;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_ERR "device_write: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
@@ -1171,7 +1171,7 @@ ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg)
         io_request_free((ioreq));
         return infomation;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_ERR "device_devctl: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
@@ -1252,7 +1252,7 @@ void init_driver_arch()
         }
     }
     
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRIVER
     //print_drivers_mini();
     /* 输出所有驱动以及设备 */
     print_drivers();

@@ -24,7 +24,8 @@
  * 如果在线程中执行exec，那么线程会全部关闭，并把当前进程用新进程镜像替换。
  * 
  */
-#define DEBUG_LOCAL 0
+
+// #define DEBUG_EXEC
 
 /**
  * do_execute - 替换当前进程的运行镜像
@@ -40,7 +41,7 @@
  */
 static int do_execute(const char *pathname, char *name, const char *argv[], const char *envp[])
 {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_EXEC
     printk(KERN_DEBUG "%s: enter.\n", __func__);
 #endif
     /* 没有参数或者参数错误 */
@@ -95,7 +96,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 #else   /* CONFIG_64BIT 64位 elf 头解析 */
 
 #endif
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_EXEC
     int argc = 0;
     printk(KERN_DEBUG "%s: dump args:\n", __func__);
     if (argv) {   
@@ -175,7 +176,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 
     /* 解除服务调用绑定 */
     sys_srvcall_unbind(-1);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_EXEC
     if (cur->pthread) {
         printk(KERN_DEBUG "%s: thread count %d\n", __func__, atomic_get(&cur->pthread->thread_count));
     }
@@ -227,7 +228,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
             } else {    /* 找到'/'，那就和路径一样 */
                 name = (char *) newpath;
             }
-            #if DEBUG_LOCAL == 1
+            #ifdef DEBUG_EXEC
             printk(KERN_DEBUG "execute: full path: %s -> %s\n", newpath, name);
             #endif
             /* 尝试替换镜像 */
@@ -240,7 +241,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
     } else if ((*p == '.' && *(p+1) == '/') || (*p == '.' && *(p+1) == '.' && *(p+2) == '/')) {    /* 当前目录 */
         /* 构建路径 */
         build_path(p, newpath);
-        #if DEBUG_LOCAL == 0
+        #ifdef DEBUG_EXEC
         printk(KERN_DEBUG "execute: merged path: %s from %s\n", newpath, p);
         #endif
 
@@ -276,7 +277,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
                 char finalpath[MAX_PATH] = {0};
                 wash_path(newpath, finalpath);
 
-                #if DEBUG_LOCAL == 1
+                #ifdef DEBUG_EXEC
                 printk(KERN_DEBUG "execute: merged path: %s from %s\n", finalpath, p);
                 #endif
                 /* 尝试执行 */
