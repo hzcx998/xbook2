@@ -55,7 +55,7 @@
         "vsprintf.h": "c",
         "vmarea.h": "c",
         "io.h": "c",
-        "vine.h": "c",
+        "func.h": "c",
         "pci.h": "c",
         "byteorder.h": "c",
         "cpu.h": "c",
@@ -134,6 +134,8 @@
         "iostream": "c",
         "ostream": "c",
         "new": "c",
-        "lvgl.h": "c"
+        "lvgl.h": "c",
+        "gui.h": "c",
+        "initcall.h": "c"
     }
 }

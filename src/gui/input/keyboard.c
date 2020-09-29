@@ -24,7 +24,7 @@ int __process_special_key(int keycode, int press)
         /* alt + tab */
         if (gui_keyboard.key_modify & GUI_KMOD_ALT_L) {
             if (press) {
-#if DEBUG_LOCAL == 1                
+#ifdef DEBUG_DRV                
                 /* switch window */
                 printf("[keyboard] [alt + tab] switch window.\n");
 #endif
@@ -37,7 +37,7 @@ int __process_special_key(int keycode, int press)
 
 int gui_key_pressed(int keycode)
 {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printf("[keyboard ] key %x->%c pressed.\n", keycode, keycode);
 #endif
     /* 处理修饰按键 */
@@ -112,7 +112,7 @@ int gui_key_pressed(int keycode)
 
 int gui_key_released(int keycode)
 {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printf("[keyboard ] key %x->%c released.\n", keycode, keycode);
 #endif
     /* 处理CTRL, ALT, SHIFT*/

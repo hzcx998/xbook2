@@ -17,7 +17,7 @@ AS			:=	nasm
 LD			:=  ld -m elf_i386
 export AS LD
 
-SRC			+= $(ARCH)/ init/ ipc/ task/ vmm/ driver/ lib/ kernel/ fs/ net/ gui/
+SRC			+= $(ARCH)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ net/ gui/
 
 NAME		:= kernel.elf
 

@@ -9,6 +9,7 @@
 #include <arch/atomic.h>
 #include <sys/res.h>
 #include <sys/input.h>
+#include "initcall.h"
 
 #define DRIVER_NAME_LEN 32
 
@@ -219,6 +220,7 @@ io_request_t *io_build_sync_request(
     io_status_block_t *io_status_block
 );
 
+int driver_object_create(driver_func_t func);
 int driver_object_delete(driver_object_t *driver);
 
 device_object_t *io_search_device_by_name(char *name);

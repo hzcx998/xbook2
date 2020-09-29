@@ -3,7 +3,7 @@
 #include <const.h>
 #include <math.h>
 #include <xbook/softirq.h>
-#include <xbook/vine.h>
+
 #include <xbook/driver.h>
 #include <string.h>
 #include <xbook/clock.h>
@@ -869,12 +869,13 @@ iostatus_t ahci_create_device(driver_object_t *driver, device_extension_t *dev)
     return status;
 }
 
-void ahci_probe_ports(driver_object_t *driver, struct hba_memory *abar)
+int ahci_probe_ports(driver_object_t *driver, struct hba_memory *abar)
 {
 	uint32_t pi = abar->port_implemented;
     #ifdef DEBUG_AHCI
 	printk(KERN_DEBUG "[ahci]: ports implemented: %x\n", pi);
 	#endif
+    int counts = 0; /* exist device count */
     int i=0;
 	while(i < 32) {
 		if(pi & 1) {
@@ -896,6 +897,7 @@ void ahci_probe_ports(driver_object_t *driver, struct hba_memory *abar)
 			        if (ahci_create_device(driver, ports[i]) < 0) {
                         printk(KERN_ERR "[ahci]: failed to create device %d, disabling port\n", i);    
                     } 
+                    counts++;
 				} else {
 					printk(KERN_ERR "[ahci]: failed to initialize device %d, disabling port\n", i);
                 }
@@ -911,6 +913,7 @@ void ahci_probe_ports(driver_object_t *driver, struct hba_memory *abar)
 		i++;
 		pi >>= 1;
 	}
+    return counts;
 }
 
 int ahci_port_acquire_slot(device_extension_t *dev)
@@ -1152,7 +1155,13 @@ static iostatus_t ahci_enter(driver_object_t *driver)
         return status;
 	}
     ahci_init_hba(hba_mem);
-    ahci_probe_ports(driver, hba_mem);
+    if (!ahci_probe_ports(driver, hba_mem)) {
+        printk(KERN_INFO "[ahci]: initializing ahci driver failed!.\n");
+        unregister_irq(ahci_int, (addr_t)driver);
+        status = IO_FAILED;
+        return status;
+    }
+    
     printk(KERN_INFO "[ahci]: initializing ahci driver done.\n");
     //spin("ahci");
     return status;
@@ -1183,7 +1192,7 @@ static iostatus_t ahci_exit(driver_object_t *driver)
     return IO_SUCCESS;
 }
 
-iostatus_t ahci_driver_vine(driver_object_t *driver)
+iostatus_t ahci_driver_func(driver_object_t *driver)
 {
     iostatus_t status = IO_SUCCESS;
     
@@ -1198,8 +1207,17 @@ iostatus_t ahci_driver_vine(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_AHCI
-    printk(KERN_DEBUG "ahci_driver_vine: driver name=%s\n",
+    printk(KERN_DEBUG "ahci_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     return status;
 }
+
+static __init void ahci_driver_entry(void)
+{
+    if (driver_object_create(ahci_driver_func) < 0) {
+        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+    }
+}
+
+driver_initcall(ahci_driver_entry);

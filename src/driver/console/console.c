@@ -1,6 +1,6 @@
 #include <xbook/debug.h>
 #include <string.h>
-#include <xbook/vine.h>
+
 #include <xbook/driver.h>
 #include <arch/io.h>
 #include <arch/config.h>
@@ -465,7 +465,7 @@ static iostatus_t console_exit(driver_object_t *driver)
     return IO_SUCCESS;
 }
 
-iostatus_t console_driver_vine(driver_object_t *driver)
+iostatus_t console_driver_func(driver_object_t *driver)
 {
     iostatus_t status = IO_SUCCESS;
     
@@ -480,8 +480,17 @@ iostatus_t console_driver_vine(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "console_driver_vine: driver name=%s\n",
+    printk(KERN_DEBUG "console_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     return status;
 }
+
+static __init void console_driver_entry(void)
+{
+    if (driver_object_create(console_driver_func) < 0) {
+        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+    }
+}
+
+driver_initcall(console_driver_entry);

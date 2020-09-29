@@ -8,7 +8,7 @@
 /// 程序本地头文件
 #include <gui/screen.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_GUI_SCREEN
 
 #ifndef   GUI_SCREEN_DEVICE_NAME
 #define   GUI_SCREEN_DEVICE_NAME        "video"
@@ -145,7 +145,7 @@ static  int  screen_detect_var(gui_screen_t *screen)
     
     screen_width     = screen->width;
     screen_height    = screen->height;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_GUI_SCREEN
     printf("video info: w:%d h:%d bpp:%d \n", screen->width, screen->height, video_info.bits_per_pixel);
 #endif
     switch (video_info.bits_per_pixel) 
@@ -191,15 +191,15 @@ static int screen_open(void)
         return  -1;
 
     video_ram_size = video_info.bytes_per_scan_line * video_info.y_resolution;
-#if DEBUG_LOCAL == 1
-    printf("%s: screen memory map size %x\n", SRV_NAME, video_ram_size);
+#ifdef DEBUG_GUI_SCREEN
+    printf("[gui]: screen memory map size %x\n", video_ram_size);
 #endif
     video_ram_start = device_mmap(video_handle, video_ram_size, IO_KERNEL);
     if (video_ram_start == NULL) {
         printf("[gui]: video mapped failed!\n");
         return -1;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_GUI_SCREEN
     printf("[gui]: mapped addr %x\n", video_ram_start);
 #endif
     return  0;

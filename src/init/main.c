@@ -17,6 +17,7 @@
 #include <xbook/fs.h>
 #include <xbook/net.h>
 #include <xbook/gui.h>
+#include <xbook/initcall.h>
 
 int kernel_main(void)
 {
@@ -50,6 +51,7 @@ int kernel_main(void)
     enable_intr();
 
     init_driver_arch();
+    do_initcalls();
     
     /* init fs */
     init_fs();

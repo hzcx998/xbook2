@@ -13,8 +13,7 @@
 
 #include "ff.h"
 
-#define DEBUG_FATFS_MAIN
-
+// #define DEBUG_FATFS_MAIN
 
 /* 磁盘驱动，把镜像文件模拟成一个磁盘设备 */
 

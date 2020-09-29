@@ -31,7 +31,7 @@
 		Support and updates available at
 		http://www.scyld.com/network/rtl8139.html
 
-		Twister-tuning table provided by Kinston
+		Twister-tuning table provrtl8139d by Kinston
 		<shangh@realtek.com.tw>.
 
 	-----<snip>-----
@@ -52,7 +52,7 @@
 
 		Ernst Gill - fixes ported from BSD driver
 
-		Daniel Kobras - identified specific locations of
+		Daniel Kobras - rtl8139ntified specific locations of
 			posted MMIO write bugginess
 
 		Gerard Sharp - bug fix, testing and feedback
@@ -107,7 +107,7 @@
 #include <xbook/debug.h>
 #include <xbook/bitops.h>
 #include <string.h>
-#include <xbook/vine.h>
+
 #include <xbook/driver.h>
 #include <assert.h>
 #include <xbook/byteorder.h>
@@ -1359,7 +1359,7 @@ static void rtl8139_hardware_start(device_extension_t *ext)
     out8(ext->io_addr + CFG9346, CFG9346_UNLOCK);
     in8(ext->io_addr + CFG9346);   // flush
 
-    /* Restore our idea of the MAC address.
+    /* Restore our rtl8139a of the MAC address.
     重载mac地址
      */
     out32(ext->io_addr + MAC0, 
@@ -1737,7 +1737,7 @@ static iostatus_t rtl8139_exit(driver_object_t *driver)
     return IO_SUCCESS;
 }
 
-iostatus_t rtl8139_driver_vine(driver_object_t *driver)
+iostatus_t rtl8139_driver_func(driver_object_t *driver)
 {
     iostatus_t status = IO_SUCCESS;
     
@@ -1754,8 +1754,17 @@ iostatus_t rtl8139_driver_vine(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "rtl8139_driver_vine: driver name=%s\n",
+    printk(KERN_DEBUG "rtl8139_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     return status;
 }
+
+static __init void rtl8139_driver_entry(void)
+{
+    if (driver_object_create(rtl8139_driver_func) < 0) {
+        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+    }
+}
+
+driver_initcall(rtl8139_driver_entry);

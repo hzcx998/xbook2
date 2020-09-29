@@ -19,7 +19,11 @@ int init_arch()
     /* init physic memory management */
     init_pmem();
 
+    /* 初始化可编程时钟 */
     init_pic();
+
+    /* 初始化总线系统 */
+    init_pci();
 
 	return 0;
 }

@@ -1,7 +1,7 @@
 #include <xbook/debug.h>
 #include <xbook/bitops.h>
 #include <string.h>
-#include <xbook/vine.h>
+
 #include <xbook/driver.h>
 #include <assert.h>
 #include <xbook/byteorder.h>
@@ -143,7 +143,7 @@ typedef struct _e1000_extension {
 
 }e1000_extension_t;
 
-iostatus_t e1000_driver_vine(driver_object_t* driver);
+iostatus_t e1000_driver_func(driver_object_t* driver);
 
 iostatus_t e1000_up(e1000_extension_t* ext);
 void e1000_down(e1000_extension_t* ext);
@@ -997,7 +997,7 @@ static iostatus_t e1000_exit(driver_object_t* driver)
     return IO_SUCCESS;
 }
 
-iostatus_t e1000_driver_vine(driver_object_t* driver)
+iostatus_t e1000_driver_func(driver_object_t* driver)
 {
     iostatus_t status = IO_SUCCESS;
 
@@ -1758,3 +1758,12 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
 
     return 0;
 }
+
+static __init void e1000_driver_entry(void)
+{
+    if (driver_object_create(e1000_driver_func) < 0) {
+        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+    }
+}
+
+driver_initcall(e1000_driver_entry);

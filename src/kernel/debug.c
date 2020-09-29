@@ -62,7 +62,8 @@ void panic(const char *fmt, ...)
 
 	pr_emerg("\npanic: %s", buf);
     #ifdef CONFIG_GUI_PRINT
-    gui_con_screen.outs("system panic!!!\n");
+    if (print_gui_console)
+        gui_con_screen.outs("system panic!!!\n");
 	#endif
     disable_intr();
 	while(1){
@@ -84,7 +85,8 @@ void spin(char * functionName)
 {
 	printk(KERN_NOTICE "spinning in %s", functionName);
     #ifdef CONFIG_GUI_PRINT
-    gui_con_screen.outs("system spin!!!\n");
+    if (print_gui_console)
+        gui_con_screen.outs("system spin!!!\n");
     #endif
 	disable_intr();
 	while(1){

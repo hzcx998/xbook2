@@ -1,7 +1,7 @@
 #include <xbook/debug.h>
 #include <xbook/bitops.h>
 #include <string.h>
-#include <xbook/vine.h>
+
 #include <xbook/driver.h>
 #include <xbook/task.h>
 #include <arch/io.h>
@@ -259,7 +259,7 @@ static iostatus_t tty_exit(driver_object_t *driver)
     return IO_SUCCESS;
 }
 
-iostatus_t tty_driver_vine(driver_object_t *driver)
+iostatus_t tty_driver_func(driver_object_t *driver)
 {
     iostatus_t status = IO_SUCCESS;
     
@@ -276,9 +276,18 @@ iostatus_t tty_driver_vine(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "tty_driver_vine: driver name=%s\n",
+    printk(KERN_DEBUG "tty_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
     return status;
 }
+
+static __init void tty_driver_entry(void)
+{
+    if (driver_object_create(tty_driver_func) < 0) {
+        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+    }
+}
+
+driver_initcall(tty_driver_entry);

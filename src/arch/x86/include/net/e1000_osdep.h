@@ -36,7 +36,7 @@
 
 #include <arch/io.h>
 #include <arch/time.h>
-#include <xbook/pci.h>
+#include <arch/pci.h>
 #include <xbook/debug.h>
 #include <xbook/clock.h>
 #include <xbook/timer.h>

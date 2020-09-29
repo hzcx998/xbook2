@@ -21,7 +21,7 @@
 
 void gui_mouse_button_down(int btn)
 {
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
     printf("[mouse ] %d button down.\n", btn);
     printf("[mouse ] x:%d, y:%d\n", gui_mouse.x, gui_mouse.y);
 #endif    
@@ -60,7 +60,7 @@ void gui_mouse_button_down(int btn)
 
 void gui_mouse_button_up(int btn)
 {
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
     printf("[mouse ] %d button up.\n", btn);
     printf("[mouse ] x:%d, y:%d\n", gui_mouse.x, gui_mouse.y);
 #endif   

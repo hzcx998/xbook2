@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 
 
-// #define DEBUG_FATFS
+#define DEBUG_FATFS
 
 
 typedef struct {

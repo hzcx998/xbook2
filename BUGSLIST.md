@@ -27,5 +27,7 @@ spinning in assertion failure()
 1. 鼠标一直移动就会出现BUG
 
 ## <2020.9.28>
-1. gato在linux下面编译生成的代码和win不一样。
 2. 鼠标在linux环境qemu启动有故障
+
+## <2020.9.30>
+1. IDE驱动程序不能在用户态进行读写？

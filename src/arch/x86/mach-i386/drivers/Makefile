@@ -1,0 +1,10 @@
+SRC	+= disk/
+SRC	+= uart/
+SRC	+= console/
+SRC	+= net/
+SRC	+= pci/
+SRC	+= input/
+SRC	+= tty/
+SRC	+= virtual/
+SRC	+= video/
+SRC	+= sound/

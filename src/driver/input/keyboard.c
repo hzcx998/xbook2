@@ -1,7 +1,7 @@
 #include <xbook/debug.h>
 #include <xbook/bitops.h>
 #include <string.h>
-#include <xbook/vine.h>
+
 #include <xbook/driver.h>
 #include <xbook/fifoio.h>
 #include <xbook/task.h>
@@ -1076,9 +1076,6 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
 
     input_even_init(&devext->evbuf);
 
-    /* 注册时钟中断并打开中断，因为设定硬件过程中可能产生中断，所以要提前打开 */	
-	register_irq(devext->irq, keyboard_handler, IRQF_DISABLED, "IRQ1", DRV_NAME, (uint32_t)devext);
-    
     /* 初始化键盘控制器 */
 
     /* 发送写配置命令 */
@@ -1089,6 +1086,9 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
     WAIT_KBC_WRITE();
 	out8(KBC_WRITE_DATA, KBC_CONFIG);
 
+    /* 注册时钟中断并打开中断，因为设定硬件过程中可能产生中断，所以要提前打开 */	
+	register_irq(devext->irq, keyboard_handler, IRQF_DISABLED, "IRQ1", DRV_NAME, (uint32_t)devext);
+    
     /* 启动一个内核线程来处理数据 */
     kthread_start("kbd", TASK_PRIO_RT, kbd_thread, devext);
 
@@ -1108,7 +1108,7 @@ static iostatus_t keyboard_exit(driver_object_t *driver)
     return IO_SUCCESS;
 }
 
-iostatus_t keyboard_driver_vine(driver_object_t *driver)
+iostatus_t keyboard_driver_func(driver_object_t *driver)
 {
     iostatus_t status = IO_SUCCESS;
     
@@ -1122,9 +1122,18 @@ iostatus_t keyboard_driver_vine(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "keyboard_driver_vine: driver name=%s\n",
+    printk(KERN_DEBUG "keyboard_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
     return status;
 }
+
+static __init void ps2keyboard_driver_entry(void)
+{
+    if (driver_object_create(keyboard_driver_func) < 0) {
+        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+    }
+}
+
+driver_initcall(ps2keyboard_driver_entry);

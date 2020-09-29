@@ -12,7 +12,7 @@
 */
 
 
-#define DEBUG_FATFS_DRIVER
+// #define DEBUG_FATFS_DRIVER
 
 FILE *drv_file;
 void *drv_buf;

@@ -9,6 +9,7 @@
 
 int init_fs()
 {
+    printk("[fs]: init start...\n");
     if (init_disk_driver() < 0)
         panic("[fs]: init disk driver failed!\n");
 
@@ -21,6 +22,8 @@ int init_fs()
     if (init_fsal() < 0) {
         panic("init fsal failed, service stopped!\n");
     }
+    printk("[fs]: init done.\n");
+    
 #if 0
     /* test */
     int fd = sys_open("/root/kfs", O_CREAT | O_RDWR, 0);

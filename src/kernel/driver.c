@@ -1,6 +1,6 @@
 #include <xbook/driver.h>
 #include <math.h>
-#include <xbook/vine.h>
+
 #include <xbook/debug.h>
 #include <assert.h>
 #include <xbook/mdl.h>
@@ -8,7 +8,6 @@
 #include <string.h>
 #include <xbook/vmspace.h>
 #include <sys/ioctl.h>
-#include <xbook/pci.h>
 #include <xbook/config.h>
 #include <xbook/vmarea.h>
 
@@ -16,28 +15,6 @@
 
 /* 驱动链表头 */
 LIST_HEAD(driver_list_head);
-
-/* 驱动藤蔓表：
-虚拟设备必须在物理设备初始化完成后
- */
-driver_func_t driver_vine_table[] = {
-    serial_driver_vine,                 /* char */
-    console_driver_vine,                /* char */
-#ifdef CONFIG_AHCI
-    ahci_driver_vine,                   /* disk */
-#else
-    ide_driver_vine,                    /* disk */
-#endif
-    rtl8139_driver_vine,                /* net */
-    e1000_driver_vine,
-    keyboard_driver_vine,               /* input */
-    ramdisk_driver_vine,                /* disk */
-    vbe_driver_vine,                    /* video */
-    mouse_driver_vine,                  /* input */
-    buzzer_driver_vine,                 /* sound */
-    tty_driver_vine,                    /* filter: tty */
-    null_driver_vine,                   /* filter: null */
-};
 
 /* 打开的设备表 */
 device_object_t *device_handle_table[DEVICE_HANDLE_NR];
@@ -236,14 +213,14 @@ void driver_object_init(driver_object_t *driver)
 }
 
 /**
- * driver_object_create - 根据藤蔓创建驱动
- * @vine: 藤蔓
+ * driver_object_create - 根据函数地址创建驱动
+ * @func: 函数地址
  * 
- * 藤蔓是指向一个驱动的一个函数指针，通过调用这个指针来创建一个驱动
+ * 函数地址是指向一个驱动的一个函数指针，通过调用这个指针来创建一个驱动
  * 
  * @return: 成功返回0，失败返回-1
  */
-int driver_object_create(driver_func_t vine)
+int driver_object_create(driver_func_t func)
 {
     driver_object_t *drvobj;
     iostatus_t status;
@@ -253,7 +230,7 @@ int driver_object_create(driver_func_t vine)
         return -1;
     /* 初始化驱动对象 */
     driver_object_init(drvobj);
-    status = vine(drvobj);
+    status = func(drvobj);
     if (status != IO_SUCCESS) {
         kfree(drvobj); /* 释放驱动对象 */
         return -1;
@@ -1234,24 +1211,12 @@ int input_even_get(input_even_buf_t *evbuf, input_event_t *even)
 /* 初始化驱动架构 */
 void init_driver_arch()
 {
-    driver_func_t vine;
     int i;
     /* 初始化设备句柄表，要在初始化驱动前，因为驱动中可能有虚拟驱动调用物理设备 */
     for (i = 0; i < DEVICE_HANDLE_NR; i++) {
         device_handle_table[i] = NULL;
     }
 
-    /* 初始化总线系统 */
-    init_pci();
-
-    /* 初始化驱动程序 */
-    for (i = 0; i < ARRAY_SIZE(driver_vine_table); i++) {
-        vine = driver_vine_table[i];
-        if (driver_object_create(vine)) {
-            printk(KERN_ERR "init_driver_arch: create one driver failed!\n");
-        }
-    }
-    
 #ifdef DEBUG_DRIVER
     //print_drivers_mini();
     /* 输出所有驱动以及设备 */

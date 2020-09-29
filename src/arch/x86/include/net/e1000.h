@@ -70,7 +70,7 @@
 #include <xbook/timer.h>
 #include <xbook/spinlock.h>
 #include <xbook/driver.h>
-#include <xbook/pci.h>
+#include <arch/pci.h>
 #include <stddef.h>
 
 #ifdef NETIF_F_TSO

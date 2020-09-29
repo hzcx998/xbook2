@@ -3,7 +3,7 @@
 #include <const.h>
 #include <math.h>
 #include <xbook/softirq.h>
-#include <xbook/vine.h>
+
 #include <xbook/driver.h>
 #include <string.h>
 #include <xbook/clock.h>
@@ -596,6 +596,8 @@ static unsigned char busy_wait(device_extension_t *ext) {
 	1000 * 1000 纳秒
 	*/
    	unsigned int time_limit = 10 * 1000 * 1000;
+    // unsigned int time_limit = 1000;
+
    	while (--time_limit >= 0) {
       	if (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_BUSY)) {
 			
@@ -863,27 +865,29 @@ static int pio_data_transfer(device_extension_t *ext,
 	unsigned char *buf,
 	unsigned short count)
 {
-	short i;
+	volatile short i = 0; // 不允许被优化
 	unsigned char error;
 	if (rw == IDE_READ) {	
 #ifdef DEBUG_DRV
-        printk("PIO read->");
+        printk("PIO read count %d->", count);
 #endif
-		for (i = 0; i < count; i++) {
+		while (i < count) {
 			/* 醒来后开始执行下面代码*/
 			if ((error = busy_wait(ext))) {     //  若失败
+                printk(KERN_ERR "wait driver failed!\n");
 				/* 重置磁盘驱动并返回 */
 				rest_driver(ext);
 				return error;
 			}
 			read_from_sector(ext, buf, 1);
+            ++i;
 			buf += SECTOR_SIZE;
 		}
 	} else {
 #ifdef DEBUG_DRV
         printk("PIO write->");
 #endif
-		for (i = 0; i < count; i++) {
+		while (i < count) {
 			/* 等待硬盘控制器请求数据 */
 			if ((error = busy_wait(ext))) {     //  若失败
 				/* 重置磁盘驱动并返回 */
@@ -892,6 +896,7 @@ static int pio_data_transfer(device_extension_t *ext,
 			}
 			/* 把数据写入端口，完成1个扇区后会产生一次中断 */
 			write_to_sector(ext, buf, 1);
+            ++i;
 			buf += SECTOR_SIZE;
             //printk("write success! ");
 		}
@@ -900,6 +905,9 @@ static int pio_data_transfer(device_extension_t *ext,
 			ATA_CMD_CACHE_FLUSH_EXT : ATA_CMD_CACHE_FLUSH);
 		ide_polling(ext->channel, 0);
 	}
+#ifdef DEBUG_DRV
+        printk("PIO read done\n");
+#endif
 	return 0;
 }
 
@@ -1157,7 +1165,6 @@ iostatus_t ide_read(device_object_t *device, io_request_t *ioreq)
         status = IO_FAILED;
     }
     loop_delay(1);
-
     ioreq->io_status.status = status;
     ioreq->io_status.infomation = len;
     
@@ -1264,19 +1271,27 @@ static int ide_probe(device_extension_t *ext, int id)
 
     ext->info = kmalloc(SECTOR_SIZE);
     if (ext->info == NULL) {
-        printk("kmalloc for ide device info failed!\n");
+        printk(KERN_ERR "kmalloc for ide device %d info failed!\n", id);
         unregister_irq(channel->irqno, (void *)channel);
+        
         return -1;
     }
-        
+   
     /* 重置驱动器 */
     rest_driver(ext);
 
     /* 获取磁盘的磁盘信息 */
     select_disk(ext, 0, 0);
-        
+    
+    int timeout = 1000; // 等待超时，如果没有IDE设备存在，就会超时
+
     //等待硬盘准备好
-    while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY)) cpu_lazy();
+    while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY) && (--timeout) > 0);
+    if (timeout <= 0) {
+        printk(KERN_NOTICE "[ide]: disk %d maybe not ready or not exist!\n", id);
+        unregister_irq(channel->irqno, (void *)channel);
+        return -1;
+    }
 
     send_cmd(channel, ATA_CMD_IDENTIFY);
     
@@ -1310,9 +1325,9 @@ static int ide_probe(device_extension_t *ext, int id)
     ext->reserved = 1;	/* 设备存在 */
 #ifdef DEBUG_DRV
     dump_ide_extension(ext);
-#endif
     pr_dbg("probe IDE disk: base:%x irq:%d\n", channel->base, channel->irqno);
-
+#endif
+    
     return 0;
 }
 
@@ -1323,7 +1338,7 @@ static iostatus_t ide_enter(driver_object_t *driver)
     device_object_t *devobj;
     device_extension_t *devext;
 
-    int id;
+    volatile int id;
     char devname[DEVICE_NAME_LEN] = {0};
 
     /* 获取已经配置了的硬盘数量
@@ -1391,7 +1406,7 @@ static iostatus_t ide_exit(driver_object_t *driver)
     return IO_SUCCESS;
 }
 
-iostatus_t ide_driver_vine(driver_object_t *driver)
+iostatus_t ide_driver_func(driver_object_t *driver)
 {
     iostatus_t status = IO_SUCCESS;
     
@@ -1406,8 +1421,17 @@ iostatus_t ide_driver_vine(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "ide_driver_vine: driver name=%s\n",
+    printk(KERN_DEBUG "ide_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     return status;
 }
+
+static __init void ide_driver_entry(void)
+{
+    if (driver_object_create(ide_driver_func) < 0) {
+        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+    }
+}
+
+driver_initcall(ide_driver_entry);

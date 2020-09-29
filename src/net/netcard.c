@@ -37,7 +37,7 @@ int netcard_probe_device(device_type_t type)
     do {
         if (sys_devscan(p, type, &devent))
             break;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_NETCARD
         printk("[net]: %s: probe device %s\n", __func__, devent.de_name);
 #endif    
         /* 添加到磁盘数组 */
