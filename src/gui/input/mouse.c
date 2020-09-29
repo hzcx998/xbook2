@@ -97,6 +97,35 @@ void gui_mouse_button_up(int btn)
     gui_push_msg(&m);
 }
 
+void gui_mouse_wheel(int val)
+{
+#ifdef DEBUG_DRV    
+    printf("[mouse ] %d wheel %d.\n", val);
+#endif   
+    g_msg_t m;
+    memset(&m, 0, sizeof(g_msg_t));
+    switch (val)
+    {
+    case 0:
+        m.id    = GM_MOUSE_WHEEL_UP;
+        break;
+    case 1:
+        m.id    = GM_MOUSE_WHEEL_DOWN;
+        break;
+    case 2:
+        m.id    = GM_MOUSE_WHEEL_LEFT;
+        break;
+    case 3:
+        m.id    = GM_MOUSE_WHEEL_RIGHT;
+        break;
+    default:
+        break;
+    }
+    m.data0     = gui_mouse.x;
+    m.data1     = gui_mouse.y;
+    gui_push_msg(&m);
+}
+
 void gui_mouse_motion()
 {
      /* 对鼠标进行修复 */

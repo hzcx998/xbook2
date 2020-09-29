@@ -374,6 +374,7 @@ static int text_height(mu_Font font)
 static bool_t ex_tp_read(mu_Context *ctx)
 {
     g_msg_t msg;
+    memset(&msg, 0, sizeof(g_msg_t));
     /* 获取消息，一般消息返回0，退出消息返回-1 */
     if (g_try_get_msg(&msg) < 0)
         return FALSE;
@@ -400,9 +401,11 @@ static bool_t ex_tp_read(mu_Context *ctx)
 	case GM_MOUSE_RBTN_UP:
 		mu_input_mouseup(ctx, g_msg_get_mouse_x(&msg), g_msg_get_mouse_y(&msg), MU_MOUSE_RIGHT);
 		break;
-
-	case GM_MOUSE_WHEEL:
-		//mu_input_scroll(ctx, 0, mouse_wheel.dy * -30);
+	case GM_MOUSE_WHEEL_UP:
+		mu_input_scroll(ctx, 0, -30);
+		break;
+	case GM_MOUSE_WHEEL_DOWN:
+		mu_input_scroll(ctx, 0, 30);
 		break;
 	case GM_MOUSE_MOTION:
 		mu_input_mousemove(ctx, g_msg_get_mouse_x(&msg), g_msg_get_mouse_y(&msg));

@@ -83,6 +83,7 @@ void gui_mouse_show(int x, int y);
 void gui_mouse_button_down(int btn);
 void gui_mouse_button_up(int btn);
 void gui_mouse_motion();
+void gui_mouse_wheel(int val);
 
 int init_mouse_layer();
 void gui_mouse_set_state(mouse_state_t state);

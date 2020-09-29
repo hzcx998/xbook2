@@ -70,7 +70,10 @@ static int g_filter_msg(g_msg_t *msg)
     case GM_MOUSE_MBTN_DOWN:
     case GM_MOUSE_MBTN_UP:
     case GM_MOUSE_MBTN_DBLCLK:
-    case GM_MOUSE_WHEEL:
+    case GM_MOUSE_WHEEL_UP:
+    case GM_MOUSE_WHEEL_DOWN:
+    case GM_MOUSE_WHEEL_LEFT:
+    case GM_MOUSE_WHEEL_RIGHT:
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
         if (g_region_in(&win->body_region, po.x, po.y)) {

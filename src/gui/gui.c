@@ -61,7 +61,10 @@ void kgui_thread(void *arg)
         case GM_MOUSE_MBTN_DOWN:
         case GM_MOUSE_MBTN_UP:
         case GM_MOUSE_MBTN_DBLCLK:
-        case GM_MOUSE_WHEEL:
+        case GM_MOUSE_WHEEL_UP:
+        case GM_MOUSE_WHEEL_DOWN:
+        case GM_MOUSE_WHEEL_LEFT:
+        case GM_MOUSE_WHEEL_RIGHT:
             /* 鼠标消息发送到鼠标指针所在的图层 */
             gui_dispatch_mouse_msg(&msg);
             break;

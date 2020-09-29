@@ -19,7 +19,10 @@ enum {
     GM_MOUSE_MBTN_DOWN,
     GM_MOUSE_MBTN_UP,
     GM_MOUSE_MBTN_DBLCLK,
-    GM_MOUSE_WHEEL,
+    GM_MOUSE_WHEEL_UP,
+    GM_MOUSE_WHEEL_DOWN,
+    GM_MOUSE_WHEEL_LEFT,
+    GM_MOUSE_WHEEL_RIGHT,
     GM_TIMER,
     GM_LAYER_ENTER,
     GM_LAYER_LEAVE,
@@ -69,6 +72,8 @@ int g_translate_msg(g_msg_t *msg);
 
 #define g_msg_get_move_x(msg) ((msg)->data0)
 #define g_msg_get_move_y(msg) ((msg)->data1)
+
+#define g_msg_get_mouse_wheel(msg) ((int)(msg)->data2)
 
 #define g_msg_get_resize_x(msg) ((msg)->data0)
 #define g_msg_get_resize_y(msg) ((msg)->data1)

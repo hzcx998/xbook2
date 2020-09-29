@@ -106,7 +106,8 @@ int win_proc(g_msg_t *msg)
     case GM_MOUSE_MBTN_DOWN:
     case GM_MOUSE_MBTN_UP:
     case GM_MOUSE_MBTN_DBLCLK:
-    case GM_MOUSE_WHEEL:
+    case GM_MOUSE_WHEEL_UP:
+    case GM_MOUSE_WHEEL_DOWN:
         x = g_msg_get_mouse_x(msg);
         y = g_msg_get_mouse_y(msg);
         //printf("[win]: mouse %d, %d\n", x, y);

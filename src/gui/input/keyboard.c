@@ -127,10 +127,10 @@ int __process_special_key(int keycode, int press)
                 gui_mouse_button_down(1);
                 break;
             case KEY_KP_PLUS:   /* wheel down */
-                //gui_mouse_button_down(2);
+                gui_mouse_wheel(1);
                 break;
             case KEY_KP_MINUS:   /* whell up */
-                //gui_mouse_button_down(1);
+                gui_mouse_wheel(0);
                 break;
             default:
                 return 0;
