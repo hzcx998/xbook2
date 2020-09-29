@@ -89,6 +89,9 @@ enum syscall_num {
     SYS_CLOSEDIR,
     SYS_READDIR,
     SYS_REWINDDIR,
+    SYS_MKFS,
+    SYS_MOUNT,
+    SYS_UNMOUNT,
 /// sockets 套接字
     SYS_SOCKET,
     SYS_BIND,

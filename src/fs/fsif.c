@@ -484,3 +484,25 @@ int sys_pipe(int fd[2])
     fd[1] = wfd;
     return 0;
 }
+
+
+int sys_mount(
+    char *source,         /* 需要挂载的资源 */
+    char *target,         /* 挂载到的目标位置 */
+    char *fstype,         /* 文件系统类型 */
+    unsigned long mountflags    /* 挂载标志 */
+) {
+    return fsif.mount(source, target, fstype, mountflags);
+}
+
+int sys_unmount(char *path, unsigned long flags)
+{
+    return fsif.unmount(path, flags);
+}
+
+int sys_mkfs(char *source,         /* 需要创建FS的设备 */
+    char *fstype,         /* 文件系统类型 */
+    unsigned long flags   /* 标志 */
+) {
+    return fsif.mkfs(source, fstype, flags);
+}
