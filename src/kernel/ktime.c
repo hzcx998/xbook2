@@ -333,7 +333,7 @@ void init_ktime()
 		
 		/* 转换成本地时间 */
 		/* 自动转换时区 */
-#if CONFIG_TIMEZONE_AUTO == 1
+#ifdef CONFIG_TIMEZONE_AUTO
         if(ktime.hour >= 16){
 			ktime.hour -= 16;
 		}else{

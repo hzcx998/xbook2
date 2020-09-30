@@ -12,6 +12,7 @@
 #include <gui/message.h>
 #include <gui/mouse.h>
 
+#ifdef CONFIG_VIRTUAL_MOUSE
 /*
 ALT+?
 方向键，小移动
@@ -26,7 +27,7 @@ enter鼠标右键
 */
 #define VIR_MOUSE_MOVE_BIG  50
 #define VIR_MOUSE_MOVE_SMALL  12
-
+#endif
 /* 特殊按键：
 ALT+TAB 切换窗口 */
 
@@ -47,7 +48,7 @@ int __process_special_key(int keycode, int press)
             return 1;
         }
     }
-
+    #ifdef CONFIG_VIRTUAL_MOUSE
     /* alt + ? */
     if (gui_keyboard.key_modify & GUI_KMOD_ALT_L) {
         if (press) {
@@ -155,6 +156,7 @@ int __process_special_key(int keycode, int press)
             return 1;
         }
     }
+    #endif
     return 0;
 }
 

@@ -15,15 +15,18 @@
 #define CONFIG_LARGE_ALLOCS
 
 /* auto select timezone */
-#define CONFIG_TIMEZONE_AUTO 0 	
+#define CONFIG_TIMEZONE_AUTO
 
 /* ahci disk driver */
-#define CONFIG_AHCI 
+#define CONFIG_AHCI
 
 /* shade layer */
 #define CONFIG_SHADE_LAYER
 
 /* gui console print */
 #define CONFIG_GUI_PRINT
+
+/* use keyboard to make virtual mouse */
+#define CONFIG_VIRTUAL_MOUSE
 
 #endif   /* _XBOOK_CONFIG_H */
