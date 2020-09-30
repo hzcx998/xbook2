@@ -4,6 +4,7 @@
 #include <arch/pmem.h>
 #include <arch/debug.h>
 #include <arch/pic.h>
+#include <arch/pci.h>
 
 int init_arch()
 {	

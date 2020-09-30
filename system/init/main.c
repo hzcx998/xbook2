@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     }
     if (pid > 0) {
         /* 父进程就相当于init进程，功能很简单，就只等待子进程退出 */
-        while (1) { /* 等待一个子进程结束 */
+        while (1) {
             int status = 0;
             int _pid;
             _pid = waitpid(-1, &status, 0);    /* wait any child exit */

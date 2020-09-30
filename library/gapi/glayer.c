@@ -9,7 +9,7 @@
 static int _g_layer_table[G_LAYER_NR] = {0,};
 static int _g_layer_desktop = -1;
 
-static int g_layer_alloc_solt()
+static int g_alloc_layer_solt()
 {
     int i;
     for (i = 0; i < G_LAYER_NR; i++) {
@@ -19,7 +19,7 @@ static int g_layer_alloc_solt()
     return -1;
 }
 
-static int g_layer_free_solt(int id)
+static int g_free_layer_solt(int id)
 {
     int i;
     for (i = 0; i < G_LAYER_NR; i++) {
@@ -31,9 +31,9 @@ static int g_layer_free_solt(int id)
     return -1;
 }
 
-int g_layer_new(int x, int y, uint32_t width, uint32_t height)
+int g_new_layer(int x, int y, uint32_t width, uint32_t height)
 {
-    int solt = g_layer_alloc_solt();
+    int solt = g_alloc_layer_solt();
     if (solt < 0)
         return -1;
     int id = syscall4(int, SYS_LAYERNEW, x, y, width, height);
@@ -44,44 +44,44 @@ int g_layer_new(int x, int y, uint32_t width, uint32_t height)
     return id;
 }
 
-int g_layer_del(int layer)
+int g_del_layer(int layer)
 {
-    if (g_layer_z(layer, -1) < 0)
+    if (g_set_layer_z(layer, -1) < 0)
         return -1;
     int retval = syscall1(int, SYS_LAYERDEL, layer);
     if (retval < 0)
         return -1;
-    return g_layer_free_solt(layer);
+    return g_free_layer_solt(layer);
 }
 
-int g_layer_del_all()
+int g_del_layer_all()
 {
     int i;
     for (i = 0; i < G_LAYER_NR; i++) {
         if (_g_layer_table[i] > 0) {
-            if (g_layer_del(_g_layer_table[i]) < 0)
+            if (g_del_layer(_g_layer_table[i]) < 0)
                 return -1;
         }
     }
     return 0;
 }
 
-int g_layer_move(int layer, int x, int y)
+int g_move_layer(int layer, int x, int y)
 {
     return syscall3(int, SYS_LAYERMOVE, layer, x, y);
 }
 
-int g_layer_z(int layer, int z)
+int g_set_layer_z(int layer, int z)
 {
     return syscall2(int, SYS_LAYERZ, layer, z);
 }
 
-int g_layer_set_flags(int layer, uint32_t flags)
+int g_set_layer_flags(int layer, uint32_t flags)
 {
     return syscall2(int, SYS_LAYERSETFLG, layer, flags);
 }
 
-int g_layer_refresh(int layer, int left, int top, int right, int bottom)
+int g_refresh_layer(int layer, int left, int top, int right, int bottom)
 {
     g_region_t p;
     p.left = left;
@@ -91,7 +91,7 @@ int g_layer_refresh(int layer, int left, int top, int right, int bottom)
     return syscall2(int, SYS_LAYERREFRESH, layer, &p);
 }
 
-int g_layer_paint(int layer, int x, int y, g_bitmap_t *bmp)
+int g_paint_layer(int layer, int x, int y, g_bitmap_t *bmp)
 {
     if (layer < 0)
         return -1;
@@ -103,14 +103,14 @@ int g_layer_paint(int layer, int x, int y, g_bitmap_t *bmp)
     rect.height = bmp->height;
     g_region_t regn;
     g_region_init(&regn);
-    return g_layer_sync_bitmap(
+    return g_sync_layer_bitmap(
         layer,
         &rect,
         bmp->buffer,
         &regn);
 }
 
-int g_layer_paint_ex(int layer, int x, int y, g_bitmap_t *bmp)
+int g_paint_layer_ex(int layer, int x, int y, g_bitmap_t *bmp)
 {
     if (layer < 0)
         return -1;
@@ -122,51 +122,51 @@ int g_layer_paint_ex(int layer, int x, int y, g_bitmap_t *bmp)
     rect.height = bmp->height;
     g_region_t regn;
     g_region_init(&regn);
-    return g_layer_sync_bitmap_ex(
+    return g_sync_layer_bitmap_ex(
         layer,
         &rect,
         bmp->buffer,
         &regn);
 }
 
-int g_layer_get_wintop()
+int g_get_layer_wintop()
 {
     return syscall0(int, SYS_LAYERGETWINTOP);
 }
 
-int g_layer_set_wintop(int top)
+int g_set_layer_wintop(int top)
 {
     return syscall1(int, SYS_LAYERSETWINTOP, top);
 }
 
-int g_layer_get_desktop()
+int g_get_layer_desktop()
 {
     if (_g_layer_desktop == -1)
         _g_layer_desktop = syscall0(int, SYS_LAYERGETDESKTOP);
     return _g_layer_desktop;
 }
 
-int g_layer_set_desktop(int id)
+int g_set_layer_desktop(int id)
 {
     return syscall1(int, SYS_LAYERSETDESKTOP, id);
 }
 
-int g_layer_get_focus()
+int g_get_layer_focus()
 {
     return syscall0(int, SYS_LAYERGETFOCUS);
 }
 
-int g_layer_set_focus(int ly)
+int g_set_layer_focus(int ly)
 {
     return syscall1(int, SYS_LAYERSETFOCUS, ly);
 }
 
-int g_layer_focus(int ly)
+int g_focus_layer(int ly)
 {
     return syscall1(int, SYS_LAYERFOCUS, ly);
 }
 
-int g_layer_resize(int ly, int x, int y, uint32_t width, uint32_t height)
+int g_resize_layer(int ly, int x, int y, uint32_t width, uint32_t height)
 {
     g_rect_t rect;
     rect.x = x;
@@ -176,7 +176,7 @@ int g_layer_resize(int ly, int x, int y, uint32_t width, uint32_t height)
     return syscall2(int, SYS_LAYERRESIZE, ly, &rect);
 }
 
-int g_layer_set_region(int layer, int type, int left, int top, int right, int bottom)
+int g_set_layer_region(int layer, int type, int left, int top, int right, int bottom)
 {
     g_region_t rg;
     rg.left = left;
@@ -186,13 +186,13 @@ int g_layer_set_region(int layer, int type, int left, int top, int right, int bo
     return syscall3(int , SYS_LAYERSETREGION, layer, type, &rg);
 }
 
-int g_layer_focus_win_top()
+int g_focus_layer_win_top()
 {
     return syscall0(int, SYS_LAYERFOCUSWINTOP);
 }
 
 
-int g_layer_sync_bitmap(
+int g_sync_layer_bitmap(
     int layer,
     g_rect_t *rect,
     g_color_t *bitmap,
@@ -202,7 +202,7 @@ int g_layer_sync_bitmap(
     return 0;
 }
 
-int g_layer_sync_bitmap_ex(
+int g_sync_layer_bitmap_ex(
     int layer,
     g_rect_t *rect,
     g_color_t *bitmap,
@@ -212,7 +212,7 @@ int g_layer_sync_bitmap_ex(
     return 0;
 }
 
-int g_layer_copy_bitmap(
+int g_copy_layer_bitmap(
     int layer,
     g_rect_t *rect,
     g_color_t *bitmap,

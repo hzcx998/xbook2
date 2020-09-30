@@ -224,7 +224,7 @@ int init_window(int width, int height)
     /* 用背景颜色清屏 */
     g_bitmap_t *bmp = g_new_bitmap(window.width, window.height);
     g_rectfill(bmp, 0, 0, window.width, window.height, window.bcolor);
-    g_window_paint(window.win, 0, 0, bmp);
+    g_paint_window(window.win, 0, 0, bmp);
     g_del_bitmap(bmp);
 
 	return 0;
@@ -369,7 +369,7 @@ void putstr(int x, int y, uint32_t color, char *s)
 		y = 0;
 	}
     /* 绘制到窗口中 */
-    g_window_paint(window.win, x0, y0, bmp);
+    g_paint_window(window.win, x0, y0, bmp);
     g_del_bitmap(bmp);
 }
 /*把数值转换成字符*/

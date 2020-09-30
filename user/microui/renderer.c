@@ -270,5 +270,5 @@ void r_clear(mu_Color clr) {
 void r_present(void) {
 	flush();
 	// framebuffer_present_render(fb, render, NULL, 0);
-    g_window_paint(fb, 0, 0, render);
+    g_paint_window(fb, 0, 0, render);
 }

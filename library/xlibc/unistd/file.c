@@ -5,8 +5,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <sys/socket.h>
-#include <sys/srvcall.h>
-#include <srv/filesrv.h>
 #include <sys/dir.h>
 #include <sys/syscall.h>
 #include <sys/stat.h>

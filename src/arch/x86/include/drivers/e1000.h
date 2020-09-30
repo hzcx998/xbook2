@@ -101,7 +101,7 @@
 struct e1000_adapter;
 
 //#include "e1000_hw.h"
-#include <net/e1000_hw.h>
+#include <drivers/e1000_hw.h>
 
 #ifdef DBG
 #define E1000_DBG(args...) printk(KERN_DEBUG "e1000: " args)

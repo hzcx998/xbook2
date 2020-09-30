@@ -8,8 +8,6 @@
 #include <math.h>
 #include <assert.h>
 
-#include <sys/srvcall.h>
-#include <srv/filesrv.h>
 #include <sys/dir.h>
 #include <sys/syscall.h>
 
@@ -55,7 +53,7 @@ char *__parse_path_afterward(char *path, char *name)
 void __wash_path(char *old_path, char *new_path)
 {
     assert(old_path[0] == '/');
-    char name[MAX_PATH_LEN] = {0};    
+    char name[MAX_PATH] = {0};    
     char* sub_path = old_path;
     sub_path = __parse_path_afterward(sub_path, name);
     if (name[0] == 0) { // 若只有"/",直接将"/"存入new_path后返回 
@@ -88,7 +86,7 @@ void __wash_path(char *old_path, char *new_path)
         }  // 若name为当前目录".",无须处理new_path
 
         /* 继续遍历下一层路径 */
-        memset(name, 0, MAX_PATH_LEN);
+        memset(name, 0, MAX_PATH);
         if (sub_path) {
 	        sub_path = __parse_path_afterward(sub_path, name);
         }

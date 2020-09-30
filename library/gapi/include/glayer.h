@@ -23,51 +23,50 @@ enum {
     LAYER_FIXED     = (1 << 2),   /* 固定位置标志 */
 };
 
-int g_layer_new(int x, int y, uint32_t width, uint32_t height);
-int g_layer_del(int layer);
-int g_layer_del_all();
+int g_new_layer(int x, int y, uint32_t width, uint32_t height);
+int g_del_layer(int layer);
 
-int g_layer_move(int layer, int x, int y);
-int g_layer_z(int layer, int z);
+int g_move_layer(int layer, int x, int y);
+int g_set_layer_z(int layer, int z);
 
-int g_layer_refresh(int layer, int left, int top, int right, int bottom);
+int g_refresh_layer(int layer, int left, int top, int right, int bottom);
 
-int g_layer_paint(int layer, int x, int y, g_bitmap_t *bmp);
-int g_layer_paint_ex(int layer, int x, int y, g_bitmap_t *bmp);
+int g_paint_layer(int layer, int x, int y, g_bitmap_t *bmp);
+int g_paint_layer_ex(int layer, int x, int y, g_bitmap_t *bmp);
 
-#define g_layer_refresh_rect(l, x, y, w, h) g_layer_refresh((l), (x), (y), ((x) + (w)), ((y) + (h)))
+#define g_refresh_layer_rect(l, x, y, w, h) g_refresh_layer((l), (x), (y), ((x) + (w)), ((y) + (h)))
 
-int g_layer_get_wintop();
-int g_layer_set_wintop(int top);
+int g_get_layer_wintop();
+int g_set_layer_wintop(int top);
 
-int g_layer_get_focus();
-int g_layer_set_focus(int ly);
+int g_get_layer_focus();
+int g_set_layer_focus(int ly);
 
-int g_layer_set_region(int layer, int type, int left, int top, int right, int bottom);
+int g_set_layer_region(int layer, int type, int left, int top, int right, int bottom);
 
-int g_layer_set_flags(int layer, uint32_t flags);
+int g_set_layer_flags(int layer, uint32_t flags);
 
-int g_layer_focus(int ly);
-int g_layer_resize(int ly, int x, int y, uint32_t width, uint32_t height);
+int g_focus_layer(int ly);
+int g_resize_layer(int ly, int x, int y, uint32_t width, uint32_t height);
 
-int g_layer_focus_win_top();
+int g_focus_layer_win_top();
 
-int g_layer_get_desktop();
-int g_layer_set_desktop(int id);
+int g_get_layer_desktop();
+int g_set_layer_desktop(int id);
 
-int g_layer_sync_bitmap(
+int g_sync_layer_bitmap(
     int layer,
     g_rect_t *rect,
     g_color_t *bitmap,
     g_region_t *region);
 
-int g_layer_sync_bitmap_ex(
+int g_sync_layer_bitmap_ex(
     int layer,
     g_rect_t *rect,
     g_color_t *bitmap,
     g_region_t *region);
 
-int g_layer_copy_bitmap(
+int g_copy_layer_bitmap(
     int layer,
     g_rect_t *rect,
     g_color_t *bitmap,

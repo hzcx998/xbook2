@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
         #if 0
         SDL_UpdateWindowSurface(gWindow);
         #else
-        g_window_paint(gWindow,  0, 0, gSurface);
+        g_paint_window(gWindow,  0, 0, gSurface);
         #endif
         fps++;
         gettimeofday(&time2, NULL);

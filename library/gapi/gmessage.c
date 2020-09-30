@@ -29,7 +29,7 @@ static int g_filter_msg(g_msg_t *msg)
         /* 触摸状态改变 */
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         if (g_region_in(&win->body_region, po.x, po.y)) {
             /* 进行坐标转换 */
             g_msg_get_mouse_x(msg) = po.x - win->body_region.left;
@@ -42,7 +42,7 @@ static int g_filter_msg(g_msg_t *msg)
     case GM_MOUSE_LBTN_DOWN:
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_click_check_group(&win->touch_list, &po, 0);
+        g_check_touch_click_group(&win->touch_list, &po, 0);
         if (g_region_in(&win->body_region, po.x, po.y)) {
             /* 进行坐标转换 */
             g_msg_get_mouse_x(msg) = po.x - win->body_region.left;
@@ -54,7 +54,7 @@ static int g_filter_msg(g_msg_t *msg)
     case GM_MOUSE_LBTN_UP:
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_click_check_group(&win->touch_list, &po, 1);
+        g_check_touch_click_group(&win->touch_list, &po, 1);
         if (g_region_in(&win->body_region, po.x, po.y)) {
             /* 进行坐标转换 */
             g_msg_get_mouse_x(msg) = po.x - win->body_region.left;
@@ -93,7 +93,7 @@ static int g_filter_msg(g_msg_t *msg)
         /* 调整窗口后，鼠标位置发生了改变 */
         po.x = -1;
         po.y = -1;
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         val = -1;
         break;
     case GM_MOVE:   /* 窗口移动 */
@@ -118,18 +118,18 @@ static int g_filter_msg(g_msg_t *msg)
     case GM_LAYER_LEAVE: /* 离开窗口 */
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         break;
     case GM_LAYER_ENTER: /* 进入窗口 */
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         break;
     case GM_HIDE: /* 隐藏窗口 */
         /* 调整窗口后，鼠标位置发生了改变 */
         po.x = -1;
         po.y = -1;
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         
         g_hide_window(win->layer);
         val = 0;
@@ -138,7 +138,7 @@ static int g_filter_msg(g_msg_t *msg)
         /* 调整窗口后，鼠标位置发生了改变 */
         po.x = -1;
         po.y = -1;
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         g_show_window(win->layer);
         val = 0;
         break;

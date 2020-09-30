@@ -193,21 +193,10 @@ void g_rectfill_ex(g_bitmap_t *bmp, int x1, int y1, int x2, int y2, g_color_t co
     if (!bmp)
         return;
 
-    #if 1
-    
     int i;
     for (i = 0; i <= y2 - y1; i++) {
         g_hline(bmp, x1, y1 + i, x2, color);
     }
-    #else
-    
-    int i, j;
-    for (j = 0; j <= y2 - y1; j++) {
-        for (i = 0; i <= x2 - x1; i++) {
-            g_putpixel(bmp, x1 + i, y1 + j, color);
-        }
-    }
-    #endif
 }
 
 void g_rect(g_bitmap_t *bmp, int x, int y, uint32_t width, uint32_t height, g_color_t color)
@@ -312,6 +301,6 @@ int g_bitmap_sync(
     int y)
 {
     g_rect_t rect = {x, y, bmp->width, bmp->height};
-    g_layer_sync_bitmap(layer, &rect, bmp->buffer, NULL);
+    g_sync_layer_bitmap(layer, &rect, bmp->buffer, NULL);
     return 0;
 }

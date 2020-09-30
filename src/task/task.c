@@ -72,6 +72,7 @@ void task_init(task_t *task, char *name, int priority)
 
     task->state = TASK_READY;
     
+    spinlock_init(&task->lock);
     // 修复优先级
     if (priority < 0)
         priority = 0;
@@ -148,7 +149,10 @@ void task_set_timeslice(task_t *task, uint32_t timeslice)
             timeslice = TASK_MIN_TIMESLICE;
         if (timeslice > TASK_MAX_TIMESLICE)
             timeslice = TASK_MAX_TIMESLICE;
+        spin_lock(&task->lock);
         task->timeslice = timeslice;
+        spin_unlock(&task->lock);
+        
     }
 }
 
@@ -218,9 +222,10 @@ void task_activate(task_t *task)
 {
     /* 任务不能为空 */
     ASSERT(task != NULL);
-    
+    spin_lock(&task->lock);
     /* 设置为运行状态 */
     task->state = TASK_RUNNING;
+    spin_unlock(&task->lock);
     //printk("vmm:%x\n", task->vmm);
     /* 激活任务虚拟内存 */
     vmm_active(task->vmm);

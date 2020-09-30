@@ -18,9 +18,9 @@
 #include <stddef.h>
 #include <xbook/vmarea.h>
 
-#include <net/e1000_hw.h>
-#include <net/e1000_osdep.h>
-#include <net/e1000.h>
+#include <drivers/e1000_hw.h>
+#include <drivers/e1000_osdep.h>
+#include <drivers/e1000.h>
 
 #define DRV_VERSION "v0.1"
 #define DRV_NAME "net-e1000" DRV_VERSION

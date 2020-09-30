@@ -12,6 +12,7 @@
 #include "pthread.h"
 #include "fs.h"
 #include "msgpool.h"
+#include "spinlock.h"
 
 /* task state */
 typedef enum task_state {
@@ -38,9 +39,9 @@ typedef enum task_state {
 /* init 进程的pid */
 #define INIT_PROC_PID       1
 
+/* 时间片界限 */
 #define TASK_MIN_TIMESLICE  1
 #define TASK_MAX_TIMESLICE  100
-
 
 /* 线程的标志 */
 enum thread_flags {
@@ -52,7 +53,6 @@ enum thread_flags {
     THREAD_FLAG_CANCELED            = (1 << 5),     /* 线程已经标记上取消点 */
     SERVER_RECEVING                 = (1 << 6),     /* 服务器处于接受中 */
     CLIENT_SENDING                  = (1 << 7),     /* 客户端正在发送中 */
-    
 };
 
 typedef struct priority_queue {
@@ -64,6 +64,7 @@ typedef struct priority_queue {
 typedef struct _task {
     unsigned char *kstack;              /* kernel stack, must be first member */
     task_state_t state;                 /* 任务的状态 */
+    spinlock_t lock;                    /* 保护进程自己的锁 */
     pid_t pid;                          /* 自己的进程id */
     pid_t parent_pid;                   /* 父进程id */
     pid_t tgid;                         /* 线程组id：线程属于哪个进程，和pid一样，就说明是主线程，不然就是子线程 */
@@ -177,8 +178,5 @@ unsigned long task_sleep_by_ticks(clock_t ticks);
 void close_one_thread(task_t *thread);
 void close_other_threads(task_t *thread);
 void pthread_exit(void *status);
-
-
-
 
 #endif   /* _XBOOK_TASK_H */

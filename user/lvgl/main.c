@@ -32,7 +32,7 @@ void my_disp_flush(lv_disp_drv_t * disp, const lv_area_t * area, lv_color_t * co
     g_invalid_window(lv_win);
     g_update_window(lv_win);
     #else
-    g_window_paint(lv_win, 0, 0, render);
+    g_paint_window(lv_win, 0, 0, render);
     #endif
     //g_refresh_window_rect(lv_win, area->x1, area->y1, area->x2 - area->x1, area->y2 - area->y1);
     lv_disp_flush_ready(disp);         /* Indicate you are ready with the flushing*/
@@ -81,7 +81,7 @@ int win_proc(g_msg_t *msg)
         g_get_invalid(lv_win, &x, &y, &w, &h);
         #ifdef GW_DALAY_FLUSH
         /* 刷新 */
-        g_window_paint(lv_win, 0, 0, render);
+        g_paint_window(lv_win, 0, 0, render);
         #endif
         break;
     case GM_TIMER:

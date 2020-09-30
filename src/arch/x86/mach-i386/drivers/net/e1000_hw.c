@@ -30,8 +30,8 @@
  * Shared functions for accessing and configuring the MAC
  */
 
-#include <net/e1000_hw.h>
-#include <net/e1000_osdep.h>
+#include <drivers/e1000_hw.h>
+#include <drivers/e1000_osdep.h>
 #include <xbook/debug.h>
 
 // #define DEBUG_DRV

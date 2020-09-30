@@ -105,17 +105,22 @@ icon_t *new_icon(char *pic, char *path, char *text)
         return NULL;
     }
 
-    g_touch_set_handler(icon->gtch, 0, icon_click_handler);
-    g_touch_set_layer(icon->gtch, desktop_layer, &icon_man.touch_list);
-    g_touch_set_extension(icon->gtch, icon);
-    g_touch_set_shape(icon->gtch, G_TOUCH_SHAPE_BORDER);
-    g_touch_set_color(icon->gtch, GC_RGB(128, 128, 128), GC_RGB(225, 225, 225));
+    g_set_touch_handler(icon->gtch, 0, icon_click_handler);
+    g_set_touch_layer(icon->gtch, desktop_layer, &icon_man.touch_list);
+    g_set_touch_extension(icon->gtch, icon);
+    g_set_touch_shape(icon->gtch, G_TOUCH_SHAPE_BORDER);
+    g_set_touch_color(icon->gtch, GC_RGB(128, 128, 128), GC_RGB(225, 225, 225));
     
     memset(icon->path, 0, MAX_PATH);
     strcpy(icon->path, path);
 
-    /* 加载图片到位图中 */
-    if (png_load_bitmap(pic, icon->icon_bmp->buffer) < 0) {
+    
+    int iw, ih, channels_in_file;
+    unsigned char *image =  g_load_image(pic, &iw, &ih, &channels_in_file);
+    if (image) {
+        g_resize_image(image, iw, ih, (unsigned char *) icon->icon_bmp->buffer,
+                icon->icon_bmp->width, icon->icon_bmp->height, 4, GRSZ_BILINEAR);
+    } else {
         /* 使用默认的位图 */
         g_rectfill(icon->icon_bmp, 0, 0, ICON_SIZE/2, ICON_SIZE/2, GC_RED);
         g_rectfill(icon->icon_bmp, ICON_SIZE/2, 0, ICON_SIZE/2, ICON_SIZE/2, GC_YELLOW);
@@ -167,7 +172,7 @@ int icon_locate(icon_t *icon, int x, int y)
         return -1;
     icon->x = x;
     icon->y = y;
-    g_touch_set_location(icon->gtch, icon->x, icon->y);
+    g_set_touch_location(icon->gtch, icon->x, icon->y);
     return 0;
 }
 
@@ -200,7 +205,7 @@ int icon_show(icon_t *icon)
     if (!icon)
         return -1;
     /*  */
-    g_touch_paint(icon->gtch);
+    g_paint_touch(icon->gtch);
 
     g_bitmap_sync(icon->icon_bmp, desktop_layer, icon->x + icon->width / 4, icon->y + icon->height / 8);
     g_bitmap_sync(icon->char_bmp, desktop_layer, icon->x, icon->y + icon->height - 20);

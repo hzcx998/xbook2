@@ -55,7 +55,6 @@ typedef struct {
 
 int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height, uint32_t flags);
 int g_del_window(int win);
-int g_del_window_all();
 int g_show_window(int win);
 
 int g_hide_window(int win);
@@ -70,9 +69,9 @@ int g_set_window_minresize(int win, uint32_t min_width, uint32_t min_height);
 
 int g_refresh_window_rect(int win, int x, int y, uint32_t width, uint32_t height);
 int g_refresh_window_region(int win, int left, int top, int right, int bottom);
-int g_window_paint(int win, int x, int y, g_bitmap_t *bmp);
-int g_window_paint_ex(int win, int x, int y, g_bitmap_t *bmp);
-int g_window_paint_copy(int win, int x, int y, g_bitmap_t *bmp);
+int g_paint_window(int win, int x, int y, g_bitmap_t *bmp);
+int g_paint_window_ex(int win, int x, int y, g_bitmap_t *bmp);
+int g_paint_window_copy(int win, int x, int y, g_bitmap_t *bmp);
 int g_update_window(int win);
 int g_invalid_rect(int win, int x, int y, uint32_t width, uint32_t height);
 int g_invalid_window(int win);

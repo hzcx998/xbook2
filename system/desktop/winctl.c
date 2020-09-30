@@ -5,24 +5,7 @@
 #include <stdio.h>
 #include <malloc.h>
 
-#define DEBUG_WINCTL
-#if 0
-/* 默认的图标数据 */
-static g_color_t winctl_icon_data[12 * 12] = {
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
-};
-#endif
+// #define DEBUG_WINCTL
 
 winctl_manager_t winctl_manager;
 winctl_t *winctl_last;  /* 上一个窗口控制 */
@@ -56,7 +39,7 @@ int winctl_lbtn_handler(void *arg)
             m.data0 = 0;
             g_send_msg(&m);
         } else { /* 需要切换到一个新的窗口 */
-            g_layer_focus(winctl->layer); /* 直接聚焦图层 */
+            g_focus_layer(winctl->layer); /* 直接聚焦图层 */
         }
     }
     return 0;
@@ -101,11 +84,11 @@ winctl_t *create_winctl(g_layer_t layer)
         return NULL;
     }
 
-    g_touch_set_color(winctl->button, winctl_manager.back_color, winctl_manager.back_color + 0x00404040);
-    g_touch_set_handler(winctl->button, 0, winctl_lbtn_handler);
-    g_touch_set_handler(winctl->button, 2, winctl_rbtn_handler);
+    g_set_touch_color(winctl->button, winctl_manager.back_color, winctl_manager.back_color + 0x00404040);
+    g_set_touch_handler(winctl->button, 0, winctl_lbtn_handler);
+    g_set_touch_handler(winctl->button, 2, winctl_rbtn_handler);
     
-    g_touch_set_layer(winctl->button, taskbar.layer, &taskbar.touch_list);
+    g_set_touch_layer(winctl->button, taskbar.layer, &taskbar.touch_list);
     winctl->button->extension = winctl;
     
     winctl->layer = layer;
@@ -166,8 +149,12 @@ int winctl_set_icon(winctl_t *winctl)
     
     g_bitmap_clear(winctl->button->bmp);
 
-    /* 如果加载图片失败，就使用默认位图 */
-    if (png_load_bitmap(icon_path, winctl->button->bmp->buffer) < 0) {
+    int iw, ih, channels_in_file;
+    unsigned char *image =  g_load_image(icon_path, &iw, &ih, &channels_in_file);
+    if (image) {
+        g_resize_image(image, iw, ih, (unsigned char *) winctl->button->bmp->buffer,
+                winctl->button->bmp->width, winctl->button->bmp->height, 4, GRSZ_BILINEAR);
+    } else {
         /* 使用默认的位图 */
         g_rectfill(winctl->button->bmp, 0, 0, ICON_SIZE/2, ICON_SIZE/2, GC_RED);
         g_rectfill(winctl->button->bmp, ICON_SIZE/2, 0, ICON_SIZE/2, ICON_SIZE/2, GC_YELLOW);
@@ -176,7 +163,7 @@ int winctl_set_icon(winctl_t *winctl)
     }
     
     /* 绘制 */
-    g_touch_paint(winctl->button);
+    g_paint_touch(winctl->button);
     return 0; 
 }
 
@@ -195,7 +182,7 @@ void winctl_lost_focus(winctl_t *winctl)
 void winctl_paint(winctl_t *winctl)
 {
     if (winctl) {
-        g_touch_paint(winctl->button);
+        g_paint_touch(winctl->button);
     } else {
 
         /* 先刷新背景，再显示 */
@@ -206,9 +193,9 @@ void winctl_paint(winctl_t *winctl)
         g_touch_t *gtch;
         list_for_each_owner (gtch, &taskbar.touch_list, list) {
             /* 设置控件位置 */
-            g_touch_set_location(gtch, x, y);
+            g_set_touch_location(gtch, x, y);
 
-            g_touch_paint(gtch);
+            g_paint_touch(gtch);
             
             x += WINCTL_ICON_SIZE + 4 + 2;
             

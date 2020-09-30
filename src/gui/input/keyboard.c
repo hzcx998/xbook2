@@ -50,7 +50,7 @@ int __process_special_key(int keycode, int press)
     }
     #ifdef CONFIG_VIRTUAL_MOUSE
     /* alt + ? */
-    if (gui_keyboard.key_modify & GUI_KMOD_ALT_L) {
+    if (gui_keyboard.key_modify & GUI_KMOD_ALT) {
         if (press) {
             switch (keycode)
             {

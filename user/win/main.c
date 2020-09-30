@@ -36,8 +36,6 @@ int main(int argc, char *argv[])
     g_set_window_minresize(win, 200, 100);
     /* 设置窗口界面 */
     
-    //g_show_window(win);
-
     /* 注册消息回调函数 */
     g_set_msg_routine(win_proc);
     
@@ -115,39 +113,24 @@ int win_proc(g_msg_t *msg)
     case GM_PAINT:
         win = g_msg_get_target(msg);
         g_get_invalid(win, &x, &y, &w, &h);
-        /*
-        g_window_rect_fill(layer, 0, 0, 100, 50, GC_BLUE);
-        g_window_rect_fill(layer, -50, -50, 100, 100, GC_GREEN);
-
-        g_window_rect_fill(layer, w-100, h-100, 100, 50, GC_BLUE);
-        g_window_rect_fill(layer, w-50, h-50, 100, 50, GC_GREEN);
-        */
-        //g_window_rect_fill(win, x, y, w, h, color);
-        #if 1
+        
         screen_bitmap = g_new_bitmap(w, h);
         if (screen_bitmap == NULL)
             break;
         if (fps % 10 == 0 || fps == 0)
             printf("size: %d %d\n", w, h);
         g_rectfill(screen_bitmap, 0, 0, w, h, color);
-        g_window_paint(win, 0, 0, screen_bitmap);
+        g_paint_window(win, 0, 0, screen_bitmap);
         //g_refresh_window_rect(win, 0, 0, w, h);
         
         g_del_bitmap(screen_bitmap);
         screen_bitmap = NULL;
-        #endif
-        //g_window_rect_fill(win,x, y, w, h, color);
-
-        /* 图形绘制更导致绘图变慢 */
-        //g_refresh_window_rect(win, x, y, w, h);
         
         g_invalid_window(win);
         g_update_window(win);
         color += 0x05040302;
         fps++;
         break;  
-    
-
     default:
         break;
     }

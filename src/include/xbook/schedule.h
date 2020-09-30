@@ -15,6 +15,14 @@ enum task_priority {
     TASK_PRIO_IDLE,         /* IDLE优先级 */
 };
 
+#if 0
+/* 调度器结构体 */
+typedef struct {
+    
+
+} scheduler_t;
+#endif
+
 extern priority_queue_t *highest_prio_queue;
 extern priority_queue_t priority_queue[];
 

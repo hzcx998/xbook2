@@ -7,6 +7,12 @@
 #include <glayer.h>
 #include <gfont.h>
 
+/* inner function */
+extern int g_del_bitmap_all();
+extern int g_del_timer_all();
+extern int g_del_window_all();
+extern int g_del_layer_all();
+
 int g_init(void)
 {
     /* call ginit */
@@ -14,7 +20,7 @@ int g_init(void)
     if (val < 0) 
         return -1;
     /* get screen info */
-    if (g_screen_get(&_g_screen) < 0)
+    if (g_get_screen(&_g_screen) < 0)
         return -1;
     
     g_init_msg();
@@ -39,7 +45,7 @@ int g_quit(void)
     g_del_bitmap_all(); // 删除位图资源
 
     /* 再关闭图层 */
-    if (g_layer_del_all() < 0)
+    if (g_del_layer_all() < 0)
         return -1;
 
     return syscall0(int, SYS_GQUIT);

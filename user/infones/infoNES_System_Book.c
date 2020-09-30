@@ -638,7 +638,7 @@ void InfoNES_LoadFrame()
     }
   }
     /* 已经绘制好内容了，直接绘制到窗口 */
-    g_window_paint(g_win, 0, 0, screen_bitmap);
+    g_paint_window(g_win, 0, 0, screen_bitmap);
 #endif
 
     #ifndef CONFIG_SOUND

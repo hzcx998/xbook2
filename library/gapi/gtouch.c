@@ -43,7 +43,7 @@ int g_del_touch(g_touch_t *tch)
     return 0;
 }
 
-int g_touch_paint(g_touch_t *tch)
+int g_paint_touch(g_touch_t *tch)
 {
     if (!tch)
         return -1;
@@ -53,12 +53,6 @@ int g_touch_paint(g_touch_t *tch)
     } else if (tch->state == G_TOUCH_ON) {
         color = tch->color_on;
     }
-    #if 0
-    g_layer_rect_fill(tch->layer, tch->rect.x, tch->rect.y, 
-        tch->rect.width, tch->rect.height, color);
-    g_layer_refresh_rect(tch->layer, tch->rect.x, tch->rect.y, 
-        tch->rect.width, tch->rect.height);
-    #else
     g_bitmap_t *bmp = g_new_bitmap(tch->rect.width, tch->rect.height);
     if (!bmp)
         return -1;
@@ -69,7 +63,6 @@ int g_touch_paint(g_touch_t *tch)
         
     g_bitmap_sync(bmp, tch->layer, tch->rect.x, tch->rect.y);
     g_del_bitmap(bmp);
-    #endif
     if (tch->bmp) {
         int x = tch->rect.x + tch->rect.width / 2 - tch->bmp->width / 2;
         int y = tch->rect.y + tch->rect.height / 2 - tch->bmp->height / 2;
@@ -79,19 +72,19 @@ int g_touch_paint(g_touch_t *tch)
     return 0;
 }
 
-int g_touch_paint_group(list_t *list_head)
+int g_paint_touch_group(list_t *list_head)
 {
     if (!list_head)
         return -1;
     g_touch_t *tch;
     list_for_each_owner (tch, list_head, list) {
-        if (g_touch_paint(tch) < 0)
+        if (g_paint_touch(tch) < 0)
             return -1;
     }
     return 0;
 }
 
-int g_touch_set_idel_color_group(list_t *list_head, g_color_t color)
+int g_set_touch_idel_color_group(list_t *list_head, g_color_t color)
 {
     if (!list_head)
         return -1;
@@ -102,7 +95,7 @@ int g_touch_set_idel_color_group(list_t *list_head, g_color_t color)
     return 0;
 }
 
-int g_touch_del_group(list_t *list_head)
+int g_del_touch_group(list_t *list_head)
 {
     if (!list_head)
         return -1;
@@ -117,7 +110,7 @@ int g_touch_del_group(list_t *list_head)
 /**
  * 状态改变检测，返回0表示已经改变，-1表示没有改变
  */
-int g_touch_state_check(g_touch_t *tch, g_point_t *po)
+int g_check_touch_state(g_touch_t *tch, g_point_t *po)
 {
     if (!tch)
         return -1;
@@ -132,19 +125,19 @@ int g_touch_state_check(g_touch_t *tch, g_point_t *po)
             tch->hold_on[i] = 0;
     }
     if (tch->state != old_state) {  /* 新旧状态不一样才重绘 */
-        g_touch_paint(tch);
+        g_paint_touch(tch);
         return 0;
     }
     return -1;
 }
 
-int g_touch_state_check_group(list_t *list_head, g_point_t *po)
+int g_check_touch_state_group(list_t *list_head, g_point_t *po)
 {
     if (!list_head)
         return -1;
     g_touch_t *tch;
     list_for_each_owner (tch, list_head, list) {
-        if (!g_touch_state_check(tch, po))
+        if (!g_check_touch_state(tch, po))
             return 0;
     }
     return -1;
@@ -160,7 +153,7 @@ int g_touch_state_check_group(list_t *list_head, g_point_t *po)
  *      4：鼠标右键按键按下
  *      5：鼠标右键按键弹起
  */
-int g_touch_click_check(g_touch_t *tch, g_point_t *po, int btn)
+int g_check_touch_click(g_touch_t *tch, g_point_t *po, int btn)
 { 
     if (!tch)
         return -1;
@@ -216,13 +209,13 @@ int g_touch_click_check(g_touch_t *tch, g_point_t *po, int btn)
     return retval;
 }
 
-int g_touch_click_check_group(list_t *list_head, g_point_t *po, int btn)
+int g_check_touch_click_group(list_t *list_head, g_point_t *po, int btn)
 {
     if (!list_head)
         return -1;
     g_touch_t *tch;
     list_for_each_owner (tch, list_head, list) {
-        if (!g_touch_click_check(tch, po, btn))
+        if (!g_check_touch_click(tch, po, btn))
             return 0;
     }
     return -1;
