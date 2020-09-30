@@ -224,8 +224,16 @@ static void layer_refresh_map(int left, int top, int right, int buttom, int z0)
             
             for(layer_y = layer_top; layer_y < layer_buttom; layer_y++){
                 screen_y = layer->y + layer_y;
+                if (screen_y < 0)
+                    continue;
+                if (screen_y >= gui_screen.height)
+                    break;
                 for(layer_x = layer_left; layer_x < layer_right; layer_x++){
                     screen_x = layer->x + layer_x;
+                    if (screen_x < 0)
+                        continue;
+                    if (screen_x >= gui_screen.width)
+                        break;
                     /* 获取图层中的颜色 */
                     if ((layer->buffer[layer_y * layer->width + layer_x] >> 24) & 0xff) {   /* 不是全透明的，就把高度写入到地图中 */
                         layer_map[(screen_y * gui_screen.width + screen_x)] = layer->z;
@@ -609,9 +617,18 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
 
             for(layer_y = layer_top; layer_y < layer_buttom; layer_y++){
                 screen_y = layer->y + layer_y;
+                if (screen_y < 0)
+                    continue;
+                if (screen_y >= gui_screen.height)
+                    break;
+
                 for(layer_x = layer_left; layer_x < layer_right; layer_x++){
                     screen_x = layer->x + layer_x;
-                    
+                    if (screen_x < 0)
+                        continue;
+                    if (screen_x >= gui_screen.width)
+                        break;
+                        
                     #ifndef LAYER_ALPAH
                     /* 照着map中的z进行刷新 */
                     if (layer_map[(screen_y * gui_screen.width + screen_x)] == layer->z) {

@@ -6,7 +6,7 @@
 surface_t *surface_image_load(char const *filename, int w, int h)
 {
     int iw, ih, channels_in_file;
-    
+    printf("[gato]: %s: %s loading...\n", __func__, filename);
     char *image =  g_load_image(filename, &iw, &ih, &channels_in_file);
     assert(image);
 

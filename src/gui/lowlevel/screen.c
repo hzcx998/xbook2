@@ -124,66 +124,6 @@ static  unsigned int    bytes_per_pixel = 0;
 static  unsigned int    screen_width    = 0;
 static  unsigned int    screen_height   = 0;
 
-static  int  screen_detect_var(gui_screen_t *screen)
-{
-    int ret = 0;
-
-    video_handle = device_open( GUI_SCREEN_DEVICE_NAME, 0 );
-    if ( video_handle < 0 ) 
-        return  -1;
-
-    ret = device_devctl(video_handle, VIDEOIO_GETINFO, (unsigned long) &video_info);
-    if ( ret < 0 ) 
-        return  -1;
-
-    screen->width     = video_info.x_resolution;
-    screen->height    = video_info.y_resolution;
-    
-    bits_per_pixel   = video_info.bits_per_pixel;
-    bytes_per_pixel  = (video_info.bits_per_pixel+7)/8;
-    screen->bpp = bits_per_pixel;
-    
-    screen_width     = screen->width;
-    screen_height    = screen->height;
-#ifdef DEBUG_GUI_SCREEN
-    printf("video info: w:%d h:%d bpp:%d \n", screen->width, screen->height, video_info.bits_per_pixel);
-#endif
-    switch (video_info.bits_per_pixel) 
-    {
-    case 8:
-        screen->gui_to_screen_color = GUI_TO_R3G3B2;
-        screen->screen_to_gui_color = R3G3B2_TO_GUI;
-        break;
-
-    case 15:
-        screen->gui_to_screen_color = GUI_TO_R5G5B5;
-        screen->screen_to_gui_color = R5G5B5_TO_GUI;
-        break;
-
-    case 16:
-        screen->gui_to_screen_color = GUI_TO_R5G6B5;
-        screen->screen_to_gui_color = R5G6B5_TO_GUI; 
-        break;
-
-    case 24:
-        screen->gui_to_screen_color = GUI_TO_R8G8B8;
-        screen->screen_to_gui_color = R8G8B8_TO_GUI;
-        break;
-
-    case 32:
-        screen->gui_to_screen_color = GUI_TO_A8R8G8B8;
-        screen->screen_to_gui_color = A8R8G8B8_TO_GUI;
-        break;
-
-    default:
-        break;
-    }
-
-    device_close(video_handle);
-    video_handle = -1;
-    return  0;
-}
-
 static int screen_open(void)
 {
     video_handle = device_open( GUI_SCREEN_DEVICE_NAME, 0 );
@@ -214,6 +154,53 @@ static int screen_close(void)
     return  1;
 }
 
+static  int  screen_output_pixel8(int x, int y, SCREEN_COLOR  color)
+{
+    /* User must write the right code */
+	int  offset = 0;
+    offset = (screen_width)*y+x;
+    *(video_ram_start+offset) = (unsigned char)color;
+    return  0;
+}
+
+static  int  screen_output_pixel15(int x, int y, SCREEN_COLOR  color)
+{
+    /* User must write the right code */
+	int  offset = 0;
+    offset = 2*((screen_width)*y+x);
+    *((short int*)((video_ram_start) + offset)) = (short int)color;
+    return  0;
+}
+
+static  int  screen_output_pixel16(int x, int y, SCREEN_COLOR  color)
+{
+    /* User must write the right code */
+	int  offset = 0;
+    offset = 2*((screen_width)*y+x);
+    *((short int*)((video_ram_start) + offset)) = (short int)color;
+    return  0;
+}
+
+static  int  screen_output_pixel24(int x, int y, SCREEN_COLOR  color)
+{
+    /* User must write the right code */
+	int  offset = 0;
+    offset = 3*((screen_width)*y+x);
+    *((video_ram_start) + offset + 0) = color&0xFF;
+    *((video_ram_start) + offset + 1) = (color&0xFF00) >> 8;
+    *((video_ram_start) + offset + 2) = (color&0xFF0000) >> 16;
+    return  0;
+}
+
+static  int  screen_output_pixel32(int x, int y, SCREEN_COLOR  color)
+{
+    /* User must write the right code */
+	int  offset = 0;
+    offset = 4*((screen_width)*y+x);
+    *((int*)((video_ram_start) + offset)) = (int)color;
+
+    return  0;
+}
 
 static  int  screen_output_pixel(int x, int y, SCREEN_COLOR  color)
 {
@@ -276,6 +263,57 @@ static  int  screen_output_pixel(int x, int y, SCREEN_COLOR  color)
             break;
 
     }
+    return  0;
+}
+
+static  int  screen_input_pixel8(int x, int y, SCREEN_COLOR *color)
+{
+    /* Maybe have code or maybe have not code */
+    int           offset    = 0;
+    offset = (screen_width)*y+x;
+    *color = *(video_ram_start+offset);
+    
+    return  0;
+}
+
+static  int  screen_input_pixel15(int x, int y, SCREEN_COLOR *color)
+{
+    /* Maybe have code or maybe have not code */
+    int           offset    = 0;
+    offset = 2*((screen_width)*y+x);
+    *color = *((short int*)(video_ram_start + offset));
+    return  0;
+}
+
+static  int  screen_input_pixel16(int x, int y, SCREEN_COLOR *color)
+{
+    /* Maybe have code or maybe have not code */
+    int           offset    = 0;
+    offset = 2*((screen_width)*y+x);
+    *color = *((short int*)(video_ram_start + offset));
+    return  0;
+}
+
+static  int  screen_input_pixel24(int x, int y, SCREEN_COLOR *color)
+{
+    /* Maybe have code or maybe have not code */
+    int           offset    = 0;
+    SCREEN_COLOR  tmp_color = 0;
+
+    offset = 3*((screen_width)*y+x);
+    tmp_color  = *(video_ram_start + offset + 0)&0xFF;
+    tmp_color |= ((*(video_ram_start + offset + 1))&0xFF00) >> 8;
+    tmp_color |= ((*(video_ram_start + offset + 2))&0xFF0000) >> 16;
+    *color     = tmp_color;
+    return  0;
+}
+
+static  int  screen_input_pixel32(int x, int y, SCREEN_COLOR *color)
+{
+    /* Maybe have code or maybe have not code */
+    int           offset    = 0;
+    offset = 4*((screen_width)*y+x);
+    *color = *((int*)(video_ram_start + offset));
     return  0;
 }
 
@@ -350,6 +388,78 @@ static  int  screen_input_pixel(int x, int y, SCREEN_COLOR *color)
     return  0;
 }
 
+static  int  screen_detect_var(gui_screen_t *screen)
+{
+    int ret = 0;
+
+    video_handle = device_open( GUI_SCREEN_DEVICE_NAME, 0 );
+    if ( video_handle < 0 ) 
+        return  -1;
+
+    ret = device_devctl(video_handle, VIDEOIO_GETINFO, (unsigned long) &video_info);
+    if ( ret < 0 ) 
+        return  -1;
+
+    screen->width     = video_info.x_resolution;
+    screen->height    = video_info.y_resolution;
+    
+    bits_per_pixel   = video_info.bits_per_pixel;
+    bytes_per_pixel  = (video_info.bits_per_pixel+7)/8;
+    screen->bpp = bits_per_pixel;
+    
+    screen_width     = screen->width;
+    screen_height    = screen->height;
+#ifdef DEBUG_GUI_SCREEN
+    printf("video info: w:%d h:%d bpp:%d \n", screen->width, screen->height, video_info.bits_per_pixel);
+#endif
+    switch (video_info.bits_per_pixel) 
+    {
+    case 8:
+        screen->gui_to_screen_color = GUI_TO_R3G3B2;
+        screen->screen_to_gui_color = R3G3B2_TO_GUI;
+        screen->output_pixel = screen_output_pixel8;
+        screen->input_pixel  = screen_input_pixel8;
+        break;
+    case 15:
+        screen->gui_to_screen_color = GUI_TO_R5G5B5;
+        screen->screen_to_gui_color = R5G5B5_TO_GUI;
+        screen->output_pixel = screen_output_pixel15;
+        screen->input_pixel  = screen_input_pixel15;
+
+        break;
+
+    case 16:
+        screen->gui_to_screen_color = GUI_TO_R5G6B5;
+        screen->screen_to_gui_color = R5G6B5_TO_GUI; 
+        screen->output_pixel = screen_output_pixel16;
+        screen->input_pixel  = screen_input_pixel16;
+
+        break;
+
+    case 24:
+        screen->gui_to_screen_color = GUI_TO_R8G8B8;
+        screen->screen_to_gui_color = R8G8B8_TO_GUI;
+        screen->output_pixel = screen_output_pixel24;
+        screen->input_pixel  = screen_input_pixel24;
+
+        break;
+
+    case 32:
+        screen->gui_to_screen_color = GUI_TO_A8R8G8B8;
+        screen->screen_to_gui_color = A8R8G8B8_TO_GUI;
+        screen->output_pixel = screen_output_pixel32;
+        screen->input_pixel  = screen_input_pixel32;
+
+        break;
+
+    default:
+        break;
+    }
+
+    device_close(video_handle);
+    video_handle = -1;
+    return  0;
+}
 
 /* Hardware accelerbrate interface */
 static  int  screen_output_hline(int left, int right, int top, SCREEN_COLOR  color)
@@ -650,9 +760,6 @@ int gui_init_screen()
     
     gui_screen.open = screen_open;
     gui_screen.close = screen_close;
-
-    gui_screen.output_pixel = screen_output_pixel;
-    gui_screen.input_pixel  = screen_input_pixel;
 
     gui_screen.output_hline = screen_output_hline;
     gui_screen.output_vline = screen_output_vline;

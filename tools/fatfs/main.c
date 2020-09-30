@@ -68,10 +68,9 @@ int main(int argc, char *argv[])
         image_file = argv[1];
         rom_dir = argv[2];
         disk_sz = atoi(argv[3]);    /* 单位是MB */
-        if (disk_sz <= 0)
-            disk_sz = DISK_SIZE;
-        else 
+        if (disk_sz > 0) 
             disk_sz *= (1024*1024); /* 转换成MB */
+        
     } else {
         image_file = IMAGE_FILE;
         rom_dir = ROM_DIR;

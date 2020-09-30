@@ -698,7 +698,7 @@ static void tab_changer_task_cb(lv_task_t * task)
     act++;
     if(act >= 3) act = 0;
 
-    lv_tabview_set_tab_act(tv, act, LV_ANIM_ON);
+    lv_tabview_set_tab_act(tv, act, LV_ANIM_OFF);
 
     switch(act) {
     case 0:

@@ -57,6 +57,10 @@ int drv_init(char *path, int disk_sz)
     #ifdef DEBUG_FATFS_DRIVER
             printf("fatfs: create a new disk.\n");
     #endif
+            if (disk_sz == 0) { /* 磁盘为0表示不创建新的 */
+                printf("fatfs: disk %s not exist, please create the disk first!\n", path);
+                return -1;
+            }
             drv_file = fopen(disk_path, "wb+");    
             if (drv_file == NULL) {
                 printf("fatfs: open disk %s failed!\n", disk_path);

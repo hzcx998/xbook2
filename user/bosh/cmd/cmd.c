@@ -218,7 +218,7 @@ int execute_cmd(int argc, char **argv)
                     shell_child_key = -1;
                 }
                 #endif
-                
+                sched_yeild();  // 让出cpu
             }
 
         } else {    /* 子进程 */
