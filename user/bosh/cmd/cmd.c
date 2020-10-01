@@ -251,7 +251,9 @@ int execute_cmd(int argc, char **argv)
             /* 恢复默认触发 */
             trigger(TRIGLSOFT, TRIG_DFL);
             /* 子进程执行程序 */
-            exit(execv((const char *) argv[0], (char *const *) argv));
+            if (execv((const char *) argv[0], (char *const *) argv) < 0)
+                printf("bosh: %s is a bad programe!\n", argv[0]);
+            exit(-1);
         }
     }
     shell_child_pid = -1;

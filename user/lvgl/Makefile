@@ -4,24 +4,24 @@ X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -s
 
 NAME		:= lv
 SRC			+= main.c 
-SRC			+= lvgl/src/lv_core/*.c 
-SRC			+= lvgl/src/lv_draw/*.c 
-SRC			+= lvgl/src/lv_font/*.c 
-SRC			+= lvgl/src/lv_gpu/*.c 
-SRC			+= lvgl/src/lv_hal/*.c 
-SRC			+= lvgl/src/lv_misc/*.c 
-SRC			+= lvgl/src/lv_themes/*.c
-SRC			+= lvgl/src/lv_widgets/*.c
-SRC			+= lvgl/examples/lv_demo_benchmark/*.c
-SRC			+= lvgl/examples/lv_demo_keypad_encoder/*.c
-SRC			+= lvgl/examples/lv_demo_printer/*.c
-SRC			+= lvgl/examples/lv_demo_printer/images/*.c
-SRC			+= lvgl/examples/lv_demo_stress/*.c
-SRC			+= lvgl/examples/lv_demo_widgets/*.c
-SRC			+= lvgl/examples/lv_demo_started/*.c
-SRC			+= lvgl/examples/lv_ex_get_started/*.c
-SRC			+= lvgl/examples/lv_ex_get_style/*.c
-SRC			+= lvgl/examples/lv_ex_get_widgets/*.c
+SRC			+= lvgl/src/lv_core/
+SRC			+= lvgl/src/lv_draw/ 
+SRC			+= lvgl/src/lv_font/ 
+SRC			+= lvgl/src/lv_gpu/ 
+SRC			+= lvgl/src/lv_hal/ 
+SRC			+= lvgl/src/lv_misc/ 
+SRC			+= lvgl/src/lv_themes/
+SRC			+= lvgl/src/lv_widgets/
+SRC			+= lvgl/examples/lv_demo_benchmark/
+SRC			+= lvgl/examples/lv_demo_keypad_encoder/
+SRC			+= lvgl/examples/lv_demo_printer/
+SRC			+= lvgl/examples/lv_demo_printer/images/
+SRC			+= lvgl/examples/lv_demo_stress/
+SRC			+= lvgl/examples/lv_demo_widgets/
+SRC			+= lvgl/examples/lv_demo_started/
+SRC			+= lvgl/examples/lv_ex_get_started/
+SRC			+= lvgl/examples/lv_ex_get_style/
+SRC			+= lvgl/examples/lv_ex_get_widgets/
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

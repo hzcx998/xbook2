@@ -643,12 +643,17 @@ void InfoNES_LoadFrame()
 
     #ifndef CONFIG_SOUND
     #ifndef CONFIG_QEMU
+    #if 0
     /* 延迟 */
     clock_t start;
     start = getticks();
     while ((getticks() - start) < 1 * HZ_PER_CLOCKS);
     #endif
+    #endif
     #endif /* CONFIG_SOUND */
+
+    mdelay(15);
+    
 }
 
 int PollEvent(void)

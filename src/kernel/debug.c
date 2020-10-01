@@ -152,7 +152,7 @@ int printk(const char *fmt, ...)
         /* 如果配置了图形控制台，那么就打印到图形控制台 */
 
         #ifdef CONFIG_GUI_PRINT
-        if (print_gui_console && level < 2 && level >= 0)
+        if (print_gui_console && level < 1 && level >= 0)
             gui_con_screen.outs(p);
         #endif
 
