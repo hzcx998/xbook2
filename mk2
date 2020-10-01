@@ -14,7 +14,7 @@ endif
 # images and rom
 IMAGE_DIR	= ../xbook2-image
 HDA_VHD		= $(IMAGE_DIR)/sata0.vhd
-HDA_VMDK	= $(IMAGE_DIR)/c-flat.vmdk
+HDA_VMDK	= $(IMAGE_DIR)/sata0-flat.vmdk
 
 ROM_DIR		= develop/rom
 

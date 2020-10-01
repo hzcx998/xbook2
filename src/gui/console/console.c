@@ -284,18 +284,6 @@ static void con_clear()
     
 }
 
-/*
-清除屏幕上的所有东西，
-字符缓冲区里面的文字
-*/
-static void con_clear_area(int x, int y, unsigned int width, unsigned int height)
-{
-	//清空背景
-    gui_draw_rect_fill(x, y,
-        width, height, gui_con_screen.background_color);
-
-}
-
 void con_set_back_color(GUI_COLOR color)
 {
     gui_con_screen.background_color = color;

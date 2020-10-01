@@ -77,11 +77,13 @@ static void sample(surface_t *base, float fps)
 {
 	//printf("fps:%f\n", fps);
 	draw_wallpaper(base);
+    #if 0
     draw_wallpaper(base);
     draw_wallpaper(base);
     draw_wallpaper(base);
     draw_wallpaper(base);
     return;
+    #endif
 	int m_x, m_y;
 	float size[N] = {0};
 	float w[N] = {0};

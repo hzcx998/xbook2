@@ -23,6 +23,8 @@
 /* shade layer */
 #define CONFIG_SHADE_LAYER
 
+// #define LAYER_ALPAH /* 是否拥有透明图层 */
+
 /* gui console print */
 #define CONFIG_GUI_PRINT
 

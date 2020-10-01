@@ -36,7 +36,8 @@ typedef struct _layer {
     gui_region_t drag_rg;       /* 拖拽区域 */
     gui_region_t resize_rg;     /* 调整大小区域 */
     gui_region_t resizemin_rg;  /* 最小的调整大小区域 */
-    spinlock_t mutex;          /* 图层操作时的互斥 */
+    spinlock_t mutex;           /* 图层操作时的互斥 */
+    unsigned long mutex_flags;  /* 互斥的标志 */        
 } layer_t;
 
 int gui_init_layer();
@@ -83,12 +84,12 @@ void layer_sync_bitmap(layer_t *layer, gui_rect_t *rect, GUI_COLOR *bitmap, gui_
 
 static inline void layer_mutex_lock(layer_t *layer)
 {
-    spin_lock(&layer->mutex);
+    spin_lock_irqsave(&layer->mutex, layer->mutex_flags);
 }
 
 static inline void layer_mutex_unlock(layer_t *layer)
 {
-    spin_unlock(&layer->mutex);
+    spin_unlock_irqrestore(&layer->mutex, layer->mutex_flags);
 }
 
 int sys_new_layer(int x, int y, uint32_t width, uint32_t height);

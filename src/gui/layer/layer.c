@@ -15,10 +15,6 @@
 
 // #define DEBUG_GUI_LAYER
 
-// #define LAYER_DEBUG
-
-// #define LAYER_ALPAH /* 是否拥有透明图层 */
-
 /* 所有图层都挂载到该链表 */
 LIST_HEAD(layer_list_head);
 /* 所有显示中的图层挂载到该链表上 */
@@ -43,6 +39,10 @@ DEFINE_SPIN_LOCK(layer_list_spin_lock);
 
 /* 图层全局变量自旋锁 */
 DEFINE_SPIN_LOCK(layer_val_lock);
+
+typedef void (*layer_refresh_block_t) (layer_t *, int , int , int, int);
+
+layer_refresh_block_t layer_refresh_block = NULL;
 
 /**
  * create_layer - 创建一个图层
@@ -203,7 +203,8 @@ static void layer_refresh_map(int left, int top, int right, int buttom, int z0)
         buttom = gui_screen.height;
     
     layer_t *layer;
-    //spin_lock(&layer_list_spin_lock);
+    unsigned long flags;
+    spin_lock_irqsave(&layer_list_spin_lock, flags); /* make sure map write is ok */
     /* 刷新高度为[Z0-top]区间的图层 */
     list_for_each_owner (layer, &layer_show_list_head, list) {
         if (layer->z >= z0) {
@@ -242,7 +243,7 @@ static void layer_refresh_map(int left, int top, int right, int buttom, int z0)
             }
         }
     }
-    //spin_unlock(&layer_list_spin_lock);
+    spin_unlock_irqrestore(&layer_list_spin_lock, flags);
 }
 
 /**
@@ -539,7 +540,6 @@ void layer_clear(layer_t *layer)
         memset(layer->buffer, 0, layer->width * layer->height * sizeof(uint32_t));
 }
 
-
 /**
  * print_layers - 打印所有图层信息
  * 
@@ -557,7 +557,311 @@ void print_layers()
 #endif
     }
 }
+extern unsigned char *video_ram_start;
 
+static inline void layer_refresh_block32(layer_t *layer, int layer_left, int layer_top, int layer_right, int layer_buttom)
+{
+    /* 在屏幕上的位置 */
+    int screen_y;
+    /* 在图层上的位置 */
+    int layer_x, layer_y;
+    #ifdef LAYER_ALPAH
+    gui_color_t *src_rgb, *dst_rgb;
+    #endif
+    /* 优化整个块 */
+    for (layer_y = layer_top; layer_y < layer_buttom; layer_y++)
+    {
+        screen_y = layer->y + layer_y;
+        #ifndef LAYER_ALPAH
+        uint32_t *dst = &((uint32_t *)gui_screen.vram_start)[gui_screen.width * screen_y + layer->x];
+        uint32_t *src = &layer->buffer[layer_y * layer->width];
+        uint16_t *map = &layer_map[(screen_y * gui_screen.width + layer->x)];
+        #else
+        dst_rgb = (gui_color_t *) (screen_backup_buffer + (screen_y * gui_screen.width + layer->x));
+        src_rgb = (gui_color_t *) &layer->buffer[layer_y * layer->width];
+        #endif
+        for (layer_x = layer_left; layer_x < layer_right; layer_x++)
+        {
+            #ifndef LAYER_ALPAH
+            /* 照着map中的z进行刷新 */
+            if (map[layer_x] == layer->z)
+            {
+            #endif
+                /* 获取图层中的颜色 */
+                #ifndef LAYER_ALPAH
+                dst[layer_x] = src[layer_x];
+                #else   /* 根据透明度计算rgb值，算法：AlphaBlend */
+                dst_rgb[layer_x].red = (((src_rgb[layer_x].red) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].red) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].green = (((src_rgb[layer_x].green) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].green) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].blue = (((src_rgb[layer_x].blue) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].blue) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].alpha = (((src_rgb[layer_x].alpha) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].alpha) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                
+                #endif /* LAYER_ALPAH */
+
+            #ifndef LAYER_ALPAH
+            }
+            #endif /* LAYER_ALPAH */
+        }
+    }
+}
+
+static inline void layer_refresh_block24(layer_t *layer, int layer_left, int layer_top, int layer_right, int layer_buttom)
+{
+    /* 在屏幕上的位置 */
+    int screen_y;
+    /* 在图层上的位置 */
+    int layer_x, layer_y;
+    #ifdef LAYER_ALPAH
+    gui_color_t *src_rgb, *dst_rgb;
+    #endif
+    /* 优化整个块 */
+    for (layer_y = layer_top; layer_y < layer_buttom; layer_y++)
+    {
+        screen_y = layer->y + layer_y;
+        #ifndef LAYER_ALPAH
+        uint8_t *dst = &((uint8_t *)gui_screen.vram_start)[(gui_screen.width * screen_y + layer->x) * 3];
+        uint32_t *src = &layer->buffer[layer_y * layer->width];
+        uint16_t *map = &layer_map[(screen_y * gui_screen.width + layer->x)];
+        #else
+        dst_rgb = (gui_color_t *) (screen_backup_buffer + (screen_y * gui_screen.width + layer->x));
+        src_rgb = (gui_color_t *) &layer->buffer[layer_y * layer->width];
+        #endif
+        for (layer_x = layer_left; layer_x < layer_right; layer_x++)
+        {
+            #ifndef LAYER_ALPAH
+            /* 照着map中的z进行刷新 */
+            if (map[layer_x] == layer->z)
+            {
+            #endif
+                /* 获取图层中的颜色 */
+                #ifndef LAYER_ALPAH
+                dst[layer_x * 3 + 0] = src[layer_x] & 0xFF;
+                dst[layer_x * 3 + 1] = (src[layer_x] & 0xFF00) >> 8;
+                dst[layer_x * 3 + 2] = (src[layer_x] & 0xFF0000) >> 16;
+                #else   /* 根据透明度计算rgb值，算法：AlphaBlend */
+                dst_rgb[layer_x].red = (((src_rgb[layer_x].red) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].red) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].green = (((src_rgb[layer_x].green) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].green) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].blue = (((src_rgb[layer_x].blue) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].blue) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].alpha = (((src_rgb[layer_x].alpha) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].alpha) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                #endif
+            #ifndef LAYER_ALPAH
+            }
+            #endif
+        }
+    }
+}
+
+static inline void layer_refresh_block16(layer_t *layer, int layer_left, int layer_top, int layer_right, int layer_buttom)
+{
+    /* 在屏幕上的位置 */
+    int screen_y;
+    /* 在图层上的位置 */
+    int layer_x, layer_y;
+    #ifdef LAYER_ALPAH
+    gui_color_t *src_rgb, *dst_rgb;
+    #endif
+    /* 优化整个块 */
+    for (layer_y = layer_top; layer_y < layer_buttom; layer_y++)
+    {
+        screen_y = layer->y + layer_y;
+        #ifndef LAYER_ALPAH
+        uint16_t *dst = &((uint16_t *)gui_screen.vram_start)[(gui_screen.width * screen_y + layer->x)];
+        uint32_t *src = &layer->buffer[layer_y * layer->width];
+        uint16_t *map = &layer_map[(screen_y * gui_screen.width + layer->x)];
+        #else
+        dst_rgb = (gui_color_t *) (screen_backup_buffer + (screen_y * gui_screen.width + layer->x));
+        src_rgb = (gui_color_t *) &layer->buffer[layer_y * layer->width];
+        #endif
+        for (layer_x = layer_left; layer_x < layer_right; layer_x++)
+        {
+            #ifndef LAYER_ALPAH
+            /* 照着map中的z进行刷新 */
+            if (map[layer_x] == layer->z)
+            {
+            #endif
+                /* 获取图层中的颜色 */
+                #ifndef LAYER_ALPAH
+                dst[layer_x] = (uint16_t)((src[layer_x] &0xF8) >> 3) | ((src[layer_x] &0xFC00) >> 5) | ((src[layer_x] &0xF80000) >> 8);
+                #else   /* 根据透明度计算rgb值，算法：AlphaBlend */
+                dst_rgb[layer_x].red = (((src_rgb[layer_x].red) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].red) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].green = (((src_rgb[layer_x].green) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].green) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].blue = (((src_rgb[layer_x].blue) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].blue) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].alpha = (((src_rgb[layer_x].alpha) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].alpha) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                #endif
+            #ifndef LAYER_ALPAH
+            }
+            #endif
+        }
+    }
+}
+
+static inline void layer_refresh_block15(layer_t *layer, int layer_left, int layer_top, int layer_right, int layer_buttom)
+{
+    /* 在屏幕上的位置 */
+    int screen_y;
+    /* 在图层上的位置 */
+    int layer_x, layer_y;
+    #ifdef LAYER_ALPAH
+    gui_color_t *src_rgb, *dst_rgb;
+    #endif
+    /* 优化整个块 */
+    for (layer_y = layer_top; layer_y < layer_buttom; layer_y++)
+    {
+        screen_y = layer->y + layer_y;
+        #ifndef LAYER_ALPAH
+        uint16_t *dst = &((uint16_t *)gui_screen.vram_start)[(gui_screen.width * screen_y + layer->x)];
+        uint32_t *src = &layer->buffer[layer_y * layer->width];
+        uint16_t *map = &layer_map[(screen_y * gui_screen.width + layer->x)];
+        #else
+        dst_rgb = (gui_color_t *) (screen_backup_buffer + (screen_y * gui_screen.width + layer->x));
+        src_rgb = (gui_color_t *) &layer->buffer[layer_y * layer->width];
+        #endif
+        for (layer_x = layer_left; layer_x < layer_right; layer_x++)
+        {
+            #ifndef LAYER_ALPAH
+            /* 照着map中的z进行刷新 */
+            if (map[layer_x] == layer->z)
+            {
+            #endif
+                /* 获取图层中的颜色 */
+                #ifndef LAYER_ALPAH
+                dst[layer_x] = (uint16_t)((src[layer_x] &0xF8) >> 3) | ((src[layer_x] &0xF800) >> 6) | ((src[layer_x] &0xF80000) >> 9);
+                #else   /* 根据透明度计算rgb值，算法：AlphaBlend */
+                dst_rgb[layer_x].red = (((src_rgb[layer_x].red) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].red) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].green = (((src_rgb[layer_x].green) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].green) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].blue = (((src_rgb[layer_x].blue) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].blue) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].alpha = (((src_rgb[layer_x].alpha) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].alpha) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                #endif
+            #ifndef LAYER_ALPAH
+            }
+            #endif
+        }
+    }
+}
+
+static inline void layer_refresh_block8(layer_t *layer, int layer_left, int layer_top, int layer_right, int layer_buttom)
+{
+    /* 在屏幕上的位置 */
+    int screen_y;
+    /* 在图层上的位置 */
+    int layer_x, layer_y;
+    #ifdef LAYER_ALPAH
+    gui_color_t *src_rgb, *dst_rgb;
+    #endif
+    /* 优化整个块 */
+    for (layer_y = layer_top; layer_y < layer_buttom; layer_y++)
+    {
+        screen_y = layer->y + layer_y;
+        #ifndef LAYER_ALPAH
+        uint8_t *dst = &((uint8_t *)gui_screen.vram_start)[(gui_screen.width * screen_y + layer->x)];
+        uint32_t *src = &layer->buffer[layer_y * layer->width];
+        uint16_t *map = &layer_map[(screen_y * gui_screen.width + layer->x)];
+        #else
+        dst_rgb = (gui_color_t *) (screen_backup_buffer + (screen_y * gui_screen.width + layer->x));
+        src_rgb = (gui_color_t *) &layer->buffer[layer_y * layer->width];
+        #endif
+        for (layer_x = layer_left; layer_x < layer_right; layer_x++)
+        {
+            #ifndef LAYER_ALPAH
+            /* 照着map中的z进行刷新 */
+            if (map[layer_x] == layer->z)
+            {
+            #endif
+                /* 获取图层中的颜色 */
+                #ifndef LAYER_ALPAH
+                dst[layer_x] = (uint8_t)((src[layer_x] &0xC0) >> 6) | ((src[layer_x] &0xE000) >> 11) | ((src[layer_x] &0xE00000) >> 16);
+                #else   /* 根据透明度计算rgb值，算法：AlphaBlend */
+                dst_rgb[layer_x].red = (((src_rgb[layer_x].red) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].red) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].green = (((src_rgb[layer_x].green) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].green) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].blue = (((src_rgb[layer_x].blue) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].blue) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                dst_rgb[layer_x].alpha = (((src_rgb[layer_x].alpha) * src_rgb[layer_x].alpha + 
+                    (dst_rgb[layer_x].alpha) *(0xff - src_rgb[layer_x].alpha)) >> 8)&0xffU;
+                #endif
+            #ifndef LAYER_ALPAH
+            }
+            #endif
+        }
+    }
+}
+
+#ifdef LAYER_ALPAH
+static void __layer_refresh_copy(int left, int top, int right, int buttom)
+{
+    int screen_x, screen_y;
+
+    switch (gui_screen.bpp)
+    {
+    case 8:
+        for (screen_y = top; screen_y <= buttom; screen_y++) {
+            uint8_t *dst = &((uint8_t *)gui_screen.vram_start)[(gui_screen.width * screen_y)];
+            uint32_t *src = &screen_backup_buffer[gui_screen.width * screen_y];
+            for (screen_x = left; screen_x <= right; screen_x++) {
+                dst[screen_x] = (uint8_t)((src[screen_x] &0xC0) >> 6) | ((src[screen_x] &0xE000) >> 11) | ((src[screen_x] &0xE00000) >> 16);
+            }
+        }
+        break;
+    case 15:
+        for (screen_y = top; screen_y <= buttom; screen_y++) {
+            uint16_t *dst = &((uint16_t *)gui_screen.vram_start)[(gui_screen.width * screen_y)];
+            uint32_t *src = &screen_backup_buffer[gui_screen.width * screen_y];
+            for (screen_x = left; screen_x <= right; screen_x++) {
+                dst[screen_x] = (uint16_t)((src[screen_x] &0xF8) >> 3) | ((src[screen_x] &0xF800) >> 6) | ((src[screen_x] &0xF80000) >> 9);
+            }
+        }
+        break;
+    case 16:
+        for (screen_y = top; screen_y <= buttom; screen_y++) {
+            uint16_t *dst = &((uint16_t *)gui_screen.vram_start)[(gui_screen.width * screen_y)];
+            uint32_t *src = &screen_backup_buffer[gui_screen.width * screen_y];
+            for (screen_x = left; screen_x <= right; screen_x++) {
+                dst[screen_x] = (uint16_t)((src[screen_x] &0xF8) >> 3) | ((src[screen_x] &0xFC00) >> 5) | ((src[screen_x] &0xF80000) >> 8);
+            }
+        }
+        break;
+    case 24:
+        for (screen_y = top; screen_y <= buttom; screen_y++) {
+            uint8_t *dst = &((uint8_t *)gui_screen.vram_start)[(gui_screen.width * screen_y) * 3];
+            uint32_t *src = &screen_backup_buffer[gui_screen.width * screen_y];
+            for (screen_x = left; screen_x <= right; screen_x++) {
+                dst[screen_x * 3 + 0] = src[screen_x] & 0xFF;
+                dst[screen_x * 3 + 1] = (src[screen_x] & 0xFF00) >> 8;
+                dst[screen_x * 3 + 2] = (src[screen_x] & 0xFF0000) >> 16;
+            }
+        }
+        break;  
+    case 32:
+        for (screen_y = top; screen_y <= buttom; screen_y++) {
+            uint32_t *dst = &((uint32_t *)gui_screen.vram_start)[gui_screen.width * screen_y];
+            uint32_t *src = &screen_backup_buffer[gui_screen.width * screen_y];
+            for (screen_x = left; screen_x <= right; screen_x++) {
+                dst[screen_x] = src[screen_x];
+            }
+        }
+        break;
+    default:
+        break;
+    }
+}
+#endif
 /**
  * layer_refresh_by_z - 刷新图层
  * 
@@ -571,28 +875,19 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
     /* 在图层中的位置 */
     int layer_left, layer_top, layer_right, layer_buttom;
 
-    /* 在屏幕上的位置 */
-    int screen_x, screen_y;
-
-    /* 在图层上的位置 */
-    int layer_x, layer_y;
-
     /* 修复需要刷新的区域 */
     if (left < 0)
         left = 0;
 	if (top < 0)
         top = 0;
-	if (right > gui_screen.width)
-        right = gui_screen.width;
-	if (buttom > gui_screen.height)
-        buttom = gui_screen.height;
+	if (right > gui_screen.width - 1)
+        right = gui_screen.width - 1;
+	if (buttom > gui_screen.height - 1)
+        buttom = gui_screen.height - 1;
     
     layer_t *layer;
-    #ifdef LAYER_ALPAH
-    GUI_COLOR color;
-    gui_color_t *src_rgb, *dst_rgb;
-    #endif
-    spin_lock(&layer_list_spin_lock);
+    unsigned long flags;
+    spin_lock_irqsave(&layer_list_spin_lock, flags);
 
     /* 刷新高度为[Z0-Z1]区间的图层 */
     list_for_each_owner (layer, &layer_show_list_head, list) {
@@ -613,66 +908,18 @@ void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1
                 layer_right = layer->width;
             if (layer_buttom > layer->height)
                 layer_buttom = layer->height;
-            /* TODO: 进行范围剪切，如果不在刷新范围内就不处理 */
 
-            for(layer_y = layer_top; layer_y < layer_buttom; layer_y++){
-                screen_y = layer->y + layer_y;
-                if (screen_y < 0)
-                    continue;
-                if (screen_y >= gui_screen.height)
-                    break;
-
-                for(layer_x = layer_left; layer_x < layer_right; layer_x++){
-                    screen_x = layer->x + layer_x;
-                    if (screen_x < 0)
-                        continue;
-                    if (screen_x >= gui_screen.width)
-                        break;
-                        
-                    #ifndef LAYER_ALPAH
-                    /* 照着map中的z进行刷新 */
-                    if (layer_map[(screen_y * gui_screen.width + screen_x)] == layer->z) {
-                    #endif
-                        /* 获取图层中的颜色 */
-                        #ifndef LAYER_ALPAH
-                        /* 写入到显存 */
-                        gui_screen.output_pixel(screen_x, screen_y, gui_screen.gui_to_screen_color(
-                            layer->buffer[layer_y * layer->width + layer_x]));
-                        #else   /* 根据透明度计算rgb值，算法：AlphaBlend */
-                        src_rgb = (gui_color_t *) &layer->buffer[layer_y * layer->width + layer_x];
-                        
-                        dst_rgb = (gui_color_t *) (screen_backup_buffer + (screen_y * gui_screen.width ) + screen_x);
-
-                        dst_rgb->red = (((src_rgb->red) * src_rgb->alpha + 
-                            (dst_rgb->red) *(0xff - src_rgb->alpha)) >> 8)&0xffU;
-                        dst_rgb->green = (((src_rgb->green) * src_rgb->alpha + 
-                            (dst_rgb->green) *(0xff - src_rgb->alpha)) >> 8)&0xffU;
-                        dst_rgb->blue = (((src_rgb->blue) * src_rgb->alpha + 
-                            (dst_rgb->blue) *(0xff - src_rgb->alpha)) >> 8)&0xffU;
-                        dst_rgb->alpha = (((src_rgb->alpha) * src_rgb->alpha + 
-                            (dst_rgb->alpha) *(0xff - src_rgb->alpha)) >> 8)&0xffU;
-                    
-                        
-                        #endif
-                    #ifndef LAYER_ALPAH
-                    }
-                    #endif
-                }
-            }
+            layer_refresh_block(layer, layer_left, layer_top, layer_right, layer_buttom);
         #ifndef LAYER_ALPAH
         }
         #endif
     }
-    spin_unlock(&layer_list_spin_lock);
-
+    
     #ifdef LAYER_ALPAH  /* 将指定区域刷新到屏幕 */
-    for (screen_y = top; screen_y <= buttom; screen_y++) {
-        for (screen_x = left; screen_x <= right; screen_x++) {
-            gui_screen.output_pixel(screen_x, screen_y, gui_screen.gui_to_screen_color(
-                screen_backup_buffer[screen_y * gui_screen.width + screen_x]));
-        }
-    }
+    __layer_refresh_copy(left, top, right, buttom);
     #endif
+
+    spin_unlock_irqrestore(&layer_list_spin_lock, flags);
 }
 
 /**
@@ -739,18 +986,16 @@ void layer_set_xy(layer_t *layer, int x, int y)
     layer->x = x;
     layer->y = y;
     if (layer->z >= 0) {
-        /* 刷新原来位置 */
-        layer_refresh_map(old_x, old_y, old_x + layer->width, old_y + layer->height, 0);
-        /* 刷新新位置 */
-        layer_refresh_map(x, y, x + layer->width, y + layer->height, layer->z);
-
-        /* 刷新新的位置 */
-        layer_refresh_by_z(old_x, old_y, old_x + layer->width, old_y + layer->height, 0, layer->z - 1);
-        /* 刷新新位置 */
-        layer_refresh_by_z(x, y, x + layer->width, y + layer->height, layer->z, layer->z);
+        /* 计算需要刷新的范围，整体只刷新一次 */
+        int x0, y0, x1, y1;
+        x0 = min(old_x, x);
+        y0 = min(old_y, y);
+        x1 = max(old_x + layer->width, x + layer->width);
+        y1 = max(old_y + layer->height, layer->z);
+        layer_refresh_map(x0, y0, x1, y1, 0);
+        layer_refresh_by_z(x0, y0, x1, y1, 0, layer->z);
     }
     layer_mutex_unlock(layer);
-
 }
 
 /**
@@ -765,7 +1010,6 @@ int layer_reset_size(layer_t *layer, int x, int y, uint32_t width, uint32_t heig
     if (!layer->buffer) {
         return -1;
     }
-    char ext_buf = 0;
     size_t bufsz = width * height * sizeof(GUI_COLOR);
     uint32_t *buffer = kmalloc(bufsz);
     if (buffer == NULL) {
@@ -1063,13 +1307,13 @@ static int gui_dispatch_mouse_filter_msg(g_msg_t *msg)
             gui_rect_t rect;
             if (!layer_calc_resize(gui_mouse.resize_layer, msg->data0, msg->data1, &rect)) {
                 /* 发送一个调整大小消息 */
-                #ifdef LAYER_DEBUG
+                #ifdef DEBUG_GUI_LAYER
                 printk("[gui]: up -> layer resize from (%d, %d), (%d, %d)",
                     gui_mouse.resize_layer->x, gui_mouse.resize_layer->y,
                     gui_mouse.resize_layer->width, gui_mouse.resize_layer->height);
                 printk(" to (%d, %d), (%d, %d)\n",
                     rect.x, rect.y, rect.width, rect.height);
-                #endif /* LAYER_DEBUG */
+                #endif /* DEBUG_GUI_LAYER */
                 layer_try_resize(gui_mouse.resize_layer, &rect);
                 
                 #ifdef CONFIG_SHADE_LAYER
@@ -1086,11 +1330,13 @@ static int gui_dispatch_mouse_filter_msg(g_msg_t *msg)
 
         if (gui_mouse.drag_layer) { /* 处于抓取时弹起 */
             if (gui_mouse.state == MOUSE_HOLD) {
+                
                 #ifdef CONFIG_SHADE_LAYER
-                layer_set_z(gui_mouse.shade, -1); /* 隐藏遮罩图层 */
                 /* 设置抓取窗口的位置 */
                 layer_set_xy(gui_mouse.drag_layer, gui_mouse.shade_rect.x,
                     gui_mouse.shade_rect.y);
+
+                layer_set_z(gui_mouse.shade, -1); /* 隐藏遮罩图层 */
                 #endif /* CONFIG_SHADE_LAYER */
 
                 /* 发送窗口移动消息 */
@@ -1104,7 +1350,6 @@ static int gui_dispatch_mouse_filter_msg(g_msg_t *msg)
                     m.data1 = gui_mouse.drag_layer->y;
                     msgpool_try_push(task->gmsgpool, &m);
                 }
-                
             }
             gui_mouse.drag_layer = NULL;
 
@@ -1125,13 +1370,13 @@ static int gui_dispatch_mouse_filter_msg(g_msg_t *msg)
             /* 实时调整大小 */
             gui_rect_t rect;
             if (!layer_calc_resize(gui_mouse.resize_layer, msg->data0, msg->data1, &rect)) {
-                #ifdef LAYER_DEBUG
+                #ifdef DEBUG_GUI_LAYER
                 printk("[gui]: layer resize from (%d, %d), (%d, %d)",
                     gui_mouse.resize_layer->x, gui_mouse.resize_layer->y,
                     gui_mouse.resize_layer->width, gui_mouse.resize_layer->height);
                 printk(" to (%d, %d), (%d, %d)\n",
                     rect.x, rect.y, rect.width, rect.height);     
-                #endif /* LAYER_DEBUG */
+                #endif /* DEBUG_GUI_LAYER */
                 #ifdef CONFIG_SHADE_LAYER
                 gui_draw_shade_layer(gui_mouse.shade, &rect, 1); /* 绘制新内容 */
                 gui_rect_copy(&gui_mouse.shade_rect, &rect); /* 保存新区域 */
@@ -1152,30 +1397,22 @@ static int gui_dispatch_mouse_filter_msg(g_msg_t *msg)
             if (gui_rect_valid(&gui_mouse.shade_rect)) {
                 gui_draw_shade_layer(gui_mouse.shade, &gui_mouse.shade_rect, 0);
             }
-            #endif
-
             gui_rect_t rect;
             rect.x = wx;
             rect.y = wy;
             rect.width = gui_mouse.drag_layer->width;
             rect.height = gui_mouse.drag_layer->height;
-            #ifdef CONFIG_SHADE_LAYER
             gui_draw_shade_layer(gui_mouse.shade, &rect, 1); /* 绘制新内容 */
             gui_rect_copy(&gui_mouse.shade_rect, &rect); /* 保存新区域 */
             if (gui_mouse.shade->z < 0) { /* 没显示就显示 */
                 layer_clear(gui_mouse.shade);
                 layer_set_z(gui_mouse.shade, sys_layer_get_win_top());
             }
+            #else
+            layer_set_xy(gui_mouse.drag_layer, wx, wy);
             #endif /* CONFIG_SHADE_LAYER */
 
             gui_mouse_set_state(MOUSE_HOLD);
-
-            #ifdef CONFIG_WAKER_LAYER
-            /* 移动的是游走窗口 */
-            layer_set_xy(gui_mouse.walker, wx, wy);
-            #else
-            //layer_set_xy(gui_mouse.drag_layer, wx, wy);
-            #endif /* CONFIG_WAKER_LAYER */
             
             return 0;
         }
@@ -1412,6 +1649,27 @@ int gui_init_layer()
 
     layer_focused = NULL;
     
+    switch (gui_screen.bpp)
+    {
+    case 8:
+        layer_refresh_block = layer_refresh_block8;
+        break;
+    case 15:
+        layer_refresh_block = layer_refresh_block15;
+        break;
+    case 16:
+        layer_refresh_block = layer_refresh_block16;
+        break;
+    case 24:
+        layer_refresh_block = layer_refresh_block24;
+        break;
+    case 32:
+        layer_refresh_block = layer_refresh_block32;
+        break;
+    default:
+        break;
+    }
+
     if (init_mouse_layer() < 0) {
         kfree(layer_map);
         return -1;
