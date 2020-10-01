@@ -545,6 +545,8 @@ int init_mouse_layer()
     gui_mouse.button_down   = gui_mouse_button_down;
     gui_mouse.button_up     = gui_mouse_button_up;
     gui_mouse.motion    = gui_mouse_motion;
+    gui_mouse.wheel    = gui_mouse_wheel;
+    
     gui_mouse.width     = 32;
     gui_mouse.height    = 32;
     gui_mouse.state     = MOUSE_NORMAL;

@@ -169,7 +169,7 @@ get_memory_info:
 %if CONFIG_GRAPHIC == 1
 
 ; 使用的模式
-VBE_MODE	EQU	VMODE_1280_1024_32
+VBE_MODE	EQU	VMODE_1024_768_16
 
 get_vbe_info:
     push ds     ; 保存数据段
