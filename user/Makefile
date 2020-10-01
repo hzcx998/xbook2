@@ -12,9 +12,10 @@ X_LIBDIRS	+= $(srctree)/../library/xlibc $(srctree)/../library/pthread \
 				$(srctree)/../library/zlib $(srctree)/../library/gapi \
 				$(srctree)/../library/xlibcpp
 
+LD			:= ld -m elf_i386
 AS			:=	nasm
 
-export AS
+export AS LD
 
 MODULE      +=  lvgl
 MODULE      +=  microui
