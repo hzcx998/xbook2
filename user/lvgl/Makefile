@@ -1,6 +1,6 @@
 X_LIBS		+= libxlibc-0.0.1.a libgapi-0.1.0.a
 
-X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=c99 -O2
+X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=c99 -O2 
 
 NAME		:= lv
 SRC			+= main.c 

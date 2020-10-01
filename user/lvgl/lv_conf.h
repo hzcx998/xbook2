@@ -736,6 +736,9 @@ typedef void * lv_obj_user_data_t;
 #  define _CRT_SECURE_NO_WARNINGS
 #endif
 
+/* disable long long print in 32 bits system */
+#define PRINTF_DISABLE_SUPPORT_LONG_LONG
+
 /*--END OF LV_CONF_H--*/
 
 #endif /*LV_CONF_H*/

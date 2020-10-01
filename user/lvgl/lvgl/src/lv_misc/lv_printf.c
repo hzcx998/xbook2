@@ -143,8 +143,6 @@ static inline void _out_null(char character, void * buffer, size_t idx, size_t m
     (void)maxlen;
 }
 
-
-
 // internal secure strlen
 // \return The length of the string (excluding the terminating 0) limited by 'maxsize'
 static inline unsigned int _strnlen_s(const char * str, size_t maxsize)
