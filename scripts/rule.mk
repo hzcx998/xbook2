@@ -3,11 +3,14 @@ include $(XBUILD_DIR)/include.mk
 quiet_cmd_cc_o_c = $(ECHO_CC) $(@:.o=)
 cmd_cc_o_c = $(CC) $(X_CFLAGS) -MD -MF $(@D)/.$(@F).d $(X_CPPFLAGS) -c $< -o $@
 
-quiet_cmd_as_o_S = $(ECHO_CC) $(@:.o=)
+quiet_cmd_as_o_S = $(ECHO_AS) $(@:.o=)
 cmd_as_o_S = $(AS) $(X_ASFLAGS) -MD -MF $(@D)/.$(@F).d $(X_CPPFLAGS) -c $< -o $@
 
 quiet_cmd_as_o_asm = $(ECHO_AS) $(@:.o=)
 cmd_as_o_asm = $(AS) $(X_ASFLAGS) -o $@  $<
+
+quiet_cmd_cc_o_cpp = $(ECHO_CXX) $(@:.o=)
+cmd_cc_o_cpp = $(CXX) $(X_CXXFLAGS) -MD -MF $(@D)/.$(@F).d $(X_CPPFLAGS) -c $< -o $@
 
 # If the list of objects to link is empty, just create an empty built-in.o
 quiet_cmd_link_o_target = $(ECHO_LD) $(obj)/built-in.o
@@ -26,6 +29,9 @@ $(obj)/%.asm.o : $(src)/%.asm FORCE
 
 $(obj)/%.c.o : $(src)/%.c FORCE
 	$(call if_changed_dep,cc_o_c)
+
+$(obj)/%.cpp.o : $(src)/%.cpp FORCE
+	$(call if_changed_dep,cc_o_cpp)
 
 # For module target
 ifneq ($(NAME),)

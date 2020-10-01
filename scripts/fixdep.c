@@ -118,11 +118,18 @@
 #define OS_LINUX
 #elif _WIN32
 #define OS_WIN32
+#elif __APPLE__
+#include "TargetConditionals.h"
+#if TARGET_OS_MAC
+#define OS_MAC
+#else
+#error "Unsupported platforms"
+#endif
 #else
 #error "Unsupported platforms"
 #endif
 
-#ifdef OS_LINUX
+#ifndef OS_WIN32
 #include <sys/mman.h>
 #include <arpa/inet.h>
 #else
@@ -338,7 +345,7 @@ static void do_config_file(const char *filename)
 		close(fd);
 		return;
 	}
-#ifdef OS_LINUX
+#ifndef OS_WIN32
 	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if ((long) map == -1) {
 		perror("fixdep: mmap");
@@ -357,7 +364,7 @@ static void do_config_file(const char *filename)
 
 	parse_config_file(map, st.st_size);
 
-#ifdef OS_LINUX
+#ifndef OS_WIN32
 	munmap(map, st.st_size);
 	close(fd);
 #else
@@ -452,7 +459,7 @@ static void print_deps(void)
 		return;
 	}
 
-#ifdef OS_LINUX
+#ifndef OS_WIN32
 	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if ((long) map == -1) {
 		perror("fixdep: mmap");
@@ -471,7 +478,7 @@ static void print_deps(void)
 
 	parse_dep_file(map, st.st_size);
 
-#ifdef OS_LINUX
+#ifndef OS_WIN32
 	munmap(map, st.st_size);
 	close(fd);
 #else

@@ -105,7 +105,10 @@ endif
 # 清理环境。
 debuild: 
 	$(MAKE) -s -C  $(KERNSRC) clean
+ifeq ($(OS),Windows_NT)
+else
 	$(MAKE) -s -C  $(FATFS_DIR) clean
+endif
 	$(MAKE) -s -C  $(LIBRARY_DIR) clean
 	$(MAKE) -s -C  $(SYSTEM_DIR) clean
 	$(MAKE) -s -C  $(USER_DIR) clean

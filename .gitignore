@@ -66,10 +66,12 @@ develop/rom/sbin/
 
 develop/bochs/
 
-# fixdep
+# linux fixdep
 library/fixdep
+system/fixdep
+user/fixdep
 
-#tools
+# linux tools
 tools/fatfs/fatfs
 
 # dir
