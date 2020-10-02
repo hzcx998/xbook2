@@ -70,6 +70,7 @@ develop/bochs/
 library/fixdep
 system/fixdep
 user/fixdep
+src/fixdep
 
 # linux tools
 tools/fatfs/fatfs
