@@ -20,7 +20,7 @@
 
 #define DEV_FIFO_BUF_LEN     64
 
-#define USE_THREAD  1
+#define USE_THREAD  0
 
 /* 键盘控制器端口 */
 enum kbd_controller_port {
