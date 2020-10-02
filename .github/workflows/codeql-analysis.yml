@@ -62,11 +62,11 @@ jobs:
     # ✏️ If the Autobuild fails above, remove it and uncomment the following three lines
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
-    - name: Install xmllint
+    - name: Install nasm, gcc
       run: sudo apt-get install nasm gcc
     - run: |
-        make all
         make build
+        make all
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
