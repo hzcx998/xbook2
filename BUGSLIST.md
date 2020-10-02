@@ -31,3 +31,6 @@ spinning in assertion failure()
 
 ## <2020.9.30>
 1. IDE驱动程序不能在用户态进行读写？
+
+## <2020.10.3>
+1. 内核usleep不能正常工作

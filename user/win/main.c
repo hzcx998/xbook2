@@ -8,17 +8,16 @@ int rate_progress = 0;
 int fps = 0;
 #define RATE_BAR_LEN    360
 
-#define WIDTH   1920
-#define HEIGHT  1080
-
+#define WIDTH   320
+#define HEIGHT  240
 
 void timer_handler(int layer, uint32_t msgid, uint32_t tmrid, uint32_t time)
 {
-    g_set_timer(layer, tmrid, 1000, timer_handler);
+    g_set_timer(layer, tmrid, 50, timer_handler);
     
     printf("[win]: fps=%d!\n", fps);
     fps = 0;
-    
+
 }
 
 g_bitmap_t *screen_bitmap;
@@ -117,8 +116,6 @@ int win_proc(g_msg_t *msg)
         screen_bitmap = g_new_bitmap(w, h);
         if (screen_bitmap == NULL)
             break;
-        if (fps % 10 == 0 || fps == 0)
-            printf("size: %d %d\n", w, h);
         g_rectfill(screen_bitmap, 0, 0, w, h, color);
         g_paint_window(win, 0, 0, screen_bitmap);
         //g_refresh_window_rect(win, 0, 0, w, h);

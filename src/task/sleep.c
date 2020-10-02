@@ -2,7 +2,7 @@
 #include <xbook/timer.h>
 #include <xbook/clock.h>
 
-// #define DEBUG_TASK_SLEEP
+#define DEBUG_TASK_SLEEP
 
 /**
  * sleep_task_timeout - 休眠任务超时
@@ -47,7 +47,7 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
     save_intr(flags);
     current_task->sleep_timer = NULL;           /* 解绑休眠定时器 */
     /* 有可能还在休眠中就被唤醒了，那么就检查定时器是否已经被执行过了 */
-    if (sleep_timer.timeout > 0) { /* 非正常唤醒 */
+    if (sleep_timer.timeout > timer_ticks) { /* 非正常唤醒 */
 #ifdef DEBUG_TASK_SLEEP
         printk(KERN_DEBUG "task_sleep_by_ticks: not del\n");
 #endif
@@ -55,11 +55,11 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
     }
 #ifdef DEBUG_TASK_SLEEP
     printk(KERN_DEBUG "task_sleep_by_ticks: end pid=%d timeout=%d\n",
-        current_task->pid, sleep_timer.timeout);
+        current_task->pid, sleep_timer.timeout - timer_ticks);
 #endif
     restore_intr(flags);
     
-    return sleep_timer.timeout; /* 返回剩余ticks */
+    return sleep_timer.timeout - timer_ticks; /* 返回剩余ticks */
 }
 
 unsigned long sys_sleep(unsigned long second)

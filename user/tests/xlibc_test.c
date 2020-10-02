@@ -4,7 +4,7 @@ int getopt_test(int argc,char *argv[]);
 
 int xlibc_test(int argc,char *argv[])
 {
-    return getopt_test(argc, argv);
+    // return getopt_test(argc, argv);
 	puts("-----------xlibc_test------------");
 
 	puts("time");
@@ -32,7 +32,17 @@ int xlibc_test(int argc,char *argv[])
 		printf("%ld:%ld ",num,labs(num));
 	}
 	putchar('\n');
-	
+	int i = 0;
+    // usleep
+    while (1)
+    {
+        usleep(1000 * 1000);
+        printf("%d\n", i);
+        i++;
+    }
+    
+
+
 	return 0;
 }
 

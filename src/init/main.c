@@ -18,6 +18,7 @@
 #include <xbook/net.h>
 #include <xbook/gui.h>
 #include <xbook/initcall.h>
+#include <xbook/timer.h>
 
 int kernel_main(void)
 {
@@ -47,6 +48,8 @@ int kernel_main(void)
     
     init_clock();
     
+    init_timer_system();
+
     /* enable interrupt */
     enable_intr();
 

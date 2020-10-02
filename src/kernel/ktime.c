@@ -251,7 +251,7 @@ unsigned long timeval_to_systicks(struct timeval *tv)
     unsigned long usec = tv->tv_usec;
     if (sec >= (MAX_SYSTICKS_VALUE / HZ)) /* 超过秒的ticks的最大值，就直接返回最大值 */
         return MAX_SYSTICKS_VALUE;
-    usec -= 1000000L / HZ - 1;  /* 向下对齐微妙秒数 */
+    //usec -= 1000000L / HZ - 1;  /* 向下对齐微妙秒数 */
     usec /= 1000000L / HZ;  /* 秒/HZ=1秒的ticks数 */
     return HZ * sec + usec;
 }
@@ -280,7 +280,7 @@ unsigned long timespec_to_systicks(struct timespec *ts)
     unsigned long nsec = ts->tv_nsec;
     if (sec >= (MAX_SYSTICKS_VALUE / HZ)) /* 超过秒的ticks的最大值，就直接返回最大值 */
         return MAX_SYSTICKS_VALUE;
-    nsec -= 1000000000L / HZ - 1;  /* 向下对齐纳妙秒数 */
+    //nsec -= 1000000000L / HZ - 1;  /* 向下对齐纳妙秒数 */
     nsec /= 1000000000L / HZ;  /* 秒/HZ=1秒的ticks数 */
     return HZ * sec + nsec;
 }
