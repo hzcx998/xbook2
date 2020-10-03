@@ -1,6 +1,7 @@
 #include <xbook/task.h>
 #include <xbook/timer.h>
 #include <xbook/clock.h>
+#include <xbook/schedule.h>
 
 // #define DEBUG_TASK_SLEEP
 

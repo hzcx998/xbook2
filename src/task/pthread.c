@@ -1,4 +1,3 @@
-#include <xbook/task.h>
 #include <xbook/schedule.h>
 #include <xbook/process.h>
 #include <xbook/pthread.h>
@@ -173,7 +172,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
 #endif
 
     task_global_list_add(task);
-    task_priority_queue_add_tail(task);
+    task_priority_queue_add_tail(sched_get_unit(), task);
     
     restore_intr(flags);
     return task;
@@ -445,7 +444,7 @@ int sys_thread_cancel(pthread_t thread)
     task->flags |= THREAD_FLAG_CANCELED;
     if (task->flags & THREAD_FLAG_CANCEL_ASYCHRONOUS) { /* 立即取消线程处理 */ 
         /* 查看是否为自己取消自己 */
-        if (task == task_current) { /* 是自己 */
+        if (task == current_task) { /* 是自己 */
             restore_intr(flags);
 #ifdef DEBUG_PTHREAD
             printk(KERN_DEBUG "sys_thread_cancel: pid=%d cancel self.\n", current_task->pid);

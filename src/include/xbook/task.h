@@ -2,6 +2,7 @@
 #define _XBOOK_TASK_H
 
 #include <arch/page.h>
+#include <arch/cpu.h>
 #include <sys/proc.h>
 #include <types.h>
 #include <list.h>
@@ -55,16 +56,11 @@ enum thread_flags {
     CLIENT_SENDING                  = (1 << 7),     /* 客户端正在发送中 */
 };
 
-typedef struct priority_queue {
-    list_t list;            /* 任务链表 */
-    unsigned long length;   /* 队列长度 */
-    unsigned int priority;  /* 优先级 */
-} priority_queue_t;
-
 typedef struct _task {
     unsigned char *kstack;              /* kernel stack, must be first member */
     task_state_t state;                 /* 任务的状态 */
     spinlock_t lock;                    /* 保护进程自己的锁 */
+    cpuid_t cpuid;                      /* 进程的cpuid */
     pid_t pid;                          /* 自己的进程id */
     pid_t parent_pid;                   /* 父进程id */
     pid_t tgid;                         /* 线程组id：线程属于哪个进程，和pid一样，就说明是主线程，不然就是子线程 */
@@ -78,7 +74,7 @@ typedef struct _task {
     struct vmm *vmm;                    /* 进程虚拟内存管理 */
     list_t list;                        /* 处于所在队列的链表 */
     list_t global_list;                 /* 全局任务队列，用来查找所有存在的任务 */
-    priority_queue_t *prio_queue;       /* 所在的优先级队列 */
+    // priority_queue_t *prio_queue;       /* 所在的优先级队列 */
     triggers_t *triggers;               /* 触发器, 内核线程没有触发器 */
     timer_t *sleep_timer;               /* 休眠时的定时器 */
     alarm_t alarm;                      /* 闹钟 */
@@ -89,16 +85,7 @@ typedef struct _task {
     unsigned int stack_magic;           /* 任务的魔数 */
 } task_t;
 
-extern task_t *task_current;   /* 当前任务指针 */
 extern list_t task_global_list;
-
-/* 获取当前地址位置 */
-#define __current_task()   ((task_t *)(current_task_addr)())
-
-#define current_task    task_current
-
-#define set_current_state(stat) \
-        current_task->state = (stat)
 
 #define GET_TASK_TRAP_FRAME(task) \
         ((trap_frame_t *) (((unsigned char *) (task) + \

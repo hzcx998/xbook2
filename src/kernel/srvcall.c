@@ -1,6 +1,6 @@
 #include <string.h>
 #include <xbook/srvcall.h>
-#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <xbook/waitqueue.h>
 #include <xbook/spinlock.h>
 

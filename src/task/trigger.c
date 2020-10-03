@@ -3,6 +3,7 @@
 #include <xbook/process.h>
 #include <xbook/debug.h>
 #include <xbook/syscall.h>
+#include <xbook/schedule.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <gui/message.h>

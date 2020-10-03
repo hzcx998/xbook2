@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <xbook/config.h>
 #include <xbook/vmarea.h>
+#include <xbook/schedule.h>
 
 // #define DEBUG_DRIVER
 

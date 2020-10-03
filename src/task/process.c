@@ -9,8 +9,9 @@
 #include <string.h>
 #include <xbook/resource.h>
 #include <xbook/pthread.h>
-#include <xbook/srvcall.h>
 #include <xbook/gui.h>
+#include <xbook/schedule.h>
+#include <xbook/srvcall.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <sys/pthread.h>
@@ -493,7 +494,7 @@ task_t *start_process(char *name, char **argv)
     unsigned long flags;
     save_intr(flags);
     task_global_list_add(task);
-    task_priority_queue_add_tail(task);
+    task_priority_queue_add_tail(sched_get_unit(), task);
     restore_intr(flags);
     
     return task;

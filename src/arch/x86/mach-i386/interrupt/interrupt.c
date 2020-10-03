@@ -2,7 +2,7 @@
 #include <arch/registers.h>
 #include <xbook/debug.h>
 #include <xbook/trigger.h>
-#include <xbook/task.h>
+#include <xbook/schedule.h>
 
 #define DEBUG_INTR
 

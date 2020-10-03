@@ -199,8 +199,9 @@ void close_one_thread(task_t *thread)
     if (thread->state == TASK_READY) {
         /* 从优先级队列移除 */
         list_del_init(&thread->list);
-        thread->prio_queue->length--;
-        thread->prio_queue = NULL;
+        /* 对应的优先级队列任务数量-1 */
+        // thread->prio_queue->length--;
+        // thread->prio_queue = NULL;
 #ifdef DEBUG_WAIT_EXIT
         printk(KERN_DEBUG "close_one_thread: pid=%d remove from ready list.\n",
             thread->pid);

@@ -4,7 +4,6 @@
 #include <arch/atomic.h>
 #include <xbook/waitqueue.h>
 #include <xbook/schedule.h>
-#include <xbook/task.h>
 #include <xbook/kmalloc.h>
 #include <xbook/clock.h>
 
@@ -115,7 +114,7 @@ static inline void __semaphore_up(semaphore_t *sema)
     
 	/* 设置任务为就绪状态 */
 	waiter->state = TASK_READY;
-    task_priority_queue_add_head(waiter);
+    task_priority_queue_add_head(sched_get_unit(), waiter);
 }
 
 /**

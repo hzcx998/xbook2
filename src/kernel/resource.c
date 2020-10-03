@@ -1,6 +1,6 @@
 
 #include <xbook/resource.h>
-#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <xbook/clock.h>
 
 /**

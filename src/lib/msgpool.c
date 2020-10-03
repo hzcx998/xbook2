@@ -1,7 +1,8 @@
 #include <xbook/msgpool.h>
 #include <xbook/kmalloc.h>
-#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <string.h>
+
 msgpool_t *msgpool_create(size_t msgsz, size_t msgcount)
 {
     if (!msgsz || !msgcount)

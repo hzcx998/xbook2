@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include <xbook/driver.h>
-#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>

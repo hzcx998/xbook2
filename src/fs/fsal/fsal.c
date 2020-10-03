@@ -12,6 +12,7 @@
 #include <xbook/kmalloc.h>
 #include <xbook/debug.h>
 #include <xbook/fs.h>
+#include <xbook/schedule.h>
 
 // #define DEBUG_FSAL
 

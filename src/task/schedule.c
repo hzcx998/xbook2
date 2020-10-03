@@ -7,57 +7,52 @@
 
 // #define DEBUG_SCHED
 
-extern task_t *task_idle;
+/* 多任务调度器 */
+scheduler_t scheduler;
 
-/* 优先级队列 */
-priority_queue_t priority_queue[MAX_PRIORITY_NR];
-
-/* 最高等级的队列 */
-priority_queue_t *highest_prio_queue;
-
-task_t *task_priority_queue_fetch_first()
+static task_t *task_priority_queue_fetch_first(sched_unit_t *su)
 {
     task_t *task;
     //printk(KERN_NOTICE "highest prio=%d\n", highest_prio_queue->priority);
+    priority_queue_t *queue = &su->priority_queue[su->dynamic_priority];
     
-    //highest_prio_queue = &priority_queue[0];
-    /* 从最高优先级开始寻找一个最近的有任务的低优先级 */
-    ADJUST_HIGHEST_PRIO(highest_prio_queue);
     /* get first task */
-    task = list_first_owner(&highest_prio_queue->list, task_t, list);
-    --highest_prio_queue->length;   /* sub a task */
-    task->prio_queue = NULL;
+    task = list_first_owner(&queue->list, task_t, list);
+    --queue->length;   /* sub a task */
+    --su->tasknr;
+
     list_del_init(&task->list);
 
     return task;
 }
 
-task_t *get_next_task(task_t *task)
+task_t *get_next_task(sched_unit_t *su)
 {
+    task_t *task = su->cur;
     //printk("cur %s-%d ->", task->name, task->pid);
     /* 1.如果是时间片到了就插入到就绪队列，准备下次调度，如果是其他状态就不插入就绪队列 */
     if (task->state == TASK_RUNNING) {
         /* 时间片到了，加入就绪队列 */
-        task_priority_queue_add_tail(task);
+        task_priority_queue_add_tail(su, task);
         // 更新信息
         task->ticks = task->timeslice;
         task->state = TASK_READY;
     /* 如果是主动让出cpu，那么就只插入就绪队列，不修改ticks */
     } else if (task->state == TASK_READY) {
         /* 让出cpu，加入就绪队列 */
-        task_priority_queue_add_tail(task);
+        task_priority_queue_add_tail(su, task);
     }
     /* 2.从就绪队列中获取一个任务 */
     /* 一定能够找到一个任务，因为最后的是idle任务 */
     task_t *next;
-    next = task_priority_queue_fetch_first();
+    next = task_priority_queue_fetch_first(su);
     return next;
 }
 
-void set_next_task(task_t *next)
+static void set_next_task(sched_unit_t *su, task_t *next)
 {
-    task_current = next;
-    task_activate(task_current);
+    su->cur = next;
+    task_activate(su->cur);
 }
 
 /**
@@ -70,43 +65,78 @@ void schedule()
 {
     unsigned long flags;
     save_intr(flags);
-    task_t *cur = current_task;
-    task_t *next = get_next_task(cur);
     
-    set_next_task(next);
+    sched_unit_t *su = sched_get_unit();
+    task_t *next = get_next_task(su);
+    
+    task_t *cur = su->cur;
 #ifdef DEBUG_SCHED 
     printk(KERN_INFO "schedule: switch from %s-%d-%x-%d to %s-%d-%x-%d\n",
         cur->name, cur->pid, cur, cur->priority, next->name, next->pid, next, next->priority);
-#endif
     /*dump_task_kstack(next->kstack);
     dump_task(next);*/
+#endif
+    set_next_task(su, next);
     switch_to(cur, next);
     
     restore_intr(flags);
 }
 
-void print_priority_queue(int prio)
+void sched_print_queue(sched_unit_t *su)
 {
-    if (prio < 0 || prio >= MAX_PRIORITY_NR) {
+    if (su == NULL) {
+        printk(KERN_ERR "[sched]: unit null!\n");
         return;
     }
-    printk("print_priority_queue: list\n");
-    priority_queue_t *queue = &priority_queue[prio];
+    printk(KERN_INFO "[sched]: queue list:\n");
+    priority_queue_t *queue;
     task_t *task;
-    list_for_each_owner (task, &queue->list, list) {
-        printk("task=%s pid=%d prio=%d vmm=%x\n", task->name, task->pid, task->priority, task->vmm);
+    int i; 
+    unsigned long flags;
+    spin_lock_irqsave(&scheduler.lock, flags);
+    for (i = 0; i < MAX_PRIORITY_NR; i++) {
+        queue = &su->priority_queue[i];
+        list_for_each_owner (task, &queue->list, list) {
+            printk(KERN_INFO "task=%s pid=%d prio=%d\n", task->name, task->pid, task->priority);
+        }
+    }
+    spin_unlock_irqrestore(&scheduler.lock, flags);
+}
+
+void init_sched_unit(sched_unit_t *su, cpuid_t cpuid, unsigned long flags)
+{
+    su->cpuid = cpuid;
+    su->flags = flags;
+    su->cur = NULL;
+    su->idle = NULL;
+    spinlock_init(&su->lock);
+    su->tasknr = 0;
+    su->dynamic_priority = 0;
+    priority_queue_t *queue;
+    int i;
+    for (i = 0; i < MAX_PRIORITY_NR; i++) {
+        queue = &su->priority_queue[i];
+        queue->cur = NULL;
+        queue->priority = i;    /* 队列的优先级 */
+        queue->length = 0;
+        INIT_LIST_HEAD(&queue->list);
+        spinlock_init(&queue->lock);
     }
 }
 
 void init_schedule()
 {
-    /* 初始化特权队列 */
+    scheduler.tasknr = 0;
+    spinlock_init(&scheduler.lock);
+    scheduler.cpunr = CPU_NR;
+    printk(KERN_NOTICE "scheduler size =%d\n", sizeof(scheduler_t));
+    /* 读取cpu的id到cpu列表，然后传递给调度器 */
+    cpuid_t cpu_list[CPU_NR];
+    // TODO: get cpu id from hw
+    cpu_list[0] = 0x86;
+
     int i;
-    for (i = 0; i < MAX_PRIORITY_NR; i++) {
-        INIT_LIST_HEAD(&priority_queue[i].list);    
-        priority_queue[i].length = 0; 
-        priority_queue[i].priority = i;
+    for (i = 0; i < scheduler.cpunr; i++) {
+        init_sched_unit(&scheduler.sched_unit_table[i], cpu_list[i], 0);
     }
-    /* 指向最高级的队列 */
-    highest_prio_queue = &priority_queue[0];
 }

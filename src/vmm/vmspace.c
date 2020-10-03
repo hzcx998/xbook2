@@ -1,6 +1,7 @@
 #include <xbook/vmspace.h>
 #include <xbook/task.h>
 #include <xbook/debug.h>
+#include <xbook/schedule.h>
 
 // #define DEBUG_VMSPACE
 

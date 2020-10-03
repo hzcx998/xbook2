@@ -1,6 +1,6 @@
 #include <xbook/ktime.h>
 #include <xbook/clock.h>
-#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <xbook/debug.h>
 
 ktime_t ktime;

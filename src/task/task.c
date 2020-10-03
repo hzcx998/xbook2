@@ -33,8 +33,6 @@ LIST_HEAD(task_global_list);
 /* idle任务 */
 task_t *task_kmain;
 
-task_t *task_current;   /* 当前任务指针 */
-
 /**  
  * new_pid - 分配一个pid
  */
@@ -97,7 +95,7 @@ void task_init(task_t *task, char *name, int priority)
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KSTACK_SIZE);
 
     /* no priority queue */
-    task->prio_queue = NULL;
+    //task->prio_queue = NULL;
     task->flags = 0;
     
     /* no triger */
@@ -206,9 +204,10 @@ task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg)
     /* 操作链表时关闭中断，结束后恢复之前状态 */
     unsigned long flags;
     save_intr(flags);
-
+    
     task_global_list_add(task);
-    task_priority_queue_add_tail(task);
+    sched_unit_t *su = sched_get_unit();
+    task_priority_queue_add_tail(su, task);
     
     restore_intr(flags);
     return task;
@@ -286,16 +285,17 @@ void task_unblock(task_t *task)
         (task->state == TASK_STOPPED));
     */
     if (task->state != TASK_READY) {
+        sched_unit_t *su = sched_get_unit();
         // 保证没有在就绪队列中
-        ASSERT(!is_task_in_priority_queue(task));
+        ASSERT(!is_task_in_priority_queue(su, task));
         // 已经就绪是不能再次就绪的
-        if (is_task_in_priority_queue(task)) {
+        if (is_task_in_priority_queue(su, task)) {
             panic("TaskUnblock: task has already in ready list!\n");
         }
         // 处于就绪状态
         task->state = TASK_READY;
         // 把任务放在最前面，让它快速得到调度
-        task_priority_queue_add_head(task);
+        task_priority_queue_add_head(su, task);
     }
     
     restore_intr(flags);
@@ -311,11 +311,10 @@ void task_yeild()
     // 先关闭中断，并且保存中断状态
     unsigned long flags;
     save_intr(flags);
-    set_current_state(TASK_READY); /* 设置为就绪状态 */
+    current_task->state = TASK_READY; /* 设置为就绪状态 */
     schedule(); /* 调度到其它任务 */
     restore_intr(flags);
 }
-
 
 /**
  * create_kmain_thread - 创建内核主线程
@@ -327,7 +326,8 @@ static void create_kmain_thread()
 {
     // 当前运行的就是主线程
     task_kmain = (task_t *) KERNEL_STATCK_BOTTOM;
-    task_current = task_kmain;   /* 设置当前任务 */
+    sched_unit_t *su = sched_get_unit();
+    su->cur = task_kmain;   /* 设置当前任务 */
 
     /* 最开始设置为最佳优先级，这样才可以往后面运行。直到运行到最后，就变成IDLE优先级 */
     task_init(task_kmain, "kmain", TASK_PRIO_BEST);
@@ -808,6 +808,9 @@ void init_tasks()
     kthread_start("test2", TASK_PRIO_RT, taskB, "NULL");
     kthread_start("test3", TASK_PRIO_RT, taskC, "NULL");*/
     //kthread_start("test4", 1, taskD, "NULL");
+    sched_unit_t *su = sched_get_unit();
+    su->idle = task_kmain;
+
     #if 0
     /* 创建idle线程 */
     kthread_start("idle", TASK_PRIO_IDLE, kthread_idle, NULL);

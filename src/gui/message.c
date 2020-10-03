@@ -1,5 +1,5 @@
 #include <xbook/msgpool.h>
-#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <gui/message.h>
 #include <gui/layer.h>
 #include <gui/timer.h>

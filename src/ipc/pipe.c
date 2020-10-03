@@ -1,6 +1,8 @@
 #include <xbook/pipe.h>
 #include <xbook/trigger.h>
 #include <xbook/debug.h>
+#include <xbook/schedule.h>
+
 #include <fsal/fsal.h>
 #include <types.h>
 #include <fcntl.h>

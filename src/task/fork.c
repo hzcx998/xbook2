@@ -259,7 +259,7 @@ int sys_fork()
     
     /* 把子进程添加到就绪队列和全局链表 */
     task_global_list_add(child);
-    task_priority_queue_add_tail(child); /* 放到队首 */
+    task_priority_queue_add_tail(sched_get_unit(), child); /* 放到队首 */
 
 
 #ifdef DEBUG_FORK

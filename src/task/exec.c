@@ -5,6 +5,7 @@
 #include <xbook/vmspace.h>
 #include <xbook/debug.h>
 #include <xbook/elf32.h>
+#include <xbook/schedule.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <unistd.h>

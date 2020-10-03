@@ -1,5 +1,5 @@
 #include <xbook/alarm.h>
-#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <xbook/clock.h>
 #include <xbook/debug.h>
 #include <xbook/trigger.h>

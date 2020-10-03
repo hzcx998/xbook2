@@ -16,6 +16,7 @@ typedef unsigned long blkcnt_t;
 typedef unsigned long clock_t;
 typedef unsigned time_t;
 typedef int clockid_t;
+typedef int cpuid_t;
 typedef unsigned long addr_t;
 
 typedef unsigned long ino_t;

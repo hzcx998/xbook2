@@ -6,6 +6,7 @@
 #include <xbook/vmspace.h>
 #include <xbook/process.h>
 #include <xbook/debug.h>
+#include <xbook/schedule.h>
 #include <string.h>
 
 void __user_trap_frame_init(trap_frame_t *frame)

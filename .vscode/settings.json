@@ -137,6 +137,7 @@
         "lvgl.h": "c",
         "gui.h": "c",
         "initcall.h": "c",
-        "gapi.h": "c"
+        "gapi.h": "c",
+        "pipe.h": "c"
     }
 }
