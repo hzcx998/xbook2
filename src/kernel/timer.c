@@ -186,8 +186,9 @@ long sys_usleep(struct timeval *inv, struct timeval *outv)
     unsigned long ticks;
 
     memcpy(&tv, inv, sizeof(struct timeval));
-    printk("[time]: usleep sec %d, usec %d\n", tv.tv_sec, tv.tv_usec);
-
+    #ifdef DEBUG_TIMER 
+    printk("[timer]: usleep sec %d, usec %d\n", tv.tv_sec, tv.tv_usec);
+    #endif
     /* 检测参数 */
     if (tv.tv_usec >= 1000000 || tv.tv_sec < 0 || tv.tv_usec < 0)
         return -EINVAL;
@@ -199,12 +200,14 @@ long sys_usleep(struct timeval *inv, struct timeval *outv)
     }
     /* 计算ticks */
     ticks = timeval_to_systicks(&tv);
-    
-    printk("[time]: usleep ticks %d\n", ticks);
+    #ifdef DEBUG_TIMER 
+    printk("[timer]: usleep ticks %d\n", ticks);
+    #endif
     /* 休眠一定的ticks */
     ticks = task_sleep_by_ticks(ticks);
-    printk("[time]: usleep left ticks %d\n", ticks);
-    
+    #ifdef DEBUG_TIMER 
+    printk("[timer]: usleep left ticks %d\n", ticks);
+    #endif
     /* 如果还剩下ticks，就传回去 */
     if (ticks > 0) {
         if (outv) {

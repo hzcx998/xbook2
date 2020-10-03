@@ -126,7 +126,7 @@ int main(int argc, char **argv)
     render = g_new_bitmap(LV_HOR_RES_MAX, LV_VER_RES_MAX);
     if (render == NULL)
         return -1;
-
+    
     /* 注册消息回调函数 */
     g_set_msg_routine(win_proc);
     

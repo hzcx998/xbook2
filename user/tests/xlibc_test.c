@@ -36,12 +36,10 @@ int xlibc_test(int argc,char *argv[])
     // usleep
     while (1)
     {
-        usleep(1000 * 1000);
+        usleep(3 * 1000 * 1000 + 123456);
         printf("%d\n", i);
         i++;
     }
-    
-
 
 	return 0;
 }
