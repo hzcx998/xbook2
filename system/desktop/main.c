@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     }
     /* 注册消息回调函数 */
     g_set_msg_routine(layer_proc);
-
+    
 #ifdef DESKTOP_LAUNCH_BOSH
     desktop_launch_app("bosh");
 #endif

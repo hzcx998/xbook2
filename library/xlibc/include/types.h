@@ -38,8 +38,6 @@ typedef unsigned long long		u64_t;
 
 typedef long long   loff_t;
 
-
-
 typedef char   bool_t;
 
 /* Types for `void *' pointers.  */

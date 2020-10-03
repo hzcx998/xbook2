@@ -751,11 +751,12 @@ static char *init_argv[2] = {"/sbin/init", 0};
 void start_user()
 {
     printk(KERN_DEBUG "[task]: start user process.\n");
+
     /* 加载init进程 */
     task_t *proc = start_process(init_argv[0], init_argv);
     if (proc == NULL)
         panic("kernel start process failed! please check initsrv!\n");
-    
+
     /* 降级期间不允许产生中断 */
 	unsigned long flags;
     save_intr(flags);
@@ -807,8 +808,9 @@ void init_tasks()
     kthread_start("test2", TASK_PRIO_RT, taskB, "NULL");
     kthread_start("test3", TASK_PRIO_RT, taskC, "NULL");*/
     //kthread_start("test4", 1, taskD, "NULL");
-
+    #if 0
     /* 创建idle线程 */
     kthread_start("idle", TASK_PRIO_IDLE, kthread_idle, NULL);
+    #endif
     printk(KERN_INFO "[task]: init done\n");
 }

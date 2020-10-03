@@ -75,9 +75,10 @@ void kgui_thread(void *arg)
             gui_dispatch_target_msg(&msg);
             break;
         }
-        /*printk("msg: target=%d id=%x data0=%x data1=%x data2=%x data3=%x\n", 
+        #if 0
+        printk("msg: target=%d id=%x data0=%x data1=%x data2=%x data3=%x\n", 
             msg.target, msg.id, msg.data0, msg.data1, msg.data2, msg.data3);
-        */
+        #endif
     }
 }
 
@@ -111,6 +112,7 @@ void init_gui()
     /* 启动gui线程 */
     if (kthread_start("kgui", TASK_PRIO_USER, kgui_thread, NULL) == NULL)
         panic("start kgui thread failed!\n");
+
 }
 
 int gui_user_init(task_t *task)

@@ -112,7 +112,7 @@ void init_net(void)
         pr_err("init netcard driver failed!\n");
         return;
     }
-        
+    
     /* 打开一个线程来读取网络数据包 */
     task_t * netin = kthread_start("netin", TASK_PRIO_USER, netin_kthread, NULL);
     if (netin == NULL) {

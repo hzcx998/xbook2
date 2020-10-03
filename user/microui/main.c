@@ -371,7 +371,7 @@ static int text_height(mu_Font font)
 	return r_get_text_height();
 }
 
-static bool_t ex_tp_read(mu_Context *ctx)
+static bool ex_tp_read(mu_Context *ctx)
 {
     g_msg_t msg;
     memset(&msg, 0, sizeof(g_msg_t));

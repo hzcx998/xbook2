@@ -48,6 +48,7 @@ read_mouse_continue:
     ret = device_read( mouse_handle, &event, sizeof(event), 0);
     if ( ret < 1 )
         return  -1;
+    
     switch (event.type)
     {        
         case EV_REL:
