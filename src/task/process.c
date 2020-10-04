@@ -70,6 +70,8 @@ static int load_segment(int fd, unsigned long offset, unsigned long file_sz,
 
     //printk(KERN_DEBUG "task %s space: addr %x page %d\n",(current_task)->name, vaddr_page, occupy_pages);
 
+    // printk(KERN_DEBUG "[proc]: read file off %x size %x to vaddr %x\n", offset, file_sz, vaddr);
+
     /* 读取数据到内存中 */
     sys_lseek(fd, offset, SEEK_SET);
     if (sys_read(fd, (void *)vaddr, file_sz) != file_sz) {
@@ -123,11 +125,15 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
             
             /* 如果内存占用大于文件占用，就要把内存中多余的部分置0 */
             if (prog_header.p_memsz > prog_header.p_filesz) {
+                #ifdef DEBUG_PROC
+                printk("[proc] clean bss at %x size(%x)\n", 
+                    prog_header.p_vaddr + prog_header.p_filesz, prog_header.p_memsz - prog_header.p_filesz);
+                printk("[proc] memsz(%x) > filesz(%x)\n", 
+                    prog_header.p_memsz, prog_header.p_filesz);
+                #endif
                 memset((void *)(prog_header.p_vaddr + prog_header.p_filesz), 0,
                     prog_header.p_memsz - prog_header.p_filesz);
-                /*printk("memsz(%x) > filesz(%x)\n", 
-                    prog_header.p_memsz, prog_header.p_filesz);
-                */
+                
             }
             prog_end = prog_header.p_vaddr + prog_header.p_memsz;
 #ifdef DEBUG_PROC            

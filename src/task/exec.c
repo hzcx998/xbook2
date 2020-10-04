@@ -138,6 +138,8 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     vmm_unmap_space_maparea(cur->vmm);
     /* 释放虚拟空间地址管理，后面映射时重新加载镜像 */
     vmm_release_space(cur->vmm);
+
+
     /* 加载镜像 */
     if (proc_load_image(cur->vmm, &elf_header, fd) < 0) {
         printk(KERN_ERR "sys_exec_file: load_image failed!\n");
@@ -184,15 +186,14 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 #endif
 
     /* 执行程序的时候需要继承原有进程的资源，因此不在这里初始化资源 */
-
     /* 设置执行入口 */
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
-    
+
     /* 设置进程名 */
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
     
-    //dump_trap_frame(frame);
+    // dump_trap_frame(frame);
     /* 切换到进程执行 */
     switch_to_user(frame);
     

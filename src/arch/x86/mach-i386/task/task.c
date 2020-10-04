@@ -276,8 +276,6 @@ int __proc_stack_init(task_t *task, trap_frame_t *frame, char **argv, char **env
 
     frame->ebp = frame->esp;
 #if 0 /* stack info */
-    printk(KERN_DEBUG "task %s arg space: start %x end %x\n",
-        (current_task)->name, vmm->arg_start, vmm->arg_end);
     printk(KERN_DEBUG "task %s stack space: start %x end %x\n",
         (current_task)->name, vmm->stack_start, vmm->stack_end);
     

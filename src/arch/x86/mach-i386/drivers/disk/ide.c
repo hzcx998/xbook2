@@ -1163,7 +1163,7 @@ iostatus_t ide_read(device_object_t *device, io_request_t *ioreq)
     } else {
         status = IO_FAILED;
     }
-    loop_delay(1);
+    
     ioreq->io_status.status = status;
     ioreq->io_status.infomation = len;
     
