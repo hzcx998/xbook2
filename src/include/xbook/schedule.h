@@ -22,7 +22,6 @@ typedef struct priority_queue {
     list_t list;            /* 任务链表 */
     unsigned long length;   /* 队列长度 */
     unsigned int priority;  /* 优先级 */
-    task_t *cur;      /* 当前正在执行的线程 */
 } priority_queue_t;
 
 /* 调度单元，每个处理器一个调度单元 */
@@ -32,8 +31,8 @@ typedef struct {
     uint32_t flags;         /* 调度标志 */
     uint32_t tasknr;        /* 任务数量 */
     uint32_t dynamic_priority;      /* 当前的动态优先级 */
-    task_t *idle;     /* 当前的idle任务 */
-    task_t *cur;      /* 当前的任务 */
+    task_t *idle;           /* 当前的idle任务 */
+    task_t *cur;            /* 当前的任务 */
     priority_queue_t priority_queue[4];  /* 优先级队列 */
 } sched_unit_t;
 

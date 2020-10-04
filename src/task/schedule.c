@@ -138,7 +138,6 @@ void init_sched_unit(sched_unit_t *su, cpuid_t cpuid, unsigned long flags)
     int i;
     for (i = 0; i < MAX_PRIORITY_NR; i++) {
         queue = &su->priority_queue[i];
-        queue->cur = NULL;
         queue->priority = i;    /* 队列的优先级 */
         queue->length = 0;
         INIT_LIST_HEAD(&queue->list);

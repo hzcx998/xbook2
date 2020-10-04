@@ -70,10 +70,10 @@ static unsigned int pci_read_config(unsigned int bus, unsigned int device, unsig
     reg |= (device & 0x1F) << 11;
     reg |= (function & 0x7) << 8;
     reg |= (addr & 0xFF) & 0xFC;	/*bit 0 and 1 always 0*/
-    io_mfence();
+
 	/*pci_write_config to config addr*/
     out32(PCI_CONFIG_ADDR, reg);
-    io_mfence();
+
     return in32(PCI_CONFIG_DATA);	/*return confige addr's data*/
 }
 
@@ -85,10 +85,10 @@ static void pci_write_config(unsigned int bus, unsigned int device, unsigned int
     reg |= (device & 0x1F) << 11;
     reg |= (function & 0x7) << 8;
     reg |= (addr & 0xFF) & 0xFC;	/*bit 0 and 1 always 0*/
-	io_mfence();
+
 	/*pci_write_config to config addr*/
     out32(PCI_CONFIG_ADDR, reg);
-    io_mfence();
+
 	/*pci_write_config data to confige addr*/
     out32(PCI_CONFIG_DATA, val);
 }
@@ -151,6 +151,11 @@ void pci_device_dump(pci_device_t *device)
 
 static void pci_scan_device(unsigned char bus, unsigned char device, unsigned char function)
 {
+    
+#ifdef DEBUG_PCI
+    printk(KERN_DEBUG "pci_scan_device: pci device at bus: %d, device: %d function: %d\n", 
+        bus, device, function);
+#endif
 	/*pci_read_config vendor id and device id*/
     unsigned int val = pci_read_config(bus, device, function, PCI_DEVICE_VENDER);
     unsigned int vendor_id = val & 0xffff;
@@ -231,8 +236,6 @@ static void pci_scan_device(unsigned char bus, unsigned char device, unsigned ch
     pci_dev->max_lat = (val >> 24) & 0xff;
     
 #ifdef DEBUG_PCI
-    printk(KERN_DEBUG "pci_scan_device: pci device at bus: %d, device: %d function: %d\n", 
-        bus, device, function);
     pci_device_dump(pci_dev);
 #endif
 }
@@ -410,6 +413,7 @@ void init_pci()
 	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
 		pci_device_table[i].flags = PCI_DEVICE_INVALID;
 	}
+    printk(KERN_INFO "[pci]: begin sacn device.\n");
 
 	/*scan all pci buses*/
 	pci_scan_buses();

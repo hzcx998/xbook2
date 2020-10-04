@@ -1,4 +1,5 @@
 #include <xbook/initcall.h>
+#include <xbook/debug.h>
 
 extern initcall_t __initcall_start[];
 extern initcall_t __initcall_end[];
@@ -15,6 +16,7 @@ void do_initcalls(void)
 		(*call)();
 		call++;
 	}
+    printk(KERN_INFO "do init call done.\n");
 }
 
 void do_exitcalls(void)

@@ -180,9 +180,6 @@ static void scroll_sceen(struct console_object *obj, int direction)
  */
 static void put_char(struct console_object *obj, char ch)
 {
-    #ifndef CONFIG_PRINT_CONSOLE
-    return;
-    #endif
 	unsigned char *vram = (unsigned char *)(V_MEM_BASE + 
         (obj->originalAddr + obj->y * SCREEN_WIDTH + obj->x) *2) ;
 	switch(ch){
@@ -259,7 +256,7 @@ void init_console_hw()
     /* 消除编译未使用提示 */
     get_cursor();
 
-    clean_screen(obj);
+    // clean_screen(obj);
     /* 默认在左上角 */
     obj->x = 0;
     obj->y = 0;

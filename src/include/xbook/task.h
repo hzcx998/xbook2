@@ -75,7 +75,6 @@ typedef struct _task {
     struct vmm *vmm;                    /* 进程虚拟内存管理 */
     list_t list;                        /* 处于所在队列的链表 */
     list_t global_list;                 /* 全局任务队列，用来查找所有存在的任务 */
-    // priority_queue_t *prio_queue;       /* 所在的优先级队列 */
     triggers_t *triggers;               /* 触发器, 内核线程没有触发器 */
     timer_t *sleep_timer;               /* 休眠时的定时器 */
     alarm_t alarm;                      /* 闹钟 */

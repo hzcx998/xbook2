@@ -639,8 +639,7 @@ static int ide_polling(struct ide_channel* channel, unsigned int advanced_check)
 	// (II) Wait for BSY to be cleared:
 	// -------------------------------------------------
 	/* time */
-    i = 0xf0000;
-    while ((in8(ATA_REG_STATUS(channel)) & ATA_STATUS_BUSY) && i--); // Wait for BSY to be zero.
+    while ((in8(ATA_REG_STATUS(channel)) & ATA_STATUS_BUSY)); // Wait for BSY to be zero.
 	
     if (advanced_check) {
 		unsigned char state = in8(ATA_REG_STATUS(channel)); // Read Status Register.
