@@ -77,6 +77,7 @@ void task_init(task_t *task, char *name, int priority)
     if (priority > MAX_PRIORITY_NR - 1)
         priority = MAX_PRIORITY_NR - 1;
 
+    task->static_priority = priority;
     task->priority = priority;
     task->timeslice = 3;  /* 时间片大小默认值 */
     task->ticks = task->timeslice;  /* timeslice -> ticks */
@@ -761,7 +762,7 @@ void start_user()
 	unsigned long flags;
     save_intr(flags);
     /* 当前任务降级，这样，其它任务才能运行到 */
-    task_kmain->priority = TASK_PRIO_IDLE;
+    task_kmain->static_priority = task_kmain->priority = TASK_PRIO_IDLE;
     
     restore_intr(flags);
     /* 调度到更高优先级的任务允许 */
@@ -770,7 +771,7 @@ void start_user()
     
     /* 其它进程可能在终端关闭状态阻塞，那么切换回来后就需要打开中才行 */
     enable_intr();
-
+    
     /* kmain线程 */
 	while (1) {
 		/* 进程默认处于阻塞状态，如果被唤醒就会执行后面的操作，
@@ -786,6 +787,7 @@ void kthread_idle(void *arg)
     printk(KERN_DEBUG "[task]: idle start...\n");
     while (1) {
         cpu_idle();
+        schedule();
     }
 }
 /**

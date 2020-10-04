@@ -104,6 +104,9 @@ static inline void task_priority_queue_add_tail(sched_unit_t *su, task_t *task)
  * task_priority_queue_add_head - 把任务添加到特权级队列头部
  * @task: 任务
  * 
+ * be called in:
+ * task_unblock, __semaphore_up
+ * 
  */
 static inline void task_priority_queue_add_head(sched_unit_t *su, task_t *task)
 {

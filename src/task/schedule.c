@@ -40,6 +40,12 @@ task_t *get_next_task(sched_unit_t *su)
     //printk("cur %s-%d ->", task->name, task->pid);
     /* 1.如果是时间片到了就插入到就绪队列，准备下次调度，如果是其他状态就不插入就绪队列 */
     if (task->state == TASK_RUNNING) {
+        /* NOTE: 设置动态优先级 */
+        task->priority++;
+        if (task->priority >= MAX_PRIORITY_NR) {    // 到达最低优先级后，翻转为自己的最高优先级
+            // printk(KERN_ERR "task %s prio %d static %d\n", task->name, task->priority, task->static_priority);
+            task->priority = task->static_priority;
+        }
         /* 时间片到了，加入就绪队列 */
         task_priority_queue_add_tail(su, task);
         // 更新信息
@@ -47,6 +53,11 @@ task_t *get_next_task(sched_unit_t *su)
         task->state = TASK_READY;
     /* 如果是主动让出cpu，那么就只插入就绪队列，不修改ticks */
     } else if (task->state == TASK_READY) {
+        /* NOTE: 设置动态优先级 */
+        task->priority++;
+        if (task->priority >= MAX_PRIORITY_NR) {    // 到达最低优先级后，翻转为自己的最高优先级
+            task->priority = task->static_priority;
+        }
         /* 让出cpu，加入就绪队列 */
         task_priority_queue_add_tail(su, task);
     }
@@ -104,9 +115,12 @@ void sched_print_queue(sched_unit_t *su)
     spin_lock_irqsave(&scheduler.lock, flags);
     for (i = 0; i < MAX_PRIORITY_NR; i++) {
         queue = &su->priority_queue[i];
+        printk(KERN_NOTICE "qeuue prio: %d\n", queue->priority);
         list_for_each_owner (task, &queue->list, list) {
-            printk(KERN_INFO "task=%s pid=%d prio=%d\n", task->name, task->pid, task->priority);
+            printk(KERN_INFO "task=%s pid=%d prio=%d ->", task->name, task->pid, task->priority);
         }
+        printk(KERN_NOTICE "\n");
+        
     }
     spin_unlock_irqrestore(&scheduler.lock, flags);
 }

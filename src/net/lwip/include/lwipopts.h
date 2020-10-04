@@ -56,7 +56,7 @@
 the thread is won't be blocked by func, so it must can't
 rt prio！
  */
-#define TCPIP_THREAD_PRIO TASK_PRIO_USER    
+#define TCPIP_THREAD_PRIO TASK_PRIO_RT    
 
 /* 不打开lwip的socket, connect等宏 */
 #define LWIP_COMPAT_SOCKETS 0

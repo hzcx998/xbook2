@@ -199,11 +199,9 @@ low_level_input(struct netif *netif)
 
   /* Obtain the size of the packet and put it into the "len"
      variable. */
-  //len = ;
   u8_t rxbuf[ETH_MTU];
-  //len = res_read(ethernetif->ethres, DEV_NOWAIT, rxbuf, ETH_MTU);
+
   len = drv_netcard.read(ethernetif->netsolt, rxbuf, ETH_MTU);
-  //srvprint("read res %d.\n", len);
   if (len < 0)
     return 0;
 #if ETH_PAD_SIZE
@@ -230,17 +228,10 @@ low_level_input(struct netif *netif)
        * actually received size. In this case, ensure the tot_len member of the
        * pbuf is the sum of the chained pbuf len members.
        */
-        q = p;
+         q = p;
       //read data into(q->payload, q->len);
-      
-        if (len < 0) {
-            pbuf_free(q);
-            return NULL;
-        } else {
-            memcpy((u8_t*)q->payload, (u8_t*)rxbuf, q->len);
-            q->next = NULL;  
-        }
-
+        memcpy((u8_t*)q->payload, (u8_t*)rxbuf, q->len);
+        q->next = NULL;
     //}
     //acknowledge that packet has been read();
 

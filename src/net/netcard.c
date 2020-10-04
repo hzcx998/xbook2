@@ -142,7 +142,7 @@ static int __read(int solt, void *buffer, size_t size)
 {
     if (IS_BAD_SOLT(solt))
         return -1;
-    int len = device_read(SOLT_TO_HANDLE(solt), buffer, size, DEV_NOWAIT);
+    int len = device_read(SOLT_TO_HANDLE(solt), buffer, size, 0);
     if (len <= 0)
         return -1;
     return len;

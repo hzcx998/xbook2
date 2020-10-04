@@ -65,7 +65,8 @@ typedef struct _task {
     pid_t parent_pid;                   /* 父进程id */
     pid_t tgid;                         /* 线程组id：线程属于哪个进程，和pid一样，就说明是主线程，不然就是子线程 */
     unsigned long flags;                /* 标志 */
-    unsigned long priority;             /* 任务所在的优先级队列 */
+    unsigned long priority;             /* 任务的动态优先级 */
+    unsigned long static_priority;      /* 任务的静态优先级 */
     unsigned long ticks;                /* 运行的ticks，当前剩余的timeslice */
     unsigned long timeslice;            /* 时间片，可以动态调整 */
     unsigned long elapsed_ticks;        /* 任务执行总共占用的时间片数 */
