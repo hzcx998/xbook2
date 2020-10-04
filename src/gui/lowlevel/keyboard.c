@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <xbook/kmalloc.h>
 #include <xbook/vmarea.h>
+#include <xbook/schedule.h>
 
 /// 程序本地头文件
 #include <gui/keyboard.h>

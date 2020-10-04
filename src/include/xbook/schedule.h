@@ -61,7 +61,6 @@ static inline sched_unit_t *sched_get_unit()
     for (i = 0; i < scheduler.cpunr; i++) {
         su = &scheduler.sched_unit_table[i];
         if (su->cpuid == cpuid) {
-            spin_unlock(&scheduler.lock);
             return su;
         }
     }
@@ -83,7 +82,7 @@ static inline int is_task_in_priority_queue(sched_unit_t *su, task_t *task)
 static inline void task_priority_queue_add_tail(sched_unit_t *su, task_t *task)
 {
     
-    priority_queue_t *queue = &su->priority_queue[su->dynamic_priority];
+    priority_queue_t *queue = su->priority_queue + task->priority;
     //printk("> task %s tp:%d hp:%d", task->name,     task->priority, highest_prio_queue->priority);
     ASSERT(!list_find(&task->list, &queue->list));
     
@@ -108,7 +107,7 @@ static inline void task_priority_queue_add_tail(sched_unit_t *su, task_t *task)
  */
 static inline void task_priority_queue_add_head(sched_unit_t *su, task_t *task)
 {
-    priority_queue_t *queue = &su->priority_queue[su->dynamic_priority];
+    priority_queue_t *queue = su->priority_queue + task->priority;
     ASSERT(!list_find(&task->list, &queue->list));
     
     // 添加到就绪队列

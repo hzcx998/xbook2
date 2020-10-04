@@ -290,7 +290,7 @@ void task_unblock(task_t *task)
         ASSERT(!is_task_in_priority_queue(su, task));
         // 已经就绪是不能再次就绪的
         if (is_task_in_priority_queue(su, task)) {
-            panic("TaskUnblock: task has already in ready list!\n");
+            panic("task_unblock: task has already in ready list!\n");
         }
         // 处于就绪状态
         task->state = TASK_READY;
@@ -777,6 +777,7 @@ void start_user()
 		直到再次被阻塞 */
         /* 执行cpu停机 */
 		cpu_idle();
+        schedule();
 	};
 }
 

@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <xbook/kmalloc.h>
 #include <xbook/vmarea.h>
+#include <xbook/schedule.h>
 
 /// 程序本地头文件
 #include <gui/mouse.h>
@@ -151,5 +152,6 @@ int gui_init_mouse()
     gui_mouse.open = mouse_open;
     gui_mouse.close = mouse_close;
     gui_mouse.read = mouse_read;
+    
     return 0;
 }

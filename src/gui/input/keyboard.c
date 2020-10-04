@@ -211,28 +211,12 @@ int gui_key_pressed(int keycode)
     if (__process_special_key(keycode, 1))
         return -1;
 
-    /* 使用按键,keydown, keycode, modify */
-    /*gui_keyboard.keyevent.state = 0;
-    gui_keyboard.keyevent.code = code_switch(keycode);
-    gui_keyboard.keyevent.modify = gui_keyboard.key_modify;
-    return 0;*/
-
-    
-    
     g_msg_t m;
     memset(&m, 0, sizeof(g_msg_t));
     m.id        = GM_KEY_DOWN;
     m.data0     = keycode;
     m.data1     = gui_keyboard.key_modify;
     return gui_push_msg(&m);
-
-    /*
-    gui_event e;
-    e.type = GUI_EVENT_KEY;
-    e.key.code = code_switch(keycode);
-    e.key.modify = gui_keyboard.key_modify;
-    e.key.state = GUI_PRESSED;
-    return gui_event_add(&e);*/
 }
 
 int gui_key_released(int keycode)

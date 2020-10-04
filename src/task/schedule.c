@@ -13,6 +13,14 @@ scheduler_t scheduler;
 static task_t *task_priority_queue_fetch_first(sched_unit_t *su)
 {
     task_t *task;
+    /* 尝试调整到最低的优先级 */
+    while (!su->priority_queue[su->dynamic_priority].length)
+    {
+        su->dynamic_priority++;
+    }
+    #ifdef DEBUG_SCHED
+    printk("[sched]: fetch priority %d\n", su->dynamic_priority);
+    #endif /* DEBUG_SCHED */
     //printk(KERN_NOTICE "highest prio=%d\n", highest_prio_queue->priority);
     priority_queue_t *queue = &su->priority_queue[su->dynamic_priority];
     
@@ -71,8 +79,8 @@ void schedule()
     
     task_t *cur = su->cur;
 #ifdef DEBUG_SCHED 
-    printk(KERN_INFO "schedule: switch from %s-%d-%x-%d to %s-%d-%x-%d\n",
-        cur->name, cur->pid, cur, cur->priority, next->name, next->pid, next, next->priority);
+    printk(KERN_INFO "schedule: switch from %s-%d-%d-%d to %s-%d-%x-%d\n",
+        cur->name, cur->pid, cur->timeslice, cur->priority, next->name, next->pid, next->timeslice, next->priority);
     /*dump_task_kstack(next->kstack);
     dump_task(next);*/
 #endif
@@ -129,7 +137,6 @@ void init_schedule()
     scheduler.tasknr = 0;
     spinlock_init(&scheduler.lock);
     scheduler.cpunr = CPU_NR;
-    printk(KERN_NOTICE "scheduler size =%d\n", sizeof(scheduler_t));
     /* 读取cpu的id到cpu列表，然后传递给调度器 */
     cpuid_t cpu_list[CPU_NR];
     // TODO: get cpu id from hw

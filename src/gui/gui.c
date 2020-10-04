@@ -31,13 +31,11 @@ g_quit来退出图形。
 void kgui_thread(void *arg)
 {
     task_t *cur = current_task;
-    task_set_timeslice(cur, 5);
     //con_loop();
     g_msg_t msg;
     memset(&msg, 0, sizeof(g_msg_t));
     while (1)
     {
-        /* 读取事件 */
         gui_keyboard.read();
         gui_mouse.read();
         
