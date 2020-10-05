@@ -20,9 +20,15 @@ unsigned int mem_node_base;
 /* 物理内存总大小 */
 static unsigned long total_pmem_size;
 
-mem_node_t *get_free_mem_node()
+mem_node_t *get_free_mem_node(unsigned int flags)
 {
-    mem_node_t *node = mem_node_table;
+    mem_node_t *node = NULL;
+    if (flags & MEM_NODE_DMA)
+        node = mem_node_table;
+    else if (flags & MEM_NODE_NORMAL)
+        node = mem_node_table + (DMA_MEM_SIZE >> PAGE_SHIFT);
+    else
+        panic("[pmem]: get node null!");
     
     while (node < mem_node_table + mem_node_count)
     {
@@ -80,7 +86,7 @@ static void cut_used_mem()
     /* 剪切掉引导分配的空间 */
     unsigned int used_mem = boot_mem_size();
     unsigned int used_pages = DIV_ROUND_UP(used_mem, PAGE_SIZE);
-    __alloc_pages(used_pages);
+    alloc_pages(used_pages);
 }
 
 /** 
@@ -118,10 +124,9 @@ unsigned long __get_total_page_nr()
     return total_pmem_size / PAGE_SIZE;
 }
 
-
-unsigned long __alloc_pages(unsigned long count)
+unsigned long __alloc_pages(unsigned long count, unsigned long flags)
 {
-    mem_node_t *node = get_free_mem_node();
+    mem_node_t *node = get_free_mem_node(flags);
     if (node == NULL)
         return 0;
     
@@ -138,7 +143,7 @@ unsigned long __alloc_pages(unsigned long count)
     node->cache = NULL;
     node->group = NULL;
 
-    return (long)__mem_node2page(node);
+    return (unsigned long)__mem_node2page(node);
 }
 
 int __free_pages(unsigned long page)
@@ -191,7 +196,7 @@ int init_pmem()
     
     /* 节点数量就是页数量 */
     mem_node_count = (normal_size + user_size)/PAGE_SIZE;
-    mem_node_base = NORMAL_MEM_ADDR;
+    mem_node_base = DMA_MEM_ADDR;
 
     unsigned int mem_node_table_size = mem_node_count * SIZEOF_MEM_NODE;
     
@@ -207,9 +212,9 @@ int init_pmem()
 
     cut_used_mem();
 #if 0   /* test */
-    unsigned int a = __alloc_pages(1000);
-    unsigned int b = __alloc_pages(2);
-    unsigned int c = __alloc_pages(10);
+    unsigned int a = alloc_pages(1000);
+    unsigned int b = alloc_pages(2);
+    unsigned int c = alloc_pages(10);
 
     printk("a=%x,b=%x,c=%x\n", a, b, c);
     
@@ -217,9 +222,9 @@ int init_pmem()
     __free_pages(b);
     __free_pages(a);
 
-    a = __alloc_pages(2);
-    b = __alloc_pages(3);
-    c = __alloc_pages(4);
+    a = alloc_pages(2);
+    b = alloc_pages(3);
+    c = alloc_pages(4);
 
     printk("a=%x,b=%x,c=%x\n", a, b, c);
     

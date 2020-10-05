@@ -11,21 +11,29 @@ int alloc_dma_buffer(struct dma_region *d)
         return -1;
     
     int npages = DIV_ROUND_UP(d->p.size, PAGE_SIZE);
-
-	d->p.address = alloc_pages(npages);
-	if(d->p.address == 0)
-		return -1;
-    
-    addr_t vaddr = alloc_vaddr(d->p.size);
-    if (vaddr == 0) {
-        free_pages(d->p.address);
-        return -1;
+    addr_t vaddr;
+    if (d->flags & DMA_REGION_SPECIAL) {
+        d->p.address = alloc_dma_pages(npages);
+        if(d->p.address == 0)
+            return -1;
+        vaddr = (addr_t) p2v(d->p.address);
+    } else { // normal
+        d->p.address = alloc_pages(npages);
+        if(d->p.address == 0)
+	    	return -1;
+        
+        vaddr = alloc_vaddr(d->p.size);
+        if (vaddr == 0) {
+            free_pages(d->p.address);
+            return -1;
+        }
+        if (__ioremap(d->p.address, vaddr, d->p.size) < 0) {
+            free_vaddr(vaddr, d->p.size);
+            free_pages(d->p.address);
+            return -1;
+        }
     }
-    if (__ioremap(d->p.address, vaddr, d->p.size) < 0) {
-        free_vaddr(vaddr, d->p.size);
-        free_pages(d->p.address);
-        return -1;
-    }
+	
 	d->v = vaddr;
 	return 0;
 }

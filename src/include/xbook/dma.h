@@ -3,6 +3,8 @@
 
 #include <types.h>
 
+#define DMA_REGION_SPECIAL 0x01    // special addr
+
 struct mm_physical_region {
 	addr_t address;
 	size_t size;
@@ -12,6 +14,7 @@ struct mm_physical_region {
 struct dma_region {
 	struct mm_physical_region p;
 	addr_t v;
+    flags_t flags;
 };
 
 int alloc_dma_buffer(struct dma_region *);

@@ -40,7 +40,7 @@ void __page_link(unsigned long va, unsigned long pa, unsigned long prot)
             *pte = (paddr | prot | PG_P_1);
         }
 	} else { /* no page table, need create a new one. */
-        unsigned long page_table = __alloc_pages(1);
+        unsigned long page_table = alloc_pages(1);
         if (!page_table) {
             /* no page left */
             panic("kernel no page left!\n");
@@ -98,7 +98,7 @@ void __page_link_unsafe(unsigned long va, unsigned long pa, unsigned long prot)
             *pte = (paddr | prot | PG_P_1);
         }
 	} else { /* no page table, need create a new one. */
-        unsigned long page_table = __alloc_pages(1);
+        unsigned long page_table = alloc_pages(1);
         if (!page_table) {
             /* no page left */
             panic("kernel no page left!\n");
@@ -178,7 +178,7 @@ int __map_pages(unsigned long start, unsigned long len, unsigned long prot)
     //printk("len %d pages %d\n", len, len / PAGE_SIZE);
 
 	/* 分配物理页 */
-	unsigned long pages = __alloc_pages(len / PAGE_SIZE);
+	unsigned long pages = alloc_pages(len / PAGE_SIZE);
 
 	if (!pages) {
         printk(KERN_ERR "map_pages -> map without free pages!\n");
@@ -333,7 +333,7 @@ int __map_pages_safe(unsigned long start, unsigned long len, unsigned long prot)
         pte_t *pte = get_pte_ptr(vaddr);
 
         if (!(*pde & PG_P_1) || !(*pte & PG_P_1)) {
-            page_addr = __alloc_pages(1);
+            page_addr = alloc_pages(1);
             if (!page_addr) {
                 printk("error: user_map_vaddr -> map pages failed!\n");
                 return -1;
@@ -442,7 +442,7 @@ end:
 /* 复制一份内核页，并清空用户态数据 */
 unsigned long *__copy_kernel_page_dir()
 {
-    unsigned long page = __alloc_pages(1);
+    unsigned long page = alloc_pages(1);
     unsigned int *vaddr = (unsigned int *)__va(page);
     
     memset(vaddr, 0, PAGE_SIZE);

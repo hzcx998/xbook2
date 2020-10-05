@@ -84,7 +84,7 @@ bool sb16_initialize(device_extension_t *extension)
 
     int data = sb16_dsp_read();
     if (data != 0xaa) {
-        printk("SB16: sb not ready");
+        printk("sb16: sb not ready");
         return false;
     }
 
@@ -92,7 +92,7 @@ bool sb16_initialize(device_extension_t *extension)
     sb16_dsp_write(0xe1);
     extension->major_version = sb16_dsp_read();
     int vmin = sb16_dsp_read();
-    printk("SB16: found version %d.%d\n", extension->major_version, vmin);
+    printk("sb16: found version %d.%d\n", extension->major_version, vmin);
     return true;
 }
 
@@ -192,7 +192,7 @@ ssize_t __sb16_write(device_extension_t *extension, const u8* data, ssize_t leng
     disable_intr();
     disable_irq(5);
     #endif
-    
+
     sb16_dsp_write(command);
     sb16_dsp_write(mode);
     sb16_dsp_write((u8)sample_count);
@@ -282,21 +282,17 @@ static iostatus_t sb16_enter(driver_object_t *driver)
 
     extension = (device_extension_t *)devobj->device_extension;
     
-    extension->dma_region.p.size = PAGE_SIZE * 8;
+    extension->dma_region.p.size = PAGE_SIZE * 8; // 32 kb
     extension->dma_region.p.alignment = 0x1000;
-    extension->dma_region.p.address = 8 * 0x100000;
-    extension->dma_region.v = extension->dma_region.p.address + PAGE_OFFSET;
-
-    #if 0
-    extension->dma_region.p.size = PAGE_SIZE;
-    extension->dma_region.p.alignment = 0x1000;
+    extension->dma_region.flags = DMA_REGION_SPECIAL; // spacil device
     if (alloc_dma_buffer(&extension->dma_region) < 0) {
         printk(KERN_ERR "sb16_enter: alloc dma buffer failed!\n");
         io_delete_device(devobj);
         status = IO_FAILED;
         return status;
     }
-    #endif
+    printk(KERN_INFO "sb16: alloc dma buffer vir addr %x phy addr %x\n", extension->dma_region.v, extension->dma_region.p.address);
+
     #ifdef SB16_POLL
     extension->done = 0;
     #else

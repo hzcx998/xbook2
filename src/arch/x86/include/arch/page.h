@@ -2,6 +2,7 @@
 #define _ARCH_PAGE_H
 
 #include "interrupt.h"
+#include "pmem.h"
 
 // 页目录类型
 typedef unsigned int pde_t;
@@ -101,7 +102,7 @@ static inline pte_t *get_pte_ptr(unsigned int vaddr)
 	return pte;
 }
 
-unsigned long __alloc_pages(unsigned long count);
+unsigned long __alloc_pages(unsigned long count, unsigned long flags);
 int __free_pages(unsigned long page);
 
 void __page_link(unsigned long va, unsigned long pa, unsigned long prot);
@@ -157,8 +158,10 @@ static inline void *p2v(unsigned long address)
     return __va(address);
 }
 
-#define alloc_pages(count)                  __alloc_pages(count)
+#define alloc_pages(count)                  __alloc_pages(count, MEM_NODE_NORMAL)
 #define free_pages(addr)                    __free_pages(addr)
+
+#define alloc_dma_pages(count)              __alloc_pages(count, MEM_NODE_DMA)
 
 #define alloc_page()                        alloc_pages(1)
 #define free_page(addr)                     free_pages(addr)
