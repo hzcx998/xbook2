@@ -17,6 +17,7 @@ AS			:=	nasm
 
 export AS LD
 
+MODULE      +=  cpuinfo
 MODULE      +=  lvgl
 MODULE      +=  microui
 MODULE      +=  cpptests

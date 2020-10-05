@@ -7,3 +7,4 @@ SRC	+= tty/
 SRC	+= virtual/
 SRC	+= video/
 SRC	+= sound/
+SRC	+= cpu.c
