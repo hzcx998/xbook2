@@ -44,13 +44,17 @@ int free_dma_buffer(struct dma_region *d)
     if (!d->p.size || !d->p.address || !d->v)
         return -1;
     
-	if (__iounmap(d->v, d->p.size) < 0) {
-        return -1;
+    if (d->flags & DMA_REGION_SPECIAL) {
+        free_pages(d->p.address);
+    } else {
+        if (__iounmap(d->v, d->p.size) < 0) {
+            return -1;
+        }
+
+        free_vaddr(d->v, d->p.size);
+        free_pages(d->p.address);
     }
-
-    free_vaddr(d->v, d->p.size);
-    free_pages(d->p.address);
-
-	d->p.address = d->v = 0;
-	return 0;
+    d->p.address = d->v = 0;
+	
+    return 0;
 }

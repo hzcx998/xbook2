@@ -317,8 +317,11 @@ static iostatus_t sb16_exit(driver_object_t *driver)
 {
     /* 遍历所有对象 */
     device_object_t *devobj, *next;
+    device_extension_t *extension;
     /* 由于涉及到要释放devobj，所以需要使用safe版本 */
     list_for_each_owner_safe (devobj, next, &driver->device_list, list) {
+        extension = (device_extension_t *) devobj->device_extension;
+        free_dma_buffer(&extension->dma_region);
         io_delete_device(devobj);   /* 删除每一个设备 */
     }
     string_del(&driver->name); /* 删除驱动名 */
