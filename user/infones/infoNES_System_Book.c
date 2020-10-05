@@ -12,11 +12,16 @@
 #include <InfoNES_System.h>
 #include <InfoNES_pAPU.h>
 
-//#define CONFIG_SOUND
-//#define CONFIG_QEMU
+#define CONFIG_SOUND
 
 #ifdef CONFIG_SOUND
-#define SOUND_DEVICE "buzzer"
+#define SOUND_DEVICE_SB16 "sb16"
+#define SOUND_DEVICE_BEEP "buzzer"
+
+// #define SOUND_DEVICE_BEEP_UP
+
+#define SOUND_DEVICE SOUND_DEVICE_SB16
+
 #endif /* CONFIG_SOUND */
 
 void start_application( char *filename );
@@ -640,18 +645,7 @@ void InfoNES_LoadFrame()
     /* 已经绘制好内容了，直接绘制到窗口 */
     g_paint_window(g_win, 0, 0, screen_bitmap);
 #endif
-
-    #ifndef CONFIG_SOUND
-    #ifndef CONFIG_QEMU
-    #if 0
-    /* 延迟 */
-    clock_t start;
-    start = getticks();
-    while ((getticks() - start) < 1 * HZ_PER_CLOCKS);
-    #endif
-    #endif
-    #endif /* CONFIG_SOUND */
-
+    
     mdelay(15);
     
 }
@@ -719,14 +713,16 @@ int InfoNES_SoundOpen( int samples_per_sync, int sample_rate )
 {
     
 #ifdef CONFIG_SOUND
-//printf("InfoNES_SoundOpen: samples_per_sync=%d, sample_rate=%d\n", samples_per_sync, sample_rate);
+    printf("InfoNES_SoundOpen: samples_per_sync=%d, sample_rate=%d\n", samples_per_sync, sample_rate);
     sound_fd = open(SOUND_DEVICE, O_DEVEX, 0);
     if (sound_fd < 0) {
-        sound_fd = 0;
+        sound_fd = -1;
         return 0;
     }
+    #ifdef SOUND_DEVICE_BEEP_UP
     /* 开始播放声音 */
     ioctl(sound_fd, SNDIO_PLAY, 0);
+    #endif
 #endif
   /* Successful */
   return 1;
@@ -741,9 +737,10 @@ void InfoNES_SoundClose( void )
 {
 
 #ifdef CONFIG_SOUND
-  if (sound_fd) {
+  if (sound_fd != -1) {
+      #ifdef SOUND_DEVICE_BEEP_UP
       ioctl(sound_fd, SNDIO_STOP, 0);
-      
+      #endif
       close(sound_fd);
     }
 #endif
@@ -759,7 +756,7 @@ void InfoNES_SoundOutput( int samples, BYTE *wave1, BYTE *wave2, BYTE *wave3, BY
 
 #ifdef CONFIG_SOUND
   
-  if ( sound_fd ) 
+  if ( sound_fd != -1) 
   {
     int i;
     for (i = 0; i < samples; i++) 
@@ -787,8 +784,11 @@ void InfoNES_SoundOutput( int samples, BYTE *wave1, BYTE *wave2, BYTE *wave3, BY
     if ( wavflag )
     {
       
+      #ifdef SOUND_DEVICE_BEEP_UP
       BYTE *buf = &final_wave[(wavflag - 1) << 10];
+      write(sound_fd, buf, 1024);
       int i;
+      
       for (i = 0; i < 1024; i++) {
         if (buf[i]) {
             ioctl(sound_fd, SNDIO_SETFREQ, buf[i] * 5);
@@ -797,7 +797,12 @@ void InfoNES_SoundOutput( int samples, BYTE *wave1, BYTE *wave2, BYTE *wave3, BY
         }
       }
       ioctl(sound_fd, SNDIO_SETFREQ, 20000);  /* 无声音 */
-            
+      #else
+      if ( write( sound_fd, &final_wave[(wavflag - 1) << 10], 1024) < 1024 ) 
+      {
+          printf("wrote less than 1024 bytes\n");
+      }
+      #endif 
       wavflag = 0;
     }
   }

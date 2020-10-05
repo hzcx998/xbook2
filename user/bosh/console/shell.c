@@ -17,8 +17,8 @@ int init_shell()
 void main_shell()
 {
     #if 0
-    char *argv[2] = {"/bin/lvglbin", NULL};
-    execute_cmd(1, argv);
+    char *argv[3] = {"/bin/infones", "/res/nes/mario.nes", NULL};
+    execute_cmd(2, argv);
     #endif
     main_window();
 }

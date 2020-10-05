@@ -3,9 +3,6 @@
 #include <stddef.h>
 #include <types.h>
 
-/* var: hardware_intr_contorller must be support in arch */
-extern struct hardware_intr_controller hardware_intr_contorller;
-
 /* irq描述表，更深层次地表现中断 */
 irq_description_t irq_description_table[NR_IRQS];
 

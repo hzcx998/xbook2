@@ -11,6 +11,7 @@
 #include <xbook/config.h>
 #include <xbook/vmarea.h>
 #include <xbook/schedule.h>
+#include <xbook/initcall.h>
 
 // #define DEBUG_DRIVER
 
@@ -1218,10 +1219,31 @@ void init_driver_arch()
         device_handle_table[i] = NULL;
     }
 
+    do_initcalls();
+    
 #ifdef DEBUG_DRIVER
     //print_drivers_mini();
     /* 输出所有驱动以及设备 */
     print_drivers();
+#endif
+
+#if 0
+    handle_t sb16 = device_open("sb16", 0);
+    if (sb16 < 0)
+        panic(KERN_DEBUG "open sb16 failed!\n");
+    
+    uint8_t buf[512];
+
+    for (i = 0; i < 512; i++) {
+        buf[i] = i;
+    }
+    device_write(sb16, buf, 512, 0);
+
+    device_close(sb16);
+    while (1)
+    {
+        /* code */
+    }
 #endif
 
 #if 0
