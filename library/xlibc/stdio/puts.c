@@ -1,20 +1,12 @@
 /*
- * puts.c - print a string onto the standard output stream
+ * xlibc/stdio/puts.c
  */
-/* $Header: puts.c,v 1.2 89/12/18 15:03:30 eck Exp $ */
 
-#include	<stdio.h>
+#include <stdio.h>
 
-int
-puts(register const char *s)
+int puts(const char *str)
 {
-	register FILE *file = stdout;
-	register int i = 0;
-
-	while (*s) {
-		if (putc(*s++, file) == EOF) return EOF;
-		else i++;
-	}
-	if (putc('\n', file) == EOF) return EOF;
-	return i + 1;
+	fputs(str, stdout);
+	fputc('\n', stdout); // 末尾加回车
+	return 0;
 }

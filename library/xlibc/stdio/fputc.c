@@ -1,12 +1,15 @@
 /*
- * fputc.c - print an unsigned character
+ * xlibc/stdio/fputc.c
  */
-/* $Header: fputc.c,v 1.1 89/05/30 13:28:45 eck Exp $ */
 
-#include	<stdio.h>
+#include <stdio.h>
 
-int
-fputc(int c, FILE *stream)
+int fputc(int c, FILE * f)
 {
-	return putc(c, stream);
+	unsigned char ch = c & 0xff;
+
+	if(__stdio_write(f, &ch, 1) <= 0)
+		return EOF;
+
+	return (ch);
 }

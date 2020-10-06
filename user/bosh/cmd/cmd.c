@@ -210,6 +210,8 @@ int execute_cmd(int argc, char **argv)
                 /* ----输入管道---- */
                 if (poll_window() == 1) {
                     //printf("write key %x:%c\n", shell_child_key, shell_child_key);
+                    // 把读取到的数据打印到终端, 然后传递给子进程
+                    shell_putchar(shell_child_key);
                     int wrret = write(xmit_pipe[1], &shell_child_key, 1);
                     if (wrret < 0) {
                         shell_printf("%s: write key %x:%c to pipe failed!\n", APP_NAME,

@@ -1,168 +1,151 @@
-/*
- * stdio.h - input/output definitions
- *
- * (c) copyright 1987 by the Vrije Universiteit, Amsterdam, The Netherlands.
- * See the copyright notice in the ACK home directory, in the file "Copyright".
- */
-/* $Header: stdio.h,v 1.3 89/12/18 14:00:10 eck Exp $ */
-
-#ifndef _STDIO_H
-#define	_STDIO_H
+#ifndef _XLIBC_STDIO_H__
+#define _XLIBC_STDIO_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*
- * Focus point of all stdio activity.
- */
-typedef struct __iobuf {
-	int		_count;
-	int		_fd;
-	int		_flags;
-	int		_bufsiz;
-	unsigned char	*_buf;
-	unsigned char	*_ptr;
-} FILE;
-
-#define	_IOFBF		0x000
-#define	_IOREAD		0x001
-#define	_IOWRITE	0x002
-#define	_IONBF		0x004
-#define	_IOMYBUF	0x008
-#define	_IOEOF		0x010
-#define	_IOERR		0x020
-#define	_IOLBF		0x040
-#define	_IOREADING	0x080
-#define	_IOWRITING	0x100
-#define	_IOAPPEND	0x200
-
-/* The following definitions are also in <unistd.h>. They should not
- * conflict.
- */
-#define	SEEK_SET	0
-#define	SEEK_CUR	1
-#define	SEEK_END	2
-
-#define	stdin		(&__stdin)
-#define	stdout		(&__stdout)
-#define	stderr		(&__stderr)
-
-#define	BUFSIZ		1024
-#define	NULL		((void *)0)
-#define	EOF		(-1)
-
-#define	FOPEN_MAX	20
-
-#define	FILENAME_MAX	14
-#define	TMP_MAX		999
-#define	L_tmpnam	(sizeof("/tmp/") + FILENAME_MAX)
-#define __STDIO_VA_LIST__	void *
-
-typedef long int	fpos_t;
-
-#if 0
-#ifndef _SIZE_T
-#define	_SIZE_T
-typedef unsigned int	size_t;		/* type returned by sizeof */
-#endif /* _SIZE_T */
-#endif
-
-extern FILE	*__iotab[FOPEN_MAX];
-extern FILE	__stdin, __stdout, __stderr;
-
-#ifndef _ANSI_H
-#include <ansi.h>
-#endif
-
+#include <types.h>
+#include <stdarg.h>
 #include <stddef.h>
+#include <sizes.h>
+#include <errno.h>
+#include <limits.h>
+#include <sys/fifo.h>
+#include <sys/types.h>
 
-_PROTOTYPE( int remove, (const char *_filename)				);
-_PROTOTYPE( int rename, (const char *_old, const char *_new)		);
-_PROTOTYPE( FILE *tmpfile, (void)					);
-_PROTOTYPE( char *tmpnam, (char *_s)					);
-_PROTOTYPE( int fclose, (FILE *_stream)					);
-_PROTOTYPE( int fflush, (FILE *_stream)					);
-_PROTOTYPE( FILE *fopen, (const char *_filename, const char *_mode)	);
-_PROTOTYPE( FILE *freopen,
-	    (const char *_filename, const char *_mode, FILE *_stream)	);
-_PROTOTYPE( void setbuf, (FILE *_stream, char *_buf)			);
-_PROTOTYPE( int setvbuf,
-		(FILE *_stream, char *_buf, int _mode, size_t _size)	);
-_PROTOTYPE( int fprintf, (FILE *_stream, const char *_format, ...)	);
-_PROTOTYPE( int printf, (const char *_format, ...)			);
-_PROTOTYPE( int sprintf, (char *_s, const char *_format, ...)		);
-_PROTOTYPE( int snprintf, (char *_s, size_t size, const char *_format, ...)		);
-_PROTOTYPE( int vfprintf,
-		(FILE *_stream, const char *_format, char *_arg)	);
-_PROTOTYPE( int vprintf, (const char *_format, char *_arg)		);
-_PROTOTYPE( int vsprintf, (char *_s, const char *_format, char *_arg)	);
-_PROTOTYPE( int vsnprintf, (char *_s, size_t size, const char *_format, char *_arg)	);
-_PROTOTYPE( int fscanf, (FILE *_stream, const char *_format, ...)	);
-_PROTOTYPE( int scanf, (const char *_format, ...)			);
-_PROTOTYPE( int sscanf, (const char *_s, const char *_format, ...)	);
-#define vfscanf _doscan
-_PROTOTYPE( int vfscanf, (FILE *_stream, const char *_format, char *_arg));
-_PROTOTYPE( int vscanf, (const char *_format, char *_arg)		);
-_PROTOTYPE( int vsscanf, (const char *_s, const char *_format, char *_arg));
-_PROTOTYPE( int fgetc, (FILE *_stream)					);
-_PROTOTYPE( char *fgets, (char *_s, int _n, FILE *_stream)		);
-_PROTOTYPE( int fputc, (int _c, FILE *_stream)				);
-_PROTOTYPE( int fputs, (const char *_s, FILE *_stream)			);
-_PROTOTYPE( int getc, (FILE *_stream)					);
-_PROTOTYPE( int getchar, (void)						);
-_PROTOTYPE( char *gets, (char *_s)					);
-_PROTOTYPE( int putc, (int _c, FILE *_stream)				);
-_PROTOTYPE( int putchar, (int _c)					);
-_PROTOTYPE( int puts, (const char *_s)					);
-_PROTOTYPE( int ungetc, (int _c, FILE *_stream)				);
-_PROTOTYPE( size_t fread,
-	    (void *_ptr, size_t _size, size_t _nmemb, FILE *_stream)	);
-_PROTOTYPE( size_t fwrite,
-	(const void *_ptr, size_t _size, size_t _nmemb, FILE *_stream)	);
-_PROTOTYPE( int fgetpos, (FILE *_stream, fpos_t *_pos)			);
-_PROTOTYPE( int fseek, (FILE *_stream, long _offset, int _whence)	);
-_PROTOTYPE( int fsetpos, (FILE *_stream, fpos_t *_pos)			);
-_PROTOTYPE( long ftell, (FILE *_stream)					);
-_PROTOTYPE( void rewind, (FILE *_stream)				);
-_PROTOTYPE( void clearerr, (FILE *_stream)				);
-_PROTOTYPE( int feof, (FILE *_stream)					);
-_PROTOTYPE( int ferror, (FILE *_stream)					);
-_PROTOTYPE( void perror, (const char *_s)				);
-_PROTOTYPE( int __fillbuf, (FILE *_stream)				);
-_PROTOTYPE( int __flushbuf, (int _c, FILE *_stream)			);
- 
+#ifndef EOF
+#define EOF			(-1)
+#endif
+
+#ifndef BUFSIZ
+#define BUFSIZ		(4096*2)
+#endif
+
+#ifndef L_tmpnam
+#define L_tmpnam	(32)
+#endif
+
+enum {
+	_IONBF			= 0,
+	_IOLBF			= 1,
+	_IOFBF			= 2,
+};
+
+#ifndef SEEK_SET
+#define	SEEK_SET    0		/* set file offset to offset */
+#define	SEEK_CUR	1		/* set file offset to current plus offset */
+#define	SEEK_END	2		/* set file offset to EOF plus offset */
+#endif
+
 /*
-snprintf
-vsnprintf
-*/
+ * Stdio file position type
+ */
+typedef loff_t fpos_t;
 
-#define	getchar()	getc(stdin)
-#define	putchar(c)	putc(c,stdout)
-#define	getc(p)		(--(p)->_count >= 0 ? (int) (*(p)->_ptr++) : \
-				__fillbuf(p))
-#define	putc(c, p)	(--(p)->_count >= 0 ? \
-			 (int) (*(p)->_ptr++ = (c)) : \
-			 __flushbuf((c),(p)))
+/*
+ * stdio state variables.
+ */
+typedef struct __FILE FILE;
+struct __FILE {
+	int fd;
 
-#define	feof(p)		(((p)->_flags & _IOEOF) != 0)
-#define	ferror(p)	(((p)->_flags & _IOERR) != 0)
-#define clearerr(p)     ((p)->_flags &= ~(_IOERR|_IOEOF))
+	ssize_t (*read)(FILE *, unsigned char *, size_t);
+	ssize_t (*write)(FILE *, const unsigned char *, size_t);
+	fpos_t (*seek)(FILE *, fpos_t, int);
+	int (*close)(FILE *);
 
-#ifndef _POSIX_SOURCE
-# define _POSIX_SOURCE 1 /* Just the POSIX 1003.1 and C89 APIs */
-#endif
+	struct fifo_t * fifo_read;
+	struct fifo_t * fifo_write;
 
-#ifdef _POSIX_SOURCE
-_PROTOTYPE( int fileno, (FILE *_stream)					);
-_PROTOTYPE (FILE *fdopen, (int _fildes, const char *_types) );
-#define	fileno(stream)		((stream)->_fd)
-#define L_ctermid 255	/* required by POSIX */
-#define L_cuserid 255	/* required by POSIX */
-#endif
+	unsigned char * buf;
+	size_t bufsz;
+	int (*rwflush)(FILE *);
+
+	fpos_t pos;
+	int mode;
+	int eof, error;
+};
+
+#define stdin		(__stdio_get_stdin())
+#define stdout		(__stdio_get_stdout())
+#define stderr		(__stdio_get_stderr())
+
+FILE * fopen(const char * path, const char * mode);
+FILE * freopen(const char * path, const char * mode, FILE * f);
+int fclose(FILE * f);
+
+int remove(const char * path);
+int rename(const char * old, const char * _new);
+int system(const char * cmd);
+
+int feof(FILE * f);
+int ferror(FILE * f);
+int fflush(FILE * f);
+void clearerr(FILE * f);
+
+int fseek(FILE * f, fpos_t off, int whence);
+fpos_t ftell(FILE * f);
+void rewind(FILE * f);
+
+int fgetpos(FILE * f, fpos_t * pos);
+int fsetpos(FILE * f, const fpos_t * pos);
+
+size_t fread(void * buf, size_t size, size_t count, FILE * f);
+size_t fwrite(const void * buf, size_t size, size_t count, FILE * f);
+
+int getchar(void);
+int getc(FILE * f);
+int fgetc(FILE * f);
+char * fgets(char * s, int n, FILE * f);
+int putchar(int c);
+int putc(int c, FILE * f);
+int fputc(int c, FILE * f);
+int fputs(const char * s, FILE * f);
+int puts(const char *str);
+
+int ungetc(int c, FILE * f);
+
+int setvbuf(FILE * f, char * buf, int mode, size_t size);
+void setbuf(FILE * f, char * buf);
+
+FILE * tmpfile(void);
+char * tmpnam(char * buf);
+
+int fprintf(FILE * f, const char * fmt, ...);
+int fscanf(FILE * f, const char * fmt, ...);
+int printf(const char * fmt, ...);
+int scanf(const char * fmt, ...);
+
+int vsnprintf(char * buf, size_t n, const char * fmt, va_list ap);
+int vasprintf(char ** s, const char * fmt, va_list ap);
+int vsscanf(const char * buf, const char * fmt, va_list ap);
+int asprintf(char ** s, const char * fmt, ...);
+int sprintf(char * buf, const char * fmt, ...);
+int snprintf(char * buf, size_t n, const char * fmt, ...);
+int sscanf(const char * buf, const char * fmt, ...);
+
+#define vsprintf(buf, fmt, ap)  vsnprintf(buf, BUFSIZ, fmt, ap)
+
+void perror(const char* str);
+
+/*
+ * Inner function
+ */
+int __stdio_no_flush(FILE * f);
+int	__stdio_read_flush(FILE * f);
+int __stdio_write_flush(FILE * f);
+
+ssize_t __stdio_read(FILE * f, unsigned char * buf, size_t size);
+ssize_t __stdio_write(FILE * f, const unsigned char * buf, size_t size);
+
+FILE * __file_alloc(int fd);
+FILE * __stdio_get_stdin(void);
+FILE * __stdio_get_stdout(void);
+FILE * __stdio_get_stderr(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _STDIO_H */
+#endif /* _XLIBC_STDIO_H__ */

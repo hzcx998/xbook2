@@ -1,30 +1,19 @@
 /*
- * tmpfile.c - create and open a temporary file
+ * xlibc/stdio/tmpfile.c
  */
-/* $Header: tmpfile.c,v 1.3 90/01/22 11:13:15 eck Exp $ */
 
-#if	defined(_POSIX_SOURCE)
-#include	<sys/types.h>
-#endif
-#include	<stdio.h>
-#include	<string.h>
-#include	"loc_incl.h"
-#include	<unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 
-FILE *
-tmpfile(void) {
-	static char name_buffer[L_tmpnam] = "/tmp/tmp." ;
-	static char *name = NULL;
-	FILE *file;
+FILE * tmpfile(void)
+{
+	struct stat st;
+	char path[MAX_PATH];
 
-	if (!name) {
-		name = name_buffer + strlen(name_buffer);
-		name = _i_compute(getpid(), 10, name, 5);
-		*name = '\0';
-	}
+	do {
+		sprintf(path, "%s/tmpfile_%d", "/tmp", rand());
+	} while(stat(path, &st) < 0);
 
-	file = fopen(name_buffer,"wb+");
-	if (!file) return (FILE *)NULL;
-	(void) remove(name_buffer);
-	return file;
+	return fopen(path, "wb+");
 }

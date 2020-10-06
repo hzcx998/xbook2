@@ -1,12 +1,12 @@
 /*
- * fgetc - get an unsigned character and return it as an int
+ * xlibc/stdio/fgetc.c
  */
-/* $Header: fgetc.c,v 1.1 89/05/30 13:27:35 eck Exp $ */
 
-#include	<stdio.h>
+#include <stdio.h>
 
-int
-fgetc(FILE *stream)
+int fgetc(FILE * f)
 {
-	return getc(stream);
+	unsigned char res;
+
+	return ((__stdio_read(f, &res, 1) <= 0) ? EOF : res);
 }

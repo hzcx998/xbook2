@@ -1,30 +1,38 @@
 /*
- * fclose.c - flush a stream and close the file
+ * xlibc/stdio/fclose.c
  */
-/* $Header: fclose.c,v 1.4 90/01/22 11:10:54 eck Exp $ */
 
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	"loc_incl.h"
-#include	<unistd.h>
+#include <errno.h>
+#include <malloc.h>
+#include <stdio.h>
 
-int
-fclose(FILE *fp)
+int fclose(FILE * f)
 {
-	register int i, retval = 0;
+	int err;
 
-	for (i=0; i<FOPEN_MAX; i++)
-		if (fp == __iotab[i]) {
-			__iotab[i] = 0;
-			break;
-		}
-	if (i >= FOPEN_MAX)
-		return EOF;
-	if (fflush(fp)) retval = EOF;
-	if (close(fileno(fp))) retval = EOF;
-	if ( io_testflag(fp,_IOMYBUF) && fp->_buf )
-		free((void *)fp->_buf);
-	if (fp != stdin && fp != stdout && fp != stderr)
-		free((void *)fp);
-	return retval;
+	if(!f)
+		return EINVAL;
+
+	if(!f->close)
+		return EINVAL;
+
+	if((err = f->rwflush(f)))
+		return err;
+
+	if((err = f->close(f)))
+		return err;
+
+	if(f->fifo_read)
+		fifo_free(f->fifo_read);
+
+	if(f->fifo_write)
+		fifo_free(f->fifo_write);
+
+	if(f->buf)
+		free(f->buf);
+
+	if(f)
+		free(f);
+
+	return err;
 }

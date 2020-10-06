@@ -1,30 +1,17 @@
 /*
- * sscanf - read formatted output from a string
+ * xlibc/stdio/sscanf.c
  */
-/* $Header: sscanf.c,v 1.3 90/09/26 13:17:39 eck Exp $ */
 
-#include	<stdio.h>
-#include	<stdarg.h>
-#include	<string.h>
-#include	"loc_incl.h"
+#include <stdio.h>
 
-int sscanf(const char *s, const char *format, ...)
+int sscanf(const char * buf, const char * fmt, ...)
 {
 	va_list ap;
-	int retval;
-	FILE tmp_stream;
+	int rv;
 
-	va_start(ap, format);
-
-	tmp_stream._fd     = -1;
-	tmp_stream._flags  = _IOREAD + _IONBF + _IOREADING;
-	tmp_stream._buf    = (unsigned char *) s;
-	tmp_stream._ptr    = (unsigned char *) s;
-	tmp_stream._count  = strlen(s);
-
-	retval = _doscan(&tmp_stream, format, ap);
-
+	va_start(ap, fmt);
+	rv = vsscanf(buf, fmt, ap);
 	va_end(ap);
 
-	return retval;
+	return rv;
 }

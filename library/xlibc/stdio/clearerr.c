@@ -1,12 +1,11 @@
 /*
- * clearerr.c - clear error and end-of-file indicators of a stream
+ * xlibc/stdio/clearerr.c
  */
-/* $Header: clearerr.c,v 1.2 91/01/03 14:23:54 ceriel Exp $ */
 
-#include	<stdio.h>
+#include <stdio.h>
 
-void
-(clearerr)(FILE *stream)
+void clearerr(FILE * f)
 {
-	clearerr(stream);
+	f->error = 0;
+	f->eof = 0;
 }

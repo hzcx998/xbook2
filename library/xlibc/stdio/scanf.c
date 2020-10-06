@@ -1,25 +1,29 @@
 /*
- * scanf.c - read formatted input from the standard input stream
+ * xlibc/stdio/scanf.c
  */
-/* $Header: scanf.c,v 1.1 89/05/30 13:33:03 eck Exp $ */
 
-#include	<stdio.h>
-#include	<stdarg.h>
-#include	"loc_incl.h"
+#include <sizes.h>
+#include <stdio.h>
+#include <string.h>
+#include <malloc.h>
 
-int
-scanf(const char *format, ...)
+int scanf(const char * fmt, ...)
 {
 	va_list ap;
-	int retval;
+	char * buf;
+	int rv;
 
-	va_start(ap, format);
+	buf = malloc(SZ_4K);
+	if(!buf)
+		return 0;
 
-	retval = _doscan(stdin, format, ap);
+	memset(buf, 0, SZ_4K);
+	fread(buf, 1, SZ_4K, stdin);
 
+	va_start(ap, fmt);
+	rv = vsscanf(buf, fmt, ap);
 	va_end(ap);
 
-	return retval;
+	free(buf);
+	return rv;
 }
-
-

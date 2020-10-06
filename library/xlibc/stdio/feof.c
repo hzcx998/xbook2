@@ -1,12 +1,10 @@
 /*
- * feof.c - test if eof on a stream occurred
+ * xlibc/stdio/feof.c
  */
-/* $Header: feof.c,v 1.2 89/12/18 15:00:39 eck Exp $ */
 
-#include	<stdio.h>
+#include <stdio.h>
 
-int
-(feof)(FILE *stream)
+int feof(FILE * f)
 {
-	return feof(stream);
+	return f->eof;
 }

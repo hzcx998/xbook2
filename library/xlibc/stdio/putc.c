@@ -1,12 +1,10 @@
 /*
- * putc.c - print (or buffer) one character
+ * xlibc/stdio/putc.c
  */
-/* $Header: putc.c,v 1.2 89/12/18 15:03:15 eck Exp $ */
 
-#include	<stdio.h>
+#include <stdio.h>
 
-int
-(putc)(int c, FILE *stream)
+int putc(int c, FILE * f)
 {
-	return putc(c, stream);
+	return fputc(c, f);
 }

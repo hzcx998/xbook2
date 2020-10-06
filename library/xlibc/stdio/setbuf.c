@@ -1,13 +1,10 @@
 /*
- * setbuf.c - control buffering of a stream
+ * xlibc/stdio/setbuf.c
  */
-/* $Header: setbuf.c,v 1.2 89/06/26 10:36:22 eck Exp $ */
 
-#include	<stdio.h>
-#include	"loc_incl.h"
+#include <stdio.h>
 
-void
-setbuf(register FILE *stream, char *buf)
+void setbuf(FILE * f, char * buf)
 {
-	(void) setvbuf(stream, buf, (buf ? _IOFBF : _IONBF), (size_t) BUFSIZ);
+	setvbuf(f, buf, buf ? _IOFBF : _IONBF, BUFSIZ);
 }

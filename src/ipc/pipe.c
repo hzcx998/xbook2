@@ -66,7 +66,7 @@ pipe_t *pipe_find(kobjid_t id)
  * 3.管道中没有数据，如果写端全部关闭，则返回0.
  * 4.如果写端没有全部关闭，则阻塞。
  */
-int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
+int __pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
 {
     if (!buffer || !bytes)
         return -1;
@@ -77,9 +77,13 @@ int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
 
     if (atomic_get(&pipe->read_count) <= 0) 
         return -1;
+
+    int rdsize = 0;
+    int chunk;
+    // 
     
-    //
     mutex_lock(&pipe->mutex);
+
     /* 没有数据就要检查写端状态，如果关闭则返回0，不然就读取阻塞，等待有数据后，读取数据返回 */
     if (fifo_buf_len(pipe->fifo) <= 0) {
         /* 写端全部被关闭，返回0 */
@@ -98,8 +102,8 @@ int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
         mutex_lock(&pipe->mutex);
     }
     /* 获取缓冲区大小，如果有数据，则直接读取数据，然后返回 */
-    int rdsize = 0;
-    int chunk = min(bytes, PIPE_SIZE); /* 获取一次能读取的数据量 */
+    
+    chunk = min(bytes, PIPE_SIZE); /* 获取一次能读取的数据量 */
     chunk = min(chunk, fifo_buf_len(pipe->fifo)); /* 获取能读取的数据量 */
     chunk = fifo_buf_get(pipe->fifo, buffer, chunk);
     rdsize += chunk;
@@ -108,10 +112,30 @@ int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
         if (wait_queue_length(&pipe->wait_queue) > 0)
             wait_queue_wakeup(&pipe->wait_queue);
     }
+    
     mutex_unlock(&pipe->mutex);
 
     return rdsize;
 }
+
+int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
+{
+    char *buf = (char *) buffer;
+    int rd = 0, tmp;
+    while (bytes > 0) {
+        tmp = __pipe_read(pipeid, buf, bytes);
+        if (tmp < 0 && rd == 0) { // 第一次读取就出错
+            return -1;
+        } else if (tmp < 0) { // 还是没有数据
+            return rd;
+        }
+        rd += tmp;
+        buf += tmp;
+        bytes -= tmp;
+    }
+    return rd;
+}
+
 
 /**
  * 从管道写入数据。

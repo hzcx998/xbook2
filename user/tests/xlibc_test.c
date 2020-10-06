@@ -1,11 +1,23 @@
 #include"test.h"
 
+#include <stdio.h>
+
 int getopt_test(int argc,char *argv[]);
 
 int xlibc_test(int argc,char *argv[])
 {
     // return getopt_test(argc, argv);
 	puts("-----------xlibc_test------------");
+	puts("read");
+    char rdbuf[10 + 1] = {0};
+    read(0, rdbuf, 10);
+    printf("rdbuf:%s\n", rdbuf);
+
+    int d, e;
+    scanf("%d %d", &d, &e);
+    printf("int: %d, char: %d\n", d, e);
+
+    return 0;
 
 	puts("time");
 	printf("%lu\n",time(NULL));

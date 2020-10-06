@@ -1,14 +1,11 @@
 /*
- * fgetpos.c - get the position in the file
+ * xlibc/stdio/fgetpos.c
  */
-/* $Header: fgetpos.c,v 1.2 89/12/18 15:01:03 eck Exp $ */
 
-#include	<stdio.h>
+#include <stdio.h>
 
-int
-fgetpos(FILE *stream, fpos_t *pos)
+int fgetpos(FILE * f, fpos_t * pos)
 {
-	*pos = ftell(stream);
-	if (*pos == -1) return -1;
+	*pos = f->pos;
 	return 0;
 }

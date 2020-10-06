@@ -1,29 +1,21 @@
 /*
- * fwrite.c - write a number of array elements on a file
+ * xlibc/stdio/fwrite.c
  */
-/* $Header: fwrite.c,v 1.3 89/12/18 15:02:39 eck Exp $ */
 
-#include	<stdio.h>
+#include <stdio.h>
 
-size_t
-fwrite(const void *ptr, size_t size, size_t nmemb,
-	    register FILE *stream)
+size_t fwrite(const void * buf, size_t size, size_t count, FILE * f)
 {
-	register const unsigned char *cp = ptr;
-	register size_t s;
-	size_t ndone = 0;
+	const unsigned char * p = buf;
+	size_t i;
 
-	if (size)
-		while ( ndone < nmemb ) {
-			s = size;
-			do {
-				if (putc((int)*cp, stream)
-					== EOF)
-					return ndone;
-				cp++;
-			} 
-			while (--s);
-			ndone++;
-		}
-	return ndone;
+	for(i = 0; i < count; i++)
+	{
+		if(__stdio_write(f, p, size) != size)
+			break;
+
+		p += size;
+	}
+
+	return i;
 }

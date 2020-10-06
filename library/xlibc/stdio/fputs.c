@@ -1,18 +1,11 @@
 /*
- * fputs - print a string
+ * xlibc/stdio/fputs.c
  */
-/* $Header: fputs.c,v 1.2 89/12/18 15:02:01 eck Exp $ */
 
-#include	<stdio.h>
+#include <string.h>
+#include <stdio.h>
 
-int
-fputs(register const char *s, register FILE *stream)
+int fputs(const char * s, FILE * f)
 {
-	register int i = 0;
-
-	while (*s) 
-		if (putc(*s++, stream) == EOF) return EOF;
-		else i++;
-
-	return i;
+	return ((__stdio_write(f, (unsigned char *)s, strlen(s)) <= 0) ? EOF : 0);
 }

@@ -1,12 +1,10 @@
 /*
- * getc.c - read an unsigned character
+ * xlibc/stdio/getc.c
  */
-/* $Header: getc.c,v 1.2 89/12/18 15:02:45 eck Exp $ */
 
-#include	<stdio.h>
+#include <stdio.h>
 
-int
-(getc)(FILE *stream)
+int getc(FILE * f)
 {
-	return getc(stream);
+	return fgetc(f);
 }

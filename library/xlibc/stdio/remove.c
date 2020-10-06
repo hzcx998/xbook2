@@ -1,12 +1,11 @@
 /*
- * remove.c - remove a file
+ * xlibc/stdio/remove.c
  */
-/* $Header: remove.c,v 1.2 90/01/22 11:12:44 eck Exp $ */
 
-#include	<stdio.h>
-#include	<unistd.h>
+#include <stdio.h>
+#include <unistd.h>
 
-int
-remove(const char *filename) {
-	return unlink(filename);
+int remove(const char * path)
+{
+	return unlink(path);
 }

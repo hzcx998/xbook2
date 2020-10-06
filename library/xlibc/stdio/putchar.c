@@ -1,12 +1,10 @@
 /*
- * putchar.c - print (or buffer) a character on the standard output stream
+ * xlibc/stdio/putchar.c
  */
-/* $Header: putchar.c,v 1.2 89/12/18 15:03:23 eck Exp $ */
 
-#include	<stdio.h>
+#include <stdio.h>
 
-int
-(putchar)(int c)
+int putchar(int c)
 {
-	return putchar(c);
+	return fputc(c, stdout);
 }
