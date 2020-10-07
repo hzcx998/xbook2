@@ -26,6 +26,7 @@ enum {
     GW_NO_MAXIM     = (1 << 3), /* 没有最大化按钮 */
     GW_NO_MINIM     = (1 << 4), /* 没有最小化按钮 */
     GW_SHOW         = (1 << 5), /* 创建时显示 */
+    GW_FOCUSED      = (1 << 6), /* 窗体是否处于聚焦中 */
 };
 
 #define GW_BTN_SIZE 16
@@ -62,6 +63,7 @@ g_window_t *g_find_window(int win);
 int g_resize_window(int win, uint32_t width, uint32_t height);
 int g_focus_window(int win, int turn);
 int g_maxim_window(int win);
+int g_set_window_title(int win, const char *title);
 
 int g_enable_window_resize(int win);
 int g_disable_window_resize(int win);

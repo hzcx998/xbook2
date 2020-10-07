@@ -15,9 +15,11 @@ void timer_handler(int layer, uint32_t msgid, uint32_t tmrid, uint32_t time)
 {
     g_set_timer(layer, tmrid, 50, timer_handler);
     
-    printf("[win]: fps=%d!\n", fps);
+    char buf[32] = {0};
+    sprintf(buf, "[win]: fps=%d", fps);
+    g_set_window_title(layer, buf);
+    printf("%s!\n", buf);
     fps = 0;
-
 }
 
 g_bitmap_t *screen_bitmap;

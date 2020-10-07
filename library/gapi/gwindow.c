@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <gwindow.h>
 #include <glayer.h>
@@ -36,10 +37,12 @@ static void __g_paint_window(g_window_t *gw, int turn, int body)
         back = GW_ON_BACK_COLOR;
         board = GW_ON_BOARD_COLOR;
         font = GW_ON_FONT_COLOR;
+        gw->flags |= GW_FOCUSED;
     } else {
         back = GW_OFF_BACK_COLOR;
         board = GW_OFF_BOARD_COLOR;
         font = GW_OFF_FONT_COLOR;
+        gw->flags &= ~GW_FOCUSED;
     }
    
     /* 需要清空位图 */
@@ -303,6 +306,58 @@ int g_enable_window_resize(int win)
     return 0;   
 }
 
+int g_set_window_title(int win, const char *title)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    
+    uint32_t back, board, font;
+    if (gw->flags) {
+        back = GW_ON_BACK_COLOR;
+        board = GW_ON_BOARD_COLOR;
+        font = GW_ON_FONT_COLOR;
+    } else {
+        back = GW_OFF_BACK_COLOR;
+        board = GW_OFF_BOARD_COLOR;
+        font = GW_OFF_FONT_COLOR;
+    }
+
+    int len = strlen(gw->title); // old title
+    
+    /* 需要清空位图 */
+    g_bitmap_clear(gw->wbmp);
+    
+    // clear old
+    g_rectfill(
+        gw->wbmp,
+        gw->width / 2 - (len *g_current_font->char_width) / 2,
+        (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
+        len * g_current_font->char_width,
+        g_current_font->char_height,
+        back
+    );
+    // set new title
+    memset(gw->title, 0, GW_TITLE_LEN);
+    strcpy(gw->title, title);
+    
+    len = strlen(gw->title);
+    // draw new title
+    g_text(
+        gw->wbmp, gw->width / 2 - (len *g_current_font->char_width) / 2,
+        (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
+        gw->title, font
+    );
+
+    g_bitmap_sync(gw->wbmp, gw->layer, 0, 0);
+
+    // attention to the buttons
+    g_set_touch_idel_color_group(&gw->touch_list, board);
+    g_paint_touch_group(&gw->touch_list);
+
+    return 0;   
+}
+
 /**
  * 设置最小可调整的窗口大小
  * @min_width: 最小允许调整的宽度
@@ -355,8 +410,10 @@ int g_resize_window(int win, uint32_t width, uint32_t height)
 
     /* 调整窗口位图大小 */
     g_bitmap_t *bmp = g_new_bitmap(gw->width, gw->height);
-    if (bmp == NULL)
-        return -1;
+    if (bmp == NULL) {
+        printf("[gwindow]: %s new bitmap null, abort!\n");
+        abort();
+    }
     g_del_bitmap(gw->wbmp);
     gw->wbmp = bmp;
 

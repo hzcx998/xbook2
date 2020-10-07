@@ -42,10 +42,10 @@ SYSTEM_DIR	= ./system
 USER_DIR	= ./user
 
 #kernel disk
-LOADER_OFF 	= 2		
+LOADER_OFF 	= 2
 LOADER_CNTS = 8
 
-SETUP_OFF 	= 10		
+SETUP_OFF 	= 10
 SETUP_CNTS 	= 90
 
 KERNEL_OFF 	= 100
