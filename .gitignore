@@ -78,8 +78,5 @@ tools/fatfs/fatfs
 # dir
 recycle
 
-user/des
-develop/rom/out
-
 # need commit to git
 !scripts/fixdep.exe
