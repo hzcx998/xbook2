@@ -674,6 +674,7 @@ int ahci_device_identify_ahci(struct hba_memory *abar,
 	struct dma_region dma;
 	dma.p.size = 0x1000;
 	dma.p.alignment = 0x1000;
+	dma.flags = DMA_REGION_SPECIAL;
 	alloc_dma_buffer(&dma);
 	ahci_write_prdt(abar, port, dev, 0, 0, 512, (addr_t)dma.v);
 	ahci_initialize_command_header(abar,
@@ -813,6 +814,8 @@ int ahci_initialize_device(struct hba_memory *abar, device_extension_t *dev)
 	dev->dma_fis.p.size = 0x1000;
 	dev->dma_fis.p.alignment = 0x1000;
 
+	dev->dma_clb.flags = DMA_REGION_SPECIAL;
+	dev->dma_fis.flags = DMA_REGION_SPECIAL;
 	alloc_dma_buffer(&dev->dma_clb);
 	alloc_dma_buffer(&dev->dma_fis);
 
@@ -967,6 +970,7 @@ int ahci_rw_multiple_do(int rw, int min, uint64_t blk, unsigned char *out_buffer
 	struct dma_region dma;
 	dma.p.size = 0x1000 * num_pages;
 	dma.p.alignment = 0x1000;
+	dma.flags = DMA_REGION_SPECIAL;
 	alloc_dma_buffer(&dma);
 	int num_read_blocks = count;
 	struct hba_port *port = (struct hba_port *)&hba_mem->ports[dev->idx];
@@ -979,9 +983,10 @@ int ahci_rw_multiple_do(int rw, int min, uint64_t blk, unsigned char *out_buffer
 	
 	ahci_port_release_slot(dev, slot);
 	
-	if(rw == 0 && num_read_blocks)
+	if(rw == 0 && num_read_blocks) {
 		memcpy(out_buffer, (void *)dma.v, length);
-	
+	}
+		
 	free_dma_buffer(&dma);
 	return num_read_blocks * ATA_SECTOR_SIZE;
 }

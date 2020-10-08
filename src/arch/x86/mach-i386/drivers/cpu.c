@@ -233,7 +233,7 @@ static iostatus_t cpu_enter(driver_object_t *driver)
     device_extension_t *extension;
 
     /* 初始化一些其它内容 */
-    status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_VIRTUAL_DISK, &devobj);
+    status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_VIRTUAL_CHAR, &devobj);
 
     if (status != IO_SUCCESS) {
         printk(KERN_ERR "cpu_enter: create device failed!\n");

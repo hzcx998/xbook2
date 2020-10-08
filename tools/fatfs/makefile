@@ -20,7 +20,7 @@ else
 
 	ifeq ($(shell uname),Linux)
 		CC       	= gcc
-		INCS     = -I /usr/include
+		INCS     = -I /usr/include -I /usr/local/include
 		LIBS     = -static-libgcc
 		# out file
 		BIN = ./fatfs

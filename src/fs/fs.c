@@ -24,6 +24,26 @@ int init_fs()
     }
     printk("[fs]: init done.\n");
     
+    // open sbin/init
+#if 0
+    int fd = sys_open("/sbin/init", O_RDONLY, 0);
+    if (fd < 0) {
+        printk("open fd failed!\n");
+        return -1;
+    }
+    uint32_t *buf = kmalloc(1024 * 50);
+    size_t need = 32 * KB;
+    sys_lseek(fd, 0, SEEK_SET);
+    int rd = sys_read(fd, buf, need);
+    printk("need: %d, read: %d\n", need, rd);
+    #if 0
+    int i;
+    for (i = 0; i <  512*15 / 4; i++) {
+        printk(" %8x ", buf[i]);
+    }
+    #endif
+    spin("test");
+#endif
 #if 0
     /* test */
     int fd = sys_open("/root/kfs", O_CREAT | O_RDWR, 0);
