@@ -6,40 +6,58 @@
 #include "renderer.h"
 #include "atlas.inl"
 
-#define BUFFER_SIZE 16384
+#define MU_RENDER_BUFFER_SIZE 16384
 
-static mu_Rect tex_buf[BUFFER_SIZE];
-static mu_Rect vert_buf[BUFFER_SIZE];
-static mu_Color color_buf[BUFFER_SIZE];
-static mu_Rect clip_rect;
+static mu_Rect mu_render_tex_buf[MU_RENDER_BUFFER_SIZE];
+static mu_Rect mu_render_vert_buf[MU_RENDER_BUFFER_SIZE];
+static mu_Color mu_render_color_buf[MU_RENDER_BUFFER_SIZE];
+static mu_Rect mu_render_clip_rect;
 
-int fb;
-static g_bitmap_t * render;
-static int width;
-static int height;
-static int buf_idx;
+static int mu_render_win;
+static g_bitmap_t * mu_render;
+static int mu_render_width;
+static int mu_render_height;
+static int mu_render_buf_idx;
 
-#define WIN_WIDTH   640
-#define WIN_HEIGHT   480
-
-void r_init(void) {
-    /* 初始化 */
+/**
+ * init microui render
+ * render used for show microui on the screen
+ */
+mu_Context *mu_render_init(const char *title, int x, int y, int width, int height) 
+{
     if (g_init() < 0) {
-        printf("g_init failed!\n");
-        exit(-1);
+        printf("[mu render]: init failed!\n");
+        return NULL;
     }
-    width = WIN_WIDTH;
-	height = WIN_HEIGHT;
-
-    fb = g_new_window("microui", 100, 100, width, height, GW_SHOW);
-    if (fb < 0){
-        printf("g_new_window failed!\n");
-        exit(-1);
+    mu_render_win = g_new_window((char *) title, x, y, width, height, GW_SHOW);
+    if (mu_render_win < 0){
+        printf("[mu render]: new widnow failed!\n");
+        g_quit();
+        return NULL;
     }
 
-	render = g_new_bitmap(width, height);
-	
-	clip_rect = (mu_Rect) { 0, 0, width, height};
+	mu_render = g_new_bitmap(width, height);
+	if (mu_render == NULL) {
+        printf("[mu render]: new bitmap failed!\n");
+        g_del_window(mu_render_win);
+        g_quit();
+        return NULL;
+    }
+	mu_render_clip_rect = (mu_Rect) { 0, 0, width, height};
+    mu_render_width = width;
+    mu_render_height = height;
+    
+    /* init microui */
+	mu_Context *ctx = malloc(sizeof(mu_Context));
+    if (ctx == NULL) {
+        printf("[mu render]: malloc for context failed!\n");
+        g_del_bitmap(mu_render);
+        g_del_window(mu_render_win);
+        g_quit();
+        return NULL;
+    }
+	mu_init(ctx);
+    return ctx;
 }
 
 #define BIT_GET(x,p)	(((char *)(x))[(p) / (sizeof(char) * 8)] & (1<<((p) % (sizeof(char) * 8))))
@@ -72,27 +90,27 @@ static void disp_fill(mu_Rect dst, mu_Rect src, mu_Color color)
 {
     int32_t x;
     int32_t y;
-	float factor_x = ((float)src.w) / (dst.w);
-	float factor_y = ((float)src.h) / (dst.h);
+	// float factor_x = ((float)src.w) / (dst.w);
+	// float factor_y = ((float)src.h) / (dst.h);
 
 	int sx, sy, ex, ey;
-	if(dst.x < clip_rect.x) sx = clip_rect.x;
-	else if(dst.x >= clip_rect.x + clip_rect.w) return; else sx = dst.x;
-	if(dst.y < clip_rect.y) sy = clip_rect.y;
-	else if(dst.y >= clip_rect.y + clip_rect.h) return; else sy = dst.y;
-	if(dst.x + dst.w > clip_rect.x + clip_rect.w) ex = clip_rect.x + clip_rect.w;
-	else if(dst.x + dst.w <= clip_rect.x) return; else ex = dst.x + dst.w;
-	if(dst.y + dst.h > clip_rect.y + clip_rect.h) ey = clip_rect.y + clip_rect.h;
-	else if(dst.y + dst.h <= clip_rect.y) return; else ey = dst.y + dst.h;
+	if(dst.x < mu_render_clip_rect.x) sx = mu_render_clip_rect.x;
+	else if(dst.x >= mu_render_clip_rect.x + mu_render_clip_rect.w) return; else sx = dst.x;
+	if(dst.y < mu_render_clip_rect.y) sy = mu_render_clip_rect.y;
+	else if(dst.y >= mu_render_clip_rect.y + mu_render_clip_rect.h) return; else sy = dst.y;
+	if(dst.x + dst.w > mu_render_clip_rect.x + mu_render_clip_rect.w) ex = mu_render_clip_rect.x + mu_render_clip_rect.w;
+	else if(dst.x + dst.w <= mu_render_clip_rect.x) return; else ex = dst.x + dst.w;
+	if(dst.y + dst.h > mu_render_clip_rect.y + mu_render_clip_rect.h) ey = mu_render_clip_rect.y + mu_render_clip_rect.h;
+	else if(dst.y + dst.h <= mu_render_clip_rect.y) return; else ey = dst.y + dst.h;
 
 	if(color.a == 0xff) {
 		for(y = sy; y < ey; y++) {
-			mu_Color *base = (mu_Color *)&((u32_t *)render->buffer)[y * width];
+			mu_Color *base = (mu_Color *)&((u32_t *)mu_render->buffer)[y * mu_render_width];
 			for(x = sx; x < ex; x++) base[x] = color;
 		}
 	} else {
 	    for(y = sy; y < ey; y++) {
-			mu_Color *base = (mu_Color *)&((u32_t *)render->buffer)[y * width];
+			mu_Color *base = (mu_Color *)&((u32_t *)mu_render->buffer)[y * mu_render_width];
 			for(x = sx; x < ex; x++) {
 				mu_Color *c = &base[x];
 				int a = color.a;
@@ -112,17 +130,17 @@ static void disp_texture(mu_Rect dst, mu_Rect src, mu_Color color)
 	float factor_y = ((float)src.h) / (dst.h);
 
 	int sx, sy, ex, ey;
-	if(dst.x < clip_rect.x) sx = clip_rect.x;
-	else if(dst.x >= clip_rect.x + clip_rect.w) return; else sx = dst.x;
-	if(dst.y < clip_rect.y) sy = clip_rect.y;
-	else if(dst.y >= clip_rect.y + clip_rect.h) return; else sy = dst.y;
-	if(dst.x + dst.w > clip_rect.x + clip_rect.w) ex = clip_rect.x + clip_rect.w;
-	else if(dst.x + dst.w <= clip_rect.x) return; else ex = dst.x + dst.w;
-	if(dst.y + dst.h > clip_rect.y + clip_rect.h) ey = clip_rect.y + clip_rect.h;
-	else if(dst.y + dst.h <= clip_rect.y) return; else ey = dst.y + dst.h;
+	if(dst.x < mu_render_clip_rect.x) sx = mu_render_clip_rect.x;
+	else if(dst.x >= mu_render_clip_rect.x + mu_render_clip_rect.w) return; else sx = dst.x;
+	if(dst.y < mu_render_clip_rect.y) sy = mu_render_clip_rect.y;
+	else if(dst.y >= mu_render_clip_rect.y + mu_render_clip_rect.h) return; else sy = dst.y;
+	if(dst.x + dst.w > mu_render_clip_rect.x + mu_render_clip_rect.w) ex = mu_render_clip_rect.x + mu_render_clip_rect.w;
+	else if(dst.x + dst.w <= mu_render_clip_rect.x) return; else ex = dst.x + dst.w;
+	if(dst.y + dst.h > mu_render_clip_rect.y + mu_render_clip_rect.h) ey = mu_render_clip_rect.y + mu_render_clip_rect.h;
+	else if(dst.y + dst.h <= mu_render_clip_rect.y) return; else ey = dst.y + dst.h;
 
     for(y = sy; y < ey; y++) {
-		mu_Color *base = (mu_Color *)&((u32_t *)render->buffer)[y * width];
+		mu_Color *base = (mu_Color *)&((u32_t *)mu_render->buffer)[y * mu_render_width];
         for(x = sx; x < ex; x++) {
 			mu_Color *c = &base[x];
 			int src_x = src.x + ((int)((x - dst.x) * factor_x));
@@ -144,17 +162,17 @@ static void disp_custom(mu_Rect dst, mu_Color *color)
     int32_t x;
     int32_t y;
 	int sx, sy, ex, ey;
-	if(dst.x < clip_rect.x) sx = clip_rect.x;
-	else if(dst.x >= clip_rect.x + clip_rect.w) return; else sx = dst.x;
-	if(dst.y < clip_rect.y) sy = clip_rect.y;
-	else if(dst.y >= clip_rect.y + clip_rect.h) return; else sy = dst.y;
-	if(dst.x + dst.w > clip_rect.x + clip_rect.w) ex = clip_rect.x + clip_rect.w;
-	else if(dst.x + dst.w <= clip_rect.x) return; else ex = dst.x + dst.w;
-	if(dst.y + dst.h > clip_rect.y + clip_rect.h) ey = clip_rect.y + clip_rect.h;
-	else if(dst.y + dst.h <= clip_rect.y) return; else ey = dst.y + dst.h;
+	if(dst.x < mu_render_clip_rect.x) sx = mu_render_clip_rect.x;
+	else if(dst.x >= mu_render_clip_rect.x + mu_render_clip_rect.w) return; else sx = dst.x;
+	if(dst.y < mu_render_clip_rect.y) sy = mu_render_clip_rect.y;
+	else if(dst.y >= mu_render_clip_rect.y + mu_render_clip_rect.h) return; else sy = dst.y;
+	if(dst.x + dst.w > mu_render_clip_rect.x + mu_render_clip_rect.w) ex = mu_render_clip_rect.x + mu_render_clip_rect.w;
+	else if(dst.x + dst.w <= mu_render_clip_rect.x) return; else ex = dst.x + dst.w;
+	if(dst.y + dst.h > mu_render_clip_rect.y + mu_render_clip_rect.h) ey = mu_render_clip_rect.y + mu_render_clip_rect.h;
+	else if(dst.y + dst.h <= mu_render_clip_rect.y) return; else ey = dst.y + dst.h;
 
 	for(y = sy; y < ey; y++) {
-		mu_Color *base = (mu_Color *)&((u32_t *)render->buffer)[y * width];
+		mu_Color *base = (mu_Color *)&((u32_t *)mu_render->buffer)[y * mu_render_width];
 		for(x = sx; x < ex; x++) {
 			mu_Color *c = &base[x];
 			int src_x = x - dst.x;
@@ -172,44 +190,44 @@ static void disp_clear(mu_Color color)
 {
     int32_t x;
     int32_t y;
-    for(y = 0; y < height; y++) {
-        for(x = 0; x < width; x++) {
-			((u32_t *)render->buffer)[y * width + x] = *(int *)&color;
+    for(y = 0; y < mu_render_height; y++) {
+        for(x = 0; x < mu_render_width; x++) {
+			((u32_t *)mu_render->buffer)[y * mu_render_width + x] = *(int *)&color;
         }
     }
 }
 
 static void flush(void) {
-	if (buf_idx == 0) { return; }
+	if (mu_render_buf_idx == 0) { return; }
 
-	for(int i = 0; i < buf_idx; i++){
-		if(tex_buf[i].x == 125)
-			disp_fill(vert_buf[i], tex_buf[i], color_buf[i]);
+	for(int i = 0; i < mu_render_buf_idx; i++){
+		if(mu_render_tex_buf[i].x == 125)
+			disp_fill(mu_render_vert_buf[i], mu_render_tex_buf[i], mu_render_color_buf[i]);
 		else
-			disp_texture(vert_buf[i], tex_buf[i], color_buf[i]);
+			disp_texture(mu_render_vert_buf[i], mu_render_tex_buf[i], mu_render_color_buf[i]);
 	}
-	buf_idx = 0;
+	mu_render_buf_idx = 0;
 }
 
 
 static void push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
-	if (buf_idx == BUFFER_SIZE) { flush(); }
+	if (mu_render_buf_idx == MU_RENDER_BUFFER_SIZE) { flush(); }
 	/* update texture buffer */
-	tex_buf[buf_idx] = src;
+	mu_render_tex_buf[mu_render_buf_idx] = src;
 	/* update vertex buffer */
-	vert_buf[buf_idx] = dst;
+	mu_render_vert_buf[mu_render_buf_idx] = dst;
 	/* update color buffer */
-	color_buf[buf_idx] = color;
-	buf_idx++;
+	mu_render_color_buf[mu_render_buf_idx] = color;
+	mu_render_buf_idx++;
 }
 
 
-void r_draw_rect(mu_Rect rect, mu_Color color) {
+void mu_render_draw_rect(mu_Rect rect, mu_Color color) {
 	push_quad(rect, atlas[ATLAS_WHITE], color);
 }
 
 
-void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
+void mu_render_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
 	mu_Rect dst = { pos.x, pos.y, 0, 0 };
 	for (const char *p = text; *p; p++) {
 		if ((*p & 0xc0) == 0x80) { continue; }
@@ -223,19 +241,19 @@ void r_draw_text(const char *text, mu_Vec2 pos, mu_Color color) {
 }
 
 
-void r_draw_icon(int id, mu_Rect rect, mu_Color color) {
+void mu_render_draw_icon(int id, mu_Rect rect, mu_Color color) {
 	mu_Rect src = atlas[id];
 	int x = rect.x + (rect.w - src.w) / 2;
 	int y = rect.y + (rect.h - src.h) / 2;
 	push_quad(mu_rect(x, y, src.w, src.h), src, color);
 }
 
-void r_draw_custom(mu_Rect rect, mu_Color *color) {
+void mu_render_draw_custom(mu_Rect rect, mu_Color *color) {
 	flush();
 	disp_custom(rect, color);
 }
 
-int r_get_text_width(const char *text, int len) {
+int mu_render_get_text_width(const char *text, int len) {
 	int res = 0;
 	for (const char *p = text; *p && len--; p++) {
 		if ((*p & 0xc0) == 0x80) { continue; }
@@ -246,29 +264,28 @@ int r_get_text_width(const char *text, int len) {
 }
 
 
-int r_get_text_height(void) {
+int mu_render_get_text_height(void) {
 	return 18;
 }
 
 
-void r_set_clip_rect(mu_Rect rect) {
+void mu_render_set_clip_rect(mu_Rect rect) {
 	flush();
 
 	if(rect.x < 0) rect.x = 0;
 	if(rect.y < 0) rect.y = 0;
-	if(rect.x + rect.w > width) rect.w = width - rect.x;
-	if(rect.y + rect.h > height) rect.h = height - rect.y;
-	clip_rect = rect; 	// 可以注释这条语句，检查是否有组件进行了错误的裁剪
+	if(rect.x + rect.w > mu_render_width) rect.w = mu_render_width - rect.x;
+	if(rect.y + rect.h > mu_render_height) rect.h = mu_render_height - rect.y;
+	mu_render_clip_rect = rect; 	// 可以注释这条语句，检查是否有组件进行了错误的裁剪
 }
 
 
-void r_clear(mu_Color clr) {
+void mu_render_clear(mu_Color clr) {
 	flush();
 	disp_clear(clr);
 }
 
-void r_present(void) {
+void mu_render_present(void) {
 	flush();
-	// framebuffer_present_render(fb, render, NULL, 0);
-    g_paint_window(fb, 0, 0, render);
+    g_paint_window(mu_render_win, 0, 0, mu_render);
 }

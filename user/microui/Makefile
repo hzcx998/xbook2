@@ -1,6 +1,6 @@
 X_LIBS		+= libxlibc-0.0.1.a libgapi-0.1.0.a
 
-NAME		:= microui
+NAME		:= mui
 SRC			+= main.c microui.c renderer.c
 
 define CUSTOM_TARGET_CMD

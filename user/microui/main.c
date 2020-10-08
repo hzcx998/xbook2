@@ -10,8 +10,6 @@ static char logbuf[64000];
 static int logbuf_updated = 0;
 static float bg[3] = {90, 95, 100};
 
-static int win_exit_flag = 0;
-
 static void write_log(const char *text)
 {
 	if (logbuf[0])
@@ -363,28 +361,30 @@ static int text_width(mu_Font font, const char *text, int len)
 	{
 		len = strlen(text);
 	}
-	return r_get_text_width(text, len);
+	return mu_render_get_text_width(text, len);
 }
 
 static int text_height(mu_Font font)
 {
-	return r_get_text_height();
+	return mu_render_get_text_height();
 }
 
-static bool ex_tp_read(mu_Context *ctx)
+int mu_render_exit()
+{
+    exit(g_quit());
+    return 0;
+}
+
+static bool mu_render_poll_event(mu_Context *ctx)
 {
     g_msg_t msg;
     memset(&msg, 0, sizeof(g_msg_t));
-    /* 获取消息，一般消息返回0，退出消息返回-1 */
     if (g_try_get_msg(&msg) < 0)
         return FALSE;
-    
     if (g_is_quit_msg(&msg)) {
-        win_exit_flag = 1;
+        mu_render_exit();
         return FALSE;
     }
-        
-    /* 有外部消息则处理消息 */
     g_dispatch_msg(&msg);
     
 	switch (g_msg_get_type(&msg))
@@ -410,11 +410,37 @@ static bool ex_tp_read(mu_Context *ctx)
 	case GM_MOUSE_MOTION:
 		mu_input_mousemove(ctx, g_msg_get_mouse_x(&msg), g_msg_get_mouse_y(&msg));
 		break;
-	case GM_KEY_UP:
-	{
+	case GM_KEY_DOWN:
+    {
+        int key = g_msg_get_key_code(&msg);
+        if (key == GK_ENTER)
+			mu_input_keydown(ctx, '\n');
+		else if (key == GK_TAB)
+			mu_input_keydown(ctx, '\t');
+		else if (key == GK_DELETE)
+			mu_input_keydown(ctx, '\b');
+		else
+			mu_input_keydown(ctx, key);
+    }
+        break;
+    case GM_KEY_UP:
+    {
+        int key = g_msg_get_key_code(&msg);
+        if (key == GK_ENTER)
+			mu_input_keyup(ctx, '\n');
+		else if (key == GK_TAB)
+			mu_input_keyup(ctx, '\t');
+		else if (key == GK_DELETE)
+			mu_input_keyup(ctx, '\b');
+		else
+			mu_input_keyup(ctx, key);
+    }
+        break;
+    #if 0
+	case GM_TEXTINPUT:
+    {
 		char s[2] = {0};
 		s[0] = g_msg_get_key_code(&msg);
-
 		if (g_msg_get_key_code(&msg) == GK_ENTER)
 			mu_input_text(ctx, "\n");
 		else if (g_msg_get_key_code(&msg) == GK_TAB)
@@ -425,86 +451,125 @@ static bool ex_tp_read(mu_Context *ctx)
 			mu_input_text(ctx, s);
 	}
 	break;
+    #endif
 	default:
 		return FALSE;
 	}
 	return TRUE;
 }
 
-int main()
+void (*mu_render_frame_ptr)(mu_Context *) = NULL;
+void (*mu_render_handler_ptr)(mu_Context *) = NULL;
+
+// mu_color
+mu_Color mu_render_back_color = {0, 0, 0, 255};
+
+void mu_render_set_frame(void (*frame)(mu_Context *))
 {
-	r_init();
+    mu_render_frame_ptr = frame;
+}
 
-	/* init microui */
-	mu_Context *ctx = malloc(sizeof(mu_Context));
-	mu_init(ctx);
-	ctx->text_width = text_width;
-	ctx->text_height = text_height;
-	char buf[20];
-	//uint64_t now, before = ktime_to_us(ktime_get());
-    struct timeval time1 = {0, 0};
-    struct timeval time2 = {0, 0};
-    int fps = 0;
-    gettimeofday(&time1, NULL);
+void mu_render_set_handler(void (*handler)(mu_Context *))
+{
+    mu_render_handler_ptr = handler;
+}
 
-	/* main loop */
-	for (;;)
+void mu_render_set_bgcolor(mu_Color color)
+{
+    mu_render_back_color = color;
+}
+
+void mu_render_loop(mu_Context *ctx)
+{
+    /* main loop */
+	while (1)
 	{
-        
 		/* handle events */
-		while (ex_tp_read(ctx));
-        if (win_exit_flag)
-            break;
+		while (mu_render_poll_event(ctx));
 		/* process frame */
-		process_frame(ctx);
-		/* render */
-		r_clear(mu_color(bg[0], bg[1], bg[2], 255));
+		if (mu_render_frame_ptr)
+            mu_render_frame_ptr(ctx);
+
+		/* render clear with back color*/
+		mu_render_clear(mu_render_back_color);
+
+        /* read cmd and deal cmd */
 		mu_Command *cmd = NULL;
 		while ((cmd = mu_next_command(ctx, cmd)))
 		{
 			switch (cmd->type)
 			{
 			case MU_COMMAND_TEXT:
-				r_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color);
+				mu_render_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color);
 				break;
 			case MU_COMMAND_RECT:
-				r_draw_rect(cmd->rect.rect, cmd->rect.color);
+				mu_render_draw_rect(cmd->rect.rect, cmd->rect.color);
 				break;
 			case MU_COMMAND_ICON:
-				r_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color);
+				mu_render_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color);
 				break;
 			case MU_COMMAND_CLIP:
-				r_set_clip_rect(cmd->clip.rect);
+				mu_render_set_clip_rect(cmd->clip.rect);
 				break;
 			case MU_COMMAND_CUSTOM:
-				r_draw_custom(cmd->custom.rect, cmd->custom.color);
+				mu_render_draw_custom(cmd->custom.rect, cmd->custom.color);
 				break;
 			}
 		}
-		mu_Rect rect = {
-			.x = ctx->mouse_pos.x - 8,
-			.y = ctx->mouse_pos.y - 8,
-			.w = 16,
-			.h = 16,
-		};
-		mu_Vec2 pos = {0, 0};
-		mu_Color color = {255, 255, 255, 255};
-        fps++;
-        gettimeofday(&time2, NULL);
-        unsigned long long mtime = (time2.tv_sec - time1.tv_sec) * 1000000 + (time2.tv_usec - time1.tv_usec);
-        if (mtime > 1000000) {
-            printf("fps %d\n", fps);
-            fps = 0;
-            time1 = time2;
-        }
-		//now = ktime_to_us(ktime_get());
-		//sprintf(buf, "%.2f", 1000000.0 / (now - before));
-		//before = ktime_to_us(ktime_get());
-		r_draw_text(buf, pos, color);
-		r_draw_icon(MU_ICON_CLOSE, rect, color);
-		r_present();
+
+        /* draw handler buf */
+        if (mu_render_handler_ptr)
+            mu_render_handler_ptr(ctx);
+
+		/* present render */
+		mu_render_present();
 	}
-    g_quit();
+}
+
+char text_buf[20];
+//uint64_t now, before = ktime_to_us(ktime_get());
+struct timeval time1 = {0, 0};
+struct timeval time2 = {0, 0};
+int fps = 0;
+
+static void process_handler(mu_Context *ctx)
+{
+	mu_Rect rect = {
+        .x = ctx->mouse_pos.x - 8,
+        .y = ctx->mouse_pos.y - 8,
+        .w = 16,
+        .h = 16,
+    };
+    mu_Vec2 pos = {0, 0};
+    mu_Color color = {255, 255, 255, 255};
+    fps++;
+    gettimeofday(&time2, NULL);
+    unsigned long long mtime = (time2.tv_sec - time1.tv_sec) * 1000000 + (time2.tv_usec - time1.tv_usec);
+    if (mtime > 1000000) {
+        printf("fps %d\n", fps);
+        sprintf(text_buf, "%d", fps);
+        
+        fps = 0;
+        time1 = time2;
+    }
+    mu_render_draw_text(text_buf, pos, color);
+    mu_render_draw_icon(MU_ICON_CLOSE, rect, color);
+}
+
+int main()
+{
+    mu_Context *ctx = mu_render_init("microui", 100, 100, 800, 600);
+	if (ctx == NULL)
+        return -1;
+
+	ctx->text_width = text_width;
+	ctx->text_height = text_height;
+    
+    mu_render_set_frame(process_frame);
+    mu_render_set_handler(process_handler);
+    mu_render_set_bgcolor(mu_color(192, 192, 192, 255));
+    gettimeofday(&time1, NULL);
+    mu_render_loop(ctx);
 
 	return 0;
 }
