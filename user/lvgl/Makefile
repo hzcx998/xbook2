@@ -2,6 +2,8 @@ X_LIBS		+= libxlibc-0.0.1.a libgapi-0.1.0.a
 
 X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=c99 -O2 
 
+X_INCDIRS	+= lvgl/lvgl
+
 NAME		:= lv
 SRC			+= main.c 
 SRC			+= lvgl/src/lv_core/
@@ -22,6 +24,7 @@ SRC			+= lvgl/examples/lv_demo_started/
 SRC			+= lvgl/examples/lv_ex_get_started/
 SRC			+= lvgl/examples/lv_ex_get_style/
 SRC			+= lvgl/examples/lv_ex_get_widgets/
+SRC			+= lvgl/lv_drivers/indev/
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

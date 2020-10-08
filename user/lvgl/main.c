@@ -6,6 +6,7 @@
 
 #include  "lvgl/lvgl.h"
 #include  "lvgl/lv_examples.h"
+#include  "lvgl/lv_drv_conf.h"
 
 int lv_win;
 g_bitmap_t *render;
@@ -88,11 +89,18 @@ int win_proc(g_msg_t *msg)
         lv_tick_inc(LV_TIMER_MS + 10);
         g_set_timer(lv_win, 1, LV_TIMER_MS, NULL);
         break;
+    case GM_KEY_DOWN:
+        keyboard_handler(g_msg_get_key_code(msg), 1);
+        break;
+    case GM_KEY_UP:                         /*Button release*/
+        keyboard_handler(g_msg_get_key_code(msg), 0);
+        break;
     default:
         break;
     }
     return 0;
 }
+
 
 static void do_register(void)
 {
@@ -111,6 +119,24 @@ static void do_register(void)
     indev_drv.type = LV_INDEV_TYPE_POINTER;    /*Touch pad is a pointer-like device*/
     indev_drv.read_cb = my_touchpad_read;      /*Set your driver function*/
     lv_indev_drv_register(&indev_drv);         /*Finally register the driver*/
+
+    /*------------------
+     * Keypad
+     * -----------------*/
+    keyboard_drv_init();
+    #if 0
+    /*Register a keypad input device*/
+    lv_indev_drv_init(&indev_drv);
+    indev_drv.type = LV_INDEV_TYPE_KEYPAD;
+    indev_drv.read_cb = keyboard_read;
+    indev_keypad = lv_indev_drv_register(&indev_drv);
+    #endif
+
+    /* Later you should create group(s) with `lv_group_t * group = lv_group_create()`,
+     * add objects to the group with `lv_group_add_obj(group, obj)`
+     * and assign this input device to group to navigate in it:
+     * `lv_indev_set_group(indev_keypad, group);` */
+
 
 }
 
@@ -143,6 +169,9 @@ int main(int argc, char **argv)
     #endif
     #if LV_USE_DEMO_PRINTER
     lv_demo_printer();
+    #endif
+    #if LV_USE_DEMO_KEYPAD_AND_ENCODER
+    lv_demo_keypad_encoder();
     #endif
     
     while (1) {

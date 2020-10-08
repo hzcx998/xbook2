@@ -17,7 +17,7 @@
  * GENERAL SETTING
  *******************/
 #define LV_EX_PRINTF       0       /*Enable printf-ing data in demoes and examples*/
-#define LV_EX_KEYBOARD     0       /*Add PC keyboard support to some examples (`lv_drivers` repository is required)*/
+#define LV_EX_KEYBOARD     1       /*Add PC keyboard support to some examples (`lv_drivers` repository is required)*/
 #define LV_EX_MOUSEWHEEL   0       /*Add 'encoder' (mouse wheel) support to some examples (`lv_drivers` repository is required)*/
 
 /*********************
@@ -25,7 +25,7 @@
  *********************/
 
 /*Show some widget*/
-#define LV_USE_DEMO_WIDGETS        1
+#define LV_USE_DEMO_WIDGETS        0
 #if LV_USE_DEMO_WIDGETS
 #define LV_DEMO_WIDGETS_SLIDESHOW  1
 #endif
@@ -34,7 +34,7 @@
 #define LV_USE_DEMO_PRINTER     0
 
 /*Demonstrate the usage of encoder and keyboard*/
-#define LV_USE_DEMO_KEYPAD_AND_ENCODER     0
+#define LV_USE_DEMO_KEYPAD_AND_ENCODER     1
 
 /*Benchmark your system*/
 #define LV_USE_DEMO_BENCHMARK   0
