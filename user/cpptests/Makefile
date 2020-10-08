@@ -1,12 +1,12 @@
 X_LIBS		+= libxlibcpp-0.0.1.a libxlibc-0.0.1.a
 
-X_CFLAGS    := -fno-builtin -Wall -fno-PIE -m32 -fno-stack-protector -std=c++98
-CC 			:= g++
+X_CXXFLAGS  := -fno-builtin -Wall -fno-PIE -m32 -fno-stack-protector -std=c++98
+CXX 		:= g++
 
 NAME		:= cpptests
 
-SRC			+= main.c
-SRC			+= iostream_test.c
+SRC			+= main.cpp
+SRC			+= iostream_test.cpp
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

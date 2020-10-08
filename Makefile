@@ -165,11 +165,7 @@ usr_c:
 QEMU_ARGUMENT = -m 512M \
 		-name "XBOOK Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
-		-drive id=disk0,file=$(HDA_IMG),if=none \
-		-drive id=disk1,file=$(HDB_IMG),if=none \
-		-device ahci,id=ahci \
-		-device ide-drive,drive=disk0,bus=ahci.0 \
-		-device ide-drive,drive=disk1,bus=ahci.1 \
+		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
 		-boot a \
 		-serial stdio \
 		-soundhw sb16 \

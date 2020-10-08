@@ -19,10 +19,10 @@ LOADER_SEG EQU 0x9000
 ;we read setup.bin from disk sector 10
 SETUP_OFF EQU 10	
 
-;we assume setup.bin size is 36kb(72 sectors)	
+;we assume setup.bin size is 45kb(90 sectors)	
 SETUP_CNTS EQU 90		
 
-;we read setup.bin to memory 0x91000 for 36kb
+;we read setup.bin to memory 0x91000 for 45kb
 ;so the segment is 0x9100, we are in real mode now.
 SETUP_SEG EQU 0x9100	
 

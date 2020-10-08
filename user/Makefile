@@ -4,13 +4,14 @@ X_ASFLAGS	+= -f elf -I $(DIR_XLIBC)/indlude
 X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=c99 -O2
 X_INCDIRS	+= ../library/xlibc/include ../library/pthread/include ../library/jpeg \
 				../library/libpng ../library/zlib ../library/gapi/include \
-				../library/xlibcpp/include ../library/microui
+				../library/xlibcpp/include ../library/microui ../library/cjson
 
 X_LDFLAGS	+= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 X_LIBDIRS	+= $(srctree)/../library/xlibc $(srctree)/../library/pthread \
 				$(srctree)/../library/jpeg $(srctree)/../library/libpng \
 				$(srctree)/../library/zlib $(srctree)/../library/gapi \
-				$(srctree)/../library/xlibcpp $(srctree)/../library/microui
+				$(srctree)/../library/xlibcpp $(srctree)/../library/microui \
+				$(srctree)/../library/cjson
 
 LD			:= ld -m elf_i386
 AS			:=	nasm

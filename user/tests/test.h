@@ -44,4 +44,7 @@ int math_test(int argc, char *argv[]);
 int http_test(int argc, char **argv);
 
 int buddy_test(int argc,char *argv[]);
+
+int cjson_main(void);
+
 #endif // _TEST_H

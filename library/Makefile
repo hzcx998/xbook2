@@ -7,6 +7,7 @@ AS			:= nasm
 export AS
 
 MODULE		:= xlibc
+MODULE		+= cjson
 MODULE		+= microui
 MODULE		+= xlibcpp
 MODULE		+= pthread

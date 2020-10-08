@@ -248,7 +248,7 @@ get_vbe_info:
 load_setup_file:
 	mov ax, SETUP_SEG
 	mov si, SETUP_OFF
-	mov cx, LOADER_CNTS
+	mov cx, SETUP_CNTS
 	;调用读取一整个块的扇区数据函数，其实也就是循环读取128个扇区，只是
 	;把它做成函数，方便调用
 	call load_file_block
