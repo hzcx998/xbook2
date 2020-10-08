@@ -2,8 +2,9 @@
 #include <gapi.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 
-#include "renderer.h"
+#include "mui_renderer.h"
 #include "atlas.inl"
 
 #define MU_RENDER_BUFFER_SIZE 16384
@@ -18,6 +19,20 @@ static g_bitmap_t * mu_render;
 static int mu_render_width;
 static int mu_render_height;
 static int mu_render_buf_idx;
+
+static int mu_render_text_width(mu_Font font, const char *text, int len)
+{
+	if (len == -1)
+	{
+		len = strlen(text);
+	}
+	return mu_render_get_text_width(text, len);
+}
+
+static int mu_render_text_height(mu_Font font)
+{
+	return mu_render_get_text_height();
+}
 
 /**
  * init microui render
@@ -57,6 +72,9 @@ mu_Context *mu_render_init(const char *title, int x, int y, int width, int heigh
         return NULL;
     }
 	mu_init(ctx);
+
+	ctx->text_width = mu_render_text_width;
+	ctx->text_height = mu_render_text_height;
     return ctx;
 }
 
@@ -288,4 +306,161 @@ void mu_render_clear(mu_Color clr) {
 void mu_render_present(void) {
 	flush();
     g_paint_window(mu_render_win, 0, 0, mu_render);
+}
+
+int mu_render_exit()
+{
+    exit(g_quit());
+    return 0;
+}
+
+static bool mu_render_poll_event(mu_Context *ctx)
+{
+    g_msg_t msg;
+    memset(&msg, 0, sizeof(g_msg_t));
+    if (g_try_get_msg(&msg) < 0)
+        return FALSE;
+    if (g_is_quit_msg(&msg)) {
+        mu_render_exit();
+        return FALSE;
+    }
+    g_dispatch_msg(&msg);
+    
+	switch (g_msg_get_type(&msg))
+	{
+	case GM_MOUSE_LBTN_DOWN:
+		mu_input_mousedown(ctx, g_msg_get_mouse_x(&msg), g_msg_get_mouse_y(&msg), MU_MOUSE_LEFT);
+		break;
+    case GM_MOUSE_RBTN_DOWN:
+		mu_input_mousedown(ctx, g_msg_get_mouse_x(&msg), g_msg_get_mouse_y(&msg), MU_MOUSE_RIGHT);
+		break;
+	case GM_MOUSE_LBTN_UP:
+		mu_input_mouseup(ctx, g_msg_get_mouse_x(&msg), g_msg_get_mouse_y(&msg), MU_MOUSE_LEFT);
+		break;
+	case GM_MOUSE_RBTN_UP:
+		mu_input_mouseup(ctx, g_msg_get_mouse_x(&msg), g_msg_get_mouse_y(&msg), MU_MOUSE_RIGHT);
+		break;
+	case GM_MOUSE_WHEEL_UP:
+		mu_input_scroll(ctx, 0, -30);
+		break;
+	case GM_MOUSE_WHEEL_DOWN:
+		mu_input_scroll(ctx, 0, 30);
+		break;
+	case GM_MOUSE_MOTION:
+		mu_input_mousemove(ctx, g_msg_get_mouse_x(&msg), g_msg_get_mouse_y(&msg));
+		break;
+	#if 0
+    case GM_KEY_DOWN:
+        {
+        int key = g_msg_get_key_code(&msg);
+        if (key == GK_ENTER)
+			mu_input_keydown(ctx, '\n');
+		else if (key == GK_TAB)
+			mu_input_keydown(ctx, '\t');
+		else if (key == GK_DELETE)
+			mu_input_keydown(ctx, '\b');
+		else
+			mu_input_keydown(ctx, key);
+        }
+        break;
+    #endif
+    case GM_KEY_UP:
+        {
+            
+        int key = g_msg_get_key_code(&msg);
+        #if 0
+        if (key == GK_ENTER)
+			mu_input_keyup(ctx, '\n');
+		else if (key == GK_TAB)
+			mu_input_keyup(ctx, '\t');
+		else if (key == GK_DELETE)
+			mu_input_keyup(ctx, '\b');
+		else
+			mu_input_keyup(ctx, key);
+        #endif
+        char s[2] = {0};
+		s[0] = key;
+		if (key == GK_ENTER)
+			mu_input_text(ctx, "\n");
+		else if (key == GK_TAB)
+			mu_input_text(ctx, "\t");
+		else if (key == GK_DELETE)
+			mu_input_text(ctx, "\b");
+		else
+			mu_input_text(ctx, s);
+        }
+        break;
+    
+	default:
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static void (*mu_render_frame_ptr)(mu_Context *) = NULL;
+static void (*mu_render_handler_ptr)(mu_Context *) = NULL;
+
+// mu_color
+mu_Color mu_render_back_color = {0, 0, 0, 255};
+
+void mu_render_set_frame(void (*frame)(mu_Context *))
+{
+    mu_render_frame_ptr = frame;
+}
+
+void mu_render_set_handler(void (*handler)(mu_Context *))
+{
+    mu_render_handler_ptr = handler;
+}
+
+void mu_render_set_bgcolor(mu_Color color)
+{
+    mu_render_back_color = color;
+}
+
+void mu_render_loop(mu_Context *ctx)
+{
+    /* main loop */
+	while (1)
+	{
+		/* handle events */
+		while (mu_render_poll_event(ctx));
+		/* process frame */
+		if (mu_render_frame_ptr)
+            mu_render_frame_ptr(ctx);
+
+		/* render clear with back color*/
+		mu_render_clear(mu_render_back_color);
+
+        /* read cmd and deal cmd */
+		mu_Command *cmd = NULL;
+		while ((cmd = mu_next_command(ctx, cmd)))
+		{
+			switch (cmd->type)
+			{
+			case MU_COMMAND_TEXT:
+				mu_render_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color);
+				break;
+			case MU_COMMAND_RECT:
+				mu_render_draw_rect(cmd->rect.rect, cmd->rect.color);
+				break;
+			case MU_COMMAND_ICON:
+				mu_render_draw_icon(cmd->icon.id, cmd->icon.rect, cmd->icon.color);
+				break;
+			case MU_COMMAND_CLIP:
+				mu_render_set_clip_rect(cmd->clip.rect);
+				break;
+			case MU_COMMAND_CUSTOM:
+				mu_render_draw_custom(cmd->custom.rect, cmd->custom.color);
+				break;
+			}
+		}
+
+        /* draw handler buf */
+        if (mu_render_handler_ptr)
+            mu_render_handler_ptr(ctx);
+
+		/* present render */
+		mu_render_present();
+	}
 }

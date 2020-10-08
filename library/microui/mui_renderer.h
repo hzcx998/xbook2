@@ -1,5 +1,5 @@
-#ifndef _MU_RENDERER_H
-#define _MU_RENDERER_H
+#ifndef _MUI_RENDERER_H
+#define _MUI_RENDERER_H
 
 #include "microui.h"
 
@@ -14,4 +14,11 @@ void mu_render_draw_custom(mu_Rect rect, mu_Color *color);
 void mu_render_clear(mu_Color color);
 void mu_render_present(void);
 
-#endif /* _MU_RENDERER_H */
+int mu_render_exit();
+void mu_render_set_frame(void (*frame)(mu_Context *));
+void mu_render_set_handler(void (*handler)(mu_Context *));
+void mu_render_set_bgcolor(mu_Color color);
+void mu_render_loop(mu_Context *ctx);
+
+
+#endif /* _MUI_RENDERER_H */
