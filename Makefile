@@ -30,11 +30,11 @@ ROM_DIR		= develop/rom
 
 # image size
 FLOPPYA_SZ	= 1474560
-HDA_SZ		= 67108864
+HDA_SZ		= 33554432
 HDB_SZ		= 12582912
 
 # 默认大小为10M
-ROM_DISK_SZ	= 64
+ROM_DISK_SZ	= 32
 
 # environment dir
 LIBRARY_DIR	= ./library
