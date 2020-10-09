@@ -13,7 +13,7 @@ char* itoa(char ** ps, int val, int base);
 char *itoa16_align(char * str, int num);
 
 void *memset(void* src, uint8_t value, uint32_t size);
-void memcpy(void* _dst, const void* _src, uint32_t size);
+void *memcpy(void* _dst, const void* _src, uint32_t size);
 int memcmp(const void * s1, const void *s2, int n);
 void *memset16(void* src, uint16_t value, uint32_t size);
 void *memset32(void* src, uint32_t value, uint32_t size);

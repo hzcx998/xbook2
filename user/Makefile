@@ -20,6 +20,7 @@ export AS LD
 
 MODULE      +=  cpuinfo
 MODULE      +=  lvgl
+MODULE      +=  lvgl2
 MODULE      +=  microui
 MODULE      +=  cpptests
 MODULE      +=  lua

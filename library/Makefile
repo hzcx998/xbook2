@@ -7,6 +7,7 @@ AS			:= nasm
 export AS
 
 MODULE		:= xlibc
+MODULE		+= lvgl
 MODULE		+= cjson
 MODULE		+= microui
 MODULE		+= xlibcpp

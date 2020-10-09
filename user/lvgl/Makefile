@@ -1,30 +1,28 @@
-X_LIBS		+= libxlibc-0.0.1.a libgapi-0.1.0.a
+X_LIBS		:= libxlibc-0.0.1.a libgapi-0.1.0.a
+# X_LIBS		+= lib/lvgl-7.6.0.a
 
-X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=c99 -O2 
+X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99
 
-X_INCDIRS	+= lvgl/lvgl
+
+LVGL_LIB	:= ../../library/lvgl
+
+# LVGL src
+LVGL_SRC	:= $(LVGL_LIB)/src/lv_core/ 
+LVGL_SRC	+= $(LVGL_LIB)/src/lv_draw/ 
+LVGL_SRC	+= $(LVGL_LIB)/src/lv_font/ 
+LVGL_SRC	+= $(LVGL_LIB)/src/lv_gpu/ 
+LVGL_SRC	+= $(LVGL_LIB)/src/lv_hal/ 
+LVGL_SRC	+= $(LVGL_LIB)/src/lv_misc/ 
+LVGL_SRC	+= $(LVGL_LIB)/src/lv_themes/
+LVGL_SRC	+= $(LVGL_LIB)/src/lv_widgets/
+LVGL_SRC	+= $(LVGL_LIB)/lv_drivers/indev/
+LVGL_SRC	+= $(LVGL_LIB)/lv_drivers/display/
+LVGL_SRC	+= $(LVGL_LIB)/lv_window.c
 
 NAME		:= lv
-SRC			+= main.c 
-SRC			+= lvgl/src/lv_core/
-SRC			+= lvgl/src/lv_draw/ 
-SRC			+= lvgl/src/lv_font/ 
-SRC			+= lvgl/src/lv_gpu/ 
-SRC			+= lvgl/src/lv_hal/ 
-SRC			+= lvgl/src/lv_misc/ 
-SRC			+= lvgl/src/lv_themes/
-SRC			+= lvgl/src/lv_widgets/
-SRC			+= lvgl/examples/lv_demo_benchmark/
-SRC			+= lvgl/examples/lv_demo_keypad_encoder/
-SRC			+= lvgl/examples/lv_demo_printer/
-SRC			+= lvgl/examples/lv_demo_printer/images/
-SRC			+= lvgl/examples/lv_demo_stress/
-SRC			+= lvgl/examples/lv_demo_widgets/
-SRC			+= lvgl/examples/lv_demo_started/
-SRC			+= lvgl/examples/lv_ex_get_started/
-SRC			+= lvgl/examples/lv_ex_get_style/
-SRC			+= lvgl/examples/lv_ex_get_widgets/
-SRC			+= lvgl/lv_drivers/indev/
+SRC			:= main.c 
+SRC			+= examples/lv_demo_widgets/
+SRC			+= $(LVGL_SRC)
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

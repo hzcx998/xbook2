@@ -139,6 +139,7 @@
         "initcall.h": "c",
         "gapi.h": "c",
         "pipe.h": "c",
-        "microui.h": "c"
+        "microui.h": "c",
+        "lv_examples.h": "c"
     }
 }
