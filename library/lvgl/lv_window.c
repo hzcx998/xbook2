@@ -2,19 +2,19 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <sys/time.h>
 
 #include  "lvgl.h"
 #include  "lv_drv_conf.h"
 #include  "lvgl_window.h"
 
-#define LV_WINDOW_LOOP_USLEEP_VAL  5000
-#define LV_WINDOW_TIMER_MS 40
+#define LV_WINDOW_DELAY_VAL  30000  // 30 ms
+#define LV_WINDOW_TIMER_MS 40       // 40 ms
 
 /* 窗口句柄 */
 int lv_winhdl = -1;
 
-static int lv_timer_id = 1;
-static int lv_usleep_val = 0;
+static int lv_window_delay_val = 0;
 static bool lv_win_exit_flag = false;
 static void (*lv_win_handler)(void) = NULL;
 
@@ -70,10 +70,6 @@ static int do_win_proc(g_msg_t *msg)
         /* 刷新 */
         g_paint_window(lv_winhdl, 0, 0, lv_display_render);
         #endif
-        break;
-    case GM_TIMER:
-        lv_tick_inc(LV_WINDOW_TIMER_MS + 10);
-        g_set_timer(lv_winhdl, lv_timer_id, LV_WINDOW_TIMER_MS, NULL);
         break;
     case GM_KEY_DOWN:
     case GM_KEY_UP:                         /*Button release*/
@@ -187,14 +183,13 @@ int lv_window_init(char *title, int x, int y, uint32_t width, uint32_t height)
     if (lv_winhdl < 0)
         return -1;
         
-    lv_timer_id = 1;
     lv_win_exit_flag = false;
-    lv_usleep_val = LV_WINDOW_LOOP_USLEEP_VAL;
+    lv_window_delay_val = LV_WINDOW_DELAY_VAL;
 
     lv_init();
 
     lv_task_create(do_msg_handle, 0, LV_TASK_PRIO_HIGHEST, NULL);
-    lv_task_create(do_win_handle, 0, LV_TASK_PRIO_HIGHEST, NULL);
+    lv_task_create(do_win_handle, 0, LV_TASK_PRIO_HIGH, NULL);
 
     if (do_register_drv(width, height) < 0) {
         g_del_window(lv_winhdl);
@@ -205,8 +200,6 @@ int lv_window_init(char *title, int x, int y, uint32_t width, uint32_t height)
     // 设置退出函数
     atexit(lv_window_exit);
 
-    g_set_timer(lv_winhdl, lv_timer_id, LV_WINDOW_TIMER_MS, NULL);
-    
     return 0;
 }
 
@@ -226,6 +219,7 @@ void lv_window_loop()
         lv_task_handler();
         if (lv_win_exit_flag)
             break;
-        usleep(lv_usleep_val);
+        usleep(lv_window_delay_val);
+        lv_tick_inc(LV_WINDOW_TIMER_MS);
     }
 }

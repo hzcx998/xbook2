@@ -943,12 +943,15 @@ void layer_refresh(layer_t *layer, int left, int top, int right, int buttom)
  */
 void layer_refresh_under(layer_t *layer, int left, int top, int right, int buttom)
 {
+    layer_mutex_lock(layer);
+
     if (layer->z >= 0) {
         layer_refresh_map(layer->x + left, layer->y + top, layer->x + right,
             layer->y + buttom, 0);
         layer_refresh_by_z(layer->x + left, layer->y + top, layer->x + right,
             layer->y + buttom, 0, layer->z);
     }
+    layer_mutex_unlock(layer);
 }
 
 void layer_refresh_under_rect(layer_t *layer, int x, int y, uint32_t width, uint32_t height)

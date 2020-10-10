@@ -48,6 +48,8 @@ Divisor = 115200 / BaudRate
 /* 串口调试端口的索引 */
 #define SERIAL_DEGUB_IDX    0
 
+// #define SERIAL_SEND_TIMEOUT
+
 enum FifoControlRegisterBits {
     FIFO_ENABLE = 1,                             /* Enable FIFOs */
     FIFO_CLEAR_RECEIVE   = (1 << 1),             /* Clear Receive FIFO */
@@ -150,11 +152,15 @@ struct serial_object serial_object;
  */
 static int serial_send(struct serial_object *obj, char data)
 {
-    int timeout = 100000;
+    #ifdef SERIAL_SEND_TIMEOUT
+    int timeout = 0x100000;
     /* 如果发送的时候不持有传输状态，就不能发送 */
     while (!(in8(obj->line_status_reg) & 
         LINE_STATUS_EMPTY_TRANSMITTER_HOLDING) && timeout--);
-
+    #else
+    while (!(in8(obj->line_status_reg) & 
+        LINE_STATUS_EMPTY_TRANSMITTER_HOLDING));
+    #endif
     /* 往数据端口写入数据 */
     out8(obj->data_reg, data);
     return 0;
