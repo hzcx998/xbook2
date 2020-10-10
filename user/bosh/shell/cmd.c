@@ -19,11 +19,10 @@
 
 /// 程序本地头文件
 #include <sh_cmd.h>
-#include <sh_shell.h>
 #include <sh_console.h>
 #include <sh_cursor.h>
 #include <sh_window.h>
-#include <sh_shell.h>
+#include <sh_terminal.h>
 
 cmd_man_t *cmdman; 
 
@@ -492,7 +491,8 @@ int cmd_ver(int argc, char **argv)
 
 int cmd_exit(int argc, char **argv)
 {
-    exit_shell();
+    exit_cmd_man();
+    exit_console();
     return 0; 
 }
 

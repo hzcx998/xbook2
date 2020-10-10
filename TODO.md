@@ -46,3 +46,5 @@
 * 对cpu信息的获取 [ok]
 * 再次移植xboot的stdio [ok]
 
+# 下个目标
+* 完善终端，完善shell程序

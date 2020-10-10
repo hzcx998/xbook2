@@ -4,7 +4,7 @@
 #include <sh_window.h>
 #include <sh_console.h>
 #include <sh_clipboard.h>
-#include <sh_shell.h>
+#include <sh_terminal.h>
 
 sh_window_t sh_window;
 
@@ -30,7 +30,7 @@ int init_window()
     return 0;
 }
 
-void main_window()
+void window_loop()
 {
     g_msg_t msg;
     while (1)
@@ -129,7 +129,8 @@ int poll_window()
     
     if (g_is_quit_msg(&msg)) {
         /* 退出执行 */
-        exit_shell();
+        exit_cmd_man();
+        exit_console();
     }
     /* 有外部消息则处理消息 */
     return g_dispatch_msg(&msg);

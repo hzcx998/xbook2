@@ -13,7 +13,7 @@ typedef struct {
 extern sh_window_t sh_window;
 
 int init_window();
-void main_window();
+void window_loop();
 int exit_window();
 
 void sh_window_rect_fill(int x, int y, uint32_t width, uint32_t height, uint32_t color);

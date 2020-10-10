@@ -776,15 +776,8 @@ int init_console()
         goto label_free_buffer;
     }
 
-    if (init_cmd_man() < 0) {
-        printf("bosh: init cmd failed!\n");
-        goto label_exit_clipboard;
-    }
-
     return 0;
 
-label_exit_clipboard:
-    exit_clipboard();
 label_free_buffer:
     free(con_screen.buffer);
 label_exit_window:
@@ -794,7 +787,6 @@ label_exit_window:
 
 int exit_console()
 {
-    exit_cmd_man();
     exit_clipboard();
     free(con_screen.buffer);
     exit_window();

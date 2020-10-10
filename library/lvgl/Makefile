@@ -1,5 +1,4 @@
 X_INCDIRS	:= xlibc/include gapi/include lvgl/
-X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99
 
 SRC			+= src/lv_core/
 SRC			+= src/lv_draw/ 

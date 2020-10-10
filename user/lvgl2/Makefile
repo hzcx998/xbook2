@@ -21,7 +21,11 @@ LVGL_SRC	+= $(LVGL_LIB)/lv_window.c
 
 NAME		:= lv2
 SRC			:= main.c 
-SRC			+= examples/lv_demo_keypad_encoder/
+#SRC			+= examples/lv_demo_keypad_encoder/
+#SRC			+= examples/lv_demo_printer/
+#SRC			+= examples/lv_demo_printer/images/
+SRC			+= examples/lv_demo_stress/
+
 SRC			+= $(LVGL_SRC)
 
 define CUSTOM_TARGET_CMD

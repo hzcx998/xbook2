@@ -19,6 +19,13 @@ int main(int argc, char **argv)
     #if LV_USE_DEMO_KEYPAD_AND_ENCODER
     lv_demo_keypad_encoder();
     #endif
+    #if LV_USE_DEMO_BENCHMARK
+    lv_demo_benchmark();
+    #endif
+    #if LV_USE_DEMO_STRESS
+    lv_demo_stress();
+    #endif
+    
     lv_window_loop();
     return 0;
 }
