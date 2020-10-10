@@ -9,8 +9,7 @@
 #include <sys/time.h>
 #include <gapi.h>
 
-#include "render.h"
-#include "surface.h"
+#include <gato.h>
 
 #if 0
 static SDL_Window *gWindow = NULL;

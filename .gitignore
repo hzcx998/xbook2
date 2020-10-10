@@ -80,3 +80,30 @@ recycle
 
 # need commit to git
 !scripts/fixdep.exe
+
+# system bin
+system/init/init
+system/desktop/desktop
+
+# user bin
+user/bosh/bosh
+user/c4/c4
+user/cat/cat
+user/cpptests/cpptests
+user/cpuinfo/cpuinfo
+user/echo/echo 
+user/freeterm/freeterm
+user/gato/gato
+user/hello/hello
+user/infones/infones
+user/invader/invader
+user/lua/lua
+user/lvgl/lv
+user/lvgl2/lv2
+user/microui/mui
+user/socket_client/socket_client
+user/socket_server/socket_server
+user/tests/tests
+user/vt100/vt100
+user/win/win
+user/gato/gato

@@ -8,6 +8,7 @@ AS			:= nasm
 export AS LD
 
 MODULE		:= xlibc
+MODULE		+= gato
 MODULE		+= lvgl
 MODULE		+= cjson
 MODULE		+= microui

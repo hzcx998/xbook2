@@ -2,9 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "surface.h"
-#include "render.h"
-#include "image.h"
+#include <gato.h>
 
 #define W 1024
 #define H 768
