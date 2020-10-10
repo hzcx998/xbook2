@@ -15,8 +15,8 @@
 #include "lv_drivers/indev/mousewheel.h"
 #endif
 
-#include  "../../lv_lib.h"
 
+#include  <lvgl_window.h>
 #if LV_USE_DEMO_KEYPAD_AND_ENCODER
 
 /*********************

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include  "lv_examples.h"
-#include  "lv_lib.h"
+#include  <lvgl_window.h>
 
 int main(int argc, char **argv)
 {

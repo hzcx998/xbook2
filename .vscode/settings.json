@@ -141,6 +141,9 @@
         "pipe.h": "c",
         "microui.h": "c",
         "lv_examples.h": "c",
-        "sh_terminal.h": "c"
+        "sh_terminal.h": "c",
+        "sh_cursor.h": "c",
+        "ft_window.h": "c",
+        "lvgl_window.h": "c"
     }
 }

@@ -11,7 +11,7 @@
 
 #if LV_USE_DEMO_WIDGETS
 
-#include  "../../lv_lib.h"
+#include  <lvgl_window.h>
 /*********************
  *      DEFINES
  *********************/
