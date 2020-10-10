@@ -155,9 +155,6 @@ void start_application( char *filename )
         g_quit();
         return;
     }
-    /* 注册消息回调函数 */
-    g_set_msg_routine(win_proc);
-
     g_set_window_icon(g_win, "res/icon/infones.png");
 
     /* 设置窗口界面 */
@@ -654,14 +651,15 @@ int PollEvent(void)
 {
     g_msg_t msg;
     /* 获取消息，非阻塞式 */
-    if (g_try_get_msg(&msg) < 0)
+    if (!g_try_get_msg(&msg))
         return -1;
     
     if (g_is_quit_msg(&msg))
         exit_application();
 
     /* 有外部消息则处理消息 */
-    g_dispatch_msg(&msg);
+    win_proc(&msg);
+
     return 0;
 }
 

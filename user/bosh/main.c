@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sh_console.h>
 #include <sh_cmd.h>
+#include <sh_window.h>
 
 int main(int argc, char *argv[]) 
 {

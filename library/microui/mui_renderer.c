@@ -318,14 +318,12 @@ static bool mu_render_poll_event(mu_Context *ctx)
 {
     g_msg_t msg;
     memset(&msg, 0, sizeof(g_msg_t));
-    if (g_try_get_msg(&msg) < 0)
+    if (!g_try_get_msg(&msg))
         return FALSE;
     if (g_is_quit_msg(&msg)) {
         mu_render_exit();
         return FALSE;
     }
-    g_dispatch_msg(&msg);
-    
 	switch (g_msg_get_type(&msg))
 	{
 	case GM_MOUSE_LBTN_DOWN:

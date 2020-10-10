@@ -271,16 +271,13 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height, uin
     __g_paint_window(gw, 1, 1); /* 绘制整个窗口 */
 
     /* 给桌面发送创建窗口消息 */
-    g_msg_t m;
-    m.id = GM_WINDOW_CREATE;
-    m.target = g_get_layer_desktop(); /* send to desktop */
-    m.data0 = ly; /* layer id */
-    if (g_send_msg(&m) < 0) {
-        g_del_bitmap(gw->wbmp);
-        g_del_touch_group(&gw->touch_list);
-        list_del(&gw->wlist);
-        g_del_layer(ly);
-        return -1;
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        g_msg_t m;
+        m.id = GM_WINDOW_CREATE;
+        m.target = desktop_ly;
+        m.data0 = ly; /* layer id */
+        g_send_msg(&m);
     }
     
     if (flags & GW_SHOW)
@@ -452,16 +449,18 @@ int g_focus_window(int win, int turn)
     __g_paint_window(gw, turn, 0);
     g_refresh_layer(gw->layer, 0, 0, gw->width, gw->height);
     /* 发送聚焦/丢焦消息给桌面 */
-    g_msg_t m;
-    m.target = g_get_layer_desktop(); /* send to desktop */
-    m.data0 = gw->layer; /* layer id */
-    if (turn) {
-        m.id = GM_GET_FOCUS;
-    } else {
-        m.id = GM_LOST_FOCUS;
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        g_msg_t m;
+        m.target = desktop_ly;
+        m.data0 = gw->layer; /* layer id */
+        if (turn) {
+            m.id = GM_GET_FOCUS;
+        } else {
+            m.id = GM_LOST_FOCUS;
+        }
+        g_send_msg(&m);
     }
-    if (g_send_msg(&m) < 0)
-        return -1;
     return 0;
 }
 
@@ -477,13 +476,14 @@ int g_del_window(int win)
     
     if (g_del_layer(gw->layer) < 0)
         return -1;
-    /* 给桌面发送关闭窗口消息 */
-    g_msg_t m;
-    m.id = GM_WINDOW_CLOSE;
-    m.target = g_get_layer_desktop(); /* send to desktop */
-    m.data0 = gw->layer; /* layer id */
-    if (g_send_msg(&m) < 0) {
-        return -1;
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        /* 给桌面发送关闭窗口消息 */
+        g_msg_t m;
+        m.id = GM_WINDOW_CLOSE;
+        m.target = desktop_ly;
+        m.data0 = gw->layer; /* layer id */
+        g_send_msg(&m);
     }
     g_del_touch_group(&gw->touch_list);
     list_del(&gw->wlist);
@@ -515,12 +515,13 @@ int g_show_window(int win)
     g_set_layer_z(gw->layer, wintop);
     g_focus_layer_win_top(); /* 显示后需要聚焦顶层窗口 */
     /* 给桌面发送关闭窗口消息 */
-    g_msg_t m;
-    m.id = GM_SHOW;
-    m.target = g_get_layer_desktop(); /* send to desktop */
-    m.data0 = gw->layer; /* layer id */
-    if (g_send_msg(&m) < 0) {
-        return -1;
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        g_msg_t m;
+        m.id = GM_SHOW;
+        m.target = desktop_ly;
+        m.data0 = gw->layer; /* layer id */
+        g_send_msg(&m);
     }
     return 0;
 }
@@ -536,15 +537,15 @@ int g_hide_window(int win)
     
     g_set_layer_z(gw->layer, -1);
     g_focus_layer_win_top(); /* 隐藏后需要聚焦顶层窗口 */
-    /* 给桌面发送关闭窗口消息 */
-    g_msg_t m;
-    m.id = GM_HIDE;
-    m.target = g_get_layer_desktop(); /* send to desktop */
-    m.data0 = gw->layer; /* layer id */
-    if (g_send_msg(&m) < 0) {
-        return -1;
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        /* 给桌面发送关闭窗口消息 */
+        g_msg_t m;
+        m.id = GM_HIDE;
+        m.target = desktop_ly;
+        m.data0 = gw->layer; /* layer id */
+        g_send_msg(&m);
     }
-
     return 0;
 }
 
@@ -781,13 +782,14 @@ int g_set_window_icon(int win, char *path)
     /* 设置图标缓冲区 */
     g_set_icon_path(gw->layer, path);
     
-    /* 给桌面发送关闭窗口消息 */
-    g_msg_t m;
-    m.id = GM_WINDOW_ICON;
-    m.target = g_get_layer_desktop(); /* send to desktop */
-    m.data0 = gw->layer; /* layer id */
-    if (g_send_msg(&m) < 0) {
-        return -1;
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        /* 给桌面发送关闭窗口消息 */
+        g_msg_t m;
+        m.id = GM_WINDOW_ICON;
+        m.target = desktop_ly;
+        m.data0 = gw->layer; /* layer id */
+        g_send_msg(&m);
     }
 
     return 0;

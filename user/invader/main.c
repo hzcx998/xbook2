@@ -255,15 +255,13 @@ void time_wait(int i, char *keyflag)
     g_msg_t msg;
     while (1)
     {
-        if (g_get_msg(&msg) < 0)
+        if (!g_get_msg(&msg))
             continue;
 
         if (g_is_quit_msg(&msg)) {
             g_quit();
             exit(0);
         }
-        /* 有外部消息则处理消息 */
-        g_dispatch_msg(&msg);
         
         /* 捕捉消息 */
         switch (g_msg_get_type(&msg))

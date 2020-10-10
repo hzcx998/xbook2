@@ -37,22 +37,20 @@ int main(int argc, char *argv[])
     g_set_window_minresize(win, 200, 100);
     /* 设置窗口界面 */
     
-    /* 注册消息回调函数 */
-    g_set_msg_routine(win_proc);
-    
     g_set_timer(win, 0x1000, 1000, timer_handler);
 
     g_msg_t msg;
+    int msg_ret;
     while (1)
     {
-        /* 获取消息，一般消息返回0，退出消息返回-1 */
-        if (g_try_get_msg(&msg) < 0)
-            continue;
-        
-        if (g_is_quit_msg(&msg))
+        /* 获取消息，无消息返回0，退出消息返回-1，有消息返回1 */
+        msg_ret = g_try_get_msg(&msg);
+        if (msg_ret < 0)
             break;
+        if (!msg_ret)
+            continue;
         /* 有外部消息则处理消息 */
-        g_dispatch_msg(&msg);
+        win_proc(&msg);
     }
 
     g_quit();

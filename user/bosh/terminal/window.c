@@ -5,8 +5,13 @@
 #include <sh_console.h>
 #include <sh_clipboard.h>
 #include <sh_terminal.h>
+#include <sh_cmd.h>
 
 sh_window_t sh_window;
+
+typedef void (*win_proc_t)(g_msg_t *msg);
+
+win_proc_t sh_win_proc;
 
 int init_window()
 {
@@ -24,9 +29,8 @@ int init_window()
     
     g_set_window_icon(win, "/res/icon/bosh.png");
 
-    /* 注册消息回调函数 */
-    g_set_msg_routine(process_window);
-    
+    set_win_proc(0);
+
     return 0;
 }
 
@@ -35,14 +39,14 @@ void window_loop()
     g_msg_t msg;
     while (1)
     {
-        /* 获取消息，一般消息返回0，退出消息返回-1 */
-        if (g_get_msg(&msg) < 0)
+        /* 获取消息，无消息返回0，退出消息返回-1，有消息返回1 */
+        if (!g_get_msg(&msg))
             continue;
         
         if (g_is_quit_msg(&msg))
             break;
         /* 有外部消息则处理消息 */
-        g_dispatch_msg(&msg);
+        sh_win_proc(&msg);
     }
 }
 
@@ -50,6 +54,14 @@ int exit_window()
 {
 
     return g_quit();
+}
+
+void set_win_proc(int state)
+{
+    if (state == 0)
+        sh_win_proc = (win_proc_t) process_window;
+    else
+        sh_win_proc = (win_proc_t) process_window2;
 }
 
 int process_window(g_msg_t *msg)
@@ -124,7 +136,7 @@ int poll_window()
 {
     g_msg_t msg;
     /* 尝试获取消息，没有则返回-1 */
-    if (g_try_get_msg(&msg) < 0)
+    if (!g_try_get_msg(&msg))
         return -1;
     
     if (g_is_quit_msg(&msg)) {
@@ -133,7 +145,8 @@ int poll_window()
         exit_console();
     }
     /* 有外部消息则处理消息 */
-    return g_dispatch_msg(&msg);
+    sh_win_proc(&msg);
+    return 0;
 }
 
 void sh_window_rect_fill(int x, int y, uint32_t width, uint32_t height, uint32_t color)

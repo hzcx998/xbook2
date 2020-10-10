@@ -1359,17 +1359,15 @@ int cmdline_check()
     }
 #endif
     /* 修改消息路由 */
-    g_set_msg_routine(process_window2);
-
+    set_win_proc(1);
     if (execute_cmd(argnum, cmd_argv) < 0) {
         //shell_printf("%s: execute cmd %s falied!\n", APP_NAME, cmd_argv[0]);
         memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
-        g_set_msg_routine(process_window);
-    
+        set_win_proc(0);
         return -1;
     }
     memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
-    g_set_msg_routine(process_window);
+    set_win_proc(0);
     return 0;
 }
 

@@ -32,19 +32,20 @@ int main(int argc, char *argv[])
         g_quit();
         return -1;
     }
-    /* 注册消息回调函数 */
-    g_set_msg_routine(layer_proc);
-    
+
 #ifdef DESKTOP_LAUNCH_BOSH
     desktop_launch_app("bosh");
 #endif
     g_msg_t msg;
     while (1)
     {
-        /* 获取消息，一般消息返回0，退出消息返回-1 */
-        if (g_get_msg(&msg) < 0)
+        /* 获取消息，无消息返回0，退出消息返回-1，有消息返回1 */
+        if (!g_get_msg(&msg))
             continue;
-        g_dispatch_msg(&msg);
+        if (g_is_quit_msg(&msg))
+            break;
+        
+        layer_proc(&msg);
     }
 
     /* 退出gui */

@@ -49,10 +49,7 @@ typedef struct {
     uint32_t data3;
 } g_msg_t;
 
-int g_init_msg();
-int g_set_msg_routine(int (*routine)(g_msg_t *));
 int g_get_msg(g_msg_t *msg);
-int g_dispatch_msg(g_msg_t *msg);
 int g_try_get_msg(g_msg_t *msg);
 int g_post_msg(g_msg_t *msg);
 int g_send_msg(g_msg_t *msg);

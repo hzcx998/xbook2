@@ -23,8 +23,6 @@ int g_init(void)
     if (g_get_screen(&_g_screen) < 0)
         return -1;
     
-    g_init_msg();
-    
     if (g_init_font() < 0)
         return -1;
 

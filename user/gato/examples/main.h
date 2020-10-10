@@ -143,12 +143,10 @@ int main(int argc, char *argv[])
         }
         #else
         g_msg_t m;
-        while (!g_try_get_msg(&m)) 
+        while (g_try_get_msg(&m)) 
         {
             if (g_is_quit_msg(&m))
                 goto exit_main;
-            /* 有外部消息则处理消息 */
-            g_dispatch_msg(&m);
             switch (g_msg_get_type(&m))
             {
             case GM_MOUSE_MOTION:

@@ -37,18 +37,6 @@ lv_indev_t *lv_window_get_mousewheel()
     return lv_window_mousewheel_drv;
 }
 
-static void do_msg_handle(struct _lv_task_t *param)
-{
-    (void)param;
-
-    g_msg_t msg;
-    if (g_try_get_msg(&msg) < 0)
-        return;
-    if (g_is_quit_msg(&msg))
-        lv_win_exit_flag = true;
-    g_dispatch_msg(&msg);
-}
-
 static void do_win_handle(struct _lv_task_t *param)
 {
     (void)param;
@@ -96,6 +84,18 @@ static int do_win_proc(g_msg_t *msg)
     }
     
     return 0;
+}
+
+static void do_msg_handle(struct _lv_task_t *param)
+{
+    (void)param;
+
+    g_msg_t msg;
+    if (!g_try_get_msg(&msg))
+        return;
+    if (g_is_quit_msg(&msg))
+        lv_win_exit_flag = true;
+    do_win_proc(&msg);
 }
 
 static int do_register_drv(uint32_t width, uint32_t height)
@@ -190,8 +190,6 @@ int lv_window_init(char *title, int x, int y, uint32_t width, uint32_t height)
     lv_timer_id = 1;
     lv_win_exit_flag = false;
     lv_usleep_val = LV_WINDOW_LOOP_USLEEP_VAL;
-
-    g_set_msg_routine(do_win_proc);
 
     lv_init();
 

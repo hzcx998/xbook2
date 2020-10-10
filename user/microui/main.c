@@ -383,6 +383,7 @@ static void process_handler(mu_Context *ctx)
     mu_render_draw_icon(MU_ICON_CLOSE, rect, color);
 }
 
+
 int main()
 {
     mu_Context *ctx = mu_render_init("microui", 100, 100, 800, 600);
