@@ -6,7 +6,6 @@ extern "C"
 #endif
 
 #include "include/color.h"
-#include "include/consolas-font.h"
 #include "include/image.h"
 #include "include/macro.h"
 #include "include/render.h"
