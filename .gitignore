@@ -106,5 +106,6 @@ user/socket_server/socket_server
 user/tests/tests
 user/vt100/vt100
 user/win/win
-user/gato/gato
 user/cal/cal
+user/sound/sound
+user/wavplayer/wavplayer
