@@ -58,9 +58,7 @@ WORD NesPalette[ 64 ] =
 };
 
 /* For Sound Emulation */
-BYTE final_wave[2048];
-int waveptr;
-int wavflag;
+short final_wave[2048];
 int sound_fd;
 
 g_bitmap_t *screen_bitmap;
@@ -585,66 +583,21 @@ guchar  pbyRgbBuf[ NES_DISP_WIDTH * NES_DISP_HEIGHT * 3 ];
 /*===================================================================*/
 void InfoNES_LoadFrame()
 {
-
-/*
- *  Transfer the contents of work frame on the screen
- *
- */
-
-  //register guchar* pBuf;
-
-  //pBuf = pbyRgbBuf;
-#if 0
-    register DWORD *q = graphBuffer;
-    // Exchange 16-bit to 24-bit  
-  for ( register int y = 0; y < NES_DISP_HEIGHT; y++ )
+  register DWORD *q = (DWORD *)screen_bitmap->buffer;
+  // Exchange 16-bit to 24-bit
+  for (register int y = 0; y < NES_DISP_HEIGHT; y++)
   {
-    for ( register int x = 0; x < NES_DISP_WIDTH; x++ )
-    {  
-      WORD wColor = WorkFrame[ ( y << 8 ) + x ];
-	  
-      *q = (guchar)( ( wColor & 0x7c00 ) >> 7 )<<16;
-        *q |= (guchar)( ( wColor & 0x03e0 ) >> 2 )<<8;
-        *q |= (guchar)( ( wColor & 0x001f ) << 3 );
-        *q |= (0xff << 24);
-        q++;
-      //*(pBuf++) = (guchar)( ( wColor & 0x7c00 ) >> 7 );
-      
-      //*(pBuf++) = (guchar)( ( wColor & 0x03e0 ) >> 2 );
-      
-      //*(pBuf++) = (guchar)( ( wColor & 0x001f ) << 3 );
+
+    WORD *p = &WorkFrame[(y << 8)];
+    for (register int x = 0; x < NES_DISP_WIDTH; x++)
+    {
+      WORD wColor = p[x];
+      *q++ = ((wColor & 0x7c00) << 9) | ((wColor & 0x03e0) << 6) | ((wColor & 0x001f) << 3) | (0xff << 24);
     }
   }
-    /* 绘制到窗口中 */
-    g_window_pixmap(g_win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT, (g_color_t *) graphBuffer);
-    g_refresh_window_rect(g_win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT);
-#else
-    register DWORD *q = (DWORD *) screen_bitmap->buffer;
-    // Exchange 16-bit to 24-bit  
-  for ( register int y = 0; y < NES_DISP_HEIGHT; y++ )
-  {
-    for ( register int x = 0; x < NES_DISP_WIDTH; x++ )
-    {  
-      WORD wColor = WorkFrame[ ( y << 8 ) + x ];
-	  
-      *q = (guchar)( ( wColor & 0x7c00 ) >> 7 )<<16;
-        *q |= (guchar)( ( wColor & 0x03e0 ) >> 2 )<<8;
-        *q |= (guchar)( ( wColor & 0x001f ) << 3 );
-        *q |= (0xff << 24);
-        q++;
-      //*(pBuf++) = (guchar)( ( wColor & 0x7c00 ) >> 7 );
-      
-      //*(pBuf++) = (guchar)( ( wColor & 0x03e0 ) >> 2 );
-      
-      //*(pBuf++) = (guchar)( ( wColor & 0x001f ) << 3 );
-    }
-  }
-    /* 已经绘制好内容了，直接绘制到窗口 */
-    g_paint_window(g_win, 0, 0, screen_bitmap);
-#endif
-    
-    mdelay(15);
-    
+  /* 已经绘制好内容了，直接绘制到窗口 */
+  g_paint_window(g_win, 0, 0, screen_bitmap);
+  mdelay(15);
 }
 
 int PollEvent(void)
@@ -753,55 +706,16 @@ void InfoNES_SoundOutput( int samples, BYTE *wave1, BYTE *wave2, BYTE *wave3, BY
 {
 
 #ifdef CONFIG_SOUND
-  
-  if ( sound_fd != -1) 
+  if (sound_fd != -1)
   {
-    int i;
-    for (i = 0; i < samples; i++) 
+    for (int i = 0; i < samples; i++)
     {
-#if 1
-      final_wave[ waveptr ] = 
-	( wave1[i] + wave2[i] + wave3[i] + wave4[i] + wave5[i] ) / 5;
-#else
-      final_wave[ waveptr ] = wave4[i];
-#endif
-
-
-      waveptr++;
-      if ( waveptr == 2048 ) 
-      {
-	waveptr = 0;
-	wavflag = 2;
-      } 
-      else if ( waveptr == 1024 )
-      {
-	wavflag = 1;
-      }
+      final_wave[i * 2 + 1] = final_wave[i * 2] = (wave1[i] + wave2[i] + wave3[i] + wave4[i] + wave5[i]) * 50;
     }
-	
-    if ( wavflag )
+
+    if (write(sound_fd, final_wave, samples * 4) < samples * 4)
     {
-      
-      #ifdef SOUND_DEVICE_BEEP_UP
-      BYTE *buf = &final_wave[(wavflag - 1) << 10];
-      write(sound_fd, buf, 1024);
-      int i;
-      
-      for (i = 0; i < 1024; i++) {
-        if (buf[i]) {
-            ioctl(sound_fd, SNDIO_SETFREQ, buf[i] * 5);
-        } else {
-            ioctl(sound_fd, SNDIO_SETFREQ, 20000);  /* 没数据 */
-        }
-      }
-      ioctl(sound_fd, SNDIO_SETFREQ, 20000);  /* 无声音 */
-      #else
-      if ( write( sound_fd, &final_wave[(wavflag - 1) << 10], 1024) < 1024 ) 
-      {
-          printf("wrote less than 1024 bytes\n");
-      }
-      #endif 
-      wavflag = 0;
+      printf("wrote less than 1024 bytes\n");
     }
   }
 #endif /* CONFIG_SOUND */

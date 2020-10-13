@@ -38,3 +38,5 @@ MODULE      +=  cat
 MODULE      +=  win
 MODULE      +=  infones
 MODULE      +=  c4
+MODULE      +=  sound
+MODULE      +=  wavplayer
