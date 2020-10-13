@@ -29,8 +29,8 @@ HDB_IMG		= $(IMAGE_DIR)/d.img
 ROM_DIR		= develop/rom
 
 # image size
-FLOPPYA_SZ	= 1474560
-HDA_SZ		= 33554432
+FLOPPYA_SZ	= 1474560  # 1.44 MB
+HDA_SZ		= 33554432 # 32 MB
 HDB_SZ		= 12582912
 
 # 默认大小为10M
@@ -73,7 +73,7 @@ all : kernel
 	$(DD) if=$(LOADER_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
 	$(DD) if=$(SETUP_BIN) of=$(FLOPPYA_IMG) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
 	$(DD) if=$(KERNEL_ELF) of=$(FLOPPYA_IMG) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
-	$(FATFS_BIN) $(HDA_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
+	$(FATFS_BIN) $(HDA_IMG) $(ROM_DIR) 0
 
 # run启动虚拟机
 run: qemu
@@ -100,7 +100,7 @@ endif
 	$(MAKE) -s -C  $(LIBRARY_DIR)
 	$(MAKE) -s -C  $(SYSTEM_DIR)
 	$(MAKE) -s -C  $(USER_DIR)
-	$(FATFS_BIN) $(HDA_IMG) $(ROM_DIR) $(ROM_DISK_SZ)
+	$(FATFS_BIN) $(HDA_IMG) $(ROM_DIR) 0
 
 # 清理环境。
 debuild: 
