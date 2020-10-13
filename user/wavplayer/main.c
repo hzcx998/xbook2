@@ -142,10 +142,10 @@ exit:
 
 int main(int argc, char *argv[])
 {
-    // if (argc != 2)
-    //     return 1;
+    if (argc != 2)
+        return 1;
     sound_fd = open(SOUND_DEVICE, O_DEVEX, 0);
-    read_wav_file("res/test.wav");
+    read_wav_file(argv[1]);
     close(sound_fd);
     return 0;
 }

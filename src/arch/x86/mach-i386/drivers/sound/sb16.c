@@ -18,9 +18,8 @@
 #define DRV_VERSION "0.1"
 
 #define DEV_NAME "sb16"
-#define DEBUG_SB16
-// #define DEBUG_SB16
-// #define printk(...)
+
+#define printk(...)
 
 #define SB16_POLL
 
