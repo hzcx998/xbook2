@@ -34,7 +34,7 @@ HDA_SZ		= 33554432
 HDB_SZ		= 12582912
 
 # 默认大小为10M
-ROM_DISK_SZ	= 32
+ROM_DISK_SZ	= 100
 
 # environment dir
 LIBRARY_DIR	= ./library
