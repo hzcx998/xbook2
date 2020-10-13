@@ -1,7 +1,7 @@
 ; program entry
 
 extern _enter_preload
-extern _exit	
+extern exit	
 extern main	
 
 [bits 32]
@@ -27,7 +27,7 @@ _start:
     call main
     ; call _exit
 	push eax    ; exit status
-	call _exit
+	call exit
     ; should never be here.
 	jmp $
 ; *** end of program ***

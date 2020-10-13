@@ -9,7 +9,7 @@
 
 sh_window_t sh_window;
 
-typedef void (*win_proc_t)(g_msg_t *msg);
+typedef int (*win_proc_t)(g_msg_t *msg);
 
 win_proc_t sh_win_proc;
 
@@ -145,8 +145,7 @@ int poll_window()
         exit_console();
     }
     /* 有外部消息则处理消息 */
-    sh_win_proc(&msg);
-    return 0;
+    return sh_win_proc(&msg);
 }
 
 void sh_window_rect_fill(int x, int y, uint32_t width, uint32_t height, uint32_t color)
