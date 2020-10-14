@@ -43,8 +43,6 @@ int cmd_buf_select(int dir);
 void cmd_buf_insert();
 int cmdline_set(char *buf, int buflen);
 void cmd_buf_copy();
-int cmd_buf_select(int dir);
-int cmdline_set(char *buf, int buflen);
 int cmdline_check();
 
 #endif  /* _BOSH_CMD_H */

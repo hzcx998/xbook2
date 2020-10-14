@@ -26,41 +26,35 @@
 
 cmd_man_t *cmdman; 
 
-void print_prompt() 
-{
-    printf("%s>", cmdman->cwd_cache);
-}
-
 void print_cmdline()
 {
-    printf(cmdman->cmd_line);
+    shell_printf(cmdman->cmd_line);
 }
 char *cmd_argv[MAX_ARG_NR] = {0};
+
+extern int fdm;
 
 int cmdline_check()
 {
 
     /* 如果什么也没有输入，就回到开始处 */
-    if(cmdman->cmd_line[0] == 0)
-        return -1;
+    if(cmdman->cmd_line[0] != '\n') {
+        cmdman->cmd_line[cmdman->cmd_len - 1] = '\0'; // 不要最后的一个回车
+        /* 记录历史缓冲区 */
+        cmd_buf_insert();
+        cmdman->cmd_line[cmdman->cmd_len - 1] = '\n';
+    }
 
-    /* 记录历史缓冲区 */
-    cmd_buf_insert();
+    /* 往ptm写入数据 */
+    printf("master write: %s\n", cmdman->cmd_line);
+    write(fdm, cmdman->cmd_line, cmdman->cmd_len);
 
+    
     /* 重置命令参数 */
     cmdman->cmd_pos = cmdman->cmd_line;
     cmdman->cmd_len = 0;
 
-    /* 处理数据 */
-    //printf("cmd: %s\n", cmd_line);
-    /* 记录历史缓冲区 */
-    //cmd_buf_insert();
-    
-    /* 修改消息路由 */
-    set_win_proc(1);
-    
     memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
-    set_win_proc(0);
     return 0;
 }
 
@@ -148,7 +142,6 @@ int cmd_buf_select(int dir)
         /* 移动到行首 */
         move_cursor(0, cursor.y);
         /* 打印提示符和当前命令行 */
-        print_prompt();
         cmd_buf_copy();
         print_cmdline();
         /* 计算命令行的长度和当前字符的位置 */
@@ -181,7 +174,6 @@ int cmdline_set(char *buf, int buflen)
     /* 移动到行首 */
     move_cursor(0, cursor.y);
     /* 打印提示符和当前命令行 */
-    print_prompt();
     /* 复制命令行内容 */
     memset(cmdman->cmd_line, 0, CMD_LINE_LEN);
     memcpy(cmdman->cmd_line, buf, min(CMD_LINE_LEN, buflen));
@@ -213,8 +205,6 @@ int init_cmd_man()
 
     cmdman->cmd_pos = cmdman->cmd_line;
     cmdman->cmd_len = 0;
-
-    print_prompt();
 
     return 0;
 }

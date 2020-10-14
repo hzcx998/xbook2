@@ -1,5 +1,5 @@
-#ifndef _BOSH_CLIPBOARD_H
-#define _BOSH_CLIPBOARD_H
+#ifndef _FREETERM_CLIPBOARD_H
+#define _FREETERM_CLIPBOARD_H
 
 #define CLIPBOARD_AVALI 0
 #define CLIPBOARD_START 1
@@ -24,4 +24,4 @@ void clipboard_move_select(int x, int y);
 void clipboard_break_select();
 void clipboard_copy_select();
 
-#endif /* _BOSH_CLIPBOARD_H */
+#endif /* _FREETERM_CLIPBOARD_H */

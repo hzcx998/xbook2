@@ -7,6 +7,12 @@ extern "C" {
 
 #include <termios.h>
 
+enum {
+    PTTY_RDNOBLK = 0x01,    
+    PTTY_WRNOBLK = 0x02
+};
+
+
 int posix_openpt(int flags);
 char *ptsname(int fd);
 int grantpt(int fd_master);

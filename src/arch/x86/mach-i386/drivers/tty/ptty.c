@@ -9,6 +9,8 @@
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #define DRV_NAME "pseudo-terminal"
 #define DRV_VERSION "0.1"
@@ -16,11 +18,16 @@
 #define DEV_NAME_MASTER "ptm"
 #define DEV_NAME_SLAVE "pts"
 
-#define PTTY_DEBUG
+// #define PTTY_DEBUG
 
 enum {
     PTTY_MASTER,    /* 主端 */
     PTTY_SLAVE,     /* 从端 */
+};
+
+enum {
+    PTTY_RDNOBLK = 0x01,    
+    PTTY_WRNOBLK = 0x02
 };
 
 /* master 数量 */
@@ -33,6 +40,7 @@ typedef struct _device_extension {
     int device_id;  /* 设备id */
     pipe_t *pipe_in;
     pipe_t *pipe_out;
+    int flags;      
 } device_extension_t;
 
 iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
@@ -81,6 +89,7 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
         devext->pipe_out = pipe_in;
         devext->slave = NULL;
         devext->locked = 1; // locked
+        devext->flags = 0;
     } else {
         /* 如果设备上锁了，就不能打开 */
         if (extension->locked) {
@@ -218,6 +227,20 @@ iostatus_t ptty_devctl(device_object_t *device, io_request_t *ioreq)
             status = IO_FAILED;
         }
         break;
+    case TIOCSFLGS:
+        extension->flags = *(unsigned long *) ioreq->parame.devctl.arg;
+        if (extension->flags & PTTY_RDNOBLK) {
+            if (pipe_ioctl(extension->pipe_in->id, F_SETFL, O_NONBLOCK, 0) < 0)
+                status = IO_FAILED;
+        }
+        if (extension->flags & PTTY_WRNOBLK) {
+            if (pipe_ioctl(extension->pipe_out->id, F_SETFL, O_NONBLOCK, 1) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case TIOCGFLGS:
+        *(unsigned long *) ioreq->parame.devctl.arg = extension->flags;
+        break;
     default:
         break;
     }
@@ -255,6 +278,8 @@ static iostatus_t ptty_enter(driver_object_t *driver)
         extension->pipe_out = NULL;
         extension->slave = NULL;
         extension->locked = 0;
+        extension->flags = 0;
+        
     }
     status = IO_SUCCESS;
     return status;

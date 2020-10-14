@@ -98,8 +98,6 @@ int __pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
             mutex_unlock(&pipe->mutex);
             return -1;
         }
-        printk(KERN_ERR "%s: pipe %d no data!\n", __func__, pipeid);
-        
         /* 添加到等待队列 */
         wait_queue_add(&pipe->wait_queue, current_task);
         mutex_unlock(&pipe->mutex);

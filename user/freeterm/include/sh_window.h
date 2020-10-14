@@ -1,5 +1,5 @@
-#ifndef _BOSH_WINDOW_H
-#define _BOSH_WINDOW_H
+#ifndef _FREETERM_WINDOW_H
+#define _FREETERM_WINDOW_H
 
 #include <gapi.h>
 
@@ -26,4 +26,4 @@ int process_window(g_msg_t *msg);
 int process_window2(g_msg_t *msg);
 int poll_window();
 
-#endif /* _BOSH_WINDOW_H */
+#endif /* _FREETERM_WINDOW_H */

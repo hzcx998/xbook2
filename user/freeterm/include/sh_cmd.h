@@ -1,5 +1,5 @@
-#ifndef _BOSH_CMD_H
-#define _BOSH_CMD_H
+#ifndef _FREETERM_CMD_H
+#define _FREETERM_CMD_H
 
 #include <stddef.h>
 
@@ -47,4 +47,4 @@ int cmd_buf_select(int dir);
 int cmdline_set(char *buf, int buflen);
 int cmdline_check();
 
-#endif  /* _BOSH_CMD_H */
+#endif  /* _FREETERM_CMD_H */

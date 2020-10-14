@@ -1,5 +1,5 @@
-#ifndef _BOSH_CONSOLE_H
-#define _BOSH_CONSOLE_H
+#ifndef _FREETERM_CONSOLE_H
+#define _FREETERM_CONSOLE_H
 
 #include <stddef.h>
 #include <gcolor.h>
@@ -90,4 +90,4 @@ int exit_console();
 #define shell_printf con_printf
 #define shell_putchar con_putchar
 
-#endif  /* _BOSH_CONSOLE_H */
+#endif  /* _FREETERM_CONSOLE_H */

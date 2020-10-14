@@ -3,7 +3,7 @@ X_LIBS		+= libxlibc-0.0.1.a libgapi-0.1.0.a
 X_INCDIRS	+= freeterm/include
 
 NAME		:= freeterm
-SRC			+= main.c shell/ terminal/
+SRC			+= main.c terminal/
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

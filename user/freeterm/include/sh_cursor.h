@@ -1,5 +1,5 @@
-#ifndef _BOSH_CURSOR_H
-#define _BOSH_CURSOR_H
+#ifndef _FREETERM_CURSOR_H
+#define _FREETERM_CURSOR_H
 
 #include <stddef.h>
 #include <gcolor.h>
@@ -40,4 +40,4 @@ void clean_cursor();
 void focus_cursor();
 void print_cursor();
 
-#endif /* _BOSH_CURSOR_H */
+#endif /* _FREETERM_CURSOR_H */

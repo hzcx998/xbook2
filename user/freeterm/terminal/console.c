@@ -168,23 +168,6 @@ void con_region_chars(int x0, int y0, int x1, int y1)
     sh_window_update(left, top, right, bottom);
 }
 
-void gui_draw_char(char ch)
-{
-    int x = cursor.x * con_screen.char_width;
-    int y = cursor.y * con_screen.char_height;
-    //printf("cursor: x=%d, y=%d\n", cursor.x, cursor.y);
-    /* 绘制背景 */
-    sh_window_rect_fill(x, y,
-        con_screen.char_width, con_screen.char_height, con_screen.background_color);
-    
-    /* 绘制字符 */
-    sh_window_char(x, y, ch, con_screen.font_color);
-
-    /* 刷新光标 */
-    sh_window_update(x, y, 
-        x +con_screen.char_width, y +con_screen.char_height);
-}
-
 void load_char_buffer()
 {
 	int bx, by, x, y;
@@ -480,37 +463,6 @@ static void con_clear()
 	draw_cursor();
     
 }
-#if 0
-/*
-清除屏幕上的所有东西，
-字符缓冲区里面的文字
-*/
-static void con_fresh()
-{
-    
-	//清空字符缓冲区
-	memset(con_screen.buffer, 0, con_screen.buflen);
-    
-	//修改字符缓冲区指针
-	con_screen.cur_pos = con_screen.buffer;
-
-	//重置光标
-	cursor.x = 0;
-	cursor.y = 0;
-
-	//清空背景
-    sh_window_rect_fill(0, 0,
-        con_screen.width, con_screen.height, con_screen.background_color);
-    
-    /* 刷新全部 */
-    sh_window_update(0, 0,
-        con_screen.width, con_screen.height);
-    //绘制光标
-	//draw_cursor();
-    
-}
-#endif
-
 /*
 清除屏幕上的所有东西，
 字符缓冲区里面的文字
@@ -618,10 +570,12 @@ int con_get_key(int kcode, int kmod)
         focus_cursor();
         move_cursor_off(cmdman->cmd_len - (cmdman->cmd_pos - cmdman->cmd_line), 0);
         con_screen.outc('\n');
+        *cmdman->cmd_pos = '\n';
+        cmdman->cmd_pos++;
+        cmdman->cmd_len++;
         cmdman->cmd_line[cmdman->cmd_len] = 0;
         /* 发送给命令行 */
         cmdline_check();   /* 执行命令 */
-        print_prompt();     /* 打印命令提示符 */
     case GK_BACKSPACE:
         clipboard_break_select();
         focus_cursor();
@@ -684,41 +638,6 @@ int con_get_key(int kcode, int kmod)
         break;
     }
     return 0;
-}
-
-/**
- * 传输按键
- * 
- * 在调用子进程期间执行
- */
-int con_xmit_key(int kcode, int kmod)
-{
-    //printf("kcode:%c kmod:%x\n", kcode, kmod);
-    /* 组合按键 */
-    if (kmod & GKMOD_CTRL) {
-        if (kcode == GK_C || kcode == GK_c) {
-            
-            // triggeron(TRIGLSOFT, shell_child_pid);
-            
-            return 0;   /* 特殊按键处理 */
-        }
-    }
-    /* 过滤一些按键 */
-    switch (kcode) {
-    case GK_NUMLOCK:
-    case GK_CAPSLOCK:
-    case GK_SCROLLOCK:
-    case GK_RSHIFT:
-    case GK_LSHIFT:
-    case GK_RCTRL:
-    case GK_LCTRL:
-    case GK_RALT:
-    case GK_LALT:
-        return 0;   /* 特殊按键处理 */
-    default:
-        break;
-    }
-    return 1;
 }
 
 int init_console()
