@@ -42,3 +42,4 @@ MODULE      +=  infones
 MODULE      +=  c4
 MODULE      +=  sound
 MODULE      +=  wavplayer
+MODULE      +=  mp3player
