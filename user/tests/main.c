@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
     //http_test(argc, argv);
     //xlibc_test(argc, argv);
     //buddy_test(argc, argv);
-    cjson_main();
+    //cjson_main();
+    pty_test(argc, argv);
     return 0;
 }

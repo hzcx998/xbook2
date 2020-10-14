@@ -14,6 +14,7 @@ SRC			+= http_test.c
 SRC			+= getopt_test.c
 SRC			+= buddy_test.c
 SRC			+= cjson_test.c
+SRC			+= pty_test.c
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

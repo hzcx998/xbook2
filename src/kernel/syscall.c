@@ -184,4 +184,5 @@ void init_syscall()
     syscall_table[SYS_LAYERCOPYBMP] = sys_layer_copy_bitmap;
     syscall_table[SYS_GGETICONPATH] = sys_gui_get_icon;
     syscall_table[SYS_GSETICONPATH] = sys_gui_set_icon;
+    syscall_table[SYS_PROBE] = sys_probe;
 }

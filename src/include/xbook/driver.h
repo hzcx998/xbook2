@@ -255,6 +255,7 @@ int device_grow(handle_t handle);
 void *device_mmap(handle_t handle, size_t length, int flags);
 
 void dump_device_object(device_object_t *device);
+int device_probe_unused(const char *name, char *buf, size_t buflen);
 
 int io_uninstall_driver(char *drvname);
 

@@ -12,6 +12,7 @@
 #include <xbook/fifo.h>
 #include <xbook/pipe.h>
 #include <sys/ipc.h>
+#include <sys/ioctl.h>
 
 // #define DEBUG_FSIF
 
@@ -505,4 +506,14 @@ int sys_mkfs(char *source,         /* 需要创建FS的设备 */
     unsigned long flags   /* 标志 */
 ) {
     return fsif.mkfs(source, fstype, flags);
+}
+
+int sys_probe(const char *name, int flags, char *buf, size_t buflen)
+{
+    if (flags & O_DEVEX) {
+        return device_probe_unused(name, buf, buflen);
+    } else {
+        printk("%s: do not support probe!\n");
+    }
+    return -1;
 }

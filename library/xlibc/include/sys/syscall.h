@@ -161,6 +161,7 @@ enum syscall_num {
     SYS_LAYERCOPYBMP,
     SYS_GGETICONPATH,
     SYS_GSETICONPATH,
+    SYS_PROBE,
     SYSCALL_NR,
 };
 

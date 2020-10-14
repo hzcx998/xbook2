@@ -47,4 +47,5 @@ int buddy_test(int argc,char *argv[]);
 
 int cjson_main(void);
 
+int pty_test(int argc, char *argv[]);
 #endif // _TEST_H

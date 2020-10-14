@@ -72,11 +72,14 @@ int __pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
         return -1;
     /* find the pipe id */
     pipe_t *pipe = pipe_find(pipeid);
-    if (pipe == NULL)
+    if (pipe == NULL) {
+        printk(KERN_ERR "%s: pipe %d not found!\n", __func__, pipeid);
         return -1;
-
-    if (atomic_get(&pipe->read_count) <= 0) 
+    }
+    if (atomic_get(&pipe->read_count) <= 0)  {
+        printk(KERN_ERR "%s: pipe %d reader is zero!\n", __func__, pipeid);
         return -1;
+    }
 
     int rdsize = 0;
     int chunk;
@@ -95,6 +98,8 @@ int __pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
             mutex_unlock(&pipe->mutex);
             return -1;
         }
+        printk(KERN_ERR "%s: pipe %d no data!\n", __func__, pipeid);
+        
         /* 添加到等待队列 */
         wait_queue_add(&pipe->wait_queue, current_task);
         mutex_unlock(&pipe->mutex);
@@ -152,10 +157,14 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
     /* find the pipe id */
     pipe_t *pipe = pipe_find(pipeid);
     if (pipe == NULL) {
+        printk(KERN_ERR "%s: pipe %d not found!\n", __func__, pipeid);
         return -1;
     }
-    if (atomic_get(&pipe->write_count) <= 0) 
+    if (atomic_get(&pipe->write_count) <= 0) {
+        printk(KERN_ERR "%s: pipe %d writer is zero!\n", __func__, pipeid);
         return -1;
+    }
+        
     if (atomic_get(&pipe->read_count) <= 0) {
         /* 没有读端时写入，触发管道异常 */
         sys_trigger_active(TRIGHSOFT, current_task->pid);

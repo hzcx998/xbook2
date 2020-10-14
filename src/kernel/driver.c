@@ -1,5 +1,6 @@
 #include <xbook/driver.h>
 #include <math.h>
+#include <stdio.h>
 
 #include <xbook/debug.h>
 #include <assert.h>
@@ -31,7 +32,6 @@ iostatus_t default_device_dispatch(device_object_t *device, io_request_t *ioreq)
     io_complete_request(ioreq);
     return IO_SUCCESS;  /* 默认是表示执行成功 */
 }
-#ifdef DEBUG_DRIVER /* print devices */
 static void print_drivers()
 {
     driver_object_t *drvobj;
@@ -50,6 +50,7 @@ static void print_drivers()
     }
 }
 
+#ifdef DEBUG_DRIVER /* print devices */
 static void print_drivers_mini()
 {
     driver_object_t *drvobj;
@@ -1177,6 +1178,27 @@ void dump_device_object(device_object_t *device)
         atomic_get(&device->reference), device->name.text);
 }
 
+int device_probe_unused(const char *name, char *buf, size_t buflen)
+{
+    driver_object_t *drvobj;
+    device_object_t *devobj;
+    int namelen = strlen(name);
+    /* 遍历所有的驱动 */
+    list_for_each_owner (drvobj, &driver_list_head, list) {
+        list_for_each_owner (devobj, &drvobj->device_list, list) {
+            if (!strncmp(name, devobj->name.text, namelen)) {
+                if (!atomic_get(&devobj->reference)) { // ref = 0
+                    memcpy(buf, devobj->name.text, min(buflen, DEVICE_NAME_LEN));
+                    buf[buflen - 1] = '\0';
+                    return 0;
+                }
+            }
+        }
+    }
+    return -1;
+}
+
+
 int input_even_init(input_even_buf_t *evbuf)
 {
     spinlock_init(&evbuf->lock);
@@ -1227,6 +1249,38 @@ void init_driver_arch()
     print_drivers();
 #endif
 
+    /* 输出所有驱动以及设备 */
+    print_drivers();
+
+    handle_t ptm0 = device_open("ptm0", 0);
+    if (ptm0 < 0)
+        panic(KERN_DEBUG "open ptm0 failed!\n");
+
+    int lock = 0;
+    device_devctl(ptm0, TIOCSPTLCK, &lock);
+    
+    int islave;
+    device_devctl(ptm0, TIOCGPTN, &islave);
+    printk("slave tty number %d\n", islave);
+
+    char devname[DEVICE_NAME_LEN] = {0};
+    sprintf(devname, "pts%d", islave);
+
+    handle_t pts0 = device_open(devname, 0);
+    if (pts0 < 0)
+        panic(KERN_DEBUG "open pts0 failed!\n");
+    
+    char buf[32] = {0, };
+    strcpy(buf, "hello, ptty!\n");
+    device_write(ptm0, buf, strlen(buf), 0);
+    char buf1[32] = {0, };
+    device_read(pts0, buf1, strlen(buf), 0);
+    printk(KERN_INFO "buf1: %s", buf1);
+
+    device_close(pts0);
+    device_close(ptm0);
+
+    //spin("test");
 #if 0
     handle_t sb16 = device_open("sb16", 0);
     if (sb16 < 0)
