@@ -327,6 +327,7 @@ int do_trigger(trap_frame_t *frame)
                 case TRIGUSR0: /* user0 */
                 case TRIGUSR1: /* user1 */
                 case TRIGRESUM: /* 在设置恢复触发器的时候就唤醒任务了 */
+                case TRIGALARM: /* alarm */
 #ifdef DEBUG_TRIGGER
                 printk(KERN_DEBUG "do_trigger: user or resume.\n");
 #endif
@@ -344,7 +345,7 @@ int do_trigger(trap_frame_t *frame)
                 case TRIGLSOFT: /* light software */
                 case TRIGHSOFT: /* heavy software */
                 case TRIGSYS: /* system */
-                case TRIGALARM: /* alarm */
+                
 #ifdef DEBUG_TRIGGER
                     printk(KERN_DEBUG "do_trigger: software or system trigger=%d\n", trig);
 #endif

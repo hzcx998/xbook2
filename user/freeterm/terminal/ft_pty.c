@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+#include <sys/trigger.h>
 
 #include <ft_pty.h>
 #include <ft_terminal.h>
@@ -23,7 +24,7 @@ int ft_pty_init(ft_pty_t *pty)
     ioctl(fdm, TIOCSFLGS, (unsigned long) &flags);
     pty->fd_master = fdm;
     pty->initialized = 1;
-
+    pty->pid_slaver = -1;
     return 0;
 }
 
@@ -66,5 +67,7 @@ int ft_pty_exit(ft_pty_t *pty)
         return -1;
 
     close(pty->fd_master);
+    if (pty->pid_slaver > 0) // close slaver
+        triggeron(TRIGHSOFT, pty->pid_slaver); 
     return 0;
 }

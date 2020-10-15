@@ -11,7 +11,9 @@ int pty_test(int argc, char *argv[])
         printf("open device failed!\n");
         return -1;
     }
-    
+    printf("fd: %d\n", fdm);
+
+
     unlockpt(fdm);
     grantpt(fdm);
 
@@ -28,6 +30,8 @@ int pty_test(int argc, char *argv[])
         printf("open slave failed!\n");
         return -1;
     }
+
+    printf("fd: %d\n", fds);
     char buf[32] = {0, };
     strcpy(buf, "hello, ptty!\n");
     write(fdm, buf, strlen(buf));

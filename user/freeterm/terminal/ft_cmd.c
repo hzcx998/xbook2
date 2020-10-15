@@ -48,6 +48,8 @@ int cmdline_check()
     #ifdef DEBUG_FT
     printf("freeterm: master write: %s\n", cmdman->cmd_line);
     #endif
+    cmdman->cmd_line[cmdman->cmd_len] = '\0'; // 末尾加0，表示回车
+    cmdman->cmd_len++;
     write(ft_pty.fd_master, cmdman->cmd_line, cmdman->cmd_len);
     
     /* 重置命令参数 */

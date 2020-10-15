@@ -4,6 +4,7 @@
 #include <xbook/task.h>
 #include <xbook/process.h>
 #include <xbook/pthread.h>
+#include <xbook/trigger.h>
 #include <sys/wait.h>
 
 // #define DEBUG_WAIT_EXIT
@@ -302,7 +303,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
 #ifdef DEBUG_WAIT_EXIT
         printk(KERN_DEBUG "sys_wait: check no wait!\n");
 #endif
-       
+        
         /* 查看是否有其它子进程 */
         if (!find_child_proc(parent)) {
 #ifdef DEBUG_WAIT_EXIT
@@ -325,7 +326,14 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
         /* WATING for children to exit */
         task_block(TASK_WAITING);
         //printk(KERN_DEBUG "proc wait: child unblocked me.\n");
+        
+        /* 如果有特殊触发器产生，则退出等待 */
+        if (trigismember(&current_task->triggers->set, TRIGHSOFT) ||
+            trigismember(&current_task->triggers->set, TRIGSYS)) {
+            break;
+        }
     }
+    return -1;
 }
 
 /**

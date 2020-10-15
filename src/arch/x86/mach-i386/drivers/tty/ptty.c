@@ -22,7 +22,7 @@
 
 enum {
     PTTY_MASTER,    /* 主端 */
-    PTTY_SLAVE,     /* 从端 */
+    PTTY_SLAVER,     /* 从端 */
 };
 
 enum {
@@ -35,9 +35,10 @@ enum {
 
 typedef struct _device_extension {
     int locked;         /* 上锁，表示是否允许打开 */
-    device_object_t *slave; // 从端
+    device_object_t *slaver; // slaver device for master
     int type;      /* 设备类型 */
     int device_id;  /* 设备id */
+    pid_t hold_pid; /* 持有控制权的进程 */
     pipe_t *pipe_in;
     pipe_t *pipe_out;
     int flags;      
@@ -50,57 +51,60 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
     pipe_t *pipe_in;
     pipe_t *pipe_out;
 
-    /* 打开时创建slave端 */
+    /* 打开时创建slaver端 */
     if (extension->type == PTTY_MASTER) {
-        /* 创建一对管道 */
-        pipe_in = create_pipe();
-        if (pipe_in == NULL) {
-            printk(KERN_ERR "ptty_open: create in pipe failed!\n");
-            goto err_pipe_in;
-        }
-        pipe_out = create_pipe();
-        if (pipe_out == NULL) {
-            printk(KERN_ERR "ptty_open: create out pipe failed!\n");
-            goto err_pipe_out;
-        }
+        if (extension->slaver == NULL && extension->pipe_in == NULL && extension->pipe_out == NULL) { // 没有从端就创建
+            /* 创建一对管道 */
+            pipe_in = create_pipe();
+            if (pipe_in == NULL) {
+                printk(KERN_ERR "ptty_open: create in pipe failed!\n");
+                goto err_pipe_in;
+            }
+            pipe_out = create_pipe();
+            if (pipe_out == NULL) {
+                printk(KERN_ERR "ptty_open: create out pipe failed!\n");
+                goto err_pipe_out;
+            }
 
-        device_object_t *devobj;
-        device_extension_t *devext;
-        char devname[DEVICE_NAME_LEN] = {0, };
-        memset(devname, 0, DEVICE_NAME_LEN);
-        sprintf(devname, "%s%d", DEV_NAME_SLAVE, extension->device_id); // 和主端一样的id
-        /* 创建一个slave终端设备 */
-        status = io_create_device(device->driver, sizeof(device_extension_t), devname, DEVICE_TYPE_VIRTUAL_CHAR, &devobj);
-        if (status != IO_SUCCESS) {
-            printk(KERN_ERR "ptty_open: create master device failed!\n");
-            goto err_create_dev;
+            device_object_t *devobj;
+            device_extension_t *devext;
+            char devname[DEVICE_NAME_LEN] = {0, };
+            memset(devname, 0, DEVICE_NAME_LEN);
+            sprintf(devname, "%s%d", DEV_NAME_SLAVE, extension->device_id); // 和主端一样的id
+            /* 创建一个slaver终端设备 */
+            status = io_create_device(device->driver, sizeof(device_extension_t), devname, DEVICE_TYPE_VIRTUAL_CHAR, &devobj);
+            if (status != IO_SUCCESS) {
+                printk(KERN_ERR "ptty_open: create master device failed!\n");
+                goto err_create_dev;
+            }
+            /* neither io mode */
+            devobj->flags = 0;
+            devext = (device_extension_t *)devobj->device_extension;
+            devext->type = PTTY_SLAVER;   /* 从终端 */
+            devext->device_id = extension->device_id;
+            
+            extension->pipe_in = pipe_in;
+            extension->pipe_out = pipe_out;
+            extension->slaver = devobj;
+            /* 对于从设备来说，读写端互换 */
+            devext->pipe_in = pipe_out;
+            devext->pipe_out = pipe_in;
+            devext->slaver = NULL;
+            devext->locked = 1; // locked
+            devext->flags = 0;
+            extension->hold_pid = -1;
         }
-        /* neither io mode */
-        devobj->flags = 0;
-        devext = (device_extension_t *)devobj->device_extension;
-        devext->type = PTTY_SLAVE;   /* 从终端 */
-        devext->device_id = extension->device_id;
-        
-        extension->pipe_in = pipe_in;
-        extension->pipe_out = pipe_out;
-        extension->slave = devobj;
-        /* 对于从设备来说，读写端互换 */
-        devext->pipe_in = pipe_out;
-        devext->pipe_out = pipe_in;
-        devext->slave = NULL;
-        devext->locked = 1; // locked
-        devext->flags = 0;
     } else {
         /* 如果设备上锁了，就不能打开 */
         if (extension->locked) {
             goto err_no;
         }
     }
-
+    
+    extension->hold_pid = current_task->pid;   
+    
     status = IO_SUCCESS;
-    #ifdef PTTY_DEBUG
-    printk(KERN_INFO "ptty_open: success!\n");
-    #endif
+    printk(KERN_INFO "ptty_open: device %s success!\n", device->name.text);
     goto err_no;
 
 err_create_dev:
@@ -119,29 +123,19 @@ iostatus_t ptty_close(device_object_t *device, io_request_t *ioreq)
 {
     iostatus_t status = IO_FAILED;
     device_extension_t *extension = device->device_extension;
-    
-    /* 关闭时销毁slave端 */
+    /* 关闭时销毁slaver端 */
     if (extension->type == PTTY_MASTER) {
-        device_object_t *devobj = extension->slave;
-        if (!devobj) {
-            goto err_not_found;
-        } 
-        device_extension_t *devext = (device_extension_t *)devobj->device_extension;
-        io_delete_device(devobj);
-        destroy_pipe(extension->pipe_in);
-        destroy_pipe(extension->pipe_out);
-        extension->slave = NULL;
-        extension->pipe_in = NULL;
-        extension->pipe_out = NULL;
-    } else {
+        extension->locked = 0;
+    } else if (extension->type == PTTY_SLAVER) {
         /* 如果设备上锁了，就不能关闭 */
         if (extension->locked) {
             goto err_not_found;
         }
+        extension->locked = 1;
     }
-    #ifdef PTTY_DEBUG
-    printk(KERN_INFO "ptty_close: success!\n");
-    #endif
+    extension->flags = 0;
+    extension->hold_pid = -1;
+    printk(KERN_INFO "ptty_close: device %s success!\n", device->name.text);
     status = IO_SUCCESS;
 err_not_found:
     ioreq->io_status.status = status;
@@ -155,16 +149,44 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
     device_extension_t *extension = device->device_extension;
     
     iostatus_t status = IO_FAILED;
-    
     uint8_t *buf = (uint8_t *) ioreq->user_buffer;
     int len = ioreq->parame.read.length;
-    #ifdef PTTY_DEBUG
-    printk(KERN_INFO "ptty_read: buf %x len %d.\n", buf, len);
-    #endif
-    /* 从读端读取 */
-    if ((len = pipe_read(extension->pipe_in->id, buf, len)) < 0)
-        goto err_rd;
 
+    /* 前台任务 */
+    if (extension->hold_pid == current_task->pid) {
+        
+        #ifdef PTTY_DEBUG
+        printk(KERN_INFO "ptty_read: buf %x len %d.\n", buf, len);
+        #endif
+        if (extension->type == PTTY_MASTER) {        
+            /* 从读端读取 */
+            if ((len = pipe_read(extension->pipe_in->id, buf, len)) < 0)
+                goto err_rd;
+        } else {
+            /* 如果遇到0，那么就结束读取 */
+            int count = 0;
+            uint8_t *p = buf;
+            while (count < len)
+            {
+                if ((pipe_read(extension->pipe_in->id, p, 1)) < 0) {
+                    len = count;
+                    goto err_rd;
+                }
+                
+                if (*p == '\0') { // 遇到终结符
+                    len = count;
+                    break;
+                }
+                count++;
+                p++;
+            }
+        }
+    } else {
+        printk(KERN_ERR "[ptty]: pid %d read but not holder, abort!\n", current_task->pid);
+        /* 不是前台任务就触发任务的硬件触发器 */
+        trigger_force(TRIGSYS, current_task->pid);
+        goto err_rd;
+    }
     status = IO_SUCCESS;
 err_rd:
 #ifdef PTTY_DEBUG
@@ -187,10 +209,16 @@ iostatus_t ptty_write(device_object_t *device, io_request_t *ioreq)
     #ifdef PTTY_DEBUG
     printk(KERN_INFO "ptty_write: buf %x len %d.\n", buf, len);
     #endif
-    /* 从写端写入 */
-    if ((len = pipe_write(extension->pipe_out->id, buf, len)) < 0)
+    if (extension->hold_pid == current_task->pid) {
+        /* 从写端写入 */
+        if ((len = pipe_write(extension->pipe_out->id, buf, len)) < 0)
+            goto err_wr;
+    } else {
+        printk(KERN_ERR "[ptty]: pid %d write but not holder, abort!\n", current_task->pid);
+        /* 不是前台任务就触发任务的硬件触发器 */
+        trigger_force(TRIGSYS, current_task->pid);
         goto err_wr;
-
+    }
     status = IO_SUCCESS;
 err_wr:
 #ifdef PTTY_DEBUG
@@ -212,16 +240,16 @@ iostatus_t ptty_devctl(device_object_t *device, io_request_t *ioreq)
     switch (ioreq->parame.devctl.code)
     {    
     case TIOCGPTN:
-        if (extension->slave) {
-            extension = extension->slave->device_extension;
+        if (extension->slaver && extension->type == PTTY_MASTER) {
+            extension = extension->slaver->device_extension;
             *(unsigned long *)ioreq->parame.devctl.arg = extension->device_id;
         } else {
             status = IO_FAILED;
         }
         break;
     case TIOCSPTLCK:
-        if (extension->slave) {
-            extension = extension->slave->device_extension;
+        if (extension->slaver && extension->type == PTTY_MASTER) {
+            extension = extension->slaver->device_extension;
             extension->locked = *(unsigned long *) ioreq->parame.devctl.arg;
         } else {
             status = IO_FAILED;
@@ -240,6 +268,9 @@ iostatus_t ptty_devctl(device_object_t *device, io_request_t *ioreq)
         break;
     case TIOCGFLGS:
         *(unsigned long *) ioreq->parame.devctl.arg = extension->flags;
+        break;
+    case TTYIO_HOLDER:
+        extension->hold_pid = *(unsigned long *) ioreq->parame.devctl.arg;
         break;
     default:
         break;
@@ -276,10 +307,10 @@ static iostatus_t ptty_enter(driver_object_t *driver)
         extension->device_id = i;   
         extension->pipe_in = NULL;
         extension->pipe_out = NULL;
-        extension->slave = NULL;
+        extension->slaver = NULL;
         extension->locked = 0;
         extension->flags = 0;
-        
+        extension->hold_pid = -1;
     }
     status = IO_SUCCESS;
     return status;

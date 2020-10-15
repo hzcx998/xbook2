@@ -42,6 +42,8 @@ int main(int argc, char *argv[])
         return -1;
     } else if (!pid) { // 子进程
         ft_pty_launch(&ft_pty, "/bin/sh");
+    } else { // 父进程
+        ft_pty.pid_slaver = pid; // 记录子进程的进程pid
     }
 
     atexit(exit_freeterm);
