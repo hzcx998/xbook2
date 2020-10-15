@@ -52,6 +52,7 @@ int ft_pty_launch(ft_pty_t *pty, char *pathname)
     dup2(fds, 2);
     close(fds);
     close(pty->fd_master);
+
     #ifdef DEBUG_FT
     printf("freeterm: %s: open slaver %s success.\n", __func__, sname);
     #endif
@@ -61,13 +62,16 @@ int ft_pty_launch(ft_pty_t *pty, char *pathname)
     return -1;
 }
 
-int ft_pty_exit(ft_pty_t *pty)
+int ft_pty_exit(ft_pty_t *pty, int relation)
 {
     if (!pty->initialized)
         return -1;
-
+    
     close(pty->fd_master);
-    if (pty->pid_slaver > 0) // close slaver
-        triggeron(TRIGHSOFT, pty->pid_slaver); 
+
+    if (pty->pid_slaver > 0 && relation) { // close slaver
+        triggeron(TRIGLSOFT, pty->pid_slaver);
+    }   
+    
     return 0;
 }

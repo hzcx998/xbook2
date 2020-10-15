@@ -9,7 +9,7 @@
 #include <gui/message.h>
 
 /* 调试触发器：0不调试，1要调试 */
-// #define DEBUG_TRIGGER
+#define DEBUG_TRIGGER
 
 /**
  * do_active_trigger - 激活任务的某个触发器
@@ -41,6 +41,16 @@ int do_active_trigger(pid_t pid, int trig, pid_t toucher)
         /* 如果是暂停，那么恢复就不能屏蔽 */
         trigdelset(&trigger->blocked, TRIGRESUM);
         break;
+    #if 0
+    case TRIGLSOFT:
+        if (task->state == TASK_BLOCKED || task->state == TASK_WAITING) { /* 处于停止状态就resume */
+            #ifdef DEBUG_TRIGGER
+            printk(KERN_NOTICE "do_active_trigger: wakeup sleep task=%s.\n", task->name);
+            #endif
+            task_wakeup(task);
+        }
+        break;
+    #endif
     case TRIGRESUM: /* 恢复进程运行 */
     case TRIGHSOFT: 
 #ifdef DEBUG_TRIGGER

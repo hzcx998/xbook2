@@ -157,6 +157,10 @@ int fs_fd_exit(task_t *task)
 {
     if (!task->fileman)
         return -1;
+    int i;
+    for (i = 0; i < LOCAL_FILE_OPEN_NR; i++)
+        fsif_degrow(i);
+    
     kfree(task->fileman);
     task->fileman = NULL;
     return 0;

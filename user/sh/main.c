@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <sys/ioctl.h>
+#include <sys/trigger.h>
 
 #include "sh.h"
 
@@ -34,6 +35,8 @@ int main(int argc, char *argv[])
 
     int pid = getpid();
     ioctl(0, TTYIO_HOLDER, &pid);
+
+    trigger(TRIGLSOFT, sh_exit_trigger);
 
     /* 备份标准输入 */
 	while(1){ 
@@ -393,13 +396,15 @@ static int redirect_do_stdout(struct redirect_info *rdout, uint32_t redirect_mas
             rdout->fd = open(rdout->filename, open_flags, 0);
         }
         if (rdout->fd < 0) {
-            //printf("open file redirect failed!\n");    
+            printf("open file redirect failed!\n");    
             return -1;
         }
-        //printf("redirect to fd %d\n", rdout->fd);
+        printf("redirect to fd %d\n", rdout->fd);
 
         /* 进行重定向 */
-        dup2(rdout->fd, STDOUT_FILENO);
+        if (dup2(rdout->fd, STDOUT_FILENO) < 0)
+            printf("dup2 failed!\n");
+
     }
     return 0;
 }
@@ -844,15 +849,56 @@ static void redirect_cmd(int argc, char **argv, struct redirect_info *rdi)
 
 }
 
-/**
- * do_buildin_cmd - 执行内建命令
- */
-int buildin_cmd(int cmd_argc, char **cmd_argv)
+void sh_exit(int ret, int relation)
 {
-    int retval = 0;
-    
-    retval = -1;
-    return retval;
+    close(sh_stdin_backup);
+    close(sh_stdout_backup);
+    close(sh_stderr_backup);
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+    if (relation) {
+        pid_t ppid = getppid();
+        if (ppid > 0) /* 关闭父进程 */
+            triggeron(TRIGLSOFT, ppid);
+    }
+    exit(ret);
+}
+
+static int buildin_cmd_exit(int argc, char **argv)
+{
+    //printf("sh: do buildin exit.\n");
+    sh_exit(0, 1);
+    return 0;
+}
+
+void sh_exit_trigger(int trigno)
+{
+    sh_exit(trigno, 0);
+}
+
+/* cmd table */
+struct buildin_cmd buildin_cmd_table[] = {
+    {"exit", buildin_cmd_exit},
+};
+
+static int do_buildin_cmd(int cmd_argc, char **cmd_argv)
+{
+    int cmd_nr = ARRAY_SIZE(buildin_cmd_table);
+    struct buildin_cmd *cmd_ptr;
+    int i = 0;
+    /* scan cmd table */
+    for (i = 0; i < cmd_nr; i++) {
+        cmd_ptr = &buildin_cmd_table[i];
+        if (!strcmp(cmd_ptr->name, cmd_argv[0])) {
+            if (cmd_ptr->cmd_func(cmd_argc, cmd_argv)) {
+                //shell_printf("do_buildin_cmd: %s failed!\n", cmd_argv[0]);
+            }
+            return 0;
+        }
+    }
+    /* not a buildin cmd */
+    return -1;
 }
 
 /**
@@ -879,7 +925,7 @@ int execute_cmd(int argc, char **argv, uint32_t redirect_mask)
     redirect_do(rdi, redirect_mask, &argc);
 
     /* 先执行内建命令，再选择磁盘中的命令 */
-    if (buildin_cmd(argc, argv)) {
+    if (do_buildin_cmd(argc, argv)) {
         
         /* 在末尾添加上结束参数 */
         argv[argc] = NULL;
@@ -897,18 +943,21 @@ int execute_cmd(int argc, char **argv, uint32_t redirect_mask)
 
             pid = getpid();
             ioctl(0, TTYIO_HOLDER, &pid);
-            /*
+
+
+            /* 
             printf("parent %d wait %d exit %d\n",
                 getpid(), pid, status);
             */
         } else {    /* 子进程 */
+
             /* 子进程执行程序 */
             pid = execv((const char *)argv[0], (char *const *)argv);
 
             /* 如果执行出错就退出 */
             if(pid == -1){
                 printf("sh: bad command %s!\n", argv[0]);
-                exit(pid);  /* 退出 */
+                sh_exit(pid, 0);
             }
         }
     }

@@ -27,7 +27,7 @@ enum {
 
 enum {
     PTTY_RDNOBLK = 0x01,    
-    PTTY_WRNOBLK = 0x02
+    PTTY_WRNOBLK = 0x02,
 };
 
 /* master 数量 */
@@ -35,7 +35,8 @@ enum {
 
 typedef struct _device_extension {
     int locked;         /* 上锁，表示是否允许打开 */
-    device_object_t *slaver; // slaver device for master
+    int opened;         /* 处于打开状态 */
+    device_object_t *other_devobj; // other devobj
     int type;      /* 设备类型 */
     int device_id;  /* 设备id */
     pid_t hold_pid; /* 持有控制权的进程 */
@@ -51,9 +52,11 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
     pipe_t *pipe_in;
     pipe_t *pipe_out;
 
-    /* 打开时创建slaver端 */
+    device_object_t *devobj;
+    device_extension_t *devext;
+    /* 打开时创建other_devobj端 */
     if (extension->type == PTTY_MASTER) {
-        if (extension->slaver == NULL && extension->pipe_in == NULL && extension->pipe_out == NULL) { // 没有从端就创建
+        if (extension->other_devobj == NULL && extension->pipe_in == NULL && extension->pipe_out == NULL) { // 没有从端就创建
             /* 创建一对管道 */
             pipe_in = create_pipe();
             if (pipe_in == NULL) {
@@ -66,12 +69,10 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
                 goto err_pipe_out;
             }
 
-            device_object_t *devobj;
-            device_extension_t *devext;
             char devname[DEVICE_NAME_LEN] = {0, };
             memset(devname, 0, DEVICE_NAME_LEN);
             sprintf(devname, "%s%d", DEV_NAME_SLAVE, extension->device_id); // 和主端一样的id
-            /* 创建一个slaver终端设备 */
+            /* 创建一个other_devobj终端设备 */
             status = io_create_device(device->driver, sizeof(device_extension_t), devname, DEVICE_TYPE_VIRTUAL_CHAR, &devobj);
             if (status != IO_SUCCESS) {
                 printk(KERN_ERR "ptty_open: create master device failed!\n");
@@ -85,13 +86,15 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
             
             extension->pipe_in = pipe_in;
             extension->pipe_out = pipe_out;
-            extension->slaver = devobj;
+            extension->other_devobj = devobj;
+
             /* 对于从设备来说，读写端互换 */
             devext->pipe_in = pipe_out;
             devext->pipe_out = pipe_in;
-            devext->slaver = NULL;
+            devext->other_devobj = device;
             devext->locked = 1; // locked
             devext->flags = 0;
+            devext->opened = 0;
             extension->hold_pid = -1;
         }
     } else {
@@ -99,12 +102,17 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
         if (extension->locked) {
             goto err_no;
         }
+        
     }
-    
+    extension->opened = 1; // 打开
     extension->hold_pid = current_task->pid;   
     
     status = IO_SUCCESS;
-    printk(KERN_INFO "ptty_open: device %s success!\n", device->name.text);
+    printk(KERN_INFO "ptty_open: device %s ref %d success!\n", device->name.text, atomic_get(&device->reference));
+    
+    printk(KERN_INFO "ptty_open: other device %s ref %d success!\n", extension->other_devobj->name.text,
+        atomic_get(&extension->other_devobj->reference));
+    
     goto err_no;
 
 err_create_dev:
@@ -123,18 +131,39 @@ iostatus_t ptty_close(device_object_t *device, io_request_t *ioreq)
 {
     iostatus_t status = IO_FAILED;
     device_extension_t *extension = device->device_extension;
-    /* 关闭时销毁slaver端 */
+    device_extension_t *devext;
+    /* 关闭时销毁other_devobj端 */
     if (extension->type == PTTY_MASTER) {
         extension->locked = 0;
+        
+        extension->opened = 0;
+        if (extension->other_devobj) {
+            devext = extension->other_devobj->device_extension;
+            if (!devext->opened) { // closed
+                printk(KERN_NOTICE "ptty_close: master clear pipe.\n");
+                pipe_clear(devext->pipe_in);
+                pipe_clear(devext->pipe_out);
+            }
+        }
     } else if (extension->type == PTTY_SLAVER) {
         /* 如果设备上锁了，就不能关闭 */
         if (extension->locked) {
             goto err_not_found;
         }
         extension->locked = 1;
+        extension->opened = 0;
+        if (extension->other_devobj) {
+            devext = extension->other_devobj->device_extension;
+            if (!devext->opened) { // closed
+                printk(KERN_NOTICE "ptty_close: slaver clear pipe.\n");
+                pipe_clear(devext->pipe_in);
+                pipe_clear(devext->pipe_out);
+            }
+        }
     }
     extension->flags = 0;
     extension->hold_pid = -1;
+
     printk(KERN_INFO "ptty_close: device %s success!\n", device->name.text);
     status = IO_SUCCESS;
 err_not_found:
@@ -240,16 +269,16 @@ iostatus_t ptty_devctl(device_object_t *device, io_request_t *ioreq)
     switch (ioreq->parame.devctl.code)
     {    
     case TIOCGPTN:
-        if (extension->slaver && extension->type == PTTY_MASTER) {
-            extension = extension->slaver->device_extension;
+        if (extension->other_devobj && extension->type == PTTY_MASTER) {
+            extension = extension->other_devobj->device_extension;
             *(unsigned long *)ioreq->parame.devctl.arg = extension->device_id;
         } else {
             status = IO_FAILED;
         }
         break;
     case TIOCSPTLCK:
-        if (extension->slaver && extension->type == PTTY_MASTER) {
-            extension = extension->slaver->device_extension;
+        if (extension->other_devobj && extension->type == PTTY_MASTER) {
+            extension = extension->other_devobj->device_extension;
             extension->locked = *(unsigned long *) ioreq->parame.devctl.arg;
         } else {
             status = IO_FAILED;
@@ -307,10 +336,11 @@ static iostatus_t ptty_enter(driver_object_t *driver)
         extension->device_id = i;   
         extension->pipe_in = NULL;
         extension->pipe_out = NULL;
-        extension->slaver = NULL;
+        extension->other_devobj = NULL;
         extension->locked = 0;
         extension->flags = 0;
         extension->hold_pid = -1;
+        extension->opened = 0;
     }
     status = IO_SUCCESS;
     return status;

@@ -6,14 +6,27 @@
 #include <pty.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <sys/trigger.h>
 
 #include <ft_pty.h>
 
 static void exit_freeterm()
 {
-    ft_pty_exit(&ft_pty);
     exit_cmd_man();
     exit_console();
+    // 屏蔽所有触发器
+    /*trigset_t trigset;
+    trigfillset(&trigset);
+    trigprocmask(TRIG_BLOCK, &trigset, NULL);*/
+    ft_pty_exit(&ft_pty, 1);
+}
+
+static void ft_exit_trigger(int trigno)
+{
+    exit_cmd_man();
+    exit_console();
+    ft_pty_exit(&ft_pty, 0);
+    exit(trigno);
 }
 
 int main(int argc, char *argv[]) 
@@ -43,10 +56,14 @@ int main(int argc, char *argv[])
     } else if (!pid) { // 子进程
         ft_pty_launch(&ft_pty, "/bin/sh");
     } else { // 父进程
+        printf("freeterm: child pid %d\n", pid);
         ft_pty.pid_slaver = pid; // 记录子进程的进程pid
     }
 
-    atexit(exit_freeterm);
+    /* 注册触发器 */
+    trigger(TRIGLSOFT, ft_exit_trigger);
+
     window_loop();
+    exit_freeterm();
     return 0;
 }

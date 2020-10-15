@@ -33,18 +33,15 @@ int g_quit(void)
 {
     
     /* 关闭定时器 */
-    if (g_del_timer_all() < 0)
-        return 0;
+    g_del_timer_all();
         
     /* 先关闭窗口 */
-    if (g_del_window_all() < 0)
-        return -1;
+    g_del_window_all();
     
     g_del_bitmap_all(); // 删除位图资源
 
     /* 再关闭图层 */
-    if (g_del_layer_all() < 0)
-        return -1;
+    g_del_layer_all();
 
     return syscall0(int, SYS_GQUIT);
 }

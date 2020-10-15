@@ -52,7 +52,6 @@ void window_loop()
 
 int exit_window()
 {
-
     return g_quit();
 }
 

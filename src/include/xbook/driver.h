@@ -252,6 +252,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset);
 ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset);
 ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg);
 int device_grow(handle_t handle);
+int device_degrow(handle_t handle);
 void *device_mmap(handle_t handle, size_t length, int flags);
 
 void dump_device_object(device_object_t *device);

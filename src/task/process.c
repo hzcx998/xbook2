@@ -387,7 +387,7 @@ int proc_pthread_exit(task_t *task)
 int proc_release(task_t *task)
 {
     if (proc_vmm_exit(task))
-        return -1; 
+        return -1;
     if (proc_trigger_exit(task))
         return -1;
     if (fs_fd_exit(task))
@@ -401,7 +401,7 @@ int proc_release(task_t *task)
     
     if (thread_release_resource(task))
         return -1;
-    
+    printk(KERN_DEBUG "[proc]: release don.\n");
     return 0;
 }
 

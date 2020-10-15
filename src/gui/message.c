@@ -45,12 +45,10 @@ int gui_msgpool_init(task_t *task)
  */
 int gui_msgpool_exit(task_t *task)
 {
-
     if (task->gmsgpool) {
         msgpool_destroy(task->gmsgpool);
         task->gmsgpool = NULL;
     }
-
     return 0;
 }
 

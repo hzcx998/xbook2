@@ -160,10 +160,9 @@ static int copy_file(task_t *child, task_t *parent)
 
 static int copy_gui(task_t *child, task_t *parent)
 {
-    /* 父进程有图形消息池，才设置子进程的图形消息池 */
+    // 不复制图形消息池
     if (parent->gmsgpool) {
-        child->gmsgpool = NULL; /* 先把子进程的消息池指针去掉，因为和父进程一样 */
-        return gui_msgpool_init(child);
+        child->gmsgpool = NULL;
     }
     return 0;
 }

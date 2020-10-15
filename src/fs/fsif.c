@@ -377,6 +377,26 @@ int fsif_grow(int fd)
     return 0;
 }
 
+/**
+ * @fd: 文件描述符
+ * 
+ * 增长文件对于的引用
+ * 
+ * 成功返回0，失败返回-1
+ */
+int fsif_degrow(int fd)
+{
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+        return -1;
+    if (ffd->flags & FILE_FD_NORMAL) {
+        
+    } else if (ffd->flags & FILE_FD_DEVICE) {
+        if (device_degrow(ffd->handle) < 0)
+            return -1;
+    }
+    return 0;
+}
 
 /**
  * 复制一个文件描述符
@@ -398,6 +418,7 @@ int sys_dup(int oldfd)
 
     /* 安装 */
     if (ffd->flags & FILE_FD_NORMAL) {
+        // newfd = local_fd_install(ffd->handle, FILE_FD_NORMAL);
     } else if (ffd->flags & FILE_FD_DEVICE) {
         newfd = local_fd_install(ffd->handle, FILE_FD_DEVICE);
     } else if (ffd->flags & FILE_FD_FIFO) {
@@ -443,7 +464,7 @@ int sys_dup2(int oldfd, int newfd)
     
     /* 安装 */
     if (ffd->flags & FILE_FD_NORMAL) {
-        
+        // newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_NORMAL);
     } else if (ffd->flags & FILE_FD_DEVICE) {
         
         newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_DEVICE);

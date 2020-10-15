@@ -994,6 +994,34 @@ int device_grow(handle_t handle)
         return 0;
     return -1;
 }
+
+
+/**
+ * device_degrow - 减少设备引用计数
+ * @handle: 设备句柄
+ * 
+ * @return: 成功返回0，失败返回-1
+ */
+int device_degrow(handle_t handle)
+{
+    if (IS_BAD_DEVICE_HANDLE(handle))
+        return -1;
+    
+    device_object_t *devobj;
+    
+    devobj = GET_DEVICE_BY_HANDLE(handle);
+
+    /* 获取设备 */
+    if (devobj == NULL) {
+        printk(KERN_ERR "device_close: device object error by handle=%d!\n", handle);
+        /* 应该激活一个触发器，让调用者停止运行 */
+        return -1;
+    }
+    if (io_device_decrease_reference(devobj) == IO_SUCCESS)
+        return 0;
+    return -1;
+}
+
 /**
  * device_read - 从设备读取数据
  * @handle: 设备句柄

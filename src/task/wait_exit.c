@@ -329,6 +329,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
         
         /* 如果有特殊触发器产生，则退出等待 */
         if (trigismember(&current_task->triggers->set, TRIGHSOFT) ||
+            trigismember(&current_task->triggers->set, TRIGLSOFT) ||
             trigismember(&current_task->triggers->set, TRIGSYS)) {
             break;
         }

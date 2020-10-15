@@ -128,6 +128,8 @@ int sys_g_init(void)
 
 int gui_user_exit(task_t *task)
 {
+    if (!task->gmsgpool)
+        return -1;
     /* 根据任务查找图层 */
     layer_t *layer;
     do {
@@ -162,13 +164,16 @@ int gui_user_exit(task_t *task)
       
     if (gui_msgpool_exit(task) < 0)
         return -1;
-    
+    printk(KERN_ERR "task %s gui user exit ok!\n", current_task->name);
     return 0;
 }
 
 int sys_g_quit(void)
 {
     task_t *cur = current_task;
+    printk(KERN_ERR "task %s sys_g_quit.\n", current_task->name);
     
-    return gui_user_exit(cur);
+    int ret = gui_user_exit(cur);
+    printk(KERN_ERR "task %s sys_g_quit done.\n", current_task->name);
+    return ret;
 }

@@ -69,5 +69,6 @@ int sys_mkfs(char *source,         /* 需要创建FS的设备 */
 int sys_probe(const char *name, int flags, char *buf, size_t buflen);
 
 int fsif_grow(int fd);
+int fsif_degrow(int fd);
 
 #endif /* _XBOOK_FS_H */
