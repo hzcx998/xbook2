@@ -456,7 +456,7 @@ void io_delete_device(
     /* 查看是否还在使用中 */
     devobj = device_handle_table_search_by_name(device->name.text);
     if (devobj) { /* 在使用中就从句柄表中删除 */
-        printk(KERN_DEBUG "io_delete_device: device %s is using!\n", 
+        printk(KERN_NOTICE "io_delete_device: device %s is using!\n", 
             devobj->name.text);
         device_handle_table_remove(devobj);
     }

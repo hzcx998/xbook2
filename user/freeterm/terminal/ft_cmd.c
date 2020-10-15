@@ -18,11 +18,12 @@
 #include <sys/trigger.h>
 
 /// 程序本地头文件
-#include <sh_cmd.h>
-#include <sh_console.h>
-#include <sh_cursor.h>
-#include <sh_window.h>
-#include <sh_terminal.h>
+#include <ft_cmd.h>
+#include <ft_console.h>
+#include <ft_cursor.h>
+#include <ft_window.h>
+#include <ft_terminal.h>
+#include <ft_pty.h>
 
 cmd_man_t *cmdman; 
 
@@ -31,8 +32,6 @@ void print_cmdline()
     shell_printf(cmdman->cmd_line);
 }
 char *cmd_argv[MAX_ARG_NR] = {0};
-
-extern int fdm;
 
 int cmdline_check()
 {
@@ -46,9 +45,10 @@ int cmdline_check()
     }
 
     /* 往ptm写入数据 */
-    printf("master write: %s\n", cmdman->cmd_line);
-    write(fdm, cmdman->cmd_line, cmdman->cmd_len);
-
+    #ifdef DEBUG_FT
+    printf("freeterm: master write: %s\n", cmdman->cmd_line);
+    #endif
+    write(ft_pty.fd_master, cmdman->cmd_line, cmdman->cmd_len);
     
     /* 重置命令参数 */
     cmdman->cmd_pos = cmdman->cmd_line;

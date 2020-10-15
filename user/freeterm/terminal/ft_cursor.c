@@ -4,9 +4,9 @@
 #include <unistd.h>
 
 /// 程序本地头文件
-#include <sh_cursor.h>
-#include <sh_window.h>
-#include <sh_console.h>
+#include <ft_cursor.h>
+#include <ft_window.h>
+#include <ft_console.h>
 
 /* 控制台光标 */
 con_cursor_t cursor;

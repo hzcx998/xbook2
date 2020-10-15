@@ -145,6 +145,7 @@
         "sh_cursor.h": "c",
         "ft_window.h": "c",
         "lvgl_window.h": "c",
-        "ioctl.h": "c"
+        "ioctl.h": "c",
+        "sh_console.h": "c"
     }
 }

@@ -4,10 +4,10 @@
 #include <stddef.h>
 #include <malloc.h>
 /// 程序本地头文件
-#include <sh_clipboard.h>
-#include <sh_console.h>
-#include <sh_cursor.h>
-#include <sh_cmd.h>
+#include <ft_clipboard.h>
+#include <ft_console.h>
+#include <ft_cursor.h>
+#include <ft_cmd.h>
 
 clipboard_t clipboard;
 

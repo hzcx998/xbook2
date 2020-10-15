@@ -8,11 +8,12 @@
 #include <sys/input.h>
 #include <sys/trigger.h>
 
-#include <sh_console.h>
-#include <sh_cursor.h>
-#include <sh_window.h>
-#include <sh_clipboard.h>
-#include <sh_cmd.h>
+#include <ft_console.h>
+#include <ft_cursor.h>
+#include <ft_window.h>
+#include <ft_clipboard.h>
+#include <ft_cmd.h>
+#include <ft_terminal.h>
 
 /* 控制台全局变量 */
 con_screen_t con_screen;
@@ -643,13 +644,13 @@ int con_get_key(int kcode, int kmod)
 int init_console()
 {
     if (init_window() < 0) {
-        printf("bosh: init window failed!\n");
+        printf("freeterm: init window failed!\n");
         return -1;
     }
 
     uint32_t width, height;
     if (sh_window_size(&width, &height) < 0) {
-        printf("bosh: get window size failed!\n");
+        printf("freeterm: get window size failed!\n");
         goto label_exit_window;
     }
     con_screen.width = width;
@@ -671,13 +672,13 @@ int init_console()
     con_screen.clear_area = con_clear_area;
     con_screen.flush = con_flush;
     con_screen.buflen = con_screen.rows * con_screen.columns * CON_FRAME_NR;
-
-    printf("[gui]: alloc console screen buffer rows %d columns %d frames %d size %x!\n", 
+    #ifdef DEBUG_FT
+    printf("freeterm: alloc console screen buffer rows %d columns %d frames %d size %x!\n", 
         con_screen.rows ,con_screen.columns, CON_FRAME_NR,con_screen.buflen);
-    
+    #endif
     con_screen.buffer = malloc(con_screen.buflen);
     if (con_screen.buffer == NULL) {
-        printf("bosh: init screen buffer failed!\n");
+        printf("freeterm: init screen buffer failed!\n");
         goto label_exit_window;
     }
     memset(con_screen.buffer, 0, con_screen.buflen);
@@ -688,7 +689,7 @@ int init_console()
     init_con_cursor();
 
     if (init_clipboard() < 0) {
-        printf("bosh: init clipboard failed!\n");
+        printf("freeterm: init clipboard failed!\n");
         goto label_free_buffer;
     }
 

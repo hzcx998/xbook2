@@ -21,6 +21,7 @@ AS			:=	nasm
 export AS LD
 
 MODULE      +=  freeterm
+MODULE      +=  sh
 MODULE      +=  cpuinfo
 MODULE      +=  lvgl
 MODULE      +=  lvgl2

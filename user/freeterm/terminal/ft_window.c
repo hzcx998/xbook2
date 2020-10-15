@@ -1,14 +1,16 @@
 #include <gapi.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
-#include <sh_window.h>
-#include <sh_console.h>
-#include <sh_clipboard.h>
-#include <sh_terminal.h>
-#include <sh_cmd.h>
+#include <ft_window.h>
+#include <ft_console.h>
+#include <ft_clipboard.h>
+#include <ft_terminal.h>
+#include <ft_cmd.h>
+#include <ft_pty.h>
 
 sh_window_t sh_window;
-extern int fdm;
 
 int init_window()
 {
@@ -30,8 +32,9 @@ int init_window()
 void window_loop()
 {
     g_msg_t msg;
-    char buf[64];
+    char buf[FT_PTM_BUFLEN];
     int len;
+    memset(buf, 0, FT_PTM_BUFLEN);
     while (1)
     {
         /* 获取消息，无消息返回0，退出消息返回-1，有消息返回1 */
@@ -42,9 +45,16 @@ void window_loop()
             process_window(&msg);    
         }
         /* 从ptm读取数据 */
-        memset(buf, 0, 64);
-        if ((len = read(fdm, buf, 64)) > 0)
-            printf("master read: %s\n", buf);
+       
+        if ((len = read(ft_pty.fd_master, buf, 64)) > 0) {
+            #ifdef DEBUG_FT
+            printf("freeterm: master read: %s\n", buf);
+            #else
+            shell_printf("%s", buf);
+            #endif
+            memset(buf, 0, FT_PTM_BUFLEN);
+        }
+            
         sched_yeild();
     }
 }
