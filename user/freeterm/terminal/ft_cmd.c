@@ -37,19 +37,23 @@ int cmdline_check()
 {
 
     /* 如果什么也没有输入，就回到开始处 */
-    if(cmdman->cmd_line[0] != '\n') {
-        cmdman->cmd_line[cmdman->cmd_len - 1] = '\0'; // 不要最后的一个回车
-        /* 记录历史缓冲区 */
-        cmd_buf_insert();
-        cmdman->cmd_line[cmdman->cmd_len - 1] = '\n';
+    if(cmdman->cmd_line[0] == 0) {
+        return -1;
     }
 
+    /* 记录历史缓冲区 */
+    cmd_buf_insert();
+    
     /* 往ptm写入数据 */
     #ifdef DEBUG_FT
     printf("freeterm: master write: %s\n", cmdman->cmd_line);
     #endif
-    cmdman->cmd_line[cmdman->cmd_len] = '\0'; // 末尾加0，表示回车
+
+    // 末尾追加一个回车
+    cmdman->cmd_line[cmdman->cmd_len] = '\n';
     cmdman->cmd_len++;
+    cmdman->cmd_line[cmdman->cmd_len] = '0';
+
     write(ft_pty.fd_master, cmdman->cmd_line, cmdman->cmd_len);
     
     /* 重置命令参数 */

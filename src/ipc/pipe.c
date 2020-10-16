@@ -116,16 +116,6 @@ int __pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
         wait_queue_add(&pipe->wait_queue, current_task);
         mutex_unlock(&pipe->mutex);
         task_block(TASK_BLOCKED); /* 阻塞自己，等待唤醒 */
-        
-        #if 0
-        /* 唤醒后检查是否有特殊触发器,如果有就返回-1 */
-        if (trigismember(&current_task->triggers->set, TRIGHSOFT) ||
-            trigismember(&current_task->triggers->set, TRIGLSOFT) ||
-            trigismember(&current_task->triggers->set, TRIGSYS)) {
-            printk(KERN_NOTICE "[pipe]: read: wakeup by special triggers!\n");
-            return -1;
-        }
-        #endif
         mutex_lock(&pipe->mutex);
     }
     /* 获取缓冲区大小，如果有数据，则直接读取数据，然后返回 */

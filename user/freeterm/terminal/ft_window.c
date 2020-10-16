@@ -45,8 +45,8 @@ void window_loop()
             process_window(&msg);    
         }
         /* 从ptm读取数据 */
-       
-        if ((len = read(ft_pty.fd_master, buf, 64)) > 0) {
+        
+        if ((len = read(ft_pty.fd_master, buf, FT_PTM_BUFLEN)) > 0) {
             #ifdef DEBUG_FT
             printf("freeterm: master read: %s\n", buf);
             #else

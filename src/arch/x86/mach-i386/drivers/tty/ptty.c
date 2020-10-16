@@ -187,29 +187,13 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
         #ifdef PTTY_DEBUG
         printk(KERN_INFO "ptty_read: buf %x len %d.\n", buf, len);
         #endif
-        if (extension->type == PTTY_MASTER) {        
-            /* 从读端读取 */
-            if ((len = pipe_read(extension->pipe_in->id, buf, len)) < 0)
-                goto err_rd;
-        } else {
-            /* 如果遇到0，那么就结束读取 */
-            int count = 0;
-            uint8_t *p = buf;
-            while (count < len)
-            {
-                if ((pipe_read(extension->pipe_in->id, p, 1)) < 0) {
-                    len = count;
-                    goto err_rd;
-                }
-                
-                if (*p == '\0') { // 遇到终结符
-                    len = count;
-                    break;
-                }
-                count++;
-                p++;
-            }
+        if (extension->type == PTTY_MASTER && !(extension->flags & PTTY_RDNOBLK)) {
+            printk(KERN_INFO "ptty_read: master read block.\n");
         }
+        /* 从读端读取 */
+        if ((len = pipe_read(extension->pipe_in->id, buf, len)) < 0)
+            goto err_rd;
+
     } else {
         printk(KERN_ERR "[ptty]: pid %d read but not holder, abort!\n", current_task->pid);
         /* 不是前台任务就触发任务的硬件触发器 */

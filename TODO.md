@@ -34,5 +34,3 @@
 * 分离基础命令，让sh和bosh功能一样。 [ok]
 * 设置freeterm为默认终端。
 * 完善freeterm终端控制按键（CTL+C）
-* freeterm终端回车后在末尾添加回车，而不是在中间
- 

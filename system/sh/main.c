@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
 		print_prompt();
         
 		memset(cmd_line, 0, CMD_LINE_LEN);
+        printf("sh: read line start.\n");
 		/* 读取命令行 */
 		readline(cmd_line, CMD_LINE_LEN);
 		
@@ -239,11 +240,18 @@ void print_prompt()
 void readline(char *buf, uint32_t count)
 {
     int len = 0;
-    if ((len = read(STDIN_FILENO, buf, count)) <= 0)
-        abort(); 
-    // 最后个字符是回车，删除掉
-    if (len > 0)
-        buf[len - 1] = '\0';
+    char *pos = buf;
+    while (len < count)
+    {
+        read(STDIN_FILENO, pos, 1);
+        len++;
+        if (*pos == '\n') {
+            *(pos) = '\0'; // 修改成0
+            break;
+        }
+        pos++;
+    }
+
 }
 
 static void redirect_init(struct redirect_info *rd)
@@ -1032,14 +1040,14 @@ int execute_cmd(int argc, char **argv, uint32_t redirect_mask)
             /* shell程序等待子进程退出 */
             pid = wait(&status);
 
+            
+            printf("parent %d wait %d exit %d\n",
+                getpid(), pid, status);
+            
             pid = getpid();
             ioctl(0, TTYIO_HOLDER, &pid);
 
 
-            /* 
-            printf("parent %d wait %d exit %d\n",
-                getpid(), pid, status);
-            */
         } else {    /* 子进程 */
 
             /* 子进程执行程序 */

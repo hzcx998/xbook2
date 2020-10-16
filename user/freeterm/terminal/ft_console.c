@@ -531,10 +531,9 @@ int con_get_key(int kcode, int kmod)
             if (!ioctl(ft_pty.fd_master, TIOCGFG, &fg_pid)) {
                 shell_printf("freeterm: front proc %d\n", fg_pid);
                 triggeron(TRIGLSOFT, fg_pid);
-            }
-                
-            else 
+            } else {
                 printf("freeterm: get front group process failed!\n");
+            }
             return 0;   /* 特殊按键处理 */
         }
     }
@@ -585,9 +584,9 @@ int con_get_key(int kcode, int kmod)
         focus_cursor();
         move_cursor_off(cmdman->cmd_len - (cmdman->cmd_pos - cmdman->cmd_line), 0);
         con_screen.outc('\n');
-        *cmdman->cmd_pos = '\n';
-        cmdman->cmd_pos++;
-        cmdman->cmd_len++;
+        //*cmdman->cmd_pos = '\n';
+        //cmdman->cmd_pos++;
+        //cmdman->cmd_len++;
         cmdman->cmd_line[cmdman->cmd_len] = 0;
         /* 发送给命令行 */
         cmdline_check();   /* 执行命令 */
