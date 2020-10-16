@@ -24,17 +24,17 @@ icon_man_t icon_man;
 char *icon_table[ICON_NR][3] = {
     {
         "/res/icon/bosh.png",
-        "/bin/bosh",
+        "/usr/bosh",
         "bosh"
     },
     {
         "/res/icon/infones.png",
-        "/bin/infones",
+        "/usr/infones",
         "infones"
     },
     {
         "/res/icon/win.jpg",
-        "/bin/win",
+        "/usr/win",
         "win"
     }
 };

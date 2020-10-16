@@ -96,11 +96,6 @@ int process_window(g_msg_t *msg)
         keycode = g_msg_get_key_code(msg);
         keymod = g_msg_get_key_modify(msg);
         con_get_key(keycode, keymod);
-        // 发送按键值给虚拟终端
-        /*
-        write(pty, &keycode, 1);
-        
-        */
         break;
     case GM_PAINT:
         win = g_msg_get_target(msg);

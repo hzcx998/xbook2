@@ -7,6 +7,7 @@
 #include <gapi.h>
 #include <sys/input.h>
 #include <sys/trigger.h>
+#include <sys/ioctl.h>
 
 #include <ft_console.h>
 #include <ft_cursor.h>
@@ -14,6 +15,7 @@
 #include <ft_clipboard.h>
 #include <ft_cmd.h>
 #include <ft_terminal.h>
+#include <ft_pty.h>
 
 /* 控制台全局变量 */
 con_screen_t con_screen;
@@ -522,6 +524,18 @@ int con_get_key(int kcode, int kmod)
         } else if (kcode == GK_DOWN) {
             scroll_screen(CON_SCROLL_DOWN, 1, 0, 1);
             return 0;
+        }
+        if (kcode == GK_C || kcode == GK_c) {
+            /* 发送给前台进程 */
+            pid_t fg_pid = -1;
+            if (!ioctl(ft_pty.fd_master, TIOCGFG, &fg_pid)) {
+                shell_printf("freeterm: front proc %d\n", fg_pid);
+                triggeron(TRIGLSOFT, fg_pid);
+            }
+                
+            else 
+                printf("freeterm: get front group process failed!\n");
+            return 0;   /* 特殊按键处理 */
         }
     }
     /* 过滤一些按键 */

@@ -21,6 +21,7 @@ int desktop_launch_app(char *path)
         return -1;
     }
     if (!pid) { /* 子进程就执行其他程序 */
+        /* 配置环境变量 */
         exit(execv(path, NULL));
     }
     return 0;

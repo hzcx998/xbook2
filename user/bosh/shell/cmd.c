@@ -1000,7 +1000,7 @@ int cmd_rm(int argc, char *argv[])
 /*
 touch: create a file
 */
-static int cmd_touch(int argc, char *argv[])
+int cmd_touch(int argc, char *argv[])
 {
 	//printf("argc: %d\n", argc);
 	if(argc == 1){	//只有一个参数，自己的名字，退出
@@ -1275,23 +1275,10 @@ struct buildin_cmd {
 /* cmd table */
 struct buildin_cmd buildin_cmd_table[] = {
     {"cls", cmd_cls},
-    {"ps", cmd_ps},
     {"help", cmd_help},
-    {"ver", cmd_ver},
     {"exit", cmd_exit},
-    {"mem", cmd_mem},
-    {"date", cmd_date},
-    {"ls", cmd_ls},
     {"cd", cmd_cd},
     {"pwd", cmd_pwd},
-    {"trig", cmd_trig},
-    {"cp", cmd_copy},
-    {"mv", cmd_move},
-    {"rn", cmd_rename},
-    {"mkdir", cmd_mkdir},
-    {"rmdir", cmd_rmdir},
-    {"rm", cmd_rm},
-    {"touch", cmd_touch},
 };
 
 int do_buildin_cmd(int cmd_argc, char **cmd_argv)
@@ -1371,9 +1358,10 @@ int cmdline_check()
     return 0;
 }
 
-char *shell_environment[3] = {
+char *shell_environment[4] = {
     "/bin",
     "/sbin",
+    "/usr",
     NULL
 };
 

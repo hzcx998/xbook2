@@ -105,6 +105,7 @@ int execvp(const char *filename, char *const argv[]);
 int execlp(const char *filename, const char *arg, ...);
 int usleep(useconds_t usec);
 
+extern char **_environ;
 #define environ _environ
 
 int pipe(int fd[2]);

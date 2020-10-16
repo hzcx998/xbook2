@@ -40,8 +40,9 @@
 #define TTYIO_COMBINE       DEVCTL_CODE('t', 4)
 #define TIOCGPTN            DEVCTL_CODE('t', 5) /* get presudo tty number */
 #define TIOCSPTLCK          DEVCTL_CODE('t', 6) /* set presudo tty lock */
-#define TIOCSFLGS            DEVCTL_CODE('t', 7) /* set flags */
-#define TIOCGFLGS            DEVCTL_CODE('t', 8) /* get flags */
+#define TIOCSFLGS           DEVCTL_CODE('t', 7) /* set flags */
+#define TIOCGFLGS           DEVCTL_CODE('t', 8) /* get flags */
+#define TIOCGFG             DEVCTL_CODE('t', 9) /* get front group task */
 
 /* net */
 #define NETIO_GETMAC        DEVCTL_CODE('n', 1)

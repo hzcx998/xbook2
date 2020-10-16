@@ -63,6 +63,7 @@ develop/image/
 
 develop/rom/bin/
 develop/rom/sbin/
+develop/rom/usr/
 
 develop/bochs/
 
@@ -81,17 +82,35 @@ recycle
 # need commit to git
 !scripts/fixdep.exe
 
-# system bin
+# system app
 system/init/init
 system/desktop/desktop
+system/sh/sh
 
-# user bin
+# user app
+
+# /bin
+user/cat/cat
+user/cpuinfo/cpuinfo
+user/echo/echo
+user/cp/cp
+user/date/date
+user/ls/ls
+user/mem/mem
+user/mkdir/mkdir
+user/mv/mv
+user/ps/ps
+user/rename/rename
+user/rm/rm
+user/rmdir/rmdir
+user/touch/touch
+user/trig/trig
+user/ver/ver
+
+# /usr
 user/bosh/bosh
 user/c4/c4
-user/cat/cat
 user/cpptests/cpptests
-user/cpuinfo/cpuinfo
-user/echo/echo 
 user/freeterm/freeterm
 user/gato/gato
 user/hello/hello
@@ -109,4 +128,3 @@ user/win/win
 user/cal/cal
 user/sound/sound
 user/wavplayer/wavplayer
-user/sh/sh

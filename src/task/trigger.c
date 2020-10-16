@@ -295,7 +295,7 @@ int do_trigger(trap_frame_t *frame)
     unsigned long flags;
     save_intr(flags);
 #ifdef DEBUG_TRIGGER
-    printk(KERN_DEBUG "do_trigger: pid=%d frame %x start.\n", cur->pid, frame);
+    //printk(KERN_DEBUG "do_trigger: pid=%d frame %x start.\n", cur->pid, frame);
 #endif
     for (trig = 1; trig <= TRIGMAX; trig++) {
         have_trig = trigismember(&trigger->set, trig) && !trigismember(&trigger->blocked, trig);
@@ -379,7 +379,7 @@ int do_trigger(trap_frame_t *frame)
     }
     restore_intr(flags);
 #ifdef DEBUG_TRIGGER
-    printk(KERN_DEBUG "do_trigger: scan done.\n");
+    //printk(KERN_DEBUG "do_trigger: scan done.\n");
 #endif
     return 0;
 }

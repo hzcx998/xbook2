@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     }
 
 #ifdef DESKTOP_LAUNCH_BOSH
-    desktop_launch_app("bosh");
+    desktop_launch_app("/usr/bosh");
 #endif
     g_msg_t msg;
     while (1)

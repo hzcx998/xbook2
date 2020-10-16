@@ -2,7 +2,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <sys/ioctl.h>
 #include <sys/trigger.h>
@@ -24,6 +23,15 @@ char cmd_line[CMD_LINE_LEN] = {0};
 char cwd_cache[MAX_PATH] = {0};
 char *cmd_argv[MAX_ARG_NR];
 
+/* 设置环境变量 */
+char *sh_environment[4] = {
+    "/bin",
+    "/sbin",
+    "/usr",
+    NULL
+};
+void sh_lsfot_trigger(int trigno);
+
 int main(int argc, char *argv[])
 {
     sh_stdin_backup = dup(0);
@@ -36,7 +44,17 @@ int main(int argc, char *argv[])
     int pid = getpid();
     ioctl(0, TTYIO_HOLDER, &pid);
 
-    trigger(TRIGLSOFT, sh_exit_trigger);
+    trigger(TRIGUSR0, sh_exit_trigger);
+    //trigger(TRIGLSOFT, sh_lsfot_trigger);
+    #if 1
+    /* 屏蔽轻软件触发器 */
+    trigset_t trigsets;
+    trigemptyset(&trigsets);
+    trigaddset(&trigsets, TRIGLSOFT);
+    trigprocmask(TRIG_BLOCK, &trigaddset, NULL);
+    #endif
+    // set environment value
+    environ = sh_environment;
 
     /* 备份标准输入 */
 	while(1){ 
@@ -198,6 +216,10 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+void sh_lsfot_trigger(int trigno)
+{
+    printf("sh: handle trigger %d.\n", trigno);
+}
 /**
  * print_prompt - 打印提示符
  *  
@@ -860,7 +882,7 @@ void sh_exit(int ret, int relation)
     if (relation) {
         pid_t ppid = getppid();
         if (ppid > 0) /* 关闭父进程 */
-            triggeron(TRIGLSOFT, ppid);
+            triggeron(TRIGUSR0, ppid);
     }
     exit(ret);
 }
@@ -877,9 +899,78 @@ void sh_exit_trigger(int trigno)
     sh_exit(trigno, 0);
 }
 
+int buildin_cmd_cls(int argc, char **argv)
+{
+	//printf("cls: argc %d\n", argc);
+	if (argc != 1) {
+		printf("cls: no argument support!\n");
+		return -1;
+	}
+    // 发出控制字符串
+
+    return 0;
+}
+
+int buildin_cmd_help(int argc, char **argv)
+{
+	if(argc != 1){
+		printf("help: no argument support!\n");
+		return -1;
+	}
+	printf("shell for book os. version 0.1 \n");
+    return 0;
+}
+
+int buildin_cmd_cd(int argc, char **argv)
+{
+	if(argc > 2){
+		printf("cd: only support 1 argument!\n");
+		return -1;
+	}
+    /*int i;
+    for (i = 0; i < argc; i++) {
+        printf("%s",argv[i]);
+    }*/
+
+    /* 只有1个参数，是cd，那么不处理 */
+    if (argc == 1) {
+        return 0; 
+    }
+    
+    char *path = argv[1];
+
+	if(chdir(path) == -1){
+		printf("cd: no such directory %s\n",argv[1]);
+		return -1;
+	}
+    /* 设置工作目录缓存 */
+    memset(cwd_cache, 0, MAX_PATH);
+    getcwd(cwd_cache, MAX_PATH);
+    
+	return 0;
+}
+
+int buildin_cmd_pwd(int argc, char **argv)
+{
+	//printf("pwd: argc %d\n", argc);
+	if(argc != 1){
+		printf("pwd: no argument support!\n");
+		return -1;
+	}else{
+        char path[MAX_PATH] = {0};
+        getcwd(path, MAX_PATH);
+        printf("%s\n", path);
+	}
+    return 0;
+}
+
 /* cmd table */
 struct buildin_cmd buildin_cmd_table[] = {
     {"exit", buildin_cmd_exit},
+    {"help", buildin_cmd_help},
+    {"cls", buildin_cmd_cls},
+    {"cd", buildin_cmd_cd},
+    {"pwd", buildin_cmd_pwd},
 };
 
 static int do_buildin_cmd(int cmd_argc, char **cmd_argv)
@@ -892,7 +983,7 @@ static int do_buildin_cmd(int cmd_argc, char **cmd_argv)
         cmd_ptr = &buildin_cmd_table[i];
         if (!strcmp(cmd_ptr->name, cmd_argv[0])) {
             if (cmd_ptr->cmd_func(cmd_argc, cmd_argv)) {
-                //shell_printf("do_buildin_cmd: %s failed!\n", cmd_argv[0]);
+                //printf("do_buildin_cmd: %s failed!\n", cmd_argv[0]);
             }
             return 0;
         }

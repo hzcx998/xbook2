@@ -54,14 +54,14 @@ int main(int argc, char *argv[])
         printf("freeterm: do fork failed!\n");
         return -1;
     } else if (!pid) { // 子进程
-        ft_pty_launch(&ft_pty, "/bin/sh");
+        ft_pty_launch(&ft_pty, "/sbin/sh");
     } else { // 父进程
         printf("freeterm: child pid %d\n", pid);
         ft_pty.pid_slaver = pid; // 记录子进程的进程pid
     }
 
     /* 注册触发器 */
-    trigger(TRIGLSOFT, ft_exit_trigger);
+    trigger(TRIGUSR0, ft_exit_trigger);
 
     window_loop();
     exit_freeterm();

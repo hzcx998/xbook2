@@ -70,7 +70,7 @@ int ft_pty_exit(ft_pty_t *pty, int relation)
     close(pty->fd_master);
 
     if (pty->pid_slaver > 0 && relation) { // close slaver
-        triggeron(TRIGLSOFT, pty->pid_slaver);
+        triggeron(TRIGUSR0, pty->pid_slaver);
     }   
     
     return 0;

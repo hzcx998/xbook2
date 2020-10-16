@@ -80,7 +80,6 @@ int main(int argc, char **argv)
   dwKeyPad1   = 0;
   dwKeyPad2   = 0;
   dwKeySystem = 0;
-  //printf("infoNes \n");
   /* If a rom name specified, start it */
   if ( argc >= 2 )
   {
@@ -89,11 +88,7 @@ int main(int argc, char **argv)
   } else {
     /* 打开图形管理界面 */
     start_application( DEF_NES_FILE);
-    printf("infoNES: too few arguments!\n");
-
   }
-  //printf("arg error!\n");
-  //while(1);
 	return 0;	
 }
 

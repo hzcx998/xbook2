@@ -9,7 +9,7 @@ extern void _exit_cleanup();
 
 void exit(int status)
 {
-    _exit_cleanup();
     if (_clean) _clean();
+    _exit_cleanup();
     _exit(status);
 }

@@ -16,3 +16,4 @@ export AS LD
 
 MODULE      +=  init
 MODULE      +=  desktop
+MODULE      +=  sh

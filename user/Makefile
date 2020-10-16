@@ -20,9 +20,26 @@ AS			:=	nasm
 
 export AS LD
 
-MODULE      +=  freeterm
-MODULE      +=  sh
+# bin
+MODULE      +=  echo
+MODULE      +=  cat
 MODULE      +=  cpuinfo
+MODULE      +=  ls
+MODULE      +=  cp
+MODULE      +=  rm
+MODULE      +=  ps
+MODULE      +=  mem
+MODULE      +=  date
+MODULE      +=  mv
+MODULE      +=  rename
+MODULE      +=  mkdir
+MODULE      +=  rmdir
+MODULE      +=  trig
+MODULE      +=  touch
+MODULE      +=  sys
+
+# usr
+MODULE      +=  freeterm
 MODULE      +=  lvgl
 MODULE      +=  lvgl2
 MODULE      +=  microui
@@ -37,8 +54,6 @@ MODULE      +=  tests
 MODULE      +=  hello
 MODULE      +=  socket_client
 MODULE      +=  socket_server
-MODULE      +=  echo
-MODULE      +=  cat
 MODULE      +=  win
 MODULE      +=  infones
 MODULE      +=  c4

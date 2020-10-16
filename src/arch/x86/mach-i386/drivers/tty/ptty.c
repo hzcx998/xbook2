@@ -238,16 +238,19 @@ iostatus_t ptty_write(device_object_t *device, io_request_t *ioreq)
     #ifdef PTTY_DEBUG
     printk(KERN_INFO "ptty_write: buf %x len %d.\n", buf, len);
     #endif
-    if (extension->hold_pid == current_task->pid) {
-        /* 从写端写入 */
-        if ((len = pipe_write(extension->pipe_out->id, buf, len)) < 0)
-            goto err_wr;
+    // if (extension->hold_pid == current_task->pid) {
+    /* 从写端写入 */
+    if ((len = pipe_write(extension->pipe_out->id, buf, len)) < 0)
+        goto err_wr;
+    
+    #if 0
     } else {
         printk(KERN_ERR "[ptty]: pid %d write but not holder, abort!\n", current_task->pid);
         /* 不是前台任务就触发任务的硬件触发器 */
         trigger_force(TRIGSYS, current_task->pid);
         goto err_wr;
-    }
+    }*/
+    #endif
     status = IO_SUCCESS;
 err_wr:
 #ifdef PTTY_DEBUG
@@ -300,6 +303,17 @@ iostatus_t ptty_devctl(device_object_t *device, io_request_t *ioreq)
         break;
     case TTYIO_HOLDER:
         extension->hold_pid = *(unsigned long *) ioreq->parame.devctl.arg;
+        break;
+    case TIOCGFG: /* get front group tasks */
+        if (extension->other_devobj && extension->type == PTTY_MASTER) {
+            extension = extension->other_devobj->device_extension;
+            if (extension->hold_pid > 0)
+                *(unsigned long *)ioreq->parame.devctl.arg = extension->hold_pid;
+            else
+                status = IO_FAILED;    
+        } else {
+            status = IO_FAILED;
+        }
         break;
     default:
         break;
