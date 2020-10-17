@@ -11,7 +11,7 @@ int win_proc(g_msg_t *msg)
 {
     int x, y;
     uint32_t w, h;
-    int keycode, keymod;
+    int keycode;
     g_window_t *gw = g_find_window(g_msg_get_target(msg));
     if (!gw)
         return -1;
@@ -19,12 +19,10 @@ int win_proc(g_msg_t *msg)
     {
     case GM_KEY_DOWN:
         keycode = g_msg_get_key_code(msg);
-        keymod = g_msg_get_key_modify(msg);
         _putc(keycode);
         break;
     case GM_KEY_UP:
         keycode = g_msg_get_key_code(msg);
-        keymod = g_msg_get_key_modify(msg);
         break;
     case GM_PAINT:
         g_get_invalid(gw->layer, &x, &y, &w, &h);

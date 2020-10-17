@@ -24,7 +24,7 @@ unsigned short *get_framebuf()
 
 void open_sound()
 {
-    sound_fd = open(SOUND_DEVICE, O_DEVEX, 0);
+    sound_fd = open(SOUND_DEVICE, O_DEVEX);
 }
 
 void close_sound()

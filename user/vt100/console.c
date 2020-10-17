@@ -82,24 +82,11 @@ static void move_char(struct vt100 *term, uint16_t dx, uint16_t dy, uint16_t sx,
 	dy = dy * term->char_height;
 	sx = sx * term->char_width;
 	sy = sy * term->char_height;
-    g_color_t col;
+
     g_bitmap_t *render = g_new_bitmap(term->char_width, term->char_height);
 
     /* 获取一个矩形区域里面的数据 */
     g_paint_window_copy(g_win, sx, sy, render);
-    #if 0   
-    for (int b = 0; b < term->char_height; b++)
-	{
-		for (int j = 0; j < term->char_width; j++)
-		{
-            g_window_get_point(g_win, sx + j, sy + b, &col);
-			g_window_put_point(g_win, dx + j, dy + b, col);
-         
-         }
-	}
-    #endif
-
-    //g_refresh_window_rect(g_win, dx, dy, term->char_width, term->char_height);
     g_paint_window(g_win, dx, dy, render);
     g_del_bitmap(render);
 }
@@ -108,8 +95,7 @@ static void scroll(struct vt100 *term, int lines)
 {
 	uint16_t top = term->scroll_start_row;
 	uint16_t bottom = term->scroll_end_row;
-	int height = bottom - top + 1;
-
+	
 	if (lines > 0)
 		for (int i = top; i <= bottom - lines; i++)
 			for (int j = 0; j < term->width; j++)
