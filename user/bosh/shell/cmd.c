@@ -436,6 +436,7 @@ int cmd_exit(int argc, char **argv)
 {
     exit_cmd_man();
     exit_console();
+    exit(0);
     return 0; 
 }
 
