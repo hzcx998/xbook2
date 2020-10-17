@@ -161,8 +161,9 @@ int execute_cmd(int argc, char **argv)
             close(recv_pipe[1]);
             close(xmit_pipe[0]);
 
+            int flags = O_NONBLOCK;
             /* 非阻塞 */
-            ioctl(recv_pipe[0], F_SETFL, O_NONBLOCK);
+            ioctl(recv_pipe[0], F_SETFL, &flags);
 
             int rdbytes;
 #ifdef DEBUG_CMD                

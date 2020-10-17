@@ -87,7 +87,6 @@ static int sound_output(short *buf, int len)
 int read_wav_file(const char *filename)
 {
     struct FILE_HEADER file_header;
-    int d;
     FILE *fp = fopen(filename, "rb");
 
     fread(&file_header, sizeof(struct FILE_HEADER), 1, fp);

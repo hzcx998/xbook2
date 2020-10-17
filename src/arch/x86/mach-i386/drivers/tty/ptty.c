@@ -108,11 +108,12 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
     extension->hold_pid = current_task->pid;   
     
     status = IO_SUCCESS;
+    #ifdef PTTY_DEBUG
     printk(KERN_INFO "ptty_open: device %s ref %d success!\n", device->name.text, atomic_get(&device->reference));
     
     printk(KERN_INFO "ptty_open: other device %s ref %d success!\n", extension->other_devobj->name.text,
         atomic_get(&extension->other_devobj->reference));
-    
+    #endif
     goto err_no;
 
 err_create_dev:
@@ -140,7 +141,9 @@ iostatus_t ptty_close(device_object_t *device, io_request_t *ioreq)
         if (extension->other_devobj) {
             devext = extension->other_devobj->device_extension;
             if (!devext->opened) { // closed
+                #ifdef PTTY_DEBUG
                 printk(KERN_NOTICE "ptty_close: master clear pipe.\n");
+                #endif
                 pipe_clear(devext->pipe_in);
                 pipe_clear(devext->pipe_out);
             }
@@ -155,7 +158,9 @@ iostatus_t ptty_close(device_object_t *device, io_request_t *ioreq)
         if (extension->other_devobj) {
             devext = extension->other_devobj->device_extension;
             if (!devext->opened) { // closed
+                #ifdef PTTY_DEBUG
                 printk(KERN_NOTICE "ptty_close: slaver clear pipe.\n");
+                #endif
                 pipe_clear(devext->pipe_in);
                 pipe_clear(devext->pipe_out);
             }
@@ -163,8 +168,10 @@ iostatus_t ptty_close(device_object_t *device, io_request_t *ioreq)
     }
     extension->flags = 0;
     extension->hold_pid = -1;
-
+    #ifdef PTTY_DEBUG
     printk(KERN_INFO "ptty_close: device %s success!\n", device->name.text);
+    #endif
+
     status = IO_SUCCESS;
 err_not_found:
     ioreq->io_status.status = status;
@@ -187,9 +194,6 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
         #ifdef PTTY_DEBUG
         printk(KERN_INFO "ptty_read: buf %x len %d.\n", buf, len);
         #endif
-        if (extension->type == PTTY_MASTER && !(extension->flags & PTTY_RDNOBLK)) {
-            printk(KERN_INFO "ptty_read: master read block.\n");
-        }
         /* 从读端读取 */
         if ((len = pipe_read(extension->pipe_in->id, buf, len)) < 0)
             goto err_rd;
@@ -252,7 +256,7 @@ iostatus_t ptty_devctl(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
     iostatus_t status = IO_SUCCESS;
-    ssize_t retval = 0;
+    int flags;
     switch (ioreq->parame.devctl.code)
     {    
     case TIOCGPTN:
@@ -274,11 +278,13 @@ iostatus_t ptty_devctl(device_object_t *device, io_request_t *ioreq)
     case TIOCSFLGS:
         extension->flags = *(unsigned long *) ioreq->parame.devctl.arg;
         if (extension->flags & PTTY_RDNOBLK) {
-            if (pipe_ioctl(extension->pipe_in->id, F_SETFL, O_NONBLOCK, 0) < 0)
+            flags = O_NONBLOCK;
+            if (pipe_ioctl(extension->pipe_in->id, F_SETFL, (unsigned long) &flags, 0) < 0)
                 status = IO_FAILED;
         }
         if (extension->flags & PTTY_WRNOBLK) {
-            if (pipe_ioctl(extension->pipe_out->id, F_SETFL, O_NONBLOCK, 1) < 0)
+            flags = O_NONBLOCK;
+            if (pipe_ioctl(extension->pipe_out->id, F_SETFL, (unsigned long) &flags, 1) < 0)
                 status = IO_FAILED;
         }
         break;

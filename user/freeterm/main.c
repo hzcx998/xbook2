@@ -52,7 +52,6 @@ int main(int argc, char *argv[])
     } else if (!pid) { // 子进程
         ft_pty_launch(&ft_pty, "/sbin/sh");
     } else { // 父进程
-        printf("freeterm: child pid %d\n", pid);
         ft_pty.pid_slaver = pid; // 记录子进程的进程pid
     }
 

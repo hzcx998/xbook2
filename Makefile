@@ -90,6 +90,7 @@ build:
 	-$(MKDIR) $(IMAGE_DIR)
 	-$(MKDIR) $(ROM_DIR)/bin
 	-$(MKDIR) $(ROM_DIR)/sbin
+	-$(MKDIR) $(ROM_DIR)/usr
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG) 
@@ -114,6 +115,7 @@ endif
 	$(MAKE) -s -C  $(USER_DIR) clean
 	-$(RM) -r $(ROM_DIR)/bin
 	-$(RM) -r $(ROM_DIR)/sbin
+	-$(RM) -r $(ROM_DIR)/usr
 	-$(RM) -r $(IMAGE_DIR)
 	
 # 重新编译所有库

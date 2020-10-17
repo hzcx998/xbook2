@@ -15,13 +15,7 @@
 #define CONFIG_SOUND
 
 #ifdef CONFIG_SOUND
-#define SOUND_DEVICE_SB16 "sb16"
-#define SOUND_DEVICE_BEEP "buzzer"
-
-// #define SOUND_DEVICE_BEEP_UP
-
-#define SOUND_DEVICE SOUND_DEVICE_SB16
-
+#define SOUND_DEVICE "sb16"
 #endif /* CONFIG_SOUND */
 
 void start_application( char *filename );
@@ -665,10 +659,6 @@ int InfoNES_SoundOpen( int samples_per_sync, int sample_rate )
         sound_fd = -1;
         return 0;
     }
-    #ifdef SOUND_DEVICE_BEEP_UP
-    /* 开始播放声音 */
-    ioctl(sound_fd, SNDIO_PLAY, 0);
-    #endif
 #endif
   /* Successful */
   return 1;
@@ -684,9 +674,6 @@ void InfoNES_SoundClose( void )
 
 #ifdef CONFIG_SOUND
   if (sound_fd != -1) {
-      #ifdef SOUND_DEVICE_BEEP_UP
-      ioctl(sound_fd, SNDIO_STOP, 0);
-      #endif
       close(sound_fd);
     }
 #endif

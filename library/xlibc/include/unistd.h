@@ -82,7 +82,7 @@ int access(const char *filenpath, int mode);
 int unlink(const char *path);
 int ftruncate(int fd, off_t offset);
 int fsync(int fd);
-int ioctl(int fd, int cmd, unsigned long arg);
+int ioctl(int fd, int cmd, void *arg);
 int fcntl(int fd, int cmd, long arg);
 
 int dup(int fd);

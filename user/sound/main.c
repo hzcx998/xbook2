@@ -21,7 +21,7 @@ static void sound_output(int hz)
         {
             wave[i][1] = wave[i][0] = 30000 * sin(2 * 3.1415926f * hz * i / 44100.0f);
         }
-        short(*channel)[WAVE_SIZE] = wave;
+        short (*channel)[WAVE_SIZE] = wave;
 
         write(sound_fd, channel[0], WAVE_SIZE * sizeof(short));
         write(sound_fd, channel[1], WAVE_SIZE * sizeof(short));

@@ -209,22 +209,6 @@ static iostatus_t cpu_read(device_object_t *device, io_request_t *ioreq)
     return status;
 }
 
-static iostatus_t cpu_devctl(device_object_t *device, io_request_t *ioreq)
-{
-    device_extension_t *extension = device->device_extension;
-    unsigned long arg = ioreq->parame.devctl.arg;
-    iostatus_t status = IO_SUCCESS;
-    switch (ioreq->parame.devctl.code)
-    {    
-    default:
-        status = IO_FAILED;
-        break;
-    }
-    ioreq->io_status.status = status;
-    io_complete_request(ioreq);
-    return status;
-}
-
 static iostatus_t cpu_enter(driver_object_t *driver)
 {
     iostatus_t status;
@@ -274,8 +258,7 @@ static iostatus_t cpu_driver_func(driver_object_t *driver)
 
 
     driver->dispatch_function[IOREQ_READ] = cpu_read;
-    driver->dispatch_function[IOREQ_DEVCTL] = cpu_devctl;
-    
+
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV

@@ -41,7 +41,7 @@ int write(int fd, void *buffer, size_t nbytes)
     return syscall3(int, SYS_WRITE, fd, buffer, nbytes);
 }
 
-int ioctl(int fd, int cmd, unsigned long arg)
+int ioctl(int fd, int cmd, void *arg)
 {
     if (fd < 0)
         return -1;

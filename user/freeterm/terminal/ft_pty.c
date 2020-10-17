@@ -21,7 +21,7 @@ int ft_pty_init(ft_pty_t *pty)
     unlockpt(fdm);
     grantpt(fdm);
     int flags = PTTY_RDNOBLK;
-    ioctl(fdm, TIOCSFLGS, (unsigned long) &flags);
+    ioctl(fdm, TIOCSFLGS, &flags);
     pty->fd_master = fdm;
     pty->initialized = 1;
     pty->pid_slaver = -1;

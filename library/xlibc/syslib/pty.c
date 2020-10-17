@@ -23,7 +23,7 @@ char *ptsname(int fd)
     int i_slave;
     static char pts_name[16];
 
-    if(ioctl(fd, TIOCGPTN, (unsigned long) &i_slave) < 0)
+    if(ioctl(fd, TIOCGPTN, &i_slave) < 0)
     {
         return NULL;
     }
@@ -50,7 +50,7 @@ int grantpt(int fd_master)
 int unlockpt(int fd_master)
 {
     int i_lock = 0;
-    return (ioctl(fd_master, TIOCSPTLCK, (unsigned long) &i_lock));
+    return (ioctl(fd_master, TIOCSPTLCK, &i_lock));
 }
 #endif
 
@@ -77,7 +77,7 @@ int openpty(int *amaster, int *aslave, char *name,
     if (aslave)  
         *aslave = sfd;  
     if (winp)  
-        ioctl(sfd, TIOCSWINSZ, (unsigned long )winp);  
+        ioctl(sfd, TIOCSWINSZ, winp);  
     return 0;  
 err:  
     if (sfd != -1)  

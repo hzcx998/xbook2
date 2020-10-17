@@ -30,7 +30,6 @@ char *sh_environment[4] = {
     "/usr",
     NULL
 };
-void sh_lsfot_trigger(int trigno);
 
 int main(int argc, char *argv[])
 {
@@ -45,14 +44,13 @@ int main(int argc, char *argv[])
     ioctl(0, TTYIO_HOLDER, &pid);
 
     trigger(TRIGUSR0, sh_exit_trigger);
-    //trigger(TRIGLSOFT, sh_lsfot_trigger);
-    #if 1
+
     /* 屏蔽轻软件触发器 */
     trigset_t trigsets;
     trigemptyset(&trigsets);
     trigaddset(&trigsets, TRIGLSOFT);
-    trigprocmask(TRIG_BLOCK, &trigaddset, NULL);
-    #endif
+    trigprocmask(TRIG_BLOCK, &trigsets, NULL);
+
     // set environment value
     environ = sh_environment;
 
@@ -62,7 +60,6 @@ int main(int argc, char *argv[])
 		print_prompt();
         
 		memset(cmd_line, 0, CMD_LINE_LEN);
-        printf("sh: read line start.\n");
 		/* 读取命令行 */
 		readline(cmd_line, CMD_LINE_LEN);
 		
@@ -217,10 +214,6 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-void sh_lsfot_trigger(int trigno)
-{
-    printf("sh: handle trigger %d.\n", trigno);
-}
 /**
  * print_prompt - 打印提示符
  *  
@@ -1015,7 +1008,6 @@ static int do_buildin_cmd(int cmd_argc, char **cmd_argv)
 int execute_cmd(int argc, char **argv, uint32_t redirect_mask)
 {
     int status = 0;
-    int arg_idx = 0;
 
     struct redirect_info rdi[3];
     redirect_cmd(argc, argv, rdi);
@@ -1040,10 +1032,10 @@ int execute_cmd(int argc, char **argv, uint32_t redirect_mask)
             /* shell程序等待子进程退出 */
             pid = wait(&status);
 
-            
+            /*
             printf("parent %d wait %d exit %d\n",
                 getpid(), pid, status);
-            
+            */
             pid = getpid();
             ioctl(0, TTYIO_HOLDER, &pid);
 

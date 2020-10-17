@@ -8,7 +8,7 @@
 #include <sys/wait.h>
 
 // #define DEBUG_WAIT
-#define DEBUG_EXIT
+// #define DEBUG_EXIT
 
 /*
 僵尸进程：当进程P调用exit时，其父进程没有wait，那么它就变成一个僵尸进程。

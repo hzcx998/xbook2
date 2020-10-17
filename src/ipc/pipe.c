@@ -271,7 +271,7 @@ int pipe_ioctl(kobjid_t pipeid, unsigned int cmd, unsigned long arg, int rw)
     int err = -1;
     switch (cmd) {
     case F_SETFL:
-        if (arg & O_NONBLOCK) {
+        if ((*(unsigned long *)arg) & O_NONBLOCK) {
             if (rw)
                 pipe->wrflags |= PIPE_NOWAIT;
             else 
