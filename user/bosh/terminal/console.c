@@ -58,7 +58,7 @@ void con_get_chars(char *buf, int counts, int x, int y)
 
 void con_select_char(int cx, int cy)
 {
-    char ch;
+    char ch = 0;
     
     con_get_char(&ch, cx, cy);
 
@@ -188,7 +188,7 @@ void gui_draw_char(char ch)
 void load_char_buffer()
 {
 	int bx, by, x, y;
-	char ch;
+	char ch = 0;
 	for (by = 0; by < con_screen.rows; by++) {
 		for (bx = 0; bx < con_screen.columns; bx++) {
 			con_get_char(&ch, bx, by);

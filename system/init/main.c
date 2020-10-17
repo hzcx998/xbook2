@@ -6,17 +6,17 @@
 int main(int argc, char *argv[])
 {
     /* 打开tty，用来进行基础地输入输出 */
-    int tty0 = open("tty0", O_DEVEX, 0);
+    int tty0 = open("tty0", O_DEVEX);
     if (tty0 < 0) {
         return -1;
     }
-    int tty1 = open("tty0", O_DEVEX, 0);
+    int tty1 = open("tty0", O_DEVEX);
     if (tty1 < 0) {
         close(tty0);
         return -1;
     }
     
-    int tty2 = open("tty0", O_DEVEX, 0);
+    int tty2 = open("tty0", O_DEVEX);
     if (tty2 < 0) {
         close(tty1);
         close(tty0);
@@ -46,6 +46,6 @@ int main(int argc, char *argv[])
         }
     }
     /* 启动桌面 */
-    exit(execve("/sbin/desktop", NULL, NULL));
+    exit(execv("/sbin/desktop", NULL));
     return 0;
 }

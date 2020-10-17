@@ -56,7 +56,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     restore_intr(flags);
 
     /* 根据文件信息创建临时原始块 */
-    int fd = sys_open(pathname, O_RDONLY, 0);
+    int fd = sys_open(pathname, O_RDONLY);
     if (fd < 0) {   /* file not exist! */
         return -1;
     }

@@ -9,7 +9,7 @@
 #include <sys/syscall.h>
 #include <sys/stat.h>
 
-int open(const char *path, int flags, int mode)
+int open(const char *path, int flags)
 {
     if (path == NULL)
         return -1;
@@ -17,7 +17,7 @@ int open(const char *path, int flags, int mode)
     build_path(path, full_path);
     const char *p = (const char *) full_path;
 
-    return syscall3(int, SYS_OPEN, p, flags, mode);
+    return syscall2(int, SYS_OPEN, p, flags);
 }
 
 int close(int fd)

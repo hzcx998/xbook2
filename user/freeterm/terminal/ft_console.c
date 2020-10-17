@@ -61,7 +61,7 @@ void con_get_chars(char *buf, int counts, int x, int y)
 
 void con_select_char(int cx, int cy)
 {
-    char ch;
+    char ch = 0;
     
     con_get_char(&ch, cx, cy);
 
@@ -174,7 +174,7 @@ void con_region_chars(int x0, int y0, int x1, int y1)
 void load_char_buffer()
 {
 	int bx, by, x, y;
-	char ch;
+	char ch = 0;
 	for (by = 0; by < con_screen.rows; by++) {
 		for (bx = 0; bx < con_screen.columns; bx++) {
 			con_get_char(&ch, bx, by);
@@ -524,17 +524,6 @@ int con_get_key(int kcode, int kmod)
         } else if (kcode == GK_DOWN) {
             scroll_screen(CON_SCROLL_DOWN, 1, 0, 1);
             return 0;
-        }
-        if (kcode == GK_C || kcode == GK_c) {
-            /* 发送给前台进程 */
-            pid_t fg_pid = -1;
-            if (!ioctl(ft_pty.fd_master, TIOCGFG, &fg_pid)) {
-                shell_printf("freeterm: front proc %d\n", fg_pid);
-                triggeron(TRIGLSOFT, fg_pid);
-            } else {
-                printf("freeterm: get front group process failed!\n");
-            }
-            return 0;   /* 特殊按键处理 */
         }
     }
     /* 过滤一些按键 */

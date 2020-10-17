@@ -221,7 +221,7 @@ static void log_window(mu_Context *ctx)
 	}
 }
 
-static void write_result(char *buf, const char *text)
+void write_result(char *buf, const char *text)
 {
 	strcat(buf, text);
 }

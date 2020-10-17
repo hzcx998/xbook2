@@ -16,7 +16,7 @@
 
 // #define DEBUG_FSIF
 
-int sys_open(const char *path, int flags, int mode)
+int sys_open(const char *path, int flags)
 {
     int handle;
     int fd = -1;
@@ -26,7 +26,7 @@ int sys_open(const char *path, int flags, int mode)
         char *p = (char *) path;
         if (*p == '/')
             p++;
-        handle = device_open(p, mode);
+        handle = device_open(p, flags);
         if (handle < 0)
             return -1;
         fd = local_fd_install(handle, FILE_FD_DEVICE);
@@ -70,6 +70,7 @@ int sys_close(int fd)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
+
     if (ffd->flags & FILE_FD_NORMAL) {
         if (fsif.close(ffd->handle) < 0)
             return -1;    

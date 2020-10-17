@@ -26,7 +26,7 @@ int init_fs()
     
     // open sbin/init
 #if 0
-    int fd = sys_open("/sbin/init", O_RDONLY, 0);
+    int fd = sys_open("/sbin/init", O_RDONLY);
     if (fd < 0) {
         printk("open fd failed!\n");
         return -1;
@@ -46,11 +46,11 @@ int init_fs()
 #endif
 #if 0
     /* test */
-    int fd = sys_open("/root/kfs", O_CREAT | O_RDWR, 0);
+    int fd = sys_open("/root/kfs", O_CREAT | O_RDWR);
     if (fd < 0)
         return -1;
     
-    int fd1 = sys_open("/root/kfs", O_CREAT | O_RDWR, 0);
+    int fd1 = sys_open("/root/kfs", O_CREAT | O_RDWR);
     if (fd1 < 0)
         return -1;
     printk("fd %d fd1 %d.\n", fd, fd1);
@@ -58,7 +58,7 @@ int init_fs()
     int wr = sys_write(fd, "hello", 5);
     printk("write file:%d %d bytes.\n", fd, wr);
     sys_close(fd);
-    fd = sys_open("/root/kfs", O_CREAT | O_RDWR, 0);
+    fd = sys_open("/root/kfs", O_CREAT | O_RDWR);
     if (fd < 0)
         return -1;
     char buf[10];

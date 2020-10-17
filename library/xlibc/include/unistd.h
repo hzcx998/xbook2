@@ -73,7 +73,7 @@ extern "C" {
 int brk(void *addr);
 void *sbrk(int increment);
 
-int open(const char *path, int flags, int mode);
+int open(const char *path, int flags);
 int close(int fd);
 int read(int fd, void *buffer, size_t nbytes);
 int write(int fd, void *buffer, size_t nbytes);

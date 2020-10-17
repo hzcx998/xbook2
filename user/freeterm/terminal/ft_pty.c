@@ -41,7 +41,7 @@ int ft_pty_launch(ft_pty_t *pty, char *pathname)
     #ifdef DEBUG_FT
     printf("freeterm: %s: slaver tty:%s\n", __func__, sname);
     #endif
-    int fds = open(sname, O_DEVEX | O_RDWR, 0);
+    int fds = open(sname, O_DEVEX | O_RDWR);
     if (fds < 0) {
         printf("freeterm: %s: open slaver %s failed!\n", __func__, sname);
         return -1;

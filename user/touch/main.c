@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	
     const char *path = (const char *)argv[1];
 
-	int fd = open(path, O_CREAT | O_RDWR, 0);
+	int fd = open(path, O_CREAT | O_RDWR);
 	if(fd == -1){
 		printf("touch: fd %d error\n", fd);
 		return 0;

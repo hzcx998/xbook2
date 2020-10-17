@@ -4,7 +4,7 @@
 #define CPU_DEV "cpu0"
 
 int main(int argc, char *argv[]) {
-    int fd = open(CPU_DEV, O_DEVEX, 0);
+    int fd = open(CPU_DEV, O_DEVEX);
     if (fd < 0) {
         printf("cpuinfo: open cpu device failed!\n");
         return -1;

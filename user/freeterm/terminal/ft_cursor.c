@@ -110,7 +110,7 @@ void move_cursor(int x, int y)
 	clean_cursor();
 
 	//把原来位置上的字符显示出来
-	char ch;
+	char ch = 0;
 	con_get_char(&ch, cursor.x, cursor.y);
 	
 	//文字颜色

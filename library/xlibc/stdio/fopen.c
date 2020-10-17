@@ -44,7 +44,7 @@ FILE * fopen(const char * path, const char * mode)
 	if(plus)
 		flags = (flags & ~(O_RDONLY | O_WRONLY)) | O_RDWR;
 
-	fd = open(path, flags, 0644);
+	fd = open(path, flags);
 	if(fd < 0)
 		return NULL;
 

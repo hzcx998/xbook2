@@ -188,7 +188,7 @@ static void test()
 
 int main(void)
 {
-    sound_fd = open("sb16", O_DEVEX, 0);
+    sound_fd = open("sb16", O_DEVEX);
     test();
     close(sound_fd);
     return 0;

@@ -269,7 +269,7 @@ static int redirect_here_document(char *delimter)
     int idx = 0;
 
     /* 打开一个临时文件 */
-    int fd = open(tmpnam(NULL), O_CREAT | O_RDWR | O_TRUNC, 0);
+    int fd = open(tmpnam(NULL), O_CREAT | O_RDWR | O_TRUNC);
     if (fd < 0) {
         printf("open tmp file failed!\n");
         return -1;
@@ -359,7 +359,7 @@ static int redirect_do_stdin(struct redirect_info *rdin, uint32_t redirect_mask,
             if (*p == '&' && isdigitstr(p + 1)) {
                 rdin->fd = atoi(p + 1);
             } else {
-                rdin->fd = open(rdin->filename, open_flags, 0);
+                rdin->fd = open(rdin->filename, open_flags);
             }
             if (rdin->fd < 0) {
                 printf("open file redirect failed!\n");    
@@ -423,7 +423,7 @@ static int redirect_do_stdout(struct redirect_info *rdout, uint32_t redirect_mas
         if (*p == '&' && isdigitstr(p + 1)) {
             rdout->fd = atoi(p + 1);
         } else {
-            rdout->fd = open(rdout->filename, open_flags, 0);
+            rdout->fd = open(rdout->filename, open_flags);
         }
         if (rdout->fd < 0) {
             printf("open file redirect failed!\n");    
@@ -469,7 +469,7 @@ static int redirect_do_stderr(struct redirect_info *rderr, uint32_t redirect_mas
         if (*p == '&' && isdigitstr(p + 1)) {
             rderr->fd = atoi(p + 1);
         } else {
-            rderr->fd = open(rderr->filename, open_flags, 0);
+            rderr->fd = open(rderr->filename, open_flags);
         }
         if (rderr->fd < 0) {
             printf("open file redirect failed!\n");    

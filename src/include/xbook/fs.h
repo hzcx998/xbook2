@@ -30,7 +30,7 @@ typedef struct {
 
 int init_fs();
 /// syscall 
-int sys_open(const char *path, int flags, int mode);
+int sys_open(const char *path, int flags);
 int sys_close(int fd);
 int sys_read(int fd, void *buffer, size_t nbytes);
 int sys_write(int fd, void *buffer, size_t nbytes);

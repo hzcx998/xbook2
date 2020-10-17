@@ -30,13 +30,13 @@ int main(int argc, char **argv)
         2. 复制数据
         3.关闭文件
      */
-    int fdrd = open(argv[1], O_RDONLY, 0);
+    int fdrd = open(argv[1], O_RDONLY);
     if (fdrd == -1) {
         printf("cp: open file %s failed!\n", argv[1]);
         return -1;
     }
     /* 如果文件已经存在则截断 */
-    int fdwr = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, 0);
+    int fdwr = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC);
     if (fdwr == -1) {
         printf("cp: open file %s failed!\n", argv[2]);
         close(fdrd);

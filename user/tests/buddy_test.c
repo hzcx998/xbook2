@@ -514,6 +514,7 @@ int recursive_free(struct free_chunk *block, int index)
         //循环这个过程，在上一级链表中查找伙伴，直到找不到伙伴或者到了4MB链表
         recursive_free(tmp_chunk, index);
     }
+    return 0;
 }
  
 /**
@@ -523,7 +524,7 @@ int recursive_free(struct free_chunk *block, int index)
 */
 int mem_free(int size)
 {
-    int index, i;
+    int index;
  
     if(!mem_avail(size))
     {
@@ -579,8 +580,7 @@ int buddy_test(int argc,char *argv[])
     */
     char c;
     int size;
-    int i;
-    
+
     mem_alloc(4);
     mem_free(4);
     mem_alloc(12);

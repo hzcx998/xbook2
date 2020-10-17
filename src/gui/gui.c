@@ -30,7 +30,6 @@ g_quit来退出图形。
 /* 主要是处理输入事件 */
 void kgui_thread(void *arg)
 {
-    task_t *cur = current_task;
     //con_loop();
     g_msg_t msg;
     memset(&msg, 0, sizeof(g_msg_t));

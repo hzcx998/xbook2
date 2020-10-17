@@ -14,10 +14,6 @@ static void exit_freeterm()
 {
     exit_cmd_man();
     exit_console();
-    // 屏蔽所有触发器
-    /*trigset_t trigset;
-    trigfillset(&trigset);
-    trigprocmask(TRIG_BLOCK, &trigset, NULL);*/
     ft_pty_exit(&ft_pty, 1);
 }
 

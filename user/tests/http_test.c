@@ -25,7 +25,7 @@ int http_test(int argc, char **argv)
 
     int sockfd, ret;
     struct sockaddr_in servaddr;
-    char str1[4096], str2[4096], buf[BUFSIZE], *str;
+    char str1[4096], str2[4096], *str;
     socklen_t len;
     fd_set   t_set;
 

@@ -32,5 +32,3 @@
 * 2020/10/15
 * 修改open3参数为2个参数，修改ioctl函数
 * 分离基础命令，让sh和bosh功能一样。 [ok]
-* 设置freeterm为默认终端。
-* 完善freeterm终端控制按键（CTL+C）
