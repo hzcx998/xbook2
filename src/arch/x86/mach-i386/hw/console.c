@@ -221,7 +221,6 @@ static void put_char(struct console_object *obj, char ch)
             default:
                 break;
             }
-            
         }
     }
     switch(ch){

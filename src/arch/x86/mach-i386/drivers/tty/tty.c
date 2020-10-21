@@ -98,6 +98,43 @@ iostatus_t tty_close(device_object_t *device, io_request_t *ioreq)
     return status;
 }
 
+
+/* 将小键盘的按键转换成主键盘上面的按键 */
+static unsigned char _g_keycode_map_table[] = {
+    KEY_KP_PERIOD,      KEY_PERIOD,
+    KEY_KP_MULTIPLY,    KEY_ASTERISK,     /* * */
+    KEY_KP_PLUS,        KEY_PLUS,            /* + */
+    KEY_KP_MINUS,       KEY_MINUS,           /* - */
+    KEY_KP_DIVIDE,      KEY_SLASH,           /* / */
+    KEY_KP0,            KEY_0,               /* 0 */
+    KEY_KP1,            KEY_1,               /* 1 */
+    KEY_KP2,            KEY_2,               /* 2 */
+    KEY_KP3,            KEY_3,               /* 3 */
+    KEY_KP4,            KEY_4,               /* 4 */
+    KEY_KP5,            KEY_5,               /* 5 */
+    KEY_KP6,            KEY_6,               /* 6 */
+    KEY_KP7,            KEY_7,               /* 7 */
+    KEY_KP8,            KEY_8,               /* 8 */
+    KEY_KP9,            KEY_9,               /* 9 */
+    0xff,               KEY_UNKNOWN,
+};
+/**
+ * 键值转换
+ */
+static unsigned char _g_key_code_switch(int code)
+{
+    unsigned char key_value = '?';
+    unsigned int i = 0;
+    for ( i = 0;  i < sizeof(_g_keycode_map_table);  i += 2 ) {
+        if (_g_keycode_map_table[i] == code) {
+            key_value = _g_keycode_map_table[i + 1]; // 返回转换后的键值
+            return key_value;
+        }
+    }
+    return 0; // not switch
+}
+
+
 static int tty_filter_keycode(int keycode)
 {
     /* 处理CTRL, ALT, SHIFT*/
@@ -111,6 +148,10 @@ static int tty_filter_keycode(int keycode)
     case KEY_NUMLOCK:     /* numlock */
     case KEY_CAPSLOCK:    /* capslock */
     case KEY_SCROLLOCK:  /* scrollock */
+    case KEY_UP:           /* up arrow */
+    case KEY_DOWN:         /* down arrow */
+    case KEY_RIGHT:        /* right arrow */
+    case KEY_LEFT:         /* left arrow */
         return 1;
     default:
         break;
@@ -144,6 +185,9 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                                 /* 按下的按键 */
                                 if ((event.value) > 0 && !tty_filter_keycode(event.code)) {
                                     ioreq->io_status.infomation = sizeof(event);
+                                    uint8_t ch = _g_key_code_switch(event.code);
+                                    if (ch > 0)
+                                        event.code = ch;
                                     *(unsigned int *) ioreq->user_buffer = event.code;
                                     status = IO_SUCCESS;
                                     #ifdef DEBUG_DRV                                
