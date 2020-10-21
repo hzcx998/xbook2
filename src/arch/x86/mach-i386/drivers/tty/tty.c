@@ -108,6 +108,9 @@ static int tty_filter_keycode(int keycode)
     case KEY_RALT:    /* right alt */
     case KEY_LCTRL:    /* left ctl */
     case KEY_RCTRL:    /* right ctl */
+    case KEY_NUMLOCK:     /* numlock */
+    case KEY_CAPSLOCK:    /* capslock */
+    case KEY_SCROLLOCK:  /* scrollock */
         return 1;
     default:
         break;

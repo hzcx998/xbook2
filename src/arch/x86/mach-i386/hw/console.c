@@ -18,6 +18,9 @@ MAKE_COLOR(BLACK, RED) | BRIGHT | FLASH
 #define TEXT_RED     0x4     /* 0100 */
 #define TEXT_GREEN   0x2     /* 0010 */
 #define TEXT_BLUE    0x1     /* 0001 */
+#define TEXT_YELLOW  0x6     /* 0110 */
+#define TEXT_MAGENTA 0x3     /* 0011 */
+
 #define TEXT_FLASH   0x80    /* 1000 0000 */
 #define TEXT_BRIGHT  0x08    /* 0000 1000 */
 #define	MAKE_COLOR(x,y)	((x<<4) | y) /* MAKE_COLOR(Background,Foreground) */
@@ -49,6 +52,9 @@ struct console_object {
     unsigned int screenSize;       /* 控制台占用的显存大小 */
     unsigned char color;                /* 字符的颜色 */
     int x, y;                  /* 偏移坐标位置 */
+    int esc_step;   
+    unsigned char ready_color;                /* 准备设置成的颜色 */
+    
 };
 
 /* 控制台表 */
@@ -182,7 +188,46 @@ static void put_char(struct console_object *obj, char ch)
 {
 	unsigned char *vram = (unsigned char *)(V_MEM_BASE + 
         (obj->originalAddr + obj->y * SCREEN_WIDTH + obj->x) *2) ;
-	switch(ch){
+	/* 检测颜色数字 */
+    if ('0' < ch && ch <= '9') {
+        if (obj->esc_step == 5) {
+            char _ch = ch - '0';
+            switch (_ch)
+            {
+            case 1:
+                obj->ready_color = MAKE_COLOR(TEXT_BLACK, TEXT_RED);
+                obj->esc_step++;
+                return;
+            case 2:
+                obj->ready_color = MAKE_COLOR(TEXT_BLACK, TEXT_GREEN);
+                obj->esc_step++;
+                return;
+            case 3:
+                obj->ready_color = MAKE_COLOR(TEXT_BLACK, TEXT_YELLOW);
+                obj->esc_step++;
+                return;
+            case 4:
+                obj->ready_color = MAKE_COLOR(TEXT_BLACK, TEXT_BLUE);
+                obj->esc_step++;
+                return;
+            case 5:
+                obj->ready_color = MAKE_COLOR(TEXT_BLACK, TEXT_MAGENTA);
+                obj->esc_step++;
+                return;
+            case 7:
+                obj->ready_color = MAKE_COLOR(TEXT_BLACK, TEXT_WHITE);
+                obj->esc_step++;
+                return;
+            default:
+                break;
+            }
+            
+        }
+    }
+    switch(ch){
+        case '\e': // break start
+            obj->esc_step++;
+            break;
         case '\r':
             break;
 		case '\n':
@@ -208,6 +253,36 @@ static void put_char(struct console_object *obj, char ch)
 				*(vram-1) = COLOR_DEFAULT;
             }
 			break;
+        case '[':
+            if (obj->esc_step == 1) {
+                obj->esc_step++;
+                break;
+            }
+        case '0':
+            if (obj->esc_step == 2) {
+                obj->esc_step++;
+                break;
+            }
+        case ';':
+            if (obj->esc_step == 3) {
+                obj->esc_step++;
+                break;
+            }
+        case 'm':
+            if (obj->esc_step == 3) {
+                obj->esc_step = 0;
+                obj->color = COLOR_DEFAULT;
+                break;
+            } else if (obj->esc_step == 6) {
+                obj->esc_step = 0;
+                obj->color = obj->ready_color;
+                break;
+            }
+        case '3':
+            if (obj->esc_step == 4) {
+                obj->esc_step++;
+                break;
+            }
 		default: 
             *vram++ = ch;
 			*vram = obj->color;
@@ -252,7 +327,8 @@ void init_console_hw()
     
     /* 设置默认颜色 */
     obj->color = COLOR_DEFAULT;
-
+    obj->esc_step = 0;
+    obj->ready_color = 0;
     /* 消除编译未使用提示 */
     get_cursor();
 
