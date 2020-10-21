@@ -84,7 +84,7 @@ VBE_MODE_SIZE	EQU		0x100	; 固定大小256字节
 VBE_CMD_VBEINFO  EQU     0x4f00  ; 返回VBE控制器的信息
 
 ; 配置vbe驱动，注意也要修改内核中的图形配置
-%define CONFIG_GRAPHIC      1
+%define CONFIG_GRAPHIC      0
 
 ; 启动图形模式
 %define CONFIG_GRAPHIC_SWITCH   1

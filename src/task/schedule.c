@@ -10,6 +10,12 @@
 /* 多任务调度器 */
 scheduler_t scheduler;
 
+/*
+TODO：优化动态优先级：当一个优先级高的线程长期获得优运行时，可以适当调低优先级。
+当一个低先级高的线程长期没获得运行时，可以适当调提高优先级。
+当前采取的是高优先级执行固定时间后就降低，不太好，没体现优先级的优势。
+*/
+
 static task_t *task_priority_queue_fetch_first(sched_unit_t *su)
 {
     task_t *task;

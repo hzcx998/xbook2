@@ -256,7 +256,7 @@ void init_console_hw()
     /* 消除编译未使用提示 */
     get_cursor();
 
-    // clean_screen(obj);
+    clean_screen(obj);
     /* 默认在左上角 */
     obj->x = 0;
     obj->y = 0;

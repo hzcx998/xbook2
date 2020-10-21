@@ -57,7 +57,7 @@ int kernel_main(void)
     /* init fs */
     init_fs();
 
-    init_gui();
+    // init_gui();
     // init_net();
     //spin("test");
     start_user();

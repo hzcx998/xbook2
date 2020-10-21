@@ -206,11 +206,11 @@ int drv_ioctl(int cmd, unsigned long arg)
     switch(cmd)
     {
     case DISKIO_SYNC:
-        rewind(drv_file);
+        /*rewind(drv_file);
         fwrite(drv_buf, disk_size / 10, 10, drv_file);
         fflush(drv_file);
         rewind(drv_file);
-        
+        */
         break;
     case DISKIO_GETSSIZE:
         *(unsigned int *)arg = SECTOR_SIZE;

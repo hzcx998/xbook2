@@ -97,8 +97,9 @@ void spin(char * functionName)
 void debug_putstr(char *str, int count)
 {
     char *s = str;
-    while (count-- > 0 && *s){
+    while (*s && count > 0){
         debug_putchar(*s++);
+        --count;
     }
 }
 
@@ -144,8 +145,6 @@ int printk(const char *fmt, ...)
             char *q = printk_msg[level];
             // 发送颜色代码
             debug_putstr(q, strlen(q));
-        } else { /* 默认颜色 */
-            debug_putstr(DEBUG_NONE_COLOR, 4);    
         }
         
         debug_putstr(p, count);
@@ -156,8 +155,9 @@ int printk(const char *fmt, ...)
             gui_con_screen.outs(p);
         #endif
 
-        /* 清除颜色 */
-        debug_putstr(DEBUG_NONE_COLOR, 4);    
+        if (level >= 0) {
+            debug_putstr(DEBUG_NONE_COLOR, 4);    
+        }
     }
     restore_intr(flags);
 	return i;

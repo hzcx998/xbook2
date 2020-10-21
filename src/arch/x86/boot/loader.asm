@@ -46,6 +46,7 @@ entry:
     call get_vbe_info
 %endif  ; CONFIG_GRAPHIC
 
+
 ;保护模式设置的步骤为
 ;1.关闭中断，防止中间发生中断，因为保护模式中断和实模式中断的方式不一样
 ;2.加载gdt，保护模式进行内存访问需要用到gdt里面定义的数据结构

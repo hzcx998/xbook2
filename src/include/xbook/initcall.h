@@ -22,8 +22,10 @@ typedef void (*exitcall_t)(void);
 	__attribute__((__used__, __section__(".exitcall_" level ".text"))) = fn
 
 #define driver_initcall(fn)		__define_initcall("0", fn, 0)
+#define filter_initcall(fn)		__define_initcall("1", fn, 1)
 
 #define driver_exitcall(fn)		__define_exitcall("0", fn, 0)
+#define filter_exitcall(fn)		__define_exitcall("1", fn, 1)
 
 void do_initcalls(void);
 void do_exitcalls(void);

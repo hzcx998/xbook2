@@ -13,17 +13,17 @@
 static surface_t *image[M] = {0};
 
 static char *image_path[M] = {
-	"res/appstore.png",
-	"res/messages.png",
-	"res/calendar.png",
-	"res/launchpad.png",
-	"res/gamecenter.png",
-	"res/systempreferences.png",
-	"res/textedit.png",
-	"res/facetime.png",
-	"res/dictionnary.png",
-	"res/safari.png",
-    "res/Sierra.jpg"};
+	"res/gato/appstore.png",
+	"res/gato/messages.png",
+	"res/gato/calendar.png",
+	"res/gato/launchpad.png",
+	"res/gato/gamecenter.png",
+	"res/gato/systempreferences.png",
+	"res/gato/textedit.png",
+	"res/gato/facetime.png",
+	"res/gato/dictionnary.png",
+	"res/gato/safari.png",
+    "res/gato/Sierra.jpg"};
 
 static void motion_get_xy(int *x, int *y);
 

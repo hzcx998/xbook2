@@ -335,6 +335,7 @@ iostatus_t console_read(device_object_t *device, io_request_t *ioreq)
 
     return IO_SUCCESS;
 }
+extern serial_putchar(char ch);
 
 iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
 {
@@ -347,12 +348,11 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
 #endif
     while (i > 0) {
         vga_outchar(device->device_extension, *buf);
+        serial_putchar(*buf);
         i--;
         buf++;
     }
     buf = (uint8_t *)ioreq->system_buffer; 
-    // print to kernel
-    printk("%s", buf);
 
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = len;

@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
 		/* 读取命令行 */
 		readline(cmd_line, CMD_LINE_LEN);
 		
+       
         /* 如果什么也没有输入，就回到开始处 */
 		if(cmd_line[0] == 0){
 			continue;
@@ -220,7 +221,7 @@ int main(int argc, char *argv[])
  */
 void print_prompt()
 {
-	printf("%s>\n", cwd_cache);
+	printf("%s>", cwd_cache);
 }
 
 /**
@@ -244,7 +245,6 @@ void readline(char *buf, uint32_t count)
         }
         pos++;
     }
-
 }
 
 static void redirect_init(struct redirect_info *rd)

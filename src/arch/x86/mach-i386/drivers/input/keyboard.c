@@ -134,7 +134,7 @@ enum kbd_cmds {
 #define MAX_SCAN_CODE_NR	0x80	/* Number of scan codes (rows in keymap) */
 
 
-/* raw key value = code passed to tty & MASK_RAW
+/* raw key value = code passed to keyboard & MASK_RAW
 the value can be found either in the keymap column 0
 or in the list below */
 #define KBD_MASK_RAW	0x01FF		
@@ -478,6 +478,8 @@ WWW Favorites	E0, 66		E0, E6
 
 *=====================================================================================*/
 
+#define KBD_NOBLOCK  0x01
+
 typedef struct _device_extension {
     device_object_t *device_object; /* 设备对象 */
     char irq;           /* irq号 */
@@ -497,6 +499,8 @@ typedef struct _device_extension {
     fifo_io_t fifoio;
     unsigned int keycode;       /* 解析出来的键值 */
     input_even_buf_t evbuf;     /* 事件缓冲区 */
+    uint32_t flags;
+    uint32_t opened;
 } device_extension_t;
 
 /* 键值表，和InputKeycode对应 */
@@ -924,6 +928,30 @@ unsigned int keyboard_do_read(device_extension_t *ext)
     return KEYCODE_NONE;
 }
 
+iostatus_t keyboard_open(device_object_t *device, io_request_t *ioreq)
+{
+    iostatus_t status = IO_SUCCESS;
+    device_extension_t *extension = device->device_extension;
+    extension->opened = 1;
+
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = 0;
+    io_complete_request(ioreq);
+    return status;
+}
+
+iostatus_t keyboard_close(device_object_t *device, io_request_t *ioreq)
+{
+    iostatus_t status = IO_SUCCESS;
+    device_extension_t *extension = device->device_extension;
+    extension->opened = 0;
+    
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = 0;
+    io_complete_request(ioreq);
+    return status;
+}
+
 /**
  * keyboard_handler - 键盘中断处理函数
  * @irq: 中断号
@@ -932,11 +960,10 @@ unsigned int keyboard_do_read(device_extension_t *ext)
 static int keyboard_handler(unsigned long irq, unsigned long data)
 {
     device_extension_t *ext = (device_extension_t *) data;
-	/* 先从硬件获取按键数据 */
-	unsigned char scan_code = in8(KBC_READ_DATA);
-
-    /* 把数据放到io队列 */
-    fifo_io_put(&ext->fifoio, scan_code);
+	unsigned char scan_code = in8(KBC_READ_DATA); /* 先从硬件获取按键数据 */
+    if (ext->opened) {
+        fifo_io_put(&ext->fifoio, scan_code);
+    }
     return 0;
 }
 
@@ -949,26 +976,33 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
     
     /* 直接返回读取的数据 */
     ioreq->io_status.infomation = ioreq->parame.read.length;
+    input_event_t *even = (input_event_t *) ioreq->user_buffer;
     /* 参数正确 */
-    if (ioreq->user_buffer && ioreq->parame.read.length == sizeof(input_event_t)) {
-        input_event_t *even = (input_event_t *) ioreq->user_buffer;
-        if (input_even_get(&ext->evbuf, even)) {
-            status = IO_FAILED;
+    if (even && ioreq->parame.read.length == sizeof(input_event_t)) {
+        
+        if (ext->flags & KBD_NOBLOCK) {
+            if (input_even_get(&ext->evbuf, even)) {
+                status = IO_FAILED;
+            } else {
+                #ifdef DEBUG_DRV
+                printk(KERN_DEBUG "key even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
+                printk(KERN_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
+                #endif        
+            }
         } else {
-#ifdef DEBUG_DRV
-            printk(KERN_DEBUG "key even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
-            printk(KERN_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
-#endif        
+            while (1) {
+                if (!input_even_get(&ext->evbuf, even))
+                    break;
+                   
+            }
         }
     } else {
         status = IO_FAILED;
     }
-#if 0
-    if (!ext->keycode)
-        status = IO_FAILED;
-
-    ext->keycode = 0; /* 读取后置0 */
-#endif
+    #ifdef DEBUG_DRV
+    printk(KERN_DEBUG "key even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
+    printk(KERN_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
+    #endif     
     ioreq->io_status.status = status;
     /* 调用完成请求 */
     io_complete_request(ioreq);
@@ -991,7 +1025,9 @@ iostatus_t keyboard_devctl(device_object_t *device, io_request_t *ioreq)
             (extension->caps_lock << 1) |
             (extension->scroll_lock << 2);
         *(unsigned int *) ioreq->parame.devctl.arg = leds;
-        
+        break;
+    case EVENIO_SETFLG:
+        extension->flags = *(unsigned int *) ioreq->parame.devctl.arg;
         break;
     default:
         status = IO_FAILED;
@@ -1056,6 +1092,9 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
 
     devext->irq = IRQ1;
     devext->keycode = 0;
+    devext->flags = 0;
+    devext->opened = 0;
+    
 	/* 初始化私有数据 */
 	devext->code_with_e0 = 0;
 	
@@ -1116,6 +1155,8 @@ iostatus_t keyboard_driver_func(driver_object_t *driver)
     driver->driver_enter = keyboard_enter;
     driver->driver_exit = keyboard_exit;
 
+    driver->dispatch_function[IOREQ_OPEN] = keyboard_open;
+    driver->dispatch_function[IOREQ_CLOSE] = keyboard_close;
     driver->dispatch_function[IOREQ_READ] = keyboard_read;
     driver->dispatch_function[IOREQ_DEVCTL] = keyboard_devctl;
     

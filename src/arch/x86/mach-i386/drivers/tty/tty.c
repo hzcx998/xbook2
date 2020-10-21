@@ -98,6 +98,25 @@ iostatus_t tty_close(device_object_t *device, io_request_t *ioreq)
     return status;
 }
 
+static int tty_filter_keycode(int keycode)
+{
+    /* 处理CTRL, ALT, SHIFT*/
+    switch (keycode) {
+    case KEY_LSHIFT:    /* left shift */
+    case KEY_RSHIFT:    /* right shift */
+    case KEY_LALT:    /* left alt */
+    case KEY_RALT:    /* right alt */
+    case KEY_LCTRL:    /* left ctl */
+    case KEY_RCTRL:    /* right ctl */
+        return 1;
+    default:
+        break;
+    }
+    return 0;
+}
+
+
+
 iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
@@ -112,30 +131,40 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                 int ret = 0;
                 
                 memset(&event, 0, sizeof(event));
-                ret = device_read(extension->kbd, &event, sizeof(event), 0);
-                if ( ret >= 1 ) {
-                    switch (event.type)
-                    {                
-                        case EV_KEY:
-                            /* 按下的按键 */
-                            if ((event.value) > 0) {
-                                ioreq->io_status.infomation = sizeof(event);
-                                *(unsigned int *) ioreq->user_buffer = event.code;
-                                status = IO_SUCCESS;
-#ifdef DEBUG_DRV                                
-                                printk(KERN_DEBUG "tty: read keycode %x\n", event.code);
-#endif
-                            }
-                            break;
-                        default:
-                            break;
+                while (1)
+                {
+                    ret = device_read(extension->kbd, &event, sizeof(event), 0);
+                    if ( ret >= 1 ) {
+                        switch (event.type)
+                        {                
+                            case EV_KEY:
+                                /* 按下的按键 */
+                                if ((event.value) > 0 && !tty_filter_keycode(event.code)) {
+                                    ioreq->io_status.infomation = sizeof(event);
+                                    *(unsigned int *) ioreq->user_buffer = event.code;
+                                    status = IO_SUCCESS;
+                                    #ifdef DEBUG_DRV                                
+                                    printk(KERN_DEBUG "tty: read keycode %x\n", event.code);
+                                    #endif
+                                    device_write(extension->con,
+                                        &event.code, 1, 0);
+
+                                    goto end_of_read;
+                                }
+                                break;
+                            default:
+                                break;
+                        }
                     }
+                  
                 }
+                
             }
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
             trigger_force(TRIGSYS, current_task->pid);
         }
     }
+end_of_read:
     ioreq->io_status.status = status;
     /* 调用完成请求 */
     io_complete_request(ioreq);
@@ -229,10 +258,6 @@ static iostatus_t tty_enter(driver_object_t *driver)
         devobj->flags = 0;
         extension = (device_extension_t *)devobj->device_extension;
         extension->device_object = devobj;
-#ifdef DEBUG_DRV
-        printk(KERN_DEBUG "tty_enter: device extension: device name=%s object=%x\n",
-            devext->device_name.text, devext->device_object);
-#endif
         extension->device_id = i;   
         extension->hold_pid = -1;   /* 没有进程持有 */
         extension->kbd = kbd;
@@ -290,4 +315,4 @@ static __init void tty_driver_entry(void)
     }
 }
 
-driver_initcall(tty_driver_entry);
+filter_initcall(tty_driver_entry);

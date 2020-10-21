@@ -59,8 +59,6 @@ void panic(const char *fmt, ...);
 void dump_value(unsigned long val);
 void dump_buffer(void *buffer, unsigned long len, char factor);
 
-void serial_putchar(char ch);
-
 void init_kernel_debug();
 
 #endif   /*_XBOOK_DEBUG_H*/
