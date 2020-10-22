@@ -1,6 +1,6 @@
 #include <arch/config.h>
 
-#ifdef X86_CONSOLE_HW
+// #ifdef X86_CONSOLE_HW
 
 #include <xbook/debug.h>
 #include <arch/io.h>
@@ -337,4 +337,4 @@ void init_console_hw()
     obj->y = 0;
     set_cursor(obj->y * SCREEN_WIDTH + obj->x);
 }
-#endif
+// #endif

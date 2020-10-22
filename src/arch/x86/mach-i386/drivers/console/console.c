@@ -348,12 +348,12 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
 #endif
     while (i > 0) {
         vga_outchar(device->device_extension, *buf);
+        #ifdef X86_SERIAL_HW
         serial_putchar(*buf);
+        #endif
         i--;
         buf++;
     }
-    buf = (uint8_t *)ioreq->system_buffer; 
-
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = len;
     /* 调用完成请求 */

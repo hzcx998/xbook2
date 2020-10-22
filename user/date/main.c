@@ -10,6 +10,6 @@ int main(int argc, char **argv)
     ktime(&ktm);
     struct tm tm;
     ktimeto(&ktm, &tm);
-    printf("date: %s\n", asctime(&tm));
+    printf("%s\n", asctime(&tm));
     return 0;
 }

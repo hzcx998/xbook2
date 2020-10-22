@@ -23,8 +23,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    printf("start 'init' service, in user mode now.\n");
-
     /* 创建一个子进程 */
     int pid = fork();
     if (pid < 0) {

@@ -95,6 +95,7 @@ int main(int argc, char *argv[])
         ktime(&ktm);
         year = ktm.year;
         month = ktm.month;
+        month++; // 0~11 -> 1~12
         display(year, month);
     } else {
         /* 参数：

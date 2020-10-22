@@ -137,6 +137,7 @@ void update_ktime()
 void sys_get_ktime(ktime_t *time)
 {
     *time = ktime;
+    --time->month;
 }
 
 /* 这个算法来自linux内核 */

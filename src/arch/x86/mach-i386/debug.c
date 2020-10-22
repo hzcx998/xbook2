@@ -15,10 +15,8 @@ void debug_putchar(char ch)
 
 void init_kernel_debug()
 {
-#ifdef X86_CONSOLE_HW
     // 初始化控制台
 	init_console_hw();
-#endif /* X86_CONSOLE_HW */
 
 #ifdef X86_SERIAL_HW
     // 初始化串口
