@@ -30,6 +30,8 @@ entry:
 	mov byte [es:160+10],'R'
 	mov byte [es:160+11],0x07
 
+    jmp $
+
 	; load setup file
 	call load_setup_file
 

@@ -4,11 +4,11 @@
 X_PREPARE	+= $(obj)/boot.bin $(obj)/loader.bin
 X_CLEAN		:= $(obj)/boot.bin $(obj)/loader.bin $(obj)/setup.elf 
 
-$(obj)/boot.bin: $(src)/boot.asm
+$(obj)/boot.bin: $(src)/hdboot.asm
 	@echo [BOOT.BIN] $@
 	@$(AS) -f bin -I $(obj)/ -o $@ $<
 
-$(obj)/loader.bin: $(src)/loader.asm
+$(obj)/loader.bin: $(src)/hdloader.asm
 	@echo [LOADER.BIN] $@
 	@$(AS)  -f bin -I $(obj)/ -o $@ $<
 

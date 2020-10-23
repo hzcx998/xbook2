@@ -43,7 +43,6 @@ read_loader_from_disk:
 	jmp LOADER_SEG:0
 	
 ;si=LBA address, from 0
-;cx=sectors
 ;es:dx=buffer address	
 ;this function was borrowed from internet
 floppy_read_sectors:

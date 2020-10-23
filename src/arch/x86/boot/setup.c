@@ -20,6 +20,7 @@ static int read_file(unsigned char *base, void *buffer, unsigned int offset, uns
 void setup_kernel()
 {
     print_str("setup kernel.\n"); 
+
     /* 读取文件头 */
     struct Elf32_Ehdr elf_header;
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));

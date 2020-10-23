@@ -50,9 +50,9 @@ KERNEL_START_ADDR EQU 0x80100000
 ;loader stack top is 0x9a000 ~ 0x9c000
 LOADER_STACK_TOP EQU 0x9c000
 
-;we can read sector less than 128 sector. so I set block size,
-;every time we load 128 sectors
-BLOCK_SIZE EQU 128
+;we can read sector less than 64 sector. so I set block size,
+;every time we load 64 sectors
+BLOCK_SIZE EQU 64
 
 ARDS_SEG	EQU		0x100	;ards start segment
 
