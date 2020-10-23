@@ -50,8 +50,8 @@ KERNEL_START_ADDR EQU 0x80100000
 ;loader stack top is 0x9a000 ~ 0x9c000
 LOADER_STACK_TOP EQU 0x9c000
 
-;we can read sector less than 64 sector. so I set block size,
-;every time we load 64 sectors
+;we can read sector less than 128 sector. so I set block size,
+;every time we load 128 sectors
 BLOCK_SIZE EQU 64
 
 ARDS_SEG	EQU		0x100	;ards start segment
@@ -84,13 +84,13 @@ VBE_MODE_SIZE	EQU		0x100	; 固定大小256字节
 VBE_CMD_VBEINFO  EQU     0x4f00  ; 返回VBE控制器的信息
 
 ; 配置vbe驱动，注意也要修改内核中的图形配置
-%define CONFIG_GRAPHIC      0
+; %define CONFIG_GRAPHIC
 
 ; 启动图形模式
-%define CONFIG_GRAPHIC_SWITCH   1
+%define CONFIG_GRAPHIC_SWITCH
 ; 注意！！！ 配置图形只检测图形模式，如果要切换到图形模式，则需要打开图形开关
 
-%if CONFIG_GRAPHIC == 1
+%ifdef CONFIG_GRAPHIC
 ;图形模式列表：
 
 ; 8位
@@ -166,3 +166,5 @@ VMODE_1920_1080_32          EQU 0x192
 ; my test computer: 1366 * 768
 %endif  ; CONFIG_GRAPHIC
 
+;%define CONFIG_BOOT_FLOPPY
+%define CONFIG_BOOT_HARDDISK

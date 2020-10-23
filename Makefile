@@ -28,6 +28,9 @@ HDA_IMG		= $(IMAGE_DIR)/c.img
 HDB_IMG		= $(IMAGE_DIR)/d.img
 ROM_DIR		= develop/rom
 
+BOOT_DISK	= $(HDA_IMG)
+FS_DISK		= $(HDB_IMG)
+
 # image size
 FLOPPYA_SZ	= 1474560  # 1.44 MB
 HDA_SZ		= 33554432 # 32 MB
@@ -69,11 +72,11 @@ KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 
 # 默认所有动作，编译内核后，把引导、内核、init服务、文件服务和rom文件写入磁盘
 all : kernel 
-	$(DD) if=$(BOOT_BIN) of=$(HDA_IMG) bs=512 count=1 conv=notrunc
-	$(DD) if=$(LOADER_BIN) of=$(HDA_IMG) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
-	$(DD) if=$(SETUP_BIN) of=$(HDA_IMG) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
-	$(DD) if=$(KERNEL_ELF) of=$(HDA_IMG) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
-	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) 0
+	$(DD) if=$(BOOT_BIN) of=$(BOOT_DISK) bs=512 count=1 conv=notrunc
+	$(DD) if=$(LOADER_BIN) of=$(BOOT_DISK) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
+	$(DD) if=$(SETUP_BIN) of=$(BOOT_DISK) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
+	$(DD) if=$(KERNEL_ELF) of=$(BOOT_DISK) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
+	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 
 # run启动虚拟机
 run: qemu
@@ -101,7 +104,7 @@ endif
 	$(MAKE) -s -C  $(LIBRARY_DIR)
 	$(MAKE) -s -C  $(SYSTEM_DIR)
 	$(MAKE) -s -C  $(USER_DIR)
-	$(FATFS_BIN) $(HDB_IMG) $(ROM_DIR) 0
+	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 
 # 清理环境。
 debuild: 
@@ -166,6 +169,7 @@ usr_c:
 
 QEMU_ARGUMENT = -m 512M \
 		-name "XBOOK Development Platform for x86" \
+		-fda $(FLOPPYA_IMG) \
 		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
 		-boot c \
 		-serial stdio \
