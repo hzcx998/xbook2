@@ -6,6 +6,7 @@
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
 #include <arch/debug.h>
+#include <arch/hw.h>
 #include <stdio.h>
 
 #include <gui/console.h>

@@ -5,8 +5,7 @@
 
 
 #include "ff.h"
-
-
+#include <xbook/kmalloc.h>
 
 #if FF_USE_LFN == 3	/* Dynamic memory allocation */
 

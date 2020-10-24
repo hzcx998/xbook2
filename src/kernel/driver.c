@@ -1278,8 +1278,8 @@ void init_driver_arch()
 #endif
 
     /* 输出所有驱动以及设备 */
-    print_drivers();
-
+    //print_drivers();
+#if 0
     handle_t ptm0 = device_open("ptm0", 0);
     if (ptm0 < 0)
         panic(KERN_DEBUG "open ptm0 failed!\n");
@@ -1307,7 +1307,7 @@ void init_driver_arch()
 
     device_close(pts0);
     device_close(ptm0);
-
+#endif
     //spin("test");
 #if 0
     handle_t sb16 = device_open("sb16", 0);

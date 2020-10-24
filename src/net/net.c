@@ -250,8 +250,6 @@ static void socket_nonblocking(void *arg)
   int ret;
   u32_t opt;
   struct sockaddr_in addr;
-  int err;
-
   LWIP_UNUSED_ARG(arg);
   /* set up address to connect to */
   memset(&addr, 0, sizeof(addr));
@@ -433,7 +431,7 @@ static void dns_netconn_thread(void *arg)
 		   {
 			 struct ip_addr dnsaddr;
 			 
-			 netbuf_data(inbuf, &dataptr, &size);
+			 netbuf_data(inbuf, (void **)&dataptr, &size);
 			 if(size >= MAX_BUFFER_LEN)
 			 {
                 netbuf_delete(inbuf);

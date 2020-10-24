@@ -4,6 +4,7 @@
 #include <xbook/driver.h>
 #include <arch/io.h>
 #include <arch/config.h>
+#include <arch/hw.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
 
@@ -335,7 +336,6 @@ iostatus_t console_read(device_object_t *device, io_request_t *ioreq)
 
     return IO_SUCCESS;
 }
-extern serial_putchar(char ch);
 
 iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
 {

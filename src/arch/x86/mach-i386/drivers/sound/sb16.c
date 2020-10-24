@@ -19,7 +19,7 @@
 
 #define DEV_NAME "sb16"
 
-#define printk(...)
+#define DEBUG_SB16
 
 #define SB16_POLL
 
@@ -67,6 +67,8 @@ typedef struct _device_extension
     wait_queue_t waiters;
 } device_extension_t;
 
+void sb16_dma_start(struct dma_region *dma_region, uint32_t length);
+
 /* Write a value to the DSP write register */
 void sb16_dsp_write(u8 value)
 {
@@ -110,7 +112,7 @@ bool sb16_initialize(device_extension_t *extension)
     int data = sb16_dsp_read();
     if (data != 0xaa)
     {
-        printk("sb16: sb not ready");
+        printk(KERN_NOTICE "sb16: sb not ready");
         return false;
     }
 
@@ -118,7 +120,8 @@ bool sb16_initialize(device_extension_t *extension)
     sb16_dsp_write(0xe1);
     extension->major_version = sb16_dsp_read();
     int vmin = sb16_dsp_read();
-    printk("sb16: found version %d.%d\n", extension->major_version, vmin);
+    printk(KERN_INFO "sb16: found version %d.%d\n", extension->major_version, vmin);
+    vmin = 0;
     return true;
 }
 void sb16_request(device_extension_t *extension)
@@ -142,7 +145,9 @@ void sb16_request(device_extension_t *extension)
     sb16_dsp_write(mode);
     sb16_dsp_write((u8)sample_count);
     sb16_dsp_write((u8)(sample_count >> 8));
-    printk("sb16: [DMA] [%x] sample_count: %d\n", dma_region->v, length);
+    #ifdef DEBUG_SB16
+    printk(KERN_DEBUG "sb16: [DMA] [%x] sample_count: %d\n", dma_region->v, length);
+    #endif
 }
 
 /**
@@ -164,12 +169,16 @@ static int sb16_handler(unsigned long irq, unsigned long data)
         in8(DSP_R_ACK); // 16 bit interrupt
 
     extension->index_r = (extension->index_r + 1) % DMA_COUNT;
-    printk("sb16: [READ FINISH] [%x]\n", dma_region->v);
+    #ifdef DEBUG_SB16
+    printk(KERN_DEBUG "sb16: [READ FINISH] [%x]\n", dma_region->v);
+    #endif
     wait_queue_wakeup_all(&extension->waiters);
 
     if (extension->index_r != extension->index_w)
     {
-        printk("sb16: [NEW READ]\n");
+        #ifdef DEBUG_SB16
+        printk(KERN_DEBUG "sb16: [NEW READ]\n");
+        #endif
         sb16_request(extension);
     }
     return 0;
@@ -222,8 +231,10 @@ static ssize_t __sb16_write(device_extension_t *extension, const u8 *data, ssize
     }
     extension->data_len[extension->index_w] = length;
     memcpy((void *)dma_region->v, data, length);
-    printk("sb16: [WRITE] [%x] %d\n", dma_region->v, length);
 
+    #ifdef DEBUG_SB16
+    printk(KERN_DEBUG "sb16: [WRITE] [%x] %d\n", dma_region->v, length);
+    #endif
     if (extension->index_w == extension->index_r)
     {
         extension->index_w = (extension->index_w + 1) % DMA_COUNT;
@@ -305,8 +316,9 @@ static iostatus_t sb16_enter(driver_object_t *driver)
 
     for (int i = 0; i < DMA_COUNT; i++)
     {
-        printk("[i:%d][count:%d]\n", i, DMA_COUNT);
-        ;
+        #ifdef DEBUG_SB16
+        printk(KERN_INFO "[i:%d][count:%d]\n", i, DMA_COUNT);
+        #endif
         extension->dma_region[i].p.size = PAGE_SIZE * 16; // 32 kb
         extension->dma_region[i].p.alignment = 0x1000;
         extension->dma_region[i].flags = DMA_REGION_SPECIAL; // spacil device
@@ -317,7 +329,9 @@ static iostatus_t sb16_enter(driver_object_t *driver)
             status = IO_FAILED;
             return status;
         }
+        #ifdef DEBUG_SB16
         printk(KERN_INFO "sb16: alloc dma buffer vir addr %x phy addr %x\n", extension->dma_region[i].v, extension->dma_region[i].p.address);
+        #endif
     }
     wait_queue_init(&extension->waiters);
 
@@ -346,7 +360,11 @@ static iostatus_t sb16_exit(driver_object_t *driver)
     list_for_each_owner_safe(devobj, next, &driver->device_list, list)
     {
         extension = (device_extension_t *)devobj->device_extension;
-        free_dma_buffer(&extension->dma_region);
+        int i;
+        for (i = 0; i < DMA_COUNT; i++)
+        {
+            free_dma_buffer(&extension->dma_region[i]);
+        }
         io_delete_device(devobj); /* 删除每一个设备 */
     }
     string_del(&driver->name); /* 删除驱动名 */
