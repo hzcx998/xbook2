@@ -81,6 +81,7 @@ void kgui_thread(void *arg)
 
 void init_gui()
 {
+    #ifdef CONFIG_GRAPH
     if (gui_init_screen() < 0)
         panic("init gui screen failed!\n");
     if (gui_init_keyboard() < 0)
@@ -109,7 +110,8 @@ void init_gui()
     /* 启动gui线程 */
     if (kthread_start("kgui", TASK_PRIO_RT, kgui_thread, NULL) == NULL)
         panic("start kgui thread failed!\n");
-
+    #endif
+    
 }
 
 int gui_user_init(task_t *task)

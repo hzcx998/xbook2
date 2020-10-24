@@ -19,7 +19,7 @@
 
 #define DEV_NAME "sb16"
 
-#define DEBUG_SB16
+// #define DEBUG_SB16
 
 #define SB16_POLL
 

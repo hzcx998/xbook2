@@ -742,7 +742,14 @@ void dump_task(task_t *task)
     //printk("vmm->vm_frame:%x priority:%d ticks:%d elapsed ticks:%d\n", task->vmm->page_storage, task->priority, task->ticks, task->elapsed_ticks);
     printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
-static char *init_argv[2] = {"/sbin/init", 0};
+
+#ifdef CONFIG_GRAPH
+#define INIT_SBIN_PATH  "/sbin/initg"
+#else
+#define INIT_SBIN_PATH  "/sbin/init"
+#endif
+
+static char *init_argv[2] = {INIT_SBIN_PATH, 0};
 
 /**
  * start_user - 开启用户进程

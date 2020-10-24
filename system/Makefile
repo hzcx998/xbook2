@@ -15,5 +15,6 @@ AS			:=	nasm
 export AS LD
 
 MODULE      +=  init
+MODULE      +=  initg
 MODULE      +=  desktop
 MODULE      +=  sh

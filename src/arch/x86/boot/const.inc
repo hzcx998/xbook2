@@ -83,16 +83,6 @@ VBE_MODE_SIZE	EQU		0x100	; 固定大小256字节
 
 VBE_CMD_VBEINFO  EQU     0x4f00  ; 返回VBE控制器的信息
 
-; 配置vbe驱动，注意也要修改内核中的图形配置
-; %define CONFIG_GRAPHIC
-
-; 启动图形模式
-%define CONFIG_GRAPHIC_SWITCH
-; 注意！！！ 配置图形只检测图形模式，如果要切换到图形模式，则需要打开图形开关
-
-%ifdef CONFIG_GRAPHIC
-;图形模式列表：
-
 ; 8位
 VMODE_1600_1200_8           EQU 0x11C
 VMODE_320_200_8             EQU 0x146
@@ -162,9 +152,3 @@ VMODE_1920_1200_32          EQU 0x189
 VMODE_2560_1600_32          EQU 0x18c
 VMODE_1280_720_32           EQU 0x18f
 VMODE_1920_1080_32          EQU 0x192
-
-; my test computer: 1366 * 768
-%endif  ; CONFIG_GRAPHIC
-
-;%define CONFIG_BOOT_FLOPPY
-%define CONFIG_BOOT_HARDDISK

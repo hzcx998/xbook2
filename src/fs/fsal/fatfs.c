@@ -10,9 +10,7 @@
 #include <sys/dir.h>
 #include <sys/stat.h>
 
-
-#define DEBUG_FATFS
-
+// #define DEBUG_FATFS
 
 typedef struct {
     FATFS *fsobj;        /* 挂载对象指针 */
@@ -104,7 +102,7 @@ static int __mount(char *source, char *target, char *fstype, unsigned long flags
         /* 在磁盘上创建文件系统 */
         res = f_mkfs(p, (const MKFS_PARM *)&parm, work, sizeof(work));
         if (res != FR_OK) {
-            pr_dbg("%s: make fs on drive %s failed with resoult code %d.\n", FS_MODEL_NAME, p, res);
+            pr_notice("%s: make fs on drive %s failed with resoult code %d.\n", FS_MODEL_NAME, p, res);
             return -1;
         }
     }

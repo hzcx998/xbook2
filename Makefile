@@ -28,16 +28,13 @@ HDA_IMG		= $(IMAGE_DIR)/c.img
 HDB_IMG		= $(IMAGE_DIR)/d.img
 ROM_DIR		= develop/rom
 
-BOOT_DISK	= $(HDA_IMG)
+BOOT_DISK	= $(FLOPPYA_IMG)
 FS_DISK		= $(HDB_IMG)
 
 # image size
 FLOPPYA_SZ	= 1474560  # 1.44 MB
 HDA_SZ		= 33554432 # 32 MB
 HDB_SZ		= 33554432
-
-# 默认大小为10M
-ROM_DISK_SZ	= 32
 
 # environment dir
 LIBRARY_DIR	= ./library
@@ -171,7 +168,7 @@ QEMU_ARGUMENT = -m 512M \
 		-name "XBOOK Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
 		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
-		-boot c \
+		-boot a \
 		-serial stdio \
 		-soundhw sb16 \
 		-soundhw pcspk

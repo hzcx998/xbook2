@@ -99,11 +99,29 @@ int fsal_list_dir(char* path)
 
 int init_disk_mount()
 {
-    /* 挂载文件系统 */
-    if (fsif.mount(ROOT_DISK_NAME, ROOT_DIR_PATH, "fat32", 0) < 0) {
-        printk("[%s] %s: mount failed!\n", FS_MODEL_NAME, __func__);
+    char name[32];
+    /* 选择一个已经创建文件系统的磁盘进行挂载为根目录 */
+    int i;
+    for (i = 0; i < 4; i++) {
+        memset(name, 0, 32);
+        strcpy(name, "disk");
+        char s[2] = {0, 0};
+        s[0] = i + '0';
+        strcat(name, s);
+        /* 挂载文件系统 */
+        if (fsif.mount(name, ROOT_DIR_PATH, "fat32", 0) < 0) {
+            #ifdef DEBUG_FSAL
+            printk("[fsal] : mount on device %s failed!\n");
+            #endif
+            continue;
+        }
+        break;  // 成功挂载
+    }
+    if (i >= 4) {
+        printk("[fsal] : mount path %s failed!\n", ROOT_DIR_PATH);
         return -1;
     }
+
 
     return 0;
 }

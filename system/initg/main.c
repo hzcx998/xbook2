@@ -43,6 +43,6 @@ int main(int argc, char *argv[])
         }
     }
     /* 启动桌面 */
-    exit(execv("/sbin/sh", NULL));
+    exit(execv("/sbin/desktop", NULL));
     return 0;
 }
