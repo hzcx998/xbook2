@@ -31,7 +31,7 @@ KERNEL MODE:
 +---------------------------+
 ```
 截图：
-![desktop0](https://gitee.com/hzc1998/xbook2/raw/master/develop/screenshoot/desktop0.png)
+![console0](https://gitee.com/hzc1998/xbook2/raw/master/develop/screenshoot/console.png)
 
 系统功能列表：
 ```
@@ -57,7 +57,7 @@ PTHREAD线程库
 
 ## Windows环境搭建
 ```
-1.下载我提取的工具包：http://www.book-os.org/tools/BuildTools-v6.zip, 下载后配置解压目录环境变量到系统环境变量Path里面。
+1.下载我提取的工具包：http://www.book-os.org/tools/BuildTools-v7.zip, 下载后配置解压目录环境变量到系统环境变量Path里面。（注意，如果你的电脑上已经有mingw或者cygwin环境，请把这个工具包的环境变量放到靠前的位置，不然不会执行工具包里面的程序）
 
 2.下载qemu最新版：https://www.qemu.org/ 下载后安装，配置安装目录环境变量到系统环境变量Path里面，或者下载我提取的版本：http://www.book-os.org/tools/Qemu-i386.rar，下载后配置解压目录环境变量到系统环境变量Path里面。
 ```
