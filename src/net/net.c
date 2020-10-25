@@ -100,6 +100,7 @@ void netin_kthread(void *arg)
         /* 检测输入，如果没有收到数据就会阻塞。 */
         ethernetif_input(&rtl8139_netif);
 		//todo: add your own user code here
+        task_yeild();
 	}
 #endif
 }

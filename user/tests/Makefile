@@ -1,6 +1,6 @@
-X_LIBS		+= libxlibc-0.0.1.a libpthread-0.0.1.a libcjson-1.7.14.a
+X_LIBS		+= libxlibc-0.0.1.a libpthread-0.0.1.a
 
-X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99 -O2
+X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99 -O3
 
 NAME		:= tests
 SRC			+= main.c
@@ -13,7 +13,6 @@ SRC			+= math_test.c
 SRC			+= http_test.c
 SRC			+= getopt_test.c
 SRC			+= buddy_test.c
-SRC			+= cjson_test.c
 SRC			+= pty_test.c
 
 define CUSTOM_TARGET_CMD

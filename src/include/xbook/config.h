@@ -18,7 +18,7 @@
 #define CONFIG_TIMEZONE_AUTO
 
 /* config graph */
-#define CONFIG_GRAPH
+// #define CONFIG_GRAPH
     #ifdef CONFIG_GRAPH
     /* gui console print */
     #define CONFIG_GUI_PRINT

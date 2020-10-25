@@ -729,7 +729,6 @@ int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen
             spin_unlock_irqrestore(&queue->lock, irqflags);
             return -1;    
         }
-        printk("!!!block wait\n");
         wait_queue_add(&queue->wait_queue, current_task);
         spin_unlock_irqrestore(&queue->lock, irqflags);
         task_block(TASK_BLOCKED);

@@ -149,6 +149,8 @@
         "sh_console.h": "c",
         "stat.h": "c",
         "ft_terminal.h": "c",
-        "ft_clipboard.h": "c"
+        "ft_clipboard.h": "c",
+        "fsal.h": "c",
+        "hw.h": "c"
     }
 }
