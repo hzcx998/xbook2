@@ -31,7 +31,7 @@ KERNEL MODE:
 +---------------------------+
 ```
 截图：
-![console0](https://gitee.com/hzc1998/xbook2/raw/master/develop/screenshoot/console.png)
+![console0](https://gitee.com/hzc1998/xbook2/raw/purekern/develop/screenshoot/console.png)
 
 系统功能列表：
 ```
