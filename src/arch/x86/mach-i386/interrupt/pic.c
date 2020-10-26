@@ -6,7 +6,7 @@
 /**
  * InitPic - 初始化pic
  */
-void init_pic(void)
+void pic_init(void)
 {
     /* mask all intr */
 	__out8(PIC_MASTER_CTLMASK,  0xff  );

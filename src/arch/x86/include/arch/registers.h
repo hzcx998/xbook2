@@ -2,11 +2,11 @@
 #define _X86_REGISTERS_H
 
 void load_tr(unsigned int tr);
-void load_gdtr(unsigned int limit, unsigned int addr);
+void gdt_register_set(unsigned int limit, unsigned int addr);
 void load_idtr(unsigned int limit, unsigned int addr);
 unsigned int load_eflags(void);
 
-void store_gdtr(unsigned int gdtr);
+void gdt_register_get(unsigned int gdtr);
 void store_idtr(unsigned int idtr);
 void store_eflags(unsigned int eflags);
 

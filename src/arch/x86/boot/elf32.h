@@ -1,6 +1,6 @@
 
-#ifndef _XBOOK_ELF32_H
-#define _XBOOK_ELF32_H
+#ifndef _BOOT_ELF32_H
+#define _BOOT_ELF32_H
 
 /* 自定义的elf类型 */
 typedef unsigned int Elf32_Word, Elf32_Addr, Elf32_Off;
@@ -57,4 +57,4 @@ enum segment_type {
 
 #define ELF32_PHDR_DATA (ELF32_PF_W | ELF32_PF_R) /* 数据段 */
 
-#endif   /* _XBOOK_ELF32_H */
+#endif   /* _BOOT_ELF32_H */

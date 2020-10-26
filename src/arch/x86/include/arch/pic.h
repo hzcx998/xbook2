@@ -8,6 +8,6 @@
 
 #define PIC_EIO             0x20    /* end of IO port */
 
-void init_pic();
+void pic_init();
 
 #endif	/* _X86_PIC_H */

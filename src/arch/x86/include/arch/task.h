@@ -1,5 +1,5 @@
-#ifndef _ARCH_TASK_H
-#define _ARCH_TASK_H
+#ifndef _X86_TASK_H
+#define _X86_TASK_H
 
 
 #include <types.h>
@@ -48,7 +48,6 @@ void __switch_to(unsigned long prev, unsigned long next);
 void __switch_to_user(trap_frame_t *frame);
 
 void __user_trap_frame_init(trap_frame_t *frame);
-void __ktask_trap_frame_init(trap_frame_t *frame);
 void __kernel_trap_frame_init(trap_frame_t *frame);
 
 void __build_user_thread_frame(trap_frame_t *frame, void *arg, void *func,
@@ -100,4 +99,4 @@ void dump_task_kstack(thread_stack_t *kstack);
 
 #define trigger_return    __trigger_return
 
-#endif  /* _ARCH_TASK_H */
+#endif  /* _X86_TASK_H */

@@ -1,5 +1,5 @@
-#ifndef _ARCH_PAGE_H
-#define _ARCH_PAGE_H
+#ifndef _X86_PAGE_H
+#define _X86_PAGE_H
 
 #include "interrupt.h"
 #include "pmem.h"
@@ -190,4 +190,4 @@ static inline void *p2v(unsigned long address)
 
 #define addr_v2p(addr)                      __addr_v2p(addr)
 
-#endif  /* _ARCH_PAGE_H */
+#endif  /* _X86_PAGE_H */

@@ -8,7 +8,7 @@
 /* tss对象 */
 tss_t tss;
 
-tss_t *get_tss()
+tss_t *tss_get_from_cpu0()
 {
 	return &tss;
 }
@@ -19,7 +19,7 @@ void update_tss_info(unsigned long task_addr)
 	tss.esp0 = (unsigned long)(task_addr + TASK_KSTACK_SIZE);
 }
 
-void init_tss()
+void tss_init()
 {
 	memset(&tss, 0, sizeof(tss));
 	// 内核的内核栈

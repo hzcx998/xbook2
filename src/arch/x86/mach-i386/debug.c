@@ -13,7 +13,7 @@ void debug_putchar(char ch)
 #endif /* X86_SERIAL_HW */
 }
 
-void init_kernel_debug()
+void arch_debug_init()
 {
     // 初始化控制台
 	init_console_hw();

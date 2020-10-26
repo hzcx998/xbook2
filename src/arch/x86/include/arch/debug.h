@@ -1,8 +1,7 @@
 #ifndef _X86_DEBUG_H
 #define _X86_DEBUG_H
 
-#define DEBUG_TASK
-
+#define TASK_DEBUG
 
 // void (*debug_putchar) (char ch);
 // 
@@ -16,8 +15,7 @@
 // And put a "extern" in "src/kernel/debug.c" because just one func "printk" reference
 // the "debug_putchar" (i just find)
 
-void init_kernel_debug();
+void arch_debug_init();
 void debug_putchar(char ch);
-
 
 #endif  /* _X86_DEBUG_H */

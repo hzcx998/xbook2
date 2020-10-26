@@ -164,9 +164,9 @@ int __free_pages(unsigned long page)
 }
 
 /**
- * init_pmem - 初始化物理内存管理以及一些相关设定
+ * physic_memory_init - 初始化物理内存管理以及一些相关设定
  */
-int init_pmem()
+int physic_memory_init()
 {
     //----获取内存大小----
     total_pmem_size = get_memory_size_from_hardware();

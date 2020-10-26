@@ -46,7 +46,6 @@ static void set_cursor(unsigned short cursor)
 	outb(CRTC_DATA_REG, cursor & 0xFF);
 }
 
-
 /**
  * flush - 刷新光标和起始位置
  * @console: 控制台

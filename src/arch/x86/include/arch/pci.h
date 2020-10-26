@@ -1,5 +1,5 @@
-#ifndef _ARCH_PCI_H
-#define _ARCH_PCI_H
+#ifndef _X86_PCI_H
+#define _X86_PCI_H
 
 /*
 【简介】
@@ -166,6 +166,6 @@ void pci_device_dump(pci_device_t *device);
 unsigned int pci_device_read(pci_device_t *device, unsigned int reg);
 void pci_device_write(pci_device_t *device, unsigned int reg, unsigned int value);
 
-void init_pci();
+void pci_init();
 
-#endif  /* _ARCH_PCI_H */
+#endif  /* _X86_PCI_H */

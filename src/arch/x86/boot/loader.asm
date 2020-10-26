@@ -49,15 +49,15 @@ entry:
 ;4.设置cr0的最低1位位1，就是切换成保护模式
 ;5.执行一个远跳转，清空cpu流水线
 set_protect_mode:
-	;close the interruption
-	cli
+	
+	cli ;close the interruption
 	lgdt	[gdt_reg]
 	
 	;enable A20 line
 	in		al,0x92
 	or		al,2
 	out		0x92,al
-	;set CR0 bit PE
+	; enable protect mode
 	mov		eax,cr0
 	or		eax,1
 	mov		cr0,eax
@@ -78,14 +78,14 @@ load_kernel_file:
 	mov ax, KERNEL_SEG
 	mov si, KERNEL_OFF
     mov dx, 0
-	mov cx, BLOCK_SIZE
+	mov cx, DISK_BLOCK_SIZE
     xor bx, bx 
 
     mov di, 16           ; 内核占用512kb，每次加载64扇区（32kb），因此需要加载16次
 .replay:
 	call read_sectors
 	add ax, 0x800
-    add si, BLOCK_SIZE
+    add si, DISK_BLOCK_SIZE
 
     dec di
     cmp di, 0

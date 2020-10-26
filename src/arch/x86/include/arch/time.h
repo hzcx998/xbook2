@@ -1,5 +1,5 @@
-#ifndef _ARCH_TIME_H
-#define _ARCH_TIME_H
+#ifndef _X86_TIME_H
+#define _X86_TIME_H
 
 unsigned int cmos_get_hour_hex();
 unsigned int cmos_get_min_hex();
@@ -45,4 +45,4 @@ void __udelay(int usec);
 
 #define udelay              __udelay
 
-#endif  /* _ARCH_TIME_H */
+#endif  /* _X86_TIME_H */

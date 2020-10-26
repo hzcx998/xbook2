@@ -1,5 +1,5 @@
-#ifndef _ARCH_CPU_H
-#define _ARCH_CPU_H
+#ifndef _X86_CPU_H
+#define _X86_CPU_H
 
 #include <types.h>
 
@@ -32,4 +32,4 @@ static inline cpuid_t hal_cpu_cur_get_id()
 }
 
 
-#endif  /* _ARCH_CPU_H */
+#endif  /* _X86_CPU_H */

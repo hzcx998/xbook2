@@ -1,5 +1,5 @@
-#ifndef _ARCH_INSTRUCTION_H
-#define _ARCH_INSTRUCTION_H
+#ifndef _X86_INSTRUCTION_H
+#define _X86_INSTRUCTION_H
 
 void __invlpg_asm(unsigned int addr);
 #define __invlpg_inline(vaddr) asm volatile ("invlpg %0"::"m" (vaddr):"memory")
@@ -90,4 +90,4 @@ static inline unsigned int  __xchg(unsigned int x,
     return old;
 }
 
-#endif  /* _ARCH_INSTRUCTION_H */
+#endif  /* _X86_INSTRUCTION_H */

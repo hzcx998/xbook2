@@ -406,7 +406,7 @@ static unsigned int pic_get_device_connected()
 	return i;
 }
 
-void init_pci()
+void pci_init()
 {
     /*init pci device table*/
 	int i;
@@ -418,5 +418,5 @@ void init_pci()
 	/*scan all pci buses*/
 	pci_scan_buses();
 
-    printk(KERN_INFO "init_pci: pci type device found %d.\n", pic_get_device_connected());
+    printk(KERN_INFO "pci_init: pci type device found %d.\n", pic_get_device_connected());
 }

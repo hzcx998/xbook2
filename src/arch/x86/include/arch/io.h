@@ -1,5 +1,5 @@
-#ifndef _ARCH_IO_H
-#define _ARCH_IO_H
+#ifndef _X86_IO_H
+#define _X86_IO_H
 
 unsigned char __in8(unsigned int port);
 unsigned short __in16(unsigned int port);
@@ -24,4 +24,4 @@ void __io_write(unsigned short port, void* buf, unsigned int n);
 
 #define io_mfence() 	__asm__ __volatile__ ("mfence	\n\t":::"memory")
 
-#endif  /* _ARCH_IO_H */
+#endif  /* _X86_IO_H */

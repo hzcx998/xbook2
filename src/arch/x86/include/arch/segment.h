@@ -41,8 +41,6 @@
 #define	INDEX_TSS 3
 #define	INDEX_USER_C 4
 #define	INDEX_USER_RW 5
-#define	INDEX_SERVE_C 6
-#define	INDEX_SERVE_RW 7
 
 //选择子...
 //内核代码，数据，栈，视频
@@ -59,16 +57,20 @@
 //TSS
 #define KERNEL_TSS_SEL ((INDEX_TSS << 3) + (SA_TIG << 2) + SA_RPL0)
 
-
-//用户代码，数据，栈
-#define SERVE_CODE_SEL ((INDEX_SERVE_C << 3) + (SA_TIG << 2) + SA_RPL1)
-#define SERVE_DATA_SEL ((INDEX_SERVE_RW << 3) + (SA_TIG << 2) + SA_RPL1)
-#define SERVE_STACK_SEL SERVE_DATA_SEL 
-
-
 /* GDT 的虚拟地址 */
 #define GDT_VADDR			0x80200000
 #define GDT_LIMIT		    0x000007ff
+
+#define GDT_OFF2PTR(gdt, off)    (gdt + off) 
+
+#define GDT_BOUND_BOTTOM   0
+#define GDT_BOUND_TOP      0xffffffff
+
+#define GDT_KERNEL_CODE_ATTR        (DA_CR | DA_DPL0 | DA_32 | DA_G)
+#define GDT_KERNEL_DATA_ATTR        (DA_DRW | DA_DPL0 | DA_32 | DA_G)
+#define GDT_USER_CODE_ATTR          (DA_CR | DA_DPL3 | DA_32 | DA_G)
+#define GDT_USER_DATA_ATTR          (DA_DRW | DA_DPL3 | DA_32 | DA_G)
+#define GDT_TSS_ATTR                (DA_386TSS)
 
 /*
 段描述符结构
@@ -80,6 +82,6 @@ struct segment_descriptor {
 };
 
 //初始化段描述符
-void init_segment_descriptor();
+void segment_descriptor_init();
 
 #endif	/*_X86_SEGMENT_H*/

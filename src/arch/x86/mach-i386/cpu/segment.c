@@ -5,9 +5,9 @@
 /* 
  * Global descriptor table
  */
-struct segment_descriptor *gdt;
+struct segment_descriptor *gdt0;
 
-static void set_segment_descriptor(struct segment_descriptor *descriptor, unsigned int limit, \
+static void segment_descriptor_set(struct segment_descriptor *descriptor, unsigned int limit, \
 		unsigned int base, unsigned int attributes)
 {
 	descriptor->limit_low    = limit & 0xffff;
@@ -18,30 +18,24 @@ static void set_segment_descriptor(struct segment_descriptor *descriptor, unsign
 	descriptor->base_high    = (base >> 24) & 0xff;
 }
 
-void init_segment_descriptor()
+void segment_descriptor_init()
 {
-    /* the new gdt */
-	gdt = (struct segment_descriptor *) GDT_VADDR;
-    
+	gdt0 = (struct segment_descriptor *) GDT_VADDR;
 	int i;
 	for (i = 0; i <= GDT_LIMIT/8; i++) {
-		set_segment_descriptor(gdt + i, 0, 0, 0);
+		segment_descriptor_set(GDT_OFF2PTR(gdt0, i), 0, 0, 0);
 	}
 	// 内核代码段和数据段
-	set_segment_descriptor(gdt + INDEX_KERNEL_C, 0xffffffff,   0x00000000, DA_CR | DA_DPL0 | DA_32 | DA_G);
-	set_segment_descriptor(gdt + INDEX_KERNEL_RW, 0xffffffff,   0x00000000, DA_DRW | DA_DPL0 | DA_32 | DA_G);
+	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_KERNEL_C), GDT_BOUND_TOP, GDT_BOUND_BOTTOM, GDT_KERNEL_CODE_ATTR);
+	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_KERNEL_RW), GDT_BOUND_TOP,   GDT_BOUND_BOTTOM, GDT_KERNEL_DATA_ATTR);
 	
-    tss_t *tss = get_tss();
+    tss_t *tss = tss_get_from_cpu0();
     // tss 段
-	set_segment_descriptor(gdt + INDEX_TSS, sizeof(tss_t) - 1, (uint32_t )tss, DA_386TSS);
+	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_TSS), sizeof(tss_t) - 1, (uint32_t )tss, GDT_TSS_ATTR);
 	// 用户代码段和数据段
-	set_segment_descriptor(gdt + INDEX_USER_C, 0xffffffff, 0x00000000, DA_CR | DA_DPL3 | DA_32 | DA_G);
-	set_segment_descriptor(gdt + INDEX_USER_RW, 0xffffffff, 0x00000000, DA_DRW | DA_DPL3 | DA_32 | DA_G);
+	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_USER_C), GDT_BOUND_TOP, GDT_BOUND_BOTTOM, DA_CR | DA_DPL3 | DA_32 | DA_G);
+	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_USER_RW), GDT_BOUND_TOP, GDT_BOUND_BOTTOM, DA_DRW | DA_DPL3 | DA_32 | DA_G);
 
-	// 服务代码段和数据段
-	set_segment_descriptor(gdt + INDEX_SERVE_C, 0xffffffff, 0x00000000, DA_CR | DA_DPL1 | DA_32 | DA_G);
-	set_segment_descriptor(gdt + INDEX_SERVE_RW, 0xffffffff, 0x00000000, DA_DRW | DA_DPL1 | DA_32 | DA_G);
-	
     /* load new gdtr */
-	load_gdtr(GDT_LIMIT, GDT_VADDR);
+	gdt_register_set(GDT_LIMIT, GDT_VADDR);
 }

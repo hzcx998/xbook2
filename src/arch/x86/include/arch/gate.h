@@ -25,6 +25,6 @@ struct gate_descriptor {
 	unsigned short offset_high;
 };
 
-void init_gate_descriptor();
+void gate_descriptor_init();
 
 #endif	/* _X86_GATE_H */

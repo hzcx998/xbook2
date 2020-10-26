@@ -1,5 +1,5 @@
-#ifndef _ARCH_INTERRUPT_H
-#define _ARCH_INTERRUPT_H
+#ifndef _X86_INTERRUPT_H
+#define _X86_INTERRUPT_H
 
 #include "atomic.h"
 #include "registers.h"
@@ -201,4 +201,4 @@ int handle_irq(unsigned long irq, trap_frame_t *frame);
 
 void init_irq_description();
 
-#endif  /* _ARCH_INTERRUPT_H */
+#endif  /* _X86_INTERRUPT_H */

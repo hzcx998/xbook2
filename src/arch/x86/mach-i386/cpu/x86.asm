@@ -89,14 +89,14 @@ write_cr0:
 	mov cr0,eax
 	ret	
 	
-global store_gdtr 
-store_gdtr:
+global gdt_register_get 
+gdt_register_get:
 	mov eax, [esp + 4]
 	sgdt [eax]
 	ret
 
-global load_gdtr
-load_gdtr:	;void load_gdtr(unsigned int limit, unsigned int addr);
+global gdt_register_set
+gdt_register_set:	;void gdt_register_set(unsigned int limit, unsigned int addr);
 	mov ax, [esp + 4]
 	mov	[esp+6],ax		
 	lgdt [esp+6]

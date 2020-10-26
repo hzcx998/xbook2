@@ -154,7 +154,7 @@ static void init_interrupt_descriptor()
 
 }
 
-void init_gate_descriptor()
+void gate_descriptor_init()
 {
 	/* interrupt gate */
 	init_interrupt_descriptor();

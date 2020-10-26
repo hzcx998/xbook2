@@ -72,7 +72,7 @@ typedef struct {
 #define CHECK_MEM_NODE(node)                            \
         if (node == NULL) panic("Mem node error!\n") 
 
-int init_pmem();
+int physic_memory_init();
 
 void dump_mem_node(mem_node_t *node);
 

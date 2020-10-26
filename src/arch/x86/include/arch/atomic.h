@@ -1,5 +1,5 @@
-#ifndef _ARCH_ATOMIC_H
-#define _ARCH_ATOMIC_H
+#ifndef _X86_ATOMIC_H
+#define _X86_ATOMIC_H
 
 #include <arch/instruction.h>
 
@@ -82,4 +82,4 @@ static inline void atomic_clear_mask(atomic_t *atomic, int mask)
 
 #define atomic_xchg(v, new) (xchg(&((v)->value), new))
 
-#endif   /* _ARCH_ATOMIC_H */
+#endif   /* _X86_ATOMIC_H */
