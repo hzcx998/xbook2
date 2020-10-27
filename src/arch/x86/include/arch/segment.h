@@ -36,22 +36,22 @@
 
 //index of descriptor
 #define	INDEX_DUMMY 0
-#define	INDEX_KERNEL_C 1
-#define	INDEX_KERNEL_RW 2
+#define	INDEX_KERNEL_CODE 1
+#define	INDEX_KERNEL_DATA 2
 #define	INDEX_TSS 3
-#define	INDEX_USER_C 4
-#define	INDEX_USER_RW 5
+#define	INDEX_USER_CODE 4
+#define	INDEX_USER_DATA 5
 
 //选择子...
 //内核代码，数据，栈，视频
 
-#define KERNEL_CODE_SEL ((INDEX_KERNEL_C << 3) + (SA_TIG << 2) + SA_RPL0)
-#define KERNEL_DATA_SEL ((INDEX_KERNEL_RW << 3) + (SA_TIG << 2) + SA_RPL0)
+#define KERNEL_CODE_SEL ((INDEX_KERNEL_CODE << 3) + (SA_TIG << 2) + SA_RPL0)
+#define KERNEL_DATA_SEL ((INDEX_KERNEL_DATA << 3) + (SA_TIG << 2) + SA_RPL0)
 #define KERNEL_STACK_SEL KERNEL_DATA_SEL 
 
 //用户代码，数据，栈
-#define USER_CODE_SEL ((INDEX_USER_C << 3) + (SA_TIG << 2) + SA_RPL3)
-#define USER_DATA_SEL ((INDEX_USER_RW << 3) + (SA_TIG << 2) + SA_RPL3)
+#define USER_CODE_SEL ((INDEX_USER_CODE << 3) + (SA_TIG << 2) + SA_RPL3)
+#define USER_DATA_SEL ((INDEX_USER_DATA << 3) + (SA_TIG << 2) + SA_RPL3)
 #define USER_STACK_SEL USER_DATA_SEL 
 
 //TSS

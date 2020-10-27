@@ -25,17 +25,14 @@ void segment_descriptor_init()
 	for (i = 0; i <= GDT_LIMIT/8; i++) {
 		segment_descriptor_set(GDT_OFF2PTR(gdt0, i), 0, 0, 0);
 	}
-	// 内核代码段和数据段
-	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_KERNEL_C), GDT_BOUND_TOP, GDT_BOUND_BOTTOM, GDT_KERNEL_CODE_ATTR);
-	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_KERNEL_RW), GDT_BOUND_TOP,   GDT_BOUND_BOTTOM, GDT_KERNEL_DATA_ATTR);
+	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_KERNEL_CODE), GDT_BOUND_TOP, GDT_BOUND_BOTTOM, GDT_KERNEL_CODE_ATTR);
+	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_KERNEL_DATA), GDT_BOUND_TOP,   GDT_BOUND_BOTTOM, GDT_KERNEL_DATA_ATTR);
 	
     tss_t *tss = tss_get_from_cpu0();
-    // tss 段
 	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_TSS), sizeof(tss_t) - 1, (uint32_t )tss, GDT_TSS_ATTR);
-	// 用户代码段和数据段
-	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_USER_C), GDT_BOUND_TOP, GDT_BOUND_BOTTOM, DA_CR | DA_DPL3 | DA_32 | DA_G);
-	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_USER_RW), GDT_BOUND_TOP, GDT_BOUND_BOTTOM, DA_DRW | DA_DPL3 | DA_32 | DA_G);
 
-    /* load new gdtr */
+	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_USER_CODE), GDT_BOUND_TOP, GDT_BOUND_BOTTOM, DA_CR | DA_DPL3 | DA_32 | DA_G);
+	segment_descriptor_set(GDT_OFF2PTR(gdt0, INDEX_USER_DATA), GDT_BOUND_TOP, GDT_BOUND_BOTTOM, DA_DRW | DA_DPL3 | DA_32 | DA_G);
+
 	gdt_register_set(GDT_LIMIT, GDT_VADDR);
 }

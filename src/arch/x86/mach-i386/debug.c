@@ -6,20 +6,20 @@ void debug_putchar(char ch)
 {
 #ifdef X86_CONSOLE_HW
     console_putchar(ch);
-#endif /* X86_CONSOLE_HW */
+#endif
 
 #ifdef X86_SERIAL_HW
     serial_putchar(ch);
-#endif /* X86_SERIAL_HW */
+#endif
 }
 
 void arch_debug_init()
 {
-    // 初始化控制台
+    // 默认都会初始化控制台
 	init_console_hw();
 
 #ifdef X86_SERIAL_HW
     // 初始化串口
     init_serial_hw();
-#endif /* X86_SERIAL_HW */
+#endif
 }

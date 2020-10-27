@@ -17,7 +17,7 @@ struct ards_struct {
 	unsigned int type;  //该结构的类型(1可以被系统使用)
 };
 
-unsigned int get_memory_size_from_hardware()
+unsigned int phy_mem_size_get_from_hardware()
 {
 	unsigned int totalSize = 0;
 

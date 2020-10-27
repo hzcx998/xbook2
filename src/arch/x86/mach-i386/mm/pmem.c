@@ -5,7 +5,7 @@
 #include <math.h>
 #include <string.h>
 
-extern unsigned int get_memory_size_from_hardware();
+extern unsigned int phy_mem_size_get_from_hardware();
 
 /*
 申请一个内存节点数组，通过引用来表明是否被使用
@@ -169,7 +169,7 @@ int __free_pages(unsigned long page)
 int physic_memory_init()
 {
     //----获取内存大小----
-    total_pmem_size = get_memory_size_from_hardware();
+    total_pmem_size = phy_mem_size_get_from_hardware();
     /* 根据内存大小划分区域
     如果内存大于1GB:
         1G预留128MB给非连续内存，其余给内核和用户程序平分，内核多余的部分分给用户

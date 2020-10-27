@@ -1,5 +1,5 @@
 #include <arch/time.h>
-
+/* TODO: make udelay better */
 void __udelay(int usec)
 {
     int i, j;
