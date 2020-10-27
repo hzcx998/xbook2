@@ -498,10 +498,10 @@ task_t *start_process(char *name, char **argv)
     }*/
     //process_setup(task, name, argv);
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     task_global_list_add(task);
     task_priority_queue_add_tail(sched_get_unit(), task);
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     
     return task;
 }

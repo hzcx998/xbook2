@@ -40,7 +40,7 @@ static int do_copy_normal_page(addr_t vaddr, void *buf, vmm_t *child, vmm_t *par
     // 分配一个物理页
     paddr = alloc_page();
     if (!paddr) {
-        printk(KERN_ERR "copy_vm_mapping: alloc_page for vaddr failed!\n");
+        printk(KERN_ERR "vmm_copy_mapping: alloc_page for vaddr failed!\n");
 
         /* 激活父进程并返回 */
         vmm_active(parent);
@@ -59,12 +59,12 @@ static int do_copy_normal_page(addr_t vaddr, void *buf, vmm_t *child, vmm_t *par
 }
 
 /* 复制进程虚拟内存的映射 */
-int __copy_vm_mapping(task_t *child, task_t *parent)
+int vmm_copy_mapping(task_t *child, task_t *parent)
 {
     /* 开始内存的复制 */
     void *buf = kmalloc(PAGE_SIZE);
     if (buf == NULL) {
-        printk(KERN_ERR "copy_vm_mapping: kmalloc buf for data transform failed!\n");
+        printk(KERN_ERR "vmm_copy_mapping: kmalloc buf for data transform failed!\n");
         return -1;
     }
     /* 获取父目录的虚拟空间 */

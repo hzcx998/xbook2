@@ -325,12 +325,12 @@ void init_ktime()
     /* 初始化系统时间 */
     //用一个循环让秒相等
 	do{
-		ktime.year      = get_time_year();
-		ktime.month     = get_time_month();
-		ktime.day       = get_time_day();
-		ktime.hour      = get_time_hour();
-		ktime.minute    =  get_time_minute();
-		ktime.second    = get_time_second();
+		ktime.year      = time_get_year();
+		ktime.month     = time_get_month();
+		ktime.day       = time_get_day();
+		ktime.hour      = time_get_hour();
+		ktime.minute    =  time_get_minute();
+		ktime.second    = time_get_second();
 		
 		/* 转换成本地时间 */
 		/* 自动转换时区 */
@@ -341,7 +341,7 @@ void init_ktime()
 			ktime.hour += 8;
 		}
 #endif /* CONFIG_TIMEZONE_AUTO */
-	}while(ktime.second != get_time_second());
+	}while(ktime.second != time_get_second());
 
     ktime.week_day = get_week_day(ktime.year, ktime.month, ktime.day);
     ktime.year_day = get_year_days();

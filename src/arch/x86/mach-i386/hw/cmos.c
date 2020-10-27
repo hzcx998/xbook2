@@ -5,9 +5,9 @@
 static unsigned char read_cmos(unsigned char p)
 {
 	unsigned char data;
-	__out8(CMOS_INDEX, p);
-	data = __in8(CMOS_DATA);
-	__out8(CMOS_INDEX, 0x80);
+	ioport_out8(CMOS_INDEX, p);
+	data = ioport_in8(CMOS_DATA);
+	ioport_out8(CMOS_INDEX, 0x80);
 	return data;
 }
 

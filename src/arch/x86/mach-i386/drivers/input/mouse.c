@@ -455,7 +455,7 @@ static iostatus_t mouse_enter(driver_object_t *driver)
 #endif
     
     /* 注册时钟中断并打开中断，因为设定硬件过程中可能产生中断，所以要提前打开 */	
-	register_irq(devext->irq, mouse_handler, IRQF_DISABLED, "IRQ12_MOUSE", DRV_NAME, (unsigned long )devext);
+	irq_register(devext->irq, mouse_handler, IRQF_DISABLED, "IRQ12_MOUSE", DRV_NAME, (unsigned long )devext);
     
     /* 开启鼠标端口 */
     WAIT_KBC_WRITE();

@@ -368,7 +368,7 @@ static void ps2mouse_initialize_device(device_extension_t *devext)
         printk(KERN_INFO "ps2mouse: No mouse wheel detected!\n");
     }
 
-	register_irq(devext->irq, mouse_handler, IRQF_DISABLED, "IRQ12_MOUSE", DRV_NAME, (unsigned long )devext);
+	irq_register(devext->irq, mouse_handler, IRQF_DISABLED, "IRQ12_MOUSE", DRV_NAME, (unsigned long )devext);
 }
 
 static void ps2mouse_expect_ack()

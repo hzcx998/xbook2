@@ -1,8 +1,8 @@
 #include <arch/page.h>
 #include <arch/pmem.h>
-#include <arch/instruction.h>
 #include <arch/registers.h>
 #include <arch/tss.h>
+#include <arch/memory.h>
 #include <xbook/debug.h>
 #include <math.h>
 #include <string.h>
@@ -145,8 +145,8 @@ void __page_unlink(unsigned long vaddr)
         // 清除页表项的存在位，相当于删除物理页
 		*pte &= ~PG_P_1;
 
-		/* flush vaddr tbl cache */
-        flush_tbl(vaddr);        
+		/* flush vaddr tlb cache */
+        tlb_flush_one(vaddr);        
     }
 }
 
@@ -621,7 +621,7 @@ int do_page_fault(trap_frame_t *frame)
     task_t *cur = current_task;
     unsigned long addr = 0x00;
 
-    addr = read_cr2(); /* cr2 saved the fault addr */
+    addr = cpu_cr2_read(); /* cr2 saved the fault addr */
     //printk(KERN_DEBUG "page fault addr:%x\n", addr);
 
     /* in kernel page fault */
@@ -629,14 +629,14 @@ int do_page_fault(trap_frame_t *frame)
         printk("task name=%s pid=%d\n", cur->name, cur->pid);
         printk(KERN_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
         printk(KERN_EMERG "page fault at %x.\n", addr);
-        dump_trap_frame(frame);
+        trap_frame_dump(frame);
         panic("halt...");
     }
     /* 如果故障地址位于内核中， */
     if (addr >= USER_VMM_SIZE) {
         /* 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
         printk(KERN_DEBUG "user pid=%d name=%s access unmaped vmarea area .\n", cur->pid, cur->name);
-        dump_trap_frame(frame);
+        trap_frame_dump(frame);
         print_task();
         do_vmarea_fault(addr);
         return -1;
@@ -670,7 +670,7 @@ int do_page_fault(trap_frame_t *frame)
                 printk("task name=%s pid=%d\n", cur->name, cur->pid);
                 printk(KERN_EMERG "do_page_fault: touch TRIGSYS trigger because unknown space!\n");
                 printk(KERN_EMERG "page fault addr:%x\n", addr);
-                dump_trap_frame(frame);
+                trap_frame_dump(frame);
                 //dump_vmspace(cur->vmm);
         
                 trigger_force(TRIGSYS, cur->pid);
@@ -700,6 +700,6 @@ void __page_dir_active(unsigned int page, int on)
     if (on) {
         paddr = page;
     }
-    write_cr3(paddr);
-    update_tss_info((unsigned long )current_task);
+    cpu_cr3_write(paddr);
+    tss_update_info((unsigned long )current_task);
 }

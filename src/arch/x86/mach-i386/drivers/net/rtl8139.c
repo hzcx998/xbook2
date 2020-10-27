@@ -672,7 +672,7 @@ int rtl8139_transmit(device_extension_t *ext, uint8_t *buf, uint32 len)
     //enum InterruptStatus flags = InterruptDisable();
     
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
     /* 如果还有剩余的传输项 */
     if (atomic_get(&ext->tx_free_counts) > 0) {
@@ -736,10 +736,10 @@ int rtl8139_transmit(device_extension_t *ext, uint8_t *buf, uint32 len)
         printk(KERN_DEBUG "Stop Tx packet!\n");
 #endif
         //netif_stop_queue (dev);
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         return -1;
     }
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 
 #ifdef DEBUG_DRV 
     printk(KERN_DEBUG "Queued Tx packet size %d to slot %d\n",
@@ -1135,7 +1135,7 @@ static int rtl8139_handler(unsigned long irq, unsigned long data)
     //struct Task *cur = CurrentTask();
     //printk(KERN_DEBUG "in task %s.\n", cur->name);
 	//printk(KERN_DEBUG "rtl8139_handler occur!\n");
-    //disable_intr();
+    //interrupt_disable();
     device_extension_t *ext = (device_extension_t *) data;
 
     u16 status, ackstat;
@@ -1220,7 +1220,7 @@ static void rtl8139_chip_reset(device_extension_t *ext)
         /* 如果重置完成，该位会被置0 */
 		if ((in8(ext->io_addr + CHIP_CMD) & CMD_RESET) == 0)
 			break;
-        cpu_lazy();
+        cpu_idle();
 	}
 
 }
@@ -1541,7 +1541,7 @@ static iostatus_t rtl8139_open(device_object_t *device, io_request_t *ioreq)
     /* 设置硬件信息 */
     rtl8139_hardware_start(ext);
 
-    register_irq(ext->irq, rtl8139_handler, IRQF_SHARED, "IRQ-Network", DEV_NAME, (unsigned int)ext);
+    irq_register(ext->irq, rtl8139_handler, IRQF_SHARED, "IRQ-Network", DEV_NAME, (unsigned int)ext);
     
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = 0;
@@ -1573,7 +1573,7 @@ static iostatus_t rtl8139_close(device_object_t *device, io_request_t *ioreq)
     out32(ext->io_addr + RX_MISSED, 0);
 
     /* 注销中断 */
-    unregister_irq(ext->irq, ext);
+    irq_unregister(ext->irq, ext);
     spin_unlock_irqrestore(&ext->lock, flags);
 
     /* 清除传输的项 */

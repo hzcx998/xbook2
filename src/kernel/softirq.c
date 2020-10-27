@@ -91,7 +91,7 @@ redo:
         action = &softirq_table[0];
         
         /* 打开中断，允许中断产生 */
-        enable_intr();
+        interrupt_enable();
 
         /* 处理softirq事件 */
         do {
@@ -106,7 +106,7 @@ redo:
         } while(evens);
 
         /* 关闭中断 */
-        disable_intr();
+        interrupt_disable();
 
         /* 检查是否还有事件没有处理，也就是说在处理事件过程中，又发生了中断 */
         evens = get_softirq_evens();
@@ -131,7 +131,7 @@ void do_softirq()
 
     /* 关闭中断 */
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     
     /* 获取事件 */
     evens = get_softirq_evens();
@@ -141,7 +141,7 @@ void do_softirq()
         handle_softirq();
 
     /* 恢复之前状态 */
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 /**
@@ -155,7 +155,7 @@ void high_task_assist_schedule(task_assist_t *assist)
     /* 如果状态还没有调度，才能进行调度 */
     if (!test_and_set_bit(HIGHTASK_ASSIST_SOFTIRQ, &assist->status)) {
         unsigned long flags;
-        save_intr(flags);
+        interrupt_save_state(flags);
 
         /* 把任务协助插入到队列最前面 */
         assist->next = high_task_assist_head.head;
@@ -164,7 +164,7 @@ void high_task_assist_schedule(task_assist_t *assist)
         /* 激活HIGHTTASKASSIST_SOFTIRQ */
         active_softirq(HIGHTASK_ASSIST_SOFTIRQ);
 
-        restore_intr(flags);
+        interrupt_restore_state(flags);
     }
 }
 
@@ -177,12 +177,12 @@ static void high_task_assist_action(softirq_action_t *action)
     task_assist_t *list;
 
     /* 先关闭中断，不然修改链表可能和添加链表产生排斥 */
-    disable_intr();
+    interrupt_disable();
     /* 获取链表头指针，用于寻找每一个调度的任务协助 */
     list = high_task_assist_head.head;
     /* 把头置空，用于后面添加协助 */
     high_task_assist_head.head = NULL;
-    enable_intr();
+    interrupt_enable();
 
     /* 开始获取并处理协助 */
     while (list != NULL) {
@@ -205,7 +205,7 @@ static void high_task_assist_action(softirq_action_t *action)
         /* 如果写成是关闭状态，那么就重新加入到队列 */
         
         /* 修改链表数据时禁止中断 */
-        disable_intr();
+        interrupt_disable();
         /* 把任务协助插入到队列最前面 */
         assist->next = high_task_assist_head.head;
         high_task_assist_head.head = assist;
@@ -213,7 +213,7 @@ static void high_task_assist_action(softirq_action_t *action)
         /* 激活HIGHTASK_ASSIST_SOFTIRQ */
         active_softirq(HIGHTASK_ASSIST_SOFTIRQ);
         
-        enable_intr();
+        interrupt_enable();
         
     }
 }
@@ -229,7 +229,7 @@ void task_assist_schedule(task_assist_t *assist)
     /* 如果状态还没有调度，才能进行调度 */
     if (!test_and_set_bit(TASK_ASSIST_SOFTIRQ, &assist->status)) {
         unsigned long flags;
-        save_intr(flags);
+        interrupt_save_state(flags);
 
         /* 把任务协助插入到队列最前面 */
         assist->next = task_assist_head.head;
@@ -238,7 +238,7 @@ void task_assist_schedule(task_assist_t *assist)
         /* 激活TASK_ASSIST_SOFTIRQ */
         active_softirq(TASK_ASSIST_SOFTIRQ);
 
-        restore_intr(flags);
+        interrupt_restore_state(flags);
     }
 }
 
@@ -252,12 +252,12 @@ static void task_assist_action(softirq_action_t *action)
     task_assist_t *list;
 
     /* 先关闭中断，不然修改链表可能和添加链表产生排斥 */
-    disable_intr();
+    interrupt_disable();
     /* 获取链表头指针，用于寻找每一个调度的任务协助 */
     list = task_assist_head.head;
     /* 把头置空，用于后面添加协助 */
     task_assist_head.head = NULL;
-    enable_intr();
+    interrupt_enable();
 
     /* 开始获取并处理协助 */
     while (list != NULL) {
@@ -280,7 +280,7 @@ static void task_assist_action(softirq_action_t *action)
         /* 如果写成是关闭状态，那么就重新加入到队列 */
         
         /* 修改链表数据时禁止中断 */
-        disable_intr();
+        interrupt_disable();
         /* 把任务协助插入到队列最前面 */
         assist->next = task_assist_head.head;
         task_assist_head.head = assist;
@@ -288,7 +288,7 @@ static void task_assist_action(softirq_action_t *action)
         /* 激活TASK_ASSIST_SOFTIRQ */
         active_softirq(TASK_ASSIST_SOFTIRQ);
         
-        enable_intr();
+        interrupt_enable();
         
     }
 }

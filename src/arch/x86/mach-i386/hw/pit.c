@@ -119,16 +119,16 @@ enum CtrlModeBits {
 };
 
 #define TIMER_FREQ     1193180 	/* 时钟的频率 */
-#define COUNTER0_VALUE  (TIMER_FREQ / __HZ)	    /* pit count0 数值 */
+#define COUNTER0_VALUE  (TIMER_FREQ / HZ)	    /* pit count0 数值 */
 
 /**
- * __init_pit_clock - 初始化pit时钟
+ * pit_clock_init - 初始化pit时钟
  */ 
-void __init_pit_clock()
+void pit_clock_init()
 {
 	//初始化时钟
-	__out8(PIT_CTRL, PIT_MODE_2 | PIT_MODE_MSB_LSB | 
+	ioport_out8(PIT_CTRL, PIT_MODE_2 | PIT_MODE_MSB_LSB | 
             PIT_MODE_COUNTER_0 | PIT_MODE_BINARY);
-	__out8(PIT_COUNTER0, (unsigned char) (COUNTER0_VALUE & 0xff));
-	__out8(PIT_COUNTER0, (unsigned char) (COUNTER0_VALUE >> 8) & 0xff);   
+	ioport_out8(PIT_COUNTER0, (unsigned char) (COUNTER0_VALUE & 0xff));
+	ioport_out8(PIT_COUNTER0, (unsigned char) (COUNTER0_VALUE >> 8) & 0xff);   
 }

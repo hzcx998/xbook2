@@ -46,7 +46,7 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
 #endif    
     task_block(TASK_BLOCKED);   /* 阻塞自己 */
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     current_task->sleep_timer = NULL;           /* 解绑休眠定时器 */
     long dt = 0;
     /* 有可能还在休眠中就被唤醒了，那么就检查定时器是否已经被执行过了 */
@@ -61,7 +61,7 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
     printk(KERN_DEBUG "task_sleep_by_ticks: end pid=%d timeout=%d\n",
         current_task->pid, dt);
 #endif
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     
     return dt; /* 返回剩余ticks */
 }

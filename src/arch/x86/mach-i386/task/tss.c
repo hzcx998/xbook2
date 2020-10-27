@@ -13,7 +13,7 @@ tss_t *tss_get_from_cpu0()
 	return &tss;
 }
 
-void update_tss_info(unsigned long task_addr)
+void tss_update_info(unsigned long task_addr)
 {
 	// 更新tss.esp0的值为任务的内核栈顶
 	tss.esp0 = (unsigned long)(task_addr + TASK_KSTACK_SIZE);
@@ -29,5 +29,5 @@ void tss_init()
     
 	tss.iobase = sizeof(tss);
 	// 加载tss register
-	load_tr(KERNEL_TSS_SEL);
+	task_register_set(KERNEL_TSS_SEL);
 }

@@ -16,10 +16,10 @@ void debug_putchar(char ch)
 void arch_debug_init()
 {
     // 默认都会初始化控制台
-	init_console_hw();
+	console_hw_init();
 
 #ifdef X86_SERIAL_HW
     // 初始化串口
-    init_serial_hw();
+    serial_hw_init();
 #endif
 }

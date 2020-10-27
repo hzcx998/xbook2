@@ -62,7 +62,7 @@ void timer_init(
 void timer_add(timer_t *timer)
 {
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     if (!timer->id) /* 无效id，重新分配 */
         timer->id = timer_id_next++;
     /* 定时器必须不在队列中 */
@@ -97,37 +97,37 @@ void timer_add(timer_t *timer)
         }
     }
     /* 根据超时的时间点插入到对应的位置 */
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 void timer_del(timer_t *timer)
 {
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     /* 定时器必须在队列中 */
     ASSERT(list_find(&timer->list, &timer_list_head));
     list_del(&timer->list);
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 int timer_alive(timer_t *timer)
 {
     int alive = 0; 
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     /* 定时器必须在队列中 */
     if (list_find(&timer->list, &timer_list_head))
         alive = 1;
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     return alive;
 }
 
 void timer_mod(timer_t *timer, unsigned long timeout)
 {
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     timer->timeout = timer_ticks + timeout;
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 int timer_cancel(timer_t *timer)
@@ -157,9 +157,9 @@ void update_timers()
 {
     timer_t *timer, *next;
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     if (timer_ticks < minim_timeout_val) { // no timer timeout
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         return;
     }
     list_for_each_owner_safe (timer, next, &timer_list_head, list) {
@@ -172,7 +172,7 @@ void update_timers()
     /* update minim */
     minim_timeout_val = timer->timeout;
 
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 /**

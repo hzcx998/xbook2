@@ -4,11 +4,11 @@
 #include "config.h"
 
 #ifdef X86_SERIAL_HW
-void init_serial_hw();
+void serial_hw_init();
 void serial_putchar(char ch);
 #endif /* X86_SERIAL_HW */
 
-void init_console_hw();
+void console_hw_init();
 
 #ifdef X86_CONSOLE_HW
 void console_putchar(char ch);

@@ -180,13 +180,13 @@ void serial_putchar(char ch)
 }
 
 /**
- * init_serial_hw - 串口初始化子程序
+ * serial_hw_init - 串口初始化子程序
  * @obj: 指向私有数据的指针
  * @id: 串口的id
  * 
  * @return: 成功返回0，失败返回-1
  */
-void init_serial_hw()
+void serial_hw_init()
 {
     struct serial_object *obj = &serial_object;
     char irq;

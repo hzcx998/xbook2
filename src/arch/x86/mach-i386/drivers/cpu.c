@@ -77,7 +77,7 @@ static void cpu_initialize(device_extension_t *extension)
 	 * 输入: eax = 0：
 	 * 返回：eax = Maximum input Value for Basic CPUID information
 	 */
-	get_cpuid(0x00000000, 0, &eax, &ebx, &ecx, &edx);
+	cpu_do_cpuid(0x00000000, 0, &eax, &ebx, &ecx, &edx);
 	extension->max_cpuid = eax;
 	
 	memcpy(extension->vendor    , &ebx, 4);
@@ -89,14 +89,14 @@ static void cpu_initialize(device_extension_t *extension)
     * eax == 0x800000000
     * 如果CPU支持扩展信息，则在EAX中返 >= 0x80000001的值。
     */
-	get_cpuid(0x80000000, 0, &eax, &ebx, &ecx, &edx);
+	cpu_do_cpuid(0x80000000, 0, &eax, &ebx, &ecx, &edx);
 	extension->max_cpuidex = eax;
 
 	//先判断是哪种厂商
 	if (!strncmp(extension->vendor, "GenuineIntel", 12)) {
 		
 		//get version information
-		get_cpuid(0x00000001, 0, &eax, &ebx, &ecx, &edx);
+		cpu_do_cpuid(0x00000001, 0, &eax, &ebx, &ecx, &edx);
 
 		extension->family   = (((eax >> 20) & 0xFF) << 4)
 				+ ((eax >> 8) & 0xF);
@@ -164,17 +164,17 @@ static void cpu_initialize(device_extension_t *extension)
 	* 以下获取扩展商标
     */
 	if(extension->max_cpuidex >= 0x80000004){
-		get_cpuid(0x80000002, 0, &eax, &ebx, &ecx, &edx);
+		cpu_do_cpuid(0x80000002, 0, &eax, &ebx, &ecx, &edx);
 		memcpy(extension->brand      , &eax, 4);
 		memcpy(extension->brand  +  4, &ebx, 4);
 		memcpy(extension->brand  +  8, &ecx, 4);
 		memcpy(extension->brand  + 12, &edx, 4);
-		get_cpuid(0x80000003, 0, &eax, &ebx, &ecx, &edx);
+		cpu_do_cpuid(0x80000003, 0, &eax, &ebx, &ecx, &edx);
 		memcpy(extension->brand  + 16, &eax, 4);
 		memcpy(extension->brand  + 20, &ebx, 4);
 		memcpy(extension->brand  + 24, &ecx, 4);
 		memcpy(extension->brand  + 28, &edx, 4);
-		get_cpuid(0x80000004, 0, &eax, &ebx, &ecx, &edx);
+		cpu_do_cpuid(0x80000004, 0, &eax, &ebx, &ecx, &edx);
 		memcpy(extension->brand  + 32, &eax, 4);
 		memcpy(extension->brand  + 36, &ebx, 4);
 		memcpy(extension->brand  + 40, &ecx, 4);

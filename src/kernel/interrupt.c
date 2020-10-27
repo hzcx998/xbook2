@@ -7,9 +7,9 @@
 irq_description_t irq_description_table[NR_IRQS];
 
 /** 
- *  init_irq_description - 初始化中断描述 
+ *  irq_description_init - 初始化中断描述 
  */
-void init_irq_description()
+void irq_description_init()
 {
     int i;
     irq_description_t *irq;
@@ -40,7 +40,7 @@ static irq_description_t *get_irq_description(unsigned long irq)
 }
 
 /**
- * register_irq - 注册一个中断
+ * irq_register - 注册一个中断
  * @irq: 中断号
  * @handler: 中断处理函数
  * @flags: 注册时的标志
@@ -50,7 +50,7 @@ static irq_description_t *get_irq_description(unsigned long irq)
  * 
  * 注册一个中断，并且打开该线
  */
-int register_irq(unsigned long irq,
+int irq_register(unsigned long irq,
     int (*handler)(unsigned long, unsigned long), 
     unsigned long flags,
     char *irqname,
@@ -119,14 +119,14 @@ int register_irq(unsigned long irq,
 
 
 /**
- * unregister_irq - 注销中断
+ * irq_unregister - 注销中断
  * @irq: 中断号
  * @data: 注销时需要的数据
  * 
  * 注销中断，如果不是共享中断就直接关闭中断线，不然就减少中断数
  * 直到中断数为0就关闭中断线
  */
-int unregister_irq(unsigned long irq, void *data)
+int irq_unregister(unsigned long irq, void *data)
 {
     irq_description_t *irq_desc = get_irq_description(irq);
     if (!irq_desc) 
@@ -134,7 +134,7 @@ int unregister_irq(unsigned long irq, void *data)
 
     /* 注销的时候不能产生中断 */
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
     /* 删除action */
     if (irq_desc->flags & IRQF_SHARED) {    
@@ -184,7 +184,7 @@ int unregister_irq(unsigned long irq, void *data)
     }
 
     /* 恢复之前的中断状态 */
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     return 0;
 }
 
@@ -198,7 +198,7 @@ static int handle_action(unsigned long irq, irq_action_t *action)
     unsigned long retval = 0;
     /* 如果有关闭中断标志。就关闭中断 */
     if (action->flags & IRQF_DISABLED) {
-        disable_intr();    
+        interrupt_disable();    
     }
     
     /* 具体的行为处理 */
@@ -206,17 +206,17 @@ static int handle_action(unsigned long irq, irq_action_t *action)
     
     /* 如果有关闭中断标志。就打开中断 */
     if (action->flags & IRQF_DISABLED) {
-        enable_intr();
+        interrupt_enable();
     }
     return retval;
 }
 
 /**
- * handle_irq - 处理irq
+ * irq_handle - 处理irq
  * @irq: irq号
  * @frame: 中断栈
  */
-int handle_irq(unsigned long irq, trap_frame_t *frame)
+int irq_handle(unsigned long irq, trap_frame_t *frame)
 {
     irq_description_t *irq_desc = get_irq_description(irq);
     if (!irq_desc) 

@@ -30,7 +30,7 @@ void update_alarms()
 {
     task_t *task;
     unsigned long flags; /* 遍历期间需要关闭中断 */
-    save_intr(flags);
+    interrupt_save_state(flags);
     list_for_each_owner (task, &task_global_list, global_list) {
         if (task->alarm.flags) {
             task->alarm.ticks--;
@@ -49,5 +49,5 @@ void update_alarms()
             }
         }
     }
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }

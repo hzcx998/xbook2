@@ -103,7 +103,7 @@ void sb16_set_sample_rate(uint16_t hz)
 
 bool sb16_initialize(device_extension_t *extension)
 {
-    //disable_irq();
+    //irq_disable();
 
     out8(0x226, 1);
     mdelay(1);
@@ -346,7 +346,7 @@ static iostatus_t sb16_enter(driver_object_t *driver)
     sb16_set_sample_rate(sample_rate);
 
     /* 注册时钟中断并打开中断，因为设定硬件过程中可能产生中断，所以要提前打开 */
-    register_irq(IRQ5, sb16_handler, IRQF_DISABLED, "IRQ5", DRV_NAME, (unsigned long)extension);
+    irq_register(IRQ5, sb16_handler, IRQF_DISABLED, "IRQ5", DRV_NAME, (unsigned long)extension);
 
     return status;
 }

@@ -1126,7 +1126,7 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
 	out8(KBC_WRITE_DATA, KBC_CONFIG);
 
     /* 注册时钟中断并打开中断，因为设定硬件过程中可能产生中断，所以要提前打开 */	
-	register_irq(devext->irq, keyboard_handler, IRQF_DISABLED, "IRQ1", DRV_NAME, (uint32_t)devext);
+	irq_register(devext->irq, keyboard_handler, IRQF_DISABLED, "IRQ1", DRV_NAME, (uint32_t)devext);
     
     /* 启动一个内核线程来处理数据 */
     kthread_start("kbd", TASK_PRIO_RT, kbd_thread, devext);

@@ -48,12 +48,12 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     /* 没有参数或者参数错误 */
     task_t *cur = current_task;
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
     /* 执行新进程的时候，需要关闭旧进程的子线程。 */
     close_other_threads(cur);
     
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 
     /* 根据文件信息创建临时原始块 */
     int fd = sys_open(pathname, O_RDONLY);
@@ -193,7 +193,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
     
-    // dump_trap_frame(frame);
+    // trap_frame_dump(frame);
     /* 切换到进程执行 */
     switch_to_user(frame);
     

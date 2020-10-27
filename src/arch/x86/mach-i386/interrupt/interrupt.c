@@ -154,7 +154,7 @@ void intr_general_handler(unsigned int esp)
 
     if (frame->vec_no == EP_PAGE_FAULT) {
         unsigned int pageFaultVaddr = 0; 
-		pageFaultVaddr = read_cr2();
+		pageFaultVaddr = cpu_cr2_read();
 		printk("page fault addr is: %x\n", pageFaultVaddr);
     }
 	/*printk("    task %s %x kstack %x.\n", task->name, task, task->kstack);
@@ -167,7 +167,7 @@ void intr_general_handler(unsigned int esp)
 }
 
 /* 完成一般中断处理函数注册及异常名称注册 */
-void init_intr_expection(void)
+void intrrupt_expection_init(void)
 {
 	int i;
 	//设置中断处理函数
@@ -206,13 +206,13 @@ void init_intr_expection(void)
 /* 
  * 在中断处理程序数组第vector_no个元素中注册安装中断处理程序function
  */
-void __register_intr_handler(unsigned char interrupt, intr_handler_t function) 
+void interrupt_register_handler(unsigned char interrupt, intr_handler_t function) 
 {
 	//把函数写入到中断处理程序表
    	intr_handler_table[interrupt] = function; 
 }
 
-void __unregister_intr_handler(unsigned char interrupt)
+void unregister_interrupt_handler(unsigned char interrupt)
 {
 	//把默认函数写入到中断处理程序表
    	intr_handler_table[interrupt] = intr_general_handler; 
@@ -221,7 +221,7 @@ void __unregister_intr_handler(unsigned char interrupt)
 /* 
  * 注册IRQ中断
  */
-void __register_irq_handler(unsigned char irq, intr_handler_t function) 
+void irq_register_handler(unsigned char irq, intr_handler_t function) 
 {
 	/* 如果是不正确的irq号就退出 */
 	if (irq < IRQ0_CLOCK || irq > IRQ15_RESERVE) {
@@ -234,7 +234,7 @@ void __register_irq_handler(unsigned char irq, intr_handler_t function)
 /* 
  * 取消IRQ中断
  */
-void __unregister_irq_handler(unsigned char irq)
+void irq_unregister_handler(unsigned char irq)
 {
 	/* 如果是不正确的irq号就退出 */
 	if (irq < IRQ0_CLOCK || irq > IRQ15_RESERVE) {
@@ -244,7 +244,7 @@ void __unregister_irq_handler(unsigned char irq)
    	intr_handler_table[IRQ_START + irq] = intr_general_handler; 
 }
 
-void dump_trap_frame(trap_frame_t *frame)
+void trap_frame_dump(trap_frame_t *frame)
 {
     printk(KERN_DEBUG "vector:%d edi:%x esi:%x ebp:%x esp dummy:%x ebx:%x edx:%x ecx:%x eax:%x\n",
         frame->vec_no, frame->edi, frame->esi, frame->ebp, frame->esp_dummy, frame->ebx, frame->edx, frame->ecx, frame->eax);

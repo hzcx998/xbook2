@@ -80,7 +80,7 @@ typedef struct spinlock {
  * 返回进入前的中断状态
  */
 #define spin_lock_irqsave(lock, flags) \
-    save_intr(flags); \
+    interrupt_save_state(flags); \
     spin_lock(lock);
 
 /**
@@ -91,7 +91,7 @@ typedef struct spinlock {
  */
 #define spin_unlock_irqrestore(lock, flags) \
     spin_unlock(lock); \
-    restore_intr(flags)
+    interrupt_restore_state(flags)
 
 /**
  * spin_lock_irq - 自旋锁加锁并关闭中断
@@ -100,7 +100,7 @@ typedef struct spinlock {
  * 关闭中断并获取自选锁
  */
 #define spin_lock_irq(lock) \
-    disable_intr(); \
+    interrupt_disable(); \
     spin_lock(lock)
 
 /**
@@ -111,7 +111,7 @@ typedef struct spinlock {
  */
 #define spin_unlock_irq(lock) \
     spin_unlock(lock); \
-    enable_intr()
+    interrupt_enable()
 
 /**
  * spin_try_lock - 尝试自旋锁加锁

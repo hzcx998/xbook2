@@ -292,7 +292,7 @@ int do_trigger(trap_frame_t *frame)
 
     char have_trig;
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 #ifdef DEBUG_TRIGGER
     //printk(KERN_DEBUG "do_trigger: pid=%d frame %x start.\n", cur->pid, frame);
 #endif
@@ -376,7 +376,7 @@ int do_trigger(trap_frame_t *frame)
             break;  /* 捕捉一个触发器后，立即返回 */
         }
     }
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 #ifdef DEBUG_TRIGGER
     //printk(KERN_DEBUG "do_trigger: scan done.\n");
 #endif

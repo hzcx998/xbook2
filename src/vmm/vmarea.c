@@ -93,17 +93,17 @@ static void *__vmalloc(size_t size)
 	area->size = size;
 
 	unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 	/* 添加到虚拟区域的链表上 */
 	list_add_tail(&area->list, &using_vmarea_list);
 
 	if (map_pages(start, size, PROT_KERN | PROT_WRITE)) {
 		free_vaddr(start, size);
 		kfree(area);
-		restore_intr(flags);
+		interrupt_restore_state(flags);
 		return NULL;
 	}
-	restore_intr(flags);
+	interrupt_restore_state(flags);
     //printk("vmalloc: create a area %x/%x\n", area->addr, area->size);
 	return (void *)area->addr;
 }
@@ -139,13 +139,13 @@ void *vmalloc(size_t size)
 	if (target != NULL) {
 		//printk("vmalloc: find a free area %x/%x\n", target->addr, target->size);
 		unsigned long flags;
-        save_intr(flags);
+        interrupt_save_state(flags);
 
 		/* 先脱离原来的空闲链表，并添加到使用链表中去 */
 		list_del(&target->list);
 
 		list_add_tail(&target->list, &using_vmarea_list);
-		restore_intr(flags);
+		interrupt_restore_state(flags);
 		return (void *)target->addr;
 	}
 
@@ -226,7 +226,7 @@ int vfree(void *ptr)
 	
 	vmarea_t *target = NULL, *area;
 	unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 	list_for_each_owner(area, &using_vmarea_list, list) {
 		/* 如果找到了对应的区域 */
 		if (area->addr == addr) {
@@ -238,13 +238,13 @@ int vfree(void *ptr)
 	/* 找到一个合适要释放的area，就释放它 */
 	if (target != NULL) {
 		if (__vfree(target)) {
-			restore_intr(flags);
+			interrupt_restore_state(flags);
 			return 0;
 		}
 	}
 	
 	/* 没找到，释放失败 */
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 	return -1;
 }
 
@@ -284,13 +284,13 @@ void *ioremap(unsigned long paddr, size_t size)
 	area->addr = vaddr;
 	area->size = size;
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
 	/* 添加到虚拟区域的链表上 */
 	list_add_tail(&area->list, &using_vmarea_list);
     
     /* 进行io内存映射，如果失败就释放资源 */
-    if (__ioremap(paddr, vaddr, size)) {
+    if (phy_addr_remap(paddr, vaddr, size)) {
         /* 释放分配的资源 */
         list_del(&area->list);
         kfree(area);
@@ -298,7 +298,7 @@ void *ioremap(unsigned long paddr, size_t size)
         /* 指向0，表示空 */
         vaddr = 0;
     }
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 
     return (void *)vaddr;    
 }
@@ -321,7 +321,7 @@ int iounmap(void *vaddr)
 	
 	vmarea_t *target = NULL, *area;
 	unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
 	list_for_each_owner(area, &using_vmarea_list, list) {
 		/* 如果找到了对应的区域 */
@@ -333,7 +333,7 @@ int iounmap(void *vaddr)
 
 	/* 找到一个合适要释放的area，就释放它 */
 	if (target != NULL) {
-        if (__iounmap(target->addr, target->size)) {
+        if (phy_addr_unmap(target->addr, target->size)) {
 		    /* 取消IO映射并释放area */
             
             list_del(&target->list);
@@ -342,13 +342,13 @@ int iounmap(void *vaddr)
 
             kfree(target);
 
-            restore_intr(flags);
+            interrupt_restore_state(flags);
             return 0;
 		}
 	}
 	
 	/* 没找到，释放失败 */
-	restore_intr(flags);
+	interrupt_restore_state(flags);
     return -1;
 }
 

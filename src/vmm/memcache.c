@@ -216,14 +216,14 @@ static int create_mem_group(mem_cache_t *cache, flags_t flags)
 {
 	mem_group_t *group;
     unsigned irqflags;
-    save_intr(irqflags);
+    interrupt_save_state(irqflags);
     // printk("cache %s need a new group %x!\n", cache->name, cache->object_size);
 
 	/* 为内存组分配一个页 */
 	group = mem_cache_alloc_pages(1);
 	if (group == NULL) {
 		printk(KERN_ERR "alloc page for mem group failed!\n");
-        restore_intr(irqflags);
+        interrupt_restore_state(irqflags);
 		return -1;
 	}
     // printk("cache %s alloc group ok %x!\n", cache->name, group);
@@ -233,14 +233,14 @@ static int create_mem_group(mem_cache_t *cache, flags_t flags)
 		goto free_group;
 	}
 
-    restore_intr(irqflags);
+    interrupt_restore_state(irqflags);
 	// 创建成功
 	return 0;
 
 free_group:
 	// 释放对象组的页
 	mem_cache_free_pages(group);
-    restore_intr(irqflags);
+    interrupt_restore_state(irqflags);
 	return -1;
 }
 
@@ -343,7 +343,7 @@ void *mem_cache_alloc_object(mem_cache_t *cache)
 
 retry_alloc_object:
 	// 要关闭中断，并保存寄存器环境
-    save_intr(flags);
+    interrupt_save_state(flags);
 
 	partialList = &cache->partial_groups;
 
@@ -383,14 +383,14 @@ retry_alloc_object:
 	object = __mem_cache_alloc_object(cache, group);
 
 	// 要恢复中断状态
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 	return object;
 new_group:
 	// 没有group，添加一个新的group
 
 	// 恢复中断状况
 	// 要恢复中断状态
-	restore_intr(flags);
+	interrupt_restore_state(flags);
 	
 	//printk("kmalloc: need a new group.\n");
 	// 添加新的group
@@ -530,12 +530,12 @@ void mem_cache_free_object(mem_cache_t *cache, void *object)
 
 	// 关闭中断
 	unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
 	__mem_cache_free_object(cache, object);
 
 	// 打开中断
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 
@@ -639,12 +639,12 @@ static int mem_cahce_shrink(mem_cache_t *cache)
 
 	// 用自旋锁来保护结构
 	unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     // 收缩内存
 	ret = __mem_cache_shrink(cache);
 
 	// 打开锁
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 
 	// 返回收缩了的内存大小
 	return ret * cache->object_count * cache->object_size;

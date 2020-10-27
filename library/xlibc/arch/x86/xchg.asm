@@ -1,9 +1,9 @@
 [section .text]
 [bits 32]
 
-global __xchg8
-; char __xchg8(char *ptr, char value);
-__xchg8:
+global mem_xchg8
+; char mem_xchg8(char *ptr, char value);
+mem_xchg8:
     push ebx
     
     mov eax, [esp + 4 + 4]      ; ptr  
@@ -15,9 +15,9 @@ __xchg8:
     pop ebx
     ret
 
-global __xchg16
-; short __xchg16(short *ptr, short value);
-__xchg16:
+global mem_xchg16
+; short mem_xchg16(short *ptr, short value);
+mem_xchg16:
     push ebx
     
     mov eax, [esp + 4 + 4]      ; ptr  
@@ -30,9 +30,9 @@ __xchg16:
     pop ebx
     ret
 
-global __xchg32
-; int __xchg32(int *ptr, int value);
-__xchg32:
+global mem_xchg32
+; int mem_xchg32(int *ptr, int value);
+mem_xchg32:
     push ebx
     
     mov eax, [esp + 4 + 4]      ; ptr  

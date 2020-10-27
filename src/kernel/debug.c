@@ -66,7 +66,7 @@ void panic(const char *fmt, ...)
     if (print_gui_console)
         gui_con_screen.outs("system panic!!!\n");
 	#endif
-    disable_intr();
+    interrupt_disable();
 	while(1){
 		cpu_idle();
 	}
@@ -89,7 +89,7 @@ void spin(char * functionName)
     if (print_gui_console)
         gui_con_screen.outs("system spin!!!\n");
     #endif
-	disable_intr();
+	interrupt_disable();
 	while(1){
 		cpu_idle();
 	}
@@ -114,7 +114,7 @@ void debug_putstr(char *str, int count)
 int printk(const char *fmt, ...)
 {
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     int i;
 	char buf[256] = {0,};
 	va_list arg = (va_list)((char*)(&fmt) + 4); /*4是参数fmt所占堆栈中的大小*/
@@ -160,7 +160,7 @@ int printk(const char *fmt, ...)
             debug_putstr(DEBUG_NONE_COLOR, 4);    
         }
     }
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 	return i;
 }
 

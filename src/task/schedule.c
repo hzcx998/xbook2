@@ -89,7 +89,7 @@ static void set_next_task(sched_unit_t *su, task_t *next)
 void schedule()
 {
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     
     sched_unit_t *su = sched_get_unit();
     task_t *next = get_next_task(su);
@@ -104,7 +104,7 @@ void schedule()
     set_next_task(su, next);
     switch_to(cur, next);
     
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 void sched_print_queue(sched_unit_t *su)

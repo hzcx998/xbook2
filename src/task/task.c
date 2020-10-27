@@ -164,14 +164,14 @@ task_t *find_task_by_pid(pid_t pid)
     task_t *task;
     /* 关闭中断 */
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     list_for_each_owner(task, &task_global_list, global_list) {
         if (task->pid == pid) {
-            restore_intr(flags);
+            interrupt_restore_state(flags);
             return task;
         }
     }
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     return NULL;
 }
 
@@ -204,13 +204,13 @@ task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg)
 
     /* 操作链表时关闭中断，结束后恢复之前状态 */
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     
     task_global_list_add(task);
     sched_unit_t *su = sched_get_unit();
     task_priority_queue_add_tail(su, task);
     
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     return task;
 }
 
@@ -238,7 +238,7 @@ void task_block(task_state_t state)
 {
     // 先关闭中断，并且保存中断状态
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
     /*
     state有4种状态，分别是TASK_BLOCKED, TASK_WAITING, TASK_STOPPED, TASK_ZOMBIE
@@ -258,7 +258,7 @@ void task_block(task_state_t state)
     // 调度到其它任务
     schedule();
     // 恢复之前的状态
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 /**
@@ -269,7 +269,7 @@ void task_unblock(task_t *task)
 {
     // 先关闭中断，并且保存中断状态
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 #if 1
     if (!((task->state == TASK_BLOCKED) || 
         (task->state == TASK_WAITING) ||
@@ -299,7 +299,7 @@ void task_unblock(task_t *task)
         task_priority_queue_add_head(su, task);
     }
     
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     /* 由于现在状态变成就绪，并且在队列里面，所以下次切换任务时就会切换到任务，并且往后面运行 */
 }
 
@@ -311,10 +311,10 @@ void task_yeild()
 {
     // 先关闭中断，并且保存中断状态
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     current_task->state = TASK_READY; /* 设置为就绪状态 */
     schedule(); /* 调度到其它任务 */
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 /**
@@ -743,6 +743,15 @@ void dump_task(task_t *task)
     printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
 
+
+void kthread_idle(void *arg)
+{
+    while (1) {
+        cpu_idle();
+        schedule();
+    }
+}
+
 #ifdef CONFIG_GRAPH
 #define INIT_SBIN_PATH  "/sbin/initg"
 #else
@@ -767,36 +776,21 @@ void start_user()
 
     /* 降级期间不允许产生中断 */
 	unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     /* 当前任务降级，这样，其它任务才能运行到 */
     task_kmain->static_priority = task_kmain->priority = TASK_PRIO_IDLE;
     
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     /* 调度到更高优先级的任务允许 */
     schedule();
     /* 当没有任务运行时，就会继续执行这个地方 */
     
     /* 其它进程可能在终端关闭状态阻塞，那么切换回来后就需要打开中才行 */
-    enable_intr();
+    interrupt_enable();
     
-    /* kmain线程 */
-	while (1) {
-		/* 进程默认处于阻塞状态，如果被唤醒就会执行后面的操作，
-		直到再次被阻塞 */
-        /* 执行cpu停机 */
-		cpu_idle();
-        schedule();
-	};
+    kthread_idle(NULL);
 }
 
-void kthread_idle(void *arg)
-{
-    printk(KERN_DEBUG "[task]: idle start...\n");
-    while (1) {
-        cpu_idle();
-        schedule();
-    }
-}
 /**
  * init_tasks - 初始化多任务环境
  */

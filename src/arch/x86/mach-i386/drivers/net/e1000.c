@@ -351,7 +351,7 @@ static int e1000_init_board(e1000_extension_t* ext)
 void e1000_down(e1000_extension_t* ext)
 {
     e1000_irq_disable(ext);
-    unregister_irq(ext->irq, ext);
+    irq_unregister(ext->irq, ext);
     timer_del(&ext->tx_fifo_stall_timer);
     timer_del(&ext->watchdog_timer);
     timer_del(&ext->phy_info_timer);
@@ -764,7 +764,7 @@ iostatus_t e1000_up(e1000_extension_t* ext)
     e1000_configure_rx(ext);
     e1000_alloc_rx_buffers(ext);
 
-    if((err = register_irq(ext->irq, e1000_intr, IRQF_SHARED, "IRQ-Network", DEV_NAME, (unsigned int)ext))) {
+    if((err = irq_register(ext->irq, e1000_intr, IRQF_SHARED, "IRQ-Network", DEV_NAME, (unsigned int)ext))) {
         return err;
     }
 
@@ -1722,11 +1722,11 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
     unsigned long intr_flags;
     int count = 0;
 
-    save_intr(intr_flags);
+    interrupt_save_state(intr_flags);
 
     if(unlikely(len <= 0)) {
         kfree(buf);
-        restore_intr(intr_flags);
+        interrupt_restore_state(intr_flags);
         return 0;
     }
 
@@ -1753,7 +1753,7 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
         e1000_tx_map(ext, buf, first, max_per_txd, length), 
         tx_flags);
     
-    restore_intr(intr_flags);
+    interrupt_restore_state(intr_flags);
 
     return 0;
 }

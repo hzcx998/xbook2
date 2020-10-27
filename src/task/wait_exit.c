@@ -271,7 +271,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
 #ifdef DEBUG_WAIT
         printk(KERN_DEBUG "sys_wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
 #endif    
-        save_intr(flags);
+        interrupt_save_state(flags);
         if (pid == -1) {    /* 任意子进程 */            
             /* 先处理挂起的任务 */
             if ((child_pid = wait_any_hangging_child(parent, status)) >= 0) {
@@ -279,7 +279,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
                 printk(KERN_DEBUG "sys_wait: pid=%d handle a hangging child %d.\n",
                     parent->pid, child_pid);
 #endif    
-                restore_intr(flags);
+                interrupt_restore_state(flags);
                 return child_pid;
             }
         } else {    /* 指定子进程 */
@@ -289,14 +289,14 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
                 printk(KERN_DEBUG "sys_wait: pid=%d handle a hangging child %d.\n",
                     parent->pid, child_pid);
 #endif    
-                restore_intr(flags);
+                interrupt_restore_state(flags);
                 return child_pid;
             }
         }
         
         /* 处理zombie子进程 */
         if ((child_pid = deal_zombie_child(parent)) > 0) {
-            restore_intr(flags);
+            interrupt_restore_state(flags);
             //printk("[task]: parent %d deal zombie child %d\n", parent->pid, child_pid);
             return child_pid;
         }
@@ -310,20 +310,20 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
 #ifdef DEBUG_WAIT
             printk(KERN_DEBUG "sys_wait: no children!\n");
 #endif    
-            restore_intr(flags);
+            interrupt_restore_state(flags);
             return -1; /* no child, return -1 */
         }
 
         /* 现在肯定没有子进程处于退出状态 */
         if (options & WNOHANG) {    /* 有不挂起等待标志，就直接返回 */
-            restore_intr(flags);
+            interrupt_restore_state(flags);
             return 0;   /* 不阻塞等待，返回0 */
         }
 
 #ifdef DEBUG_WAIT
         printk(KERN_DEBUG "sys_wait: pid=%d no child exit, waiting...\n", parent->pid);
 #endif
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         /* WATING for children to exit */
         task_block(TASK_WAITING);
         //printk(KERN_DEBUG "proc wait: child unblocked me.\n");
@@ -354,7 +354,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
 void sys_exit(int status)
 {
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
     task_t *cur = current_task;  /* 当前进程是父进程 */
 
@@ -391,7 +391,7 @@ void sys_exit(int status)
     if (parent) {
         /* 查看父进程状态 */
         if (parent->state == TASK_WAITING) {
-            restore_intr(flags);
+            interrupt_restore_state(flags);
 #ifdef DEBUG_EXIT
             printk(KERN_DEBUG "sys_exit: pid=%d parent %d waiting...\n", 
                 cur->pid, parent->pid);
@@ -401,7 +401,7 @@ void sys_exit(int status)
             task_unblock(parent); /* 唤醒父进程 */
             task_block(TASK_HANGING);   /* 把自己挂起 */
         } else { /* 父进程没有 */
-            restore_intr(flags);
+            interrupt_restore_state(flags);
 #ifdef DEBUG_EXIT
             printk(KERN_DEBUG "sys_exit: pid=%d parent %d not waiting, zombie!\n",
                 cur->pid, parent->pid);
@@ -416,7 +416,7 @@ void sys_exit(int status)
 #endif    
         /* 可以赖皮，认INIT进程为干爸爸，那么就有父进程了，就可以被回收。 嘻嘻 */
         //printk("no parent!\n");
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         task_block(TASK_ZOMBIE); 
     }
 }
@@ -424,7 +424,7 @@ void sys_exit(int status)
 void kthread_exit(int status)
 {
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
     task_t *cur = current_task;  /* 当前进程是父进程 */
     cur->exit_status = status;
@@ -439,7 +439,7 @@ void kthread_exit(int status)
     if (parent) {
         /* 查看父进程状态 */
         if (parent->state == TASK_WAITING) {
-            restore_intr(flags);
+            interrupt_restore_state(flags);
 #ifdef DEBUG_EXIT
             printk(KERN_DEBUG "sys_exit: pid=%d parent %d waiting...\n", cur->pid, parent->pid);
 #endif    
@@ -448,7 +448,7 @@ void kthread_exit(int status)
             task_unblock(parent); /* 唤醒父进程 */
             task_block(TASK_HANGING);   /* 把自己挂起 */
         } else { /* 父进程没有 */
-            restore_intr(flags);
+            interrupt_restore_state(flags);
 #ifdef DEBUG_EXIT
             printk(KERN_DEBUG "sys_exit: pid=%d parent %d not waiting, zombie!\n", cur->pid, parent->pid);
 #endif    
@@ -461,7 +461,7 @@ void kthread_exit(int status)
             printk(KERN_DEBUG "sys_exit: pid=%d no parent! zombie!\n", cur->pid);
 #endif    
         //printk("no parent!\n");
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         task_block(TASK_ZOMBIE); 
     }
 }

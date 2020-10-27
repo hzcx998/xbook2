@@ -127,7 +127,7 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
     CHECK_THREAD_CANCELATION_POTINT(current_task);
 
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     waitque_t *waitque = &waitque_table[handle];
     if (waitque->flags) {
 #ifdef DEBUG_WAITQUE
@@ -187,7 +187,7 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
             if (ticks <= 0) {   /* ticks为0，就直接返回 */
                 /* 从等待队列删除 */
                 wait_queue_remove(&waitque->wait_queue, current_task);
-                restore_intr(flags);
+                interrupt_restore_state(flags);
                 return ETIMEDOUT;   /* 和超时效果一样 */
             }
             /* 休眠的ticks太小，导致调度过于频繁，因此，在此进行增加,
@@ -220,7 +220,7 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
                         break;
                     }          
                 }
-                restore_intr(flags);
+                interrupt_restore_state(flags);
                 return ETIMEDOUT;
             }
         } else {
@@ -228,7 +228,7 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
         }
     }
 out:
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     return 0;
 }
 
@@ -251,7 +251,7 @@ int sys_waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long
         return -1;
     
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     waitque_t *waitque = &waitque_table[handle];
     if (waitque->flags) {
 #ifdef DEBUG_WAITQUE
@@ -311,7 +311,7 @@ int sys_waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long
             }                       
         }
     }
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     return 0;
 }
 

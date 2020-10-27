@@ -40,7 +40,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
     mdl->next = NULL;
 
     unsigned long flags;    /* 关闭并保存中断 */
-    save_intr(flags);
+    interrupt_save_state(flags);
 
     unsigned long phyaddr = addr_v2p((unsigned long) mdl->start_vaddr);
     printk(KERN_DEBUG "mdl_alloc: viraddr=%x phyaddr=%x\n", vaddr, phyaddr);
@@ -51,7 +51,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
     unsigned long mapped_vaddr = alloc_vaddr(length);
     if (!mapped_vaddr) {
         kfree(mdl);
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         return NULL;
     }
     mdl->mapped_vaddr = (void *) mapped_vaddr;
@@ -59,7 +59,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
     /* 映射固定内存页（虚拟地址和物理地址都指定了） */
     map_pages_fixed(mapped_vaddr, phyaddr, length, PROT_KERN | PROT_WRITE);
     
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     printk(KERN_DEBUG "mdl_alloc: map success!\n");
     
     /* 有请求才进行关联 */
@@ -97,11 +97,11 @@ void mdl_free(mdl_t *mdl)
     printk(KERN_DEBUG "mdl_free: vaddr=%x length=%d byte offset=%d mapped vaddr=%x.\n",
         mdl->start_vaddr, mdl->byte_count, mdl->byte_offset, mdl->mapped_vaddr);
     unsigned long flags;    /* 关闭并保存中断 */
-    save_intr(flags);
+    interrupt_save_state(flags);
     /* 取消共享内存映射 */
     unmap_pages_safe((unsigned long) mdl->mapped_vaddr, mdl->byte_count, 1);
     free_vaddr((unsigned long) mdl->mapped_vaddr, mdl->byte_count);  /* 释放映射后的虚拟地址 */
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 
     kfree(mdl); /* 释放mdl结构 */
 }

@@ -616,9 +616,9 @@ io_request_t *io_build_sync_request(
         ioreq->parame.write.offset = offset;
         /* 把数据复制到内核缓冲区，不允许产生中断 */
         if (devobj->flags & DO_BUFFERED_IO) {
-            save_intr(flags);
+            interrupt_save_state(flags);
             memcpy(ioreq->system_buffer, buffer, length);
-            restore_intr(flags);
+            interrupt_restore_state(flags);
         }
         break;
     case IOREQ_DEVCTL:
@@ -1061,9 +1061,9 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         if (devobj->flags & DO_BUFFERED_IO) { 
             /* 复制数据到用户空间 */
             unsigned long flags;
-            save_intr(flags);
+            interrupt_save_state(flags);
             memcpy(ioreq->user_buffer, ioreq->system_buffer, len);
-            restore_intr(flags);
+            interrupt_restore_state(flags);
             kfree(ioreq->system_buffer);
         } else if (devobj->flags & DO_DIRECT_IO) { 
             /* 删除映射 */

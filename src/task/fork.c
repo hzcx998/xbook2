@@ -37,7 +37,7 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     
     /* 复制名字，在后面追加fork表明是一个fork的进程，用于测试 */
     //strcat(child->name, "_fork");
-    //dump_trap_frame((trap_frame_t *)child->kstack);
+    //trap_frame_dump((trap_frame_t *)child->kstack);
     return 0;
 }
 
@@ -129,7 +129,7 @@ static int copy_vm(task_t *child, task_t *parent)
         return -1;
 
     /* 复制页表内容，因为所有的东西都在里面 */
-    if (copy_vm_mapping(child, parent))
+    if (vmm_copy_mapping(child, parent))
         return -1;
     
     /* 复制VMSpace */
@@ -234,7 +234,7 @@ int sys_fork()
     task_t *parent = current_task;
 
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
 #ifdef DEBUG_FORK
     printk(KERN_DEBUG "%s: parent %s pid=%d prio=%d is forking now.\n", 
@@ -265,7 +265,7 @@ int sys_fork()
     printk(KERN_DEBUG "%s: task %s pid %d fork task %s pid %d ppid %d\n", 
         __func__, parent->name, parent->pid, child->name, child->pid, child->parent_pid);
 #endif
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     
     /* 父进程返回子进程pid */
     return child->pid;

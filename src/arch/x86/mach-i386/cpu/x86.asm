@@ -1,90 +1,102 @@
 [section .text]
 [bits 32]
 
-global __in8
-__in8:	;uint8_t __in8(unsigned int port);
-	mov		edx,[esp+4]
+global ioport_in8
+ioport_in8:
+    push edx
+	mov		edx,[esp+8]
 	xor		eax,eax
 	in		al,dx
-	ret
+	pop edx
+    ret
 
-global __in16
-__in16:	;uint16_t __in16(unsigned int port);
-	mov		edx,[esp+4]
+global ioport_in16
+ioport_in16:
+    push edx
+	mov		edx,[esp+8]
 	xor		eax,eax
 	in		ax,dx
-	ret
+	pop edx
+    ret
 
-global __in32
-__in32:	;unsigned int __in32(unsigned int port);
-	mov		edx,[esp+4]
+global ioport_in32
+ioport_in32:
+	push edx
+    mov		edx,[esp+8]
 	in		eax,dx
-	ret
+	pop edx
+    ret
 
-global __out8
-__out8:	; void __out8(unsigned int port, unsigned int data);
-	mov		edx,[esp+4]
-	mov		al,[esp+8]
+global ioport_out8
+ioport_out8:
+    push edx
+    mov		edx,[esp+8]
+	mov		al,[esp+12]
 	out		dx,al
-	ret
+	pop edx
+    ret
 
-global __out16
-__out16:	; void __out16(unsigned int port, unsigned int data);
-	mov		edx,[esp+4]
-	mov		ax,[esp+8]
+global ioport_out16
+ioport_out16:
+    push edx
+    mov		edx,[esp+8]
+	mov		ax,[esp+12]
 	out		dx,ax
-	ret	
+	pop edx
+    ret	
 
-global __out32
-__out32:	; void __out32(unsigned int port, unsigned int data);
-	mov		edx,[esp+4]
-	mov		eax,[esp+8]
+global ioport_out32
+ioport_out32:
+    push edx
+    mov		edx,[esp+8]
+	mov		eax,[esp+12]
 	out		dx,eax
-	ret
+	pop edx
+    ret
 
-global __disable_intr
-__disable_intr:	; void __disable_intr(void);
+global interrupt_disable
+interrupt_disable:
 	cli
 	ret
 
-global __enable_intr
-__enable_intr:	; void __enable_intr(void);
+global interrupt_enable
+interrupt_enable:
 	sti
 	ret
 	
-global __cpu_idle
-__cpu_idle: ;void __cpu_idle(void);
+global cpu_do_nohing
+cpu_do_nohing:
 	nop
 	ret
 
-global load_tr
-load_tr:		; void load_tr(unsigned int tr);
-	ltr	[esp+4]			; tr
+global task_register_set
+task_register_set:
+	ltr	[esp+4]
 	ret
 	
-global read_cr2
-read_cr2:
+global cpu_cr2_read
+cpu_cr2_read:
 	mov eax,cr2
 	ret
 
-global read_cr3
-read_cr3:
+global cpu_cr3_read
+cpu_cr3_read:
 	mov eax,cr3
 	ret
 
-global write_cr3 
-write_cr3:
+global cpu_cr3_write 
+cpu_cr3_write:
 	mov eax,[esp+4]
 	mov cr3,eax
 	ret
 
-global read_cr0
-read_cr0:
+global cpu_cr0_read
+cpu_cr0_read:
 	mov eax,cr0
 	ret
 
-global write_cr0
-write_cr0:
+global cpu_cr0_write
+cpu_cr0_write:
 	mov eax,[esp+4]
 	mov cr0,eax
 	ret	
@@ -96,11 +108,12 @@ gdt_register_get:
 	ret
 
 global gdt_register_set
-gdt_register_set:	;void gdt_register_set(unsigned int limit, unsigned int addr);
+gdt_register_set:
 	mov ax, [esp + 4]
 	mov	[esp+6],ax		
 	lgdt [esp+6]
 	
+    ; flush segment registers
     mov ax, 0x10
 	mov ds, ax 
 	mov es, ax 
@@ -112,34 +125,34 @@ gdt_register_set:	;void gdt_register_set(unsigned int limit, unsigned int addr);
 .l:
 	ret
 
-global store_idtr
-store_idtr:
+global idt_register_get
+idt_register_get:
 	mov eax, [esp + 4]
 	sidt [eax]
 	ret
 
-global load_idtr
-load_idtr:	;void load_reg_idtr(unsigned int limit, unsigned int addr);
+global idt_register_set
+idt_register_set:
 	mov		ax,[esp+4]
 	mov		[esp+6],ax
 	lidt	[esp+6]
 	ret
 
-global load_eflags
-load_eflags:	; unsigned int load_eflags(void);
-	pushf		; PUSH eflags
+global eflags_save_to
+eflags_save_to:
+	pushf
 	pop		eax
 	ret
 
-global store_eflags
-store_eflags:	; void store_eflags(unsigned int eflags);
+global eflags_restore_from
+eflags_restore_from:
 	mov		eax,[ESP+4]
 	push	eax
-	popfd		; POP eflags
+	popfd
 	ret
 
-global __io_read
-__io_read:	;void __io_read(u16 port, void* buf, unsigned int n);
+global ioport_read_bytes
+ioport_read_bytes:
 	mov	edx, [esp + 4]		; port
 	mov	edi, [esp + 4 + 4]	; buf
 	mov	ecx, [esp + 4 + 4 + 4]	; n
@@ -148,8 +161,8 @@ __io_read:	;void __io_read(u16 port, void* buf, unsigned int n);
 	rep	insw
 	ret
 
-global __io_write 
-__io_write:	;void __io_write(u16 port, void* buf, unsigned int n);
+global ioport_write_bytes 
+ioport_write_bytes:
 	mov	edx, [esp + 4]		; port
 	mov	esi, [esp + 4 + 4]	; buf
 	mov	ecx, [esp + 4 + 4 + 4]	; n
@@ -158,36 +171,14 @@ __io_write:	;void __io_write(u16 port, void* buf, unsigned int n);
 	rep	outsw
 	ret
 
-
-global __invlpg
-__invlpg:
-	mov eax, [esp + 4]
-	invlpg [eax]
-	ret	
-
-global __cpuid
-__cpuid: 	; void __cpuid(unsigned int id_eax, unsigned int *eax, 
-			; 		unsigned int *ebx, unsigned int *ecx, unsigned int *edx);
-	mov eax, [esp + 4] ; eax_id
-	cpuid
-	mov edi, [esp + 8]	;eax
-	mov [edi], eax
-	mov edi, [esp + 12]	;ebx
-	mov [edi], ebx
-	mov edi, [esp + 16]	;ecx
-	mov [edi], ecx
-	mov edi, [esp + 20]	;edx
-	mov [edi], edx
-	ret
-
-global __cpu_lazy 
-__cpu_lazy: ;void __cpu_lazy();
+global cpu_do_sleep 
+cpu_do_sleep: ;void cpu_do_sleep();
 	hlt
 	ret
 
-global __xchg8
-; char __xchg8(char *ptr, char value);
-__xchg8:
+global mem_xchg8
+; char mem_xchg8(char *ptr, char value);
+mem_xchg8:
     push ebx
     
     mov eax, [esp + 4 + 4]      ; ptr  
@@ -199,9 +190,9 @@ __xchg8:
     pop ebx
     ret
 
-global __xchg16
-; short __xchg16(short *ptr, short value);
-__xchg16:
+global mem_xchg16
+; short mem_xchg16(short *ptr, short value);
+mem_xchg16:
     push ebx
     
     mov eax, [esp + 4 + 4]      ; ptr  
@@ -214,9 +205,9 @@ __xchg16:
     pop ebx
     ret
 
-global __xchg32
-; int __xchg32(int *ptr, int value);
-__xchg32:
+global mem_xchg32
+; int mem_xchg32(int *ptr, int value);
+mem_xchg32:
     push ebx
     
     mov eax, [esp + 4 + 4]      ; ptr  

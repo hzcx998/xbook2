@@ -98,7 +98,6 @@
 #define PCI_ANY_ID (~0)
 #endif
 
-/* PCI设备ID */
 struct pci_device_id
 {
 	uint32_t vendor, device;   //vendor and device id or PCI_ANY_ID
@@ -106,7 +105,6 @@ struct pci_device_id
 	uint32_t class, class_mask;
 };
 
-/*PCI地址bar结构体，保存Bass Address （0~5）的信息*/
 typedef struct pci_device_bar
 {
 	unsigned int type;		    /*地址bar的类型（IO地址/MEM地址）*/
@@ -117,9 +115,6 @@ typedef struct pci_device_bar
 #define PCI_DEVICE_INVALID 		0
 #define PCI_DEVICE_USING		 	1
 
-/*
-PCI设备结构体，用于保存我们所需要的pci信息，并不是和硬件的一样
-*/
 typedef struct pci_device
 {
 	int flags; 		/*device flags*/

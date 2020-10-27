@@ -28,7 +28,7 @@ int kernel_main(void)
     init_vmarea();
     
     /* init irq description */
-    init_irq_description();
+    irq_description_init();
     /* init softirq */
     init_softirq();
     
@@ -50,7 +50,7 @@ int kernel_main(void)
     init_timer_system();
 
     /* enable interrupt */
-    enable_intr();
+    interrupt_enable();
 
     init_driver_arch();
     

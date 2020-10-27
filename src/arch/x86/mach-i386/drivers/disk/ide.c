@@ -968,7 +968,7 @@ static int ata_type_transfer(device_extension_t *ext,
 
 		/* 等待驱动不繁忙 */
 		// (III) Wait if the drive is busy;
-		while (in8(ATA_REG_STATUS(channel)) & ATA_STATUS_BUSY) cpu_lazy();// Wait if busy.
+		while (in8(ATA_REG_STATUS(channel)) & ATA_STATUS_BUSY) cpu_idle();// Wait if busy.
 		/* 从控制器中选择设备 */
 		select_disk(ext, mode, head);
 
@@ -976,7 +976,7 @@ static int ata_type_transfer(device_extension_t *ext,
 		select_sector(ext, mode, lbaIO, count);
 
 		/* 等待磁盘控制器处于准备状态 */
-		while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY)) cpu_lazy();
+		while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY)) cpu_idle();
 
 		/* 选择并发送命令 */
 		select_cmd(rw, mode, dma, &cmd);
@@ -988,7 +988,7 @@ static int ata_type_transfer(device_extension_t *ext,
 				rw, dma, cmd, head);
 #endif
 		/* 等待磁盘控制器处于准备状态 */
-		while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY)) cpu_lazy();
+		while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY)) cpu_idle();
 
 		/* 发送命令 */
 		send_cmd(channel, cmd);
@@ -1255,7 +1255,7 @@ static int ide_probe(device_extension_t *ext, int id)
 
     if (diskno == 0) {  /* 通道上第一个磁盘的时候才注册中断 */
         /* 注册中断 */
-        register_irq(channel->irqno, ide_handler, IRQF_DISABLED, "harddisk", DEV_NAME, (unsigned long)channel);
+        irq_register(channel->irqno, ide_handler, IRQF_DISABLED, "harddisk", DEV_NAME, (unsigned long)channel);
     }
     
 #ifdef DEBUG_DRV
@@ -1272,7 +1272,7 @@ static int ide_probe(device_extension_t *ext, int id)
     ext->info = kmalloc(SECTOR_SIZE);
     if (ext->info == NULL) {
         printk(KERN_ERR "kmalloc for ide device %d info failed!\n", id);
-        unregister_irq(channel->irqno, (void *)channel);
+        irq_unregister(channel->irqno, (void *)channel);
         
         return -1;
     }
@@ -1289,7 +1289,7 @@ static int ide_probe(device_extension_t *ext, int id)
     while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY) && (--timeout) > 0);
     if (timeout <= 0) {
         printk(KERN_NOTICE "[ide]: disk %d maybe not ready or not exist!\n", id);
-        unregister_irq(channel->irqno, (void *)channel);
+        irq_unregister(channel->irqno, (void *)channel);
         return -1;
     }
 
@@ -1298,7 +1298,7 @@ static int ide_probe(device_extension_t *ext, int id)
     err = ide_polling(channel, 1);
     if (err) {
         ide_print_error(ext, err);
-        unregister_irq(channel->irqno, (void *)channel);
+        irq_unregister(channel->irqno, (void *)channel);
         kfree(ext->info);
         return -1;
     }
@@ -1396,7 +1396,7 @@ static iostatus_t ide_exit(driver_object_t *driver)
         }
         if (ext->drive == 0) {  /* 通道上第一个磁盘的时候才注销中断 */
             /* 注销中断 */
-    		unregister_irq(ext->channel->irqno, ext->channel);
+    		irq_unregister(ext->channel->irqno, ext->channel);
         }
         
         io_delete_device(devobj);   /* 删除每一个设备 */

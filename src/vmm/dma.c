@@ -27,7 +27,7 @@ int alloc_dma_buffer(struct dma_region *d)
             free_pages(d->p.address);
             return -1;
         }
-        if (__ioremap(d->p.address, vaddr, d->p.size) < 0) {
+        if (phy_addr_remap(d->p.address, vaddr, d->p.size) < 0) {
             free_vaddr(vaddr, d->p.size);
             free_pages(d->p.address);
             return -1;
@@ -47,7 +47,7 @@ int free_dma_buffer(struct dma_region *d)
     if (d->flags & DMA_REGION_SPECIAL) {
         free_pages(d->p.address);
     } else {
-        if (__iounmap(d->v, d->p.size) < 0) {
+        if (phy_addr_unmap(d->v, d->p.size) < 0) {
             return -1;
         }
 

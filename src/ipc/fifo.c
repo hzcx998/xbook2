@@ -362,7 +362,7 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg)
     /* 只要还有数据，就不停地写入，直到写完为止 */
     while (left_size > 0) {
         /* 对已有数据的检测，必须是在关闭中断下检测，不能被打断 */
-        save_intr(flags);
+        interrupt_save_state(flags);
         chunk = MIN(left_size, FIFO_SIZE); /* 获取一次要写入的数据量 */
         chunk = MIN(chunk, fifo_buf_avali(fifo->fifo)); /* 获取能写入的数据量 */
         
@@ -389,9 +389,9 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg)
             
             task_unblock(fifo->reader);
         }
-        restore_intr(flags); /* 完成对已有数据检测 */
+        interrupt_restore_state(flags); /* 完成对已有数据检测 */
 
-        //save_intr(flags);
+        //interrupt_save_state(flags);
         /* 如果fifo缓冲区为已经满了，并且还需要写入数据，就进入抉择阶段 */
         if (fifo_buf_avali(fifo->fifo) <= 0 && left_size > 0) {
             if (fifo->flags & (IPC_NOWAIT << 24)) { /* 如果是不需要等待，就直接返回 */
@@ -478,12 +478,12 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
     mutex_lock(&fifo->mutex); /* 获取管道，只有一个进程可以进入管道 */
     unsigned long flags;
     
-    save_intr(flags); /* 对已有数据的检测需要关闭中断 */
+    interrupt_save_state(flags); /* 对已有数据的检测需要关闭中断 */
     /* 如果缓冲区里面没有数据，就进入抉择截断 */
     if (fifo_buf_len(fifo->fifo) <= 0) {
         if (fifo->flags & (IPC_NOWAIT << 16)) { /* 如果是不需要等待，就直接返回 */
             fifo->flags &= ~FIFO_IN_READ;   /* 管道离开读状态 */
-            restore_intr(flags);
+            interrupt_restore_state(flags);
             mutex_unlock(&fifo->mutex); /* 释放管道 */
 #ifdef DEBUG_IPC_FIFO
             printk(KERN_DEBUG "fifo_read: read with no wait, return.\n");
@@ -493,14 +493,14 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
 #ifdef DEBUG_IPC_FIFO
         printk(KERN_DEBUG "fifo_read: buffer empty, pid=%d blocked.\n", current_task->pid);
 #endif
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         /* 阻塞自己，等待有空闲空间后被唤醒 */
         mutex_unlock(&fifo->mutex); /* 释放管道 */
         task_block(TASK_BLOCKED);   /* 阻塞自己 */
         mutex_lock(&fifo->mutex); /* 获取管道 */
-        save_intr(flags);
+        interrupt_save_state(flags);
     }
-    restore_intr(flags); /* 完成对已有数据检测 */
+    interrupt_restore_state(flags); /* 完成对已有数据检测 */
     /* 被唤醒后，肯定有数据了 */
     int rdsize = 0;
     int chunk = MIN(size, FIFO_SIZE); /* 获取一次能读取的数据量 */
@@ -520,7 +520,7 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
 #ifdef DEBUG_IPC_FIFO
         printk(KERN_DEBUG "fifo_read: wakeup writer pid=%d.\n", fifo->writer->pid);
 #endif
-        //restore_intr(flags);
+        //interrupt_restore_state(flags);
         task_unblock(fifo->writer);
     }
     

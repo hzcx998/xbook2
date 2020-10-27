@@ -152,5 +152,6 @@
         "ft_clipboard.h": "c",
         "fsal.h": "c",
         "hw.h": "c"
-    }
+    },
+    "python.pythonPath": "D:\\DevApp\\Anaconda3\\python.exe"
 }

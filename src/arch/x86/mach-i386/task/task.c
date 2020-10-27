@@ -116,7 +116,7 @@ void __build_user_thread_frame(trap_frame_t *frame, void *arg, void *func,
  */
 static void kernel_thread(task_func_t *function, void *arg)
 {
-    enable_intr();  /* 在启动前需要打开中断，避免启动后不能产生时钟中断调度 */
+    interrupt_enable();  /* 在启动前需要打开中断，避免启动后不能产生时钟中断调度 */
     function(arg);
 }
 

@@ -9,7 +9,6 @@
 #include <arch/io.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
-#include <arch/instruction.h>
 #include <arch/page.h>
 #include <arch/pmem.h>
 #include <arch/time.h>

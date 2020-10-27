@@ -15,7 +15,6 @@
 #include <xbook/kmalloc.h>
 #include <arch/pci.h>
 #include <xbook/mutexlock.h>
-#include <xbook/cpu.h>
 #include <xbook/bitops.h>
 #include <xbook/dma.h>
 #include <xbook/task.h>
@@ -434,11 +433,11 @@ pci_device_t *get_ahci_pci (void)
     pci_enable_bus_mastering(ahci);
 
     /* 映射IO物理内存地址到虚拟地址中，才能对设备映射到内存的地址进行操作 */
-    if (__ioremap((addr_t)hba_mem, (addr_t)ahci->bar[5].base_addr, ahci->bar[5].length) < 0) {
+    if (phy_addr_remap((addr_t)hba_mem, (addr_t)ahci->bar[5].base_addr, ahci->bar[5].length) < 0) {
         pr_err("[ahci] device ioremap on %x length %x failed!\n", ahci->bar[5].base_addr, ahci->bar[5].length);
         return NULL;
     }
-    flush_tlb();    // 刷新快表
+    tlb_flush();    // 刷新快表
     #ifdef DEBUG_AHCI
 	pr_dbg("[ahci]: mapping hba_mem to %x -> %x\n", hba_mem, ahci->bar[5].base_addr);
 	pr_dbg("[ahci]: using interrupt %d\n", ahci->irq_line);
@@ -731,9 +730,9 @@ uint32_t ahci_check_type(volatile struct hba_port *port)
 	while(port->command & (1 << 15)) cpu_pause();
 	port->command &= ~(1 << 4);
 	while(port->command & (1 << 14)) cpu_pause();
-	io_mfence();
+	wmb();
     port->command |= 2;
-    io_mfence();
+    wmb();
 	mdelay(10);
 
 	uint32_t s = port->sata_status;
@@ -1153,7 +1152,7 @@ static iostatus_t ahci_enter(driver_object_t *driver)
         return status;
 	}
     
-    if (register_irq(ahci_int, ahci_handler, IRQF_SHARED, "ahci", "ahci driver", (addr_t)driver) < 0) {
+    if (irq_register(ahci_int, ahci_handler, IRQF_SHARED, "ahci", "ahci driver", (addr_t)driver) < 0) {
 		printk(KERN_ERR "[ahci]: register interrupt failed!\n");
 		/* 需要取消内存映射以及关闭ahci总线 */
         status = IO_FAILED;
@@ -1162,7 +1161,7 @@ static iostatus_t ahci_enter(driver_object_t *driver)
     ahci_init_hba(hba_mem);
     if (!ahci_probe_ports(driver, hba_mem)) {
         printk(KERN_INFO "[ahci]: initializing ahci driver failed!.\n");
-        unregister_irq(ahci_int, (addr_t *)driver);
+        irq_unregister(ahci_int, (addr_t *)driver);
         status = IO_FAILED;
         return status;
     }
@@ -1177,7 +1176,7 @@ static iostatus_t ahci_exit(driver_object_t *driver)
     /* 遍历所有对象 */
     device_object_t *devobj, *next;
     device_extension_t *ext;
-    unregister_irq(ahci_int, driver);
+    irq_unregister(ahci_int, driver);
 
     /* 由于涉及到要释放devobj，所以需要使用safe版本 */
     list_for_each_owner_safe (devobj, next, &driver->device_list, list) {

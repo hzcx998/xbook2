@@ -37,6 +37,6 @@ typedef struct tss
 
 void tss_init();
 tss_t *tss_get_from_cpu0();
-void update_tss_info(unsigned long task_addr);
+void tss_update_info(unsigned long task_addr);
 
 #endif	/*_X86_CPU_H*/

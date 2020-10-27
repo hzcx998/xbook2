@@ -4,23 +4,21 @@
 #include "atomic.h"
 #include "registers.h"
 
-
-void __disable_intr(void);
-void __enable_intr(void);
+void interrupt_disable(void);
+void interrupt_enable(void);
 
 /* save intr status and disable intr */
-#define __save_intr(flags)                  \
+#define interrupt_save_state(flags)                  \
     do {                                    \
-        flags = (unsigned int)load_eflags();\
-        __disable_intr();                   \
+        flags = (unsigned int)eflags_save_to();\
+        interrupt_disable();                   \
     } while (0)
 
 /* restore intr status and enable intr */
-#define __restore_intr(flags)               \
+#define interrupt_restore_state(flags)               \
     do {                                    \
-        store_eflags((unsigned int)flags);\
+        eflags_restore_from((unsigned int)flags);\
     } while (0)
-
 
 /* 中断分配管理 */
 
@@ -110,21 +108,15 @@ typedef struct trap_frame {
 //中断处理函数的类型
 typedef void* intr_handler_t;
 
-void __register_intr_handler(unsigned char interrupt, intr_handler_t function);
-void __unregister_intr_handler(unsigned char interrupt);
+void interrupt_register_handler(unsigned char interrupt, intr_handler_t function);
+void unregister_interrupt_handler(unsigned char interrupt);
 
-void __register_irq_handler(unsigned char irq, intr_handler_t function);
-void __unregister_irq_handler(unsigned char irq);
+void irq_register_handler(unsigned char irq, intr_handler_t function);
+void irq_unregister_handler(unsigned char irq);
 
-void dump_trap_frame(trap_frame_t *frame);
+void trap_frame_dump(trap_frame_t *frame);
 
-void init_intr_expection(void);
-
-#define enable_intr     __enable_intr
-#define disable_intr    __disable_intr
-
-#define save_intr     __save_intr
-#define restore_intr    __restore_intr
+void intrrupt_expection_init(void);
 
 /* ----中断上半部分---- */
 /* IRQ 编号 */
@@ -165,8 +157,8 @@ struct hardware_intr_controller {
 /* var: hardware_intr_contorller must be support in arch */
 extern struct hardware_intr_controller hardware_intr_contorller;
 
-#define enable_irq(n) hardware_intr_contorller.enable(n)
-#define disable_irq(n) hardware_intr_contorller.disable(n)
+#define irq_enable(n) hardware_intr_contorller.enable(n)
+#define irq_disable(n) hardware_intr_contorller.disable(n)
 
 /* irq对应的处理 */
 typedef struct irq_action {
@@ -189,16 +181,14 @@ typedef struct irq_description {
     char *irqname;
 } irq_description_t;
 
-int register_irq(unsigned long irq,
+int irq_register(unsigned long irq,
     int (*handler)(unsigned long, unsigned long), 
     unsigned long flags,
     char *irqname,
     char *devname,
     unsigned long data);
-int unregister_irq(unsigned long irq, void *data);
-
-int handle_irq(unsigned long irq, trap_frame_t *frame);
-
-void init_irq_description();
+int irq_unregister(unsigned long irq, void *data);
+int irq_handle(unsigned long irq, trap_frame_t *frame);
+void irq_description_init();
 
 #endif  /* _X86_INTERRUPT_H */

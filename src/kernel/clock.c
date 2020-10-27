@@ -8,7 +8,6 @@
 #include <xbook/schedule.h>
 #include <xbook/timer.h>
 #include <arch/interrupt.h>
-#include <xbook/cpu.h>
 #include <xbook/ktime.h>
 
 volatile clock_t systicks;
@@ -115,14 +114,14 @@ void init_clock()
 {
     timer_ticks = systicks = 0;
     /* 初始化时钟硬件 */
-    init_clock_hardware();
+    clock_hardware_init();
 
 	/* 注册定时器软中断处理 */
 	build_softirq(TIMER_SOFTIRQ, timer_softirq_handler);
 	/* 注册定时器软中断处理 */
 	build_softirq(SCHED_SOFTIRQ, sched_softirq_handler);
 	/* 注册时钟中断并打开中断 */	
-	if (register_irq(IRQ0_CLOCK, &clock_handler, IRQF_DISABLED, "clockirq", "kclock", 0))
+	if (irq_register(IRQ0_CLOCK, &clock_handler, IRQF_DISABLED, "clockirq", "kclock", 0))
         printk("register failed!\n");
 
     printk(KERN_INFO "[clock] init done\n");

@@ -154,7 +154,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     
     /* 操作链表时关闭中断，结束后恢复之前状态 */
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
     atomic_inc(&task->pthread->thread_count);   /* 增加一个线程 */
     if (atomic_get(&task->pthread->thread_count) > PTHREAD_MAX_NR) { /* 超过最大线程数量，就不能创建 */
@@ -164,7 +164,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
 #endif
         atomic_dec(&task->pthread->thread_count);
         kfree(task);
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         return NULL;
     }
 #ifdef DEBUG_PTHREAD
@@ -174,7 +174,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     task_global_list_add(task);
     task_priority_queue_add_tail(sched_get_unit(), task);
     
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     return task;
 }
 
@@ -198,7 +198,7 @@ pid_t sys_thread_create(
 void pthread_exit(void *status)
 {
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
     task_t *cur = current_task;
 
@@ -251,7 +251,7 @@ void pthread_exit(void *status)
     if (parent) {
         /* 查看父进程状态 */
         if (parent->state == TASK_WAITING) {
-            restore_intr(flags);
+            interrupt_restore_state(flags);
 #ifdef DEBUG_PTHREAD
             printk(KERN_DEBUG "pthread_exit: pid=%d parent %d waiting...\n", cur->pid, parent->pid);
 #endif    
@@ -260,7 +260,7 @@ void pthread_exit(void *status)
             task_unblock(parent); /* 唤醒父进程 */
             task_block(TASK_HANGING);   /* 把自己挂起 */
         } else { /* 父进程没有 */
-            restore_intr(flags);
+            interrupt_restore_state(flags);
 #ifdef DEBUG_PTHREAD
             printk(KERN_DEBUG "pthread_exit: pid=%d parent %d not waiting, zombie!\n", cur->pid, parent->pid);
 #endif    
@@ -273,7 +273,7 @@ void pthread_exit(void *status)
             printk(KERN_DEBUG "pthread_exit: pid=%d no parent! zombie!\n", cur->pid);
 #endif    
         //printk("no parent!\n");
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         task_block(TASK_ZOMBIE); 
     }
 }
@@ -319,7 +319,7 @@ int pthread_join(pthread_t thread, void **thread_return)
 {
     task_t *waiter = current_task;  /* 当前进程是父进程 */
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     /* 先查看线程，是否存在，并且要是线程才行 */
     task_t *task, *find = NULL;
     list_for_each_owner (task, &task_global_list, global_list) {
@@ -331,7 +331,7 @@ int pthread_join(pthread_t thread, void **thread_return)
     }
     
     if (find == NULL) { /* 线程不存在 */
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         return -1;  /* 没找到线程 */
     }
 #ifdef DEBUG_PTHREAD
@@ -342,7 +342,7 @@ int pthread_join(pthread_t thread, void **thread_return)
 #ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "pthread_join: pid=%d join the %d was detached, just return.\n", waiter->pid, thread);
 #endif  
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         return -1;
     }
  
@@ -352,7 +352,7 @@ int pthread_join(pthread_t thread, void **thread_return)
         printk(KERN_DEBUG "pthread_join: pid=%d the thread %d had joined by thread %d, return.\n",
             waiter->pid, find->pid, find->parent_pid);
 #endif 
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         return -1;  /* 已经有一个线程在等待，不能等待 */
     }
 
@@ -383,11 +383,11 @@ int pthread_join(pthread_t thread, void **thread_return)
 #ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "pthread_join: pid=%d waiting...\n", waiter->pid);
 #endif        
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         /* WATING for thread to exit */
         task_block(TASK_WAITING);
         
-        save_intr(flags);
+        interrupt_save_state(flags);
     } while (pid == -1);
     /* 回写状态 */
     if (thread_return != NULL) {
@@ -398,7 +398,7 @@ int pthread_join(pthread_t thread, void **thread_return)
 #endif
     }
 
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     return 0;
 }
 
@@ -426,14 +426,14 @@ int sys_thread_cancel(pthread_t thread)
 {
     task_t *task;
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
     task = find_task_by_pid(thread);
     if (task == NULL) { /* 没找到 */
 #ifdef DEBUG_PTHREAD
         printk(KERN_ERR "sys_thread_cancel: pid=%d not find thread %d!\n",
             current_task->pid, thread);
 #endif 
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         return -1;
     }
 #ifdef DEBUG_PTHREAD
@@ -445,7 +445,7 @@ int sys_thread_cancel(pthread_t thread)
     if (task->flags & THREAD_FLAG_CANCEL_ASYCHRONOUS) { /* 立即取消线程处理 */ 
         /* 查看是否为自己取消自己 */
         if (task == current_task) { /* 是自己 */
-            restore_intr(flags);
+            interrupt_restore_state(flags);
 #ifdef DEBUG_PTHREAD
             printk(KERN_DEBUG "sys_thread_cancel: pid=%d cancel self.\n", current_task->pid);
 #endif 
@@ -458,7 +458,7 @@ int sys_thread_cancel(pthread_t thread)
             close_one_thread(task);
         }
     }
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     return 0;
 }
 

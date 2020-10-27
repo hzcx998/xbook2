@@ -64,7 +64,7 @@ static inline void semaphore_down(semaphore_t *sema)
 {
     
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
 	/* 如果计数器大于0，就说明资源没有被占用 */
 	if (atomic_get(&sema->counter) > 0) {
@@ -74,7 +74,7 @@ static inline void semaphore_down(semaphore_t *sema)
         /* 如果信号量为0，说明不能被获取，那么就把当前进程阻塞 */
 		__semaphore_down(sema);
 	}
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 /**
@@ -85,7 +85,7 @@ static inline int semaphore_try_down(semaphore_t *sema)
 {
     
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 
 	/* 如果计数器大于0，就说明资源没有被占用 */
 	if (atomic_get(&sema->counter) > 0) {
@@ -93,10 +93,10 @@ static inline int semaphore_try_down(semaphore_t *sema)
 		atomic_dec(&sema->counter);
     } else {	
 		/* 不能获取的话，就不被阻塞，直接返回 */
-		restore_intr(flags);
+		interrupt_restore_state(flags);
 		return -1;
 	}
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 	return 0;
 }
 
@@ -124,7 +124,7 @@ static inline void __semaphore_up(semaphore_t *sema)
 static inline void semaphore_up(semaphore_t *sema)
 {
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_state(flags);
 	/* 如果等待队列为空，说明没有等待的任务，就只释放信号量 */
 	if (list_empty(&sema->waiter.wait_list)) {
 		/* 使信号量递增 */
@@ -133,7 +133,7 @@ static inline void semaphore_up(semaphore_t *sema)
  		/* 有等待任务，就唤醒一个 */
 		__semaphore_up(sema);
 	}
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 /**

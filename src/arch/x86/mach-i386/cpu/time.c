@@ -1,6 +1,6 @@
 #include <arch/time.h>
 /* TODO: make udelay better */
-void __udelay(int usec)
+void cpu_do_udelay(int usec)
 {
     int i, j;
     for (i = 0; i < 10 * usec; i++);

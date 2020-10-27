@@ -153,7 +153,7 @@ int __free_pages(unsigned long page)
     if (node == NULL)
         return -1;
     
-    __atomic_dec(&node->reference);
+    mem_atomic_dec(&node->reference);
 
 	if (node->reference == 0) {
         node->count = 0;

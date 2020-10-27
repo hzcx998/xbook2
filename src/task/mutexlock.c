@@ -10,12 +10,12 @@ void mutex_lock(mutexlock_t *mutex)
 {
     do {
         /* 保证整个函数是原子的 */
-        disable_intr();
+        interrupt_disable();
 
         /* 循环+等待，做更深的判断 */
         if (!atomic_xchg(&mutex->count, 1)) {
             /* 如果获取到锁，直接返回 */
-            enable_intr();
+            interrupt_enable();
             return;
         }
         
@@ -25,7 +25,7 @@ void mutex_lock(mutexlock_t *mutex)
         list_add_tail(&task->list, &mutex->wait_list);
         /*
         SET_TASK_STATUS(task, TASK_BLOCKED);
-        enable_intr();
+        interrupt_enable();
         schedule();*/
         task_block(TASK_BLOCKED);
     } while (1);
@@ -38,18 +38,18 @@ void mutex_lock(mutexlock_t *mutex)
 void mutex_unlock(mutexlock_t *mutex)
 {
     /* 保证整个函数是原子的 */
-    disable_intr();
+    interrupt_disable();
     atomic_set(&mutex->count, 0); /* set lock unused */
 
     if (mutex->waiters == 0) {
-        enable_intr();
+        interrupt_enable();
         return;
     }
     /* 获取第一个等待者 */
     task_t *task = list_first_owner(&mutex->wait_list, task_t, list);
     list_del_init(&task->list);
     mutex->waiters--;
-    enable_intr();
+    interrupt_enable();
     
     task_wakeup(task);
 }
