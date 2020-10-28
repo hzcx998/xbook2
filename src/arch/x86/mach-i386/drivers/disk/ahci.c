@@ -543,7 +543,7 @@ int ahci_write_prdt(struct hba_memory *abar, struct hba_port *port, device_exten
 	{
 		/* TODO: do we need to do this? */
 		addr_t phys_buffer;
-        phys_buffer = addr_v2p(virt_buffer);
+        phys_buffer = addr_vir2phy(virt_buffer);
 		//mm_virtual_getmap(virt_buffer, &phys_buffer, 0);
 		prd = &tbl->prdt_entries[i+offset];
 		prd->byte_count = PRDT_MAX_COUNT-1;
@@ -555,7 +555,7 @@ int ahci_write_prdt(struct hba_memory *abar, struct hba_port *port, device_exten
 		virt_buffer += PRDT_MAX_COUNT;
 	}
 	addr_t phys_buffer;
-    phys_buffer = addr_v2p(virt_buffer);
+    phys_buffer = addr_vir2phy(virt_buffer);
 	//mm_virtual_getmap(virt_buffer, &phys_buffer, 0);
 	prd = &tbl->prdt_entries[i+offset];
 	prd->byte_count = length-1;

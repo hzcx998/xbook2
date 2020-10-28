@@ -1,11 +1,12 @@
 #include <arch/pmem.h>
+#include <arch/vmm.h>
 #include <xbook/vmm.h>
 #include <xbook/debug.h>
 #include <xbook/vmspace.h>
 
 void vmm_init(vmm_t *vmm)
 {
-    vmm->page_storage = copy_kernel_page_storge();
+    vmm->page_storage = kern_page_copy_storge();
     if (vmm->page_storage == NULL) {
         panic(KERN_EMERG "task_init_vmm: kmalloc for page_storege failed!\n");
     }
@@ -16,8 +17,8 @@ void vmm_init(vmm_t *vmm)
 
 int sys_mstate(mstate_t *ms)
 {
-    ms->ms_total    = get_total_page_nr() * PAGE_SIZE;
-    ms->ms_free     = get_free_page_nr() * PAGE_SIZE;
+    ms->ms_total    = page_get_total_nr() * PAGE_SIZE;
+    ms->ms_free     = page_get_free_nr() * PAGE_SIZE;
     ms->ms_used     = ms->ms_total - ms->ms_free;
     if (ms->ms_used < 0)
         ms->ms_used = 0;
@@ -37,9 +38,9 @@ void dump_vmm(vmm_t *vmm)
 void vmm_active(vmm_t *vmm)
 {
     if (vmm == NULL) {
-        page_dir_active(0, 0);
+        vmm_active_kernel();
     } else {   
-        page_dir_active(v2p(vmm->page_storage), 1);
+        vmm_active_user(kern_vir_addr2phy_addr(vmm->page_storage));
     }
 }
 
@@ -99,7 +100,7 @@ int vmm_unmap_space(vmm_t *vmm)
     /* 取消虚拟空间的地址映射 */
     while (space != NULL) {
         /* 由于内存区域可能不是连续的，所以需要用安全的方式来取消映射 */
-        unmap_pages_safe(space->start, space->end - space->start, space->flags & VMS_MAP_SHARED);
+        page_unmap_addr_safe(space->start, space->end - space->start, space->flags & VMS_MAP_SHARED);
         space = space->next;
     }
     return 0;
@@ -124,7 +125,7 @@ int vmm_unmap_space_maparea(vmm_t *vmm)
     while (space != NULL) {
         if (space->start >= VMS_MAP_START_ADDR &&
             space->end <= VMS_MAP_START_ADDR + MAX_VMS_MAP_SIZE) {
-            unmap_pages_safe(space->start, space->end - space->start, space->flags & VMS_MAP_SHARED);
+            page_unmap_addr_safe(space->start, space->end - space->start, space->flags & VMS_MAP_SHARED);
         }
         space = space->next;
     }

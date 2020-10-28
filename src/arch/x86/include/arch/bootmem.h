@@ -14,9 +14,9 @@ typedef struct boot_mem
     unsigned int top_addr;  // 引导内存的界限
 } boot_mem_t;
 
-void init_boot_mem(unsigned int start, unsigned int limit);
+void boot_mem_init(unsigned int start, unsigned int limit);
 void *boot_mem_alloc(size_t size);
-unsigned int boot_mem_pos();
+unsigned int boot_mem_current_addr();
 unsigned int boot_mem_size();
 
 #endif  /* _X86_BOOTMEM_H */

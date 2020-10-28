@@ -56,13 +56,13 @@ int fsal_dir_free(fsal_dir_t *dir)
 
 /* 将最上层路径名称解析出来 */
 /**
- * __parse_path_afterward - 朝后解析路径
+ * kern_vir_addr2phy_addrrse_path_afterward - 朝后解析路径
  * @path: 路径名
  * @name: 储存名字的地址
  * 
  *  成功返回解析到的位置，失败返回NULL
  */
-static char *__parse_path_afterward(char *path, char *name)
+static char *kern_vir_addr2phy_addrrse_path_afterward(char *path, char *name)
 {
     if (path[0] == '/') {   // 根目录不需要单独解析
         /* 路径中出现1个或多个连续的字符'/',将这些'/'跳过,如"///a/b" */
@@ -93,7 +93,7 @@ void wash_path(char *old_path, char *new_path)
     ASSERT(old_path[0] == '/');
     char name[MAX_PATH] = {0};    
     char* sub_path = old_path;
-    sub_path = __parse_path_afterward(sub_path, name);
+    sub_path = kern_vir_addr2phy_addrrse_path_afterward(sub_path, name);
     if (name[0] == 0) { // 若只有"/",直接将"/"存入new_path后返回 
         new_path[0] = '/';
         new_path[1] = 0;
@@ -126,7 +126,7 @@ void wash_path(char *old_path, char *new_path)
         /* 继续遍历下一层路径 */
         memset(name, 0, MAX_PATH);
         if (sub_path) {
-	        sub_path = __parse_path_afterward(sub_path, name);
+	        sub_path = kern_vir_addr2phy_addrrse_path_afterward(sub_path, name);
         }
     }
 }

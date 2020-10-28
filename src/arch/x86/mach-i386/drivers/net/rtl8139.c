@@ -1530,8 +1530,8 @@ static iostatus_t rtl8139_open(device_object_t *device, io_request_t *ioreq)
     }
 
     /* 把虚拟地址转换成物理地址，即DMA地址 */
-    ext->tx_buffer_dma = v2p(ext->tx_buffers);
-    ext->rx_ring_dma = v2p(ext->rx_ring);
+    ext->tx_buffer_dma = kern_vir_addr2phy_addr(ext->tx_buffers);
+    ext->rx_ring_dma = kern_vir_addr2phy_addr(ext->rx_ring);
 
     /* 传输标志设置 */
     ext->tx_flags = (TX_FIFO_THRESH << 11) & 0x003f0000;

@@ -97,7 +97,7 @@ static void *__vmalloc(size_t size)
 	/* 添加到虚拟区域的链表上 */
 	list_add_tail(&area->list, &using_vmarea_list);
 
-	if (map_pages(start, size, PROT_KERN | PROT_WRITE)) {
+	if (page_map_addr(start, size, PROT_KERN | PROT_WRITE)) {
 		free_vaddr(start, size);
 		kfree(area);
 		interrupt_restore_state(flags);

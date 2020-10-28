@@ -178,9 +178,9 @@ int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
     /* 创建空间后，需要做虚拟地址映射 */
     if (flags & VMS_MAP_SHARED) { /* 如果是共享映射，就映射成共享的地址 */
         //printk(KERN_DEBUG "do_vmspace_map: shared at %x:%x %x\n", addr, paddr, len);
-        map_pages_fixed(addr, paddr, len, prot);
+        page_map_addr_fixed(addr, paddr, len, prot);
     } else {
-        map_pages_safe(addr, len, prot); 
+        page_map_addr_safe(addr, len, prot); 
     }
     
     return addr;
@@ -235,7 +235,7 @@ int do_vmspace_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
         return -2;
     }
     
-    unmap_pages_safe(addr, len, space->flags & VMS_MAP_SHARED);
+    page_unmap_addr_safe(addr, len, space->flags & VMS_MAP_SHARED);
 
     /* 分配一个新的空间，有可能要unmap的空间会分成2个空间，例如：
     [start, addr, addr+len, end] => [start, addr], [addr+len, end]

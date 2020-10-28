@@ -64,7 +64,7 @@ static int copy_vm_struct(task_t *child, task_t *parent)
 static int copy_share_mem(vmspace_t *vmspace)
 {
     /* 转换成物理地址 */
-    addr_t phyaddr = addr_v2p(vmspace->start);  
+    addr_t phyaddr = addr_vir2phy(vmspace->start);  
     /* 查找共享内存 */
     share_mem_t *shm = share_mem_find_by_addr(phyaddr);
     if (shm == NULL) { 

@@ -130,26 +130,26 @@ int mem_cache_init(mem_cache_t *cache, char *name, size_t size, flags_t flags)
 	return 0;
 }
 
-static void *mem_cache_alloc_pages(unsigned long count)
+static void *mem_cache_page_alloc_normal(unsigned long count)
 {
-	unsigned long page = alloc_pages(count);
+	unsigned long page = page_alloc_normal(count);
 	if (!page)
 		return NULL;
 	
-	return p2v(page);
+	return kern_phy_addr2vir_addr(page);
 }
 
-static int mem_cache_free_pages(void *address)
+static int mem_cache_page_free(void *address)
 {
 	if (address == NULL)
 		return -1;
 
-	unsigned int page = v2p(address);
+	unsigned int page = kern_vir_addr2phy_addr(address);
 	
 	if (!page)
 		return -1;
 	
-	free_pages(page);
+	page_free(page);
 	return 0;
 }
 
@@ -178,20 +178,20 @@ static int mem_group_init(
 		group->objects = map + 16;
 
 		/* 转换成节点，并标记 */
-		node = addr2page(v2p(group));
+		node = phy_addr_to_mem_node(kern_vir_addr2phy_addr(group));
 		CHECK_MEM_NODE(node);
 		MEM_NODE_MARK_CHACHE_GROUP(node, cache, group);
 	} else {
 		unsigned int pages = DIV_ROUND_UP(cache->object_count * cache->object_size, PAGE_SIZE); 
 
-		group->objects = mem_cache_alloc_pages(pages);
+		group->objects = mem_cache_page_alloc_normal(pages);
 		if (group->objects == NULL) {
 			printk(KERN_ERR "alloc page for mem objects failed\n");
 			return -1;
 		}
 		int i;
 		for (i = 0; i < pages; i++) {
-			node = addr2page(v2p(group->objects + i * PAGE_SIZE));
+			node = phy_addr_to_mem_node(kern_vir_addr2phy_addr(group->objects + i * PAGE_SIZE));
 			CHECK_MEM_NODE(node);
 			MEM_NODE_MARK_CHACHE_GROUP(node, cache, group);
 		}
@@ -220,7 +220,7 @@ static int create_mem_group(mem_cache_t *cache, flags_t flags)
     // printk("cache %s need a new group %x!\n", cache->name, cache->object_size);
 
 	/* 为内存组分配一个页 */
-	group = mem_cache_alloc_pages(1);
+	group = mem_cache_page_alloc_normal(1);
 	if (group == NULL) {
 		printk(KERN_ERR "alloc page for mem group failed!\n");
         interrupt_restore_state(irqflags);
@@ -239,7 +239,7 @@ static int create_mem_group(mem_cache_t *cache, flags_t flags)
 
 free_group:
 	// 释放对象组的页
-	mem_cache_free_pages(group);
+	mem_cache_page_free(group);
     interrupt_restore_state(irqflags);
 	return -1;
 }
@@ -421,7 +421,7 @@ void *kmalloc(size_t size)
         if (obj == NULL)
             return NULL;
         obj->size = size;
-        obj->addr = mem_cache_alloc_pages(DIV_ROUND_UP(size, PAGE_SIZE));
+        obj->addr = mem_cache_page_alloc_normal(DIV_ROUND_UP(size, PAGE_SIZE));
         if (obj->addr == NULL) {
             kfree(obj);
             return NULL;
@@ -461,7 +461,7 @@ static void __mem_cache_free_object(mem_cache_t *cache, void *object)
 	// 获取group
 
 	// 获取页
-	mem_node_t *node = addr2page(v2p(object));
+	mem_node_t *node = phy_addr_to_mem_node(kern_vir_addr2phy_addr(object));
 
 	CHECK_MEM_NODE(node);
 
@@ -551,7 +551,7 @@ void kfree(void *object)
 	mem_cache_t *cache;
 	
 	// 获取对象所在的页
-	mem_node_t *node = addr2page(v2p(object));
+	mem_node_t *node = phy_addr_to_mem_node(kern_vir_addr2phy_addr(object));
 
 	CHECK_MEM_NODE(node);
 	
@@ -564,7 +564,7 @@ void kfree(void *object)
             if (obj->addr == object) {
                 
                 list_del(&obj->list);
-                mem_cache_free_pages(obj->addr);
+                mem_cache_page_free(obj->addr);
                 kfree(obj);
                 printk(KERN_DEBUG "[memcache]: free large mem object %x\n", object);
                 return;
@@ -595,13 +595,13 @@ static int group_destory(mem_cache_t *cache, mem_group_t *group)
 	/* 根据缓冲中记录的对象大小进行不同的设定 */
 	if (cache->object_size < 1024) {
 		/* 只释放group所在的内存，因为所有数据都在里面 */
-		if (mem_cache_free_pages(group))
+		if (mem_cache_page_free(group))
 			return -1;
 	} else {
 		/* 要释放group和对象所在的页 */
-		if (mem_cache_free_pages(group->objects))
+		if (mem_cache_page_free(group->objects))
 			return -1;
-		if (mem_cache_free_pages(group))
+		if (mem_cache_page_free(group))
 			return -1;
 	}
 	return 0;
@@ -765,8 +765,8 @@ int init_mem_caches()
     size = kmshrink();
 	printk("shrink size %x bytes %d MB\n", size, size/MB);
 
-    unsigned long free_size = get_free_page_nr();
-    unsigned long total_size = get_total_page_nr();
+    unsigned long free_size = page_get_free_nr();
+    unsigned long total_size = page_get_total_nr();
     printk("total:%d free:%d used:%d\n", total_size, free_size, total_size - free_size);
 	
 #endif

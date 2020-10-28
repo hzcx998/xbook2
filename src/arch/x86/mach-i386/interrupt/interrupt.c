@@ -28,7 +28,7 @@ void intr_general_handler(unsigned int esp)
 	/* 支持信号后的处理 */
     switch (frame->vec_no) {
     case EP_PAGE_FAULT:
-        do_page_fault(frame); /* 执行页故障处理 */
+        page_do_fault(frame); /* 执行页故障处理 */
 		return;
     case EP_DIVIDE:
     case EP_DEVICE_NOT_AVAILABLE:
@@ -109,7 +109,7 @@ void intr_general_handler(unsigned int esp)
     #endif
 	/* 如果是页故障，就处理它 */
 	if (frame->vec_no == EP_PAGE_FAULT) {
-		do_page_fault(frame);
+		page_do_fault(frame);
 		return;
 	}
     /* 原始处理方式 */

@@ -7,7 +7,7 @@ void setup_paging()
 {
     print_str("setup_paging.\n");
 
-    unsigned int *pgdir = (unsigned int *) PAGE_DIR_PHY_ADDR;
+    unsigned int *pgdir = (unsigned int *) KERN_PAGE_DIR_PHY_ADDR;
     unsigned int *pgtbl = (unsigned int *) PAGE_TBL_PHY_ADDR;
     
     /* clear page dir table */

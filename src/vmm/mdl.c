@@ -29,7 +29,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
         return NULL;
     }
     /* 获取虚拟地址页对齐的地址 */
-    mdl->start_vaddr =  (void *) (((unsigned long) vaddr) & PAGE_ADDR_MASK);
+    mdl->start_vaddr =  (void *) (((unsigned long) vaddr) & PAGE_MASK);
     mdl->byte_offset = (char *)vaddr - (char *)mdl->start_vaddr;
     if (length > MDL_MAX_SIZE) {
         length = MDL_MAX_SIZE;      /* 剪切长度 */
@@ -42,7 +42,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
     unsigned long flags;    /* 关闭并保存中断 */
     interrupt_save_state(flags);
 
-    unsigned long phyaddr = addr_v2p((unsigned long) mdl->start_vaddr);
+    unsigned long phyaddr = addr_vir2phy((unsigned long) mdl->start_vaddr);
     printk(KERN_DEBUG "mdl_alloc: viraddr=%x phyaddr=%x\n", vaddr, phyaddr);
     unsigned long pages = PAGE_ALIGN(length) / PAGE_SIZE;
     printk(KERN_DEBUG "mdl_alloc: length=%d pages=%d\n", length, pages);
@@ -57,7 +57,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
     mdl->mapped_vaddr = (void *) mapped_vaddr;
     
     /* 映射固定内存页（虚拟地址和物理地址都指定了） */
-    map_pages_fixed(mapped_vaddr, phyaddr, length, PROT_KERN | PROT_WRITE);
+    page_map_addr_fixed(mapped_vaddr, phyaddr, length, PROT_KERN | PROT_WRITE);
     
     interrupt_restore_state(flags);
     printk(KERN_DEBUG "mdl_alloc: map success!\n");
@@ -99,7 +99,7 @@ void mdl_free(mdl_t *mdl)
     unsigned long flags;    /* 关闭并保存中断 */
     interrupt_save_state(flags);
     /* 取消共享内存映射 */
-    unmap_pages_safe((unsigned long) mdl->mapped_vaddr, mdl->byte_count, 1);
+    page_unmap_addr_safe((unsigned long) mdl->mapped_vaddr, mdl->byte_count, 1);
     free_vaddr((unsigned long) mdl->mapped_vaddr, mdl->byte_count);  /* 释放映射后的虚拟地址 */
     interrupt_restore_state(flags);
 

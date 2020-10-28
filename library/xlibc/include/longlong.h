@@ -1431,7 +1431,7 @@ extern UDItype __umulsidi3 (USItype, USItype);
 #define UDIV_TIME 230
 #endif /* sparc64 */
 
-#if defined (__vax__) && W_TYPE_SIZE == 32
+#if defined (kern_phy_addr2vir_addrx__) && W_TYPE_SIZE == 32
 #define add_ssaaaa(sh, sl, ah, al, bh, bl) \
   __asm__ ("addl2 %5,%1\n\tadwc %3,%0"					\
 	   : "=g" ((USItype) (sh)),					\
@@ -1474,7 +1474,7 @@ extern UDItype __umulsidi3 (USItype, USItype);
 	     : "=g" (q), "=g" (r)					\
 	     : "g" (__xx.__ll), "g" (d));				\
   } while (0)
-#endif /* __vax__ */
+#endif /* kern_phy_addr2vir_addrx__ */
 
 #ifdef _TMS320C6X
 #define add_ssaaaa(sh, sl, ah, al, bh, bl) \

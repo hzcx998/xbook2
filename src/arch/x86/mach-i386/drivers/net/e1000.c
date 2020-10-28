@@ -656,7 +656,7 @@ iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
         kfree(txdr->buffer_info);
         return -1;
     }
-    txdr->dma = v2p(txdr->desc);
+    txdr->dma = kern_vir_addr2phy_addr(txdr->desc);
     // printk(KERN_DEBUG "-------txdr_dma = %x txdr_size = %d\n", txdr->dma, txdr->size);
     memset(txdr->desc, 0, txdr->size);
 
@@ -700,7 +700,7 @@ iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
         printk(KERN_DEBUG "unable to allocate memory for the recieve descriptor ring\n");
         return -1;
     }
-    rxdr->dma = v2p(rxdr->desc);
+    rxdr->dma = kern_vir_addr2phy_addr(rxdr->desc);
     memset(rxdr->desc, 0, rxdr->size);
     // printk(KERN_DEBUG "-------rxdr_dma = %x rxdr_size = %d\n", rxdr->dma, rxdr->size);
 
@@ -1233,7 +1233,7 @@ static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
 
         buffer_info->buffer = buffer;
         buffer_info->length = ext->rx_buffer_len;
-        buffer_info->dma = v2p(buffer);
+        buffer_info->dma = kern_vir_addr2phy_addr(buffer);
 
         rx_desc = E1000_RX_DESC(*rx_ring, i);
         rx_desc->buffer_addr_low = cpu_to_le32(buffer_info->dma); //------
@@ -1639,7 +1639,7 @@ e1000_tx_map(e1000_extension_t* ext,
         }
 
         buffer_info->length = size;
-        buffer_info->dma = v2p(buffer + offset);
+        buffer_info->dma = kern_vir_addr2phy_addr(buffer + offset);
         // printk(KERN_DEBUG "tx_buffer_info->dma = %d\n", buffer_info->dma);
         buffer_info->time_stamp = systicks;
 

@@ -98,4 +98,7 @@ but make it already an possibility. */
 /* The "volatile" is due to gcc bugs */
 #define barrier() __asm__ __volatile__("": : :"memory")
 
+
+unsigned int phy_mem_get_size_from_hardware();
+
 #endif   /* _X86_MEMORY_H */

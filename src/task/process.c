@@ -38,10 +38,10 @@ static int load_segment(int fd, unsigned long offset, unsigned long file_sz,
         fd, offset, file_sz, mem_sz, vaddr);
     */
     /* 获取虚拟地址的页对齐地址 */
-    unsigned long vaddr_page = vaddr & PAGE_ADDR_MASK;
+    unsigned long vaddr_page = vaddr & PAGE_MASK;
 
     /* 获取在第一个页中的大小 */
-    unsigned long size_in_first_page = PAGE_SIZE - (vaddr & PAGE_INSIDE);
+    unsigned long size_in_first_page = PAGE_SIZE - (vaddr & PAGE_LIMIT);
 
     /*  段要占用多少个页 */
     unsigned long occupy_pages = 0;
@@ -417,7 +417,7 @@ int proc_destroy(task_t *task, int thread)
     if (task->vmm == NULL)
         return -1;
     if (!thread) {
-        free_page(v2p(task->vmm->page_storage));
+        page_free_one(kern_vir_addr2phy_addr(task->vmm->page_storage));
         vmm_free(task->vmm);
         task->vmm = NULL;    
     }

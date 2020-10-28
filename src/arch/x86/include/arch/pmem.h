@@ -76,12 +76,12 @@ int physic_memory_init();
 
 void dump_mem_node(mem_node_t *node);
 
-mem_node_t *__page2mem_node(unsigned int page);
-unsigned int __mem_node2page(mem_node_t *node);
+mem_node_t *phy_addr_to_mem_node(unsigned int page);
+unsigned int mem_node_to_phy_addr(mem_node_t *node);
 
 mem_node_t *get_free_mem_node(unsigned int flags);
 
-unsigned long __get_free_page_nr();
-unsigned long __get_total_page_nr();
+unsigned long page_get_free_nr();
+unsigned long page_get_total_nr();
 
 #endif   /*_X86_PMEM_H */

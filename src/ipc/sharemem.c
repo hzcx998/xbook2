@@ -133,7 +133,7 @@ int share_mem_free(share_mem_t *shm)
 #endif
     /* 要有物理地址并且还不能是映射的当前进程的共享内存 */
     if (shm->page_addr && !(shm->flags & SHARE_MEM_PRIVATE))
-        if (free_pages(shm->page_addr))
+        if (page_free(shm->page_addr))
             return -1;
     memset(shm->name, 0, SHARE_MEM_NAME_LEN);
 
@@ -234,7 +234,7 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
             
         /* 如果没有需要分配一个新的物理地址，并映射之 */
         if (!shm->page_addr) {
-            shm->page_addr = alloc_pages(shm->npages);  /* 分配物理内存 */
+            shm->page_addr = page_alloc_normal(shm->npages);  /* 分配物理内存 */
             if (!shm->page_addr)    /* 分配失败，返回NULL */
                 return (void *) -1;
         } 
@@ -253,7 +253,7 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
         unsigned long vaddr;
 
         if (shmflg & IPC_RND)
-            vaddr = (unsigned long) shmaddr & PAGE_ADDR_MASK; /* 页地址对齐 */
+            vaddr = (unsigned long) shmaddr & PAGE_MASK; /* 页地址对齐 */
         else 
             vaddr = (unsigned long) shmaddr;
 #if DEBUG_SHM == 1
@@ -261,7 +261,7 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
 #endif
         /* 映射一个已经存在的物理地址 */
         if (!shm->page_addr) {
-            shm->page_addr = addr_v2p(vaddr);    /* 直接获取物理地址 */
+            shm->page_addr = addr_vir2phy(vaddr);    /* 直接获取物理地址 */
 #if DEBUG_SHM == 1            
             printk(KERN_DEBUG "%s: phy addr:%x.\n", __func__, shm->page_addr);
 #endif
@@ -301,7 +301,7 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
 
     unsigned long addr;
     if (shmflg & IPC_RND)
-        addr = (unsigned long) shmaddr & PAGE_ADDR_MASK; /* 页地址对齐 */
+        addr = (unsigned long) shmaddr & PAGE_MASK; /* 页地址对齐 */
     else 
         addr = (unsigned long) shmaddr;
 
@@ -311,7 +311,7 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
         return -1;
     }
     
-    addr = addr_v2p(addr); /* 通过用户虚拟地址获取物理地址 */
+    addr = addr_vir2phy(addr); /* 通过用户虚拟地址获取物理地址 */
 #if DEBUG_SHM == 1
     printk(KERN_DEBUG "%s: shmaddr :%x physical addr:%x\n", __func__, shmaddr, addr);
 #endif

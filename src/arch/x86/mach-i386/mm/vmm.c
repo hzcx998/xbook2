@@ -4,24 +4,18 @@
 #include <xbook/debug.h>
 #include <xbook/vmspace.h>
 #include <xbook/vmm.h>
+#include <xbook/schedule.h>
+#include <arch/tss.h>
 #include <string.h>
 
 #define DEBUG_VMM
 
 static int do_copy_share_page(addr_t vaddr, vmm_t *child, vmm_t *parent)
 {
-    /* 保存物理地址 */
-    addr_t paddr = addr_v2p(vaddr);
-    
+    addr_t paddr = addr_vir2phy(vaddr);
     pr_dbg("[vmm]: copy share page at vaddr %x phy addr %x\n", vaddr, paddr);   
-    
-    /* 2.切换到子进程空间 */
     vmm_active(child);
-
-    // 根据空间的保护来设定页属性
-    page_link(vaddr, paddr, PG_RW_W | PG_US_U);
-
-    /* 5.恢复父进程内存空间 */
+    page_link_addr(vaddr, paddr, PAGE_ATTR_WRITE | PAGE_ATTR_USER);
     vmm_active(parent);
     return 0;
 }
@@ -29,59 +23,34 @@ static int do_copy_share_page(addr_t vaddr, vmm_t *child, vmm_t *parent)
 static int do_copy_normal_page(addr_t vaddr, void *buf, vmm_t *child, vmm_t *parent)
 {
     addr_t paddr;
-    /* 1.将进程空间中的数据复制到内核空间，切换页表后，
-    还能访问到父进程中的数据 */
     memcpy(buf, (void *)vaddr, PAGE_SIZE);
-
-    /* 2.切换进程空间 */
     vmm_active(child);
-
-    /* 3.映射虚拟地址 */
-    // 分配一个物理页
-    paddr = alloc_page();
+    paddr = page_alloc_one();
     if (!paddr) {
-        printk(KERN_ERR "vmm_copy_mapping: alloc_page for vaddr failed!\n");
-
-        /* 激活父进程并返回 */
+        printk(KERN_ERR "vmm_copy_mapping: page_alloc_one for vaddr failed!\n");
         vmm_active(parent);
-
         return -1;
     }
-    // 根据空间的保护来设定页属性
-    page_link(vaddr, paddr, PG_RW_W | PG_US_U);
-
-    /* 4.从内核复制数据到进程 */
+    page_link_addr(vaddr, paddr, PAGE_ATTR_WRITE | PAGE_ATTR_USER);
     memcpy((void *)vaddr, buf, PAGE_SIZE);
-
-    /* 5.恢复父进程内存空间 */
     vmm_active(parent);
     return 0;
 }
 
-/* 复制进程虚拟内存的映射 */
 int vmm_copy_mapping(task_t *child, task_t *parent)
 {
-    /* 开始内存的复制 */
     void *buf = kmalloc(PAGE_SIZE);
     if (buf == NULL) {
         printk(KERN_ERR "vmm_copy_mapping: kmalloc buf for data transform failed!\n");
         return -1;
     }
-    /* 获取父目录的虚拟空间 */
     vmspace_t *space = parent->vmm->vmspace_head;
-    
     addr_t prog_vaddr = 0;
-
-    /* 当空间不为空时就一直获取 */
     while (space != NULL) {
-        /* 获取空间最开始地址 */
         prog_vaddr = space->start;
-        // printk(KERN_DEBUG "the space %x start %x end %x\n", space, space->start, space->end);
-        /* 在空间中进行复制 */
         while (prog_vaddr < space->end) {
             /* 如果是共享内存，就只复制页映射，而不创建新的页 */
             if (space->flags & VMS_MAP_SHARED) {
-
                 if (do_copy_share_page(prog_vaddr, child->vmm, parent->vmm) < 0) {
                     kfree(buf);
                     return -1;
@@ -92,13 +61,23 @@ int vmm_copy_mapping(task_t *child, task_t *parent)
                     return -1;
                 }
             }
-            // printk(KERN_DEBUG "copy at virtual address %x\n", prog_vaddr);
-            /* 指向下一个页 */
             prog_vaddr += PAGE_SIZE;
         }
-        /* 指向下一个空间 */
         space = space->next;
     }
     kfree(buf);
     return 0; 
+}
+
+void vmm_active_kernel()
+{
+    unsigned long paddr = KERN_PAGE_DIR_PHY_ADDR;
+    cpu_cr3_write(paddr);
+    tss_update_info((unsigned long )current_task);
+}
+
+void vmm_active_user(unsigned int page)
+{
+    cpu_cr3_write(page);    
+    tss_update_info((unsigned long )current_task);
 }

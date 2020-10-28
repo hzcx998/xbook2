@@ -5,4 +5,8 @@
 
 int vmm_copy_mapping(task_t *child, task_t *parent);
 
+void vmm_active_kernel();
+void vmm_active_user(unsigned int page);
+
+
 #endif	/*_X86_VMM_H */
