@@ -62,9 +62,6 @@ static inline pte_t *vir_addr_to_table_entry(unsigned int vaddr)
 	return pte;
 }
 
-unsigned long page_alloc(unsigned long count, unsigned long flags);
-int page_free(unsigned long page);
-
 void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot);
 void page_unlink_addr(unsigned long vaddr);
 
@@ -96,12 +93,14 @@ int page_do_fault(trap_frame_t *frame);
 #define PROT_USER        0x10      /* page in user */
 #define PROT_REMAP       0x20      /* page remap */
 
-#define page_alloc_normal(count)            page_alloc(count, MEM_NODE_NORMAL)
-#define page_alloc_dma(count)               page_alloc(count, MEM_NODE_DMA)
+#define page_alloc_normal(count)            mem_node_alloc_pages(count, MEM_NODE_TYPE_NORMAL)
+#define page_alloc_dma(count)               mem_node_alloc_pages(count, MEM_NODE_TYPE_DMA)
+
+#define page_free(addr)                     mem_node_free_pages(addr)
 
 #define page_alloc_one()                    page_alloc_normal(1)
-#define page_free_one(addr)                 page_free(addr)
+#define page_free_one(addr)                 mem_node_free_pages(addr)
 
-#define kern_page_copy_storge             kern_page_dir_copy_to
+#define kern_page_copy_storge               kern_page_dir_copy_to
 
 #endif  /* _X86_PAGE_H */

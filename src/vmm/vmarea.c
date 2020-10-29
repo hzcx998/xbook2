@@ -358,7 +358,7 @@ int iounmap(void *vaddr)
 void init_vmarea()
 {
 	/* 每一位代表1个页的分配状态 */
-	vaddr_bitmap.byte_length = HIGH_MEM_SIZE / (PAGE_SIZE * 8);
+	vaddr_bitmap.byte_length = DYNAMIC_MAP_MEM_SIZE / (PAGE_SIZE * 8);
 	
 	/* 为位图分配空间 */
 	vaddr_bitmap.bits = kmalloc(vaddr_bitmap.byte_length);

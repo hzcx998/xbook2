@@ -7,8 +7,8 @@
 #include <arch/page.h>
 #include <arch/pmem.h>
 
-#define VMAREA_BASE     __VMAREA_BASE
-#define VMAREA_END      __VMAREA_END
+#define VMAREA_BASE     DYNAMIC_MAP_MEM_ADDR
+#define VMAREA_END      DYNAMIC_MAP_MEM_END
 
 /* 虚拟区域结构体 */
 typedef struct vmarea {

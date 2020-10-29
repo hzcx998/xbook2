@@ -765,8 +765,8 @@ int init_mem_caches()
     size = kmshrink();
 	printk("shrink size %x bytes %d MB\n", size, size/MB);
 
-    unsigned long free_size = page_get_free_nr();
-    unsigned long total_size = page_get_total_nr();
+    unsigned long free_size = mem_get_free_page_nr();
+    unsigned long total_size = mem_get_total_page_nr();
     printk("total:%d free:%d used:%d\n", total_size, free_size, total_size - free_size);
 	
 #endif

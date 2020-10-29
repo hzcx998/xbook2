@@ -3,48 +3,38 @@
 
 #include "atomic.h"
 #include <xbook/memcache.h>
+#include <const.h>
 
 // 0MB~1MB是体系结构相关的内存分布
 #define BIOS_MEM_ADDR               0X000000000
-#define BIOS_MEM_SIZE               0X000100000     // 1MB
+#define BIOS_MEM_SIZE               (1 * MB)
 
-// 1MB~2MB是内核镜像
-#define KERNEL_MEM_ADDR             (BIOS_MEM_ADDR+BIOS_MEM_SIZE)
-#define KERNEL_MEM_SIZE             0X000100000     // 1MB
+#define KERNEL_SELF_MEM_ADDR        (BIOS_MEM_ADDR+BIOS_MEM_SIZE)
+#define KERNEL_SELF_MEM_SIZE        (1 * MB)
 
-// 2MB~8MB是系统重要信息的存放地址
-#define MATERIAL_MEM_ADDR           (KERNEL_MEM_ADDR+KERNEL_MEM_SIZE)
-#define MATERIAL_MEM_SIZE           0X000600000   // 6MB
+#define KERN_DATA_MEM_ADDR          (KERNEL_SELF_MEM_ADDR+KERNEL_SELF_MEM_SIZE)
+#define KERN_DATA_MEM_SIZE          (6 * MB)
 
-// 8MB~16MB是设备DMA的地址
-#define DMA_MEM_ADDR                (MATERIAL_MEM_ADDR+MATERIAL_MEM_SIZE)
-#define DMA_MEM_SIZE                0X000800000   // 10MB
+#define DMA_MEM_ADDR                (KERN_DATA_MEM_ADDR+KERN_DATA_MEM_SIZE)
+#define DMA_MEM_SIZE                (8 * MB)
 
-// ---- 以上是必须的基本内存使用情况 ----
-
-// 16M以上是普通内存开始地址
 #define NORMAL_MEM_ADDR             (DMA_MEM_ADDR+DMA_MEM_SIZE) 
-
-#define TOP_MEM_ADDR                0xFFFFFFFF // 最高内存地址
+#define TOP_MEM_ADDR                0xFFFFFFFF 
 
 /* 空内存，当前页目录表物理地址的映射（不可访问） */
-#define NULL_MEM_SIZE                0X400000
-#define NULL_MEM_ADDR                (TOP_MEM_ADDR - NULL_MEM_SIZE + 1)
+#define KERN_BLACKHOLE_MEM_SIZE            (4 * MB)
+#define KERN_LIMIT_MEM_ADDR                (TOP_MEM_ADDR - KERN_BLACKHOLE_MEM_SIZE + 1)
 
-#define HIGH_MEM_SIZE               0x8000000 // 非连续性内存128MB
+#define DYNAMIC_MAP_MEM_SIZE               (128 * MB)
+#define DYNAMIC_MAP_MEM_ADDR               (TOP_MEM_ADDR - (DYNAMIC_MAP_MEM_SIZE + KERN_BLACKHOLE_MEM_SIZE) + 1)
 
-/* 非连续内存起始地址, 4MB+128MB*/
-#define HIGH_MEM_ADDR               (TOP_MEM_ADDR - (HIGH_MEM_SIZE + NULL_MEM_SIZE) + 1)
+#define DYNAMIC_MAP_MEM_END    KERN_LIMIT_MEM_ADDR
 
-#define __VMAREA_BASE   HIGH_MEM_ADDR
-#define __VMAREA_END    NULL_MEM_ADDR
-
-/* 内核栈 */
 #define KERNEL_STATCK_TOP		0x8009f000
 #define KERNEL_STATCK_BOTTOM	(KERNEL_STATCK_TOP - (TASK_KSTACK_SIZE))
 
-#define MEM_NODE_DMA        0x01
-#define MEM_NODE_NORMAL     0x02
+#define MEM_NODE_TYPE_DMA        0x01
+#define MEM_NODE_TYPE_NORMAL     0x02
 
 /* mem_node 内存节点，用于管理每一段物理内存（以页为单位） */
 typedef struct {
@@ -56,7 +46,6 @@ typedef struct {
 } mem_node_t;
 
 #define SIZEOF_MEM_NODE sizeof(mem_node_t) 
-
 
 #define MEM_NODE_MARK_CHACHE_GROUP(node, cache, group)  \
         node->cache = cache;                            \
@@ -79,9 +68,13 @@ void dump_mem_node(mem_node_t *node);
 mem_node_t *phy_addr_to_mem_node(unsigned int page);
 unsigned int mem_node_to_phy_addr(mem_node_t *node);
 
-mem_node_t *get_free_mem_node(unsigned int flags);
+mem_node_t *mem_alloc_node(unsigned int flags);
 
-unsigned long page_get_free_nr();
-unsigned long page_get_total_nr();
+unsigned long mem_get_free_page_nr();
+unsigned long mem_get_total_page_nr();
+
+unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags);
+int mem_node_free_pages(unsigned long page);
+
 
 #endif   /*_X86_PMEM_H */

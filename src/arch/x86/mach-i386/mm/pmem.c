@@ -12,12 +12,12 @@ unsigned int mem_node_base;
 
 static unsigned long total_pmem_size;
 
-mem_node_t *get_free_mem_node(unsigned int flags)
+mem_node_t *mem_alloc_node(unsigned int flags)
 {
     mem_node_t *node = NULL;
-    if (flags & MEM_NODE_DMA)
+    if (flags & MEM_NODE_TYPE_DMA)
         node = mem_node_table;
-    else if (flags & MEM_NODE_NORMAL)
+    else if (flags & MEM_NODE_TYPE_NORMAL)
         node = mem_node_table + (DMA_MEM_SIZE >> PAGE_SHIFT);
     else
         panic("phymem: get node null!");
@@ -67,7 +67,7 @@ static void cut_used_mem()
     page_alloc_normal(used_pages);
 }
 
-unsigned long page_get_free_nr()
+unsigned long mem_get_free_page_nr()
 {
     mem_node_t *node = mem_node_table;
     unsigned long free_nodes = 0;
@@ -84,14 +84,14 @@ unsigned long page_get_free_nr()
     return free_nodes;
 }
 
-unsigned long page_get_total_nr()
+unsigned long mem_get_total_page_nr()
 {
     return total_pmem_size / PAGE_SIZE;
 }
 
-unsigned long page_alloc(unsigned long count, unsigned long flags)
+unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
 {
-    mem_node_t *node = get_free_mem_node(flags);
+    mem_node_t *node = mem_alloc_node(flags);
     if (node == NULL)
         return 0;
     int index = node - mem_node_table;
@@ -106,7 +106,7 @@ unsigned long page_alloc(unsigned long count, unsigned long flags)
     return (unsigned long)mem_node_to_phy_addr(node);
 }
 
-int page_free(unsigned long page)
+int mem_node_free_pages(unsigned long page)
 {
     mem_node_t *node = phy_addr_to_mem_node((unsigned long)page);
     if (node == NULL)
@@ -132,7 +132,7 @@ int physic_memory_init()
     unsigned int normal_size;
     unsigned int user_size;
     
-    normal_size = (total_pmem_size - (NORMAL_MEM_ADDR + HIGH_MEM_SIZE + NULL_MEM_SIZE)) / 2; 
+    normal_size = (total_pmem_size - (NORMAL_MEM_ADDR + DYNAMIC_MAP_MEM_SIZE + KERN_BLACKHOLE_MEM_SIZE)) / 2; 
     user_size = total_pmem_size - normal_size;
     if (normal_size > 1*GB) {
         unsigned int more_size = normal_size - 1*GB;
