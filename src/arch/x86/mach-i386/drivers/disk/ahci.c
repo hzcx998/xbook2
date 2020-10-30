@@ -433,7 +433,7 @@ pci_device_t *get_ahci_pci (void)
     pci_enable_bus_mastering(ahci);
 
     /* 映射IO物理内存地址到虚拟地址中，才能对设备映射到内存的地址进行操作 */
-    if (phy_addr_remap((addr_t)hba_mem, (addr_t)ahci->bar[5].base_addr, ahci->bar[5].length) < 0) {
+    if (mem_remap((addr_t)hba_mem, (addr_t)ahci->bar[5].base_addr, ahci->bar[5].length) < 0) {
         pr_err("[ahci] device ioremap on %x length %x failed!\n", ahci->bar[5].base_addr, ahci->bar[5].length);
         return NULL;
     }

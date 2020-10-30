@@ -2,7 +2,7 @@
 #include <arch/page.h>
 #include <arch/ioremap.h>
 
-int phy_addr_remap(unsigned long paddr, unsigned long vaddr, size_t size)
+int mem_remap(unsigned long paddr, unsigned long vaddr, size_t size)
 {
     unsigned long end = vaddr + size;
     while (vaddr < end) {
@@ -14,7 +14,7 @@ int phy_addr_remap(unsigned long paddr, unsigned long vaddr, size_t size)
     return 0;
 }
 
-int phy_addr_unmap(unsigned long addr, size_t size)
+int mem_unmap(unsigned long addr, size_t size)
 {
     unsigned long end = addr + size;
     

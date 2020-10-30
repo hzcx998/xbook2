@@ -290,7 +290,7 @@ void *ioremap(unsigned long paddr, size_t size)
 	list_add_tail(&area->list, &using_vmarea_list);
     
     /* 进行io内存映射，如果失败就释放资源 */
-    if (phy_addr_remap(paddr, vaddr, size)) {
+    if (mem_remap(paddr, vaddr, size)) {
         /* 释放分配的资源 */
         list_del(&area->list);
         kfree(area);
@@ -333,7 +333,7 @@ int iounmap(void *vaddr)
 
 	/* 找到一个合适要释放的area，就释放它 */
 	if (target != NULL) {
-        if (phy_addr_unmap(target->addr, target->size)) {
+        if (mem_unmap(target->addr, target->size)) {
 		    /* 取消IO映射并释放area */
             
             list_del(&target->list);
