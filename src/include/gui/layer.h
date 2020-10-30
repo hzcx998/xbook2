@@ -2,7 +2,7 @@
 #define _GUI_LAYER_H
 
 #include <stdint.h>
-#include <list.h>
+#include <xbook/list.h>
 #include "color.h"
 #include "shape.h"
 #include "message.h"

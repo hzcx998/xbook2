@@ -6,7 +6,7 @@
 #include <types.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <list.h>
+#include <xbook/list.h>
 
 #define ROOT_DISK_NAME  "disk1"
 #define ROOT_DIR_PATH  "/root"

@@ -1,5 +1,5 @@
-#ifndef _X86_PMEM_H
-#define _X86_PMEM_H
+#ifndef _X86_PHYMEM_H
+#define _X86_PHYMEM_H
 
 #include "atomic.h"
 #include <xbook/memcache.h>
@@ -36,7 +36,7 @@
 #define MEM_NODE_TYPE_DMA        0x01
 #define MEM_NODE_TYPE_NORMAL     0x02
 
-/* mem_node 内存节点，用于管理每一段物理内存（以页为单位） */
+
 typedef struct {
     unsigned int count;         /* 内存节点占用的页数 */
     unsigned int flags;         /* 节点标志 */
@@ -44,6 +44,8 @@ typedef struct {
     mem_cache_t *cache;         /* 内存缓冲 */
     mem_group_t *group;         /* 内存组 */
 } mem_node_t;
+
+
 
 #define SIZEOF_MEM_NODE sizeof(mem_node_t) 
 
@@ -74,4 +76,4 @@ unsigned long mem_get_total_page_nr();
 unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags);
 int mem_node_free_pages(unsigned long page);
 
-#endif   /*_X86_PMEM_H */
+#endif   /*_X86_PHYMEM_H */

@@ -60,6 +60,9 @@ void dump_mem_node(mem_node_t *node)
     }
 }
 
+
+
+
 static void cut_used_mem()
 {
     unsigned int used_mem = boot_mem_size();
@@ -144,6 +147,7 @@ int physic_memory_init()
     kern_page_map_early(DMA_MEM_ADDR, NORMAL_MEM_ADDR + normal_size);
     boot_mem_init(KERN_BASE_VIR_ADDR + NORMAL_MEM_ADDR , KERN_BASE_VIR_ADDR + (NORMAL_MEM_ADDR + normal_size));
     
+    /// 
     mem_node_count = (normal_size + user_size)/PAGE_SIZE;
     mem_node_base = DMA_MEM_ADDR;
 
@@ -154,6 +158,10 @@ int physic_memory_init()
     }
     memset(mem_node_table, 0, mem_node_table_size);
 
+    ///
+    mem_range_init(0, DMA_MEM_ADDR, NORMAL_MEM_ADDR);
+    mem_range_init(1, NORMAL_MEM_ADDR, total_pmem_size - NORMAL_MEM_ADDR);
+    
     cut_used_mem();
     return 0;
 }   

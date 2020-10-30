@@ -4,7 +4,7 @@
 #include "mutexlock.h"
 #include "fifobuf.h"
 #include "waitqueue.h"
-#include <list.h>
+#include <xbook/list.h>
 #include <stdint.h>
 #include <types.h>
 

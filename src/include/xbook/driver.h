@@ -1,7 +1,7 @@
 #ifndef _XBOOK_DRIVER_H
 #define _XBOOK_DRIVER_H
 
-#include <list.h>
+#include <xbook/list.h>
 #include "string.h"
 #include "spinlock.h"
 #include "mutexlock.h"

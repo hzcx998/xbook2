@@ -3,7 +3,7 @@
 #define _XBOOK_SCHEDULE_H
 
 #include "task.h"
-#include <list.h>
+#include <xbook/list.h>
 #include <assert.h>
 #include "debug.h"
 #include "schedule.h"

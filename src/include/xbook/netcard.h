@@ -2,7 +2,7 @@
 #ifndef _XBOOK_NETCARD_H
 #define _XBOOK_NETCARD_H
 
-#include <list.h>
+#include <xbook/list.h>
 #include <types.h>
 #include <xbook/driver.h>
 

@@ -1,7 +1,7 @@
 #ifndef _XBOOK_WAIT_QUEUE_H
 #define _XBOOK_WAIT_QUEUE_H
 
-#include <list.h>
+#include <xbook/list.h>
 #include "debug.h"
 #include "spinlock.h"
 #include <assert.h>

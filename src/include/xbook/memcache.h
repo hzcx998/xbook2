@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <xbook/config.h>
 #include <xbook/bitmap.h>
-#include <list.h>
+#include <xbook/list.h>
 #include <const.h>
 
 /*

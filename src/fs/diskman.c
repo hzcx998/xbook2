@@ -1,4 +1,4 @@
-#include <list.h>
+#include <xbook/list.h>
 #include <xbook/diskman.h>
 #include <xbook/resource.h>
 #include <xbook/kmalloc.h>

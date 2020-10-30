@@ -2,7 +2,7 @@
 #define _XBOOK_RAW_BLOCK_H
 
 #include "driver.h"
-#include <list.h>
+#include <xbook/list.h>
 #include <xbook/config.h>
 
 #define RAW_BLOCK_NAME_LEN 24

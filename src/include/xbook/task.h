@@ -5,7 +5,7 @@
 #include <arch/cpu.h>
 #include <sys/proc.h>
 #include <types.h>
-#include <list.h>
+#include <xbook/list.h>
 #include "vmm.h"
 #include "trigger.h"
 #include "timer.h"
