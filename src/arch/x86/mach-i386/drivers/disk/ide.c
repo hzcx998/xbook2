@@ -1198,11 +1198,6 @@ iostatus_t ide_write(device_object_t *device, io_request_t *ioreq)
     return status;
 }
 
-/**
- * ide_handler - IDE硬盘中断处理函数
- * @irq: 中断号
- * @data: 中断的数据
- */
 static int ide_handler(unsigned long irq, unsigned long data)
 {
     struct ide_channel *channel = (struct ide_channel *)data;
@@ -1224,12 +1219,6 @@ static int ide_handler(unsigned long irq, unsigned long data)
     return 0;
 }
 
-/**
- * ide_probe - 探测设备
- * @disks: 找到的磁盘数
- * 
- * 根据磁盘数初始化对应的磁盘的信息
- */
 static int ide_probe(device_extension_t *ext, int id)
 {
 	/* 初始化，并获取信息 */

@@ -1009,15 +1009,6 @@ int ahci_rw_multiple(int rw, int min, uint64_t blk, unsigned char *out_buffer, i
 	return ret;
 }
 
-/**
- * ahci_read_sector - 读扇区
- * @dev: 设备
- * @lba: 逻辑扇区地址
- * @count: 扇区数
- * @buf: 扇区缓冲
- * 
- * 数据读取磁盘，成功返回读取到的数据数量，失败返回0
- */
 static int ahci_read_sector(device_extension_t *ext,
 	unsigned int lba,
 	void *buf,
@@ -1026,15 +1017,6 @@ static int ahci_read_sector(device_extension_t *ext,
     return ahci_rw_multiple(0, ext->idx, lba, buf, count);
 }
 
-/**
- * ahci_write_sector - 写扇区
- * @dev: 设备
- * @lba: 逻辑扇区地址
- * @count: 扇区数
- * @buf: 扇区缓冲
- * 
- * 把数据写入磁盘，成功返回写入的数据数量，失败返回0
- */
 static int ahci_write_sector(
     device_extension_t *ext,
 	unsigned int lba,

@@ -61,7 +61,7 @@ char cpu_model_unknown[] = "Unknown";
 /* Cpu end of loop */
 char cpu_unknown_info[] = "Unknown";
 
-static void cpu_print(device_extension_t *extension)
+static void cpu_driver_print(device_extension_t *extension)
 {
     printk(KERN_INFO "CPU info:\n");
     printk(KERN_INFO "vendor: %s brand: %s\n", extension->vendor, extension->brand);
@@ -69,7 +69,7 @@ static void cpu_print(device_extension_t *extension)
     printk(KERN_INFO "type: 0x%x stepping: 0x%x\n", extension->type, extension->stepping);
     printk(KERN_INFO "max cpuid: 0x%x max cpuid ext: 0x%x\n", extension->max_cpuid, extension->max_cpuidex);
 }
-static void cpu_initialize(device_extension_t *extension)
+static void cpu_driver_initialize(device_extension_t *extension)
 {
 	uint32_t eax, ebx, ecx, edx;
 	/* 
@@ -189,7 +189,7 @@ static void cpu_initialize(device_extension_t *extension)
 	}
 }
 
-static iostatus_t cpu_read(device_object_t *device, io_request_t *ioreq)
+static iostatus_t cpu_driver_read(device_object_t *device, io_request_t *ioreq)
 {
     iostatus_t status = IO_SUCCESS;
     device_extension_t *extension = (device_extension_t *) device->device_extension;
@@ -209,7 +209,7 @@ static iostatus_t cpu_read(device_object_t *device, io_request_t *ioreq)
     return status;
 }
 
-static iostatus_t cpu_enter(driver_object_t *driver)
+static iostatus_t cpu_driver_enter(driver_object_t *driver)
 {
     iostatus_t status;
     
@@ -220,22 +220,22 @@ static iostatus_t cpu_enter(driver_object_t *driver)
     status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_VIRTUAL_CHAR, &devobj);
 
     if (status != IO_SUCCESS) {
-        printk(KERN_ERR "cpu_enter: create device failed!\n");
+        printk(KERN_ERR "cpu_driver_enter: create device failed!\n");
         return status;
     }
     /* neighter io mode */
     devobj->flags = 0;
     extension = (device_extension_t *)devobj->device_extension;
     
-    cpu_initialize(extension);
+    cpu_driver_initialize(extension);
 
     /* 打印CPU信息 */
-    cpu_print(extension);
+    cpu_driver_print(extension);
 
     return status;
 }
 
-static iostatus_t cpu_exit(driver_object_t *driver)
+static iostatus_t cpu_driver_exit(driver_object_t *driver)
 {
     /* 遍历所有对象 */
     device_object_t *devobj, *next;
@@ -253,11 +253,11 @@ static iostatus_t cpu_driver_func(driver_object_t *driver)
     iostatus_t status = IO_SUCCESS;
     
     /* 绑定驱动信息 */
-    driver->driver_enter = cpu_enter;
-    driver->driver_exit = cpu_exit;
+    driver->driver_enter = cpu_driver_enter;
+    driver->driver_exit = cpu_driver_exit;
 
 
-    driver->dispatch_function[IOREQ_READ] = cpu_read;
+    driver->dispatch_function[IOREQ_READ] = cpu_driver_read;
 
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
