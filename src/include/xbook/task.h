@@ -86,6 +86,9 @@ typedef struct _task {
 } task_t;
 
 extern list_t task_global_list;
+extern volatile int task_init_done;
+
+
 
 #define GET_TASK_TRAP_FRAME(task) \
         ((trap_frame_t *) (((unsigned char *) (task) + \

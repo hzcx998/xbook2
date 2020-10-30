@@ -10,7 +10,7 @@
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <arch/page.h>
-#include <arch/pmem.h>
+#include <arch/phymem.h>
 #include <arch/time.h>
 #include <arch/ioremap.h>
 #include <arch/task.h>

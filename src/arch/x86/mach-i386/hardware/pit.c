@@ -53,7 +53,6 @@ Read Back Command Status (8254 only, read from counter register)
 */
 #define PIT_CTRL	0x43
 
-
 /* Mode Control Register */
 enum CtrlModeBits {
     /* Bits 76 Counter Select Bits */
@@ -121,12 +120,8 @@ enum CtrlModeBits {
 #define TIMER_FREQ     1193180 	/* 时钟的频率 */
 #define COUNTER0_VALUE  (TIMER_FREQ / HZ)	    /* pit count0 数值 */
 
-/**
- * pit_clock_init - 初始化pit时钟
- */ 
 void pit_clock_init()
 {
-	//初始化时钟
 	ioport_out8(PIT_CTRL, PIT_MODE_2 | PIT_MODE_MSB_LSB | 
             PIT_MODE_COUNTER_0 | PIT_MODE_BINARY);
 	ioport_out8(PIT_COUNTER0, (unsigned char) (COUNTER0_VALUE & 0xff));

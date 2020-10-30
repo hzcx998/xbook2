@@ -1,4 +1,4 @@
-#include <arch/pmem.h>
+#include <arch/phymem.h>
 #include <arch/page.h>
 #include <arch/bootmem.h>
 #include <arch/memory.h>
@@ -12,7 +12,7 @@ unsigned int mem_node_base;
 
 static unsigned long total_pmem_size;
 
-mem_node_t *mem_alloc_node(unsigned int flags)
+static mem_node_t *mem_alloc_node(unsigned int flags)
 {
     mem_node_t *node = NULL;
     if (flags & MEM_NODE_TYPE_DMA)

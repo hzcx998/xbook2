@@ -2,7 +2,7 @@
 #include <arch/page.h>
 #include <arch/cpu.h>
 #include <arch/task.h>
-#include <arch/pmem.h>
+#include <arch/phymem.h>
 #include <xbook/task.h>
 #include <string.h>
 #include <string.h>
@@ -32,6 +32,9 @@ LIST_HEAD(task_global_list);
 
 /* idle任务 */
 task_t *task_kmain;
+
+/* task init done flags, for early interrupt. */
+volatile int task_init_done = 0;
 
 /**  
  * new_pid - 分配一个pid
@@ -820,4 +823,5 @@ void init_tasks()
     kthread_start("idle", TASK_PRIO_IDLE, kthread_idle, NULL);
     #endif
     printk(KERN_INFO "[task]: init done\n");
+    task_init_done = 1;
 }

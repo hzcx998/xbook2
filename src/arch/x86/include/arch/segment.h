@@ -25,7 +25,7 @@
 #define	DA_386TSS		0x89	/* 可用 386 任务状态段类型值		*/
 
 /* 选择子类型值说明 */
-/* 其中, SA_ : Selector Attribute */
+/* 其中, SA : Selector Attribute */
 #define	SA_RPL0		0
 #define	SA_RPL1		1
 #define	SA_RPL2		2
@@ -42,19 +42,14 @@
 #define	INDEX_USER_CODE 4
 #define	INDEX_USER_DATA 5
 
-//选择子...
-//内核代码，数据，栈，视频
-
 #define KERNEL_CODE_SEL ((INDEX_KERNEL_CODE << 3) + (SA_TIG << 2) + SA_RPL0)
 #define KERNEL_DATA_SEL ((INDEX_KERNEL_DATA << 3) + (SA_TIG << 2) + SA_RPL0)
 #define KERNEL_STACK_SEL KERNEL_DATA_SEL 
 
-//用户代码，数据，栈
 #define USER_CODE_SEL ((INDEX_USER_CODE << 3) + (SA_TIG << 2) + SA_RPL3)
 #define USER_DATA_SEL ((INDEX_USER_DATA << 3) + (SA_TIG << 2) + SA_RPL3)
 #define USER_STACK_SEL USER_DATA_SEL 
 
-//TSS
 #define KERNEL_TSS_SEL ((INDEX_TSS << 3) + (SA_TIG << 2) + SA_RPL0)
 
 /* GDT 的虚拟地址 */
@@ -72,16 +67,12 @@
 #define GDT_USER_DATA_ATTR          (DA_DRW | DA_DPL3 | DA_32 | DA_G)
 #define GDT_TSS_ATTR                (DA_386TSS)
 
-/*
-段描述符结构
-*/
 struct segment_descriptor {
 	unsigned short limit_low, base_low;
 	unsigned char base_mid, access_right;
 	unsigned char limit_high, base_high;
 };
 
-//初始化段描述符
 void segment_descriptor_init();
 
 #endif	/*_X86_SEGMENT_H*/

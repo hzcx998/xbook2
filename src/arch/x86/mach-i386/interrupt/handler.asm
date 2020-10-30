@@ -1,10 +1,9 @@
 %include "arch/const.inc"
 
-;intr_handler_table是C中注册的中断处理程序数组
-extern intr_handler_table		 
-extern do_irq		 
-extern do_softirq	
-extern do_trigger
+extern interrupt_handlers		 
+extern interrupt_do_irq		 
+extern interrupt_do_softirq
+extern interrupt_do_trigger
 extern syscall_table
 
 [bits 32]
@@ -91,8 +90,8 @@ syscall_handler:
    	push ebx			    ; 系统调用中第1个参数
     
 	;3 调用子功能处理函数
-   	call [syscall_table + eax*4]	    ; 编译器会在栈中根据C函数声明匹配正确数量的参数
-   	add esp, 20			    ; 跨过上面的5个参数
+   	call [syscall_table + eax*4]
+   	add esp, 20
 
 	;4 将call调用后的返回值存入待当前内核栈中eax的位置
     mov [esp + 8*4], eax	
@@ -100,14 +99,13 @@ syscall_handler:
     ; 处理完用户消息后再进行触发器处理，因为处理过程可能会影响到寄存器的值
     ;5
     push esp         ; 把中断栈指针传递进去
-    call do_trigger
+    call interrupt_do_trigger
     add esp, 4
     cli
-    jmp intr_exit		    ; intr_exit返回,恢复上下文
+    jmp interrupt_exit
 
-global intr_exit
-intr_exit:
-; 以下是恢复上下文环境
+global interrupt_exit
+interrupt_exit:
     add esp, 4			   ; 跳过中断号
     popad
     pop gs

@@ -1,7 +1,7 @@
 #include <arch/tss.h>
 #include <arch/segment.h>
 #include <arch/registers.h>
-#include <arch/pmem.h>
+#include <arch/phymem.h>
 #include <string.h>
 #include <xbook/task.h>
 

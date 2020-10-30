@@ -1150,7 +1150,7 @@ static int rtl8139_handler(unsigned long irq, unsigned long data)
     
     /* 如果一个状态位也没有，就退出 */
     if (unlikely((status & rtl8139_intr_mask) == 0)) {
-        printk(KERN_DEBUG "[rtl8139]: no intr occur!\n");
+        printk(KERN_DEBUG "[rtl8139]: no interrupt occur!\n");
         goto out;
     }
     //printk(KERN_DEBUG "[rtl8139]: int status:%x\n", status);

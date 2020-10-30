@@ -4,15 +4,12 @@
 #include "cpu.h"
 #include "cmos.h"
 
-/* HZ */
 #define HZ                (100 * 5)
 
 void pit_clock_init();
 
-/* clock hardware init */
 #define clock_hardware_init pit_clock_init
 
-/* get time */
 #define time_get_hour       cmos_get_hour_hex
 #define time_get_minute     cmos_get_min_hex
 #define time_get_second     cmos_get_sec_hex

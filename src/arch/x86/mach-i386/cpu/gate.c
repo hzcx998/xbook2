@@ -12,7 +12,7 @@ struct gate_descriptor *idt0;
 
 #define KERN_SYSCALL_NR 0x40
 
-static void gate_descriptor_set(struct gate_descriptor *descriptor, intr_handler_t offset,
+static void gate_descriptor_set(struct gate_descriptor *descriptor, interrupt_handler_t offset,
 		unsigned int selector, unsigned int attributes, unsigned char privilege)
 {
 	descriptor->offset_low   = (unsigned int)offset & 0xffff;
@@ -93,5 +93,5 @@ static void interrupt_descriptor_init()
 void gate_descriptor_init()
 {
 	interrupt_descriptor_init();
-    intrrupt_expection_init();
+    interrupt_expection_init();
 }

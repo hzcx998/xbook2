@@ -272,10 +272,10 @@ static int handle_trigger(trap_frame_t *frame, int trig)
 }
 
 /**
- * do_trigger - 执行触发器
+ * interrupt_do_trigger - 执行触发器
  * frame: 中断栈框 
  */
-int do_trigger(trap_frame_t *frame)
+int interrupt_do_trigger(trap_frame_t *frame)
 {
     task_t *cur = current_task;
     /* 内核线程没有触发器 */
@@ -294,18 +294,18 @@ int do_trigger(trap_frame_t *frame)
     unsigned long flags;
     interrupt_save_state(flags);
 #ifdef DEBUG_TRIGGER
-    //printk(KERN_DEBUG "do_trigger: pid=%d frame %x start.\n", cur->pid, frame);
+    //printk(KERN_DEBUG "interrupt_do_trigger: pid=%d frame %x start.\n", cur->pid, frame);
 #endif
     for (trig = 1; trig <= TRIGMAX; trig++) {
         have_trig = trigismember(&trigger->set, trig) && !trigismember(&trigger->blocked, trig);
         /* 如果触发器激活了，就处理 */
         if (have_trig) {
 #ifdef DEBUG_TRIGGER
-                printk(KERN_DEBUG "do_trigger: pid=%d trigger=%d\n", cur->pid, trig);
+                printk(KERN_DEBUG "interrupt_do_trigger: pid=%d trigger=%d\n", cur->pid, trig);
 #endif
             /* 处理后置0 */
 #ifdef DEBUG_TRIGGER
-            printk(KERN_DEBUG "do_trigger: before set=%x flags=%x\n", trigger->set, trigger->flags);
+            printk(KERN_DEBUG "interrupt_do_trigger: before set=%x flags=%x\n", trigger->set, trigger->flags);
 #endif
             trigdelset(&trigger->set, trig);
             trigger->touchers[trig - 1] = -1;   /* clean toucher */
@@ -313,11 +313,11 @@ int do_trigger(trap_frame_t *frame)
             
             ta = &trigger->actions[trig - 1];
 #ifdef DEBUG_TRIGGER
-            printk(KERN_DEBUG "do_trigger: after set=%x flags=%x\n", trigger->set, trigger->flags);
+            printk(KERN_DEBUG "interrupt_do_trigger: after set=%x flags=%x\n", trigger->set, trigger->flags);
 #endif
             if (ta->handler == TRIG_IGN) { /* ignore trigger */
 #ifdef DEBUG_TRIGGER
-                printk(KERN_DEBUG "do_trigger: ignore trigger=%d\n", trig);
+                printk(KERN_DEBUG "interrupt_do_trigger: ignore trigger=%d\n", trig);
 #endif
                 continue;   
             }
@@ -325,7 +325,7 @@ int do_trigger(trap_frame_t *frame)
                 /* init process do nothing. */
                 if (cur->pid == INIT_PROC_PID) {
 #ifdef DEBUG_TRIGGER
-                printk(KERN_DEBUG "do_trigger: trigger is invailed for init process :)\n");
+                printk(KERN_DEBUG "interrupt_do_trigger: trigger is invailed for init process :)\n");
 #endif
                     continue;
                 }
@@ -338,12 +338,12 @@ int do_trigger(trap_frame_t *frame)
                 case TRIGRESUM: /* 在设置恢复触发器的时候就唤醒任务了 */
                 case TRIGALARM: /* alarm */
 #ifdef DEBUG_TRIGGER
-                printk(KERN_DEBUG "do_trigger: user or resume.\n");
+                printk(KERN_DEBUG "interrupt_do_trigger: user or resume.\n");
 #endif
                     continue;   /* default ignore. */
                 case TRIGPAUSE: /* pause */
 #ifdef DEBUG_TRIGGER
-                printk(KERN_DEBUG "do_trigger: stop trigger=%d\n", trig);
+                printk(KERN_DEBUG "interrupt_do_trigger: stop trigger=%d\n", trig);
 #endif
                     cur->exit_status = trig;
                     
@@ -356,7 +356,7 @@ int do_trigger(trap_frame_t *frame)
                 case TRIGSYS: /* system */
                 
 #ifdef DEBUG_TRIGGER
-                    printk(KERN_DEBUG "do_trigger: software or system trigger=%d\n", trig);
+                    printk(KERN_DEBUG "interrupt_do_trigger: software or system trigger=%d\n", trig);
 #endif
                     /* 避免本次未能退出，故再添加一次触发 */
                     trigaddset(&trigger->set, trig);
@@ -369,7 +369,7 @@ int do_trigger(trap_frame_t *frame)
                 }
             }
 #ifdef DEBUG_TRIGGER
-            printk(KERN_DEBUG "do_trigger: handle user or light software trigger=%d\n", trig);
+            printk(KERN_DEBUG "interrupt_do_trigger: handle user or light software trigger=%d\n", trig);
 #endif
             /* 捕捉用户态程序 */
             handle_trigger(frame, trig);
@@ -378,7 +378,7 @@ int do_trigger(trap_frame_t *frame)
     }
     interrupt_restore_state(flags);
 #ifdef DEBUG_TRIGGER
-    //printk(KERN_DEBUG "do_trigger: scan done.\n");
+    //printk(KERN_DEBUG "interrupt_do_trigger: scan done.\n");
 #endif
     return 0;
 }

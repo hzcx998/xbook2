@@ -40,7 +40,7 @@
 typedef struct {
     unsigned int count;         /* 内存节点占用的页数 */
     unsigned int flags;         /* 节点标志 */
-    int reference;     /* 引用次数 */
+    int reference;              /* 引用次数 */
     mem_cache_t *cache;         /* 内存缓冲 */
     mem_group_t *group;         /* 内存组 */
 } mem_node_t;
@@ -68,13 +68,10 @@ void dump_mem_node(mem_node_t *node);
 mem_node_t *phy_addr_to_mem_node(unsigned int page);
 unsigned int mem_node_to_phy_addr(mem_node_t *node);
 
-mem_node_t *mem_alloc_node(unsigned int flags);
-
 unsigned long mem_get_free_page_nr();
 unsigned long mem_get_total_page_nr();
 
 unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags);
 int mem_node_free_pages(unsigned long page);
-
 
 #endif   /*_X86_PMEM_H */

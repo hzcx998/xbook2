@@ -7,7 +7,7 @@
 
 // #define DEBUG_PCI
 
-pci_device_t pci_devices[PCI_MAX_DEVICE_NR];
+pci_device_t pci_devices[PCI_MAX_DEV_NRICE_NR];
 
 static void pci_device_bar_init(pci_device_bar_t *bar, unsigned int addr_reg_val, unsigned int len_reg_val)
 {
@@ -54,7 +54,7 @@ static void pci_device_init(
     device->class_code = class_code;
     device->revision_id = revision_id;
 	int i;
-    for (i = 0; i < PCI_MAX_BAR; i++) {
+    for (i = 0; i < PCI_MAX_BAR_NR; i++) {
          device->bar[i].type = PCI_BAR_TYPE_INVALID;
     }
     device->irq_line = -1;
@@ -86,7 +86,7 @@ static void pci_write_config(unsigned int bus, unsigned int device, unsigned int
 static pci_device_t *pci_alloc_device()
 {
 	int i;
-	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
+	for (i = 0; i < PCI_MAX_DEV_NRICE_NR; i++) {
 		if (pci_devices[i].flags == PCI_DEVICE_INVALID) {
 			pci_devices[i].flags = PCI_DEVICE_USING;
 			return &pci_devices[i];
@@ -98,7 +98,7 @@ static pci_device_t *pci_alloc_device()
 int pci_free_device(pci_device_t *device)
 {
 	int i;
-	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
+	for (i = 0; i < PCI_MAX_DEV_NRICE_NR; i++) {
 		if (&pci_devices[i] == device) {
 			device->flags = PCI_DEVICE_INVALID;
 			return 0;
@@ -124,7 +124,7 @@ void pci_device_dump(pci_device_t *device)
     printk(KERN_DEBUG "pci_device_dump: min Gnt: %d\n", device->min_gnt);
     printk(KERN_DEBUG "pci_device_dump: max Lat:  %d\n", device->max_lat);
     int i;
-	for (i = 0; i < PCI_MAX_BAR; i++) {
+	for (i = 0; i < PCI_MAX_BAR_NR; i++) {
         if (device->bar[i].type != PCI_BAR_TYPE_INVALID) {
             printk(KERN_DEBUG "pci_device_dump: bar %d:\n", i);
 			pci_device_bar_dump(&device->bar[i]);
@@ -167,7 +167,7 @@ static void pci_scan_device(unsigned char bus, unsigned char device, unsigned ch
     pci_device_init(pci_dev, bus, device, function, vendor_id, device_id, classcode, revision_id, (header_type & 0x80));
 	
 	int bar, reg;
-    for (bar = 0; bar < PCI_MAX_BAR; bar++) {
+    for (bar = 0; bar < PCI_MAX_BAR_NR; bar++) {
         reg = PCI_BASS_ADDRESS0 + (bar*4);
         val = pci_read_config(bus, device, function, reg);
 		/*set 0xffffffff to bass address[0~5], so that if we pci_read_config again, it's addr len*/
@@ -214,9 +214,9 @@ static void pci_scan_all_buses()
 {
 	unsigned int bus;
 	unsigned char device, function;
-    for (bus = 0; bus < PCI_MAX_BUS; bus++) {
-        for (device = 0; device < PCI_MAX_DEV; device++) {
-           for (function = 0; function < PCI_MAX_FUN; function++) {
+    for (bus = 0; bus < PCI_MAX_BUS_NR; bus++) {
+        for (device = 0; device < PCI_MAX_DEV_NR; device++) {
+           for (function = 0; function < PCI_MAX_FUN_NR; function++) {
 				pci_scan_device(bus, device, function);
 			}
         }
@@ -228,7 +228,7 @@ pci_device_t* pci_get_device(unsigned int vendor_id, unsigned int device_id)
 	int i;
 	pci_device_t* device;
 	
-	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
+	for (i = 0; i < PCI_MAX_DEV_NRICE_NR; i++) {
 		device = &pci_devices[i];
         
 		if (device->flags == PCI_DEVICE_USING &&
@@ -247,7 +247,7 @@ pci_device_t* pci_get_device_by_class_code(unsigned int class, unsigned int sub_
 	
     unsigned int class_code = ((class & 0xff) << 16) | ((sub_class & 0xff) << 8);
 
-	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
+	for (i = 0; i < PCI_MAX_DEV_NRICE_NR; i++) {
 		device = &pci_devices[i];
 		if (device->flags == PCI_DEVICE_USING &&
             (device->class_code & 0xffff00) == class_code) {
@@ -264,7 +264,7 @@ pci_device_t *pci_locate_device(unsigned short vendor, unsigned short device)
 
     pci_device_t* tmp;
 	int i;
-	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
+	for (i = 0; i < PCI_MAX_DEV_NRICE_NR; i++) {
 		tmp = &pci_devices[i];
 		if (tmp->flags == PCI_DEVICE_USING &&
             tmp->vendor_id == vendor && 
@@ -282,7 +282,7 @@ pci_device_t *pci_locate_class(unsigned short class, unsigned short _subclass)
 	pci_device_t *tmp;
     unsigned int class_code = ((class & 0xff) << 16) | ((_subclass & 0xff) << 8);
     int i;
-	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
+	for (i = 0; i < PCI_MAX_DEV_NRICE_NR; i++) {
 		tmp = &pci_devices[i];
 		if (tmp->flags == PCI_DEVICE_USING &&
             (tmp->class_code & 0xffff00) == class_code) {
@@ -320,7 +320,7 @@ void pci_device_write(pci_device_t *device, unsigned int reg, unsigned int value
 unsigned int pci_device_get_io_addr(pci_device_t *device)
 {
 	int i;
-    for (i = 0; i < PCI_MAX_BAR; i++) {
+    for (i = 0; i < PCI_MAX_BAR_NR; i++) {
         if (device->bar[i].type == PCI_BAR_TYPE_IO) {
             return device->bar[i].base_addr;
         }
@@ -332,7 +332,7 @@ unsigned int pci_device_get_io_addr(pci_device_t *device)
 unsigned int pci_device_get_mem_addr(pci_device_t *device)
 {
 	int i;
-    for (i = 0; i < PCI_MAX_BAR; i++) {
+    for (i = 0; i < PCI_MAX_BAR_NR; i++) {
         if (device->bar[i].type == PCI_BAR_TYPE_MEM) {
             return device->bar[i].base_addr;
         }
@@ -344,7 +344,7 @@ unsigned int pci_device_get_mem_addr(pci_device_t *device)
 unsigned int pci_device_get_mem_len(pci_device_t *device)
 {
     int i;
-    for(i = 0; i < PCI_MAX_BAR; i++) {
+    for(i = 0; i < PCI_MAX_BAR_NR; i++) {
         if(device->bar[i].type == PCI_BAR_TYPE_MEM) {
             return device->bar[i].length;
         }
@@ -361,7 +361,7 @@ static unsigned int pic_get_device_connected()
 {
 	int i;
 	pci_device_t *device;
-	for (i = 0; i < PCI_MAX_BAR; i++) {
+	for (i = 0; i < PCI_MAX_BAR_NR; i++) {
 		device = &pci_devices[i];
         if (device->flags != PCI_DEVICE_USING) {
             break;
@@ -373,7 +373,7 @@ static unsigned int pic_get_device_connected()
 void pci_init()
 {
 	int i;
-	for (i = 0; i < PCI_MAX_DEVICE_NR; i++) {
+	for (i = 0; i < PCI_MAX_DEV_NRICE_NR; i++) {
 		pci_devices[i].flags = PCI_DEVICE_INVALID;
 	}
     printk(KERN_INFO "[pci]: begin sacn device.\n");

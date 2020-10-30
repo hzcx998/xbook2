@@ -1,4 +1,4 @@
-#include <arch/pmem.h>
+#include <arch/phymem.h>
 #include <arch/vmm.h>
 #include <xbook/vmm.h>
 #include <xbook/debug.h>

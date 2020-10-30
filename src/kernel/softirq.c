@@ -119,11 +119,11 @@ redo:
 }
 
 /**
- * do_softirq - 做软中断处理
+ * interrupt_do_softirq - 做软中断处理
  * 
  * 通过这个地方，将有机会去处理软中断事件
  */
-void do_softirq()
+void interrupt_do_softirq()
 {
     unsigned long evens;
 

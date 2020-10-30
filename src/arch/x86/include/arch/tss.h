@@ -3,9 +3,7 @@
 
 #include <stdint.h>
 
-/* 任务状态 */
-typedef struct tss 
-{
+typedef struct {
 	uint32_t backlink;
 	uint32_t esp0;	//we will use esp 
 	uint32_t ss0;	//stack segment

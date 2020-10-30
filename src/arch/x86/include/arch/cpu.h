@@ -29,10 +29,7 @@ static inline void cpu_do_cpuid(unsigned int mop,unsigned int sop,unsigned int *
     );
 }
 
-/**
- * 获取当前cpu的id
- */
-static inline cpuid_t hal_cpu_cur_get_id()
+static inline cpuid_t hal_cpu_get_id()
 {
     return 0x86; /* only support one cpu */
 }

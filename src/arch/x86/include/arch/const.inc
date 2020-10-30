@@ -1,10 +1,10 @@
 KERNEL_STACK_TOP EQU 0x8009f000
 
-EOI EQU 0X20
-INT_M_CTL	equ	0x20	; I/O port for interrupt controller         <Master>
-INT_M_CTLMASK	equ	0x21	; setting bits in this port disables ints   <Master>
-INT_S_CTL	equ	0xA0	; I/O port for second interrupt controller  <Slave>
-INT_S_CTLMASK	equ	0xA1	; setting bits in this port disables ints   <Slave>
+EOI             EQU 0X20
+INT_M_CTL	    EQU	0x20	; I/O port for interrupt controller         <Master>
+INT_M_CTLMASK	EQU	0x21	; setting bits in this port disables ints   <Master>
+INT_S_CTL	    EQU	0xA0	; I/O port for second interrupt controller  <Slave>
+INT_S_CTLMASK	EQU	0xA1	; setting bits in this port disables ints   <Slave>
 
 %define   ERROR_CODE   nop
 %define   NO_ERROR_CODE push 0
@@ -29,14 +29,14 @@ exception_entry%1:
     push %1
     
     push esp
-    call [intr_handler_table + %1*4]
+    call [interrupt_handlers + %1*4]
     add esp, 4
     
     push esp
-    call do_trigger
+    call interrupt_do_trigger
     add esp, 4
     
-    jmp intr_exit
+    jmp interrupt_exit
 %endmacro
 
 %macro INTERRUPT_ENTRY 2
@@ -58,15 +58,15 @@ irq_entry%1:
     
     push %1
     push esp
-    call do_irq
+    call interrupt_do_irq
     add esp, 4
     
-    call do_softirq
+    call interrupt_do_softirq
 
     push esp
-    call do_trigger
+    call interrupt_do_trigger
     add esp, 4
-    jmp intr_exit
+    jmp interrupt_exit
 
 %endmacro
 

@@ -4,9 +4,6 @@
 
 #define	tlb_flush_one(addr)	\
 	__asm__ __volatile__	("invlpg	(%0)	\n\t"::"r"(addr):"memory")
-/*
-
-*/
 
 #define tlb_flush()						\
 do								\
@@ -28,14 +25,6 @@ int mem_xchg32(int *ptr, int value);
 #define xchg(ptr,v) ((__typeof__(*(ptr)))mem_xchg((unsigned int) \
         (v),(ptr),sizeof(*(ptr))))
 
-/**
- * __Xchg: 交换一个内存地址和一个数值的值
- * @x: 数值
- * @ptr: 内存指针
- * @size: 地址值的字节大小
- * 
- * 返回交换前地址中的值
- */
 static inline unsigned int  mem_xchg(unsigned int x, 
         volatile void * ptr, int size)
 {
@@ -53,7 +42,6 @@ static inline unsigned int  mem_xchg(unsigned int x,
     }
     return old;
 }
-
 
 /* x86特性 */
 #define X86_FEATURE_XMM2 (0*32+26) /* Streaming SIMD Extensions-2 */
@@ -97,7 +85,6 @@ but make it already an possibility. */
 
 /* The "volatile" is due to gcc bugs */
 #define barrier() __asm__ __volatile__("": : :"memory")
-
 
 unsigned int phy_mem_get_size_from_hardware();
 

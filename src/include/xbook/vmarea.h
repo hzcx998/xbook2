@@ -5,7 +5,7 @@
 #include <list.h>
 #include <types.h>
 #include <arch/page.h>
-#include <arch/pmem.h>
+#include <arch/phymem.h>
 
 #define VMAREA_BASE     DYNAMIC_MAP_MEM_ADDR
 #define VMAREA_END      DYNAMIC_MAP_MEM_END

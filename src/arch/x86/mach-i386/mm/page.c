@@ -1,5 +1,5 @@
 #include <arch/page.h>
-#include <arch/pmem.h>
+#include <arch/phymem.h>
 #include <arch/registers.h>
 #include <arch/tss.h>
 #include <arch/memory.h>

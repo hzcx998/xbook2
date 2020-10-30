@@ -65,8 +65,8 @@ int __proc_stack_init(task_t *task, trap_frame_t *frame, char **argv, char **env
 
 int __trigger_return(trap_frame_t *frame);
 
-void intr_exit();
-void intr_exit2();
+void interrupt_exit();
+void interrupt_exit2();
 void dump_task_kstack(thread_stack_t *kstack);
 
 

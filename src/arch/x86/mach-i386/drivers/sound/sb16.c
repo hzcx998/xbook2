@@ -158,8 +158,10 @@ void sb16_request(device_extension_t *extension)
 static int sb16_handler(unsigned long irq, unsigned long data)
 {
     device_extension_t *extension = (device_extension_t *)data;
+    #ifdef DEBUG_SB16
     struct dma_region *dma_region = &extension->dma_region[extension->index_r];
-
+    #endif
+    
     // Stop sound output ready for the next block.
     sb16_dsp_write(DSP_PAUSE_16BIT);
     // memset((void *)dma_region->v, 0, dma_region->p.size);

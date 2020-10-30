@@ -1,7 +1,7 @@
 #include <arch/segment.h>
 #include <arch/gate.h>
 #include <arch/tss.h>
-#include <arch/pmem.h>
+#include <arch/phymem.h>
 #include <arch/debug.h>
 #include <arch/pic.h>
 #include <arch/pci.h>

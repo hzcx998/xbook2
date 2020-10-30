@@ -55,7 +55,7 @@ void init_schedule();
 static inline sched_unit_t *sched_get_unit()
 {
     sched_unit_t *su = NULL;
-    cpuid_t cpuid = hal_cpu_cur_get_id();
+    cpuid_t cpuid = hal_cpu_get_id();
     int i;
     for (i = 0; i < scheduler.cpunr; i++) {
         su = &scheduler.sched_unit_table[i];

@@ -23,9 +23,6 @@
 #define BCD_ASCII_FIRST(n)	(((n<<4)>>4)+0x30)  //取BCD的个位并以字符?出,来自UdoOS
 #define BCD_ASCII_S(n)	((n<<4)+0x30)  //取BCD的十位并以字符?出,来自UdoOS
 
-/*
-获得数据的端口
-*/
 unsigned int cmos_get_hour_hex();
 unsigned int cmos_get_min_hex();
 unsigned char cmos_get_min_hex8();

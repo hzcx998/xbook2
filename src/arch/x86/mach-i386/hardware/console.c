@@ -1,7 +1,5 @@
 #include <arch/config.h>
 
-// #ifdef X86_CONSOLE_HW
-
 #include <xbook/debug.h>
 #include <arch/io.h>
 #include <arch/debug.h>
@@ -46,85 +44,62 @@ MAKE_COLOR(BLACK, RED) | BRIGHT | FLASH
 
 #define COLOR_DEFAULT	(MAKE_COLOR(TEXT_BLACK, TEXT_WHITE))
 
-/* 控制台结构 */
-struct console_object {
+typedef struct {
     unsigned int originalAddr;          /* 控制台对应的显存的位置 */
-    unsigned int screenSize;       /* 控制台占用的显存大小 */
+    unsigned int screenSize;            /* 控制台占用的显存大小 */
     unsigned char color;                /* 字符的颜色 */
-    int x, y;                  /* 偏移坐标位置 */
+    int x, y;                           /* 偏移坐标位置 */
     int esc_step;   
-    unsigned char ready_color;                /* 准备设置成的颜色 */
-    
-};
+    unsigned char ready_color;          /* 准备设置成的颜色 */
+} console_hardware_t;
 
-/* 控制台表 */
-struct console_object console_object;
+console_hardware_t console_obj;
 
 static void set_cursor(unsigned short cursor)
 {
-	//设置光标位置 0-2000
-
-	//执行前保存flags状态，然后关闭中断
 	unsigned long flags;
     interrupt_save_state(flags);
-    
-	out8(CRTC_ADDR_REG, CURSOR_H);			//光标高位
+	out8(CRTC_ADDR_REG, CURSOR_H);
 	out8(CRTC_DATA_REG, (cursor >> 8) & 0xFF);
-	out8(CRTC_ADDR_REG, CURSOR_L);			//光标低位
+	out8(CRTC_ADDR_REG, CURSOR_L);
 	out8(CRTC_DATA_REG, cursor & 0xFF);
-	//恢复之前的flags状态
     interrupt_restore_state(flags);
 }
 
 static unsigned int get_cursor()
 {
-	unsigned int posLow, posHigh;		//设置光标位置的高位的低位
-	//取得光标位置
-	out8(CRTC_ADDR_REG, CURSOR_H);			//光标高位
+	unsigned int posLow, posHigh;
+	out8(CRTC_ADDR_REG, CURSOR_H);
 	posHigh = in8(CRTC_DATA_REG);
-	out8(CRTC_ADDR_REG, CURSOR_L);			//光标低位
+	out8(CRTC_ADDR_REG, CURSOR_L);
 	posLow = in8(CRTC_DATA_REG);
-	
-	return (posHigh<<8 | posLow);	//返回合成后的值
+	return (posHigh<<8 | posLow);
 }
 
 static void set_start_addr(unsigned short addr)
 {
-	//执行前保存flags状态，然后关闭中断
 	unsigned long flags;
     interrupt_save_state(flags);
-
 	out8(CRTC_ADDR_REG, START_ADDR_H);
 	out8(CRTC_DATA_REG, (addr >> 8) & 0xFF);
 	out8(CRTC_ADDR_REG, START_ADDR_L);
 	out8(CRTC_DATA_REG, addr & 0xFF);
-	//恢复之前的flags状态
     interrupt_restore_state(flags);
 }
 
-/**
- * flush - 刷新光标和起始位置
- * @console: 控制台
- */
-static void flush(struct console_object *obj)
+static void flush(console_hardware_t *obj)
 {
-    /* 计算光标位置，并设置 */
     set_cursor(obj->originalAddr + obj->y * SCREEN_WIDTH + obj->x);
     set_start_addr(obj->originalAddr);
 }
 
-/**
- * clean_screen - 清除控制台
- * @console: 控制台
- */
-void clean_screen(struct console_object *obj)
+void clean_screen(console_hardware_t *obj)
 {
-    /* 指向显存 */
     unsigned char *vram = (unsigned char *)(V_MEM_BASE + obj->originalAddr * 2);
 	int i;
 	for(i = 0; i < obj->screenSize * 2; i += 2){
-		*vram++ = '\0';  /* 所有字符都置0 */
-        *vram++ = COLOR_DEFAULT;  /* 颜色设置为黑白 */
+		*vram++ = '\0';
+        *vram++ = COLOR_DEFAULT;
 	}
     obj->x = 0;
     obj->y = 0;
@@ -132,7 +107,7 @@ void clean_screen(struct console_object *obj)
 }
 
 #ifdef DEBUG_CONSOLE
-void DumpConsole(struct console_object *obj)
+void dump_console(console_hardware_t *obj)
 {
     printk(PART_TIP "----Console----\n");
     printk(PART_TIP "origin:%d size:%d x:%d y:%d color:%x chrdev:%x\n",
@@ -148,13 +123,12 @@ void DumpConsole(struct console_object *obj)
  *             - SCREEN_DOWN: 向下滚动
  * 
  */
-static void scroll_sceen(struct console_object *obj, int direction)
+static void scroll_sceen(console_hardware_t *obj, int direction)
 {
     unsigned char *vram = (unsigned char *)(V_MEM_BASE + obj->originalAddr * 2);
     int i;
                 
 	if(direction == SCREEN_UP){
-        /* 起始地址 */
         for (i = SCREEN_WIDTH * 2 * 24; i > SCREEN_WIDTH * 2; i -= 2) {
             vram[i] = vram[i - SCREEN_WIDTH * 2];
             vram[i + 1] = vram[i + 1 - SCREEN_WIDTH * 2];
@@ -165,7 +139,6 @@ static void scroll_sceen(struct console_object *obj, int direction)
         }
 
 	}else if(direction == SCREEN_DOWN){
-        /* 起始地址 */
         for (i = 0; i < SCREEN_WIDTH * 2 * 24; i += 2) {
             vram[i] = vram[i + SCREEN_WIDTH * 2];
             vram[i + 1] = vram[i + 1 + SCREEN_WIDTH * 2];
@@ -179,16 +152,10 @@ static void scroll_sceen(struct console_object *obj, int direction)
 	flush(obj);
 }
 
-/**
- * put_char - 控制台上输出一个字符
- * @console: 控制台
- * @ch: 字符
- */
-static void put_char(struct console_object *obj, char ch)
+static void put_char(console_hardware_t *obj, char ch)
 {
 	unsigned char *vram = (unsigned char *)(V_MEM_BASE + 
         (obj->originalAddr + obj->y * SCREEN_WIDTH + obj->x) *2) ;
-	/* 检测颜色数字 */
     if ('0' < ch && ch <= '9') {
         if (obj->esc_step == 5) {
             char _ch = ch - '0';
@@ -230,7 +197,6 @@ static void put_char(struct console_object *obj, char ch)
         case '\r':
             break;
 		case '\n':
-            // 如果是回车，那还是要把回车写进去
             *vram++ = '\0';
             *vram = COLOR_DEFAULT;
             obj->x = 0;
@@ -240,11 +206,9 @@ static void put_char(struct console_object *obj, char ch)
 		case '\b':
             if (obj->x >= 0 && obj->y >= 0) {
                 obj->x--;
-                /* 调整为上一行尾 */
                 if (obj->x < 0) {
                     obj->x = SCREEN_WIDTH - 1;
                     obj->y--;
-                    /* 对y进行修复 */
                     if (obj->y < 0)
                         obj->y = 0;
                 }
@@ -293,7 +257,6 @@ static void put_char(struct console_object *obj, char ch)
             }
 			break;
 	}
-    /* 滚屏 */
     while (obj->y > SCREEN_HEIGHT - 1) {
         scroll_sceen(obj, SCREEN_DOWN);
     }
@@ -301,40 +264,27 @@ static void put_char(struct console_object *obj, char ch)
     flush(obj);
 }
 
-/**
- * console_putchar - 控制台调试输出
- * @ch:字符
- */
-void console_putchar(char ch)
+void console_hardware_putchar(char ch)
 {
     
-    put_char(&console_object, ch);
+    put_char(&console_obj, ch);
 }
 
-/**
- * console_hw_init - 初始化控制台调试驱动
- */
-void console_hw_init()
+void console_hardware_init()
 {
-    struct console_object *obj = &console_object;
+    console_hardware_t *obj = &console_obj;
 
-    /* 设置屏幕大小 */
     obj->screenSize = SCREEN_SIZE;
 
-	/* 控制台起始地址 */
     obj->originalAddr = 0;
     
-    /* 设置默认颜色 */
     obj->color = COLOR_DEFAULT;
     obj->esc_step = 0;
     obj->ready_color = 0;
-    /* 消除编译未使用提示 */
     get_cursor();
 
     clean_screen(obj);
-    /* 默认在左上角 */
     obj->x = 0;
     obj->y = 0;
     set_cursor(obj->y * SCREEN_WIDTH + obj->x);
 }
-// #endif

@@ -62,7 +62,7 @@ int irq_register(unsigned long irq,
         return -1;
     
     /* 指定硬件控制器 */
-    irq_desc->controller = &hardware_intr_contorller;
+    irq_desc->controller = &interrupt_controller;
     
     /* 设置irq名字 */
     irq_desc->irqname = irqname;

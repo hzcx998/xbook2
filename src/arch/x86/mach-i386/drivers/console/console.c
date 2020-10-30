@@ -349,7 +349,7 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
     while (i > 0) {
         vga_outchar(device->device_extension, *buf);
         #ifdef X86_SERIAL_HW
-        serial_putchar(*buf);
+        serial_hardware_putchar(*buf);
         #endif
         i--;
         buf++;

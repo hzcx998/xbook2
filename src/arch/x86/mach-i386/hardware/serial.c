@@ -38,7 +38,6 @@ Divisor计算方法：
 Divisor = 115200 / BaudRate 
 */
 
-/* 默认波特率值 */
 #define DEFAULT_BAUD_VALUE  19200
 #define DEFAULT_DIVISOR_VALUE (MAX_BAUD_VALUE / DEFAULT_BAUD_VALUE)
 
@@ -118,14 +117,12 @@ enum intr_indenty_regBits {
     INTR_STATUS_FIFO                = (1 << 6) | (1 << 7),  /* FIFO enabled */
 };
 
-/* 最多有4个串口 */
 #define MAX_COM_NR  4 
 
 /* 默认初始化的串口数 */
 #define DEFAULT_COM_NR  2 
 
-/* 每一个com端口都有一个串行结构来描述 */
-struct serial_object {
+typedef struct {
     char irq;           /* irq号 */
     /* ----串口的寄存器---- */
     uint16_t iobase;                    /* IO基地址 */
@@ -140,63 +137,43 @@ struct serial_object {
     uint16_t line_status_reg;       /* 行状态寄存器 */
     uint16_t modem_status_reg;       /* 调制解调器状态寄存器 */
     uint16_t scratch_reg;       /* 刮伤寄存器 */
-};
+} serial_hardware_t;
 
 /* 4个串口 */
-struct serial_object serial_object;
+serial_hardware_t serial_obj;
 
-/**
- * serial_send - 串口发送数据
- * @obj: 私有结构体指针
- * @data: 传输的数据
- */
-static int serial_send(struct serial_object *obj, char data)
+static int serial_send(serial_hardware_t *obj, char data)
 {
     #ifdef SERIAL_SEND_TIMEOUT
     int timeout = 0x100000;
-    /* 如果发送的时候不持有传输状态，就不能发送 */
     while (!(in8(obj->line_status_reg) & 
         LINE_STATUS_EMPTY_TRANSMITTER_HOLDING) && timeout--);
     #else
     while (!(in8(obj->line_status_reg) & 
         LINE_STATUS_EMPTY_TRANSMITTER_HOLDING));
     #endif
-    /* 往数据端口写入数据 */
     out8(obj->data_reg, data);
     return 0;
 }
 
-/**
- * serial_putchar - 串口调试输出字符
- * @ch: 要输出的字符
- */
-void serial_putchar(char ch)
+void serial_hardware_putchar(char ch)
 {
     /* 如果是回车，就需要发送一个'\r'，以兼d容unix/linux操作系统的输出 */
     if(ch == '\n') {
-        serial_send(&serial_object, '\r');
+        serial_send(&serial_obj, '\r');
     }
-	serial_send(&serial_object, ch);
+	serial_send(&serial_obj, ch);
 }
 
-/**
- * serial_hw_init - 串口初始化子程序
- * @obj: 指向私有数据的指针
- * @id: 串口的id
- * 
- * @return: 成功返回0，失败返回-1
- */
-void serial_hw_init()
+void serial_hardware_init()
 {
-    struct serial_object *obj = &serial_object;
+    serial_hardware_t *obj = &serial_obj;
     char irq;
     uint16_t iobase;
 
-    /* 根据ID设置iobase和irq */
     iobase = COM1_BASE;
     irq = 4;
 
-    /* 串口的寄存器参数设置(对齐后很好看！！！) */
     obj->iobase                         = iobase;
     obj->data_reg                       = iobase + 0;
     obj->divisor_low_reg                = iobase + 0;
@@ -209,20 +186,13 @@ void serial_hw_init()
     obj->modem_status_reg               = iobase + 6;
     obj->scratch_reg                    = iobase + 7;
 
-    /* irq号 */
     obj->irq = irq;
-    
-    /* ----执行设备的初始化---- */
 
-    /* 设置可以更改波特率Baud */
     out8(obj->line_ctrl_reg, LINE_DLAB);
 
-    /* Set Baud rate to 115200，设置除数寄存器为新的波特率值 */
     out8(obj->divisor_low_reg, low8(DEFAULT_DIVISOR_VALUE));
     out8(obj->divisor_high_reg, high8(DEFAULT_DIVISOR_VALUE));
     
-    /* 设置 DLAB to 0, 设置字符宽度为 8, 停字为 to 1, 没有奇偶校验, 
-    Break signal Disabled */
     out8(obj->line_ctrl_reg, LINE_WORD_LENGTH_8 | 
             LINE_STOP_BIT_1 | LINE_PARITY_NO);
     
@@ -230,17 +200,11 @@ void serial_hw_init()
     out8(obj->intr_enable_reg, INTR_RECV_DATA_AVALIABLE | 
         INTR_RECV_LINE_STATUS | INTR_LOW_POWER_MODE); 
 
-    /* 设置FIFO，打开FIFO, 清除接收 FIFO, 清除传输 FIFO
-    打开 64Byte FIFO, 中断触发等级为 14Byte
-     */
     out8(obj->fifo_reg, FIFO_ENABLE | FIFO_CLEAR_TRANSMIT |
                 FIFO_CLEAR_RECEIVE | FIFO_ENABLE_64 | 
                 FIFO_TRIGGER_14);
-
-    /* 无调制解调器设置 */            
-    out8(obj->modem_ctrl_reg, 0x00);
-    /* 无刮伤寄存器设置 */            
+          
+    out8(obj->modem_ctrl_reg, 0x00);          
     out8(obj->scratch_reg, 0x00);
-
 }
 #endif
