@@ -38,9 +38,15 @@
 
 
 typedef struct {
+    list_t node_list_head;
+    size_t node_count;
+} mem_section_t;
+
+typedef struct _mem_node {
     unsigned int count;         /* 内存节点占用的页数 */
-    unsigned int flags;         /* 节点标志 */
+    unsigned int flags;         
     int reference;              /* 引用次数 */
+    list_t list;                /* 节点链表 */
     mem_cache_t *cache;         /* 内存缓冲 */
     mem_group_t *group;         /* 内存组 */
 } mem_node_t;

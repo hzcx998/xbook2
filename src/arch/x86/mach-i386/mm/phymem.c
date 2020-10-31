@@ -147,7 +147,7 @@ int physic_memory_init()
     kern_page_map_early(DMA_MEM_ADDR, NORMAL_MEM_ADDR + normal_size);
     boot_mem_init(KERN_BASE_VIR_ADDR + NORMAL_MEM_ADDR , KERN_BASE_VIR_ADDR + (NORMAL_MEM_ADDR + normal_size));
     
-    /// 
+    #if 0
     mem_node_count = (normal_size + user_size)/PAGE_SIZE;
     mem_node_base = DMA_MEM_ADDR;
 
@@ -157,11 +157,14 @@ int physic_memory_init()
         panic("boot mem alloc for mem node table failed!\n");
     }
     memset(mem_node_table, 0, mem_node_table_size);
-
-    ///
+    #else
     mem_range_init(0, DMA_MEM_ADDR, NORMAL_MEM_ADDR);
-    mem_range_init(1, NORMAL_MEM_ADDR, total_pmem_size - NORMAL_MEM_ADDR);
+    mem_range_init(1, NORMAL_MEM_ADDR, total_pmem_size - NORMAL_MEM_ADDR + PAGE_SIZE);
     
+    mem_pool_test();
+    #endif
+
+    spin("test");
     cut_used_mem();
     return 0;
 }   
