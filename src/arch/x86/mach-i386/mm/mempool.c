@@ -188,7 +188,7 @@ unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
     if (count > MEM_SECTION_MAX_SIZE)
         return 0;
 
-    mem_range_t *mem_range;
+    mem_range_t *mem_range = NULL;
 
     if (flags & MEM_NODE_TYPE_DMA)
         mem_range = &mem_ranges[MEM_RANGE_DMA];
@@ -276,7 +276,6 @@ unsigned long mem_get_free_page_nr()
     }
     return page_count;
 }
-
 
 void mem_pool_test()
 {
