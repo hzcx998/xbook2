@@ -156,15 +156,11 @@ int mem_range_split_section(mem_range_t *mem_range, mem_section_t *mem_section)
         printk(KERN_ERR "mempool: no free section left!\n");
         return -1;
     }
-    #ifdef MEMPOOL_DEBUG
-    printk(KERN_DEBUG "mempool: found a free section size %d\n", tmp_section->section_size);
-    #endif
+
     mem_node_t *node = list_first_owner(&tmp_section->free_list_head, mem_node_t, list);
     list_del(&node->list);
     MEM_SECTION_DES_COUNT(tmp_section);
-    #ifdef MEMPOOL_DEBUG
-    printk(KERN_DEBUG "mempool: large section size %d\n", tmp_section->section_size);
-    #endif
+
     mem_node_init(node, 1, tmp_section->section_size / 2);
     
     mem_node_t *node_half = node + node->count;
@@ -177,9 +173,7 @@ int mem_range_split_section(mem_range_t *mem_range, mem_section_t *mem_section)
     MEM_NODE_MARK_SECTION(node_half, tmp_section);
     MEM_SECTION_INC_COUNT(tmp_section);
     MEM_SECTION_INC_COUNT(tmp_section);
-    #ifdef MEMPOOL_DEBUG
-    printk(KERN_DEBUG "mempool: split section size %d -> %x:%x\n", tmp_section->section_size, node, node_half);
-    #endif
+
     return mem_range_split_section(mem_range, mem_section);
 }
 
@@ -204,16 +198,10 @@ unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
     for (i = 0; i < MEM_SECTION_MAX_NR; i++) {
         mem_section = &mem_range->sections[i];
         if (mem_section->section_size >= count) {
-            #ifdef MEMPOOL_DEBUG
-            printk(KERN_DEBUG "mem section: found section size %d\n", mem_section->section_size);
-            #endif
             break;
         }
     }
     if (list_empty(&mem_section->free_list_head)) {
-        #ifdef MEMPOOL_DEBUG    
-        printk(KERN_NOTICE "mem section size %d: empty.\n", mem_section->section_size);
-        #endif
         if (mem_section->section_size == MEM_SECTION_MAX_SIZE) {    // 没有更大的节
             // TODO: 收缩内存，合并没有使用的小节为大节
             printk(KERN_ERR "mempool: no free section!\n");
@@ -231,9 +219,7 @@ unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
 
     mem_node_init(node, 1, count);
     MEM_NODE_MARK_SECTION(node, mem_section);
-    #ifdef MEMPOOL_DEBUG
-    printk(KERN_DEBUG "mempool: alloc mem node size %d\n", mem_section->section_size);
-    #endif
+
     return mem_node_to_phy_addr(node);
 }
 
@@ -257,9 +243,7 @@ int mem_node_free_pages(unsigned long addr)
     mem_node_init(node, 0, 0);
     list_add(&node->list, &section->free_list_head);
     MEM_SECTION_INC_COUNT(section);
-    #ifdef MEMPOOL_DEBUG
-    printk(KERN_DEBUG "free page at node %x -> %x ok.\n", node, addr);
-    #endif
+
     return 0;
 }
 
