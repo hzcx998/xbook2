@@ -22,6 +22,10 @@ void interrupt_general_handler(unsigned int esp)
         if (task_init_done) {
             page_do_fault(frame);
     		return;
+        } else {
+            unsigned long addr = 0x00;
+            addr = cpu_cr2_read(); /* cr2 saved the fault addr */
+            printk("page fault addr:%x\n", addr);
         }
     case EP_DIVIDE:
     case EP_DEVICE_NOT_AVAILABLE:

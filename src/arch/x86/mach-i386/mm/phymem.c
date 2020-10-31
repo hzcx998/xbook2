@@ -1,4 +1,5 @@
 #include <arch/phymem.h>
+#include <arch/mempool.h>
 #include <arch/page.h>
 #include <arch/bootmem.h>
 #include <arch/memory.h>
@@ -6,11 +7,32 @@
 #include <math.h>
 #include <string.h>
 
+static unsigned long total_pmem_size;
+
+void dump_mem_node(mem_node_t *node)
+{ 
+    printk("----Mem Node----\n");
+    printk("count: %d flags:%x reference:%d\n",
+        node->count, node->flags, node->reference);
+    if (node->cache && node->group) {
+        printk("cache: %x group:%x\n",
+            node->cache, node->group);
+    }
+    if (node->section) {
+        printk("section: %x\n",
+            node->section);
+    }
+}
+
+unsigned long mem_get_total_page_nr()
+{
+    return total_pmem_size / PAGE_SIZE;
+}
+
+#if 0
 mem_node_t *mem_node_table;
 unsigned int mem_node_count;
 unsigned int mem_node_base;
-
-static unsigned long total_pmem_size;
 
 static mem_node_t *mem_alloc_node(unsigned int flags)
 {
@@ -49,27 +71,6 @@ unsigned int mem_node_to_phy_addr(mem_node_t *node)
     return mem_node_base + (index << PAGE_SHIFT);
 }
 
-void dump_mem_node(mem_node_t *node)
-{ 
-    printk("----Mem Node----\n");
-    printk("count: %d flags:%x reference:%d\n",
-        node->count, node->flags, node->reference);
-    if (node->cache && node->group) {
-        printk("cache: %x group:%x\n",
-            node->cache, node->group);
-    }
-}
-
-
-
-
-static void cut_used_mem()
-{
-    unsigned int used_mem = boot_mem_size();
-    unsigned int used_pages = DIV_ROUND_UP(used_mem, PAGE_SIZE);
-    page_alloc_normal(used_pages);
-}
-
 unsigned long mem_get_free_page_nr()
 {
     mem_node_t *node = mem_node_table;
@@ -85,11 +86,6 @@ unsigned long mem_get_free_page_nr()
             node++;
     }
     return free_nodes;
-}
-
-unsigned long mem_get_total_page_nr()
-{
-    return total_pmem_size / PAGE_SIZE;
 }
 
 unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
@@ -122,6 +118,15 @@ int mem_node_free_pages(unsigned long page)
 	}
     return -1;
 }
+#endif
+
+static void cut_used_mem()
+{
+    unsigned int used_mem = boot_mem_size();
+    unsigned int used_pages = DIV_ROUND_UP(used_mem, PAGE_SIZE);
+    printk("phymem: cut used pages %d\n", used_pages);
+    page_alloc_normal(used_pages);
+}
 
 int physic_memory_init()
 {
@@ -135,8 +140,10 @@ int physic_memory_init()
     unsigned int normal_size;
     unsigned int user_size;
     
-    normal_size = (total_pmem_size - (NORMAL_MEM_ADDR + DYNAMIC_MAP_MEM_SIZE + KERN_BLACKHOLE_MEM_SIZE)) / 2; 
-    user_size = total_pmem_size - normal_size;
+    normal_size = (total_pmem_size - 
+        (NORMAL_MEM_ADDR + DYNAMIC_MAP_MEM_SIZE + KERN_BLACKHOLE_MEM_SIZE)) / 2; 
+    user_size = total_pmem_size - normal_size - NORMAL_MEM_ADDR;
+    
     if (normal_size > 1*GB) {
         unsigned int more_size = normal_size - 1*GB;
         user_size += more_size;
@@ -158,13 +165,13 @@ int physic_memory_init()
     }
     memset(mem_node_table, 0, mem_node_table_size);
     #else
-    mem_range_init(0, DMA_MEM_ADDR, NORMAL_MEM_ADDR);
-    mem_range_init(1, NORMAL_MEM_ADDR, total_pmem_size - NORMAL_MEM_ADDR + PAGE_SIZE);
-    
-    mem_pool_test();
+    mem_range_init(MEM_RANGE_DMA, DMA_MEM_ADDR, DMA_MEM_SIZE);
+    mem_range_init(MEM_RANGE_NORMAL, NORMAL_MEM_ADDR, normal_size);
+    mem_range_init(MEM_RANGE_USER, NORMAL_MEM_ADDR + normal_size, user_size);
+
+    //mem_pool_test();
     #endif
 
-    spin("test");
     cut_used_mem();
     return 0;
 }   

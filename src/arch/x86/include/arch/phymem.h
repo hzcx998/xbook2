@@ -35,11 +35,13 @@
 
 #define MEM_NODE_TYPE_DMA        0x01
 #define MEM_NODE_TYPE_NORMAL     0x02
+#define MEM_NODE_TYPE_USER      0x04
 
 
 typedef struct {
-    list_t node_list_head;
+    list_t free_list_head;
     size_t node_count;
+    size_t section_size;
 } mem_section_t;
 
 typedef struct _mem_node {
@@ -47,6 +49,7 @@ typedef struct _mem_node {
     unsigned int flags;         
     int reference;              /* 引用次数 */
     list_t list;                /* 节点链表 */
+    mem_section_t *section;
     mem_cache_t *cache;         /* 内存缓冲 */
     mem_group_t *group;         /* 内存组 */
 } mem_node_t;
@@ -55,16 +58,28 @@ typedef struct _mem_node {
 
 #define SIZEOF_MEM_NODE sizeof(mem_node_t) 
 
-#define MEM_NODE_MARK_CHACHE_GROUP(node, cache, group)  \
-        node->cache = cache;                            \
-        node->group = group
+#define MEM_NODE_MARK_CHACHE_GROUP(node, _cache, _group)  \
+        node->cache = _cache;                            \
+        node->group = _group
+        
+#define MEM_NODE_MARK_SECTION(node, _section)  \
+        node->section = _section
         
 #define MEM_NODE_CLEAR_GROUP_CACHE(node)                \
         node->cache = NULL;                          \
         node->group = NULL
+#define MEM_NODE_CLEAR_SECTION(node)                \
+        node->section = NULL
         
 #define MEM_NODE_GET_GROUP(node) node->group
 #define MEM_NODE_GET_CACHE(node) node->cache
+#define MEM_NODE_GET_SECTION(node) node->section
+
+#define MEM_SECTION_DES_COUNT(section) \
+        section->node_count--
+
+#define MEM_SECTION_INC_COUNT(section) \
+        section->node_count++
 
 #define CHECK_MEM_NODE(node)                            \
         if (node == NULL) panic("Mem node error!\n") 

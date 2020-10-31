@@ -4,9 +4,16 @@
 #include "phymem.h"
 #include <xbook/list.h>
 
-#define MEM_RANGE_NR    2
+enum {
+    MEM_RANGE_DMA = 0,
+    MEM_RANGE_NORMAL,
+    MEM_RANGE_USER,
+    MEM_RANGE_NR
+};
 
 #define MEM_SECTION_MAX_NR      10
+
+#define MEM_SECTION_MAX_SIZE    512    // 2 ^ 9
 
 typedef struct {
     unsigned int start;
@@ -16,7 +23,7 @@ typedef struct {
     mem_node_t *node_table;     // 节点表
 } mem_range_t;
 
-void mem_range_init(unsigned int idx, unsigned int start, unsigned int end);
+void mem_range_init(unsigned int idx, unsigned int start, size_t len);
 
 void mem_pool_test();
 

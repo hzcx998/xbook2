@@ -538,7 +538,6 @@ void mem_cache_free_object(mem_cache_t *cache, void *object)
     interrupt_restore_state(flags);
 }
 
-
 /*
  * kfree - 释放一个对象占用的内存
  * @object: 对象的指针
@@ -676,99 +675,5 @@ int init_mem_caches()
 {
     /* make basic mem caches */
 	make_mem_caches();
-#if 0       /* test */
-	char *a = kmalloc(32);
-	char *b = kmalloc(512);
-	char *c = kmalloc(1024);
-	char *d = kmalloc(128*1024);
-	
-	//memset(d, 0, 512*1024);
-
-	a = kmalloc(32);
-	b = kmalloc(512);
-	c = kmalloc(1024);
-	d = kmalloc(128*1024);
-
-	printk("a=%x, b=%x,c=%x,d=%x,\n", a, b,c,d);
-
-	kfree(a);
-	kfree(b);
-	kfree(c);
-	kfree(d);
-	a = kmalloc(32);
-	b = kmalloc(512);
-	c = kmalloc(1024);
-	d = kmalloc(128*1024);
-    
-	printk("a=%x, b=%x,c=%x,d=%x,\n", a, b,c,d);
-
-	kfree(a);
-	kfree(b);
-	kfree(c);
-	kfree(d);
-	
-	a = kmalloc(64);
-	b = kmalloc(256);
-	c = kmalloc(4096);
-	d = kmalloc(64*1024);
-
-	printk("a=%x, b=%x,c=%x,d=%x,\n", a, b,c,d);
-
-	int i = 0;
-
-	char *table[10];
-	for (i = 0; i < 10; i++) {
-		table[i] = kmalloc(128*1024);
-		printk("x=%x\n", table[i]);
-	}
-
-	for (i = 0; i < 10; i++) {
-		kfree(table[i]);
-	}
-
-	size_t size = kmshrink();
-	printk("shrink size %x bytes %d MB\n", size, size/MB);
-
-	for (i = 0; i < 10; i++) {
-		table[i] = kmalloc(1*MB);
-		printk("x=%x\n", table[i]);
-	}
-
-	for (i = 0; i < 10; i++) {
-		kfree(table[i]);
-	}
-    size = kmshrink();
-	printk("shrink size %x bytes %d MB\n", size, size/MB);
-	
-
-    mem_cache_t newcache;
-    mem_cache_init(&newcache, "new cache", 10 * MB, 0);
-
-    void *na = mem_cache_alloc_object(&newcache);
-    if (na == NULL) 
-        printk("alloc failed\n");
-    
-    memset(na, 0, 10 * MB);
-    printk("alloc at %p\n", na);
-    
-    void *nb = mem_cache_alloc_object(&newcache);
-    if (nb == NULL) 
-        printk("alloc failed\n");
-    
-    memset(nb, 0, 10 * MB);
-    
-    printk("alloc at %p\n", nb);
-    
-    mem_cache_free_object(&newcache, na);
-    mem_cache_free_object(&newcache, nb);
-
-    size = kmshrink();
-	printk("shrink size %x bytes %d MB\n", size, size/MB);
-
-    unsigned long free_size = mem_get_free_page_nr();
-    unsigned long total_size = mem_get_total_page_nr();
-    printk("total:%d free:%d used:%d\n", total_size, free_size, total_size - free_size);
-	
-#endif
 	return 0;
 }

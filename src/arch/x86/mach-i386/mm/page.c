@@ -1,5 +1,6 @@
 #include <arch/page.h>
 #include <arch/phymem.h>
+#include <arch/mempool.h>
 #include <arch/registers.h>
 #include <arch/tss.h>
 #include <arch/memory.h>
@@ -9,12 +10,6 @@
 #include <assert.h>
 #include <xbook/schedule.h>
 #include <xbook/vmspace.h>
-
-// TODo: swap page to disk, then get free page
-int page_swap()
-{
-    return 0;
-}
 
 void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
 {
@@ -34,10 +29,7 @@ void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
 	} else {
         unsigned long page_table = page_alloc_normal(1);
         if (!page_table) {
-            page_swap();
-            page_table = page_alloc_normal(1);
-            if (!page_table)
-                panic("%s: kernel no page left!\n", __func__);
+            panic("%s: kernel no page left!\n", __func__);
         }
         *pde = (page_table | prot | PAGE_ATTR_PRESENT);
         memset((void *)((unsigned long)pte & PAGE_MASK), 0, PAGE_SIZE);
@@ -69,10 +61,7 @@ void page_link_addr_unsafe(unsigned long va, unsigned long pa, unsigned long pro
 	} else {
         unsigned long page_table = page_alloc_normal(1);
         if (!page_table) {
-            page_swap();
-            page_table = page_alloc_normal(1);
-            if (!page_table)
-                panic("%s: kernel no page left!\n", __func__);
+            panic("%s: kernel no page left!\n", __func__);
         }
         
         *pde = (page_table | prot | PAGE_ATTR_PRESENT);
@@ -110,21 +99,28 @@ int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
     else
         attr |= PAGE_ATTR_READ;
 
-	unsigned long pages = page_alloc_normal(len / PAGE_SIZE);
-	if (!pages) {
-        page_swap();
-        pages = page_alloc_normal(len / PAGE_SIZE);
-        if (!pages) {
-            printk(KERN_ERR "%s: map no free pages!\n", __func__);
+	unsigned long pages = len / PAGE_SIZE;
+    while (pages > 0) { 
+        uint32_t trunk;
+        if ((pages / MEM_SECTION_MAX_SIZE) > 0)
+            trunk = MEM_SECTION_MAX_SIZE;
+        else
+            trunk = pages;
+
+        unsigned long page_addr = page_alloc_normal(trunk);
+        if (!page_addr) {
+            printk(KERN_ERR "%s: map no free pages for %d count!\n", __func__, len / PAGE_SIZE);
             return -1;
         }
+        
+        pages -= trunk;
+        while (trunk > 0) {
+            --trunk;
+            page_link_addr(first, page_addr, attr);
+            first += PAGE_SIZE;
+            page_addr += PAGE_SIZE;
+        }
     }
-	unsigned long end = first + len;
-	while (first < end) {
-		page_link_addr(first, pages, attr);
-		first += PAGE_SIZE;
-        pages += PAGE_SIZE;
-	}
 	return 0;
 }
 
