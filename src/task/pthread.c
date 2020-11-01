@@ -32,7 +32,7 @@ void pthread_desc_exit(pthread_desc_t *pthread)
 void pthread_entry(void *arg) 
 {
     trap_frame_t *frame = GET_TASK_TRAP_FRAME(current_task);
-    switch_to_user(frame);
+    kernel_switch_to_user(frame);
 }
 
 
@@ -135,7 +135,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     proc_make_trap_frame(task);
 
     // 创建一个线程
-    make_task_stack(task, pthread_entry, arg);
+    task_stack_build(task, pthread_entry, arg);
 
 #if 0
     /* 写入关键信息 */
@@ -145,7 +145,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
 #endif
     /* 构建用户线程栈框 */
     trap_frame_t *frame = GET_TASK_TRAP_FRAME(task);
-    build_user_thread_frame(frame, arg, (void *)func, thread_entry, 
+    user_thread_frame_build(frame, arg, (void *)func, thread_entry, 
         (unsigned char *)attr->stackaddr + attr->stacksize);
 
     if (attr->detachstate == PTHREAD_CREATE_DETACHED) {    /* 设置detach分离 */

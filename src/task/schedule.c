@@ -98,11 +98,11 @@ void schedule()
 #ifdef DEBUG_SCHED 
     printk(KERN_INFO "schedule: switch from %s-%d-%d-%d to %s-%d-%x-%d\n",
         cur->name, cur->pid, cur->timeslice, cur->priority, next->name, next->pid, next->timeslice, next->priority);
-    /*dump_task_kstack(next->kstack);
+    /*thread_kstack_dump(next->kstack);
     dump_task(next);*/
 #endif
     set_next_task(su, next);
-    switch_to(cur, next);
+    thread_switch_to_next(cur, next);
     
     interrupt_restore_state(flags);
 }

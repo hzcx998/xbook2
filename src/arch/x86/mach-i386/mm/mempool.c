@@ -225,7 +225,6 @@ unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
 
 int mem_node_free_pages(unsigned long addr)
 {
-    //mem_range_t *mem_range;
     mem_node_t *node = phy_addr_to_mem_node(addr);
     if (!node)
         return -1;

@@ -9,21 +9,6 @@
 
 static unsigned long total_pmem_size;
 
-void dump_mem_node(mem_node_t *node)
-{ 
-    printk("----Mem Node----\n");
-    printk("count: %d flags:%x reference:%d\n",
-        node->count, node->flags, node->reference);
-    if (node->cache && node->group) {
-        printk("cache: %x group:%x\n",
-            node->cache, node->group);
-    }
-    if (node->section) {
-        printk("section: %x\n",
-            node->section);
-    }
-}
-
 unsigned long mem_get_total_page_nr()
 {
     return total_pmem_size / PAGE_SIZE;

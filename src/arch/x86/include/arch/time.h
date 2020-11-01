@@ -18,6 +18,4 @@ void pit_clock_init();
 #define time_get_year       cmos_get_year
 #define time_get_week       cmos_get_day_of_week
 
-#define udelay              cpu_do_udelay
-
 #endif  /* _X86_TIME_H */

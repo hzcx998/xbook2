@@ -34,4 +34,6 @@ static inline cpuid_t hal_cpu_get_id()
     return 0x86; /* only support one cpu */
 }
 
+#define udelay              cpu_do_udelay
+
 #endif  /* _X86_CPU_H */

@@ -67,7 +67,7 @@ typedef struct pci_device_bar
     unsigned int length;	    /*地址的长度*/
 } pci_device_bar_t;
 
-#define PCI_DEVICE_INVALID 		0
+#define PCI_DEVICE_INVALID 		    0
 #define PCI_DEVICE_USING		 	1
 
 typedef struct pci_device

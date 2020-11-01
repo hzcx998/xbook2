@@ -121,7 +121,7 @@ void task_free(task_t *task);
 
 void dump_task(task_t *task);
 
-void make_task_stack(task_t *task, task_func_t *function, void *arg);
+void task_stack_build(task_t *task, task_func_t *function, void *arg);
 task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg);
 void kthread_exit(int status);
 

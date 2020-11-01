@@ -109,6 +109,8 @@ void trap_frame_dump(trap_frame_t *frame);
 
 void interrupt_expection_init(void);
 
+void interrupt_exit();
+
 enum {
     IRQ0 = 0,
     IRQ1,

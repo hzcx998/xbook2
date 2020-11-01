@@ -216,7 +216,7 @@ static int copy_task(task_t *child, task_t *parent)
 
     if (copy_gui(child, parent) < 0)
         return -1;
-    fork_bulid_child_stack(child);
+    task_stack_build_when_forking(child);
     // printk(KERN_DEBUG "child heap is [%x,%x]\n", child->vmm->heap_start, child->vmm->heap_end);
     return 0;
 }

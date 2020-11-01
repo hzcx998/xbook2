@@ -1,11 +1,9 @@
 #ifndef _X86_GATE_H
 #define _X86_GATE_H
 
-/* IDT 的虚拟地址 */
-#define IDT_VADDR		0x80200800
+#define IDT_VADDR		0x80200800  /* IDT 的虚拟地址 */
 #define IDT_LIMIT		0x000007ff
 
-// 总共支持的中断数
 #define MAX_IDT_NR (IDT_LIMIT/8)      
 
 #define IDT_OFF2PTR(idt, off)    (idt + off) 
@@ -20,11 +18,6 @@
 #define DA_GATE_DPL2 2
 #define DA_GATE_DPL3 3
 
-
-
-/*
-门描述符结构
-*/
 struct gate_descriptor {
 	unsigned short offset_low, selector;
 	unsigned char datacount;

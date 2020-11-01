@@ -1,9 +1,8 @@
 [section .text]
 [bits 32]
 
-; void __switch_to(unsigned long prev, unsigned long next);
-global __switch_to
-__switch_to:
+global thread_switch_to_next
+thread_switch_to_next:
 	push esi
 	push edi
 	push ebx 
@@ -21,11 +20,9 @@ __switch_to:
 	pop esi
 	ret
 
-; 跳转到用户态执行的切换
-global __switch_to_user
-__switch_to_user:
-    mov esp, [esp + 4]  ; process stack
-; 以下是恢复上下文环境
+global kernel_switch_to_user
+kernel_switch_to_user:
+    mov esp, [esp + 4]
     add esp, 4			   ; 跳过中断号
     popad
     pop gs

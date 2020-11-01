@@ -2,7 +2,7 @@
 #define _X86_PAGE_H
 
 #include "interrupt.h"
-#include "phymem.h"
+#include "mempool.h"
 
 typedef unsigned int pde_t; /* page dir entry */
 typedef unsigned int pte_t; /* page table entry */

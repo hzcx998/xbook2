@@ -518,11 +518,11 @@ iostatus_t mouse_driver_func(driver_object_t *driver)
     return status;
 }
 
-static __init void ps2mouse_driver_entry(void)
+static __init void mouse_driver_entry(void)
 {
     if (driver_object_create(mouse_driver_func) < 0) {
         printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 
-driver_initcall(ps2mouse_driver_entry);
+// driver_initcall(mouse_driver_entry);

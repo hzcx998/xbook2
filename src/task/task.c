@@ -203,7 +203,7 @@ task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg)
 
     //printk("alloc a task at %x\n", task);
     // 创建一个线程
-    make_task_stack(task, func, arg);
+    task_stack_build(task, func, arg);
 
     /* 操作链表时关闭中断，结束后恢复之前状态 */
     unsigned long flags;

@@ -437,7 +437,7 @@ void proc_make_trap_frame(task_t *task)
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)task + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
     /* 默认内核线程使用内核段 */
-    user_trap_frame_init(frame);
+    user_frame_init(frame);
 }
 
 /* 构建用户进程初始上下文信息 */
@@ -486,7 +486,7 @@ task_t *start_process(char *name, char **argv)
     }
 
     /* 创建进程栈 */
-    make_task_stack(task, proc_entry, argv);
+    task_stack_build(task, proc_entry, argv);
     //current_task = task;    /* 指向当前任务 */
     /*
     int argc = 0;

@@ -153,7 +153,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     proc_make_trap_frame(cur);
     
     /* 初始化用户栈 */
-    if(proc_stack_init(cur, frame, new_argv, new_envp) < 0){
+    if(process_frame_init(cur, frame, new_argv, new_envp) < 0){
         /* !!!需要取消已经加载镜像虚拟地址映射 */
         goto free_loaded_image;
     }
@@ -187,7 +187,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 
     /* 执行程序的时候需要继承原有进程的资源，因此不在这里初始化资源 */
     /* 设置执行入口 */
-    user_entry_point(frame, (unsigned long)elf_header.e_entry);
+    user_set_entry_point(frame, (unsigned long)elf_header.e_entry);
 
     /* 设置进程名 */
     memset(cur->name, 0, MAX_TASK_NAMELEN);
@@ -195,7 +195,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     
     // trap_frame_dump(frame);
     /* 切换到进程执行 */
-    switch_to_user(frame);
+    kernel_switch_to_user(frame);
     
     /* 不会继续往后执行 */
 free_loaded_image:

@@ -228,7 +228,7 @@ int sys_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
  */
 int sys_trigger_return(unsigned int ebx, unsigned int ecx, unsigned int esi, unsigned int edi, trap_frame_t *frame)
 {
-    return trigger_return(frame);
+    return trigger_return_to_user(frame);
 }
 
 /**
@@ -252,7 +252,7 @@ static int handle_trigger(trap_frame_t *frame, int trig)
 #endif    
     
     /* 构建用户触发器栈框，返回时就可以处理用户自定义函数 */
-    build_trigger_frame(trig, act, frame);
+    trigger_frame_build(frame, trig, act);
 
     /* 执行完信号后需要把触发器行为设置为默认的行为 */
     if (act->flags & TA_ONCSHOT) {
