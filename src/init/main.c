@@ -22,45 +22,25 @@
 int kernel_main(void)
 {
     printk(KERN_INFO "welcome to xbook kernel.\n");
-    
-    /* init memory cache for kernel */
     init_mem_caches();
     init_vmarea();
-    
-    /* init irq description */
     irq_description_init();
-    /* init softirq */
     init_softirq();
-    
-    /* init ipc */
     init_share_mem();
     init_msg_queue();
     init_sem();
     init_fifo();
-
     init_syscall();
     init_srvcall();
-    
     init_ktime();
-
     init_tasks();
-    
     init_clock();
-    
     init_timer_system();
-
-    /* enable interrupt */
     interrupt_enable();
-
     init_driver_arch();
-    
-    /* init fs */
     init_fs();
-
     init_gui();
     init_net();
-    //spin("test");
     start_user();
-
     return 0;    
 }
