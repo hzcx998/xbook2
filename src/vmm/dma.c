@@ -1,6 +1,6 @@
 #include <arch/page.h>
-#include <arch/ioremap.h>
-#include <xbook/vmarea.h>
+#include <arch/memio.h>
+#include <xbook/virmem.h>
 #include <xbook/dma.h>
 #include <math.h>
 
@@ -22,13 +22,13 @@ int alloc_dma_buffer(struct dma_region *d)
         if(d->p.address == 0)
 	    	return -1;
         
-        vaddr = alloc_vaddr(d->p.size);
+        vaddr = vir_addr_alloc(d->p.size);
         if (vaddr == 0) {
             page_free(d->p.address);
             return -1;
         }
         if (mem_remap(d->p.address, vaddr, d->p.size) < 0) {
-            free_vaddr(vaddr, d->p.size);
+            vir_addr_free(vaddr, d->p.size);
             page_free(d->p.address);
             return -1;
         }
@@ -51,7 +51,7 @@ int free_dma_buffer(struct dma_region *d)
             return -1;
         }
 
-        free_vaddr(d->v, d->p.size);
+        vir_addr_free(d->v, d->p.size);
         page_free(d->p.address);
     }
     d->p.address = d->v = 0;

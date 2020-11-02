@@ -1,6 +1,6 @@
 #include <xbook/debug.h>
 #include <arch/page.h>
-#include <arch/ioremap.h>
+#include <arch/memio.h>
 
 int mem_remap(unsigned long paddr, unsigned long vaddr, size_t size)
 {

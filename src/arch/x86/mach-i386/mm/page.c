@@ -350,10 +350,10 @@ static int do_page_no_write(unsigned long addr)
 	return 0;
 }
 
-static inline void do_vmarea_fault(unsigned long addr)
+static inline void do_vir_mem_fault(unsigned long addr)
 {
-    /* TODO: 如果是在vmarea区域中，就进行页复制，不是的话，就发出段信号。 */
-    panic("do_vmarea_fault: at %x not support now!\n", addr);
+    /* TODO: 如果是在vir_mem区域中，就进行页复制，不是的话，就发出段信号。 */
+    panic("do_vir_mem_fault: at %x not support now!\n", addr);
 }
 
 static void do_expand_stack(vmspace_t *space, unsigned long addr)
@@ -417,10 +417,10 @@ int page_do_fault(trap_frame_t *frame)
     /* 如果故障地址位于内核中， */
     if (addr >= USER_VMM_SIZE) {
         /* TODO: 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
-        printk(KERN_DEBUG "user pid=%d name=%s access unmaped vmarea area .\n", cur->pid, cur->name);
+        printk(KERN_DEBUG "user pid=%d name=%s access unmaped vir_mem area .\n", cur->pid, cur->name);
         trap_frame_dump(frame);
         print_task();
-        do_vmarea_fault(addr);
+        do_vir_mem_fault(addr);
         return -1;
     }
     /* 故障地址在用户空间 */

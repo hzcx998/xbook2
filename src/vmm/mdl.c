@@ -1,7 +1,7 @@
 #include <xbook/mdl.h>
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
-#include <xbook/vmarea.h>
+#include <xbook/virmem.h>
 #include <xbook/schedule.h>
 
 
@@ -48,7 +48,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
     printk(KERN_DEBUG "mdl_alloc: length=%d pages=%d\n", length, pages);
     
     /* 分配一个虚拟地址 */
-    unsigned long mapped_vaddr = alloc_vaddr(length);
+    unsigned long mapped_vaddr = vir_addr_alloc(length);
     if (!mapped_vaddr) {
         mem_free(mdl);
         interrupt_restore_state(flags);
@@ -100,7 +100,7 @@ void mdl_free(mdl_t *mdl)
     interrupt_save_state(flags);
     /* 取消共享内存映射 */
     page_unmap_addr_safe((unsigned long) mdl->mapped_vaddr, mdl->byte_count, 1);
-    free_vaddr((unsigned long) mdl->mapped_vaddr, mdl->byte_count);  /* 释放映射后的虚拟地址 */
+    vir_addr_free((unsigned long) mdl->mapped_vaddr, mdl->byte_count);  /* 释放映射后的虚拟地址 */
     interrupt_restore_state(flags);
 
     mem_free(mdl); /* 释放mdl结构 */

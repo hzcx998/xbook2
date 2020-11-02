@@ -771,7 +771,6 @@ static char *init_argv[2] = {INIT_SBIN_PATH, 0};
 void start_user()
 {
     printk(KERN_DEBUG "[task]: start user process.\n");
-
     /* 加载init进程 */
     task_t *proc = start_process(init_argv[0], init_argv);
     if (proc == NULL)

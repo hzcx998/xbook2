@@ -7,7 +7,7 @@
 #include <math.h>
 #include <string.h>
 
-static unsigned long total_pmem_size;
+static volatile unsigned long total_pmem_size;
 
 unsigned long mem_get_total_page_nr()
 {

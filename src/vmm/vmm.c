@@ -3,6 +3,7 @@
 #include <xbook/vmm.h>
 #include <xbook/debug.h>
 #include <xbook/vmspace.h>
+#include <string.h>
 
 void vmm_init(vmm_t *vmm)
 {
@@ -11,12 +12,14 @@ void vmm_init(vmm_t *vmm)
         panic(KERN_EMERG "task_init_vmm: mem_alloc for page_storege failed!\n");
     }
     vmm->vmspace_head = NULL;
-    /* 其它参数 */
-    
 }
 
 int sys_mstate(mstate_t *ms)
 {
+    if (!ms)
+        return -1;
+    memset(ms, 0, sizeof(mstate_t));
+
     ms->ms_total    = mem_get_total_page_nr() * PAGE_SIZE;
     ms->ms_free     = mem_get_free_page_nr() * PAGE_SIZE;
     ms->ms_used     = ms->ms_total - ms->ms_free;
@@ -57,14 +60,13 @@ int vmm_release_space(vmm_t *vmm)
 {
     if (vmm == NULL)
         return -1; 
-    /* 释放虚拟空间地址描述 */
     vmspace_t *space = (vmspace_t *)vmm->vmspace_head;
 
     vmspace_t *p;
     while (space != NULL) {
         p = space;
         space = space->next;
-        vmspace_free(p); /* 释放空间 */
+        vmspace_free(p);
     }
     vmm->vmspace_head = NULL;
 
@@ -139,11 +141,9 @@ int vmm_exit(vmm_t *vmm)
     if (vmm->vmspace_head == NULL)
         return -1;
 
-    /* 取消虚拟空间映射 */
     if (vmm_unmap_space(vmm)) {
         return -1;
     }
-    /* 释放虚拟空间描述 */
     if (vmm_release_space(vmm)) {
         return -1;
     }

@@ -115,6 +115,7 @@ int init_disk_mount()
             #endif
             continue;
         }
+        printk("[fsal] : mount device %s to path %s success.\n", name, ROOT_DIR_PATH);
         break;  // 成功挂载
     }
     if (i >= 4) {

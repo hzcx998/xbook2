@@ -16,7 +16,7 @@
 #include <arch/cpu.h>
 #include <sys/ioctl.h>
 #include <stddef.h>
-#include <xbook/vmarea.h>
+#include <xbook/virmem.h>
 
 #include <drivers/e1000_hw.h>
 #include <drivers/e1000_osdep.h>
@@ -224,7 +224,7 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
     // printk(KERN_DEBUG "mmio_start=%x\n", mmio_start);
     // printk(KERN_DEBUG "mmio_len=%x\n", mmio_len);
 
-    ext->hw.hw_addr = (uint8_t*)ioremap(mmio_start, mmio_len);
+    ext->hw.hw_addr = (uint8_t*)memio_remap(mmio_start, mmio_len);
 
     /* get io address */
     ext->io_addr = pci_device_get_io_addr(pci_device);
@@ -560,7 +560,7 @@ void e1000_free_tx_resources(e1000_extension_t* ext)
 {
     e1000_clean_tx_ring(ext);
     
-    vfree(ext->tx_ring.buffer_info);
+    vir_mem_free(ext->tx_ring.buffer_info);
     ext->tx_ring.buffer_info = NULL;
     
     mem_free(ext->tx_ring.desc);

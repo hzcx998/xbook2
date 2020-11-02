@@ -4,7 +4,7 @@
 
 #include <xbook/driver.h>
 #include <xbook/task.h>
-#include <xbook/vmarea.h>
+#include <xbook/virmem.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>
@@ -250,10 +250,10 @@ static iostatus_t vbe_enter(driver_object_t *driver)
 #if MAP_VRAM_TO_KERN == 1
     /* 将显存映射到内核 */
     int video_ram_size = extension->mode_info->bytesPerScanLine * extension->mode_info->yResolution;
-    extension->vir_base_addr = ioremap(extension->mode_info->phyBasePtr, video_ram_size);
+    extension->vir_base_addr = memio_remap(extension->mode_info->phyBasePtr, video_ram_size);
     if (extension->vir_base_addr == NULL) {
         status = IO_FAILED;
-        printk(KERN_ERR "%s: %s: ioremap for vbe ram failed!\n", 
+        printk(KERN_ERR "%s: %s: memio_remap for vbe ram failed!\n", 
             DRV_NAME, __func__);
         return status;
     }

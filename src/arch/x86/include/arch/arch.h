@@ -12,7 +12,7 @@
 #include <arch/page.h>
 #include <arch/phymem.h>
 #include <arch/time.h>
-#include <arch/ioremap.h>
+#include <arch/memio.h>
 #include <arch/task.h>
 
 #endif  /* _X86_ARCH_H */

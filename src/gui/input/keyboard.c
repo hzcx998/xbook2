@@ -3,7 +3,6 @@
 #include <xbook/driver.h>
 #include <sys/ioctl.h>
 #include <xbook/memalloc.h>
-#include <xbook/vmarea.h>
 
 /// 程序本地头文件
 #include <gui/keyboard.h>

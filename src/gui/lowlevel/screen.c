@@ -3,7 +3,7 @@
 #include <xbook/driver.h>
 #include <sys/ioctl.h>
 #include <xbook/memalloc.h>
-#include <xbook/vmarea.h>
+#include <xbook/virmem.h>
 
 /// 程序本地头文件
 #include <gui/screen.h>
@@ -49,7 +49,7 @@ static int screen_open(void)
 
 static int screen_close(void)
 {
-    iounmap(video_ram_start);
+    memio_unmap(video_ram_start);
     device_close(video_handle);
     video_ram_start = NULL;
     video_handle = -1;

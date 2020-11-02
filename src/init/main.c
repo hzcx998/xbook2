@@ -2,7 +2,7 @@
 #include <xbook/debug.h>
 #include <xbook/softirq.h>
 #include <xbook/clock.h>
-#include <xbook/vmarea.h>
+#include <xbook/virmem.h>
 #include <xbook/task.h>
 #include <xbook/rawblock.h>
 #include <xbook/schedule.h>
@@ -23,7 +23,7 @@ int kernel_main(void)
 {
     printk(KERN_INFO "welcome to xbook kernel.\n");
     mem_caches_init();
-    init_vmarea();
+    vir_mem_init();
     irq_description_init();
     init_softirq();
     init_share_mem();
@@ -41,6 +41,7 @@ int kernel_main(void)
     init_fs();
     init_gui();
     init_net();
+    
     start_user();
     return 0;    
 }

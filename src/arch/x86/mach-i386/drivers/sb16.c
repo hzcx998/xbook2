@@ -4,7 +4,6 @@
 
 #include <xbook/driver.h>
 #include <xbook/task.h>
-#include <xbook/vmarea.h>
 #include <xbook/clock.h>
 #include <xbook/dma.h>
 #include <xbook/schedule.h>

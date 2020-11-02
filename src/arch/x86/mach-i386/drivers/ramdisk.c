@@ -4,7 +4,7 @@
 
 #include <xbook/driver.h>
 #include <xbook/task.h>
-#include <xbook/vmarea.h>
+#include <xbook/virmem.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>
@@ -140,7 +140,7 @@ static iostatus_t ramdisk_enter(driver_object_t *driver)
     extension->device_object = devobj;
     extension->sectors = RAMDISK_SECTORS;
     extension->buflen = extension->sectors * SECTOR_SIZE;
-    extension->buffer = vmalloc(extension->buflen);
+    extension->buffer = vir_mem_alloc(extension->buflen);
     if (extension->buffer == NULL) {
         status = IO_FAILED;
     }
