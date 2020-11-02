@@ -81,6 +81,9 @@ static int __mount(char *source, char *target, char *fstype, unsigned long flags
         if (flags & MT_REMKFS) {
             remkfs = 1;
         }
+    } else {
+        pr_dbg("[%s] %s: no fs on the disk %s.\n", FS_MODEL_NAME, __func__, source);
+        return -1;
     }
     
     const TCHAR *p;

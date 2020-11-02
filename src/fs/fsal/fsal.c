@@ -115,6 +115,7 @@ int init_disk_mount()
             #endif
             continue;
         }
+        printk("[fsal] : mount device %s success!\n", name);
         break;  // 成功挂载
     }
     if (i >= 4) {

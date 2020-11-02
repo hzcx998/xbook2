@@ -85,6 +85,7 @@ recycle
 
 # system app
 system/init/init
+system/init/initg
 system/desktop/desktop
 system/sh/sh
 
