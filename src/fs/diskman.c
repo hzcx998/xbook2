@@ -1,7 +1,7 @@
 #include <xbook/list.h>
 #include <xbook/diskman.h>
 #include <xbook/resource.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -35,7 +35,7 @@ int disk_probe_device(device_type_t type)
             break;
         /* 添加到磁盘数组 */
         /* 创建一个设备信息 */
-        disk = kmalloc(sizeof(disk_info_t));
+        disk = mem_alloc(sizeof(disk_info_t));
         if (disk == NULL)
             return -1;
         /* 填信息并添加到链表 */

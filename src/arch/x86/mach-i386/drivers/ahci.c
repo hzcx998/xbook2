@@ -12,7 +12,7 @@
 #include <arch/cpu.h>
 #include <arch/ioremap.h>
 #include <arch/memory.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <arch/pci.h>
 #include <xbook/mutexlock.h>
 #include <xbook/bitops.h>
@@ -887,7 +887,7 @@ int ahci_probe_ports(driver_object_t *driver, struct hba_memory *abar)
 				printk(KERN_DEBUG "[ahci]: detected SATA device on port %d\n", i);
                 #endif
                 /* 创建设备扩展 */
-				ports[i] = kmalloc(sizeof(device_extension_t));
+				ports[i] = mem_alloc(sizeof(device_extension_t));
 				ports[i]->type = type;
 				ports[i]->idx = i;
                 mutexlock_init(&(ports[i]->lock));
@@ -1170,7 +1170,7 @@ static iostatus_t ahci_exit(driver_object_t *driver)
         for(j = 0; j < HBA_COMMAND_HEADER_NUM; j++)
             free_dma_buffer(&(ext->ch_dmas[j]));
 
-        kfree(ext);
+        mem_free(ext);
         io_delete_device(devobj);   /* 删除每一个设备 */
     }
     

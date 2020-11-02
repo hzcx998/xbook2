@@ -1,5 +1,5 @@
 #include <arch/interrupt.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <stddef.h>
 #include <types.h>
 
@@ -70,7 +70,7 @@ int irq_register(unsigned long irq,
     irq_desc->flags = flags;
 
     /* 创建一个中断行为 */
-    irq_action_t *action = kmalloc(sizeof(irq_action_t));
+    irq_action_t *action = mem_alloc(sizeof(irq_action_t));
     if (!action)
         return -1;
     /* 为行为结构体赋值 */
@@ -155,7 +155,7 @@ int irq_unregister(unsigned long irq, void *data)
                 }
                 
                 /* 释放action */
-                kfree(p);
+                mem_free(p);
                 
                 /* 释放完毕，退出 */
                 break;
@@ -165,7 +165,7 @@ int irq_unregister(unsigned long irq, void *data)
         
     } else {
         /* 释放action */
-        kfree(irq_desc->action);
+        mem_free(irq_desc->action);
         /* 设置为空 */
         irq_desc->action = NULL;
     }

@@ -2,7 +2,7 @@
 #include <fsal/fatfs.h>
 #include <string.h>
 #include <unistd.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <xbook/debug.h>
 
 /* 路径转换表 */
@@ -20,7 +20,7 @@ fsal_path_t *fsal_master_path;
  */
 int init_fsal_path_table()
 {
-    fsal_path_table = kmalloc(FSAL_PATH_TABLE_SIZE);
+    fsal_path_table = mem_alloc(FSAL_PATH_TABLE_SIZE);
     if (fsal_path_table == NULL) 
         return -1;
     memset(fsal_path_table, 0, FSAL_PATH_TABLE_SIZE);

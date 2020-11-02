@@ -129,7 +129,7 @@ void task_free(task_t *task)
 {
     /* remove from global list */
     list_del(&task->global_list);
-    kfree(task);
+    mem_free(task);
 }
 
 /**
@@ -187,7 +187,7 @@ task_t *find_task_by_pid(pid_t pid)
 task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg)
 {
     // 创建一个新的线程结构体
-    task_t *task = (task_t *) kmalloc(TASK_KSTACK_SIZE);
+    task_t *task = (task_t *) mem_alloc(TASK_KSTACK_SIZE);
     
     if (!task)
         return NULL;
@@ -197,7 +197,7 @@ task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg)
     
     /* 创建文件描述表 */
     if (fs_fd_init(task) < 0) {
-        kfree(task);
+        mem_free(task);
         return NULL;
     }
 

@@ -10,7 +10,7 @@
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
 
@@ -1098,9 +1098,9 @@ static int ide_clean_disk(device_extension_t *ext, sector_t count)
 	sector_t todo, done = 0;
 
 	/* 每次写入10个扇区 */
-	char *buffer = kmalloc(SECTOR_SIZE *10);
+	char *buffer = mem_alloc(SECTOR_SIZE *10);
 	if (!buffer) {
-		printk("kmalloc for ide buf failed!\n");
+		printk("mem_alloc for ide buf failed!\n");
 		return -1;
 	}
 
@@ -1258,9 +1258,9 @@ static int ide_probe(device_extension_t *ext, int id)
     ext->drive = diskno;
     ext->type = IDE_ATA;
 
-    ext->info = kmalloc(SECTOR_SIZE);
+    ext->info = mem_alloc(SECTOR_SIZE);
     if (ext->info == NULL) {
-        printk(KERN_ERR "kmalloc for ide device %d info failed!\n", id);
+        printk(KERN_ERR "mem_alloc for ide device %d info failed!\n", id);
         irq_unregister(channel->irqno, (void *)channel);
         
         return -1;
@@ -1288,7 +1288,7 @@ static int ide_probe(device_extension_t *ext, int id)
     if (err) {
         ide_print_error(ext, err);
         irq_unregister(channel->irqno, (void *)channel);
-        kfree(ext->info);
+        mem_free(ext->info);
         return -1;
     }
     
@@ -1381,7 +1381,7 @@ static iostatus_t ide_exit(driver_object_t *driver)
         ext = devobj->device_extension;
         /* 释放分配的信息缓冲区 */
         if (ext->info) {
-            kfree(ext->info);
+            mem_free(ext->info);
         }
         if (ext->drive == 0) {  /* 通道上第一个磁盘的时候才注销中断 */
             /* 注销中断 */

@@ -24,7 +24,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
         return NULL;
 
     /* 分配mdl空间 */
-    mdl_t *mdl = kmalloc(sizeof(mdl_t));
+    mdl_t *mdl = mem_alloc(sizeof(mdl_t));
     if (mdl == NULL) {
         return NULL;
     }
@@ -50,7 +50,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
     /* 分配一个虚拟地址 */
     unsigned long mapped_vaddr = alloc_vaddr(length);
     if (!mapped_vaddr) {
-        kfree(mdl);
+        mem_free(mdl);
         interrupt_restore_state(flags);
         return NULL;
     }
@@ -103,6 +103,6 @@ void mdl_free(mdl_t *mdl)
     free_vaddr((unsigned long) mdl->mapped_vaddr, mdl->byte_count);  /* 释放映射后的虚拟地址 */
     interrupt_restore_state(flags);
 
-    kfree(mdl); /* 释放mdl结构 */
+    mem_free(mdl); /* 释放mdl结构 */
 }
 

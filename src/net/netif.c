@@ -85,12 +85,12 @@ int sys_send(int sockfd, const void *buf, int len, int flags)
         return -1;
 
     /* 使用内核缓冲区代替用户缓冲区，发送时涉及到任务切换 */
-    void *tmpbuf = kmalloc(len);
+    void *tmpbuf = mem_alloc(len);
     if (tmpbuf == NULL)
         return -1;
     memcpy(tmpbuf, buf, len);
     int retval = lwip_send(ffd->handle, tmpbuf, len, flags);
-    kfree(tmpbuf);
+    mem_free(tmpbuf);
     return retval;
 }
 int sys_recv(int sockfd, void *buf, int len, unsigned int flags)
@@ -124,13 +124,13 @@ int sys_sendto(int sockfd, struct _sockarg *arg)
         return -1;
 
     /* 使用内核缓冲区代替用户缓冲区，发送时涉及到任务切换 */
-    void *tmpbuf = kmalloc(arg->len);
+    void *tmpbuf = mem_alloc(arg->len);
     if (tmpbuf == NULL)
         return -1;
     memcpy(tmpbuf, arg->buf, arg->len);
     int retval = lwip_sendto(ffd->handle, tmpbuf, arg->len, 
         arg->flags, arg->to_from, arg->tolen);
-    kfree(tmpbuf);
+    mem_free(tmpbuf);
     return retval;
 }
 

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 
 /// 程序本地头文件
 #include <gui/console.h>
@@ -329,7 +329,7 @@ int gui_init_console()
     printk("[gui]: alloc console screen buffer rows %d columns %d frames %d size %x!\n", 
         gui_con_screen.rows ,gui_con_screen.columns, CON_FRAME_NR,gui_con_screen.buflen);
     
-    gui_con_screen.buffer = kmalloc(gui_con_screen.buflen);
+    gui_con_screen.buffer = mem_alloc(gui_con_screen.buflen);
     if (gui_con_screen.buffer == NULL)
         return -1;
     memset(gui_con_screen.buffer, 0, gui_con_screen.buflen);

@@ -114,7 +114,7 @@
 #include <xbook/spinlock.h>
 #include <math.h>
 #include <xbook/waitqueue.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <arch/pci.h>
@@ -1514,18 +1514,18 @@ static iostatus_t rtl8139_open(device_object_t *device, io_request_t *ioreq)
     device_extension_t *ext = device->device_extension;
     
      /* 分配传输缓冲区 */
-    ext->tx_buffers = (unsigned char *) kmalloc(TX_BUF_TOT_LEN);
+    ext->tx_buffers = (unsigned char *) mem_alloc(TX_BUF_TOT_LEN);
     if (ext->tx_buffers == NULL) {
-        printk(KERN_DEBUG "kmalloc for rtl8139 tx buffer failed!\n");
+        printk(KERN_DEBUG "mem_alloc for rtl8139 tx buffer failed!\n");
         
         return -1;
     }
 
     /* 分配接收缓冲区 */
-    ext->rx_ring = (unsigned char *) kmalloc(RX_BUF_TOT_LEN);
+    ext->rx_ring = (unsigned char *) mem_alloc(RX_BUF_TOT_LEN);
     if (ext->rx_ring == NULL) {
-        printk(KERN_DEBUG "kmalloc for rtl8139 rx buffer failed!\n");
-        kfree(ext->tx_buffers);
+        printk(KERN_DEBUG "mem_alloc for rtl8139 rx buffer failed!\n");
+        mem_free(ext->tx_buffers);
         return -1;
     }
 
@@ -1580,8 +1580,8 @@ static iostatus_t rtl8139_close(device_object_t *device, io_request_t *ioreq)
     rtl8139_tx_clear(ext);
 
     /* 释放缓冲区 */
-    kfree(ext->rx_ring);
-    kfree(ext->tx_buffers);
+    mem_free(ext->rx_ring);
+    mem_free(ext->tx_buffers);
 
     ext->rx_ring = NULL;
     ext->tx_buffers = NULL;

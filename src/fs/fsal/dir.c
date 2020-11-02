@@ -1,7 +1,7 @@
 #include <fsal/dir.h>
 #include <string.h>
 #include <assert.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 
 /* 目录表指针 */
 fsal_dir_t *fsal_dir_table;
@@ -13,7 +13,7 @@ fsal_dir_t *fsal_dir_table;
  */
 int init_fsal_dir_table()
 {
-    fsal_dir_table = kmalloc(FSAL_DIR_OPEN_NR * sizeof(fsal_dir_t));
+    fsal_dir_table = mem_alloc(FSAL_DIR_OPEN_NR * sizeof(fsal_dir_t));
     if (fsal_dir_table == NULL) 
         return -1;
     memset(fsal_dir_table, 0, FSAL_DIR_OPEN_NR * sizeof(fsal_dir_t));

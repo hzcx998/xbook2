@@ -445,7 +445,7 @@ static iostatus_t mouse_enter(driver_object_t *driver)
 
     devext->button_record = 0;
 #if USE_THREAD == 1
-    unsigned char *buf = kmalloc(DEV_FIFO_BUF_LEN);
+    unsigned char *buf = mem_alloc(DEV_FIFO_BUF_LEN);
     if (buf == NULL) {
         status = IO_FAILED;
         printk(KERN_DEBUG "%s: alloc buf failed!\n", __func__);

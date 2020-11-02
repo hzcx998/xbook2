@@ -321,7 +321,7 @@ int sys_waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long
  */
 void init_waitque()
 {
-    waitque_table = kmalloc(WAITQUE_NR * sizeof(waitque_t));
+    waitque_table = mem_alloc(WAITQUE_NR * sizeof(waitque_t));
     if (waitque_table == NULL)
         panic("%s: alloc memory for waitque table failed!\n", __func__);
     int i;

@@ -117,7 +117,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 #endif
     /* 由于需要重载镜像数据，而传递的参数是在用户数据中，因此需要先保存
     参数，然后再重载镜像 */
-    char *tmp_arg = kmalloc(PAGE_SIZE);
+    char *tmp_arg = mem_alloc(PAGE_SIZE);
     if (tmp_arg == NULL) {
         printk(KERN_ERR "sys_exec_file: it is not a elf format file!\n", name);
         goto free_tmp_fd;
@@ -157,7 +157,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         /* !!!需要取消已经加载镜像虚拟地址映射 */
         goto free_loaded_image;
     }
-    kfree(tmp_arg); /* 不需要了，释放掉 */
+    mem_free(tmp_arg); /* 不需要了，释放掉 */
     sys_close(fd);  /* 正常关闭文件 */
 
     /* 初始化用户堆 */
@@ -202,7 +202,7 @@ free_loaded_image:
     /* 释放已经加载的镜像，不过由于已经替换了新的镜像，回不去了，就直接exit吧。 */
     sys_exit(-1);
 free_tmp_arg:
-    kfree(tmp_arg);
+    mem_free(tmp_arg);
 free_tmp_fd:
     sys_close(fd);
     return -1;   

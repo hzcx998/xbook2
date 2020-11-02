@@ -27,8 +27,8 @@ typedef struct timer_struct {
 #define DEFINE_TIMER(timer_name, timeout, arg, callback) \
     timer_t timer_name = TIMER_INIT(timer_name, timeout, arg, callback); \
 
-#define timer_alloc()       kmalloc(sizeof(timer_t))
-#define timer_free(timer)   kfree(timer)
+#define timer_alloc()       mem_alloc(sizeof(timer_t))
+#define timer_free(timer)   mem_free(timer)
 
 void timer_init(
     timer_t *timer,

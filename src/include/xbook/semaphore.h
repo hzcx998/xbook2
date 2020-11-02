@@ -4,7 +4,7 @@
 #include <arch/atomic.h>
 #include <xbook/waitqueue.h>
 #include <xbook/schedule.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <xbook/clock.h>
 
 typedef struct semaphor {

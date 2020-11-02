@@ -273,7 +273,7 @@ static iostatus_t tty_enter(driver_object_t *driver)
     device_object_t *devobj;
     device_extension_t *extension;
     device_public_t *public;    /* 公有数据 */
-    public = kmalloc(sizeof(device_public_t));
+    public = mem_alloc(sizeof(device_public_t));
     if (public == NULL) {
         return IO_FAILED;
     }
@@ -282,7 +282,7 @@ static iostatus_t tty_enter(driver_object_t *driver)
     handle_t kbd = device_open(KBD_DEVICE_NAME, 0);
     if (kbd < 0) {
         printk(KERN_DEBUG "tty_enter: open keyboard device failed!\n");
-        kfree(public);
+        mem_free(public);
         return IO_FAILED;
     }
 
@@ -298,7 +298,7 @@ static iostatus_t tty_enter(driver_object_t *driver)
         if (status != IO_SUCCESS) {
             printk(KERN_ERR "tty_enter: create device failed!\n");
             device_close(kbd);
-            kfree(public);
+            mem_free(public);
             return status;
         }
         /* neither io mode */

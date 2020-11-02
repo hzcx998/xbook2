@@ -83,7 +83,7 @@ static void *__vmalloc(size_t size)
 	vmarea_t *area;
 
 	/* 创建一个虚拟区域 */
-	area = kmalloc(sizeof(vmarea_t));
+	area = mem_alloc(sizeof(vmarea_t));
 	if (area == NULL) {
 		free_vaddr(start, size);
 		return NULL;
@@ -99,7 +99,7 @@ static void *__vmalloc(size_t size)
 
 	if (page_map_addr(start, size, PROT_KERN | PROT_WRITE)) {
 		free_vaddr(start, size);
-		kfree(area);
+		mem_free(area);
 		interrupt_restore_state(flags);
 		return NULL;
 	}
@@ -275,7 +275,7 @@ void *ioremap(unsigned long paddr, size_t size)
 	vmarea_t *area;
 
 	/* 创建一个虚拟区域 */
-	area = kmalloc(sizeof(vmarea_t));
+	area = mem_alloc(sizeof(vmarea_t));
 	if (area == NULL) {
 		free_vaddr(vaddr, size);
 		return NULL;
@@ -293,7 +293,7 @@ void *ioremap(unsigned long paddr, size_t size)
     if (mem_remap(paddr, vaddr, size)) {
         /* 释放分配的资源 */
         list_del(&area->list);
-        kfree(area);
+        mem_free(area);
         free_vaddr(vaddr, size);
         /* 指向0，表示空 */
         vaddr = 0;
@@ -340,7 +340,7 @@ int iounmap(void *vaddr)
 
             free_vaddr(addr, target->size);
 
-            kfree(target);
+            mem_free(target);
 
             interrupt_restore_state(flags);
             return 0;
@@ -361,7 +361,7 @@ void init_vmarea()
 	vaddr_bitmap.byte_length = DYNAMIC_MAP_MEM_SIZE / (PAGE_SIZE * 8);
 	
 	/* 为位图分配空间 */
-	vaddr_bitmap.bits = kmalloc(vaddr_bitmap.byte_length);
+	vaddr_bitmap.bits = mem_alloc(vaddr_bitmap.byte_length);
 
 	bitmap_init(&vaddr_bitmap);
 

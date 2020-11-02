@@ -31,7 +31,7 @@ int init_fs()
         printk("open fd failed!\n");
         return -1;
     }
-    uint32_t *buf = kmalloc(1024 * 50);
+    uint32_t *buf = mem_alloc(1024 * 50);
     size_t need = 32 * KB;
     sys_lseek(fd, 0, SEEK_SET);
     int rd = sys_read(fd, buf, need);

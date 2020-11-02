@@ -1,7 +1,7 @@
 #include <xbook/netcard.h>
 #include <xbook/driver.h>
 #include <xbook/debug.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <string.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
@@ -42,7 +42,7 @@ int netcard_probe_device(device_type_t type)
 #endif    
         /* 添加到磁盘数组 */
         /* 创建一个设备信息 */
-        netcard = kmalloc(sizeof(netcard_info_t));
+        netcard = mem_alloc(sizeof(netcard_info_t));
         if (netcard == NULL)
             return -1;
         /* 填信息并添加到链表 */

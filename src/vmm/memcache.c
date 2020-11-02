@@ -16,9 +16,6 @@
 #include <string.h>
 #include <xbook/bitmap.h>
 
-/*
- * cache_size - cache大小的描述
- */
 static cache_size_t cache_size[] = {
 	#if PAGE_SIZE == 4096
 	{32, NULL},
@@ -26,7 +23,6 @@ static cache_size_t cache_size[] = {
 	{64, NULL},
 	{128, NULL},
 	{256, NULL},
-	/* 小于1KB的，就在单个页中进行分割 */
 	{512, NULL},
 	{1024, NULL},
 	{2048, NULL},
@@ -35,7 +31,6 @@ static cache_size_t cache_size[] = {
 	{16*1024, NULL},
 	{32*1024, NULL},
 	{64*1024, NULL},
-	/* 通常情况下最大支持128KB的内存分配，需要在1MB内完成对象分割 */
 	{128*1024, NULL},	
 	/* 配置大内存的分配 */
 	#ifdef CONFIG_LARGE_ALLOCS
@@ -45,12 +40,9 @@ static cache_size_t cache_size[] = {
 	{2*1024*1024, NULL},
 	{4*1024*1024, NULL},
 	#endif
-	{0, NULL},		// 用于索引判断结束
+	{0, NULL},
 };
 
-/*
- * 通过页的大小来选择cache数量
- */
 #if PAGE_SIZE == 4096
 	#ifdef CONFIG_LARGE_ALLOCS 
 		#define MAX_MEM_CACHE_NR 18
@@ -65,13 +57,10 @@ static cache_size_t cache_size[] = {
 	#endif
 #endif
 
-/* 最开始的groupcache */
-mem_cache_t mem_cache_table[MAX_MEM_CACHE_NR];
-
-/* 大内存对象链表 */
+mem_cache_t mem_caches[MAX_MEM_CACHE_NR];
 LIST_HEAD(large_mem_object_list);
 
-void dump_mem_cache(mem_cache_t *cache)
+void mem_cache_dump(mem_cache_t *cache)
 {
 	printk("----Mem Cache----\n");
 	printk("object size %d count %d\n", cache->object_size, cache->object_count);
@@ -79,7 +68,7 @@ void dump_mem_cache(mem_cache_t *cache)
 	printk("full %x partial %x free %x\n", cache->full_groups, cache->partial_groups, cache->free_groups);
 }
 
-void dump_mem_group(mem_group_t *group)
+void mem_group_dump(mem_group_t *group)
 {
 	printk("----Mem Group----\n");
 	printk("map bits %x len %d\n", group->map.bits, group->map.byte_length);
@@ -87,55 +76,39 @@ void dump_mem_group(mem_group_t *group)
 	printk("using %d free %x\n", group->using_count, group->free_count);
 }
 
-
 int mem_cache_init(mem_cache_t *cache, char *name, size_t size, flags_t flags)
 {
 	if (!size)
 		return -1;
-	// 初始化链表
 	INIT_LIST_HEAD(&cache->full_groups);
 	INIT_LIST_HEAD(&cache->partial_groups);
 	INIT_LIST_HEAD(&cache->free_groups);
 
-	/* 根据size来选择不同的储存方式，以节约内存 */
-	if (size < 1024) { // 如果是小于1024，那么就放到单个页中。
-		/* 地址和8字节对齐，因为在结构体后面存放位图，位图是8字节为单位的 */
+	if (size < 1024) {
 		unsigned int group_size = ALIGN_WITH(SIZEOF_MEM_GROUP, 8);
-
-		/* 如果是32字节为准，那么，就位图就只需要16字节即可 */
 		unsigned int left_size = PAGE_SIZE - group_size - 16;
-
-		// 对象数量
 		cache->object_count = left_size / size;;
-	} else if (size <= 128 * 1024) {  // 如果是小于128kb，就放到1MB以内
+	} else if (size <= 128 * 1024) {
 		cache->object_count = (1 * MB) / size;
-	} else if (size <= 4 * 1024 * 1024) { // 如果是小于4MB，就放到4MB以内
+	} else if (size <= 4 * 1024 * 1024) {
 		cache->object_count = (4 * MB) / size;
 	} else {
         /* 超过最大范围，则每一个缓存4个对象 */
         cache->object_count = 4;
     }
 
-	// 对象的大小
 	cache->object_size = size;
-
-	// 设定cache的标志
 	cache->flags = flags;
-	
-	// 设置名字
 	memset(cache->name, 0, MEM_CACHE_NAME_LEN);
 	strcpy(cache->name, name);
-
-	//dump_mem_cache(cache);
 	return 0;
 }
 
-static void *mem_cache_page_alloc_normal(unsigned long count)
+static void *mem_cache_page_alloc(unsigned long count)
 {
 	unsigned long page = page_alloc_normal(count);
 	if (!page)
 		return NULL;
-	
 	return kern_phy_addr2vir_addr(page);
 }
 
@@ -143,12 +116,9 @@ static int mem_cache_page_free(void *address)
 {
 	if (address == NULL)
 		return -1;
-
 	unsigned int page = kern_vir_addr2phy_addr(address);
-	
 	if (!page)
 		return -1;
-	
 	page_free(page);
 	return 0;
 }
@@ -156,35 +126,22 @@ static int mem_cache_page_free(void *address)
 static int mem_group_init(
     mem_cache_t *cache,
 	mem_group_t *group,
-	flags_t flags
-) {
-
-	// 把group添加到free链表
+	flags_t flags)
+{
 	list_add(&group->list, &cache->free_groups);
-
-	// 位图位于group结构后面
 	unsigned char *map = (unsigned char *)(group + 1);
-
-	// 设定位图
 	group->map.byte_length = DIV_ROUND_UP(cache->object_count, 8);
 	group->map.bits = (unsigned char *)map;	
-
 	bitmap_init(&group->map);
-
 	mem_node_t *node; 
-
-	/* 根据缓冲中记录的对象大小进行不同的设定 */
 	if (cache->object_size < 1024) {
 		group->objects = map + 16;
-
-		/* 转换成节点，并标记 */
 		node = phy_addr_to_mem_node(kern_vir_addr2phy_addr(group));
 		CHECK_MEM_NODE(node);
 		MEM_NODE_MARK_CHACHE_GROUP(node, cache, group);
 	} else {
 		unsigned int pages = DIV_ROUND_UP(cache->object_count * cache->object_size, PAGE_SIZE); 
-
-		group->objects = mem_cache_page_alloc_normal(pages);
+		group->objects = mem_cache_page_alloc(pages);
 		if (group->objects == NULL) {
 			printk(KERN_ERR "alloc page for mem objects failed\n");
 			return -1;
@@ -200,404 +157,196 @@ static int mem_group_init(
 	group->using_count = 0;
 	group->free_count = cache->object_count;
 	group->flags =  flags;
-
-    
-	//dump_mem_group(group);
 	return 0;
 }
-/*
- * groupCreate - 创建一个新的group
- * @cache: group所在的cache
- * @flags:创建的标志
- * 
- * 如果成功返回，失败返回-1
- */
-static int create_mem_group(mem_cache_t *cache, flags_t flags)
+
+static int mem_group_create(mem_cache_t *cache, flags_t flags)
 {
 	mem_group_t *group;
     unsigned irqflags;
     interrupt_save_state(irqflags);
-    // printk("cache %s need a new group %x!\n", cache->name, cache->object_size);
-
-	/* 为内存组分配一个页 */
-	group = mem_cache_page_alloc_normal(1);
+	group = mem_cache_page_alloc(1);
 	if (group == NULL) {
 		printk(KERN_ERR "alloc page for mem group failed!\n");
         interrupt_restore_state(irqflags);
 		return -1;
 	}
-    // printk("cache %s alloc group ok %x!\n", cache->name, group);
-
 	if (mem_group_init(cache, group, flags)) {
 		printk(KERN_ERR "init mem group failed!\n");
 		goto free_group;
 	}
 
     interrupt_restore_state(irqflags);
-	// 创建成功
 	return 0;
-
 free_group:
-	// 释放对象组的页
 	mem_cache_page_free(group);
     interrupt_restore_state(irqflags);
 	return -1;
 }
 
-
-static int make_mem_caches()
+static int mem_caches_build()
 {
-	// 指向cache大小的指针
 	cache_size_t *cachesz = cache_size;
-
-	// mem_cache_table
-	mem_cache_t *mem_cache = &mem_cache_table[0];
-
-	//printk("mem_cache_table addr %x size %d\n", mem_cache, sizeof(mem_cache_t));
-
-	// 如果没有遇到大小为0的cache，就会把cache初始化
+	mem_cache_t *mem_cache = &mem_caches[0];
 	while (cachesz->cache_size) {
-		/* 初始化缓存信息 */
 		if (mem_cache_init(mem_cache, "mem cache", cachesz->cache_size, 0)) {
 			printk("create mem cache failed!\n");
 			return -1;
 		}
-		
-		// 设定cachePtr
 		cachesz->mem_cache = mem_cache;
-
-		// 指向下一个mem cache
 		mem_cache++;
-
-		// 指向下一个cache size
 		cachesz++;
 	}
-
 	return 0;
 }
 
-/*
- * __mem_cache_alloc_object - 在group中分配一个对象
- * @cache: 对象所在的cache
- * @group: 对象所在的group
- * 
- * 在当前cache中分配一个对象
- */
-static void *__mem_cache_alloc_object(mem_cache_t *cache, mem_group_t *group)
+static void *mem_cache_do_alloc(mem_cache_t *cache, mem_group_t *group)
 {
 	void *object;
-
-	// 做一些标志的设定
-
-	
-	// 从位图中获取一个空闲的对象
 	int idx = bitmap_scan(&group->map, 1);
-	
-	// 分配失败
 	if (idx == -1) {
-		/* 没有可用对象了 */
 		printk(KERN_EMERG "bitmap scan failed!\n");
-		
 		return NULL;
 	}
-		
-	// 设定为已经使用
 	bitmap_set(&group->map, idx, 1);
-
-	// 获取object的位置
 	object = group->objects + idx * cache->object_size;
-	
-	// 改变group的使用情况
 	group->using_count++;
 	group->free_count--;
-	
-	// 判断group是否已经使用完了
 	if (group->free_count == 0) {
-		// 从partial的这链表删除
 		list_del(&group->list);
-		// 添加到full中去
 		list_add_tail(&group->list, &cache->full_groups);
 	}
-
 	return object;
 }
 
-/*
- * mem_cache_alloc_object - 在group中分配一个对象
- * @cache: 对象所在的cache
- * @flags: 分配需要的标志
- * 
- * 在当前cache中分配一个对象
- */
 void *mem_cache_alloc_object(mem_cache_t *cache)
 {
 	void *object;
 	mem_group_t *group;
-
-	// 存在空闲的就分配并且返回
 	list_t *partialList, *node;
-
-	// 检测分配环境
-
 	unsigned long flags;
-
 retry_alloc_object:
-	// 要关闭中断，并保存寄存器环境
     interrupt_save_state(flags);
-
 	partialList = &cache->partial_groups;
-
-	// 指向partial中的第一个group
 	node = partialList->next;
-
-	//printk("cache size %x\n", cache->object_size);
-
-	// 如果partial是空的
 	if (list_empty(partialList)) {
-		//printk("partialList empty\n");
-
 		list_t *freeList;
 		freeList = &cache->free_groups;
-		// 如果free是空的
 		if (list_empty(freeList)) {
-			//printk("free empty\n");
-
-			// 需要创建一个新的group
 			goto new_group;
 		}
-		// 指向第一个组
 		node = freeList->next;
-
-		// 把node从free list中删除
 		list_del(node);
-
-		// 把node添加到partial中去
 		list_add_tail(node, partialList);
-
 	}
-
-	//printk("kmalloc: found a node.\n");
-	/* 现在node是partial中的一个节点 */
 	group = list_owner(node, mem_group_t, list);
-	//printk("group %x cache size %x\n", group, cache->object_size);
-	object = __mem_cache_alloc_object(cache, group);
-
-	// 要恢复中断状态
+	object = mem_cache_do_alloc(cache, group);
     interrupt_restore_state(flags);
 	return object;
 new_group:
-	// 没有group，添加一个新的group
-
-	// 恢复中断状况
-	// 要恢复中断状态
 	interrupt_restore_state(flags);
-	
-	//printk("kmalloc: need a new group.\n");
-	// 添加新的group
-	if (create_mem_group(cache, 0))
-		return NULL;	// 如果创建一个group失败就返回
-
+	if (mem_group_create(cache, 0))
+		return NULL;
 	goto retry_alloc_object;
 	return NULL;
 }
 
-/*
- * kmalloc - 分配一个对象
- * @size: 对象的大小
- * @flags: 分配需要的flags
- * 
- * 分配一个size大小的内存
- */
-void *kmalloc(size_t size)
+void *mem_alloc(size_t size)
 {
-	// 如果越界了就返回空
 	if (size > MAX_MEM_CACHE_SIZE) {
-		// printk(KERN_NOTICE "kmalloc size %d too big!", size);
-        
         if (size > MAX_MEM_OBJECT_SIZE)
             return NULL;
         /* 使用首适配分配法 */
-        large_mem_object_t *obj = kmalloc(sizeof(large_mem_object_t));
+        large_mem_object_t *obj = mem_alloc(sizeof(large_mem_object_t));
         if (obj == NULL)
             return NULL;
         obj->size = size;
-        obj->addr = mem_cache_page_alloc_normal(DIV_ROUND_UP(size, PAGE_SIZE));
+        obj->addr = mem_cache_page_alloc(DIV_ROUND_UP(size, PAGE_SIZE));
         if (obj->addr == NULL) {
-            kfree(obj);
+            mem_free(obj);
             return NULL;
         }
         list_add(&obj->list, &large_mem_object_list);
         printk(KERN_DEBUG "[memcache]: alloc large mem object %x\n", obj->addr);
 		return obj->addr;
 	}
-	
 	cache_size_t *cachesz = &cache_size[0];
-
 	while (cachesz->cache_size) {
-		// 如果找到一个大于等于当前大小的cache，就跳出循环
 		if (cachesz->cache_size >= size)
 			break;
-		
-		// 指向下一个大小描述
 		cachesz++;
 	}
-	//printk("des %x cache %x size %x\n", sizeDes, sizeDes->cachePtr, sizeDes->cachePtr->object_size);
-	void *p = mem_cache_alloc_object(cachesz->mem_cache);
+    void *p = mem_cache_alloc_object(cachesz->mem_cache);
     return p;
 }
 
-
-/*
- * __mem_cache_free_object - 释放一个group对象
- * @cache: 对象所在的cache
- * @object: 对象的指针
- * 
- * 释放group对象，而不是group，group用destory
- */
-static void __mem_cache_free_object(mem_cache_t *cache, void *object)
+static void mem_cache_do_free(mem_cache_t *cache, void *object)
 {
 	mem_group_t *group;
-
-	// 获取group
-
-	// 获取页
 	mem_node_t *node = phy_addr_to_mem_node(kern_vir_addr2phy_addr(object));
 
 	CHECK_MEM_NODE(node);
-
-	//printk("OBJECT %x page %x cache %x", object, page, page->groupCache);
-	// 遍历cache的3个链表。然后查看group是否有这个对象的地址
 	group = MEM_NODE_GET_GROUP(node);
-
-	// 如果查询失败，就返回，代表没有进行释放
 	if (group == NULL) 
 		panic(KERN_EMERG "group get from page bad!\n");
-
-	//printk("get object group %x\n", group);
-
-	// 把group中对应的object释放，也就是把位图清除
-
-	// 找到位图的索引
 	int index = (((unsigned char *)object) - group->objects)/cache->object_size; 
-	
-	// 检测index是否正确
 	if (index < 0 || index > group->map.byte_length*8)
 		panic(KERN_EMERG "map index bad range!\n");
-	
-	// 把位图设置为0，就说明它没有使用了
 	bitmap_set(&group->map, index, 0);
 
 	int unsing = group->using_count;
-	/*
-	dump_mem_group(group);
-	DumpMemNode(node);*/
-
-	//printk("kfree: found group and node.\n");
-
-	// 使用中的对象数减少
 	group->using_count--;
-	// 空闲的对象数增加
 	group->free_count++;
 	
-	// 没有使用中的对象
 	if (!group->using_count) {
-		// 把它放到free空闲列表
 		list_del(&group->list);
 		list_add_tail(&group->list, &cache->free_groups);
-
-		//printk("kfree: free to free group.\n");
-		//memset(group->map.bits, 0, group->map.byte_length);
-		//printk("free to cache %x name %s group %x\n", cache, cache->name, group);
 	} else if (unsing == cache->object_count) {
-		// 释放之前这个是满的group，现在释放后，就到partial中去
 		list_del(&group->list);
 		list_add_tail(&group->list, &cache->partial_groups);
-		
-		//printk("kfree: free to partial group.\n");
 	}
 }
 
-/*
- * mem_cache_free_object - 释放一个group对象
- * @cache: 对象所在的cache
- * @object: 对象的指针
- * 
- * 释放group对象，而不是group，group用destory
- */
 void mem_cache_free_object(mem_cache_t *cache, void *object)
 {
-	// 检测环境
-
-	// 关闭中断
 	unsigned long flags;
     interrupt_save_state(flags);
-
-	__mem_cache_free_object(cache, object);
-
-	// 打开中断
+	mem_cache_do_free(cache, object);
     interrupt_restore_state(flags);
 }
 
-/*
- * kfree - 释放一个对象占用的内存
- * @object: 对象的指针
- */
-void kfree(void *object)
+void mem_free(void *object)
 {
 	if (!object)
 		return;
-    
 	mem_cache_t *cache;
-	
-	// 获取对象所在的页
 	mem_node_t *node = phy_addr_to_mem_node(kern_vir_addr2phy_addr(object));
-
 	CHECK_MEM_NODE(node);
-	
-	// 转换成group cache
 	cache = MEM_NODE_GET_CACHE(node);
     if (cache == NULL) {
         /* 采用首适配释放 */
         large_mem_object_t *obj;
         list_for_each_owner (obj, &large_mem_object_list, list) {
             if (obj->addr == object) {
-                
                 list_del(&obj->list);
                 mem_cache_page_free(obj->addr);
-                kfree(obj);
+                mem_free(obj);
                 printk(KERN_DEBUG "[memcache]: free large mem object %x\n", object);
                 return;
             }
         }
         return;
     }
-	//dump_mem_cache(cache);
-	//printk("get object group cache %x\n", cache);
-
-	// 调用核心函数
 	mem_cache_free_object(cache, (void *)object);
 }
 
-
-/*
- * group_destory - 销毁group
- * @cache: group所在的cache
- * @group: 要销毁的group
- * 
- * 销毁一个group,成功返回0，失败返回-1
- */
 static int group_destory(mem_cache_t *cache, mem_group_t *group)
 {
-	// 删除链表关系
 	list_del(&group->list);
-	
-	/* 根据缓冲中记录的对象大小进行不同的设定 */
 	if (cache->object_size < 1024) {
-		/* 只释放group所在的内存，因为所有数据都在里面 */
 		if (mem_cache_page_free(group))
 			return -1;
 	} else {
-		/* 要释放group和对象所在的页 */
 		if (mem_cache_page_free(group->objects))
 			return -1;
 		if (mem_cache_page_free(group))
@@ -606,74 +355,44 @@ static int group_destory(mem_cache_t *cache, mem_group_t *group)
 	return 0;
 }
 
-/**
- * __mem_cache_shrink - 收缩内存大小 
- * @cache: 收缩哪个缓冲区的大小
- */
-static int __mem_cache_shrink(mem_cache_t *cache)
+static int mem_cache_do_shrink(mem_cache_t *cache)
 {
 	mem_group_t *group, *next;
  
 	int ret = 0;
 
 	list_for_each_owner_safe(group, next, &cache->free_groups, list) {
-		// 销毁成功才计算销毁数量
-		//printk("find a free group %x\n", group);
 		if(!group_destory(cache, group))
 			ret++;
 	}
 	return ret;
 }
 
-/**
- * SlabCacheShrink - 收缩内存大小 
- * @cache: 收缩哪个缓冲区的大小
- */
 static int mem_cahce_shrink(mem_cache_t *cache)
 {
 	int ret;
-	// cache出错的话就返回
 	if (!cache) 
 		return 0; 
-
-	// 用自旋锁来保护结构
 	unsigned long flags;
     interrupt_save_state(flags);
-    // 收缩内存
-	ret = __mem_cache_shrink(cache);
-
-	// 打开锁
+	ret = mem_cache_do_shrink(cache);
     interrupt_restore_state(flags);
-
-	// 返回收缩了的内存大小
 	return ret * cache->object_count * cache->object_size;
 }
 
-/**
- * SlabCacheAllShrink - 对所有的cache都进行收缩
- */
-int kmshrink()
+int mem_shrink()
 {
-	// 释放了的大小
 	size_t size = 0;
-
-	// 指向cache的指针
 	cache_size_t *cachesz = &cache_size[0];
-
-	// 对每一个cache都进行收缩
 	while (cachesz->cache_size) {
-		// 收缩大小
 		size += mem_cahce_shrink(cachesz->mem_cache);
-		// 指向下一个cache大小描述
 		cachesz++;
 	}
-
 	return size;
 }
 
-int init_mem_caches()
+int mem_caches_init()
 {
-    /* make basic mem caches */
-	make_mem_caches();
+	mem_caches_build();
 	return 0;
 }

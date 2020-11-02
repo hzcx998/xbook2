@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <xbook/debug.h>
 #include <xbook/fs.h>
 #include <xbook/schedule.h>
@@ -27,7 +27,7 @@ fsal_file_t *fsal_file_table;
  */
 int init_fsal_file_table()
 {
-    fsal_file_table = kmalloc(FSAL_FILE_OPEN_NR * sizeof(fsal_file_t));
+    fsal_file_table = mem_alloc(FSAL_FILE_OPEN_NR * sizeof(fsal_file_t));
     if (fsal_file_table == NULL) 
         return -1;
     memset(fsal_file_table, 0, FSAL_FILE_OPEN_NR * sizeof(fsal_file_t));
@@ -154,7 +154,7 @@ int init_fsal()
 
 int fs_fd_init(task_t *task)
 {
-    task->fileman = kmalloc(sizeof(file_man_t));
+    task->fileman = mem_alloc(sizeof(file_man_t));
     if (task->fileman == NULL) {
         return -1;
     }
@@ -179,7 +179,7 @@ int fs_fd_exit(task_t *task)
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++)
         fsif_degrow(i);
     
-    kfree(task->fileman);
+    mem_free(task->fileman);
     task->fileman = NULL;
     return 0;
 }

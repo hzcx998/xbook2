@@ -83,7 +83,7 @@ static int copy_vm_vmspace(task_t *child, task_t *parent)
         /* 分配一个空间 */
         vmspace_t *space = vmspace_alloc();
         if (space == NULL) {
-            printk(KERN_ERR "copy_vm_vmspace: kmalloc for space failed!\n");
+            printk(KERN_ERR "copy_vm_vmspace: mem_alloc for space failed!\n");
             return -1;
         }
         
@@ -141,7 +141,7 @@ static int copy_vm(task_t *child, task_t *parent)
 
 static int copy_trigger(task_t *child, task_t *parent)
 {
-    child->triggers = kmalloc(sizeof(triggers_t));
+    child->triggers = mem_alloc(sizeof(triggers_t));
     if (child->triggers == NULL)
         return -1;
     /* 复制触发器结构 */
@@ -241,9 +241,9 @@ int sys_fork()
         __func__, parent->name, parent->pid, parent->priority);
 #endif    
     /* 为子进程分配空间 */
-    task_t *child = kmalloc(TASK_KSTACK_SIZE);
+    task_t *child = mem_alloc(TASK_KSTACK_SIZE);
     if (child == NULL) {
-        printk(KERN_ERR "do_usrmsg_fork: kmalloc for child task failed!\n");
+        printk(KERN_ERR "do_usrmsg_fork: mem_alloc for child task failed!\n");
         return -1;
     }
     /* 当前中断处于关闭中，并且父进程有页目录表 */
@@ -252,7 +252,7 @@ int sys_fork()
     /* 复制进程 */
     if (copy_task(child, parent)) {
         printk(KERN_ERR "do_usrmsg_fork: copy task failed!\n");
-        kfree(child);
+        mem_free(child);
         return -1;
     }
     

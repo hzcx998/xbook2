@@ -14,13 +14,13 @@ static kobjid_t pipe_next_id = 0;
  
 pipe_t *create_pipe()
 {
-    pipe_t *pipe = kmalloc(sizeof(pipe_t));
+    pipe_t *pipe = mem_alloc(sizeof(pipe_t));
     if (pipe == NULL) {
         return NULL;
     }
     pipe->fifo = fifo_buf_alloc(PIPE_SIZE);
     if (pipe->fifo == NULL) {
-        kfree(pipe);
+        mem_free(pipe);
         return NULL;
     }
     atomic_set(&pipe->read_count, 1);
@@ -43,7 +43,7 @@ int destroy_pipe(pipe_t *pipe)
         return -1;
     list_del_init(&pipe->list);
     fifo_buf_free(pipe->fifo);
-    kfree(pipe);
+    mem_free(pipe);
     return 0;
 }
 

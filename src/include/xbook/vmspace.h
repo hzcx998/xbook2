@@ -38,8 +38,8 @@ typedef struct vmspace {
     struct vmspace *next;   /* 所有控件构成单向链表 */
 } vmspace_t;
 
-#define vmspace_alloc() kmalloc(sizeof(vmspace_t))
-#define vmspace_free    kfree
+#define vmspace_alloc() mem_alloc(sizeof(vmspace_t))
+#define vmspace_free    mem_free
 
 
 void dump_vmspace(vmm_t *vmm);

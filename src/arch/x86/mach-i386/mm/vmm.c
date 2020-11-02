@@ -1,6 +1,6 @@
 #include <arch/page.h>
 #include <arch/vmm.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <xbook/debug.h>
 #include <xbook/vmspace.h>
 #include <xbook/vmm.h>
@@ -39,9 +39,9 @@ static int do_copy_normal_page(addr_t vaddr, void *buf, vmm_t *child, vmm_t *par
 
 int vmm_copy_mapping(task_t *child, task_t *parent)
 {
-    void *buf = kmalloc(PAGE_SIZE);
+    void *buf = mem_alloc(PAGE_SIZE);
     if (buf == NULL) {
-        printk(KERN_ERR "vmm_copy_mapping: kmalloc buf for data transform failed!\n");
+        printk(KERN_ERR "vmm_copy_mapping: mem_alloc buf for data transform failed!\n");
         return -1;
     }
     vmspace_t *space = parent->vmm->vmspace_head;
@@ -52,12 +52,12 @@ int vmm_copy_mapping(task_t *child, task_t *parent)
             /* 如果是共享内存，就只复制页映射，而不创建新的页 */
             if (space->flags & VMS_MAP_SHARED) {
                 if (do_copy_share_page(prog_vaddr, child->vmm, parent->vmm) < 0) {
-                    kfree(buf);
+                    mem_free(buf);
                     return -1;
                 }
             } else {
                 if (do_copy_normal_page(prog_vaddr, buf, child->vmm, parent->vmm) < 0) {
-                    kfree(buf);
+                    mem_free(buf);
                     return -1;
                 }
             }
@@ -65,7 +65,7 @@ int vmm_copy_mapping(task_t *child, task_t *parent)
         }
         space = space->next;
     }
-    kfree(buf);
+    mem_free(buf);
     return 0; 
 }
 

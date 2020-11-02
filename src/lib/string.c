@@ -22,7 +22,7 @@ int string_new(string_t *string, char *text, unsigned int maxlen)
 {
     if (string == NULL || text == NULL || maxlen < 1)
         return -1;
-    string->text = kmalloc(maxlen);
+    string->text = mem_alloc(maxlen);
     
     if (string->text == NULL) {
         return -1;
@@ -52,7 +52,7 @@ int string_new(string_t *string, char *text, unsigned int maxlen)
 void string_del(string_t *string)
 {
     if (string->text) {
-        kfree(string->text);
+        mem_free(string->text);
         string->text = NULL;
     }
     string->length = 0;

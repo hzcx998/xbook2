@@ -165,7 +165,7 @@ int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
     /* 从slab中分配一块内存来当做VMSpace结构 */
     vmspace_t *space = vmspace_alloc();
     if (!space) {
-        printk(KERN_ERR "do_vmspace_map: kmalloc for space failed!\n");
+        printk(KERN_ERR "do_vmspace_map: mem_alloc for space failed!\n");
         return -1;    
     }
 
@@ -243,7 +243,7 @@ int do_vmspace_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
 
     vmspace_t* space_new = vmspace_alloc();
     if (!space_new) {        
-        printk(KERN_ERR "do_vmspace_unmap: kmalloc for space_new failed!\n");
+        printk(KERN_ERR "do_vmspace_unmap: mem_alloc for space_new failed!\n");
         return -1;
     }
 

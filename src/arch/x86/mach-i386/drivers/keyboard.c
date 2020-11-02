@@ -1105,7 +1105,7 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
 	devext->caps_lock   = 0;
 	devext->num_lock    = 1;
 	devext->scroll_lock = 0;
-    unsigned char *buf = kmalloc(DEV_FIFO_BUF_LEN);
+    unsigned char *buf = mem_alloc(DEV_FIFO_BUF_LEN);
     if (buf == NULL) {
         status = IO_FAILED;
         printk(KERN_DEBUG "keyboard_enter: alloc buf failed!\n");

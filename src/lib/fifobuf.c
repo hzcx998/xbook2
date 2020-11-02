@@ -1,5 +1,5 @@
 #include <xbook/fifobuf.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <math.h>
 #include <assert.h>
 #include <string.h>
@@ -28,20 +28,20 @@ fifo_buf_t *fifo_buf_alloc(unsigned int size)
         size = roundup_pow_of_two(size);
     }
 
-    buffer = kmalloc(size);
+    buffer = mem_alloc(size);
     if (buffer == NULL)
         return NULL;
 
-    fifo = kmalloc(sizeof(fifo_buf_t));
+    fifo = mem_alloc(sizeof(fifo_buf_t));
     if (fifo == NULL) {
-        kfree(buffer);
+        mem_free(buffer);
         return NULL;
     }
     
     fifo_buf_init(fifo, buffer, size);
     if (fifo == NULL) {
-        kfree(buffer);
-        kfree(fifo);
+        mem_free(buffer);
+        mem_free(fifo);
     }
     
     return fifo;
@@ -49,8 +49,8 @@ fifo_buf_t *fifo_buf_alloc(unsigned int size)
 
 void fifo_buf_free(fifo_buf_t *fifo)
 {
-    kfree(fifo->buffer);
-    kfree(fifo);
+    mem_free(fifo->buffer);
+    mem_free(fifo);
 }
 
 unsigned int __fifo_buf_put(fifo_buf_t *fifo, 

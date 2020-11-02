@@ -227,7 +227,7 @@ int sem_up(int semid)
  */
 void init_sem()
 {
-    sem_table = (sem_t *)kmalloc(sizeof(sem_t) * SEM_MAX_NR);
+    sem_table = (sem_t *)mem_alloc(sizeof(sem_t) * SEM_MAX_NR);
     if (sem_table == NULL) /* must be ok! */
         panic(KERN_EMERG "init_sem: alloc mem for sem_table failed! :(\n");
     //printk(KERN_DEBUG "init_sem: alloc mem table at %x\n", sem_table);   

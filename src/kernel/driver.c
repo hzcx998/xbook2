@@ -228,14 +228,14 @@ int driver_object_create(driver_func_t func)
     driver_object_t *drvobj;
     iostatus_t status;
 
-    drvobj = kmalloc(sizeof(driver_object_t));
+    drvobj = mem_alloc(sizeof(driver_object_t));
     if (drvobj == NULL)
         return -1;
     /* 初始化驱动对象 */
     driver_object_init(drvobj);
     status = func(drvobj);
     if (status != IO_SUCCESS) {
-        kfree(drvobj); /* 释放驱动对象 */
+        mem_free(drvobj); /* 释放驱动对象 */
         return -1;
     }
     /* 执行驱动进入部分 */
@@ -243,7 +243,7 @@ int driver_object_create(driver_func_t func)
         status = drvobj->driver_enter(drvobj); 
 
     if (status != IO_SUCCESS) {
-        kfree(drvobj); /* 释放驱动对象 */
+        mem_free(drvobj); /* 释放驱动对象 */
         return -1;
     }
     unsigned long flags;        
@@ -282,7 +282,7 @@ int driver_object_delete(driver_object_t *driver)
     spin_unlock_irqrestore(&driver_lock, flags);
 
     /* 释放掉驱动对象 */
-    kfree(driver);
+    mem_free(driver);
 #ifdef DEBUG_DRIVER
     printk(KERN_DEBUG "driver_object_delete: driver delete done.\n");
 #endif
@@ -404,7 +404,7 @@ iostatus_t io_create_device(
 ) {
     device_object_t *devobj;
 
-    devobj = kmalloc(sizeof(device_object_t) + device_extension_size);
+    devobj = mem_alloc(sizeof(device_object_t) + device_extension_size);
     if (devobj == NULL)
         return IO_FAILED;
     
@@ -421,7 +421,7 @@ iostatus_t io_create_device(
     devobj->reserved = 0;
     /* 如果创建字符串失败，就返回 */
     if (string_new(&devobj->name, device_name, DEVICE_NAME_LEN)) {
-        kfree(devobj);
+        mem_free(devobj);
         return IO_FAILED;
     }
     devobj->driver = driver; /* 绑定驱动 */
@@ -473,12 +473,12 @@ void io_delete_device(
     
     string_del(&devobj->name); /* 释放名字 */
     /* 释放设备对象 */
-    kfree(devobj);
+    mem_free(devobj);
 }
 
 io_request_t *io_request_alloc()
 {
-    io_request_t *ioreq = kmalloc(sizeof(io_request_t));
+    io_request_t *ioreq = mem_alloc(sizeof(io_request_t));
     if (ioreq)
         memset(ioreq, 0, sizeof(io_request_t));
     return ioreq;
@@ -486,7 +486,7 @@ io_request_t *io_request_alloc()
 
 void io_request_free(io_request_t *ioreq)
 {
-    kfree(ioreq);    
+    mem_free(ioreq);    
 }
 
 iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
@@ -568,9 +568,9 @@ io_request_t *io_build_sync_request(
                 length = MAX_MEM_CACHE_SIZE; /* 调整大小 */
                 printk(KERN_WARING "io_build_sync_request: length too big!\n");
             }
-            ioreq->system_buffer = kmalloc(length);
+            ioreq->system_buffer = mem_alloc(length);
             if (ioreq->system_buffer == NULL) {
-                kfree(ioreq);
+                mem_free(ioreq);
                 return NULL;
             }
             ioreq->flags |= IOREQ_BUFFERED_IO;
@@ -580,7 +580,7 @@ io_request_t *io_build_sync_request(
         } else if (devobj->flags & DO_DIRECT_IO) {
             ioreq->mdl_address = mdl_alloc(buffer, length, FALSE, ioreq);
             if (ioreq->mdl_address == NULL) {
-                kfree(ioreq);
+                mem_free(ioreq);
                 return NULL;    
             }
             /* 分配内存描述列表 */
@@ -683,7 +683,7 @@ void io_device_queue_cleanup(device_queue_t *queue)
     /* 由于要删除队列成员，所以需要用safe版本 */
     list_for_each_owner_safe (entry, next, &queue->list_head, list) {
         list_del(&entry->list); /* 从链表删除 */
-        kfree(entry);           /* 释放空间 */
+        mem_free(entry);           /* 释放空间 */
     }
     spin_unlock_irqrestore(&queue->lock, irqflags);
 }
@@ -699,7 +699,7 @@ iostatus_t io_device_queue_append(device_queue_t *queue, unsigned char *buf, int
         spin_unlock_irqrestore(&queue->lock, irqflags);
         return IO_FAILED;
     }
-    device_queue_entry_t *entry = kmalloc(sizeof(device_queue_entry_t) + len);
+    device_queue_entry_t *entry = mem_alloc(sizeof(device_queue_entry_t) + len);
     if (entry == NULL) {
         spin_unlock_irqrestore(&queue->lock, irqflags);
         return IO_FAILED;
@@ -741,7 +741,7 @@ int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen
     queue->entry_count--;
     int len = MIN(entry->length, buflen);
     memcpy(buf, entry->buf, len);
-    kfree(entry);
+    mem_free(entry);
     spin_unlock_irqrestore(&queue->lock, irqflags);
 #if DEBUG_LOCLA == 1
     printk(KERN_DEBUG "io_device_queue_get: pid=%d len=%d.\n",
@@ -1064,7 +1064,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
             interrupt_save_state(flags);
             memcpy(ioreq->user_buffer, ioreq->system_buffer, len);
             interrupt_restore_state(flags);
-            kfree(ioreq->system_buffer);
+            mem_free(ioreq->system_buffer);
         } else if (devobj->flags & DO_DIRECT_IO) { 
             /* 删除映射 */
             printk(KERN_DEBUG "device_read: read done. free mdl.\n");
@@ -1355,15 +1355,15 @@ void init_driver_arch()
     /*
     char *buffer;
     for (i = 200; i <= 220; i++) {
-        char *buffer = kmalloc(PAGE_SIZE * i);
+        char *buffer = mem_alloc(PAGE_SIZE * i);
         memset(buffer, 0, PAGE_SIZE);
         printk(KERN_DEBUG "read on %d len=%d\n", i, device_read(sda, buffer, SECTOR_SIZE * i, i));
         printk(KERN_DEBUG "%x %x\n", buffer[0], buffer[511]);
         memset(buffer, i, PAGE_SIZE);
         printk(KERN_DEBUG "write to %d len=%d\n", i, device_write(sda, buffer, SECTOR_SIZE * i, i));
-        kfree(buffer);
+        mem_free(buffer);
     }*/
-    char *buffer = kmalloc(PAGE_SIZE);
+    char *buffer = mem_alloc(PAGE_SIZE);
     memset(buffer, 0, PAGE_SIZE);
     printk(KERN_DEBUG "read on %d len=%d\n", 0, device_read(sda, buffer, SECTOR_SIZE, 0));
     uint32_t *p = (uint32_t *) buffer;
@@ -1380,7 +1380,7 @@ void init_driver_arch()
     if (null < 0)
         panic(KERN_DEBUG "open null failed!\n");
     
-    char *buffer = kmalloc(PAGE_SIZE);
+    char *buffer = mem_alloc(PAGE_SIZE);
     memset(buffer, 0xff, PAGE_SIZE);
     printk(KERN_DEBUG "write len=%d\n", device_write(null, buffer, PAGE_SIZE, 0));
     memset(buffer, 0, PAGE_SIZE);
@@ -1393,7 +1393,7 @@ void init_driver_arch()
     if (ramd < 0)
         panic(KERN_DEBUG "open ramdisk failed!\n");
 
-    char *buffer = kmalloc(PAGE_SIZE);
+    char *buffer = mem_alloc(PAGE_SIZE);
     memset(buffer, 0xff, PAGE_SIZE);
     printk(KERN_DEBUG "write len=%d\n", device_write(ramd, buffer, PAGE_SIZE, 1));
     memset(buffer, 0, PAGE_SIZE);
@@ -1410,7 +1410,7 @@ void init_driver_arch()
 
     loop_delay(100);
     
-    char *net_buf = kmalloc(2048);
+    char *net_buf = mem_alloc(2048);
     if (net_buf == NULL) {
         panic("alloc for net buf failed!\n");
     }
@@ -1474,9 +1474,9 @@ void init_driver_arch()
     if (handle >= 0)
         dump_device_object(GET_DEVICE_BY_HANDLE(ide0));
     
-    char *disk_buf = kmalloc(256 * 1024);
+    char *disk_buf = mem_alloc(256 * 1024);
     if (disk_buf == NULL)
-        panic("kmalloc for disk buf failed!\n");
+        panic("mem_alloc for disk buf failed!\n");
 
     printk(KERN_DEBUG "read disk:%d\n", device_read(ide0, disk_buf, 256 * 1024, 0));
     printk(KERN_DEBUG "write disk:%d\n", device_write(ide0, disk_buf, 256 * 1024, 0));

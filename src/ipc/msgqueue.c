@@ -245,7 +245,7 @@ int msg_queue_send(int msgid, void *msgbuf, size_t size, int msgflg)
     }
 
     /* 分配一个消息 */
-    msg_t *msg = kmalloc(sizeof(msg_t) + size);
+    msg_t *msg = mem_alloc(sizeof(msg_t) + size);
     if (msg == NULL) {
         semaphore_up(&msgq->mutex);
         return -1;
@@ -377,7 +377,7 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
     printk(KERN_DEBUG "msg_queue_recv: recv msg type=%d len:%d ok!\n", msg->type, msg->length);
 #endif
     /* 释放消息 */
-    kfree(msg);
+    mem_free(msg);
     /* 接收完后，检测是否有等待发送中的任务，并将它唤醒 */
     wait_queue_wakeup(&msgq->senders);
     semaphore_up(&msgq->mutex);
@@ -390,7 +390,7 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
  */
 void init_msg_queue()
 {
-    msg_queue_table = (msg_queue_t *)kmalloc(sizeof(msg_queue_t) * MSGQ_MAX_NR);
+    msg_queue_table = (msg_queue_t *)mem_alloc(sizeof(msg_queue_t) * MSGQ_MAX_NR);
     if (msg_queue_table == NULL) /* must be ok! */
         panic(KERN_EMERG "init_msg_queue: alloc mem for msg_queue_table failed! :(\n");
     //printk(KERN_DEBUG "init_msg_queue: alloc mem table at %x\n", msg_queue_table);   

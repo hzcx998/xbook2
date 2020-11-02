@@ -74,7 +74,7 @@ system/fixdep
 user/fixdep
 src/fixdep
 
-# linux tools
+# linux tools 
 tools/fatfs/fatfs
 
 # dir

@@ -22,7 +22,7 @@
 int kernel_main(void)
 {
     printk(KERN_INFO "welcome to xbook kernel.\n");
-    init_mem_caches();
+    mem_caches_init();
     init_vmarea();
     irq_description_init();
     init_softirq();

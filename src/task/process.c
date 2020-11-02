@@ -352,7 +352,7 @@ int proc_vmm_exit(task_t *task)
 
 int proc_trigger_init(task_t *task)
 {
-    task->triggers = kmalloc(sizeof(triggers_t));
+    task->triggers = mem_alloc(sizeof(triggers_t));
     if (task->triggers == NULL)
         return -1;
     trigger_init(task->triggers);
@@ -363,14 +363,14 @@ int proc_trigger_exit(task_t *task)
 {
     if (task->triggers == NULL)
         return -1;
-    kfree(task->triggers);
+    mem_free(task->triggers);
     task->triggers = NULL;
     return 0;
 }
 
 int proc_pthread_init(task_t *task)
 {
-    task->pthread = kmalloc(sizeof(pthread_desc_t));
+    task->pthread = mem_alloc(sizeof(pthread_desc_t));
     if (task->pthread == NULL)
         return -1;
     pthread_desc_init(task->pthread);
@@ -457,7 +457,7 @@ void proc_entry(void* arg)
 task_t *start_process(char *name, char **argv)
 {
     // 创建一个新的线程结构体
-    task_t *task = (task_t *) kmalloc(TASK_KSTACK_SIZE);
+    task_t *task = (task_t *) mem_alloc(TASK_KSTACK_SIZE);
     
     if (!task)
         return NULL;
@@ -467,13 +467,13 @@ task_t *start_process(char *name, char **argv)
     task->tgid = task->pid;     /* 主线程，和pid一样 */
 
     if (proc_vmm_init(task)) {
-        kfree(task);
+        mem_free(task);
         return NULL;
     }
     
     if (proc_trigger_init(task)) {
         proc_vmm_exit(task);
-        kfree(task);
+        mem_free(task);
         return NULL;
     }
 
@@ -481,7 +481,7 @@ task_t *start_process(char *name, char **argv)
     if (fs_fd_init(task) < 0) {
         proc_trigger_exit(task);
         proc_vmm_exit(task);
-        kfree(task);
+        mem_free(task);
         return NULL;
     }
 

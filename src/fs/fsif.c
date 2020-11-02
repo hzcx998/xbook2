@@ -137,12 +137,12 @@ int sys_write(int fd, void *buffer, size_t nbytes)
         retval = fsif.write(ffd->handle, buffer, nbytes);
     } else if (ffd->flags & FILE_FD_SOCKET) {
         /* 由于lwip_write实现原因，需要内核缓冲区中转 */
-        void *tmpbuffer = kmalloc(nbytes);
+        void *tmpbuffer = mem_alloc(nbytes);
         if (tmpbuffer == NULL)
             return -1;
         memcpy(tmpbuffer, buffer, nbytes);
         retval = lwip_write(ffd->handle, tmpbuffer, nbytes);  
-        kfree(tmpbuffer);
+        mem_free(tmpbuffer);
     } else if (ffd->flags & FILE_FD_DEVICE) {
         retval = device_write(ffd->handle, buffer, nbytes, ffd->offset);  
         if (retval > 0)

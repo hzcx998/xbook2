@@ -379,7 +379,7 @@ int share_mem_put(int shmid)
  */
 void init_share_mem()
 {
-    share_mem_table = (share_mem_t *)kmalloc(sizeof(share_mem_t) * MAX_SHARE_MEM_NR);
+    share_mem_table = (share_mem_t *)mem_alloc(sizeof(share_mem_t) * MAX_SHARE_MEM_NR);
     if (share_mem_table == NULL) /* must be ok! */
         panic(KERN_EMERG "init_share_mem: alloc mem for share_mem_table failed! :(\n");
     //printk(KERN_DEBUG "init_share_mem: alloc mem table at %x\n", share_mem_table);   

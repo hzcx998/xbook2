@@ -1,5 +1,5 @@
 #include <xbook/msgpool.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <xbook/schedule.h>
 #include <string.h>
 
@@ -7,13 +7,13 @@ msgpool_t *msgpool_create(size_t msgsz, size_t msgcount)
 {
     if (!msgsz || !msgcount)
         return NULL;
-    msgpool_t *pool = kmalloc(sizeof(msgpool_t));
+    msgpool_t *pool = mem_alloc(sizeof(msgpool_t));
     if (pool == NULL)
         return NULL;
     pool->msgcount  = 0;
     pool->msgsz     = msgsz;
     pool->msgmaxcnt = msgcount;
-    pool->msgbuf    = kmalloc(msgcount * msgsz);
+    pool->msgbuf    = mem_alloc(msgcount * msgsz);
     if (pool->msgbuf == NULL)
         return NULL;
     memset(pool->msgbuf, 0, msgcount * msgsz);
@@ -34,9 +34,9 @@ int msgpool_destroy(msgpool_t *pool)
         pool->msgmaxcnt = 0;
         pool->msgcount     = 0;
         pool->msgsz     = 0;
-        kfree(pool->msgbuf);
+        mem_free(pool->msgbuf);
         pool->tail = pool->head = pool->msgbuf = NULL;
-        kfree(pool);
+        mem_free(pool);
         return 0;
     }
     return -1;

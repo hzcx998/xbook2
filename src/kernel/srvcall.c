@@ -41,12 +41,12 @@ static int copy_srvarg_buffer(srvarg_t *dst, srvarg_t *src, int srvio, int new_b
 #ifdef DEBUG_SRVCALL
                     printk(KERN_DEBUG "%s: data%d free buffer: %x size %d\n", __func__, i, src->data[i], src->size[i]);   
 #endif
-                    kfree((void *) src->data[i]);
+                    mem_free((void *) src->data[i]);
                 }
             } else if (srvio == SRVIO_SERVICE) {   /* 有效：SRVIO_SERVICE */
                 /* 需要将数据复制回到服务缓冲区 */
                 if (new_buf) {  /* 需要创建一个新的缓冲区来储存数据 */
-                    dst->data[i] = (unsigned long) kmalloc(dst->size[i]);
+                    dst->data[i] = (unsigned long) mem_alloc(dst->size[i]);
                     if (dst->data[i] == 0) {
                         return -1;
                     }

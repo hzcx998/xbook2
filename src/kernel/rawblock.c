@@ -3,7 +3,7 @@
 #include <math.h>
 #include <xbook/debug.h>
 #include <xbook/driver.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 
 // #define DEBUG_DRV
 
@@ -11,7 +11,7 @@ LIST_HEAD(raw_block_list);
 
 raw_block_t *raw_block_alloc(handle_t handle, char *name)
 {
-    raw_block_t *block = kmalloc(sizeof(raw_block_t));
+    raw_block_t *block = mem_alloc(sizeof(raw_block_t));
     if (block == NULL)
         return NULL;
 
@@ -31,7 +31,7 @@ raw_block_t *raw_block_alloc(handle_t handle, char *name)
 void raw_block_free(raw_block_t *block)
 {
     list_del_init(&block->list);
-    kfree(block);
+    mem_free(block);
 }
 
 int raw_block_init(raw_block_t *block, unsigned long off, unsigned long count,
@@ -42,7 +42,7 @@ int raw_block_init(raw_block_t *block, unsigned long off, unsigned long count,
     block->memsz = memsz;
     block->pos = 0;
 
-    block->vaddr = kmalloc(block->memsz);
+    block->vaddr = mem_alloc(block->memsz);
     if (block->vaddr == NULL)
         return -1;
 
@@ -68,7 +68,7 @@ int raw_block_tmp_add(raw_block_t *block, unsigned char *buf, unsigned long size
     block->vaddr = NULL;
     /* 根据缓冲区大小创建一个新的缓冲区，并把数据复制进去 */
     if (block->memsz <= MAX_MEM_CACHE_SIZE) { /* 分配一个小块内存 */
-        block->vaddr = kmalloc(block->memsz);
+        block->vaddr = mem_alloc(block->memsz);
     } else { /* 添加一个新的高速缓存 */
         printk(KERN_NOTICE "raw_block_tmp_add: need a large buffer!\n");
         return -1;
@@ -86,7 +86,7 @@ int raw_block_tmp_add(raw_block_t *block, unsigned char *buf, unsigned long size
 void raw_block_tmp_del(raw_block_t *block)
 {
     if (block->memsz <= MAX_MEM_CACHE_SIZE) {
-        kfree(block->vaddr);
+        mem_free(block->vaddr);
     } else {
         printk(KERN_NOTICE "raw_block_tmp_del: free a large buffer!\n");
     }

@@ -1,6 +1,6 @@
 #include <string.h>
 #include <unistd.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <xbook/debug.h>
 #include <xbook/msgpool.h>
 #include <xbook/task.h>
@@ -55,17 +55,17 @@ layer_t *create_layer(int width, int height)
 {
     size_t bufsz = width * height * sizeof(GUI_COLOR);
     uint32_t flags = 0;
-    GUI_COLOR *buffer = kmalloc(bufsz);
+    GUI_COLOR *buffer = mem_alloc(bufsz);
     if (buffer == NULL) {
-        printk(KERN_NOTICE "[gui]: alloc layer buffer in kmalloc failed!\n");
+        printk(KERN_NOTICE "[gui]: alloc layer buffer in mem_alloc failed!\n");
         return NULL;
     }
 
     memset(buffer, 0, width * height * sizeof(GUI_COLOR));
-    layer_t *layer = kmalloc(sizeof(layer_t));
+    layer_t *layer = mem_alloc(sizeof(layer_t));
 
     if (layer == NULL) {
-        kfree(buffer);
+        mem_free(buffer);
         return NULL;
     }
 
@@ -524,13 +524,13 @@ int destroy_layer(layer_t *layer)
     layer_mutex_lock(layer);
     
     /* 释放缓冲区 */
-    kfree(layer->buffer);
+    mem_free(layer->buffer);
     
     layer->buffer = NULL;
     layer_mutex_unlock(layer);
 
     /* 释放图层 */
-    kfree(layer);
+    mem_free(layer);
     return 0;
 }
 
@@ -1014,7 +1014,7 @@ int layer_reset_size(layer_t *layer, int x, int y, uint32_t width, uint32_t heig
         return -1;
     }
     size_t bufsz = width * height * sizeof(GUI_COLOR);
-    uint32_t *buffer = kmalloc(bufsz);
+    uint32_t *buffer = mem_alloc(bufsz);
     if (buffer == NULL) {
         return -1;
     }
@@ -1026,7 +1026,7 @@ int layer_reset_size(layer_t *layer, int x, int y, uint32_t width, uint32_t heig
     layer_mutex_lock(layer);
    
     /* 重新绑定缓冲区 */
-    kfree(layer->buffer);
+    mem_free(layer->buffer);
 
     layer->buffer = NULL;
     layer->buffer = buffer;
@@ -1674,7 +1674,7 @@ int gui_init_layer()
     }
 
     if (init_mouse_layer() < 0) {
-        kfree(layer_map);
+        mem_free(layer_map);
         return -1;
     }
     /*

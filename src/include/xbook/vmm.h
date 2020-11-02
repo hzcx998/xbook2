@@ -29,8 +29,8 @@ typedef struct {
 int sys_mstate(mstate_t *ms);
 
 
-#define vmm_alloc() (vmm_t *)kmalloc(sizeof(vmm_t)) 
-#define vmm_free(vmm) kfree(vmm) 
+#define vmm_alloc() (vmm_t *)mem_alloc(sizeof(vmm_t)) 
+#define vmm_free(vmm) mem_free(vmm) 
 
 void vmm_init(vmm_t *vmm);
 int vmm_exit(vmm_t *vmm);

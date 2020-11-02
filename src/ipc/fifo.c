@@ -669,7 +669,7 @@ int fifo_grow(int fifoid)
  */
 void init_fifo()
 {
-    fifo_table = (fifo_t *)kmalloc(sizeof(fifo_t) * FIFO_NR);
+    fifo_table = (fifo_t *)mem_alloc(sizeof(fifo_t) * FIFO_NR);
     if (fifo_table == NULL) /* must be ok! */
         panic(KERN_EMERG "init_fifo: alloc mem for fifo_table failed! :(\n");
     

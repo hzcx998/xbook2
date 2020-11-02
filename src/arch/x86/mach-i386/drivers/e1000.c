@@ -8,7 +8,7 @@
 #include <xbook/spinlock.h>
 #include <math.h>
 #include <xbook/waitqueue.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <arch/pci.h>
@@ -512,7 +512,7 @@ static inline void
 e1000_free_tx_resource(struct e1000_buffer* buffer_info)
 {
     if(buffer_info->buffer) {
-        kfree(buffer_info->buffer);
+        mem_free(buffer_info->buffer);
         buffer_info->buffer = NULL;
     }
 }
@@ -563,7 +563,7 @@ void e1000_free_tx_resources(e1000_extension_t* ext)
     vfree(ext->tx_ring.buffer_info);
     ext->tx_ring.buffer_info = NULL;
     
-    kfree(ext->tx_ring.desc);
+    mem_free(ext->tx_ring.desc);
     
     ext->tx_ring.desc = NULL;
 }
@@ -584,7 +584,7 @@ static void e1000_clean_rx_ring(e1000_extension_t* ext)
     for(i=0; i<rx_ring->count; i++) {
         buffer_info = rx_ring->buffer_info;
         if(buffer_info->buffer) {
-            kfree(buffer_info->buffer);
+            mem_free(buffer_info->buffer);
             buffer_info->buffer = NULL;
         }
     }
@@ -614,7 +614,7 @@ void e1000_free_rx_resources(e1000_extension_t* ext)
     
     e1000_clean_rx_ring(ext);
     
-    kfree(rx_ring->buffer_info);
+    mem_free(rx_ring->buffer_info);
     rx_ring->buffer_info = NULL;
 
     rx_ring->desc = NULL;
@@ -638,7 +638,7 @@ iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
 
     size = sizeof(struct e1000_buffer) * txdr->count + 1;
     // printk(KERN_DEBUG "-------size = %d\n", size);
-    txdr->buffer_info = kmalloc(size);
+    txdr->buffer_info = mem_alloc(size);
     if(!txdr->buffer_info) {
         printk(KERN_DEBUG "---Unable to allocate memory for the transmit desciptor ring\n");
         return -1;
@@ -650,10 +650,10 @@ iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
     E1000_ROUNDUP(txdr->size, 4096);
 
     /* 申请DMA空间 */
-    txdr->desc = kmalloc(txdr->size);
+    txdr->desc = mem_alloc(txdr->size);
     if(!txdr->desc) {
         printk(KERN_DEBUG "unable to allocate memory the transmit descriptor ring\n");
-        kfree(txdr->buffer_info);
+        mem_free(txdr->buffer_info);
         return -1;
     }
     txdr->dma = kern_vir_addr2phy_addr(txdr->desc);
@@ -683,7 +683,7 @@ iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
     DEBUGFUNC("e1000_setup_rx_resources start");
 
     size = sizeof(struct e1000_buffer) * rxdr->count + 1;
-    rxdr->buffer_info = kmalloc(size);
+    rxdr->buffer_info = mem_alloc(size);
     if(!rxdr->buffer_info) {
         printk(KERN_DEBUG "unable to allocate memory for the recieve descriptor ring\n");
         return -1;
@@ -695,7 +695,7 @@ iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
     E1000_ROUNDUP(rxdr->size, 4096);
 
     /* 分配DMA空间 */
-    rxdr->desc = kmalloc(rxdr->size);
+    rxdr->desc = mem_alloc(rxdr->size);
     if(!rxdr->desc) {
         printk(KERN_DEBUG "unable to allocate memory for the recieve descriptor ring\n");
         return -1;
@@ -1220,7 +1220,7 @@ static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
     buffer_info = &rx_ring->buffer_info[i];   //i=0
 
     while(!buffer_info->buffer) {
-        buffer = kmalloc(ext->rx_buffer_len + NET_IP_ALIGN);
+        buffer = mem_alloc(ext->rx_buffer_len + NET_IP_ALIGN);
 
         if(unlikely(!buffer)) {
             break;
@@ -1492,7 +1492,7 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
         if(unlikely(!(rx_desc->status & E1000_RXD_STAT_EOP))) {
             /* all receives must fit into a single buffer */
             printk(KERN_DEBUG "%s: receive packet consumed multiple buffers", netdev->name);
-            kfree(buffer);
+            mem_free(buffer);
             goto next_desc;
         }
 
@@ -1508,7 +1508,7 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
                 spin_unlock_irqrestore(&ext->stats_lock, flags);
                 length--;
             } else {
-                kfree(buffer);
+                mem_free(buffer);
                 goto next_desc;
             }
         }
@@ -1552,7 +1552,7 @@ e1000_unmap_and_free_tx_resource(e1000_extension_t* ext,
         buffer_info->dma = 0;
     }
     if(buffer_info->buffer) {
-        //kfree(buffer_info->buffer);
+        //mem_free(buffer_info->buffer);
         buffer_info->buffer = NULL;
     }
 }
@@ -1725,7 +1725,7 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
     interrupt_save_state(intr_flags);
 
     if(unlikely(len <= 0)) {
-        kfree(buf);
+        mem_free(buf);
         interrupt_restore_state(intr_flags);
         return 0;
     }

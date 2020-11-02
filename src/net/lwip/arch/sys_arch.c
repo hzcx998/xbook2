@@ -113,12 +113,12 @@ static void sys_sem_free_internal(struct sys_sem *sem);
 
 static void *__malloc(size_t size)
 {
-    return kmalloc(size);
+    return mem_alloc(size);
 }
 
 static void __free(void *ptr)
 {
-    kfree(ptr);
+    mem_free(ptr);
 }
 
 /*-----------------------------------------------------------------------------------*/

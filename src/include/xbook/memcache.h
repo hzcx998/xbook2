@@ -70,10 +70,10 @@ typedef struct {
     void *addr;     /* 虚拟地址 */
 } large_mem_object_t;
 
-int init_mem_caches();
+int mem_caches_init();
 
-void *kmalloc(size_t size);
-void kfree(void *object);
+void *mem_alloc(size_t size);
+void mem_free(void *object);
 int ksharink();
 
 int mem_cache_init(mem_cache_t *cache, char *name, size_t size, flags_t flags);

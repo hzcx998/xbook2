@@ -19,7 +19,7 @@ void pthread_desc_init(pthread_desc_t *pthread)
 void pthread_desc_exit(pthread_desc_t *pthread)
 {
     if (pthread != NULL)
-        kfree(pthread);
+        mem_free(pthread);
 }
 
 /**
@@ -106,7 +106,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     }
 
     // 创建一个新的线程结构体
-    task_t *task = (task_t *) kmalloc(TASK_KSTACK_SIZE);
+    task_t *task = (task_t *) mem_alloc(TASK_KSTACK_SIZE);
     
     if (!task)
         return NULL;
@@ -163,7 +163,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
             parent->pid, parent->tgid);
 #endif
         atomic_dec(&task->pthread->thread_count);
-        kfree(task);
+        mem_free(task);
         interrupt_restore_state(flags);
         return NULL;
     }
