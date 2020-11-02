@@ -60,6 +60,7 @@ dkms.conf
 
 # develop
 develop/image/
+develop/local/
 
 develop/rom/bin/
 develop/rom/sbin/
