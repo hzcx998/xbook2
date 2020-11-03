@@ -3,7 +3,7 @@
 #include <arch/segment.h>
 #include <xbook/syscall.h>
 #include <xbook/trigger.h>
-#include <xbook/vmspace.h>
+#include <xbook/memspace.h>
 #include <xbook/process.h>
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
@@ -123,10 +123,10 @@ int process_frame_init(task_t *task, trap_frame_t *frame, char **argv, char **en
     vmm_t *vmm = task->vmm;
 
     vmm->stack_end = USER_STACK_TOP;
-    vmm->stack_start = vmm->stack_end - DEFAULT_STACK_SIZE;
+    vmm->stack_start = vmm->stack_end - MEM_SPACE_STACK_SIZE_DEFAULT;
 
-    if (vmspace_mmap(vmm->stack_start, 0, vmm->stack_end - vmm->stack_start , PROT_USER | PROT_WRITE,
-        VMS_MAP_FIXED | VMS_MAP_STACK) == ((void *)-1)) {
+    if (mem_space_mmap(vmm->stack_start, 0, vmm->stack_end - vmm->stack_start , PROT_USER | PROT_WRITE,
+        MEM_SPACE_MAP_FIXED | MEM_SPACE_MAP_STACK) == ((void *)-1)) {
         return -1;
     }
     memset((void *) vmm->stack_start, 0, vmm->stack_end - vmm->stack_start);
@@ -144,7 +144,7 @@ int process_frame_init(task_t *task, trap_frame_t *frame, char **argv, char **en
     frame->edx = (unsigned int) new_envp;
 
     if (!arg_bottom) {
-        vmspace_unmmap(vmm->stack_start, vmm->stack_end - vmm->stack_start);
+        mem_space_unmmap(vmm->stack_start, vmm->stack_end - vmm->stack_start);
         return -1;
     }
     frame->esp = (unsigned long) arg_bottom;

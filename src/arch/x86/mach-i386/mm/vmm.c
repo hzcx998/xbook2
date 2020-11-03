@@ -2,7 +2,7 @@
 #include <arch/vmm.h>
 #include <xbook/memalloc.h>
 #include <xbook/debug.h>
-#include <xbook/vmspace.h>
+#include <xbook/memspace.h>
 #include <xbook/vmm.h>
 #include <xbook/schedule.h>
 #include <arch/tss.h>
@@ -44,13 +44,13 @@ int vmm_copy_mapping(task_t *child, task_t *parent)
         printk(KERN_ERR "vmm_copy_mapping: mem_alloc buf for data transform failed!\n");
         return -1;
     }
-    vmspace_t *space = parent->vmm->vmspace_head;
+    mem_space_t *space = parent->vmm->mem_space_head;
     addr_t prog_vaddr = 0;
     while (space != NULL) {
         prog_vaddr = space->start;
         while (prog_vaddr < space->end) {
             /* 如果是共享内存，就只复制页映射，而不创建新的页 */
-            if (space->flags & VMS_MAP_SHARED) {
+            if (space->flags & MEM_SPACE_MAP_SHARED) {
                 if (do_copy_share_page(prog_vaddr, child->vmm, parent->vmm) < 0) {
                     mem_free(buf);
                     return -1;

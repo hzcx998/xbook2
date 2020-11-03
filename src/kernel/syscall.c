@@ -1,6 +1,6 @@
 #include <xbook/syscall.h>
 #include <xbook/process.h>
-#include <xbook/vmspace.h>
+#include <xbook/memspace.h>
 #include <xbook/resource.h>
 #include <xbook/trigger.h>
 #include <xbook/alarm.h>
@@ -62,7 +62,7 @@ void init_syscall()
     syscall_table[SYS_WAITQUE_WAKE] = sys_waitque_wake;
 
     /* 内存管理 */
-    syscall_table[SYS_HEAP] = sys_vmspace_heap;
+    syscall_table[SYS_HEAP] = sys_mem_space_expend_heap;
     syscall_table[SYS_MUNMAP] = sys_munmap;
     
     syscall_table[SYS_ALARM] = sys_alarm;

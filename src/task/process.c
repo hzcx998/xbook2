@@ -5,7 +5,7 @@
 #include <xbook/elf32.h>
 #include <string.h>
 #include <math.h>
-#include <xbook/vmspace.h>
+#include <xbook/memspace.h>
 #include <string.h>
 #include <xbook/resource.h>
 #include <xbook/pthread.h>
@@ -58,10 +58,10 @@ static int load_segment(int fd, unsigned long offset, unsigned long file_sz,
     }
     
     /* 映射虚拟空间 */  
-    int ret = (int)vmspace_mmap(vaddr_page, 0, occupy_pages * PAGE_SIZE, 
-            PROT_USER | PROT_WRITE, VMS_MAP_FIXED);
+    int ret = (int)mem_space_mmap(vaddr_page, 0, occupy_pages * PAGE_SIZE, 
+            PROT_USER | PROT_WRITE, MEM_SPACE_MAP_FIXED);
     if (ret < 0) {
-        printk(KERN_ERR "load_segment: vmspace_mmap failed!\n");
+        printk(KERN_ERR "load_segment: mem_space_mmap failed!\n");
         return -1;
     }
     // printk(KERN_DEBUG "task %d map space: addr %x end %x\n", current_task->pid, vaddr_page, vaddr_page + occupy_pages * PAGE_SIZE);
@@ -303,8 +303,8 @@ void proc_heap_init(task_t *task)
 {
     return;
 #ifdef DEBUG_PROC
-    printk(KERN_DEBUG "task=%d dump vmspace.\n", task->pid);
-    vmspace_dump(task->vmm);
+    printk(KERN_DEBUG "task=%d dump memspace.\n", task->pid);
+    mem_space_dump(task->vmm);
 
     printk(KERN_DEBUG "data segment end=%x end2=%d.\n", 
         task->vmm->data_end, PAGE_ALIGN(task->vmm->data_end));
@@ -325,10 +325,10 @@ void proc_heap_init(task_t *task)
 void proc_map_space_init(task_t *task)
 {
     /* map默认在堆的末尾+10个页的位置 */
-    //task->vmm->map_start = task->vmm->heap_start + MAX_VMS_HEAP_SIZE + PAGE_SIZE * 10;
-    task->vmm->map_start = (unsigned long) VMS_MAP_START_ADDR;
+    //task->vmm->map_start = task->vmm->heap_start + MAX_MEM_SPACE_HEAP_SIZE + PAGE_SIZE * 10;
+    task->vmm->map_start = (unsigned long) MEM_SPACE_MAP_ADDR_START;
     
-    task->vmm->map_end = task->vmm->map_start + MAX_VMS_MAP_SIZE;
+    task->vmm->map_end = task->vmm->map_start + MAX_MEM_SPACE_MAP_SIZE;
 }
 
 int proc_vmm_init(task_t *task)

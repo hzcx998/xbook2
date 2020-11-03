@@ -4,7 +4,7 @@
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 #include <xbook/process.h>
-#include <xbook/vmspace.h>
+#include <xbook/memspace.h>
 #include <xbook/sharemem.h>
 #include <fsal/fsal.h>
 #include <gui/message.h>
@@ -61,10 +61,10 @@ static int copy_vm_struct(task_t *child, task_t *parent)
 /**
  * 复制共享内存，共享内存有可能是以其他形式存在的，并不是shmid这种。
  */
-static int copy_share_mem(vmspace_t *vmspace)
+static int copy_share_mem(mem_space_t *mem_space)
 {
     /* 转换成物理地址 */
-    addr_t phyaddr = addr_vir2phy(vmspace->start);  
+    addr_t phyaddr = addr_vir2phy(mem_space->start);  
     /* 查找共享内存 */
     share_mem_t *shm = share_mem_find_by_addr(phyaddr);
     if (shm == NULL) { 
@@ -73,17 +73,17 @@ static int copy_share_mem(vmspace_t *vmspace)
     return share_mem_grow(shm->id);
 }
 
-static int copy_vm_vmspace(task_t *child, task_t *parent)
+static int copy_vm_mem_space(task_t *child, task_t *parent)
 {
     /* 空间头 */
-    vmspace_t *tail = NULL;
+    mem_space_t *tail = NULL;
     /* 指向父任务的空间 */
-    vmspace_t *p = parent->vmm->vmspace_head;
+    mem_space_t *p = parent->vmm->mem_space_head;
     while (p != NULL) {
         /* 分配一个空间 */
-        vmspace_t *space = vmspace_alloc();
+        mem_space_t *space = mem_space_alloc();
         if (space == NULL) {
-            printk(KERN_ERR "copy_vm_vmspace: mem_alloc for space failed!\n");
+            printk(KERN_ERR "copy_vm_mem_space: mem_alloc for space failed!\n");
             return -1;
         }
         
@@ -93,14 +93,14 @@ static int copy_vm_vmspace(task_t *child, task_t *parent)
         space->next = NULL;
 
         /* 如果空间是共享内存，就需要增长共享内存的links */
-        if (space->flags & VMS_MAP_SHARED) {
+        if (space->flags & MEM_SPACE_MAP_SHARED) {
             if (copy_share_mem(space) < 0)
                 return -1;
         }
 
         /* 如果空间表头是空，那么就让空间表头指向第一个space */
         if (tail == NULL)
-            child->vmm->vmspace_head = space;    
+            child->vmm->mem_space_head = space;    
         else 
             tail->next = space; /* 让空间位于子任务的空间表的最后面 */
 
@@ -112,7 +112,7 @@ static int copy_vm_vmspace(task_t *child, task_t *parent)
     }
     /* 打印子进程space */
 #if 0
-    p = child->vmm->vmspace_head;
+    p = child->vmm->mem_space_head;
     while (p != NULL) {
         printk(KERN_DEBUG "[child] space %x start %x end %x flags %x\n",
                 p, p->start, p->end, p->flags);
@@ -132,8 +132,8 @@ static int copy_vm(task_t *child, task_t *parent)
     if (vmm_copy_mapping(child, parent))
         return -1;
     
-    /* 复制VMSpace */
-    if (copy_vm_vmspace(child, parent))
+    /* 复制MEM_SPACEpace */
+    if (copy_vm_mem_space(child, parent))
         return -1;
     
     return 0;

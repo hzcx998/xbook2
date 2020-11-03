@@ -7,7 +7,7 @@
 #include <xbook/mdl.h>
 #include <xbook/clock.h>
 #include <string.h>
-#include <xbook/vmspace.h>
+#include <xbook/memspace.h>
 #include <sys/ioctl.h>
 #include <xbook/config.h>
 #include <xbook/virmem.h>
@@ -954,8 +954,8 @@ void *device_mmap(handle_t handle, size_t length, int flags)
             if (flags & IO_KERNEL)
                 mapaddr = memio_remap(ioreq->io_status.infomation, length);
             else
-                mapaddr = vmspace_mmap(0, ioreq->io_status.infomation, length, 
-                    PROT_USER | PROT_WRITE, VMS_MAP_SHARED | VMS_MAP_REMAP);
+                mapaddr = mem_space_mmap(0, ioreq->io_status.infomation, length, 
+                    PROT_USER | PROT_WRITE, MEM_SPACE_MAP_SHARED | MEM_SPACE_MAP_REMAP);
 
         }
         io_request_free((ioreq));

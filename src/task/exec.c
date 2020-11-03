@@ -2,7 +2,7 @@
 #include <string.h>
 #include <xbook/pthread.h>
 #include <xbook/srvcall.h>
-#include <xbook/vmspace.h>
+#include <xbook/memspace.h>
 #include <xbook/debug.h>
 #include <xbook/elf32.h>
 #include <xbook/schedule.h>

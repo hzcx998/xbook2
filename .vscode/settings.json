@@ -34,7 +34,7 @@
         "xbook.h": "c",
         "stdint.h": "c",
         "conio.h": "c",
-        "vmspace.h": "c",
+        "memspace.h": "c",
         "sharemem.h": "c",
         "shm.h": "c",
         "ipc.h": "c",

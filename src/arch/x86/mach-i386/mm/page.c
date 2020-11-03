@@ -9,7 +9,7 @@
 #include <string.h>
 #include <assert.h>
 #include <xbook/schedule.h>
-#include <xbook/vmspace.h>
+#include <xbook/memspace.h>
 
 void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
 {
@@ -356,13 +356,13 @@ static inline void do_vir_mem_fault(unsigned long addr)
     panic("do_vir_mem_fault: at %x not support now!\n", addr);
 }
 
-static void do_expand_stack(vmspace_t *space, unsigned long addr)
+static void do_expand_stack(mem_space_t *space, unsigned long addr)
 {
     addr &= PAGE_MASK;
 	space->start = addr;
 }
 
-static int do_protection_fault(vmspace_t *space, unsigned long addr, int write)
+static int do_protection_fault(mem_space_t *space, unsigned long addr, int write)
 {
 	/* 没有写标志，说明该段内存不支持内存写入，就直接返回吧 */
 	if (write) {
@@ -424,11 +424,11 @@ int page_do_fault(trap_frame_t *frame)
         return -1;
     }
     /* 故障地址在用户空间 */
-    vmspace_t *space = vmspace_find(cur->vmm, addr);
+    mem_space_t *space = mem_space_find(cur->vmm, addr);
     if (space == NULL) {    
         printk(KERN_EMERG "page_do_fault: user access user unknown space .\n");
         printk(KERN_EMERG "page fault addr:%x\n", addr);
-        vmspace_dump(cur->vmm);
+        mem_space_dump(cur->vmm);
         print_task();
         trigger_force(TRIGSYS, cur->pid);
         return -1;
@@ -436,8 +436,8 @@ int page_do_fault(trap_frame_t *frame)
     if (space->start > addr) { /* 故障地址在空间前，说明是栈向下拓展，那么尝试拓展栈。 */
         if (frame->error_code & PAGE_ERR_USER) {
             /* 可拓展栈：有栈标志，在可拓展限定内， */
-            if ((space->flags & VMS_MAP_STACK) &&
-                ((space->end - space->start) < MAX_VMS_STACK_SIZE) &&
+            if ((space->flags & MEM_SPACE_MAP_STACK) &&
+                ((space->end - space->start) < MAX_MEM_SPACE_STACK_SIZE) &&
                 (addr + 32 >= frame->esp)) {
                 do_expand_stack(space, addr);
             } else {

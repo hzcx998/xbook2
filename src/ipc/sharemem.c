@@ -3,7 +3,7 @@
 #include <xbook/debug.h>
 #include <string.h>
 #include <string.h>
-#include <xbook/vmspace.h>
+#include <xbook/memspace.h>
 #include <xbook/semaphore.h>
 #include <sys/ipc.h>
 
@@ -219,7 +219,7 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
     /* 现在已经找到了共享内存，需要将它映射到当前进程的空间 */
     if (shmaddr == NULL) {  /* 自动选择一个映射地址 */
         /* 获取一个未使用的虚拟地址 */
-        addr = vmspace_get_unmaped(cur->vmm, shm->npages * PAGE_SIZE);
+        addr = mem_space_get_unmaped(cur->vmm, shm->npages * PAGE_SIZE);
         if (addr == -1) /* 已经没有空闲的空间 */
             return (void *) -1;
 
@@ -229,7 +229,7 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
             return (void *) -1;
         
         /* 如果有空间和它相交，就返回错误 */
-        if (vmspace_find_intersection(cur->vmm, addr, addr + len))
+        if (mem_space_find_intersection(cur->vmm, addr, addr + len))
             return (void *) -1;
             
         /* 如果没有需要分配一个新的物理地址，并映射之 */
@@ -241,13 +241,13 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
 #if DEBUG_SHM == 1
         printk(KERN_DEBUG "%s: virtual addr:%x physical addr:%x\n", __func__, addr, shm->page_addr);
 #endif
-        unsigned long flags = VMS_MAP_FIXED | VMS_MAP_SHARED;
+        unsigned long flags = MEM_SPACE_MAP_FIXED | MEM_SPACE_MAP_SHARED;
         if (shmflg & IPC_REMAP) {
-            flags |= VMS_MAP_REMAP;
+            flags |= MEM_SPACE_MAP_REMAP;
         }
         /* 把虚拟地址和物理地址进行映射，物理地址是共享的。由于已经确切获取了一个地址，
         所以这里就用固定映射，因为是共享内存，所以使用共享的方式。 */
-        shmaddr = vmspace_mmap(addr, shm->page_addr, shm->npages * PAGE_SIZE,
+        shmaddr = mem_space_mmap(addr, shm->page_addr, shm->npages * PAGE_SIZE,
             PROT_USER | PROT_WRITE, flags);
     } else {    /* 把给定的虚拟地址映射成共享内存 */
         unsigned long vaddr;
@@ -305,7 +305,7 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
     else 
         addr = (unsigned long) shmaddr;
 
-    vmspace_t *sp = vmspace_find(cur->vmm, addr);
+    mem_space_t *sp = mem_space_find(cur->vmm, addr);
     if (sp == NULL) {/* 没有找到对应的空间 */
         printk(KERN_DEBUG "share_mem_unmap: not fond space\n");
         return -1;
@@ -322,7 +322,7 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
     /* 不是映射已经存在的内存区域才会取消映射 */
     if (!(shm->flags & SHARE_MEM_PRIVATE)) {
         /* 取消虚拟空间映射 */
-        retval = do_vmspace_unmap(cur->vmm, sp->start, sp->end - sp->start);
+        retval = do_mem_space_unmap(cur->vmm, sp->start, sp->end - sp->start);
     }
     if (retval != -1) {  /* 减少链接数 */
         if (shm) {
