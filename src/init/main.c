@@ -31,7 +31,7 @@ int kernel_main(void)
     msg_queue_init();
     sem_init();
     fifo_fifo();
-    init_syscall();
+    syscall_init();
     init_srvcall();
     init_ktime();
     init_tasks();

@@ -4,7 +4,7 @@ extern interrupt_handlers
 extern interrupt_do_irq		 
 extern softirq_handle_in_interrupt
 extern interrupt_do_trigger
-extern syscall_table
+extern syscalls
 
 [bits 32]
 [section .text]
@@ -90,7 +90,7 @@ syscall_handler:
    	push ebx			    ; 系统调用中第1个参数
     
 	;3 调用子功能处理函数
-   	call [syscall_table + eax*4]
+   	call [syscalls + eax*4]
    	add esp, 20
 
 	;4 将call调用后的返回值存入待当前内核栈中eax的位置
