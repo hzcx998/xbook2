@@ -57,7 +57,7 @@ PTHREAD线程库
 
 ## Windows环境搭建
 ```
-1.下载我提取的工具包：http://www.book-os.org/tools/BuildTools-v6.zip, 下载后配置解压目录环境变量到系统环境变量Path里面。
+1.下载我提取的工具包：http://www.book-os.org/tools/BuildTools-v7.zip, 下载后配置解压目录环境变量到系统环境变量Path里面。
 
 2.下载qemu最新版：https://www.qemu.org/ 下载后安装，配置安装目录环境变量到系统环境变量Path里面，或者下载我提取的版本：http://www.book-os.org/tools/Qemu-i386.rar，下载后配置解压目录环境变量到系统环境变量Path里面。
 ```
