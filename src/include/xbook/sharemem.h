@@ -34,7 +34,7 @@ int share_mem_put(int shmid);
 void *share_mem_map(int shmid, void *shmaddr, int shmflg);
 int share_mem_unmap(const void *shmaddr, int shmflg);
 
-void init_share_mem();
+void share_mem_init();
 int share_mem_grow(int shmid);
 share_mem_t *share_mem_find_by_addr(addr_t addr);
 

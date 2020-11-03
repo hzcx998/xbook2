@@ -27,7 +27,7 @@ int kernel_main(void)
     vir_mem_init();
     irq_description_init();
     softirq_init();
-    init_share_mem();
+    share_mem_init();
     init_msg_queue();
     init_sem();
     init_fifo();
