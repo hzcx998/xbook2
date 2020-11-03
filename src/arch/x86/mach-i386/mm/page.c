@@ -428,7 +428,7 @@ int page_do_fault(trap_frame_t *frame)
     if (space == NULL) {    
         printk(KERN_EMERG "page_do_fault: user access user unknown space .\n");
         printk(KERN_EMERG "page fault addr:%x\n", addr);
-        dump_vmspace(cur->vmm);
+        vmspace_dump(cur->vmm);
         print_task();
         trigger_force(TRIGSYS, cur->pid);
         return -1;

@@ -135,7 +135,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 
     /* 取消空间映射 */
     // vmm_unmap_space(cur->vmm);
-    vmm_unmap_space_maparea(cur->vmm);
+    vmm_unmap_the_mapping_space(cur->vmm);
     /* 释放虚拟空间地址管理，后面映射时重新加载镜像 */
     vmm_release_space(cur->vmm);
 

@@ -5,11 +5,10 @@
 
 // #define DEBUG_VMSPACE
 
-void dump_vmspace(vmm_t *vmm)
+void vmspace_dump(vmm_t *vmm)
 {
     if (vmm == NULL)
         return;
-    
     vmspace_t *space = vmm->vmspace_head;
     while (space != NULL) {
         printk(KERN_INFO "space: start=%x end=%x prot=%x flags:%x\n", 

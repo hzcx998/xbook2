@@ -42,7 +42,7 @@ typedef struct vmspace {
 #define vmspace_free    mem_free
 
 
-void dump_vmspace(vmm_t *vmm);
+void vmspace_dump(vmm_t *vmm);
 void vmspace_insert(vmm_t *vmm, vmspace_t *space);
 int do_vmspace_unmap(vmm_t *vmm, unsigned long addr, unsigned long len);
 int do_vmspace_map(vmm_t *vmm, unsigned long addr, unsigned long paddr, 

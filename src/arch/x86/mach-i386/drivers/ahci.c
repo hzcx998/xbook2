@@ -674,7 +674,7 @@ int ahci_device_identify_ahci(struct hba_memory *abar,
 	dma.p.size = 0x1000;
 	dma.p.alignment = 0x1000;
 	dma.flags = DMA_REGION_SPECIAL;
-	alloc_dma_buffer(&dma);
+	dma_alloc_buffer(&dma);
 	ahci_write_prdt(abar, port, dev, 0, 0, 512, (addr_t)dma.v);
 	ahci_initialize_command_header(abar,
 			port, dev, 0, 0, 0, 1, fis_len);
@@ -689,7 +689,7 @@ int ahci_device_identify_ahci(struct hba_memory *abar,
 		printk(KERN_ERR "[ahci]: device %d: identify 1: port hung\n", dev->idx);
 		printk(KERN_ERR "[ahci]: device %d: identify 1: tfd=%x, serr=%x\n",
 				dev->idx, port->task_file_data, port->sata_error);
-		free_dma_buffer(&dma);
+		dma_free_buffer(&dma);
 		return 0;
 	}
 
@@ -711,12 +711,12 @@ int ahci_device_identify_ahci(struct hba_memory *abar,
 		printk(KERN_ERR "[ahci]: device %d: identify 2: port hung\n", dev->idx);
 		printk(KERN_ERR "[ahci]: device %d: identify 2: tfd=%x, serr=%x\n",
 				dev->idx, port->task_file_data, port->sata_error);
-		free_dma_buffer(&dma);
+		dma_free_buffer(&dma);
 		return 0;
 	}
 	
 	memcpy(&dev->identify, (void *)dma.v, sizeof(struct ata_identify));
-	free_dma_buffer(&dma);
+	dma_free_buffer(&dma);
     #ifdef DEBUG_AHCI
 	printk(KERN_INFO "[ahci]: device %d: num sectors=%d: %x, %x\n", dev->idx,
 			dev->identify.lba48_addressable_sectors, dev->identify.ss_2);
@@ -815,8 +815,8 @@ int ahci_initialize_device(struct hba_memory *abar, device_extension_t *dev)
 
 	dev->dma_clb.flags = DMA_REGION_SPECIAL;
 	dev->dma_fis.flags = DMA_REGION_SPECIAL;
-	alloc_dma_buffer(&dev->dma_clb);
-	alloc_dma_buffer(&dev->dma_fis);
+	dma_alloc_buffer(&dev->dma_clb);
+	dma_alloc_buffer(&dev->dma_fis);
 
 	dev->clb_virt = (void *)dev->dma_clb.v;
 	dev->fis_virt = (void *)dev->dma_fis.v;
@@ -828,7 +828,7 @@ int ahci_initialize_device(struct hba_memory *abar, device_extension_t *dev)
 	for(i=0;i<HBA_COMMAND_HEADER_NUM;i++) {
 		dev->ch_dmas[i].p.size = 0x1000;
 		dev->ch_dmas[i].p.alignment = 0x1000;
-		alloc_dma_buffer(&dev->ch_dmas[i]);
+		dma_alloc_buffer(&dev->ch_dmas[i]);
 		dev->ch[i] = (void *)dev->ch_dmas[i].v;
 		memset(h, 0, sizeof(*h));
 		h->command_table_base_l = low32(dev->ch_dmas[i].p.address);
@@ -970,7 +970,7 @@ int ahci_rw_multiple_do(int rw, int min, uint64_t blk, unsigned char *out_buffer
 	dma.p.size = 0x1000 * num_pages;
 	dma.p.alignment = 0x1000;
 	dma.flags = DMA_REGION_SPECIAL;
-	alloc_dma_buffer(&dma);
+	dma_alloc_buffer(&dma);
 	int num_read_blocks = count;
 	struct hba_port *port = (struct hba_port *)&hba_mem->ports[dev->idx];
 	if(rw == 1)
@@ -986,7 +986,7 @@ int ahci_rw_multiple_do(int rw, int min, uint64_t blk, unsigned char *out_buffer
 		memcpy(out_buffer, (void *)dma.v, length);
 	}
 		
-	free_dma_buffer(&dma);
+	dma_free_buffer(&dma);
 	return num_read_blocks * ATA_SECTOR_SIZE;
 }
 
@@ -1164,11 +1164,11 @@ static iostatus_t ahci_exit(driver_object_t *driver)
     list_for_each_owner_safe (devobj, next, &driver->device_list, list) {
         ext = devobj->device_extension;
         
-        free_dma_buffer(&(ext->dma_clb));
-        free_dma_buffer(&(ext->dma_fis));
+        dma_free_buffer(&(ext->dma_clb));
+        dma_free_buffer(&(ext->dma_fis));
         int j;
         for(j = 0; j < HBA_COMMAND_HEADER_NUM; j++)
-            free_dma_buffer(&(ext->ch_dmas[j]));
+            dma_free_buffer(&(ext->ch_dmas[j]));
 
         mem_free(ext);
         io_delete_device(devobj);   /* 删除每一个设备 */

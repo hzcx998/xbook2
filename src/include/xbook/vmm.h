@@ -36,8 +36,8 @@ void vmm_init(vmm_t *vmm);
 int vmm_exit(vmm_t *vmm);
 int vmm_release_space(vmm_t *vmm);
 int vmm_unmap_space(vmm_t *vmm);
-int vmm_unmap_space_maparea(vmm_t *vmm);
-void dump_vmm(vmm_t *vmm);
+int vmm_unmap_the_mapping_space(vmm_t *vmm);
+void vmm_dump(vmm_t *vmm);
 
 void vmm_active(vmm_t *vmm);
 

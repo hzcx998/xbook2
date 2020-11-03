@@ -4,7 +4,7 @@
 #include <xbook/dma.h>
 #include <math.h>
 
-int alloc_dma_buffer(struct dma_region *d)
+int dma_alloc_buffer(struct dma_region *d)
 {
     /* 参数检测 */
     if (!d->p.size)
@@ -38,7 +38,7 @@ int alloc_dma_buffer(struct dma_region *d)
 	return 0;
 }
 
-int free_dma_buffer(struct dma_region *d)
+int dma_free_buffer(struct dma_region *d)
 {
     /* 参数检测 */
     if (!d->p.size || !d->p.address || !d->v)

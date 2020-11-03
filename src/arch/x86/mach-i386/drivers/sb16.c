@@ -323,7 +323,7 @@ static iostatus_t sb16_enter(driver_object_t *driver)
         extension->dma_region[i].p.size = PAGE_SIZE * 16; // 32 kb
         extension->dma_region[i].p.alignment = 0x1000;
         extension->dma_region[i].flags = DMA_REGION_SPECIAL; // spacil device
-        if (alloc_dma_buffer(&extension->dma_region[i]) < 0)
+        if (dma_alloc_buffer(&extension->dma_region[i]) < 0)
         {
             printk(KERN_ERR "sb16_enter: alloc dma buffer failed!\n");
             io_delete_device(devobj);
@@ -364,7 +364,7 @@ static iostatus_t sb16_exit(driver_object_t *driver)
         int i;
         for (i = 0; i < DMA_COUNT; i++)
         {
-            free_dma_buffer(&extension->dma_region[i]);
+            dma_free_buffer(&extension->dma_region[i]);
         }
         io_delete_device(devobj); /* 删除每一个设备 */
     }

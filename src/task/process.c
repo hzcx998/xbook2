@@ -304,7 +304,7 @@ void proc_heap_init(task_t *task)
     return;
 #ifdef DEBUG_PROC
     printk(KERN_DEBUG "task=%d dump vmspace.\n", task->pid);
-    dump_vmspace(task->vmm);
+    vmspace_dump(task->vmm);
 
     printk(KERN_DEBUG "data segment end=%x end2=%d.\n", 
         task->vmm->data_end, PAGE_ALIGN(task->vmm->data_end));
