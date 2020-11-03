@@ -9,7 +9,7 @@
 #include <xbook/schedule.h>
 #include <xbook/waitqueue.h>
 #include <arch/io.h>
-#include <arch/interrupt.h>
+#include <xbook/hardirq.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
 
@@ -154,7 +154,7 @@ void sb16_request(device_extension_t *extension)
  * @irq: 中断号
  * @data: 中断的数据
  */
-static int sb16_handler(unsigned long irq, unsigned long data)
+static int sb16_handler(irqno_t irq, void *data)
 {
     device_extension_t *extension = (device_extension_t *)data;
     #ifdef DEBUG_SB16
@@ -347,7 +347,7 @@ static iostatus_t sb16_enter(driver_object_t *driver)
     sb16_set_sample_rate(sample_rate);
 
     /* 注册时钟中断并打开中断，因为设定硬件过程中可能产生中断，所以要提前打开 */
-    irq_register(IRQ5, sb16_handler, IRQF_DISABLED, "IRQ5", DRV_NAME, (unsigned long)extension);
+    irq_register(IRQ5, sb16_handler, IRQF_DISABLED, "IRQ5", DRV_NAME, (void *) extension);
 
     return status;
 }

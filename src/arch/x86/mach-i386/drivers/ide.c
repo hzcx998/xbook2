@@ -8,7 +8,7 @@
 #include <string.h>
 #include <xbook/clock.h>
 #include <arch/io.h>
-#include <arch/interrupt.h>
+#include <xbook/hardirq.h>
 #include <arch/cpu.h>
 #include <xbook/memalloc.h>
 #include <sys/ioctl.h>
@@ -1198,7 +1198,7 @@ iostatus_t ide_write(device_object_t *device, io_request_t *ioreq)
     return status;
 }
 
-static int ide_handler(unsigned long irq, unsigned long data)
+static int ide_handler(irqno_t irq, void *data)
 {
     struct ide_channel *channel = (struct ide_channel *)data;
 	device_extension_t *ext = channel->ext + channel->who;
@@ -1244,7 +1244,7 @@ static int ide_probe(device_extension_t *ext, int id)
 
     if (diskno == 0) {  /* 通道上第一个磁盘的时候才注册中断 */
         /* 注册中断 */
-        irq_register(channel->irqno, ide_handler, IRQF_DISABLED, "harddisk", DEV_NAME, (unsigned long)channel);
+        irq_register(channel->irqno, ide_handler, IRQF_DISABLED, "harddisk", DEV_NAME, (void *) channel);
     }
     
 #ifdef DEBUG_DRV

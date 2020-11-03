@@ -678,7 +678,7 @@ static int io_complete_check(io_request_t *ioreq, iostatus_t status)
 void io_device_queue_cleanup(device_queue_t *queue)
 {
     device_queue_entry_t *entry, *next;
-    unsigned long irqflags;
+    irqno_t irqflags;
     spin_lock_irqsave(&queue->lock, irqflags);
     /* 由于要删除队列成员，所以需要用safe版本 */
     list_for_each_owner_safe (entry, next, &queue->list_head, list) {
@@ -690,7 +690,7 @@ void io_device_queue_cleanup(device_queue_t *queue)
 
 iostatus_t io_device_queue_append(device_queue_t *queue, unsigned char *buf, int len)
 {
-    unsigned long irqflags;
+    irqno_t irqflags;
     spin_lock_irqsave(&queue->lock, irqflags);
     if (queue->entry_count > DEVICE_QUEUE_ENTRY_NR) { /* 超过队列项数，就先丢弃数据包 */
 #if DEBUG_LOCLA == 1
@@ -721,7 +721,7 @@ iostatus_t io_device_queue_append(device_queue_t *queue, unsigned char *buf, int
 
 int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen, int flags)
 {
-    unsigned long irqflags;
+    irqno_t irqflags;
 
     spin_lock_irqsave(&queue->lock, irqflags);
     if (!queue->entry_count) {  /* 没有数据包 */

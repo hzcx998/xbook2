@@ -8,7 +8,7 @@
 #include <xbook/spinlock.h>
 #include <math.h>
 #include <arch/io.h>
-#include <arch/interrupt.h>
+#include <xbook/hardirq.h>
 #include <sys/ioctl.h>
 
 #define DRV_NAME "input-keyboard"
@@ -957,7 +957,7 @@ iostatus_t keyboard_close(device_object_t *device, io_request_t *ioreq)
  * @irq: 中断号
  * @data: 中断的数据
  */
-static int keyboard_handler(unsigned long irq, unsigned long data)
+static int keyboard_handler(irqno_t irq, void *data)
 {
     device_extension_t *ext = (device_extension_t *) data;
 	unsigned char scan_code = in8(KBC_READ_DATA); /* 先从硬件获取按键数据 */
@@ -1126,7 +1126,7 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
 	out8(KBC_WRITE_DATA, KBC_CONFIG);
 
     /* 注册时钟中断并打开中断，因为设定硬件过程中可能产生中断，所以要提前打开 */	
-	irq_register(devext->irq, keyboard_handler, IRQF_DISABLED, "IRQ1", DRV_NAME, (uint32_t)devext);
+	irq_register(devext->irq, keyboard_handler, IRQF_DISABLED, "IRQ1", DRV_NAME, (void *) devext);
     
     /* 启动一个内核线程来处理数据 */
     kthread_start("kbd", TASK_PRIO_RT, kbd_thread, devext);

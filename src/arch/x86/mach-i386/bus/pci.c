@@ -198,7 +198,7 @@ static void pci_scan_device(unsigned char bus, unsigned char device, unsigned ch
     
     val = pci_read_config(bus, device, function, PCI_MAX_LNT_MIN_GNT_IRQ_PIN_IRQ_LINE);
     if ((val & 0xff) > 0 && (val & 0xff) < 32) {
-        unsigned int irq = val & 0xff;
+        irqno_t irq = val & 0xff;
         pci_dev->irq_line = irq;
         pci_dev->irq_pin = (val >> 8)& 0xff;
     }

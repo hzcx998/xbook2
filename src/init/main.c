@@ -1,5 +1,6 @@
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
+#include <xbook/hardirq.h>
 #include <xbook/softirq.h>
 #include <xbook/clock.h>
 #include <xbook/virmem.h>

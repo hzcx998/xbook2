@@ -39,7 +39,7 @@ int sys_waitque_create()
     mutex_lock(&waitque_table_lock);
 #else
 
-    unsigned long irqflags;
+    irqno_t irqflags;
     spin_lock_irqsave(&waitque_table_lock, irqflags);
 #endif    
     for (i = 0; i < WAITQUE_NR; i++) {
@@ -84,7 +84,7 @@ int sys_waitque_destroy(int handle)
     #ifdef USE_MUTEX_LOCK
     mutex_lock(&waitque_table_lock);
     #else
-    unsigned long irqflags;
+    irqno_t irqflags;
     spin_lock_irqsave(&waitque_table_lock, irqflags);
     #endif   
     waitque_t *waitque = &waitque_table[handle];

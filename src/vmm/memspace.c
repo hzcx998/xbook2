@@ -3,7 +3,7 @@
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
 
-// #define DEBUG_MEM_SPACEPACE
+// #define DEBUG_MEM_SPACE
 
 void mem_space_dump(vmm_t *vmm)
 {
@@ -207,7 +207,7 @@ unsigned long sys_mem_space_expend_heap(unsigned long heap)
     unsigned long ret;
     unsigned long old_heap, new_heap;
     vmm_t *vmm = current_task->vmm;
-#ifdef DEBUG_MEM_SPACEPACE    
+#ifdef DEBUG_MEM_SPACE    
     printk(KERN_DEBUG "%s: task %s pid %d vmm heap start %x end %x new %x\n", 
         __func__, current_task->name, current_task->pid, vmm->heap_start, vmm->heap_end, heap);
 #endif
@@ -236,7 +236,7 @@ unsigned long sys_mem_space_expend_heap(unsigned long heap)
     if ((find = mem_space_find_intersection(vmm, old_heap, new_heap + PAGE_SIZE))) {
         printk(KERN_ERR "%s: space intersection! old=%x, new=%x, end=%x\n",
             __func__, old_heap, new_heap, new_heap + PAGE_SIZE);
-#ifdef DEBUG_MEM_SPACEPACE   
+#ifdef DEBUG_MEM_SPACE   
         printk(KERN_ERR "%s: find: start=%x, end=%x\n",
             __func__, find->start, find->end);
 
@@ -250,7 +250,7 @@ unsigned long sys_mem_space_expend_heap(unsigned long heap)
         goto the_end;
     }
 set_heap:
-#ifdef DEBUG_MEM_SPACEPACE   
+#ifdef DEBUG_MEM_SPACE   
     printk(KERN_DEBUG "sys_mem_space_expend_heap: set new heap %x old is %x\n",
         heap, vmm->heap_end);
 #endif

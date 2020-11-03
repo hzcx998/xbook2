@@ -7,7 +7,7 @@
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 #include <xbook/timer.h>
-#include <arch/interrupt.h>
+#include <xbook/hardirq.h>
 #include <xbook/ktime.h>
 
 volatile clock_t systicks;
@@ -56,7 +56,7 @@ void sched_softirq_handler(softirq_action_t *action)
 /**
  * clock_handler - 时钟中断处理函数
  */
-int clock_handler(unsigned long irq, unsigned long data)
+int clock_handler(irqno_t irq, void *data)
 {
     /* 改变ticks计数 */
 	systicks++;
@@ -121,7 +121,7 @@ void init_clock()
 	/* 注册定时器软中断处理 */
 	build_softirq(SCHED_SOFTIRQ, sched_softirq_handler);
 	/* 注册时钟中断并打开中断 */	
-	if (irq_register(IRQ0_CLOCK, &clock_handler, IRQF_DISABLED, "clockirq", "kclock", 0))
+	if (irq_register(IRQ0_CLOCK, clock_handler, IRQF_DISABLED, "clockirq", "kclock", NULL))
         printk("register failed!\n");
 
     printk(KERN_INFO "[clock] init done\n");

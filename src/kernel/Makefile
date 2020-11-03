@@ -1,4 +1,4 @@
-SRC	+= interrupt.c
+SRC	+= hardirq.c
 SRC	+= softirq.c
 SRC	+= clock.c
 SRC	+= rawblock.c

@@ -4,6 +4,7 @@
 #include "atomic.h"
 #include "registers.h"
 
+
 void interrupt_disable(void);
 void interrupt_enable(void);
 
@@ -130,48 +131,5 @@ enum {
     IRQ15,
     NR_IRQS
 };
-
-#define IRQF_DISABLED       0x01
-#define IRQF_SHARED         0x02
-#define IRQF_TIMER          0x03
-
-typedef struct {
-    void (*enable)(unsigned int irq);
-    void (*disable)(unsigned int irq);
-    unsigned int (*install)(unsigned int irq, void *arg);
-    void (*uninstall)(unsigned int irq);
-    void (*ack)(unsigned int irq);
-} interrupt_controller_t;
-
-extern interrupt_controller_t interrupt_controller;
-
-#define irq_enable(n) interrupt_controller.enable(n)
-#define irq_disable(n) interrupt_controller.disable(n)
-
-typedef struct irq_action {
-    unsigned long data;
-    int (*handler)(unsigned long, unsigned long);
-    unsigned long flags;
-    struct irq_action *next;
-    char *name;
-} irq_action_t;
-
-typedef struct irq_description {
-    interrupt_controller_t *controller;
-    struct irq_action *action;
-    unsigned long flags;
-    atomic_t device_count;
-    char *irqname;
-} irq_description_t;
-
-int irq_register(unsigned long irq,
-    int (*handler)(unsigned long, unsigned long), 
-    unsigned long flags,
-    char *irqname,
-    char *devname,
-    unsigned long data);
-int irq_unregister(unsigned long irq, void *data);
-int irq_handle(unsigned long irq, trap_frame_t *frame);
-void irq_description_init();
 
 #endif  /* _X86_INTERRUPT_H */

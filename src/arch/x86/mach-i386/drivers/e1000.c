@@ -10,7 +10,7 @@
 #include <xbook/waitqueue.h>
 #include <xbook/memalloc.h>
 #include <arch/io.h>
-#include <arch/interrupt.h>
+#include <xbook/hardirq.h>
 #include <arch/pci.h>
 #include <arch/atomic.h>
 #include <arch/cpu.h>
@@ -176,7 +176,7 @@ static void e1000_leave_82542_rst(e1000_extension_t* ext);
 static void e1000_clean_tx_ring(e1000_extension_t* ext);
 static void e1000_clean_rx_ring(e1000_extension_t* ext);
 static void e1000_alloc_rx_buffers(e1000_extension_t* ext);
-static int e1000_intr(unsigned long irq, unsigned long data);
+static int e1000_intr(irqno_t irq, void *data);
 static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext);
 #ifdef CONFIG_E1000_NAPI
 static int e1000_clean(struct net_device *netdev, int *budget);
@@ -764,7 +764,7 @@ iostatus_t e1000_up(e1000_extension_t* ext)
     e1000_configure_rx(ext);
     e1000_alloc_rx_buffers(ext);
 
-    if((err = irq_register(ext->irq, e1000_intr, IRQF_SHARED, "IRQ-Network", DEV_NAME, (unsigned int)ext))) {
+    if((err = irq_register(ext->irq, e1000_intr, IRQF_SHARED, "IRQ-Network", DEV_NAME, (void *) ext))) {
         return err;
     }
 
@@ -1387,7 +1387,7 @@ static void e1000_setup_rctl(e1000_extension_t* ext)
  * @data: pointer to a network interface device structure
  **/
 
-static int e1000_intr(unsigned long irq, unsigned long data)
+static int e1000_intr(irqno_t irq, void *data)
 {
     e1000_extension_t* ext = (e1000_extension_t*)data;
 
@@ -1398,7 +1398,7 @@ static int e1000_intr(unsigned long irq, unsigned long data)
 #endif
 
     if(unlikely(!icr)) {
-        return -1;
+        return IRQ_NEXTONE;
     }
 
     if(unlikely(icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC))) {
@@ -1413,7 +1413,7 @@ static int e1000_intr(unsigned long irq, unsigned long data)
         }
     }
 
-    return 0;
+    return IRQ_HANDLED;
 }
 
 /**

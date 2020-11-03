@@ -5,7 +5,7 @@
 #include <xbook/debug.h>
 #include <xbook/driver.h>
 #include <arch/io.h>
-#include <arch/interrupt.h>
+#include <xbook/hardirq.h>
 
 #define DRV_NAME "input-mouse"
 #define DRV_VERSION "0.1"
@@ -234,7 +234,7 @@ static void ps2mouse_commit_packet(device_extension_t *devext) {
  * @irq: 中断号
  * @data: 中断的数据
  */
-static int mouse_handler(unsigned long irq, unsigned long data)
+static int mouse_handler(irqno_t irq, void *data)
 {
     device_extension_t *devext = (device_extension_t *) data;
 	/* 先从硬件获取按键数据 */
@@ -368,7 +368,7 @@ static void ps2mouse_initialize_device(device_extension_t *devext)
         printk(KERN_INFO "ps2mouse: No mouse wheel detected!\n");
     }
 
-	irq_register(devext->irq, mouse_handler, IRQF_DISABLED, "IRQ12_MOUSE", DRV_NAME, (unsigned long )devext);
+	irq_register(devext->irq, mouse_handler, IRQF_DISABLED, "IRQ12_MOUSE", DRV_NAME, (void *) devext);
 }
 
 static void ps2mouse_expect_ack()

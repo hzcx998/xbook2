@@ -8,7 +8,7 @@
 #include <string.h>
 #include <xbook/clock.h>
 #include <arch/io.h>
-#include <arch/interrupt.h>
+#include <xbook/hardirq.h>
 #include <arch/cpu.h>
 #include <arch/memio.h>
 #include <arch/memory.h>
@@ -1110,8 +1110,9 @@ iostatus_t ahci_write(device_object_t *device, io_request_t *ioreq)
  * @irq: 中断号
  * @data: 中断的数据
  */
-static int ahci_handler(unsigned long irq, unsigned long data)
+static int ahci_handler(irqno_t irq, void *data)
 {
+    int intrhandled = IRQ_NEXTONE;
     int i;
 	for(i=0;i<32;i++) {
 		if(hba_mem->interrupt_status & (1 << i)) {
@@ -1119,9 +1120,10 @@ static int ahci_handler(unsigned long irq, unsigned long data)
 			hba_mem->ports[i].interrupt_status = ~0;
 			hba_mem->interrupt_status = (1 << i);
 			ahci_flush_commands((struct hba_port *)&hba_mem->ports[i]);
+            intrhandled = IRQ_HANDLED;
 		}
 	}
-    return 0;
+    return intrhandled;
 }
 
 static iostatus_t ahci_enter(driver_object_t *driver)
@@ -1134,7 +1136,7 @@ static iostatus_t ahci_enter(driver_object_t *driver)
         return status;
 	}
     
-    if (irq_register(ahci_int, ahci_handler, IRQF_SHARED, "ahci", "ahci driver", (addr_t)driver) < 0) {
+    if (irq_register(ahci_int, ahci_handler, IRQF_SHARED, "ahci", "ahci driver", (void *)driver) < 0) {
 		printk(KERN_ERR "[ahci]: register interrupt failed!\n");
 		/* 需要取消内存映射以及关闭ahci总线 */
         status = IO_FAILED;

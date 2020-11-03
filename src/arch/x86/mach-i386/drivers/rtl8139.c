@@ -116,7 +116,7 @@
 #include <xbook/waitqueue.h>
 #include <xbook/memalloc.h>
 #include <arch/io.h>
-#include <arch/interrupt.h>
+#include <xbook/hardirq.h>
 #include <arch/pci.h>
 #include <arch/atomic.h>
 #include <arch/cpu.h>
@@ -529,7 +529,7 @@ typedef struct _device_extension {
 
     unsigned int io_addr;
     int drv_flags;           /* 驱动标志 */
-    unsigned int irq;
+    irqno_t irq;
     unsigned char mac_addr[6];
 	flags_t flags;
 	pci_device_t *pci_device;
@@ -1130,7 +1130,7 @@ out:
  * @irq: 中断号
  * @data: 中断的数据
  */
-static int rtl8139_handler(unsigned long irq, unsigned long data)
+static int rtl8139_handler(irqno_t irq, void *data)
 {
     //struct Task *cur = CurrentTask();
     //printk(KERN_DEBUG "in task %s.\n", cur->name);
@@ -1151,7 +1151,8 @@ static int rtl8139_handler(unsigned long irq, unsigned long data)
     /* 如果一个状态位也没有，就退出 */
     if (unlikely((status & rtl8139_intr_mask) == 0)) {
         printk(KERN_DEBUG "[rtl8139]: no interrupt occur!\n");
-        goto out;
+        spin_unlock(&ext->lock);
+        return IRQ_NEXTONE;
     }
     //printk(KERN_DEBUG "[rtl8139]: int status:%x\n", status);
 
@@ -1197,14 +1198,13 @@ static int rtl8139_handler(unsigned long irq, unsigned long data)
 		if (status & TX_ERR)
 			out16(ext->io_addr + INTR_STATUS, TX_ERR);
     }
-
-out:
+    
     spin_unlock(&ext->lock);
 #ifdef DEBUG_DRV
     printk(KERN_DEBUG "exiting interrupt, intr_status=%x\n",
 		   in16(ext->io_addr + INTR_STATUS));
 #endif    
-    return 0;
+    return IRQ_HANDLED;
 }
 
 static void rtl8139_chip_reset(device_extension_t *ext)
@@ -1541,7 +1541,7 @@ static iostatus_t rtl8139_open(device_object_t *device, io_request_t *ioreq)
     /* 设置硬件信息 */
     rtl8139_hardware_start(ext);
 
-    irq_register(ext->irq, rtl8139_handler, IRQF_SHARED, "IRQ-Network", DEV_NAME, (unsigned int)ext);
+    irq_register(ext->irq, rtl8139_handler, IRQF_SHARED, "IRQ-Network", DEV_NAME, (void *) ext);
     
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = 0;
