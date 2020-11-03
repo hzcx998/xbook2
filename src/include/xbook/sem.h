@@ -29,7 +29,7 @@ int sem_put(int semid);
 int sem_down(int semid, int semflg);
 int sem_up(int semid);
 
-void init_sem();
+void sem_init();
 
 int sys_sem_get(char *name, int value, int semflg);
 int sys_sem_put(int semid);

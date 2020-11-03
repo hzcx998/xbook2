@@ -43,7 +43,7 @@ int msg_queue_put(int msgid);
 int msg_queue_send(int msgid, void *msgbuf, size_t size, int msgflg);
 int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgflg);
 
-void init_msg_queue();
+void msg_queue_init();
 
 int sys_msgque_get(char *name, unsigned long flags);
 int sys_msgque_put(int msgid);

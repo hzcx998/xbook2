@@ -28,9 +28,9 @@ int kernel_main(void)
     irq_description_init();
     softirq_init();
     share_mem_init();
-    init_msg_queue();
-    init_sem();
-    init_fifo();
+    msg_queue_init();
+    sem_init();
+    fifo_fifo();
     init_syscall();
     init_srvcall();
     init_ktime();

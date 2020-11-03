@@ -38,6 +38,6 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg);
 int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg);
 int fifo_ctl(int fifoid, unsigned int cmd, unsigned long arg);
 int fifo_grow(int fifoid);
-void init_fifo();
+void fifo_fifo();
 
 #endif   /* _XBOOK_FIFO_H */
