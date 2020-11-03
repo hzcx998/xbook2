@@ -61,7 +61,7 @@ irq_entry%1:
     call interrupt_do_irq
     add esp, 4
     
-    call interrupt_do_softirq
+    call softirq_handle_in_interrupt
 
     push esp
     call interrupt_do_trigger

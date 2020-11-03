@@ -63,10 +63,10 @@ int clock_handler(irqno_t irq, void *data)
     timer_ticks++;
     
 	/* 激活定时器软中断 */
-	active_softirq(TIMER_SOFTIRQ);
+	softirq_active(TIMER_SOFTIRQ);
 
 	/* 激活调度器软中断 */
-	active_softirq(SCHED_SOFTIRQ);
+	softirq_active(SCHED_SOFTIRQ);
     return 0;
 }
 
@@ -117,9 +117,9 @@ void init_clock()
     clock_hardware_init();
 
 	/* 注册定时器软中断处理 */
-	build_softirq(TIMER_SOFTIRQ, timer_softirq_handler);
+	softirq_build(TIMER_SOFTIRQ, timer_softirq_handler);
 	/* 注册定时器软中断处理 */
-	build_softirq(SCHED_SOFTIRQ, sched_softirq_handler);
+	softirq_build(SCHED_SOFTIRQ, sched_softirq_handler);
 	/* 注册时钟中断并打开中断 */	
 	if (irq_register(IRQ0_CLOCK, clock_handler, IRQF_DISABLED, "clockirq", "kclock", NULL))
         printk("register failed!\n");

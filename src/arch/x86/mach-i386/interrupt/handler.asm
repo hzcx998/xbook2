@@ -2,7 +2,7 @@
 
 extern interrupt_handlers		 
 extern interrupt_do_irq		 
-extern interrupt_do_softirq
+extern softirq_handle_in_interrupt
 extern interrupt_do_trigger
 extern syscall_table
 
