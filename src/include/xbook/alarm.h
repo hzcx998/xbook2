@@ -16,6 +16,6 @@ static inline void alarm_init(alarm_t *alarm)
 }
 
 unsigned long sys_alarm(unsigned long second);
-void update_alarms();
+void alarm_update_ticks();
 
 #endif   /* _XBOOK_ALARM_H */

@@ -1447,7 +1447,7 @@ void init_driver_arch()
     printk(KERN_DEBUG "read disk:%d\n", device_read(ide0, disk_buf, 256 * 1024, 0));
     printk(KERN_DEBUG "write disk:%d\n", device_write(ide0, disk_buf, 256 * 1024, 0));
     
-    dump_buffer(disk_buf, 32, 1);    
+    log_dump_buffer(disk_buf, 32, 1);    
     /*
     io_uninstall_driver("uart-serial");
     io_uninstall_driver("vga-console");

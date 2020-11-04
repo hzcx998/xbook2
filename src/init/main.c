@@ -32,8 +32,8 @@ int kernel_main(void)
     syscall_init();
     walltime_init();
     init_tasks();
-    init_clock();
-    init_timer_system();
+    clock_init();
+    timers_init();
     interrupt_enable();
     init_driver_arch();
     init_fs();

@@ -81,7 +81,7 @@ int sys_gui_modify_timer(uint32_t timer, uint32_t msec)
     if (gtmr == NULL)
         return -1;
     clock_t ticks = MSEC_TO_TICKS(msec);
-    timer_mod(&gtmr->timer, ticks);
+    timer_modify(&gtmr->timer, ticks);
     if (!timer_alive(&gtmr->timer)) { /* 修改后，如果没在定时器链表中，就添加进去 */
         timer_add(&gtmr->timer);
     }

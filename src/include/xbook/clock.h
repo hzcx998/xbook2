@@ -23,7 +23,7 @@ extern volatile clock_t timer_ticks;    // timer ticks
 #define time_after_eq(unknown, known) ((long)(known) - (long)(unknown) <= 0)
 #define time_before_eq(unknown, known) ((long)(unknown) - (long)(known) <= 0)
 
-void init_clock();
+void clock_init();
 void clock_msleep(unsigned long msecond);
 
 clock_t sys_get_ticks();

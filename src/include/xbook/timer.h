@@ -38,13 +38,13 @@ void timer_init(
 
 void timer_add(timer_t *timer);
 void timer_del(timer_t *timer);
-void timer_mod(timer_t *timer, unsigned long timeout);
+void timer_modify(timer_t *timer, unsigned long timeout);
 int timer_cancel(timer_t *timer);
 int timer_alive(timer_t *timer);
 
-void update_timers();
+void timer_update_ticks();
 long sys_usleep(struct timeval *inv, struct timeval *outv);
 
-int init_timer_system();
+int timers_init();
 
 #endif   /* _XBOOK_TIMER_H */

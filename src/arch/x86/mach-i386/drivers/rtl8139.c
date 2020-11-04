@@ -1623,7 +1623,7 @@ static iostatus_t rtl8139_read(device_object_t *device, io_request_t *ioreq)
 #ifdef DEBUG_DRV    
     if (len > 0) {
         buf = (uint8_t *)ioreq->user_buffer; 
-        dump_buffer(buf, 32, 1);
+        log_dump_buffer(buf, 32, 1);
     }
 #endif
     ioreq->io_status.status = status;

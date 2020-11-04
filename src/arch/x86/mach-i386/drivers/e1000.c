@@ -768,7 +768,7 @@ iostatus_t e1000_up(e1000_extension_t* ext)
         return err;
     }
 
-    timer_mod(&ext->watchdog_timer, systicks);
+    timer_modify(&ext->watchdog_timer, systicks);
     e1000_irq_enable(ext);
 
     return IO_SUCCESS;
@@ -1403,7 +1403,7 @@ static int e1000_intr(irqno_t irq, void *data)
 
     if(unlikely(icr & (E1000_ICR_RXSEQ | E1000_ICR_LSC))) {
         hw->get_link_status = 1;
-        timer_mod(&ext->watchdog_timer, systicks);
+        timer_modify(&ext->watchdog_timer, systicks);
     }
 
     for(i=0; i<E1000_MAX_INTR; i++) {
