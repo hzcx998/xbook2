@@ -11,7 +11,6 @@
 #include <xbook/pthread.h>
 #include <xbook/gui.h>
 #include <xbook/schedule.h>
-#include <xbook/srvcall.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <sys/pthread.h>
@@ -396,8 +395,6 @@ int proc_release(task_t *task)
         return -1;
     if (proc_pthread_exit(task))
         return -1;
-    
-    sys_srvcall_unbind(-1); /* 解除服务调用绑定 */
     
     if (thread_release_resource(task))
         return -1;

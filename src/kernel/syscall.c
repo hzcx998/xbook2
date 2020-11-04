@@ -7,7 +7,6 @@
 #include <xbook/ktime.h>
 #include <xbook/clock.h>
 #include <xbook/waitque.h>
-#include <xbook/srvcall.h>
 #include <xbook/fs.h>
 #include <xbook/driver.h>
 #include <xbook/net.h>
@@ -57,12 +56,6 @@ void syscall_init()
     syscalls[SYS_GETTICKS] = sys_get_ticks;
     syscalls[SYS_GETTIMEOFDAY] = sys_gettimeofday;
     syscalls[SYS_CLOCK_GETTIME] = sys_clock_gettime;
-    syscalls[SYS_SRVCALL] = sys_srvcall;
-    syscalls[SYS_SRVCALL_LISTEN] = sys_srvcall_listen;
-    syscalls[SYS_SRVCALL_ACK] = sys_srvcall_ack;
-    syscalls[SYS_SRVCALL_BIND] = sys_srvcall_bind;
-    syscalls[SYS_SRVCALL_UNBIND] = sys_srvcall_unbind;
-    syscalls[SYS_SRVCALL_FETCH] = sys_srvcall_fetch;
     syscalls[SYS_UNID] = sys_unid;
     syscalls[SYS_TSTATE] = sys_tstate;
     syscalls[SYS_GETVER] = sys_getver;

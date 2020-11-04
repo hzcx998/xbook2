@@ -1,7 +1,6 @@
 #include <xbook/process.h>
 #include <string.h>
 #include <xbook/pthread.h>
-#include <xbook/srvcall.h>
 #include <xbook/memspace.h>
 #include <xbook/debug.h>
 #include <xbook/elf32.h>
@@ -177,8 +176,6 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     /* 替换新镜像后前，都需要退出原来的图形消息池，“新”进程需要重新初始化 */
     gui_msgpool_exit(cur);
 
-    /* 解除服务调用绑定 */
-    sys_srvcall_unbind(-1);
 #ifdef DEBUG_EXEC
     if (cur->pthread) {
         printk(KERN_DEBUG "%s: thread count %d\n", __func__, atomic_get(&cur->pthread->thread_count));
