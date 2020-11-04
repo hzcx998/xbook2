@@ -6,10 +6,10 @@
 
 int main(int argc, char **argv)
 {
-    ktime_t ktm;
-    ktime(&ktm);
+    walltime_t wt;
+    walltime(&wt);
     struct tm tm;
-    ktimeto(&ktm, &tm);
+    walltime_switch(&wt, &tm);
     printf("%s\n", asctime(&tm));
     return 0;
 }

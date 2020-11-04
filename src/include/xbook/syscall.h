@@ -1,12 +1,6 @@
 #ifndef _XBOOK_SYSCALL_H
 #define _XBOOK_SYSCALL_H
 
-/*
-系统调用的作用是，用户可以通过内核暴露的系统调用
-来执行内核提供的部分操作。
-对于元内核，至少需要为用户提供进程，内存管理，进程间通信，时间管理，设备管理
-相应的系统调用接口。
-*/
 typedef void * syscall_t;
 
 enum syscall_num {
@@ -51,7 +45,7 @@ enum syscall_num {
     
     SYS_RES_RESERVED = 50,              /* 预留10个接口给资源管理 */
     SYS_ALARM,
-    SYS_KTIME,
+    SYS_WALLTIME,
     SYS_GETTICKS,
     SYS_GETTIMEOFDAY,
     SYS_CLOCK_GETTIME,

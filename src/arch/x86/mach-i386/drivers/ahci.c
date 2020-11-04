@@ -1069,7 +1069,6 @@ iostatus_t ahci_read(device_object_t *device, io_request_t *ioreq)
         status = IO_FAILED;
         len = 0;
     }
-    //loop_delay(1);
 
     ioreq->io_status.status = status;
     ioreq->io_status.infomation = len;

@@ -3,7 +3,7 @@
 
 #include <xbook/list.h>
 #include "memcache.h"
-#include "ktime.h"
+#include <sys/time.h>
 
 typedef void (*timer_callback_t) (unsigned long); 
 

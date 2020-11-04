@@ -88,13 +88,13 @@ void display(int year, int month)
 int main(int argc, char *argv[])
 {
     int year, month;
-    ktime_t ktm;
+    walltime_t wt;
 
     /* 解析参数 */
     if (argc == 1) {    /* 只有一个参数，就直接显示当前时间的日历 */
-        ktime(&ktm);
-        year = ktm.year;
-        month = ktm.month;
+        walltime(&wt);
+        year = wt.year;
+        month = wt.month;
         month++; // 0~11 -> 1~12
         display(year, month);
     } else {

@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <xbook/timer.h>
-#include <xbook/ktime.h>
+#include <sys/walltime.h>
 #include <xbook/task.h>
 #include <xbook/clock.h>
 #include <errno.h>

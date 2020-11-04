@@ -35,11 +35,7 @@ char * ctime(const time_t * t);
 size_t strftime(char * s, size_t max, const char * fmt, const struct tm * t);
 int __secs_to_tm(long long t, struct tm * tm);
 long long __tm_to_secs(const struct tm * tm);
-
-/* ktime to tm */
-int ktimeto(ktime_t *ktm, struct tm *tm);
-
-
+int walltime_switch(walltime_t *wt, struct tm *tm);
 
 #ifdef __cplusplus
 }

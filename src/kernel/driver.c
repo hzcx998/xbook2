@@ -1404,40 +1404,6 @@ void init_driver_arch()
     printk(KERN_DEBUG "disk sectors=%d\n", device_devctl(ramd, DISKIO_GETSIZE, 0));
 #endif
 #if 0
-    handle_t net0 = device_open("rtl8139", 0);
-    if (net0 < 0)
-        printk("open rtl 8139 failed!\n");
-
-    loop_delay(100);
-    
-    char *net_buf = mem_alloc(2048);
-    if (net_buf == NULL) {
-        panic("alloc for net buf failed!\n");
-    }
-    while (1) {
-        loop_delay(10);
-        //device_write(net0, net_buf, 128, 0);
-        int len = device_read(net0, net_buf, 2048, 0);
-        if (len > 0)
-            dump_buffer(net_buf, len, 1);
-    }
-    
-
-    device_close(net0);
-
-    loop_delay(100);
-
-    net0 = device_open("rtl8139", 0);
-    if (net0 < 0)
-        printk("open rtl 8139 failed!\n");
-
-
-    while (1)
-    {
-        
-    }
-#endif
-#if 0
     handle_t handle = device_open("com0", 123);
     printk(KERN_DEBUG "init_driver_arch: open device handle=%d\n", handle);
     if (handle >= 0)

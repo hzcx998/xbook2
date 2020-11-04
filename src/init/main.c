@@ -5,7 +5,6 @@
 #include <xbook/clock.h>
 #include <xbook/virmem.h>
 #include <xbook/task.h>
-#include <xbook/rawblock.h>
 #include <xbook/schedule.h>
 #include <xbook/sharemem.h>
 #include <xbook/msgqueue.h>
@@ -13,7 +12,7 @@
 #include <xbook/syscall.h>
 #include <xbook/fifo.h>
 #include <xbook/driver.h>
-#include <xbook/ktime.h>
+#include <xbook/walltime.h>
 #include <xbook/fs.h>
 #include <xbook/net.h>
 #include <xbook/gui.h>
@@ -31,7 +30,7 @@ int kernel_main(void)
     sem_init();
     fifo_fifo();
     syscall_init();
-    init_ktime();
+    walltime_init();
     init_tasks();
     init_clock();
     init_timer_system();

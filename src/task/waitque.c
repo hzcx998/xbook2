@@ -6,7 +6,7 @@
 #include <xbook/pthread.h>
 #include <xbook/waitque.h>
 #include <xbook/clock.h>
-#include <xbook/ktime.h>
+#include <sys/time.h>
 #include <xbook/mutexlock.h>
 #include <sys/waitque.h>
 #include <errno.h>

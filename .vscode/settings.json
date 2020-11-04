@@ -52,7 +52,7 @@
         "byteorder.h": "c",
         "cpu.h": "c",
         "driver.h": "c",
-        "ktime.h": "c",
+        "walltime.h": "c",
         "kfile.h": "c",
         "proc.h": "c",
         "stddef.h": "c",

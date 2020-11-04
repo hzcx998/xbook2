@@ -4,7 +4,6 @@
 #include <xbook/resource.h>
 #include <xbook/trigger.h>
 #include <xbook/alarm.h>
-#include <xbook/ktime.h>
 #include <xbook/clock.h>
 #include <xbook/waitque.h>
 #include <xbook/fs.h>
@@ -13,8 +12,10 @@
 #include <xbook/sharemem.h>
 #include <xbook/sem.h>
 #include <xbook/msgqueue.h>
+#include <xbook/walltime.h>
 #include <xbook/gui.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <dirent.h>
 #include <gui/layer.h>
 #include <gui/message.h>
@@ -52,7 +53,7 @@ void syscall_init()
     syscalls[SYS_HEAP] = sys_mem_space_expend_heap;
     syscalls[SYS_MUNMAP] = sys_munmap;
     syscalls[SYS_ALARM] = sys_alarm;
-    syscalls[SYS_KTIME] = sys_get_ktime;
+    syscalls[SYS_WALLTIME] = sys_get_walltime;
     syscalls[SYS_GETTICKS] = sys_get_ticks;
     syscalls[SYS_GETTIMEOFDAY] = sys_gettimeofday;
     syscalls[SYS_CLOCK_GETTIME] = sys_clock_gettime;

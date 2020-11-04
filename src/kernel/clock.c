@@ -8,7 +8,7 @@
 #include <xbook/schedule.h>
 #include <xbook/timer.h>
 #include <xbook/hardirq.h>
-#include <xbook/ktime.h>
+#include <xbook/walltime.h>
 
 volatile clock_t systicks;
 volatile clock_t timer_ticks;
@@ -19,7 +19,7 @@ void timer_softirq_handler(softirq_action_t *action)
 	/* 改变系统时间 */
     if (systicks % HZ == 0) {  /* 1s更新一次 */
         /* 唤醒每秒时间工作 */
-        update_ktime();
+        walltime_update_second();
     }
     update_timers();
     update_alarms();

@@ -13,13 +13,9 @@ unsigned long alarm(unsigned long second)
     return syscall1(unsigned long , SYS_ALARM, second);
 }
 
-/**
- * ktime - 获取内核时间
- * @ktm: 内核时间结构
- */
-unsigned long ktime(ktime_t *ktm)
+unsigned long walltime(walltime_t *wt)
 {
-    return syscall1(int, SYS_KTIME, ktm);
+    return syscall1(int, SYS_WALLTIME, wt);
 }
 
 
@@ -54,18 +50,18 @@ int clock_gettime(clockid_t clockid, struct timespec *ts)
     return syscall2(int, SYS_CLOCK_GETTIME, clockid, ts);
 }
 
-int ktimeto(ktime_t *ktm, struct tm *tm)
+int walltime_switch(walltime_t *wt, struct tm *tm)
 {
-    if (!ktm || !tm)
+    if (!wt || !tm)
         return -1;
-    tm->tm_year = ktm->year - 1900;
-    tm->tm_yday = ktm->year_day;
-    tm->tm_mon = ktm->month;
-    tm->tm_mday = ktm->day;
-    tm->tm_hour = ktm->hour;
-    tm->tm_min = ktm->minute;
-    tm->tm_sec = ktm->second;
-    tm->tm_wday = ktm->week_day;
+    tm->tm_year = wt->year - 1900;
+    tm->tm_yday = wt->year_day;
+    tm->tm_mon = wt->month;
+    tm->tm_mday = wt->day;
+    tm->tm_hour = wt->hour;
+    tm->tm_min = wt->minute;
+    tm->tm_sec = wt->second;
+    tm->tm_wday = wt->week_day;
     tm->tm_isdst = -1;
     return 0;
 }

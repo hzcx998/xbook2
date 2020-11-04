@@ -56,7 +56,7 @@
 
 #include <xbook/task.h>
 #include <xbook/semaphore.h>
-#include <xbook/ktime.h>
+#include <sys/time.h>
 #include <xbook/mutexlock.h>
 
 #if 0

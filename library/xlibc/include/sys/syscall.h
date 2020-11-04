@@ -46,7 +46,7 @@ enum syscall_num {
     SYS_MMAP, 
     SYS_RES_RESERVED = 50,              /* 预留10个接口给资源管理 */
     SYS_ALARM,
-    SYS_KTIME,
+    SYS_WALLTIME,
     SYS_GETTICKS,
     SYS_GETTIMEOFDAY,
     SYS_CLOCK_GETTIME,

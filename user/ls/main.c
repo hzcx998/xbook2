@@ -70,12 +70,12 @@ static void __ls(char *pathname, int detail)
             /* 类型,属性，文件日期，大小，名字 */
             printf("%c%c%c%c %04d/%02d/%02d %02d:%02d:%02d %12d %s\n",
                 type, attrR, attrW, attrX,
-                FILE_TIME_YEA(fstat.st_mtime>>16),
-                FILE_TIME_MON(fstat.st_mtime>>16),
-                FILE_TIME_DAY(fstat.st_mtime>>16),
-                FILE_TIME_HOU(fstat.st_mtime&0xffff),
-                FILE_TIME_MIN(fstat.st_mtime&0xffff),
-                FILE_TIME_SEC(fstat.st_mtime&0xffff),
+                WTM_RD_YEAR(fstat.st_mtime>>16),
+                WTM_RD_MONTH(fstat.st_mtime>>16),
+                WTM_RD_DAY(fstat.st_mtime>>16),
+                WTM_RD_HOUR(fstat.st_mtime&0xffff),
+                WTM_RD_MINUTE(fstat.st_mtime&0xffff),
+                WTM_RD_SECOND(fstat.st_mtime&0xffff),
                 fstat.st_size, de->d_name);
             //printf("type:%x inode:%d name:%s\n", de.type, de.inode, de.name);
         } else {

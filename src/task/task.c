@@ -18,7 +18,6 @@
 #include <xbook/rwlock.h>
 #include <xbook/vmm.h>
 #include <xbook/waitque.h>
-#include <xbook/rawblock.h>
 #include <xbook/process.h>
 #include <fsal/fsal.h>
 #include <math.h>

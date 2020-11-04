@@ -25,7 +25,7 @@ extern volatile clock_t timer_ticks;    // timer ticks
 
 void init_clock();
 void clock_msleep(unsigned long msecond);
-void loop_delay(int t);
+
 clock_t sys_get_ticks();
 clock_t clock_delay_by_ticks(clock_t ticks);
 void mdelay(time_t msec);
