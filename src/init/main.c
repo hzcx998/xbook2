@@ -17,6 +17,7 @@
 #include <xbook/net.h>
 #include <xbook/gui.h>
 #include <xbook/timer.h>
+#include <xbook/initcall.h>
 
 int kernel_main(void)
 {
@@ -35,7 +36,8 @@ int kernel_main(void)
     clock_init();
     timers_init();
     interrupt_enable();
-    init_driver_arch();
+    driver_framewrok_init();
+    initcalls_exec();
     init_fs();
     init_gui();
     init_net();

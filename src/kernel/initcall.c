@@ -6,7 +6,7 @@ extern initcall_t __initcall_end[];
 extern exitcall_t __exitcall_start[];
 extern exitcall_t __exitcall_end[];
 
-void do_initcalls(void)
+void initcalls_exec(void)
 {
 	initcall_t * call;
 
@@ -19,7 +19,7 @@ void do_initcalls(void)
     printk(KERN_INFO "do init call done.\n");
 }
 
-void do_exitcalls(void)
+void exitcalls_exec(void)
 {
 	exitcall_t * call;
 

@@ -197,7 +197,7 @@ typedef struct _driver_object
 } driver_object_t;
 
 
-void init_driver_arch();
+void driver_framewrok_init();
 
 iostatus_t io_create_device(
     driver_object_t *driver,
@@ -276,5 +276,8 @@ typedef struct _input_even_buf {
 int input_even_init(input_even_buf_t *evbuf);
 int input_even_put(input_even_buf_t *evbuf, input_event_t *even);
 int input_even_get(input_even_buf_t *evbuf, input_event_t *even);
+
+void drivers_print();
+void drivers_print_mini();
 
 #endif   /* _XBOOK_DRIVER_H */
