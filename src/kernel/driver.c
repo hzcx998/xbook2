@@ -34,7 +34,6 @@ void drivers_print()
     device_object_t *devobj;
     int device_count;
     printk(KERN_INFO "io system info-> drivers\n");
-    /* 遍历所有的驱动 */
     list_for_each_owner (drvobj, &driver_list_head, list) {
         printk(KERN_INFO "driver: name=%s\n", drvobj->name.text);
         device_count = 0;
@@ -51,7 +50,6 @@ void drivers_print_mini()
     driver_object_t *drvobj;
     device_object_t *devobj;
     printk(KERN_INFO "io system info-> drivers\n");
-    /* 遍历所有的驱动 */
     list_for_each_owner (drvobj, &driver_list_head, list) {
         list_for_each_owner (devobj, &drvobj->device_list, list) {
             printk("%s ", devobj->name.text);
@@ -64,7 +62,6 @@ static driver_object_t *io_search_driver_by_name(char *drvname)
 {
     driver_object_t *drvobj;
     spin_lock(&driver_lock);
-    /* 遍历所有的驱动 */
     list_for_each_owner (drvobj, &driver_list_head, list) {
         if (!strcmp(drvobj->name.text, drvname)) {
             spin_unlock(&driver_lock);

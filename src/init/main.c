@@ -38,6 +38,7 @@ int kernel_main(void)
     interrupt_enable();
     driver_framewrok_init();
     initcalls_exec();
+    
     init_fs();
     init_gui();
     init_net();
