@@ -20,7 +20,7 @@ void mutex_lock(mutexlock_t *mutex)
         }
         
         mutex->waiters++;
-        task_t *task = current_task;
+        task_t *task = task_current;
         
         list_add_tail(&task->list, &mutex->wait_list);
         /*

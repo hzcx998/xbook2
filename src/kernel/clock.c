@@ -24,7 +24,7 @@ static void timer_softirq_handler(softirq_action_t *action)
 
 static void sched_softirq_handler(softirq_action_t *action)
 {
-    task_t *current = current_task;
+    task_t *current = task_current;
     ASSERT(current->stack_magic == TASK_STACK_MAGIC);
     current->elapsed_ticks++;
 	if (current->ticks <= 0) {

@@ -165,13 +165,13 @@ int do_mem_space_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
 
 void *mem_space_mmap(uint32_t addr, uint32_t paddr, uint32_t len, uint32_t prot, uint32_t flags)
 {
-    task_t *current = current_task;
+    task_t *current = task_current;
     return (void *)do_mem_space_map(current->vmm, addr, paddr, len, prot, flags);
 }
 
 int mem_space_unmmap(uint32_t addr, uint32_t len)
 {
-    task_t *current = current_task;
+    task_t *current = task_current;
     return do_mem_space_unmap(current->vmm, addr, len);
 }
 
@@ -206,10 +206,10 @@ unsigned long sys_mem_space_expend_heap(unsigned long heap)
 {
     unsigned long ret;
     unsigned long old_heap, new_heap;
-    vmm_t *vmm = current_task->vmm;
+    vmm_t *vmm = task_current->vmm;
 #ifdef DEBUG_MEM_SPACE    
     printk(KERN_DEBUG "%s: task %s pid %d vmm heap start %x end %x new %x\n", 
-        __func__, current_task->name, current_task->pid, vmm->heap_start, vmm->heap_end, heap);
+        __func__, task_current->name, task_current->pid, vmm->heap_start, vmm->heap_end, heap);
 #endif
     /* 如果堆比开始位置都小就退出 */
     if (heap < vmm->heap_start) {
@@ -240,7 +240,7 @@ unsigned long sys_mem_space_expend_heap(unsigned long heap)
         printk(KERN_ERR "%s: find: start=%x, end=%x\n",
             __func__, find->start, find->end);
 
-        printk(KERN_ERR "task=%d.\n", current_task->pid);
+        printk(KERN_ERR "task=%d.\n", task_current->pid);
 #endif
         goto the_end;
     }

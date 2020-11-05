@@ -239,7 +239,7 @@ int fs_fd_reinit(task_t *cur)
 
 int fd_alloc()
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         if (cur->fileman->fds[i].flags == 0) {
@@ -255,7 +255,7 @@ int fd_alloc()
 
 int fd_free(int fd)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     if (OUT_RANGE(fd, 0, LOCAL_FILE_OPEN_NR))
         return -1;
     if (cur->fileman->fds[fd].flags == 0) {
@@ -281,7 +281,7 @@ int local_fd_install(int resid, unsigned int flags)
     int fd = fd_alloc();
     if (fd < 0)
         return -1;
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     cur->fileman->fds[fd].handle = resid;
     cur->fileman->fds[fd].flags |= flags;
     #ifdef DEBUG_FSAL
@@ -303,7 +303,7 @@ int local_fd_install_to(int resid, int newfd, unsigned int flags)
     if (OUT_RANGE(newfd, 0, LOCAL_FILE_OPEN_NR))
         return -1;
 
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     cur->fileman->fds[newfd].handle = resid;
     cur->fileman->fds[newfd].flags = FILE_FD_ALLOC;
     cur->fileman->fds[newfd].flags |= flags;
@@ -326,13 +326,13 @@ file_fd_t *fd_local_to_file(int local_fd)
     if (OUT_RANGE(local_fd, 0, LOCAL_FILE_OPEN_NR))
         return NULL;
 
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     return &cur->fileman->fds[local_fd];
 }
 
 int handle_to_local_fd(int handle, unsigned int flags)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     file_fd_t *fdptr;
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {

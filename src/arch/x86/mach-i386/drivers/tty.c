@@ -62,7 +62,7 @@ iostatus_t tty_open(device_object_t *device, io_request_t *ioreq)
         status = IO_FAILED;
     } else { /* 打开成功 */
         if (extension->hold_pid == -1) {    /* 首次打开，持有者就是打开者 */
-            extension->hold_pid = current_task->pid;
+            extension->hold_pid = task_current->pid;
 #ifdef DEBUG_DRV
             printk(KERN_DEBUG "tty_open: open tty=%d.\n", extension->device_id);
 #endif        
@@ -168,7 +168,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
     iostatus_t status = IO_FAILED;
     if (extension->public->visitor_id == extension->device_id) {  /* 可拜访者设备id */
         /* 前台任务 */
-        if (extension->hold_pid == current_task->pid) {
+        if (extension->hold_pid == task_current->pid) {
             if (!extension->public->detach_kbd) {    /* 键盘分离了就不能读取键盘 */
                 /* read from input even */
                 struct input_event event;
@@ -208,7 +208,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                 
             }
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
-            trigger_force(TRIGSYS, current_task->pid);
+            trigger_force(TRIGSYS, task_current->pid);
         }
     }
 end_of_read:
@@ -244,7 +244,7 @@ iostatus_t tty_devctl(device_object_t *device, io_request_t *ioreq)
     case TTYIO_VISITOR:   /* 设置可以访问键盘的tty */
         tty_set_visitor(device, ioreq->parame.devctl.arg);
     case TTYIO_HOLDER:
-        extension->hold_pid = current_task->pid;
+        extension->hold_pid = task_current->pid;
         break;
     case TTYIO_DETACH:
         extension->public->detach_kbd = 1;

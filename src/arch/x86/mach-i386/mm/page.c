@@ -370,14 +370,14 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
 		int ret = do_page_no_write(addr);
 		if (ret) {
             printk(KERN_EMERG "page: %s: touch TRIGSYS trigger because page not writable!", __func__);    
-            trigger_force(TRIGSYS, current_task->pid);    
+            trigger_force(TRIGSYS, task_current->pid);    
             return -1;
         }
 
 		/* 虽然写入的写标志，但是还是会出现缺页故障，在此则处理一下缺页 */
 		if (do_handle_no_page(addr, space->page_prot)) {
             printk(KERN_EMERG "page: %s: touch TRIGSYS trigger because hand no page failed!", __func__);
-            trigger_force(TRIGSYS, current_task->pid);
+            trigger_force(TRIGSYS, task_current->pid);
 			return -1; 
         }
 		return 0;
@@ -385,7 +385,7 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
 		printk(KERN_DEBUG "page: %s: no write protection\n", __func__);
 	}
     printk(KERN_EMERG "page: %s: touch TRIGSYS trigger because page protection!", __func__);
-    trigger_force(TRIGSYS, current_task->pid);
+    trigger_force(TRIGSYS, task_current->pid);
     return -1;
 }
 
@@ -402,7 +402,7 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
  */
 int page_do_fault(trap_frame_t *frame)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     unsigned long addr = 0x00;
     addr = cpu_cr2_read(); /* cr2 saved the fault addr */
 

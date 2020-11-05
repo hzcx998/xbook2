@@ -73,11 +73,11 @@ void vmm_active_kernel()
 {
     unsigned long paddr = KERN_PAGE_DIR_PHY_ADDR;
     cpu_cr3_write(paddr);
-    tss_update_info((unsigned long )current_task);
+    tss_update_info((unsigned long )task_current);
 }
 
 void vmm_active_user(unsigned int page)
 {
     cpu_cr3_write(page);    
-    tss_update_info((unsigned long )current_task);
+    tss_update_info((unsigned long )task_current);
 }

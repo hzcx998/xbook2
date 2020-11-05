@@ -43,11 +43,11 @@ static inline void synclock_init(synclock_t *lock)
  */
 static inline void sync_lock(synclock_t *lock)
 {
-    if (lock->holder != current_task) { // 自己没有锁才获取信号量
+    if (lock->holder != task_current) { // 自己没有锁才获取信号量
         /* 获取信号量，如果信号量已经被其它任务占用，那么自己就等待
         直到信号量被其它任务释放，自己才可以获取*/
         semaphore_down(&lock->semaphore);
-        lock->holder = current_task; // 当自己成功获取信号量后才把锁的持有者设置成当前任务
+        lock->holder = task_current; // 当自己成功获取信号量后才把锁的持有者设置成当前任务
         ASSERT(lock->reapt_count == 0); // 有新的任务第一次获取锁，说明锁还没有被任务重复获取
         lock->reapt_count = 1; // 现在被新的任务获取了，所以现在有1次获取
     } else {
@@ -62,7 +62,7 @@ static inline void sync_lock(synclock_t *lock)
  */
 static inline void sync_unlock(synclock_t *lock)
 {
-    ASSERT(lock->holder == current_task); // 释放的时候自己必须持有锁
+    ASSERT(lock->holder == task_current); // 释放的时候自己必须持有锁
     if (lock->reapt_count > 1) { // 如果自己获取多次，那么只有等次数为1时才会真正释放信号量
         lock->reapt_count--; // 减少重复次数并返回
         return;

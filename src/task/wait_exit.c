@@ -262,7 +262,7 @@ void close_other_threads(task_t *thread)
 pid_t sys_waitpid(pid_t pid, int *status, int options)
 {
     
-    task_t *parent = current_task;  /* 当前进程是父进程 */
+    task_t *parent = task_current;  /* 当前进程是父进程 */
     TASK_CHECK_THREAD_CANCELATION_POTINT(parent);
     pid_t child_pid;
     unsigned long flags;
@@ -329,9 +329,9 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
         //printk(KERN_DEBUG "proc wait: child unblocked me.\n");
         
         /* 如果有特殊触发器产生，则退出等待 */
-        if (trigismember(&current_task->triggers->set, TRIGHSOFT) ||
-            trigismember(&current_task->triggers->set, TRIGLSOFT) ||
-            trigismember(&current_task->triggers->set, TRIGSYS)) {
+        if (trigismember(&task_current->triggers->set, TRIGHSOFT) ||
+            trigismember(&task_current->triggers->set, TRIGLSOFT) ||
+            trigismember(&task_current->triggers->set, TRIGSYS)) {
             break;
         }
     }
@@ -356,7 +356,7 @@ void sys_exit(int status)
     unsigned long flags;
     interrupt_save_state(flags);
 
-    task_t *cur = current_task;  /* 当前进程是父进程 */
+    task_t *cur = task_current;  /* 当前进程是父进程 */
 
     cur->exit_status = status;
     
@@ -426,7 +426,7 @@ void kern_thread_exit(int status)
     unsigned long flags;
     interrupt_save_state(flags);
 
-    task_t *cur = current_task;  /* 当前进程是父进程 */
+    task_t *cur = task_current;  /* 当前进程是父进程 */
     cur->exit_status = status;
 
     /* 释放内核资源 */

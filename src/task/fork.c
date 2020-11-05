@@ -231,7 +231,7 @@ static int copy_task(task_t *child, task_t *parent)
 int sys_fork()
 {
     /* 把当前任务当做父进程 */
-    task_t *parent = current_task;
+    task_t *parent = task_current;
 
     unsigned long flags;
     interrupt_save_state(flags);
@@ -258,7 +258,7 @@ int sys_fork()
     
     /* 把子进程添加到就绪队列和全局链表 */
     task_add_to_global_list(child);
-    task_priority_queue_add_tail(sched_get_unit(), child); /* 放到队首 */
+    sched_queue_add_tail(sched_get_cur_unit(), child); /* 放到队首 */
 
 
 #ifdef DEBUG_FORK

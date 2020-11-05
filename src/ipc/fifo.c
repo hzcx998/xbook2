@@ -104,7 +104,7 @@ int fifo_get(char *name, unsigned long flags)
             }
             if (rw == 1) {
                 if (fifo->writer == NULL && !atomic_get(&fifo->writeref)) {
-                    fifo->writer = current_task;                  
+                    fifo->writer = task_current;                  
                 }
                 atomic_inc(&fifo->writeref);
                 if (flags & IPC_NOWAIT) {
@@ -112,7 +112,7 @@ int fifo_get(char *name, unsigned long flags)
                 }
             } else if (rw == 0) {
                 if (fifo->reader == NULL && !atomic_get(&fifo->readref)) {
-                    fifo->reader = current_task;
+                    fifo->reader = task_current;
                     if (fifo->writer && fifo->writer->state == TASK_BLOCKED && fifo->flags & FIFO_IN_WRITE) {              
                         task_unblock(fifo->writer);
                     }
@@ -129,13 +129,13 @@ int fifo_get(char *name, unsigned long flags)
                 goto err;
             }
             if (rw == 1) {
-                fifo->writer = current_task;
+                fifo->writer = task_current;
                 atomic_set(&fifo->writeref, 1);
                 if (flags & IPC_NOWAIT) {
                     fifo->flags |= (IPC_NOWAIT << 24);
                 }
             } else if (rw == 0) {
-                fifo->reader = current_task;
+                fifo->reader = task_current;
                 atomic_set(&fifo->readref, 1);
                 if (flags & IPC_NOWAIT) {
                     fifo->flags |= (IPC_NOWAIT << 16);
@@ -157,12 +157,12 @@ int fifo_put(int fifoid)
 
     if (fifo) {
         mutex_lock(&fifo->mutex);
-        if (current_task == fifo->reader) {
+        if (task_current == fifo->reader) {
             atomic_dec(&fifo->readref);
             if (atomic_get(&fifo->readref) == 0) {
                 fifo->reader = NULL;
             }
-        } else if (current_task == fifo->writer) {
+        } else if (task_current == fifo->writer) {
             atomic_dec(&fifo->writeref);
             if (atomic_get(&fifo->writeref) == 0) {
                 fifo->writer = NULL;
@@ -207,7 +207,7 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg)
         return -1;
     }
     if (fifo->flags & (IPC_NOERROR << 24))
-        if (fifo->writer != current_task) {
+        if (fifo->writer != task_current) {
             printk(KERN_ERR "%s: writer no current task!\n");
             return -1;
         }
@@ -278,7 +278,7 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
         return -1;
     }
     if (fifo->flags & (IPC_NOERROR << 16))
-        if (fifo->reader != current_task) 
+        if (fifo->reader != task_current) 
             return -1;
     fifo->flags |= FIFO_IN_READ;
     if (fifo->writer == NULL) {
@@ -329,9 +329,9 @@ int fifo_set_rdwr(int fifoid, unsigned long arg)
     if (fifo) {
         mutex_lock(&fifo->mutex);
         if (arg == IPC_READER) {
-            fifo->reader = current_task;
+            fifo->reader = task_current;
         } else if (arg == IPC_WRITER) {
-            fifo->writer = current_task;
+            fifo->writer = task_current;
         } else {
             mutex_unlock(&fifo->mutex);
             semaphore_up(&fifo_mutex);
@@ -352,9 +352,9 @@ int fifo_set_flags(int fifoid, unsigned int cmd, unsigned long arg)
     fifo = fifo_find_by_id(fifoid);
     if (fifo) {
         mutex_lock(&fifo->mutex);
-        if (fifo->reader == current_task) {
+        if (fifo->reader == task_current) {
             fifo->flags |= (arg & 0xff) << 16;
-        } else if (fifo->writer == current_task) {
+        } else if (fifo->writer == task_current) {
             fifo->flags |= (arg & 0xff) << 24;
         } else {
             mutex_unlock(&fifo->mutex);
@@ -394,12 +394,12 @@ int fifo_grow(int fifoid)
     fifo = fifo_find_by_id(fifoid);
     if (fifo) {
         mutex_lock(&fifo->mutex);
-        if (current_task == fifo->reader && atomic_get(&fifo->readref) > 0) {
+        if (task_current == fifo->reader && atomic_get(&fifo->readref) > 0) {
             atomic_inc(&fifo->readref);
-        } else if (current_task == fifo->writer && atomic_get(&fifo->writeref) > 0) {
+        } else if (task_current == fifo->writer && atomic_get(&fifo->writeref) > 0) {
             atomic_inc(&fifo->writeref);
         } else {  
-            pr_dbg("[FIFO]: %s: %s: not reader or writer!\n", __func__, current_task->name);
+            pr_dbg("[FIFO]: %s: %s: not reader or writer!\n", __func__, task_current->name);
             mutex_unlock(&fifo->mutex);
             semaphore_up(&fifo_mutex);        
             return -1;
@@ -408,7 +408,7 @@ int fifo_grow(int fifoid)
         semaphore_up(&fifo_mutex);        
         return 0;
     }
-    pr_dbg("[FIFO]: %s: %s: fifo not found!\n", __func__, current_task->name);
+    pr_dbg("[FIFO]: %s: %s: fifo not found!\n", __func__, task_current->name);
     semaphore_up(&fifo_mutex);
     return -1;
 }

@@ -124,7 +124,7 @@ int trigger_force(int trig, pid_t pid)
 #ifdef DEBUG_TRIGGER
     printk(KERN_DEBUG "trigger_force: start.\n");
 #endif
-    return do_active_trigger(pid, trig, current_task->pid);
+    return do_active_trigger(pid, trig, task_current->pid);
 }
 
 /**
@@ -142,7 +142,7 @@ int sys_trigger_active(int trig, pid_t pid)
 #endif
     
     /* 激活触发器 */
-    return do_active_trigger(pid, trig, current_task->pid);
+    return do_active_trigger(pid, trig, task_current->pid);
 }
 
 /**
@@ -158,7 +158,7 @@ int sys_trigger_handler(int trig, trighandler_t handler)
         return -1;
     if (trig == TRIGHSOFT || trig == TRIGPAUSE) /* 重软件和暂停不能够捕捉和忽略 */
         return -1;
-    triggers_t *trigger = current_task->triggers;
+    triggers_t *trigger = task_current->triggers;
     if (trigger == NULL)
         return -1;
 #ifdef DEBUG_TRIGGER
@@ -195,7 +195,7 @@ int sys_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
         return -1;
     if (trig == TRIGHSOFT || trig == TRIGPAUSE) /* 重软件和暂停不能够捕捉和忽略 */
         return -1;
-    triggers_t *trigger = current_task->triggers;
+    triggers_t *trigger = task_current->triggers;
     if (trigger == NULL)
         return -1;
     trig_action_t ta;
@@ -242,7 +242,7 @@ int sys_trigger_return(unsigned int ebx, unsigned int ecx, unsigned int esi, uns
  */
 static int handle_trigger(trap_frame_t *frame, int trig)
 {
-    triggers_t *trigger = current_task->triggers;
+    triggers_t *trigger = task_current->triggers;
     /* 获取触发器行为 */
     trig_action_t *act = &trigger->actions[trig - 1];
 
@@ -277,7 +277,7 @@ static int handle_trigger(trap_frame_t *frame, int trig)
  */
 int interrupt_do_trigger(trap_frame_t *frame)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     /* 内核线程没有触发器 */
     if (cur->triggers == NULL)
         return -1;
@@ -396,7 +396,7 @@ int interrupt_do_trigger(trap_frame_t *frame)
  */
 int sys_trigger_proc_mask(int how, trigset_t *set, trigset_t *oldset)
 {
-    triggers_t *trigger = current_task->triggers;
+    triggers_t *trigger = task_current->triggers;
 
     spin_lock_irq(&trigger->trig_lock);
 
@@ -432,7 +432,7 @@ int sys_trigger_pending(trigset_t *set)
 {
     if (set == NULL)
         return -1;
-    triggers_t *trigger = current_task->triggers;
+    triggers_t *trigger = task_current->triggers;
     spin_lock_irq(&trigger->trig_lock);
     *set = trigger->set;
     spin_unlock_irq(&trigger->trig_lock);

@@ -298,7 +298,7 @@ int sys_rename(const char *source, const char *target)
 
 int sys_chdir(const char *path)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     if (!cur->fileman)
         return -1;
     
@@ -319,7 +319,7 @@ int sys_chdir(const char *path)
 
 int sys_getcwd(char *buf, int bufsz)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     if (!cur->fileman)
         return -1;
     memcpy(buf, cur->fileman->cwd, min(bufsz, MAX_PATH));

@@ -31,7 +31,7 @@ void pthread_desc_exit(pthread_desc_t *pthread)
  */
 void pthread_entry(void *arg) 
 {
-    trap_frame_t *frame = TASK_GET_TRAP_FRAME(current_task);
+    trap_frame_t *frame = TASK_GET_TRAP_FRAME(task_current);
     kernel_switch_to_user(frame);
 }
 
@@ -94,7 +94,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     pthread_attr_t *attr, void *thread_entry)
 {
     /* 创建线程的父进程 */
-    task_t *parent = current_task;
+    task_t *parent = task_current;
 #ifdef DEBUG_PTHREAD
     printk(KERN_DEBUG "pthread_start: pid=%d routine=%x arg=%x stackaddr=%x stacksize=%x detach=%d\n",
         parent->pid, func, arg, attr->stackaddr, attr->stacksize, attr->detachstate);
@@ -172,7 +172,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
 #endif
 
     task_add_to_global_list(task);
-    task_priority_queue_add_tail(sched_get_unit(), task);
+    sched_queue_add_tail(sched_get_cur_unit(), task);
     
     interrupt_restore_state(flags);
     return task;
@@ -200,7 +200,7 @@ void pthread_exit(void *status)
     unsigned long flags;
     interrupt_save_state(flags);
 
-    task_t *cur = current_task;
+    task_t *cur = task_current;
 
     /* 减少线程数量 */
     atomic_dec(&cur->pthread->thread_count);   
@@ -317,7 +317,7 @@ int sys_thread_detach(pthread_t thread)
 
 int pthread_join(pthread_t thread, void **thread_return)
 {
-    task_t *waiter = current_task;  /* 当前进程是父进程 */
+    task_t *waiter = task_current;  /* 当前进程是父进程 */
     unsigned long flags;
     interrupt_save_state(flags);
     /* 先查看线程，是否存在，并且要是线程才行 */
@@ -409,7 +409,7 @@ int pthread_join(pthread_t thread, void **thread_return)
  */
 int sys_thread_join(pthread_t thread, void **thread_return)
 {
-    TASK_CHECK_THREAD_CANCELATION_POTINT(current_task);
+    TASK_CHECK_THREAD_CANCELATION_POTINT(task_current);
     return pthread_join(thread, thread_return);
 }
 
@@ -431,29 +431,29 @@ int sys_thread_cancel(pthread_t thread)
     if (task == NULL) { /* 没找到 */
 #ifdef DEBUG_PTHREAD
         printk(KERN_ERR "sys_thread_cancel: pid=%d not find thread %d!\n",
-            current_task->pid, thread);
+            task_current->pid, thread);
 #endif 
         interrupt_restore_state(flags);
         return -1;
     }
 #ifdef DEBUG_PTHREAD
     printk(KERN_ERR "sys_thread_cancel: pid=%d set thread %d cancelation point.\n",
-        current_task->pid, thread);
+        task_current->pid, thread);
 #endif
     /* 设置取消点 */
     task->flags |= THREAD_FLAG_CANCELED;
     if (task->flags & THREAD_FLAG_CANCEL_ASYCHRONOUS) { /* 立即取消线程处理 */ 
         /* 查看是否为自己取消自己 */
-        if (task == current_task) { /* 是自己 */
+        if (task == task_current) { /* 是自己 */
             interrupt_restore_state(flags);
 #ifdef DEBUG_PTHREAD
-            printk(KERN_DEBUG "sys_thread_cancel: pid=%d cancel self.\n", current_task->pid);
+            printk(KERN_DEBUG "sys_thread_cancel: pid=%d cancel self.\n", task_current->pid);
 #endif 
             pthread_exit((void *) THREAD_FLAG_CANCEL_ASYCHRONOUS); /* 退出线程运行 */
         } else {    /* 取消其它线程 */
 #ifdef DEBUG_PTHREAD
             printk(KERN_DEBUG "sys_thread_cancel: pid=%d will cancel thread %d.\n",
-                current_task->pid, thread);
+                task_current->pid, thread);
 #endif 
             close_one_thread(task);
         }
@@ -470,7 +470,7 @@ int sys_thread_cancel(pthread_t thread)
  */
 void sys_thread_testcancel(void)
 {
-    TASK_CHECK_THREAD_CANCELATION_POTINT(current_task);
+    TASK_CHECK_THREAD_CANCELATION_POTINT(task_current);
 }
 /**
  * sys_thread_setcancelstate - 设置取消状态
@@ -482,11 +482,11 @@ void sys_thread_testcancel(void)
  */
 int sys_thread_setcancelstate(int state, int *oldstate)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     if (oldstate != NULL) {  /* 保存原来的类型 */
 #ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcancelstate: pid=%d fetch oldstate.\n",
-            current_task->pid);
+            task_current->pid);
 #endif 
         if (cur->flags & THREAD_FLAG_CANCEL_DISABLE) {
             *oldstate = PTHREAD_CANCEL_DISABLE;  
@@ -498,13 +498,13 @@ int sys_thread_setcancelstate(int state, int *oldstate)
         cur->flags |= THREAD_FLAG_CANCEL_DISABLE;
 #ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcancelstate: pid=%d set cancel disable.\n",
-            current_task->pid);
+            task_current->pid);
 #endif 
     } else if (state == PTHREAD_CANCEL_ENABLE) {
         cur->flags &= ~THREAD_FLAG_CANCEL_DISABLE;
 #ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcancelstate: pid=%d set cancel enable.\n",
-            current_task->pid);
+            task_current->pid);
 #endif
     } else {
         return -1;
@@ -522,11 +522,11 @@ int sys_thread_setcancelstate(int state, int *oldstate)
  */
 int sys_thread_setcanceltype(int type, int *oldtype)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     if (oldtype != NULL) {  /* 保存原来的类型 */
 #ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcanceltype: pid=%d fetch oldtype.\n",
-            current_task->pid);
+            task_current->pid);
 #endif 
         if (cur->flags & THREAD_FLAG_CANCEL_ASYCHRONOUS) {
             *oldtype = PTHREAD_CANCEL_ASYCHRONOUS;  
@@ -538,13 +538,13 @@ int sys_thread_setcanceltype(int type, int *oldtype)
         cur->flags |= THREAD_FLAG_CANCEL_ASYCHRONOUS;
 #ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcanceltype: pid=%d set cancel asychronous.\n",
-            current_task->pid);
+            task_current->pid);
 #endif 
     } else if (type == PTHREAD_CANCEL_DEFFERED) {
         cur->flags &= ~THREAD_FLAG_CANCEL_ASYCHRONOUS;
 #ifdef DEBUG_PTHREAD
         printk(KERN_DEBUG "sys_thread_setcanceltype: pid=%d set cancel deffered.\n",
-            current_task->pid);
+            task_current->pid);
 #endif 
     } else {
         return -1;

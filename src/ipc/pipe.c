@@ -107,7 +107,7 @@ int __pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
             mutex_unlock(&pipe->mutex);
             return -1;
         }
-        wait_queue_add(&pipe->wait_queue, current_task);
+        wait_queue_add(&pipe->wait_queue, task_current);
         mutex_unlock(&pipe->mutex);
         task_block(TASK_BLOCKED);
         mutex_lock(&pipe->mutex);
@@ -165,7 +165,7 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
     }
         
     if (atomic_get(&pipe->read_count) <= 0) {
-        sys_trigger_active(TRIGHSOFT, current_task->pid);
+        sys_trigger_active(TRIGHSOFT, task_current->pid);
         return -1;
     } 
         
@@ -192,7 +192,7 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
                 mutex_unlock(&pipe->mutex);
                 return -1;
             }
-            wait_queue_add(&pipe->wait_queue, current_task);
+            wait_queue_add(&pipe->wait_queue, task_current);
             mutex_unlock(&pipe->mutex);
             task_block(TASK_BLOCKED);
             mutex_lock(&pipe->mutex);

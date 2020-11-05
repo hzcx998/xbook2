@@ -105,7 +105,7 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
         
     }
     extension->opened = 1; // 打开
-    extension->hold_pid = current_task->pid;   
+    extension->hold_pid = task_current->pid;   
     
     status = IO_SUCCESS;
     #ifdef PTTY_DEBUG
@@ -189,7 +189,7 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
     int len = ioreq->parame.read.length;
 
     /* 前台任务 */
-    if (extension->hold_pid == current_task->pid) {
+    if (extension->hold_pid == task_current->pid) {
         
         #ifdef PTTY_DEBUG
         printk(KERN_INFO "ptty_read: buf %x len %d.\n", buf, len);
@@ -199,9 +199,9 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
             goto err_rd;
 
     } else {
-        printk(KERN_ERR "[ptty]: pid %d read but not holder, abort!\n", current_task->pid);
+        printk(KERN_ERR "[ptty]: pid %d read but not holder, abort!\n", task_current->pid);
         /* 不是前台任务就触发任务的硬件触发器 */
-        trigger_force(TRIGSYS, current_task->pid);
+        trigger_force(TRIGSYS, task_current->pid);
         goto err_rd;
     }
     status = IO_SUCCESS;
@@ -226,16 +226,16 @@ iostatus_t ptty_write(device_object_t *device, io_request_t *ioreq)
     #ifdef PTTY_DEBUG
     printk(KERN_INFO "ptty_write: buf %x len %d.\n", buf, len);
     #endif
-    // if (extension->hold_pid == current_task->pid) {
+    // if (extension->hold_pid == task_current->pid) {
     /* 从写端写入 */
     if ((len = pipe_write(extension->pipe_out->id, buf, len)) < 0)
         goto err_wr;
     
     #if 0
     } else {
-        printk(KERN_ERR "[ptty]: pid %d write but not holder, abort!\n", current_task->pid);
+        printk(KERN_ERR "[ptty]: pid %d write but not holder, abort!\n", task_current->pid);
         /* 不是前台任务就触发任务的硬件触发器 */
-        trigger_force(TRIGSYS, current_task->pid);
+        trigger_force(TRIGSYS, task_current->pid);
         goto err_wr;
     }*/
     #endif

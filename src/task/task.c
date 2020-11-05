@@ -134,8 +134,8 @@ task_t *kern_thread_start(char *name, int priority, task_func_t *func, void *arg
     unsigned long flags;
     interrupt_save_state(flags);
     task_add_to_global_list(task);
-    sched_unit_t *su = sched_get_unit();
-    task_priority_queue_add_tail(su, task);
+    sched_unit_t *su = sched_get_cur_unit();
+    sched_queue_add_tail(su, task);
     interrupt_restore_state(flags);
     return task;
 }
@@ -158,7 +158,7 @@ void task_block(task_state_t state)
             (state == TASK_STOPPED) ||
             (state == TASK_HANGING) ||
             (state == TASK_ZOMBIE));
-    task_t *current = current_task;
+    task_t *current = task_current;
     current->state = state;    
     schedule();
     interrupt_restore_state(flags);
@@ -174,13 +174,13 @@ void task_unblock(task_t *task)
         panic("task_unblock: task name=%s pid=%d state=%d\n", task->name, task->pid, task->state);
     }
     if (task->state != TASK_READY) {
-        sched_unit_t *su = sched_get_unit();
-        ASSERT(!is_task_in_priority_queue(su, task));
-        if (is_task_in_priority_queue(su, task)) {
+        sched_unit_t *su = sched_get_cur_unit();
+        ASSERT(!sched_queue_has_task(su, task));
+        if (sched_queue_has_task(su, task)) {
             panic("task_unblock: task has already in ready list!\n");
         }
         task->state = TASK_READY;
-        task_priority_queue_add_head(su, task);
+        sched_queue_add_head(su, task);
     }
     interrupt_restore_state(flags);
 }
@@ -189,7 +189,7 @@ void task_yeild()
 {
     unsigned long flags;
     interrupt_save_state(flags);
-    current_task->state = TASK_READY;
+    task_current->state = TASK_READY;
     schedule();
     interrupt_restore_state(flags);
 }
@@ -219,18 +219,18 @@ static void task_init_boot_idle(sched_unit_t *su)
 */
 pid_t sys_get_pid()
 {
-    return current_task->tgid;
+    return task_current->tgid;
 }
 
 pid_t sys_get_ppid()
 {
-    return current_task->parent_pid;
+    return task_current->parent_pid;
 }
 
 /* 由于最小粒度是线程，所以，线程id=pid。 */
 pid_t sys_get_tid()
 {
-    return current_task->pid;
+    return task_current->pid;
 }
 
 void tasks_print()
@@ -310,7 +310,7 @@ void task_start_user()
     task_t *proc = start_process(init_argv[0], init_argv);
     if (proc == NULL)
         panic("kernel start process failed! please check initsrv!\n");
-    sched_unit_t *su = sched_get_unit();
+    sched_unit_t *su = sched_get_cur_unit();
     /* 降级期间不允许产生中断，降级后其它任务才有机会运行 */
 	unsigned long flags;
     interrupt_save_state(flags);
@@ -324,7 +324,7 @@ void task_start_user()
 void tasks_init()
 {
     task_next_pid = 0;
-    sched_unit_t *su = sched_get_unit();
+    sched_unit_t *su = sched_get_cur_unit();
     task_init_boot_idle(su);
     task_alloc_pid(); /* 跳过pid1，预留给INIT进程 */
     init_waitque();

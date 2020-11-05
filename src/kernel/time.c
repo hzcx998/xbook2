@@ -35,12 +35,12 @@ int sys_clock_gettime(clockid_t clockid, struct timespec *ts)
         ts->tv_nsec = ((systicks % HZ) * MS_PER_TICKS) * 1000000;
         break;
     case CLOCK_PROCESS_CPUTIME_ID:  /* 本进程运行时间*/
-        ts->tv_sec = current_task->elapsed_ticks / HZ;
-        ts->tv_nsec = ((current_task->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;
+        ts->tv_sec = task_current->elapsed_ticks / HZ;
+        ts->tv_nsec = ((task_current->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;
         break;
     case CLOCK_THREAD_CPUTIME_ID:   /*本线程运行时间*/
-        ts->tv_sec = current_task->elapsed_ticks / HZ;
-        ts->tv_nsec = ((current_task->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;
+        ts->tv_sec = task_current->elapsed_ticks / HZ;
+        ts->tv_nsec = ((task_current->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;
         break;
     default:
         return -1;

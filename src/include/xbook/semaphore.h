@@ -52,7 +52,7 @@ static inline void semaphore_destroy(semaphore_t *sema)
 static inline void __semaphore_down(semaphore_t *sema)
 {
 	/* 把自己添加到信号量的等待队列中，等待被唤醒 */
-	list_add_tail(&current_task->list, &sema->waiter.wait_list);
+	list_add_tail(&task_current->list, &sema->waiter.wait_list);
 	task_block(TASK_BLOCKED);
 }
 
@@ -114,7 +114,7 @@ static inline void __semaphore_up(semaphore_t *sema)
     
 	/* 设置任务为就绪状态 */
 	waiter->state = TASK_READY;
-    task_priority_queue_add_head(sched_get_unit(), waiter);
+    sched_queue_add_head(sched_get_cur_unit(), waiter);
 }
 
 /**

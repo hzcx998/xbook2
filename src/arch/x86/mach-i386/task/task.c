@@ -46,7 +46,7 @@ void trigger_frame_build(trap_frame_t *frame, int trig, void *_act)
     trigger_frame_t *trigger_frame = (trigger_frame_t *)((frame->esp - sizeof(trigger_frame_t)) & -8UL);
     
     trigger_frame->trig = trig;
-    trigger_frame->oldmask = current_task->triggers->blocked;
+    trigger_frame->oldmask = task_current->triggers->blocked;
 
     memcpy(&trigger_frame->trap_frame, frame, sizeof(trap_frame_t));
 
@@ -159,7 +159,7 @@ int trigger_return_to_user(trap_frame_t *frame)
     trigger_frame_t *trigger_frame = (trigger_frame_t *)(frame->esp - 4);
     trigset_t oldset = trigger_frame->oldmask;
     
-    triggers_t *trigger = current_task->triggers; 
+    triggers_t *trigger = task_current->triggers; 
     spin_lock_irq(&trigger->trig_lock);
     trigger->blocked = oldset;
     trigger_calc_left(trigger);

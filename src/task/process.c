@@ -62,11 +62,11 @@ static int load_segment(int fd, unsigned long offset, unsigned long file_sz,
         printk(KERN_ERR "load_segment: mem_space_mmap failed!\n");
         return -1;
     }
-    // printk(KERN_DEBUG "task %d map space: addr %x end %x\n", current_task->pid, vaddr_page, vaddr_page + occupy_pages * PAGE_SIZE);
+    // printk(KERN_DEBUG "task %d map space: addr %x end %x\n", task_current->pid, vaddr_page, vaddr_page + occupy_pages * PAGE_SIZE);
     /* 清空内存 */
     //memset((void *) vaddr_page, 0, occupy_pages * PAGE_SIZE);
 
-    //printk(KERN_DEBUG "task %s space: addr %x page %d\n",(current_task)->name, vaddr_page, occupy_pages);
+    //printk(KERN_DEBUG "task %s space: addr %x page %d\n",(task_current)->name, vaddr_page, occupy_pages);
 
     // printk(KERN_DEBUG "[proc]: read file off %x size %x to vaddr %x\n", offset, file_sz, vaddr);
 
@@ -483,7 +483,7 @@ task_t *start_process(char *name, char **argv)
 
     /* 创建进程栈 */
     task_stack_build(task, proc_entry, argv);
-    //current_task = task;    /* 指向当前任务 */
+    //task_current = task;    /* 指向当前任务 */
     /*
     int argc = 0;
     char *p;
@@ -496,7 +496,7 @@ task_t *start_process(char *name, char **argv)
     unsigned long flags;
     interrupt_save_state(flags);
     task_add_to_global_list(task);
-    task_priority_queue_add_tail(sched_get_unit(), task);
+    sched_queue_add_tail(sched_get_cur_unit(), task);
     interrupt_restore_state(flags);
     
     return task;

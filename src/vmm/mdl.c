@@ -36,7 +36,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
         printk(KERN_NOTICE "mdl_alloc: length=%x too long!\n", length);    
     }
     mdl->byte_count = length;
-    mdl->task = current_task;
+    mdl->task = task_current;
     mdl->next = NULL;
 
     unsigned long flags;    /* 关闭并保存中断 */

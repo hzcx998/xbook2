@@ -47,7 +47,7 @@ void interrupt_general_handler(unsigned int esp)
             #ifdef DEBUG_INTR
             printk(KERN_EMERG "interrupt_general_handler: touch TRIGHW trigger because a expection %d occur!\n", frame->vec_no);
             #endif
-            trigger_force(TRIGSYS, current_task->pid);
+            trigger_force(TRIGSYS, task_current->pid);
             trap_frame_dump(frame);
 		    return;
         }
@@ -57,7 +57,7 @@ void interrupt_general_handler(unsigned int esp)
             #ifdef DEBUG_INTR
 		    printk(KERN_NOTICE "interrupt_general_handler: touch TRIGDBG trigger because a debug occur!\n");
             #endif
-            trigger_force(TRIGDBG, current_task->pid);
+            trigger_force(TRIGDBG, task_current->pid);
             trap_frame_dump(frame);
             return;
         }

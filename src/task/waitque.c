@@ -53,7 +53,7 @@ int sys_waitque_create()
             spin_unlock_irqrestore(&waitque_table_lock, irqflags);
             #endif
 #ifdef DEBUG_WAITQUE
-            printk(KERN_DEBUG "%s: pid=%d get handle=%d\n", __func__, current_task->pid, i);
+            printk(KERN_DEBUG "%s: pid=%d get handle=%d\n", __func__, task_current->pid, i);
 #endif
             return i;
         }
@@ -65,7 +65,7 @@ int sys_waitque_create()
     spin_unlock_irqrestore(&waitque_table_lock, irqflags);
     #endif
 #ifdef DEBUG_WAITQUE
-    printk(KERN_DEBUG "%s: pid=%d get handle failed!\n", __func__, current_task->pid);
+    printk(KERN_DEBUG "%s: pid=%d get handle failed!\n", __func__, task_current->pid);
 #endif
     return -1;
 }
@@ -124,14 +124,14 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
     if (IS_BAD_WAITQUE(handle))
         return EINVAL;
 
-    TASK_CHECK_THREAD_CANCELATION_POTINT(current_task);
+    TASK_CHECK_THREAD_CANCELATION_POTINT(task_current);
 
     unsigned long flags;
     interrupt_save_state(flags);
     waitque_t *waitque = &waitque_table[handle];
     if (waitque->flags) {
 #ifdef DEBUG_WAITQUE
-        printk(KERN_DEBUG "%s: pid=%d wait\n", __func__, current_task->pid);
+        printk(KERN_DEBUG "%s: pid=%d wait\n", __func__, task_current->pid);
 #endif
         /* 对变量进行操作 */
         if (addr) {
@@ -163,10 +163,10 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
             }
         }
 
-        wait_queue_add(&waitque->wait_queue, current_task);
+        wait_queue_add(&waitque->wait_queue, task_current);
         if (wqflags & WAITQUE_TIMED) {   /* 有定时 */
 #ifdef DEBUG_WAITQUE
-            printk(KERN_DEBUG "%s: pid=%d wait with timer\n", __func__, current_task->pid);
+            printk(KERN_DEBUG "%s: pid=%d wait with timer\n", __func__, task_current->pid);
 #endif
             /* 如果是中途被打断，剩余ticks就大于0，一般是被其它线程唤醒。
             不然就是正常超时 */
@@ -186,7 +186,7 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
             }
             if (ticks <= 0) {   /* ticks为0，就直接返回 */
                 /* 从等待队列删除 */
-                wait_queue_remove(&waitque->wait_queue, current_task);
+                wait_queue_remove(&waitque->wait_queue, task_current);
                 interrupt_restore_state(flags);
                 return ETIMEDOUT;   /* 和超时效果一样 */
             }
@@ -199,22 +199,22 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
                 ticks = 2 * MS_PER_TICKS;
 
 #ifdef DEBUG_WAITQUE
-            printk(KERN_DEBUG "%s: pid=%d sleep ticks %u\n", __func__, current_task->pid, ticks);
+            printk(KERN_DEBUG "%s: pid=%d sleep ticks %u\n", __func__, task_current->pid, ticks);
 #endif
 
             if (task_sleep_by_ticks(ticks) > 0) {
           
 #ifdef DEBUG_WAITQUE
-                printk(KERN_DEBUG "%s: pid=%d was breaked\n", __func__, current_task->pid);
+                printk(KERN_DEBUG "%s: pid=%d was breaked\n", __func__, task_current->pid);
 #endif      
                 goto out;
             } else { /* timeout */
 #ifdef DEBUG_WAITQUE
-                printk(KERN_DEBUG "%s: pid=%d timeout\n", __func__, current_task->pid);
+                printk(KERN_DEBUG "%s: pid=%d timeout\n", __func__, task_current->pid);
 #endif
                 task_t *task, *next;
                 list_for_each_owner_safe (task, next, &waitque->wait_queue.wait_list, list) {
-                    if (task == current_task) {
+                    if (task == task_current) {
                         /* 从当前队列删除 */
                         list_del(&task->list);
                         break;
@@ -255,7 +255,7 @@ int sys_waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long
     waitque_t *waitque = &waitque_table[handle];
     if (waitque->flags) {
 #ifdef DEBUG_WAITQUE
-        printk(KERN_DEBUG "%s: pid=%d wake handle=%d\n", __func__, current_task->pid, handle);
+        printk(KERN_DEBUG "%s: pid=%d wake handle=%d\n", __func__, task_current->pid, handle);
 #endif
         /* 对变量进行操作 */
         if (addr) {
@@ -293,11 +293,11 @@ int sys_waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long
             唤醒后，会自动删除定时器，因此，不再这里做对应的处理 */
             if (wqflags & WAITQUE_ALL) {    /* 唤醒全部 */
 #ifdef DEBUG_WAITQUE
-            printk(KERN_DEBUG "%s: pid=%d wake broadcast thread.\n", __func__, current_task->pid);
+            printk(KERN_DEBUG "%s: pid=%d wake broadcast thread.\n", __func__, task_current->pid);
 #endif
             } else {        /* 只唤醒单线程 */
 #ifdef DEBUG_WAITQUE
-                printk(KERN_DEBUG "%s: pid=%d wake single thread.\n", __func__, current_task->pid);
+                printk(KERN_DEBUG "%s: pid=%d wake single thread.\n", __func__, task_current->pid);
 #endif
             }
             /* 从当前队列删除 */

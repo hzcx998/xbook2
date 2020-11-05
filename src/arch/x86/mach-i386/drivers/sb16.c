@@ -227,7 +227,7 @@ static ssize_t __sb16_write(device_extension_t *extension, const u8 *data, ssize
 
     while (((extension->index_w + 1) % DMA_COUNT) == extension->index_r)
     {
-        wait_queue_add(&extension->waiters, current_task);
+        wait_queue_add(&extension->waiters, task_current);
         task_sleep();
     }
     extension->data_len[extension->index_w] = length;

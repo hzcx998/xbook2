@@ -146,7 +146,7 @@ int msg_queue_send(int msgid, void *msgbuf, size_t size, int msgflg)
             semaphore_up(&msgq->mutex);
             return -1;
         }
-        wait_queue_add(&msgq->senders, current_task);
+        wait_queue_add(&msgq->senders, task_current);
         semaphore_up(&msgq->mutex);
         task_block(TASK_BLOCKED);
         semaphore_down(&msgq->mutex);
@@ -194,7 +194,7 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
             semaphore_up(&msgq->mutex); 
             return -1;
         }
-        wait_queue_add(&msgq->receivers, current_task);
+        wait_queue_add(&msgq->receivers, task_current);
         semaphore_up(&msgq->mutex);
         task_block(TASK_BLOCKED);
         semaphore_down(&msgq->mutex);

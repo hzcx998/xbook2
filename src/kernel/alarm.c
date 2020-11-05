@@ -6,7 +6,7 @@
 
 unsigned long sys_alarm(unsigned long second)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     unsigned long old_second = cur->alarm.second;
     if (second == 0) {
         cur->alarm.flags = 0;

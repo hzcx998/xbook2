@@ -123,7 +123,7 @@ int gui_user_init(task_t *task)
 
 int sys_g_init(void)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     return gui_user_init(cur);
 }
 
@@ -170,7 +170,7 @@ int gui_user_exit(task_t *task)
 
 int sys_g_quit(void)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     int ret = gui_user_exit(cur);
     return ret;
 }

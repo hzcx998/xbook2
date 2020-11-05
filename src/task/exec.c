@@ -45,7 +45,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     printk(KERN_DEBUG "%s: enter.\n", __func__);
 #endif
     /* 没有参数或者参数错误 */
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     unsigned long flags;
     interrupt_save_state(flags);
 

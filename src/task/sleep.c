@@ -37,17 +37,17 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
 {
     if (!ticks)     /* 为0就不休眠 */
         return 0;
-    DEFINE_TIMER(sleep_timer, ticks, (unsigned long )current_task, sleep_task_timeout);
-    current_task->sleep_timer = &sleep_timer;    /* 绑定休眠定时器 */
+    DEFINE_TIMER(sleep_timer, ticks, (unsigned long )task_current, sleep_task_timeout);
+    task_current->sleep_timer = &sleep_timer;    /* 绑定休眠定时器 */
     sleep_timer.timeout += timer_ticks;
     timer_add(&sleep_timer);
 #ifdef DEBUG_TASK_SLEEP 
-    printk(KERN_DEBUG "task_sleep_by_ticks: start pid=%d\n", current_task->pid);
+    printk(KERN_DEBUG "task_sleep_by_ticks: start pid=%d\n", task_current->pid);
 #endif    
     task_block(TASK_BLOCKED);   /* 阻塞自己 */
     unsigned long flags;
     interrupt_save_state(flags);
-    current_task->sleep_timer = NULL;           /* 解绑休眠定时器 */
+    task_current->sleep_timer = NULL;           /* 解绑休眠定时器 */
     long dt = 0;
     /* 有可能还在休眠中就被唤醒了，那么就检查定时器是否已经被执行过了 */
     if (sleep_timer.timeout > timer_ticks) { /* 非正常唤醒 */
@@ -59,7 +59,7 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
     }
 #ifdef DEBUG_TASK_SLEEP
     printk(KERN_DEBUG "task_sleep_by_ticks: end pid=%d timeout=%d\n",
-        current_task->pid, dt);
+        task_current->pid, dt);
 #endif
     interrupt_restore_state(flags);
     
@@ -68,7 +68,7 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
 
 unsigned long sys_sleep(unsigned long second)
 {
-    TASK_CHECK_THREAD_CANCELATION_POTINT(current_task);
+    TASK_CHECK_THREAD_CANCELATION_POTINT(task_current);
     if (!second)
         return 0;
     clock_t ticks = second * HZ;

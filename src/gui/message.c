@@ -58,7 +58,7 @@ int gui_msgpool_exit(task_t *task)
  */
 int sys_g_get_msg(g_msg_t *msg)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     if (!cur->gmsgpool)
         return -1;
     return msgpool_pop(cur->gmsgpool, msg);
@@ -70,7 +70,7 @@ int sys_g_get_msg(g_msg_t *msg)
  */
 int sys_g_try_get_msg(g_msg_t *msg)
 {
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     if (!cur->gmsgpool)
         return -1;
     return msgpool_try_pop(cur->gmsgpool, msg);

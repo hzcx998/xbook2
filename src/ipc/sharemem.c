@@ -140,7 +140,7 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
     if (shm == NULL) {
         return (void *) -1;
     }   
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     unsigned long addr;
     unsigned long len = shm->npages * PAGE_SIZE;
     if (shmaddr == NULL) {
@@ -187,7 +187,7 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
     if (!shmaddr) {
         return -1;
     }
-    task_t *cur = current_task;
+    task_t *cur = task_current;
     unsigned long addr;
     if (shmflg & IPC_RND)
         addr = (unsigned long) shmaddr & PAGE_MASK;
