@@ -149,7 +149,7 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
   LWIP_UNUSED_ARG(stacksize);
   //LWIP_UNUSED_ARG(prio);
   
-  thread = kthread_start((char *)name, prio, function, arg);
+  thread = kern_thread_start((char *)name, prio, function, arg);
 
   if (NULL != thread) {
     task_set_timeslice(thread, 1);
@@ -159,7 +159,7 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
   printk("%s: thread %x\n", __func__, thread);
   #endif
   if (NULL == st) {
-    LWIP_DEBUGF(SYS_DEBUG, ("sys_thread_new: kthread_start %x, st = 0x%lx",
+    LWIP_DEBUGF(SYS_DEBUG, ("sys_thread_new: kern_thread_start %x, st = 0x%lx",
                        thread, (unsigned long)st));
     abort();
   }

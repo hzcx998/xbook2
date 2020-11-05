@@ -47,7 +47,7 @@ typedef struct _scheduler {
 extern scheduler_t scheduler;
 
 void schedule();
-void init_schedule();
+void schedule_init();
 
 /**
  * 通过cpu获取当前的调度单元

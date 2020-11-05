@@ -124,7 +124,7 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
     if (IS_BAD_WAITQUE(handle))
         return EINVAL;
 
-    CHECK_THREAD_CANCELATION_POTINT(current_task);
+    TASK_CHECK_THREAD_CANCELATION_POTINT(current_task);
 
     unsigned long flags;
     interrupt_save_state(flags);

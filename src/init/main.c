@@ -32,17 +32,18 @@ int kernel_main(void)
     fifo_fifo();
     syscall_init();
     walltime_init();
-    init_tasks();
+    schedule_init();
+    tasks_init();
     clock_init();
     timers_init();
     interrupt_enable();
     driver_framewrok_init();
     initcalls_exec();
-    
+
     init_fs();
     init_gui();
     init_net();
     
-    start_user();
+    task_start_user();
     return 0;    
 }

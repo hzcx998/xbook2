@@ -21,10 +21,10 @@
 static int copy_struct_and_kstack(task_t *child, task_t *parent)
 {
     /* 复制task所在的页，里面有结构体，0级栈，还有返回地址等 */
-    memcpy(child, parent, TASK_KSTACK_SIZE);
+    memcpy(child, parent, TASK_KERN_STACK_SIZE);
 
     /* 单独修改内容 */
-    child->pid = fork_pid();
+    child->pid = task_fork_pid();
     child->tgid = child->pid;      /* 生成的进程是主线程 */
     child->state = TASK_READY;
     child->parent_pid = parent->pid;
@@ -33,7 +33,7 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     child->list.next = child->list.prev = NULL;
     child->global_list.next = child->global_list.prev = NULL;
     /* 设置内核栈位置 */
-    child->kstack = (unsigned char *)((unsigned char *)child + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
+    child->kstack = (unsigned char *)((unsigned char *)child + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
     
     /* 复制名字，在后面追加fork表明是一个fork的进程，用于测试 */
     //strcat(child->name, "_fork");
@@ -241,7 +241,7 @@ int sys_fork()
         __func__, parent->name, parent->pid, parent->priority);
 #endif    
     /* 为子进程分配空间 */
-    task_t *child = mem_alloc(TASK_KSTACK_SIZE);
+    task_t *child = mem_alloc(TASK_KERN_STACK_SIZE);
     if (child == NULL) {
         printk(KERN_ERR "do_usrmsg_fork: mem_alloc for child task failed!\n");
         return -1;
@@ -257,7 +257,7 @@ int sys_fork()
     }
     
     /* 把子进程添加到就绪队列和全局链表 */
-    task_global_list_add(child);
+    task_add_to_global_list(child);
     task_priority_queue_add_tail(sched_get_unit(), child); /* 放到队首 */
 
 

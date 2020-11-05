@@ -3,10 +3,6 @@
 #include <xbook/schedule.h>
 #include <xbook/clock.h>
 
-/**
- * sys_unid - 生成唯一id
- * @id: 参考值
- */
 unsigned long sys_unid(int id)
 {
     unsigned long _id;

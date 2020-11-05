@@ -108,7 +108,7 @@ void init_gui()
         panic("init gui layer failed!\n");
 
     /* 启动gui线程 */
-    if (kthread_start("kgui", TASK_PRIO_RT, kgui_thread, NULL) == NULL)
+    if (kern_thread_start("kgui", TASK_PRIO_RT, kgui_thread, NULL) == NULL)
         panic("start kgui thread failed!\n");
     #endif
     

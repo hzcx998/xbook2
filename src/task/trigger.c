@@ -24,7 +24,7 @@ int do_active_trigger(pid_t pid, int trig, pid_t toucher)
     printk(KERN_DEBUG "do_active_trigger: toucher=%d pid=%d tirgger:%d\n",
         toucher, pid, trig);
 #endif        
-    task_t *task = find_task_by_pid(pid);
+    task_t *task = task_find_by_pid(pid);
     if (task == NULL)
         return -1;
     if (task->triggers == NULL)
@@ -105,7 +105,7 @@ int trigger_force(int trig, pid_t pid)
         return -1;
     if (pid < 0)
         return -1;
-    task_t *task = find_task_by_pid(pid);
+    task_t *task = task_find_by_pid(pid);
     if (task == NULL)
         return -1;
     if (task->triggers == NULL)
@@ -323,7 +323,7 @@ int interrupt_do_trigger(trap_frame_t *frame)
             }
             if (ta->handler == TRIG_DFL) {   /* default trigger */
                 /* init process do nothing. */
-                if (cur->pid == INIT_PROC_PID) {
+                if (cur->pid == USER_INIT_PROC_ID) {
 #ifdef DEBUG_TRIGGER
                 printk(KERN_DEBUG "interrupt_do_trigger: trigger is invailed for init process :)\n");
 #endif

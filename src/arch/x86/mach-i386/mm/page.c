@@ -419,7 +419,7 @@ int page_do_fault(trap_frame_t *frame)
         /* TODO: 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
         printk(KERN_DEBUG "user pid=%d name=%s access unmaped vir_mem area .\n", cur->pid, cur->name);
         trap_frame_dump(frame);
-        print_task();
+        tasks_print();
         do_vir_mem_fault(addr);
         return -1;
     }
@@ -429,7 +429,7 @@ int page_do_fault(trap_frame_t *frame)
         printk(KERN_EMERG "page_do_fault: user access user unknown space .\n");
         printk(KERN_EMERG "page fault addr:%x\n", addr);
         mem_space_dump(cur->vmm);
-        print_task();
+        tasks_print();
         trigger_force(TRIGSYS, cur->pid);
         return -1;
     }

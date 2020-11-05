@@ -479,7 +479,7 @@ static iostatus_t mouse_enter(driver_object_t *driver)
 
 #if USE_THREAD == 1    
     /* 启动一个内核线程来处理数据 */
-    kthread_start("mouse", TASK_PRIO_RT, mouse_thread, devext);
+    kern_thread_start("mouse", TASK_PRIO_RT, mouse_thread, devext);
 #endif
     return status;
 }

@@ -147,7 +147,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 
     /* 构建中断栈框 */
     trap_frame_t *frame = (trap_frame_t *)\
-        ((unsigned long)cur + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
+        ((unsigned long)cur + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
     
     proc_make_trap_frame(cur);
     

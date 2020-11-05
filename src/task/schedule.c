@@ -77,7 +77,7 @@ task_t *get_next_task(sched_unit_t *su)
 static void set_next_task(sched_unit_t *su, task_t *next)
 {
     su->cur = next;
-    task_activate(su->cur);
+    task_activate_in_schedule(su->cur);
 }
 
 /**
@@ -99,7 +99,7 @@ void schedule()
     printk(KERN_INFO "schedule: switch from %s-%d-%d-%d to %s-%d-%x-%d\n",
         cur->name, cur->pid, cur->timeslice, cur->priority, next->name, next->pid, next->timeslice, next->priority);
     /*thread_kstack_dump(next->kstack);
-    dump_task(next);*/
+    task_dump(next);*/
 #endif
     set_next_task(su, next);
     thread_switch_to_next(cur, next);
@@ -151,7 +151,7 @@ void init_sched_unit(sched_unit_t *su, cpuid_t cpuid, unsigned long flags)
     }
 }
 
-void init_schedule()
+void schedule_init()
 {
     scheduler.tasknr = 0;
     spinlock_init(&scheduler.lock);

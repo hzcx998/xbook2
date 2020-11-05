@@ -31,7 +31,7 @@ void pthread_desc_exit(pthread_desc_t *pthread)
  */
 void pthread_entry(void *arg) 
 {
-    trap_frame_t *frame = GET_TASK_TRAP_FRAME(current_task);
+    trap_frame_t *frame = TASK_GET_TRAP_FRAME(current_task);
     kernel_switch_to_user(frame);
 }
 
@@ -106,7 +106,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     }
 
     // 创建一个新的线程结构体
-    task_t *task = (task_t *) mem_alloc(TASK_KSTACK_SIZE);
+    task_t *task = (task_t *) mem_alloc(TASK_KERN_STACK_SIZE);
     
     if (!task)
         return NULL;
@@ -139,12 +139,12 @@ task_t *pthread_start(task_func_t *func, void *arg,
 
 #if 0
     /* 写入关键信息 */
-    trap_frame_t *frame = GET_TASK_TRAP_FRAME(task);
+    trap_frame_t *frame = TASK_GET_TRAP_FRAME(task);
     frame->eip = func;
     frame->esp = stack_top;
 #endif
     /* 构建用户线程栈框 */
-    trap_frame_t *frame = GET_TASK_TRAP_FRAME(task);
+    trap_frame_t *frame = TASK_GET_TRAP_FRAME(task);
     user_thread_frame_build(frame, arg, (void *)func, thread_entry, 
         (unsigned char *)attr->stackaddr + attr->stacksize);
 
@@ -171,7 +171,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     printk(KERN_NOTICE "pthread_start: thread count %d\n", atomic_get(&task->pthread->thread_count));
 #endif
 
-    task_global_list_add(task);
+    task_add_to_global_list(task);
     task_priority_queue_add_tail(sched_get_unit(), task);
     
     interrupt_restore_state(flags);
@@ -224,7 +224,7 @@ void pthread_exit(void *status)
         因此，可能存在父进程join等待，所以，这里就需要检测任务状态 */
         if (cur->flags &  THREAD_FLAG_JOINED) {    /* 处于join状态 */
             /* 父进程指向join中的进程 */
-            task_t *parent = find_task_by_pid(cur->parent_pid);
+            task_t *parent = task_find_by_pid(cur->parent_pid);
             if (parent != NULL && parent->state == TASK_WAITING) {  /* 如果父进程在等待中 */
                 if (parent->tgid == cur->tgid) {    /* 父进程和自己属于同一个线程组 */
                     printk(KERN_DEBUG "pthread_exit: pid=%d parent %s pid=%d joining, wakeup it.\n",
@@ -237,7 +237,7 @@ void pthread_exit(void *status)
         }
         /* 过继给主线程 */
         //cur->parent_pid = cur->tgid;
-        cur->parent_pid = INIT_PROC_PID;
+        cur->parent_pid = USER_INIT_PROC_ID;
 
     } else {    /* 需要同步释放 */
 #ifdef DEBUG_PTHREAD
@@ -247,7 +247,7 @@ void pthread_exit(void *status)
 #ifdef DEBUG_PTHREAD
     printk(KERN_DEBUG "pthread_exit: pid=%d tgid=%d ppid=%d.\n", cur->pid, cur->tgid, cur->parent_pid);
 #endif
-    task_t *parent = find_task_by_pid(cur->parent_pid); 
+    task_t *parent = task_find_by_pid(cur->parent_pid); 
     if (parent) {
         /* 查看父进程状态 */
         if (parent->state == TASK_WAITING) {
@@ -290,7 +290,7 @@ void sys_thread_exit(void *retval)
  */
 int sys_thread_detach(pthread_t thread) 
 {
-    task_t *task = find_task_by_pid(thread);
+    task_t *task = task_find_by_pid(thread);
     if (task == NULL)   /* not found */
         return -1;
     printk(KERN_DEBUG "sys_thread_detach: thread=%s pid=%d tgid=%d ppid=%d set detach.\n",
@@ -300,7 +300,7 @@ int sys_thread_detach(pthread_t thread)
     因此，可能存在父进程join等待，所以，这里就需要检测任务状态 */
     if (task->flags & THREAD_FLAG_JOINED) {    /* 处于join状态 */
         /* 父进程指向join中的进程 */
-        task_t *parent = find_task_by_pid(task->parent_pid);
+        task_t *parent = task_find_by_pid(task->parent_pid);
         if (parent != NULL && parent->state == TASK_WAITING) {  /* 如果父进程在等待中 */
             if (parent->tgid == task->tgid) {    /* 父进程和自己属于同一个线程组 */
                 printk(KERN_DEBUG "pthread_exit: pid=%d parent %s pid=%d joining, wakeup it.\n",
@@ -409,7 +409,7 @@ int pthread_join(pthread_t thread, void **thread_return)
  */
 int sys_thread_join(pthread_t thread, void **thread_return)
 {
-    CHECK_THREAD_CANCELATION_POTINT(current_task);
+    TASK_CHECK_THREAD_CANCELATION_POTINT(current_task);
     return pthread_join(thread, thread_return);
 }
 
@@ -427,7 +427,7 @@ int sys_thread_cancel(pthread_t thread)
     task_t *task;
     unsigned long flags;
     interrupt_save_state(flags);
-    task = find_task_by_pid(thread);
+    task = task_find_by_pid(thread);
     if (task == NULL) { /* 没找到 */
 #ifdef DEBUG_PTHREAD
         printk(KERN_ERR "sys_thread_cancel: pid=%d not find thread %d!\n",
@@ -470,7 +470,7 @@ int sys_thread_cancel(pthread_t thread)
  */
 void sys_thread_testcancel(void)
 {
-    CHECK_THREAD_CANCELATION_POTINT(current_task);
+    TASK_CHECK_THREAD_CANCELATION_POTINT(current_task);
 }
 /**
  * sys_thread_setcancelstate - 设置取消状态

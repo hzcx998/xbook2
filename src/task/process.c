@@ -431,7 +431,7 @@ void proc_make_trap_frame(task_t *task)
 {
     /* 预留中断栈 */
     trap_frame_t *frame = (trap_frame_t *)\
-        ((unsigned long)task + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
+        ((unsigned long)task + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
     /* 默认内核线程使用内核段 */
     user_frame_init(frame);
 }
@@ -453,13 +453,13 @@ void proc_entry(void* arg)
 task_t *start_process(char *name, char **argv)
 {
     // 创建一个新的线程结构体
-    task_t *task = (task_t *) mem_alloc(TASK_KSTACK_SIZE);
+    task_t *task = (task_t *) mem_alloc(TASK_KERN_STACK_SIZE);
     
     if (!task)
         return NULL;
     // 初始化线程
     task_init(task, name, TASK_PRIO_USER);
-    task->pid = INIT_PROC_PID;  /* 修改pid为INIT进程pid */
+    task->pid = USER_INIT_PROC_ID;  /* 修改pid为INIT进程pid */
     task->tgid = task->pid;     /* 主线程，和pid一样 */
 
     if (proc_vmm_init(task)) {
@@ -495,7 +495,7 @@ task_t *start_process(char *name, char **argv)
     //process_setup(task, name, argv);
     unsigned long flags;
     interrupt_save_state(flags);
-    task_global_list_add(task);
+    task_add_to_global_list(task);
     task_priority_queue_add_tail(sched_get_unit(), task);
     interrupt_restore_state(flags);
     

@@ -39,7 +39,7 @@ int wait_any_hangging_child(task_t *parent, int *status)
                 if (status != NULL)
                     *status = child->exit_status;
                 /* 子进程或者子线程 */
-                if (IN_SINGAL_THREAD(child)) {
+                if (TASK_IS_SINGAL_THREAD(child)) {
 #ifdef DEBUG_WAIT
                     printk(KERN_NOTICE "wait_any_hangging_child: process.\n");
                     if (child->pthread)
@@ -82,7 +82,7 @@ int wait_one_hangging_child(task_t *parent, pid_t pid, int *status)
                     *status = child->exit_status;
 
                 /* 子进程或者子线程 */
-                if (IN_SINGAL_THREAD(child)) {
+                if (TASK_IS_SINGAL_THREAD(child)) {
 #ifdef DEBUG_WAIT
                     printk(KERN_NOTICE "wait_one_hangging_child: process.\n");
                     if (child->pthread)
@@ -126,7 +126,7 @@ int deal_zombie_child(task_t *parent)
                 printk(KERN_NOTICE "deal_zombie_child: pid=%d find a zombie child %d \n", parent->pid, child->pid);
 #endif
                 /* 子进程或者子线程 */
-                if (IN_SINGAL_THREAD(child)) {
+                if (TASK_IS_SINGAL_THREAD(child)) {
 #ifdef DEBUG_WAIT
                     printk(KERN_NOTICE "deal_zombie_child: process.\n");
                     if (child->pthread)
@@ -162,7 +162,7 @@ int find_child_proc(task_t *parent)
     task_t *child;
     list_for_each_owner (child, &task_global_list, global_list) {
         /* 必须是单线程才可以 */
-        if (child->parent_pid == parent->pid && IN_SINGAL_THREAD(child)) {
+        if (child->parent_pid == parent->pid && TASK_IS_SINGAL_THREAD(child)) {
             children++;
         }
     }
@@ -180,7 +180,7 @@ void adopt_children_to_init(task_t *parent)
     task_t *child;
     list_for_each_owner (child, &task_global_list, global_list) {
         if (child->parent_pid == parent->pid) { /* find a child process */
-            child->parent_pid = INIT_PROC_PID;
+            child->parent_pid = USER_INIT_PROC_ID;
         }
     }
 }
@@ -229,7 +229,7 @@ void close_other_threads(task_t *thread)
     task_t *borther, *next;
     list_for_each_owner_safe (borther, next, &task_global_list, global_list) {
         /* 查找一个兄弟线程，位于同一个线程组，但不是自己 */
-        if (IN_SAME_THREAD_GROUP(thread, borther)) {
+        if (TASK_IN_SAME_THREAD_GROUP(thread, borther)) {
             if (thread->pid != borther->pid) {
                 close_one_thread(borther); /* 销毁兄弟 */
             }
@@ -263,7 +263,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
 {
     
     task_t *parent = current_task;  /* 当前进程是父进程 */
-    CHECK_THREAD_CANCELATION_POTINT(parent);
+    TASK_CHECK_THREAD_CANCELATION_POTINT(parent);
     pid_t child_pid;
     unsigned long flags;
     
@@ -386,7 +386,7 @@ void sys_exit(int status)
 #ifdef DEBUG_EXIT
     printk(KERN_DEBUG "sys_exit: pid=%d release all resources done.\n", cur->pid);
 #endif    
-    task_t *parent = find_task_by_pid(cur->parent_pid); 
+    task_t *parent = task_find_by_pid(cur->parent_pid); 
     
     if (parent) {
         /* 查看父进程状态 */
@@ -421,7 +421,7 @@ void sys_exit(int status)
     }
 }
 
-void kthread_exit(int status)
+void kern_thread_exit(int status)
 {
     unsigned long flags;
     interrupt_save_state(flags);
@@ -433,9 +433,9 @@ void kthread_exit(int status)
     thread_release_resource(cur);
     
     /* 内核线程没有实际的父进程，因此把自己过继给init进程 */
-    cur->parent_pid = INIT_PROC_PID;
+    cur->parent_pid = USER_INIT_PROC_ID;
 
-    task_t *parent = find_task_by_pid(cur->parent_pid); 
+    task_t *parent = task_find_by_pid(cur->parent_pid); 
     if (parent) {
         /* 查看父进程状态 */
         if (parent->state == TASK_WAITING) {

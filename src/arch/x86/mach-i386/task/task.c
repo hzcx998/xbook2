@@ -100,7 +100,7 @@ int task_stack_build_when_forking(task_t *child)
 {
 
     trap_frame_t *frame = (trap_frame_t *)(
-            (unsigned long)child + TASK_KSTACK_SIZE - sizeof(trap_frame_t));
+            (unsigned long)child + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
     
     /* 设置eax为0，就相当于设置了子任务的返回值为0 */
     frame->eax = 0;
