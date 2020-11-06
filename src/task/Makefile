@@ -8,6 +8,6 @@ SRC	+= exec.c
 SRC	+= trigger.c
 SRC	+= sleep.c
 SRC	+= pthread.c
-SRC	+= waitque.c
+SRC	+= mutexqueue.c
 SRC	+= waitqueue.c
 SRC	+= mutexlock.c

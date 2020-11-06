@@ -1,5 +1,5 @@
 #include <pthread.h>
-#include <sys/waitque.h>
+#include <sys/mutexqueue.h>
 #include <sys/proc.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,8 +29,8 @@ int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cond_attr)
     }
     pthread_spin_init(&cond->spin, PTHREAD_PROCESS_PRIVATE);
     /* 创建内核的锁的等待队列 */
-    cond->waitque = waitque_create();
-    if (cond->waitque < 0)
+    cond->mutex_queue = mutex_queue_alloc();
+    if (cond->mutex_queue < 0)
         return ENOMEM;
 
     return 0;
@@ -44,9 +44,9 @@ int pthread_cond_destroy(pthread_cond_t *cond)
 {
     if (!cond)
         return EINVAL;
-    if (cond->waitque >= 0)
-        waitque_destroy(cond->waitque);
-    cond->waitque = -1;
+    if (cond->mutex_queue >= 0)
+        mutex_queue_free(cond->mutex_queue);
+    cond->mutex_queue = -1;
     return 0;
 }
 
@@ -61,11 +61,11 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
     if (!cond || !mutex)
         return EINVAL;
-    /* 如果是通过静态方式创建，那么waitque就需要重新获取 */
-    if (cond->waitque == -1) {
+    /* 如果是通过静态方式创建，那么mutex_queue就需要重新获取 */
+    if (cond->mutex_queue == -1) {
         return EINVAL;
-        cond->waitque = waitque_create();
-        if (cond->waitque < 0)
+        cond->mutex_queue = mutex_queue_alloc();
+        if (cond->mutex_queue < 0)
             return ENOMEM;
     }
 
@@ -75,7 +75,7 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
     pthread_mutex_unlock(mutex);
 
     /* 加入等待队列，并把自旋锁解锁 */
-    waitque_wait(cond->waitque, (void *) &cond->spin.count, WAITQUE_ZERO, 0);
+    mutex_queue_wait(cond->mutex_queue, (void *) &cond->spin.count, MUTEX_QUEUE_ZERO, 0);
     //printf("cond: %d after wait, lock mutex.\n", pthread_self());
     //pthread_spin_unlock(&cond->spin);    /* 获得对互斥锁得操作 */
     
@@ -97,11 +97,11 @@ int pthread_cond_timedwait(
 ) {
     if (!cond || !mutex)
         return EINVAL;
-    /* 如果是通过静态方式创建，那么waitque就需要重新获取 */
-    if (cond->waitque == -1) {
+    /* 如果是通过静态方式创建，那么mutex_queue就需要重新获取 */
+    if (cond->mutex_queue == -1) {
         return EINVAL;
-        cond->waitque = waitque_create();
-        if (cond->waitque < 0)
+        cond->mutex_queue = mutex_queue_alloc();
+        if (cond->mutex_queue < 0)
             return ENOMEM;
     }
     int retval = 0;
@@ -110,7 +110,7 @@ int pthread_cond_timedwait(
     pthread_mutex_unlock(mutex);
 
     /* 加入等待队列，并把自旋锁解锁 */
-    retval = waitque_wait(cond->waitque, (void *) &cond->spin.count, WAITQUE_TIMED | WAITQUE_ZERO, (unsigned long) abstime);
+    retval = mutex_queue_wait(cond->mutex_queue, (void *) &cond->spin.count, MUTEX_QUEUE_TIMED | MUTEX_QUEUE_ZERO, (unsigned long) abstime);
  
     //printf("cond: %d after wait, lock mutex.\n", pthread_self());
     /* 对互斥锁加锁，获得操作。 */
@@ -128,18 +128,18 @@ int pthread_cond_signal(pthread_cond_t *cond)
 {
     if (!cond)
         return EINVAL;
-    /* 如果是通过静态方式创建，那么waitque就需要重新获取 */
-    if (cond->waitque == -1) {
+    /* 如果是通过静态方式创建，那么mutex_queue就需要重新获取 */
+    if (cond->mutex_queue == -1) {
         return EINVAL;
-        cond->waitque = waitque_create();
-        if (cond->waitque < 0)
+        cond->mutex_queue = mutex_queue_alloc();
+        if (cond->mutex_queue < 0)
             return ENOMEM;
     }
 
     pthread_spin_lock(&cond->spin);    /* 获得对互斥锁得操作 */
 
     /* 唤醒等待队列 */
-    waitque_wake(cond->waitque, NULL, 0, 0);
+    mutex_queue_wake(cond->mutex_queue, NULL, 0, 0);
 
     pthread_spin_unlock(&cond->spin);    /* 获得对互斥锁得操作 */
 
@@ -155,18 +155,18 @@ int pthread_cond_broadcast(pthread_cond_t *cond)
 {
     if (!cond)
         return EINVAL;
-    /* 如果是通过静态方式创建，那么waitque就需要重新获取 */
-    if (cond->waitque == -1) {
+    /* 如果是通过静态方式创建，那么mutex_queue就需要重新获取 */
+    if (cond->mutex_queue == -1) {
         return EINVAL;
-        cond->waitque = waitque_create();
-        if (cond->waitque < 0)
+        cond->mutex_queue = mutex_queue_alloc();
+        if (cond->mutex_queue < 0)
             return ENOMEM;
     }
     
     pthread_spin_lock(&cond->spin);    /* 获得对互斥锁得操作 */
 
     /* 加入等待队列，并把自旋锁解锁 */
-    waitque_wake(cond->waitque, NULL, WAITQUE_ALL, 0);
+    mutex_queue_wake(cond->mutex_queue, NULL, MUTEX_QUEUE_ALL, 0);
 
     pthread_spin_unlock(&cond->spin);    /* 获得对互斥锁得操作 */
 

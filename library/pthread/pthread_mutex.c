@@ -1,5 +1,5 @@
 #include <pthread.h>
-#include <sys/waitque.h>
+#include <sys/mutexqueue.h>
 #include <sys/proc.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,8 +17,8 @@ int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexa
     }
     mutex->kind = mutex->mattr.type;  /* 和属性一致 */
     /* 创建内核的锁的等待队列 */
-    mutex->waitque = waitque_create();
-    if (mutex->waitque < 0)
+    mutex->mutex_queue = mutex_queue_alloc();
+    if (mutex->mutex_queue < 0)
         return ENOMEM;
     return 0;
 }
@@ -29,9 +29,9 @@ int pthread_mutex_destroy(pthread_mutex_t *mutex)
     mutex->count = 0;
     mutex->owner = 0;
     mutex->kind = 0;
-    if (mutex->waitque >= 0)
-        waitque_destroy(mutex->waitque);
-    mutex->waitque = -1;
+    if (mutex->mutex_queue >= 0)
+        mutex_queue_free(mutex->mutex_queue);
+    mutex->mutex_queue = -1;
     mutex->lock = 0;
     pthread_spin_init(&mutex->spin, PTHREAD_PROCESS_PRIVATE);
     memset(&mutex->mattr, 0, sizeof(pthread_mutexattr_t));
@@ -41,10 +41,10 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
 {
     if (!mutex)
         return EINVAL;
-    /* 如果是通过静态方式创建，那么waitque就需要重新获取 */
-    if (mutex->waitque == -1) {
-        mutex->waitque = waitque_create();
-        if (mutex->waitque < 0)
+    /* 如果是通过静态方式创建，那么mutex_queue就需要重新获取 */
+    if (mutex->mutex_queue == -1) {
+        mutex->mutex_queue = mutex_queue_alloc();
+        if (mutex->mutex_queue < 0)
             return ENOMEM;
     }
     
@@ -54,16 +54,16 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
             /* 如果0，那么说明该互斥锁已经被其它线程持有，自己等待 */
             if (!test_and_set(&mutex->lock, 0)) {
                 /*
-                在即将阻塞前，需要释放mutex->spin自旋锁。但是释放后到waitque_wait之前的这一部分
+                在即将阻塞前，需要释放mutex->spin自旋锁。但是释放后到mutex_queue_wait之前的这一部分
                 空间是有可能切换到其它线程，其它线程就可能会同时到达这里。那么就违背了准则。
                 从获取锁到阻塞期间必须是原子的。
                 因此，这里不进行pthread_spin_unlock(&mutex->spin);
-                而是通过waitque_wait，来对自旋锁的值进行操作，来修改自旋锁的值，实现解锁。
-                因为waitque_wait的执行是原子的，所以只有当他调度出去后，才会产生调度。
+                而是通过mutex_queue_wait，来对自旋锁的值进行操作，来修改自旋锁的值，实现解锁。
+                因为mutex_queue_wait的执行是原子的，所以只有当他调度出去后，才会产生调度。
                 */
                 //printf("had locked!\n");
                 /* 设置自选锁值为0，并且阻塞自己 */
-                waitque_wait(mutex->waitque, (void *) &mutex->spin, WAITQUE_ZERO, 0);
+                mutex_queue_wait(mutex->mutex_queue, (void *) &mutex->spin, MUTEX_QUEUE_ZERO, 0);
             } else {
                 mutex->lock = 0;    /* 获得锁 */
                 mutex->owner = pthread_self();
@@ -88,16 +88,16 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
             /* 如果非0，那么说明该互斥锁已经被其它线程持有，自己等待 */
             if (!test_and_set(&mutex->lock, 0)) {
                 /*
-                在即将阻塞前，需要释放mutex->spin自旋锁。但是释放后到waitque_wait之前的这一部分
+                在即将阻塞前，需要释放mutex->spin自旋锁。但是释放后到mutex_queue_wait之前的这一部分
                 空间是有可能切换到其它线程，其它线程就可能会同时到达这里。那么就违背了准则。
                 从获取锁到阻塞期间必须是原子的。
                 因此，这里不进行pthread_spin_unlock(&mutex->spin);
-                而是通过waitque_wait，来对自旋锁的值进行操作，来修改自旋锁的值，实现解锁。
-                因为waitque_wait的执行是原子的，所以只有当他调度出去后，才会产生调度。
+                而是通过mutex_queue_wait，来对自旋锁的值进行操作，来修改自旋锁的值，实现解锁。
+                因为mutex_queue_wait的执行是原子的，所以只有当他调度出去后，才会产生调度。
                 */
                 //printf("had locked!\n");
                 /* 设置自选锁值为0，并且阻塞自己 */
-                waitque_wait(mutex->waitque, (void *) &mutex->spin, WAITQUE_ZERO, 0);
+                mutex_queue_wait(mutex->mutex_queue, (void *) &mutex->spin, MUTEX_QUEUE_ZERO, 0);
             } else {
                 mutex->lock = 0;    /* 获得锁 */
                 mutex->owner = pthread_self();
@@ -128,16 +128,16 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
             /* 如果非0，那么说明该互斥锁已经被其它线程持有，自己等待 */
             if (!test_and_set(&mutex->lock, 0)) {
                 /*
-                在即将阻塞前，需要释放mutex->spin自旋锁。但是释放后到waitque_wait之前的这一部分
+                在即将阻塞前，需要释放mutex->spin自旋锁。但是释放后到mutex_queue_wait之前的这一部分
                 空间是有可能切换到其它线程，其它线程就可能会同时到达这里。那么就违背了准则。
                 从获取锁到阻塞期间必须是原子的。
                 因此，这里不进行pthread_spin_unlock(&mutex->spin);
-                而是通过waitque_wait，来对自旋锁的值进行操作，来修改自旋锁的值，实现解锁。
-                因为waitque_wait的执行是原子的，所以只有当他调度出去后，才会产生调度。
+                而是通过mutex_queue_wait，来对自旋锁的值进行操作，来修改自旋锁的值，实现解锁。
+                因为mutex_queue_wait的执行是原子的，所以只有当他调度出去后，才会产生调度。
                 */
                 //printf("had locked!\n");
                 /* 设置自选锁值为0，并且阻塞自己 */
-                waitque_wait(mutex->waitque, (void *) &mutex->spin, WAITQUE_ZERO, 0);
+                mutex_queue_wait(mutex->mutex_queue, (void *) &mutex->spin, MUTEX_QUEUE_ZERO, 0);
             } else {
                 mutex->lock = 0;    /* 获得锁 */
                 mutex->owner = pthread_self();
@@ -153,10 +153,10 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex)
     if (!mutex)
         return EINVAL;
     
-    /* 如果是通过静态方式创建，那么waitque就需要重新获取 */
-    if (mutex->waitque == -1) {
-        mutex->waitque = waitque_create();
-        if (mutex->waitque < 0)
+    /* 如果是通过静态方式创建，那么mutex_queue就需要重新获取 */
+    if (mutex->mutex_queue == -1) {
+        mutex->mutex_queue = mutex_queue_alloc();
+        if (mutex->mutex_queue < 0)
             return ENOMEM;
     }
 
@@ -166,7 +166,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex)
         
         mutex->lock = 1;    /* 释放锁 */
         mutex->owner = 0;
-        waitque_wake(mutex->waitque, NULL, 0, 0);
+        mutex_queue_wake(mutex->mutex_queue, NULL, 0, 0);
         pthread_spin_unlock(&mutex->spin);    /* 取消对互斥锁得操作 */
     } else if (mutex->kind == PTHREAD_MUTEX_ERRORCHECK) {  /* 检测锁 */ 
         pthread_spin_lock(&mutex->spin);    /* 获得对互斥锁的操作 */
@@ -177,7 +177,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex)
 
         mutex->lock = 1;    /* 释放锁 */
         mutex->owner = 0;
-        waitque_wake(mutex->waitque, NULL, 0, 0);
+        mutex_queue_wake(mutex->mutex_queue, NULL, 0, 0);
         pthread_spin_unlock(&mutex->spin);    /* 取消对互斥锁得操作 */
         
     } else if (mutex->kind == PTHREAD_MUTEX_RECURSIVE) {  /* 可重入锁 */ 
@@ -199,7 +199,7 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex)
 
         mutex->lock = 1;    /* 释放锁 */
         mutex->owner = 0;
-        waitque_wake(mutex->waitque, NULL, 0, 0);
+        mutex_queue_wake(mutex->mutex_queue, NULL, 0, 0);
         pthread_spin_unlock(&mutex->spin);    /* 取消对互斥锁得操作 */
     } 
     return 0;

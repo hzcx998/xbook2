@@ -18,18 +18,8 @@ static void sleep_task_timeout(unsigned long arg)
     printk(KERN_DEBUG "sleep_task_timeout: wakeup\n");
 #endif    
     task_t *task = (task_t *)arg;
-    /* 需要在触发的时候就置空，避免还未唤醒的时候，进程退出，检测定时器
-    指针还指向定时器，但是定时器在早已从定时器链表删除。 */
     task->sleep_timer = NULL;
-    
-    /* 如果已经在其他队列，那么先从其他队列删除
-    案例：在waitque中，会先添加到就绪队列，然后休眠。
-    当定时器触发时，会把任务唤醒，添加到新的就绪队列。
-    而此时，task本来在waitque中，这就破坏了waitque，
-    因此，需要先在这里把原有链表删除，再唤醒。
-     */
-    list_del_init(&task->list); 
-    /* 超时后唤醒休眠的任务 */
+    list_del_init(&task->list);
     task_wakeup(task);
 }
 

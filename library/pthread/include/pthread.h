@@ -103,7 +103,7 @@ typedef struct __pthread_mutex {
     int count;                      /* 可重入时owner持有锁的次数 */
     int owner;                      /* 锁的持有者 */
     int kind;                       /* 锁的类型 */
-    int waitque;                    /* 对应的内核的用户等待队列 */
+    int mutex_queue;                    /* 对应的内核的用户等待队列 */
     pthread_spinlock_t spin;        /* 维护操作时的自旋锁 */
     pthread_mutexattr_t mattr;      /* 属性 */
 } pthread_mutex_t;
@@ -113,7 +113,7 @@ typedef struct __pthread_mutex {
          .count = 0, \
          .owner = 0, \
          .kind = PTHREAD_MUTEX_DEFAULT, \
-         .waitque = -1, \
+         .mutex_queue = -1, \
          .spin = PTHREAD_SPIN_LOCK_INITIALIZER, \
          .mattr = PTHREAD_MUTEX_ATTR_INITIALIZER}
 
@@ -141,13 +141,13 @@ typedef struct __pthread_condattr {
 
 typedef struct __pthread_cond {
     pthread_spinlock_t spin;        /* 维护操作时的自旋锁 */
-    int waitque;                    /* 对应的内核的用户等待队列 */
+    int mutex_queue;                    /* 对应的内核的用户等待队列 */
     pthread_condattr_t cond_attr;      /* 属性 */
 } pthread_cond_t;
 /* 默认初始化为未初始化的自旋锁 */
 #define PTHREAD_COND_INITIALIZER \
         {.spin = PTHREAD_SPIN_LOCK_INITIALIZER, \
-         .waitque = -1, \
+         .mutex_queue = -1, \
          .cond_attr = PTHREAD_COND_ATTR_INITIALIZER}
 
 int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *condattr);

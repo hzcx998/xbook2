@@ -18,6 +18,7 @@
 #include <xbook/gui.h>
 #include <xbook/timer.h>
 #include <xbook/initcall.h>
+#include <xbook/mutexqueue.h>
 
 int kernel_main(void)
 {
@@ -34,6 +35,7 @@ int kernel_main(void)
     walltime_init();
     schedule_init();
     tasks_init();
+    mutex_queue_init();
     clock_init();
     timers_init();
     interrupt_enable();

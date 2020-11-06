@@ -17,7 +17,7 @@
 #include <xbook/fifoio.h>
 #include <xbook/rwlock.h>
 #include <xbook/vmm.h>
-#include <xbook/waitque.h>
+#include <xbook/mutexqueue.h>
 #include <xbook/process.h>
 #include <fsal/fsal.h>
 #include <math.h>
@@ -327,7 +327,6 @@ void tasks_init()
     sched_unit_t *su = sched_get_cur_unit();
     task_init_boot_idle(su);
     task_alloc_pid(); /* 跳过pid1，预留给INIT进程 */
-    init_waitque();
     task_init_done = 1;
     printk(KERN_INFO "[ok] tasks init.");
 }

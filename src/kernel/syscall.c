@@ -5,7 +5,7 @@
 #include <xbook/trigger.h>
 #include <xbook/alarm.h>
 #include <xbook/clock.h>
-#include <xbook/waitque.h>
+#include <xbook/mutexqueue.h>
 #include <xbook/fs.h>
 #include <xbook/driver.h>
 #include <xbook/net.h>
@@ -46,10 +46,10 @@ void syscall_init()
     syscalls[SYS_THREAD_CANCELSTATE] = sys_thread_setcancelstate;
     syscalls[SYS_THREAD_CANCELTYPE] = sys_thread_setcanceltype;
     syscalls[SYS_SCHED_YEILD] = sys_sched_yeild;
-    syscalls[SYS_WAITQUE_CREATE] = sys_waitque_create;
-    syscalls[SYS_WAITQUE_DESTROY] = sys_waitque_destroy;
-    syscalls[SYS_WAITQUE_WAIT] = sys_waitque_wait;
-    syscalls[SYS_WAITQUE_WAKE] = sys_waitque_wake;
+    syscalls[SYS_MUTEX_QUEUE_CREATE] = sys_mutex_queue_free;
+    syscalls[SYS_MUTEX_QUEUE_DESTROY] = sys_mutex_queue_alloc;
+    syscalls[SYS_MUTEX_QUEUE_WAIT] = sys_mutex_queue_wait;
+    syscalls[SYS_MUTEX_QUEUE_WAKE] = sys_mutex_queue_wake;
     syscalls[SYS_HEAP] = sys_mem_space_expend_heap;
     syscalls[SYS_MUNMAP] = sys_munmap;
     syscalls[SYS_ALARM] = sys_alarm;
