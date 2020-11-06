@@ -307,7 +307,7 @@ static char *init_argv[2] = {INIT_SBIN_PATH, 0};
 void task_start_user()
 {
     printk(KERN_DEBUG "[task]: start user process.\n");
-    task_t *proc = start_process(init_argv[0], init_argv);
+    task_t *proc = user_process_start(init_argv[0], init_argv);
     if (proc == NULL)
         panic("kernel start process failed! please check initsrv!\n");
     sched_unit_t *su = sched_get_cur_unit();

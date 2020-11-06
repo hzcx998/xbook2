@@ -129,7 +129,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     task->fileman = parent->fileman; /* 共享文件管理 */
     
     /* 中断栈框 */
-    proc_make_trap_frame(task);
+    proc_trap_frame_init(task);
 
     // 创建一个线程
     task_stack_build(task, pthread_entry, arg);

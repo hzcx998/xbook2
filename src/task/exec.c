@@ -149,7 +149,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
     
-    proc_make_trap_frame(cur);
+    proc_trap_frame_init(cur);
     
     /* 初始化用户栈 */
     if(process_frame_init(cur, frame, new_argv, new_envp) < 0){
@@ -159,8 +159,6 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     mem_free(tmp_arg); /* 不需要了，释放掉 */
     sys_close(fd);  /* 正常关闭文件 */
 
-    /* 初始化用户堆 */
-    proc_heap_init(cur);
     /* 初始化用户映射区域 */
     proc_map_space_init(cur);
     
