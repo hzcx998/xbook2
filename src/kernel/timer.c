@@ -8,9 +8,6 @@
 #include <arch/interrupt.h>
 #include <arch/time.h>
 
-// #define DEBUG_TIMER
-
-
 /* 30day = 30 * 60 * 60 * 24 * HZ */
 #define TIMER_IDLE_TIMEOUT  (2592000 * HZ)
 
@@ -59,9 +56,6 @@ void timer_add(timer_t *timer)
     if (list_empty(&timer_list_head)) {    
         list_add_tail(&timer->list, &timer_list_head);
         minim_timeout_val = timer->timeout;
-        #ifdef DEBUG_TIMER 
-        printk("[timer]: timer list is null, timeout %d - %x add to tail!\n", timer->timeout, timer->timeout);
-        #endif /* DEBUG_TIMER */
     } else {
         timer_t *first = list_first_owner(&timer_list_head, timer_t, list);
         if (timer->timeout < first->timeout) {
@@ -159,9 +153,6 @@ long sys_usleep(struct timeval *inv, struct timeval *outv)
     }
     ticks = timeval_to_systicks(&tv);
     ticks = task_sleep_by_ticks(ticks);
-    #ifdef DEBUG_TIMER 
-    printk("[timer]: usleep left ticks %d\n", ticks);
-    #endif
     if (ticks > 0) {
         if (outv) {
             systicks_to_timeval(ticks, &tv);

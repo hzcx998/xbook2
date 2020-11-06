@@ -64,7 +64,7 @@ typedef struct {
     list_t list;                        /* 处于所在队列的链表，就绪队列，阻塞队列等 */
     list_t global_list;                 /* 全局任务队列，用来查找所有存在的任务 */
     triggers_t *triggers;               
-    timer_t *sleep_timer;               
+    timer_t sleep_timer;               
     alarm_t alarm;                      
     long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */

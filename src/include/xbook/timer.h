@@ -30,6 +30,9 @@ typedef struct timer_struct {
 #define timer_alloc()       mem_alloc(sizeof(timer_t))
 #define timer_free(timer)   mem_free(timer)
 
+#define timer_set_handler(tmr, handler) (tmr)->callback = (timer_callback_t)(handler)
+#define timer_set_arg(tmr, _arg) (tmr)->arg = (unsigned long )(_arg)
+
 void timer_init(
     timer_t *timer,
     unsigned long timeout,

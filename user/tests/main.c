@@ -12,6 +12,6 @@ int main(int argc, char *argv[])
     //http_test(argc, argv);
     //xlibc_test(argc, argv);
     //buddy_test(argc, argv);
-    pty_test(argc, argv);
+    sleep_test(argc, argv);
     return 0;
 }

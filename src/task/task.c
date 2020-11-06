@@ -61,7 +61,7 @@ void task_init(task_t *task, char *name, int priority)
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KERN_STACK_SIZE);
     task->flags = 0;
     task->triggers = NULL;
-    task->sleep_timer = NULL;
+    timer_init(&task->sleep_timer, 0, 0, NULL);
     alarm_init(&task->alarm);
     task->errno = 0;
     task->pthread = NULL;

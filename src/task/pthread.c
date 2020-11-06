@@ -47,10 +47,7 @@ void pthread_entry(void *arg)
  */
 int thread_release_resource(task_t *task)
 {
-    /* 取消定时器 */
-    timer_cancel(task->sleep_timer);
-    task->sleep_timer = NULL;
-
+    timer_cancel(&task->sleep_timer);
     return 0;
 }
 
