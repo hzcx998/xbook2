@@ -164,7 +164,7 @@ static int mem_group_create(mem_cache_t *cache, flags_t flags)
 {
 	mem_group_t *group;
     unsigned irqflags;
-    interrupt_save_state(irqflags);
+    interrupt_save_and_disable(irqflags);
 	group = mem_cache_page_alloc(1);
 	if (group == NULL) {
 		printk(KERN_ERR "alloc page for mem group failed!\n");
@@ -226,7 +226,7 @@ void *mem_cache_alloc_object(mem_cache_t *cache)
 	list_t *partialList, *node;
 	unsigned long flags;
 retry_alloc_object:
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 	partialList = &cache->partial_groups;
 	node = partialList->next;
 	if (list_empty(partialList)) {
@@ -310,7 +310,7 @@ static void mem_cache_do_free(mem_cache_t *cache, void *object)
 void mem_cache_free_object(mem_cache_t *cache, void *object)
 {
 	unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 	mem_cache_do_free(cache, object);
     interrupt_restore_state(flags);
 }
@@ -374,7 +374,7 @@ static int mem_cahce_shrink(mem_cache_t *cache)
 	if (!cache) 
 		return 0; 
 	unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 	ret = mem_cache_do_shrink(cache);
     interrupt_restore_state(flags);
 	return ret * cache->object_count * cache->object_size;

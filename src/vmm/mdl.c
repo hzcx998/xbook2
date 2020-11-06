@@ -40,7 +40,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
     mdl->next = NULL;
 
     unsigned long flags;    /* 关闭并保存中断 */
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 
     unsigned long phyaddr = addr_vir2phy((unsigned long) mdl->start_vaddr);
     printk(KERN_DEBUG "mdl_alloc: viraddr=%x phyaddr=%x\n", vaddr, phyaddr);
@@ -97,7 +97,7 @@ void mdl_free(mdl_t *mdl)
     printk(KERN_DEBUG "mdl_free: vaddr=%x length=%d byte offset=%d mapped vaddr=%x.\n",
         mdl->start_vaddr, mdl->byte_count, mdl->byte_offset, mdl->mapped_vaddr);
     unsigned long flags;    /* 关闭并保存中断 */
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     /* 取消共享内存映射 */
     page_unmap_addr_safe((unsigned long) mdl->mapped_vaddr, mdl->byte_count, 1);
     vir_addr_free((unsigned long) mdl->mapped_vaddr, mdl->byte_count);  /* 释放映射后的虚拟地址 */

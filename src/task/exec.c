@@ -47,7 +47,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     /* 没有参数或者参数错误 */
     task_t *cur = task_current;
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 
     /* 执行新进程的时候，需要关闭旧进程的子线程。 */
     close_other_threads(cur);

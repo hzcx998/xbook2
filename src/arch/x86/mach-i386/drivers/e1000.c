@@ -1722,7 +1722,7 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
     unsigned long intr_flags;
     int count = 0;
 
-    interrupt_save_state(intr_flags);
+    interrupt_save_and_disable(intr_flags);
 
     if(unlikely(len <= 0)) {
         mem_free(buf);

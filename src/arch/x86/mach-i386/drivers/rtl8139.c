@@ -672,7 +672,7 @@ int rtl8139_transmit(device_extension_t *ext, uint8_t *buf, uint32 len)
     //enum InterruptStatus flags = InterruptDisable();
     
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 
     /* 如果还有剩余的传输项 */
     if (atomic_get(&ext->tx_free_counts) > 0) {

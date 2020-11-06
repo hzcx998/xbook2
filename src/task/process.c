@@ -494,7 +494,7 @@ task_t *start_process(char *name, char **argv)
     }*/
     //process_setup(task, name, argv);
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     task_add_to_global_list(task);
     sched_queue_add_tail(sched_get_cur_unit(), task);
     interrupt_restore_state(flags);

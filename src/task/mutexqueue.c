@@ -71,7 +71,7 @@ int sys_mutex_queue_wait(int handle, void *addr, unsigned int wqflags, unsigned 
     TASK_CHECK_THREAD_CANCELATION_POTINT(task_current);
 
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     mutex_queue_t *mutex_queue = &mutex_queue_head[handle];
     if (mutex_queue->flags) {
         if (addr) {
@@ -160,7 +160,7 @@ int sys_mutex_queue_wake(int handle, void *addr, unsigned int wqflags, unsigned 
         return -1;
     
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     mutex_queue_t *mutex_queue = &mutex_queue_head[handle];
     if (mutex_queue->flags) {
         if (addr) {

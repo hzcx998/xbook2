@@ -292,7 +292,7 @@ int interrupt_do_trigger(trap_frame_t *frame)
 
     char have_trig;
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 #ifdef DEBUG_TRIGGER
     //printk(KERN_DEBUG "interrupt_do_trigger: pid=%d frame %x start.\n", cur->pid, frame);
 #endif

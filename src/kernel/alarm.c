@@ -22,7 +22,7 @@ void alarm_update_ticks()
 {
     task_t *task;
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     list_for_each_owner (task, &task_global_list, global_list) {
         if (task->alarm.flags) {
             task->alarm.ticks--;

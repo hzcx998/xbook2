@@ -8,7 +8,7 @@
 void interrupt_disable(void);
 void interrupt_enable(void);
 
-#define interrupt_save_state(flags)                  \
+#define interrupt_save_and_disable(flags)                  \
     do {                                    \
         flags = (unsigned int)eflags_save_to();\
         interrupt_disable();                   \

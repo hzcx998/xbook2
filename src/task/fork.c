@@ -234,7 +234,7 @@ int sys_fork()
     task_t *parent = task_current;
 
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 
 #ifdef DEBUG_FORK
     printk(KERN_DEBUG "%s: parent %s pid=%d prio=%d is forking now.\n", 

@@ -59,7 +59,7 @@ static void *vir_mem_do_alloc(size_t size)
 	area->size = size;
 
 	unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 	list_add_tail(&area->list, &using_vir_mem_list);
 	if (page_map_addr(start, size, PROT_KERN | PROT_WRITE)) {
 		vir_addr_free(start, size);
@@ -88,7 +88,7 @@ void *vir_mem_alloc(size_t size)
 	}
 	if (target != NULL) {
 		unsigned long flags;
-        interrupt_save_state(flags);
+        interrupt_save_and_disable(flags);
 		list_del(&target->list);
 		list_add_tail(&target->list, &using_vir_mem_list);
 		interrupt_restore_state(flags);
@@ -133,7 +133,7 @@ int vir_mem_free(void *ptr)
 		return -1;
 	vir_mem_t *target = NULL, *area;
 	unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 	list_for_each_owner(area, &using_vir_mem_list, list) {
 		if (area->addr == addr) {
 			target = area;
@@ -169,7 +169,7 @@ void *memio_remap(unsigned long paddr, size_t size)
 	area->addr = vaddr;
 	area->size = size;
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 	list_add_tail(&area->list, &using_vir_mem_list);
     if (mem_remap(paddr, vaddr, size)) {
         list_del(&area->list);
@@ -191,7 +191,7 @@ int memio_unmap(void *vaddr)
 		return -1;
 	vir_mem_t *target = NULL, *area;
 	unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 	list_for_each_owner(area, &using_vir_mem_list, list) {
 		if (area->addr == addr) {
 			target = area;

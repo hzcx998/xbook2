@@ -63,7 +63,7 @@ void softirq_handle_in_interrupt()
 {
     unsigned long evens;
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     evens = softirq_get_evens();
     if (evens) 
         softirq_do_handle();
@@ -74,7 +74,7 @@ void high_task_assist_schedule(task_assist_t *assist)
 {
     if (!test_and_set_bit(HIGHTASK_ASSIST_SOFTIRQ, &assist->status)) {
         unsigned long flags;
-        interrupt_save_state(flags);
+        interrupt_save_and_disable(flags);
         assist->next = high_task_assist_head.head;
         high_task_assist_head.head = assist;
         softirq_active(HIGHTASK_ASSIST_SOFTIRQ);
@@ -109,7 +109,7 @@ void task_assist_schedule(task_assist_t *assist)
 {
     if (!test_and_set_bit(TASK_ASSIST_SOFTIRQ, &assist->status)) {
         unsigned long flags;
-        interrupt_save_state(flags);
+        interrupt_save_and_disable(flags);
         assist->next = task_assist_head.head;
         task_assist_head.head = assist;
         softirq_active(TASK_ASSIST_SOFTIRQ);

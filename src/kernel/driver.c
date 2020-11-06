@@ -488,7 +488,7 @@ io_request_t *io_build_sync_request(
         ioreq->parame.write.length = length;
         ioreq->parame.write.offset = offset;
         if (devobj->flags & DO_BUFFERED_IO) {
-            interrupt_save_state(flags);
+            interrupt_save_and_disable(flags);
             memcpy(ioreq->system_buffer, buffer, length);
             interrupt_restore_state(flags);
         }
@@ -816,7 +816,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         len = ioreq->io_status.infomation;
         if (devobj->flags & DO_BUFFERED_IO) { 
             unsigned long flags;
-            interrupt_save_state(flags);
+            interrupt_save_and_disable(flags);
             memcpy(ioreq->user_buffer, ioreq->system_buffer, len);
             interrupt_restore_state(flags);
             mem_free(ioreq->system_buffer);

@@ -226,7 +226,7 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg)
     int chunk = 0;
     int wrsize = 0;
     while (left_size > 0) {
-        interrupt_save_state(flags);
+        interrupt_save_and_disable(flags);
         chunk = MIN(left_size, FIFO_SIZE);
         chunk = MIN(chunk, fifo_buf_avali(fifo->fifo));
         chunk = fifo_buf_put(fifo->fifo, buf + off, chunk);
@@ -290,7 +290,7 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
 
     mutex_lock(&fifo->mutex);
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     if (fifo_buf_len(fifo->fifo) <= 0) {
         if (fifo->flags & (IPC_NOWAIT << 16)) {
             fifo->flags &= ~FIFO_IN_READ;
@@ -302,7 +302,7 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
         mutex_unlock(&fifo->mutex);
         task_block(TASK_BLOCKED);
         mutex_lock(&fifo->mutex);
-        interrupt_save_state(flags);
+        interrupt_save_and_disable(flags);
     }
 
     interrupt_restore_state(flags);

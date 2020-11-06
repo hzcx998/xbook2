@@ -84,7 +84,7 @@ static void set_cursor(unsigned short cursor)
 {
 	//执行前保存flags状态，然后关闭中断
 	unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 	out8(CRTC_ADDR_REG, CURSOR_H);			//光标高位
 	out8(CRTC_DATA_REG, (cursor >> 8) & 0xFF);
 	out8(CRTC_ADDR_REG, CURSOR_L);			//光标低位
@@ -97,7 +97,7 @@ static void set_video_start_addr(unsigned short addr)
 {
 	//执行前保存flags状态，然后关闭中断
 	unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 
 	out8(CRTC_ADDR_REG, START_ADDR_H);
 	out8(CRTC_DATA_REG, (addr >> 8) & 0xFF);

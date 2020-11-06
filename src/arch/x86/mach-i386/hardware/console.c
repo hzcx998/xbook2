@@ -58,7 +58,7 @@ console_hardware_t console_obj;
 static void set_cursor(unsigned short cursor)
 {
 	unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 	out8(CRTC_ADDR_REG, CURSOR_H);
 	out8(CRTC_DATA_REG, (cursor >> 8) & 0xFF);
 	out8(CRTC_ADDR_REG, CURSOR_L);
@@ -79,7 +79,7 @@ static unsigned int get_cursor()
 static void set_start_addr(unsigned short addr)
 {
 	unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 	out8(CRTC_ADDR_REG, START_ADDR_H);
 	out8(CRTC_DATA_REG, (addr >> 8) & 0xFF);
 	out8(CRTC_ADDR_REG, START_ADDR_L);

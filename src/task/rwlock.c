@@ -29,7 +29,7 @@ void rwlock_init(rwlock_t *lock, enum rwlock_arg arg)
         lock->write_lock = __rwlock_write_lock_rw_fair;
         lock->write_unlock = __rwlock_write_unlock_rw_fair;
         break;
-    default: /* 参数出错，置空 */
+    default:
         lock->write_lock = lock->read_lock = NULL;
         lock->write_unlock = lock->read_unlock = NULL;
         break;

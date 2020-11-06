@@ -271,7 +271,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
 #ifdef DEBUG_WAIT
         printk(KERN_DEBUG "sys_wait: name=%s pid=%d wait child.\n", parent->name, parent->pid);
 #endif    
-        interrupt_save_state(flags);
+        interrupt_save_and_disable(flags);
         if (pid == -1) {    /* 任意子进程 */            
             /* 先处理挂起的任务 */
             if ((child_pid = wait_any_hangging_child(parent, status)) >= 0) {
@@ -354,7 +354,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
 void sys_exit(int status)
 {
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 
     task_t *cur = task_current;  /* 当前进程是父进程 */
 
@@ -424,7 +424,7 @@ void sys_exit(int status)
 void kern_thread_exit(int status)
 {
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 
     task_t *cur = task_current;  /* 当前进程是父进程 */
     cur->exit_status = status;

@@ -100,7 +100,7 @@ task_t *task_find_by_pid(pid_t pid)
 {
     task_t *task;
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     list_for_each_owner(task, &task_global_list, global_list) {
         if (task->pid == pid) {
             interrupt_restore_state(flags);
@@ -132,7 +132,7 @@ task_t *kern_thread_start(char *name, int priority, task_func_t *func, void *arg
     }
     task_stack_build(task, func, arg);
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     task_add_to_global_list(task);
     sched_unit_t *su = sched_get_cur_unit();
     sched_queue_add_tail(su, task);
@@ -152,7 +152,7 @@ void task_activate_in_schedule(task_t *task)
 void task_block(task_state_t state)
 {
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     ASSERT ((state == TASK_BLOCKED) || 
             (state == TASK_WAITING) || 
             (state == TASK_STOPPED) ||
@@ -167,7 +167,7 @@ void task_block(task_state_t state)
 void task_unblock(task_t *task)
 {
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     if (!((task->state == TASK_BLOCKED) || 
         (task->state == TASK_WAITING) ||
         (task->state == TASK_STOPPED))) {
@@ -188,7 +188,7 @@ void task_unblock(task_t *task)
 void task_yeild()
 {
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     task_current->state = TASK_READY;
     schedule();
     interrupt_restore_state(flags);
@@ -313,7 +313,7 @@ void task_start_user()
     sched_unit_t *su = sched_get_cur_unit();
     /* 降级期间不允许产生中断，降级后其它任务才有机会运行 */
 	unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     su->idle->static_priority = su->idle->priority = TASK_PRIO_IDLE;
     interrupt_restore_state(flags);
     schedule();

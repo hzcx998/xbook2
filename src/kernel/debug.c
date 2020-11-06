@@ -98,7 +98,7 @@ void debug_putstr(char *str, int count)
 int printk(const char *fmt, ...)
 {
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     int i;
 	char buf[256] = {0,};
 	va_list arg = (va_list)((char*)(&fmt) + 4); /*4是参数fmt所占堆栈中的大小*/

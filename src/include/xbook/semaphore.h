@@ -64,7 +64,7 @@ static inline void semaphore_down(semaphore_t *sema)
 {
     
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 
 	/* 如果计数器大于0，就说明资源没有被占用 */
 	if (atomic_get(&sema->counter) > 0) {
@@ -85,7 +85,7 @@ static inline int semaphore_try_down(semaphore_t *sema)
 {
     
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 
 	/* 如果计数器大于0，就说明资源没有被占用 */
 	if (atomic_get(&sema->counter) > 0) {
@@ -124,7 +124,7 @@ static inline void __semaphore_up(semaphore_t *sema)
 static inline void semaphore_up(semaphore_t *sema)
 {
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 	/* 如果等待队列为空，说明没有等待的任务，就只释放信号量 */
 	if (list_empty(&sema->waiter.wait_list)) {
 		/* 使信号量递增 */

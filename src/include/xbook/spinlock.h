@@ -80,7 +80,7 @@ typedef struct spinlock {
  * 返回进入前的中断状态
  */
 #define spin_lock_irqsave(lock, flags) \
-    interrupt_save_state(flags); \
+    interrupt_save_and_disable(flags); \
     spin_lock(lock);
 
 /**

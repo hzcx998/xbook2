@@ -52,7 +52,7 @@ void timer_init(
 void timer_add(timer_t *timer)
 {
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     if (!timer->id)
         timer->id = timer_id_next++;
     ASSERT(!list_find(&timer->list, &timer_list_head));
@@ -83,7 +83,7 @@ void timer_add(timer_t *timer)
 void timer_del(timer_t *timer)
 {
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     ASSERT(list_find(&timer->list, &timer_list_head));
     list_del(&timer->list);
     interrupt_restore_state(flags);
@@ -93,7 +93,7 @@ int timer_alive(timer_t *timer)
 {
     int alive = 0; 
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     if (list_find(&timer->list, &timer_list_head))
         alive = 1;
     interrupt_restore_state(flags);
@@ -103,7 +103,7 @@ int timer_alive(timer_t *timer)
 void timer_modify(timer_t *timer, unsigned long timeout)
 {
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     timer->timeout = timer_ticks + timeout;
     interrupt_restore_state(flags);
 }
@@ -130,7 +130,7 @@ void timer_update_ticks()
 {
     timer_t *timer, *next;
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     if (timer_ticks < minim_timeout_val) { // no timer timeout
         interrupt_restore_state(flags);
         return;

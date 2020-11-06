@@ -36,7 +36,7 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
 #endif    
     task_block(TASK_BLOCKED);   /* 阻塞自己 */
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     task_current->sleep_timer = NULL;           /* 解绑休眠定时器 */
     long dt = 0;
     /* 有可能还在休眠中就被唤醒了，那么就检查定时器是否已经被执行过了 */

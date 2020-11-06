@@ -211,9 +211,9 @@ int pthread_attr_setstackaddr(pthread_attr_t *attr, void *stackaddr)
 
 void pthread_cleanup_push(void (*routine)(void *), void *arg)
 {
-    
+    // TODO: add cleanup func here
 }
 void pthread_cleanup_pop(int execute)
 {
-
+    // TODO: do cleanup func
 }

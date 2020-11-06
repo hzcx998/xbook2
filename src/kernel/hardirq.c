@@ -84,7 +84,7 @@ int irq_unregister(irqno_t irq, void *data)
         return -1;
 
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     if (irq_desc->flags & IRQF_SHARED) {
         irq_action_t *p = irq_desc->action, *prev;
         do {

@@ -154,7 +154,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     
     /* 操作链表时关闭中断，结束后恢复之前状态 */
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 
     atomic_inc(&task->pthread->thread_count);   /* 增加一个线程 */
     if (atomic_get(&task->pthread->thread_count) > PTHREAD_MAX_NR) { /* 超过最大线程数量，就不能创建 */
@@ -198,7 +198,7 @@ pid_t sys_thread_create(
 void pthread_exit(void *status)
 {
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
 
     task_t *cur = task_current;
 
@@ -319,7 +319,7 @@ int pthread_join(pthread_t thread, void **thread_return)
 {
     task_t *waiter = task_current;  /* 当前进程是父进程 */
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     /* 先查看线程，是否存在，并且要是线程才行 */
     task_t *task, *find = NULL;
     list_for_each_owner (task, &task_global_list, global_list) {
@@ -387,7 +387,7 @@ int pthread_join(pthread_t thread, void **thread_return)
         /* WATING for thread to exit */
         task_block(TASK_WAITING);
         
-        interrupt_save_state(flags);
+        interrupt_save_and_disable(flags);
     } while (pid == -1);
     /* 回写状态 */
     if (thread_return != NULL) {
@@ -426,7 +426,7 @@ int sys_thread_cancel(pthread_t thread)
 {
     task_t *task;
     unsigned long flags;
-    interrupt_save_state(flags);
+    interrupt_save_and_disable(flags);
     task = task_find_by_pid(thread);
     if (task == NULL) { /* 没找到 */
 #ifdef DEBUG_PTHREAD
