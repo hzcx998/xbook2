@@ -6,24 +6,24 @@
 #include <arch/interrupt.h>
 #include <xbook/spinlock.h>
 
-#define TRIG_LEFT           (1 << 0)        /* 有剩余的触发器没处理 */
-#define TRIG_CATCHED        (1 << 1)        /* 触发器被捕捉，并且已经处理了 */
+#define TRIG_LEFT           (1 << 0)
+#define TRIG_CATCHED        (1 << 1)
 
 typedef struct {
-    trigset_t blocked;                  /* 阻塞触发器集 */                     
-    trigset_t set;                      /* 触发器集 */                     
-    trig_action_t actions[TRIG_NR];     /* 触发器行为 */
-    pid_t touchers[TRIG_NR];            /* 触发者进程id */               
-    unsigned long flags;                /* 触发器标志 */
+    trigset_t blocked;                     
+    trigset_t set;                     
+    trig_action_t actions[TRIG_NR];
+    pid_t touchers[TRIG_NR];               
+    unsigned long flags;
     spinlock_t trig_lock;
 } triggers_t;
 
 typedef struct {
-	char *ret_addr;                 /* 记录返回地址 */
-	unsigned long trig;             /* 触发器 */
-    trigset_t oldmask;           /* 执行前的遮罩 */
-    trap_frame_t trap_frame;        /* 保存原来的栈框 */
-	char ret_code[8];               /* 构建返回的系统调用代码 */
+	char *ret_addr;
+	unsigned long trig;
+    trigset_t oldmask;
+    trap_frame_t trap_frame;
+	char ret_code[8];
 } trigger_frame_t;
 
 void trigger_init(triggers_t *triggers);
@@ -35,9 +35,6 @@ int sys_trigger_return(unsigned int ebx, unsigned int ecx, unsigned int esi, uns
 int sys_trigger_proc_mask(int how, trigset_t *set, trigset_t *oldset);
 int sys_trigger_pending(trigset_t *set);
 
-/**
- * trigger_calc_left - 计算是否还有信号需要处理
- */
 static inline void trigger_calc_left(triggers_t *trigger)
 {
     if (trigger->set > 1)
@@ -51,7 +48,6 @@ static inline void trigger_set_action(triggers_t *trigger, int trig, trig_action
     trigger->actions[trig - 1].flags = ta->flags;
     trigger->actions[trig - 1].handler = ta->handler;
     trigger->actions[trig - 1].mask = ta->mask;
-    /* remove HSOFT and PAUSE */
     trigdelset(&trigger->actions[trig - 1].mask, trigmask(TRIGHSOFT) | trigmask(TRIGPAUSE));
 }
 

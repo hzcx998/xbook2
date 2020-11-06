@@ -9,7 +9,7 @@
  */
 int trigaddset(trigset_t *set,int trig)
 {
-    if (IS_BAD_TRIGGER(trig))
+    if (TRIGGER_IS_BAD(trig))
         return -1;
     *set |= (1 << trig);
     return 0;
@@ -22,7 +22,7 @@ int trigaddset(trigset_t *set,int trig)
  */
 int trigdelset(trigset_t *set,int trig)
 {
-    if (IS_BAD_TRIGGER(trig))
+    if (TRIGGER_IS_BAD(trig))
         return -1;
     *set &= ~(1 << trig);
     return 0;
@@ -54,7 +54,7 @@ int trigfillset(trigset_t *set)
  */
 int trigismember(trigset_t *set,int trig)
 {
-    if (IS_BAD_TRIGGER(trig))
+    if (TRIGGER_IS_BAD(trig))
         return 0;
     return (*set & (1 << trig));
 }
@@ -112,7 +112,7 @@ int trigpending(trigset_t *set)
 
 int trigmask(int trig)
 {
-    if (IS_BAD_TRIGGER(trig))
+    if (TRIGGER_IS_BAD(trig))
         return -1;
     return (1 << trig);
 }

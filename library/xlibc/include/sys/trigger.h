@@ -24,7 +24,7 @@ typedef void (*trighandler_t) (int);
 #define TRIGUSR0        7  /* user trigger 0，用户自定义触发器 */
 #define TRIGUSR1        8  /* user trigger 1，用户自定义触发器 */
 #define TRIGALARM       9  /* user alarm trigger 用户闹钟触发器 */
-#define TRIGMAX         TRIGALARM  /* 最大的触发器 */
+#define TRIG_MAX         TRIGALARM  /* 最大的触发器 */
 
 /* 信号处理函数 */
 #define TRIG_ERR     ((trighandler_t) -1)       /* 错误触发器 */
@@ -32,7 +32,7 @@ typedef void (*trighandler_t) (int);
 #define TRIG_IGN     ((trighandler_t) 1)        /* 忽略触发器 */
 
 /* 检测是否是错误的触发器 */
-#define IS_BAD_TRIGGER(trig) \
+#define TRIGGER_IS_BAD(trig) \
     (trig < 1 || trig > TRIGUSR1)
   
 #define TA_ONCE             (1 << 0)    /* 只执行一次 */
