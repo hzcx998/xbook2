@@ -13,7 +13,7 @@ enum {
 };
 
 void abort(void);
-#define exit    _exit
+void exit(int status);
 
 #ifdef __cplusplus
 }

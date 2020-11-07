@@ -20,8 +20,6 @@ enum {
     LAYER_WINDOW    = (1 << 0),   /* 窗口标志 */
     LAYER_FLOAT     = (1 << 1),   /* 浮动块标志 */
     LAYER_FIXED     = (1 << 2),   /* 固定位置标志 */
-    LAYER_EXT_BUF   = (1 << 2),   /* 扩展内存，使用缓冲区专用内存 */
-    
 };
 
 typedef struct _layer {
@@ -34,16 +32,19 @@ typedef struct _layer {
     list_t global_list;         /* 在全局图层链表中的一个节点 */
     list_t widget_list_head;    /* 子控件链表 */
     void *extension;            /* 图层拓展 */
+    void *ext_buf0;             /* 拓展缓冲区 */
     gui_region_t drag_rg;       /* 拖拽区域 */
     gui_region_t resize_rg;     /* 调整大小区域 */
     gui_region_t resizemin_rg;  /* 最小的调整大小区域 */
-    spinlock_t mutex;          /* 图层操作时的互斥 */
+    spinlock_t mutex;           /* 图层操作时的互斥 */
+    unsigned long mutex_flags;  /* 互斥的标志 */        
 } layer_t;
 
 int gui_init_layer();
 
 layer_t *create_layer(int width, int height);
 int destroy_layer(layer_t *layer);
+void layer_clear(layer_t *layer);
 void layer_set_xy(layer_t *layer, int x, int y);
 void layer_set_z(layer_t *layer, int z);
 void layer_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1);
@@ -81,6 +82,16 @@ int layer_focus_win_top();
 
 void layer_sync_bitmap(layer_t *layer, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
 
+static inline void layer_mutex_lock(layer_t *layer)
+{
+    spin_lock_irqsave(&layer->mutex, layer->mutex_flags);
+}
+
+static inline void layer_mutex_unlock(layer_t *layer)
+{
+    spin_unlock_irqrestore(&layer->mutex, layer->mutex_flags);
+}
+
 int sys_new_layer(int x, int y, uint32_t width, uint32_t height);
 int sys_layer_z(int id, int z);
 int sys_layer_move(int id, int x, int y);
@@ -113,15 +124,7 @@ int sys_layer_set_desktop(int id);
 int sys_layer_get_desktop();
 int sys_layer_sync_bitmap(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
 int sys_layer_sync_bitmap_ex(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
-
-static inline void layer_mutex_lock(layer_t *layer)
-{
-    spin_lock(&layer->mutex);
-}
-
-static inline void layer_mutex_unlock(layer_t *layer)
-{
-    spin_unlock(&layer->mutex);
-}
-
+int sys_gui_get_icon(int lyid, char *path, uint32_t len);
+int sys_gui_set_icon(int lyid, char *path, uint32_t len);
+int sys_layer_copy_bitmap(int lyid, gui_rect_t *rect, GUI_COLOR *bitmap, gui_region_t *region);
 #endif  /* _GUI_LAYER_H */

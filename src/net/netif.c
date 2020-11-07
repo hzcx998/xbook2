@@ -1,10 +1,13 @@
 #include <xbook/net.h>
 #include <xbook/debug.h>
 #include <lwip/sockets.h>
+#include <lwip/err.h>
+#include <lwip/dns.h>
+
 #include <fsal/fsal.h>
 #include <string.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_NETIF
 
 /**
  * 将套接字纳入用户的local fd table中，
@@ -18,7 +21,7 @@ int sys_socket(int domain, int type, int protocol)
     if (socket_id < 0) {
         return -1;    
     }
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_NETIF
     printk("[NET]: %s: create socket id %d.\n", __func__, socket_id);
     #endif
     return local_fd_install(socket_id, FILE_FD_SOCKET);
@@ -72,7 +75,7 @@ int sys_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 
 int sys_send(int sockfd, const void *buf, int len, int flags)
 {
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_NETIF    
     printk("[NET]: %s: fd=%d buf=%x len=%d flags=%x\n", __func__, sockfd, buf, len, flags);
 #endif
     file_fd_t *ffd = fd_local_to_file(sockfd);
@@ -92,7 +95,7 @@ int sys_send(int sockfd, const void *buf, int len, int flags)
 }
 int sys_recv(int sockfd, void *buf, int len, unsigned int flags)
 {
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_NETIF    
     printk("[NET]: %s: fd=%d buf=%x len=%d flags=%x\n", __func__, sockfd, buf, len, flags);
 #endif    
     file_fd_t *ffd = fd_local_to_file(sockfd);
@@ -110,7 +113,7 @@ int sys_sendto(int sockfd, struct _sockarg *arg)
     if (arg == NULL) {
         return -1;
     }
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_NETIF    
     printk("[NET]: %s: fd=%d buf=%x len=%d flags=%x to=%x tolen=%d\n",
         __func__, sockfd, arg->buf, arg->len, arg->flags, arg->to_from, arg->tolen);
 #endif    
@@ -136,7 +139,7 @@ int sys_recvfrom(int sockfd, struct _sockarg *arg)
     if (arg == NULL) {
         return -1;
     }
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_NETIF    
     printk("[NET]: %s: fd=%d buf=%x len=%d flags=%x to=%x fromlen=%d\n",
         __func__, sockfd, arg->buf, arg->len, arg->flags, arg->to_from, arg->tolen);
 #endif    
@@ -317,4 +320,12 @@ int sys_select(int maxfdp, struct _sockfd_set *fd_sets, struct timeval *timeout)
         }
     }
     return nready;
+}
+
+int sys_dns_setserver(uint8_t numdns, const char *str)
+{
+    ip_addr_t dnsserver;
+    ip4_addr_set_u32(&dnsserver, ipaddr_addr(str));
+    dns_setserver((u8_t) numdns, &dnsserver);
+    return 0;
 }

@@ -1,6 +1,10 @@
 #ifndef _SYS_IOCTL_H
 #define _SYS_IOCTL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* 设备控制码：
 0~15位：命令（0-0x7FFF系统保留，0x8000-0xffff用户自定义）
 16~31位：设备类型
@@ -39,6 +43,11 @@
 #define TTYIO_VISITOR    DEVCTL_CODE('t', 2)
 #define TTYIO_DETACH        DEVCTL_CODE('t', 3)
 #define TTYIO_COMBINE       DEVCTL_CODE('t', 4)
+#define TIOCGPTN            DEVCTL_CODE('t', 5) /* get presudo tty number */
+#define TIOCSPTLCK          DEVCTL_CODE('t', 6) /* set presudo tty lock */
+#define TIOCSFLGS           DEVCTL_CODE('t', 7) /* set flags */
+#define TIOCGFLGS           DEVCTL_CODE('t', 8) /* get flags */
+#define TIOCGFG             DEVCTL_CODE('t', 9) /* get front group task */
 
 /* net */
 #define NETIO_GETMAC        DEVCTL_CODE('n', 1)
@@ -60,5 +69,9 @@ typedef struct _video_info {
 #define SNDIO_PLAY          DEVCTL_CODE('s', 1) /* play */
 #define SNDIO_STOP          DEVCTL_CODE('s', 2) /* stop play */
 #define SNDIO_SETFREQ       DEVCTL_CODE('s', 3) /* set play freq */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* _SYS_IOCTL_H */

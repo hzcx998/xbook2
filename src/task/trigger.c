@@ -3,12 +3,12 @@
 #include <xbook/process.h>
 #include <xbook/debug.h>
 #include <xbook/syscall.h>
+#include <xbook/schedule.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <gui/message.h>
 
-/* 调试触发器：0不调试，1要调试 */
-#define DEBUG_LOCAL   0
+// #define DEBUG_TRIGGER
 
 /**
  * do_active_trigger - 激活任务的某个触发器
@@ -20,7 +20,7 @@ int do_active_trigger(pid_t pid, int trig, pid_t toucher)
         return -1;
     if (toucher < 0)
         return -1;
-#if DEBUG_LOCAL == 1 
+#ifdef DEBUG_TRIGGER 
     printk(KERN_DEBUG "do_active_trigger: toucher=%d pid=%d tirgger:%d\n",
         toucher, pid, trig);
 #endif        
@@ -40,13 +40,23 @@ int do_active_trigger(pid_t pid, int trig, pid_t toucher)
         /* 如果是暂停，那么恢复就不能屏蔽 */
         trigdelset(&trigger->blocked, TRIGRESUM);
         break;
+    #if 0
+    case TRIGLSOFT:
+        if (task->state == TASK_BLOCKED || task->state == TASK_WAITING) { /* 处于停止状态就resume */
+            #ifdef DEBUG_TRIGGER
+            printk(KERN_NOTICE "do_active_trigger: wakeup sleep task=%s.\n", task->name);
+            #endif
+            task_wakeup(task);
+        }
+        break;
+    #endif
     case TRIGRESUM: /* 恢复进程运行 */
     case TRIGHSOFT: 
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
         printk(KERN_DEBUG "do_active_trigger: may wakeup not ready task.\n");
 #endif        
         if (task->state == TASK_STOPPED) { /* 处于停止状态就resume */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
             printk(KERN_DEBUG "do_active_trigger: wakeup stopped task=%s.\n", task->name);
 #endif
             task_wakeup(task);
@@ -61,7 +71,7 @@ int do_active_trigger(pid_t pid, int trig, pid_t toucher)
     /* 如果触发器已经激活，就不再激活 */
     if (trigismember(&trigger->set, trig))
         goto out;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
     printk(KERN_DEBUG "do_active_trigger: write trigger set.\n");
 #endif
     /* 填写触发者 */
@@ -111,7 +121,7 @@ int trigger_force(int trig, pid_t pid)
     /* 如果触发器被屏蔽了，就需要解除屏蔽 */
     trigdelset(&trigger->blocked, trig);
     spin_unlock_irqrestore(&trigger->trig_lock, flags);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
     printk(KERN_DEBUG "trigger_force: start.\n");
 #endif
     return do_active_trigger(pid, trig, current_task->pid);
@@ -127,7 +137,7 @@ int trigger_force(int trig, pid_t pid)
 int sys_trigger_active(int trig, pid_t pid)
 {
 
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
     printk(KERN_DEBUG "trigger_active: start.\n");
 #endif
     
@@ -151,7 +161,7 @@ int sys_trigger_handler(int trig, trighandler_t handler)
     triggers_t *trigger = current_task->triggers;
     if (trigger == NULL)
         return -1;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
     printk(KERN_DEBUG "trigger_handler: trig=%d handler=%x\n", trig, handler);
 #endif
     trig_action_t ta;
@@ -194,7 +204,7 @@ int sys_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
     if (oldact) { /* 如果旧行为指针为空，就先保存旧的行为指针 */
         trigger_get_action(trigger, trig, &ta);
         *oldact = ta;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
     printk(KERN_DEBUG "trigger_action: old trig=%d handler=%x flags=%x\n",
         trig, oldact->handler, oldact->flags);
 #endif
@@ -202,7 +212,7 @@ int sys_trigger_action(int trig, trig_action_t *act, trig_action_t *oldact)
     if (act) {
         ta = *act;
         trigger_set_action(trigger, trig, &ta);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
     printk(KERN_DEBUG "trigger_action: new trig=%d handler=%x flags=%x\n",
         trig, act->handler, act->flags);
 #endif
@@ -236,7 +246,7 @@ static int handle_trigger(trap_frame_t *frame, int trig)
     /* 获取触发器行为 */
     trig_action_t *act = &trigger->actions[trig - 1];
 
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
     /* 处理自定义函数 */
     printk(KERN_DEBUG "handle_trigger: handle trig=%d frame %x.\n", trig, frame);
 #endif    
@@ -283,18 +293,18 @@ int do_trigger(trap_frame_t *frame)
     char have_trig;
     unsigned long flags;
     save_intr(flags);
-#if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "do_trigger: pid=%d frame %x start.\n", cur->pid, frame);
+#ifdef DEBUG_TRIGGER
+    //printk(KERN_DEBUG "do_trigger: pid=%d frame %x start.\n", cur->pid, frame);
 #endif
     for (trig = 1; trig <= TRIGMAX; trig++) {
         have_trig = trigismember(&trigger->set, trig) && !trigismember(&trigger->blocked, trig);
         /* 如果触发器激活了，就处理 */
         if (have_trig) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
                 printk(KERN_DEBUG "do_trigger: pid=%d trigger=%d\n", cur->pid, trig);
 #endif
             /* 处理后置0 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
             printk(KERN_DEBUG "do_trigger: before set=%x flags=%x\n", trigger->set, trigger->flags);
 #endif
             trigdelset(&trigger->set, trig);
@@ -302,11 +312,11 @@ int do_trigger(trap_frame_t *frame)
             trigger_calc_left(trigger);
             
             ta = &trigger->actions[trig - 1];
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
             printk(KERN_DEBUG "do_trigger: after set=%x flags=%x\n", trigger->set, trigger->flags);
 #endif
             if (ta->handler == TRIG_IGN) { /* ignore trigger */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
                 printk(KERN_DEBUG "do_trigger: ignore trigger=%d\n", trig);
 #endif
                 continue;   
@@ -314,7 +324,7 @@ int do_trigger(trap_frame_t *frame)
             if (ta->handler == TRIG_DFL) {   /* default trigger */
                 /* init process do nothing. */
                 if (cur->pid == INIT_PROC_PID) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
                 printk(KERN_DEBUG "do_trigger: trigger is invailed for init process :)\n");
 #endif
                     continue;
@@ -326,12 +336,13 @@ int do_trigger(trap_frame_t *frame)
                 case TRIGUSR0: /* user0 */
                 case TRIGUSR1: /* user1 */
                 case TRIGRESUM: /* 在设置恢复触发器的时候就唤醒任务了 */
-#if DEBUG_LOCAL == 1
+                case TRIGALARM: /* alarm */
+#ifdef DEBUG_TRIGGER
                 printk(KERN_DEBUG "do_trigger: user or resume.\n");
 #endif
                     continue;   /* default ignore. */
                 case TRIGPAUSE: /* pause */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
                 printk(KERN_DEBUG "do_trigger: stop trigger=%d\n", trig);
 #endif
                     cur->exit_status = trig;
@@ -343,8 +354,8 @@ int do_trigger(trap_frame_t *frame)
                 case TRIGLSOFT: /* light software */
                 case TRIGHSOFT: /* heavy software */
                 case TRIGSYS: /* system */
-                case TRIGALARM: /* alarm */
-#if DEBUG_LOCAL == 1
+                
+#ifdef DEBUG_TRIGGER
                     printk(KERN_DEBUG "do_trigger: software or system trigger=%d\n", trig);
 #endif
                     /* 避免本次未能退出，故再添加一次触发 */
@@ -357,7 +368,7 @@ int do_trigger(trap_frame_t *frame)
                     break;
                 }
             }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_TRIGGER
             printk(KERN_DEBUG "do_trigger: handle user or light software trigger=%d\n", trig);
 #endif
             /* 捕捉用户态程序 */
@@ -366,8 +377,8 @@ int do_trigger(trap_frame_t *frame)
         }
     }
     restore_intr(flags);
-#if DEBUG_LOCAL == 1
-    printk(KERN_DEBUG "do_trigger: scan done.\n");
+#ifdef DEBUG_TRIGGER
+    //printk(KERN_DEBUG "do_trigger: scan done.\n");
 #endif
     return 0;
 }

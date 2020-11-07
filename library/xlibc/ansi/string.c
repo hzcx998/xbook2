@@ -62,12 +62,13 @@ void *memset32(void* src, uint32_t value, uint32_t size)
 	return src;
 }
 
-void memcpy(void* _dst, const void* _src, uint32_t size) {
+void *memcpy(void* _dst, const void* _src, uint32_t size) {
  
    uint8_t* dst = _dst;
    const uint8_t* src = _src;
    while (size-- > 0)
       *dst++ = *src++;
+    return _dst;
 }
 
 char* strcpy(char* _dst, const char* _src) {

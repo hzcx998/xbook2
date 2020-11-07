@@ -1,5 +1,5 @@
 /*
- * libc/stdio/clearerr.c
+ * xlibc/stdio/clearerr.c
  */
 
 #include <stdio.h>

@@ -2,26 +2,54 @@
 #include <stdarg.h>
 #include <string.h>
 #include <xbook/spinlock.h>
+#include <xbook/config.h>
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
 #include <arch/debug.h>
+#include <arch/hw.h>
 #include <stdio.h>
 
-extern void(*debug_putchar)(char ch);
+#include <gui/console.h>
+
+/*
+color fmt: \e[b;fm
+
+Foreground colors
+    30	Black
+    31	Red
+    32	Green
+    33	Yellow
+    34	Blue
+    35	Magenta
+    36	Cyan
+    37	White
+        
+Background colors
+    40	Black
+    41	Red
+    42	Green
+    43	Yellow
+    44	Blue
+    45	Magenta
+    46	Cyan
+    47	White
+*/
 
 char *printk_msg[] = {
-    "emege: ",
-    "alter: ",
-    "crit: ",
-    "error: ",
-    "waring: ",
-    "notice: ",
-    "info: ",
-    "debug: ",
+    "\e[0;35m",     /* Magenta */
+    "\e[0;31m",     /* Red */
+    "\e[0;33m",     /* Yellow */
+    "\e[0;34m",     /* Blue */
+    "\e[0;32m",     /* Green */
+    "\e[0;37m",     /* White */
     0,
 };
+/* no color */
+#define DEBUG_NONE_COLOR    "\e[0m"
 
 int printk_level = DEFAULT_LOG_LEVEL;
+
+int print_gui_console = 0;
 
 //停机并输出大量信息
 void panic(const char *fmt, ...)
@@ -33,8 +61,12 @@ void panic(const char *fmt, ...)
 
 	vsprintf(buf, fmt, arg);
 
-	printk("\npanic: %s", buf);
-	disable_intr();
+	pr_emerg("\npanic: %s", buf);
+    #ifdef CONFIG_GUI_PRINT
+    if (print_gui_console)
+        gui_con_screen.outs("system panic!!!\n");
+	#endif
+    disable_intr();
 	while(1){
 		cpu_idle();
 	}
@@ -43,7 +75,7 @@ void panic(const char *fmt, ...)
 //断言
 void assertion_failure(char *exp, char *file, char *baseFile, int line)
 {
-	printk("\nassert(%s) failed:\nfile: %s\nbase_file: %s\nln: %d",
+	printk(KERN_ERR "\nassert(%s) failed:\nfile: %s\nbase_file: %s\nln: %d",
 	exp, file, baseFile, line);
 
 	spin("assertion failure()");
@@ -52,14 +84,25 @@ void assertion_failure(char *exp, char *file, char *baseFile, int line)
 //停机显示函数名
 void spin(char * functionName)
 {
-	printk("\nspinning in %s", functionName);
+	printk(KERN_NOTICE "spinning in %s", functionName);
+    #ifdef CONFIG_GUI_PRINT
+    if (print_gui_console)
+        gui_con_screen.outs("system spin!!!\n");
+    #endif
 	disable_intr();
 	while(1){
 		cpu_idle();
 	}
 }
 
-DEFINE_SPIN_LOCK_UNLOCKED(print_lock);
+void debug_putstr(char *str, int count)
+{
+    char *s = str;
+    while (*s && count > 0){
+        debug_putchar(*s++);
+        --count;
+    }
+}
 
 /**
  * printk - 格式化输出
@@ -70,12 +113,10 @@ DEFINE_SPIN_LOCK_UNLOCKED(print_lock);
  */
 int printk(const char *fmt, ...)
 {
-    /* 自旋锁上锁 */
-    spin_lock(&print_lock);
-
-	int i;
-	char buf[256];
-    memset(buf, 0, 256);
+    unsigned long flags;
+    save_intr(flags);
+    int i;
+	char buf[256] = {0,};
 	va_list arg = (va_list)((char*)(&fmt) + 4); /*4是参数fmt所占堆栈中的大小*/
 	i = vsprintf(buf, fmt, arg);
 
@@ -88,7 +129,7 @@ int printk(const char *fmt, ...)
     /* 如果显示指明调试等级 */
     if (*p == '<') {
         /* 有完整的调试等级 */
-        if (*(p + 1) >= '0' && *(p + 1) <= '7' && *(p + 2) == '>') {
+        if (*(p + 1) >= '0' && *(p + 1) <= (DEFAULT_LOG_MAX + '0') && *(p + 2) == '>') {
             level = *(p + 1) - '0'; /* 获取等级 */
             if (level > printk_level) /* 如果等级过低，就不显示 */ 
                 show = 0;
@@ -99,22 +140,27 @@ int printk(const char *fmt, ...)
         }
     }
     if (show) {
-        #if PRINT_LEVEL_MSG == 1
+        
         /* print level first */
         if (level >= 0) {
             char *q = printk_msg[level];
-            while (*q)
-                debug_putchar(*q++);
+            // 发送颜色代码
+            debug_putstr(q, strlen(q));
         }
-        #endif
         
-        while (count-- > 0)
-            debug_putchar(*p++);
-    
+        debug_putstr(p, count);
+        /* 如果配置了图形控制台，那么就打印到图形控制台 */
+
+        #ifdef CONFIG_GUI_PRINT
+        if (print_gui_console && level < 1 && level >= 0)
+            gui_con_screen.outs(p);
+        #endif
+
+        if (level >= 0) {
+            debug_putstr(DEBUG_NONE_COLOR, 4);    
+        }
     }
-    /* 自旋锁解锁锁 */
-    spin_unlock(&print_lock);
-    
+    restore_intr(flags);
 	return i;
 }
 

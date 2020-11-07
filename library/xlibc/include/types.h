@@ -1,6 +1,10 @@
 #ifndef _LIB_TYPES_H
 #define _LIB_TYPES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef long pid_t;
 typedef unsigned long flags_t;
 typedef unsigned long register_t;    //寄存器
@@ -34,8 +38,6 @@ typedef unsigned long long		u64_t;
 
 typedef long long   loff_t;
 
-
-
 typedef char   bool_t;
 
 /* Types for `void *' pointers.  */
@@ -51,6 +53,10 @@ typedef int			intptr_t;
 #  define __intptr_t_defined
 # endif
 typedef unsigned int		uintptr_t;
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif  /* _LIB_TYPES_H */

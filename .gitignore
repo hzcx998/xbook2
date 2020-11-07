@@ -60,16 +60,21 @@ dkms.conf
 
 # develop
 develop/image/
+develop/local/
 
 develop/rom/bin/
 develop/rom/sbin/
+develop/rom/usr/
 
 develop/bochs/
 
-# fixdep
+# linux fixdep
 library/fixdep
+system/fixdep
+user/fixdep
+src/fixdep
 
-#tools
+# linux tools
 tools/fatfs/fatfs
 
 # dir
@@ -77,3 +82,53 @@ recycle
 
 # need commit to git
 !scripts/fixdep.exe
+
+# system app
+system/init/init
+system/init/initg
+system/desktop/desktop
+system/sh/sh
+
+# user app
+
+# /bin
+user/cat/cat
+user/cpuinfo/cpuinfo
+user/echo/echo
+user/cp/cp
+user/date/date
+user/ls/ls
+user/mem/mem
+user/mkdir/mkdir
+user/mv/mv
+user/ps/ps
+user/rename/rename
+user/rm/rm
+user/rmdir/rmdir
+user/touch/touch
+user/trig/trig
+user/ver/ver
+
+# /usr
+user/bosh/bosh
+user/c4/c4
+user/cpptests/cpptests
+user/freeterm/freeterm
+user/gato/gato
+user/hello/hello
+user/infones/infones
+user/invader/invader
+user/lua/lua
+user/lvgl/lv
+user/lvgl2/lv2
+user/microui/mui
+user/socket_client/socket_client
+user/socket_server/socket_server
+user/tests/tests
+user/vt100/vt100
+user/win/win
+user/cal/cal
+user/sound/sound
+user/wavplayer/wavplayer
+user/mp3player/mp3player
+

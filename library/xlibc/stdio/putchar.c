@@ -1,5 +1,5 @@
 /*
- * libc/stdio/putchar.c
+ * xlibc/stdio/putchar.c
  */
 
 #include <stdio.h>

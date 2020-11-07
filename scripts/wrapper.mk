@@ -24,6 +24,7 @@ X_CONF_FILE	:=	$(srctree)/include/xconfigs.h
 # compiler's flags
 X_ASFLAGS	:=
 X_CFLAGS	:=
+X_CXXFLAGS	:=
 X_LDFLAGS	:=
 X_LIBDIRS	:=
 X_LIBS		:=
@@ -36,7 +37,7 @@ ifneq ($(wildcard $(X_CONF_FILE)),)
 X_CPPFLAGS	+=	-include $(X_CONF_DIR)/autoconf.h
 endif
 
-export X_ASFLAGS X_CFLAGS X_LDFLAGS X_LIBDIRS X_LIBS X_DEFINES X_LDFLAGS X_INCDIRS X_INCS
+export X_ASFLAGS X_CFLAGS X_CXXFLAGS X_LDFLAGS X_LIBDIRS X_LIBS X_DEFINES X_LDFLAGS X_INCDIRS X_INCS
 export BUILD_OBJ BUILD_SRC X_CONF_DIR
 
 PHONY	+=	all clean xbegin xend xclean conf fixdep $(ROOT_DIR)

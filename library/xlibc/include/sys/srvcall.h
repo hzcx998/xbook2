@@ -1,6 +1,10 @@
 #ifndef _SYS_SRVCALL_H
 #define _SYS_SRVCALL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * 系统调用是用户态陷入内核，让内核帮忙执行一些内容。
  * 服务调用是用户态转移到用户态，让服务进程帮忙执行一些内容。
@@ -72,5 +76,9 @@ int srvcall_ack(int port, srvarg_t *arg);
 int srvcall(int port, srvarg_t *arg);
 int srvcall_fetch(int port, srvarg_t *arg);
 int srvcall_inbuffer(srvarg_t *arg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* _SYS_SRVCALL_H */

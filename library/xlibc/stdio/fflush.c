@@ -1,5 +1,5 @@
 /*
- * libc/stdio/fflush.c
+ * xlibc/stdio/fflush.c
  */
 
 #include <errno.h>

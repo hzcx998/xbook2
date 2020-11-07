@@ -17,6 +17,7 @@
 #include <xbook/fs.h>
 #include <xbook/net.h>
 #include <xbook/gui.h>
+#include <xbook/timer.h>
 
 int kernel_main(void)
 {
@@ -46,6 +47,8 @@ int kernel_main(void)
     
     init_clock();
     
+    init_timer_system();
+
     /* enable interrupt */
     enable_intr();
 
@@ -55,11 +58,9 @@ int kernel_main(void)
     init_fs();
 
     init_gui();
-    init_net();
-    
+    // init_net();
     //spin("test");
     start_user();
 
     return 0;    
 }
-

@@ -1,5 +1,5 @@
 /*
- * libc/stdio/getc.c
+ * xlibc/stdio/getc.c
  */
 
 #include <stdio.h>

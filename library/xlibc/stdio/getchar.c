@@ -1,5 +1,5 @@
 /*
- * libc/stdio/getchar.c
+ * xlibc/stdio/getchar.c
  */
 
 #include <stdio.h>

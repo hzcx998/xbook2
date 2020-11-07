@@ -1,5 +1,5 @@
 /*
- * libc/stdio/fwrite.c
+ * xlibc/stdio/fwrite.c
  */
 
 #include <stdio.h>

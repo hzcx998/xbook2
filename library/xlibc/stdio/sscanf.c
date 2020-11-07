@@ -1,5 +1,5 @@
 /*
- * libc/stdio/sscanf.c
+ * xlibc/stdio/sscanf.c
  */
 
 #include <stdio.h>

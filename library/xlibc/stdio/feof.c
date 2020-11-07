@@ -1,5 +1,5 @@
 /*
- * libc/stdio/feof.c
+ * xlibc/stdio/feof.c
  */
 
 #include <stdio.h>

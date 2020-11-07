@@ -9,8 +9,9 @@
 #include <string.h>
 #include <xbook/resource.h>
 #include <xbook/pthread.h>
-#include <xbook/srvcall.h>
 #include <xbook/gui.h>
+#include <xbook/schedule.h>
+#include <xbook/srvcall.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <sys/pthread.h>
@@ -18,7 +19,7 @@
 #include <gui/message.h>
 #include <unistd.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_PROC
 
 /**
  * load_segment - 加载段
@@ -69,6 +70,8 @@ static int load_segment(int fd, unsigned long offset, unsigned long file_sz,
 
     //printk(KERN_DEBUG "task %s space: addr %x page %d\n",(current_task)->name, vaddr_page, occupy_pages);
 
+    // printk(KERN_DEBUG "[proc]: read file off %x size %x to vaddr %x\n", offset, file_sz, vaddr);
+
     /* 读取数据到内存中 */
     sys_lseek(fd, offset, SEEK_SET);
     if (sys_read(fd, (void *)vaddr, file_sz) != file_sz) {
@@ -87,7 +90,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
     /* 获取程序头起始偏移 */
     Elf32_Off prog_header_off = elf_header->e_phoff;
     Elf32_Half prog_header_size = elf_header->e_phentsize;
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_PROC
     printk(KERN_DEBUG "prog offset %x size %d\n", prog_header_off, prog_header_size);
     #endif
     Elf32_Off prog_end;
@@ -101,7 +104,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
         if (sys_read(fd, (void *)&prog_header, prog_header_size) != prog_header_size) {
             return -1;
         }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PROC
         printk(KERN_DEBUG "proc_load_image: read prog header off %x vaddr %x filesz %x memsz %x\n", 
             prog_header.p_offset, prog_header.p_vaddr, prog_header.p_filesz, prog_header.p_memsz);
 #endif        
@@ -122,14 +125,18 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
             
             /* 如果内存占用大于文件占用，就要把内存中多余的部分置0 */
             if (prog_header.p_memsz > prog_header.p_filesz) {
+                #ifdef DEBUG_PROC
+                printk("[proc] clean bss at %x size(%x)\n", 
+                    prog_header.p_vaddr + prog_header.p_filesz, prog_header.p_memsz - prog_header.p_filesz);
+                printk("[proc] memsz(%x) > filesz(%x)\n", 
+                    prog_header.p_memsz, prog_header.p_filesz);
+                #endif
                 memset((void *)(prog_header.p_vaddr + prog_header.p_filesz), 0,
                     prog_header.p_memsz - prog_header.p_filesz);
-                /*printk("memsz(%x) > filesz(%x)\n", 
-                    prog_header.p_memsz, prog_header.p_filesz);
-                */
+                
             }
             prog_end = prog_header.p_vaddr + prog_header.p_memsz;
-#if DEBUG_LOCAL == 1            
+#ifdef DEBUG_PROC            
             printk(KERN_DEBUG "seg start:%x end:%x\n", prog_header.p_vaddr, prog_end);
 #endif        
 
@@ -138,7 +145,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
             if (prog_header.p_flags == ELF32_PHDR_CODE) {
                 vmm->code_start = prog_header.p_vaddr;
                 vmm->code_end = prog_end;
-#if DEBUG_LOCAL == 1  
+#ifdef DEBUG_PROC  
                 printk(KERN_DEBUG "code start:%x end:%x\n", vmm->code_start, vmm->code_end);
 #endif
                 /*堆默认在代码的后面的一个页后面 */
@@ -150,7 +157,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
             } else if (prog_header.p_flags == ELF32_PHDR_DATA) {
                 vmm->data_start = prog_header.p_vaddr;
                 vmm->data_end = prog_end;
-#if DEBUG_LOCAL == 1                  
+#ifdef DEBUG_PROC                  
                 printk(KERN_DEBUG "data start:%x end:%x\n", vmm->data_start, vmm->data_end);
 #endif
                 /*堆默认在数据的后面的一个页后面 */
@@ -176,7 +183,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
         prog_header_off += prog_header_size;
         grog_idx++;
     }
-#if DEBUG_LOCAL == 1 
+#ifdef DEBUG_PROC 
     printk(KERN_DEBUG "heap start:%x\n", vmm->heap_start);
 #endif
     return 0;
@@ -295,7 +302,7 @@ int proc_build_arg(unsigned long arg_top, unsigned long *arg_bottom, char *argv[
 void proc_heap_init(task_t *task)
 {
     return;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_PROC
     printk(KERN_DEBUG "task=%d dump vmspace.\n", task->pid);
     dump_vmspace(task->vmm);
 
@@ -361,29 +368,6 @@ int proc_trigger_exit(task_t *task)
     return 0;
 }
 
-int proc_res_init(task_t *task)
-{
-    task->res = kmalloc(sizeof(resource_t));
-    if (task->res == NULL)
-        return -1;
-    resource_init(task->res);
-    return 0;
-}
-
-int proc_res_exit(task_t *task)
-{
-    if (task->res == NULL)
-        return -1;
-
-    /* 释放资源中的设备资源 */
-    resource_release(task->res);
-
-    kfree(task->res);
-    task->res = NULL;
-    return 0;
-}
-
-
 int proc_pthread_init(task_t *task)
 {
     task->pthread = kmalloc(sizeof(pthread_desc_t));
@@ -403,10 +387,8 @@ int proc_pthread_exit(task_t *task)
 int proc_release(task_t *task)
 {
     if (proc_vmm_exit(task))
-        return -1; 
-    if (proc_trigger_exit(task))
         return -1;
-    if (proc_res_exit(task))
+    if (proc_trigger_exit(task))
         return -1;
     if (fs_fd_exit(task))
         return -1;
@@ -419,7 +401,7 @@ int proc_release(task_t *task)
     
     if (thread_release_resource(task))
         return -1;
-    
+    printk(KERN_DEBUG "[proc]: release don.\n");
     return 0;
 }
 
@@ -495,18 +477,10 @@ task_t *start_process(char *name, char **argv)
         return NULL;
     }
 
-    if (proc_res_init(task)) {
-        proc_trigger_exit(task);
-        proc_vmm_exit(task);
-        kfree(task);
-        return NULL;
-    }
-
     /* 创建文件描述表 */
     if (fs_fd_init(task) < 0) {
         proc_trigger_exit(task);
         proc_vmm_exit(task);
-        proc_res_exit(task);
         kfree(task);
         return NULL;
     }
@@ -526,7 +500,7 @@ task_t *start_process(char *name, char **argv)
     unsigned long flags;
     save_intr(flags);
     task_global_list_add(task);
-    task_priority_queue_add_tail(task);
+    task_priority_queue_add_tail(sched_get_unit(), task);
     restore_intr(flags);
     
     return task;

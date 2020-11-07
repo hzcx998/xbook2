@@ -1,145 +1,99 @@
-#ifndef _XLIBC_MATH_H
-#define _XLIBC_MATH_H
+#ifndef __MATH_H__
+#define __MATH_H__
 
-#include <arch/config.h>
-#include <stddef.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/*
-    File:       math.h
+#include <stdint.h>
+#include <float.h>
+#include <endian.h>
+#include <limits.h>
 
-    Contains:   Define math type, functions and macros
+typedef float	float_t;
+typedef double	double_t;
 
-    Written by: GUI
+#define FORCE_EVAL(x) do {									\
+	if (sizeof(x) == sizeof(float)) {						\
+		volatile float __x __attribute__((unused));			\
+		__x = (x);											\
+	} else if (sizeof(x) == sizeof(double)) {				\
+		volatile double __x __attribute__((unused));		\
+		__x = (x);											\
+	} else {												\
+		volatile long double __x __attribute__((unused));	\
+		__x = (x);											\
+	}														\
+} while(0)
 
-    Copyright:  (C) 2017-2020 by GuEe Studio for Book OS. All rights reserved.
-*/
+/* Get two 32 bit ints from a double */
+#define EXTRACT_WORDS(hi, lo, d)							\
+do {														\
+	union {double f; uint64_t i;} __u;						\
+	__u.f = (d);											\
+	(hi) = __u.i >> 32;										\
+	(lo) = (uint32_t)__u.i;									\
+} while (0)
 
-/* IEEE ISO */
-typedef struct {
-    unsigned int mantissa:23;
-    unsigned int exponent:8;
-    unsigned int sign:1;
-} float_t;
+/* Get the more significant 32 bit int from a double */
+#define GET_HIGH_WORD(hi, d)								\
+do {														\
+	union {double f; uint64_t i;} __u;						\
+	__u.f = (d);											\
+	(hi) = __u.i >> 32;										\
+} while (0)
 
-typedef struct {
-    unsigned int mantissal:32;
-    unsigned int mantissah:20;
-    unsigned int exponent:11;
-    unsigned int sign:1;
-} double_t;
+/* Get the less significant 32 bit int from a double */
+#define GET_LOW_WORD(lo, d)									\
+do {														\
+	union {double f; uint64_t i;} __u;						\
+	__u.f = (d);											\
+	(lo) = (uint32_t)__u.i;									\
+} while (0)
 
-typedef struct {
-    unsigned int mantissal:32;
-    unsigned int mantissah:32;
-    unsigned int exponent:15;
-    unsigned int sign:1;
-    unsigned int empty:16;
-} long_double_t;
-/* IEEE ISO */
+/* Set a double from two 32 bit ints */
+#define INSERT_WORDS(d, hi, lo)								\
+do {														\
+	union {double f; uint64_t i;} __u;						\
+	__u.i = ((uint64_t)(hi)<<32) | (uint32_t)(lo);			\
+	(d) = __u.f;											\
+} while (0)
 
-#define M_E        2.7182818284590452354   /* e */
-#define M_LOG2E    1.4426950408889634074   /* log_2 e */
-#define M_LOG10E   0.43429448190325182765  /* log_10 e */
-#define M_LN2      0.69314718055994530942  /* log_e 2 */
-#define M_LN10     2.30258509299404568402  /* log_e 10 */
-#define M_PI       3.14159265358979323846  /* pi */
-#define M_PI_D     6.28318530717958646692  /* pi*2 */
-#define M_PI_2     1.57079632679489661923  /* pi/2 */
-#define M_PI_4     0.78539816339744830962  /* pi/4 */
-#define M_1_PI     0.31830988618379067154  /* 1/pi */
-#define M_2_PI     0.63661977236758134308  /* 2/pi */
-#define M_2_SQRTPI 1.12837916709551257390  /* 2/sqrt(pi) */
-#define M_SQRT2    1.41421356237309504880  /* sqrt(2) */
-#define M_SQRT1_2  0.70710678118654752440  /* 1/sqrt(2) */
+/* Set the more significant 32 bits of a double from an int */
+#define SET_HIGH_WORD(d, hi)								\
+do {														\
+	union {double f; uint64_t i;} __u;						\
+	__u.f = (d);											\
+	__u.i &= 0xffffffff;									\
+	__u.i |= (uint64_t)(hi) << 32;							\
+	(d) = __u.f;											\
+} while (0)
 
-#ifdef __LIB_64B__
-#define M_El        2.7182818284590452353602874713526625L  /* e */
-#define M_LOG2El    1.4426950408889634073599246810018922L  /* log_2 e */
-#define M_LOG10El   0.4342944819032518276511289189166051L  /* log_10 e */
-#define M_LN2l      0.6931471805599453094172321214581766L  /* log_e 2 */
-#define M_LN10l     2.3025850929940456840179914546843642L  /* log_e 10 */
-#define M_PIl       3.1415926535897932384626433832795029L  /* pi */
-#define M_PI_Dl     6.2831853071795864669252867665590058L  /* pi*2 */
-#define M_PI_2l     1.5707963267948966192313216916397514L  /* pi/2 */
-#define M_PI_4l     0.7853981633974483096156608458198757L  /* pi/4 */
-#define M_1_PIl     0.3183098861837906715377675267450287L  /* 1/pi */
-#define M_2_PIl     0.6366197723675813430755350534900574L  /* 2/pi */
-#define M_2_SQRTPIl 1.1283791670955125738961589031215452L  /* 2/sqrt(pi) */
-#define M_SQRT2l    1.4142135623730950488016887242096981L  /* sqrt(2) */
-#define M_SQRT1_2l  0.7071067811865475244008443621048490L  /* 1/sqrt(2) */
-#endif /* __LIB_64B__ */
+/* Set the less significant 32 bits of a double from an int */
+#define SET_LOW_WORD(d, lo)									\
+do {														\
+	union {double f; uint64_t i;} __u;						\
+	__u.f = (d);											\
+	__u.i &= 0xffffffff00000000ull;							\
+	__u.i |= (uint32_t)(lo);								\
+	(d) = __u.f;											\
+} while (0)
 
-#ifdef __LIB_32B__
-#define M_FLOAT float
-#else
-#define M_FLOAT double
-#endif /* __LIB_32B__ */
+/* Get a 32 bit int from a float */
+#define GET_FLOAT_WORD(w, d)								\
+do {														\
+	union {float f; uint32_t i;} __u;						\
+	__u.f = (d);											\
+	(w) = __u.i;											\
+} while (0)
 
-M_FLOAT acos(M_FLOAT);
-M_FLOAT asin(M_FLOAT);
-M_FLOAT atan(M_FLOAT);
-M_FLOAT atan2(M_FLOAT, M_FLOAT);
-M_FLOAT ceil(M_FLOAT);
-M_FLOAT cos(M_FLOAT);
-M_FLOAT cosh(M_FLOAT);
-M_FLOAT exp(M_FLOAT);
-M_FLOAT fabs(M_FLOAT);
-M_FLOAT floor(M_FLOAT);
-M_FLOAT fmod(M_FLOAT, M_FLOAT);
-M_FLOAT frexp(double, int *);
-M_FLOAT ldexp(M_FLOAT, int);
-M_FLOAT log(M_FLOAT);
-M_FLOAT log2(float);
-M_FLOAT log10(M_FLOAT);
-double modf(double , double *);
-M_FLOAT pow(double, double);
-M_FLOAT round(M_FLOAT);
-M_FLOAT sin(M_FLOAT);
-M_FLOAT sinh(M_FLOAT);
-M_FLOAT sqrt(float);
-M_FLOAT tan(M_FLOAT);
-M_FLOAT tanh(M_FLOAT);
-M_FLOAT fmax(M_FLOAT x, M_FLOAT y);
-M_FLOAT fmin(M_FLOAT x, M_FLOAT y);
-
-#ifdef __LIB_32B__
-#define acosf(x)    acos(x)
-#define asinf(x)    asin(x)
-#define atanf(x)    atan(x)
-#define atan2f(x,y) atan2(x,y)
-#define ceilf(x)    ceil(x)
-#define cosf(x)     cos(x)
-#define coshf(x)    cosh(x)
-#define expf(x)     exp(x)
-#define fabsf(x)    fabs(x)
-#define floorf(x)   floor(x)
-#define fmodf(x,y)  fmod(x,y)
-#define frexpf(x,y) frexp(x,y)
-#define ldexpf(x,y) ldexp(x,y)
-#define logf(x)     log(x)
-#define log2f(x)    log2(x)
-#define log10f(x)   log10(x)
-#define powf(x,y)   pow(x,y)
-#define roundf(x)   round(x)
-#define sinf(x)     sin(x)
-#define sinhf(x)    sinh(x)
-#define sqrtf(x)    sqrt(x)
-#define tanf(x)     tan(x)
-#define tanhf(x)    tanh(x)
-#define fmaxf(x, y) fmax(x, y)
-#define fminf(x, y) fmin(x, y)
-#endif /* __LIB_32B__ */
-
-extern const M_FLOAT MATH_PI;
-extern const M_FLOAT MATH_PI_D;
-extern const M_FLOAT MATH_PI_2;
-extern const M_FLOAT MATH_PI_4;
-extern const M_FLOAT MATH_LN10;
-
-extern const float EPSILON;
-extern const M_FLOAT LOG_MULTIPLE;
-
-
+/* Set a float from a 32 bit int */
+#define SET_FLOAT_WORD(d, w)								\
+do {														\
+	union {float f; uint32_t i;} __u;						\
+	__u.i = (w);											\
+	(d) = __u.f;											\
+} while (0)
 
 #define FP_NAN					0
 #define FP_INFINITE				1
@@ -160,5 +114,157 @@ extern const M_FLOAT LOG_MULTIPLE;
 #define	islessgreater(x, y)		__builtin_islessgreater((x), (y))
 #define	isunordered(x, y)		__builtin_isunordered((x), (y))
 
+static __inline unsigned __FLOAT_BITS(float __f)
+{
+	union {float __f; unsigned __i;} __u;
+	__u.__f = __f;
+	return __u.__i;
+}
 
-#endif /* _XLIBC_MATH_H */
+static __inline unsigned long long __DOUBLE_BITS(double __f)
+{
+	union {double __f; unsigned long long __i;} __u;
+	__u.__f = __f;
+	return __u.__i;
+}
+
+#define fpclassify(x) ( \
+	sizeof(x) == sizeof(float) ? __fpclassifyf(x) : \
+	sizeof(x) == sizeof(double) ? __fpclassify(x) : \
+	__fpclassify(x) )
+
+#define isinf(x) ( \
+	sizeof(x) == sizeof(float) ? (__FLOAT_BITS(x) & 0x7fffffff) == 0x7f800000 : \
+	sizeof(x) == sizeof(double) ? (__DOUBLE_BITS(x) & -1ULL>>1) == 0x7ffULL<<52 : \
+	__fpclassify(x) == FP_INFINITE)
+
+#define isnan(x) ( \
+	sizeof(x) == sizeof(float) ? (__FLOAT_BITS(x) & 0x7fffffff) > 0x7f800000 : \
+	sizeof(x) == sizeof(double) ? (__DOUBLE_BITS(x) & -1ULL>>1) > 0x7ffULL<<52 : \
+	__fpclassify(x) == FP_NAN)
+
+#define isnormal(x) ( \
+	sizeof(x) == sizeof(float) ? ((__FLOAT_BITS(x)+0x00800000) & 0x7fffffff) >= 0x01000000 : \
+	sizeof(x) == sizeof(double) ? ((__DOUBLE_BITS(x)+(1ULL<<52)) & -1ULL>>1) >= 1ULL<<53 : \
+	__fpclassify(x) == FP_NORMAL)
+
+#define isfinite(x) ( \
+	sizeof(x) == sizeof(float) ? (__FLOAT_BITS(x) & 0x7fffffff) < 0x7f800000 : \
+	sizeof(x) == sizeof(double) ? (__DOUBLE_BITS(x) & -1ULL>>1) < 0x7ffULL<<52 : \
+	__fpclassify(x) > FP_INFINITE)
+
+#define M_E						2.7182818284590452354	/* e */
+#define M_LOG2E					1.4426950408889634074	/* log_2 e */
+#define M_LOG10E				0.43429448190325182765	/* log_10 e */
+#define M_LN2					0.69314718055994530942	/* log_e 2 */
+#define M_LN10					2.30258509299404568402	/* log_e 10 */
+#define M_PI					3.14159265358979323846	/* pi */
+#define M_PI_2					1.57079632679489661923	/* pi/2 */
+#define M_PI_4					0.78539816339744830962	/* pi/4 */
+#define M_1_PI					0.31830988618379067154	/* 1/pi */
+#define M_2_PI					0.63661977236758134308	/* 2/pi */
+#define M_2_SQRTPI				1.12837916709551257390	/* 2/sqrt(pi) */
+#define M_SQRT2					1.41421356237309504880	/* sqrt(2) */
+#define M_SQRT1_2				0.70710678118654752440	/* 1/sqrt(2) */
+
+double	acos(double);
+float	acosf(float);
+double	acosh(double);
+float	acoshf(float);
+double	asin(double);
+float	asinf(float);
+double	asinh(double);
+float	asinhf(float);
+double	atan(double);
+float	atanf(float);
+double	atan2(double, double);
+float	atan2f(float, float);
+double	atanh(double);
+float	atanhf(float);
+double	cbrt(double);
+float	cbrtf(float);
+double	ceil(double);
+float	ceilf(float);
+double	cos(double);
+float	cosf(float);
+double	cosh(double);
+float	coshf(float);
+double	exp(double);
+float	expf(float);
+double	exp2(double);
+float	exp2f(float);
+double	expm1(double);
+float	expm1f(float);
+double	fabs(double);
+float	fabsf(float);
+double	fdim(double, double);
+float	fdimf(float, float);
+double	floor(double);
+float	floorf(float);
+double	fmod(double, double);
+float	fmodf(float, float);
+double	frexp(double, int *);
+float	frexpf(float, int *);
+double	hypot(double, double);
+float	hypotf(float, float);
+double	ldexp(double, int);
+float	ldexpf(float, int);
+double	log(double);
+float	logf(float);
+double	log10(double);
+float	log10f(float);
+double	log1p(double);
+float	log1pf(float);
+double	log2(double);
+float	log2f(float);
+double	modf(double, double *);
+float	modff(float, float *);
+double	pow(double, double);
+float	powf(float, float);
+double	rint(double);
+float	rintf(float);
+double	round(double);
+float	roundf(float);
+double	scalbn(double, int);
+float	scalbnf(float, int);
+double	scalbln(double, long);
+float	scalblnf(float, long);
+double	sin(double);
+float	sinf(float);
+double	sinh(double);
+float	sinhf(float);
+double	sqrt(double);
+float	sqrtf(float);
+double	tan(double);
+float	tanf(float);
+double	tanh(double);
+float	tanhf(float);
+double	trunc(double);
+float	truncf(float);
+double fmax(double, double);
+float fmaxf(float, float);
+double fmin(double, double);
+float fminf(float, float);
+
+/*
+ * libm kernel functions
+ */
+double	__cos(double, double);
+float	__cosdf(double);
+double	__expo2(double);
+float	__expo2f(float);
+int		__fpclassify(double);
+int		__fpclassifyf(float);
+int		__rem_pio2_large(double *, double *, int, int, int);
+int		__rem_pio2(double, double *);
+int		__rem_pio2f(float, double *);
+double	__sin(double, double, int);
+float	__sindf(double);
+double	__tan(double, double, int);
+float	__tandf(double, int);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __MATH_H__ */

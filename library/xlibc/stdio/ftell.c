@@ -1,5 +1,5 @@
 /*
- * libc/stdio/ftell.c
+ * xlibc/stdio/ftell.c
  */
 
 #include <errno.h>

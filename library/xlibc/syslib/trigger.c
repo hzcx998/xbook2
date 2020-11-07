@@ -1,5 +1,6 @@
 #include <sys/trigger.h>
 #include <sys/syscall.h>
+#include <stddef.h>
 
 /**
  * trigaddset - 触发器集添加一个触发器
@@ -114,4 +115,21 @@ int trigmask(int trig)
     if (IS_BAD_TRIGGER(trig))
         return -1;
     return (1 << trig);
+}
+
+int trigblock(int block)
+{
+    trigset_t newset;
+    trigset_t oldset;
+    newset = *(trigset_t *)&block;
+    if (trigprocmask(TRIG_BLOCK, &newset, &oldset) < 0)
+        return -1;
+    return (int) oldset;
+}
+
+int trigsetmask(int mask)
+{
+    trigset_t newset;
+    newset = *(trigset_t *)&mask;
+    return trigprocmask(TRIG_SETMASK, &newset, NULL);
 }

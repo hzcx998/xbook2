@@ -1,13 +1,25 @@
 #ifndef _XLIBC_STDDEF_H
 #define _XLIBC_STDDEF_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef _SIZE_T
+#define	_SIZE_T
 typedef unsigned long size_t;
+#endif /* _SIZE_T */
 typedef unsigned long dma_addr_t;
+
+#ifndef __cplusplus
 
 #ifndef _WCHAR_T_DEFINED   
 typedef unsigned short wchar_t;   
 #define _WCHAR_T_DEFINED   
 #endif  
+
+#endif /* __cplusplus */
 
 /*
  *这里是define类型的
@@ -83,6 +95,10 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif  /* _XLIBC_STDDEF_H */

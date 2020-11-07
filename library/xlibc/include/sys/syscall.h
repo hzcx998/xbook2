@@ -1,6 +1,10 @@
 #ifndef _SYS_SYSCALL_H
 #define _SYS_SYSCALL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum syscall_num {
     SYS_EXIT,
     SYS_FORK,
@@ -85,6 +89,9 @@ enum syscall_num {
     SYS_CLOSEDIR,
     SYS_READDIR,
     SYS_REWINDDIR,
+    SYS_MKFS,
+    SYS_MOUNT,
+    SYS_UNMOUNT,
 /// sockets 套接字
     SYS_SOCKET,
     SYS_BIND,
@@ -126,11 +133,6 @@ enum syscall_num {
     SYS_LAYERDEL,
     SYS_LAYERZ,
     SYS_LAYERMOVE,
-    SYS_LAYEROUTP,
-    SYS_LAYERINP,
-    SYS_LAYERLINE,
-    SYS_LAYERRECT,
-    SYS_LAYERRECTFILL,
     SYS_LAYERREFRESH,
     SYS_LAYERSETWINTOP,
     SYS_LAYERGETWINTOP,
@@ -156,6 +158,10 @@ enum syscall_num {
     SYS_GDELTIMER,
     SYS_LAYERSYNCBMP,
     SYS_LAYERSYNCBMPEX,
+    SYS_LAYERCOPYBMP,
+    SYS_GGETICONPATH,
+    SYS_GSETICONPATH,
+    SYS_PROBE,
     SYSCALL_NR,
 };
 
@@ -186,5 +192,9 @@ extern unsigned long __syscall4(unsigned long num, unsigned long arg0,
 #define syscall4(type, num, arg0, arg1, arg2, arg3) \
         (type) __syscall4((unsigned long ) num, (unsigned long ) arg0,\
         (unsigned long ) arg1, (unsigned long ) arg2, (unsigned long ) arg3)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* _SYS_ */

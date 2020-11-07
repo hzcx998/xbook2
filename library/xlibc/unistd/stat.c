@@ -2,8 +2,6 @@
 #include <types.h>
 #include <stddef.h>
 #include <string.h>
-#include <sys/srvcall.h>
-#include <srv/filesrv.h>
 #include <sys/stat.h>
 #include <sys/dir.h>
 #include <sys/syscall.h>

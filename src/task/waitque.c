@@ -11,7 +11,7 @@
 #include <sys/waitque.h>
 #include <errno.h>
 
-#define DEBUG_LOCAL 0
+#define DEBUG_WAITQUE
 
 #define USE_MUTEX_LOCK
 
@@ -52,7 +52,7 @@ int sys_waitque_create()
             #else
             spin_unlock_irqrestore(&waitque_table_lock, irqflags);
             #endif
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_WAITQUE
             printk(KERN_DEBUG "%s: pid=%d get handle=%d\n", __func__, current_task->pid, i);
 #endif
             return i;
@@ -64,7 +64,7 @@ int sys_waitque_create()
     #else
     spin_unlock_irqrestore(&waitque_table_lock, irqflags);
     #endif
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_WAITQUE
     printk(KERN_DEBUG "%s: pid=%d get handle failed!\n", __func__, current_task->pid);
 #endif
     return -1;
@@ -130,7 +130,7 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
     save_intr(flags);
     waitque_t *waitque = &waitque_table[handle];
     if (waitque->flags) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_WAITQUE
         printk(KERN_DEBUG "%s: pid=%d wait\n", __func__, current_task->pid);
 #endif
         /* 对变量进行操作 */
@@ -165,7 +165,7 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
 
         wait_queue_add(&waitque->wait_queue, current_task);
         if (wqflags & WAITQUE_TIMED) {   /* 有定时 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_WAITQUE
             printk(KERN_DEBUG "%s: pid=%d wait with timer\n", __func__, current_task->pid);
 #endif
             /* 如果是中途被打断，剩余ticks就大于0，一般是被其它线程唤醒。
@@ -198,18 +198,18 @@ int sys_waitque_wait(int handle, void *addr, unsigned int wqflags, unsigned long
             if (ticks < 2 * MS_PER_TICKS)
                 ticks = 2 * MS_PER_TICKS;
 
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_WAITQUE
             printk(KERN_DEBUG "%s: pid=%d sleep ticks %u\n", __func__, current_task->pid, ticks);
 #endif
 
             if (task_sleep_by_ticks(ticks) > 0) {
           
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_WAITQUE
                 printk(KERN_DEBUG "%s: pid=%d was breaked\n", __func__, current_task->pid);
 #endif      
                 goto out;
             } else { /* timeout */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_WAITQUE
                 printk(KERN_DEBUG "%s: pid=%d timeout\n", __func__, current_task->pid);
 #endif
                 task_t *task, *next;
@@ -254,7 +254,7 @@ int sys_waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long
     save_intr(flags);
     waitque_t *waitque = &waitque_table[handle];
     if (waitque->flags) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_WAITQUE
         printk(KERN_DEBUG "%s: pid=%d wake handle=%d\n", __func__, current_task->pid, handle);
 #endif
         /* 对变量进行操作 */
@@ -292,11 +292,11 @@ int sys_waitque_wake(int handle, void *addr, unsigned int wqflags, unsigned long
             /* 如果是唤醒一个有定时的线程，本来需要删除其定时器的，但是
             唤醒后，会自动删除定时器，因此，不再这里做对应的处理 */
             if (wqflags & WAITQUE_ALL) {    /* 唤醒全部 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_WAITQUE
             printk(KERN_DEBUG "%s: pid=%d wake broadcast thread.\n", __func__, current_task->pid);
 #endif
             } else {        /* 只唤醒单线程 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_WAITQUE
                 printk(KERN_DEBUG "%s: pid=%d wake single thread.\n", __func__, current_task->pid);
 #endif
             }

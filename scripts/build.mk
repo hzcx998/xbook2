@@ -51,13 +51,14 @@ endif
 X_CPPFLAGS	:= $(patsubst %, -I %, $(foreach d,$(X_INCDIRS),$(wildcard $(srctree)/$(d)))) $(patsubst %, -D%, $(X_DEFINES)) $(patsubst %, -include %, $(X_INCS))
 X_LDLIBS	:= $(patsubst %, -L%, $(X_LIBDIRS)) $(patsubst %, -l%, $(X_LIBS))
 
-export X_ASFLAGS X_CFLAGS X_LDFLAGS X_LIBDIRS X_LIBS X_DEFINES X_LDFLAGS X_INCDIRS X_INCS
+export X_ASFLAGS X_CFLAGS X_CXXFLAGS X_LDFLAGS X_LIBDIRS X_LIBS X_DEFINES X_LDFLAGS X_INCDIRS X_INCS
 
 X_CUR_OBJ	:=	$(foreach f,$(filter-out %/, $(SRC)),$(wildcard $(srctree)/$(src)/$(f)))
 X_CUR_OBJ	:=	$(patsubst $(srctree)/$(src)/%,$(obj)/%.o,$(X_CUR_OBJ))
 X_SUBDIR	:=	$(filter %/,$(foreach f,$(filter %/, $(SRC)),$(wildcard $(srctree)/$(src)/$(f))))
 X_SUBDIR	:=	$(patsubst $(srctree)/%/,%,$(X_SUBDIR))
 X_SUB_OBJ	:=	$(patsubst $(src)/%,$(obj)/%/built-in.o,$(X_SUBDIR))
+
 
 X_OBJS		:=	$(X_CUR_OBJ) $(X_SUB_OBJ)
 # case: $(obj)==.
@@ -93,9 +94,9 @@ $(X_TARGET): $(X_MODULE)
 $(X_NAME): $(X_OBJS)
 
 clean:
-ifneq ($(strip $(wildcard $(X_TARGET) $(obj)/.*.cmd $(X_NAME) $(X_CLEAN))),)
+ifneq ($(strip $(wildcard $(X_TARGET) $(obj)/.*.cmd $(X_DEPS) $(X_CLEAN))),)
 	@$(ECHO) '$(ECHO_RM)' $(obj)
-	@$(RM) $(X_TARGET) $(wildcard $(obj)/.*.cmd) $(X_NAME) $(X_CLEAN)
+	@$(RM) $(X_TARGET) $(wildcard $(obj)/.*.cmd) $(X_DEPS) $(X_CLEAN)
 endif
 
 include $(XBUILD_DIR)/rule.mk

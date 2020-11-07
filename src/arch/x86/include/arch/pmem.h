@@ -43,6 +43,8 @@
 #define KERNEL_STATCK_TOP		0x8009f000
 #define KERNEL_STATCK_BOTTOM	(KERNEL_STATCK_TOP - (TASK_KSTACK_SIZE))
 
+#define MEM_NODE_DMA        0x01
+#define MEM_NODE_NORMAL     0x02
 
 /* mem_node 内存节点，用于管理每一段物理内存（以页为单位） */
 typedef struct {
@@ -77,7 +79,7 @@ void dump_mem_node(mem_node_t *node);
 mem_node_t *__page2mem_node(unsigned int page);
 unsigned int __mem_node2page(mem_node_t *node);
 
-mem_node_t *get_free_mem_node();
+mem_node_t *get_free_mem_node(unsigned int flags);
 
 unsigned long __get_free_page_nr();
 unsigned long __get_total_page_nr();

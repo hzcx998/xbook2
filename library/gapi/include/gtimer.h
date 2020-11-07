@@ -49,7 +49,5 @@ uint32_t g_set_timer(int layer, uint32_t id, uint32_t msec, g_timer_handler_t ha
  */
 int g_del_timer(int layer, uint32_t id);
 
-int g_del_timer_all();
-
 g_timer_t *g_timer_find_by_timer(uint32_t timer);
 #endif /* _GAPI_TIMER_H */

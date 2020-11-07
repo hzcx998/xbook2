@@ -1,5 +1,5 @@
 /*
- * libc/stdio/fgetpos.c
+ * xlibc/stdio/fgetpos.c
  */
 
 #include <stdio.h>

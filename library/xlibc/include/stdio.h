@@ -76,7 +76,7 @@ FILE * freopen(const char * path, const char * mode, FILE * f);
 int fclose(FILE * f);
 
 int remove(const char * path);
-int rename(const char * old, const char * new);
+int rename(const char * old, const char * _new);
 int system(const char * cmd);
 
 int feof(FILE * f);
@@ -126,6 +126,8 @@ int snprintf(char * buf, size_t n, const char * fmt, ...);
 int sscanf(const char * buf, const char * fmt, ...);
 
 #define vsprintf(buf, fmt, ap)  vsnprintf(buf, BUFSIZ, fmt, ap)
+
+void perror(const char* str);
 
 /*
  * Inner function

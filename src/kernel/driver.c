@@ -1,6 +1,7 @@
 #include <xbook/driver.h>
 #include <math.h>
-#include <xbook/vine.h>
+#include <stdio.h>
+
 #include <xbook/debug.h>
 #include <assert.h>
 #include <xbook/mdl.h>
@@ -8,36 +9,15 @@
 #include <string.h>
 #include <xbook/vmspace.h>
 #include <sys/ioctl.h>
-#include <xbook/pci.h>
 #include <xbook/config.h>
 #include <xbook/vmarea.h>
+#include <xbook/schedule.h>
+#include <xbook/initcall.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRIVER
 
 /* 驱动链表头 */
 LIST_HEAD(driver_list_head);
-
-/* 驱动藤蔓表：
-虚拟设备必须在物理设备初始化完成后
- */
-driver_func_t driver_vine_table[] = {
-    serial_driver_vine,                 /* char */
-    console_driver_vine,                /* char */
-#ifdef CONFIG_AHCI
-    ahci_driver_vine,                   /* disk */
-#else
-    ide_driver_vine,                    /* disk */
-#endif
-    rtl8139_driver_vine,                /* net */
-    e1000_driver_vine,
-    keyboard_driver_vine,               /* input */
-    ramdisk_driver_vine,                /* disk */
-    vbe_driver_vine,                    /* video */
-    mouse_driver_vine,                  /* input */
-    buzzer_driver_vine,                 /* sound */
-    tty_driver_vine,                    /* filter: tty */
-    null_driver_vine,                   /* filter: null */
-};
 
 /* 打开的设备表 */
 device_object_t *device_handle_table[DEVICE_HANDLE_NR];
@@ -52,7 +32,6 @@ iostatus_t default_device_dispatch(device_object_t *device, io_request_t *ioreq)
     io_complete_request(ioreq);
     return IO_SUCCESS;  /* 默认是表示执行成功 */
 }
-#if DEBUG_LOCAL == 2 /* print devices */
 static void print_drivers()
 {
     driver_object_t *drvobj;
@@ -71,6 +50,7 @@ static void print_drivers()
     }
 }
 
+#ifdef DEBUG_DRIVER /* print devices */
 static void print_drivers_mini()
 {
     driver_object_t *drvobj;
@@ -236,14 +216,14 @@ void driver_object_init(driver_object_t *driver)
 }
 
 /**
- * driver_object_create - 根据藤蔓创建驱动
- * @vine: 藤蔓
+ * driver_object_create - 根据函数地址创建驱动
+ * @func: 函数地址
  * 
- * 藤蔓是指向一个驱动的一个函数指针，通过调用这个指针来创建一个驱动
+ * 函数地址是指向一个驱动的一个函数指针，通过调用这个指针来创建一个驱动
  * 
  * @return: 成功返回0，失败返回-1
  */
-int driver_object_create(driver_func_t vine)
+int driver_object_create(driver_func_t func)
 {
     driver_object_t *drvobj;
     iostatus_t status;
@@ -253,7 +233,7 @@ int driver_object_create(driver_func_t vine)
         return -1;
     /* 初始化驱动对象 */
     driver_object_init(drvobj);
-    status = vine(drvobj);
+    status = func(drvobj);
     if (status != IO_SUCCESS) {
         kfree(drvobj); /* 释放驱动对象 */
         return -1;
@@ -281,7 +261,7 @@ int driver_object_create(driver_func_t vine)
 int driver_object_delete(driver_object_t *driver)
 {
     iostatus_t status = IO_SUCCESS;
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRIVER    
     printk(KERN_DEBUG "driver_object_delete: driver %s delete start.\n",
         driver->name.text);
 #endif
@@ -303,7 +283,7 @@ int driver_object_delete(driver_object_t *driver)
 
     /* 释放掉驱动对象 */
     kfree(driver);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_DEBUG "driver_object_delete: driver delete done.\n");
 #endif
 
@@ -457,7 +437,7 @@ iostatus_t io_create_device(
     
     /* 把设备地址保存到device里面 */
     *device = devobj;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_DEBUG "io_create_device: create device done.\n");
 #endif
     return IO_SUCCESS;
@@ -476,7 +456,7 @@ void io_delete_device(
     /* 查看是否还在使用中 */
     devobj = device_handle_table_search_by_name(device->name.text);
     if (devobj) { /* 在使用中就从句柄表中删除 */
-        printk(KERN_DEBUG "io_delete_device: device %s is using!\n", 
+        printk(KERN_NOTICE "io_delete_device: device %s is using!\n", 
             devobj->name.text);
         device_handle_table_remove(devobj);
     }
@@ -594,7 +574,7 @@ io_request_t *io_build_sync_request(
                 return NULL;
             }
             ioreq->flags |= IOREQ_BUFFERED_IO;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
             printk(KERN_DEBUG "io_build_sync_request: system buffer.\n");
 #endif
         } else if (devobj->flags & DO_DIRECT_IO) {
@@ -604,11 +584,11 @@ io_request_t *io_build_sync_request(
                 return NULL;    
             }
             /* 分配内存描述列表 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
             printk(KERN_DEBUG "io_build_sync_request: direct buffer.\n");
 #endif
         } else {    /* 直接使用用户地址 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
             printk(KERN_DEBUG "io_build_sync_request: user buffer.\n");
 #endif
         }
@@ -921,7 +901,7 @@ int device_close(handle_t handle)
         return 0;
     }
 rollback_ref:
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_DEBUG "device_close: do dispatch failed!\n");
 #endif
     io_device_increase_reference(devobj);
@@ -967,7 +947,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
     if (!io_complete_check(ioreq, status)) {
         void *mapaddr = NULL;
         /* 对获取的物理地址进行映射 */
-#if DEBUG_LOCAL == 1        
+#ifdef DEBUG_DRIVER        
         printk(KERN_DEBUG "%s: get device phy addr:%x\n", __func__, ioreq->io_status.infomation);
 #endif
         if (ioreq->io_status.infomation) {  /* 有物理地址，说明获取成功，再做进一步设置 */
@@ -982,7 +962,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
         io_request_free((ioreq));
         return mapaddr;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_DEBUG "%s: do dispatch failed!\n", __func__);
 #endif
     io_request_free((ioreq));
@@ -1014,6 +994,34 @@ int device_grow(handle_t handle)
         return 0;
     return -1;
 }
+
+
+/**
+ * device_degrow - 减少设备引用计数
+ * @handle: 设备句柄
+ * 
+ * @return: 成功返回0，失败返回-1
+ */
+int device_degrow(handle_t handle)
+{
+    if (IS_BAD_DEVICE_HANDLE(handle))
+        return -1;
+    
+    device_object_t *devobj;
+    
+    devobj = GET_DEVICE_BY_HANDLE(handle);
+
+    /* 获取设备 */
+    if (devobj == NULL) {
+        printk(KERN_ERR "device_close: device object error by handle=%d!\n", handle);
+        /* 应该激活一个触发器，让调用者停止运行 */
+        return -1;
+    }
+    if (io_device_decrease_reference(devobj) == IO_SUCCESS)
+        return 0;
+    return -1;
+}
+
 /**
  * device_read - 从设备读取数据
  * @handle: 设备句柄
@@ -1070,7 +1078,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         //printk("io ret.\n");
         return len;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_ERR "device_read: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
@@ -1123,7 +1131,7 @@ ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset)
         io_request_free((ioreq));
         return len;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_ERR "device_write: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
@@ -1171,7 +1179,7 @@ ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg)
         io_request_free((ioreq));
         return infomation;
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRIVER
     printk(KERN_ERR "device_devctl: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
@@ -1197,6 +1205,27 @@ void dump_device_object(device_object_t *device)
         device->type, device->driver, device->device_extension, device->flags,
         atomic_get(&device->reference), device->name.text);
 }
+
+int device_probe_unused(const char *name, char *buf, size_t buflen)
+{
+    driver_object_t *drvobj;
+    device_object_t *devobj;
+    int namelen = strlen(name);
+    /* 遍历所有的驱动 */
+    list_for_each_owner (drvobj, &driver_list_head, list) {
+        list_for_each_owner (devobj, &drvobj->device_list, list) {
+            if (!strncmp(name, devobj->name.text, namelen)) {
+                if (!atomic_get(&devobj->reference)) { // ref = 0
+                    memcpy(buf, devobj->name.text, min(buflen, DEVICE_NAME_LEN));
+                    buf[buflen - 1] = '\0';
+                    return 0;
+                }
+            }
+        }
+    }
+    return -1;
+}
+
 
 int input_even_init(input_even_buf_t *evbuf)
 {
@@ -1234,28 +1263,69 @@ int input_even_get(input_even_buf_t *evbuf, input_event_t *even)
 /* 初始化驱动架构 */
 void init_driver_arch()
 {
-    driver_func_t vine;
     int i;
     /* 初始化设备句柄表，要在初始化驱动前，因为驱动中可能有虚拟驱动调用物理设备 */
     for (i = 0; i < DEVICE_HANDLE_NR; i++) {
         device_handle_table[i] = NULL;
     }
 
-    /* 初始化总线系统 */
-    init_pci();
-
-    /* 初始化驱动程序 */
-    for (i = 0; i < ARRAY_SIZE(driver_vine_table); i++) {
-        vine = driver_vine_table[i];
-        if (driver_object_create(vine)) {
-            printk(KERN_ERR "init_driver_arch: create one driver failed!\n");
-        }
-    }
+    do_initcalls();
     
-#if DEBUG_LOCAL == 2
+#ifdef DEBUG_DRIVER
     //print_drivers_mini();
     /* 输出所有驱动以及设备 */
     print_drivers();
+#endif
+
+    /* 输出所有驱动以及设备 */
+    //print_drivers();
+#if 0
+    handle_t ptm0 = device_open("ptm0", 0);
+    if (ptm0 < 0)
+        panic(KERN_DEBUG "open ptm0 failed!\n");
+
+    int lock = 0;
+    device_devctl(ptm0, TIOCSPTLCK, &lock);
+    
+    int islave;
+    device_devctl(ptm0, TIOCGPTN, &islave);
+    printk("slave tty number %d\n", islave);
+
+    char devname[DEVICE_NAME_LEN] = {0};
+    sprintf(devname, "pts%d", islave);
+
+    handle_t pts0 = device_open(devname, 0);
+    if (pts0 < 0)
+        panic(KERN_DEBUG "open pts0 failed!\n");
+    
+    char buf[32] = {0, };
+    strcpy(buf, "hello, ptty!\n");
+    device_write(ptm0, buf, strlen(buf), 0);
+    char buf1[32] = {0, };
+    device_read(pts0, buf1, strlen(buf), 0);
+    printk(KERN_INFO "buf1: %s", buf1);
+
+    device_close(pts0);
+    device_close(ptm0);
+#endif
+    //spin("test");
+#if 0
+    handle_t sb16 = device_open("sb16", 0);
+    if (sb16 < 0)
+        panic(KERN_DEBUG "open sb16 failed!\n");
+    
+    uint8_t buf[512];
+
+    for (i = 0; i < 512; i++) {
+        buf[i] = i;
+    }
+    device_write(sb16, buf, 512, 0);
+
+    device_close(sb16);
+    while (1)
+    {
+        /* code */
+    }
 #endif
 
 #if 0

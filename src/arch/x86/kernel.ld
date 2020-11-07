@@ -13,8 +13,26 @@ SECTIONS {
     .text : {
         . = ALIGN(4);   /* 4 bytes align */
         *(.text)
+        *(.init.text)
+		*(.exit.text)
     }
 
+    .initcall ALIGN(8) :
+	{
+		PROVIDE(__initcall_start = .);
+		KEEP(*(.initcall_0.text))
+        KEEP(*(.initcall_1.text))
+		PROVIDE(__initcall_end = .);
+	}
+
+	.exitcall ALIGN(8) :
+	{
+		PROVIDE(__exitcall_start = .);
+		KEEP(*(.exitcall_0.text))
+		KEEP(*(.exitcall_1.text))
+		PROVIDE(__exitcall_end = .);
+	}
+    
     /* data segment */
     .data : {
         . = ALIGN(4);   /* 4 bytes align */

@@ -1,6 +1,10 @@
 #ifndef _LIB_STDARG_H
 #define _LIB_STDARG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _AUPBND 1
 #define _ADNBND 1 
 #define _Bnd(X, bnd) (sizeof(X) + ((bnd) & ~(bnd)))
@@ -16,5 +20,9 @@ typedef char *va_list;
  * copy variable args
  */
 #define va_copy(d, s)		__builtin_va_copy(d, s)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _LIB_STDARG_H */

@@ -5,6 +5,7 @@
 #include <xbook/diskman.h>
 #include <xbook/debug.h>
 
+// #define DEBUG_FSALIF
 
 static int __open(void *path, int flags)
 {
@@ -528,9 +529,11 @@ int __mount(
         return -1;
     }
 
+    #ifdef DEBUG_FSALIF
     printk("[%s] %s: will mount fs source %s target %s fstype %s.\n",
             FS_MODEL_NAME, __func__, source, target, fstype);
-
+    #endif
+    
     /* 执行对应类型文件系统的挂载 */
     int retval = fsal->mount(source, target, fstype, mountflags);
     if (retval < 0) {

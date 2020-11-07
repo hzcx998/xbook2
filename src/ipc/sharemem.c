@@ -446,11 +446,11 @@ int share_mem_grow(int shmid)
     semaphore_down(&share_mem_mutex);
     shm = share_mem_find_by_id(shmid);
     if (shm) {
-        #if DEBUG_LOCAL == 1
+        #ifdef DEBUG_IPC_SHM
         pr_dbg("[shm]: shmid=%d before grow links=%d.\n", shmid, atomic_get(&shm->links));
         #endif
         atomic_inc(&shm->links);
-        #if DEBUG_LOCAL == 1
+        #ifdef DEBUG_IPC_SHM
         pr_dbg("[shm]: shmid=%d after grow links=%d.\n", shmid, atomic_get(&shm->links));
         #endif
         semaphore_up(&share_mem_mutex);

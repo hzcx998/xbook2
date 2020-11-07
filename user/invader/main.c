@@ -215,7 +215,7 @@ int init_window(int width, int height)
 	if (g_init() == -1) {
 		return -1;
 	}
-	window.win = g_new_window(WINDOW_NAME, 100, 100, window.width, window.height);
+	window.win = g_new_window(WINDOW_NAME, 300, 100, window.width, window.height, GW_NO_MAXIM);
     if (window.win < 0) {
         g_quit();
         return -1;
@@ -224,7 +224,7 @@ int init_window(int width, int height)
     /* 用背景颜色清屏 */
     g_bitmap_t *bmp = g_new_bitmap(window.width, window.height);
     g_rectfill(bmp, 0, 0, window.width, window.height, window.bcolor);
-    g_window_paint(window.win, 0, 0, bmp);
+    g_paint_window(window.win, 0, 0, bmp);
     g_del_bitmap(bmp);
 
 	return 0;
@@ -255,15 +255,13 @@ void time_wait(int i, char *keyflag)
     g_msg_t msg;
     while (1)
     {
-        if (g_get_msg(&msg) < 0)
+        if (!g_get_msg(&msg))
             continue;
 
         if (g_is_quit_msg(&msg)) {
             g_quit();
             exit(0);
         }
-        /* 有外部消息则处理消息 */
-        g_dispatch_msg(&msg);
         
         /* 捕捉消息 */
         switch (g_msg_get_type(&msg))
@@ -369,7 +367,7 @@ void putstr(int x, int y, uint32_t color, char *s)
 		y = 0;
 	}
     /* 绘制到窗口中 */
-    g_window_paint(window.win, x0, y0, bmp);
+    g_paint_window(window.win, x0, y0, bmp);
     g_del_bitmap(bmp);
 }
 /*把数值转换成字符*/

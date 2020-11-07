@@ -5,6 +5,7 @@
 #include <xbook/vmspace.h>
 #include <xbook/debug.h>
 #include <xbook/elf32.h>
+#include <xbook/schedule.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <unistd.h>
@@ -24,7 +25,8 @@
  * 如果在线程中执行exec，那么线程会全部关闭，并把当前进程用新进程镜像替换。
  * 
  */
-#define DEBUG_LOCAL 0
+
+// #define DEBUG_EXEC
 
 /**
  * do_execute - 替换当前进程的运行镜像
@@ -40,7 +42,7 @@
  */
 static int do_execute(const char *pathname, char *name, const char *argv[], const char *envp[])
 {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_EXEC
     printk(KERN_DEBUG "%s: enter.\n", __func__);
 #endif
     /* 没有参数或者参数错误 */
@@ -54,7 +56,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     restore_intr(flags);
 
     /* 根据文件信息创建临时原始块 */
-    int fd = sys_open(pathname, O_RDONLY, 0);
+    int fd = sys_open(pathname, O_RDONLY);
     if (fd < 0) {   /* file not exist! */
         return -1;
     }
@@ -95,7 +97,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 #else   /* CONFIG_64BIT 64位 elf 头解析 */
 
 #endif
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_EXEC
     int argc = 0;
     printk(KERN_DEBUG "%s: dump args:\n", __func__);
     if (argv) {   
@@ -136,6 +138,8 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     vmm_unmap_space_maparea(cur->vmm);
     /* 释放虚拟空间地址管理，后面映射时重新加载镜像 */
     vmm_release_space(cur->vmm);
+
+
     /* 加载镜像 */
     if (proc_load_image(cur->vmm, &elf_header, fd) < 0) {
         printk(KERN_ERR "sys_exec_file: load_image failed!\n");
@@ -175,22 +179,21 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 
     /* 解除服务调用绑定 */
     sys_srvcall_unbind(-1);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_EXEC
     if (cur->pthread) {
         printk(KERN_DEBUG "%s: thread count %d\n", __func__, atomic_get(&cur->pthread->thread_count));
     }
 #endif
 
     /* 执行程序的时候需要继承原有进程的资源，因此不在这里初始化资源 */
-
     /* 设置执行入口 */
     user_entry_point(frame, (unsigned long)elf_header.e_entry);
-    
+
     /* 设置进程名 */
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
     
-    //dump_trap_frame(frame);
+    // dump_trap_frame(frame);
     /* 切换到进程执行 */
     switch_to_user(frame);
     
@@ -227,7 +230,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
             } else {    /* 找到'/'，那就和路径一样 */
                 name = (char *) newpath;
             }
-            #if DEBUG_LOCAL == 1
+            #ifdef DEBUG_EXEC
             printk(KERN_DEBUG "execute: full path: %s -> %s\n", newpath, name);
             #endif
             /* 尝试替换镜像 */
@@ -240,7 +243,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
     } else if ((*p == '.' && *(p+1) == '/') || (*p == '.' && *(p+1) == '.' && *(p+2) == '/')) {    /* 当前目录 */
         /* 构建路径 */
         build_path(p, newpath);
-        #if DEBUG_LOCAL == 0
+        #ifdef DEBUG_EXEC
         printk(KERN_DEBUG "execute: merged path: %s from %s\n", newpath, p);
         #endif
 
@@ -276,7 +279,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
                 char finalpath[MAX_PATH] = {0};
                 wash_path(newpath, finalpath);
 
-                #if DEBUG_LOCAL == 1
+                #ifdef DEBUG_EXEC
                 printk(KERN_DEBUG "execute: merged path: %s from %s\n", finalpath, p);
                 #endif
                 /* 尝试执行 */

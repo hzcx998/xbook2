@@ -1,5 +1,5 @@
 /*
- * libc/stdio/setvbuf.c
+ * xlibc/stdio/setvbuf.c
  */
 
 #include <stdio.h>

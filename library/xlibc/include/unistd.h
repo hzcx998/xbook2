@@ -1,6 +1,10 @@
 #ifndef _LIB_UNISTD_H
 #define _LIB_UNISTD_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <types.h>
 #include <stddef.h>
 
@@ -44,9 +48,10 @@
 #define O_TEXT      0x100   // 文本模式打开        
 #define O_BINARY    0x200   // 二进制模式打开
 #define O_NONBLOCK  0x400   // 无阻塞
+#define O_NOCTTY    0x800   // 不设置为控制tty
+
 #define O_DEVEX     0x10000   // 打开的是设备
 #define O_FIFO      0x20000   // 打开的是管道
-
 
 #ifndef SEEK_SET
 /* file seek */
@@ -68,7 +73,7 @@
 int brk(void *addr);
 void *sbrk(int increment);
 
-int open(const char *path, int flags, int mode);
+int open(const char *path, int flags);
 int close(int fd);
 int read(int fd, void *buffer, size_t nbytes);
 int write(int fd, void *buffer, size_t nbytes);
@@ -77,7 +82,7 @@ int access(const char *filenpath, int mode);
 int unlink(const char *path);
 int ftruncate(int fd, off_t offset);
 int fsync(int fd);
-int ioctl(int fd, int cmd, unsigned long arg);
+int ioctl(int fd, int cmd, void *arg);
 int fcntl(int fd, int cmd, long arg);
 
 int dup(int fd);
@@ -100,10 +105,18 @@ int execvp(const char *filename, char *const argv[]);
 int execlp(const char *filename, const char *arg, ...);
 int usleep(useconds_t usec);
 
+extern char **_environ;
 #define environ _environ
 
 int pipe(int fd[2]);
 
+int probe(const char *name, int flags, char *buf, size_t buflen);
+
 #include <sys/proc.h>
+#include <getopt.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _LIB_UNISTD_H */

@@ -1,5 +1,5 @@
 /*
- * libc/stdio/snprintf.c
+ * xlibc/stdio/snprintf.c
  */
 
 #include <stdio.h>

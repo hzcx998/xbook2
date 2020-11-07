@@ -1,16 +1,11 @@
-/*
-    File:       fabs.c
-
-    Contains:   For abs(x)
-
-    Written by: GUI
-
-    Copyright:  (C) 2017-2020 by GuEe Studio for Book OS. All rights reserved.
-*/
-
-
 #include <math.h>
 
-M_FLOAT fabs(M_FLOAT x) {
-    return (x < 0 ? -x : x);
+
+static double __fabs(double x)
+{
+	union {double f; uint64_t i;} u = {x};
+	u.i &= -1ULL/2;
+	return u.f;
 }
+
+extern __typeof(__fabs) fabs __attribute__((weak, alias("__fabs")));

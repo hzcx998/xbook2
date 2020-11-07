@@ -1,5 +1,5 @@
 /*
- * libc/stdio/printf.c
+ * xlibc/stdio/printf.c
  */
 
 #include <stdarg.h>

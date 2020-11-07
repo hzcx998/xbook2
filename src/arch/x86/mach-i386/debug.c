@@ -1,24 +1,25 @@
 #include <arch/debug.h>
 #include <arch/config.h>
+#include <arch/hw.h>
 
-/**
- * init_kernel_debug
- * 
- */
+void debug_putchar(char ch)
+{
+#ifdef X86_CONSOLE_HW
+    console_putchar(ch);
+#endif /* X86_CONSOLE_HW */
 
-//define "debug_putchar"
-void (*debug_putchar)(char ch);
+#ifdef X86_SERIAL_HW
+    serial_putchar(ch);
+#endif /* X86_SERIAL_HW */
+}
 
 void init_kernel_debug()
 {
-
-#if CONFIG_DEBUG_METHOD == 1
     // 初始化控制台
-	init_console_debug();
-    debug_putchar = &console_putchar;
-#elif CONFIG_DEBUG_METHOD == 2
+	init_console_hw();
+
+#ifdef X86_SERIAL_HW
     // 初始化串口
-    init_serial_debug();
-    debug_putchar = &serial_putchar;
-#endif /* CONFIG_DEBUG_METHOD */
+    init_serial_hw();
+#endif /* X86_SERIAL_HW */
 }

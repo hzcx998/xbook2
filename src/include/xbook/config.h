@@ -15,12 +15,21 @@
 #define CONFIG_LARGE_ALLOCS
 
 /* auto select timezone */
-#define CONFIG_TIMEZONE_AUTO 0 	
+#define CONFIG_TIMEZONE_AUTO
 
-/* ahci disk driver */
-#define CONFIG_AHCI 
+/* config graph */
+#define CONFIG_GRAPH
+    #ifdef CONFIG_GRAPH
+    /* gui console print */
+    #define CONFIG_GUI_PRINT
+    /* use keyboard to make virtual mouse */
+    #define CONFIG_VIRTUAL_MOUSE
+    
+    /* shade layer */
+    #define CONFIG_SHADE_LAYER
 
-/* shade layer */
-#define CONFIG_SHADE_LAYER
+    /* 是否拥有透明图层 */
+    // #define LAYER_ALPAH 
+    #endif
 
 #endif   /* _XBOOK_CONFIG_H */

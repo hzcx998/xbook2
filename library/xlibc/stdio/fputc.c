@@ -1,5 +1,5 @@
 /*
- * libc/stdio/fputc.c
+ * xlibc/stdio/fputc.c
  */
 
 #include <stdio.h>

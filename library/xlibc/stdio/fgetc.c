@@ -1,5 +1,5 @@
 /*
- * libc/stdio/fgetc.c
+ * xlibc/stdio/fgetc.c
  */
 
 #include <stdio.h>

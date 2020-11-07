@@ -12,10 +12,11 @@
 #include <xbook/fifo.h>
 #include <xbook/pipe.h>
 #include <sys/ipc.h>
+#include <sys/ioctl.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_FSIF
 
-int sys_open(const char *path, int flags, int mode)
+int sys_open(const char *path, int flags)
 {
     int handle;
     int fd = -1;
@@ -25,7 +26,7 @@ int sys_open(const char *path, int flags, int mode)
         char *p = (char *) path;
         if (*p == '/')
             p++;
-        handle = device_open(p, mode);
+        handle = device_open(p, flags);
         if (handle < 0)
             return -1;
         fd = local_fd_install(handle, FILE_FD_DEVICE);
@@ -69,11 +70,12 @@ int sys_close(int fd)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -1;
+
     if (ffd->flags & FILE_FD_NORMAL) {
         if (fsif.close(ffd->handle) < 0)
             return -1;    
     } else if (ffd->flags & FILE_FD_SOCKET) {
-        #if DEBUG_LOCAL == 1
+        #if DEBUG_FSIF
         printk("[FS]: %s: close fd %d socket %d.\n", __func__, fd, ffd->handle);
         #endif
         if (lwip_close(ffd->handle) < 0)
@@ -376,6 +378,26 @@ int fsif_grow(int fd)
     return 0;
 }
 
+/**
+ * @fd: 文件描述符
+ * 
+ * 增长文件对于的引用
+ * 
+ * 成功返回0，失败返回-1
+ */
+int fsif_degrow(int fd)
+{
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+        return -1;
+    if (ffd->flags & FILE_FD_NORMAL) {
+        
+    } else if (ffd->flags & FILE_FD_DEVICE) {
+        if (device_degrow(ffd->handle) < 0)
+            return -1;
+    }
+    return 0;
+}
 
 /**
  * 复制一个文件描述符
@@ -397,6 +419,7 @@ int sys_dup(int oldfd)
 
     /* 安装 */
     if (ffd->flags & FILE_FD_NORMAL) {
+        // newfd = local_fd_install(ffd->handle, FILE_FD_NORMAL);
     } else if (ffd->flags & FILE_FD_DEVICE) {
         newfd = local_fd_install(ffd->handle, FILE_FD_DEVICE);
     } else if (ffd->flags & FILE_FD_FIFO) {
@@ -442,7 +465,7 @@ int sys_dup2(int oldfd, int newfd)
     
     /* 安装 */
     if (ffd->flags & FILE_FD_NORMAL) {
-        
+        // newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_NORMAL);
     } else if (ffd->flags & FILE_FD_DEVICE) {
         
         newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_DEVICE);
@@ -483,4 +506,36 @@ int sys_pipe(int fd[2])
     fd[0] = rfd;
     fd[1] = wfd;
     return 0;
+}
+
+
+int sys_mount(
+    char *source,         /* 需要挂载的资源 */
+    char *target,         /* 挂载到的目标位置 */
+    char *fstype,         /* 文件系统类型 */
+    unsigned long mountflags    /* 挂载标志 */
+) {
+    return fsif.mount(source, target, fstype, mountflags);
+}
+
+int sys_unmount(char *path, unsigned long flags)
+{
+    return fsif.unmount(path, flags);
+}
+
+int sys_mkfs(char *source,         /* 需要创建FS的设备 */
+    char *fstype,         /* 文件系统类型 */
+    unsigned long flags   /* 标志 */
+) {
+    return fsif.mkfs(source, fstype, flags);
+}
+
+int sys_probe(const char *name, int flags, char *buf, size_t buflen)
+{
+    if (flags & O_DEVEX) {
+        return device_probe_unused(name, buf, buflen);
+    } else {
+        printk("%s: do not support probe!\n");
+    }
+    return -1;
 }

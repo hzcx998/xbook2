@@ -1,5 +1,5 @@
 /*
- * libc/stdio/sprintf.c
+ * xlibc/stdio/sprintf.c
  */
 
 #include <stdio.h>

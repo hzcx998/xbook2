@@ -30,7 +30,7 @@ typedef struct {
 
 int init_fs();
 /// syscall 
-int sys_open(const char *path, int flags, int mode);
+int sys_open(const char *path, int flags);
 int sys_close(int fd);
 int sys_read(int fd, void *buffer, size_t nbytes);
 int sys_write(int fd, void *buffer, size_t nbytes);
@@ -53,7 +53,22 @@ int sys_dup(int oldfd);
 int sys_dup2(int oldfd, int newfd);
 int sys_pipe(int fd[2]);
 
+int sys_mount(
+    char *source,         /* 需要挂载的资源 */
+    char *target,         /* 挂载到的目标位置 */
+    char *fstype,         /* 文件系统类型 */
+    unsigned long mountflags    /* 挂载标志 */
+);
+
+int sys_unmount(char *path, unsigned long flags);
+int sys_mkfs(char *source,         /* 需要创建FS的设备 */
+    char *fstype,         /* 文件系统类型 */
+    unsigned long flags   /* 标志 */
+);
+
+int sys_probe(const char *name, int flags, char *buf, size_t buflen);
 
 int fsif_grow(int fd);
+int fsif_degrow(int fd);
 
 #endif /* _XBOOK_FS_H */

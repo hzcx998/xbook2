@@ -5,14 +5,24 @@
 
 /* 默认是调试等级 */
 
-#define DEFAULT_LOG_MIN   0
-#define DEFAULT_LOG_MAX   7
+#define KERN_EMERG      "<0>"      /* system is unuseable */
+#define KERN_ERR        "<1>"      /* error condition */
+#define KERN_WARING     "<2>"      /* waring condition */
+#define KERN_NOTICE     "<3>"      /* normal significant */
+#define KERN_INFO       "<4>"      /* infomational */
+#define KERN_DEBUG      "<5>"      /* debug message */
 
-#define DEFAULT_LOG_LEVEL   7
+/* 默认是调试等级 */
+
+#define DEFAULT_LOG_MIN   0
+#define DEFAULT_LOG_MAX   5
+
+#define DEFAULT_LOG_LEVEL  5
 
 #define PRINT_LEVEL_MSG   0
 
 extern int printk_level;
+extern int print_gui_console;
 
 //内核打印函数的指针
 int printk(const char *fmt, ...);
@@ -48,8 +58,6 @@ void panic(const char *fmt, ...);
 
 void dump_value(unsigned long val);
 void dump_buffer(void *buffer, unsigned long len, char factor);
-
-void serial_putchar(char ch);
 
 void init_kernel_debug();
 

@@ -1,5 +1,5 @@
 /*
- * libc/stdio/freopen.c
+ * xlibc/stdio/freopen.c
  */
 
 #include <stdio.h>

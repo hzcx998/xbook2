@@ -3,6 +3,7 @@ SRC	+= font/*.c
 SRC	+= graph/*.c
 SRC	+= input/*.c
 SRC	+= layer/*.c
+SRC	+= console/*.c
 SRC	+= gui.c
 SRC	+= message.c
 SRC	+= timer.c

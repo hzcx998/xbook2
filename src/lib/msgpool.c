@@ -1,7 +1,8 @@
 #include <xbook/msgpool.h>
 #include <xbook/kmalloc.h>
-#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <string.h>
+
 msgpool_t *msgpool_create(size_t msgsz, size_t msgcount)
 {
     if (!msgsz || !msgcount)
@@ -70,9 +71,23 @@ int msgpool_try_push(msgpool_t *pool, void *buf)
 {
     if (!pool)
         return -1;
-    if (msgpool_full(pool))
+    
+    mutex_lock(&pool->mutex);
+    if (msgpool_full(pool)) {
+        mutex_unlock(&pool->mutex);
         return -1;
-    return msgpool_push(pool, buf);
+    }
+        
+    memcpy(pool->head, buf, pool->msgsz);   /* copy data */
+    pool->head += pool->msgsz;
+    /* fix out of boundary */
+    if (pool->head >= pool->msgbuf + pool->msgmaxcnt * pool->msgsz)
+        pool->head = pool->msgbuf;
+    pool->msgcount++;
+    if (wait_queue_length(&pool->waiters) > 0)
+        wait_queue_wakeup(&pool->waiters);     /* wake up */
+    mutex_unlock(&pool->mutex);
+    return 0;
 }
 
 int msgpool_pop(msgpool_t *pool, void *buf)
@@ -105,9 +120,25 @@ int msgpool_try_pop(msgpool_t *pool, void *buf)
 {
     if (!pool)
         return -1;
-    if (msgpool_empty(pool))
+    mutex_lock(&pool->mutex);
+    if (msgpool_empty(pool)) {
+        mutex_unlock(&pool->mutex);
         return -1;
-    return msgpool_pop(pool, buf);
+    }
+        
+    if (buf) { /* 有buf才复制 */
+        memcpy(buf, pool->tail, pool->msgsz);   /* copy data */
+    }
+    pool->tail += pool->msgsz;
+    /* fix out of boundary */
+    if (pool->tail >= pool->msgbuf + pool->msgmaxcnt * pool->msgsz)
+        pool->tail = pool->msgbuf;
+    pool->msgcount--;
+    if (wait_queue_length(&pool->waiters) > 0)
+        wait_queue_wakeup(&pool->waiters);     /* wake up */    
+
+    mutex_unlock(&pool->mutex);
+    return 0;
 }
 
 int msgpool_empty(msgpool_t *pool)

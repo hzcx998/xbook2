@@ -5,7 +5,7 @@
 
 cpu: model=pentium,count=1, ips=10000000
 # how much memory the emulated machine will have
-megs: 512
+megs: 256
 
 # filename of ROM images
 romimage: file=$BXSHARE/BIOS-bochs-latest
@@ -39,7 +39,7 @@ keyboard: type=mf, serial_delay=250
 keyboard: keymap=$BXSHARE/keymaps/x11-pc-us.map
 keyboard: user_shortcut=ctrl-alt
 
-com1: enabled=1, mode=file, dev=develop/bochs/output.txt"
+com1: enabled=1, mode=file, dev="develop/bochs/output.txt"
 
 #keyboard: enabled=1, map=$BXSHARE/keymaps/x11-pc-us.map
 #keyboard_mapping: enabled=1, map=$BXSHARE/keymaps/x11-pc-fr.map

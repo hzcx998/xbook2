@@ -1,6 +1,10 @@
 #ifndef _LIB_STRING_H
 #define _LIB_STRING_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <types.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -9,7 +13,7 @@ char* itoa(char ** ps, int val, int base);
 char *itoa16_align(char * str, int num);
 
 void *memset(void* src, uint8_t value, uint32_t size);
-void memcpy(void* _dst, const void* _src, uint32_t size);
+void *memcpy(void* _dst, const void* _src, uint32_t size);
 int memcmp(const void * s1, const void *s2, int n);
 void *memset16(void* src, uint16_t value, uint32_t size);
 void *memset32(void* src, uint32_t value, uint32_t size);
@@ -45,6 +49,10 @@ static inline __attribute__((always_inline)) int fls(int x)
 	return x ? sizeof(x) * 8 - __builtin_clz(x) : 0;
 }
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /*_LIB_STDINT_H*/
 

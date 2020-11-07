@@ -1,6 +1,10 @@
 #ifndef _SYS_TIME_H
 #define _SYS_TIME_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "ktime.h"
 #include <types.h>
 //#include <time.h>
@@ -55,5 +59,9 @@ void mdelay(time_t msec);
 #define FILE_TIME_YEA(data) ((unsigned int)(((data >> 9) & 0x7f)+1980))
 #define FILE_TIME_MON(data) ((unsigned int)((data >> 5) & 0xf))
 #define FILE_TIME_DAY(data) ((unsigned int)(data & 0x1f))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _SYS_TIME_H */

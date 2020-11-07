@@ -1,5 +1,5 @@
 /*
- * libc/stdio/fread.c
+ * xlibc/stdio/fread.c
  */
 
 #include <stdio.h>

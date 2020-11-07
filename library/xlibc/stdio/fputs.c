@@ -1,5 +1,5 @@
 /*
- * libc/stdio/fputs.c
+ * xlibc/stdio/fputs.c
  */
 
 #include <string.h>

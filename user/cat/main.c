@@ -12,7 +12,6 @@ int main(int argc, char *argv[])
         /*  */
         char buf = 0;
         while (read(STDIN_FILENO, &buf, 1) > 0) {
-            write(STDOUT_FILENO, &buf, 1);
         }
         return 0;
 	}
@@ -23,7 +22,7 @@ int main(int argc, char *argv[])
 	
     const char *path = (const char *)argv[1];
 
-	int fd = open(path, O_RDONLY, 0);
+	int fd = open(path, O_RDONLY);
 	if(fd == -1){
 		printf("cat: file %s not exist!\n", path);
 		return -1;

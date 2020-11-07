@@ -8,14 +8,18 @@ int rate_progress = 0;
 int fps = 0;
 #define RATE_BAR_LEN    360
 
+#define WIDTH   320
+#define HEIGHT  240
+
 void timer_handler(int layer, uint32_t msgid, uint32_t tmrid, uint32_t time)
 {
-
-    g_set_timer(layer, tmrid, 1000, timer_handler);
+    g_set_timer(layer, tmrid, 50, timer_handler);
     
-    printf("[win]: fps=%d!\n", fps);
+    char buf[32] = {0};
+    sprintf(buf, "[win]: fps=%d", fps);
+    g_set_window_title(layer, buf);
+    printf("%s!\n", buf);
     fps = 0;
-    
 }
 
 g_bitmap_t *screen_bitmap;
@@ -25,7 +29,7 @@ int main(int argc, char *argv[])
     if (g_init() < 0)
         return -1;
 
-    int win = g_new_window("win", 400, 200, 360, 240);
+    int win = g_new_window("win", 0, 0, WIDTH, HEIGHT, GW_SHOW);
     if (win < 0)
         return -1;
         
@@ -33,24 +37,20 @@ int main(int argc, char *argv[])
     g_set_window_minresize(win, 200, 100);
     /* 设置窗口界面 */
     
-    g_show_window(win);
-
-    /* 注册消息回调函数 */
-    g_set_msg_routine(win_proc);
-    
     g_set_timer(win, 0x1000, 1000, timer_handler);
 
     g_msg_t msg;
+    int msg_ret;
     while (1)
     {
-        /* 获取消息，一般消息返回0，退出消息返回-1 */
-        if (g_try_get_msg(&msg) < 0)
-            continue;
-        
-        if (g_is_quit_msg(&msg))
+        /* 获取消息，无消息返回0，退出消息返回-1，有消息返回1 */
+        msg_ret = g_try_get_msg(&msg);
+        if (msg_ret < 0)
             break;
+        if (!msg_ret)
+            continue;
         /* 有外部消息则处理消息 */
-        g_dispatch_msg(&msg);
+        win_proc(&msg);
     }
 
     g_quit();
@@ -103,7 +103,8 @@ int win_proc(g_msg_t *msg)
     case GM_MOUSE_MBTN_DOWN:
     case GM_MOUSE_MBTN_UP:
     case GM_MOUSE_MBTN_DBLCLK:
-    case GM_MOUSE_WHEEL:
+    case GM_MOUSE_WHEEL_UP:
+    case GM_MOUSE_WHEEL_DOWN:
         x = g_msg_get_mouse_x(msg);
         y = g_msg_get_mouse_y(msg);
         //printf("[win]: mouse %d, %d\n", x, y);
@@ -111,39 +112,22 @@ int win_proc(g_msg_t *msg)
     case GM_PAINT:
         win = g_msg_get_target(msg);
         g_get_invalid(win, &x, &y, &w, &h);
-        /*
-        g_window_rect_fill(layer, 0, 0, 100, 50, GC_BLUE);
-        g_window_rect_fill(layer, -50, -50, 100, 100, GC_GREEN);
-
-        g_window_rect_fill(layer, w-100, h-100, 100, 50, GC_BLUE);
-        g_window_rect_fill(layer, w-50, h-50, 100, 50, GC_GREEN);
-        */
-        //g_window_rect_fill(win, x, y, w, h, color);
-        #if 1
+        
         screen_bitmap = g_new_bitmap(w, h);
         if (screen_bitmap == NULL)
             break;
-        if (fps % 10 == 0 || fps == 0)
-            printf("size: %d %d\n", w, h);
         g_rectfill(screen_bitmap, 0, 0, w, h, color);
-        g_window_paint(win, 0, 0, screen_bitmap);
+        g_paint_window(win, 0, 0, screen_bitmap);
         //g_refresh_window_rect(win, 0, 0, w, h);
         
         g_del_bitmap(screen_bitmap);
         screen_bitmap = NULL;
-        #endif
-        //g_window_rect_fill(win,x, y, w, h, color);
-
-        /* 图形绘制更导致绘图变慢 */
-        //g_refresh_window_rect(win, x, y, w, h);
         
         g_invalid_window(win);
         g_update_window(win);
         color += 0x05040302;
         fps++;
         break;  
-    
-
     default:
         break;
     }

@@ -1,29 +1,23 @@
-/*
-    File:       frexp.c
-
-    Contains:   Split a float into mantissa and exponent
-
-    Written by: GUI
-
-    Copyright:  (C) 2017-2020 by GuEe Studio for Book OS. All rights reserved.
-*/
-
-
 #include <math.h>
 
-M_FLOAT frexp(double x, int *exptr) {
-    union {
-        double* _x;
-        double_t* x;
-    } ux;
 
-    ux._x = &x;
+double frexp(double x, int *e)
+{
+	union { double d; uint64_t i; } y = { x };
+	int ee = y.i>>52 & 0x7ff;
 
-    if (exptr != NULL)
-        *exptr = ux.x->exponent - 0x3fe;
+	if (!ee) {
+		if (x) {
+			x = frexp(x*0x1p64, e);
+			*e -= 64;
+		} else *e = 0;
+		return x;
+	} else if (ee == 0x7ff) {
+		return x;
+	}
 
-    ux.x->exponent = 0x3fe;
-
-    return x;
+	*e = ee - 0x3fe;
+	y.i &= 0x800fffffffffffffull;
+	y.i |= 0x3fe0000000000000ull;
+	return y.d;
 }
-

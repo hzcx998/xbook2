@@ -1,11 +1,16 @@
 #ifndef _LIB_STDLIB_H
 #define _LIB_STDLIB_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "stddef.h"
 #include "types.h"
 #include "malloc.h"
 #include "exit.h"
 #include "stdint.h"
+#include "environ.h"
 
 #define RAND_MAX 0x7fff
 
@@ -14,8 +19,6 @@ int rand();
 
 void qsort( void  * base, size_t n_elements, size_t el_size,
     int  (* compare ) (void const *, void const *) );
-void sort(char * lo, char * hi, 
-    int (*comp)(const void *, const void *), size_t width);
 
 long strtol(const char * nptr, char ** endptr, int base);
 long long strtoll(const char * nptr, char ** endptr, int base);
@@ -37,5 +40,11 @@ long atol(const char * nptr);
 int abs(int const i);
 long int labs(long int const i);
 void atexit(void (*func)(void));
+
+int system(const char * cmd);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _LIB_STDLIB_H */

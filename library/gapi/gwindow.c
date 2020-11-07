@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <gwindow.h>
 #include <glayer.h>
@@ -31,57 +32,61 @@ g_window_t *g_find_window(int win)
  */
 static void __g_paint_window(g_window_t *gw, int turn, int body)
 {
-    uint32_t back, board, front, font;
+    uint32_t back, board, font;
     if (turn) {
         back = GW_ON_BACK_COLOR;
         board = GW_ON_BOARD_COLOR;
-        front = GW_ON_FRONT_COLOR;
         font = GW_ON_FONT_COLOR;
+        gw->flags |= GW_FOCUSED;
     } else {
         back = GW_OFF_BACK_COLOR;
         board = GW_OFF_BOARD_COLOR;
-        front = GW_OFF_FRONT_COLOR;
         font = GW_OFF_FONT_COLOR;
+        gw->flags &= ~GW_FOCUSED;
     }
-    #if 0
-    if (body)
-        g_layer_rect_fill(gw->layer, 0, 0, gw->width, gw->height, back);
-    g_layer_rect(gw->layer, 0, 0, gw->width, gw->height, board);
-
-    g_layer_rect_fill(gw->layer, 0, gw->body_region.top - 1, gw->width, 1, board);
-    //g_layer_line(gw->layer, 0, GW_TITLE_BAR_HIGHT, gw->width, GW_TITLE_BAR_HIGHT, board);
-
-    g_layer_text(gw->layer, gw->width / 2 - (strlen(gw->title) * 
-        g_current_font->char_width) / 2, (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
-        gw->title, font);
-    #else
+   
     /* 需要清空位图 */
     g_bitmap_clear(gw->wbmp);
+    
     if (body)
-        g_rectfill(gw->wbmp, 0, 0, gw->width, gw->height, back);
-    g_rect(gw->wbmp, 0, 0, gw->width, gw->height, board);
-    g_rectfill(gw->wbmp, 0, gw->body_region.top - 1, gw->width, 1, board);
+        g_rectfill(gw->wbmp, 1, 1, gw->width - 2, gw->height - 2, back);
+    
+    g_rectfill(gw->wbmp, 1, gw->body_region.top - 1, gw->width - 2, 1, board);
+
+    /* 基础圆角 */
+    g_rectfill(gw->wbmp, 2, 0, gw->width - 4, 1, board);
+    g_rectfill(gw->wbmp, 0, gw->height - 1, gw->width, 1, board);
+    g_rectfill(gw->wbmp, 0, 2, 1, gw->height - 2, board);
+    g_rectfill(gw->wbmp, gw->width - 1, 2, 1, gw->height - 2, board);
+
+    uint32_t none_color = GC_ARGB(0, 0, 0, 0);
+    /* 左上角 */
+    g_putpixel(gw->wbmp, 2, 0, none_color);
+    g_putpixel(gw->wbmp, 3, 0, none_color);
+    g_putpixel(gw->wbmp, 0, 2, none_color);
+    g_putpixel(gw->wbmp, 0, 3, none_color);
+    g_putpixel(gw->wbmp, 1, 1, none_color);
+    g_putpixel(gw->wbmp, 2, 1, board);
+    g_putpixel(gw->wbmp, 1, 2, board);
+
+    /* 右上角 */
+    g_putpixel(gw->wbmp, gw->width - 3, 0, none_color);
+    g_putpixel(gw->wbmp, gw->width - 4, 0, none_color);
+    g_putpixel(gw->wbmp, gw->width - 1, 2, none_color);
+    g_putpixel(gw->wbmp, gw->width - 1, 3, none_color);
+    g_putpixel(gw->wbmp, gw->width - 2, 1, none_color);
+    /* 填充边框 */
+    g_putpixel(gw->wbmp, gw->width - 3, 1, board);
+    g_putpixel(gw->wbmp, gw->width - 2, 2, board);
+    
     g_text(gw->wbmp, gw->width / 2 - (strlen(gw->title) * 
         g_current_font->char_width) / 2, (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
         gw->title, font);
-    #if 0
-    g_rect_t rect;
-    rect.x = 0;
-    rect.y = 0;
-    rect.width = gw->width;
-    rect.height = gw->height;
     
-    g_region_t regn;
-    regn.left = 0;
-    regn.top = 0;
-    regn.right = gw->width;
-    regn.bottom = gw->height;
-    g_layer_sync_bitmap(gw->layer, &rect, gw->wbmp->buffer, &regn);
-    #endif
     g_bitmap_sync(gw->wbmp, gw->layer, 0, 0);
-    #endif
-    g_touch_set_idel_color_group(&gw->touch_list, front);
-    g_touch_paint_group(&gw->touch_list);
+
+    g_set_touch_idel_color_group(&gw->touch_list, board);
+    g_paint_touch_group(&gw->touch_list);
     if (body) {
         g_invalid_window(gw->layer);
         g_update_window(gw->layer);
@@ -99,7 +104,7 @@ static int g_window_close_btn_handler(void *arg)
     g_point_t po;
     po.x = -1;
     po.y = -1;
-    g_touch_state_check_group(&gw->touch_list, &po);
+    g_check_touch_state_group(&gw->touch_list, &po);
 
     return g_post_quit_msg(tch->layer);   /* 邮寄一个消息 */
 }
@@ -115,7 +120,7 @@ static int g_window_minim_btn_handler(void *arg)
     g_point_t po;
     po.x = -1;
     po.y = -1;
-    g_touch_state_check_group(&gw->touch_list, &po);
+    g_check_touch_state_group(&gw->touch_list, &po);
 
     g_hide_window(tch->layer);
     return 0;
@@ -132,7 +137,7 @@ static int g_window_maxim_btn_handler(void *arg)
     g_point_t po;
     po.x = -1;
     po.y = -1;
-    g_touch_state_check_group(&gw->touch_list, &po);
+    g_check_touch_state_group(&gw->touch_list, &po);
 
     g_maxim_window(tch->layer);
     return 0;
@@ -143,41 +148,60 @@ static int g_window_maxim_btn_handler(void *arg)
  */
 int g_window_bind_touch(g_window_t *gw)
 {
-    g_touch_t *gtc_close = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
+    g_touch_t *gtc_close;
+    g_touch_t *gtc_minim;
+    g_touch_t *gtc_maxim;
+
+    gtc_close = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
     if (gtc_close == NULL)
-        goto step_1;
-    g_touch_t *gtc_minim = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
-    if (gtc_minim == NULL)
-        goto step_2;
-    g_touch_t *gtc_maxim = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
-    if (gtc_maxim == NULL)
-        goto step_3;
-        
-    g_touch_set_location(gtc_close, 16, 4);
-    g_touch_set_color(gtc_close, GW_OFF_FRONT_COLOR, GC_RED);
-    g_touch_set_handler(gtc_close, 0, g_window_close_btn_handler);
-    g_touch_set_layer(gtc_close, gw->layer, &gw->touch_list);
+        return -1;
+
+    if (!(gw->flags & GW_NO_MINIM)) {
+        gtc_minim = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
+        if (gtc_minim == NULL) {
+            free(gtc_close);
+            return -1;
+        }
+    }
+
+    if (!(gw->flags & GW_NO_MAXIM)) {
+        gtc_maxim = g_new_touch(GW_BTN_SIZE, GW_BTN_SIZE);
+        if (gtc_maxim == NULL) {
+            if (!(gw->flags & GW_NO_MINIM))
+                free(gtc_minim);
+            free(gtc_close);
+            return -1;
+        }
+    }
+
+    int x = 16;
+    int y = 4;
+
+    g_set_touch_location(gtc_close, x, y);
+    g_set_touch_color(gtc_close, GW_OFF_FRONT_COLOR, GC_RED);
+    g_set_touch_handler(gtc_close, 0, g_window_close_btn_handler);
+    g_set_touch_layer(gtc_close, gw->layer, &gw->touch_list);
     gtc_close->extension = gw;
     
-    g_touch_set_location(gtc_minim, 16 + 16 * 1 + 8 * 1, 4);
-    g_touch_set_color(gtc_minim, GW_OFF_FRONT_COLOR, GC_YELLOW);
-    g_touch_set_handler(gtc_minim, 0, g_window_minim_btn_handler);
-    g_touch_set_layer(gtc_minim, gw->layer, &gw->touch_list);
-    gtc_minim->extension = gw;
+    if (!(gw->flags & GW_NO_MINIM)) {
+        x += 16 + 8;
+        g_set_touch_location(gtc_minim, x, y);
+        g_set_touch_color(gtc_minim, GW_OFF_FRONT_COLOR, GC_YELLOW);
+        g_set_touch_handler(gtc_minim, 0, g_window_minim_btn_handler);
+        g_set_touch_layer(gtc_minim, gw->layer, &gw->touch_list);
+        gtc_minim->extension = gw;
+    }
 
-    g_touch_set_location(gtc_maxim, 16 + 16 * 2 + 8 * 2, 4);
-    g_touch_set_color(gtc_maxim, GW_OFF_FRONT_COLOR, GC_GREEN);
-    g_touch_set_handler(gtc_maxim, 0, g_window_maxim_btn_handler);
-    g_touch_set_layer(gtc_maxim, gw->layer, &gw->touch_list);
-    gtc_maxim->extension = gw;
+    if (!(gw->flags & GW_NO_MAXIM)) {
+        x += 16 + 8;
+        g_set_touch_location(gtc_maxim, x, y);
+        g_set_touch_color(gtc_maxim, GW_OFF_FRONT_COLOR, GC_GREEN);
+        g_set_touch_handler(gtc_maxim, 0, g_window_maxim_btn_handler);
+        g_set_touch_layer(gtc_maxim, gw->layer, &gw->touch_list);
+        gtc_maxim->extension = gw;
+    }
 
     return 0;
-step_3:
-    free(gtc_minim);
-step_2:
-    free(gtc_close);
-step_1:
-    return -1;
 }
 
 /**
@@ -186,14 +210,14 @@ step_1:
  * @height: 窗体高度
  * 
  */
-int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height)
+int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height, uint32_t flags)
 {
     if (!title || !width || !height)
         return -1;
     uint32_t lw = width + 2;
     uint32_t lh = height + GW_TITLE_BAR_HIGHT + 1;
     
-    int ly = g_layer_new(x, y, lw, lh);
+    int ly = g_new_layer(x, y, lw, lh);
     if (ly < 0) {
         return -1;
     }
@@ -201,13 +225,13 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height)
     /* alloc window */
     g_window_t *gw = malloc(sizeof(g_window_t));
     if (gw == NULL) {
-        g_layer_del(ly);
+        g_del_layer(ly);
         return -1;
     }
     memset(gw->title, 0, GW_TITLE_LEN);
     strcpy(gw->title, title);
     gw->layer = ly;
-    gw->flags = 0;
+    gw->flags = flags;
     gw->x = x;
     gw->y = y;
     gw->width = lw;
@@ -217,7 +241,7 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height)
 
     gw->wbmp = g_new_bitmap(gw->width, gw->height);
     if (gw->wbmp == NULL) {
-        g_layer_del(ly);
+        g_del_layer(ly);
         return 0;
     }
 
@@ -227,13 +251,13 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height)
     if (g_window_bind_touch(gw) < 0) {
         g_del_bitmap(gw->wbmp);
         list_del(&gw->wlist);
-        g_layer_del(ly);
+        g_del_layer(ly);
         return -1;
     }
 
-    g_layer_set_region(ly, LAYER_REGION_DRAG, 0, 0, gw->width, GW_TITLE_BAR_HIGHT);
+    g_set_layer_region(ly, LAYER_REGION_DRAG, 0, 0, gw->width, GW_TITLE_BAR_HIGHT);
     
-    g_layer_set_flags(ly, LAYER_WINDOW);
+    g_set_layer_flags(ly, LAYER_WINDOW);
     gw->backup.y = gw->backup.x = 0;
     gw->backup.width = gw->backup.height = 0;
 
@@ -247,17 +271,18 @@ int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height)
     __g_paint_window(gw, 1, 1); /* 绘制整个窗口 */
 
     /* 给桌面发送创建窗口消息 */
-    g_msg_t m;
-    m.id = GM_WINDOW_CREATE;
-    m.target = g_layer_get_desktop(); /* send to desktop */
-    m.data0 = ly; /* layer id */
-    if (g_send_msg(&m) < 0) {
-        g_del_bitmap(gw->wbmp);
-        g_touch_del_group(&gw->touch_list);
-        list_del(&gw->wlist);
-        g_layer_del(ly);
-        return -1;
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        g_msg_t m;
+        m.id = GM_WINDOW_CREATE;
+        m.target = desktop_ly;
+        m.data0 = ly; /* layer id */
+        g_send_msg(&m);
     }
+    
+    if (flags & GW_SHOW)
+        g_show_window(gw->layer);
+
     return ly;
 }
 
@@ -271,9 +296,61 @@ int g_enable_window_resize(int win)
         return -1;
 
     /* enable resize region */
-    g_layer_set_region(gw->layer, LAYER_REGION_RESIZE, 4, 4, gw->width-4, gw->height - 4);
+    g_set_layer_region(gw->layer, LAYER_REGION_RESIZE, 4, 4, gw->width-4, gw->height - 4);
     
     gw->flags |= GW_RESIZE;
+
+    return 0;   
+}
+
+int g_set_window_title(int win, const char *title)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    
+    uint32_t back, board, font;
+    if (gw->flags) {
+        back = GW_ON_BACK_COLOR;
+        board = GW_ON_BOARD_COLOR;
+        font = GW_ON_FONT_COLOR;
+    } else {
+        back = GW_OFF_BACK_COLOR;
+        board = GW_OFF_BOARD_COLOR;
+        font = GW_OFF_FONT_COLOR;
+    }
+
+    int len = strlen(gw->title); // old title
+    
+    /* 需要清空位图 */
+    g_bitmap_clear(gw->wbmp);
+    
+    // clear old
+    g_rectfill(
+        gw->wbmp,
+        gw->width / 2 - (len *g_current_font->char_width) / 2,
+        (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
+        len * g_current_font->char_width,
+        g_current_font->char_height,
+        back
+    );
+    // set new title
+    memset(gw->title, 0, GW_TITLE_LEN);
+    strcpy(gw->title, title);
+    
+    len = strlen(gw->title);
+    // draw new title
+    g_text(
+        gw->wbmp, gw->width / 2 - (len *g_current_font->char_width) / 2,
+        (GW_TITLE_BAR_HIGHT - g_current_font->char_height) / 2,
+        gw->title, font
+    );
+
+    g_bitmap_sync(gw->wbmp, gw->layer, 0, 0);
+
+    // attention to the buttons
+    g_set_touch_idel_color_group(&gw->touch_list, board);
+    g_paint_touch_group(&gw->touch_list);
 
     return 0;   
 }
@@ -293,7 +370,7 @@ int g_set_window_minresize(int win, uint32_t min_width, uint32_t min_height)
         return -1;
     
     /* set resize min rect, 窗体大小转换成图层大小 */
-    g_layer_set_region(gw->layer, LAYER_REGION_RESIZEMIN, 0, 0, min_width + 2,
+    g_set_layer_region(gw->layer, LAYER_REGION_RESIZEMIN, 0, 0, min_width + 2,
         min_height + GW_TITLE_BAR_HIGHT + 1);
 
     return 0;   
@@ -308,7 +385,7 @@ int g_disable_window_resize(int win)
     if (!gw)
         return -1;
     /* disable resize region */
-    g_layer_set_region(gw->layer, LAYER_REGION_RESIZE, -1, -1, -1, -1);
+    g_set_layer_region(gw->layer, LAYER_REGION_RESIZE, -1, -1, -1, -1);
 
     gw->flags &= ~GW_RESIZE;
     
@@ -325,22 +402,23 @@ int g_resize_window(int win, uint32_t width, uint32_t height)
         return -1;
     if (!width || !height)
         return -1;
-    //printf("window resize from (%d, %d) to (%d, %d)\n", gw->width, gw->height, width, height);
     gw->width = width;
     gw->height = height;
 
     /* 调整窗口位图大小 */
     g_bitmap_t *bmp = g_new_bitmap(gw->width, gw->height);
-    if (bmp == NULL)
-        return -1;
+    if (bmp == NULL) {
+        printf("[gwindow]: %s new bitmap null, abort!\n");
+        abort();
+    }
     g_del_bitmap(gw->wbmp);
     gw->wbmp = bmp;
 
     /* 设置拖拽区域 */
-    g_layer_set_region(gw->layer, LAYER_REGION_DRAG, 0, 0, width, GW_TITLE_BAR_HIGHT);
+    g_set_layer_region(gw->layer, LAYER_REGION_DRAG, 0, 0, width, GW_TITLE_BAR_HIGHT);
 
     if (gw->flags & GW_RESIZE) { /* 需要有调整大小标志才能进行调整 */
-        g_layer_set_region(gw->layer, LAYER_REGION_RESIZE, 4, 4, width-4, height - 4);
+        g_set_layer_region(gw->layer, LAYER_REGION_RESIZE, 4, 4, width-4, height - 4);
     }
     
     gw->win_width = width - 2;
@@ -355,7 +433,7 @@ int g_resize_window(int win, uint32_t width, uint32_t height)
     __g_paint_window(gw, 1, 1);
     /* TODO: 重绘内容 */
 
-    g_layer_refresh(gw->layer, 0, 0, width, height);
+    g_refresh_layer(gw->layer, 0, 0, width, height);
     return 0;
 }
 
@@ -369,18 +447,20 @@ int g_focus_window(int win, int turn)
     if (!gw)
         return -1;
     __g_paint_window(gw, turn, 0);
-    g_layer_refresh(gw->layer, 0, 0, gw->width, gw->height);
+    g_refresh_layer(gw->layer, 0, 0, gw->width, gw->height);
     /* 发送聚焦/丢焦消息给桌面 */
-    g_msg_t m;
-    m.target = g_layer_get_desktop(); /* send to desktop */
-    m.data0 = gw->layer; /* layer id */
-    if (turn) {
-        m.id = GM_GET_FOCUS;
-    } else {
-        m.id = GM_LOST_FOCUS;
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        g_msg_t m;
+        m.target = desktop_ly;
+        m.data0 = gw->layer; /* layer id */
+        if (turn) {
+            m.id = GM_GET_FOCUS;
+        } else {
+            m.id = GM_LOST_FOCUS;
+        }
+        g_send_msg(&m);
     }
-    if (g_send_msg(&m) < 0)
-        return -1;
     return 0;
 }
 
@@ -394,21 +474,22 @@ int g_del_window(int win)
     if (!gw)
         return -1;
     
-    if (g_layer_del(gw->layer) < 0)
+    if (g_del_layer(gw->layer) < 0)
         return -1;
-    /* 给桌面发送关闭窗口消息 */
-    g_msg_t m;
-    m.id = GM_WINDOW_CLOSE;
-    m.target = g_layer_get_desktop(); /* send to desktop */
-    m.data0 = gw->layer; /* layer id */
-    if (g_send_msg(&m) < 0) {
-        return -1;
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        /* 给桌面发送关闭窗口消息 */
+        g_msg_t m;
+        m.id = GM_WINDOW_CLOSE;
+        m.target = desktop_ly;
+        m.data0 = gw->layer; /* layer id */
+        g_send_msg(&m);
     }
-    g_touch_del_group(&gw->touch_list);
+    g_del_touch_group(&gw->touch_list);
     list_del(&gw->wlist);
     g_del_bitmap(gw->wbmp);
     free(gw);
-    g_layer_focus_win_top(); /* 删除后需要聚焦顶层窗口 */
+    g_focus_layer_win_top(); /* 删除后需要聚焦顶层窗口 */
     return 0;
 }
 
@@ -430,16 +511,17 @@ int g_show_window(int win)
     g_window_t *gw = g_find_window(win);
     if (!gw)
         return -1;
-    int wintop = g_layer_get_wintop();
-    g_layer_z(gw->layer, wintop);
-    g_layer_focus_win_top(); /* 显示后需要聚焦顶层窗口 */
+    int wintop = g_get_layer_wintop();
+    g_set_layer_z(gw->layer, wintop);
+    g_focus_layer_win_top(); /* 显示后需要聚焦顶层窗口 */
     /* 给桌面发送关闭窗口消息 */
-    g_msg_t m;
-    m.id = GM_SHOW;
-    m.target = g_layer_get_desktop(); /* send to desktop */
-    m.data0 = gw->layer; /* layer id */
-    if (g_send_msg(&m) < 0) {
-        return -1;
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        g_msg_t m;
+        m.id = GM_SHOW;
+        m.target = desktop_ly;
+        m.data0 = gw->layer; /* layer id */
+        g_send_msg(&m);
     }
     return 0;
 }
@@ -453,17 +535,17 @@ int g_hide_window(int win)
     if (!gw)
         return -1;
     
-    g_layer_z(gw->layer, -1);
-    g_layer_focus_win_top(); /* 隐藏后需要聚焦顶层窗口 */
-    /* 给桌面发送关闭窗口消息 */
-    g_msg_t m;
-    m.id = GM_HIDE;
-    m.target = g_layer_get_desktop(); /* send to desktop */
-    m.data0 = gw->layer; /* layer id */
-    if (g_send_msg(&m) < 0) {
-        return -1;
+    g_set_layer_z(gw->layer, -1);
+    g_focus_layer_win_top(); /* 隐藏后需要聚焦顶层窗口 */
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        /* 给桌面发送关闭窗口消息 */
+        g_msg_t m;
+        m.id = GM_HIDE;
+        m.target = desktop_ly;
+        m.data0 = gw->layer; /* layer id */
+        g_send_msg(&m);
     }
-
     return 0;
 }
 
@@ -523,71 +605,17 @@ int g_maxim_window(int win)
         }
     }
 
-    if (g_layer_resize(gw->layer, rect.x, rect.y, rect.width, rect.height) < 0)
+    if (g_resize_layer(gw->layer, rect.x, rect.y, rect.width, rect.height) < 0)
         return -1;
 
-    if (g_layer_focus(gw->layer) < 0) {
+    if (g_focus_layer(gw->layer) < 0) {
         /* TODO: 恢复原来的大小 */
         return -1;
     }
     return 0;
 }
 
-static int _g_window_put_point(g_window_t *gw, int x, int y, g_color_t color)
-{
-    if (x < 0 || y < 0 || x >= gw->win_width || y >= gw->win_height) {
-        return -1;
-    }
-    g_layer_outp(gw->layer, gw->body_region.left + x, gw->body_region.top + y, color);
-    return 0;
-}
-
-int g_window_put_point(int win, int x, int y, g_color_t color)
-{
-    g_window_t *gw = g_find_window(win);
-    if (!gw)
-        return -1;
-    _g_window_put_point(gw, x, y, color);
-    return 0;
-}
-
-int g_window_get_point(int win, int x, int y, g_color_t *color)
-{
-    g_window_t *gw = g_find_window(win);
-    if (!gw)
-        return -1;
-    if (x < 0 || y < 0 || x >= gw->body_region.right || x >= gw->body_region.bottom) {
-        return -1;
-    }
-    g_layer_inp(gw->layer, gw->body_region.left + x, gw->body_region.top + y, color);
-    return 0;
-}
-
-int g_window_rect_fill(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color)
-{
-    g_window_t *gw = g_find_window(win);
-    if (!gw)
-        return -1;
-    
-    int i, j;
-    for (j = 0; j < height; j++) {
-        for (i = 0; i < width; i++) {
-            _g_window_put_point(gw, x + i, y + j, color);
-        }
-    }
-    return 0;
-}
-
-int g_window_rect(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color)
-{
-    g_window_rect_fill(win, x, y, width, 1, color);
-    g_window_rect_fill(win, x, y + height - 1, width, 1, color);
-    g_window_rect_fill(win, x, y, 1, height, color);
-    g_window_rect_fill(win, x + width - 1, y, 1, height, color);
-    return 0;
-}
-
-int g_window_paint(int win, int x, int y, g_bitmap_t *bmp)
+int g_paint_window(int win, int x, int y, g_bitmap_t *bmp)
 {
     g_window_t *gw = g_find_window(win);
     if (!gw)
@@ -597,14 +625,14 @@ int g_window_paint(int win, int x, int y, g_bitmap_t *bmp)
     rect.y = y + gw->body_region.top;
     rect.width = bmp->width;
     rect.height = bmp->height;
-    return g_layer_sync_bitmap(
+    return g_sync_layer_bitmap(
         gw->layer,
         &rect,
         bmp->buffer,
         &gw->body_region);
 }
 
-int g_window_paint_ex(int win, int x, int y, g_bitmap_t *bmp)
+int g_paint_window_ex(int win, int x, int y, g_bitmap_t *bmp)
 {
     g_window_t *gw = g_find_window(win);
     if (!gw)
@@ -614,7 +642,28 @@ int g_window_paint_ex(int win, int x, int y, g_bitmap_t *bmp)
     rect.y = y + gw->body_region.top;
     rect.width = bmp->width;
     rect.height = bmp->height;
-    return g_layer_sync_bitmap_ex(
+    return g_sync_layer_bitmap_ex(
+        gw->layer,
+        &rect,
+        bmp->buffer,
+        &gw->body_region);
+}
+
+/**
+ * g_paint_window_copy - 从窗口中复制绘制内容到bmp中
+ * 
+ */
+int g_paint_window_copy(int win, int x, int y, g_bitmap_t *bmp)
+{
+    g_window_t *gw = g_find_window(win);
+    if (!gw)
+        return -1;
+    g_rect_t rect;
+    rect.x = x + gw->body_region.left;
+    rect.y = y + gw->body_region.top;
+    rect.width = bmp->width;
+    rect.height = bmp->height;
+    return g_copy_layer_bitmap(
         gw->layer,
         &rect,
         bmp->buffer,
@@ -631,7 +680,7 @@ int g_refresh_window_rect(int win, int x, int y, uint32_t width, uint32_t height
     if (!gw)
         return -1;
     
-    g_layer_refresh_rect(win, gw->body_region.left + x, gw->body_region.top + y, width, height);
+    g_refresh_layer_rect(win, gw->body_region.left + x, gw->body_region.top + y, width, height);
     return 0;
 }
 
@@ -645,7 +694,7 @@ int g_refresh_window_region(int win, int left, int top, int right, int bottom)
     if (!gw)
         return -1;
     
-    g_layer_refresh(win, gw->body_region.left + left, gw->body_region.top + top,
+    g_refresh_layer(win, gw->body_region.left + left, gw->body_region.top + top,
         gw->body_region.left + right, gw->body_region.top + bottom);
     return 0;
 }
@@ -721,32 +770,27 @@ int g_get_invalid(int win, int *x, int *y, uint32_t *width, uint32_t *height)
     return 0;
 }
 
-int g_window_char(
-    int win,
-    int x,
-    int y,
-    char ch,
-    uint32_t color)
+/**
+ * 隐藏指定窗口，从桌面消失，变成隐藏状态
+*/
+int g_set_window_icon(int win, char *path)
 {
     g_window_t *gw = g_find_window(win);
     if (!gw)
         return -1;
     
-    g_layer_word(gw->layer, gw->body_region.left + x, gw->body_region.top + y, ch, color);
-    return 0;
-}
+    /* 设置图标缓冲区 */
+    g_set_icon_path(gw->layer, path);
+    
+    int desktop_ly = g_get_layer_desktop(); /* send to desktop */
+    if (desktop_ly >= 0) {
+        /* 给桌面发送关闭窗口消息 */
+        g_msg_t m;
+        m.id = GM_WINDOW_ICON;
+        m.target = desktop_ly;
+        m.data0 = gw->layer; /* layer id */
+        g_send_msg(&m);
+    }
 
-int g_window_text(
-    int win,
-    int x,
-    int y,
-    char *text,
-    uint32_t color)
-{
-    g_window_t *gw = g_find_window(win);
-    if (!gw)
-        return -1;
-    
-    g_layer_text(gw->layer, gw->body_region.left + x, gw->body_region.top + y, text, color);
     return 0;
 }

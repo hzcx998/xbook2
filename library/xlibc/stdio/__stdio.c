@@ -1,8 +1,7 @@
 /*
- * libc/stdio/__stdio.c
+ * xlibc/stdio/__stdio.c
  */
 
-#include <sys/res.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <unistd.h>

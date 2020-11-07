@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <xbook/kmalloc.h>
 #include <xbook/vmarea.h>
+#include <xbook/schedule.h>
 
 /// 程序本地头文件
 #include <gui/mouse.h>
@@ -37,6 +38,7 @@ static  int  mouse_read(void)
 {
     static int  x_rel                     = 0;
     static int  y_rel                     = 0;
+    static int  z_rel                     = 0;
     static int  flag_rel                  = 0;
 
     struct      input_event  event;
@@ -47,6 +49,7 @@ read_mouse_continue:
     ret = device_read( mouse_handle, &event, sizeof(event), 0);
     if ( ret < 1 )
         return  -1;
+    
     switch (event.type)
     {        
         case EV_REL:
@@ -64,6 +67,12 @@ read_mouse_continue:
                 goto  read_mouse_continue;
 
             } else if ( (event.code) == REL_WHEEL ) {
+                z_rel = (int )event.value;
+                if (z_rel < 0)
+                    gui_mouse.wheel(0);
+                else
+                    gui_mouse.wheel(1);
+                    
                 /* 一个滚轮事件 */
                 return  0;           
             } else {
@@ -143,5 +152,6 @@ int gui_init_mouse()
     gui_mouse.open = mouse_open;
     gui_mouse.close = mouse_close;
     gui_mouse.read = mouse_read;
+    
     return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * libc/stdio/system.c
+ * xlibc/stdio/system.c
  */
 
 #include <stdio.h>

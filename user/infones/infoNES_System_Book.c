@@ -12,11 +12,10 @@
 #include <InfoNES_System.h>
 #include <InfoNES_pAPU.h>
 
-//#define CONFIG_SOUND
-//#define CONFIG_QEMU
+#define CONFIG_SOUND
 
 #ifdef CONFIG_SOUND
-#define SOUND_DEVICE "buzzer"
+#define SOUND_DEVICE "sb16"
 #endif /* CONFIG_SOUND */
 
 void start_application( char *filename );
@@ -53,9 +52,7 @@ WORD NesPalette[ 64 ] =
 };
 
 /* For Sound Emulation */
-BYTE final_wave[2048];
-int waveptr;
-int wavflag;
+short final_wave[2048];
 int sound_fd;
 
 g_bitmap_t *screen_bitmap;
@@ -77,7 +74,6 @@ int main(int argc, char **argv)
   dwKeyPad1   = 0;
   dwKeyPad2   = 0;
   dwKeySystem = 0;
-  //printf("infoNes \n");
   /* If a rom name specified, start it */
   if ( argc >= 2 )
   {
@@ -86,11 +82,7 @@ int main(int argc, char **argv)
   } else {
     /* 打开图形管理界面 */
     start_application( DEF_NES_FILE);
-    printf("infoNES: too few arguments!\n");
-
   }
-  //printf("arg error!\n");
-  //while(1);
 	return 0;	
 }
 
@@ -137,7 +129,7 @@ void start_application( char *filename )
         return;
     }
 
-    g_win = g_new_window(title, 10, 100, NES_DISP_WIDTH, NES_DISP_HEIGHT);
+    g_win = g_new_window(title, 10, 100, NES_DISP_WIDTH, NES_DISP_HEIGHT, GW_NO_MAXIM);
     if (g_win < 0) {
         printf("[infones] create window failed!\n");
         g_quit();
@@ -150,8 +142,7 @@ void start_application( char *filename )
         g_quit();
         return;
     }
-    /* 注册消息回调函数 */
-    g_set_msg_routine(win_proc);
+    g_set_window_icon(g_win, "res/icon/infones.png");
 
     /* 设置窗口界面 */
     g_show_window(g_win);
@@ -329,7 +320,7 @@ int LoadSRAM()
   /*-------------------------------------------------------------------*/
 
   // Open SRAM file
-  fd = open( szSaveName, O_RDONLY , 0);
+  fd = open( szSaveName, O_RDONLY);
   if ( fd == -1 ) {
       printf("[infones] open file %s failed!\n", szSaveName);
     return -1;
@@ -433,7 +424,7 @@ int InfoNES_ReadRom( const char *pszFileName )
   int fd;
 
   /* Open ROM file */
-  fd = open( pszFileName, O_RDONLY , 0);
+  fd = open( pszFileName, O_RDONLY);
   if ( fd == -1 ) {
       printf("[infones] open file %s failed!\n", pszFileName);
     return -1;
@@ -581,86 +572,36 @@ guchar  pbyRgbBuf[ NES_DISP_WIDTH * NES_DISP_HEIGHT * 3 ];
 /*===================================================================*/
 void InfoNES_LoadFrame()
 {
-
-/*
- *  Transfer the contents of work frame on the screen
- *
- */
-
-  //register guchar* pBuf;
-
-  //pBuf = pbyRgbBuf;
-#if 0
-    register DWORD *q = graphBuffer;
-    // Exchange 16-bit to 24-bit  
-  for ( register int y = 0; y < NES_DISP_HEIGHT; y++ )
+  register DWORD *q = (DWORD *)screen_bitmap->buffer;
+  // Exchange 16-bit to 24-bit
+  for (register int y = 0; y < NES_DISP_HEIGHT; y++)
   {
-    for ( register int x = 0; x < NES_DISP_WIDTH; x++ )
-    {  
-      WORD wColor = WorkFrame[ ( y << 8 ) + x ];
-	  
-      *q = (guchar)( ( wColor & 0x7c00 ) >> 7 )<<16;
-        *q |= (guchar)( ( wColor & 0x03e0 ) >> 2 )<<8;
-        *q |= (guchar)( ( wColor & 0x001f ) << 3 );
-        *q |= (0xff << 24);
-        q++;
-      //*(pBuf++) = (guchar)( ( wColor & 0x7c00 ) >> 7 );
-      
-      //*(pBuf++) = (guchar)( ( wColor & 0x03e0 ) >> 2 );
-      
-      //*(pBuf++) = (guchar)( ( wColor & 0x001f ) << 3 );
+
+    WORD *p = &WorkFrame[(y << 8)];
+    for (register int x = 0; x < NES_DISP_WIDTH; x++)
+    {
+      WORD wColor = p[x];
+      *q++ = ((wColor & 0x7c00) << 9) | ((wColor & 0x03e0) << 6) | ((wColor & 0x001f) << 3) | (0xff << 24);
     }
   }
-    /* 绘制到窗口中 */
-    g_window_pixmap(g_win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT, (g_color_t *) graphBuffer);
-    g_refresh_window_rect(g_win, 0, 0, NES_DISP_WIDTH, NES_DISP_HEIGHT);
-#else
-    register DWORD *q = (DWORD *) screen_bitmap->buffer;
-    // Exchange 16-bit to 24-bit  
-  for ( register int y = 0; y < NES_DISP_HEIGHT; y++ )
-  {
-    for ( register int x = 0; x < NES_DISP_WIDTH; x++ )
-    {  
-      WORD wColor = WorkFrame[ ( y << 8 ) + x ];
-	  
-      *q = (guchar)( ( wColor & 0x7c00 ) >> 7 )<<16;
-        *q |= (guchar)( ( wColor & 0x03e0 ) >> 2 )<<8;
-        *q |= (guchar)( ( wColor & 0x001f ) << 3 );
-        *q |= (0xff << 24);
-        q++;
-      //*(pBuf++) = (guchar)( ( wColor & 0x7c00 ) >> 7 );
-      
-      //*(pBuf++) = (guchar)( ( wColor & 0x03e0 ) >> 2 );
-      
-      //*(pBuf++) = (guchar)( ( wColor & 0x001f ) << 3 );
-    }
-  }
-    /* 已经绘制好内容了，直接绘制到窗口 */
-    g_window_paint(g_win, 0, 0, screen_bitmap);
-#endif
-
-    #ifndef CONFIG_SOUND
-    #ifndef CONFIG_QEMU
-    /* 延迟 */
-    clock_t start;
-    start = getticks();
-    while ((getticks() - start) < 1 * HZ_PER_CLOCKS);
-    #endif
-    #endif /* CONFIG_SOUND */
+  /* 已经绘制好内容了，直接绘制到窗口 */
+  g_paint_window(g_win, 0, 0, screen_bitmap);
+  mdelay(15);
 }
 
 int PollEvent(void)
 {
     g_msg_t msg;
     /* 获取消息，非阻塞式 */
-    if (g_try_get_msg(&msg) < 0)
+    if (!g_try_get_msg(&msg))
         return -1;
     
     if (g_is_quit_msg(&msg))
         exit_application();
 
     /* 有外部消息则处理消息 */
-    g_dispatch_msg(&msg);
+    win_proc(&msg);
+
     return 0;
 }
 
@@ -712,14 +653,12 @@ int InfoNES_SoundOpen( int samples_per_sync, int sample_rate )
 {
     
 #ifdef CONFIG_SOUND
-//printf("InfoNES_SoundOpen: samples_per_sync=%d, sample_rate=%d\n", samples_per_sync, sample_rate);
-    sound_fd = open(SOUND_DEVICE, O_DEVEX, 0);
+    printf("InfoNES_SoundOpen: samples_per_sync=%d, sample_rate=%d\n", samples_per_sync, sample_rate);
+    sound_fd = open(SOUND_DEVICE, O_DEVEX);
     if (sound_fd < 0) {
-        sound_fd = 0;
+        sound_fd = -1;
         return 0;
     }
-    /* 开始播放声音 */
-    ioctl(sound_fd, SNDIO_PLAY, 0);
 #endif
   /* Successful */
   return 1;
@@ -734,9 +673,7 @@ void InfoNES_SoundClose( void )
 {
 
 #ifdef CONFIG_SOUND
-  if (sound_fd) {
-      ioctl(sound_fd, SNDIO_STOP, 0);
-      
+  if (sound_fd != -1) {
       close(sound_fd);
     }
 #endif
@@ -751,47 +688,16 @@ void InfoNES_SoundOutput( int samples, BYTE *wave1, BYTE *wave2, BYTE *wave3, BY
 {
 
 #ifdef CONFIG_SOUND
-  
-  if ( sound_fd ) 
+  if (sound_fd != -1)
   {
-    int i;
-    for (i = 0; i < samples; i++) 
+    for (int i = 0; i < samples; i++)
     {
-#if 1
-      final_wave[ waveptr ] = 
-	( wave1[i] + wave2[i] + wave3[i] + wave4[i] + wave5[i] ) / 5;
-#else
-      final_wave[ waveptr ] = wave4[i];
-#endif
-
-
-      waveptr++;
-      if ( waveptr == 2048 ) 
-      {
-	waveptr = 0;
-	wavflag = 2;
-      } 
-      else if ( waveptr == 1024 )
-      {
-	wavflag = 1;
-      }
+      final_wave[i * 2 + 1] = final_wave[i * 2] = (wave1[i] + wave2[i] + wave3[i] + wave4[i] + wave5[i]) * 50;
     }
-	
-    if ( wavflag )
+
+    if (write(sound_fd, final_wave, samples * 4) < samples * 4)
     {
-      
-      BYTE *buf = &final_wave[(wavflag - 1) << 10];
-      int i;
-      for (i = 0; i < 1024; i++) {
-        if (buf[i]) {
-            ioctl(sound_fd, SNDIO_SETFREQ, buf[i] * 5);
-        } else {
-            ioctl(sound_fd, SNDIO_SETFREQ, 20000);  /* 没数据 */
-        }
-      }
-      ioctl(sound_fd, SNDIO_SETFREQ, 20000);  /* 无声音 */
-            
-      wavflag = 0;
+      printf("wrote less than 1024 bytes\n");
     }
   }
 #endif /* CONFIG_SOUND */

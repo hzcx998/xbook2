@@ -37,7 +37,7 @@ int netcard_probe_device(device_type_t type)
     do {
         if (sys_devscan(p, type, &devent))
             break;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_NETCARD
         printk("[net]: %s: probe device %s\n", __func__, devent.de_name);
 #endif    
         /* 添加到磁盘数组 */
@@ -142,7 +142,7 @@ static int __read(int solt, void *buffer, size_t size)
 {
     if (IS_BAD_SOLT(solt))
         return -1;
-    int len = device_read(SOLT_TO_HANDLE(solt), buffer, size, DEV_NOWAIT);
+    int len = device_read(SOLT_TO_HANDLE(solt), buffer, size, 0);
     if (len <= 0)
         return -1;
     return len;

@@ -173,10 +173,13 @@ enum {
     GK_POWER,   /* power */
     GK_EURO,   /* euro */
     GK_UNDO,   /* undo */
+    GK_LBTN,    /* mouse left btn */
+    GK_MBTN,    /* mouse middle btn */
+    GK_RBTN,    /* mouse right btn */
     GK_LAST       /* last one */        
 };
 
-/* 控制按键状态 */
+/* 控制按键状态，常用于组合按键 */
 #define GKMOD_SHIFT_L    0x01
 #define GKMOD_SHIFT_R    0x02
 #define GKMOD_SHIFT      (GKMOD_SHIFT_L | GKMOD_SHIFT_R)

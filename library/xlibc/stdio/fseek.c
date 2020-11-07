@@ -1,5 +1,5 @@
 /*
- * libc/stdio/fseek.c
+ * xlibc/stdio/fseek.c
  */
 
 #include <stdio.h>

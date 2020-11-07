@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <xbook/kmalloc.h>
 #include <xbook/vmarea.h>
+#include <xbook/schedule.h>
 
 /// 程序本地头文件
 #include <gui/keyboard.h>
@@ -37,6 +38,9 @@ static  int  keyboard_open(void)
     if ( ledstate & 0x02 )
         gui_keyboard.ledstate |= GUI_KMOD_CAPS;
 
+    int flags = 0x01;   // no block
+    device_devctl( kbd_handle, EVENIO_SETFLG,(unsigned long) &flags);
+    
     return 0;
 }
 

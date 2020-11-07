@@ -33,8 +33,6 @@ LIST_HEAD(task_global_list);
 /* idle任务 */
 task_t *task_kmain;
 
-task_t *task_current;   /* 当前任务指针 */
-
 /**  
  * new_pid - 分配一个pid
  */
@@ -72,12 +70,14 @@ void task_init(task_t *task, char *name, int priority)
 
     task->state = TASK_READY;
     
+    spinlock_init(&task->lock);
     // 修复优先级
     if (priority < 0)
         priority = 0;
     if (priority > MAX_PRIORITY_NR - 1)
         priority = MAX_PRIORITY_NR - 1;
 
+    task->static_priority = priority;
     task->priority = priority;
     task->timeslice = 3;  /* 时间片大小默认值 */
     task->ticks = task->timeslice;  /* timeslice -> ticks */
@@ -96,14 +96,11 @@ void task_init(task_t *task, char *name, int priority)
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KSTACK_SIZE);
 
     /* no priority queue */
-    task->prio_queue = NULL;
+    //task->prio_queue = NULL;
     task->flags = 0;
     
     /* no triger */
     task->triggers = NULL;
-    
-    /* no resource */
-    task->res = NULL;
     
     /* no timer */
     task->sleep_timer = NULL;
@@ -151,7 +148,10 @@ void task_set_timeslice(task_t *task, uint32_t timeslice)
             timeslice = TASK_MIN_TIMESLICE;
         if (timeslice > TASK_MAX_TIMESLICE)
             timeslice = TASK_MAX_TIMESLICE;
+        spin_lock(&task->lock);
         task->timeslice = timeslice;
+        spin_unlock(&task->lock);
+        
     }
 }
 
@@ -192,15 +192,8 @@ task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg)
     // 初始化线程
     task_init(task, name, priority);
     
-    /* 创建资源 */
-    if (proc_res_init(task) < 0) {
-        kfree(task);
-        return NULL;
-    }
-
     /* 创建文件描述表 */
     if (fs_fd_init(task) < 0) {
-        proc_res_exit(task);
         kfree(task);
         return NULL;
     }
@@ -212,9 +205,10 @@ task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg)
     /* 操作链表时关闭中断，结束后恢复之前状态 */
     unsigned long flags;
     save_intr(flags);
-
+    
     task_global_list_add(task);
-    task_priority_queue_add_tail(task);
+    sched_unit_t *su = sched_get_unit();
+    task_priority_queue_add_tail(su, task);
     
     restore_intr(flags);
     return task;
@@ -228,9 +222,10 @@ void task_activate(task_t *task)
 {
     /* 任务不能为空 */
     ASSERT(task != NULL);
-    
+    spin_lock(&task->lock);
     /* 设置为运行状态 */
     task->state = TASK_RUNNING;
+    spin_unlock(&task->lock);
     //printk("vmm:%x\n", task->vmm);
     /* 激活任务虚拟内存 */
     vmm_active(task->vmm);
@@ -291,16 +286,17 @@ void task_unblock(task_t *task)
         (task->state == TASK_STOPPED));
     */
     if (task->state != TASK_READY) {
+        sched_unit_t *su = sched_get_unit();
         // 保证没有在就绪队列中
-        ASSERT(!is_task_in_priority_queue(task));
+        ASSERT(!is_task_in_priority_queue(su, task));
         // 已经就绪是不能再次就绪的
-        if (is_task_in_priority_queue(task)) {
-            panic("TaskUnblock: task has already in ready list!\n");
+        if (is_task_in_priority_queue(su, task)) {
+            panic("task_unblock: task has already in ready list!\n");
         }
         // 处于就绪状态
         task->state = TASK_READY;
         // 把任务放在最前面，让它快速得到调度
-        task_priority_queue_add_head(task);
+        task_priority_queue_add_head(su, task);
     }
     
     restore_intr(flags);
@@ -316,11 +312,10 @@ void task_yeild()
     // 先关闭中断，并且保存中断状态
     unsigned long flags;
     save_intr(flags);
-    set_current_state(TASK_READY); /* 设置为就绪状态 */
+    current_task->state = TASK_READY; /* 设置为就绪状态 */
     schedule(); /* 调度到其它任务 */
     restore_intr(flags);
 }
-
 
 /**
  * create_kmain_thread - 创建内核主线程
@@ -332,14 +327,11 @@ static void create_kmain_thread()
 {
     // 当前运行的就是主线程
     task_kmain = (task_t *) KERNEL_STATCK_BOTTOM;
-    task_current = task_kmain;   /* 设置当前任务 */
+    sched_unit_t *su = sched_get_unit();
+    su->cur = task_kmain;   /* 设置当前任务 */
 
     /* 最开始设置为最佳优先级，这样才可以往后面运行。直到运行到最后，就变成IDLE优先级 */
     task_init(task_kmain, "kmain", TASK_PRIO_BEST);
-    /* 创建资源 */
-    if (proc_res_init(task_kmain) < 0) {
-        panic("init kmain res failed!\n");
-    }
 
     if (fs_fd_init(task_kmain) < 0) {
         panic("init kmain fs fd failed!\n");
@@ -750,7 +742,14 @@ void dump_task(task_t *task)
     //printk("vmm->vm_frame:%x priority:%d ticks:%d elapsed ticks:%d\n", task->vmm->page_storage, task->priority, task->ticks, task->elapsed_ticks);
     printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
-static char *init_argv[2] = {"/sbin/init", 0};
+
+#ifdef CONFIG_GRAPH
+#define INIT_SBIN_PATH  "/sbin/initg"
+#else
+#define INIT_SBIN_PATH  "/sbin/init"
+#endif
+
+static char *init_argv[2] = {INIT_SBIN_PATH, 0};
 
 /**
  * start_user - 开启用户进程
@@ -760,16 +759,17 @@ static char *init_argv[2] = {"/sbin/init", 0};
 void start_user()
 {
     printk(KERN_DEBUG "[task]: start user process.\n");
+
     /* 加载init进程 */
     task_t *proc = start_process(init_argv[0], init_argv);
     if (proc == NULL)
         panic("kernel start process failed! please check initsrv!\n");
-    
+
     /* 降级期间不允许产生中断 */
 	unsigned long flags;
     save_intr(flags);
     /* 当前任务降级，这样，其它任务才能运行到 */
-    task_kmain->priority = TASK_PRIO_IDLE;
+    task_kmain->static_priority = task_kmain->priority = TASK_PRIO_IDLE;
     
     restore_intr(flags);
     /* 调度到更高优先级的任务允许 */
@@ -778,13 +778,14 @@ void start_user()
     
     /* 其它进程可能在终端关闭状态阻塞，那么切换回来后就需要打开中才行 */
     enable_intr();
-
+    
     /* kmain线程 */
 	while (1) {
 		/* 进程默认处于阻塞状态，如果被唤醒就会执行后面的操作，
 		直到再次被阻塞 */
         /* 执行cpu停机 */
 		cpu_idle();
+        schedule();
 	};
 }
 
@@ -793,6 +794,7 @@ void kthread_idle(void *arg)
     printk(KERN_DEBUG "[task]: idle start...\n");
     while (1) {
         cpu_idle();
+        schedule();
     }
 }
 /**
@@ -816,8 +818,12 @@ void init_tasks()
     kthread_start("test2", TASK_PRIO_RT, taskB, "NULL");
     kthread_start("test3", TASK_PRIO_RT, taskC, "NULL");*/
     //kthread_start("test4", 1, taskD, "NULL");
+    sched_unit_t *su = sched_get_unit();
+    su->idle = task_kmain;
 
+    #if 0
     /* 创建idle线程 */
     kthread_start("idle", TASK_PRIO_IDLE, kthread_idle, NULL);
+    #endif
     printk(KERN_INFO "[task]: init done\n");
 }

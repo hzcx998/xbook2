@@ -5,7 +5,7 @@
 #include <xbook/driver.h>
 #include <xbook/kmalloc.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_DRV
 
 LIST_HEAD(raw_block_list);
 
@@ -111,7 +111,7 @@ int raw_block_upload(raw_block_t *block)
     
     /* 小于1个块 */
     if (count < RB_BLOCK_NR) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "raw_block_upload: buf=%x off=%d count=%d\n", block->vaddr, off, count);
 #endif
         if (device_read(block->handle, block->vaddr, count * SECTOR_SIZE, off) < 0) 
@@ -121,7 +121,7 @@ int raw_block_upload(raw_block_t *block)
         int chunk = count & 0xff;   /* 取256以下的数据数量 */
         unsigned char *p = block->vaddr;
         while (count > 0) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
         printk(KERN_DEBUG "raw_block_upload: buf=%x off=%d count=%d\n", p, off, chunk);
 #endif
             if (device_read(block->handle, p, chunk * SECTOR_SIZE, off) < 0)

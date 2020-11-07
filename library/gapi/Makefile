@@ -1,5 +1,4 @@
-X_ASFLAGS	:= -f elf -I xlibc/include
-X_INCDIRS	:= xlibc/include gapi/include
+X_INCDIRS	:= xlibc/include gapi/include jpeg/ libpng/
 
 SRC			:= *.c fonts/*.c
 

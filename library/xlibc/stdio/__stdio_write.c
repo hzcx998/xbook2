@@ -1,5 +1,5 @@
 /*
- * libc/stdio/__stdio_write.c
+ * xlibc/stdio/__stdio_write.c
  */
 
 #include <malloc.h>

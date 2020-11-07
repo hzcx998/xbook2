@@ -1,5 +1,5 @@
 /*
- * libc/stdio/scanf.c
+ * xlibc/stdio/scanf.c
  */
 
 #include <sizes.h>

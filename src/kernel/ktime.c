@@ -1,6 +1,6 @@
 #include <xbook/ktime.h>
 #include <xbook/clock.h>
-#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <xbook/debug.h>
 
 ktime_t ktime;
@@ -137,6 +137,7 @@ void update_ktime()
 void sys_get_ktime(ktime_t *time)
 {
     *time = ktime;
+    --time->month;
 }
 
 /* 这个算法来自linux内核 */
@@ -251,7 +252,7 @@ unsigned long timeval_to_systicks(struct timeval *tv)
     unsigned long usec = tv->tv_usec;
     if (sec >= (MAX_SYSTICKS_VALUE / HZ)) /* 超过秒的ticks的最大值，就直接返回最大值 */
         return MAX_SYSTICKS_VALUE;
-    usec -= 1000000L / HZ - 1;  /* 向下对齐微妙秒数 */
+    //usec -= 1000000L / HZ - 1;  /* 向下对齐微妙秒数 */
     usec /= 1000000L / HZ;  /* 秒/HZ=1秒的ticks数 */
     return HZ * sec + usec;
 }
@@ -280,7 +281,7 @@ unsigned long timespec_to_systicks(struct timespec *ts)
     unsigned long nsec = ts->tv_nsec;
     if (sec >= (MAX_SYSTICKS_VALUE / HZ)) /* 超过秒的ticks的最大值，就直接返回最大值 */
         return MAX_SYSTICKS_VALUE;
-    nsec -= 1000000000L / HZ - 1;  /* 向下对齐纳妙秒数 */
+    //nsec -= 1000000000L / HZ - 1;  /* 向下对齐纳妙秒数 */
     nsec /= 1000000000L / HZ;  /* 秒/HZ=1秒的ticks数 */
     return HZ * sec + nsec;
 }
@@ -333,7 +334,7 @@ void init_ktime()
 		
 		/* 转换成本地时间 */
 		/* 自动转换时区 */
-#if CONFIG_TIMEZONE_AUTO == 1
+#ifdef CONFIG_TIMEZONE_AUTO
         if(ktime.hour >= 16){
 			ktime.hour -= 16;
 		}else{

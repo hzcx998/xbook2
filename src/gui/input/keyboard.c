@@ -12,6 +12,22 @@
 #include <gui/message.h>
 #include <gui/mouse.h>
 
+#ifdef CONFIG_VIRTUAL_MOUSE
+/*
+ALT+?
+方向键，小移动
+
+小键盘：
+78946123大移动
+5鼠标左键
+enter鼠标右键
+.(del)鼠标中键
++滚轮下
+-滚轮上
+*/
+#define VIR_MOUSE_MOVE_BIG  50
+#define VIR_MOUSE_MOVE_SMALL  12
+#endif
 /* 特殊按键：
 ALT+TAB 切换窗口 */
 
@@ -24,7 +40,7 @@ int __process_special_key(int keycode, int press)
         /* alt + tab */
         if (gui_keyboard.key_modify & GUI_KMOD_ALT_L) {
             if (press) {
-#if DEBUG_LOCAL == 1                
+#ifdef DEBUG_DRV                
                 /* switch window */
                 printf("[keyboard] [alt + tab] switch window.\n");
 #endif
@@ -32,12 +48,121 @@ int __process_special_key(int keycode, int press)
             return 1;
         }
     }
+    #ifdef CONFIG_VIRTUAL_MOUSE
+    /* alt + ? */
+    if (gui_keyboard.key_modify & GUI_KMOD_ALT) {
+        if (press) {
+            switch (keycode)
+            {
+            case KEY_LEFT:
+                gui_mouse.x -= VIR_MOUSE_MOVE_SMALL;
+                gui_mouse_motion();
+                break;
+            case KEY_RIGHT:
+                gui_mouse.x += VIR_MOUSE_MOVE_SMALL;
+                gui_mouse_motion();
+                break;
+            case KEY_UP:
+                
+                gui_mouse.y -= VIR_MOUSE_MOVE_SMALL;
+                gui_mouse_motion();
+                break;
+            case KEY_DOWN:
+                
+                gui_mouse.y += VIR_MOUSE_MOVE_SMALL;
+                gui_mouse_motion();
+                break;
+            case KEY_KP4:
+                
+                gui_mouse.x -= VIR_MOUSE_MOVE_BIG;
+                gui_mouse_motion();
+                break;
+            case KEY_KP6:
+                
+                gui_mouse.x += VIR_MOUSE_MOVE_BIG;
+                gui_mouse_motion();
+                break;
+            case KEY_KP8:
+                
+                gui_mouse.y -= VIR_MOUSE_MOVE_BIG;
+                gui_mouse_motion();
+                break;
+            case KEY_KP2:
+                
+                gui_mouse.y += VIR_MOUSE_MOVE_BIG;
+                gui_mouse_motion();
+                break;
+            case KEY_KP7:
+                
+                gui_mouse.x -= VIR_MOUSE_MOVE_BIG;
+                gui_mouse.y -= VIR_MOUSE_MOVE_BIG;
+
+                gui_mouse_motion();
+                break;
+            case KEY_KP9:
+                
+                gui_mouse.x += VIR_MOUSE_MOVE_BIG;
+                gui_mouse.y -= VIR_MOUSE_MOVE_BIG;
+
+                gui_mouse_motion();
+                break;
+            case KEY_KP1:
+                gui_mouse.x -= VIR_MOUSE_MOVE_BIG;
+                gui_mouse.y += VIR_MOUSE_MOVE_BIG;
+                
+                gui_mouse_motion();
+                break;
+            case KEY_KP3:
+                gui_mouse.x += VIR_MOUSE_MOVE_BIG;
+                gui_mouse.y += VIR_MOUSE_MOVE_BIG;
+                gui_mouse_motion();
+                break;
+            case KEY_KP5:   /* left */
+                gui_mouse_button_down(0);
+                break;
+            case KEY_KP_ENTER:   /* right */
+            case KEY_ENTER:   /* right */
+                gui_mouse_button_down(2);
+                break;
+            case KEY_KP_PERIOD:   /* middle */
+                gui_mouse_button_down(1);
+                break;
+            case KEY_KP_PLUS:   /* wheel down */
+                gui_mouse_wheel(1);
+                break;
+            case KEY_KP_MINUS:   /* whell up */
+                gui_mouse_wheel(0);
+                break;
+            default:
+                return 0;
+            }
+            return 1;
+        } else {
+            switch (keycode)
+            {
+            case KEY_KP5:   /* left */
+                gui_mouse_button_up(0);
+                break;
+            case KEY_KP_ENTER:   /* right */
+            case KEY_ENTER:   /* right */
+                gui_mouse_button_up(2);
+                break;
+            case KEY_KP_PERIOD:   /* middle */
+                gui_mouse_button_up(1);
+                break;
+            default:
+                return 0;
+            }
+            return 1;
+        }
+    }
+    #endif
     return 0;
 }
 
 int gui_key_pressed(int keycode)
 {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printf("[keyboard ] key %x->%c pressed.\n", keycode, keycode);
 #endif
     /* 处理修饰按键 */
@@ -86,33 +211,17 @@ int gui_key_pressed(int keycode)
     if (__process_special_key(keycode, 1))
         return -1;
 
-    /* 使用按键,keydown, keycode, modify */
-    /*gui_keyboard.keyevent.state = 0;
-    gui_keyboard.keyevent.code = code_switch(keycode);
-    gui_keyboard.keyevent.modify = gui_keyboard.key_modify;
-    return 0;*/
-
-    
-    
     g_msg_t m;
     memset(&m, 0, sizeof(g_msg_t));
     m.id        = GM_KEY_DOWN;
     m.data0     = keycode;
     m.data1     = gui_keyboard.key_modify;
     return gui_push_msg(&m);
-
-    /*
-    gui_event e;
-    e.type = GUI_EVENT_KEY;
-    e.key.code = code_switch(keycode);
-    e.key.modify = gui_keyboard.key_modify;
-    e.key.state = GUI_PRESSED;
-    return gui_event_add(&e);*/
 }
 
 int gui_key_released(int keycode)
 {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_DRV
     printf("[keyboard ] key %x->%c released.\n", keycode, keycode);
 #endif
     /* 处理CTRL, ALT, SHIFT*/

@@ -1,5 +1,5 @@
 /*
- * libc/stdio/ungetc.c
+ * xlibc/stdio/ungetc.c
  */
 
 #include <stdio.h>

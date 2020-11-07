@@ -162,6 +162,12 @@ struct hardware_intr_controller {
     void (*ack)(unsigned int irq);
 };
 
+/* var: hardware_intr_contorller must be support in arch */
+extern struct hardware_intr_controller hardware_intr_contorller;
+
+#define enable_irq(n) hardware_intr_contorller.enable(n)
+#define disable_irq(n) hardware_intr_contorller.disable(n)
+
 /* irq对应的处理 */
 typedef struct irq_action {
     unsigned long data;

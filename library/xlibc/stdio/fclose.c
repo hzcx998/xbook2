@@ -1,5 +1,5 @@
 /*
- * libc/stdio/fclose.c
+ * xlibc/stdio/fclose.c
  */
 
 #include <errno.h>

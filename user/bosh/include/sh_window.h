@@ -13,9 +13,10 @@ typedef struct {
 extern sh_window_t sh_window;
 
 int init_window();
-void main_window();
+void window_loop();
 int exit_window();
 
+void set_win_proc(int state);
 void sh_window_rect_fill(int x, int y, uint32_t width, uint32_t height, uint32_t color);
 void sh_window_rect(int x, int y, uint32_t width, uint32_t height, uint32_t color);
 void sh_window_char(int x, int y, char ch, uint32_t color);

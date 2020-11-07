@@ -1,7 +1,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/res.h>
 
 errno_t __errno = 0;
 
@@ -75,12 +74,4 @@ char *strerror(int errnum)
         return __errno_string[errnum];
     }
     return __errno_string[0];
-}
-
-void perror(char *str)
-{
-    char *error = strerror(__errno);
-    res_write(RES_STDERRNO, 0, str, strlen(str));
-    res_write(RES_STDERRNO, 0, ": ", 2);
-    res_write(RES_STDERRNO, 0, error, strlen(error));
 }

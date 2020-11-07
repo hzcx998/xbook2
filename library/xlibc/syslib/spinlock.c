@@ -3,6 +3,7 @@
 #include <sys/spinlock.h>
 #include <stdio.h>
 #include <errno.h>
+#include <stdint.h>
 
 /* 自选一定次数后，才进行yeild */
 #define __SPIN_COUNT    10

@@ -1,8 +1,9 @@
 #include <xbook/vmspace.h>
 #include <xbook/task.h>
 #include <xbook/debug.h>
+#include <xbook/schedule.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_VMSPACE
 
 void dump_vmspace(vmm_t *vmm)
 {
@@ -362,7 +363,7 @@ unsigned long sys_vmspace_heap(unsigned long heap)
     unsigned long ret;
     unsigned long old_heap, new_heap;
     vmm_t *vmm = current_task->vmm;
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_VMSPACE    
     printk(KERN_DEBUG "%s: task %s pid %d vmm heap start %x end %x new %x\n", 
         __func__, current_task->name, current_task->pid, vmm->heap_start, vmm->heap_end, heap);
 #endif
@@ -404,7 +405,7 @@ unsigned long sys_vmspace_heap(unsigned long heap)
     if ((find = vmspace_find_intersection(vmm, old_heap, new_heap + PAGE_SIZE))) {
         printk(KERN_ERR "%s: space intersection! old=%x, new=%x, end=%x\n",
             __func__, old_heap, new_heap, new_heap + PAGE_SIZE);
-#if DEBUG_LOCAL == 1   
+#ifdef DEBUG_VMSPACE   
         printk(KERN_ERR "%s: find: start=%x, end=%x\n",
             __func__, find->start, find->end);
 
@@ -423,7 +424,7 @@ unsigned long sys_vmspace_heap(unsigned long heap)
     }
      
 set_heap:
-#if DEBUG_LOCAL == 1   
+#ifdef DEBUG_VMSPACE   
     printk(KERN_DEBUG "sys_vmspace_heap: set new heap %x old is %x\n",
         heap, vmm->heap_end);
 #endif

@@ -2,8 +2,6 @@
 #include <sys/proc.h>
 #include <sys/trigger.h>
 
-extern void _exit_cleanup();
-
 /**
  * _exit() - exit process
  * 
@@ -13,7 +11,6 @@ extern void _exit_cleanup();
  */
 void _exit(int status)
 {
-    _exit_cleanup();
     syscall1(int , SYS_EXIT, status);
 }
 
@@ -68,39 +65,6 @@ int wait(int *status)
 int waitpid(pid_t pid, int *status, int options)
 {
     return syscall3(int, SYS_WAITPID, pid, status, options);
-}
-
-/**
- * execraw() - execute raw block
- * 
- * @name: raw block name
- * @argv: arguments array
- * 
- * execute a raw block process, replaces the current process with the
- * raw block and runs the process corresponding to the raw block.
- * 
- * @return: -1 is failed, no success return, if success, run the new process. 
- */
-int execraw(char *name, char *argv[])
-{
-    return syscall2(int, SYS_EXECR, name, argv);
-}
-
-/**
- * execfile() - execute file
- * 
- * @name: file name
- * @file: file info
- * @argv: arguments array
- * 
- * execute file in process, replaces the current process with the
- * file image and runs the process corresponding to the file.
- * 
- * @return: -1 is failed, no success return, if success, run the new process. 
- */
-int execfile(char *name, kfile_t *file, char *argv[])
-{
-    return syscall3(int, SYS_EXECF, name, file, argv);
 }
 
 pid_t getpid()

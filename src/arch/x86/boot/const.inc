@@ -19,10 +19,10 @@ LOADER_SEG EQU 0x9000
 ;we read setup.bin from disk sector 10
 SETUP_OFF EQU 10	
 
-;we assume setup.bin size is 36kb(72 sectors)	
-SETUP_CNTS EQU 90		
+;we assume setup.bin size is 32kb(64 sectors)	
+SETUP_CNTS EQU 64		
 
-;we read setup.bin to memory 0x91000 for 36kb
+;we read setup.bin to memory 0x91000 for 32kb
 ;so the segment is 0x9100, we are in real mode now.
 SETUP_SEG EQU 0x9100	
 
@@ -52,7 +52,7 @@ LOADER_STACK_TOP EQU 0x9c000
 
 ;we can read sector less than 128 sector. so I set block size,
 ;every time we load 128 sectors
-BLOCK_SIZE EQU 128
+BLOCK_SIZE EQU 64
 
 ARDS_SEG	EQU		0x100	;ards start segment
 
@@ -82,16 +82,6 @@ VBE_MODE_SEG	EQU		0x130	; 物理地址是0x1300
 VBE_MODE_SIZE	EQU		0x100	; 固定大小256字节
 
 VBE_CMD_VBEINFO  EQU     0x4f00  ; 返回VBE控制器的信息
-
-; 配置vbe驱动，注意也要修改内核中的图形配置
-%define CONFIG_GRAPHIC      1
-
-; 启动图形模式
-%define CONFIG_GRAPHIC_SWITCH   1
-; 注意！！！ 配置图形只检测图形模式，如果要切换到图形模式，则需要打开图形开关
-
-%if CONFIG_GRAPHIC == 1
-;图形模式列表：
 
 ; 8位
 VMODE_1600_1200_8           EQU 0x11C
@@ -162,9 +152,3 @@ VMODE_1920_1200_32          EQU 0x189
 VMODE_2560_1600_32          EQU 0x18c
 VMODE_1280_720_32           EQU 0x18f
 VMODE_1920_1080_32          EQU 0x192
-
-; 使用的模式
-VBE_MODE	EQU	VMODE_800_600_16
-; my test computer: 1366 * 768
-%endif  ; CONFIG_GRAPHIC
-

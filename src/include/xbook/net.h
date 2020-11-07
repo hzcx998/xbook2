@@ -2,7 +2,9 @@
 #ifndef _XBOOK_NET_H
 #define _XBOOK_NET_H
 
+
 #include <lwip/sockets.h>
+#include <stdint.h>
 
 void init_net(void);
 
@@ -39,5 +41,6 @@ int sys_getsockopt(int sockfd, unsigned int flags, void *optval, socklen_t *optl
 int sys_setsockopt(int sockfd, unsigned int flags, const void *optval, socklen_t optlen);
 int sys_ioctlsocket(int sockfd, int request, void *arg);
 int sys_select(int maxfdp, struct _sockfd_set *fd_sets, struct timeval *timeout);
+int sys_dns_setserver(uint8_t numdns, const char *str);
 
 #endif  /* _XBOOK_NET_H */

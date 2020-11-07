@@ -1,5 +1,5 @@
 /*
- * libc/stdio/__stdio_read.c
+ * xlibc/stdio/__stdio_read.c
  */
 
 #include <sizes.h>

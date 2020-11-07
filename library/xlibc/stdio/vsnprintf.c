@@ -1,5 +1,5 @@
 /*
- * libc/stdio/vsnprintf.c
+ * xlibc/stdio/vsnprintf.c
  */
 
 #include <math.h>

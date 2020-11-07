@@ -1,6 +1,10 @@
 #ifndef _SYS_KTIME_H
 #define _SYS_KTIME_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* 时间和数据互相转换 */
 #define KTIME_TIME(hou, min, sec) ((unsigned short)(((hou & 0x1f) << 11) | \
@@ -35,5 +39,9 @@ typedef struct ktime {
 	int week_day;        /* [0-6] */
 	int year_day;        /**/
 } ktime_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* _SYS_KTIME_H */

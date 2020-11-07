@@ -38,6 +38,11 @@
 #define TTYIO_VISITOR       DEVCTL_CODE('t', 2)
 #define TTYIO_DETACH        DEVCTL_CODE('t', 3)
 #define TTYIO_COMBINE       DEVCTL_CODE('t', 4)
+#define TIOCGPTN            DEVCTL_CODE('t', 5) /* get presudo tty number */
+#define TIOCSPTLCK          DEVCTL_CODE('t', 6) /* set presudo tty lock */
+#define TIOCSFLGS           DEVCTL_CODE('t', 7) /* set flags */
+#define TIOCGFLGS           DEVCTL_CODE('t', 8) /* get flags */
+#define TIOCGFG             DEVCTL_CODE('t', 9) /* get front group task */
 
 /* net */
 #define NETIO_GETMAC        DEVCTL_CODE('n', 1)
@@ -53,6 +58,7 @@ typedef struct _video_info {
 
 /* even */
 #define EVENIO_GETLED     DEVCTL_CODE('e', 1) /* get led states */
+#define EVENIO_SETFLG     DEVCTL_CODE('e', 2) /* set flags */
 
 /* pipe */
 #define PIPEIO_SETRW        DEVCTL_CODE('p', 1) /* set reader or writer */
@@ -62,5 +68,6 @@ typedef struct _video_info {
 #define SNDIO_PLAY          DEVCTL_CODE('s', 1) /* play */
 #define SNDIO_STOP          DEVCTL_CODE('s', 2) /* stop play */
 #define SNDIO_SETFREQ       DEVCTL_CODE('s', 3) /* set play freq */
+
 
 #endif   /* _SYS_IOCTL_H */

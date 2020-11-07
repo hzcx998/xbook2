@@ -1,5 +1,5 @@
 /*
- * libc/stdio/tmpname.c
+ * xlibc/stdio/tmpname.c
  */
 
 #include <stdio.h>

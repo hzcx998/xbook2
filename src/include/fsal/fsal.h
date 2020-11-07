@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <list.h>
 
-#define ROOT_DISK_NAME  "disk0"
+#define ROOT_DISK_NAME  "disk1"
 #define ROOT_DIR_PATH  "/root"
 
 #define FS_MODEL_NAME  "fsal"

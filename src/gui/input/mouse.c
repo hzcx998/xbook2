@@ -21,7 +21,7 @@
 
 void gui_mouse_button_down(int btn)
 {
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
     printf("[mouse ] %d button down.\n", btn);
     printf("[mouse ] x:%d, y:%d\n", gui_mouse.x, gui_mouse.y);
 #endif    
@@ -60,7 +60,7 @@ void gui_mouse_button_down(int btn)
 
 void gui_mouse_button_up(int btn)
 {
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_DRV    
     printf("[mouse ] %d button up.\n", btn);
     printf("[mouse ] x:%d, y:%d\n", gui_mouse.x, gui_mouse.y);
 #endif   
@@ -90,6 +90,35 @@ void gui_mouse_button_up(int btn)
         break;
     default:
         m.id    = GM_NONE;
+        break;
+    }
+    m.data0     = gui_mouse.x;
+    m.data1     = gui_mouse.y;
+    gui_push_msg(&m);
+}
+
+void gui_mouse_wheel(int val)
+{
+#ifdef DEBUG_DRV    
+    printf("[mouse ] %d wheel %d.\n", val);
+#endif   
+    g_msg_t m;
+    memset(&m, 0, sizeof(g_msg_t));
+    switch (val)
+    {
+    case 0:
+        m.id    = GM_MOUSE_WHEEL_UP;
+        break;
+    case 1:
+        m.id    = GM_MOUSE_WHEEL_DOWN;
+        break;
+    case 2:
+        m.id    = GM_MOUSE_WHEEL_LEFT;
+        break;
+    case 3:
+        m.id    = GM_MOUSE_WHEEL_RIGHT;
+        break;
+    default:
         break;
     }
     m.data0     = gui_mouse.x;
@@ -427,14 +456,19 @@ void gui_draw_shade_layer(layer_t *shade, gui_rect_t *rect, int draw)
 { 
     if (!shade || !rect)
         return;
+    
+    #if 0   /* shade can out of screen */
     if (rect->x < 0)
         rect->x = 0;
     if (rect->y < 0)
         rect->y = 0;
+    
     if (rect->width > shade->width)
         rect->width = shade->width;
     if (rect->height > shade->height)
         rect->height = shade->height;
+
+    #endif
     GUI_COLOR color;
 
     /* 如果有绘制，就根据绘制窗口绘制容器 */
@@ -511,6 +545,8 @@ int init_mouse_layer()
     gui_mouse.button_down   = gui_mouse_button_down;
     gui_mouse.button_up     = gui_mouse_button_up;
     gui_mouse.motion    = gui_mouse_motion;
+    gui_mouse.wheel    = gui_mouse_wheel;
+    
     gui_mouse.width     = 32;
     gui_mouse.height    = 32;
     gui_mouse.state     = MOUSE_NORMAL;

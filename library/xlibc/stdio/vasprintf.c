@@ -1,5 +1,5 @@
 /*
- * libc/stdio/vasprintf.c
+ * xlibc/stdio/vasprintf.c
  */
 
 #include <malloc.h>

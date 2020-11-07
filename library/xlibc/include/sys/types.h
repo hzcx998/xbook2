@@ -1,6 +1,10 @@
 #ifndef _SYS_TYPES_H
 #define _SYS_TYPES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <types.h>
@@ -22,5 +26,9 @@ typedef struct dirent {
 } dirent_t;
 
 typedef long ssize_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _SYS_TYPES_H */

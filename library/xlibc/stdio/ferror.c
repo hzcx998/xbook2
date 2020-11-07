@@ -1,5 +1,5 @@
 /*
- * libc/stdio/ferror.c
+ * xlibc/stdio/ferror.c
  */
 
 #include <stdio.h>

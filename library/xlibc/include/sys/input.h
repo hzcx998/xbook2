@@ -1,6 +1,10 @@
 #ifndef _SYS_INPUT_H
 #define _SYS_INPUT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 typedef struct input_event {
@@ -199,5 +203,9 @@ enum input_rel_code {
     REL_Y,
     REL_WHEEL
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* _SYS_INPUT_H */

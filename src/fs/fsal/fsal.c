@@ -12,8 +12,9 @@
 #include <xbook/kmalloc.h>
 #include <xbook/debug.h>
 #include <xbook/fs.h>
+#include <xbook/schedule.h>
 
-#define DEBUG_LOCAL 0
+// #define DEBUG_FSAL
 
 
 /* 文件表指针 */
@@ -98,11 +99,30 @@ int fsal_list_dir(char* path)
 
 int init_disk_mount()
 {
-    /* 挂载文件系统 */
-    if (fsif.mount(ROOT_DISK_NAME, ROOT_DIR_PATH, "fat32", 0) < 0) {
-        printk("[%s] %s: mount failed!\n", FS_MODEL_NAME, __func__);
+    char name[32];
+    /* 选择一个已经创建文件系统的磁盘进行挂载为根目录 */
+    int i;
+    for (i = 0; i < 4; i++) {
+        memset(name, 0, 32);
+        strcpy(name, "disk");
+        char s[2] = {0, 0};
+        s[0] = i + '0';
+        strcat(name, s);
+        /* 挂载文件系统 */
+        if (fsif.mount(name, ROOT_DIR_PATH, "fat32", 0) < 0) {
+            #ifdef DEBUG_FSAL
+            printk("[fsal] : mount on device %s failed!\n");
+            #endif
+            continue;
+        }
+        printk("[fsal] : mount device %s success!\n", name);
+        break;  // 成功挂载
+    }
+    if (i >= 4) {
+        printk("[fsal] : mount path %s failed!\n", ROOT_DIR_PATH);
         return -1;
     }
+
 
     return 0;
 }
@@ -156,6 +176,10 @@ int fs_fd_exit(task_t *task)
 {
     if (!task->fileman)
         return -1;
+    int i;
+    for (i = 0; i < LOCAL_FILE_OPEN_NR; i++)
+        fsif_degrow(i);
+    
     kfree(task->fileman);
     task->fileman = NULL;
     return 0;
@@ -166,7 +190,7 @@ int fs_fd_copy(task_t *src, task_t *dest)
     if (!src->fileman || !dest->fileman) {
         return -1;
     }
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_FSAL
     printk("[fs]: fd copy from %s to %s\n", src->name, dest->name);
     #endif
     /* 复制工作目录 */
@@ -178,7 +202,7 @@ int fs_fd_copy(task_t *src, task_t *dest)
             dest->fileman->fds[i].flags = src->fileman->fds[i].flags;
             dest->fileman->fds[i].offset = src->fileman->fds[i].offset;
             
-            #if DEBUG_LOCAL == 1
+            #ifdef DEBUG_FSAL
             printk("[fs]: fds[%d]=%d\n", i, src->fileman->fds[i].handle);
             #endif
 
@@ -202,7 +226,7 @@ int fs_fd_reinit(task_t *cur)
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         if (cur->fileman->fds[i].flags != 0) {  /* 已经占用，需要关闭 */
-            #if DEBUG_LOCAL == 1
+            #ifdef DEBUG_FSAL
             pr_dbg("[FS]: %s: fd=%d, flags=%x handle=%d\n", __func__, i, 
                 cur->fileman->fds[i].flags, cur->fileman->fds[i].handle);
             #endif
@@ -260,7 +284,7 @@ int local_fd_install(int resid, unsigned int flags)
     task_t *cur = current_task;
     cur->fileman->fds[fd].handle = resid;
     cur->fileman->fds[fd].flags |= flags;
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_FSAL
     printf("[FS]: %s: install fd=%d handle=%d\n", __func__, fd, resid);
     #endif
     return fd;
@@ -284,7 +308,7 @@ int local_fd_install_to(int resid, int newfd, unsigned int flags)
     cur->fileman->fds[newfd].flags = FILE_FD_ALLOC;
     cur->fileman->fds[newfd].flags |= flags;
     cur->fileman->fds[newfd].offset = 0;
-    #if DEBUG_LOCAL == 1
+    #ifdef DEBUG_FSAL
     printf("[FS]: %s: install fd=%d handle=%d\n", __func__, newfd, resid);
     #endif
     return newfd;

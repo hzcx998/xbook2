@@ -1,5 +1,5 @@
 /*
- * libc/stdio/asprintf.c
+ * xlibc/stdio/asprintf.c
  */
 
 #include <stdio.h>

@@ -7,6 +7,7 @@
 #include <gui/layer.h>
 #include <gui/message.h>
 #include <gui/timer.h>
+#include <gui/console.h>
 
 #include <xbook/debug.h>
 #include <xbook/gui.h>
@@ -34,12 +35,12 @@ void kgui_thread(void *arg)
     memset(&msg, 0, sizeof(g_msg_t));
     while (1)
     {
-        /* 读取事件 */
         gui_keyboard.read();
         gui_mouse.read();
         
         /* 获取系统消息 */
         if (gui_pop_msg(&msg) < 0) {
+            task_yeild(); /* 让出cpu */
             continue;
         }
         switch (msg.id)
@@ -59,7 +60,10 @@ void kgui_thread(void *arg)
         case GM_MOUSE_MBTN_DOWN:
         case GM_MOUSE_MBTN_UP:
         case GM_MOUSE_MBTN_DBLCLK:
-        case GM_MOUSE_WHEEL:
+        case GM_MOUSE_WHEEL_UP:
+        case GM_MOUSE_WHEEL_DOWN:
+        case GM_MOUSE_WHEEL_LEFT:
+        case GM_MOUSE_WHEEL_RIGHT:
             /* 鼠标消息发送到鼠标指针所在的图层 */
             gui_dispatch_mouse_msg(&msg);
             break;
@@ -68,14 +72,16 @@ void kgui_thread(void *arg)
             gui_dispatch_target_msg(&msg);
             break;
         }
-        /*printk("msg: target=%d id=%x data0=%x data1=%x data2=%x data3=%x\n", 
+        #if 0
+        printk("msg: target=%d id=%x data0=%x data1=%x data2=%x data3=%x\n", 
             msg.target, msg.id, msg.data0, msg.data1, msg.data2, msg.data3);
-        */
+        #endif
     }
 }
 
 void init_gui()
 {
+    #ifdef CONFIG_GRAPH
     if (gui_init_screen() < 0)
         panic("init gui screen failed!\n");
     if (gui_init_keyboard() < 0)
@@ -95,12 +101,17 @@ void init_gui()
     if (gui_mouse.open() < 0)
         panic("open gui keyboard failed!\n");
 
+    if (gui_init_console() < 0)
+        panic("init gui console failed!\n");
+
     if (gui_init_layer() < 0)
         panic("init gui layer failed!\n");
 
     /* 启动gui线程 */
-    if (kthread_start("kgui", TASK_PRIO_USER, kgui_thread, NULL) == NULL)
+    if (kthread_start("kgui", TASK_PRIO_RT, kgui_thread, NULL) == NULL)
         panic("start kgui thread failed!\n");
+    #endif
+    
 }
 
 int gui_user_init(task_t *task)
@@ -118,6 +129,8 @@ int sys_g_init(void)
 
 int gui_user_exit(task_t *task)
 {
+    if (!task->gmsgpool)
+        return -1;
     /* 根据任务查找图层 */
     layer_t *layer;
     do {
@@ -152,13 +165,12 @@ int gui_user_exit(task_t *task)
       
     if (gui_msgpool_exit(task) < 0)
         return -1;
-    
     return 0;
 }
 
 int sys_g_quit(void)
 {
     task_t *cur = current_task;
-    
-    return gui_user_exit(cur);
+    int ret = gui_user_exit(cur);
+    return ret;
 }

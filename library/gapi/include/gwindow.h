@@ -9,21 +9,24 @@
 
 #define GW_TITLE_LEN    64
 
-#define GW_ON_BACK_COLOR  GC_RGB(245, 245, 245)
+#define GW_ON_BACK_COLOR  GC_ARGB(225, 245, 245, 245)
 #define GW_ON_BOARD_COLOR GC_RGB(200, 200, 200)
 #define GW_ON_FRONT_COLOR GC_RGB(230, 230, 230)
 #define GW_ON_FONT_COLOR  GC_RGB(25, 25, 25)
 
-#define GW_OFF_BACK_COLOR  GC_RGB(235, 235, 235)
-#define GW_OFF_BOARD_COLOR GC_RGB(190, 190, 190)
-#define GW_OFF_FRONT_COLOR GC_RGB(210, 210, 210)
-#define GW_OFF_FONT_COLOR  GC_RGB(128, 128, 128)
+#define GW_OFF_BACK_COLOR  GC_ARGB(225, 225, 225, 225)
+#define GW_OFF_BOARD_COLOR GC_RGB(180, 180, 180)
+#define GW_OFF_FRONT_COLOR GC_RGB(200, 200, 200)
+#define GW_OFF_FONT_COLOR  GC_RGB(118, 118, 118)
 
 enum {
-    GW_MAXIM        = (1 << 0),
-    GW_RESIZE       = (1 << 1),
-    GW_RESIZE_EX    = (1 << 2),
-    
+    GW_MAXIM        = (1 << 0), /* 处于最大化状态 */
+    GW_RESIZE       = (1 << 1), /* 处于调整大小状态 */
+    GW_RESIZE_EX    = (1 << 2), /* 记录大小调整信息中 */
+    GW_NO_MAXIM     = (1 << 3), /* 没有最大化按钮 */
+    GW_NO_MINIM     = (1 << 4), /* 没有最小化按钮 */
+    GW_SHOW         = (1 << 5), /* 创建时显示 */
+    GW_FOCUSED      = (1 << 6), /* 窗体是否处于聚焦中 */
 };
 
 #define GW_BTN_SIZE 16
@@ -51,9 +54,8 @@ typedef struct {
     char title[GW_TITLE_LEN];   /* 窗口的标题 */
 } g_window_t;
 
-int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height);
+int g_new_window(char *title, int x, int y, uint32_t width, uint32_t height, uint32_t flags);
 int g_del_window(int win);
-int g_del_window_all();
 int g_show_window(int win);
 
 int g_hide_window(int win);
@@ -61,36 +63,22 @@ g_window_t *g_find_window(int win);
 int g_resize_window(int win, uint32_t width, uint32_t height);
 int g_focus_window(int win, int turn);
 int g_maxim_window(int win);
+int g_set_window_title(int win, const char *title);
 
 int g_enable_window_resize(int win);
 int g_disable_window_resize(int win);
 int g_set_window_minresize(int win, uint32_t min_width, uint32_t min_height);
 
-int g_window_put_point(int win, int x, int y, g_color_t color);
-int g_window_get_point(int win, int x, int y, g_color_t *color);
-int g_window_rect_fill(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color);
-int g_window_rect(int win, int x, int y, uint32_t width, uint32_t height, g_color_t color);
 int g_refresh_window_rect(int win, int x, int y, uint32_t width, uint32_t height);
 int g_refresh_window_region(int win, int left, int top, int right, int bottom);
-int g_window_paint(int win, int x, int y, g_bitmap_t *bmp);
-int g_window_paint_ex(int win, int x, int y, g_bitmap_t *bmp);
-
+int g_paint_window(int win, int x, int y, g_bitmap_t *bmp);
+int g_paint_window_ex(int win, int x, int y, g_bitmap_t *bmp);
+int g_paint_window_copy(int win, int x, int y, g_bitmap_t *bmp);
 int g_update_window(int win);
 int g_invalid_rect(int win, int x, int y, uint32_t width, uint32_t height);
 int g_invalid_window(int win);
 int g_get_invalid(int win, int *x, int *y, uint32_t *width, uint32_t *height);
 
-int g_window_char(
-    int win,
-    int x,
-    int y,
-    char ch,
-    uint32_t color);
-int g_window_text(
-    int win,
-    int x,
-    int y,
-    char *text,
-    uint32_t color);
+int g_set_window_icon(int win, char *path);
 
 #endif  /* _GAPI_WINDOW_H */

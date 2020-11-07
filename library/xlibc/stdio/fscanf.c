@@ -1,5 +1,5 @@
 /*
- * libc/stdio/fscanf.c
+ * xlibc/stdio/fscanf.c
  */
 
 #include <sizes.h>

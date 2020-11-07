@@ -39,6 +39,12 @@
 
    On a 32 bit machine UWtype should typically be USItype;
    on a 64 bit machine, UWtype should typically be UDItype.  */
+#ifndef _XLIBC_LONGLONG_H
+#define _XLIBC_LONGLONG_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define __BITS4 (W_TYPE_SIZE / 4)
 #define __ll_B ((UWtype) 1 << (W_TYPE_SIZE / 2))
@@ -1739,3 +1745,5 @@ extern UHItype __stormy16_count_leading_zeros (UHItype);
 #ifndef UDIV_NEEDS_NORMALIZATION
 #define UDIV_NEEDS_NORMALIZATION 0
 #endif
+
+#endif /* _XLIBC_LONGLONG_H */

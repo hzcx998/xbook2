@@ -1,0 +1,10 @@
+SRC	+= disk/
+SRC	+= uart/
+SRC	+= console/
+SRC	+= net/
+SRC	+= input/
+SRC	+= tty/
+SRC	+= virtual/
+SRC	+= video/
+SRC	+= sound/
+SRC	+= cpu.c

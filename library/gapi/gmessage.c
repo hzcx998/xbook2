@@ -6,8 +6,6 @@
 #include <gtimer.h>
 #include <stdio.h>
 
-int (*_g_msg_routine_call) (g_msg_t *msg);
-
 /**
  * 过滤系统消息。
  * 某些特殊功能，是需要进程和内核互相协作才能完成。
@@ -29,7 +27,7 @@ static int g_filter_msg(g_msg_t *msg)
         /* 触摸状态改变 */
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         if (g_region_in(&win->body_region, po.x, po.y)) {
             /* 进行坐标转换 */
             g_msg_get_mouse_x(msg) = po.x - win->body_region.left;
@@ -42,7 +40,7 @@ static int g_filter_msg(g_msg_t *msg)
     case GM_MOUSE_LBTN_DOWN:
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_click_check_group(&win->touch_list, &po, 0);
+        g_check_touch_click_group(&win->touch_list, &po, 0);
         if (g_region_in(&win->body_region, po.x, po.y)) {
             /* 进行坐标转换 */
             g_msg_get_mouse_x(msg) = po.x - win->body_region.left;
@@ -54,7 +52,7 @@ static int g_filter_msg(g_msg_t *msg)
     case GM_MOUSE_LBTN_UP:
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_click_check_group(&win->touch_list, &po, 1);
+        g_check_touch_click_group(&win->touch_list, &po, 1);
         if (g_region_in(&win->body_region, po.x, po.y)) {
             /* 进行坐标转换 */
             g_msg_get_mouse_x(msg) = po.x - win->body_region.left;
@@ -70,7 +68,10 @@ static int g_filter_msg(g_msg_t *msg)
     case GM_MOUSE_MBTN_DOWN:
     case GM_MOUSE_MBTN_UP:
     case GM_MOUSE_MBTN_DBLCLK:
-    case GM_MOUSE_WHEEL:
+    case GM_MOUSE_WHEEL_UP:
+    case GM_MOUSE_WHEEL_DOWN:
+    case GM_MOUSE_WHEEL_LEFT:
+    case GM_MOUSE_WHEEL_RIGHT:
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
         if (g_region_in(&win->body_region, po.x, po.y)) {
@@ -90,7 +91,7 @@ static int g_filter_msg(g_msg_t *msg)
         /* 调整窗口后，鼠标位置发生了改变 */
         po.x = -1;
         po.y = -1;
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         val = -1;
         break;
     case GM_MOVE:   /* 窗口移动 */
@@ -115,18 +116,18 @@ static int g_filter_msg(g_msg_t *msg)
     case GM_LAYER_LEAVE: /* 离开窗口 */
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         break;
     case GM_LAYER_ENTER: /* 进入窗口 */
         po.x = g_msg_get_mouse_x(msg);
         po.y = g_msg_get_mouse_y(msg);
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         break;
     case GM_HIDE: /* 隐藏窗口 */
         /* 调整窗口后，鼠标位置发生了改变 */
         po.x = -1;
         po.y = -1;
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         
         g_hide_window(win->layer);
         val = 0;
@@ -135,7 +136,7 @@ static int g_filter_msg(g_msg_t *msg)
         /* 调整窗口后，鼠标位置发生了改变 */
         po.x = -1;
         po.y = -1;
-        g_touch_state_check_group(&win->touch_list, &po);
+        g_check_touch_state_group(&win->touch_list, &po);
         g_show_window(win->layer);
         val = 0;
         break;
@@ -156,48 +157,41 @@ static int g_filter_msg(g_msg_t *msg)
 }
 
 /**
- * 默认的消息处理方式
- */
-static int g_default_msg_proc(g_msg_t *msg)
-{
-
-    return 0;
-}
-
-int g_set_msg_routine(int (*routine)(g_msg_t *))
-{
-    _g_msg_routine_call = routine;
-    return 0;
-}
-
+ * 获取一个消息，无消息则阻塞
+ * 成功获取一个消息返回1
+ * 没有获取消息返回0
+ * 获取一个QUIT消息返回-1
+*/
 int g_get_msg(g_msg_t *msg)
 {
-    int val = syscall1(int, SYS_GGETMSG, msg);
-    
-    return val;
-}
-
-int g_try_get_msg(g_msg_t *msg)
-{
-    int val = syscall1(int, SYS_GTRYGETMSG, msg);
-    return val;
+    while (!syscall1(int, SYS_GGETMSG, msg)) { // 获取到消息
+        if (!g_filter_msg(msg)) { // 被系统过滤，返回0
+            return 0;
+        }
+        if (g_is_quit_msg(msg)) // quit msg
+            return -1;
+        return 1; // 获取但没有被处理，用户来处理
+    }
+    return 0;  // 获取消息出错  
 }
 
 /**
- * 派发消息
- * 用户处理的返回>0，系统处理的返回0
+ * 获取一个消息，无消息则不阻塞
+ * 成功获取一个消息返回1
+ * 没有获取消息返回0
+ * 获取一个QUIT消息返回-1
 */
-int g_dispatch_msg(g_msg_t *msg)
+int g_try_get_msg(g_msg_t *msg)
 {
-    if (!g_filter_msg(msg))
-        return 0;
-    if (_g_msg_routine_call) {
-        int retval = _g_msg_routine_call(msg);
-        if (retval > 0)
-            return retval;
+    if (!syscall1(int, SYS_GTRYGETMSG, msg)) { // 获取到消息
+        if (!g_filter_msg(msg)) { // 被系统过滤，返回0
+            return 0;
+        }
+        if (g_is_quit_msg(msg)) // quit msg
+            return -1;
+        return 1; // 获取但没有被处理，用户来处理
     }
-    /* 默认处理方式 */
-    return g_default_msg_proc(msg);
+    return 0; 
 }
 
 int g_post_msg(g_msg_t *msg)
@@ -219,12 +213,6 @@ int g_post_quit_msg(int target)
     m.target = target;
     m.id = GM_QUIT;
     return g_post_msg(&m);
-}
-
-int g_init_msg()
-{
-    _g_msg_routine_call = NULL;
-    return 0;
 }
 
 /* 将小键盘的按键转换成主键盘上面的按键 */

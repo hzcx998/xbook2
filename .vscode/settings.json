@@ -55,7 +55,7 @@
         "vsprintf.h": "c",
         "vmarea.h": "c",
         "io.h": "c",
-        "vine.h": "c",
+        "func.h": "c",
         "pci.h": "c",
         "byteorder.h": "c",
         "cpu.h": "c",
@@ -122,16 +122,6 @@
         "font.h": "c",
         "event.h": "c",
         "cursor.h": "c",
-<<<<<<< HEAD
-        "*.tcc": "c",
-        "fstream": "c",
-        "istream": "c",
-        "ostream": "c",
-        "*.rh": "c",
-        "array": "c",
-        "string": "c",
-        "string_view": "c"
-=======
         "mouse.h": "c",
         "graph.h": "c",
         "waitqueue.h": "c",
@@ -139,7 +129,26 @@
         "gscreen.h": "c",
         "cstdlib": "c",
         "sh_clipboard.h": "c",
-        "sh_window.h": "c"
->>>>>>> develop
+        "sh_window.h": "c",
+        "shape.h": "c",
+        "iostream": "c",
+        "ostream": "c",
+        "new": "c",
+        "lvgl.h": "c",
+        "gui.h": "c",
+        "initcall.h": "c",
+        "gapi.h": "c",
+        "pipe.h": "c",
+        "microui.h": "c",
+        "lv_examples.h": "c",
+        "sh_terminal.h": "c",
+        "sh_cursor.h": "c",
+        "ft_window.h": "c",
+        "lvgl_window.h": "c",
+        "ioctl.h": "c",
+        "sh_console.h": "c",
+        "stat.h": "c",
+        "ft_terminal.h": "c",
+        "ft_clipboard.h": "c"
     }
 }

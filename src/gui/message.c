@@ -1,5 +1,5 @@
 #include <xbook/msgpool.h>
-#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <gui/message.h>
 #include <gui/layer.h>
 #include <gui/timer.h>
@@ -16,18 +16,15 @@ int gui_init_msg()
 
 int gui_push_msg(g_msg_t *msg)
 {
-    if (msgpool_full(gui_msgpool) > 0)
-        return -1;
-    return msgpool_push(gui_msgpool, msg);
+    return msgpool_try_push(gui_msgpool, msg);
 }
 
 int gui_pop_msg(g_msg_t *msg)
 {
-    if (msgpool_empty(gui_msgpool) > 0)
-        return -1;
-    return msgpool_pop(gui_msgpool, msg);
+    /*if (msgpool_empty(gui_msgpool) > 0)
+        return -1;*/
+    return msgpool_try_pop(gui_msgpool, msg);
 }
-
 
 /**
  * 初始化用户消息池
@@ -48,12 +45,10 @@ int gui_msgpool_init(task_t *task)
  */
 int gui_msgpool_exit(task_t *task)
 {
-
     if (task->gmsgpool) {
         msgpool_destroy(task->gmsgpool);
         task->gmsgpool = NULL;
     }
-
     return 0;
 }
 

@@ -16,15 +16,13 @@ typedef struct {
     int width;  
     int height;
     int bpp;        /* bits per pixel */
-    /* 颜色转换 */
-    SCREEN_COLOR   (*gui_to_screen_color)(GUI_COLOR  gui_color);
-    GUI_COLOR      (*screen_to_gui_color)(SCREEN_COLOR  screen_color);
+    unsigned char  *vram_start;
     g_screen_t screen;
     int            (*open)(void);
     int	           (*close)(void);
 
-    int            (*output_pixel)(int x, int y, SCREEN_COLOR  color);
-    int            (*input_pixel)(int x, int y, SCREEN_COLOR  *color);
+    int            (*output_pixel)(int x, int y, GUI_COLOR  color);
+    int            (*input_pixel)(int x, int y, GUI_COLOR  *color);
     
     int            (*output_hline)(int left, int right, int top, SCREEN_COLOR  color);
     int            (*output_vline)(int left, int top, int bottom, SCREEN_COLOR  color);

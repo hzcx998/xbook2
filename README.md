@@ -4,7 +4,7 @@ xbook2操作系统内核是一个基于intel x86平台的32位处理器的系统
 尽力了3个多月混合内核阶段，我发现微内核一个非常非常非常严重的问题就是效率，性能问题。我也知道我写得代码很烂，但是相比于宏内核的效率，的确差很多。于是，冥思苦想，还是做回宏内核，拥抱小可爱。
 
 xbook2被设计成一个跨处理器平台的架构，有ARCH目录，可以在里面添加一个新的处理器平台。不过目前也是尽量将平台相关的分离到arch里面，并为完全分离出来，待后面多实现几个平台后，才能更好的让处理器平台和内核部分进行更优化的分离。  
-  
+
 内核结构示意图：
 ```
 USER MODE:
@@ -30,6 +30,8 @@ KERNEL MODE:
 |          hardware         |
 +---------------------------+
 ```
+截图：
+![desktop0](https://gitee.com/hzc1998/xbook2/raw/master/develop/screenshoot/desktop0.png)
 
 系统功能列表：
 ```
@@ -55,14 +57,9 @@ PTHREAD线程库
 
 ## Windows环境搭建
 ```
-1.下载我提取的工具包：http://www.book-os.org/tools/BuildTools-v5.rar
-2.下载Mingw，官网下载或进QQ群下载：http://www.mingw.org/
-3.解压工具包和Mingw后配置环境变量到系统环境变量Path里面
-4.修改源码tools/fatfs/Makefile的Windows中gcc和头文件环境的路径为你Mingw的路径。
-5.下载qemu最新版：https://www.qemu.org/ 下载后安装，配置安装目录环境变量到系统环境变量Path里面
-    或者下载我提取的版本：http://www.book-os.org/tools/Qemu-i386.rar
-    下载后配置解压目录环境变量到系统环境变量Path里面
-！！！注意：BuilTools的环境配置要放在Mingw的前面
+1.下载我提取的工具包：http://www.book-os.org/tools/BuildTools-v7.zip, 下载后配置解压目录环境变量到系统环境变量Path里面。
+
+2.下载qemu最新版：https://www.qemu.org/ 下载后安装，配置安装目录环境变量到系统环境变量Path里面，或者下载我提取的版本：http://www.book-os.org/tools/Qemu-i386.rar，下载后配置解压目录环境变量到系统环境变量Path里面。
 ```
 
 ## Linux环境搭建

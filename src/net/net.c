@@ -21,6 +21,8 @@ struct netif rtl8139_netif;
 void
 httpserver_init();
 void socket_examples_init(void);
+void dns_netconn_init();
+void dhcp_netconn_init();
 
 /**
  * 0： 仅虚拟机和主机通信
@@ -41,16 +43,18 @@ void lwip_init_task(void)
     #if CONFIG_LEVEL == 0
     //IP4_ADDR(&ipaddr, 172,17,1,1);
     #if 0
-    IP4_ADDR(&ipaddr, 192,168,56,105);
-    IP4_ADDR(&gateway, 192,168,56,1);
-    IP4_ADDR(&netmask, 255,255,255, 0);
-    #else
     IP4_ADDR(&ipaddr, 169,254,146,177);
     IP4_ADDR(&gateway, 169,254,146,176);
     IP4_ADDR(&netmask, 255,255,0, 0);
+    #else
+    IP4_ADDR(&ipaddr, 192,168,0,105);
+    IP4_ADDR(&gateway, 192,168,0,104);
+    IP4_ADDR(&netmask, 255,255,255, 0);
 
     #endif
-    
+
+    sys_dns_setserver(1, "192.168.0.104");
+
     #elif CONFIG_LEVEL == 1
     IP4_ADDR(&gateway, 169,254,177,48);
     IP4_ADDR(&netmask, 255,255,0,0);
@@ -70,13 +74,9 @@ void lwip_init_task(void)
     netif_set_up(&rtl8139_netif);
 #if CONFIG_LEVEL == 2
     printk("[%s] %s: dhcp start.\n", "net", __func__);
-    dhcp_start(&rtl8139_netif);
-    while (rtl8139_netif.dhcp->state != DHCP_BOUND)
-    {
-        
-    }
+    err_t err = dhcp_start(&rtl8139_netif);
     
-    printk("[%s] %s: dhcp done.\n", "net", __func__);
+    printk("[%s] %s: dhcp done err=%d.\n", "net", __func__, err);
 #endif
     printk(KERN_DEBUG "lwip_init_task done\n");
 }
@@ -93,6 +93,8 @@ void netin_kthread(void *arg)
     lwip_init_task();
  
     httpserver_init();
+    dns_netconn_init();
+    //dhcp_netconn_init();
     //socket_examples_init();
     while(1) {
         /* 检测输入，如果没有收到数据就会阻塞。 */
@@ -110,9 +112,9 @@ void init_net(void)
         pr_err("init netcard driver failed!\n");
         return;
     }
-        
+    
     /* 打开一个线程来读取网络数据包 */
-    task_t * netin = kthread_start("netin", TASK_PRIO_USER, netin_kthread, NULL);
+    task_t * netin = kthread_start("netin", TASK_PRIO_RT, netin_kthread, NULL);
     if (netin == NULL) {
         pr_err("[NET]: start kthread netin failed!\n");
     }
@@ -133,25 +135,6 @@ const static char http_index_html[] = "<html><head><title>Congrats!</title></hea
 static void
 httpserver_serve(struct netconn *conn)
 {
-
-    ip_addr_t ipaddr;
-    memset(&ipaddr, 0, sizeof(ip_addr_t));
-
-    /* 获取主机域名 */
-    netconn_gethostbyname("www.book-os.org", &ipaddr);
-    printk("!!!ip: %x %s\n", ipaddr.addr, ipaddr_ntoa(&ipaddr));
-    ip_addr_t ipaddr2;
-    ipaddr2.addr = ntohl(ipaddr.addr);
-    printk("!!!ip: %x %s\n", ipaddr.addr, ipaddr_ntoa(&ipaddr2));
-
-    memset(&ipaddr, 0, sizeof(ip_addr_t));
-    
-    netconn_gethostbyname("www.baidu.org", &ipaddr);
-    printk("!!!ip: %x %s\n", ipaddr.addr, ipaddr_ntoa(&ipaddr));
-    ipaddr2.addr = ntohl(ipaddr.addr);
-    printk("!!!ip: %x %s\n", ipaddr.addr, ipaddr_ntoa(&ipaddr2));
-
-
   struct netbuf *inbuf;
   char *buf;
   u16_t buflen;
@@ -267,8 +250,6 @@ static void socket_nonblocking(void *arg)
   int ret;
   u32_t opt;
   struct sockaddr_in addr;
-  int err;
-
   LWIP_UNUSED_ARG(arg);
   /* set up address to connect to */
   memset(&addr, 0, sizeof(addr));
@@ -422,3 +403,121 @@ void socket_examples_init(void)
   sys_thread_new("socket_timeoutrecv", socket_timeoutrecv, NULL, 0, TCPIP_THREAD_PRIO);
 }
 #endif
+
+
+#if LWIP_NETCONN
+#define MAX_BUFFER_LEN 256
+char recvbuf[MAX_BUFFER_LEN];
+char sendbuf[MAX_BUFFER_LEN];
+
+static void dns_netconn_thread(void *arg)
+{
+    struct netconn *conn,*newconn = NULL;
+	err_t ret = ERR_OK;
+	conn = netconn_new(NETCONN_TCP);
+	netconn_bind(conn,NULL,8080);
+	netconn_listen(conn);
+	
+	while(1)
+	{
+		 ret = netconn_accept(conn, &newconn);
+		 while(newconn != NULL)
+		 {
+		   struct netbuf *inbuf = NULL;
+		   char *dataptr;
+		   u16_t size;
+		   ret = netconn_recv(newconn, &inbuf);
+		   if(ret == ERR_OK)
+		   {
+			 struct ip_addr dnsaddr;
+			 
+			 netbuf_data(inbuf, (void **)&dataptr, &size);
+			 if(size >= MAX_BUFFER_LEN)
+			 {
+                netbuf_delete(inbuf);
+				continue;
+			 }
+			 
+			 MEMCPY( recvbuf, dataptr, size);
+			 recvbuf[size] = '\0';
+			 netbuf_delete(inbuf);
+			 printk("recv web: %s\n", recvbuf);
+			 if ((ret = netconn_gethostbyname((char*)(recvbuf), &(dnsaddr))) == ERR_OK){
+				u16_t strlen = sprintf(sendbuf,"%s = %s\n",recvbuf,ip_ntoa(&dnsaddr));
+				if(strlen > 0)
+				  netconn_write(newconn,sendbuf, strlen, NETCONN_COPY);
+                printk("%s\n", sendbuf);
+			 }
+			 
+		   }else{
+		   
+			netconn_close(newconn);
+			netconn_delete(newconn);
+			newconn = NULL;
+		   }
+		 }//while(newconn!=NULL)
+	 }
+
+}
+
+void
+dns_netconn_init()
+{
+  sys_thread_new("http_server_netconn", dns_netconn_thread, NULL, DEFAULT_THREAD_STACKSIZE, TCPIP_THREAD_PRIO);
+}
+
+#endif /* LWIP_NETCONN*/
+
+
+#include "lwip/opt.h"
+#include "lwip/arch.h"
+#include "lwip/api.h"
+#include "lwip/dhcp.h"
+#include "lwip/inet.h"
+
+#if LWIP_NETCONN
+#define MAX_BUFFER_LEN 256
+char sendbuf[MAX_BUFFER_LEN];
+
+static void dhcp_netconn_thread(void *arg)
+{
+	struct netconn *conn;
+	struct ip_addr serveraddr;
+	u32_t err,wr_err;
+	int strlen = 0;
+    printk("dhcp thread start.!\n");
+	while(rtl8139_netif.dhcp->state != DHCP_BOUND)	//DHCP�Ƿ�����ЧIP��ַ
+		mdelay(100);
+    printk("!!!dhcp thread ok!\n");
+
+	IP4_ADDR(&serveraddr,169,254,146,176); 			//���������IP��ַ
+	
+	while(1)
+	{
+	   conn=netconn_new(NETCONN_TCP);			//����TCP���ӽṹ
+	   err=netconn_connect(conn,&serveraddr,8080);	//���ӷ��������˿ں�8080
+	 
+	   if(err==ERR_OK) {							//���ӳɹ�
+		   printk("Connection OK \n"); 		//��ӡ��Ϣ
+		   do
+		   {
+		      strlen = sprintf(sendbuf,"A LwIP client Using DHCP Address: %s\r\n", \
+			  	ipaddr_ntoa((ip_addr_t *)&(rtl8139_netif.ip_addr)));
+			  
+			  wr_err=netconn_write(conn,sendbuf, strlen, NETCONN_NOCOPY);
+			  mdelay(100);
+		   }while(wr_err==ERR_OK);
+	   }
+	   printk("Connection failed \n");
+	   netconn_close(conn); 						//�ر�����
+	   netconn_delete(conn);						//ɾ�����ӽṹ
+	}
+
+}
+
+void dhcp_netconn_init()
+{
+  sys_thread_new("dhcp_netconn_thread", dhcp_netconn_thread, NULL, DEFAULT_THREAD_STACKSIZE, TCPIP_THREAD_PRIO);
+}
+
+#endif /* LWIP_NETCONN*/

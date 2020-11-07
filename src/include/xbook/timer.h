@@ -10,10 +10,10 @@ typedef void (*timer_callback_t) (unsigned long);
 /* 定时器 */
 typedef struct timer_struct {
     list_t list;                /* 定时器链表 */
-    long timeout;      /* 超时计数器，以ticks为单位 */
+    clock_t timeout;            /* 超时点，以ticks为单位 */
     unsigned long arg;          /* 参数 */
     unsigned long id;           /* 定时器的id值 */
-    timer_callback_t callback;    /* 回调函数 */
+    timer_callback_t callback;  /* 回调函数 */
 } timer_t;
 
 #define TIMER_INIT(timer, _timeout, _arg, _callback) \
@@ -45,5 +45,6 @@ int timer_alive(timer_t *timer);
 void update_timers();
 long sys_usleep(struct timeval *inv, struct timeval *outv);
 
+int init_timer_system();
 
 #endif   /* _XBOOK_TIMER_H */

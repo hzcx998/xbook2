@@ -1,5 +1,5 @@
 /*
- * libc/stdio/rewind.c
+ * xlibc/stdio/rewind.c
  */
 
 #include <stdio.h>

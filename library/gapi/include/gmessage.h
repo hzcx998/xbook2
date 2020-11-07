@@ -19,7 +19,10 @@ enum {
     GM_MOUSE_MBTN_DOWN,
     GM_MOUSE_MBTN_UP,
     GM_MOUSE_MBTN_DBLCLK,
-    GM_MOUSE_WHEEL,
+    GM_MOUSE_WHEEL_UP,
+    GM_MOUSE_WHEEL_DOWN,
+    GM_MOUSE_WHEEL_LEFT,
+    GM_MOUSE_WHEEL_RIGHT,
     GM_TIMER,
     GM_LAYER_ENTER,
     GM_LAYER_LEAVE,
@@ -32,6 +35,7 @@ enum {
     GM_HIDE,
     GM_SHOW,
     GM_PAINT,
+    GM_WINDOW_ICON,
     GM_NR,
 };
 
@@ -45,10 +49,7 @@ typedef struct {
     uint32_t data3;
 } g_msg_t;
 
-int g_init_msg();
-int g_set_msg_routine(int (*routine)(g_msg_t *));
 int g_get_msg(g_msg_t *msg);
-int g_dispatch_msg(g_msg_t *msg);
 int g_try_get_msg(g_msg_t *msg);
 int g_post_msg(g_msg_t *msg);
 int g_send_msg(g_msg_t *msg);
@@ -68,6 +69,8 @@ int g_translate_msg(g_msg_t *msg);
 
 #define g_msg_get_move_x(msg) ((msg)->data0)
 #define g_msg_get_move_y(msg) ((msg)->data1)
+
+#define g_msg_get_mouse_wheel(msg) ((int)(msg)->data2)
 
 #define g_msg_get_resize_x(msg) ((msg)->data0)
 #define g_msg_get_resize_y(msg) ((msg)->data1)

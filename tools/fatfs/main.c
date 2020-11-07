@@ -13,8 +13,7 @@
 
 #include "ff.h"
 
-#define DEBUG_LOCAL 0
-
+// #define DEBUG_FATFS_MAIN
 
 /* 磁盘驱动，把镜像文件模拟成一个磁盘设备 */
 
@@ -49,7 +48,7 @@ int scan_host_files(char *host_path, char *custom_path);
  */
 int main(int argc, char *argv[]) 
 {
-#if DEBUG_LOCAL == 1   
+#ifdef DEBUG_FATFS_MAIN   
     printf("==== FATFS MANAGMENT ====\n");
     printf("args:\n");
     int i;
@@ -69,16 +68,15 @@ int main(int argc, char *argv[])
         image_file = argv[1];
         rom_dir = argv[2];
         disk_sz = atoi(argv[3]);    /* 单位是MB */
-        if (disk_sz <= 0)
-            disk_sz = DISK_SIZE;
-        else 
+        if (disk_sz > 0) 
             disk_sz *= (1024*1024); /* 转换成MB */
+        
     } else {
         image_file = IMAGE_FILE;
         rom_dir = ROM_DIR;
         disk_sz = DISK_SIZE;
     }
-#if DEBUG_LOCAL == 1   
+#ifdef DEBUG_FATFS_MAIN   
     printf("fatfs: image file: %s\n", image_file);
     printf("fatfs: rom dir: %s\n", rom_dir);
 #endif    
@@ -98,7 +96,7 @@ int main(int argc, char *argv[])
     BYTE work[FF_MAX_SS]; /* Work area (larger is better for processing time) */
 
     if (mkfs_flags) {
-#if DEBUG_LOCAL == 1           
+#ifdef DEBUG_FATFS_MAIN           
         printf("fatfs: make a new fs on the disk.\n");
 #endif
         //MKFS_PARM opt = {FM_FAT32, 0, 0, 0, 0};
@@ -119,13 +117,13 @@ int main(int argc, char *argv[])
     }
 
     /* 打印rom目录内容 */
-    #if DEBUG_LOCAL == 1   
+    #ifdef DEBUG_FATFS_MAIN   
     printf("==== HOST ROM FILES ====\n");
     #endif
     scan_host_files(rom_dir, "0:");
 
     /* 打印磁盘文件上的文件信息 */
-    #if DEBUG_LOCAL == 1   
+    #ifdef DEBUG_FATFS_MAIN   
     printf("==== FILES ====\n");
     #endif
     char dir_buf[256] = {0};
@@ -158,7 +156,7 @@ FRESULT scan_files (
             res = f_readdir(&dir, &fno);                   /* Read a directory item */
             if (res != FR_OK || fno.fname[0] == 0) break;  /* Break on error or end of dir */
             if (fno.fattrib & AM_FDIR) {                    /* It is a directory */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
                 printf("%s/%s\n", path, fno.fname);
 #endif
                 char sub_path[256];
@@ -175,7 +173,7 @@ FRESULT scan_files (
                 if (res != FR_OK) break;
                 //path[i] = 0;
             } else {                                       /* It is a file. */
-                #if DEBUG_LOCAL == 1    
+                #ifdef DEBUG_FATFS_MAIN    
                 printf("%s/%s size: %d\n", path, fno.fname, fno.fsize);
                 #endif
             }
@@ -191,7 +189,7 @@ FRESULT scan_files (
  */
 int copy_file_to_custom(char *host_path, char *custom_path)
 {
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_FATFS_MAIN    
     printf("fatfs: copy file from %s to %s\n", host_path, custom_path);
 #endif
     FILE *fp = fopen(host_path, "rb+");
@@ -201,7 +199,7 @@ int copy_file_to_custom(char *host_path, char *custom_path)
     }
     fseek(fp, 0, SEEK_END);
     int filesz = ftell(fp);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
     printf("fatfs: host file size:%d\n", filesz);
 #endif
     if (filesz <= 0) { /* empty file */
@@ -229,7 +227,7 @@ int copy_file_to_custom(char *host_path, char *custom_path)
     size_t read_bytes;
     memset(buf, 0, filesz + 1);
     read_bytes = fread(buf, 1, filesz,  fp);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
     printf("fatfs: read %d bytes.\n", read_bytes);
 #endif
     if (read_bytes != filesz || read_bytes <= 0) {
@@ -274,7 +272,7 @@ int scan_host_files(char *host_path, char *custom_path)
     }
 #endif
     /* 打印客机目录 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
     printf("[custom path] %s\n", custom_path);
 #endif
     struct _finddata_t data;
@@ -300,7 +298,7 @@ int scan_host_files(char *host_path, char *custom_path)
                 }
                 strcat(custom_buf, data.name);
                 //sprintf(custom_buf, "%s/%s", custom_path, data.name);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
                 printf("[custom dir] %s -> %s\n", custom_buf, data.name);
 #endif
                 //memcpy(custom_path, custom_buf, 256);
@@ -308,7 +306,7 @@ int scan_host_files(char *host_path, char *custom_path)
 
                 /* 打印主机路径 */
                 sprintf(host_buf, "%s/%s", host_path, data.name);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
                 printf("[host dir] %s -> %s\n", host_buf, data.name);
 #endif
                 scan_host_files(host_buf, custom_buf);
@@ -317,12 +315,12 @@ int scan_host_files(char *host_path, char *custom_path)
             /* 打印主机路径 */
            
             sprintf(host_buf, "%s/%s", host_path, data.name);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
             printf("[host file] %s -> %s\n", host_buf, data.name);
 #endif
             /* 在客机中创建一个文件 */
             sprintf(custom_buf, "%s/%s", custom_path, data.name);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
             printf("[custom file] %s -> %s\n", custom_buf, data.name);
 #endif
             copy_file_to_custom(host_buf, custom_buf);
@@ -345,7 +343,7 @@ int scan_host_files(char *host_path, char *custom_path)
 {
     int rv = 0;
     /* 打印客机目录 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
     printf("[custom path] %s\n", custom_path);
 #endif
 
@@ -381,7 +379,7 @@ int scan_host_files(char *host_path, char *custom_path)
                 }
                 strcat(custom_buf, de->d_name);
                 //sprintf(custom_buf, "%s/%s", custom_path, de->d_name);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
                 printf("[custom dir] %s -> %s\n", custom_buf, de->d_name);
 #endif
                 //memcpy(custom_path, custom_buf, 256);
@@ -389,7 +387,7 @@ int scan_host_files(char *host_path, char *custom_path)
 
                 /* 打印主机路径 */
                 sprintf(host_buf, "%s/%s", host_path, de->d_name);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
                 printf("[host dir] %s -> %s\n", host_buf, de->d_name);
 #endif
                 scan_host_files(host_buf, custom_buf);
@@ -398,12 +396,12 @@ int scan_host_files(char *host_path, char *custom_path)
             /* 打印主机路径 */
            
             sprintf(host_buf, "%s/%s", host_path, de->d_name);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
             printf("[host file] %s -> %s\n", host_buf, de->d_name);
 #endif
             /* 在客机中创建一个文件 */
             sprintf(custom_buf, "%s/%s", custom_path, de->d_name);
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_FATFS_MAIN
             printf("[custom file] %s -> %s\n", custom_buf, de->d_name);
 #endif
             copy_file_to_custom(host_buf, custom_buf);

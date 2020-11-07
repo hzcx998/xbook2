@@ -1,6 +1,10 @@
 #ifndef _SYS_IPC_H
 #define _SYS_IPC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <types.h>
 
 /* IPC local flags */
@@ -46,5 +50,9 @@ int msgget(char *name, unsigned long flags);
 int msgput(int msgid);
 int msgsend(int msgid, void *msgbuf, size_t size, int msgflg);
 int msgrecv(int msgid, void *msgbuf, size_t msgsz, int msgflg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* _SYS_IPC_H */

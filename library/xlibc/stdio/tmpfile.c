@@ -1,5 +1,5 @@
 /*
- * libc/stdio/tmpfile.c
+ * xlibc/stdio/tmpfile.c
  */
 
 #include <stdio.h>

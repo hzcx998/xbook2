@@ -10,3 +10,4 @@ SRC	+= alarm.c
 SRC	+= ktime.c
 SRC	+= srvcall.c
 SRC	+= debug.c
+SRC	+= initcall.c

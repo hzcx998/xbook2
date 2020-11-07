@@ -1,6 +1,8 @@
 #ifndef _LIB_DIRENT_H
 #define _LIB_DIRENT_H
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <sys/types.h>
 
 typedef struct _dirdes {
@@ -12,5 +14,9 @@ DIR *opendir(const char *path);
 int closedir(DIR *dir);
 struct dirent *readdir(DIR *dir);
 int rewinddir(DIR *dir);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _LIB_DIRENT_H */

@@ -6,7 +6,7 @@
 #include <sys/ipc.h>
 
 /* debug fifo : 1 enable, 0 disable */
-#define DEBUG_LOCAL 0
+// #define DEBUG_IPC_FIFO
 
 /* 管道表 */
 fifo_t *fifo_table;
@@ -82,7 +82,7 @@ fifo_t *fifo_alloc(char *name)
             atomic_set(&fifo->readref, 0);
             atomic_set(&fifo->writeref, 0);
             
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
             printk(KERN_DEBUG "fifo_alloc: fifo id=%d\n", fifo->id);
 #endif
             return fifo; /* 返回管道 */
@@ -103,7 +103,7 @@ int fifo_free(fifo_t *fifo)
         fifo_buf_free(fifo->fifo);
         fifo->fifo = NULL;
     }
-#if DEBUG_LOCAL == 1    
+#ifdef DEBUG_IPC_FIFO    
     printk(KERN_DEBUG "fifo_free: fifo id=%d\n", fifo->id);
 #endif
     memset(fifo->name, 0, FIFO_NAME_LEN);
@@ -166,7 +166,7 @@ int fifo_get(char *name, unsigned long flags)
                 /* 没有写者就设置写者 */
                 if (fifo->writer == NULL && !atomic_get(&fifo->writeref)) {
                     fifo->writer = current_task;                  
-                    #if DEBUG_LOCAL == 1                
+                    #ifdef DEBUG_IPC_FIFO                
                     pr_dbg("fifo writer pid %d\n", current_task->pid);
                     #endif
                 }
@@ -179,12 +179,12 @@ int fifo_get(char *name, unsigned long flags)
                 if (fifo->reader == NULL && !atomic_get(&fifo->readref)) {
                     fifo->reader = current_task;
                     
-                    #if DEBUG_LOCAL == 1                
+                    #ifdef DEBUG_IPC_FIFO                
                     pr_dbg("fifo reader pid %d\n", current_task->pid);
                     #endif                
                     /* 读者注册时，需要查看是否写者在等待同步中 */
                     if (fifo->writer && fifo->writer->state == TASK_BLOCKED && fifo->flags & FIFO_IN_WRITE) {
-                        #if DEBUG_LOCAL == 1
+                        #ifdef DEBUG_IPC_FIFO
                         printk(KERN_DEBUG "fifo_get: reader register, writer sync wait, wake up writer.\n");
                         #endif                    
                         task_unblock(fifo->writer); /* 唤醒写者 */
@@ -208,7 +208,7 @@ int fifo_get(char *name, unsigned long flags)
                 if (flags & IPC_NOWAIT) {
                     fifo->flags |= (IPC_NOWAIT << 24);
                 }
-#if DEBUG_LOCAL == 1                
+#ifdef DEBUG_IPC_FIFO                
                 pr_dbg("fifo writer pid %d\n", current_task->pid);
 #endif
             } else if (rw == 0) {
@@ -217,7 +217,7 @@ int fifo_get(char *name, unsigned long flags)
                 if (flags & IPC_NOWAIT) {
                     fifo->flags |= (IPC_NOWAIT << 16);
                 }
-#if DEBUG_LOCAL == 1                
+#ifdef DEBUG_IPC_FIFO                
                 pr_dbg("fifo reader pid %d\n", current_task->pid);
 #endif                
             }
@@ -257,7 +257,7 @@ int fifo_put(int fifoid)
             atomic_dec(&fifo->readref);
             if (atomic_get(&fifo->readref) == 0) {
                 fifo->reader = NULL;    /* 取消读者身份 */
-                #if DEBUG_LOCAL == 1
+                #ifdef DEBUG_IPC_FIFO
                 printk(KERN_DEBUG "fifo_put: reader closed, free fifo=%d.\n", fifo->id);
                 #endif
             }
@@ -266,14 +266,14 @@ int fifo_put(int fifoid)
             atomic_dec(&fifo->writeref);
             if (atomic_get(&fifo->writeref) == 0) {
                 fifo->writer = NULL;    /* 取消写者身份 */
-                #if DEBUG_LOCAL == 1
+                #ifdef DEBUG_IPC_FIFO
                 printk(KERN_DEBUG "fifo_put: writer closed, free fifo=%d.\n", fifo->id);
                 #endif
             }
         }
         /* 如果读写者都为空，那么才真正释放管道 */
         if (fifo->reader == NULL && fifo->writer == NULL) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
             printk(KERN_DEBUG "fifo_put: both fifo reader and writer closed, free fifo=%d.\n", fifo->id);
 #endif
             fifo_free(fifo);
@@ -336,17 +336,17 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg)
     
     /* 检测读者是否就绪 */
     if (fifo->reader == NULL) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
     printk(KERN_DEBUG "fifo_write: reader not ready.\n");
 #endif        
         if (!(fifo->flags & (IPC_NOSYNC << 24))) { /* 需要同步等待写者注册 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
             printk(KERN_DEBUG "fifo_write: need sync for reader.\n");
 #endif
             task_block(TASK_BLOCKED);
         }
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
     printk(KERN_DEBUG "fifo_write: id=%d buffer=%x size=%d flags=%x\n",
         fifoid, buffer, size, fifo->flags);
 #endif
@@ -366,7 +366,7 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg)
         chunk = MIN(left_size, FIFO_SIZE); /* 获取一次要写入的数据量 */
         chunk = MIN(chunk, fifo_buf_avali(fifo->fifo)); /* 获取能写入的数据量 */
         
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
         printk(KERN_DEBUG "fifo_write: will write %d bytes.\n", chunk);
 #endif
         
@@ -376,14 +376,14 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg)
         off += chunk;
         left_size -= chunk;
         wrsize += chunk;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
         printk(KERN_DEBUG "fifo_write: actually write %d bytes.\n", chunk);
 #endif
         /* 写入数据后，尝试唤醒阻塞的读者: 有读者，读者阻塞，管道在读 */
         if (fifo->reader && fifo->reader->state == TASK_BLOCKED &&
             (fifo->flags & FIFO_IN_READ))
         {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
         printk(KERN_DEBUG "fifo_write: wakeup reader pid=%d.\n", fifo->reader->pid);
 #endif            
             
@@ -397,12 +397,12 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg)
             if (fifo->flags & (IPC_NOWAIT << 24)) { /* 如果是不需要等待，就直接返回 */
                 fifo->flags &= ~FIFO_IN_WRITE;   /* 管道离开写状态 */
                 mutex_unlock(&fifo->mutex); /* 释放管道 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
                 printk(KERN_DEBUG "fifo_write: write with no wait, return.\n");
 #endif               
                 return -1;
             }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
             printk(KERN_DEBUG "fifo_write: buffer full, pid=%d blocked.\n", current_task->pid);
 #endif
             /* 阻塞自己，等待有空闲空间后被唤醒 */
@@ -415,7 +415,7 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg)
     fifo->flags &= ~FIFO_IN_WRITE;   /* 管道离开写状态 */
     
     mutex_unlock(&fifo->mutex); /* 释放管道 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
     printk("[FIFO]: %s: size=%d\n", __func__, wrsize);
 #endif
     return wrsize;
@@ -462,7 +462,7 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
     fifo->flags |= FIFO_IN_READ;   /* 管道进入读状态 */
     /* 检测读者是否就绪 */
     if (fifo->writer == NULL) {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
     printk(KERN_DEBUG "fifo_read: writer not ready.\n");
 #endif        
         if (fifo->flags & (IPC_NOSYNC << 16)) { /* 需要同步等待写者注册 */
@@ -470,7 +470,7 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
             return -1;
         }
     }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
     printk(KERN_DEBUG "fifo_read: id=%d buffer=%x size=%d flags=%x\n",
         fifoid, buffer, size, fifo->flags);
 #endif
@@ -485,12 +485,12 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
             fifo->flags &= ~FIFO_IN_READ;   /* 管道离开读状态 */
             restore_intr(flags);
             mutex_unlock(&fifo->mutex); /* 释放管道 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
             printk(KERN_DEBUG "fifo_read: read with no wait, return.\n");
 #endif
             return -1;
         }
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
         printk(KERN_DEBUG "fifo_read: buffer empty, pid=%d blocked.\n", current_task->pid);
 #endif
         restore_intr(flags);
@@ -505,19 +505,19 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
     int rdsize = 0;
     int chunk = MIN(size, FIFO_SIZE); /* 获取一次能读取的数据量 */
     chunk = MIN(chunk, fifo_buf_len(fifo->fifo)); /* 获取能读取的数据量 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
         printk(KERN_DEBUG "fifo_read: will read %d bytes.\n", chunk);
 #endif
     chunk = fifo_buf_get(fifo->fifo, buffer, chunk);
     rdsize += chunk;
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
         printk(KERN_DEBUG "fifo_read: actually read %d bytes.\n", chunk);
 #endif   
     /* 读取数据后，尝试唤醒休眠的写者: 有写者，写者阻塞，管道在写 */
     if (fifo->writer && fifo->writer->state == TASK_BLOCKED && 
         (fifo->flags & FIFO_IN_WRITE)) 
     {
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
         printk(KERN_DEBUG "fifo_read: wakeup writer pid=%d.\n", fifo->writer->pid);
 #endif
         //restore_intr(flags);
@@ -527,7 +527,7 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
     fifo->flags &= ~FIFO_IN_READ;   /* 管道离开读状态 */
     
     mutex_unlock(&fifo->mutex); /* 释放管道 */
-#if DEBUG_LOCAL == 1
+#ifdef DEBUG_IPC_FIFO
     printk("[FIFO]: %s: size=%d\n", __func__, rdsize);
 #endif
     return rdsize;

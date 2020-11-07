@@ -1,5 +1,5 @@
 /*
- * libc/stdio/remove.c
+ * xlibc/stdio/remove.c
  */
 
 #include <stdio.h>

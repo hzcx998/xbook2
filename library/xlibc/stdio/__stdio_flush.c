@@ -1,5 +1,5 @@
 /*
- * libc/stdio/__stdio_flush.c
+ * xlibc/stdio/__stdio_flush.c
  */
 
 #include <stddef.h>

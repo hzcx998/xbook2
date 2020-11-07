@@ -1,5 +1,5 @@
 /*
- * libc/stdio/vsscanf.c
+ * xlibc/stdio/vsscanf.c
  */
 
 #include <ctype.h>

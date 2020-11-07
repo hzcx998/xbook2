@@ -12,6 +12,7 @@
 #include <xbook/ktime.h>
 
 volatile clock_t systicks;
+volatile clock_t timer_ticks;
 
 /* 定时器软中断处理 */
 void timer_softirq_handler(softirq_action_t *action)
@@ -60,7 +61,8 @@ int clock_handler(unsigned long irq, unsigned long data)
 {
     /* 改变ticks计数 */
 	systicks++;
-
+    timer_ticks++;
+    
 	/* 激活定时器软中断 */
 	active_softirq(TIMER_SOFTIRQ);
 
@@ -111,8 +113,7 @@ void mdelay(time_t msec)
  */
 void init_clock()
 {
-    systicks = 0;
-
+    timer_ticks = systicks = 0;
     /* 初始化时钟硬件 */
     init_clock_hardware();
 

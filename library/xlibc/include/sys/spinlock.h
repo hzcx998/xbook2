@@ -1,6 +1,10 @@
 #ifndef _SYS_SPINLOCK_H
 #define _SYS_SPINLOCK_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <arch/atomic.h>
 
 typedef struct {
@@ -16,5 +20,9 @@ int spin_lock(spinlock_t *lock);
 int spin_trylock(spinlock_t *lock);
 int spin_unlock(spinlock_t *lock);
 int spin_is_locked(spinlock_t *lock);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _SYS_SPINLOCK_H */
