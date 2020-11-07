@@ -240,7 +240,7 @@ int sys_thread_cancel(pthread_t thread)
             interrupt_restore_state(flags);
             pthread_exit((void *) THREAD_FLAG_CANCEL_ASYCHRONOUS);
         } else {
-            task_close_one_thread(task);
+            proc_close_one_thread(task);
         }
     }
     interrupt_restore_state(flags);

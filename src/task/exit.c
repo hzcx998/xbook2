@@ -5,7 +5,6 @@
 #include <xbook/process.h>
 #include <xbook/pthread.h>
 #include <xbook/trigger.h>
-#include <xbook/exit.h>
 
 static void adopt_children_to_init(task_t *parent)
 {
