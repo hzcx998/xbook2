@@ -26,19 +26,18 @@ typedef struct {
     unsigned long ms_used;     /* 物理内存已使用大小 */
 } mstate_t;
 
-int sys_mstate(mstate_t *ms);
-
-
-#define vmm_alloc() (vmm_t *)mem_alloc(sizeof(vmm_t)) 
-#define vmm_free(vmm) mem_free(vmm) 
-
 void vmm_init(vmm_t *vmm);
 int vmm_exit(vmm_t *vmm);
+void vmm_free(vmm_t *vmm);
+int vmm_exit_when_fork_failed(vmm_t *vmm, vmm_t *parent_vmm);
+void vmm_free_storage(vmm_t *vmm);
 int vmm_release_space(vmm_t *vmm);
 int vmm_unmap_space(vmm_t *vmm);
 int vmm_unmap_the_mapping_space(vmm_t *vmm);
 void vmm_dump(vmm_t *vmm);
-
+int vmm_copy_mem_space(vmm_t *child_vmm, vmm_t *parent_vmm);
 void vmm_active(vmm_t *vmm);
+
+int sys_mstate(mstate_t *ms);
 
 #endif  /* _XBOOK_VMM_H */

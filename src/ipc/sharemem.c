@@ -232,19 +232,27 @@ int share_mem_put(int shmid)
     return -1;
 }
 
-int share_mem_grow(int shmid)
+int share_mem_inc(int shmid)
 {
     share_mem_t *shm;
     semaphore_down(&share_mem_mutex);
     shm = share_mem_find_by_id(shmid);
     if (shm) {
-        #ifdef DEBUG_IPC_SHM
-        pr_dbg("[shm]: shmid=%d before grow links=%d.\n", shmid, atomic_get(&shm->links));
-        #endif
         atomic_inc(&shm->links);
-        #ifdef DEBUG_IPC_SHM
-        pr_dbg("[shm]: shmid=%d after grow links=%d.\n", shmid, atomic_get(&shm->links));
-        #endif
+        semaphore_up(&share_mem_mutex);
+        return 0;
+    }
+    semaphore_up(&share_mem_mutex);
+    return -1;
+}
+
+int share_mem_dec(int shmid)
+{
+    share_mem_t *shm;
+    semaphore_down(&share_mem_mutex);
+    shm = share_mem_find_by_id(shmid);
+    if (shm) {
+        atomic_dec(&shm->links);
         semaphore_up(&share_mem_mutex);
         return 0;
     }

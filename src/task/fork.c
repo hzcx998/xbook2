@@ -15,7 +15,7 @@
 
 static pid_t task_fork_pid()
 {
-    return task_alloc_pid();
+    return task_take_pid();
 }
 
 /**
@@ -34,7 +34,7 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     return 0;
 }
 
-static int copy_vm_struct(task_t *child, task_t *parent)
+static void copy_vm_struct(task_t *child, task_t *parent)
 {
     child->vmm->code_start = parent->vmm->code_start;
     child->vmm->data_start = parent->vmm->data_start;
@@ -46,57 +46,24 @@ static int copy_vm_struct(task_t *child, task_t *parent)
     child->vmm->heap_end = parent->vmm->heap_end;
     child->vmm->map_end = parent->vmm->map_end;
     child->vmm->stack_end = parent->vmm->stack_end;
-    return 0;
-}
-
-/**
- * 复制共享内存，共享内存有可能是以其他形式存在的，并不是shmid这种。
- * 只有增长引用计数失败才返回
- */
-static int copy_share_mem(mem_space_t *mem_space)
-{
-    addr_t phyaddr = addr_vir2phy(mem_space->start);  
-    share_mem_t *shm = share_mem_find_by_addr(phyaddr);
-    if (shm == NULL) { 
-        return 0;
-    }
-    return share_mem_grow(shm->id);
-}
-
-static int copy_vm_mem_space(task_t *child, task_t *parent)
-{
-    mem_space_t *tail = NULL;
-    mem_space_t *p = parent->vmm->mem_space_head;
-    while (p != NULL) {
-        mem_space_t *space = mem_space_alloc();
-        if (space == NULL) {
-            printk(KERN_ERR "copy_vm_mem_space: mem_alloc for space failed!\n");
-            return -1;
-        }
-        *space = *p;
-        space->next = NULL;
-        if (space->flags & MEM_SPACE_MAP_SHARED) {
-            if (copy_share_mem(space) < 0)
-                return -1;
-        }
-        if (tail == NULL)
-            child->vmm->mem_space_head = space;    
-        else 
-            tail->next = space;
-        tail = space;
-        p = p->next;
-    }
-    return 0;
 }
 
 static int copy_vm(task_t *child, task_t *parent)
 {
-    if (copy_vm_struct(child, parent))
+    if (proc_vmm_init(child) < 0)
         return -1;
-    if (vmm_copy_mapping(child, parent))
+    copy_vm_struct(child, parent);
+    if (vmm_copy_mem_space(child->vmm, parent->vmm) < 0) {
+        vmm_free(child->vmm);
+        child->vmm = NULL;
         return -1;
-    if (copy_vm_mem_space(child, parent))
+    }
+    if (vmm_copy_mapping(child, parent) < 0) {
+        vmm_release_space(child->vmm);
+        vmm_free(child->vmm);
+        child->vmm = NULL;
         return -1;
+    }
     return 0;
 }
 
@@ -136,24 +103,33 @@ static int copy_pthread_desc(task_t *child, task_t *parent)
 
 static int copy_task(task_t *child, task_t *parent)
 {
-    // TODO: 回滚复制失败后的资源
     if (copy_struct_and_kstack(child, parent))
-        return -1;
-    if (proc_vmm_init(child)) {
-        return -1;
-    }
+        goto rollback_failed;
     if (copy_vm(child, parent))
-        return -1;
+        goto rollback_struct;
     if (copy_trigger(child, parent))
-        return -1;
+        goto rollback_vmm;
     if (copy_pthread_desc(child, parent))
-        return -1;
+        goto rollback_trigger;
     if (copy_file(child, parent) < 0)
-        return -1; 
+        goto rollback_pthread_desc;
     if (copy_gui(child, parent) < 0)
-        return -1;
+        goto rollback_file;
+    goto rollback_file;
     task_stack_build_when_forking(child);
     return 0;
+rollback_file:
+    fs_fd_exit(child);
+rollback_pthread_desc:
+    proc_pthread_exit(child);
+rollback_trigger:
+    proc_trigger_exit(child);
+rollback_vmm:
+    proc_vmm_exit_when_forking(child, parent);
+rollback_struct:
+    task_rollback_pid();
+rollback_failed:
+    return -1;    
 }
 
 int sys_fork()
@@ -163,13 +139,14 @@ int sys_fork()
     interrupt_save_and_disable(flags);
     task_t *child = mem_alloc(TASK_KERN_STACK_SIZE);
     if (child == NULL) {
-        printk(KERN_ERR "do_usrmsg_fork: mem_alloc for child task failed!\n");
+        printk(KERN_ERR "sys_fork: mem_alloc for child task failed!\n");
         return -1;
     }
     ASSERT(parent->vmm != NULL);
     if (copy_task(child, parent)) {
-        printk(KERN_ERR "do_usrmsg_fork: copy task failed!\n");
+        printk(KERN_ERR "sys_fork: copy task failed!\n");
         mem_free(child);
+        interrupt_restore_state(flags);
         return -1;
     }
     task_add_to_global_list(child);

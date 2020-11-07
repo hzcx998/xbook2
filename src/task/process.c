@@ -153,7 +153,7 @@ void proc_map_space_init(task_t *task)
 
 int proc_vmm_init(task_t *task)
 {
-    task->vmm = vmm_alloc();
+    task->vmm = (vmm_t *)mem_alloc(sizeof(vmm_t));
     if (task->vmm == NULL) {
         return -1;
     }
@@ -166,6 +166,14 @@ int proc_vmm_exit(task_t *task)
     if (task->vmm == NULL)
         return -1;
     vmm_exit(task->vmm);
+    return 0;
+}
+
+int proc_vmm_exit_when_forking(task_t *child, task_t *parent)
+{
+    if (child->vmm == NULL)
+        return -1;
+    vmm_exit_when_fork_failed(child->vmm, parent->vmm);
     return 0;
 }
 
@@ -198,6 +206,8 @@ int proc_pthread_init(task_t *task)
 
 int proc_pthread_exit(task_t *task)
 {
+    if (!task->pthread)
+        return -1; 
     pthread_desc_exit(task->pthread);
     task->pthread = NULL;
     return 0;
@@ -219,7 +229,6 @@ int proc_destroy(task_t *task, int thread)
     if (task->vmm == NULL)
         return -1;
     if (!thread) {
-        page_free_one(kern_vir_addr2phy_addr(task->vmm->page_storage));
         vmm_free(task->vmm);
         task->vmm = NULL;    
     }

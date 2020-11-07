@@ -3,6 +3,7 @@
 #include <xbook/vmm.h>
 #include <xbook/debug.h>
 #include <xbook/memspace.h>
+#include <xbook/sharemem.h>
 #include <string.h>
 
 void vmm_init(vmm_t *vmm)
@@ -12,6 +13,17 @@ void vmm_init(vmm_t *vmm)
         panic(KERN_EMERG "task_init_vmm: mem_alloc for page_storege failed!\n");
     }
     vmm->mem_space_head = NULL;
+}
+
+void vmm_free(vmm_t *vmm)
+{
+    if (vmm) {
+        if (vmm->page_storage) {
+            page_free_one(kern_vir_addr2phy_addr(vmm->page_storage));
+            vmm->page_storage = NULL;
+        }
+        mem_free(vmm);
+    }
 }
 
 int sys_mstate(mstate_t *ms)
@@ -45,6 +57,52 @@ void vmm_active(vmm_t *vmm)
     }
 }
 
+int vmm_dec_share_mem(mem_space_t *mem_space)
+{
+    addr_t phyaddr = addr_vir2phy(mem_space->start);  
+    share_mem_t *shm = share_mem_find_by_addr(phyaddr);
+    if (shm == NULL) { 
+        return 0;
+    }
+    return share_mem_dec(shm->id);
+}
+
+int vmm_inc_share_mem(mem_space_t *mem_space)
+{
+    addr_t phyaddr = addr_vir2phy(mem_space->start);  
+    share_mem_t *shm = share_mem_find_by_addr(phyaddr);
+    if (shm == NULL) { 
+        return 0;
+    }
+    return share_mem_inc(shm->id);
+}
+
+int vmm_copy_mem_space(vmm_t *child_vmm, vmm_t *parent_vmm)
+{
+    mem_space_t *tail = NULL;
+    mem_space_t *p = parent_vmm->mem_space_head;
+    while (p != NULL) {
+        mem_space_t *space = mem_space_alloc();
+        if (space == NULL) {
+            printk(KERN_ERR "copy_vm_mem_space: mem_alloc for space failed!\n");
+            return -1;
+        }
+        *space = *p;
+        space->next = NULL;
+        if (space->flags & MEM_SPACE_MAP_SHARED) {
+            if (vmm_inc_share_mem(space) < 0)
+                return -1;
+        }
+        if (tail == NULL)
+            child_vmm->mem_space_head = space;    
+        else 
+            tail->next = space;
+        tail = space;
+        p = p->next;
+    }
+    return 0;
+}
+
 int vmm_release_space(vmm_t *vmm)
 {
     if (vmm == NULL)
@@ -53,6 +111,10 @@ int vmm_release_space(vmm_t *vmm)
     mem_space_t *p;
     while (space != NULL) {
         p = space;
+        if (space->flags & MEM_SPACE_MAP_SHARED) {
+            if (vmm_dec_share_mem(space) < 0)
+                printk(KERN_ERR "vmm: release space on share map space [%x-%x]\n", space->start, space->end);
+        }
         space = space->next;
         mem_space_free(p);
     }
@@ -102,14 +164,35 @@ int vmm_exit(vmm_t *vmm)
 {
     if (vmm == NULL)
         return -1; 
-    if (vmm->mem_space_head == NULL)
+    
+    if (vmm->mem_space_head == NULL) {
         return -1;
-
+    }
     if (vmm_unmap_space(vmm)) {
         printk(KERN_WARING "vmm: exit when unmap space failed!\n");
     }
     if (vmm_release_space(vmm)) {
         printk(KERN_WARING "vmm: exit when release space failed!\n");
     }
+    return 0;
+}
+
+int vmm_exit_when_fork_failed(vmm_t *child_vmm, vmm_t *parent_vmm)
+{
+    if (child_vmm == NULL)
+        return -1; 
+    
+    if (child_vmm->mem_space_head == NULL) {
+        return -1;
+    }
+    vmm_active(child_vmm); // active child vmm for unmap space
+    if (vmm_unmap_space(child_vmm)) {
+        printk(KERN_WARING "vmm: exit when unmap space failed!\n");
+    }
+    vmm_active(parent_vmm); // active back to parent vmm 
+    if (vmm_release_space(child_vmm)) {
+        printk(KERN_WARING "vmm: exit when release space failed!\n");
+    }
+    vmm_free(child_vmm);    // free vmm, not used after this func.
     return 0;
 }

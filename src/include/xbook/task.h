@@ -124,7 +124,8 @@ static inline void task_wakeup(task_t *task)
     }
 }
 
-pid_t task_alloc_pid();
+pid_t task_take_pid();
+void task_rollback_pid();
 void tasks_print();
 void task_start_user();
 unsigned long task_sleep_by_ticks(clock_t ticks);

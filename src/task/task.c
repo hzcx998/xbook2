@@ -27,9 +27,14 @@ LIST_HEAD(task_global_list);
 /* task init done flags, for early interrupt. */
 volatile int task_init_done = 0;
 
-pid_t task_alloc_pid()
+pid_t task_take_pid()
 {
     return task_next_pid++;
+}
+
+void task_rollback_pid()
+{
+    --task_next_pid;
 }
 
 void task_init(task_t *task, char *name, int priority)
@@ -48,7 +53,7 @@ void task_init(task_t *task, char *name, int priority)
     task->ticks = task->timeslice;
     task->elapsed_ticks = 0;
     task->vmm = NULL;
-    task->pid = task_alloc_pid();
+    task->pid = task_take_pid();
     task->tgid = task->pid; /* 默认都是主线程，需要的时候修改 */
     task->parent_pid = -1;
     task->exit_status = 0;
@@ -364,7 +369,7 @@ void tasks_init()
     task_next_pid = 0;
     sched_unit_t *su = sched_get_cur_unit();
     task_init_boot_idle(su);
-    task_alloc_pid(); /* 跳过pid1，预留给INIT进程 */
+    task_take_pid(); /* 跳过pid1，预留给INIT进程 */
     task_init_done = 1;
     printk(KERN_INFO "[ok] tasks init.");
 }
