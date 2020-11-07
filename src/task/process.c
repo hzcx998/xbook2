@@ -6,7 +6,6 @@
 #include <math.h>
 #include <xbook/memspace.h>
 #include <string.h>
-#include <xbook/resource.h>
 #include <xbook/pthread.h>
 #include <xbook/gui.h>
 #include <xbook/schedule.h>

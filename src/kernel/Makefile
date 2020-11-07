@@ -2,7 +2,6 @@ SRC	+= hardirq.c
 SRC	+= softirq.c
 SRC	+= clock.c
 SRC	+= syscall.c
-SRC	+= resource.c
 SRC	+= driver.c
 SRC	+= timer.c
 SRC	+= alarm.c

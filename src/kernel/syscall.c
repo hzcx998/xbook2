@@ -1,7 +1,6 @@
 #include <xbook/syscall.h>
 #include <xbook/process.h>
 #include <xbook/memspace.h>
-#include <xbook/resource.h>
 #include <xbook/trigger.h>
 #include <xbook/alarm.h>
 #include <xbook/clock.h>

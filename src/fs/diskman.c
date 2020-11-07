@@ -1,6 +1,5 @@
 #include <xbook/list.h>
 #include <xbook/diskman.h>
-#include <xbook/resource.h>
 #include <xbook/memalloc.h>
 #include <string.h>
 #include <stdio.h>

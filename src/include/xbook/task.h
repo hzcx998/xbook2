@@ -138,5 +138,6 @@ pid_t sys_get_ppid();
 pid_t sys_get_tid();
 int sys_getver(char *buf, int len);
 int sys_tstate(tstate_t *ts, unsigned int *idx);
+unsigned long sys_unid(int id);
 
 #endif   /* _XBOOK_TASK_H */

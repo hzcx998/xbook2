@@ -115,7 +115,7 @@ static int copy_task(task_t *child, task_t *parent)
         goto rollback_pthread_desc;
     if (copy_gui(child, parent) < 0)
         goto rollback_file;
-    goto rollback_file;
+
     task_stack_build_when_forking(child);
     return 0;
 rollback_file:
