@@ -27,14 +27,9 @@ LIST_HEAD(task_global_list);
 /* task init done flags, for early interrupt. */
 volatile int task_init_done = 0;
 
-static pid_t task_alloc_pid()
+pid_t task_alloc_pid()
 {
     return task_next_pid++;
-}
-
-pid_t task_fork_pid()
-{
-    return task_alloc_pid();
 }
 
 void task_init(task_t *task, char *name, int priority)
@@ -140,7 +135,32 @@ task_t *kern_thread_start(char *name, int priority, task_func_t *func, void *arg
     return task;
 }
 
-void task_activate_in_schedule(task_t *task)
+void kern_thread_exit(int status)
+{
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
+
+    task_t *cur = task_current;
+    cur->exit_status = status;
+    task_do_cancel(cur);
+    cur->parent_pid = USER_INIT_PROC_ID;
+    task_t *parent = task_find_by_pid(cur->parent_pid); 
+    if (parent) {
+        if (parent->state == TASK_WAITING) {
+            interrupt_restore_state(flags);
+            task_unblock(parent);
+            task_block(TASK_HANGING);
+        } else {
+            interrupt_restore_state(flags);
+            task_block(TASK_ZOMBIE);
+        }
+    } else {
+        interrupt_restore_state(flags);
+        task_block(TASK_ZOMBIE); 
+    }
+}
+
+void task_activate_when_sched(task_t *task)
 {
     ASSERT(task != NULL);
     spin_lock(&task->lock);
@@ -192,6 +212,24 @@ void task_yeild()
     task_current->state = TASK_READY;
     schedule();
     interrupt_restore_state(flags);
+}
+
+int task_count_children(task_t *parent)
+{
+    int children = 0;
+    task_t *child;
+    list_for_each_owner (child, &task_global_list, global_list) {
+        if (child->parent_pid == parent->pid && TASK_IS_SINGAL_THREAD(child)) {
+            children++;
+        }
+    }
+    return children;
+}
+
+int task_do_cancel(task_t *task)
+{
+    timer_cancel(&task->sleep_timer);
+    return 0;
 }
 
 /**
@@ -285,7 +323,7 @@ void task_dump(task_t *task)
     printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
 
-void kthread_idle(void *arg)
+void kern_do_idle(void *arg)
 {
     while (1) {
         cpu_idle();
@@ -318,7 +356,7 @@ void task_start_user()
     interrupt_restore_state(flags);
     schedule();
     interrupt_enable();
-    kthread_idle(NULL);
+    kern_do_idle(NULL);
 }
 
 void tasks_init()

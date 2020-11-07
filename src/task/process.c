@@ -210,7 +210,7 @@ int proc_release(task_t *task)
     fs_fd_exit(task);
     gui_user_exit(task);
     proc_pthread_exit(task);
-    thread_release_resource(task);
+    task_do_cancel(task);
     return 0;
 }
 
@@ -234,11 +234,60 @@ void proc_trap_frame_init(task_t *task)
     user_frame_init(frame);
 }
 
-void proc_first_entry(void* arg)
+void proc_entry(void* arg)
 {
     const char **argv = (const char **) arg;
     sys_execve(argv[0], argv, NULL);
     panic("proc: start first process %s failed!\n", argv[0]);
+}
+
+int proc_deal_zombie_child(task_t *parent)
+{
+    int zombies = 0;
+    int zombie = -1;
+    task_t *child, *next;
+    list_for_each_owner_safe (child, next, &task_global_list, global_list) {
+        if (child->parent_pid == parent->pid) {
+            if (child->state == TASK_ZOMBIE) {
+                if (zombie == -1) {
+                    zombie = child->pid;
+                }
+                if (TASK_IS_SINGAL_THREAD(child)) {
+                    proc_destroy(child, 0);
+                } else {
+                    proc_destroy(child, 1);
+                }
+                zombies++;
+            }
+        }
+    }
+    return zombie; /* 如果没有僵尸进程就返回-1，有则返回第一个僵尸进程的pid */
+}
+
+void proc_close_one_thread(task_t *thread)
+{
+    if (thread->state == TASK_READY) {
+        list_del_init(&thread->list);
+    }
+    if (thread->state != TASK_HANGING && thread->state != TASK_ZOMBIE) {
+        task_do_cancel(thread);
+    }
+    proc_destroy(thread, 1);
+}
+
+void proc_close_other_threads(task_t *thread)
+{
+    task_t *borther, *next;
+    list_for_each_owner_safe (borther, next, &task_global_list, global_list) {
+        if (TASK_IN_SAME_THREAD_GROUP(thread, borther)) {
+            if (thread->pid != borther->pid) {
+                proc_close_one_thread(borther);
+            }
+        }
+    }
+    if (thread->pthread) {
+        atomic_set(&thread->pthread->thread_count, 0);
+    }
 }
 
 task_t *user_process_start(char *name, char **argv)
@@ -264,7 +313,7 @@ task_t *user_process_start(char *name, char **argv)
         mem_free(task);
         return NULL;
     }
-    task_stack_build(task, proc_first_entry, argv);
+    task_stack_build(task, proc_entry, argv);
     unsigned long flags;
     interrupt_save_and_disable(flags);
     task_add_to_global_list(task);

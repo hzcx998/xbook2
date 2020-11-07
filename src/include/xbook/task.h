@@ -106,7 +106,7 @@ void kern_thread_exit(int status);
 
 task_t *task_find_by_pid(pid_t pid);
 void task_add_to_global_list(task_t *task);
-void task_activate_in_schedule(task_t *task);
+void task_activate_when_sched(task_t *task);
 
 void task_block(task_state_t state);
 void task_unblock(task_t *task);
@@ -124,24 +124,18 @@ static inline void task_wakeup(task_t *task)
     }
 }
 
-#define sys_sched_yeild     task_yeild
-
-pid_t task_fork_pid();
+pid_t task_alloc_pid();
 void tasks_print();
-
 void task_start_user();
+unsigned long task_sleep_by_ticks(clock_t ticks);
+int task_count_children(task_t *parent);
+int task_do_cancel(task_t *task);
 
+#define sys_sched_yeild     task_yeild
 pid_t sys_get_pid();
 pid_t sys_get_ppid();
 pid_t sys_get_tid();
 int sys_getver(char *buf, int len);
-
 int sys_tstate(tstate_t *ts, unsigned int *idx);
-unsigned long sys_sleep(unsigned long second);
-unsigned long task_sleep_by_ticks(clock_t ticks);
-
-void close_one_thread(task_t *thread);
-void close_other_threads(task_t *thread);
-void pthread_exit(void *status);
 
 #endif   /* _XBOOK_TASK_H */

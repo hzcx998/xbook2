@@ -4,7 +4,6 @@
 #include <sys/pthread.h>
 #include <arch/atomic.h>
 
-/* 一个进程最多32个线程 */
 #define PTHREAD_MAX_NR      32
 
 typedef struct pthread_desc {
@@ -13,6 +12,7 @@ typedef struct pthread_desc {
 
 void pthread_desc_init(pthread_desc_t *pthread);
 void pthread_desc_exit(pthread_desc_t *pthread);
+void pthread_exit(void *status);
 
 pid_t sys_thread_create(
     pthread_attr_t *attr,

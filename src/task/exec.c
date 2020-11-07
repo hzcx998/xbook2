@@ -28,7 +28,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     task_t *cur = task_current;
     unsigned long flags;
     interrupt_save_and_disable(flags);
-    close_other_threads(cur);
+    proc_close_other_threads(cur);
     interrupt_restore_state(flags);
     int fd = sys_open(pathname, O_RDONLY);
     if (fd < 0) {

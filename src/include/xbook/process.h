@@ -20,12 +20,14 @@ int proc_pthread_init(task_t *task);
 int proc_res_init(task_t *task);
 int proc_res_exit(task_t *task);
 
-int thread_release_resource(task_t *task);
+int proc_deal_zombie_child(task_t *parent);
+void proc_close_one_thread(task_t *thread);
+void proc_close_other_threads(task_t *thread);
 
 int sys_fork();
-void sys_exit(int status);
 pid_t sys_waitpid(pid_t pid, int *status, int options);
-
 int sys_execve(const char *pathname, const char *argv[], const char *envp[]);
+void sys_exit(int status);
+unsigned long sys_sleep(unsigned long second);
 
 #endif /* _XBOOK_PROCESS_H */

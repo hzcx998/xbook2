@@ -13,6 +13,11 @@
 
 // #define DEBUG_FORK
 
+static pid_t task_fork_pid()
+{
+    return task_alloc_pid();
+}
+
 /**
  * 在用户态多线程中，fork只会把调用者线程复制给子进程，而其它线程不复制
  */
@@ -113,7 +118,6 @@ static int copy_file(task_t *child, task_t *parent)
 
 static int copy_gui(task_t *child, task_t *parent)
 {
-    // 不复制图形消息池
     if (parent->gmsgpool) {
         child->gmsgpool = NULL;
     }

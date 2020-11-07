@@ -23,12 +23,6 @@ void pthread_entry(void *arg)
     kernel_switch_to_user(frame);
 }
 
-int thread_release_resource(task_t *task)
-{
-    timer_cancel(&task->sleep_timer);
-    return 0;
-}
-
 int wait_one_hangging_thread(task_t *parent, pid_t pid, int *status)
 {
     task_t *child, *next;
@@ -118,7 +112,7 @@ void pthread_exit(void *status)
         sys_exit((int) status);
     }
     cur->exit_status = (int)status;
-    thread_release_resource(cur);
+    task_do_cancel(cur);
     if (cur->flags & THREAD_FLAG_DETACH) {
         if (cur->flags &  THREAD_FLAG_JOINED) {
             task_t *parent = task_find_by_pid(cur->parent_pid);
@@ -246,7 +240,7 @@ int sys_thread_cancel(pthread_t thread)
             interrupt_restore_state(flags);
             pthread_exit((void *) THREAD_FLAG_CANCEL_ASYCHRONOUS);
         } else {
-            close_one_thread(task);
+            task_close_one_thread(task);
         }
     }
     interrupt_restore_state(flags);
