@@ -3,7 +3,7 @@
 int main(int argc, char *argv[])
 {
     //socket_test4(argc, argv);
-    //pipe_test(argc, argv);
+    pipe_test(argc, argv);
     //shm_test(argc, argv);
 	//trig_test(argc, argv);
 
@@ -12,6 +12,6 @@ int main(int argc, char *argv[])
     //http_test(argc, argv);
     //xlibc_test(argc, argv);
     //buddy_test(argc, argv);
-    sleep_test(argc, argv);
+    //sleep_test(argc, argv);
     return 0;
 }

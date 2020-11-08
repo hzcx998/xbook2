@@ -6,13 +6,14 @@
 
 int main(int argc, char *argv[])
 {
-    
 	/* 如果没有参数，就接收输入，输入类型：管道，文件，设备 */
     if (argc == 1) {
         /*  */
         char buf = 0;
-        while (read(STDIN_FILENO, &buf, 1) > 0) {
-        }
+        int ret = 0;
+        do {
+            ret = read(STDIN_FILENO, &buf, 1);
+        } while (ret > 0);
         return 0;
 	}
 	if(argc > 2){

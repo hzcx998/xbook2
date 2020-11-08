@@ -79,7 +79,7 @@ pipe_t *pipe_find(kobjid_t id)
  * 3.管道中没有数据，如果写端全部关闭，则返回0.
  * 4.如果写端没有全部关闭，则阻塞。
  */
-int __pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
+int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
 {
     if (!buffer || !bytes)
         return -1;
@@ -95,15 +95,19 @@ int __pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
 
     int rdsize = 0;
     int chunk;
-    // 
-    
     mutex_lock(&pipe->mutex);
-    if (fifo_buf_len(pipe->fifo) <= 0) {
+    
+    while (fifo_buf_len(pipe->fifo) <= 0) {
         if (atomic_get(&pipe->write_count) <= 0) {
             mutex_unlock(&pipe->mutex);
             return 0;
         }
         if (pipe->rdflags & PIPE_NOWAIT) {
+            mutex_unlock(&pipe->mutex);
+            return -1;
+        }
+        if (trigismember(&task_current->triggers->set, TRIGHSOFT) ||
+            trigismember(&task_current->triggers->set, TRIGLSOFT)) {
             mutex_unlock(&pipe->mutex);
             return -1;
         }
@@ -116,30 +120,13 @@ int __pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
     chunk = min(chunk, fifo_buf_len(pipe->fifo));
     chunk = fifo_buf_get(pipe->fifo, buffer, chunk);
     rdsize += chunk;
+    
     if (atomic_get(&pipe->write_count) > 0) {
         if (wait_queue_length(&pipe->wait_queue) > 0)
             wait_queue_wakeup(&pipe->wait_queue);
     }
     mutex_unlock(&pipe->mutex);
     return rdsize;
-}
-
-int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
-{
-    char *buf = (char *) buffer;
-    int rd = 0, tmp;
-    while (bytes > 0) {
-        tmp = __pipe_read(pipeid, buf, bytes);
-        if (tmp < 0 && rd == 0) {
-            return -1;
-        } else if (tmp < 0) {
-            return rd;
-        }
-        rd += tmp;
-        buf += tmp;
-        bytes -= tmp;
-    }
-    return rd;
 }
 
 /**
@@ -177,26 +164,36 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
     int chunk = 0;
     int wrsize = 0;
     while (left_size > 0) {
-        chunk = min(left_size, PIPE_SIZE);
-        chunk = min(chunk, fifo_buf_avali(pipe->fifo));
-        chunk = fifo_buf_put(pipe->fifo, buf + off, chunk);
-        off += chunk;
-        left_size -= chunk;
-        wrsize += chunk;
-        if (atomic_get(&pipe->read_count) > 0) {
-            if (wait_queue_length(&pipe->wait_queue) > 0)
-                wait_queue_wakeup(&pipe->wait_queue);
-        }
-        if (fifo_buf_avali(pipe->fifo) <= 0 && left_size > 0) {
-            if (pipe->wrflags & PIPE_NOWAIT) {
+        while (fifo_buf_avali(pipe->fifo) <= 0) {
+            if ((pipe->wrflags & PIPE_NOWAIT) || 
+                trigismember(&task_current->triggers->set, TRIGHSOFT) ||
+                trigismember(&task_current->triggers->set, TRIGLSOFT)) {
                 mutex_unlock(&pipe->mutex);
                 return -1;
+            }
+            if (atomic_get(&pipe->read_count) <= 0) {
+                sys_trigger_active(TRIGHSOFT, task_current->pid);
+                return -1;
+            }
+            if (atomic_get(&pipe->read_count) > 0) {
+                if (wait_queue_length(&pipe->wait_queue) > 0)
+                    wait_queue_wakeup(&pipe->wait_queue);
             }
             wait_queue_add(&pipe->wait_queue, task_current);
             mutex_unlock(&pipe->mutex);
             task_block(TASK_BLOCKED);
             mutex_lock(&pipe->mutex);
         }
+        chunk = min(left_size, PIPE_SIZE);
+        chunk = min(chunk, fifo_buf_avali(pipe->fifo));
+        chunk = fifo_buf_put(pipe->fifo, buf + off, chunk);
+        off += chunk;
+        left_size -= chunk;
+        wrsize += chunk;
+    }
+    if (atomic_get(&pipe->read_count) > 0) {
+        if (wait_queue_length(&pipe->wait_queue) > 0)
+            wait_queue_wakeup(&pipe->wait_queue);
     }
     mutex_unlock(&pipe->mutex);
     return wrsize;

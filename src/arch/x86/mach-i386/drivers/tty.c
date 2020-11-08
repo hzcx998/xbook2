@@ -159,8 +159,6 @@ static int tty_filter_keycode(int keycode)
     return 0;
 }
 
-
-
 iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
@@ -173,10 +171,8 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                 /* read from input even */
                 struct input_event event;
                 int ret = 0;
-                
                 memset(&event, 0, sizeof(event));
-                while (1)
-                {
+                while (1) {
                     ret = device_read(extension->kbd, &event, sizeof(event), 0);
                     if ( ret >= 1 ) {
                         switch (event.type)
@@ -184,7 +180,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                             case EV_KEY:
                                 /* 按下的按键 */
                                 if ((event.value) > 0 && !tty_filter_keycode(event.code)) {
-                                    ioreq->io_status.infomation = sizeof(event);
+                                    ioreq->io_status.infomation = 1;
                                     uint8_t ch = _g_key_code_switch(event.code);
                                     if (ch > 0)
                                         event.code = ch;
@@ -208,6 +204,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                 
             }
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
+            printk("not front");
             trigger_force(TRIGSYS, task_current->pid);
         }
     }

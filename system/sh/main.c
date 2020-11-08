@@ -260,11 +260,6 @@ static int do_buildin_cmd(int cmd_argc, char **cmd_argv)
 int execute_cmd(int argc, char **argv)
 {
     int status = 0;
-
-    /*struct redirect_info rdi[3];
-    redirect_cmd(argc, argv, rdi);
-    redirect_do(rdi, redirect_mask, &argc);
-    */
     /* 先执行内建命令，再选择磁盘中的命令 */
     if (do_buildin_cmd(argc, argv)) {
         
@@ -281,29 +276,23 @@ int execute_cmd(int argc, char **argv)
 
             /* shell程序等待子进程退出 */
             pid = wait(&status);
-
-            /*
-            printf("parent %d wait %d exit %d\n",
-                getpid(), pid, status);
-            */
             pid = getpid();
             ioctl(0, TTYIO_HOLDER, &pid);
-
-
         } else {    /* 子进程 */
-
+            pid = getpid();
+            ioctl(0, TTYIO_HOLDER, &pid);
             /* 子进程执行程序 */
             pid = execv((const char *)argv[0], (char *const *)argv);
 
             /* 如果执行出错就退出 */
             if(pid == -1){
                 printf("sh: bad command %s!\n", argv[0]);
-                sh_exit(pid, 0);
+                pid = getppid();
+                ioctl(0, TTYIO_HOLDER, &pid);
+                sh_exit(-1, 0);
             }
         }
     }
-    /* 需要在执行完后恢复重定向到shell */
-    //redirect_restore(rdi, redirect_mask);
     return 0;
 }
 
