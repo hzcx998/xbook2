@@ -164,9 +164,10 @@ usr_c:
 		-device ide-drive,drive=disk1,bus=ahci.1 \
                
 ifeq ($(OS),Windows_NT)
-QEMU_KVM = -accel hax
+QEMU_KVM := -accel hax
+QEMU_KVM :=
 else
-QEMU_KVM = -enable-kvm
+QEMU_KVM := -enable-kvm
 endif
 
 QEMU_ARGUMENT = -m 512M $(QEMU_KVM) \

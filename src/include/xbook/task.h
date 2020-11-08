@@ -34,6 +34,7 @@ typedef enum {
 
 #define TASK_TIMESLICE_MIN  1
 #define TASK_TIMESLICE_MAX  100
+#define TASK_TIMESLICE_DEAULT  3
 
 enum thread_flags {
     THREAD_FLAG_DETACH              = (1 << 0),     /* 线程分离标志，表示自己释放资源 */
@@ -53,8 +54,8 @@ typedef struct {
     pid_t parent_pid;
     pid_t tgid;                         /* 线程组id：线程属于哪个进程，和pid一样，就说明是主线程，不然就是子线程 */
     unsigned long flags;                
-    unsigned long priority;             /* 任务的动态优先级 */
-    unsigned long static_priority;      /* 任务的静态优先级 */
+    char priority;             /* 任务的动态优先级 */
+    char static_priority;      /* 任务的静态优先级 */
     unsigned long ticks;                /* 运行的ticks，当前剩余的timeslice */
     unsigned long timeslice;            /* 时间片，可以动态调整 */
     unsigned long elapsed_ticks;        /* 任务执行总共占用的时间片数 */
@@ -97,11 +98,11 @@ extern volatile int task_init_done;
       
 void tasks_init();
 
-void task_init(task_t *task, char *name, int priority);
+void task_init(task_t *task, char *name, uint8_t prio_level);
 void task_free(task_t *task);
 void task_dump(task_t *task);
 
-task_t *kern_thread_start(char *name, int priority, task_func_t *func, void *arg);
+task_t *kern_thread_start(char *name, uint8_t prio_level, task_func_t *func, void *arg);
 void kern_thread_exit(int status);
 
 task_t *task_find_by_pid(pid_t pid);

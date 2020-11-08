@@ -303,7 +303,7 @@ task_t *user_process_start(char *name, char **argv)
     task_t *task = (task_t *) mem_alloc(TASK_KERN_STACK_SIZE);
     if (!task)
         return NULL;
-    task_init(task, name, TASK_PRIO_USER);
+    task_init(task, name, TASK_PRIO_LEVEL_NORMAL);
     task->pid = USER_INIT_PROC_ID;
     task->tgid = task->pid;
     if (proc_vmm_init(task)) {

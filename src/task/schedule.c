@@ -8,18 +8,40 @@
 // #define DEBUG_SCHED
 
 scheduler_t scheduler;
+
+const uint8_t sched_priority_levels[TASK_PRIO_LEVEL_MAX] = {8, 4, 6, 8, 10, 13, 24};
+
 /*
 TODO：优化动态优先级：当一个优先级高的线程长期获得优运行时，可以适当调低优先级。
 当一个低先级高的线程长期没获得运行时，可以适当调提高优先级。
 当前采取的是高优先级执行固定时间后就降低，不太好，没体现优先级的优势。
 */
+uint8_t sched_calc_base_priority(uint32_t level)
+{
+    if (level >= TASK_PRIO_LEVEL_MAX)
+        level = 0;
+    return sched_priority_levels[level];
+}
+
+uint8_t sched_calc_new_priority(task_t *task, char adjustment)
+{
+    char priority = task->priority;
+    ASSERT((priority < TASK_PRIORITY_REALTIME));
+    if ((priority < TASK_PRIORITY_REALTIME)) {
+        priority = priority + adjustment;
+        if (priority >= TASK_PRIORITY_REALTIME)
+            priority = TASK_PRIORITY_REALTIME - 1;
+        if (priority < task->static_priority)
+            priority = task->static_priority;
+    }
+    return (uint8_t) priority;
+}
 
 static task_t *sched_queue_fetch_first(sched_unit_t *su)
 {
     task_t *task;
-    while (!su->priority_queue[su->dynamic_priority].length)
-    {
-        su->dynamic_priority++;
+    while (!su->priority_queue[su->dynamic_priority].length) {
+        --su->dynamic_priority;
     }
     sched_queue_t *queue = &su->priority_queue[su->dynamic_priority];
     task = list_first_owner(&queue->list, task_t, list);
@@ -32,20 +54,22 @@ static task_t *sched_queue_fetch_first(sched_unit_t *su)
 task_t *get_next_task(sched_unit_t *su)
 {
     task_t *task = su->cur;
-    if (task->state == TASK_RUNNING) {
-        task->priority++;
-        if (task->priority >= MAX_PRIORITY_NR) {
-            task->priority = task->static_priority;
-        }
-        sched_queue_add_tail(su, task);
+    switch (task->state) {
+    case TASK_RUNNING:
         task->ticks = task->timeslice;
         task->state = TASK_READY;
-    } else if (task->state == TASK_READY) {
-        task->priority++;
-        if (task->priority >= MAX_PRIORITY_NR) {
-            task->priority = task->static_priority;
+    case TASK_READY:
+        // Non-real-time tasks are dynamically prioritized
+        if (task->static_priority < TASK_PRIORITY_REALTIME) {
+            --task->priority;
+            if ((task->priority < (task->static_priority - TASK_PRIORITY_TURN_DISTANCE)) || 
+                (task->priority < TASK_PRIORITY_LOW)) {
+                task->priority = task->static_priority;
+            }
         }
         sched_queue_add_tail(su, task);
+    default:
+        break;
     }
     task_t *next;
     next = sched_queue_fetch_first(su);
@@ -82,14 +106,15 @@ void sched_print_queue(sched_unit_t *su)
     int i; 
     unsigned long flags;
     spin_lock_irqsave(&scheduler.lock, flags);
-    for (i = 0; i < MAX_PRIORITY_NR; i++) {
+    for (i = 0; i < TASK_PRIORITY_MAX_NR; i++) {
         queue = &su->priority_queue[i];
-        printk(KERN_NOTICE "qeuue prio: %d\n", queue->priority);
-        list_for_each_owner (task, &queue->list, list) {
-            printk(KERN_INFO "task=%s pid=%d prio=%d ->", task->name, task->pid, task->priority);
+        if (queue->length > 0) {
+            printk(KERN_NOTICE "qeuue prio: %d\n", queue->priority);
+            list_for_each_owner (task, &queue->list, list) {
+                printk(KERN_INFO "task=%s pid=%d prio=%d ->", task->name, task->pid, task->priority);
+            }
+            printk(KERN_NOTICE "\n");
         }
-        printk(KERN_NOTICE "\n");
-        
     }
     spin_unlock_irqrestore(&scheduler.lock, flags);
 }
@@ -105,7 +130,7 @@ void init_sched_unit(sched_unit_t *su, cpuid_t cpuid, unsigned long flags)
     su->dynamic_priority = 0;
     sched_queue_t *queue;
     int i;
-    for (i = 0; i < MAX_PRIORITY_NR; i++) {
+    for (i = 0; i < TASK_PRIORITY_MAX_NR; i++) {
         queue = &su->priority_queue[i];
         queue->priority = i;
         queue->length = 0;

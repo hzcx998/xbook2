@@ -115,11 +115,10 @@ void init_net(void)
     }
     
     /* 打开一个线程来读取网络数据包 */
-    task_t * netin = kern_thread_start("netin", TASK_PRIO_RT, netin_kthread, NULL);
+    task_t * netin = kern_thread_start("netin", TASK_PRIO_LEVEL_NORMAL, netin_kthread, NULL);
     if (netin == NULL) {
         pr_err("[NET]: start kthread netin failed!\n");
     }
-    task_set_timeslice(netin, 2);
 }
 
 #if LWIP_NETCONN
@@ -221,7 +220,7 @@ httpserver_thread(void *arg)
 void
 httpserver_init()
 {
-  sys_thread_new("http_server_netconn", httpserver_thread, NULL, DEFAULT_THREAD_STACKSIZE, TASK_PRIO_USER);
+  sys_thread_new("http_server_netconn", httpserver_thread, NULL, DEFAULT_THREAD_STACKSIZE, TASK_PRIO_LEVEL_NORMAL);
 }
 #endif
 

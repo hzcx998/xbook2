@@ -37,19 +37,16 @@ void task_rollback_pid()
     --task_next_pid;
 }
 
-void task_init(task_t *task, char *name, int priority)
+void task_init(task_t *task, char *name, uint8_t prio_level)
 {
     memset(task, 0, sizeof(task_t));
     strcpy(task->name, name);
     task->state = TASK_READY;
     spinlock_init(&task->lock);
-    if (priority < 0)
-        priority = 0;
-    if (priority > MAX_PRIORITY_NR - 1)
-        priority = MAX_PRIORITY_NR - 1;
-    task->static_priority = priority;
-    task->priority = priority;
-    task->timeslice = 3;
+    task->static_priority = sched_calc_base_priority(prio_level);
+    task->priority = task->static_priority;
+    // 
+    task->timeslice = TASK_TIMESLICE_DEAULT - task->priority /10 + (10 - MS_PER_TICKS) / 4  + 1;
     task->ticks = task->timeslice;
     task->elapsed_ticks = 0;
     task->vmm = NULL;
@@ -114,18 +111,18 @@ task_t *task_find_by_pid(pid_t pid)
 /**
  * kern_thread_start - 启动一个内核线程
  * @name: 线程的名字
- * @priority: 线程优先级
+ * @prio_level: 线程优先级
  * @func: 线程入口
  * @arg: 线程参数
  * 
  * @return: 成功返回任务的指针，失败返回NULL
  */
-task_t *kern_thread_start(char *name, int priority, task_func_t *func, void *arg)
+task_t *kern_thread_start(char *name, uint8_t prio_level, task_func_t *func, void *arg)
 {
     task_t *task = (task_t *) mem_alloc(TASK_KERN_STACK_SIZE);
     if (!task)
         return NULL;
-    task_init(task, name, priority);
+    task_init(task, name, prio_level);
     if (fs_fd_init(task) < 0) {
         mem_free(task);
         return NULL;
@@ -205,6 +202,7 @@ void task_unblock(task_t *task)
             panic("task_unblock: task has already in ready list!\n");
         }
         task->state = TASK_READY;
+        task->priority = sched_calc_new_priority(task, 1);
         sched_queue_add_head(su, task);
     }
     interrupt_restore_state(flags);
@@ -244,7 +242,7 @@ int task_do_cancel(task_t *task)
 static void task_init_boot_idle(sched_unit_t *su)
 {
     su->idle = (task_t *) KERNEL_STATCK_BOTTOM;
-    task_init(su->idle, "idle0", TASK_PRIO_BEST);
+    task_init(su->idle, "idle0", TASK_PRIO_LEVEL_REALTIME);
     /* 需要在后面操作文件，因此需要初始化文件描述符表 */
     if (fs_fd_init(su->idle) < 0) { 
         panic("init kmain fs fd failed!\n");
@@ -361,11 +359,11 @@ void task_start_user()
     task_t *proc = user_process_start(init_argv[0], init_argv);
     if (proc == NULL)
         panic("kernel start process failed! please check initsrv!\n");
+    
     sched_unit_t *su = sched_get_cur_unit();
-    /* 降级期间不允许产生中断，降级后其它任务才有机会运行 */
 	unsigned long flags;
     interrupt_save_and_disable(flags);
-    su->idle->static_priority = su->idle->priority = TASK_PRIO_IDLE;
+    su->idle->static_priority = su->idle->priority = TASK_PRIORITY_SYS;
     interrupt_restore_state(flags);
     schedule();
     interrupt_enable();
