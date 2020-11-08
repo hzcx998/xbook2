@@ -1,0 +1,149 @@
+XBook2 GAPI(Graphic API)手册  
+
+GAPI是用于操作图形界面的库
+用户层的实现位于源代码的/library/gapi目录下
+
+本手册中,不作特殊说明,函数的返回值均为
+	成功	0
+	失败	-1
+
+========
+使用时包含gapi.h头文件
+#include<gapi.h>
+
+-------
+int g_init(void);
+
+初始化图形API
+
+-------
+
+int g_quit(void);
+
+关闭图形API,取消定时器  
+
+========
+使用时包含gwindow.h头文件
+#include<gwindow.h>
+
+在此段落中,窗口句柄是一个整数,为窗口的唯一标识符(也被称作窗口标识)
+
+--------
+
+int g_new_window(char *title,int x,int y,uint32_t width,
+	uint32_t height,uint32_t flags); 
+
+创建新窗口  
+参数:  
+	char \*title 窗口名  
+	int x	窗口的x坐标位置  
+	int y	窗口的y坐标位置  
+	uint32_t width	窗口宽度  
+	uint32_t height	窗口高度
+	uint32_t flags	窗口属性  
+		GW_SHOW	创建后立刻显示窗口  
+返回值:
+	成功	窗口句柄
+	失败	-1	
+
+--------
+
+g_window_t *g_find_window(int win);
+
+根据窗口句柄查找窗口指针
+参数:
+	int win	窗口句柄
+返回值:
+	成功	窗口指针
+	失败	NULL
+
+--------
+
+int g_enable_window_resize(int win);
+
+允许窗口调整大小
+参数:
+	int win	窗口句柄
+
+--------
+
+int g_set_window_title(int win,const char *title);
+
+设置窗口标题
+参数:
+	int win	窗口句柄
+	const char *title	窗口标题
+
+--------
+
+int g_set_window_minresize(int win,uint32_t min_width,
+	uint32_t min_height);
+
+设置窗口在可调整的最小大小
+参数:
+	int win	窗口句柄
+	uint32_t min_width	最小宽度
+	uint32_t min_height	最小高度
+
+--------
+
+int g_disable_window_resize(int win);
+
+禁止窗口调整大小
+参数:
+	int win	窗口句柄
+
+--------
+
+int g_resize_window(int win,uint32_t width,uint32_t height);
+
+调整窗口大小
+参数:
+	int win	窗口句柄
+	uint32_t width	目标宽度
+	uint32_t height	目标高度
+
+--------
+
+int g_focus_window(int win,int turn);
+
+设置窗口聚焦状态
+参数:
+	int win	窗口句柄
+	int turn	聚焦状态
+		on	聚焦
+		off	丢焦
+
+--------
+
+int g_del_window(int win);
+
+删除窗口
+参数:
+	int win	窗口句柄
+
+--------
+
+int g_del_window_all();
+
+删除所有窗口
+
+--------
+
+int g_hide_window(int win);
+
+隐藏窗口
+参数:
+	int win	窗口句柄
+
+--------
+
+int g_maxim_window(int win);
+
+窗口最大化设置
+参数:
+	int win	窗口句柄
+当窗口为最大化时,还原窗口
+否则将窗口最大化
+
+========
