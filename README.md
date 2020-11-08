@@ -60,6 +60,8 @@ PTHREAD线程库
 1.下载我提取的工具包：http://www.book-os.org/tools/BuildTools-v7.zip, 下载后配置解压目录环境变量到系统环境变量Path里面。（注意，如果你的电脑上已经有mingw或者cygwin环境，请把这个工具包的环境变量放到靠前的位置，不然不会执行工具包里面的程序）
 
 2.下载qemu最新版：https://www.qemu.org/ 下载后安装，配置安装目录环境变量到系统环境变量Path里面，或者下载我提取的版本：http://www.book-os.org/tools/Qemu-i386.rar，下载后配置解压目录环境变量到系统环境变量Path里面。
+
+3.下载windows下面的qemu加速扩展程序HAXM v7.6.5：https://github.com/intel/haxm/releases，下载后安装即可.
 ```
 
 ## Linux环境搭建
@@ -74,8 +76,14 @@ PTHREAD线程库
     
 ```
 
-## 编译使用命令：
+## 编译时build后直接run即可（可加-jn参数多线程编译，n是线程数。）：
+```bash
+> make build    # 构建环境
+> make run      # 编译并运行，默认使用qemu虚拟机运行
 ```
+
+## 编译时可用的命令：
+```bash
 > make          # 只编译源码
 > make build    # 构建环境
 > make debuild  # 清理环境
@@ -86,9 +94,6 @@ PTHREAD线程库
 > make usr      # 只编译用户程序（在开发应用时常用）
 > make lib      # 只编译库（在开发库时常用）
 ```
-
-## 其它文档
-* [xbook应用程序开发指南](https://github.com/hzcx998/xbook2/blob/develop/doc/appdev-helper.md)
 
 联系方式：
 开源官网：www.book-os.org  
