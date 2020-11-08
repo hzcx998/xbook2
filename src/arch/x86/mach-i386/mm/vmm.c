@@ -25,7 +25,7 @@ static int do_copy_normal_page(addr_t vaddr, void *buf, vmm_t *child, vmm_t *par
     addr_t paddr;
     memcpy(buf, (void *)vaddr, PAGE_SIZE);
     vmm_active(child);
-    paddr = page_alloc_one();
+    paddr = page_alloc_user(1);
     if (!paddr) {
         printk(KERN_ERR "vmm_copy_mapping: page_alloc_one for vaddr failed!\n");
         vmm_active(parent);

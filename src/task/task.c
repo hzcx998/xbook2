@@ -45,8 +45,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     spinlock_init(&task->lock);
     task->static_priority = sched_calc_base_priority(prio_level);
     task->priority = task->static_priority;
-    // 
-    task->timeslice = TASK_TIMESLICE_DEAULT - task->priority /10 + (10 - MS_PER_TICKS) / 4  + 1;
+    task->timeslice = TASK_TIMESLICE_BASE + (task->priority / 10);
     task->ticks = task->timeslice;
     task->elapsed_ticks = 0;
     task->vmm = NULL;

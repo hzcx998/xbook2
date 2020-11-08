@@ -27,7 +27,7 @@ void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
             *pte = (paddr | prot | PAGE_ATTR_PRESENT);
         }
 	} else {
-        unsigned long page_table = page_alloc_normal(1);
+        unsigned long page_table = page_alloc_user(1);
         if (!page_table) {
             panic("%s: kernel no page left!\n", __func__);
         }
@@ -49,7 +49,7 @@ void page_link_addr_unsafe(unsigned long va, unsigned long pa, unsigned long pro
     if (*pde & PAGE_ATTR_PRESENT) {
     
         if ((*pte & PAGE_ATTR_PRESENT)) {
-            page_free_one(*pte & PAGE_MASK);
+            page_free(*pte & PAGE_MASK);
             *pte = 0;
         }
 
@@ -59,7 +59,7 @@ void page_link_addr_unsafe(unsigned long va, unsigned long pa, unsigned long pro
             *pte = (paddr | prot | PAGE_ATTR_PRESENT);
         }
 	} else {
-        unsigned long page_table = page_alloc_normal(1);
+        unsigned long page_table = page_alloc_user(1);
         if (!page_table) {
             panic("%s: kernel no page left!\n", __func__);
         }
@@ -68,7 +68,7 @@ void page_link_addr_unsafe(unsigned long va, unsigned long pa, unsigned long pro
         memset((void *)((unsigned long)pte & PAGE_MASK), 0, PAGE_SIZE);
 
         if ((*pte & PAGE_ATTR_PRESENT)) {
-            page_free_one(*pte & PAGE_MASK);
+            page_free(*pte & PAGE_MASK);
             *pte = 0;
         }
         *pte = (paddr | prot | PAGE_ATTR_PRESENT);
@@ -107,7 +107,7 @@ int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
         else
             trunk = pages;
 
-        unsigned long page_addr = page_alloc_normal(trunk);
+        unsigned long page_addr = page_alloc_user(trunk);
         if (!page_addr) {
             printk(KERN_ERR "%s: map no free pages for %d count!\n", __func__, len / PAGE_SIZE);
             return -1;
@@ -202,7 +202,7 @@ int page_map_addr_safe(unsigned long start, unsigned long len, unsigned long pro
         pte_t *pte = vir_addr_to_table_entry(vaddr);
 
         if (!(*pde & PAGE_ATTR_PRESENT) || !(*pte & PAGE_ATTR_PRESENT)) {
-            page_addr = page_alloc_normal(1);
+            page_addr = page_alloc_user(1);
             if (!page_addr) {
                 printk("error: user_map_vaddr -> map pages failed!\n");
                 return -1;

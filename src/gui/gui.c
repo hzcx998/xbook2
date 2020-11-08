@@ -103,13 +103,13 @@ void init_gui()
 
     if (gui_init_console() < 0)
         panic("init gui console failed!\n");
-
+    
     if (gui_init_layer() < 0)
         panic("init gui layer failed!\n");
-
-    /* 启动gui线程 */
-    if (kern_thread_start("kgui", TASK_PRIO_LEVEL_HIGH, kgui_thread, NULL) == NULL)
+    
+    if (kern_thread_start("kgui", TASK_PRIO_LEVEL_NORMAL, kgui_thread, NULL) == NULL)
         panic("start kgui thread failed!\n");
+    
     #endif
     
 }

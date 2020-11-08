@@ -32,4 +32,6 @@
     // #define LAYER_ALPAH 
     #endif
 
+// #define CONFIG_NET
+
 #endif   /* _XBOOK_CONFIG_H */

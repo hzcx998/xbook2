@@ -108,6 +108,7 @@ void netin_kthread(void *arg)
 /* 网络初始化 */
 void init_net(void)
 {
+    #ifdef CONFIG_NET
     printk("[NET]: init start.\n");
     if (init_netcard_driver() < 0) {
         pr_err("init netcard driver failed!\n");
@@ -119,6 +120,7 @@ void init_net(void)
     if (netin == NULL) {
         pr_err("[NET]: start kthread netin failed!\n");
     }
+    #endif
 }
 
 #if LWIP_NETCONN

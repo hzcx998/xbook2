@@ -19,7 +19,7 @@ void vmm_free(vmm_t *vmm)
 {
     if (vmm) {
         if (vmm->page_storage) {
-            page_free_one(kern_vir_addr2phy_addr(vmm->page_storage));
+            page_free(kern_vir_addr2phy_addr(vmm->page_storage));
             vmm->page_storage = NULL;
         }
         mem_free(vmm);

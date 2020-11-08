@@ -153,7 +153,7 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
         if (mem_space_find_intersection(cur->vmm, addr, addr + len))
             return (void *) -1;
         if (!shm->page_addr) {
-            shm->page_addr = page_alloc_normal(shm->npages);
+            shm->page_addr = page_alloc_user(shm->npages);
             if (!shm->page_addr)
                 return (void *) -1;
         }

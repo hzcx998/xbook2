@@ -34,7 +34,7 @@ typedef enum {
 
 #define TASK_TIMESLICE_MIN  1
 #define TASK_TIMESLICE_MAX  100
-#define TASK_TIMESLICE_DEAULT  3
+#define TASK_TIMESLICE_BASE  1
 
 enum thread_flags {
     THREAD_FLAG_DETACH              = (1 << 0),     /* 线程分离标志，表示自己释放资源 */

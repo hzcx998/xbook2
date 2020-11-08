@@ -31,8 +31,6 @@ int layer_next_id = 0;  /* 图层id */
 #ifdef LAYER_ALPAH
 uint32_t *screen_backup_buffer; /*  */
 #endif
-mem_cache_t layer_buffer_memcache;  /* 图层缓冲区内存分配器 */
-mem_cache_t layer_buffer_memcache_ex;  /* 图层缓冲区内存分配器 */
 
 /* 图层链表管理的自旋锁 */
 DEFINE_SPIN_LOCK(layer_list_spin_lock);
@@ -1629,18 +1627,16 @@ int layer_focus_win_top()
 }
 int gui_init_layer()
 {
-    size_t maxsz = gui_screen.width * gui_screen.height * sizeof(uint32_t) + PAGE_SIZE;
-    printk(KERN_DEBUG "max layer buffer size=%x %dMB\n", maxsz, maxsz/ MB);
-    mem_cache_init(&layer_buffer_memcache, "layer_buffer", maxsz, 0);
-    maxsz = gui_screen.width * gui_screen.height * sizeof(uint16_t);
+    size_t maxsz = gui_screen.width * gui_screen.height * sizeof(uint32_t);
+    printk(KERN_DEBUG "layer: frame buffer size=%x %dMB\n", maxsz, maxsz/ MB);
     /* 分配地图空间 */
-    layer_map = mem_cache_alloc_object(&layer_buffer_memcache);
+    layer_map = mem_alloc(maxsz/2);
     if (layer_map == NULL) {
         return -1;
     }
-    memset(layer_map, 0, maxsz);
+    memset(layer_map, 0, maxsz/2);
     #ifdef LAYER_ALPAH /* 分配屏幕缓冲区 */
-    screen_backup_buffer = mem_cache_alloc_object(&layer_buffer_memcache);
+    screen_backup_buffer = mem_alloc(maxsz);
     if (screen_backup_buffer == NULL) {
         return -1;
     }
@@ -1674,16 +1670,11 @@ int gui_init_layer()
     }
 
     if (init_mouse_layer() < 0) {
+        #ifdef LAYER_ALPAH /* 分配屏幕缓冲区 */
+        mem_free(screen_backup_buffer);
+        #endif
         mem_free(layer_map);
         return -1;
     }
-    /*
-    layer_t *test = create_layer(300, 200);
-    layer_set_z(test, 0);
-    layer_draw_rect_fill(test, 10, 10, 1, 1, COLOR_RED);
-    layer_draw_rect(test, 10, 20, 1, 1, COLOR_RED);
-    layer_refresh_rect(test, 10, 10, 1, 1);
-    spin("test");*/
-
     return 0;
 }

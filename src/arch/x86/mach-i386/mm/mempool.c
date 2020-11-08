@@ -179,9 +179,10 @@ int mem_range_split_section(mem_range_t *mem_range, mem_section_t *mem_section)
 
 unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
 {
-    if (count > MEM_SECTION_MAX_SIZE)
+    if (count > MEM_SECTION_MAX_SIZE) {
+        printk(KERN_NOTICE "%s: page count %d too big!\n", __func__, count);
         return 0;
-
+    }
     mem_range_t *mem_range = NULL;
 
     if (flags & MEM_NODE_TYPE_DMA)
