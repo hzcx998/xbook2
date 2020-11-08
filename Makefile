@@ -165,7 +165,6 @@ usr_c:
                
 ifeq ($(OS),Windows_NT)
 QEMU_KVM := -accel hax
-QEMU_KVM :=
 else
 QEMU_KVM := -enable-kvm
 endif
