@@ -1236,7 +1236,7 @@ static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
         buffer_info->dma = kern_vir_addr2phy_addr(buffer);
 
         rx_desc = E1000_RX_DESC(*rx_ring, i);
-        rx_desc->buffer_addr_low = cpu_to_le32(buffer_info->dma); //------
+        rx_desc->buffer_addr_low = byte_cpu_to_little_endian32(buffer_info->dma); //------
         rx_desc->buffer_addr_high = 0;
 
         if(unlikely((i & ~(E1000_RX_BUFFER_WRITE - 1)) == i)) {
@@ -1486,7 +1486,7 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
         cleaned = TRUE;
 
         buffer = buffer_info->buffer;
-        length = le16_to_cpu(rx_desc->length);
+        length = byte_little_endian16_to_cpu(rx_desc->length);
         // printk(KERN_DEBUG "length = %d------rx_desc->length = %d\n", length, rx_desc->length);
 
         if(unlikely(!(rx_desc->status & E1000_RXD_STAT_EOP))) {
@@ -1575,7 +1575,7 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
     eop = tx_ring->buffer_info[i].next_to_watch;
     eop_desc = E1000_TX_DESC(*tx_ring, eop);
 
-    while(eop_desc->upper.data & cpu_to_le32(E1000_TXD_STAT_DD)) {
+    while(eop_desc->upper.data & byte_cpu_to_little_endian32(E1000_TXD_STAT_DD)) {
         // printk(KERN_DEBUG "i = %d\n", i);
         // printk(KERN_DEBUG "next_to_watch = %d\n", eop);
         // printk(KERN_DEBUG "!!!!!!!!!!!\n");
@@ -1689,18 +1689,18 @@ e1000_tx_queue(e1000_extension_t* ext, int count, int tx_flags)
     while(count--) {
         buffer_info = &tx_ring->buffer_info[i];
         tx_desc = E1000_TX_DESC(*tx_ring, i);
-        // tx_desc->buffer_addr = cpu_to_le32(buffer_info->dma);   //------
-        tx_desc->buffer_addr_low = cpu_to_le32(buffer_info->dma);
+        // tx_desc->buffer_addr = byte_cpu_to_little_endian32(buffer_info->dma);   //------
+        tx_desc->buffer_addr_low = byte_cpu_to_little_endian32(buffer_info->dma);
         tx_desc->buffer_addr_high = 0;
         tx_desc->lower.data = 
-            cpu_to_le32(txd_lower | buffer_info->length);
-        tx_desc->upper.data = cpu_to_le32(txd_upper);
+            byte_cpu_to_little_endian32(txd_lower | buffer_info->length);
+        tx_desc->upper.data = byte_cpu_to_little_endian32(txd_upper);
         if(unlikely(++i == tx_ring->count)) {
             i = 0;
         }
     }
 
-    tx_desc->lower.data |= cpu_to_le32(ext->txd_cmd);
+    tx_desc->lower.data |= byte_cpu_to_little_endian32(ext->txd_cmd);
 	
     /* Force memory writes to complete before letting h/w
 	 * know there are new descriptors to fetch.  (Only

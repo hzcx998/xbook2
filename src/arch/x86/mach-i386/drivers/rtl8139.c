@@ -984,7 +984,7 @@ static int rtl8139_rx_interrupt(device_extension_t *ext)
         /* read size+status of next frame from DMA ring buffer
         读取接收的状态
          */
-        rx_status = le32_to_cpu(*(uint32_t *)(rx_ring + ring_offset));
+        rx_status = byte_little_endian32_to_cpu(*(uint32_t *)(rx_ring + ring_offset));
         /* 接收的大小在高16位 */
         rx_size = rx_status >> 16;
 
@@ -1363,11 +1363,11 @@ static void rtl8139_hardware_start(device_extension_t *ext)
     重载mac地址
      */
     out32(ext->io_addr + MAC0, 
-            le32_to_cpu(*(uint32_t *)(ext->mac_addr + 0)));
+            byte_little_endian32_to_cpu(*(uint32_t *)(ext->mac_addr + 0)));
     in32(ext->io_addr + MAC0);
     
     out16(ext->io_addr + MAC0 + 4, 
-            le32_to_cpu(*(uint16_t *)(ext->mac_addr + 4)));
+            byte_little_endian32_to_cpu(*(uint16_t *)(ext->mac_addr + 4)));
     in16(ext->io_addr + MAC0 + 4);
     
     ext->current_rx = 0;
