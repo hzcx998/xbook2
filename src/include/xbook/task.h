@@ -5,7 +5,7 @@
 #include <arch/cpu.h>
 #include <sys/proc.h>
 #include <types.h>
-#include <xbook/list.h>
+#include "list.h"
 #include "vmm.h"
 #include "trigger.h"
 #include "timer.h"
@@ -14,6 +14,7 @@
 #include "fs.h"
 #include "msgpool.h"
 #include "spinlock.h"
+#include "exception.h"
 
 typedef enum {
     TASK_READY = 0,         /* 进程处于就绪状态 */
@@ -64,6 +65,7 @@ typedef struct {
     struct vmm *vmm;                    
     list_t list;                        /* 处于所在队列的链表，就绪队列，阻塞队列等 */
     list_t global_list;                 /* 全局任务队列，用来查找所有存在的任务 */
+    exception_manager_t exception_manager;         
     triggers_t *triggers;               
     timer_t sleep_timer;               
     alarm_t alarm;                      
@@ -132,6 +134,7 @@ void task_start_user();
 unsigned long task_sleep_by_ticks(clock_t ticks);
 int task_count_children(task_t *parent);
 int task_do_cancel(task_t *task);
+pid_t task_get_pid(task_t *task);
 
 #define sys_sched_yeild     task_yeild
 pid_t sys_get_pid();

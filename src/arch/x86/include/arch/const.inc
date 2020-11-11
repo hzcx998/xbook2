@@ -33,7 +33,7 @@ exception_entry%1:
     add esp, 4
     
     push esp
-    call interrupt_do_trigger
+    call exception_check
     add esp, 4
     
     jmp interrupt_exit
@@ -64,7 +64,7 @@ irq_entry%1:
     call softirq_handle_in_interrupt
 
     push esp
-    call interrupt_do_trigger
+    call exception_check
     add esp, 4
     jmp interrupt_exit
 

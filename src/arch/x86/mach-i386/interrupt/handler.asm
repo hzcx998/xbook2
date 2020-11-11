@@ -5,6 +5,7 @@ extern interrupt_do_irq
 extern softirq_handle_in_interrupt
 extern interrupt_do_trigger
 extern syscalls
+extern exception_check
 
 [bits 32]
 [section .text]
@@ -99,7 +100,7 @@ syscall_handler:
     ; 处理完用户消息后再进行触发器处理，因为处理过程可能会影响到寄存器的值
     ;5
     push esp         ; 把中断栈指针传递进去
-    call interrupt_do_trigger
+    call exception_check
     add esp, 4
     cli
     jmp interrupt_exit

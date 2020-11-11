@@ -101,6 +101,12 @@ static int copy_pthread_desc(task_t *child, task_t *parent)
     return 0;
 }
 
+static int copy_exception(task_t *child, task_t *parent)
+{
+    exception_manager_init(&child->exception_manager);
+    return exception_copy(&child->exception_manager, &parent->exception_manager);
+}
+
 static int copy_task(task_t *child, task_t *parent)
 {
     if (copy_struct_and_kstack(child, parent))
@@ -115,9 +121,12 @@ static int copy_task(task_t *child, task_t *parent)
         goto rollback_pthread_desc;
     if (copy_gui(child, parent) < 0)
         goto rollback_file;
-
+    if (copy_exception(child, parent) < 0)
+        goto rollback_gui;
     task_stack_build_when_forking(child);
     return 0;
+rollback_gui:
+    // DO nothing
 rollback_file:
     fs_fd_exit(child);
 rollback_pthread_desc:

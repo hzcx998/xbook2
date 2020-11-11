@@ -219,6 +219,7 @@ int proc_release(task_t *task)
     fs_fd_exit(task);
     gui_user_exit(task);
     proc_pthread_exit(task);
+    exception_manager_exit(&task->exception_manager);
     task_do_cancel(task);
     return 0;
 }

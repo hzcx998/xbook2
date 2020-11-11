@@ -19,6 +19,7 @@
 #include <xbook/vmm.h>
 #include <xbook/mutexqueue.h>
 #include <xbook/process.h>
+#include <xbook/exception.h>
 #include <fsal/fsal.h>
 #include <math.h>
 
@@ -59,6 +60,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->triggers = NULL;
     timer_init(&task->sleep_timer, 0, 0, NULL);
     alarm_init(&task->alarm);
+    exception_manager_init(&task->exception_manager);
     task->errno = 0;
     task->pthread = NULL;
     task->fileman = NULL;
@@ -252,6 +254,11 @@ static void task_init_boot_idle(sched_unit_t *su)
     su->cur = su->idle;
 }
 
+pid_t task_get_pid(task_t *task)
+{
+    return task->tgid;
+}
+
 /* 
 当调用者为进程时，tgid=pid
 当调用者为线程时，tgid=master process pid
@@ -259,7 +266,7 @@ static void task_init_boot_idle(sched_unit_t *su)
 */
 pid_t sys_get_pid()
 {
-    return task_current->tgid;
+    return task_get_pid(task_current);
 }
 
 pid_t sys_get_ppid()
