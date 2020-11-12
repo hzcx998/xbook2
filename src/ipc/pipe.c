@@ -170,6 +170,7 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
             }
             if (atomic_get(&pipe->read_count) <= 0) {
                 exception_force_self(EXP_CODE_PIPE, 0);
+                mutex_unlock(&pipe->mutex);
                 return -1;
             }
             if (atomic_get(&pipe->read_count) > 0) {

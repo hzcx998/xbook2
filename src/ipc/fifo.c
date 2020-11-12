@@ -206,11 +206,10 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg)
         printk(KERN_ERR "%s: no writer!\n");
         return -1;
     }
-    if (fifo->flags & (IPC_NOERROR << 24))
-        if (fifo->writer != task_current) {
-            printk(KERN_ERR "%s: writer no current task!\n");
-            return -1;
-        }
+    if (fifo->flags & (IPC_NOERROR << 24) && fifo->writer != task_current) {
+        printk(KERN_ERR "%s: writer no current task!\n");
+        return -1;
+    }
     fifo->flags |= FIFO_IN_WRITE;
     if (fifo->reader == NULL) {
         if (!(fifo->flags & (IPC_NOSYNC << 24))) {
@@ -219,35 +218,42 @@ int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg)
     }
 
     mutex_lock(&fifo->mutex);
-    unsigned long flags;
     int left_size = (int )size;
     int off = 0;
     unsigned char *buf = buffer;
     int chunk = 0;
     int wrsize = 0;
     while (left_size > 0) {
-        interrupt_save_and_disable(flags);
+        while (fifo_buf_avali(fifo->fifo) <= 0) {
+            if (fifo->flags & (IPC_NOWAIT << 24)) {
+                fifo->flags &= ~FIFO_IN_WRITE;
+                mutex_unlock(&fifo->mutex);
+                return -1;
+            }
+            if (!fifo->reader || atomic_get(&fifo->readref) <= 0) {
+                exception_force_self(EXP_CODE_PIPE, 0);
+                mutex_unlock(&fifo->mutex);
+                return -1; 
+            }
+            if (fifo->reader->state == TASK_BLOCKED &&
+                (fifo->flags & FIFO_IN_READ)) {
+                task_unblock(fifo->reader);
+            }
+            mutex_unlock(&fifo->mutex);
+            task_block(TASK_BLOCKED);
+            mutex_lock(&fifo->mutex);
+        }
+
         chunk = MIN(left_size, FIFO_SIZE);
         chunk = MIN(chunk, fifo_buf_avali(fifo->fifo));
         chunk = fifo_buf_put(fifo->fifo, buf + off, chunk);
         off += chunk;
         left_size -= chunk;
         wrsize += chunk;
-        if (fifo->reader && fifo->reader->state == TASK_BLOCKED &&
-                (fifo->flags & FIFO_IN_READ)) {
-            task_unblock(fifo->reader);
-        }
-        interrupt_restore_state(flags);
-        if (fifo_buf_avali(fifo->fifo) <= 0 && left_size > 0) {
-            if (fifo->flags & (IPC_NOWAIT << 24)) {
-                fifo->flags &= ~FIFO_IN_WRITE;
-                mutex_unlock(&fifo->mutex);
-                return -1;
-            }
-            mutex_unlock(&fifo->mutex);
-            task_block(TASK_BLOCKED);
-            mutex_lock(&fifo->mutex);
-        }
+    }
+    if (fifo->reader->state == TASK_BLOCKED &&
+        (fifo->flags & FIFO_IN_READ)) {
+        task_unblock(fifo->reader);
     }
     fifo->flags &= ~FIFO_IN_WRITE;
     mutex_unlock(&fifo->mutex);
@@ -277,37 +283,37 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
         printk(KERN_ERR "fifo_read: reader null!\n");
         return -1;
     }
-    if (fifo->flags & (IPC_NOERROR << 16))
-        if (fifo->reader != task_current) 
-            return -1;
+    if (fifo->flags & (IPC_NOERROR << 16) && (fifo->reader != task_current))
+        return -1;
     fifo->flags |= FIFO_IN_READ;
-    if (fifo->writer == NULL) {
-        if (fifo->flags & (IPC_NOSYNC << 16)) {
-            printk(KERN_DEBUG "fifo_read: don't need sync for reader.\n");  
-            return -1;
-        }
+    if (fifo->writer == NULL && (fifo->flags & (IPC_NOSYNC << 16))) {
+        printk(KERN_DEBUG "fifo_read: don't need sync for reader.\n");  
+        return -1;
     }
 
     mutex_lock(&fifo->mutex);
-    unsigned long flags;
-    interrupt_save_and_disable(flags);
-    if (fifo_buf_len(fifo->fifo) <= 0) {
+    int rdsize = 0;
+    int chunk;
+    while (fifo_buf_len(fifo->fifo) <= 0) {
         if (fifo->flags & (IPC_NOWAIT << 16)) {
             fifo->flags &= ~FIFO_IN_READ;
-            interrupt_restore_state(flags);
             mutex_unlock(&fifo->mutex);
             return -1;
         }
-        interrupt_restore_state(flags);
+        if (!fifo->writer || atomic_get(&fifo->writeref) <= 0) {
+            mutex_unlock(&fifo->mutex);
+            return -1;
+        }
+        if (exception_cause_exit(&task_current->exception_manager)) {
+            mutex_unlock(&fifo->mutex);
+            return -1;
+        }
         mutex_unlock(&fifo->mutex);
         task_block(TASK_BLOCKED);
         mutex_lock(&fifo->mutex);
-        interrupt_save_and_disable(flags);
     }
 
-    interrupt_restore_state(flags);
-    int rdsize = 0;
-    int chunk = MIN(size, FIFO_SIZE);
+    chunk = MIN(size, FIFO_SIZE);
     chunk = MIN(chunk, fifo_buf_len(fifo->fifo));
     chunk = fifo_buf_get(fifo->fifo, buffer, chunk);
     rdsize += chunk;
@@ -315,7 +321,6 @@ int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg)
             (fifo->flags & FIFO_IN_WRITE)) {
         task_unblock(fifo->writer);
     }
-
     fifo->flags &= ~FIFO_IN_READ;
     mutex_unlock(&fifo->mutex);
     return rdsize;
