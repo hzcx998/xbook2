@@ -59,13 +59,15 @@ int expcheck()
 {
     uint32_t code;
     uint32_t arg;
-    if (__expchkpoint(&code, &arg) < 0)
-        return -1;
-    if (code >= EXP_CODE_MAX_NR) {
-        return -EINVAL;
-    }
-    if (__exception_handers[code]) {
-        __exception_handers[code](code, arg);
+    while (1) {
+        if (__expchkpoint(&code, &arg) < 0)
+            return -1;
+        if (code >= EXP_CODE_MAX_NR) {
+            return -EINVAL;
+        }
+        if (__exception_handers[code]) {
+            __exception_handers[code](code, arg);
+        }
     }
     return 0;
 }

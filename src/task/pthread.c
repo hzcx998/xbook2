@@ -61,7 +61,8 @@ task_t *pthread_start(task_func_t *func, void *arg,
     task->vmm = parent->vmm;
     task->fileman = parent->fileman;
     // TODO: init exception for child
-
+    exception_manager_init(&task->exception_manager);
+    
     proc_trap_frame_init(task);
     task_stack_build(task, pthread_entry, arg);
     trap_frame_t *frame = TASK_GET_TRAP_FRAME(task);
