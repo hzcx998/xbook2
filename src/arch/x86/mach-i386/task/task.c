@@ -2,7 +2,6 @@
 #include <arch/interrupt.h>
 #include <arch/segment.h>
 #include <xbook/syscall.h>
-#include <xbook/trigger.h>
 #include <xbook/memspace.h>
 #include <xbook/process.h>
 #include <xbook/debug.h>
@@ -38,34 +37,6 @@ void kernel_frame_init(trap_frame_t *frame)
     frame->ecx = frame->edx = 0;
 
     frame->eflags = (EFLAGS_MBS | EFLAGS_IF_1 | EFLAGS_IOPL_1);
-}
-
-void trigger_frame_build(trap_frame_t *frame, int trig, void *_act)
-{
-    trig_action_t *act = (trig_action_t *)_act;
-    trigger_frame_t *trigger_frame = (trigger_frame_t *)((frame->esp - sizeof(trigger_frame_t)) & -8UL);
-    
-    trigger_frame->trig = trig;
-    trigger_frame->oldmask = task_current->triggers->blocked;
-
-    memcpy(&trigger_frame->trap_frame, frame, sizeof(trap_frame_t));
-
-    trigger_frame->ret_addr = trigger_frame->ret_code;
-
-    /* 构建返回代码，系统调用封装
-    模拟系统调用来实现从用户态返回到内核态
-    mov eax, SYS_TRIGRET
-    int 0x40
-     */
-    trigger_frame->ret_code[0] = 0xb8;                          /* 给eax赋值的机器码 */
-    *(uint32_t *)(trigger_frame->ret_code + 1) = SYS_TRIGRET;   /* 系统调用号 */
-    *(uint16_t *)(trigger_frame->ret_code + 5) = 0x40cd;        /* int对应的指令是0xcd，系统调用中断号是0x40 */
-    
-    frame->eip = (unsigned int)act->handler;
-    frame->esp = (unsigned int)trigger_frame;
-    frame->ds = frame->es = frame->fs = frame->gs = USER_DATA_SEL;
-    frame->ss = USER_STACK_SEL;
-    frame->cs = USER_CODE_SEL;
 }
 
 void user_thread_frame_build(trap_frame_t *frame, void *arg, void *func,
@@ -150,22 +121,6 @@ int process_frame_init(task_t *task, trap_frame_t *frame, char **argv, char **en
     frame->esp = (unsigned long) arg_bottom;
     frame->ebp = frame->esp;
     return 0;
-}
-
-int trigger_return_to_user(trap_frame_t *frame)
-{
-    /* 原本trigger_frame是在用户栈esp-trigger_frame_size这个位置，但是由于调用了用户处理程序后，
-    函数会把返回地址弹出，也就是esp+4，所以，需要通过esp-4才能获取到trigger_frame */
-    trigger_frame_t *trigger_frame = (trigger_frame_t *)(frame->esp - 4);
-    trigset_t oldset = trigger_frame->oldmask;
-    
-    triggers_t *trigger = task_current->triggers; 
-    spin_lock_irq(&trigger->trig_lock);
-    trigger->blocked = oldset;
-    trigger_calc_left(trigger);
-    spin_unlock_irq(&trigger->trig_lock);
-    memcpy(frame, &trigger_frame->trap_frame, sizeof(trap_frame_t));
-    return frame->eax;
 }
 
 void thread_kstack_dump(thread_stack_t *kstack)

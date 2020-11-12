@@ -188,6 +188,7 @@ int exception_send(pid_t pid, uint32_t code, uint32_t arg)
             return -ENOMEM; 
         }
         exception_add_catch(exception_manager, exp);
+        task_wakeup(target);
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         return 0;
     }
@@ -201,6 +202,7 @@ int exception_send(pid_t pid, uint32_t code, uint32_t arg)
         return -ENOMEM; 
     }
     exception_add_normal(exception_manager, exp);
+    task_wakeup(target);
     spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
     return 0;
 }
@@ -215,12 +217,39 @@ int exception_force(pid_t pid, uint32_t code, uint32_t arg)
     return exception_send(pid, code, arg);
 }
 
+int exception_force_self(uint32_t code, uint32_t arg)
+{
+    return exception_force(sys_get_pid(), code, arg);
+}
+
+int exception_raise(uint32_t code, uint32_t arg)
+{
+    return exception_send(sys_get_pid(), code, arg);
+}
+
+bool exception_cause_exit(exception_manager_t *exception_manager)
+{
+    exception_t *exp;
+    list_for_each_owner (exp, &exception_manager->exception_list, list) {
+        if (exp->code != EXP_CODE_CHLD &&
+            exp->code != EXP_CODE_USER &&
+            exp->code != EXP_CODE_STOP &&
+            exp->code != EXP_CODE_CONT &&
+            exp->code != EXP_CODE_TRAP &&
+            exp->code != EXP_CODE_ALRM) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static int exception_dispatch(exception_manager_t *exception_manager, exception_t *exp)
 {
     task_t *cur = task_current;
     switch (exp->code) {
     case EXP_CODE_CHLD:
     case EXP_CODE_USER:
+    case EXP_CODE_ALRM:
         // Ignore
         break;
     case EXP_CODE_STOP:

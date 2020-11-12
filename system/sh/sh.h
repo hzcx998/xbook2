@@ -19,7 +19,7 @@ void print_prompt();
 int cmd_parse(char * cmd_str, char **argv, char token);
 void readline( char *buf, uint32_t count);
 int execute_cmd(int argc, char **argv);
-void sh_exit_trigger(int trigno);
+void sh_exit_handler(uint32_t code, uint32_t arg);
 void print_logo();
 
 #endif /* _SH_H */

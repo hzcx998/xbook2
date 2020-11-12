@@ -1,6 +1,5 @@
 #include <sys/syscall.h>
 #include <sys/proc.h>
-#include <sys/trigger.h>
 
 /**
  * _exit() - exit process

@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/proc.h>
-#include <sys/trigger.h>
 #include <sys/syscall.h>
 
 extern char **environ;

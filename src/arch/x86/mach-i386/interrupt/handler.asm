@@ -3,7 +3,6 @@
 extern interrupt_handlers		 
 extern interrupt_do_irq		 
 extern softirq_handle_in_interrupt
-extern interrupt_do_trigger
 extern syscalls
 extern exception_check
 

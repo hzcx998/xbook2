@@ -14,7 +14,9 @@
 #define MEM_SPACE_MAP_SHARED      0x80       /* 映射成共享内存 */
 #define MEM_SPACE_MAP_REMAP       0x100      /* 强制重写映射 */
 
-#define MAX_MEM_SPACE_STACK_SIZE  (16 * MB)
+//#define MAX_MEM_SPACE_STACK_SIZE  (16 * MB)
+#define MAX_MEM_SPACE_STACK_SIZE  (PAGE_SIZE * 8)
+
 #define MEM_SPACE_STACK_SIZE_DEFAULT  (PAGE_SIZE * 4)
 
 #define MAX_MEM_SPACE_HEAP_SIZE    (512 * MB)

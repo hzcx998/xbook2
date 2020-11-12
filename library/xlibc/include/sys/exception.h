@@ -29,6 +29,7 @@ enum exception_code {
     EXP_CODE_TTIN,
     EXP_CODE_TTOU,
     EXP_CODE_SYS,
+    EXP_CODE_DEVICE,
     EXP_CODE_MAX_NR
 };
 

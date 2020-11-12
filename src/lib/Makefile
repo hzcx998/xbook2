@@ -3,7 +3,6 @@ SRC	+= string.c
 SRC	+= bitmap.c
 SRC	+= fifobuf.c
 SRC	+= fifoio.c
-SRC	+= trigger.c
 SRC	+= stdio.c
 SRC	+= abort.c
 SRC	+= inet.c

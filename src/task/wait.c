@@ -102,9 +102,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
         }
         interrupt_restore_state(flags);
         task_block(TASK_WAITING);
-        if (trigismember(&task_current->triggers->set, TRIGHSOFT) ||
-            trigismember(&task_current->triggers->set, TRIGLSOFT) ||
-            trigismember(&task_current->triggers->set, TRIGSYS)) {
+        if (exception_cause_exit(&parent->exception_manager)) {
             break;
         }
     }

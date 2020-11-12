@@ -1,7 +1,6 @@
 #include <xbook/syscall.h>
 #include <xbook/process.h>
 #include <xbook/memspace.h>
-#include <xbook/trigger.h>
 #include <xbook/alarm.h>
 #include <xbook/clock.h>
 #include <xbook/mutexqueue.h>
@@ -30,10 +29,6 @@ void syscall_init()
     syscalls[SYS_WAITPID] = sys_waitpid;
     syscalls[SYS_GETPID] = sys_get_pid;
     syscalls[SYS_GETPPID] = sys_get_ppid;
-    syscalls[SYS_TRIGGER] = sys_trigger_handler;
-    syscalls[SYS_TRIGGERON] = sys_trigger_active;
-    syscalls[SYS_TRIGGERACT] = sys_trigger_action;
-    syscalls[SYS_TRIGRET] = sys_trigger_return;
     syscalls[SYS_SLEEP] = sys_sleep;
     syscalls[SYS_THREAD_CREATE] = sys_thread_create;
     syscalls[SYS_THREAD_EXIT] = sys_thread_exit;
@@ -121,8 +116,6 @@ void syscall_init()
     syscalls[SYS_MSGPUT] = sys_msgque_put;
     syscalls[SYS_MSGSEND] = sys_msgque_send;
     syscalls[SYS_MSGRECV] = sys_msgque_recv;
-    syscalls[SYS_TRIGPENDING] = sys_trigger_pending;
-    syscalls[SYS_TRIGPROCMASK] = sys_trigger_proc_mask;
     syscalls[SYS_LAYERNEW] = sys_new_layer;
     syscalls[SYS_LAYERDEL] = sys_del_layer;
     syscalls[SYS_LAYERZ] = sys_layer_z;

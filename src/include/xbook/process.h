@@ -15,8 +15,6 @@ void proc_map_space_init(task_t *task);
 int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd);
 void proc_trap_frame_init(task_t *task);
 int proc_release(task_t *task);
-int proc_trigger_init(task_t *task);
-int proc_trigger_exit(task_t *task);
 int proc_pthread_init(task_t *task);
 int proc_pthread_exit(task_t *task);
 

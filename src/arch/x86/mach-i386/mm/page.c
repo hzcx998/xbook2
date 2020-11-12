@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <xbook/schedule.h>
 #include <xbook/memspace.h>
+#include <xbook/exception.h>
 
 void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
 {
@@ -353,7 +354,7 @@ static int do_page_no_write(unsigned long addr)
 static inline void do_vir_mem_fault(unsigned long addr)
 {
     /* TODO: 如果是在vir_mem区域中，就进行页复制，不是的话，就发出段信号。 */
-    panic("do_vir_mem_fault: at %x not support now!\n", addr);
+    exception_force_self(EXP_CODE_SEGV, addr);
 }
 
 static void do_expand_stack(mem_space_t *space, unsigned long addr)
@@ -369,23 +370,23 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
 		printk(KERN_DEBUG "page: %s: addr %x have write protection.\n", __func__, addr);
 		int ret = do_page_no_write(addr);
 		if (ret) {
-            printk(KERN_EMERG "page: %s: touch TRIGSYS trigger because page not writable!", __func__);    
-            trigger_force(TRIGSYS, task_current->pid);    
+            printk(KERN_EMERG "page: %s: page not writable!", __func__);    
+            exception_force_self(EXP_CODE_SEGV, addr);
             return -1;
         }
 
 		/* 虽然写入的写标志，但是还是会出现缺页故障，在此则处理一下缺页 */
 		if (do_handle_no_page(addr, space->page_prot)) {
-            printk(KERN_EMERG "page: %s: touch TRIGSYS trigger because hand no page failed!", __func__);
-            trigger_force(TRIGSYS, task_current->pid);
+            printk(KERN_EMERG "page: %s: hand no page failed!", __func__);
+            exception_force_self(EXP_CODE_SEGV, addr);
 			return -1; 
         }
 		return 0;
 	} else {
 		printk(KERN_DEBUG "page: %s: no write protection\n", __func__);
 	}
-    printk(KERN_EMERG "page: %s: touch TRIGSYS trigger because page protection!", __func__);
-    trigger_force(TRIGSYS, task_current->pid);
+    printk(KERN_EMERG "page: %s: page protection!", __func__);
+    exception_force_self(EXP_CODE_SEGV, addr);
     return -1;
 }
 
@@ -417,20 +418,17 @@ int page_do_fault(trap_frame_t *frame)
     /* 如果故障地址位于内核中， */
     if (addr >= USER_VMM_SIZE) {
         /* TODO: 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
-        printk(KERN_DEBUG "user pid=%d name=%s access unmaped vir_mem area .\n", cur->pid, cur->name);
+        printk(KERN_ERR "page fauilt: user pid=%d name=%s access unmaped vir_mem area.\n", cur->pid, cur->name);
         trap_frame_dump(frame);
-        tasks_print();
         do_vir_mem_fault(addr);
         return -1;
     }
     /* 故障地址在用户空间 */
     mem_space_t *space = mem_space_find(cur->vmm, addr);
     if (space == NULL) {    
-        printk(KERN_EMERG "page_do_fault: user access user unknown space .\n");
-        printk(KERN_EMERG "page fault addr:%x\n", addr);
-        mem_space_dump(cur->vmm);
-        tasks_print();
-        trigger_force(TRIGSYS, cur->pid);
+        printk(KERN_ERR "page fauilt: user pid=%d name=%s user access user unknown space.\n", cur->pid, cur->name);
+        trap_frame_dump(frame);
+        exception_force_self(EXP_CODE_SEGV, addr);
         return -1;
     }
     if (space->start > addr) { /* 故障地址在空间前，说明是栈向下拓展，那么尝试拓展栈。 */
@@ -441,14 +439,11 @@ int page_do_fault(trap_frame_t *frame)
                 (addr + 32 >= frame->esp)) {
                 do_expand_stack(space, addr);
             } else {
-                printk("task name=%s pid=%d\n", cur->name, cur->pid);
-                printk(KERN_EMERG "page_do_fault: touch TRIGSYS trigger because unknown space!\n");
-                printk(KERN_EMERG "page fault addr:%x\n", addr);
+                printk(KERN_ERR "page fauilt: user pid=%d name=%s user task stack out of range!\n", cur->pid, cur->name);
                 trap_frame_dump(frame);
-        
-                trigger_force(TRIGSYS, cur->pid);
+                exception_force_self(EXP_CODE_STKFLT, addr);
                 return -1;  
-            }    
+            }
         }
     }
     /* 故障地址在空间里面，情况如下：

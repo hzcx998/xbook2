@@ -7,7 +7,6 @@
 #include <types.h>
 #include "list.h"
 #include "vmm.h"
-#include "trigger.h"
 #include "timer.h"
 #include "alarm.h"
 #include "pthread.h"
@@ -66,7 +65,6 @@ typedef struct {
     list_t list;                        /* 处于所在队列的链表，就绪队列，阻塞队列等 */
     list_t global_list;                 /* 全局任务队列，用来查找所有存在的任务 */
     exception_manager_t exception_manager;         
-    triggers_t *triggers;               
     timer_t sleep_timer;               
     alarm_t alarm;                      
     long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
@@ -100,6 +98,10 @@ extern volatile int task_init_done;
 
 #define TASK_WAS_STOPPED(task) ((task)->state == TASK_STOPPED)
 
+#define TASK_NOT_READY(task) ((task)->state == TASK_BLOCKED || \
+        (task)->state == TASK_WAITING || \
+        (task)->state == TASK_STOPPED)
+
 void tasks_init();
 
 void task_init(task_t *task, char *name, uint8_t prio_level);
@@ -122,9 +124,7 @@ void task_set_timeslice(task_t *task, uint32_t timeslice);
 #define task_sleep() task_block(TASK_BLOCKED) 
 static inline void task_wakeup(task_t *task)
 {
-    if ((task->state == TASK_BLOCKED) || 
-        (task->state == TASK_WAITING) ||
-        (task->state == TASK_STOPPED)) {    
+    if (TASK_NOT_READY(task)) {    
         task_unblock(task);
     }
 }

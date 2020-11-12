@@ -92,7 +92,6 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     mem_free(tmp_arg);
     sys_close(fd);
     proc_map_space_init(cur);
-    trigger_init(cur->triggers);
     pthread_desc_init(cur->pthread);
     fs_fd_reinit(cur);
     gui_msgpool_exit(cur);

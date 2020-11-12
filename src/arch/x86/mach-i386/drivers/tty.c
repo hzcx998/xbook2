@@ -4,6 +4,7 @@
 
 #include <xbook/driver.h>
 #include <xbook/schedule.h>
+#include <xbook/exception.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>
@@ -204,8 +205,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                 
             }
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
-            printk("not front");
-            trigger_force(TRIGSYS, task_current->pid);
+            exception_force_self(EXP_CODE_TTIN, 0);
         }
     }
 end_of_read:

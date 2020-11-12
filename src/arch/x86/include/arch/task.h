@@ -31,9 +31,6 @@ void user_frame_init(trap_frame_t *frame);
 void user_thread_frame_build(trap_frame_t *frame, void *arg, void *func,
     void *thread_entry, void *stack_top);
 
-void trigger_frame_build(trap_frame_t *frame, int trig, void *act);
-int trigger_return_to_user(trap_frame_t *frame);
-
 void task_stack_build(task_t *task, task_func_t *function, void *arg);
 int task_stack_build_when_forking(task_t *child);
 

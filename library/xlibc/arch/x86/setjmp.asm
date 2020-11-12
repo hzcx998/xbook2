@@ -1,18 +1,9 @@
 [section .text]
 [bits 32]
 
-; xlibc/include/sys/trigger.h
-extern trigblock    
-extern trigsetmask
-
 global setjmp
 ; int setjmp(jmp_buf env);
 setjmp:
-    ; trigger 
-    push 0      ; trigblock arg: block = 0
-    call trigblock
-    add esp, 4
-
     mov ecx, [esp + 4]  ; ecx = env
     mov edx, [esp + 0]  ; edx = ret addr
     mov [ecx + 0], edx
@@ -29,11 +20,6 @@ setjmp:
 global longjmp
 ; void longjmp(jmp_buf env, int val)
 longjmp:
-    ; trigger
-    mov edx, [esp + 4]   ; edx = env
-    push dword [edx + 24]   ; trigsetmask arg: mask = setjmp -> trigblock -> ret val
-    call trigsetmask
-    add esp, 4
 
     mov edx, [esp + 4]  ; edx = env
     mov eax, [esp + 8]  ; eax = val

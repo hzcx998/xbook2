@@ -1,8 +1,8 @@
 #include <stdlib.h>
-#include <sys/trigger.h>
+#include <sys/exception.h>
 #include <sys/proc.h>
 
 void abort(void)
 {
-    triggeron(TRIGHSOFT, getpid());
+    expraise(EXP_CODE_ABORT, 0);
 }

@@ -6,7 +6,6 @@ SRC	+= fork.c
 SRC	+= wait.c
 SRC	+= exit.c
 SRC	+= exec.c
-SRC	+= trigger.c
 SRC	+= sleep.c
 SRC	+= pthread.c
 SRC	+= mutexqueue.c

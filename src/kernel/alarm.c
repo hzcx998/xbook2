@@ -2,7 +2,6 @@
 #include <xbook/schedule.h>
 #include <xbook/clock.h>
 #include <xbook/debug.h>
-#include <xbook/trigger.h>
 
 unsigned long sys_alarm(unsigned long second)
 {
@@ -30,7 +29,7 @@ void alarm_update_ticks()
                 task->alarm.second--;
                 task->alarm.ticks = HZ;
                 if (!task->alarm.second) {
-                    sys_trigger_active(TRIGALARM, task->pid);
+                    exception_send(task->pid, EXP_CODE_ALRM, 0);
                     task->alarm.flags = 0;
                 }
             }

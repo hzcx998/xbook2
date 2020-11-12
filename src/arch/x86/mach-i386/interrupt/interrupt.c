@@ -1,7 +1,7 @@
 #include <arch/interrupt.h>
 #include <arch/registers.h>
 #include <xbook/debug.h>
-#include <xbook/trigger.h>
+#include <xbook/exception.h>
 #include <xbook/schedule.h>
 
 #define DEBUG_INTR
@@ -15,57 +15,84 @@ void interrupt_general_handler(unsigned int esp)
 
     //IRQ7和IRQ15可能会产生伪中断(spurious interrupt),无须处理。
 	if (frame->vec_no == 0x27 || frame->vec_no == 0x2f) {	
-      	return;		
+      	return;
    	}
-    switch (frame->vec_no) {
-    case EP_PAGE_FAULT:
-        if (task_init_done) {
+    if (task_init_done) {
+        switch (frame->vec_no) {
+        case EP_PAGE_FAULT:
             page_do_fault(frame);
-    		return;
-        } else {
-            unsigned long addr = 0x00;
-            addr = cpu_cr2_read(); /* cr2 saved the fault addr */
-            printk("page fault addr:%x\n", addr);
+            break;
+        case EP_DIVIDE:
+        case EP_INVALID_OPCODE:
+            exception_force_self(EXP_CODE_ILL, frame->vec_no);
+            break;
+        case EP_DEVICE_NOT_AVAILABLE:
+            exception_force_self(EXP_CODE_DEVICE, frame->vec_no);
+            break;
+        case EP_COPROCESSOR_SEGMENT_OVERRUN:
+        case EP_X87_FLOAT_POINT:
+        case EP_SIMD_FLOAT_POINT:
+            exception_force_self(EXP_CODE_FPE, frame->vec_no);
+            break;
+        case EP_OVERFLOW:
+        case EP_BOUND_RANGE:
+        case EP_INVALID_TSS:
+        case EP_ALIGNMENT_CHECK:
+            exception_force_self(EXP_CODE_BUS, frame->vec_no);
+            break;
+        case EP_SEGMENT_NOT_PRESENT:
+        case EP_GENERAL_PROTECTION:
+            exception_force_self(EXP_CODE_SEGV, frame->vec_no);
+            break;
+        case EP_STACK_FAULT:
+            exception_force_self(EXP_CODE_STKFLT, frame->vec_no);
+            break;
+        case EP_MACHINE_CHECK:
+        case EP_INTERRUPT:
+            exception_force_self(EXP_CODE_INT, frame->vec_no);
+            break;
+        case EP_DOUBLE_FAULT:
+            exception_force_self(EXP_CODE_FINALHIT, frame->vec_no);
+            break;
+        case EP_DEBUG:
+        case EP_BREAKPOINT:
+            exception_force_self(EXP_CODE_TRAP, frame->vec_no);
+            break;
+        default:
+            break;
         }
-    case EP_DIVIDE:
-    case EP_DEVICE_NOT_AVAILABLE:
-    case EP_COPROCESSOR_SEGMENT_OVERRUN:
-    case EP_X87_FLOAT_POINT:
-    case EP_SIMD_FLOAT_POINT:
-    case EP_OVERFLOW:
-	case EP_BOUND_RANGE:
-    case EP_SEGMENT_NOT_PRESENT:
-    case EP_STACK_FAULT:
-	case EP_INVALID_TSS:
-    case EP_GENERAL_PROTECTION:
-    case EP_ALIGNMENT_CHECK:
-    case EP_MACHINE_CHECK:
-    case EP_INVALID_OPCODE:
-	case EP_INTERRUPT:
-    case EP_DOUBLE_FAULT:
-        if (task_init_done) {
-            #ifdef DEBUG_INTR
-            printk(KERN_EMERG "interrupt_general_handler: touch TRIGHW trigger because a expection %d occur!\n", frame->vec_no);
-            #endif
-            trigger_force(TRIGSYS, task_current->pid);
-            trap_frame_dump(frame);
-		    return;
+    } else {
+        switch (frame->vec_no) {
+        case EP_PAGE_FAULT:
+            {
+                unsigned long addr = 0x00;
+                addr = cpu_cr2_read(); /* cr2 saved the fault addr */
+                printk("page fault addr:%x\n", addr);
+            }            
+        case EP_DIVIDE:
+        case EP_DEVICE_NOT_AVAILABLE:
+        case EP_COPROCESSOR_SEGMENT_OVERRUN:
+        case EP_X87_FLOAT_POINT:
+        case EP_SIMD_FLOAT_POINT:
+        case EP_OVERFLOW:
+        case EP_BOUND_RANGE:
+        case EP_SEGMENT_NOT_PRESENT:
+        case EP_STACK_FAULT:
+        case EP_INVALID_TSS:
+        case EP_GENERAL_PROTECTION:
+        case EP_ALIGNMENT_CHECK:
+        case EP_MACHINE_CHECK:
+        case EP_INVALID_OPCODE:
+        case EP_INTERRUPT:
+        case EP_DOUBLE_FAULT:
+        case EP_DEBUG:
+        case EP_BREAKPOINT:
+        default:
+            break;
         }
-	case EP_DEBUG:
-    case EP_BREAKPOINT:
-        if (task_init_done) {
-            #ifdef DEBUG_INTR
-		    printk(KERN_NOTICE "interrupt_general_handler: touch TRIGDBG trigger because a debug occur!\n");
-            #endif
-            trigger_force(TRIGDBG, task_current->pid);
-            trap_frame_dump(frame);
-            return;
-        }
-    default:
-		break;
-	}
-    trap_frame_dump(frame);
-   	panic("Expection not resuloved!\n");
+        trap_frame_dump(frame);
+        panic("Expection not resuloved!\n");
+    }
 }
 
 void interrupt_expection_init(void)

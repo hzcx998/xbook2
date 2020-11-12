@@ -1,5 +1,4 @@
 #include <xbook/pipe.h>
-#include <xbook/trigger.h>
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
 
@@ -106,8 +105,7 @@ int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
             mutex_unlock(&pipe->mutex);
             return -1;
         }
-        if (trigismember(&task_current->triggers->set, TRIGHSOFT) ||
-            trigismember(&task_current->triggers->set, TRIGLSOFT)) {
+        if (exception_cause_exit(&task_current->exception_manager)) {
             mutex_unlock(&pipe->mutex);
             return -1;
         }
@@ -152,7 +150,7 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
     }
         
     if (atomic_get(&pipe->read_count) <= 0) {
-        sys_trigger_active(TRIGHSOFT, task_current->pid);
+        exception_force_self(EXP_CODE_PIPE, 0);
         return -1;
     } 
         
@@ -166,13 +164,12 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
     while (left_size > 0) {
         while (fifo_buf_avali(pipe->fifo) <= 0) {
             if ((pipe->wrflags & PIPE_NOWAIT) || 
-                trigismember(&task_current->triggers->set, TRIGHSOFT) ||
-                trigismember(&task_current->triggers->set, TRIGLSOFT)) {
+                exception_cause_exit(&task_current->exception_manager)) {
                 mutex_unlock(&pipe->mutex);
                 return -1;
             }
             if (atomic_get(&pipe->read_count) <= 0) {
-                sys_trigger_active(TRIGHSOFT, task_current->pid);
+                exception_force_self(EXP_CODE_PIPE, 0);
                 return -1;
             }
             if (atomic_get(&pipe->read_count) > 0) {

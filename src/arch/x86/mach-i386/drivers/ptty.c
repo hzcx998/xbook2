@@ -5,6 +5,7 @@
 #include <xbook/driver.h>
 #include <xbook/schedule.h>
 #include <xbook/pipe.h>
+#include <xbook/exception.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>
@@ -201,7 +202,7 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
     } else {
         printk(KERN_ERR "[ptty]: pid %d read but not holder, abort!\n", task_current->pid);
         /* 不是前台任务就触发任务的硬件触发器 */
-        trigger_force(TRIGSYS, task_current->pid);
+        exception_force_self(EXP_CODE_TTIN, 0);
         goto err_rd;
     }
     status = IO_SUCCESS;
@@ -234,8 +235,7 @@ iostatus_t ptty_write(device_object_t *device, io_request_t *ioreq)
     #if 0
     } else {
         printk(KERN_ERR "[ptty]: pid %d write but not holder, abort!\n", task_current->pid);
-        /* 不是前台任务就触发任务的硬件触发器 */
-        trigger_force(TRIGSYS, task_current->pid);
+        exception_force_self(EXP_CODE_TTOU);
         goto err_wr;
     }*/
     #endif

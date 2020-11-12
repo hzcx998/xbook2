@@ -27,6 +27,7 @@ enum exception_code {
     EXP_CODE_TTIN,
     EXP_CODE_TTOU,
     EXP_CODE_SYS,
+    EXP_CODE_DEVICE,
     EXP_CODE_MAX_NR
 };
 
@@ -55,6 +56,9 @@ void exception_manager_exit(exception_manager_t *exception_manager);
 int exception_send(pid_t pid, uint32_t code, uint32_t arg);
 int exception_force(pid_t pid, uint32_t code, uint32_t arg);
 int exception_copy(exception_manager_t *dest, exception_manager_t *src);
+int exception_force_self(uint32_t code, uint32_t arg);
+int exception_raise(uint32_t code, uint32_t arg);
+bool exception_cause_exit(exception_manager_t *exception_manager);
 
 int sys_expsend(pid_t pid, uint32_t code, uint32_t arg);
 int sys_expchkpoint(uint32_t *code, uint32_t *arg);

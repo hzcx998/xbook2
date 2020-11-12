@@ -39,7 +39,6 @@
         "shm.h": "c",
         "ipc.h": "c",
         "const.h": "c",
-        "trigger.h": "c",
         "syscall.h": "c",
         "res.h": "c",
         "msgqueue.h": "c",

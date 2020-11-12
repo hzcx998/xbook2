@@ -17,7 +17,6 @@ spinning in assertion failure()
 ```
 
 ## <2020.9.1>
-1. trigger捕捉用户态程序BUG
 2. 强制结束窗口程序时可能会出现不能反回终端的状态。
 
 ## <2020.9.28>

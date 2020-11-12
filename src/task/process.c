@@ -176,24 +176,6 @@ int proc_vmm_exit_when_forking(task_t *child, task_t *parent)
     return 0;
 }
 
-int proc_trigger_init(task_t *task)
-{
-    task->triggers = mem_alloc(sizeof(triggers_t));
-    if (task->triggers == NULL)
-        return -1;
-    trigger_init(task->triggers);
-    return 0;
-}
-
-int proc_trigger_exit(task_t *task)
-{
-    if (task->triggers == NULL)
-        return -1;
-    mem_free(task->triggers);
-    task->triggers = NULL;
-    return 0;
-}
-
 int proc_pthread_init(task_t *task)
 {
     task->pthread = mem_alloc(sizeof(pthread_desc_t));
@@ -215,7 +197,6 @@ int proc_pthread_exit(task_t *task)
 int proc_release(task_t *task)
 {
     proc_vmm_exit(task);
-    proc_trigger_exit(task);
     fs_fd_exit(task);
     gui_user_exit(task);
     proc_pthread_exit(task);
@@ -311,13 +292,7 @@ task_t *user_process_start(char *name, char **argv)
         mem_free(task);
         return NULL;
     }
-    if (proc_trigger_init(task)) {
-        proc_vmm_exit(task);
-        mem_free(task);
-        return NULL;
-    }
     if (fs_fd_init(task) < 0) {
-        proc_trigger_exit(task);
         proc_vmm_exit(task);
         mem_free(task);
         return NULL;

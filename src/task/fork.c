@@ -67,15 +67,6 @@ static int copy_vm(task_t *child, task_t *parent)
     return 0;
 }
 
-static int copy_trigger(task_t *child, task_t *parent)
-{
-    child->triggers = mem_alloc(sizeof(triggers_t));
-    if (child->triggers == NULL)
-        return -1;
-    *child->triggers = *parent->triggers;
-    return 0;
-}
-
 static int copy_file(task_t *child, task_t *parent)
 {
     if (fs_fd_init(child) < 0)
@@ -113,10 +104,8 @@ static int copy_task(task_t *child, task_t *parent)
         goto rollback_failed;
     if (copy_vm(child, parent))
         goto rollback_struct;
-    if (copy_trigger(child, parent))
-        goto rollback_vmm;
     if (copy_pthread_desc(child, parent))
-        goto rollback_trigger;
+        goto rollback_vmm;
     if (copy_file(child, parent) < 0)
         goto rollback_pthread_desc;
     if (copy_gui(child, parent) < 0)
@@ -131,8 +120,6 @@ rollback_file:
     fs_fd_exit(child);
 rollback_pthread_desc:
     proc_pthread_exit(child);
-rollback_trigger:
-    proc_trigger_exit(child);
 rollback_vmm:
     proc_vmm_exit_when_forking(child, parent);
 rollback_struct:
