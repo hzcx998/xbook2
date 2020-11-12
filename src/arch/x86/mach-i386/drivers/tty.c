@@ -38,6 +38,7 @@ typedef struct _device_extension {
     handle_t con;           /* 对于的控制台设备 */
     handle_t kbd;           /* 对于的键盘设备 */
     device_public_t *public;    /* 共有资源 */
+    uint32_t lctl;        /* 组合按键 */
 } device_extension_t;
 
 static int tty_set_visitor(device_object_t *device, int visitor)
@@ -135,16 +136,41 @@ static unsigned char _g_key_code_switch(int code)
     return 0; // not switch
 }
 
-
-static int tty_filter_keycode(int keycode)
+static int tty_filter_keycode_down(device_extension_t *extension, int keycode)
 {
     /* 处理CTRL, ALT, SHIFT*/
     switch (keycode) {
+    case KEY_LCTRL:    /* left ctl */
+        extension->lctl = 1;
     case KEY_LSHIFT:    /* left shift */
     case KEY_RSHIFT:    /* right shift */
     case KEY_LALT:    /* left alt */
     case KEY_RALT:    /* right alt */
+    case KEY_RCTRL:    /* right ctl */
+    case KEY_NUMLOCK:     /* numlock */
+    case KEY_CAPSLOCK:    /* capslock */
+    case KEY_SCROLLOCK:  /* scrollock */
+    case KEY_UP:           /* up arrow */
+    case KEY_DOWN:         /* down arrow */
+    case KEY_RIGHT:        /* right arrow */
+    case KEY_LEFT:         /* left arrow */
+        return 1;
+    default:
+        break;
+    }
+    return 0;
+}
+
+static int tty_filter_keycode_up(device_extension_t *extension, int keycode)
+{
+    /* 处理CTRL, ALT, SHIFT*/
+    switch (keycode) {
     case KEY_LCTRL:    /* left ctl */
+        extension->lctl = 0;
+    case KEY_LSHIFT:    /* left shift */
+    case KEY_RSHIFT:    /* right shift */
+    case KEY_LALT:    /* left alt */
+    case KEY_RALT:    /* right alt */
     case KEY_RCTRL:    /* right ctl */
     case KEY_NUMLOCK:     /* numlock */
     case KEY_CAPSLOCK:    /* capslock */
@@ -180,20 +206,28 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                         {                
                             case EV_KEY:
                                 /* 按下的按键 */
-                                if ((event.value) > 0 && !tty_filter_keycode(event.code)) {
-                                    ioreq->io_status.infomation = 1;
-                                    uint8_t ch = _g_key_code_switch(event.code);
-                                    if (ch > 0)
-                                        event.code = ch;
-                                    *(unsigned int *) ioreq->user_buffer = event.code;
-                                    status = IO_SUCCESS;
-                                    #ifdef DEBUG_DRV                                
-                                    printk(KERN_DEBUG "tty: read keycode %x\n", event.code);
-                                    #endif
-                                    device_write(extension->con,
-                                        &event.code, 1, 0);
-
-                                    goto end_of_read;
+                                if ((event.value) > 0) {
+                                    if (!tty_filter_keycode_down(extension, event.code)) {
+                                        
+                                        uint8_t ch = _g_key_code_switch(event.code);
+                                        if (ch > 0)
+                                            event.code = ch;
+                                        
+                                        if (extension->lctl && (event.code == 'c' || event.code == 'C')) {
+                                            // ctl + c
+                                            exception_send(extension->hold_pid, EXP_CODE_INT, 0);
+                                        } else {
+                                            ioreq->io_status.infomation = 1;
+                                            *(unsigned int *) ioreq->user_buffer = event.code;
+                                            status = IO_SUCCESS;
+                                            device_write(extension->con,
+                                                &event.code, 1, 0);
+                                            goto end_of_read;
+                                        }
+                                        
+                                    }
+                                } else {
+                                    tty_filter_keycode_up(extension, event.code);
                                 }
                                 break;
                             default:
@@ -306,6 +340,7 @@ static iostatus_t tty_enter(driver_object_t *driver)
         extension->hold_pid = -1;   /* 没有进程持有 */
         extension->kbd = kbd;
         extension->con = -1;    /* 没有控制台 */
+        extension->lctl = 0;
         extension->public = public;
         /* 默认第一个tty */
         if (public->visitor_id == -1)
