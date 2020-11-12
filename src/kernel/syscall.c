@@ -156,4 +156,8 @@ void syscall_init()
     syscalls[SYS_GGETICONPATH] = sys_gui_get_icon;
     syscalls[SYS_GSETICONPATH] = sys_gui_set_icon;
     syscalls[SYS_PROBE] = sys_probe;
+    syscalls[SYS_EXPSEND] = sys_expsend;
+    syscalls[SYS_EXPCHKPOINT] = sys_expchkpoint;
+    syscalls[SYS_EXPCATCH] = sys_expcatch;
+    syscalls[SYS_EXPBLOCK] = sys_expblock;
 }

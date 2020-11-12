@@ -3,18 +3,7 @@ X_LIBS		+= libxlibc-0.0.1.a libpthread-0.0.1.a
 X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99 -O3
 
 NAME		:= tests
-SRC			+= main.c
-SRC			+= socket_test.c
-SRC			+= pipe_test.c
-SRC			+= shm_test.c
-SRC			+= trig_test.c
-SRC			+= xlibc_test.c
-SRC			+= math_test.c
-SRC			+= http_test.c
-SRC			+= getopt_test.c
-SRC			+= buddy_test.c
-SRC			+= pty_test.c
-SRC			+= sleep_test.c
+SRC			+= *.c
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

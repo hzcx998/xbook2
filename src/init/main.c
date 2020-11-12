@@ -20,12 +20,6 @@
 #include <xbook/initcall.h>
 #include <xbook/mutexqueue.h>
 
-void timer_handler(unsigned long arg) 
-{
-    printk(KERN_NOTICE "\n\n!timer hander!\n\n");
-    exception_send(sys_get_pid(), EXP_CODE_INTR, 0);
-}
-
 int kernel_main(void)
 {
     printk(KERN_INFO "welcome to xbook kernel.\n");
@@ -52,10 +46,6 @@ int kernel_main(void)
     init_gui();
     init_net();
     
-    timer_t tmr;
-    timer_init(&tmr, 3 * HZ, 0, timer_handler);
-    timer_add(&tmr);
-
     task_start_user();
     return 0;    
 }

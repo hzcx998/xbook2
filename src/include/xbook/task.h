@@ -97,7 +97,9 @@ extern volatile int task_init_done;
             pthread_exit((void *) THREAD_FLAG_CANCELED); \
         } \
     } while (0)
-      
+
+#define TASK_WAS_STOPPED(task) ((task)->state == TASK_STOPPED)
+
 void tasks_init();
 
 void task_init(task_t *task, char *name, uint8_t prio_level);
