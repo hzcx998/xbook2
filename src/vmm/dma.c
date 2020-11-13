@@ -27,7 +27,7 @@ int dma_alloc_buffer(struct dma_region *d)
             page_free(d->p.address);
             return -1;
         }
-        if (mem_remap(d->p.address, vaddr, d->p.size) < 0) {
+        if (hal_memio_remap(d->p.address, vaddr, d->p.size) < 0) {
             vir_addr_free(vaddr, d->p.size);
             page_free(d->p.address);
             return -1;
@@ -47,7 +47,7 @@ int dma_free_buffer(struct dma_region *d)
     if (d->flags & DMA_REGION_SPECIAL) {
         page_free(d->p.address);
     } else {
-        if (mem_unmap(d->v, d->p.size) < 0) {
+        if (hal_memio_unmap(d->v, d->p.size) < 0) {
             return -1;
         }
 

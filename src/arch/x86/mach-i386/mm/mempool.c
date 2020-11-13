@@ -202,14 +202,18 @@ unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
             break;
         }
     }
+    unsigned long intr_flags;
+    interrupt_save_and_disable(intr_flags);
     if (list_empty(&mem_section->free_list_head)) {
         if (mem_section->section_size == MEM_SECTION_MAX_SIZE) {    // 没有更大的节
             // TODO: 收缩内存，合并没有使用的小节为大节
             printk(KERN_ERR "mempool: no free section!\n");
+            interrupt_restore_state(flags);
             return 0;
         } else {
             if (mem_range_split_section(mem_range, mem_section) < 0) {
                 printk(KERN_ERR "mempool: split section failed!\n");
+                interrupt_restore_state(intr_flags);
                 return 0;
             }
         }
@@ -220,7 +224,7 @@ unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
 
     mem_node_init(node, 1, count);
     MEM_NODE_MARK_SECTION(node, mem_section);
-
+    interrupt_restore_state(intr_flags);
     return mem_node_to_phy_addr(node);
 }
 
@@ -236,19 +240,24 @@ int mem_node_free_pages(unsigned long addr)
         printk(KERN_WARING "node no section!\n");
         return -1;
     }
+    unsigned long intr_flags;
+    interrupt_save_and_disable(intr_flags);
     if (list_find(&node->list, &section->free_list_head)) {
         printk(KERN_WARING "addr %x don't need free again!\n", addr);
+        interrupt_restore_state(intr_flags); 
         return -1;
     }
     mem_node_init(node, 0, 0);
     list_add(&node->list, &section->free_list_head);
     MEM_SECTION_INC_COUNT(section);
-
+    interrupt_restore_state(intr_flags);
     return 0;
 }
 
 unsigned long mem_get_free_page_nr()
 {
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
     size_t page_count = 0;
     int i, j;
     for (j = 0; j < MEM_RANGE_NR; j++) {
@@ -258,6 +267,7 @@ unsigned long mem_get_free_page_nr()
             page_count += section->node_count * section->section_size;
         }
     }
+    interrupt_restore_state(flags);
     return page_count;
 }
 

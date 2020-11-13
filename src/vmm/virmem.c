@@ -4,6 +4,7 @@
 #include <xbook/debug.h>
 #include <xbook/bitmap.h>
 #include <xbook/memcache.h>
+#include <xbook/mutexlock.h>
 #include <string.h>
 
 static bitmap_t vir_addr_bitmap;
@@ -11,19 +12,25 @@ static unsigned long vir_addr_base;
 static list_t using_vir_mem_list;
 static list_t free_vir_mem_list;
 
+DEFINE_MUTEX_LOCK(vir_addr_lock);
+
 unsigned long vir_addr_alloc(size_t size)
 {
 	size = PAGE_ALIGN(size);
 	if (!size)
 		return 0;
 	long pages = size / PAGE_SIZE;
+    mutex_lock(&vir_addr_lock);
 	long idx = bitmap_scan(&vir_addr_bitmap, pages);
-	if (idx == -1)
-		return 0;
+	if (idx == -1) {
+        mutex_unlock(&vir_addr_lock);
+        return 0;
+    }	
 	int i;
 	for (i = 0; i < pages; i++) {
 		bitmap_set(&vir_addr_bitmap, idx + i, 1);
 	}
+    mutex_unlock(&vir_addr_lock);
 	return vir_addr_base + idx * PAGE_SIZE; 
 }
 
@@ -36,10 +43,12 @@ unsigned long vir_addr_free(unsigned long vaddr, size_t size)
 	long idx = (vaddr - vir_addr_base) / PAGE_SIZE;
 	if (idx == -1)
 		return -1;
-	long i;
+    mutex_lock(&vir_addr_lock);
+    long i;
 	for (i = 0; i < pages; i++) {
 		bitmap_set(&vir_addr_bitmap, idx + i, 0);
 	}
+    mutex_unlock(&vir_addr_lock);
 	return 0; 
 }
 
@@ -171,7 +180,7 @@ void *memio_remap(unsigned long paddr, size_t size)
     unsigned long flags;
     interrupt_save_and_disable(flags);
 	list_add_tail(&area->list, &using_vir_mem_list);
-    if (mem_remap(paddr, vaddr, size)) {
+    if (hal_memio_remap(paddr, vaddr, size)) {
         list_del(&area->list);
         mem_free(area);
         vir_addr_free(vaddr, size);
@@ -199,7 +208,7 @@ int memio_unmap(void *vaddr)
 		}
 	}
 	if (target != NULL) {
-        if (mem_unmap(target->addr, target->size)) {
+        if (hal_memio_unmap(target->addr, target->size)) {
             list_del(&target->list);
             vir_addr_free(addr, target->size);
             mem_free(target);

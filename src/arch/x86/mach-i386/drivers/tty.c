@@ -299,6 +299,7 @@ void tty_thread(void *arg)
                             if (extension->lctl && (event.code == 'c' || event.code == 'C')) {
                                 // ctl + c
                                 exception_send(extension->hold_pid, EXP_CODE_INT, 0);
+                                //printk("hold pid=%d\n", extension->hold_pid);
                             } else {
                                 /* put into fifo buf */
                                 fifo_io_put(&extension->fifoio, event.code);

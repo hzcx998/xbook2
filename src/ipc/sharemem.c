@@ -182,7 +182,7 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
     return shmaddr;
 }
 
-int share_mem_unmap(const void *shmaddr, int shmflg)
+int share_hal_memio_unmap(const void *shmaddr, int shmflg)
 {
     if (!shmaddr) {
         return -1;
@@ -195,7 +195,7 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
         addr = (unsigned long) shmaddr;
     mem_space_t *sp = mem_space_find(cur->vmm, addr);
     if (sp == NULL) {
-        printk(KERN_DEBUG "share_mem_unmap: not fond space\n");
+        printk(KERN_DEBUG "share_hal_memio_unmap: not fond space\n");
         return -1;
     }
     addr = addr_vir2phy(addr);
@@ -211,7 +211,7 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
             atomic_dec(&shm->links);
         }
     } else {
-        printk(KERN_ERR "share_mem_unmap: do unmap at %x failed!\n", addr);
+        printk(KERN_ERR "share_hal_memio_unmap: do unmap at %x failed!\n", addr);
     }
     return retval;
 }
@@ -275,9 +275,9 @@ void *sys_shmem_map(int shmid, void *shmaddr, int shmflg)
     return share_mem_map(shmid, shmaddr, shmflg);
 }
 
-int sys_shmem_unmap(const void *shmaddr, int shmflg)
+int sys_shhal_memio_unmap(const void *shmaddr, int shmflg)
 {
-    return share_mem_unmap(shmaddr, shmflg);
+    return share_hal_memio_unmap(shmaddr, shmflg);
 }
 
 void share_mem_init()

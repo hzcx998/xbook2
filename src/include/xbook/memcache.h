@@ -6,6 +6,7 @@
 #include <xbook/config.h>
 #include <xbook/bitmap.h>
 #include <xbook/list.h>
+#include <xbook/mutexlock.h>
 #include <const.h>
 
 /*
@@ -55,7 +56,7 @@ typedef struct mem_cache {
     unsigned long object_size;    // group中每个对象的大小
     flags_t flags;              // cache的标志位
     unsigned long object_count;  // 每个group中有多少个对象
-    
+    mutexlock_t mutex;
     char name[MEM_CACHE_NAME_LEN];     // cache的名字
 } mem_cache_t;
 

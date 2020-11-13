@@ -59,6 +59,7 @@ static cache_size_t cache_size[] = {
 
 mem_cache_t mem_caches[MAX_MEM_CACHE_NR];
 LIST_HEAD(large_mem_object_list);
+DEFINE_MUTEX_LOCK(large_mem_mutex);
 
 void mem_cache_dump(mem_cache_t *cache)
 {
@@ -101,6 +102,7 @@ int mem_cache_init(mem_cache_t *cache, char *name, size_t size, flags_t flags)
 	cache->flags = flags;
 	memset(cache->name, 0, MEM_CACHE_NAME_LEN);
 	strcpy(cache->name, name);
+    mutexlock_init(&cache->mutex);
 	return 0;
 }
 
@@ -163,24 +165,18 @@ static int mem_group_init(
 static int mem_group_create(mem_cache_t *cache, flags_t flags)
 {
 	mem_group_t *group;
-    unsigned irqflags;
-    interrupt_save_and_disable(irqflags);
 	group = mem_cache_page_alloc(1);
 	if (group == NULL) {
 		printk(KERN_ERR "alloc page for mem group failed!\n");
-        interrupt_restore_state(irqflags);
 		return -1;
 	}
 	if (mem_group_init(cache, group, flags)) {
 		printk(KERN_ERR "init mem group failed!\n");
 		goto free_group;
 	}
-
-    interrupt_restore_state(irqflags);
 	return 0;
 free_group:
 	mem_cache_page_free(group);
-    interrupt_restore_state(irqflags);
 	return -1;
 }
 
@@ -224,9 +220,8 @@ void *mem_cache_alloc_object(mem_cache_t *cache)
 	void *object;
 	mem_group_t *group;
 	list_t *partialList, *node;
-	unsigned long flags;
 retry_alloc_object:
-    interrupt_save_and_disable(flags);
+    mutex_lock(&cache->mutex);
 	partialList = &cache->partial_groups;
 	node = partialList->next;
 	if (list_empty(partialList)) {
@@ -241,10 +236,10 @@ retry_alloc_object:
 	}
 	group = list_owner(node, mem_group_t, list);
 	object = mem_cache_do_alloc(cache, group);
-    interrupt_restore_state(flags);
+    mutex_unlock(&cache->mutex);
 	return object;
 new_group:
-	interrupt_restore_state(flags);
+    mutex_unlock(&cache->mutex);
 	if (mem_group_create(cache, 0))
 		return NULL;
 	goto retry_alloc_object;
@@ -266,7 +261,9 @@ void *mem_alloc(size_t size)
             mem_free(obj);
             return NULL;
         }
+        mutex_lock(&large_mem_mutex);
         list_add(&obj->list, &large_mem_object_list);
+        mutex_unlock(&large_mem_mutex);
         printk(KERN_DEBUG "[memcache]: alloc large mem object %x\n", obj->addr);
 		return obj->addr;
 	}
@@ -292,8 +289,8 @@ static void mem_cache_do_free(mem_cache_t *cache, void *object)
 	int index = (((unsigned char *)object) - group->objects)/cache->object_size; 
 	if (index < 0 || index > group->map.byte_length*8)
 		panic(KERN_EMERG "map index bad range!\n");
+    mutex_lock(&cache->mutex);
 	bitmap_set(&group->map, index, 0);
-
 	int unsing = group->using_count;
 	group->using_count--;
 	group->free_count++;
@@ -305,14 +302,12 @@ static void mem_cache_do_free(mem_cache_t *cache, void *object)
 		list_del(&group->list);
 		list_add_tail(&group->list, &cache->partial_groups);
 	}
+    mutex_unlock(&cache->mutex);
 }
 
 void mem_cache_free_object(mem_cache_t *cache, void *object)
 {
-	unsigned long flags;
-    interrupt_save_and_disable(flags);
 	mem_cache_do_free(cache, object);
-    interrupt_restore_state(flags);
 }
 
 void mem_free(void *object)
@@ -325,16 +320,19 @@ void mem_free(void *object)
 	cache = MEM_NODE_GET_CACHE(node);
     if (cache == NULL) {
         /* 采用首适配释放 */
+        mutex_lock(&large_mem_mutex);
         large_mem_object_t *obj;
         list_for_each_owner (obj, &large_mem_object_list, list) {
             if (obj->addr == object) {
                 list_del(&obj->list);
                 mem_cache_page_free(obj->addr);
                 mem_free(obj);
+                mutex_unlock(&large_mem_mutex);
                 printk(KERN_DEBUG "[memcache]: free large mem object %x\n", object);
                 return;
             }
         }
+        mutex_unlock(&large_mem_mutex);
         return;
     }
 	mem_cache_free_object(cache, (void *)object);
@@ -358,9 +356,7 @@ static int group_destory(mem_cache_t *cache, mem_group_t *group)
 static int mem_cache_do_shrink(mem_cache_t *cache)
 {
 	mem_group_t *group, *next;
- 
 	int ret = 0;
-
 	list_for_each_owner_safe(group, next, &cache->free_groups, list) {
 		if(!group_destory(cache, group))
 			ret++;

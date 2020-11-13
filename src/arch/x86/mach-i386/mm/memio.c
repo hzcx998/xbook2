@@ -2,7 +2,7 @@
 #include <arch/page.h>
 #include <arch/memio.h>
 
-int mem_remap(unsigned long paddr, unsigned long vaddr, size_t size)
+int hal_memio_remap(unsigned long paddr, unsigned long vaddr, size_t size)
 {
     unsigned long end = vaddr + size;
     while (vaddr < end) {
@@ -14,7 +14,7 @@ int mem_remap(unsigned long paddr, unsigned long vaddr, size_t size)
     return 0;
 }
 
-int mem_unmap(unsigned long addr, size_t size)
+int hal_memio_unmap(unsigned long addr, size_t size)
 {
     unsigned long end = addr + size;
     
