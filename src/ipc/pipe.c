@@ -111,6 +111,7 @@ int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
         }
         wait_queue_add(&pipe->wait_queue, task_current);
         mutex_unlock(&pipe->mutex);
+        TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
         mutex_lock(&pipe->mutex);
     }
@@ -179,6 +180,7 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
             }
             wait_queue_add(&pipe->wait_queue, task_current);
             mutex_unlock(&pipe->mutex);
+            TASK_ENTER_WAITLIST(task_current);
             task_block(TASK_BLOCKED);
             mutex_lock(&pipe->mutex);
         }

@@ -43,6 +43,7 @@ enum thread_flags {
     THREAD_FLAG_CANCEL_DISABLE      = (1 << 3),     /* 线程不能被取消 */
     THREAD_FLAG_CANCEL_ASYCHRONOUS  = (1 << 4),     /* 线程收到取消信号时立即退出 */
     THREAD_FLAG_CANCELED            = (1 << 5),     /* 线程已经标记上取消点 */
+    THREAD_FLAG_WAITLIST            = (1 << 6),     /* 在等待链表中 */
 };
 
 typedef struct {
@@ -102,6 +103,10 @@ extern volatile int task_init_done;
         (task)->state == TASK_WAITING || \
         (task)->state == TASK_STOPPED)
 
+#define TASK_ENTER_WAITLIST(task) (task)->flags |= THREAD_FLAG_WAITLIST
+#define TASK_LEAVE_WAITLIST(task) (task)->flags &= ~THREAD_FLAG_WAITLIST
+#define TASK_IN_WAITLIST(task) ((task)->flags & THREAD_FLAG_WAITLIST)
+
 void tasks_init();
 
 void task_init(task_t *task, char *name, uint8_t prio_level);
@@ -124,7 +129,11 @@ void task_set_timeslice(task_t *task, uint32_t timeslice);
 #define task_sleep() task_block(TASK_BLOCKED) 
 static inline void task_wakeup(task_t *task)
 {
-    if (TASK_NOT_READY(task)) {    
+    if (TASK_NOT_READY(task)) {
+        /* NOTICE: if in a waitlist, must del it. */
+        if (TASK_IN_WAITLIST(task)) {   
+            list_del_init(&task->list);
+        }
         task_unblock(task);
     }
 }

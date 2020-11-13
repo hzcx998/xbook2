@@ -593,6 +593,7 @@ int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen
         }
         wait_queue_add(&queue->wait_queue, task_current);
         spin_unlock_irqrestore(&queue->lock, irqflags);
+        TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
         spin_lock_irqsave(&queue->lock, irqflags);   
     }

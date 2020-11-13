@@ -45,7 +45,8 @@ int main(int argc, char *argv[])
 
     expcatch(EXP_CODE_USER, sh_exit_handler);
     expblock(EXP_CODE_TERM);
-
+    expblock(EXP_CODE_INT);
+    
     // set environment value
     environ = sh_environment;
 

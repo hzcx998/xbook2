@@ -36,6 +36,7 @@ static inline void semaphore_destroy(semaphore_t *sema)
 static inline void __semaphore_down(semaphore_t *sema)
 {
 	list_add_tail(&task_current->list, &sema->waiter.wait_list);
+    TASK_ENTER_WAITLIST(task_current);
 	task_block(TASK_BLOCKED);
 }
 
@@ -67,10 +68,13 @@ static inline int semaphore_try_down(semaphore_t *sema)
 
 static inline void __semaphore_up(semaphore_t *sema)
 {
-	task_t *waiter = list_first_owner(&sema->waiter.wait_list, task_t, list);
-	list_del(&waiter->list);
-	waiter->state = TASK_READY;
-    sched_queue_add_head(sched_get_cur_unit(), waiter);
+	task_t *waiter = list_first_owner_or_null(&sema->waiter.wait_list, task_t, list);
+	if (waiter) {
+        list_del(&waiter->list);
+        TASK_LEAVE_WAITLIST(waiter);
+        waiter->state = TASK_READY;
+        sched_queue_add_head(sched_get_cur_unit(), waiter);
+    }
 }
 
 static inline void semaphore_up(semaphore_t *sema)

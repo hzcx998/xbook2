@@ -52,6 +52,7 @@ int msgpool_push(msgpool_t *pool, void *buf)
         wait_queue_add(&pool->waiters, task_current);
         
         mutex_unlock(&pool->mutex);
+        TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
         mutex_lock(&pool->mutex);
     }
@@ -98,6 +99,7 @@ int msgpool_pop(msgpool_t *pool, void *buf)
     if (msgpool_empty(pool)) {
         wait_queue_add(&pool->waiters, task_current);
         mutex_unlock(&pool->mutex);
+        TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
         mutex_lock(&pool->mutex);
     }

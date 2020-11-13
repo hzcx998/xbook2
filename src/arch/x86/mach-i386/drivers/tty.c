@@ -201,18 +201,26 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
         /* 前台任务 */
         if (extension->hold_pid == task_current->pid) {
             // get key code from keyboard fifo buf
-            uint8_t code = fifo_io_get(&extension->fifoio);
-            if (code > 0) {
-                ioreq->io_status.infomation = 1;
-                *(uint8_t *) ioreq->user_buffer = code;
-                status = IO_SUCCESS;
-                goto end_of_read;
+            uint8_t *buf = ioreq->user_buffer;
+            size_t len = ioreq->parame.read.length;
+            size_t read_count = 0;
+            while (len > 0) {
+                uint8_t code = fifo_io_get(&extension->fifoio);
+                if (code > 0) {
+                    *buf = code;
+                    buf++;
+                    len--;
+                    read_count++;
+                } else {
+                    break;
+                }
             }
+            ioreq->io_status.infomation = read_count;
+            status = IO_SUCCESS;
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
             exception_force_self(EXP_CODE_TTIN, 0);
         }
     }
-end_of_read:
     ioreq->io_status.status = status;
     /* 调用完成请求 */
     io_complete_request(ioreq);
@@ -278,7 +286,6 @@ void tty_thread(void *arg)
             struct input_event event;
             int ret = 0;
             memset(&event, 0, sizeof(event));
-
             ret = device_read(extension->kbd, &event, sizeof(event), 0);
             if ( ret >= 1 ) {
                 switch (event.type) {                
@@ -292,7 +299,6 @@ void tty_thread(void *arg)
                             if (extension->lctl && (event.code == 'c' || event.code == 'C')) {
                                 // ctl + c
                                 exception_send(extension->hold_pid, EXP_CODE_INT, 0);
-                                extension->hold_pid = -1;
                             } else {
                                 /* put into fifo buf */
                                 fifo_io_put(&extension->fifoio, event.code);

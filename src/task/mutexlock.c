@@ -9,6 +9,7 @@ void mutex_lock(mutexlock_t *mutex)
         }
         mutex->waiters++;
         list_add_tail(&task_current->list, &mutex->wait_list);
+        TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
     };
 }
@@ -22,9 +23,12 @@ void mutex_unlock(mutexlock_t *mutex)
         interrupt_restore_state(flags);
         return;
     }
-    task_t *task = list_first_owner(&mutex->wait_list, task_t, list);
-    list_del_init(&task->list);
-    mutex->waiters--;
-    task_wakeup(task);
+    task_t *task = list_first_owner_or_null(&mutex->wait_list, task_t, list);
+    if (task) {
+        list_del_init(&task->list);
+        TASK_LEAVE_WAITLIST(task_current);
+        mutex->waiters--;
+        task_wakeup(task);
+    }
     interrupt_restore_state(flags);
 }

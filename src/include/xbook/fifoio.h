@@ -14,6 +14,7 @@ typedef struct fifo_io {
     unsigned int size;      /* 缓冲区大小 */
     unsigned char *head;	/* 队首,数据往队首处写入 */
     unsigned char *tail;    /* 队尾,数据从队尾处读出 */
+    uint32_t count;         /* 数据数量 */
 	semaphore_t full;       /* 满数据信号量，已经放入数据的数量 */
     semaphore_t empty;      /* 空数据信号量，剩余的数据数量 */
     mutexlock_t mutex;      /* 互斥锁，保证存放数据互斥 */
@@ -42,20 +43,12 @@ void fifo_io_put(fifo_io_t *fifo, unsigned char data);
 
 static inline bool fifo_io_len(fifo_io_t *fifo)
 {
-    unsigned int len;
-    mutex_lock(&fifo->mutex);
-    len = atomic_get(&fifo->full.counter);
-    mutex_unlock(&fifo->mutex);
-    return len;
+    return fifo->count;
 }
 
 static inline bool fifo_io_avali(fifo_io_t *fifo)
 {
-    unsigned int len;
-    mutex_lock(&fifo->mutex);
-    len = atomic_get(&fifo->empty.counter);
-    mutex_unlock(&fifo->mutex);
-    return len;
+    return fifo->size - fifo->count;
 }
 
 #endif /* _XBOOK_FIFO_IO_H */

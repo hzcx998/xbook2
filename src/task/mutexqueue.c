@@ -134,6 +134,7 @@ int sys_mutex_queue_wait(int handle, void *addr, unsigned int wqflags, unsigned 
                 return ETIMEDOUT;
             }
         } else {
+            TASK_ENTER_WAITLIST(task_current);
             task_block(TASK_BLOCKED);
         }
     }
@@ -194,6 +195,7 @@ int sys_mutex_queue_wake(int handle, void *addr, unsigned int wqflags, unsigned 
         task_t *task, *next;
         list_for_each_owner_safe (task, next, &mutex_queue->wait_queue.wait_list, list) {
             list_del(&task->list);
+            TASK_LEAVE_WAITLIST(task);
             task_wakeup(task);
             if (wqflags & MUTEX_QUEUE_ALL) {
                 continue;
