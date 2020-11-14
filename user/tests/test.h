@@ -40,5 +40,6 @@ int sleep_test(int argc, char *argv[]);
 int exp_test(int argc, char *argv[]);
 int fifo_test(int argc, char *argv[]);
 int sys_test(int argc, char *argv[]);
+int pthread_test(int argc, char *argv[]);
 
 #endif // _TEST_H

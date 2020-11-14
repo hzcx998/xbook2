@@ -16,6 +16,6 @@ int main(int argc, char *argv[])
     //exp_test(argc, argv);
     // fifo_test(argc, argv);
     sys_test(argc, argv);
-    
+    pthread_test(argc, argv);
     return 0;
 }

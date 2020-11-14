@@ -31,8 +31,10 @@ int pthread_create(
     void * (*start_routine) (void *),
     void *arg
 ) {
-    if (!thread || !start_routine)
-        return EINVAL;
+    if (!thread || !start_routine) {
+        _set_errno(EINVAL);
+        return -1;
+    }
 
     pthread_attr_t default_attr;
     if (attr == NULL) {

@@ -40,8 +40,8 @@ void syscall_init()
     syscalls[SYS_THREAD_CANCELSTATE] = sys_thread_setcancelstate;
     syscalls[SYS_THREAD_CANCELTYPE] = sys_thread_setcanceltype;
     syscalls[SYS_SCHED_YEILD] = sys_sched_yeild;
-    syscalls[SYS_MUTEX_QUEUE_CREATE] = sys_mutex_queue_free;
-    syscalls[SYS_MUTEX_QUEUE_DESTROY] = sys_mutex_queue_alloc;
+    syscalls[SYS_MUTEX_QUEUE_CREATE] = sys_mutex_queue_alloc;
+    syscalls[SYS_MUTEX_QUEUE_DESTROY] = sys_mutex_queue_free;
     syscalls[SYS_MUTEX_QUEUE_WAIT] = sys_mutex_queue_wait;
     syscalls[SYS_MUTEX_QUEUE_WAKE] = sys_mutex_queue_wake;
     syscalls[SYS_HEAP] = sys_mem_space_expend_heap;

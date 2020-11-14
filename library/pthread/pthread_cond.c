@@ -116,7 +116,7 @@ int pthread_cond_timedwait(
     /* 对互斥锁加锁，获得操作。 */
     pthread_mutex_lock(mutex);
 
-    return retval;
+    return -retval;
 }
 #endif
 /**

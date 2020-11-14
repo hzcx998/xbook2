@@ -2,6 +2,7 @@
 #include <xbook/clock.h>
 #include <xbook/schedule.h>
 #include <xbook/debug.h>
+#include <xbook/safety.h>
 
 walltime_t walltime;
 const char month_day[] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
@@ -91,10 +92,11 @@ void walltime_update_second()
 	}
 }
 
-void sys_get_walltime(walltime_t *wt)
+int sys_get_walltime(walltime_t *wt)
 {
-    *wt = walltime;
-    --wt->month;
+    walltime_t tmp = walltime;
+    --tmp.month;
+    return mem_copy_to_user(wt, &tmp, sizeof(walltime_t));
 }
 
 #define MINUTE 60

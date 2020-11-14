@@ -6,18 +6,37 @@
 #include <xbook/pthread.h>
 #include <xbook/mutexqueue.h>
 #include <xbook/clock.h>
-#include <sys/time.h>
 #include <xbook/mutexlock.h>
+#include <xbook/safety.h>
+#include <sys/time.h>
 #include <sys/mutexqueue.h>
 #include <errno.h>
 
 mutex_queue_t *mutex_queue_head;
 DEFINE_MUTEX_LOCK(mutex_queue_lock);
 
-int sys_mutex_queue_alloc(int handle)
+int sys_mutex_queue_alloc()
+{
+    mutex_queue_t *mutex_queue = &mutex_queue_head[0];
+    int i;
+    mutex_lock(&mutex_queue_lock);
+    for (i = 0; i < MUTEX_QUEUE_NR_MAX; i++) {
+        if (!mutex_queue->flags) {
+            wait_queue_init(&mutex_queue->wait_queue);
+            mutex_queue->flags = MUTEX_QUEUE_USING;
+            mutex_unlock(&mutex_queue_lock);
+            return i;
+        }
+        mutex_queue++;
+    }
+    mutex_unlock(&mutex_queue_lock);
+    return -ENOMEM;
+}
+
+int sys_mutex_queue_free(int handle)
 {
     if (MUTEX_QUEUE_IS_BAD(handle))
-        return -1;
+        return -EINVAL;
     
     mutex_lock(&mutex_queue_lock);
     mutex_queue_t *mutex_queue = &mutex_queue_head[handle];
@@ -31,25 +50,58 @@ int sys_mutex_queue_alloc(int handle)
     return 0;
 }
 
-int sys_mutex_queue_free()
-{
-    mutex_queue_t *mutex_queue = &mutex_queue_head[0];
-    int i;
-    mutex_lock(&mutex_queue_lock);
-    
-    for (i = 0; i < MUTEX_QUEUE_NR_MAX; i++) {
-        if (!mutex_queue->flags) {
-            wait_queue_init(&mutex_queue->wait_queue);
-            mutex_queue->flags = MUTEX_QUEUE_USING;
-            mutex_unlock(&mutex_queue_lock);
-            return i;
-        }
-        mutex_queue++;
+static int mutex_queue_addr_calc(void *addr, unsigned int wqflags, unsigned long value)
+{    
+    unsigned long tmpval;
+    switch (wqflags & MUTEX_QUEUE_OPMASK) {
+    case MUTEX_QUEUE_ADD:
+        if (mem_copy_from_user(&tmpval, addr, sizeof(unsigned long)) < 0)
+            return -1;
+        tmpval += value;
+        if (mem_copy_to_user(addr, &tmpval, sizeof(unsigned long)) < 0)
+            return -1;
+        break;
+    case MUTEX_QUEUE_SUB:
+        if (mem_copy_from_user(&tmpval, addr, sizeof(unsigned long)) < 0)
+            return -1;
+        tmpval -= value;
+        if (mem_copy_to_user(addr, &tmpval, sizeof(unsigned long)) < 0)
+            return -1;
+        break;
+    case MUTEX_QUEUE_SET:
+        tmpval = value;
+        if (mem_copy_to_user(addr, &tmpval, sizeof(unsigned long)) < 0)
+            return -1;
+        break;
+    case MUTEX_QUEUE_ZERO:
+        tmpval = 0;
+        if (mem_copy_to_user(addr, &tmpval, sizeof(unsigned long)) < 0)
+            return -1;
+        break;
+    case MUTEX_QUEUE_ONE:
+        tmpval = 1;
+        if (mem_copy_to_user(addr, &tmpval, sizeof(unsigned long)) < 0)
+            return -1;        
+        break;
+    case MUTEX_QUEUE_INC:
+        if (mem_copy_from_user(&tmpval, addr, sizeof(unsigned long)) < 0)
+            return -1;
+        ++tmpval;
+        if (mem_copy_to_user(addr, &tmpval, sizeof(unsigned long)) < 0)
+            return -1;
+        break;
+    case MUTEX_QUEUE_DEC:
+        if (mem_copy_from_user(&tmpval, addr, sizeof(unsigned long)) < 0)
+            return -1;
+        --tmpval;
+        if (mem_copy_to_user(addr, &tmpval, sizeof(unsigned long)) < 0)
+            return -1;
+        break;
+    default:
+        break;
     }
-    mutex_unlock(&mutex_queue_lock);
-    return -1;
+    return 0;
 }
-
 /**
  * @handle: 等待队列句柄
  * @addr: 需要操作的数据地址
@@ -66,62 +118,46 @@ int sys_mutex_queue_free()
 int sys_mutex_queue_wait(int handle, void *addr, unsigned int wqflags, unsigned long value)
 {
     if (MUTEX_QUEUE_IS_BAD(handle))
-        return EINVAL;
+        return -EINVAL;
 
     TASK_CHECK_THREAD_CANCELATION_POTINT(task_current);
-
     unsigned long flags;
     interrupt_save_and_disable(flags);
     mutex_queue_t *mutex_queue = &mutex_queue_head[handle];
     if (mutex_queue->flags) {
         if (addr) {
-            switch (wqflags & MUTEX_QUEUE_OPMASK) {
-            case MUTEX_QUEUE_ADD:
-                *(unsigned int *) addr = *(unsigned int *) addr + value;
-                break;
-            case MUTEX_QUEUE_SUB:
-                *(unsigned int *) addr = *(unsigned int *) addr - value;
-                break;
-            case MUTEX_QUEUE_SET:
-                *(unsigned int *) addr = value;
-                break;
-            case MUTEX_QUEUE_ZERO:
-                *(unsigned int *) addr = 0;
-                break;
-            case MUTEX_QUEUE_ONE:
-                *(unsigned int *) addr = 1;
-                break;
-            case MUTEX_QUEUE_INC:
-                *(unsigned int *) addr = *(unsigned int *) addr + 1;
-                break;
-            case MUTEX_QUEUE_DEC:
-                *(unsigned int *) addr = *(unsigned int *) addr - 1;
-                break;
-            default:
-                break;
+            if (mutex_queue_addr_calc(addr, wqflags, value) < 0) {
+                interrupt_restore_state(flags);
+                return -EFAULT; // memory fault
             }
         }
         wait_queue_add(&mutex_queue->wait_queue, task_current);
         if (wqflags & MUTEX_QUEUE_TIMED) {
             clock_t ticks = 0;
-            if (value > 0) {
-                struct timespec *abstm = (struct timespec *)value;
+            if (value) {                
+                struct timespec abstm;
+                if (mem_copy_from_user(&abstm, (struct timespec *)value, sizeof(struct timespec)) < 0) {
+                    interrupt_restore_state(flags);
+                    return -EFAULT;
+                }
                 struct timespec curtm;
                 sys_clock_gettime(CLOCK_REALTIME, &curtm);
                 struct timespec newtm;
-                newtm.tv_sec = abstm->tv_sec - curtm.tv_sec;
-                newtm.tv_nsec = abstm->tv_nsec - curtm.tv_nsec;
+                newtm.ts_sec = abstm.ts_sec - curtm.ts_sec;
+                newtm.ts_nsec = abstm.ts_nsec - curtm.ts_nsec;
                 ticks = timespec_to_systicks(&newtm);
             }
             if (ticks <= 0) {
                 wait_queue_remove(&mutex_queue->wait_queue, task_current);
                 interrupt_restore_state(flags);
-                return ETIMEDOUT;
+                return -ETIMEDOUT;
             }
+            /* 避免ticks太少影响效应 */
             if (ticks < 2 * MS_PER_TICKS)
                 ticks = 2 * MS_PER_TICKS;
             if (task_sleep_by_ticks(ticks) > 0) {
-                goto out;
+                interrupt_restore_state(flags);
+                return 0;
             } else {
                 task_t *task, *next;
                 list_for_each_owner_safe (task, next, &mutex_queue->wait_queue.wait_list, list) {
@@ -131,14 +167,13 @@ int sys_mutex_queue_wait(int handle, void *addr, unsigned int wqflags, unsigned 
                     }          
                 }
                 interrupt_restore_state(flags);
-                return ETIMEDOUT;
+                return -ETIMEDOUT;
             }
         } else {
             TASK_ENTER_WAITLIST(task_current);
             task_block(TASK_BLOCKED);
         }
     }
-out:
     interrupt_restore_state(flags);
     return 0;
 }
@@ -158,38 +193,16 @@ out:
 int sys_mutex_queue_wake(int handle, void *addr, unsigned int wqflags, unsigned long value)
 {
     if (MUTEX_QUEUE_IS_BAD(handle))
-        return -1;
+        return -EINVAL;
     
     unsigned long flags;
     interrupt_save_and_disable(flags);
     mutex_queue_t *mutex_queue = &mutex_queue_head[handle];
     if (mutex_queue->flags) {
         if (addr) {
-            switch (wqflags & MUTEX_QUEUE_OPMASK)
-            {
-            case MUTEX_QUEUE_ADD:
-                *(unsigned int *) addr = *(unsigned int *) addr + value;
-                break;
-            case MUTEX_QUEUE_SUB:
-                *(unsigned int *) addr = *(unsigned int *) addr - value;
-                break;
-            case MUTEX_QUEUE_SET:
-                *(unsigned int *) addr = value;
-                break;
-            case MUTEX_QUEUE_ZERO:
-                *(unsigned int *) addr = 0;
-                break;
-            case MUTEX_QUEUE_ONE:
-                *(unsigned int *) addr = 1;
-                break;
-            case MUTEX_QUEUE_INC:
-                *(unsigned int *) addr = *(unsigned int *) addr + 1;
-                break;
-            case MUTEX_QUEUE_DEC:
-                *(unsigned int *) addr = *(unsigned int *) addr - 1;
-                break;
-            default:
-                break;
+            if (mutex_queue_addr_calc(addr, wqflags, value) < 0) {
+                interrupt_restore_state(flags);
+                return -EFAULT;
             }
         }
         task_t *task, *next;

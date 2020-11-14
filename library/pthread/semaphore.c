@@ -142,22 +142,6 @@ int sem_timedwait(sem_t *sem, const struct timespec *abs_timeout)
 	return status;
 }
 
-int sem_timedwait2(sem_t* sem, int msecs)
-{
-    struct timeval now;
-    struct timespec waittime;
-
-    if(msecs < 0)
-        msecs = 0;
- 
-    int sec = msecs / 1000;
-    gettimeofday(&now, NULL);
-    waittime.tv_sec = now.tv_sec + sec;
-    waittime.tv_nsec = (now.tv_usec + (msecs%1000)*1000)*1000;
-
-	return sem_timedwait(sem, &waittime);
-}
-
 int sem_trywait(sem_t *sem)
 {
     if (sem == NULL) {
@@ -165,8 +149,6 @@ int sem_trywait(sem_t *sem)
     }
     /* 没有超时时间，直接返回 */
     int status = sem_timedwait(sem, NULL);
-    //int status = sem_timedwait2(sem, 0);
-    
     if( status == ETIMEDOUT )
         return EAGAIN;
     

@@ -17,7 +17,7 @@ typedef struct {
 void mutex_queue_init();
 int sys_mutex_queue_wake(int handle, void *addr, unsigned int wqflags, unsigned long value);
 int sys_mutex_queue_wait(int handle, void *addr, unsigned int wqflags, unsigned long value);
-int sys_mutex_queue_alloc(int handle);
-int sys_mutex_queue_free();
+int sys_mutex_queue_alloc();
+int sys_mutex_queue_free(int handle);
 
 #endif   /* _XBOOK_MUTEX_QUEUE_H */
