@@ -30,3 +30,4 @@ MODULE      +=  rmdir
 MODULE      +=  touch
 MODULE      +=  tests
 MODULE      +=  hello
+MODULE      +=  osver

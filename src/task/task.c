@@ -20,8 +20,10 @@
 #include <xbook/mutexqueue.h>
 #include <xbook/process.h>
 #include <xbook/exception.h>
+#include <xbook/safety.h>
 #include <fsal/fsal.h>
 #include <math.h>
+#include <errno.h>
 
 static pid_t task_next_pid;
 LIST_HEAD(task_global_list);
@@ -291,36 +293,46 @@ void tasks_print()
 
 int sys_tstate(tstate_t *ts, unsigned int *idx)
 {
-    if (ts == NULL)
-        return -1;
-    int n = 0;
+    if (!ts || !idx)
+        return -EINVAL;
+    unsigned int index;
+    if (mem_copy_from_user(&index, idx, sizeof(unsigned int)) < 0)
+        return -EINVAL;
     task_t *task;
+    tstate_t tmp_ts;
+    int n = 0;
     list_for_each_owner (task, &task_global_list, global_list) {
-        if (n == *idx) {
-            ts->ts_pid = task->pid;
-            ts->ts_ppid = task->parent_pid;
-            ts->ts_tgid = task->tgid;
-            ts->ts_state = task->state;
-            ts->ts_priority = task->priority;
-            ts->ts_timeslice = task->timeslice;
-            ts->ts_runticks = task->elapsed_ticks;
-            memset(ts->ts_name, 0, PROC_NAME_LEN);
-            strcpy(ts->ts_name, task->name);
-            *idx = *idx + 1;
+        if (n == index) {
+            tmp_ts.ts_pid = task->pid;
+            tmp_ts.ts_ppid = task->parent_pid;
+            tmp_ts.ts_tgid = task->tgid;
+            tmp_ts.ts_state = task->state;
+            tmp_ts.ts_priority = task->priority;
+            tmp_ts.ts_timeslice = task->timeslice;
+            tmp_ts.ts_runticks = task->elapsed_ticks;
+            memset(tmp_ts.ts_name, 0, PROC_NAME_LEN);
+            strcpy(tmp_ts.ts_name, task->name);
+            ++index;
+            if (mem_copy_to_user(ts, &tmp_ts, sizeof(tstate_t)) < 0)
+                return -EINVAL;
+            if (mem_copy_to_user(idx, &index, sizeof(unsigned int)) < 0)
+                return -EINVAL;
             return 0;
         }
         n++;
     }
-    return -1;
+    return -ESRCH;
 }
 
 int sys_getver(char *buf, int len)
 {
-    if (len < strlen(OS_NAME) + strlen(OS_VERSION))
-        return -1;
-
-    strcpy(buf, OS_NAME);
-    strcat(buf, OS_VERSION);
+    if (!buf || !len)
+        return -EINVAL;
+    char tbuf[32] = {0};
+    strcpy(tbuf, OS_NAME);
+    strcat(tbuf, OS_VERSION);
+    if (mem_copy_to_user(buf, tbuf, min(len, strlen(tbuf))) < 0)
+        return -EFAULT;
     return 0;
 }
 

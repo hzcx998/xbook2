@@ -269,8 +269,7 @@ int execute_cmd(int argc, char **argv)
 
         if (pid > 0) {  /* 父进程 */
             // 把子进程设置为前台
-            ioctl(0, TTYIO_HOLDER, &pid);
-
+            // ioctl(0, TTYIO_HOLDER, &pid);
             /* shell程序等待子进程退出 */
             pid = wait(&status);
             pid = getpid();

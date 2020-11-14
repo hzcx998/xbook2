@@ -1,6 +1,6 @@
 X_LIBS		+= libxlibc-0.0.1.a
 
-NAME		:= ver
+NAME		:= osver
 SRC			+= main.c
 
 define CUSTOM_TARGET_CMD

@@ -3,6 +3,7 @@
 #include <sys/walltime.h>
 #include <xbook/task.h>
 #include <xbook/clock.h>
+#include <xbook/safety.h>
 #include <errno.h>
 #include <string.h>
 #include <arch/interrupt.h>
@@ -141,9 +142,12 @@ void timer_update_ticks()
 
 long sys_usleep(struct timeval *inv, struct timeval *outv)
 {
+    if (!inv)
+        return -EINVAL;
     struct timeval tv;
     unsigned long ticks;
-    memcpy(&tv, inv, sizeof(struct timeval));
+    if (mem_copy_from_user(&tv, inv, sizeof(struct timeval)) < 0)
+        return -EFAULT;
     if (tv.tv_usec >= 1000000 || tv.tv_sec < 0 || tv.tv_usec < 0)
         return -EINVAL;
     /* 如果小于2毫秒就用延时的方式 */
@@ -156,7 +160,8 @@ long sys_usleep(struct timeval *inv, struct timeval *outv)
     if (ticks > 0) {
         if (outv) {
             systicks_to_timeval(ticks, &tv);
-            memcpy(outv, &tv, sizeof(struct timeval));
+            if (mem_copy_to_user(outv, &tv, sizeof(struct timeval)) < 0)
+                return -EFAULT;
         }
         return -EINTR;
     }

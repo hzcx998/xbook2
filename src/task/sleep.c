@@ -7,7 +7,6 @@ static void task_sleep_timeout_handler(unsigned long arg)
 {
     task_t *task = (task_t *)arg;
     list_del_init(&task->list);
-    TASK_LEAVE_WAITLIST(task_current);
     task_wakeup(task);
 }
 
@@ -21,7 +20,6 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
     timer_set_arg(timer, cur);
     timer_set_handler(timer, task_sleep_timeout_handler);
     timer_add(timer);
-    TASK_ENTER_WAITLIST(task_current);
     task_block(TASK_BLOCKED);
     unsigned long flags;
     interrupt_save_and_disable(flags);
@@ -29,6 +27,7 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
     if (timer->timeout > timer_ticks) {
         delta_ticks = timer->timeout - timer_ticks;
         timer_del(timer);
+        //printk("sleep intrrupted!\n");
     }
     interrupt_restore_state(flags);    
     return delta_ticks;

@@ -4,7 +4,9 @@
 #include <xbook/debug.h>
 #include <xbook/memspace.h>
 #include <xbook/sharemem.h>
+#include <xbook/safety.h>
 #include <string.h>
+#include <errno.h>
 
 void vmm_init(vmm_t *vmm)
 {
@@ -29,13 +31,16 @@ void vmm_free(vmm_t *vmm)
 int sys_mstate(mstate_t *ms)
 {
     if (!ms)
-        return -1;
-    memset(ms, 0, sizeof(mstate_t));
-    ms->ms_total = mem_get_total_page_nr() * PAGE_SIZE;
-    ms->ms_free = mem_get_free_page_nr() * PAGE_SIZE;
-    ms->ms_used = ms->ms_total - ms->ms_free;
-    if (ms->ms_used < 0)
-        ms->ms_used = 0;
+        return -EINVAL;
+    mstate_t tms;
+    tms.ms_total = mem_get_total_page_nr() * PAGE_SIZE;
+    tms.ms_free = mem_get_free_page_nr() * PAGE_SIZE;
+    tms.ms_used = tms.ms_total - tms.ms_free;
+    if (tms.ms_used < 0)
+        tms.ms_used = 0;
+    if (mem_copy_to_user(ms, &tms, sizeof(mstate_t)) < 0) {
+        return -EFAULT;
+    }
     return 0;
 }
 
