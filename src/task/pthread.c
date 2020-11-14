@@ -1,8 +1,10 @@
 #include <xbook/schedule.h>
 #include <xbook/process.h>
 #include <xbook/pthread.h>
+#include <xbook/safety.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
+#include <errno.h>
 
 void pthread_desc_init(pthread_desc_t *pthread)
 {
@@ -60,7 +62,6 @@ task_t *pthread_start(task_func_t *func, void *arg,
     task->pthread = parent->pthread;
     task->vmm = parent->vmm;
     task->fileman = parent->fileman;
-    // TODO: init exception for child
     exception_manager_init(&task->exception_manager);
     
     proc_trap_frame_init(task);
@@ -93,12 +94,17 @@ pid_t sys_thread_create(
     void *arg,
     void *thread_entry)
 {
-    if (attr == NULL)
-        return -1;
+    if (!attr || !func || !thread_entry)
+        return -EINVAL;
+
+    if (mem_copy_from_user(NULL, attr, sizeof(pthread_attr_t)) < 0 ||
+        safety_check_range(func, sizeof(task_func_t *)) < 0 ||
+        safety_check_range(thread_entry, sizeof(void *)) < 0)
+        return -EINVAL;
 
     task_t *task = pthread_start(func, arg, attr, thread_entry);
     if (task == NULL)
-        return -1;
+        return -ENOMEM;
     return task->pid;
 }
 
@@ -213,7 +219,8 @@ int pthread_join(pthread_t thread, void **thread_return)
         interrupt_save_and_disable(flags);
     } while (pid == -1);
     if (thread_return != NULL) {
-        *thread_return = (void *)status;
+        if (mem_copy_to_user(thread_return, &status, sizeof(void *)) < 0)
+            return -1;
     }
     interrupt_restore_state(flags);
     return 0;
@@ -263,9 +270,13 @@ int sys_thread_setcancelstate(int state, int *oldstate)
     task_t *cur = task_current;
     if (oldstate != NULL) {
         if (cur->flags & THREAD_FLAG_CANCEL_DISABLE) {
-            *oldstate = PTHREAD_CANCEL_DISABLE;  
+            int _oldstate = PTHREAD_CANCEL_DISABLE;
+            if (mem_copy_to_user(oldstate, &_oldstate, sizeof(int)) < 0)
+                return -1;
         } else {
-            *oldstate = PTHREAD_CANCEL_ENABLE;
+            int _oldstate = PTHREAD_CANCEL_ENABLE;
+            if (mem_copy_to_user(oldstate, &_oldstate, sizeof(int)) < 0)
+                return -1;
         }
     }
     if (state == PTHREAD_CANCEL_DISABLE) {
@@ -289,9 +300,13 @@ int sys_thread_setcanceltype(int type, int *oldtype)
     task_t *cur = task_current;
     if (oldtype != NULL) {
         if (cur->flags & THREAD_FLAG_CANCEL_ASYCHRONOUS) {
-            *oldtype = PTHREAD_CANCEL_ASYCHRONOUS;  
+            int _oldtype = PTHREAD_CANCEL_ASYCHRONOUS;
+            if (mem_copy_to_user(oldtype, &_oldtype, sizeof(int)) < 0)
+                return -1;
         } else {
-            *oldtype = PTHREAD_CANCEL_DEFFERED;
+            int _oldtype = PTHREAD_CANCEL_DEFFERED;
+            if (mem_copy_to_user(oldtype, &_oldtype, sizeof(int)) < 0)
+                return -1;
         }
     }
     if (type == PTHREAD_CANCEL_ASYCHRONOUS) {

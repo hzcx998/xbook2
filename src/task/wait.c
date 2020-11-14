@@ -2,6 +2,7 @@
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 #include <xbook/process.h>
+#include <xbook/safety.h>
 
 /*
 僵尸进程：当进程P调用exit时，其父进程没有wait，那么它就变成一个僵尸进程。
@@ -70,6 +71,9 @@ static int wait_one_hangging_child(task_t *parent, pid_t pid, int *status)
  */
 pid_t sys_waitpid(pid_t pid, int *status, int options)
 {
+    if (status && safety_check_range(status, sizeof(int *)) < 0)
+        return -1;
+    int wait_status = 0;
     task_t *parent = task_current;
     TASK_CHECK_THREAD_CANCELATION_POTINT(parent);
     pid_t child_pid;
@@ -77,14 +81,18 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
     while (1) {
         interrupt_save_and_disable(flags);
         if (pid == -1) { 
-            if ((child_pid = wait_any_hangging_child(parent, status)) >= 0) {
+            if ((child_pid = wait_any_hangging_child(parent, &wait_status)) >= 0) {
                 interrupt_restore_state(flags);
+                if (status)
+                    mem_copy_to_user(status, &wait_status, sizeof(int *));
                 return child_pid;
             }
         } else {
             
-            if ((child_pid = wait_one_hangging_child(parent, pid, status)) >= 0) {
+            if ((child_pid = wait_one_hangging_child(parent, pid, &wait_status)) >= 0) {
                 interrupt_restore_state(flags);
+                if (status)
+                    mem_copy_to_user(status, &wait_status, sizeof(int *));
                 return child_pid;
             }
         }

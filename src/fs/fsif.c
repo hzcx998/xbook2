@@ -11,6 +11,7 @@
 #include <lwip/sockets.h>
 #include <xbook/fifo.h>
 #include <xbook/pipe.h>
+#include <xbook/safety.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
 
@@ -98,7 +99,10 @@ int sys_close(int fd)
 
 int sys_read(int fd, void *buffer, size_t nbytes)
 {
-    // printk("[fs]: %s: fd=%d buf=%x bytes=%d\n", __func__, fd, buffer, nbytes);
+    if (fd < 0 || !nbytes)
+        return -1;
+    if (mem_copy_to_user(buffer, NULL, nbytes) < 0)
+        return -1;
     file_fd_t *ffd = fd_local_to_file(fd);
     if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0) {
         pr_err("[FS]: %s: fd %d err!\n", __func__, fd);
@@ -121,9 +125,29 @@ int sys_read(int fd, void *buffer, size_t nbytes)
     return retval;
 }
 
+/* only readfile in kernel, with out safety check */
+int sys_readfile(int fd, void *buffer, size_t nbytes)
+{
+    if (fd < 0 || !nbytes)
+        return -1;
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0) {
+        pr_err("[FS]: %s: fd %d err!\n", __func__, fd);
+        return -1;
+    }
+    int retval = -1;
+    if (ffd->flags & FILE_FD_NORMAL) {
+        retval = fsif.read(ffd->handle, buffer, nbytes);
+    }
+    return retval;
+}
+
 int sys_write(int fd, void *buffer, size_t nbytes)
 {
-    //pr_dbg("sys_write: %s\n", buffer);
+    if (fd < 0 || !nbytes)
+        return -1;
+    if (mem_copy_from_user(NULL, buffer, nbytes) < 0)
+        return -1;
 
     file_fd_t *ffd = fd_local_to_file(fd);
     if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0) {

@@ -14,6 +14,8 @@ int main(int argc, char *argv[])
     //buddy_test(argc, argv);
     //sleep_test(argc, argv);
     //exp_test(argc, argv);
-    fifo_test(argc, argv);
+    // fifo_test(argc, argv);
+    sys_test(argc, argv);
+    
     return 0;
 }

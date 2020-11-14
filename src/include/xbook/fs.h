@@ -52,6 +52,7 @@ long sys_tell(int fd);
 int sys_dup(int oldfd);
 int sys_dup2(int oldfd, int newfd);
 int sys_pipe(int fd[2]);
+int sys_readfile(int fd, void *buffer, size_t nbytes);
 
 int sys_mount(
     char *source,         /* 需要挂载的资源 */

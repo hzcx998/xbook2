@@ -42,7 +42,7 @@ int pthread_create(
         attr = &default_attr;
     }
     pid_t pid = syscall4(pid_t, SYS_THREAD_CREATE, attr, start_routine, arg, __pthread_entry);
-    if (pid == -1)
+    if (pid < 0)
         return -1;
     *thread = (pthread_t) pid;
     return 0;

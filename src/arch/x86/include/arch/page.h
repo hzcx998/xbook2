@@ -62,6 +62,9 @@ static inline pte_t *vir_addr_to_table_entry(unsigned int vaddr)
 	return pte;
 }
 
+bool page_readable(unsigned long vaddr, unsigned long count);
+bool page_writable(unsigned long vaddr, unsigned long nbytes);
+
 void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot);
 void page_unlink_addr(unsigned long vaddr);
 

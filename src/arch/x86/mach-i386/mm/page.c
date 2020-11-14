@@ -12,6 +12,39 @@
 #include <xbook/memspace.h>
 #include <xbook/exception.h>
 
+bool page_readable(unsigned long vaddr, unsigned long nbytes)
+{
+    unsigned long addr = vaddr & PAGE_MASK;
+    unsigned long count = PAGE_ALIGN(nbytes);
+    while (count > 0) {
+        pte_t *pte = vir_addr_to_table_entry(addr);
+        if (!(*pte & PAGE_ATTR_PRESENT)) {
+            return false;
+        }
+        addr += PAGE_SIZE;
+        count -= PAGE_SIZE;
+    }
+    return true;
+}
+
+bool page_writable(unsigned long vaddr, unsigned long nbytes)
+{
+    unsigned long addr = vaddr & PAGE_MASK;
+    unsigned long count = PAGE_ALIGN(nbytes);
+    while (count > 0) {
+        pte_t *pte = vir_addr_to_table_entry(addr);
+        if (!(*pte & PAGE_ATTR_PRESENT)) {
+            return false;
+        }
+        if (!(*pte & PAGE_ATTR_WRITE)) {
+            return false;
+        }
+        addr += PAGE_SIZE;
+        count -= PAGE_SIZE;
+    }
+    return true;
+}
+
 void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
 {
     unsigned long vaddr = (unsigned long )va;

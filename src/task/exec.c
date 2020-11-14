@@ -47,7 +47,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     struct Elf32_Ehdr elf_header;
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
     sys_lseek(fd, 0, SEEK_SET);
-    if (sys_read(fd, &elf_header, sizeof(struct Elf32_Ehdr)) != sizeof(struct Elf32_Ehdr)) {
+    if (sys_readfile(fd, &elf_header, sizeof(struct Elf32_Ehdr)) != sizeof(struct Elf32_Ehdr)) {
         printk(KERN_ERR "sys_exec_file: read elf header failed!\n");
         goto free_tmp_fd;
     }

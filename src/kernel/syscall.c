@@ -154,3 +154,13 @@ void syscall_init()
     syscalls[SYS_EXPCATCH] = sys_expcatch;
     syscalls[SYS_EXPBLOCK] = sys_expblock;
 }
+
+int syscall_error(uint32_t callno)
+{
+    if (callno >= SYSCALL_NR) {
+        printk(KERN_DEBUG "syscall: bad number %d, raise exception!\n", callno);
+        exception_raise(EXP_CODE_SYS, callno);
+        return 1;
+    }
+    return 0;
+}

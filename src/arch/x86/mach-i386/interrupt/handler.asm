@@ -5,6 +5,7 @@ extern interrupt_do_irq
 extern softirq_handle_in_interrupt
 extern syscalls
 extern exception_check
+extern syscall_error
 
 [bits 32]
 [section .text]
@@ -82,6 +83,13 @@ syscall_handler:
     
     sti
 
+    ; check syscall num
+    push eax
+    call syscall_error
+    cmp eax, 1
+    je .bad_syscall
+    pop eax
+    
     ;2 为系统调用子功能传入参数
     push esp                ; 传入栈指针，可以用来获取所有陷阱栈框寄存器
     push edi                ; 系统调用中第4个参数
@@ -95,14 +103,17 @@ syscall_handler:
 
 	;4 将call调用后的返回值存入待当前内核栈中eax的位置
     mov [esp + 8*4], eax	
-     
-    ; 处理完用户消息后再进行触发器处理，因为处理过程可能会影响到寄存器的值
-    ;5
-    push esp         ; 把中断栈指针传递进去
+
+.check_exception:
+    push esp
     call exception_check
     add esp, 4
     cli
     jmp interrupt_exit
+
+.bad_syscall:
+    pop eax
+    jmp .check_exception
 
 global interrupt_exit
 interrupt_exit:

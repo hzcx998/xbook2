@@ -1,6 +1,8 @@
 #ifndef _XBOOK_SYSCALL_H
 #define _XBOOK_SYSCALL_H
 
+#include <stdint.h>
+
 typedef void * syscall_t;
 
 enum syscall_num {
@@ -167,5 +169,6 @@ SYS_WAITPID，SYS_SLEEP，SYS_THREAD_JOIN，SYS_GETRES, SYS_PUTRES, SYS_READRES,
 SYS_WRITERES */
 
 void syscall_init();
+int syscall_error(uint32_t callno);
 
 #endif   /*_XBOOK_SYSCALL_H*/

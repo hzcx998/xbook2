@@ -35,7 +35,7 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
         return -1;
     }
     sys_lseek(fd, offset, SEEK_SET);
-    if (sys_read(fd, (void *)vaddr, file_sz) != file_sz) {
+    if (sys_readfile(fd, (void *)vaddr, file_sz) != file_sz) {
         return -1;
     }
     return 0;
@@ -51,7 +51,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
     while (grog_idx < elf_header->e_phnum) {
         memset(&prog_header, 0, prog_header_size);
         sys_lseek(fd, prog_header_off, SEEK_SET);
-        if (sys_read(fd, (void *)&prog_header, prog_header_size) != prog_header_size) {
+        if (sys_readfile(fd, (void *)&prog_header, prog_header_size) != prog_header_size) {
             return -1;
         }
         if (prog_header.p_type == PT_LOAD) {
