@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <types.h>
+#include <sys/stat.h>
 
 
 #define FILE_FD_ALLOC   0X01    /* alloced */
@@ -52,7 +53,14 @@ long sys_tell(int fd);
 int sys_dup(int oldfd);
 int sys_dup2(int oldfd, int newfd);
 int sys_pipe(int fd[2]);
-int sys_readfile(int fd, void *buffer, size_t nbytes);
+
+// special for kernel
+int kern_file_open(const char *path, int flags);
+int kern_file_read(int fd, void *buffer, size_t nbytes);
+int kern_file_stat(const char *path, struct stat *buf);
+int kern_file_access(const char *path, int mode);
+int kern_file_lseek(int fd, off_t offset, int whence);
+int kern_file_close(int fd);
 
 int sys_mount(
     char *source,         /* 需要挂载的资源 */

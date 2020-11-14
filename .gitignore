@@ -107,7 +107,7 @@ user/rm/rm
 user/rmdir/rmdir
 user/touch/touch
 user/trig/trig
-user/ver/ver
+user/osver/osver
 
 # /usr
 user/bosh/bosh
