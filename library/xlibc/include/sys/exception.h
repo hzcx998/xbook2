@@ -33,10 +33,10 @@ enum exception_code {
     EXP_CODE_MAX_NR
 };
 
-typedef void (*exp_hander_t) (uint32_t, uint32_t);
+typedef void (*exp_hander_t) (uint32_t);
 
-int expsend(pid_t pid, uint32_t code, uint32_t arg);
-int expraise(uint32_t code, uint32_t arg);
+int expsend(pid_t pid, uint32_t code);
+int expraise(uint32_t code);
 int expcatch(uint32_t code, exp_hander_t handler);
 int expblock(uint32_t code);
 int expunblock(uint32_t code);

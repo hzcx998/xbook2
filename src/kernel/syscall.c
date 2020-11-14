@@ -150,16 +150,16 @@ void syscall_init()
     syscalls[SYS_GSETICONPATH] = sys_gui_set_icon;
     syscalls[SYS_PROBE] = sys_probe;
     syscalls[SYS_EXPSEND] = sys_expsend;
-    syscalls[SYS_EXPCHKPOINT] = sys_expchkpoint;
     syscalls[SYS_EXPCATCH] = sys_expcatch;
     syscalls[SYS_EXPBLOCK] = sys_expblock;
+    syscalls[SYS_EXPRET] = sys_excetion_return;
 }
 
 int syscall_error(uint32_t callno)
 {
     if (callno >= SYSCALL_NR) {
-        printk(KERN_DEBUG "syscall: bad number %d, raise exception!\n", callno);
-        exception_raise(EXP_CODE_SYS, callno);
+        printk(KERN_ERR "syscall: bad number %d, raise exception!\n", callno);
+        exception_raise(EXP_CODE_SYS);
         return 1;
     }
     return 0;

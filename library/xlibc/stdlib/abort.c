@@ -4,5 +4,5 @@
 
 void abort(void)
 {
-    expraise(EXP_CODE_ABORT, 0);
+    expraise(EXP_CODE_ABORT);
 }

@@ -1,9 +1,10 @@
 #include "test.h"
 #include <sys/exception.h>
 
-void exp_hander(uint32_t code, uint32_t arg)
+void exp_hander(uint32_t code)
 {
-    printf("handler code %d arg %d\n", code, arg);
+    printf("handler code %d\n", code);
+    expcatch(EXP_CODE_INT, exp_hander);
 }
 
 int exp_test(int argc, char *argv[])
@@ -11,7 +12,6 @@ int exp_test(int argc, char *argv[])
     expcatch(EXP_CODE_INT, exp_hander);
     int i = 0;
     while (1) {
-        expcheck();
     }
     return 0;
 }

@@ -157,9 +157,9 @@ enum syscall_num {
     SYS_GSETICONPATH,
     SYS_PROBE,
     SYS_EXPSEND,
-    SYS_EXPCHKPOINT,
     SYS_EXPCATCH,
     SYS_EXPBLOCK,
+    SYS_EXPRET,
     SYSCALL_NR,
 };
 

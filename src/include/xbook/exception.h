@@ -33,13 +33,21 @@ enum exception_code {
 
 #define EXCEPTION_SETS_SIZE   (EXP_CODE_MAX_NR / 32 + 1)
 
+typedef void (*exception_handler_t) (uint32_t);
+
 typedef struct {
     list_t list;        // 单个任务的异常构成一个列表
     uint32_t code;
     uint32_t flags;
     pid_t source;       // 异常来源
-    uint32_t arg;
 } exception_t;
+
+typedef struct {
+	char *ret_addr;                 /* 记录返回地址 */
+	unsigned long code;             /* 触发器 */
+    trap_frame_t trap_frame;        /* 保存原来的栈框 */
+	char ret_code[8];               /* 构建返回的系统调用代码 */
+} exception_frame_t;
 
 typedef struct {
     list_t exception_list;
@@ -49,20 +57,24 @@ typedef struct {
     spinlock_t manager_lock;    // 管理器使用的锁
     uint32_t exception_block[EXCEPTION_SETS_SIZE];    // 异常的阻塞情况    
     uint32_t exception_catch[EXCEPTION_SETS_SIZE];    // 异常的捕捉情况    
+    exception_handler_t handlers[EXP_CODE_MAX_NR];
 } exception_manager_t;
 
 void exception_manager_init(exception_manager_t *exception_manager);
 void exception_manager_exit(exception_manager_t *exception_manager);
-int exception_send(pid_t pid, uint32_t code, uint32_t arg);
-int exception_force(pid_t pid, uint32_t code, uint32_t arg);
+int exception_send(pid_t pid, uint32_t code);
+int exception_force(pid_t pid, uint32_t code);
 int exception_copy(exception_manager_t *dest, exception_manager_t *src);
-int exception_force_self(uint32_t code, uint32_t arg);
-int exception_raise(uint32_t code, uint32_t arg);
+int exception_force_self(uint32_t code);
+int exception_raise(uint32_t code);
 bool exception_cause_exit(exception_manager_t *exception_manager);
 
-int sys_expsend(pid_t pid, uint32_t code, uint32_t arg);
-int sys_expchkpoint(uint32_t *code, uint32_t *arg);
-int sys_expcatch(uint32_t code, uint32_t state);
+void exception_frame_build(uint32_t code, exception_handler_t handler, trap_frame_t *frame);
+int exception_return(trap_frame_t *frame);
+
+int sys_expsend(pid_t pid, uint32_t code);
+int sys_expcatch(uint32_t code, exception_handler_t handler);
 int sys_expblock(uint32_t code, uint32_t state);
+int sys_excetion_return(unsigned int ebx, unsigned int ecx, unsigned int esi, unsigned int edi, trap_frame_t *frame);
 
 #endif   /* _XBOOK_SOFT_EXCEPTION_H */

@@ -120,6 +120,8 @@ void page_unlink_addr(unsigned long vaddr)
 
 int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
 {
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
     unsigned long first = start & PAGE_MASK;
     len = PAGE_ALIGN(len);
     unsigned int attr = 0;    
@@ -144,6 +146,7 @@ int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
         unsigned long page_addr = page_alloc_user(trunk);
         if (!page_addr) {
             printk(KERN_ERR "%s: map no free pages for %d count!\n", __func__, len / PAGE_SIZE);
+            interrupt_restore_state(flags);
             return -1;
         }
         
@@ -155,11 +158,14 @@ int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
             page_addr += PAGE_SIZE;
         }
     }
+    interrupt_restore_state(flags);
 	return 0;
 }
 
 int page_map_addr_fixed(unsigned long start, unsigned long addr, unsigned long len, unsigned long prot)
 {
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
     unsigned long first = start & PAGE_MASK;
     len = PAGE_ALIGN(len);
 
@@ -186,6 +192,7 @@ int page_map_addr_fixed(unsigned long start, unsigned long addr, unsigned long l
         first += PAGE_SIZE;
         pages += PAGE_SIZE;
 	}
+    interrupt_restore_state(flags);
 	return 0;
 }
 
@@ -199,6 +206,8 @@ int page_unmap_addr(unsigned long vaddr, unsigned long len)
 {
 	if (!len)
 		return -1;
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
 	len = PAGE_ALIGN(len);
 	unsigned long paddr, start = (unsigned long)vaddr & PAGE_MASK;
     unsigned long end = start + len;
@@ -209,11 +218,14 @@ int page_unmap_addr(unsigned long vaddr, unsigned long len)
 		start += PAGE_SIZE;
 	}
 	page_free(paddr);
+    interrupt_restore_state(flags);
 	return 0;
 }
 
 int page_map_addr_safe(unsigned long start, unsigned long len, unsigned long prot)
 {
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
     unsigned long vaddr = (unsigned long )start & PAGE_MASK;
     len = PAGE_ALIGN(len);
     unsigned long pages = DIV_ROUND_UP(len, PAGE_SIZE);
@@ -239,6 +251,7 @@ int page_map_addr_safe(unsigned long start, unsigned long len, unsigned long pro
             page_addr = page_alloc_user(1);
             if (!page_addr) {
                 printk("error: user_map_vaddr -> map pages failed!\n");
+                interrupt_restore_state(flags);
                 return -1;
             }
             
@@ -247,6 +260,7 @@ int page_map_addr_safe(unsigned long start, unsigned long len, unsigned long pro
         vaddr += PAGE_SIZE;
         page_idx++;
     }
+    interrupt_restore_state(flags);
     return 0;
 }
 
@@ -262,6 +276,8 @@ static int is_page_table_empty(pte_t *page_table)
 
 int page_unmap_addr_safe(unsigned long start, unsigned long len, char fixed)
 {
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
     unsigned long vaddr = (unsigned long )start & PAGE_MASK;
     len = PAGE_ALIGN(len);
     unsigned long pages = DIV_ROUND_UP(len, PAGE_SIZE);
@@ -302,11 +318,14 @@ int page_unmap_addr_safe(unsigned long start, unsigned long len, char fixed)
         }
     }
 end_unmap:
+    interrupt_restore_state(flags);
     return 0;
 }
 
 unsigned long *kern_page_dir_copy_to()
 {
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
     unsigned long page = page_alloc_normal(1);
     unsigned int *vaddr = (unsigned int *)kern_phy_addr2vir_addr(page);
     
@@ -316,6 +335,7 @@ unsigned long *kern_page_dir_copy_to()
         PAGE_SIZE / 2);
 
     vaddr[PAGE_TABLE_ENTRY_NR - 1] = page | KERN_PAGE_ATTR;
+    interrupt_restore_state(flags);
     return (unsigned long *)vaddr;
 }
 
@@ -386,8 +406,9 @@ static int do_page_no_write(unsigned long addr)
 
 static inline void do_vir_mem_fault(unsigned long addr)
 {
+    printk("do_vir_mem_fault\n");
     /* TODO: 如果是在vir_mem区域中，就进行页复制，不是的话，就发出段信号。 */
-    exception_force_self(EXP_CODE_SEGV, addr);
+    exception_force_self(EXP_CODE_SEGV);
 }
 
 static void do_expand_stack(mem_space_t *space, unsigned long addr)
@@ -400,18 +421,18 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
 {
 	/* 没有写标志，说明该段内存不支持内存写入，就直接返回吧 */
 	if (write) {
-		printk(KERN_DEBUG "page: %s: addr %x have write protection.\n", __func__, addr);
+		printk(KERN_DEBUG "page: %s: addr %x have write protection.\n", __func__);
 		int ret = do_page_no_write(addr);
 		if (ret) {
             printk(KERN_EMERG "page: %s: page not writable!", __func__);    
-            exception_force_self(EXP_CODE_SEGV, addr);
+            exception_force_self(EXP_CODE_SEGV);
             return -1;
         }
 
 		/* 虽然写入的写标志，但是还是会出现缺页故障，在此则处理一下缺页 */
 		if (do_handle_no_page(addr, space->page_prot)) {
             printk(KERN_EMERG "page: %s: hand no page failed!", __func__);
-            exception_force_self(EXP_CODE_SEGV, addr);
+            exception_force_self(EXP_CODE_SEGV);
 			return -1; 
         }
 		return 0;
@@ -419,7 +440,7 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
 		printk(KERN_DEBUG "page: %s: no write protection\n", __func__);
 	}
     printk(KERN_EMERG "page: %s: page protection!", __func__);
-    exception_force_self(EXP_CODE_SEGV, addr);
+    exception_force_self(EXP_CODE_SEGV);
     return -1;
 }
 
@@ -444,7 +465,7 @@ int page_do_fault(trap_frame_t *frame)
     if (!(frame->error_code & PAGE_ERR_USER) && addr >= KERN_BASE_VIR_ADDR) {
         printk("task name=%s pid=%d\n", cur->name, cur->pid);
         printk(KERN_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
-        printk(KERN_EMERG "page fault at %x.\n", addr);
+        printk(KERN_EMERG "page fault at %x.\n");
         trap_frame_dump(frame);
         panic("halt...");
     }
@@ -461,7 +482,7 @@ int page_do_fault(trap_frame_t *frame)
     if (space == NULL) {    
         printk(KERN_ERR "page fauilt: user pid=%d name=%s user access user unknown space.\n", cur->pid, cur->name);
         trap_frame_dump(frame);
-        exception_force_self(EXP_CODE_SEGV, addr);
+        exception_force_self(EXP_CODE_SEGV);
         return -1;
     }
     if (space->start > addr) { /* 故障地址在空间前，说明是栈向下拓展，那么尝试拓展栈。 */
@@ -474,7 +495,7 @@ int page_do_fault(trap_frame_t *frame)
             } else {
                 printk(KERN_ERR "page fauilt: user pid=%d name=%s user task stack out of range!\n", cur->pid, cur->name);
                 trap_frame_dump(frame);
-                exception_force_self(EXP_CODE_STKFLT, addr);
+                exception_force_self(EXP_CODE_STKFLT);
                 return -1;  
             }
         }

@@ -29,7 +29,7 @@ void alarm_update_ticks()
                 task->alarm.second--;
                 task->alarm.ticks = HZ;
                 if (!task->alarm.second) {
-                    exception_send(task->pid, EXP_CODE_ALRM, 0);
+                    exception_send(task->pid, EXP_CODE_ALRM);
                     task->alarm.flags = 0;
                 }
             }

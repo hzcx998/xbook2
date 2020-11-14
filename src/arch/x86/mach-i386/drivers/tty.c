@@ -218,7 +218,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
             ioreq->io_status.infomation = read_count;
             status = IO_SUCCESS;
         } else {    /* 不是前台任务就触发任务的硬件触发器 */
-            exception_force_self(EXP_CODE_TTIN, 0);
+            exception_force_self(EXP_CODE_TTIN);
         }
     }
     ioreq->io_status.status = status;
@@ -298,7 +298,7 @@ void tty_thread(void *arg)
                                 event.code = ch;
                             if (extension->lctl && (event.code == 'c' || event.code == 'C')) {
                                 // ctl + c
-                                exception_send(extension->hold_pid, EXP_CODE_INT, 0);
+                                exception_send(extension->hold_pid, EXP_CODE_INT);
                                 //printk("hold pid=%d\n", extension->hold_pid);
                             } else {
                                 /* put into fifo buf */

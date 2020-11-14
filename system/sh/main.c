@@ -104,8 +104,6 @@ void readline(char *buf, uint32_t count)
     while (len < count)
     {
         read(STDIN_FILENO, pos, 1);
-        expcheck();
-
         if (*pos == '\n') {
             *(pos) = '\0'; // 修改成0
             break;
@@ -137,7 +135,7 @@ void sh_exit(int ret, int relation)
     if (relation) {
         pid_t ppid = getppid();
         if (ppid > 0) /* 关闭父进程 */
-            expsend(EXP_CODE_USER, ppid, 0);
+            expsend(EXP_CODE_USER, ppid);
     }
     exit(ret);
 }
@@ -149,7 +147,7 @@ static int buildin_cmd_exit(int argc, char **argv)
     return 0;
 }
 
-void sh_exit_handler(uint32_t code, uint32_t arg)
+void sh_exit_handler(uint32_t code)
 {
     sh_exit(code, 0);
 }

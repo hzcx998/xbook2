@@ -1,6 +1,7 @@
 #include <xbook/exception.h>
 #include <xbook/schedule.h>
 #include <xbook/process.h>
+#include <xbook/safety.h>
 #include <errno.h>
 
 void exception_manager_init(exception_manager_t *exception_manager)
@@ -15,6 +16,7 @@ void exception_manager_init(exception_manager_t *exception_manager)
     for (i = 0; i < EXCEPTION_SETS_SIZE; i++) {
         exception_manager->exception_block[i] = 0;
         exception_manager->exception_catch[i] = 0;
+        exception_manager->handlers[i] = NULL;
     }
     spinlock_init(&exception_manager->manager_lock);
 }
@@ -33,14 +35,13 @@ void exception_manager_exit(exception_manager_t *exception_manager)
     exception_manager->catch_number = 0;
 }
 
-exception_t *exception_create(uint32_t code, pid_t source, uint32_t arg, uint32_t flags)
+exception_t *exception_create(uint32_t code, pid_t source, uint32_t flags)
 {
     exception_t *exp = mem_alloc(sizeof(exception_t));
     if (!exp)
         return NULL;
     exp->code = code;
     exp->source = source;
-    exp->arg = arg;
     exp->flags = flags;
     INIT_LIST_HEAD(&exp->list);
     return exp;
@@ -69,24 +70,26 @@ static bool exception_can_catch(exception_manager_t *exception_manager, uint32_t
     return catch;
 }
 
-static void exception_enable_catch(exception_manager_t *exception_manager, uint32_t code)
+static int exception_enable_catch(exception_manager_t *exception_manager, uint32_t code)
 {
     if (code == EXP_CODE_FINALHIT || code == EXP_CODE_STOP)
-        return;
+        return -1;
     unsigned long flags;
     spin_lock_irqsave(&exception_manager->manager_lock, flags);
     exception_manager->exception_catch[code / 32] |= (1 << (code % 32));
     spin_unlock_irqrestore(&exception_manager->manager_lock, flags);
+    return 0;
 }
 
-static void exception_disable_catch(exception_manager_t *exception_manager, uint32_t code)
+static int exception_disable_catch(exception_manager_t *exception_manager, uint32_t code)
 {
     if (code == EXP_CODE_FINALHIT || code == EXP_CODE_STOP)
-        return;
+        return -1;
     unsigned long flags;
     spin_lock_irqsave(&exception_manager->manager_lock, flags);
     exception_manager->exception_catch[code / 32] &= ~(1 << (code % 32));
     spin_unlock_irqrestore(&exception_manager->manager_lock, flags);
+    return 0;
 }
 
 static void exception_enable_block(exception_manager_t *exception_manager, uint32_t code)
@@ -139,7 +142,7 @@ int exception_copy(exception_manager_t *dest, exception_manager_t *src)
 {
     exception_t *tmp;
     list_for_each_owner (tmp, &src->exception_list, list) {
-        exception_t *exp = exception_create(tmp->code, tmp->source, tmp->arg, tmp->flags);
+        exception_t *exp = exception_create(tmp->code, tmp->source, tmp->flags);
         if (!exp) {
             exception_manager_exit(dest);
             return -1;
@@ -147,7 +150,7 @@ int exception_copy(exception_manager_t *dest, exception_manager_t *src)
         exception_add_normal(dest, exp);
     }
     list_for_each_owner (tmp, &src->catch_list, list) {
-        exception_t *exp = exception_create(tmp->code, tmp->source, tmp->arg, tmp->flags);
+        exception_t *exp = exception_create(tmp->code, tmp->source, tmp->flags);
         if (!exp) {
             exception_manager_exit(dest);
             return -1;
@@ -157,7 +160,7 @@ int exception_copy(exception_manager_t *dest, exception_manager_t *src)
     return 0;
 }
 
-bool exception_filter(task_t *target, uint32_t code, uint32_t arg)
+bool exception_filter(task_t *target, uint32_t code)
 {
     if (code == EXP_CODE_CONT) {
         if (TASK_WAS_STOPPED(target)) {
@@ -168,7 +171,7 @@ bool exception_filter(task_t *target, uint32_t code, uint32_t arg)
     return false;
 }
 
-int exception_send(pid_t pid, uint32_t code, uint32_t arg)
+int exception_send(pid_t pid, uint32_t code)
 {
     if (code >= EXP_CODE_MAX_NR || pid < 0)
         return -EINVAL;
@@ -182,7 +185,7 @@ int exception_send(pid_t pid, uint32_t code, uint32_t arg)
     unsigned long irq_flags;
     if (exception_can_catch(exception_manager, code)) {
         spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
-        exception_t *exp = exception_create(code, task_get_pid(task_current), arg, 0);
+        exception_t *exp = exception_create(code, task_get_pid(task_current), 0);
         if (!exp) {
             spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
             return -ENOMEM; 
@@ -193,10 +196,10 @@ int exception_send(pid_t pid, uint32_t code, uint32_t arg)
         return 0;
     }
 
-    if (exception_filter(target, code, arg))
+    if (exception_filter(target, code))
         return 0;
     spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
-    exception_t *exp = exception_create(code, task_get_pid(task_current), arg, 0);
+    exception_t *exp = exception_create(code, task_get_pid(task_current), 0);
     if (!exp) {
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         return -ENOMEM; 
@@ -207,24 +210,24 @@ int exception_send(pid_t pid, uint32_t code, uint32_t arg)
     return 0;
 }
 
-int exception_force(pid_t pid, uint32_t code, uint32_t arg)
+int exception_force(pid_t pid, uint32_t code)
 {
     task_t *target = task_find_by_pid(pid); 
     if (!target)
         return -ESRCH;
     exception_manager_t *exception_manager = &target->exception_manager;
     exception_disable_block(exception_manager, code);
-    return exception_send(pid, code, arg);
+    return exception_send(pid, code);
 }
 
-int exception_force_self(uint32_t code, uint32_t arg)
+int exception_force_self(uint32_t code)
 {
-    return exception_force(sys_get_pid(), code, arg);
+    return exception_force(sys_get_pid(), code);
 }
 
-int exception_raise(uint32_t code, uint32_t arg)
+int exception_raise(uint32_t code)
 {
-    return exception_send(sys_get_pid(), code, arg);
+    return exception_send(sys_get_pid(), code);
 }
 
 bool exception_cause_exit(exception_manager_t *exception_manager)
@@ -266,8 +269,7 @@ static int exception_dispatch(exception_manager_t *exception_manager, exception_
     return 0;
 }
 
-/* called in interrupt env. */
-int exception_check(trap_frame_t *frame)
+int exception_check_kernel(trap_frame_t *frame)
 {
     exception_manager_t *exception_manager = &task_current->exception_manager;
     unsigned long irq_flags;
@@ -282,56 +284,72 @@ int exception_check(trap_frame_t *frame)
         if (!exp)
             break;
         exception_del_normal(exception_manager, exp);
-        spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
-        exception_dispatch(exception_manager, exp);
+        exception_t tmp_exp = *exp;
         mem_free(exp);
+        spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
+        exception_dispatch(exception_manager, &tmp_exp);
         spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
     }
     spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
     return 0;
 }
 
-int sys_expsend(pid_t pid, uint32_t code, uint32_t arg)
+static int exception_handle(exception_manager_t *exception_manager, exception_t *exp, trap_frame_t *frame)
 {
-    return exception_send(pid, code, arg);
+    exception_handler_t handler = exception_manager->handlers[exp->code];
+    if (handler) {
+        exception_frame_build(exp->code, handler, frame);
+        exception_manager->handlers[exp->code] = NULL;
+        exception_disable_catch(exception_manager, exp->code);
+    }
+    return 0;
 }
 
-int exception_checkpoint(uint32_t *code, uint32_t *arg)
+int exception_check_user(trap_frame_t *frame)
 {
     exception_manager_t *exception_manager = &task_current->exception_manager;
     unsigned long irq_flags;
     spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
     if (!exception_manager->catch_number) {
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
-        return -1; 
+        return -1;
     }
     ASSERT(!list_empty(&exception_manager->catch_list));
-
     exception_t *exp = list_first_owner(&exception_manager->catch_list, exception_t, list);
     exception_del_catch(exception_manager, exp);
-    if (code)
-        *code = exp->code;
-    if (arg)
-        *arg = exp->arg;
-    spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
+    exception_t tmp_exp = *exp;
     mem_free(exp);
+    exception_handle(exception_manager, &tmp_exp, frame);
+    spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
     return 0;
 }
 
-int sys_expchkpoint(uint32_t *code, uint32_t *arg)
+/* called in interrupt env. */
+void exception_check(trap_frame_t *frame)
 {
-    return exception_checkpoint(code, arg);
+    exception_check_kernel(frame);
+    exception_check_user(frame);
 }
 
-int sys_expcatch(uint32_t code, uint32_t state)
+int sys_expsend(pid_t pid, uint32_t code)
+{
+    return exception_send(pid, code);
+}
+
+int sys_expcatch(uint32_t code, exception_handler_t handler)
 {
     if (code >= EXP_CODE_MAX_NR)
         return -EINVAL;
+    if (safety_check_range(handler, PAGE_SIZE) < 0)
+        return -EINVAL;
+
     exception_manager_t *exception_manager = &task_current->exception_manager;
-    if (state) {
-        exception_enable_catch(exception_manager, code);
+    if (handler) {
+        if (!exception_enable_catch(exception_manager, code)) 
+            exception_manager->handlers[code] = handler;
     } else {
-        exception_disable_catch(exception_manager, code);
+        if (!exception_disable_catch(exception_manager, code))
+            exception_manager->handlers[code] = NULL;    
     }
     return 0;
 }
@@ -347,4 +365,9 @@ int sys_expblock(uint32_t code, uint32_t state)
         exception_disable_block(exception_manager, code);
     }
     return 0;
+}
+
+int sys_excetion_return(unsigned int ebx, unsigned int ecx, unsigned int esi, unsigned int edi, trap_frame_t *frame)
+{
+    return exception_return(frame);
 }

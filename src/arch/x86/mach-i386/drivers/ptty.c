@@ -202,7 +202,7 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
     } else {
         printk(KERN_ERR "[ptty]: pid %d read but not holder, abort!\n", task_current->pid);
         /* 不是前台任务就触发任务的硬件触发器 */
-        exception_force_self(EXP_CODE_TTIN, 0);
+        exception_force_self(EXP_CODE_TTIN);
         goto err_rd;
     }
     status = IO_SUCCESS;
