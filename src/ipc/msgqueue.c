@@ -1,7 +1,9 @@
 #include <xbook/msgqueue.h>
 #include <xbook/debug.h>
+#include <xbook/safety.h>
 #include <string.h>
 #include <math.h>
+#include <errno.h>
 #include <sys/ipc.h>
 
 msg_queue_t *msg_queue_table;
@@ -253,6 +255,10 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
 
 int sys_msgque_get(char *name, unsigned long flags)
 {
+    if (!name)
+        return -EINVAL;
+    if (mem_copy_from_user(NULL, name, MSGQ_NAME_LEN) < 0)
+        return -EINVAL;
     return msg_queue_get(name, flags);
 }
 
@@ -263,11 +269,19 @@ int sys_msgque_put(int msgid)
 
 int sys_msgque_send(int msgid, void *msgbuf, size_t size, int msgflg)
 {
+    if (!msgbuf)
+        return -EINVAL;
+    if (mem_copy_from_user(NULL, msgbuf, size) < 0)
+        return -EINVAL;
     return msg_queue_send(msgid, msgbuf, size, msgflg);
 }
 
 int sys_msgque_recv(int msgid, void *msgbuf, size_t msgsz, int msgflg)
 {
+    if (!msgbuf)
+        return -EINVAL;
+    if (mem_copy_to_user(msgbuf, NULL, msgsz) < 0)
+        return -EINVAL;
     long *msgtype = (long *) msgbuf;
     return msg_queue_recv(msgid, msgbuf, msgsz, *msgtype, msgflg);
 }

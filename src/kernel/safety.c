@@ -2,12 +2,13 @@
 #include <xbook/kernel.h>
 #include <xbook/schedule.h>
 #include <arch/page.h>
+#include <string.h>
 
 int safety_check_range(void *src, unsigned long nbytes)
 {
     unsigned long addr;
     addr = (unsigned long) src;
-    if (task_current->vmm && (addr >= KERN_VADDR) || (addr + nbytes >= KERN_VADDR)) {
+    if (task_current->vmm && ((addr >= KERN_VADDR) || (addr + nbytes >= KERN_VADDR))) {
         return -1;
     }
     return 0;

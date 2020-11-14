@@ -9,7 +9,6 @@ int kern_file_open(const char *path, int flags)
         return -EINVAL; 
     int handle;
     int fd = -1;
-    unsigned long new_flags;
     handle = fsif.open((void *)path, flags);
     if (handle < 0)
         return -1;

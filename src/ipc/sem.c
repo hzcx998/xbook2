@@ -1,9 +1,11 @@
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
+#include <xbook/safety.h>
 #include <string.h>
 #include <string.h>
 #include <xbook/sem.h>
 #include <sys/ipc.h>
+#include <errno.h>
 
 #define DEBUG_SEM 0
 
@@ -153,6 +155,10 @@ int sem_up(int semid)
 
 int sys_sem_get(char *name, int value, int semflg)
 {
+    if (!name)
+        return -EINVAL;
+    if (mem_copy_from_user(NULL, name, SEM_NAME_LEN) < 0)
+        return -EINVAL;
     return sem_get(name, value, semflg);
 }
 

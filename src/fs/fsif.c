@@ -21,7 +21,7 @@ int sys_open(const char *path, int flags)
 {
     if (!path)
         return -EINVAL; 
-    if (mem_copy_from_user(NULL, path, MAX_PATH) < 0)
+    if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
     int handle;
     int fd = -1;
@@ -220,7 +220,7 @@ int sys_access(const char *path, int mode)
 {
     if (!path)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, path, MAX_PATH) < 0)
+    if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
     //printk("%s: path: %s\n", __func__, path);
     return fsif.access(path, mode);
@@ -230,7 +230,7 @@ int sys_unlink(const char *path)
 {
     if (!path)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, path, MAX_PATH) < 0)
+    if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
     return fsif.unlink((char *) path);
 }
@@ -272,7 +272,7 @@ int sys_stat(const char *path, struct stat *buf)
 {
     if (!path || !buf)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, path, MAX_PATH) < 0)
+    if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
     if (mem_copy_to_user(buf, NULL, sizeof(struct stat)) < 0)
         return -EINVAL;
@@ -298,7 +298,7 @@ int sys_chmod(const char *path, mode_t mode)
 {
     if (!path)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, path, MAX_PATH) < 0)
+    if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
     return fsif.chmod((char *) path, mode);
 }
@@ -318,7 +318,7 @@ int sys_mkdir(const char *path, mode_t mode)
 {
     if (!path)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, path, MAX_PATH) < 0)
+    if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
     return fsif.mkdir((char *) path, mode);
 }
@@ -327,7 +327,7 @@ int sys_rmdir(const char *path)
 {
     if (!path)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, path, MAX_PATH) < 0)
+    if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
     return fsif.rmdir((char *) path);
 }
@@ -336,9 +336,9 @@ int sys_rename(const char *source, const char *target)
 {
     if (!source || !target)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, source, MAX_PATH) < 0)
+    if (mem_copy_from_user(NULL, (void *) source, MAX_PATH) < 0)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, target, MAX_PATH) < 0)
+    if (mem_copy_from_user(NULL, (void *) target, MAX_PATH) < 0)
         return -EINVAL;
     return fsif.rename((char *) source, (char *) target);
 }
@@ -347,7 +347,7 @@ int sys_chdir(const char *path)
 {
     if (!path)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, path, MAX_PATH) < 0)
+    if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
 
     task_t *cur = task_current;
@@ -387,7 +387,7 @@ dir_t sys_opendir(const char *path)
 {
     if (!path)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, path, MAX_PATH) < 0)
+    if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
     return fsif.opendir((char *) path);
 }
@@ -618,11 +618,11 @@ int sys_probe(const char *name, int flags, char *buf, size_t buflen)
 {
     if (!name || !buf)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, name, 32) < 0)
+    if (mem_copy_from_user(NULL, (void *) name, 32) < 0)
         return -EINVAL;
     if (mem_copy_to_user(buf, NULL, buflen) < 0)
         return -EINVAL;
-        
+
     if (flags & O_DEVEX) {
         return device_probe_unused(name, buf, buflen);
     } else {

@@ -1,11 +1,13 @@
 #include <xbook/sharemem.h>
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
+#include <xbook/safety.h>
 #include <string.h>
 #include <string.h>
 #include <xbook/memspace.h>
 #include <xbook/semaphore.h>
 #include <sys/ipc.h>
+#include <errno.h>
 
 share_mem_t *share_mem_table;
 DEFINE_SEMAPHORE(share_mem_mutex, 1);
@@ -262,6 +264,10 @@ int share_mem_dec(int shmid)
 
 int sys_shmem_get(char *name, unsigned long size, unsigned long flags)
 {
+    if (!name)
+        return -EINVAL;
+    if (mem_copy_from_user(NULL, name, SHARE_MEM_NAME_LEN) < 0)
+        return -EINVAL;
     return share_mem_get(name, size, flags);
 }
 
@@ -272,11 +278,15 @@ int sys_shmem_put(int shmid)
 
 void *sys_shmem_map(int shmid, void *shmaddr, int shmflg)
 {
+    if (mem_copy_from_user(NULL, shmaddr, PAGE_SIZE) < 0)
+        return (void *) -1;
     return share_mem_map(shmid, shmaddr, shmflg);
 }
 
 int sys_shhal_memio_unmap(const void *shmaddr, int shmflg)
 {
+    if (mem_copy_from_user(NULL, (void *)shmaddr, PAGE_SIZE) < 0)
+        return -EINVAL;
     return share_hal_memio_unmap(shmaddr, shmflg);
 }
 
