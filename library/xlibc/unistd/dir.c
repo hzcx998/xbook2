@@ -18,13 +18,13 @@ struct _dirdes __dirdes_table[_MAX_DIRDES_NR] = {{0, -1}, };
 
 /* 将最上层路径名称解析出来 */
 /**
- * kern_vir_addr2phy_addrrse_path_afterward - 朝后解析路径
+ * parse_path_afterward - 朝后解析路径
  * @path: 路径名
  * @name: 储存名字的地址
  * 
  *  成功返回解析到的位置，失败返回NULL
  */
-char *kern_vir_addr2phy_addrrse_path_afterward(char *path, char *name)
+char *parse_path_afterward(char *path, char *name)
 {
     if (path[0] == '/') {   // 根目录不需要单独解析
         /* 路径中出现1个或多个连续的字符'/',将这些'/'跳过,如"///a/b" */
@@ -55,7 +55,7 @@ void __wash_path(char *old_path, char *new_path)
     assert(old_path[0] == '/');
     char name[MAX_PATH] = {0};    
     char* sub_path = old_path;
-    sub_path = kern_vir_addr2phy_addrrse_path_afterward(sub_path, name);
+    sub_path = parse_path_afterward(sub_path, name);
     if (name[0] == 0) { // 若只有"/",直接将"/"存入new_path后返回 
         new_path[0] = '/';
         new_path[1] = 0;
@@ -88,19 +88,19 @@ void __wash_path(char *old_path, char *new_path)
         /* 继续遍历下一层路径 */
         memset(name, 0, MAX_PATH);
         if (sub_path) {
-	        sub_path = kern_vir_addr2phy_addrrse_path_afterward(sub_path, name);
+	        sub_path = parse_path_afterward(sub_path, name);
         }
     }
 }
 
 /**
- * __make_abs_path - 根据路径名生成绝对路径
+ * make_abs_path - 根据路径名生成绝对路径
  * @path: 路径名
  * @abspath: 绝对路径存放的地址
  * 
  * 有可能路径名是相对路径，所以需要进行路径合并处理
  */
-void __make_abs_path(const char *path, char *abspath)
+void make_abs_path(const char *path, char *abspath)
 {
     /*
     判断是否有磁盘符，如果有，就说明是绝对路径，不然就是相对路径。
@@ -153,7 +153,7 @@ void build_path(const char *path, char *out_path)
 {
     /* 生成绝对路径测试 */
     char abs_path[MAX_PATH] = {0};
-    __make_abs_path(path, abs_path);
+    make_abs_path(path, abs_path);
 
     /* 移动到第一个'/'处，也就是根目录处 */
     char *p = strchr(abs_path, '/');

@@ -16,11 +16,6 @@
 #include <xbook/diskman.h>
 #include <xbook/debug.h>
 
-/* Definitions of physical drive number for each drive */
-#define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
-#define DEV_IDE0		1	/* Example: Map IDE0 to physical drive 1 */
-#define DEV_IDE1		2	/* Example: Map IDE1 to physical drive 2 */
-
 /* 文件系统驱动映射表 */
 extern int fatfs_drv_map[FF_VOLUMES];
 
@@ -46,33 +41,7 @@ DSTATUS disk_status (
 	DSTATUS stat = 0;
 	int result = 0;
     return stat;
-
-	switch (pdrv) {
-	case DEV_RAM :
-		//result = RAM_disk_status();
-
-		// translate the reslut code here
-
-		return stat;
-
-	case DEV_IDE0 :
-		//result = MMC_disk_status();
-
-		// translate the reslut code here
-
-		return stat;
-
-	case DEV_IDE1 :
-		//result = USB_disk_status();
-
-		// translate the reslut code here
-
-		return stat;
-	}
-	return result;
 }
-
-
 
 /*-----------------------------------------------------------------------*/
 /* Inidialize a Drive                                                    */
@@ -85,10 +54,9 @@ DSTATUS disk_initialize (
 	DSTATUS stat = 0;
     if (pdrv >= FF_VOLUMES)
         return STA_NOINIT;
-
-    if (drv_disk.open(fatfs_drv_map[pdrv]) < 0) {
+    if (diskman.open(fatfs_drv_map[pdrv]) < 0) {
         stat = STA_NODISK;
-        printk("%s: open disk solt %d failed!\n", __func__, fatfs_drv_map[pdrv]);
+        printk(KERN_ERR "%s: open disk solt %d failed!\n", __func__, fatfs_drv_map[pdrv]);
     }
     return stat;
 }
@@ -108,11 +76,8 @@ DRESULT disk_read (
         return RES_PARERR;
 
 	DRESULT res = RES_OK;
-    if (drv_disk.read(fatfs_drv_map[pdrv], sector, (void *) buff, count * FF_MIN_SS) < 0) {
+    if (diskman.read(fatfs_drv_map[pdrv], sector, (void *) buff, count * FF_MIN_SS) < 0) {
         res = RES_ERROR;
-
-        printk("%s: read disk solt %d failed!\n", __func__, fatfs_drv_map[pdrv]);
-        printk("%s: sector %d buf %x count %d\n", __func__, sector, buff, count);
     }
     return res;
 }
@@ -136,8 +101,7 @@ DRESULT disk_write (
         return RES_PARERR;
 
 	DRESULT res = RES_OK;
-
-    if (drv_disk.write(fatfs_drv_map[pdrv], sector, (void *) buff, count * FF_MIN_SS) < 0) {
+    if (diskman.write(fatfs_drv_map[pdrv], sector, (void *) buff, count * FF_MIN_SS) < 0) {
         res = RES_ERROR;
     }
     return res;
@@ -172,10 +136,8 @@ DRESULT disk_ioctl (
         *(WORD*)buff = 1; res = RES_OK;
         break;     
     case GET_SECTOR_COUNT:
-        //*(DWORD*)buff = res_ioctl(disk_drives[pdrv].handle, DISKIO_GETSIZE, 0);res = RES_OK;
-        drv_disk.ioctl(fatfs_drv_map[pdrv], DISKIO_GETSIZE, (unsigned long) buff);
+        diskman.ioctl(fatfs_drv_map[pdrv], DISKIO_GETSIZE, (unsigned long) buff);
         res = RES_OK;
-        //printk("disk%d count:%d\n", pdrv, *(DWORD*)buff);
         break;
     default:
         res = RES_ERROR;

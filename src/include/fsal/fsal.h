@@ -55,7 +55,7 @@ typedef struct {
 /* 文件抽象层接口 */
 extern fsal_t fsif;
 
-int init_fsal();
+int fsal_init();
 
 #define MT_REMKFS       0x01 /* 挂在前需要格式化磁盘 */
 #define MT_DELAYED      0x02 /* 延时挂载 */
@@ -63,9 +63,9 @@ int init_fsal();
 /* 允许打开的文件数量 */
 #define FSAL_FILE_OPEN_NR       128
 
-#define FSAL_FILE_USED      0X01 
+#define FSAL_FILE_FLAG_USED      0X01 
 
-typedef struct _fsal_file {
+typedef struct {
     char flags;             /* 文件标志 */
     fsal_t *fsal;           /* 文件系统抽象 */
     union {
@@ -80,7 +80,7 @@ extern fsal_file_t *fsal_file_table;
 /* 在表中的索引转换成文件指针 */
 #define FSAL_I2F(idx)  ((fsal_file_t *)(&fsal_file_table[(idx)]))
 
-#define ISBAD_FSAL_FIDX(idx) ((idx) < 0 || (idx) >= FSAL_FILE_OPEN_NR)
+#define FSAL_BAD_FIDX(idx) ((idx) < 0 || (idx) >= FSAL_FILE_OPEN_NR)
 
 fsal_file_t *fsal_file_alloc();
 int fsal_file_free(fsal_file_t *file);
@@ -88,7 +88,7 @@ int fsal_file_free(fsal_file_t *file);
 /* 路径转换长度，一般是路径的前缀。例如/root, c: */
 #define FASL_PATH_LEN   24
 
-/* 路径转换表项数 */
+/* 路径转换表项数，决定最多可以支持的文件系统数量 */
 #define FASL_PATH_NR   12
 
 /* 路径转换 */
@@ -102,7 +102,7 @@ extern fsal_path_t *fsal_path_table;
 
 #define FSAL_PATH_TABLE_SIZE   (sizeof(fsal_path_t) * FASL_PATH_NR)
 
-int init_fsal_path_table();
+int fsal_path_init();
 int fsal_path_insert(void *path, char *alpath, fsal_t *fsal);
 int fsal_path_remove(void *path);
 void fsal_path_print();

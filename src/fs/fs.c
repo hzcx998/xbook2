@@ -7,21 +7,18 @@
 #include <unistd.h>
 #include <dirent.h>
 
-int init_fs()
+int file_system_init()
 {
-    printk("[fs]: init start...\n");
-    if (init_disk_driver() < 0)
-        panic("[fs]: init disk driver failed!\n");
+    printk(KERN_INFO "fs: init start.\n");
+    if (disk_manager_init() < 0)
+        panic("fs: init disk manager failed!\n");
 
-    /* 初始化接口部分 */
-    if (init_fstype() < 0) {
-        panic("init fstype failed, service stopped!\n");
-    }
+    if (fstype_init() < 0)
+        panic("fs: init fstype failed, service stopped!\n");
     
-    /* 初始化文件系统抽象层 */
-    if (init_fsal() < 0) {
-        panic("init fsal failed, service stopped!\n");
+    if (fsal_init() < 0) {
+        panic("fs: init fsal failed, service stopped!\n");
     }
-    printk("[fs]: init done.\n");
+    printk(KERN_INFO "fs: init done.\n");
     return 0;
 }

@@ -61,7 +61,6 @@ int sys_open(const char *path, int flags)
             return -ENODEV;
         fd = local_fd_install(handle, FILE_FD_FIFO);
     } else {
-        //printk("[fs]: %s: path=%s flags=%x\n", __func__, path, flags);
         handle = fsif.open((void *)path, flags);
         if (handle < 0)
             return -ENOFILE;
@@ -410,13 +409,6 @@ int sys_rewinddir(dir_t dir)
     return fsif.rewinddir(dir);
 }
 
-/**
- * @fd: 文件描述符
- * 
- * 增长文件对于的引用
- * 
- * 成功返回0，失败返回-1
- */
 int fsif_grow(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
@@ -443,13 +435,6 @@ int fsif_grow(int fd)
     return 0;
 }
 
-/**
- * @fd: 文件描述符
- * 
- * 增长文件对于的引用
- * 
- * 成功返回0，失败返回-1
- */
 int fsif_degrow(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
@@ -463,6 +448,7 @@ int fsif_degrow(int fd)
     }
     return 0;
 }
+
 
 /**
  * 复制一个文件描述符

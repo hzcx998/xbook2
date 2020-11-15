@@ -42,7 +42,7 @@ int kernel_main(void)
     driver_framewrok_init();
     initcalls_exec();
 
-    init_fs();
+    file_system_init();
     init_gui();
     init_net();
     

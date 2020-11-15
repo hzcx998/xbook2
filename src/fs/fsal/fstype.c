@@ -3,7 +3,6 @@
 #include <fsal/fatfs.h>
 #include <string.h>
 
-/* 文件系统类型链表，管理所有的文件系统 */
 LIST_HEAD(fstype_list_head);
 
 int fstype_register(fsal_t *fsal)
@@ -23,15 +22,15 @@ fsal_t *fstype_find(char *name)
     char **subtable;
     fsal_t *fsal;
     list_for_each_owner (fsal, &fstype_list_head, list) {
-        if (fsal->subtable == NULL) {   /* 没有子表，就比较名字 */
-            if (!strcmp(fsal->name, name)) {    /* 比较文件系统是否找到 */
+        if (fsal->subtable == NULL) {
+            if (!strcmp(fsal->name, name)) {
                 return fsal;
             }
         } else {    /* 比较子表 */
             subtable = fsal->subtable;
             int i = 0;
             while (subtable[i] != NULL) {
-                if (!strcmp(subtable[i], name)) {    /* 比较文件系统是否找到 */
+                if (!strcmp(subtable[i], name)) {
                     return fsal;
                 }
                 i++;
@@ -41,12 +40,10 @@ fsal_t *fstype_find(char *name)
     return NULL;
 }
 
-int init_fstype()
+int fstype_init()
 {
     INIT_LIST_HEAD(&fstype_list_head);
-
     /* 注册文件系统: FATFS */
     fstype_register(&fatfs_fsal);
-
     return 0;
 }

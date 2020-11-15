@@ -33,7 +33,7 @@ extern fsal_dir_t *fsal_dir_table;
 
 #define ISBAD_FSAL_DIDX(idx) ((idx) < 0 || (idx) >= FSAL_DIR_OPEN_NR)
 
-int init_fsal_dir_table();
+int fsal_dir_table_init();
 fsal_dir_t *fsal_dir_alloc();
 int fsal_dir_free(fsal_dir_t *dir);
 

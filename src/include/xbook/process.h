@@ -3,7 +3,6 @@
 
 #include "task.h"
 #include "elf32.h"
-#include <sys/kfile.h>
 
 task_t *user_process_start(char *name, char **argv);
 int proc_destroy(task_t *task, int thread);

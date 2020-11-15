@@ -4,6 +4,5 @@
 #define ROOT_DIR_BUF    "/"
 
 void build_path(const char *path, char *out_path);
-void __setcwd(char *path);
 
 #endif   /* _SYS_DIR_H */

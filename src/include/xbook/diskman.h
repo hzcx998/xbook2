@@ -15,7 +15,7 @@ typedef struct {
     char virname[DEVICE_NAME_LEN];        /* 虚拟磁盘名字 */
 } disk_info_t;
 
-#define DISK_SOLT_NR 10
+#define DISK_MAN_SOLT_NR 10
 
 typedef struct {
     int (*open)(int);
@@ -23,14 +23,14 @@ typedef struct {
     int (*read)(int , off_t , void *, size_t );
     int (*write)(int , off_t , void *, size_t );
     int (*ioctl)(int , unsigned int , unsigned long );
-} disk_drvier_t;
+} disk_manager_t;
 
-extern disk_drvier_t drv_disk;
+extern disk_manager_t diskman;
 
 int disk_probe_device(device_type_t type);
 void disk_info_print();
-int init_disk_driver();
-int disk_res_find(char *name);
-disk_info_t *disk_res_find_info(char *name);
+int disk_manager_init();
+int disk_info_find(char *name);
+disk_info_t *disk_info_find_info(char *name);
 
 #endif   /* _XBOOK_DISKMAN_H */

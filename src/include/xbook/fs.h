@@ -29,7 +29,7 @@ typedef struct {
 } file_man_t;
 
 
-int init_fs();
+int file_system_init();
 /// syscall 
 int sys_open(const char *path, int flags);
 int sys_close(int fd);
@@ -54,14 +54,6 @@ int sys_dup(int oldfd);
 int sys_dup2(int oldfd, int newfd);
 int sys_pipe(int fd[2]);
 
-// special for kernel
-int kern_file_open(const char *path, int flags);
-int kern_file_read(int fd, void *buffer, size_t nbytes);
-int kern_file_stat(const char *path, struct stat *buf);
-int kern_file_access(const char *path, int mode);
-int kern_file_lseek(int fd, off_t offset, int whence);
-int kern_file_close(int fd);
-
 int sys_mount(
     char *source,         /* 需要挂载的资源 */
     char *target,         /* 挂载到的目标位置 */
@@ -79,5 +71,14 @@ int sys_probe(const char *name, int flags, char *buf, size_t buflen);
 
 int fsif_grow(int fd);
 int fsif_degrow(int fd);
+
+// special for kernel
+int kern_file_open(const char *path, int flags);
+int kern_file_read(int fd, void *buffer, size_t nbytes);
+int kern_file_stat(const char *path, struct stat *buf);
+int kern_file_access(const char *path, int mode);
+int kern_file_lseek(int fd, off_t offset, int whence);
+int kern_file_close(int fd);
+
 
 #endif /* _XBOOK_FS_H */
