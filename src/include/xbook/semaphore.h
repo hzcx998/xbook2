@@ -33,6 +33,24 @@ static inline void semaphore_destroy(semaphore_t *sema)
     atomic_set(&sema->counter, 0);
 }
 
+static inline semaphore_t *semaphore_alloc(int value)
+{
+    semaphore_t *sema = mem_alloc(sizeof(semaphore_t));
+    if (!sema)
+        return NULL;
+    semaphore_init(sema, value);
+    return sema;
+}
+
+static inline int semaphore_free(semaphore_t *sema)
+{
+    if (!sema)
+        return -1;
+    semaphore_destroy(sema);
+    mem_free(sema);
+    return 0;
+}
+
 static inline void __semaphore_down(semaphore_t *sema)
 {
 	list_add_tail(&task_current->list, &sema->waiter.wait_list);
