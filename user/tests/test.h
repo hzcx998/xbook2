@@ -42,4 +42,12 @@ int fifo_test(int argc, char *argv[]);
 int sys_test(int argc, char *argv[]);
 int pthread_test(int argc, char *argv[]);
 
+int file_test(int argc, char *argv[]);
+
+static inline void sys_err(char *str)
+{
+    printf("sys err: %s\n", str);
+    exit(-1);
+}
+
 #endif // _TEST_H

@@ -17,6 +17,7 @@
 // #define DEBUG_FSAL
 
 fsal_file_t *fsal_file_table;
+DEFINE_SPIN_LOCK(fsal_file_table_lock);
 
 int fsal_file_table_init()
 {
@@ -29,14 +30,20 @@ int fsal_file_table_init()
 
 fsal_file_t *fsal_file_alloc()
 {
+    unsigned long irq_flags;
+    spin_lock_irqsave(&fsal_file_table_lock, irq_flags);
     int i;
+    fsal_file_t *file;
     for (i = 0; i < FSAL_FILE_OPEN_NR; i++) {
-        if (!fsal_file_table[i].flags) {
-            memset(&fsal_file_table[i], 0, sizeof(fsal_file_t));
-            fsal_file_table[i].flags = FSAL_FILE_FLAG_USED;
-            return &fsal_file_table[i];
+        file = &fsal_file_table[i];
+        if (!file->flags) {
+            memset(file, 0, sizeof(fsal_file_t));
+            file->flags = FSAL_FILE_FLAG_USED;
+            spin_unlock_irqrestore(&fsal_file_table_lock, irq_flags);
+            return file;
         }
     }
+    spin_unlock_irqrestore(&fsal_file_table_lock, irq_flags);
     return NULL;
 }
 
@@ -44,7 +51,10 @@ int fsal_file_free(fsal_file_t *file)
 {
     if (!file->flags)
         return -1;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&fsal_file_table_lock, irq_flags);
     file->flags = 0;
+    spin_unlock_irqrestore(&fsal_file_table_lock, irq_flags);
     return 0;
 }
 
@@ -110,6 +120,7 @@ int fs_fd_init(task_t *task)
     }
     memset(task->fileman->cwd, 0, MAX_PATH);
     strcpy(task->fileman->cwd, "/");
+    spinlock_init(&task->fileman->lock);
     return 0;
 }
 
@@ -117,10 +128,12 @@ int fs_fd_exit(task_t *task)
 {
     if (!task->fileman)
         return -1;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&task->fileman->lock, irq_flags);
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++)
         fsif_degrow(i);
-    
+    spin_unlock_irqrestore(&task->fileman->lock, irq_flags);
     mem_free(task->fileman);
     task->fileman = NULL;
     return 0;
@@ -131,6 +144,8 @@ int fs_fd_copy(task_t *src, task_t *dest)
     if (!src->fileman || !dest->fileman) {
         return -1;
     }
+    unsigned long irq_flags;
+    spin_lock_irqsave(&dest->fileman->lock, irq_flags);
     memcpy(dest->fileman->cwd, src->fileman->cwd, MAX_PATH);
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
@@ -141,6 +156,7 @@ int fs_fd_copy(task_t *src, task_t *dest)
             fsif_grow(i);
         }
     }
+    spin_unlock_irqrestore(&dest->fileman->lock, irq_flags);
     return 0;
 }
 
@@ -152,6 +168,8 @@ int fs_fd_reinit(task_t *cur)
     if (!cur->fileman) {
         return -1;
     }
+    unsigned long irq_flags;
+    spin_lock_irqsave(&cur->fileman->lock, irq_flags);
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         if (cur->fileman->fds[i].flags != 0) {
@@ -159,21 +177,26 @@ int fs_fd_reinit(task_t *cur)
                 sys_close(i);
         }
     }
+    spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
     return 0;
 }
 
 int fsal_fd_alloc()
 {
     task_t *cur = task_current;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&cur->fileman->lock, irq_flags);
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         if (cur->fileman->fds[i].flags == 0) {
             cur->fileman->fds[i].flags = 1;
             cur->fileman->fds[i].handle = -1;
             cur->fileman->fds[i].offset = 0;
+            spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
             return i;
         }
     }
+    spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
     return -1;
 }
 
@@ -182,12 +205,16 @@ int fsal_fd_free(int fd)
     task_t *cur = task_current;
     if (OUT_RANGE(fd, 0, LOCAL_FILE_OPEN_NR))
         return -1;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&cur->fileman->lock, irq_flags);
     if (cur->fileman->fds[fd].flags == 0) {
+        spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
         return -1;
     }
     cur->fileman->fds[fd].handle = -1;
     cur->fileman->fds[fd].flags = 0;
     cur->fileman->fds[fd].offset = 0;
+    spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
     return 0;
 }
 
@@ -202,8 +229,11 @@ int local_fd_install(int resid, unsigned int flags)
     if (fd < 0)
         return -1;
     task_t *cur = task_current;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&cur->fileman->lock, irq_flags);
     cur->fileman->fds[fd].handle = resid;
     cur->fileman->fds[fd].flags |= flags;
+    spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
     return fd;
 }
 
@@ -217,10 +247,13 @@ int local_fd_install_to(int resid, int newfd, unsigned int flags)
     if (OUT_RANGE(newfd, 0, LOCAL_FILE_OPEN_NR))
         return -1;
     task_t *cur = task_current;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&cur->fileman->lock, irq_flags);
     cur->fileman->fds[newfd].handle = resid;
     cur->fileman->fds[newfd].flags = FILE_FD_ALLOC;
     cur->fileman->fds[newfd].flags |= flags;
     cur->fileman->fds[newfd].offset = 0;
+    spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
     return newfd;
 }
 
@@ -243,14 +276,18 @@ file_fd_t *fd_local_to_file(int local_fd)
 int handle_to_local_fd(int handle, unsigned int flags)
 {
     task_t *cur = task_current;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&cur->fileman->lock, irq_flags);
     file_fd_t *fdptr;
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         fdptr = &cur->fileman->fds[i];
         if ((fdptr->handle == handle) && (fdptr->flags & flags)) {
+            spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
             return i;   /* find the local fd */
         }
     }
+    spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
     return -1;
 }
 

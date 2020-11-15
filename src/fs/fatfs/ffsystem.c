@@ -6,6 +6,7 @@
 
 #include "ff.h"
 #include <xbook/memalloc.h>
+#include <xbook/walltime.h>
 
 #if FF_USE_LFN == 3	/* Dynamic memory allocation */
 
@@ -168,3 +169,17 @@ void ff_rel_grant (
 
 #endif
 
+#if FF_FS_NORTC == 0
+
+DWORD get_fattime (void)
+{
+    DWORD value = (((walltime.year - 1980) & 0x7f) << 25) |
+            ((walltime.month & 0xf) << 21) |
+            ((walltime.day & 0x1f) << 16) |
+            ((walltime.hour & 0x1f) << 11) |
+            ((walltime.minute & 0x3f) << 5) |
+            ((walltime.second / 2) & 0x1f);
+    return value;
+}
+
+#endif /* FF_FS_NORTC */

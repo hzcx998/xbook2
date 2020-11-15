@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <types.h>
 #include <sys/stat.h>
-
+#include <xbook/spinlock.h>
 
 #define FILE_FD_ALLOC   0X01    /* alloced */
 #define FILE_FD_NORMAL  0X02    /* is normal file */
@@ -26,6 +26,7 @@ typedef struct {
 typedef struct {
     file_fd_t fds[LOCAL_FILE_OPEN_NR];
     char cwd[MAX_PATH];
+    spinlock_t lock;
 } file_man_t;
 
 

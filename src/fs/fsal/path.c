@@ -7,6 +7,7 @@
 
 fsal_path_t *fsal_path_table;
 fsal_path_t *fsal_master_path;
+DEFINE_SPIN_LOCK(fsal_path_table_lock);
 
 int fsal_path_init()
 {
@@ -28,27 +29,33 @@ int fsal_path_insert(void *path, char *alpath, fsal_t *fsal)
     fpath = fsal_path_alloc();
     if (fpath == NULL)
         return -1;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&fsal_path_table_lock, irq_flags);
     fpath->fsal = fsal;
     strcpy(fpath->path, path);
     fpath->path[strlen(path)] = '\0';
-    
     strcpy(fpath->alpath, alpath);
     fpath->alpath[strlen(alpath)] = '\0';
     if (fsal_master_path == NULL)
         fsal_master_path = fpath;
+    spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
     return 0;
 }
 
 fsal_path_t *fsal_path_alloc()
 {
+    unsigned long irq_flags;
+    spin_lock_irqsave(&fsal_path_table_lock, irq_flags);
     fsal_path_t *fpath;
     int i;
     for (i = 0; i < FASL_PATH_NR; i++) {
         fpath = &fsal_path_table[i];
         if (fpath->fsal == NULL) {
+            spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
             return fpath;
         }
     }
+    spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
     return NULL;
 }
 
@@ -56,6 +63,8 @@ int fsal_path_remove(void *path)
 {
     char *p = (char *) path;
     fsal_path_t *fpath;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&fsal_path_table_lock, irq_flags);
     int i;
     for (i = 0; i < FASL_PATH_NR; i++) {
         fpath = &fsal_path_table[i];
@@ -63,10 +72,12 @@ int fsal_path_remove(void *path)
             if (!strcmp(p, fpath->path)) {
                 fpath->fsal     = NULL;
                 memset(fpath->path, 0, FASL_PATH_LEN);
+                spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
                 return 0;
             }
         }
     }
+    spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
     return -1;
 }
 
@@ -93,15 +104,19 @@ fsal_path_t *fsal_path_find(void *alpath, int inmaster)
         strcpy(name, alpath);
     }
     fsal_path_t *fpath;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&fsal_path_table_lock, irq_flags);
     int i;
     for (i = 0; i < FASL_PATH_NR; i++) {
         fpath = &fsal_path_table[i];
         if (fpath->fsal) {
             if (!strcmp(name, fpath->alpath)) {
+                spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
                 return fpath;
             }
         }
     }
+    spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
     if (inmaster)
         return fsal_master_path;
     return NULL;
@@ -148,6 +163,8 @@ void fsal_path_print()
 {
     printk("%s: fsal path info:\n", FS_MODEL_NAME);
     fsal_path_t *fpath;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&fsal_path_table_lock, irq_flags);
     int i;
     for (i = 0; i < FASL_PATH_NR; i++) {
         fpath = &fsal_path_table[i];
@@ -155,6 +172,7 @@ void fsal_path_print()
             printk("fasl alpath=%s path=%s fsal=%x\n", fpath->alpath, fpath->path, fpath->fsal);
         }
     }
+    spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
 }
 
 
