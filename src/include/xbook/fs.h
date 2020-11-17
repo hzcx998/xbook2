@@ -21,6 +21,7 @@ typedef struct {
     int handle;         /* 对象句柄 */
     uint32_t flags;     /* 对象的标志 */
     off_t offset;       /* 数据偏移 */
+    /* 文件操作集 */
 } file_fd_t;
 
 typedef struct {
@@ -28,7 +29,6 @@ typedef struct {
     char cwd[MAX_PATH];
     spinlock_t lock;
 } file_man_t;
-
 
 int file_system_init();
 /// syscall 
@@ -80,6 +80,5 @@ int kern_file_stat(const char *path, struct stat *buf);
 int kern_file_access(const char *path, int mode);
 int kern_file_lseek(int fd, off_t offset, int whence);
 int kern_file_close(int fd);
-
-
+ 
 #endif /* _XBOOK_FS_H */

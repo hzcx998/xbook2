@@ -75,6 +75,8 @@ int sys_close(int fd)
     if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -EINVAL;
 
+    /* ffd里面存放一个fsal指针，直接调用对应的函数 */
+
     if (ffd->flags & FILE_FD_NORMAL) {
         if (fsif.close(ffd->handle) < 0)
             return -1;    

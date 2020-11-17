@@ -1,5 +1,5 @@
-#ifndef __FILESRV_FSAL_DIR_H__
-#define __FILESRV_FSAL_DIR_H__
+#ifndef _FSAL_DIR_H
+#define _FSAL_DIR_H
 
 #include "fsal.h"
 #include "../../fs/fatfs/ff.h"
@@ -40,4 +40,4 @@ int fsal_dir_free(fsal_dir_t *dir);
 void build_path(const char *path, char *out_path);
 void wash_path(char *old_path, char *new_path);
 
-#endif  /* __FILESRV_FSAL_DIR_H__ */
+#endif  /* _FSAL_DIR_H */

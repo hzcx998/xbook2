@@ -1,5 +1,5 @@
-#ifndef __FILESRV_FSAL_H__
-#define __FILESRV_FSAL_H__
+#ifndef _FSAL_CORE_H
+#define _FSAL_CORE_H
 
 /* File system abstraction layer (FSAL) 文件系统抽象层 */
 #include "../../fs/fatfs/ff.h"
@@ -84,6 +84,7 @@ extern fsal_file_t *fsal_file_table;
 
 fsal_file_t *fsal_file_alloc();
 int fsal_file_free(fsal_file_t *file);
+int fsal_file_table_init();
 
 /* 路径转换长度，一般是路径的前缀。例如/root, c: */
 #define FASL_PATH_LEN   24
@@ -125,4 +126,4 @@ int handle_to_local_fd(int handle, unsigned int flags);
 int fs_fd_copy(task_t *src, task_t *dest);
 int fs_fd_reinit(task_t *cur);
 
-#endif  /* __FILESRV_FSAL_H__ */
+#endif  /* _FSAL_CORE_H */

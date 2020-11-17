@@ -514,6 +514,7 @@ static int fsalif_access(const char *path, int mode)
     return fsal->access(new_path, mode);
 }
 
+/* 文件的抽象层接口 */
 fsal_t fsif = {
     .mkfs       = fsalif_mkfs,
     .mount      = fsalif_mount,
