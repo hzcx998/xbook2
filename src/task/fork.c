@@ -6,7 +6,7 @@
 #include <xbook/process.h>
 #include <xbook/memspace.h>
 #include <xbook/sharemem.h>
-#include <fsal/fsal.h>
+#include <fsal/fd.h>
 #include <gui/message.h>
 
 #include <string.h>

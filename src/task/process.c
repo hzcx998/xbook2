@@ -12,7 +12,7 @@
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <sys/pthread.h>
-#include <fsal/fsal.h>
+#include <fsal/fd.h>
 #include <gui/message.h>
 #include <unistd.h>
 

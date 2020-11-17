@@ -1,5 +1,4 @@
-#include <fsal/fsal.h>
-#include <fsal/fatfs.h>
+#include <fsal/path.h>
 #include <string.h>
 #include <unistd.h>
 #include <xbook/memalloc.h>

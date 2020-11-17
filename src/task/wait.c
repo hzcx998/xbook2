@@ -3,6 +3,7 @@
 #include <xbook/schedule.h>
 #include <xbook/process.h>
 #include <xbook/safety.h>
+#include <fsal/fd.h>
 
 /*
 僵尸进程：当进程P调用exit时，其父进程没有wait，那么它就变成一个僵尸进程。

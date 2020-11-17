@@ -2,6 +2,7 @@
 #include <xbook/fs.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <fsal/fd.h>
 
 int kern_file_open(const char *path, int flags)
 {

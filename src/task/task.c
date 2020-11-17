@@ -21,7 +21,7 @@
 #include <xbook/process.h>
 #include <xbook/exception.h>
 #include <xbook/safety.h>
-#include <fsal/fsal.h>
+#include <fsal/fd.h>
 #include <math.h>
 #include <errno.h>
 

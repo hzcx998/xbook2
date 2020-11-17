@@ -5,6 +5,7 @@
 #include <lwip/dns.h>
 
 #include <fsal/fsal.h>
+#include <fsal/fd.h>
 #include <string.h>
 
 // #define DEBUG_NETIF

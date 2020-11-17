@@ -1,6 +1,6 @@
-#include <fsal/fsal.h>
 #include <fsal/fatfs.h>
 #include <fsal/dir.h>
+#include <fsal/file.h>
 
 #include <string.h>
 #include <unistd.h>

@@ -1,6 +1,8 @@
 #include <fsal/fsal.h>
 #include <fsal/dir.h>
 #include <fsal/fstype.h>
+#include <fsal/file.h>
+#include <fsal/path.h>
 #include <stddef.h>
 #include <xbook/diskman.h>
 #include <xbook/debug.h>

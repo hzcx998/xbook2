@@ -1,37 +1,15 @@
 #ifndef _XBOOK_FS_H
 #define	_XBOOK_FS_H
 
-#define LOCAL_FILE_OPEN_NR  128
-
 #include <stddef.h>
 #include <stdint.h>
 #include <types.h>
 #include <sys/stat.h>
 #include <xbook/spinlock.h>
-
-#define FILE_FD_ALLOC   0X01    /* alloced */
-#define FILE_FD_NORMAL  0X02    /* is normal file */
-#define FILE_FD_DEVICE  0X04    /* is a device */
-#define FILE_FD_SOCKET  0X08    /* is a socket */
-#define FILE_FD_FIFO    0X10    /* is a fifo */
-#define FILE_FD_PIPE0   0X20    /* is a pipe0: read */
-#define FILE_FD_PIPE1   0X40    /* is a pipe1: write */
-
-typedef struct {
-    int handle;         /* 对象句柄 */
-    uint32_t flags;     /* 对象的标志 */
-    off_t offset;       /* 数据偏移 */
-    /* 文件操作集 */
-} file_fd_t;
-
-typedef struct {
-    file_fd_t fds[LOCAL_FILE_OPEN_NR];
-    char cwd[MAX_PATH];
-    spinlock_t lock;
-} file_man_t;
+#include <fsal/fsal.h>
 
 int file_system_init();
-/// syscall 
+
 int sys_open(const char *path, int flags);
 int sys_close(int fd);
 int sys_read(int fd, void *buffer, size_t nbytes);
