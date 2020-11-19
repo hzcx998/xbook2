@@ -1009,6 +1009,21 @@ static int devif_decref(int handle)
     return device_degrow(handle);
 }
 
+static int devif_read(int handle, void *buf, size_t size)
+{
+    return device_read(handle, buf, size, 0);
+}
+
+static int devif_write(int handle, void *buf, size_t size)
+{
+    return device_write(handle, buf, size, 0);
+}
+
+static int devif_ioctl(int handle, int cmd, unsigned long arg)
+{
+    return device_devctl(handle, cmd, arg);
+}
+
 fsal_t devif;
 
 void driver_framewrok_init()
@@ -1023,4 +1038,7 @@ void driver_framewrok_init()
     devif.close     = devif_close;
     devif.incref    = devif_incref;
     devif.decref    = devif_decref;
+    devif.read      = devif_read;
+    devif.write     = devif_write;
+    devif.ioctl     = devif_ioctl;
 }

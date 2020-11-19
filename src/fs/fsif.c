@@ -92,6 +92,9 @@ int sys_read(int fd, void *buffer, size_t nbytes)
         pr_err("[FS]: %s: fd %d err!\n", __func__, fd);
         return -EINVAL;
     }
+    if (!ffd->fsal->read)
+        return -ENOSYS;
+    /*
     int retval = -1;
     if (ffd->flags & FILE_FD_NORMAL) {
         retval = fsif.read(ffd->handle, buffer, nbytes);
@@ -106,7 +109,8 @@ int sys_read(int fd, void *buffer, size_t nbytes)
     } else if ((ffd->flags & FILE_FD_PIPE0)) {
         retval = pipe_read(ffd->handle, buffer, nbytes);  
     }
-    return retval;
+    */
+    return ffd->fsal->read(ffd->handle, buffer, nbytes);
 }
 
 int sys_write(int fd, void *buffer, size_t nbytes)
@@ -123,6 +127,9 @@ int sys_write(int fd, void *buffer, size_t nbytes)
             fd, ffd->handle, ffd->flags);
         return -EINVAL;
     }
+    if (!ffd->fsal->write)
+        return -ENOSYS;
+    #if 0
     int retval = -1;
     
     if (ffd->flags & FILE_FD_NORMAL) {
@@ -144,7 +151,8 @@ int sys_write(int fd, void *buffer, size_t nbytes)
     } else if ((ffd->flags & FILE_FD_PIPE1)) {
         retval = pipe_write(ffd->handle, buffer, nbytes);  
     }
-    return retval;
+    #endif
+    return ffd->fsal->write(ffd->handle, buffer, nbytes);
 }
 
 int sys_ioctl(int fd, int cmd, unsigned long arg)
@@ -152,6 +160,9 @@ int sys_ioctl(int fd, int cmd, unsigned long arg)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
+    if (!ffd->fsal->ioctl)
+        return -ENOSYS;
+    #if 0
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.ioctl(ffd->handle, cmd, arg);
     } else if (ffd->flags & FILE_FD_DEVICE) {
@@ -164,6 +175,8 @@ int sys_ioctl(int fd, int cmd, unsigned long arg)
         return pipe_ioctl(ffd->handle, cmd, arg, 1);
     }
     return -1;
+    #endif
+    return ffd->fsal->ioctl(ffd->handle, cmd, arg);
 }
 
 int sys_fcntl(int fd, int cmd, long arg)
@@ -188,6 +201,10 @@ int sys_lseek(int fd, off_t offset, int whence)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
+    if (!ffd->fsal->lseek)
+        return -ENOSYS;
+    return ffd->fsal->lseek(ffd->handle, offset, whence);
+    #if 0
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.lseek(ffd->handle, offset, whence);
     } else if (ffd->flags & FILE_FD_DEVICE) {
@@ -195,6 +212,7 @@ int sys_lseek(int fd, off_t offset, int whence)
         return 0;
     }
     return -EINVAL;
+    #endif
 }
 
 int sys_access(const char *path, int mode)
@@ -232,10 +250,9 @@ int sys_fsync(int fd)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
-    if (ffd->flags & FILE_FD_NORMAL) {
-        return fsif.fsync(fd);
-    }
-    return -EINVAL;
+    if (!ffd->fsal->fsync)
+        return -ENOSYS;
+    return ffd->fsal->fsync(ffd->handle);
 }
 
 long sys_tell(int fd)
