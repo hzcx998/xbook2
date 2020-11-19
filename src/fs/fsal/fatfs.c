@@ -197,26 +197,24 @@ static int fsal_fatfs_open(void *path, int flags)
         fsal_file_free(fp);
         return -1;
     }
-    return FSAL_F2I(fp);
+    return FSAL_FILE2IDX(fp);
 }
 
 static int fsal_fatfs_close(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)
-        return -1;
-    int flags = fp->flags;
-    if (fsal_file_free(fp) < 0)
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))
         return -1;
     FRESULT fres;
     fres = f_close(&fp->file.fatfs);
-    if (fres != FR_OK) {
-        fp->flags = flags;
+    if (fres != FR_OK) {    
         pr_err("[fatfs]: close file failed!\n");
         return -1;
     }
+    if (fsal_file_free(fp) < 0)
+        return -1;
     return 0;
 }
 
@@ -226,10 +224,10 @@ static int fsal_fatfs_close(int idx)
  */
 static int fsal_fatfs_read(int idx, void *buf, size_t size)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))
         return -1;
     
     FRESULT fr;
@@ -260,10 +258,10 @@ static int fsal_fatfs_read(int idx, void *buf, size_t size)
 
 static int fsal_fatfs_write(int idx, void *buf, size_t size)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags) 
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
         return -1;
     FRESULT fr;
     UINT bw;
@@ -275,10 +273,10 @@ static int fsal_fatfs_write(int idx, void *buf, size_t size)
 
 static int fsal_fatfs_lseek(int idx, off_t offset, int whence)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))
         return -1;
     off_t new_off = 0;
     switch (whence)
@@ -405,10 +403,10 @@ static int fsal_fatfs_rename(char *old_path, char *new_path)
 
 static int fsal_fatfs_ftruncate(int idx, off_t offset)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)   
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))   
         return -1;
     
     off_t old = f_tell(&fp->file.fatfs);
@@ -428,10 +426,10 @@ static int fsal_fatfs_ftruncate(int idx, off_t offset)
 
 static int fsal_fatfs_fsync(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)   
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))   
         return -1;
     FRESULT fres;
     fres = f_sync(&fp->file.fatfs);
@@ -466,10 +464,10 @@ static int fsal_fatfs_state(char *path, void *buf)
 
 static int fsal_fatfs_fstat(int idx, void *buf)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)   
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))   
         return -1;
     
     /* NOTICE: FATFS暂时不支持 */
@@ -484,10 +482,10 @@ static int fsal_fatfs_chmod(char *path, mode_t mode)
 
 static int fsal_fatfs_fchmod(int idx, mode_t mode)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)   
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))   
         return -1;
     return 0;
 }
@@ -509,10 +507,10 @@ static int fsal_fatfs_utime(char *path, time_t actime, time_t modtime)
  */
 static int fsal_fatfs_feof(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)   
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))   
         return -1;
     return f_eof(&fp->file.fatfs);
 }
@@ -522,20 +520,20 @@ static int fsal_fatfs_feof(int idx)
  */
 static int fsal_fatfs_ferror(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)   
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))   
         return -1;
     return f_error(&fp->file.fatfs);
 }
 
 static off_t fsal_fatfs_ftell(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)   
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))   
         return -1;
     return f_tell(&fp->file.fatfs);
 }
@@ -545,20 +543,20 @@ static off_t fsal_fatfs_ftell(int idx)
  */
 static size_t fsal_fatfs_fsize(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)   
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))   
         return -1;
     return f_size(&fp->file.fatfs);
 }
 
 static int fsal_fatfs_rewind(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
-    if (!fp->flags)   
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))   
         return -1;
     return f_rewind(&fp->file.fatfs);
 }

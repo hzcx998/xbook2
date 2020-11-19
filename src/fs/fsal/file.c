@@ -39,6 +39,8 @@ fsal_file_t *fsal_file_alloc()
         if (!file->flags) {
             memset(file, 0, sizeof(fsal_file_t));
             file->flags = FSAL_FILE_FLAG_USED;
+            atomic_set(&file->reference, 0);
+            file->fsal = NULL;
             spin_unlock_irqrestore(&fsal_file_table_lock, irq_flags);
             return file;
         }

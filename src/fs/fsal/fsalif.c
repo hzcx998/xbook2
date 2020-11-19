@@ -4,10 +4,33 @@
 #include <fsal/file.h>
 #include <fsal/path.h>
 #include <stddef.h>
+#include <errno.h>
 #include <xbook/diskman.h>
 #include <xbook/debug.h>
 
 // #define DEBUG_FSALIF
+
+static int fsalif_incref(int idx)
+{
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))
+        return -1;
+    fsal_file_inc_reference(fp);
+    return 0;
+}
+
+static int fsalif_decref(int idx)
+{
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))
+        return -1;
+    fsal_file_dec_reference(fp);
+    return 0;
+}
 
 static int fsalif_open(void *path, int flags)
 {
@@ -26,25 +49,36 @@ static int fsalif_open(void *path, int flags)
     char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
-    return fsal->open(new_path, flags);
+    
+    int handle = fsal->open(new_path, flags);
+    if (handle >= 0)
+        fsalif_incref(handle);
+    return handle;
 }
 
 static int fsalif_close(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))
+        return -1;
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (fsalif_decref(idx) < 0)
+        return -EINVAL;
+    if (!fsal_file_need_close(fp)) {
+        return 0;   /* no need to close */
+    }
     return fsal->close(idx);
 }
 
 static int fsalif_ftruncate(int idx, off_t offset)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -53,9 +87,9 @@ static int fsalif_ftruncate(int idx, off_t offset)
 
 static int fsalif_read(int idx, void *buf, size_t size)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -64,9 +98,9 @@ static int fsalif_read(int idx, void *buf, size_t size)
 
 static int fsalif_write(int idx, void *buf, size_t size)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -75,9 +109,9 @@ static int fsalif_write(int idx, void *buf, size_t size)
 
 static int fsalif_lseek(int idx, off_t off, int whence)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -86,9 +120,9 @@ static int fsalif_lseek(int idx, off_t off, int whence)
 
 static int fsalif_fsync(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -292,9 +326,9 @@ static int fsalif_utime(char *path, time_t actime, time_t modtime)
 
 static int fsalif_feof(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -303,9 +337,9 @@ static int fsalif_feof(int idx)
 
 static int fsalif_ferror(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -314,9 +348,9 @@ static int fsalif_ferror(int idx)
 
 static off_t fsalif_ftell(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -325,9 +359,9 @@ static off_t fsalif_ftell(int idx)
 
 static size_t fsalif_fsize(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -336,9 +370,9 @@ static size_t fsalif_fsize(int idx)
 
 static int fsalif_rewind(int idx)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -399,9 +433,9 @@ static int fsalif_chdir(char *path)
 
 static int fsalif_ioctl(int idx, int cmd, unsigned long arg)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -410,9 +444,9 @@ static int fsalif_ioctl(int idx, int cmd, unsigned long arg)
 
 static int fsalif_fcntl(int idx, int cmd, long arg)
 {
-    if (FSAL_BAD_FIDX(idx))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    fsal_file_t *fp = FSAL_I2F(idx);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
@@ -518,6 +552,8 @@ static int fsalif_access(const char *path, int mode)
 
 /* 文件的抽象层接口 */
 fsal_t fsif = {
+    .name       = "fsif",
+    .subtable   = NULL,
     .mkfs       = fsalif_mkfs,
     .mount      = fsalif_mount,
     .unmount    = fsalif_unmount,
@@ -550,4 +586,6 @@ fsal_t fsif = {
     .fcntl      = fsalif_fcntl,
     .fstat      = fsalif_fstat,
     .access     = fsalif_access,
+    .incref     = fsalif_incref,
+    .decref     = fsalif_decref,
 };

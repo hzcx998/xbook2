@@ -27,6 +27,7 @@ int fs_fd_init(task_t *task)
         task->fileman->fds[i].handle = -1;
         task->fileman->fds[i].flags = 0;
         task->fileman->fds[i].offset = 0;
+        task->fileman->fds[i].fsal = NULL;
     }
     memset(task->fileman->cwd, 0, MAX_PATH);
     strcpy(task->fileman->cwd, "/");
@@ -63,6 +64,7 @@ int fs_fd_copy(task_t *src, task_t *dest)
             dest->fileman->fds[i].handle = src->fileman->fds[i].handle;
             dest->fileman->fds[i].flags = src->fileman->fds[i].flags;
             dest->fileman->fds[i].offset = src->fileman->fds[i].offset;
+            dest->fileman->fds[i].fsal = src->fileman->fds[i].fsal;
             fsif_grow(i);
         }
     }
@@ -99,9 +101,10 @@ int fsal_fd_alloc()
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         if (cur->fileman->fds[i].flags == 0) {
-            cur->fileman->fds[i].flags = 1;
+            cur->fileman->fds[i].flags = FSAL_FILE_FD_IS_BAD;
             cur->fileman->fds[i].handle = -1;
             cur->fileman->fds[i].offset = 0;
+            cur->fileman->fds[i].fsal = NULL;
             spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
             return i;
         }
@@ -124,8 +127,25 @@ int fsal_fd_free(int fd)
     cur->fileman->fds[fd].handle = -1;
     cur->fileman->fds[fd].flags = 0;
     cur->fileman->fds[fd].offset = 0;
+    cur->fileman->fds[fd].fsal = NULL;
     spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
     return 0;
+}
+
+void filefd_set_fsal(file_fd_t *fd, unsigned int flags)
+{
+    switch (flags)
+    {
+    case FILE_FD_NORMAL:
+        fd->fsal = &fsif;
+        break;    
+    case FILE_FD_DEVICE:
+        fd->fsal = &devif;
+        break;    
+    default:
+        fd->fsal = NULL;
+        break;
+    }
 }
 
 /**
@@ -142,7 +162,9 @@ int local_fd_install(int resid, unsigned int flags)
     unsigned long irq_flags;
     spin_lock_irqsave(&cur->fileman->lock, irq_flags);
     cur->fileman->fds[fd].handle = resid;
+    cur->fileman->fds[fd].offset = 0;
     cur->fileman->fds[fd].flags |= flags;
+    filefd_set_fsal(&cur->fileman->fds[fd], flags);
     /* 根据不同的标志设置不同的fsal指针 */
     spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
     return fd;
@@ -161,9 +183,10 @@ int local_fd_install_to(int resid, int newfd, unsigned int flags)
     unsigned long irq_flags;
     spin_lock_irqsave(&cur->fileman->lock, irq_flags);
     cur->fileman->fds[newfd].handle = resid;
-    cur->fileman->fds[newfd].flags = FILE_FD_ALLOC;
+    cur->fileman->fds[newfd].flags = FSAL_FILE_FD_IS_BAD;
     cur->fileman->fds[newfd].flags |= flags;
     cur->fileman->fds[newfd].offset = 0;
+    filefd_set_fsal(&cur->fileman->fds[newfd], flags);
     spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
     return newfd;
 }

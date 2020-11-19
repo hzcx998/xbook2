@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <lwip/sockets.h>
 #include <xbook/fifo.h>
@@ -18,25 +19,21 @@
 
 // #define DEBUG_FSIF
 
+// #define FSIF_USER_CHECK
+
+
 int sys_open(const char *path, int flags)
 {
     if (!path)
         return -EINVAL; 
+    #ifdef FSIF_USER_CHECK
     if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
+    #endif
     int handle;
     int fd = -1;
     unsigned long new_flags;
-    if (O_DEVEX & flags) {
-        /* 去掉根目录 */
-        char *p = (char *) path;
-        if (*p == '/')
-            p++;
-        handle = device_open(p, flags);
-        if (handle < 0)
-            return -ENODEV;
-        fd = local_fd_install(handle, FILE_FD_DEVICE);
-    } else if (O_FIFO & flags) {
+    if (O_FIFO & flags) {
         /* 去掉根目录 */
         char *p = (char *) path;
         if (*p == '/')
@@ -73,33 +70,12 @@ int sys_open(const char *path, int flags)
 int sys_close(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
-
-    /* ffd里面存放一个fsal指针，直接调用对应的函数 */
-
-    if (ffd->flags & FILE_FD_NORMAL) {
-        if (fsif.close(ffd->handle) < 0)
-            return -1;    
-    } else if (ffd->flags & FILE_FD_SOCKET) {
-        #if DEBUG_FSIF
-        printk("[FS]: %s: close fd %d socket %d.\n", __func__, fd, ffd->handle);
-        #endif
-        if (lwip_close(ffd->handle) < 0)
-            return -1;
-    } else if (ffd->flags & FILE_FD_DEVICE) {
-        if (device_close(ffd->handle) < 0)
-            return -1;
-    } else if (ffd->flags & FILE_FD_FIFO) {
-        if (fifo_put(ffd->handle) < 0)
-            return -1;        
-    } else if (ffd->flags & FILE_FD_PIPE0) {
-        if (pipe_close(ffd->handle, 0) < 0)
-            return -1;  
-    } else if (ffd->flags & FILE_FD_PIPE1) {
-        if (pipe_close(ffd->handle, 1) < 0)
-            return -1;
-    }
+    if (!ffd->fsal->close)
+        return -ENOSYS;
+    if (ffd->fsal->close(ffd->handle) < 0)
+        return -1;
     return local_fd_uninstall(fd);
 }
 
@@ -107,10 +83,12 @@ int sys_read(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0 || !nbytes || !buffer)
         return -EINVAL;
+    #ifdef FSIF_USER_CHECK
     if (mem_copy_to_user(buffer, NULL, nbytes) < 0)
         return -EINVAL;
+    #endif
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0) {
+    if (FILE_FD_IS_BAD(ffd)) {
         pr_err("[FS]: %s: fd %d err!\n", __func__, fd);
         return -EINVAL;
     }
@@ -135,11 +113,12 @@ int sys_write(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0 || !nbytes || !buffer)
         return -EINVAL;
+    #ifdef FSIF_USER_CHECK
     if (mem_copy_from_user(NULL, buffer, nbytes) < 0)
         return -EINVAL;
-
+    #endif
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0) {
+    if (FILE_FD_IS_BAD(ffd)) {
         pr_err("[FS]: %s: fd %d err! handle=%d flags=%x\n", __func__, 
             fd, ffd->handle, ffd->flags);
         return -EINVAL;
@@ -171,7 +150,7 @@ int sys_write(int fd, void *buffer, size_t nbytes)
 int sys_ioctl(int fd, int cmd, unsigned long arg)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.ioctl(ffd->handle, cmd, arg);
@@ -190,7 +169,7 @@ int sys_ioctl(int fd, int cmd, unsigned long arg)
 int sys_fcntl(int fd, int cmd, long arg)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.fcntl(ffd->handle, cmd, arg);
@@ -207,7 +186,7 @@ int sys_fcntl(int fd, int cmd, long arg)
 int sys_lseek(int fd, off_t offset, int whence)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.lseek(ffd->handle, offset, whence);
@@ -240,7 +219,7 @@ int sys_unlink(const char *path)
 int sys_ftruncate(int fd, off_t offset)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.ftruncate(ffd->handle, offset);
@@ -251,7 +230,7 @@ int sys_ftruncate(int fd, off_t offset)
 int sys_fsync(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.fsync(fd);
@@ -262,7 +241,7 @@ int sys_fsync(int fd)
 long sys_tell(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.ftell(fd);
@@ -288,7 +267,7 @@ int sys_fstat(int fd, struct stat *buf)
     if (mem_copy_to_user(buf, NULL, sizeof(struct stat)) < 0)
         return -EINVAL;
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.fstat(ffd->handle, buf);
@@ -308,7 +287,7 @@ int sys_chmod(const char *path, mode_t mode)
 int sys_fchmod(int fd, mode_t mode)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.fchmod(ffd->handle, mode);
@@ -415,7 +394,7 @@ int sys_rewinddir(dir_t dir)
 int fsif_grow(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -1;
     if (ffd->flags & FILE_FD_NORMAL) {
         
@@ -441,7 +420,7 @@ int fsif_grow(int fd)
 int fsif_degrow(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -1;
     if (ffd->flags & FILE_FD_NORMAL) {
         
@@ -464,27 +443,14 @@ int fsif_degrow(int fd)
 int sys_dup(int oldfd)
 {
     file_fd_t *ffd = fd_local_to_file(oldfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
     int newfd = -1;
-    /* 增长 */
-    if (fsif_grow(oldfd) < 0)
-        return -1;
-
-    /* 安装 */
-    if (ffd->flags & FILE_FD_NORMAL) {
-        // newfd = local_fd_install(ffd->handle, FILE_FD_NORMAL);
-    } else if (ffd->flags & FILE_FD_DEVICE) {
-        newfd = local_fd_install(ffd->handle, FILE_FD_DEVICE);
-    } else if (ffd->flags & FILE_FD_FIFO) {
-        newfd = local_fd_install(ffd->handle, FILE_FD_FIFO);
-    } else if (ffd->flags & FILE_FD_SOCKET) {
-
-    } else if (ffd->flags & FILE_FD_PIPE0) {
-        newfd = local_fd_install(ffd->handle, FILE_FD_PIPE0);
-    } else if (ffd->flags & FILE_FD_PIPE1) {
-        newfd = local_fd_install(ffd->handle, FILE_FD_PIPE1);
-    }
+    if (!ffd->fsal->incref)
+        return -ENOSYS;
+    if (ffd->fsal->incref(ffd->handle) < 0)
+        return -EINVAL;
+    newfd = local_fd_install(ffd->handle, ffd->flags & FILE_FD_TYPE_MASK);
     return newfd;
 }
 
@@ -501,38 +467,21 @@ int sys_dup(int oldfd)
 int sys_dup2(int oldfd, int newfd)
 {
     file_fd_t *ffd = fd_local_to_file(oldfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
     if (oldfd == newfd) /* 一样则直接返回 */
         return newfd;
     /* 查看新fd，看是否已经打开，如果是，则先关闭。 */
     file_fd_t *newffd = fd_local_to_file(newfd);
     if (newffd != NULL && newffd->handle >= 0 && newffd->flags != 0) {
-        //pr_dbg("[FS]: %s: new fd %d exist! close it.\n", __func__, newfd);    
-        if (sys_close(newfd) < 0)   /* 关闭 */
+        if (sys_close(newfd) < 0)
             return -1;   
     }
-        
-    /* 复制oldfd并安装到newfd中 */
-    if (fsif_grow(oldfd) < 0)
-        return -1;
-    
-    /* 安装 */
-    if (ffd->flags & FILE_FD_NORMAL) {
-        // newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_NORMAL);
-    } else if (ffd->flags & FILE_FD_DEVICE) {
-        
-        newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_DEVICE);
-    } else if (ffd->flags & FILE_FD_FIFO) {
-        
-        newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_FIFO);
-    } else if (ffd->flags & FILE_FD_SOCKET) {
-
-    } else if (ffd->flags & FILE_FD_PIPE0) {
-        newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_PIPE0);
-    } else if (ffd->flags & FILE_FD_PIPE1) {
-        newfd = local_fd_install_to(ffd->handle, newfd, FILE_FD_PIPE1);
-    }
+    if (!ffd->fsal->incref)
+        return -ENOSYS;
+    if (ffd->fsal->incref(ffd->handle) < 0)
+        return -EINVAL;    
+    newfd = local_fd_install(ffd->handle, ffd->flags & FILE_FD_TYPE_MASK);
     return newfd;
 }
 
@@ -618,4 +567,19 @@ int sys_probe(const char *name, int flags, char *buf, size_t buflen)
         printk("%s: do not support probe!\n");
     }
     return -EINVAL;
+}
+
+int sys_opendev(const char *path, int flags)
+{
+    if (!path)
+        return -EINVAL; 
+    /*if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
+        return -EINVAL;*/
+    int handle;
+    int fd = -1;
+    handle = devif.open((void *)path, flags);
+    if (handle < 0)
+        return -ENODEV;
+    fd = local_fd_install(handle, FILE_FD_DEVICE);
+    return fd;
 }

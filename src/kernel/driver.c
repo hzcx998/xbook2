@@ -13,6 +13,7 @@
 #include <xbook/virmem.h>
 #include <xbook/schedule.h>
 #include <xbook/initcall.h>
+#include <fsal/fsal.h>
 
 // #define DRIVER_FRAMEWROK_DEBUG
 
@@ -984,10 +985,42 @@ int input_even_get(input_even_buf_t *evbuf, input_event_t *even)
     return 0;
 }
 
+static int devif_open(void *pathname, int flags)
+{
+    /* 去掉根目录 */
+    char *p = (char *) pathname;
+    if (*p == '/')
+        p++;
+    return device_open(p, flags);
+}
+
+static int devif_close(int handle)
+{
+    return device_close(handle);
+}
+
+static int devif_incref(int handle)
+{
+    return device_grow(handle);
+}
+
+static int devif_decref(int handle)
+{
+    return device_degrow(handle);
+}
+
+fsal_t devif;
+
 void driver_framewrok_init()
 {
     int i;
     for (i = 0; i < DEVICE_HANDLE_NR; i++) {
         device_handle_table[i] = NULL;
     }
+    memset(&devif, 0, sizeof(fsal_t));
+    devif.name = "devif";
+    devif.open      = devif_open;
+    devif.close     = devif_close;
+    devif.incref    = devif_incref;
+    devif.decref    = devif_decref;
 }

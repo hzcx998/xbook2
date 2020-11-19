@@ -4,13 +4,15 @@
 #include "fsal.h"
 #include <xbook/task.h>
 
-#define FILE_FD_ALLOC   0X01    /* alloced */
-#define FILE_FD_NORMAL  0X02    /* is normal file */
-#define FILE_FD_DEVICE  0X04    /* is a device */
-#define FILE_FD_SOCKET  0X08    /* is a socket */
-#define FILE_FD_FIFO    0X10    /* is a fifo */
-#define FILE_FD_PIPE0   0X20    /* is a pipe0: read */
-#define FILE_FD_PIPE1   0X40    /* is a pipe1: write */
+#define FSAL_FILE_FD_IS_BAD   (1 << 31)    /* alloced */
+#define FILE_FD_NORMAL  0X01    /* is normal file */
+#define FILE_FD_DEVICE  0X02    /* is a device */
+#define FILE_FD_SOCKET  0X04    /* is a socket */
+#define FILE_FD_FIFO    0X08    /* is a fifo */
+#define FILE_FD_PIPE0   0X10    /* is a pipe0: read */
+#define FILE_FD_PIPE1   0X20    /* is a pipe1: write */
+
+#define FILE_FD_TYPE_MASK   0XFF
 
 int fs_fd_init(task_t *task);
 int fs_fd_exit(task_t *task);

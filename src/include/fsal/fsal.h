@@ -48,11 +48,14 @@ typedef struct {
     int (*fcntl)(int, int, long);
     int (*fstat)(int, void *);
     int (*access)(const char *, int);
+    int (*incref)(int);
+    int (*decref)(int);
     void *extention;
 } fsal_t;
 
 /* 文件抽象层接口 */
 extern fsal_t fsif;
+extern fsal_t devif;
 
 int fsal_init();
 
@@ -60,7 +63,7 @@ typedef struct {
     int handle;         /* 对象句柄 */
     uint32_t flags;     /* 对象的标志 */
     off_t offset;       /* 数据偏移 */
-    /* 文件操作集 */
+    fsal_t *fsal;       /* 文件操作集 */
 } file_fd_t;
 
 typedef struct {
@@ -68,5 +71,9 @@ typedef struct {
     char cwd[MAX_PATH];
     spinlock_t lock;
 } file_man_t;
+
+#define FILE_FD_IS_BAD(ffd) (!ffd || (ffd->handle < 0) || \
+        (!ffd->flags) || (!ffd->fsal < 0))
+
 
 #endif  /* _FSAL_CORE_H */
