@@ -129,6 +129,8 @@ iostatus_t ramdisk_devctl(device_object_t *device, io_request_t *ioreq)
             off = extension->sectors - 1;
         extension->rwoffset = off;
         break;
+    case DISKIO_GETOFF:
+        *((unsigned long *) arg) = extension->rwoffset;
     default:
         status = IO_FAILED;
         break;

@@ -32,6 +32,7 @@ long sys_tell(int fd);
 int sys_dup(int oldfd);
 int sys_dup2(int oldfd, int newfd);
 int sys_pipe(int fd[2]);
+long sys_fsize(int fd);
 
 int sys_mount(
     char *source,         /* 需要挂载的资源 */
@@ -50,8 +51,8 @@ int sys_probe(const char *name, int flags, char *buf, size_t buflen);
 
 int sys_opendev(const char *path, int flags);
 
-int fsif_grow(int fd);
-int fsif_degrow(int fd);
+int fsif_incref(int fd);
+int fsif_decref(int fd);
 
 // special for kernel
 int kern_file_open(const char *path, int flags);

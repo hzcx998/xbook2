@@ -1049,6 +1049,8 @@ iostatus_t ahci_devctl(device_object_t *device, io_request_t *ioreq)
             off = ext->size - 1;
         ext->rwoffset = off;
         break;
+    case DISKIO_GETOFF:
+        *((unsigned long *) arg) = ext->rwoffset;
     default:
         infomation = -1;
         status = IO_FAILED;

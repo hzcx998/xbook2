@@ -74,16 +74,23 @@ int file_system_init()
     printk(KERN_DEBUG "dup %d->%d\n", fd, sys_dup(fd));
     printk(KERN_DEBUG "read %d\n", sys_read(0, sbuf, 512));
     log_dump_buffer(sbuf, 512, 1);
+
+    printk(KERN_DEBUG "size %d\n", sys_fsize(0));
     unsigned long arg = 0;
     sys_ioctl(0, DISKIO_SETOFF, (void *) &arg);
     printk(KERN_DEBUG "read %d\n", sys_read(1, sbuf, 512));
     
-    arg = 0;
-    sys_ioctl(1, DISKIO_SETOFF, (void *) &arg);
+    sys_lseek(1, 512, 0);
+    //arg = 0;
+    //sys_ioctl(1, DISKIO_SETOFF, (void *) &arg);
     log_dump_buffer(sbuf, 512, 1);
     printk(KERN_DEBUG "read %d\n", sys_read(2, sbuf, 512));    
-    arg = 0;
-    sys_ioctl(2, DISKIO_SETOFF, (void *) &arg);
+    //arg = 0;
+    //sys_ioctl(2, DISKIO_SETOFF, (void *) &arg);
+    
+    printk(KERN_DEBUG "cur off %d\n", sys_tell(1));
+    sys_lseek(1, 0, 0);
+    
     log_dump_buffer(sbuf, 512, 1);
     retval = sys_close(fd);
     printk(KERN_DEBUG "retval %d\n", retval);

@@ -43,7 +43,7 @@ int fs_fd_exit(task_t *task)
     spin_lock_irqsave(&task->fileman->lock, irq_flags);
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++)
-        fsif_degrow(i);
+        fsif_decref(i);
     spin_unlock_irqrestore(&task->fileman->lock, irq_flags);
     mem_free(task->fileman);
     task->fileman = NULL;
@@ -65,7 +65,7 @@ int fs_fd_copy(task_t *src, task_t *dest)
             dest->fileman->fds[i].flags = src->fileman->fds[i].flags;
             dest->fileman->fds[i].offset = src->fileman->fds[i].offset;
             dest->fileman->fds[i].fsal = src->fileman->fds[i].fsal;
-            fsif_grow(i);
+            fsif_incref(i);
         }
     }
     spin_unlock_irqrestore(&dest->fileman->lock, irq_flags);

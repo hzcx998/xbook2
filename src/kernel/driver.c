@@ -1024,6 +1024,27 @@ static int devif_ioctl(int handle, int cmd, unsigned long arg)
     return device_devctl(handle, cmd, arg);
 }
 
+static int devif_lseek(int handle, off_t off, int whence)
+{
+    return device_devctl(handle, DISKIO_SETOFF, (unsigned long) &off);
+}
+
+static int devif_fsize(int handle)
+{
+    int size = 0;
+    if (device_devctl(handle, DISKIO_GETSIZE, (unsigned long) &size) < 0)
+        return -1;
+    return size;
+}
+
+static int devif_ftell(int handle)
+{
+    unsigned long off = 0;
+    if (device_devctl(handle, DISKIO_GETOFF, (unsigned long) &off) < 0)
+        return -1;
+    return off;
+}
+
 fsal_t devif;
 
 void driver_framewrok_init()
@@ -1041,4 +1062,7 @@ void driver_framewrok_init()
     devif.read      = devif_read;
     devif.write     = devif_write;
     devif.ioctl     = devif_ioctl;
+    devif.lseek     = devif_lseek;
+    devif.fsize     = devif_fsize;
+    devif.ftell     = devif_ftell;
 }

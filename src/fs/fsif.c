@@ -184,6 +184,10 @@ int sys_fcntl(int fd, int cmd, long arg)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
+    if (!ffd->fsal->fcntl)
+        return -ENOSYS;
+    return ffd->fsal->fcntl(ffd->handle, cmd, (unsigned long )arg);   
+    #if 0
     if (ffd->flags & FILE_FD_NORMAL) {
         return fsif.fcntl(ffd->handle, cmd, arg);
     } else if (ffd->flags & FILE_FD_SOCKET) {
@@ -193,7 +197,7 @@ int sys_fcntl(int fd, int cmd, long arg)
     } else if (ffd->flags & FILE_FD_PIPE1) {
         return pipe_ioctl(ffd->handle, cmd, arg, 1);
     }
-    return -EINVAL;
+    #endif
 }
 
 int sys_lseek(int fd, off_t offset, int whence)
@@ -204,15 +208,6 @@ int sys_lseek(int fd, off_t offset, int whence)
     if (!ffd->fsal->lseek)
         return -ENOSYS;
     return ffd->fsal->lseek(ffd->handle, offset, whence);
-    #if 0
-    if (ffd->flags & FILE_FD_NORMAL) {
-        return fsif.lseek(ffd->handle, offset, whence);
-    } else if (ffd->flags & FILE_FD_DEVICE) {
-        ffd->offset = offset;
-        return 0;
-    }
-    return -EINVAL;
-    #endif
 }
 
 int sys_access(const char *path, int mode)
@@ -220,8 +215,7 @@ int sys_access(const char *path, int mode)
     if (!path)
         return -EINVAL;
     if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
-        return -EINVAL;
-    //printk("%s: path: %s\n", __func__, path);
+        return -EINVAL; 
     return fsif.access(path, mode);
 }
 
@@ -239,10 +233,9 @@ int sys_ftruncate(int fd, off_t offset)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
-    if (ffd->flags & FILE_FD_NORMAL) {
-        return fsif.ftruncate(ffd->handle, offset);
-    }
-    return -EINVAL;
+    if (!ffd->fsal->ftruncate)
+        return -ENOSYS;
+    return ffd->fsal->ftruncate(ffd->handle, offset);
 }
 
 int sys_fsync(int fd)
@@ -260,10 +253,19 @@ long sys_tell(int fd)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
-    if (ffd->flags & FILE_FD_NORMAL) {
-        return fsif.ftell(fd);
-    }
-    return -EINVAL;
+    if (!ffd->fsal->ftell)
+        return -ENOSYS;
+    return ffd->fsal->ftell(ffd->handle);
+}
+
+long sys_fsize(int fd)
+{
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
+    if (!ffd->fsal->fsize)
+        return -ENOSYS;
+    return ffd->fsal->fsize(ffd->handle);
 }
 
 int sys_stat(const char *path, struct stat *buf)
@@ -286,10 +288,9 @@ int sys_fstat(int fd, struct stat *buf)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
-    if (ffd->flags & FILE_FD_NORMAL) {
-        return fsif.fstat(ffd->handle, buf);
-    }
-    return -EINVAL;
+    if (!ffd->fsal->fstat)
+        return -ENOSYS;
+    return ffd->fsal->fstat(ffd->handle, buf);
 }
 
 int sys_chmod(const char *path, mode_t mode)
@@ -306,10 +307,9 @@ int sys_fchmod(int fd, mode_t mode)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
-    if (ffd->flags & FILE_FD_NORMAL) {
-        return fsif.fchmod(ffd->handle, mode);
-    }
-    return -EINVAL;
+    if (!ffd->fsal->fchmod)
+        return -ENOSYS;
+    return ffd->fsal->fchmod(ffd->handle, mode);
 }
 
 int sys_mkdir(const char *path, mode_t mode)
@@ -371,11 +371,9 @@ int sys_getcwd(char *buf, int bufsz)
 {
     if (!buf)
         return -EINVAL;
-    
     task_t *cur = task_current;
     if (!cur->fileman)
         return -EINVAL;
-    
     if (mem_copy_to_user(buf, cur->fileman->cwd, min(bufsz, MAX_PATH)) < 0)
         return -EINVAL;
     return 0;
@@ -389,6 +387,7 @@ dir_t sys_opendir(const char *path)
         return -EINVAL;
     return fsif.opendir((char *) path);
 }
+
 int sys_closedir(dir_t dir)
 {
     return fsif.closedir(dir);
@@ -408,11 +407,15 @@ int sys_rewinddir(dir_t dir)
     return fsif.rewinddir(dir);
 }
 
-int fsif_grow(int fd)
+int fsif_incref(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -1;
+    if (!ffd->fsal->incref)
+        return -ENOSYS;
+    return ffd->fsal->incref(ffd->handle);
+    #if 0
     if (ffd->flags & FILE_FD_NORMAL) {
         
     } else if (ffd->flags & FILE_FD_DEVICE) {
@@ -432,22 +435,18 @@ int fsif_grow(int fd)
         
     }
     return 0;
+    #endif
 }
 
-int fsif_degrow(int fd)
+int fsif_decref(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -1;
-    if (ffd->flags & FILE_FD_NORMAL) {
-        
-    } else if (ffd->flags & FILE_FD_DEVICE) {
-        if (device_decref(ffd->handle) < 0)
-            return -1;
-    }
-    return 0;
+    if (!ffd->fsal->decref)
+        return -ENOSYS;
+    return ffd->fsal->decref(ffd->handle);
 }
-
 
 /**
  * 复制一个文件描述符
@@ -590,8 +589,10 @@ int sys_opendev(const char *path, int flags)
 {
     if (!path)
         return -EINVAL; 
-    /*if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
-        return -EINVAL;*/
+    #ifdef FSIF_USER_CHECK
+    if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
+        return -EINVAL;
+    #endif
     int handle;
     int fd = -1;
     handle = devif.open((void *)path, flags);

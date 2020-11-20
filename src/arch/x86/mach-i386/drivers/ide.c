@@ -1133,7 +1133,7 @@ iostatus_t ide_devctl(device_object_t *device, io_request_t *ioreq)
     switch (ctlcode)
     {
     case DISKIO_GETSIZE:
-        *((unsigned int *) arg) = ext->size; 
+        *((unsigned int *) arg) = ext->size;
         break;
     case DISKIO_CLEAR:
         ide_clean_disk(device->device_extension, arg);
@@ -1143,6 +1143,9 @@ iostatus_t ide_devctl(device_object_t *device, io_request_t *ioreq)
         if (off > ext->size - 1)
             off = ext->size - 1;
         ext->rwoffset = off;
+        break;
+    case DISKIO_GETOFF:
+        *((unsigned long *) arg) = ext->rwoffset;
         break;
     default:
         infomation = -1;

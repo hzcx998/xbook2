@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <fsal/dir.h>
 #include <fsal/fsal.h>
+#include <fsal/fd.h>
 #include <gui/message.h>
 
 /**

@@ -39,7 +39,6 @@ DSTATUS disk_status (
     if (pdrv >= FF_VOLUMES)
         return STA_NOINIT;
 	DSTATUS stat = 0;
-	int result = 0;
     return stat;
 }
 
