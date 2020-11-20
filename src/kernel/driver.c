@@ -762,7 +762,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
     return NULL;
 }
 
-int device_grow(handle_t handle)
+int device_incref(handle_t handle)
 {
     if (IS_BAD_DEVICE_HANDLE(handle))
         return -1;
@@ -777,7 +777,7 @@ int device_grow(handle_t handle)
     return -1;
 }
 
-int device_degrow(handle_t handle)
+int device_decref(handle_t handle)
 {
     if (IS_BAD_DEVICE_HANDLE(handle))
         return -1;
@@ -1001,22 +1001,22 @@ static int devif_close(int handle)
 
 static int devif_incref(int handle)
 {
-    return device_grow(handle);
+    return device_incref(handle);
 }
 
 static int devif_decref(int handle)
 {
-    return device_degrow(handle);
+    return device_decref(handle);
 }
 
 static int devif_read(int handle, void *buf, size_t size)
 {
-    return device_read(handle, buf, size, 0);
+    return device_read(handle, buf, size, DISKOFF_MAX);
 }
 
 static int devif_write(int handle, void *buf, size_t size)
 {
-    return device_write(handle, buf, size, 0);
+    return device_write(handle, buf, size, DISKOFF_MAX);
 }
 
 static int devif_ioctl(int handle, int cmd, unsigned long arg)

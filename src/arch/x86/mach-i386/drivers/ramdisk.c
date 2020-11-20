@@ -25,13 +25,19 @@ typedef struct _device_extension {
     unsigned char *buffer;          /* 缓冲区 */
     unsigned long buflen;           /* 缓冲区大小 */
     unsigned long sectors;          /* 磁盘扇区数 */
+    unsigned long rwoffset; // 读写偏移位置
 } device_extension_t;
 
 iostatus_t ramdisk_read(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
     iostatus_t status = IO_SUCCESS;
-    unsigned long off = ioreq->parame.read.offset;
+    unsigned long off;    
+    if (ioreq->parame.read.offset == DISKOFF_MAX) {
+        off = extension->rwoffset;
+    } else {
+        off = ioreq->parame.read.offset;
+    }
     unsigned long length = ioreq->parame.read.length;
     /* 判断越界 */
     if (off + (length / SECTOR_SIZE)  >= extension->sectors) {
@@ -63,7 +69,12 @@ iostatus_t ramdisk_write(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
     iostatus_t status = IO_SUCCESS;
-    unsigned long off = ioreq->parame.write.offset;
+    unsigned long off;    
+    if (ioreq->parame.write.offset == DISKOFF_MAX) {
+        off = extension->rwoffset;
+    } else {
+        off = ioreq->parame.write.offset;
+    }
     unsigned long length = ioreq->parame.write.length;
     /* 判断越界 */
     if (off + (length / SECTOR_SIZE)  >= extension->sectors) {
@@ -94,6 +105,7 @@ iostatus_t ramdisk_devctl(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
     unsigned long arg = ioreq->parame.devctl.arg;
+    unsigned long off;
     iostatus_t status = IO_SUCCESS;
     switch (ioreq->parame.devctl.code)
     {    
@@ -110,6 +122,12 @@ iostatus_t ramdisk_devctl(device_object_t *device, io_request_t *ioreq)
 #ifdef DEBUG_DRV
         printk(KERN_DEBUG "ramdisk_devctl: clear disk sectors=%d\n", extension->sectors);
 #endif        
+        break;
+    case DISKIO_SETOFF:
+        off = *((unsigned long *) arg);
+        if (off > extension->sectors - 1)
+            off = extension->sectors - 1;
+        extension->rwoffset = off;
         break;
     default:
         status = IO_FAILED;
@@ -141,6 +159,7 @@ static iostatus_t ramdisk_enter(driver_object_t *driver)
     extension->sectors = RAMDISK_SECTORS;
     extension->buflen = extension->sectors * SECTOR_SIZE;
     extension->buffer = vir_mem_alloc(extension->buflen);
+    extension->rwoffset = 0;
     if (extension->buffer == NULL) {
         status = IO_FAILED;
     }

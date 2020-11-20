@@ -397,7 +397,7 @@ typedef struct _device_extension {
 	/* 状态信息 */
 	unsigned int read_sectors;	// 读取了多少扇区
 	unsigned int write_sectors;	// 写入了多少扇区
-
+    unsigned long rwoffset; // 读写偏移位置
     uint32_t type;
 	int idx;
 	mutexlock_t lock;
@@ -867,7 +867,7 @@ iostatus_t ahci_create_device(driver_object_t *driver, device_extension_t *dev)
     devobj->device_extension = dev;
     dev->device_object = devobj;
 	dev->created = 1;
-
+    dev->rwoffset = 0;
     return status;
 }
 
@@ -1030,6 +1030,7 @@ iostatus_t ahci_devctl(device_object_t *device, io_request_t *ioreq)
 {
     unsigned int ctlcode = ioreq->parame.devctl.code;
     unsigned long arg = ioreq->parame.devctl.arg;
+    unsigned long off;
     device_extension_t *ext = device->device_extension;
 
     iostatus_t status = IO_SUCCESS;
@@ -1041,6 +1042,12 @@ iostatus_t ahci_devctl(device_object_t *device, io_request_t *ioreq)
         break;
     case DISKIO_CLEAR:
         //ahci_clean_disk(device->device_extension, arg);
+        break;
+    case DISKIO_SETOFF:
+        off = *((unsigned long *) arg);
+        if (off > ext->size - 1)
+            off = ext->size - 1;
+        ext->rwoffset = off;
         break;
     default:
         infomation = -1;
@@ -1058,11 +1065,19 @@ iostatus_t ahci_read(device_object_t *device, io_request_t *ioreq)
     long len;
     iostatus_t status = IO_SUCCESS;
     sector_t sectors = DIV_ROUND_UP(ioreq->parame.read.length, SECTOR_SIZE);
+    device_extension_t *ext = device->device_extension;
+
 #ifdef DEBUG_AHCI
     printk(KERN_DEBUG "ahci_read: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.read.offset);
 #endif    
-    len = ahci_read_sector(device->device_extension, ioreq->parame.read.offset,
+    unsigned long off;    
+    if (ioreq->parame.read.offset == DISKOFF_MAX) {
+        off = ext->rwoffset;
+    } else {
+        off = ioreq->parame.read.offset;
+    }
+    len = ahci_read_sector(device->device_extension, off,
         ioreq->system_buffer, sectors);
     
     if (!len) { /* 执行失败 */
@@ -1083,12 +1098,19 @@ iostatus_t ahci_write(device_object_t *device, io_request_t *ioreq)
     long len;
     iostatus_t status = IO_SUCCESS;
     sector_t sectors = DIV_ROUND_UP(ioreq->parame.write.length, SECTOR_SIZE);
+    device_extension_t *ext = device->device_extension;
+
 #ifdef DEBUG_AHCI
     printk(KERN_DEBUG "ahci_write: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.write.offset);
 #endif    
-
-    len = ahci_write_sector(device->device_extension, ioreq->parame.write.offset,
+    unsigned long off;    
+    if (ioreq->parame.read.offset == DISKOFF_MAX) {
+        off = ext->rwoffset;
+    } else {
+        off = ioreq->parame.read.offset;
+    }
+    len = ahci_write_sector(device->device_extension, off,
         ioreq->system_buffer, sectors);
     
     if (!len) { /* 执行失败 */

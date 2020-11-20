@@ -14,7 +14,7 @@ int sys_open(const char *path, int flags);
 int sys_close(int fd);
 int sys_read(int fd, void *buffer, size_t nbytes);
 int sys_write(int fd, void *buffer, size_t nbytes);
-int sys_ioctl(int fd, int cmd, unsigned long arg);
+int sys_ioctl(int fd, int cmd, void *arg);
 int sys_fcntl(int fd, int cmd, long arg);
 int sys_lseek(int fd, off_t offset, int whence);
 int sys_access(const char *path, int mode);

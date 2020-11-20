@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/ioctl.h>
 
 int file_system_init()
 {
@@ -57,6 +58,33 @@ int file_system_init()
     printk(KERN_DEBUG "write %d\n", sys_write(0, "fd0", 3));
     printk(KERN_DEBUG "write %d\n", sys_write(1, "fd1", 3));
     printk(KERN_DEBUG "write %d\n", sys_write(2, "fd2", 3));    
+    retval = sys_close(fd);
+    printk(KERN_DEBUG "retval %d\n", retval);
+    retval = sys_close(1);
+    printk(KERN_DEBUG "retval %d\n", retval);
+    retval = sys_close(2);
+    printk(KERN_DEBUG "retval %d\n", retval);
+ 
+    fd = sys_opendev("/ide1", O_RDWR);
+    if (fd < 0) {
+        panic("fs: open device failed!\n");
+    }
+    char sbuf[512];
+    printk(KERN_DEBUG "dup %d->%d\n", fd, sys_dup(fd));
+    printk(KERN_DEBUG "dup %d->%d\n", fd, sys_dup(fd));
+    printk(KERN_DEBUG "read %d\n", sys_read(0, sbuf, 512));
+    log_dump_buffer(sbuf, 512, 1);
+    unsigned long arg = 0;
+    sys_ioctl(0, DISKIO_SETOFF, (void *) &arg);
+    printk(KERN_DEBUG "read %d\n", sys_read(1, sbuf, 512));
+    
+    arg = 0;
+    sys_ioctl(1, DISKIO_SETOFF, (void *) &arg);
+    log_dump_buffer(sbuf, 512, 1);
+    printk(KERN_DEBUG "read %d\n", sys_read(2, sbuf, 512));    
+    arg = 0;
+    sys_ioctl(2, DISKIO_SETOFF, (void *) &arg);
+    log_dump_buffer(sbuf, 512, 1);
     retval = sys_close(fd);
     printk(KERN_DEBUG "retval %d\n", retval);
     retval = sys_close(1);

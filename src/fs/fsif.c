@@ -155,7 +155,7 @@ int sys_write(int fd, void *buffer, size_t nbytes)
     return ffd->fsal->write(ffd->handle, buffer, nbytes);
 }
 
-int sys_ioctl(int fd, int cmd, unsigned long arg)
+int sys_ioctl(int fd, int cmd, void *arg)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
@@ -176,7 +176,7 @@ int sys_ioctl(int fd, int cmd, unsigned long arg)
     }
     return -1;
     #endif
-    return ffd->fsal->ioctl(ffd->handle, cmd, arg);
+    return ffd->fsal->ioctl(ffd->handle, cmd, (unsigned long )arg);
 }
 
 int sys_fcntl(int fd, int cmd, long arg)
@@ -416,7 +416,7 @@ int fsif_grow(int fd)
     if (ffd->flags & FILE_FD_NORMAL) {
         
     } else if (ffd->flags & FILE_FD_DEVICE) {
-        if (device_grow(ffd->handle) < 0)
+        if (device_incref(ffd->handle) < 0)
             return -1;
         
     } else if (ffd->flags & FILE_FD_FIFO) {
@@ -442,7 +442,7 @@ int fsif_degrow(int fd)
     if (ffd->flags & FILE_FD_NORMAL) {
         
     } else if (ffd->flags & FILE_FD_DEVICE) {
-        if (device_degrow(ffd->handle) < 0)
+        if (device_decref(ffd->handle) < 0)
             return -1;
     }
     return 0;

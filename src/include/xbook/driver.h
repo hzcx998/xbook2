@@ -84,10 +84,10 @@ enum _device_object_flags {
     DO_DISPENSE                 = (1 << 2),     /* 分发位 */
 };
 
-typedef struct _drver_extension 
+typedef struct _driver_extension 
 {
     unsigned long unused;
-} drver_extension_t;
+} driver_extension_t;
 
 typedef struct _io_parame {
     union 
@@ -246,13 +246,15 @@ int io_device_queue_pickup(
     int flags
 );
 
+#define DISKOFF_MAX  (~0UL)
+
 handle_t device_open(char *devname, unsigned int flags);
 int device_close(handle_t handle);
 ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset);
 ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset);
 ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg);
-int device_grow(handle_t handle);
-int device_degrow(handle_t handle);
+int device_incref(handle_t handle);
+int device_decref(handle_t handle);
 void *device_mmap(handle_t handle, size_t length, int flags);
 
 void dump_device_object(device_object_t *device);

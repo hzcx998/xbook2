@@ -136,6 +136,7 @@ typedef struct _device_extension {
 	unsigned int command_sets; // Command Sets Supported.
 	unsigned int size;		// Size in Sectors.
 
+    unsigned long rwoffset; // 读写偏移位置
 	/* 状态信息 */
 	unsigned int read_sectors;	// 读取了多少扇区
 	unsigned int write_sectors;	// 写入了多少扇区
@@ -1125,8 +1126,8 @@ iostatus_t ide_devctl(device_object_t *device, io_request_t *ioreq)
 {
     unsigned int ctlcode = ioreq->parame.devctl.code;
     unsigned long arg = ioreq->parame.devctl.arg;
+    unsigned long off;
     device_extension_t *ext = device->device_extension;
-
     iostatus_t status = IO_SUCCESS;
     int infomation = 0;
     switch (ctlcode)
@@ -1136,6 +1137,12 @@ iostatus_t ide_devctl(device_object_t *device, io_request_t *ioreq)
         break;
     case DISKIO_CLEAR:
         ide_clean_disk(device->device_extension, arg);
+        break;
+    case DISKIO_SETOFF:
+        off = *((unsigned long *) arg);
+        if (off > ext->size - 1)
+            off = ext->size - 1;
+        ext->rwoffset = off;
         break;
     default:
         infomation = -1;
@@ -1153,11 +1160,19 @@ iostatus_t ide_read(device_object_t *device, io_request_t *ioreq)
     long len;
     iostatus_t status = IO_SUCCESS;
     sector_t sectors = DIV_ROUND_UP(ioreq->parame.read.length, SECTOR_SIZE);
+    device_extension_t *ext = device->device_extension;
+
 #ifdef DEBUG_DRV
     printk(KERN_DEBUG "ide_read: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.read.offset);
-#endif    
-    len = ide_read_sector(device->device_extension, ioreq->parame.read.offset,
+#endif
+    unsigned long off;    
+    if (ioreq->parame.read.offset == DISKOFF_MAX) {
+        off = ext->rwoffset;
+    } else {
+        off = ioreq->parame.read.offset;
+    }
+    len = ide_read_sector(device->device_extension, off,
         ioreq->system_buffer, sectors);
     if (!len) { /* 执行成功 */
         len = sectors * SECTOR_SIZE;
@@ -1178,12 +1193,19 @@ iostatus_t ide_write(device_object_t *device, io_request_t *ioreq)
     long len;
     iostatus_t status = IO_SUCCESS;
     sector_t sectors = DIV_ROUND_UP(ioreq->parame.write.length, SECTOR_SIZE);
+    device_extension_t *ext = device->device_extension;
+
 #ifdef DEBUG_DRV
     printk(KERN_DEBUG "ide_write: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.write.offset);
 #endif    
-
-    len = ide_write_sector(device->device_extension, ioreq->parame.write.offset,
+    unsigned long off;    
+    if (ioreq->parame.write.offset == DISKOFF_MAX) {
+        off = ext->rwoffset;
+    } else {
+        off = ioreq->parame.write.offset;
+    }
+    len = ide_write_sector(device->device_extension, off,
         ioreq->system_buffer, sectors);
     if (!len) { /* 执行成功 */
         len = sectors * SECTOR_SIZE;
@@ -1312,6 +1334,7 @@ static int ide_probe(device_extension_t *ext, int id)
     ext->capabilities = ext->info->Capabilities0;
     ext->signature = ext->info->General_Config;
     ext->reserved = 1;	/* 设备存在 */
+    ext->rwoffset = 0;
 #ifdef DEBUG_DRV
     dump_ide_extension(ext);
     pr_dbg("probe IDE disk: base:%x irq:%d\n", channel->base, channel->irqno);

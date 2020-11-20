@@ -26,6 +26,7 @@
 /* disk */
 #define DISKIO_GETSIZE      DEVCTL_CODE('d', 1)
 #define DISKIO_CLEAR        DEVCTL_CODE('d', 2)
+#define DISKIO_SETOFF       DEVCTL_CODE('d', 3)
 
 /* tty */
 #define TTYIO_CLEAR         CONIO_CLEAR
