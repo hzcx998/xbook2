@@ -140,7 +140,7 @@ int pipe(int fd[2])
     return syscall1(int, SYS_PIPE, fd);
 }
 
-int probe(const char *name, int flags, char *buf, size_t buflen)
+int probedev(const char *name, char *buf, size_t buflen)
 {
-    return syscall4(int, SYS_PROBE, name, flags, buf, buflen);
+    return syscall3(int, SYS_PROBEDEV, name, buf, buflen);
 }

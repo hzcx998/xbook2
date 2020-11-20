@@ -568,23 +568,6 @@ int sys_mkfs(char *source,         /* 需要创建FS的设备 */
     return fsif.mkfs(source, fstype, flags);
 }
 
-int sys_probe(const char *name, int flags, char *buf, size_t buflen)
-{
-    if (!name || !buf)
-        return -EINVAL;
-    if (mem_copy_from_user(NULL, (void *) name, 32) < 0)
-        return -EINVAL;
-    if (mem_copy_to_user(buf, NULL, buflen) < 0)
-        return -EINVAL;
-
-    if (flags & O_DEVEX) {
-        return device_probe_unused(name, buf, buflen);
-    } else {
-        printk("%s: do not support probe!\n");
-    }
-    return -EINVAL;
-}
-
 int sys_opendev(const char *path, int flags)
 {
     if (!path)
@@ -601,3 +584,15 @@ int sys_opendev(const char *path, int flags)
     fd = local_fd_install(handle, FILE_FD_DEVICE);
     return fd;
 }
+
+int sys_probedev(const char *name, char *buf, size_t buflen)
+{
+    if (!name || !buf)
+        return -EINVAL;
+    if (mem_copy_from_user(NULL, (void *) name, 32) < 0)
+        return -EINVAL;
+    if (mem_copy_to_user(buf, NULL, buflen) < 0)
+        return -EINVAL;
+    return device_probe_unused(name, buf, buflen);
+}
+

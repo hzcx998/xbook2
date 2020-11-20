@@ -47,9 +47,8 @@ int sys_mkfs(char *source,         /* 需要创建FS的设备 */
     unsigned long flags   /* 标志 */
 );
 
-int sys_probe(const char *name, int flags, char *buf, size_t buflen);
-
 int sys_opendev(const char *path, int flags);
+int sys_probedev(const char *name, char *buf, size_t buflen);
 
 int fsif_incref(int fd);
 int fsif_decref(int fd);

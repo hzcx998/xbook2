@@ -1029,19 +1029,19 @@ static int devif_lseek(int handle, off_t off, int whence)
     return device_devctl(handle, DISKIO_SETOFF, (unsigned long) &off);
 }
 
-static int devif_fsize(int handle)
+static size_t devif_fsize(int handle)
 {
     int size = 0;
     if (device_devctl(handle, DISKIO_GETSIZE, (unsigned long) &size) < 0)
-        return -1;
+        return 0;
     return size;
 }
 
-static int devif_ftell(int handle)
+static off_t devif_ftell(int handle)
 {
-    unsigned long off = 0;
+    off_t off = 0;
     if (device_devctl(handle, DISKIO_GETOFF, (unsigned long) &off) < 0)
-        return -1;
+        return 0;
     return off;
 }
 

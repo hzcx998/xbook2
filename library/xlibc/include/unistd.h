@@ -110,7 +110,7 @@ extern char **_environ;
 
 int pipe(int fd[2]);
 
-int probe(const char *name, int flags, char *buf, size_t buflen);
+int probedev(const char *name, char *buf, size_t buflen);
 
 #include <sys/proc.h>
 #include <getopt.h>

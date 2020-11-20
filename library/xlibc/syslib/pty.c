@@ -8,7 +8,7 @@
 int posix_openpt(int flags)
 {
     char devname[32] = {0};
-    if (probe("ptm", O_DEVEX, devname, 32) < 0)
+    if (probedev("ptm", devname, 32) < 0)
         return -1; 
 
     int fd_master;
