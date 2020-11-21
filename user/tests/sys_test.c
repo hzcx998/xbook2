@@ -9,9 +9,9 @@ int sys_test(int argc, char *argv[])
         return -1;
     }
     char buf[32] = {0,};
-    int nread = read(fd, 0x90000000, 32);
+    int nread = read(fd, (void *)0x90000000, 32);
     printf("read: %d buf: %s\n", nread, buf);
-    int nwrite = write(fd, 0x90000000, 32);
+    int nwrite = write(fd, (void *)0x90000000, 32);
     printf("write: %d\n", nwrite);
     close(fd);
 

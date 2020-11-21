@@ -50,9 +50,6 @@ extern "C" {
 #define O_NONBLOCK  0x400   // 无阻塞
 #define O_NOCTTY    0x800   // 不设置为控制tty
 
-#define O_DEVEX     0x10000   // 打开的是设备
-#define O_FIFO      0x20000   // 打开的是管道
-
 #ifndef SEEK_SET
 /* file seek */
 #define SEEK_SET 0
@@ -110,7 +107,10 @@ extern char **_environ;
 
 int pipe(int fd[2]);
 
+/* supported by xbook kernel */
 int probedev(const char *name, char *buf, size_t buflen);
+int opendev(const char *devname, int flags);
+int openfifo(const char *fifoname, int flags);
 
 #include <sys/proc.h>
 #include <getopt.h>

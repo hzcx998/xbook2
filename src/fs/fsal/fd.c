@@ -41,9 +41,10 @@ int fs_fd_exit(task_t *task)
         return -1;
     unsigned long irq_flags;
     spin_lock_irqsave(&task->fileman->lock, irq_flags);
+    /* auto exit */
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++)
-        fsif_decref(i);
+        sys_close(i);
     spin_unlock_irqrestore(&task->fileman->lock, irq_flags);
     mem_free(task->fileman);
     task->fileman = NULL;
@@ -141,6 +142,15 @@ void filefd_set_fsal(file_fd_t *fd, unsigned int flags)
         break;    
     case FILE_FD_DEVICE:
         fd->fsal = &devif;
+        break;    
+    case FILE_FD_PIPE0:
+        fd->fsal = &pipeif_rd;
+        break;    
+    case FILE_FD_PIPE1:
+        fd->fsal = &pipeif_wr;
+        break;    
+    case FILE_FD_FIFO:
+        fd->fsal = &fifoif;
         break;    
     default:
         fd->fsal = NULL;

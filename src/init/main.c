@@ -30,7 +30,7 @@ int kernel_main(void)
     share_mem_init();
     msg_queue_init();
     sem_init();
-    fifo_fifo();
+    fifo_init();
     syscall_init();
     walltime_init();
     schedule_init();

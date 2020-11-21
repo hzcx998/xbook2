@@ -36,7 +36,7 @@ int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes);
 int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes);
 int pipe_close(kobjid_t pipeid, int rw);
 int pipe_ioctl(kobjid_t pipeid, unsigned int cmd, unsigned long arg, int rw);
-int pipe_grow(kobjid_t pipeid, int rw);
+int pipe_incref(kobjid_t pipeid, int rw);
 int pipe_clear(pipe_t *pipe);
 
 #endif  /* _XBOOK_PIPE_H */

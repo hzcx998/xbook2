@@ -44,9 +44,6 @@
 #define O_TEXT      0x100   // 文本模式打开        
 #define O_BINARY    0x200   // 二进制模式打开
 #define O_NONBLOCK  0x400   // 无阻塞
-#define O_DEVEX     0x10000   // 打开的是设备
-#define O_FIFO      0x20000   // 打开的是管道
-
 
 #ifndef SEEK_SET
 /* file seek */

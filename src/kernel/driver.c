@@ -989,8 +989,6 @@ static int devif_open(void *pathname, int flags)
 {
     /* 去掉根目录 */
     char *p = (char *) pathname;
-    if (*p == '/')
-        p++;
     return device_open(p, flags);
 }
 

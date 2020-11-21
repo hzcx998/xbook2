@@ -56,6 +56,9 @@ typedef struct {
 /* 文件抽象层接口 */
 extern fsal_t fsif;
 extern fsal_t devif;
+extern fsal_t pipeif_rd;
+extern fsal_t pipeif_wr;
+extern fsal_t fifoif;
 
 int fsal_init();
 

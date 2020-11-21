@@ -10,7 +10,6 @@ void exp_hander(uint32_t code)
 int exp_test(int argc, char *argv[])
 {
     expcatch(EXP_CODE_INT, exp_hander);
-    int i = 0;
     while (1) {
     }
     return 0;

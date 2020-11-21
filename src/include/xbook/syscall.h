@@ -161,6 +161,8 @@ enum syscall_num {
     SYS_EXPCATCH,
     SYS_EXPBLOCK,
     SYS_EXPRET,
+    SYS_OPENDEV,
+    SYS_OPENFIFO,
     SYSCALL_NR,
 };
 

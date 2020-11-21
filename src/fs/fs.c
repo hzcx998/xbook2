@@ -49,7 +49,7 @@ int file_system_init()
     retval = sys_close(2);
     printk(KERN_DEBUG "retval %d\n", retval);
 
-    fd = sys_opendev("/com0", O_RDWR);
+    fd = sys_opendev("com0", O_RDWR);
     if (fd < 0) {
         panic("fs: open device failed!\n");
     }
@@ -65,7 +65,7 @@ int file_system_init()
     retval = sys_close(2);
     printk(KERN_DEBUG "retval %d\n", retval);
  
-    fd = sys_opendev("/ide1", O_RDWR);
+    fd = sys_opendev("ide1", O_RDWR);
     if (fd < 0) {
         panic("fs: open device failed!\n");
     }
@@ -99,6 +99,6 @@ int file_system_init()
     retval = sys_close(2);
     printk(KERN_DEBUG "retval %d\n", retval);
 
-    spin("test");
+    // spin("test");
     return 0;
 }

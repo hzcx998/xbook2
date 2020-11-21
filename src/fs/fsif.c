@@ -30,41 +30,28 @@ int sys_open(const char *path, int flags)
     if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
     #endif
-    int handle;
-    int fd = -1;
-    unsigned long new_flags;
-    if (O_FIFO & flags) {
-        /* 去掉根目录 */
-        char *p = (char *) path;
-        if (*p == '/')
-            p++;
-        
-        /* 有创建标志 */
-        new_flags = IPC_CREAT;
-        if (flags & O_CREAT) {
-            new_flags |= IPC_EXCL;
-        }
-        if (flags & O_RDWR) {
-            new_flags |= (IPC_READER | IPC_WRITER);
-        } else if (flags & O_RDONLY) {
-            new_flags |= IPC_READER;
-        } else if (flags & O_WRONLY) {
-            new_flags |= IPC_WRITER;
-        }
-        if (flags & O_NONBLOCK) {
-            new_flags |= IPC_NOWAIT;
-        }
-        handle = fifo_get(p, new_flags);
-        if (handle < 0)
-            return -ENODEV;
-        fd = local_fd_install(handle, FILE_FD_FIFO);
-    } else {
-        handle = fsif.open((void *)path, flags);
-        if (handle < 0)
-            return -ENOFILE;
-        fd = local_fd_install(handle, FILE_FD_NORMAL);
-    }
-    return fd;
+    if (!fsif.open)
+        return -ENOSYS;
+    int handle = fsif.open((void *)path, flags);
+    if (handle < 0)
+        return -ENOFILE;
+    return local_fd_install(handle, FILE_FD_NORMAL);
+}
+
+int sys_openfifo(const char *fifoname, int flags)
+{
+    if (!fifoname)
+        return -EINVAL; 
+    #ifdef FSIF_USER_CHECK
+    if (mem_copy_from_user(NULL, (void *)fifoname, MAX_PATH) < 0)
+        return -EINVAL;
+    #endif
+    if (!fifoif.open)
+        return -ENOSYS;
+    int handle = fifoif.open((void *) fifoname, flags);
+    if (handle < 0)
+        return handle;
+    return local_fd_install(handle, FILE_FD_FIFO);
 }
 
 int sys_close(int fd)
@@ -423,13 +410,13 @@ int fsif_incref(int fd)
             return -1;
         
     } else if (ffd->flags & FILE_FD_FIFO) {
-        if (fifo_grow(ffd->handle) < 0)
+        if (fifo_incref(ffd->handle) < 0)
             return -1;
     } else if (ffd->flags & FILE_FD_PIPE0) {
-        if (pipe_grow(ffd->handle, 0) < 0)
+        if (pipe_incref(ffd->handle, 0) < 0)
             return -1;
     } else if (ffd->flags & FILE_FD_PIPE1) {
-        if (pipe_grow(ffd->handle, 1) < 0)
+        if (pipe_incref(ffd->handle, 1) < 0)
             return -1;
     } else if (ffd->flags & FILE_FD_SOCKET) {
         
@@ -576,13 +563,13 @@ int sys_opendev(const char *path, int flags)
     if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
     #endif
+    if (!devif.open) 
+        return -ENOSYS;
     int handle;
-    int fd = -1;
     handle = devif.open((void *)path, flags);
     if (handle < 0)
         return -ENODEV;
-    fd = local_fd_install(handle, FILE_FD_DEVICE);
-    return fd;
+    return local_fd_install(handle, FILE_FD_DEVICE);
 }
 
 int sys_probedev(const char *name, char *buf, size_t buflen)

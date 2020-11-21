@@ -25,7 +25,7 @@ int pty_test(int argc, char *argv[])
     }
     
     printf("slave tty %s\n", sname);
-    int fds = open(sname, O_DEVEX | O_RDWR);
+    int fds = opendev(sname, O_RDWR);
     if (fds < 0) {
         printf("open slave failed!\n");
         return -1;
