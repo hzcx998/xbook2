@@ -19,7 +19,7 @@
 
 // #define DEBUG_FSIF
 
-// #define FSIF_USER_CHECK
+#define FSIF_USER_CHECK
 
 int sys_open(const char *path, int flags)
 {
@@ -51,6 +51,23 @@ int sys_openfifo(const char *fifoname, int flags)
     if (handle < 0)
         return handle;
     return local_fd_install(handle, FILE_FD_FIFO);
+}
+
+int sys_opendev(const char *path, int flags)
+{
+    if (!path)
+        return -EINVAL; 
+    #ifdef FSIF_USER_CHECK
+    if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
+        return -EINVAL;
+    #endif
+    if (!devif.open) 
+        return -ENOSYS;
+    int handle;
+    handle = devif.open((void *)path, flags);
+    if (handle < 0)
+        return -ENODEV;
+    return local_fd_install(handle, FILE_FD_DEVICE);
 }
 
 int sys_close(int fd)
@@ -467,23 +484,6 @@ int sys_mkfs(char *source,         /* 需要创建FS的设备 */
     if (mem_copy_from_user(NULL, fstype, 32) < 0)
         return -EINVAL;
     return fsif.mkfs(source, fstype, flags);
-}
-
-int sys_opendev(const char *path, int flags)
-{
-    if (!path)
-        return -EINVAL; 
-    #ifdef FSIF_USER_CHECK
-    if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
-        return -EINVAL;
-    #endif
-    if (!devif.open) 
-        return -ENOSYS;
-    int handle;
-    handle = devif.open((void *)path, flags);
-    if (handle < 0)
-        return -ENODEV;
-    return local_fd_install(handle, FILE_FD_DEVICE);
 }
 
 int sys_probedev(const char *name, char *buf, size_t buflen)

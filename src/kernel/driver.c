@@ -987,7 +987,6 @@ int input_even_get(input_even_buf_t *evbuf, input_event_t *even)
 
 static int devif_open(void *pathname, int flags)
 {
-    /* 去掉根目录 */
     char *p = (char *) pathname;
     return device_open(p, flags);
 }
