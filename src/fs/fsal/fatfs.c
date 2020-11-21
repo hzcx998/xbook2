@@ -9,6 +9,7 @@
 #include <const.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <errno.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
 
@@ -17,6 +18,14 @@
 typedef struct {
     FATFS *fsobj;        /* 挂载对象指针 */
 } fatfs_extention_t;
+
+typedef struct {
+    DIR dir;
+} fatfs_dir_extention_t;
+
+typedef struct {
+    FIL file;
+} fatfs_file_extention_t;
 
 fatfs_extention_t fatfs_extention;
 
@@ -172,6 +181,12 @@ static int fsal_fatfs_open(void *path, int flags)
     fsal_file_t *fp = fsal_file_alloc();
     if (fp == NULL)
         return -1;
+    fp->extension = mem_alloc(sizeof(fatfs_file_extention_t));
+    if (!fp->extension) {
+        fsal_file_free(fp);
+        return -ENOMEM;
+    }
+
     fp->fsal = &fatfs_fsal;
     const TCHAR *p = (const TCHAR *) path;
 
@@ -192,8 +207,9 @@ static int fsal_fatfs_open(void *path, int flags)
     }
 
     FRESULT fres;
-    fres = f_open(&fp->file.fatfs, p, mode);
+    fres = f_open((FIL *)fp->extension, p, mode);
     if (fres != FR_OK) {
+        mem_free(fp->extension);
         fsal_file_free(fp);
         return -1;
     }
@@ -208,11 +224,14 @@ static int fsal_fatfs_close(int idx)
     if (FSAL_BAD_FILE(fp))
         return -1;
     FRESULT fres;
-    fres = f_close(&fp->file.fatfs);
+    fres = f_close((FIL *)fp->extension);
     if (fres != FR_OK) {    
         pr_err("[fatfs]: close file failed!\n");
         return -1;
     }
+    if (fp->extension)
+        mem_free(fp->extension);
+    fp->extension = NULL;
     if (fsal_file_free(fp) < 0)
         return -1;
     return 0;
@@ -240,7 +259,7 @@ static int fsal_fatfs_read(int idx, void *buf, size_t size)
     chunk =  size % (SECTOR_SIZE); // read mini block
     while (size > 0) {
         br = 0;
-        fr = f_read(&fp->file.fatfs, p, chunk, &br);
+        fr = f_read((FIL *)fp->extension, p, chunk, &br);
         if (fr != FR_OK && !readbytes) { // first time read get error
             pr_err("fatfs: f_read: err code %d\n", fr);
             return -1;
@@ -265,7 +284,7 @@ static int fsal_fatfs_write(int idx, void *buf, size_t size)
         return -1;
     FRESULT fr;
     UINT bw;
-    fr = f_write(&fp->file.fatfs, buf, size, &bw);
+    fr = f_write((FIL *)fp->extension, buf, size, &bw);
     if (fr != FR_OK)
         return -1;
     return bw;
@@ -285,16 +304,16 @@ static int fsal_fatfs_lseek(int idx, off_t offset, int whence)
         new_off = offset;
         break;
     case SEEK_CUR:
-        new_off = f_tell(&fp->file.fatfs) + offset;
+        new_off = f_tell((FIL *)fp->extension) + offset;
         break;
     case SEEK_END:
-        new_off = f_size(&fp->file.fatfs) + offset;
+        new_off = f_size((FIL *)fp->extension) + offset;
         break;
     default:
         break;
     }
     FRESULT fr;
-    fr = f_lseek(&fp->file.fatfs, new_off);
+    fr = f_lseek((FIL *)fp->extension, new_off);
     if (fr != FR_OK)
         return -1;
     
@@ -304,12 +323,19 @@ static int fsal_fatfs_lseek(int idx, off_t offset, int whence)
 static int fsal_fatfs_opendir(char *path)
 {
     fsal_dir_t *pdir = fsal_dir_alloc();
-    if (pdir == NULL)
+    if (!pdir)
         return -1;
+    pdir->extension = mem_alloc(sizeof(fatfs_dir_extention_t));
+    if (!pdir->extension) {
+        fsal_dir_free(pdir);
+        return -ENOMEM;
+    }
+
     pdir->fsal = &fatfs_fsal;
     FRESULT res;
-    res = f_opendir(&pdir->dir.fatfs, path);                       /* Open the directory */
+    res = f_opendir((DIR *)pdir->extension, path);                       /* Open the directory */
     if (res != FR_OK) {
+        mem_free(pdir->extension);
         fsal_dir_free(pdir);
         return -1;
     }
@@ -323,15 +349,17 @@ static int fsal_fatfs_closedir(int idx)
     fsal_dir_t *pdir = FSAL_I2D(idx);
     if (!pdir->flags)
         return -1;
-    int flags = pdir->flags;
-    if (fsal_dir_free(pdir) < 0)
-        return -1;
+    
     FRESULT fres;
-    fres = f_closedir(&pdir->dir.fatfs);
+    fres = f_closedir((DIR *)pdir->extension);
     if (fres != FR_OK) {
-        pdir->flags = flags; /* 恢复文件信息 */
         return -1;
     }
+    if (pdir->extension)
+        mem_free(pdir->extension);
+    pdir->extension = NULL;
+    if (fsal_dir_free(pdir) < 0)
+        return -1;
     return 0;
 }
 
@@ -345,7 +373,7 @@ static int fsal_fatfs_readdir(int idx, void *buf)
     
     FRESULT fres;
     FILINFO finfo;
-    fres = f_readdir(&pdir->dir.fatfs, &finfo);
+    fres = f_readdir((DIR *)pdir->extension, &finfo);
     if (fres != FR_OK) {
         return -1;
     }
@@ -409,16 +437,16 @@ static int fsal_fatfs_ftruncate(int idx, off_t offset)
     if (FSAL_BAD_FILE(fp))   
         return -1;
     
-    off_t old = f_tell(&fp->file.fatfs);
+    off_t old = f_tell((FIL *)fp->extension);
 
     FRESULT fres;
-    fres = f_lseek(&fp->file.fatfs, offset);
+    fres = f_lseek((FIL *)fp->extension, offset);
     if (fres != FR_OK) {
         return -1;
     }
-    fres = f_truncate(&fp->file.fatfs);
+    fres = f_truncate((FIL *)fp->extension);
     if (fres != FR_OK) {
-        f_lseek(&fp->file.fatfs, old);
+        f_lseek((FIL *)fp->extension, old);
         return -1;
     }
     return 0;
@@ -432,7 +460,7 @@ static int fsal_fatfs_fsync(int idx)
     if (FSAL_BAD_FILE(fp))   
         return -1;
     FRESULT fres;
-    fres = f_sync(&fp->file.fatfs);
+    fres = f_sync((FIL *)fp->extension);
     if (fres != FR_OK) {
         return -1;
     }
@@ -471,13 +499,13 @@ static int fsal_fatfs_fstat(int idx, void *buf)
         return -1;
     
     /* NOTICE: FATFS暂时不支持 */
-    return -1;
+    return -ENOSYS;
 }
 
 static int fsal_fatfs_chmod(char *path, mode_t mode)
 {
     /* NOTICE: FATFS暂时不支持 */
-    return 0;
+    return -ENOSYS;
 }
 
 static int fsal_fatfs_fchmod(int idx, mode_t mode)
@@ -512,7 +540,7 @@ static int fsal_fatfs_feof(int idx)
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     if (FSAL_BAD_FILE(fp))   
         return -1;
-    return f_eof(&fp->file.fatfs);
+    return f_eof((FIL *)fp->extension);
 }
 
 /**
@@ -525,7 +553,7 @@ static int fsal_fatfs_ferror(int idx)
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     if (FSAL_BAD_FILE(fp))   
         return -1;
-    return f_error(&fp->file.fatfs);
+    return f_error((FIL *)fp->extension);
 }
 
 static off_t fsal_fatfs_ftell(int idx)
@@ -535,7 +563,7 @@ static off_t fsal_fatfs_ftell(int idx)
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     if (FSAL_BAD_FILE(fp))   
         return -1;
-    return f_tell(&fp->file.fatfs);
+    return f_tell((FIL *)fp->extension);
 }
 
 /**
@@ -548,7 +576,7 @@ static size_t fsal_fatfs_fsize(int idx)
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     if (FSAL_BAD_FILE(fp))   
         return -1;
-    return f_size(&fp->file.fatfs);
+    return f_size((FIL *)fp->extension);
 }
 
 static int fsal_fatfs_rewind(int idx)
@@ -558,7 +586,7 @@ static int fsal_fatfs_rewind(int idx)
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     if (FSAL_BAD_FILE(fp))   
         return -1;
-    return f_rewind(&fp->file.fatfs);
+    return f_rewind((FIL *)fp->extension);
 }
 
 static int fsal_fatfs_rewinddir(int idx)
@@ -568,7 +596,7 @@ static int fsal_fatfs_rewinddir(int idx)
     fsal_dir_t *pdir = FSAL_I2D(idx);
     if (!pdir->flags)   
         return -1;
-    return f_rewinddir(&pdir->dir.fatfs);
+    return f_rewinddir((DIR *)pdir->extension);
 }
 
 static int fsal_fatfs_rmdir(char *path)

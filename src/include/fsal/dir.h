@@ -2,7 +2,6 @@
 #define _FSAL_DIR_H
 
 #include "fsal.h"
-#include "../../fs/fatfs/ff.h"
 #include <stdint.h>
 #include <types.h>
 
@@ -17,9 +16,12 @@ typedef int dir_t;
 typedef struct {
     char flags;             /* 文件标志 */
     fsal_t *fsal;           /* 文件系统抽象 */
+    void *extension;        /* 目录扩展 */
+    #if 0
     union {
         DIR fatfs;          /* fatfs目录结构 */
-    } dir;    
+    } dir;
+    #endif    
 } fsal_dir_t;
 
 #define fstate_t dirent_t 

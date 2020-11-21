@@ -41,6 +41,7 @@ fsal_file_t *fsal_file_alloc()
             file->flags = FSAL_FILE_FLAG_USED;
             atomic_set(&file->reference, 0);
             file->fsal = NULL;
+            file->extension = NULL;
             spin_unlock_irqrestore(&fsal_file_table_lock, irq_flags);
             return file;
         }

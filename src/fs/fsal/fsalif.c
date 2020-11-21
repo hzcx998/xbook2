@@ -383,8 +383,8 @@ static int fsalif_rewinddir(int idx)
 {
     if (FSAL_IS_BAD_DIR(idx))
         return -1;
-    fsal_dir_t *fp = FSAL_I2D(idx);
-    fsal_t *fsal = fp->fsal;
+    fsal_dir_t *fdir = FSAL_I2D(idx);
+    fsal_t *fsal = fdir->fsal;
     if (fsal == NULL)
         return -1;
     return fsal->rewinddir(idx);

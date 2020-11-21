@@ -2,7 +2,6 @@
 #define _FSAL_FILE_H
 
 /* File system abstraction layer (FSAL) 文件系统抽象层 */
-#include "../../fs/fatfs/ff.h"
 #include <types.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -22,9 +21,7 @@ typedef struct {
     atomic_t reference;
     char flags;             /* 文件标志 */
     fsal_t *fsal;           /* 文件系统抽象 */
-    union {
-        FIL fatfs;          /* fatfs文件结构 */
-    } file;    
+    void *extension;
 } fsal_file_t;
 
 extern fsal_file_t *fsal_file_table;

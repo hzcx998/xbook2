@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 
 /**
  * print_prompt - 打印提示符
- *  
+ * 
  */
 void print_prompt()
 {
@@ -120,7 +120,6 @@ void readline(char *buf, uint32_t count)
             len++;
             pos++;
         }
-        
     }
 }
 
