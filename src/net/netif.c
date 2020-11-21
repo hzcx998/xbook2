@@ -7,6 +7,7 @@
 #include <fsal/fsal.h>
 #include <fsal/fd.h>
 #include <string.h>
+#include <errno.h>
 
 // #define DEBUG_NETIF
 
@@ -31,18 +32,19 @@ int sys_socket(int domain, int type, int protocol)
 int sys_bind(int sockfd, struct sockaddr *my_addr, int addrlen)
 {
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
+    if (FILE_FD_IS_BAD(ffd))
         return -1;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
     return lwip_bind(ffd->handle, my_addr, addrlen);
 }
+
 int sys_connect(int sockfd, struct sockaddr *serv_addr, int addrlen)
 {
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -52,8 +54,8 @@ int sys_connect(int sockfd, struct sockaddr *serv_addr, int addrlen)
 int sys_listen(int sockfd, int backlog)
 {
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -63,8 +65,8 @@ int sys_listen(int sockfd, int backlog)
 int sys_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 {
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -80,8 +82,8 @@ int sys_send(int sockfd, const void *buf, int len, int flags)
     printk("[NET]: %s: fd=%d buf=%x len=%d flags=%x\n", __func__, sockfd, buf, len, flags);
 #endif
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -94,14 +96,15 @@ int sys_send(int sockfd, const void *buf, int len, int flags)
     mem_free(tmpbuf);
     return retval;
 }
+
 int sys_recv(int sockfd, void *buf, int len, unsigned int flags)
 {
 #ifdef DEBUG_NETIF    
     printk("[NET]: %s: fd=%d buf=%x len=%d flags=%x\n", __func__, sockfd, buf, len, flags);
 #endif    
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -119,8 +122,8 @@ int sys_sendto(int sockfd, struct _sockarg *arg)
         __func__, sockfd, arg->buf, arg->len, arg->flags, arg->to_from, arg->tolen);
 #endif    
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -145,8 +148,8 @@ int sys_recvfrom(int sockfd, struct _sockarg *arg)
         __func__, sockfd, arg->buf, arg->len, arg->flags, arg->to_from, arg->tolen);
 #endif    
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -158,8 +161,8 @@ int sys_recvfrom(int sockfd, struct _sockarg *arg)
 int sys_shutdown(int sockfd, int how)
 {
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -169,18 +172,19 @@ int sys_shutdown(int sockfd, int how)
 int sys_getpeername(int sockfd, struct sockaddr *serv_addr, socklen_t *addrlen)
 {
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
     return lwip_getsockname(ffd->handle, serv_addr, addrlen);
 }
+
 int sys_getsockname(int sockfd, struct sockaddr *my_addr, socklen_t *addrlen)
 {
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -190,8 +194,8 @@ int sys_getsockname(int sockfd, struct sockaddr *my_addr, socklen_t *addrlen)
 int sys_getsockopt(int sockfd, unsigned int flags, void *optval, socklen_t *optlen)
 {
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -203,8 +207,8 @@ int sys_getsockopt(int sockfd, unsigned int flags, void *optval, socklen_t *optl
 int sys_setsockopt(int sockfd, unsigned int flags, const void *optval, socklen_t optlen)
 {
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -216,8 +220,8 @@ int sys_setsockopt(int sockfd, unsigned int flags, const void *optval, socklen_t
 int sys_ioctlsocket(int sockfd, int request, void *arg)
 {
     file_fd_t *ffd = fd_local_to_file(sockfd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -1;
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
     if (!(ffd->flags & FILE_FD_SOCKET))
         return -1;
 
@@ -329,4 +333,63 @@ int sys_dns_setserver(uint8_t numdns, const char *str)
     ip4_addr_set_u32(&dnsserver, ipaddr_addr(str));
     dns_setserver((u8_t) numdns, &dnsserver);
     return 0;
+}
+
+int netif_read(int fd, void *buffer, size_t nbytes)
+{
+    if (fd < 0 || !nbytes || !buffer)
+        return -EINVAL;
+    #ifdef NETIF_USER_CHECK
+    if (mem_copy_to_user(buffer, NULL, nbytes) < 0)
+        return -EINVAL;
+    #endif
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd)) {
+        pr_err("net: %s: fd %d err!\n", __func__, fd);
+        return -EINVAL;
+    }
+    return lwip_read(ffd->handle, buffer, nbytes);  
+}
+
+int netif_write(int fd, void *buffer, size_t nbytes)
+{
+    if (fd < 0 || !nbytes || !buffer)
+        return -EINVAL;
+    #ifdef NETIF_USER_CHECK
+    if (mem_copy_from_user(NULL, buffer, nbytes) < 0)
+        return -EINVAL;
+    #endif
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd)) {
+        pr_err("net: %s: fd %d err! handle=%d flags=%x\n", __func__, 
+            fd, ffd->handle, ffd->flags);
+        return -EINVAL;
+    }
+    /* 由于lwip_write实现原因，需要内核缓冲区中转 */
+    void *tmpbuffer = mem_alloc(nbytes);
+    if (tmpbuffer == NULL)
+        return -ENOMEM;
+    memcpy(tmpbuffer, buffer, nbytes);
+    int retval = lwip_write(ffd->handle, tmpbuffer, nbytes);  
+    mem_free(tmpbuffer);
+    return retval;
+}
+
+int netif_fcntl(int fd, int cmd, long arg)
+{
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
+    return lwip_fcntl(ffd->handle, cmd, arg);  
+}
+
+int netif_close(int fd)
+{
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
+    if (!(ffd->flags & FILE_FD_SOCKET))
+        return -1;
+    // TODO: add ref inc & dec
+    return lwip_close(ffd->handle);  
 }

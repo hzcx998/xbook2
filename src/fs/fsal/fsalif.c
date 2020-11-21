@@ -154,7 +154,7 @@ static int fsalif_opendir(char *path)
 
 static int fsalif_closedir(int idx)
 {
-    if (ISBAD_FSAL_DIDX(idx))
+    if (FSAL_IS_BAD_DIR(idx))
         return -1;
     fsal_dir_t *pdir = FSAL_I2D(idx);
     fsal_t *fsal = pdir->fsal;
@@ -165,7 +165,7 @@ static int fsalif_closedir(int idx)
 
 static int fsalif_readdir(int idx, void *buf)
 {
-    if (ISBAD_FSAL_DIDX(idx))
+    if (FSAL_IS_BAD_DIR(idx))
         return -1;
     fsal_dir_t *pdir = FSAL_I2D(idx);
     fsal_t *fsal = pdir->fsal;
@@ -262,7 +262,7 @@ static int fsalif_state(char *path, void *buf)
 
 static int fsalif_fstat(int idx, void *buf)
 {
-    if (ISBAD_FSAL_DIDX(idx))
+    if (FSAL_IS_BAD_DIR(idx))
         return -1;
     fsal_dir_t *pdir = FSAL_I2D(idx);
     fsal_t *fsal = pdir->fsal;
@@ -293,7 +293,7 @@ static int fsalif_chmod(char *path, mode_t mode)
 
 static int fsalif_fchmod(int idx, mode_t mode)
 {
-    if (ISBAD_FSAL_DIDX(idx))
+    if (FSAL_IS_BAD_DIR(idx))
         return -1;
     fsal_dir_t *pdir = FSAL_I2D(idx);
     fsal_t *fsal = pdir->fsal;
@@ -381,7 +381,7 @@ static int fsalif_rewind(int idx)
 
 static int fsalif_rewinddir(int idx)
 {
-    if (ISBAD_FSAL_DIDX(idx))
+    if (FSAL_IS_BAD_DIR(idx))
         return -1;
     fsal_dir_t *fp = FSAL_I2D(idx);
     fsal_t *fsal = fp->fsal;

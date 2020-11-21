@@ -318,7 +318,7 @@ static int fsal_fatfs_opendir(char *path)
 
 static int fsal_fatfs_closedir(int idx)
 {
-    if (ISBAD_FSAL_DIDX(idx))
+    if (FSAL_IS_BAD_DIR(idx))
         return -1;
     fsal_dir_t *pdir = FSAL_I2D(idx);
     if (!pdir->flags)
@@ -337,7 +337,7 @@ static int fsal_fatfs_closedir(int idx)
 
 static int fsal_fatfs_readdir(int idx, void *buf)
 {
-    if (ISBAD_FSAL_DIDX(idx))
+    if (FSAL_IS_BAD_DIR(idx))
         return -1;
     fsal_dir_t *pdir = FSAL_I2D(idx);
     if (!pdir->flags)   
@@ -563,7 +563,7 @@ static int fsal_fatfs_rewind(int idx)
 
 static int fsal_fatfs_rewinddir(int idx)
 {
-    if (ISBAD_FSAL_DIDX(idx))
+    if (FSAL_IS_BAD_DIR(idx))
         return -1;
     fsal_dir_t *pdir = FSAL_I2D(idx);
     if (!pdir->flags)   

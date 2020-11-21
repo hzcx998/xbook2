@@ -21,7 +21,6 @@
 
 // #define FSIF_USER_CHECK
 
-
 int sys_open(const char *path, int flags)
 {
     if (!path)
@@ -81,22 +80,6 @@ int sys_read(int fd, void *buffer, size_t nbytes)
     }
     if (!ffd->fsal->read)
         return -ENOSYS;
-    /*
-    int retval = -1;
-    if (ffd->flags & FILE_FD_NORMAL) {
-        retval = fsif.read(ffd->handle, buffer, nbytes);
-    } else if (ffd->flags & FILE_FD_SOCKET) {
-        retval = lwip_read(ffd->handle, buffer, nbytes);  
-    } else if (ffd->flags & FILE_FD_DEVICE) {
-        retval = device_read(ffd->handle, buffer, nbytes, ffd->offset);  
-        if (retval > 0)
-            ffd->offset += (retval / SECTOR_SIZE);
-    } else if (ffd->flags & FILE_FD_FIFO) {
-        retval = fifo_read(ffd->handle, buffer, nbytes, 0);  
-    } else if ((ffd->flags & FILE_FD_PIPE0)) {
-        retval = pipe_read(ffd->handle, buffer, nbytes);  
-    }
-    */
     return ffd->fsal->read(ffd->handle, buffer, nbytes);
 }
 
@@ -116,29 +99,6 @@ int sys_write(int fd, void *buffer, size_t nbytes)
     }
     if (!ffd->fsal->write)
         return -ENOSYS;
-    #if 0
-    int retval = -1;
-    
-    if (ffd->flags & FILE_FD_NORMAL) {
-        retval = fsif.write(ffd->handle, buffer, nbytes);
-    } else if (ffd->flags & FILE_FD_SOCKET) {
-        /* 由于lwip_write实现原因，需要内核缓冲区中转 */
-        void *tmpbuffer = mem_alloc(nbytes);
-        if (tmpbuffer == NULL)
-            return -ENOMEM;
-        memcpy(tmpbuffer, buffer, nbytes);
-        retval = lwip_write(ffd->handle, tmpbuffer, nbytes);  
-        mem_free(tmpbuffer);
-    } else if (ffd->flags & FILE_FD_DEVICE) {
-        retval = device_write(ffd->handle, buffer, nbytes, ffd->offset);  
-        if (retval > 0)
-            ffd->offset += (retval / SECTOR_SIZE);
-    } else if (ffd->flags & FILE_FD_FIFO) {
-        retval = fifo_write(ffd->handle, buffer, nbytes, 0);  
-    } else if ((ffd->flags & FILE_FD_PIPE1)) {
-        retval = pipe_write(ffd->handle, buffer, nbytes);  
-    }
-    #endif
     return ffd->fsal->write(ffd->handle, buffer, nbytes);
 }
 
@@ -149,20 +109,6 @@ int sys_ioctl(int fd, int cmd, void *arg)
         return -EINVAL;
     if (!ffd->fsal->ioctl)
         return -ENOSYS;
-    #if 0
-    if (ffd->flags & FILE_FD_NORMAL) {
-        return fsif.ioctl(ffd->handle, cmd, arg);
-    } else if (ffd->flags & FILE_FD_DEVICE) {
-        return device_devctl(ffd->handle, cmd, arg);
-    } else if (ffd->flags & FILE_FD_FIFO) {
-        return fifo_ctl(ffd->handle, cmd, arg);
-    } else if (ffd->flags & FILE_FD_PIPE0) {
-        return pipe_ioctl(ffd->handle, cmd, arg, 0);
-    } else if (ffd->flags & FILE_FD_PIPE1) {
-        return pipe_ioctl(ffd->handle, cmd, arg, 1);
-    }
-    return -1;
-    #endif
     return ffd->fsal->ioctl(ffd->handle, cmd, (unsigned long )arg);
 }
 
@@ -174,17 +120,6 @@ int sys_fcntl(int fd, int cmd, long arg)
     if (!ffd->fsal->fcntl)
         return -ENOSYS;
     return ffd->fsal->fcntl(ffd->handle, cmd, (unsigned long )arg);   
-    #if 0
-    if (ffd->flags & FILE_FD_NORMAL) {
-        return fsif.fcntl(ffd->handle, cmd, arg);
-    } else if (ffd->flags & FILE_FD_SOCKET) {
-        return lwip_fcntl(ffd->handle, cmd, arg);  
-    } else if (ffd->flags & FILE_FD_PIPE0) {
-        return pipe_ioctl(ffd->handle, cmd, arg, 0);
-    } else if (ffd->flags & FILE_FD_PIPE1) {
-        return pipe_ioctl(ffd->handle, cmd, arg, 1);
-    }
-    #endif
 }
 
 int sys_lseek(int fd, off_t offset, int whence)
@@ -402,27 +337,6 @@ int fsif_incref(int fd)
     if (!ffd->fsal->incref)
         return -ENOSYS;
     return ffd->fsal->incref(ffd->handle);
-    #if 0
-    if (ffd->flags & FILE_FD_NORMAL) {
-        
-    } else if (ffd->flags & FILE_FD_DEVICE) {
-        if (device_incref(ffd->handle) < 0)
-            return -1;
-        
-    } else if (ffd->flags & FILE_FD_FIFO) {
-        if (fifo_incref(ffd->handle) < 0)
-            return -1;
-    } else if (ffd->flags & FILE_FD_PIPE0) {
-        if (pipe_incref(ffd->handle, 0) < 0)
-            return -1;
-    } else if (ffd->flags & FILE_FD_PIPE1) {
-        if (pipe_incref(ffd->handle, 1) < 0)
-            return -1;
-    } else if (ffd->flags & FILE_FD_SOCKET) {
-        
-    }
-    return 0;
-    #endif
 }
 
 int fsif_decref(int fd)

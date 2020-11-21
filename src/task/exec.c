@@ -31,12 +31,12 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     interrupt_save_and_disable(flags);
     proc_close_other_threads(cur);
     interrupt_restore_state(flags);
-    int fd = kern_file_open(pathname, O_RDONLY);
+    int fd = kfile_open(pathname, O_RDONLY);
     if (fd < 0) {
         return -1;
     }
     struct stat sbuf;
-    if (kern_file_stat(pathname, &sbuf) < 0) {
+    if (kfile_stat(pathname, &sbuf) < 0) {
         pr_err("[exec]: %s: file stat failed!\n", __func__);
         goto free_tmp_fd;
     }
@@ -47,8 +47,8 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     #ifdef CONFIG_32BIT     /* 32位 elf 头解析 */
     struct Elf32_Ehdr elf_header;
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
-    kern_file_lseek(fd, 0, SEEK_SET);
-    if (kern_file_read(fd, &elf_header, sizeof(struct Elf32_Ehdr)) != sizeof(struct Elf32_Ehdr)) {
+    kfile_lseek(fd, 0, SEEK_SET);
+    if (kfile_read(fd, &elf_header, sizeof(struct Elf32_Ehdr)) != sizeof(struct Elf32_Ehdr)) {
         printk(KERN_ERR "sys_exec_file: read elf header failed!\n");
         goto free_tmp_fd;
     }
@@ -91,7 +91,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         goto free_loaded_image;
     }
     mem_free(tmp_arg);
-    kern_file_close(fd);
+    kfile_close(fd);
     proc_map_space_init(cur);
     pthread_desc_init(cur->pthread);
     fs_fd_reinit(cur);
@@ -107,7 +107,7 @@ free_loaded_image:
 free_tmp_arg:
     mem_free(tmp_arg);
 free_tmp_fd:
-    kern_file_close(fd);
+    kfile_close(fd);
     return -1;   
 }
 
@@ -120,7 +120,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
     memset(newpath, 0, MAX_PATH);
     if (*p == '/') { 
         wash_path(p, newpath);
-        if (!kern_file_access((const char *) newpath, F_OK)) {
+        if (!kfile_access((const char *) newpath, F_OK)) {
             char *name = strrchr(newpath, '/');
             if (name) {
                 name++;
@@ -134,7 +134,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
         }
     } else if ((*p == '.' && *(p+1) == '/') || (*p == '.' && *(p+1) == '.' && *(p+2) == '/')) {    /* 当前目录 */
         build_path(p, newpath);
-        if (!kern_file_access(newpath, F_OK)) {
+        if (!kfile_access(newpath, F_OK)) {
             char *pname = strrchr(newpath, '/');
             if (pname)
                 pname++;
@@ -158,7 +158,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
                 strcat(newpath, p);
                 char finalpath[MAX_PATH] = {0};
                 wash_path(newpath, finalpath);
-                if (!kern_file_access(finalpath, F_OK)) {
+                if (!kfile_access(finalpath, F_OK)) {
                     char *pname = strrchr(finalpath, '/');
                     if (pname)
                         pname++;

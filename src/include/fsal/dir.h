@@ -31,7 +31,7 @@ extern fsal_dir_t *fsal_dir_table;
 /* 在表中的索引转换成文件指针 */
 #define FSAL_I2D(idx)  ((fsal_dir_t *)(&fsal_dir_table[(idx)]))
 
-#define ISBAD_FSAL_DIDX(idx) ((idx) < 0 || (idx) >= FSAL_DIR_OPEN_NR)
+#define FSAL_IS_BAD_DIR(idx) ((idx) < 0 || (idx) >= FSAL_DIR_OPEN_NR)
 
 int fsal_dir_table_init();
 fsal_dir_t *fsal_dir_alloc();

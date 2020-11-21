@@ -55,11 +55,11 @@ int fsif_incref(int fd);
 int fsif_decref(int fd);
 
 // special for kernel
-int kern_file_open(const char *path, int flags);
-int kern_file_read(int fd, void *buffer, size_t nbytes);
-int kern_file_stat(const char *path, struct stat *buf);
-int kern_file_access(const char *path, int mode);
-int kern_file_lseek(int fd, off_t offset, int whence);
-int kern_file_close(int fd);
+int kfile_open(const char *path, int flags);
+int kfile_read(int fd, void *buffer, size_t nbytes);
+int kfile_stat(const char *path, struct stat *buf);
+int kfile_access(const char *path, int mode);
+int kfile_lseek(int fd, off_t offset, int whence);
+int kfile_close(int fd);
  
 #endif /* _XBOOK_FS_H */
