@@ -11,3 +11,4 @@ SRC	+= initcall.c
 SRC	+= time.c
 SRC	+= exception.c
 SRC	+= safety.c
+SRC	+= account.c

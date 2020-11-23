@@ -19,6 +19,7 @@
 #include <xbook/timer.h>
 #include <xbook/initcall.h>
 #include <xbook/mutexqueue.h>
+#include <xbook/account.h>
 
 int kernel_main(void)
 {
@@ -43,6 +44,7 @@ int kernel_main(void)
     initcalls_exec();
 
     file_system_init();
+    account_manager_init();
     init_gui();
     init_net();
     
