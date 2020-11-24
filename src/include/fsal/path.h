@@ -2,7 +2,7 @@
 #define _FSAL_PATH_H
 
 /* File system abstraction layer (FSAL) 文件系统抽象层 */
-#include "../../fs/fatfs/ff.h"
+
 #include <types.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -10,6 +10,7 @@
 
 #define ROOT_DISK_NAME  "disk1"
 #define ROOT_DIR_PATH  "/root"
+#define HOME_DIR_PATH  "/home"
 
 #define MT_REMKFS       0x01 /* 挂在前需要格式化磁盘 */
 #define MT_DELAYED      0x02 /* 延时挂载 */

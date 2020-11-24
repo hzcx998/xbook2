@@ -12,3 +12,4 @@ SRC	+= time.c
 SRC	+= exception.c
 SRC	+= safety.c
 SRC	+= account.c
+SRC	+= permission.c

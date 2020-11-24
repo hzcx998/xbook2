@@ -43,6 +43,8 @@ int pthread_test(int argc, char *argv[]);
 
 int file_test(int argc, char *argv[]);
 
+int perm_test(int argc, char *argv[]);
+
 static inline void sys_err(char *str)
 {
     printf("sys err: %s\n", str);

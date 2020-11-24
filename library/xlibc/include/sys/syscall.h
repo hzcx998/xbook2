@@ -162,6 +162,8 @@ enum syscall_num {
     SYS_EXPRET,
     SYS_OPENDEV,
     SYS_OPENFIFO,
+    SYS_LOGIN,
+    SYS_REGISTER,
     SYSCALL_NR,
 };
 

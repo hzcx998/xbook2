@@ -11,6 +11,7 @@
 #include <xbook/sem.h>
 #include <xbook/msgqueue.h>
 #include <xbook/walltime.h>
+#include <xbook/account.h>
 #include <xbook/gui.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -155,7 +156,8 @@ void syscall_init()
     syscalls[SYS_EXPRET] = sys_excetion_return;
     syscalls[SYS_OPENDEV] = sys_opendev;
     syscalls[SYS_OPENFIFO] = sys_openfifo;
-    
+    syscalls[SYS_LOGIN] = sys_account_login;
+    syscalls[SYS_REGISTER] = sys_account_register;
 }
 
 int syscall_error(uint32_t callno)

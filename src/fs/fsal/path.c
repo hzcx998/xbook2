@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <xbook/memalloc.h>
 #include <xbook/debug.h>
+#include <assert.h>
+#include <xbook/fs.h>
 
 fsal_path_t *fsal_path_table;
 fsal_path_t *fsal_master_path;

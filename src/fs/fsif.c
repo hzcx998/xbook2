@@ -14,12 +14,13 @@
 #include <xbook/fifo.h>
 #include <xbook/pipe.h>
 #include <xbook/safety.h>
+#include <xbook/account.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
 
 // #define DEBUG_FSIF
 
-#define FSIF_USER_CHECK
+// #define FSIF_USER_CHECK
 
 int sys_open(const char *path, int flags)
 {
@@ -31,6 +32,11 @@ int sys_open(const char *path, int flags)
     #endif
     if (!fsif.open)
         return -ENOSYS;
+    
+    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
+
     int handle = fsif.open((void *)path, flags);
     if (handle < 0)
         return -ENOFILE;
@@ -47,6 +53,9 @@ int sys_openfifo(const char *fifoname, int flags)
     #endif
     if (!fifoif.open)
         return -ENOSYS;
+    if (!account_selfcheck_permission((char *)fifoname, PERMISION_ATTR_FIFO)) {
+        return -EPERM;
+    }
     int handle = fifoif.open((void *) fifoname, flags);
     if (handle < 0)
         return handle;
@@ -63,6 +72,9 @@ int sys_opendev(const char *path, int flags)
     #endif
     if (!devif.open) 
         return -ENOSYS;
+    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_DEVICE)) {
+        return -EPERM;
+    }
     int handle;
     handle = devif.open((void *)path, flags);
     if (handle < 0)
@@ -154,7 +166,10 @@ int sys_access(const char *path, int mode)
     if (!path)
         return -EINVAL;
     if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
-        return -EINVAL; 
+        return -EINVAL;
+    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
     return fsif.access(path, mode);
 }
 
@@ -164,6 +179,9 @@ int sys_unlink(const char *path)
         return -EINVAL;
     if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
+    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
     return fsif.unlink((char *) path);
 }
 
@@ -215,6 +233,9 @@ int sys_stat(const char *path, struct stat *buf)
         return -EINVAL;
     if (mem_copy_to_user(buf, NULL, sizeof(struct stat)) < 0)
         return -EINVAL;
+    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
     return fsif.state((char *) path, buf);
 }
 
@@ -238,6 +259,9 @@ int sys_chmod(const char *path, mode_t mode)
         return -EINVAL;
     if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
+    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
     return fsif.chmod((char *) path, mode);
 }
 
@@ -257,6 +281,9 @@ int sys_mkdir(const char *path, mode_t mode)
         return -EINVAL;
     if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
+    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
     return fsif.mkdir((char *) path, mode);
 }
 
@@ -266,6 +293,9 @@ int sys_rmdir(const char *path)
         return -EINVAL;
     if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
+    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
     return fsif.rmdir((char *) path);
 }
 
@@ -277,6 +307,12 @@ int sys_rename(const char *source, const char *target)
         return -EINVAL;
     if (mem_copy_from_user(NULL, (void *) target, MAX_PATH) < 0)
         return -EINVAL;
+    if (!account_selfcheck_permission((char *)source, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
+    if (!account_selfcheck_permission((char *)target, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
     return fsif.rename((char *) source, (char *) target);
 }
 
@@ -324,6 +360,9 @@ dir_t sys_opendir(const char *path)
         return -EINVAL;
     if (mem_copy_from_user(NULL, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
+    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
     return fsif.opendir((char *) path);
 }
 
@@ -461,6 +500,13 @@ int sys_mount(
     if (mem_copy_from_user(NULL, fstype, 32) < 0)
         return -EINVAL;
     
+    if (!account_selfcheck_permission((char *)source, PERMISION_ATTR_DEVICE)) {
+        return -EPERM;
+    }
+    if (!account_selfcheck_permission((char *)target, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
+
     return fsif.mount(source, target, fstype, mountflags);
 }
 
@@ -470,6 +516,9 @@ int sys_unmount(char *path, unsigned long flags)
         return -EINVAL;
     if (mem_copy_from_user(NULL, path, MAX_PATH) < 0)
         return -EINVAL;
+    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE)) {
+        return -EPERM;
+    }
     return fsif.unmount(path, flags);
 }
 
@@ -483,6 +532,9 @@ int sys_mkfs(char *source,         /* 需要创建FS的设备 */
         return -EINVAL;
     if (mem_copy_from_user(NULL, fstype, 32) < 0)
         return -EINVAL;
+    if (!account_selfcheck_permission((char *)source, PERMISION_ATTR_DEVICE)) {
+        return -EPERM;
+    }
     return fsif.mkfs(source, fstype, flags);
 }
 
