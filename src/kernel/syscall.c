@@ -156,8 +156,10 @@ void syscall_init()
     syscalls[SYS_EXPRET] = sys_excetion_return;
     syscalls[SYS_OPENDEV] = sys_opendev;
     syscalls[SYS_OPENFIFO] = sys_openfifo;
-    syscalls[SYS_LOGIN] = sys_account_login;
-    syscalls[SYS_REGISTER] = sys_account_register;
+    syscalls[SYS_ACNTLOGIN] = sys_account_login;
+    syscalls[SYS_ACNTREGISTER] = sys_account_register;
+    syscalls[SYS_ACNTNAME] = sys_account_name;
+    syscalls[SYS_ACNTVERIFY] = sys_account_verify;
 }
 
 int syscall_error(uint32_t callno)

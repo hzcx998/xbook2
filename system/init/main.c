@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+
+#define _HAS_LOGIN
 
 int main(int argc, char *argv[])
 {
@@ -42,7 +45,13 @@ int main(int argc, char *argv[])
             }
         }
     }
-    /* 启动桌面 */
+    #ifdef _HAS_LOGIN
+    pid = getpid();
+    ioctl(tty0, TTYIO_HOLDER, &pid);
+    char *_argv[3] = {"-s", "/sbin/sh", NULL};
+    exit(execv("/sbin/login", _argv));
+    #else
     exit(execv("/sbin/sh", NULL));
+    #endif
     return 0;
 }

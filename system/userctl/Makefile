@@ -1,6 +1,6 @@
 X_LIBS		+= libxlibc-0.0.1.a
 
-NAME		:= init
+NAME		:= userctl
 SRC			+= main.c 
 
 define CUSTOM_TARGET_CMD

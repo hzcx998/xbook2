@@ -4,7 +4,7 @@
 #include <arch/page.h>
 
 #define USER_VMM_SIZE       KERN_BASE_VIR_ADDR
-#define USER_STACK_TOP      USER_VMM_SIZE
+#define USER_STACK_TOP      (USER_VMM_SIZE - PAGE_SIZE)
 #define VMM_UNMAPPED_BASE    (USER_VMM_SIZE / 2)
 
 /* 进程空间虚拟内存管理 */

@@ -17,3 +17,4 @@ export AS LD
 MODULE      +=  init
 MODULE      +=  sh
 MODULE      +=  login
+MODULE      +=  userctl

@@ -15,6 +15,8 @@ struct buildin_cmd {
 };
 
 //func
+
+void update_cwdcache();
 void print_prompt();
 int cmd_parse(char * cmd_str, char **argv, char token);
 void readline( char *buf, uint32_t count);

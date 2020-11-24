@@ -2,21 +2,20 @@
 #define _XBOOK_ACCOUNT_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include <xbook/spinlock.h>
 
 /* 最大允许的账户数量 */
-#define ACCOUNT_NR  4
+#define ACCOUNT_NR  8
 
 #define ACCOUNT_NAME_LEN    32
 #define ACCOUNT_PASSWORD_LEN    128
 
-#define ADMIN_ACCOUNT_NAME      "admin"
-#define ADMIN_ACCOUNT_PASSWORD  "1234"
-
+#define ROOT_ACCOUNT_NAME      "root"
+#define ROOT_ACCOUNT_PASSWORD  "1234"
 
 #define ACCOUNT_LEVEL_ROOT  1
-#define ACCOUNT_LEVEL_ADMIN 2
-#define ACCOUNT_LEVEL_USER  3
+#define ACCOUNT_LEVEL_USER  2
 #define ACCOUNT_LEVEL_MASK  0xff
 
 #define ACCOUNT_FLAG_USED       (1 << 31)
@@ -86,5 +85,7 @@ int account_debind_perm(account_t *account);
 
 int sys_account_login(const char *name, char *password);
 int sys_account_register(const char *name, char *password);
+int sys_account_name(char *buf, size_t buflen);
+int sys_account_verify(char *password);
 
 #endif   /* _XBOOK_ACCOUNT_H */

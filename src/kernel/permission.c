@@ -159,6 +159,7 @@ int permission_database_load()
     str = "disk0"; permission_database_insert(PERMISION_ATTR_DEVICE | PERMISION_ATTR_RDWR, str);
     str = "disk1"; permission_database_insert(PERMISION_ATTR_DEVICE | PERMISION_ATTR_RDWR, str);
     str = "/account"; permission_database_insert(PERMISION_ATTR_FILE | PERMISION_ATTR_RDWR, str);
+    str = "/sbin/init"; permission_database_insert(PERMISION_ATTR_FILE | PERMISION_ATTR_RDWR, str);
     
     return 0;
 }

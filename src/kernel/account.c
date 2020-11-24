@@ -2,7 +2,9 @@
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
 #include <string.h>
+#include <errno.h>
 #include <fsal/path.h>
+#include <xbook/safety.h>
 
 /*
 磁盘数据库设计
@@ -10,7 +12,7 @@
 账户索引文件：
 账户名：密码：账户属性：权限文档
 account
-admin,1234,0
+root,1234,0
 jason,4567,02
 zhuyu,abcd,02
 
@@ -123,8 +125,8 @@ int account_read_config()
     // TODO:read config file
     // load account to account table
     
-    // default admin account
-    if (account_push(ADMIN_ACCOUNT_NAME, ADMIN_ACCOUNT_PASSWORD, ACCOUNT_LEVEL_ADMIN) < 0)
+    // default root account
+    if (account_push(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD, ACCOUNT_LEVEL_ROOT) < 0)
         return -1;
 
     return 0;
@@ -157,18 +159,14 @@ int account_login(const char *name, char *password)
         pr_err("account %s not exist!\n", name);
         return -1;
     }
-    if (account == account_current) {
-        pr_err("account %s had logined!\n", name);        
+    if (strcmp(account->password, password) != 0) {
+        pr_err("password %s not match!\n", name);
         return -1;
     }
     /* 之前登陆过，但是没有退出登录，强制退出其权限  */
     if (account->flags & ACCOUNT_FLAG_LOGINED) {
         account_debind_perm(account);
         account->flags &= ~ACCOUNT_FLAG_LOGINED;
-    }
-    if (strcmp(account->password, password) != 0) {
-        pr_err("password %s not match!\n", name);
-        return -1;
     }
     /* 登录时才从权限数据库中把权限加载到账户的权限数据索引表 */
     account_bind_perm(account);
@@ -213,7 +211,13 @@ int account_logout(const char *name)
 int account_register(const char *name, char *password, uint32_t flags)
 {
     if (!name || !password)
-        return -1;
+        return -EINVAL;
+    if (account_current) {
+        if ((account_current->flags & ACCOUNT_LEVEL_MASK) != ACCOUNT_LEVEL_ROOT) {
+            pr_err("account %s no permission to register account %s!\n", account_current->name, name);
+            return -EPERM;
+        }
+    }
     /* TODO:验证是否是合格的用户名和密码 */
     
     /* 查看账户是否已经存在了，不存在才创建 */
@@ -251,6 +255,12 @@ int account_unregister(const char *name)
 {
     if (!name)
         return -1;
+    if (account_current) {
+        if ((account_current->flags & ACCOUNT_LEVEL_MASK) != ACCOUNT_LEVEL_ROOT) {
+            pr_err("account %s no permission to unregister account %s!\n", account_current->name, name);
+            return -EPERM;
+        }
+    }
     /* TODO:验证是否是合格的用户名和密码 */
     
     /* 查看账户是否已经存在了，不存在才创建 */
@@ -352,7 +362,7 @@ void __account_bind_perm(void *arg, void *self)
 
 int account_bind_perm(account_t *account)
 {
-    // admin no perm limit
+    // root no perm limit
     if ((account->flags & ACCOUNT_LEVEL_MASK) < ACCOUNT_LEVEL_USER) {
         account->index_len = 0;
     } else {
@@ -410,9 +420,16 @@ int account_selfcheck_permission(char *str, uint32_t attr)
 int sys_account_login(const char *name, char *password)
 {
     if (!name)
-        return -1;
+        return -EINVAL;
+    if (mem_copy_from_user(NULL, (void *)name, ACCOUNT_NAME_LEN) < 0) {
+        return -EINVAL;
+    }
+        
     if (!password) {
         return account_logout(name);
+    }
+    if (mem_copy_from_user(NULL, (void *)password, ACCOUNT_PASSWORD_LEN) < 0) {
+        return -EINVAL;
     }
     return account_login(name, password);
 }
@@ -420,11 +437,37 @@ int sys_account_login(const char *name, char *password)
 int sys_account_register(const char *name, char *password)
 {
     if (!name)
-        return -1;
+        return -EINVAL;
+    if (mem_copy_from_user(NULL, (void *)name, ACCOUNT_NAME_LEN) < 0)
+        return -EINVAL;
     if (!password) {
         return account_unregister(name);
     }
+    if (mem_copy_from_user(NULL, (void *)password, ACCOUNT_PASSWORD_LEN) < 0)
+        return -EINVAL;
     return account_register(name, password, ACCOUNT_LEVEL_USER);
+}
+
+int sys_account_name(char *buf, size_t buflen)
+{
+    if (!account_current)
+        return -EFAULT;
+    return mem_copy_to_user((void *)buf, account_current->name, min(buflen, strlen(account_current->name)));
+}
+
+int sys_account_verify(char *password)
+{
+    if (!account_current)
+        return -EFAULT;
+    if (mem_copy_from_user(NULL, password, ACCOUNT_PASSWORD_LEN) < 0)
+        return -EFAULT;
+    mutex_lock(&account_mutex_lock);
+    if (strcmp(account_current->password, password) != 0) {
+        mutex_unlock(&account_mutex_lock);
+        return -1;
+    }
+    mutex_unlock(&account_mutex_lock);
+    return 0;
 }
 
 int account_manager_init()
@@ -441,24 +484,16 @@ int account_manager_init()
     account_read_config();
     permission_database_init();
 
-    if (account_login("admin", "1234") < 0)
-        panic("account: login admin failed!\n");
+    /* default login root */
+    if (account_login(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD) < 0)
+        panic("account: login root failed!\n");
     
+    /* create a user acccount */
     account_register("jason", "1234", ACCOUNT_LEVEL_USER);
 
-    if (account_login("jason", "1234") < 0)
-        panic("account: login jason failed!\n");
-    
-    #if 0
-    if (account_logout("jason") < 0)
-        panic("account: logout jason failed!\n");
-    
-    if (account_login("admin", "1234") < 0)
-        panic("account: login admin failed!\n");
-    
-    printk(KERN_NOTICE "unregister jason!\n");
-    account_unregister("jason");
-    #endif
-    printk(KERN_INFO "login admin: OK!\n");
+    if (account_logout(ROOT_ACCOUNT_NAME) < 0)
+        panic("account: logout root failed!\n");
+
+    printk(KERN_INFO "account init: OK!\n");
     return 0;
 }

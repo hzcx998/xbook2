@@ -5,11 +5,11 @@
 #include <ctype.h>
 #include <sys/ioctl.h>
 #include <sys/exception.h>
+#include <sys/sys.h>
 
 #include "sh.h"
 
 #define CMDLINE_LEN 128
-
 
 #define CMD_LINE_LEN 128
 #define MAX_ARG_NR 16
@@ -37,9 +37,8 @@ int main(int argc, char *argv[])
     sh_stdout_backup = dup(1);
     sh_stderr_backup = dup(2);
     
-	memset(cwd_cache, 0, MAX_PATH);
-	getcwd(cwd_cache, 32);
-
+	update_cwdcache();
+    
     int pid = getpid();
     ioctl(0, TTYIO_HOLDER, &pid);
 
@@ -81,13 +80,27 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+void update_cwdcache()
+{
+    memset(cwd_cache, 0, MAX_PATH);
+    char buf[32] = {0};
+    memset(buf, 0, 32);
+    accountname(buf, 32);
+    strcat(cwd_cache, "[");
+    strcat(cwd_cache, buf);
+    getcwd(buf, 32);
+    strcat(cwd_cache, " ");
+    strcat(cwd_cache, buf);
+    strcat(cwd_cache, "]");
+}
+
 /**
  * print_prompt - 打印提示符
  * 
  */
 void print_prompt()
 {
-	printf("%s>", cwd_cache);
+	printf("%s ", cwd_cache);
 }
 
 /**
@@ -188,17 +201,12 @@ int buildin_cmd_cd(int argc, char **argv)
     if (argc == 1) {
         return 0; 
     }
-    
     char *path = argv[1];
-
-	if(chdir(path) == -1){
-		printf("cd: no such directory %s\n",argv[1]);
+	if(chdir(path) < 0){
+		printf("cd: no such directory %s or no permission!\n",argv[1]);
 		return -1;
 	}
-    /* 设置工作目录缓存 */
-    memset(cwd_cache, 0, MAX_PATH);
-    getcwd(cwd_cache, MAX_PATH);
-    
+    update_cwdcache();
 	return 0;
 }
 
@@ -285,6 +293,7 @@ int execute_cmd(int argc, char **argv)
                 sh_exit(-1, 0);
             }
         }
+        update_cwdcache();
     }
     return 0;
 }
