@@ -80,6 +80,13 @@ int fsal_init()
     if (fsal_disk_mount_init() < 0) {
         return -1;
     }
+
+    /* 创建核心目录 */
+    if (kfile_mkdir(HOME_DIR_PATH, 0) < 0)
+        pr_warning("fsal create dir %s failed or dir existed!\n", HOME_DIR_PATH);
+    if (kfile_mkdir(ACCOUNT_DIR_PATH, 0) < 0)
+        pr_warning("fsal create dir %s failed or dir existed!\n", ACCOUNT_DIR_PATH);
+        
     char path[MAX_PATH] = {0};
     strcpy(path, "/root");
     fsal_list_dir(path);

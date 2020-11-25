@@ -3,26 +3,10 @@
 #include <xbook/debug.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include <fsal/path.h>
 #include <xbook/safety.h>
-
-/*
-磁盘数据库设计
-
-账户索引文件：
-账户名：密码：账户属性：权限文档
-account
-root,1234,0
-jason,4567,02
-zhuyu,abcd,02
-
-权限库文件：
-dbdata
-资源类型，属性：数据
-01,/home/jason
-02,disk0
-03,disk1
-*/
+#include <xbook/fs.h>
 
 account_t *account_table;
 account_t *account_current; /* 当前登录的账户 */
@@ -119,22 +103,159 @@ int account_pop(const char *name)
     return 0;
 }
 
+int account_scan_line(char *str)
+{
+    // 权限,内容
+    char *next = strchr(str, ',');
+    if (!next)
+        return -1;
+    *next = '\0';
+    next++;
+    if (!next)
+        return -1;
+    uint32_t attr = 0;
+    char *p = str;
+    if (*p == 'S') {
+        attr |= ACCOUNT_LEVEL_ROOT;
+    } else if (*p == 'U') {
+        attr |= ACCOUNT_LEVEL_ROOT;
+    }
+    str = next;
+    next = strchr(str, ',');
+    if (!next)
+        return -1;
+    *next = '\0';
+    next++;
+    if (!next)
+        return -1;
+    p = strchr(next, '\n');
+    if (p)
+        *p = '\0';
+    return account_push(str, next, attr);
+}
+
+static int account_load_from_file(char *filename)
+{
+    int fd = kfile_open(filename, O_RDONLY);
+    if (fd < 0) {
+        return -1;
+    }
+    int fsize = kfile_lseek(fd, 0, SEEK_END);
+    if (fsize <= 0) {
+        kfile_close(fd);
+        return -1;
+    }
+    char *buf = mem_alloc(fsize);
+    if (!buf) {
+        kfile_close(fd);
+        return -1;
+    }
+        
+    kfile_lseek(fd, 0, SEEK_SET);
+    if (kfile_read(fd, buf, fsize) != fsize) {
+        mem_free(buf);
+        kfile_close(fd);
+        return -1;
+    }
+    kfile_close(fd);
+    char *str = buf;
+    char *p = str;
+    while (*p) {
+        while (*p != '\n') {
+            p++;
+        }
+        *p = 0;
+        if (account_scan_line(str) < 0) {
+            mem_free(buf);
+            return -1;
+        }
+        if (*(p+1) == 0) {  // 没有字符串了
+            break;
+        }
+        str = p + 1;
+        p = str;
+    }
+    mem_free(buf);
+    return 0;
+}
+
 /* 读取配置，存放到账户库 */
 int account_read_config()
 {
-    // TODO:read config file
-    // load account to account table
-    
-    // default root account
-    if (account_push(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD, ACCOUNT_LEVEL_ROOT) < 0)
-        return -1;
+    char buf[32] = {0};
+    strcat(buf, ACCOUNT_DIR_PATH);
+    strcat(buf, "/");
+    strcat(buf, ACCOUNT_FILE_NAME);
+    /* 如果文件不存在，则需要创建文件，并创建根账户 */
+    int file_not_exist = 0;
+    if (kfile_access(buf, F_OK) < 0) {
+        int fd = kfile_open(buf, O_CREAT | O_RDWR);
+        if (fd < 0) {
+            pr_err("create account file %s failed!\n", buf);
+            return -1;
+        }
+        kfile_close(fd);
+        file_not_exist = 1;
+    }
 
+    if (file_not_exist) {   
+        /* 创建唯一的账户 */
+        if (account_push(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD, ACCOUNT_LEVEL_ROOT) < 0) {
+            pr_err("add a new account %s to table failed!\n", ROOT_ACCOUNT_NAME);
+            return -1;
+        }
+        if (account_sync() < 0) {
+            pr_err("sync account failed!\n");
+            return -1;
+        }
+    } else { /* 账户文件已经存在了，直接读取文件即可。 */ 
+        if (account_load_from_file(buf) < 0) {
+            pr_err("load account from file failed!\n");
+            return -1;
+        }
+    }
     return 0;
+}
+
+static void account_build_file_buf(account_t *account, char *buf)
+{
+    int level = (account->flags & ACCOUNT_LEVEL_MASK);
+    char *level_str = (level == ACCOUNT_LEVEL_ROOT) ? "S":"U";
+    strcat(buf, level_str);
+    strcat(buf, ",");
+    strcat(buf, account->name);
+    strcat(buf, ",");
+    strcat(buf, account->password);
+    strcat(buf, "\n");
 }
 
 int account_sync_data()
 {
     /* TODO: 根据账户表内存情况，把数据写入到磁盘文件中去  */
+    mutex_lock(&account_mutex_lock);
+
+    char buf[32] = {0};
+    strcat(buf, ACCOUNT_DIR_PATH);
+    strcat(buf, "/");
+    strcat(buf, ACCOUNT_FILE_NAME);
+    int fd = kfile_open(buf, O_RDWR | O_TRUNC);
+    if (fd < 0) {
+        pr_err("open account file %s failed!\n", buf);
+        mutex_unlock(&account_mutex_lock);
+        return -1;
+    }
+    int i; for (i = 0; i < ACCOUNT_NR; i++) {
+        account_t *account = account_table + i;
+        if ((account->flags & ACCOUNT_FLAG_USED)) {    
+            /* U/S,name,password\n */
+            char account_buf[ACCOUNT_NAME_LEN + ACCOUNT_PASSWORD_LEN + 8] = {0};
+            account_build_file_buf(account, account_buf);
+            // pr_dbg("account buf:%s", account_buf);
+            kfile_write(fd, account_buf, strlen(account_buf));
+        }
+    }
+    kfile_close(fd);
+    mutex_unlock(&account_mutex_lock);
     return 0;
 }
 
@@ -248,6 +369,10 @@ int account_register(const char *name, char *password, uint32_t flags)
         account_pop(name);
         return -1;
     }
+
+    if (kfile_mkdir(str, 0) < 0) {
+        pr_warn("create account %s home path %s failed or existed!\n", name, str);
+    }
     return 0;
 }
 
@@ -319,17 +444,25 @@ int account_unregister(const char *name)
         permission_database_insert(data_backup.attr, data_backup.str);
         return -1;
     }
+    
+    if (kfile_rmdir(str) < 0) {
+        pr_warn("delect account %s home path %s failed or not existed!\n", name, str);
+    }
     return 0;
 }
 
 int account_add_index(account_t *account, uint32_t index)
 {
+    unsigned long flags;
+    spin_lock_irqsave(&account->lock, flags);
     int i; for (i = 0; i < PERMISION_DATABASE_LEN; i++) {
         if (account->data_index[i] == -1) {
             account->data_index[i] = index;
+            account->index_len++;
             break;
         }
     }
+    spin_unlock_irqrestore(&account->lock, flags);
     if (i >= PERMISION_DATABASE_LEN)
         return -1;
     return 0;
@@ -339,7 +472,13 @@ int account_del_index(account_t *account, uint32_t index)
 {
     if (index >= PERMISION_DATABASE_LEN)
         return -1;
-    account->data_index[index] = -1;
+    unsigned long flags;
+    spin_lock_irqsave(&account->lock, flags);
+    if (account->data_index[index] >= 0) {
+        account->data_index[index] = -1;
+        account->index_len--;
+    }
+    spin_unlock_irqrestore(&account->lock, flags);
     return 0;
 }
 
@@ -481,19 +620,21 @@ int account_manager_init()
         account_init(account_table + i);
     }
     account_current = NULL;
-    account_read_config();
+    
     permission_database_init();
-
+    if (account_read_config() < 0)
+        panic("account manager read config failed!\n");
+    
     /* default login root */
     if (account_login(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD) < 0)
         panic("account: login root failed!\n");
     
     /* create a user acccount */
     account_register("jason", "1234", ACCOUNT_LEVEL_USER);
-
-    if (account_logout(ROOT_ACCOUNT_NAME) < 0)
-        panic("account: logout root failed!\n");
-
+    
+    if (account_login("jason", "1234") < 0)
+        panic("account: login user failed!\n");
+    
     printk(KERN_INFO "account init: OK!\n");
     return 0;
 }

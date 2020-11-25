@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <xbook/spinlock.h>
+#include <xbook/mutexlock.h>
 
 /* 最大允许的账户数量 */
 #define ACCOUNT_NR  8
@@ -14,6 +15,9 @@
 #define ROOT_ACCOUNT_NAME      "root"
 #define ROOT_ACCOUNT_PASSWORD  "1234"
 
+#define ACCOUNT_FILE_NAME       "acct"
+#define PERMISSION_FILE_NAME    "perm"
+
 #define ACCOUNT_LEVEL_ROOT  1
 #define ACCOUNT_LEVEL_USER  2
 #define ACCOUNT_LEVEL_MASK  0xff
@@ -21,27 +25,29 @@
 #define ACCOUNT_FLAG_USED       (1 << 31)
 #define ACCOUNT_FLAG_LOGINED    (1 << 16)
 
-#define PERMISION_DATA_LEN   32
+#define PERMISION_STR_LEN   32
 #define PERMISION_DATABASE_LEN   32
 
+/* 0-9 */
 #define PERMISION_ATTR_DEVICE       (1 << 0)
 #define PERMISION_ATTR_FILE         (1 << 1)    // 有子路径概念
 #define PERMISION_ATTR_FIFO         (1 << 2)
 
 #define PERMISION_ATTR_TYPE_MASK    0xffff
-
+/* rw-h */
 #define PERMISION_ATTR_READ         (1 << 16)
 #define PERMISION_ATTR_WRITE        (1 << 17)
 #define PERMISION_ATTR_RDWR         (PERMISION_ATTR_READ | PERMISION_ATTR_WRITE)
-#define PERMISION_ATTR_HOME         (1 << 3) // 用户主页
+#define PERMISION_ATTR_EXEC         (1 << 18)
+#define PERMISION_ATTR_HOME         (1 << 19) // 用户主页
 
 typedef struct {
     uint32_t attr;      /* 0~15: 类型。16~31：属性 */
-    char str[PERMISION_DATA_LEN];
+    char str[PERMISION_STR_LEN];
 } permission_data_t;
 
 typedef struct {
-    spinlock_t lock;    /* 用于维护数据库操作的锁 */
+    mutexlock_t lock;    /* 用于维护数据库操作的锁 */
     uint32_t length;    /* 当前存放的数据数量 */
     permission_data_t datasets[PERMISION_DATABASE_LEN];
 } permission_database_t;
@@ -80,6 +86,7 @@ int account_logout(const char *name);
 int account_register(const char *name, char *password, uint32_t flags);
 int account_unregister(const char *name);
 
+int account_sync();
 int account_bind_perm(account_t *account);
 int account_debind_perm(account_t *account);
 

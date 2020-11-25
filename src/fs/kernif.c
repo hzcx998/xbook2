@@ -22,11 +22,10 @@ int kfile_close(int fd)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -EINVAL;
-
-    if (ffd->flags & FILE_FD_NORMAL) {
-        if (fsif.close(ffd->handle) < 0)
-            return -1;    
-    }
+    if (!ffd->fsal->close)
+        return -ENOSYS;
+    if (ffd->fsal->close(ffd->handle) < 0)
+        return -1;
     return local_fd_uninstall(fd);
 }
 
@@ -39,11 +38,24 @@ int kfile_read(int fd, void *buffer, size_t nbytes)
         pr_err("[FS]: %s: fd %d err!\n", __func__, fd);
         return -1;
     }
-    int retval = -1;
-    if (ffd->flags & FILE_FD_NORMAL) {
-        retval = fsif.read(ffd->handle, buffer, nbytes);
+    if (!ffd->fsal->read)
+        return -ENOSYS;
+    return ffd->fsal->read(ffd->handle, buffer, nbytes);
+}
+
+int kfile_write(int fd, void *buffer, size_t nbytes)
+{
+    if (fd < 0 || !nbytes || !buffer)
+        return -EINVAL;
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd)) {
+        pr_err("[FS]: %s: fd %d err! handle=%d flags=%x\n", __func__, 
+            fd, ffd->handle, ffd->flags);
+        return -EINVAL;
     }
-    return retval;
+    if (!ffd->fsal->write)
+        return -ENOSYS;
+    return ffd->fsal->write(ffd->handle, buffer, nbytes);
 }
 
 int kfile_stat(const char *path, struct stat *buf)
@@ -65,8 +77,21 @@ int kfile_lseek(int fd, off_t offset, int whence)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
         return -EINVAL;
-    if (ffd->flags & FILE_FD_NORMAL) {
-        return fsif.lseek(ffd->handle, offset, whence);
-    }
-    return -EINVAL;
+    if (!ffd->fsal->lseek)
+        return -ENOSYS;
+    return ffd->fsal->lseek(ffd->handle, offset, whence);
+}
+
+int kfile_mkdir(const char *path, mode_t mode)
+{
+    if (!path)
+        return -EINVAL;
+    return fsif.mkdir((char *) path, mode);
+}
+
+int kfile_rmdir(const char *path)
+{
+    if (!path)
+        return -EINVAL;
+    return fsif.rmdir((char *) path);
 }

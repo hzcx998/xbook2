@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
-#define _HAS_LOGIN
+// #define _HAS_LOGIN
 
 int main(int argc, char *argv[])
 {
