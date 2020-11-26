@@ -81,8 +81,6 @@ int fs_fd_reinit(task_t *cur)
     if (!cur->fileman) {
         return -1;
     }
-    unsigned long irq_flags;
-    spin_lock_irqsave(&cur->fileman->lock, irq_flags);
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         if (cur->fileman->fds[i].flags != 0) {
@@ -90,7 +88,6 @@ int fs_fd_reinit(task_t *cur)
                 sys_close(i);
         }
     }
-    spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
     return 0;
 }
 
