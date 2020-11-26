@@ -165,10 +165,11 @@ usr_c:
                
 ifeq ($(OS),Windows_NT)
 QEMU_KVM := -accel hax
-QEMU_KVM := 
 else
 QEMU_KVM := -enable-kvm
 endif
+
+QEMU_KVM := # no virutal
 
 QEMU_ARGUMENT = -m 512M $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \
