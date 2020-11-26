@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <sys/sys.h>
+#include <sys/ioctl.h>
 
 /**
  * readline - 读取一行输入
@@ -83,7 +84,13 @@ int main(int argc, char *argv[])
             flags = 0;
             if (password == NULL || (*password == 0) || (*password == '-')) { // need input password
                 printf("password: ");
+                uint32_t oldflgs = 0;
+                ioctl(STDIN_FILENO, TIOCGFLGS, &oldflgs);
+                uint32_t newflgs = oldflgs & ~TTYFLG_ECHO;
+                ioctl(STDIN_FILENO, TIOCSFLGS, &newflgs);
                 readline(pwdbuf, 32);
+                ioctl(STDIN_FILENO, TIOCSFLGS, &oldflgs);
+                printf("\n");
                 password = pwdbuf;
                 break;
             }
@@ -109,11 +116,17 @@ int main(int argc, char *argv[])
                 printf("user name: ");
                 readline(namebuf, 32);
             }
-            memset(pwdbuf, 0, 32 + 1);            
+            memset(pwdbuf, 0, 32 + 1);     
+            uint32_t oldflgs = 0;
+            ioctl(STDIN_FILENO, TIOCGFLGS, &oldflgs);
+            uint32_t newflgs = oldflgs & ~TTYFLG_ECHO;
+            ioctl(STDIN_FILENO, TIOCSFLGS, &newflgs);       
             while (!pwdbuf[0]) {    
                 printf("password: ");
                 readline(pwdbuf, 32);
             }
+            ioctl(STDIN_FILENO, TIOCSFLGS, &oldflgs);
+            printf("\n");
             username = namebuf;
             password = pwdbuf;
             if (!login(namebuf, pwdbuf)) {

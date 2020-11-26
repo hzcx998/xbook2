@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <sys/sys.h>
+#include <sys/ioctl.h>
 
 /**
  * readline - 读取一行输入
@@ -60,7 +61,13 @@ int main(int argc, char *argv[])
     char buf[129] = {0};
     while (!buf[0]) {
         printf("enter your password: ");
+        uint32_t oldflgs = 0;
+        ioctl(STDIN_FILENO, TIOCGFLGS, &oldflgs);
+        uint32_t newflgs = oldflgs & ~TTYFLG_ECHO;
+        ioctl(STDIN_FILENO, TIOCSFLGS, &newflgs);     
         readline(buf, 128);
+        ioctl(STDIN_FILENO, TIOCSFLGS, &oldflgs);
+        printf("\n");
     }
     if (accountverify(buf) < 0) {
         printf("password error!\n");

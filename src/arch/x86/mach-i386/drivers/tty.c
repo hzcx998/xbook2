@@ -1,6 +1,7 @@
 #include <xbook/debug.h>
 #include <xbook/bitops.h>
 #include <string.h>
+#include <stddef.h>
 
 #include <xbook/driver.h>
 #include <xbook/schedule.h>
@@ -10,6 +11,7 @@
 #include <sys/ioctl.h>
 #include <stdio.h>
 #include <xbook/fifoio.h>
+#include <xbook/safety.h>
 
 #define DRV_NAME "virtual-tty"
 #define DRV_VERSION "0.1"
@@ -45,6 +47,7 @@ typedef struct _device_extension {
     device_public_t *public;    /* 共有资源 */
     uint32_t lctl;        /* 组合按键 */
     fifo_io_t fifoio;
+    uint32_t flags;
 } device_extension_t;
 
 static int tty_set_visitor(device_object_t *device, int visitor)
@@ -247,6 +250,7 @@ iostatus_t tty_write(device_object_t *device, io_request_t *ioreq)
 iostatus_t tty_devctl(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
+    unsigned long arg = ioreq->parame.devctl.arg;
     iostatus_t status = IO_SUCCESS;
     ssize_t retval = 0;
     switch (ioreq->parame.devctl.code)
@@ -262,7 +266,14 @@ iostatus_t tty_devctl(device_object_t *device, io_request_t *ioreq)
     case TTYIO_COMBINE:
         extension->public->detach_kbd = 0;
         break;
-            
+    case TIOCSFLGS:
+        if (mem_copy_from_user(&extension->flags, (void *)arg, 4) < 0)
+            status = IO_FAILED;
+        break;        
+    case TIOCGFLGS:
+        if (mem_copy_to_user((void *)arg, &extension->flags, 4) < 0)
+            status = IO_FAILED;
+        break;        
     default:
         retval = device_devctl(extension->con, ioreq->parame.devctl.code,
             ioreq->parame.devctl.arg);
@@ -304,8 +315,10 @@ void tty_thread(void *arg)
                             } else {
                                 /* put into fifo buf */
                                 fifo_io_put(&extension->fifoio, event.code);
-                                device_write(extension->con,
-                                    &event.code, 1, 0);
+                                if (extension->flags & TTYFLG_ECHO) {
+                                    device_write(extension->con,
+                                        &event.code, 1, 0);
+                                }
                             }
                         }
                     } else {
@@ -365,6 +378,7 @@ static iostatus_t tty_enter(driver_object_t *driver)
         extension->kbd = kbd;
         extension->con = -1;    /* 没有控制台 */
         extension->lctl = 0;
+        extension->flags = TTYFLG_ECHO;
         extension->public = public;
         unsigned char *buf = mem_alloc(DEV_FIFO_BUF_LEN);
         if (buf == NULL) {

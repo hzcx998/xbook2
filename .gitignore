@@ -88,6 +88,8 @@ system/init/init
 system/init/initg
 system/desktop/desktop
 system/sh/sh
+system/login/login
+system/userctl/userctl
 
 # user app
 

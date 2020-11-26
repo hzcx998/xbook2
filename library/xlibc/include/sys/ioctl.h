@@ -51,6 +51,9 @@ extern "C" {
 #define TIOCGFLGS           DEVCTL_CODE('t', 8) /* get flags */
 #define TIOCGFG             DEVCTL_CODE('t', 9) /* get front group task */
 
+/* tty flags */
+#define TTYFLG_ECHO    0x01
+
 /* net */
 #define NETIO_GETMAC        DEVCTL_CODE('n', 1)
 #define NETIO_SETMAC        DEVCTL_CODE('n', 2)
