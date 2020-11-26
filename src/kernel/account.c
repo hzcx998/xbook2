@@ -57,6 +57,7 @@ static int account_free(account_t *account)
 
 void account_dump()
 {
+    pr_dbg("Account List:\n");
     int i;
     for (i = 0; i < ACCOUNT_NR; i++) {
         account_t *account = account_table + i;
@@ -103,6 +104,48 @@ int account_pop(const char *name)
     return 0;
 }
 
+#define IS_VALID_ACCOUNT_WORD(w) (('a' <= w && w <= 'z') \
+        || ('Z' <= w && w <= 'Z') \
+        || ('0' <= w && w <= '9') \
+        || (w == '_'))
+
+#define IS_VALID_PASSWORD_WORD(w) (('a' <= w && w <= 'z') \
+        || ('Z' <= w && w <= 'Z') \
+        || ('0' <= w && w <= '9') \
+        || (w == '_') \
+        || (w == '$') \
+        || (w == '@') \
+        || (w == '!') \
+        || (w == '%') \
+        || (w == '*') \
+        || (w == '#') \
+        || (w == '~') \
+        || (w == '?'))
+
+int account_name_check(const char *name)
+{
+    char *p = (char *) name;
+    while (*p) {
+        if (!IS_VALID_ACCOUNT_WORD(*p)) {
+            return -1;
+        }
+        p++;
+    }
+    return 0;
+}
+
+int account_password_check(const char *password)
+{
+    char *p = (char *)password;
+    while (*p) {
+        if (!IS_VALID_PASSWORD_WORD(*p)) {
+            return -1;
+        }
+        p++;
+    }
+    return 0;
+}
+
 int account_scan_line(char *str)
 {
     // 权限,内容
@@ -114,12 +157,14 @@ int account_scan_line(char *str)
     if (!next)
         return -1;
     uint32_t attr = 0;
+    /* 解析权限 */
     char *p = str;
     if (*p == 'S') {
         attr |= ACCOUNT_LEVEL_ROOT;
     } else if (*p == 'U') {
         attr |= ACCOUNT_LEVEL_ROOT;
     }
+    /* 分离账户和密码 */
     str = next;
     next = strchr(str, ',');
     if (!next)
@@ -128,9 +173,14 @@ int account_scan_line(char *str)
     next++;
     if (!next)
         return -1;
+    /* 解析数据，去掉换行符号，windows时\r\n,linux是\n,mac是\r。 */
     p = strchr(next, '\n');
     if (p)
         *p = '\0';
+    p = strchr(next, '\r');
+    if (p)
+        *p = '\0';
+    /* 解析账户名 */
     return account_push(str, next, attr);
 }
 
@@ -150,7 +200,7 @@ static int account_load_from_file(char *filename)
         kfile_close(fd);
         return -1;
     }
-        
+    memset(buf, 0, fsize);
     kfile_lseek(fd, 0, SEEK_SET);
     if (kfile_read(fd, buf, fsize) != fsize) {
         mem_free(buf);
@@ -160,19 +210,18 @@ static int account_load_from_file(char *filename)
     kfile_close(fd);
     char *str = buf;
     char *p = str;
-    while (*p) {
-        while (*p != '\n') {
+    char *next_line = p;
+    while (*p && next_line < buf + fsize) {
+        while (*p != '\n' && *p) {
             p++;
         }
+        next_line = p + 1;
         *p = 0;
         if (account_scan_line(str) < 0) {
             mem_free(buf);
             return -1;
         }
-        if (*(p+1) == 0) {  // 没有字符串了
-            break;
-        }
-        str = p + 1;
+        str = next_line;
         p = str;
     }
     mem_free(buf);
@@ -198,7 +247,8 @@ int account_read_config()
         file_not_exist = 1;
     }
 
-    if (file_not_exist) {   
+    if (file_not_exist) {  
+        pr_dbg("File Not Exist!\n"); 
         /* 创建唯一的账户 */
         if (account_push(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD, ACCOUNT_LEVEL_ROOT) < 0) {
             pr_err("add a new account %s to table failed!\n", ROOT_ACCOUNT_NAME);
@@ -209,6 +259,7 @@ int account_read_config()
             return -1;
         }
     } else { /* 账户文件已经存在了，直接读取文件即可。 */ 
+        pr_dbg("File Exist!\n"); 
         if (account_load_from_file(buf) < 0) {
             pr_err("load account from file failed!\n");
             return -1;
@@ -231,7 +282,6 @@ static void account_build_file_buf(account_t *account, char *buf)
 
 int account_sync_data()
 {
-    /* TODO: 根据账户表内存情况，把数据写入到磁盘文件中去  */
     mutex_lock(&account_mutex_lock);
 
     char buf[32] = {0};
@@ -275,6 +325,14 @@ int account_login(const char *name, char *password)
 {
     if (!name || !password)
         return -1;
+    
+    if (account_name_check(name) < 0) {
+        return -EINVAL;
+    }
+    if (account_password_check(password) < 0) {
+        return -EINVAL;
+    }
+
     account_t *account = account_find_by_name(name);
     if (!account) {
         pr_err("account %s not exist!\n", name);
@@ -302,6 +360,10 @@ int account_logout(const char *name)
 {
     if (!name)
         return -1;
+    if (account_name_check(name) < 0) {
+        return -EINVAL;
+    }
+
     account_t *account = account_find_by_name(name);
     if (!account) {
         pr_err("account %s not exist!\n", name);
@@ -333,6 +395,13 @@ int account_register(const char *name, char *password, uint32_t flags)
 {
     if (!name || !password)
         return -EINVAL;
+    if (account_name_check(name) < 0) {
+        return -EINVAL;
+    }
+    if (account_password_check(password) < 0) {
+        return -EINVAL;
+    }
+
     if (account_current) {
         if ((account_current->flags & ACCOUNT_LEVEL_MASK) != ACCOUNT_LEVEL_ROOT) {
             pr_err("account %s no permission to register account %s!\n", account_current->name, name);
@@ -380,6 +449,9 @@ int account_unregister(const char *name)
 {
     if (!name)
         return -1;
+    if (account_name_check(name) < 0) {
+        return -EINVAL;
+    }
     if (account_current) {
         if ((account_current->flags & ACCOUNT_LEVEL_MASK) != ACCOUNT_LEVEL_ROOT) {
             pr_err("account %s no permission to unregister account %s!\n", account_current->name, name);
@@ -563,7 +635,6 @@ int sys_account_login(const char *name, char *password)
     if (mem_copy_from_user(NULL, (void *)name, ACCOUNT_NAME_LEN) < 0) {
         return -EINVAL;
     }
-        
     if (!password) {
         return account_logout(name);
     }
@@ -600,6 +671,9 @@ int sys_account_verify(char *password)
         return -EFAULT;
     if (mem_copy_from_user(NULL, password, ACCOUNT_PASSWORD_LEN) < 0)
         return -EFAULT;
+    if (account_password_check(password) < 0) {
+        return -EINVAL;
+    }
     mutex_lock(&account_mutex_lock);
     if (strcmp(account_current->password, password) != 0) {
         mutex_unlock(&account_mutex_lock);
@@ -624,16 +698,10 @@ int account_manager_init()
     permission_database_init();
     if (account_read_config() < 0)
         panic("account manager read config failed!\n");
-    
+
     /* default login root */
     if (account_login(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD) < 0)
         panic("account: login root failed!\n");
-    
-    /* create a user acccount */
-    account_register("jason", "1234", ACCOUNT_LEVEL_USER);
-    
-    if (account_login("jason", "1234") < 0)
-        panic("account: login user failed!\n");
     
     printk(KERN_INFO "account init: OK!\n");
     return 0;

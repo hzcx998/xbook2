@@ -234,6 +234,7 @@ int permission_scan_line(char *str)
     next++;
     if (!next)
         return -1;
+    /* 解析权限 */
     uint32_t attr = 0;
     char *p = str;
     if (*p == '0') {
@@ -259,8 +260,13 @@ int permission_scan_line(char *str)
     if (*p == 'H') {
         attr |= PERMISION_ATTR_HOME;
     }
-    int len = strlen(next);
-    next[len - 1] = 0;
+    /* 解析数据，去掉换行符号，windows时\r\n,linux是\n,mac是\r。 */
+    p = strchr(next, '\n');
+    if (p)
+        *p = '\0';
+    p = strchr(next, '\r');
+    if (p)
+        *p = '\0';
     return (permission_database_insert(attr, next) >= 0) ? 0: -1;
 }
 
@@ -281,7 +287,7 @@ static int permission_scan_insert(char *filename)
         kfile_close(fd);
         return -1;
     }
-        
+    memset(buf, 0, fsize);
     kfile_lseek(fd, 0, SEEK_SET);
     if (kfile_read(fd, buf, fsize) != fsize) {
         mem_free(buf);
@@ -291,19 +297,18 @@ static int permission_scan_insert(char *filename)
     kfile_close(fd);
     char *str = buf;
     char *p = str;
-    while (*p) {
-        while (*p != '\n') {
+    char *next_line = p;
+    while (*p && next_line < buf + fsize) {
+        while (*p != '\n' && *p) {
             p++;
         }
+        next_line = p + 1;
         *p = 0;
         if (permission_scan_line(str) < 0) {
             mem_free(buf);
             return -1;
         }
-        if (*(p+1) == 0) {  // 没有字符串了
-            break;
-        }
-        str = p + 1;
+        str = next_line;
         p = str;
     }
     mem_free(buf);

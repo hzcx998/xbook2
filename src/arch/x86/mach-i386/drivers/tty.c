@@ -290,8 +290,7 @@ iostatus_t tty_devctl(device_object_t *device, io_request_t *ioreq)
 void tty_thread(void *arg)
 {
     device_public_t *public = (device_public_t *)arg;
-    while (1)
-    {
+    while (1) {
         device_extension_t *extension = public->extensions[public->visitor_id];
         if (!extension->public->detach_kbd) {    /* 键盘分离了就不能读取键盘 */
             /* read from input even */
