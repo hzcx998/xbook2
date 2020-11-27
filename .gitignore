@@ -69,9 +69,9 @@ develop/rom/usr/
 develop/bochs/
 
 # linux fixdep
-library/fixdep
-system/fixdep
-user/fixdep
+user/libs/fixdep
+user/sbin/fixdep
+user/bin/fixdep
 src/fixdep
 
 # linux tools 
@@ -84,53 +84,52 @@ recycle
 !scripts/fixdep.exe
 
 # system app
-system/init/init
-system/init/initg
-system/desktop/desktop
-system/sh/sh
-system/login/login
-system/userctl/userctl
+user/sbin/init/init
+user/sbin/init/initg
+user/sbin/desktop/desktop
+user/sbin/sh/sh
+user/sbin/login/login
+user/sbin/userctl/userctl
 
 # user app
 
 # /bin
-user/cat/cat
-user/cpuinfo/cpuinfo
-user/echo/echo
-user/cp/cp
-user/date/date
-user/ls/ls
-user/mem/mem
-user/mkdir/mkdir
-user/mv/mv
-user/ps/ps
-user/rename/rename
-user/rm/rm
-user/rmdir/rmdir
-user/touch/touch
-user/trig/trig
-user/osver/osver
+user/bin/cat/cat
+user/bin/cpuinfo/cpuinfo
+user/bin/echo/echo
+user/bin/cp/cp
+user/bin/date/date
+user/bin/ls/ls
+user/bin/mem/mem
+user/bin/mkdir/mkdir
+user/bin/mv/mv
+user/bin/ps/ps
+user/bin/rename/rename
+user/bin/rm/rm
+user/bin/rmdir/rmdir
+user/bin/touch/touch
+user/bin/trig/trig
+user/bin/osver/osver
 
 # /usr
-user/bosh/bosh
-user/c4/c4
-user/cpptests/cpptests
-user/freeterm/freeterm
-user/gato/gato
-user/hello/hello
-user/infones/infones
-user/invader/invader
-user/lua/lua
-user/lvgl/lv
-user/lvgl2/lv2
-user/microui/mui
-user/socket_client/socket_client
-user/socket_server/socket_server
-user/tests/tests
-user/vt100/vt100
-user/win/win
-user/cal/cal
-user/sound/sound
-user/wavplayer/wavplayer
-user/mp3player/mp3player
-
+user/usr/bosh/bosh
+user/usr/c4/c4
+user/usr/cpptests/cpptests
+user/usr/freeterm/freeterm
+user/usr/gato/gato
+user/usr/hello/hello
+user/usr/infones/infones
+user/usr/invader/invader
+user/usr/lua/lua
+user/usr/lvgl/lv
+user/usr/lvgl2/lv2
+user/usr/microui/mui
+user/usr/socket_client/socket_client
+user/usr/socket_server/socket_server
+user/usr/tests/tests
+user/usr/vt100/vt100
+user/usr/win/win
+user/usr/cal/cal
+user/usr/sound/sound
+user/usr/wavplayer/wavplayer
+user/usr/mp3player/mp3player
