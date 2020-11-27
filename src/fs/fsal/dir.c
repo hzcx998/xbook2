@@ -1,4 +1,4 @@
-#include <fsal/dir.h>
+#include <xbook/dir.h>
 #include <string.h>
 #include <assert.h>
 #include <xbook/memalloc.h>

@@ -1,5 +1,5 @@
-#ifndef _FSAL_DIR_H
-#define _FSAL_DIR_H
+#ifndef _XBOOK_FSAL_DIR_H
+#define _XBOOK_FSAL_DIR_H
 
 #include "fsal.h"
 #include <stdint.h>
@@ -42,4 +42,4 @@ int fsal_dir_free(fsal_dir_t *dir);
 void build_path(const char *path, char *out_path);
 void wash_path(char *old_path, char *new_path);
 
-#endif  /* _FSAL_DIR_H */
+#endif  /* _XBOOK_FSAL_DIR_H */

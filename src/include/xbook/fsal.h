@@ -1,5 +1,5 @@
-#ifndef _FSAL_CORE_H
-#define _FSAL_CORE_H
+#ifndef _XBOOK_FSAL_CORE_H
+#define _XBOOK_FSAL_CORE_H
 
 /* File system abstraction layer (FSAL) 文件系统抽象层 */
 #include <types.h>
@@ -79,4 +79,4 @@ typedef struct {
         (!ffd->flags) || (!ffd->fsal < 0))
 
 
-#endif  /* _FSAL_CORE_H */
+#endif  /* _XBOOK_FSAL_CORE_H */

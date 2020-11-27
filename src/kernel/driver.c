@@ -13,7 +13,7 @@
 #include <xbook/virmem.h>
 #include <xbook/schedule.h>
 #include <xbook/initcall.h>
-#include <fsal/fsal.h>
+#include <xbook/fsal.h>
 
 // #define DRIVER_FRAMEWROK_DEBUG
 

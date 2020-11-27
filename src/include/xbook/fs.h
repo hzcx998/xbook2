@@ -6,7 +6,7 @@
 #include <types.h>
 #include <sys/stat.h>
 #include <xbook/spinlock.h>
-#include <fsal/fsal.h>
+#include <xbook/fsal.h>
 
 int file_system_init();
 

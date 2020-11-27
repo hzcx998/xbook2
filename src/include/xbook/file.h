@@ -1,5 +1,5 @@
-#ifndef _FSAL_FILE_H
-#define _FSAL_FILE_H
+#ifndef _XBOOK_FSAL_FILE_H
+#define _XBOOK_FSAL_FILE_H
 
 /* File system abstraction layer (FSAL) 文件系统抽象层 */
 #include <types.h>
@@ -54,4 +54,4 @@ static inline bool fsal_file_need_close(fsal_file_t *file)
     return (bool) (atomic_get(&file->reference) <= 0);
 }
 
-#endif  /* _FSAL_FILE_H */
+#endif  /* _XBOOK_FSAL_FILE_H */

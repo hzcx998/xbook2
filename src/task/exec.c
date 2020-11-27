@@ -9,9 +9,9 @@
 #include <arch/task.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <fsal/dir.h>
-#include <fsal/fsal.h>
-#include <fsal/fd.h>
+#include <xbook/dir.h>
+#include <xbook/fsal.h>
+#include <xbook/fd.h>
 
 /**
  * exec使用新的镜像以及堆栈替换原有的内容。

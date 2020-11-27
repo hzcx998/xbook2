@@ -1,6 +1,6 @@
 #include <xbook/list.h>
-#include <fsal/fsal.h>
-#include <fsal/fatfs.h>
+#include <xbook/fsal.h>
+#include <xbook/fatfs.h>
 #include <string.h>
 
 LIST_HEAD(fstype_list_head);

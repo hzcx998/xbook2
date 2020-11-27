@@ -1,5 +1,5 @@
-#ifndef _FSAL_FD_H
-#define _FSAL_FD_H
+#ifndef _XBOOK_FSAL_FD_H
+#define _XBOOK_FSAL_FD_H
 
 #include "fsal.h"
 #include <xbook/task.h>
@@ -24,4 +24,4 @@ int handle_to_local_fd(int handle, unsigned int flags);
 int fs_fd_copy(task_t *src, task_t *dest);
 int fs_fd_reinit(task_t *cur);
 
-#endif  /* _FSAL_FD_H */
+#endif  /* _XBOOK_FSAL_FD_H */

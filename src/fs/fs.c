@@ -1,8 +1,8 @@
 #include <xbook/fs.h>
 #include <xbook/diskman.h>
 #include <xbook/debug.h>
-#include <fsal/fsal.h>
-#include <fsal/fstype.h>
+#include <xbook/fsal.h>
+#include <xbook/fstype.h>
 #include <stddef.h>
 #include <unistd.h>
 #include <dirent.h>

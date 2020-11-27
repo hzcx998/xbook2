@@ -2,7 +2,7 @@
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
 
-#include <fsal/fsal.h>
+#include <xbook/fsal.h>
 #include <types.h>
 #include <fcntl.h>
 #include <unistd.h>

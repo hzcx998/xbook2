@@ -2,7 +2,7 @@
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
 #include <xbook/fs.h>
-#include <fsal/path.h>
+#include <xbook/path.h>
 #include <string.h>
 #include <unistd.h>
 

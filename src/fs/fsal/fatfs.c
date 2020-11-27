@@ -1,8 +1,8 @@
-#include <fsal/fsal.h>
-#include <fsal/fatfs.h>
-#include <fsal/dir.h>
-#include <fsal/file.h>
-#include <fsal/path.h>
+#include <xbook/fsal.h>
+#include <xbook/fatfs.h>
+#include <xbook/dir.h>
+#include <xbook/file.h>
+#include <xbook/path.h>
 #include "../fatfs/ff.h"
 #include <xbook/diskman.h>
 #include <xbook/memalloc.h>

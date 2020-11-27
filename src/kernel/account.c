@@ -4,7 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <fsal/path.h>
+#include <xbook/path.h>
 #include <xbook/safety.h>
 #include <xbook/fs.h>
 

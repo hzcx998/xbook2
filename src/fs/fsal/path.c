@@ -1,4 +1,4 @@
-#include <fsal/path.h>
+#include <xbook/path.h>
 #include <string.h>
 #include <unistd.h>
 #include <xbook/memalloc.h>

@@ -1,8 +1,8 @@
-#include <fsal/fsal.h>
+#include <xbook/fsal.h>
 #include <xbook/fs.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include <fsal/fd.h>
+#include <xbook/fd.h>
 
 int kfile_open(const char *path, int flags)
 {

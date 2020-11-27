@@ -11,7 +11,7 @@
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <sys/pthread.h>
-#include <fsal/fd.h>
+#include <xbook/fd.h>
 #include <unistd.h>
 
 static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz,

@@ -1,5 +1,5 @@
-#ifndef _FSAL_PATH_H
-#define _FSAL_PATH_H
+#ifndef _XBOOK_FSAL_PATH_H
+#define _XBOOK_FSAL_PATH_H
 
 /* File system abstraction layer (FSAL) 文件系统抽象层 */
 
@@ -43,4 +43,4 @@ fsal_path_t *fsal_path_find(void *alpath, int inmaster);
 int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path);
 int fsal_list_dir(char* path);
 
-#endif  /* _FSAL_PATH_H */
+#endif  /* _XBOOK_FSAL_PATH_H */

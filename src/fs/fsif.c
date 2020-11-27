@@ -1,5 +1,5 @@
-#include <fsal/fsal.h>
-#include <fsal/fd.h>
+#include <xbook/fsal.h>
+#include <xbook/fd.h>
 #include <xbook/fs.h>
 #include <xbook/task.h>
 #include <xbook/debug.h>
