@@ -33,3 +33,4 @@ MODULE      +=  touch
 MODULE      +=  tests
 MODULE      +=  hello
 MODULE      +=  osver
+MODULE      +=  lua

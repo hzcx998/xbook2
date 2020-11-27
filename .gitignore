@@ -64,8 +64,6 @@ develop/local/
 
 develop/rom/bin/
 develop/rom/sbin/
-develop/rom/usr/
-
 develop/bochs/
 
 # linux fixdep
@@ -111,25 +109,25 @@ user/bin/touch/touch
 user/bin/trig/trig
 user/bin/osver/osver
 
-# /usr
-user/usr/bosh/bosh
-user/usr/c4/c4
-user/usr/cpptests/cpptests
-user/usr/freeterm/freeterm
-user/usr/gato/gato
-user/usr/hello/hello
-user/usr/infones/infones
-user/usr/invader/invader
-user/usr/lua/lua
-user/usr/lvgl/lv
-user/usr/lvgl2/lv2
-user/usr/microui/mui
-user/usr/socket_client/socket_client
-user/usr/socket_server/socket_server
-user/usr/tests/tests
-user/usr/vt100/vt100
-user/usr/win/win
-user/usr/cal/cal
-user/usr/sound/sound
-user/usr/wavplayer/wavplayer
-user/usr/mp3player/mp3player
+# /bin
+user/bin/bosh/bosh
+user/bin/c4/c4
+user/bin/cpptests/cpptests
+user/bin/freeterm/freeterm
+user/bin/gato/gato
+user/bin/hello/hello
+user/bin/infones/infones
+user/bin/invader/invader
+user/bin/lua/lua
+user/bin/lvgl/lv
+user/bin/lvgl2/lv2
+user/bin/microui/mui
+user/bin/socket_client/socket_client
+user/bin/socket_server/socket_server
+user/bin/tests/tests
+user/bin/vt100/vt100
+user/bin/win/win
+user/bin/cal/cal
+user/bin/sound/sound
+user/bin/wavplayer/wavplayer
+user/bin/mp3player/mp3player
