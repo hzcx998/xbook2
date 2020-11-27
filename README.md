@@ -33,6 +33,15 @@ KERNEL MODE:
 截图：
 ![console0](https://gitee.com/hzc1998/xbook2/raw/purekern/develop/screenshoot/console.png)
 
+| 目录            | 描述                                      |
+| ------------- | --------------------------------------- |
+| develop       | 开发时用到的磁盘镜像，ROM文件系统内容等   |
+| doc           | 操作系统相关的文档                               |
+| scripts       | 用到的xbuild脚本和其它配置文件 |
+| src           | xbook2内核的源码                  |
+| tools         | 内核开发需要用到的工具                         |
+| user          | 和用户相关的内容，库，应用程序等  |
+
 系统功能列表：
 ```
 多进程，内核多线程，用户多线程
@@ -91,8 +100,7 @@ PTHREAD线程库
 > make qemu     # 使用qemu虚拟机运行
 > make qemudbg  # 使用qemu虚拟机进行调试
 > make clean    # 清除编译产生的对象文件以及可执行文件
-> make usr      # 只编译用户程序（在开发应用时常用）
-> make lib      # 只编译库（在开发库时常用）
+> make user     # 只编译用户程序（在开发应用时常用）
 ```
 
 联系方式：
