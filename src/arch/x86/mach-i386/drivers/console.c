@@ -184,6 +184,8 @@ static void console_scroll(device_extension_t *ext, int direction)
 	flush(ext);
 }
 
+#define TAB_WIDTH   4
+
 /**
  * vga_outchar - 控制台上输出一个字符
  * @console: 控制台
@@ -221,6 +223,13 @@ static void vga_outchar(device_extension_t *ext, unsigned char ch)
     case '\r':
         /* 忽略掉 */
         break;  
+    case '\t':
+        {
+            int spaces = ((ext->x + TAB_WIDTH) & (~(TAB_WIDTH - 1))) - ext->x;
+            while (spaces--) {
+                vga_outchar(ext, ' ');
+            }
+        }
     default: 
         *vram++ = ch;
         *vram = ext->color;
