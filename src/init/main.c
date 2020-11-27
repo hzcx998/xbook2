@@ -14,7 +14,6 @@
 #include <xbook/driver.h>
 #include <xbook/walltime.h>
 #include <xbook/fs.h>
-#include <xbook/gui.h>
 #include <xbook/timer.h>
 #include <xbook/initcall.h>
 #include <xbook/mutexqueue.h>
@@ -41,10 +40,8 @@ int kernel_main(void)
     interrupt_enable();
     driver_framewrok_init();
     initcalls_exec();
-
     file_system_init();
     account_manager_init();
-    init_gui();
     task_start_user();
     return 0;    
 }

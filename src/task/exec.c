@@ -12,7 +12,6 @@
 #include <fsal/dir.h>
 #include <fsal/fsal.h>
 #include <fsal/fd.h>
-#include <gui/message.h>
 
 /**
  * exec使用新的镜像以及堆栈替换原有的内容。
@@ -95,7 +94,6 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     proc_map_space_init(cur);
     pthread_desc_init(cur->pthread);
     fs_fd_reinit(cur);
-    gui_msgpool_exit(cur);
     exception_manager_exit(&cur->exception_manager);
     exception_manager_init(&cur->exception_manager);
     user_set_entry_point(frame, (unsigned long)elf_header.e_entry);

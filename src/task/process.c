@@ -7,13 +7,11 @@
 #include <xbook/memspace.h>
 #include <string.h>
 #include <xbook/pthread.h>
-#include <xbook/gui.h>
 #include <xbook/schedule.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <sys/pthread.h>
 #include <fsal/fd.h>
-#include <gui/message.h>
 #include <unistd.h>
 
 static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz,
@@ -198,7 +196,6 @@ int proc_release(task_t *task)
 {
     proc_vmm_exit(task);
     fs_fd_exit(task);
-    gui_user_exit(task);
     proc_pthread_exit(task);
     exception_manager_exit(&task->exception_manager);
     task_do_cancel(task);

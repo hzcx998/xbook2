@@ -11,14 +11,9 @@
 #include <xbook/msgqueue.h>
 #include <xbook/walltime.h>
 #include <xbook/account.h>
-#include <xbook/gui.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <dirent.h>
-#include <gui/layer.h>
-#include <gui/message.h>
-#include <gui/screen.h>
-#include <gui/timer.h>
 
 syscall_t syscalls[SYSCALL_NR];
 
@@ -100,38 +95,6 @@ void syscall_init()
     syscalls[SYS_MSGPUT] = sys_msgque_put;
     syscalls[SYS_MSGSEND] = sys_msgque_send;
     syscalls[SYS_MSGRECV] = sys_msgque_recv;
-    syscalls[SYS_LAYERNEW] = sys_new_layer;
-    syscalls[SYS_LAYERDEL] = sys_del_layer;
-    syscalls[SYS_LAYERZ] = sys_layer_z;
-    syscalls[SYS_LAYERMOVE] = sys_layer_move;
-    syscalls[SYS_LAYERREFRESH] = sys_layer_refresh;
-    syscalls[SYS_LAYERGETWINTOP] = sys_layer_get_win_top;
-    syscalls[SYS_LAYERSETWINTOP] = sys_layer_set_win_top;
-    syscalls[SYS_GINIT] = sys_g_init;
-    syscalls[SYS_GQUIT] = sys_g_quit;
-    syscalls[SYS_GGETMSG] = sys_g_get_msg;
-    syscalls[SYS_GTRYGETMSG] = sys_g_try_get_msg;
-    syscalls[SYS_LAYERSETFOCUS] = sys_layer_set_focus;
-    syscalls[SYS_LAYERGETFOCUS] = sys_layer_get_focus;
-    syscalls[SYS_LAYERSETREGION] = sys_layer_set_region;
-    syscalls[SYS_GPOSTMSG] = sys_g_post_msg;
-    syscalls[SYS_GSENDMSG] = sys_g_send_msg;
-    syscalls[SYS_LAYERSETFLG] = sys_layer_set_flags;
-    syscalls[SYS_LAYERRESIZE] = sys_layer_resize;
-    syscalls[SYS_LAYERFOCUS] = sys_layer_focus;
-    syscalls[SYS_LAYERFOCUSWINTOP] = sys_layer_focus_win_top;
-    syscalls[SYS_GSCREENGET] = sys_screen_get;
-    syscalls[SYS_GSCREENSETWINRG] = sys_screen_set_window_region;
-    syscalls[SYS_LAYERGETDESKTOP] = sys_layer_get_desktop;
-    syscalls[SYS_LAYERSETDESKTOP] = sys_layer_set_desktop;
-    syscalls[SYS_GNEWTIMER] = sys_gui_new_timer;
-    syscalls[SYS_GMODIFYTIMER] = sys_gui_modify_timer;
-    syscalls[SYS_GDELTIMER] = sys_gui_del_timer;
-    syscalls[SYS_LAYERSYNCBMP] = sys_layer_sync_bitmap;
-    syscalls[SYS_LAYERSYNCBMPEX] = sys_layer_sync_bitmap_ex;
-    syscalls[SYS_LAYERCOPYBMP] = sys_layer_copy_bitmap;
-    syscalls[SYS_GGETICONPATH] = sys_gui_get_icon;
-    syscalls[SYS_GSETICONPATH] = sys_gui_set_icon;
     syscalls[SYS_PROBEDEV] = sys_probedev;
     syscalls[SYS_EXPSEND] = sys_expsend;
     syscalls[SYS_EXPCATCH] = sys_expcatch;

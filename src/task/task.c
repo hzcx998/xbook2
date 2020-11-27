@@ -359,11 +359,7 @@ void kern_do_idle(void *arg)
     }
 }
 
-#ifdef CONFIG_GRAPH
-#define INIT_SBIN_PATH  "/sbin/initg"
-#else
 #define INIT_SBIN_PATH  "/sbin/init"
-#endif
 
 static char *init_argv[2] = {INIT_SBIN_PATH, 0};
 

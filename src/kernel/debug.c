@@ -8,7 +8,6 @@
 #include <arch/debug.h>
 #include <arch/hw.h>
 #include <stdio.h>
-#include <gui/console.h>
 
 /*
 color fmt: \e[b;fm
@@ -56,10 +55,6 @@ void panic(const char *fmt, ...)
 	va_list arg = (va_list)((char*)&fmt + 4);
 	vsprintf(buf, fmt, arg);
 	pr_emerg("\npanic: %s", buf);
-    #ifdef CONFIG_GUI_PRINT
-    if (print_gui_console)
-        gui_con_screen.outs("system panic!!!\n");
-	#endif
     interrupt_disable();
 	while(1){
 		cpu_idle();
@@ -76,10 +71,6 @@ void assertion_failure(char *exp, char *file, char *baseFile, int line)
 void spin(char * functionName)
 {
 	printk(KERN_NOTICE "spinning in %s", functionName);
-    #ifdef CONFIG_GUI_PRINT
-    if (print_gui_console)
-        gui_con_screen.outs("system spin!!!\n");
-    #endif
 	interrupt_disable();
 	while(1){
 		cpu_idle();
@@ -122,10 +113,6 @@ int printk(const char *fmt, ...)
             debug_putstr(q, strlen(q));
         }
         debug_putstr(p, count);
-        #ifdef CONFIG_GUI_PRINT
-        if (print_gui_console && level < 1 && level >= 0)
-            gui_con_screen.outs(p);
-        #endif
         if (level >= 0) {
             debug_putstr(DEBUG_NONE_COLOR, 4);    
         }
