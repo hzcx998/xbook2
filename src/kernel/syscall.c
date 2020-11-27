@@ -6,7 +6,6 @@
 #include <xbook/mutexqueue.h>
 #include <xbook/fs.h>
 #include <xbook/driver.h>
-#include <xbook/net.h>
 #include <xbook/sharemem.h>
 #include <xbook/sem.h>
 #include <xbook/msgqueue.h>
@@ -86,22 +85,6 @@ void syscall_init()
     syscalls[SYS_MKFS] = sys_mkfs;
     syscalls[SYS_MOUNT] = sys_mount;
     syscalls[SYS_UNMOUNT] = sys_unmount;
-    syscalls[SYS_SOCKET] = sys_socket;
-    syscalls[SYS_BIND] = sys_bind;
-    syscalls[SYS_CONNECT] = sys_connect;
-    syscalls[SYS_LISTEN] = sys_listen;
-    syscalls[SYS_ACCEPT] = sys_accept;
-    syscalls[SYS_SEND] = sys_send;
-    syscalls[SYS_RECV] = sys_recv;
-    syscalls[SYS_SENDTO] = sys_sendto;
-    syscalls[SYS_RECVFROM] = sys_recvfrom;
-    syscalls[SYS_SHUTDOWN] = sys_shutdown;
-    syscalls[SYS_GETPEERNAME] = sys_getpeername;
-    syscalls[SYS_GETSOCKNAME] = sys_getsockname;
-    syscalls[SYS_GETSOCKOPT] = sys_getsockopt;
-    syscalls[SYS_SETSOCKOPT] = sys_setsockopt;
-    syscalls[SYS_IOCTLSOCKET] = sys_ioctlsocket;
-    syscalls[SYS_SELECT] = sys_select;
     syscalls[SYS_DUP] = sys_dup;
     syscalls[SYS_DUP2] = sys_dup2;
     syscalls[SYS_PIPE] = sys_pipe;

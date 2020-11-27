@@ -4,7 +4,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
-#include <sys/socket.h>
 #include <sys/dir.h>
 #include <sys/syscall.h>
 #include <sys/stat.h>

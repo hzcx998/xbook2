@@ -14,7 +14,6 @@
 #include <xbook/driver.h>
 #include <xbook/walltime.h>
 #include <xbook/fs.h>
-#include <xbook/net.h>
 #include <xbook/gui.h>
 #include <xbook/timer.h>
 #include <xbook/initcall.h>
@@ -46,8 +45,6 @@ int kernel_main(void)
     file_system_init();
     account_manager_init();
     init_gui();
-    init_net();
-    
     task_start_user();
     return 0;    
 }

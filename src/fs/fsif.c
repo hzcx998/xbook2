@@ -4,13 +4,13 @@
 #include <xbook/task.h>
 #include <xbook/debug.h>
 #include <xbook/driver.h>
+#include <xbook/schedule.h>
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include <lwip/sockets.h>
 #include <xbook/fifo.h>
 #include <xbook/pipe.h>
 #include <xbook/safety.h>
