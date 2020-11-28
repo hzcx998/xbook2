@@ -2,16 +2,14 @@
 #define _XBOOK_SYSCALL_H
 
 #include <stdint.h>
+#include <xbook/plugin.h>
 
 typedef void * syscall_t;
 
 enum syscall_num {
     SYS_EXIT,
     SYS_FORK,
-    SYS_EXECR,
-    SYS_EXECF,
     SYS_WAITPID,
-    SYS_COEXIST,
     SYS_GETPID,
     SYS_GETPPID,
     SYS_SLEEP,
@@ -33,14 +31,7 @@ enum syscall_num {
     SYS_HEAP,
     SYS_MUNMAP,
     SYS_VMM_RESERVED = 40,              /* 预留10个接口给内存管理 */
-    SYS_GETRES, 
-    SYS_PUTRES,
-    SYS_READRES, 
-    SYS_WRITERES,
-    SYS_CTLRES,
     SYS_DEVSCAN, 
-    SYS_MMAP, 
-    
     SYS_RES_RESERVED = 50,              /* 预留10个接口给资源管理 */
     SYS_ALARM,
     SYS_WALLTIME,
@@ -59,7 +50,6 @@ enum syscall_num {
     SYS_GETVER,
     SYS_MSTATE,
     SYS_USLEEP,
-/// 文件系统
     SYS_OPEN,
     SYS_CLOSE,
     SYS_READ,
@@ -104,41 +94,6 @@ enum syscall_num {
     SYS_MSGPUT,
     SYS_MSGSEND,
     SYS_MSGRECV,
-    SYS_XCONGET,
-    SYS_XCONCLEAR,
-    SYS_XCONPUT,
-    SYS_LAYERNEW,
-    SYS_LAYERDEL,
-    SYS_LAYERZ,
-    SYS_LAYERMOVE,
-    SYS_LAYERREFRESH,
-    SYS_LAYERSETWINTOP,
-    SYS_LAYERGETWINTOP,
-    SYS_GINIT,
-    SYS_GQUIT,
-    SYS_GGETMSG,
-    SYS_GTRYGETMSG,
-    SYS_LAYERSETFOCUS,
-    SYS_LAYERGETFOCUS,
-    SYS_LAYERSETREGION,
-    SYS_GPOSTMSG,
-    SYS_GSENDMSG,
-    SYS_LAYERSETFLG,
-    SYS_LAYERRESIZE,
-    SYS_LAYERFOCUS,
-    SYS_LAYERFOCUSWINTOP,
-    SYS_GSCREENGET,
-    SYS_GSCREENSETWINRG,
-    SYS_LAYERGETDESKTOP,
-    SYS_LAYERSETDESKTOP,
-    SYS_GNEWTIMER,
-    SYS_GMODIFYTIMER,
-    SYS_GDELTIMER,
-    SYS_LAYERSYNCBMP,
-    SYS_LAYERSYNCBMPEX,
-    SYS_LAYERCOPYBMP,
-    SYS_GGETICONPATH,
-    SYS_GSETICONPATH,
     SYS_PROBEDEV,
     SYS_EXPSEND,
     SYS_EXPCATCH,
@@ -150,8 +105,26 @@ enum syscall_num {
     SYS_ACNTREGISTER,
     SYS_ACNTNAME,
     SYS_ACNTVERIFY,
+    SYS_SOCKET,
+    SYS_BIND,
+    SYS_CONNECT,
+    SYS_LISTEN,
+    SYS_ACCEPT,
+    SYS_SEND,
+    SYS_RECV,
+    SYS_SENDTO,
+    SYS_RECVFROM,
+    SYS_SHUTDOWN,
+    SYS_GETPEERNAME,
+    SYS_GETSOCKNAME,
+    SYS_GETSOCKOPT,
+    SYS_SETSOCKOPT,
+    SYS_IOCTLSOCKET,
+    SYS_SELECT,
     SYSCALL_NR,
 };
+
+extern syscall_t syscalls[];
 
 /* 属于检测点的系统调用有：
 SYS_WAITPID，SYS_SLEEP，SYS_THREAD_JOIN，SYS_GETRES, SYS_PUTRES, SYS_READRES, 

@@ -18,6 +18,7 @@
 #include <xbook/initcall.h>
 #include <xbook/mutexqueue.h>
 #include <xbook/account.h>
+#include <xbook/plugin.h>
 
 int kernel_main(void)
 {
@@ -26,11 +27,11 @@ int kernel_main(void)
     vir_mem_init();
     irq_description_init();
     softirq_init();
+    syscall_init();
     share_mem_init();
     msg_queue_init();
     sem_init();
     fifo_init();
-    syscall_init();
     walltime_init();
     schedule_init();
     tasks_init();
@@ -42,6 +43,7 @@ int kernel_main(void)
     initcalls_exec();
     file_system_init();
     account_manager_init();
+    plugin_init();
     task_start_user();
     return 0;    
 }

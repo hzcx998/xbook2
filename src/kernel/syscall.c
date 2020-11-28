@@ -11,6 +11,7 @@
 #include <xbook/msgqueue.h>
 #include <xbook/walltime.h>
 #include <xbook/account.h>
+#include <xbook/plugin.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <dirent.h>
@@ -19,6 +20,9 @@ syscall_t syscalls[SYSCALL_NR];
 
 void syscall_init()
 {
+    int i; for (i = 0; i < SYSCALL_NR; i++) {
+        syscalls[i] = NULL;
+    }
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;
     syscalls[SYS_WAITPID] = sys_waitpid;
@@ -106,6 +110,7 @@ void syscall_init()
     syscalls[SYS_ACNTREGISTER] = sys_account_register;
     syscalls[SYS_ACNTNAME] = sys_account_name;
     syscalls[SYS_ACNTVERIFY] = sys_account_verify;
+    plugin_syscall_init();
 }
 
 int syscall_error(uint32_t callno)

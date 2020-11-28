@@ -17,6 +17,7 @@ TRUNC		= truncate
 RM			= rm
 DD			= dd
 MKDIR		= mkdir
+OBJDUMP		= objdump
 
 # virtual machine
 QEMU 		= qemu-system-i386
@@ -67,7 +68,7 @@ SETUP_BIN 	= $(ARCH)/boot/setup.bin
 KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 
 # 参数
-.PHONY: all kernel build debuild qemu qemudbg user user_clean
+.PHONY: all kernel build debuild qemu qemudbg user user_clean dump
 
 # 默认所有动作，编译内核后，把引导、内核、init服务、文件服务和rom文件写入磁盘
 all : kernel 
@@ -130,6 +131,8 @@ user_clean:
 	$(MAKE) -s -C  $(SBIN_DIR) clean && \
 	$(MAKE) -s -C  $(BIN_DIR) clean
 
+dump:
+	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > kern.dump
 
 #-hda $(HDA_IMG) -hdb $(HDB_IMG)
 # 网卡配置: 
@@ -170,7 +173,8 @@ QEMU_ARGUMENT = -m 512M $(QEMU_KVM) \
 		-boot a \
 		-serial stdio \
 		-soundhw sb16 \
-		-soundhw pcspk
+		-soundhw pcspk \
+		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
 
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 #		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 

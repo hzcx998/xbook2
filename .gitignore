@@ -66,6 +66,8 @@ develop/rom/bin/
 develop/rom/sbin/
 develop/bochs/
 
+kern.dump
+
 # linux fixdep
 user/libs/fixdep
 user/sbin/fixdep
@@ -131,3 +133,4 @@ user/bin/cal/cal
 user/bin/sound/sound
 user/bin/wavplayer/wavplayer
 user/bin/mp3player/mp3player
+user/bin/hello/hello
