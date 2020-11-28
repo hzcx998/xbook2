@@ -6,7 +6,7 @@ SRC			+= ansi/*.c arpa/*.c charset/*.c crypto/*.c ctype/*.c
 SRC			+= environ/*.c locale/*.c malloc/*.c math/*.c stdio/*.c
 SRC			+= stdlib/*.c string/*.c syslib/*.c time/*.c unistd/*.c
 SRC			+= syslib/syscall.asm
-SRC			+= gcc/*.c
+SRC			+= gcc/*.c socket/*.c
 
 TARGET_TYPE	:= static
 NAME		:= xlibc-0.0.1
