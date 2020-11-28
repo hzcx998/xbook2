@@ -18,10 +18,16 @@
 
 syscall_t syscalls[SYSCALL_NR];
 
+void syscall_default()
+{
+    pr_err("user call a not supported syscall!\n");
+    exception_raise(EXP_CODE_SYS);
+}
+
 void syscall_init()
 {
     int i; for (i = 0; i < SYSCALL_NR; i++) {
-        syscalls[i] = NULL;
+        syscalls[i] = syscall_default;
     }
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

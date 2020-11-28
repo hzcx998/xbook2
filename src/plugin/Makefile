@@ -1,3 +1,3 @@
 SRC	+= plugin.c
-
-SRC	+= net/
+# 注释插件目录就可以取消插件
+# SRC	+= net/

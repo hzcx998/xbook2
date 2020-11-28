@@ -18,6 +18,8 @@ int main(int argc, char *argv[])
     //sys_test(argc, argv);
     //pthread_test(argc, argv);
     // file_test(argc, argv);
-    perm_test(argc, argv);
+    // perm_test(argc, argv);
+    socket_test4(argc, argv);
+
     return 0;
 }

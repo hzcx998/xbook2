@@ -139,16 +139,21 @@ void filefd_set_fsal(file_fd_t *fd, unsigned int flags)
         break;    
     case FILE_FD_DEVICE:
         fd->fsal = &devif;
-        break;    
+        break;
     case FILE_FD_PIPE0:
         fd->fsal = &pipeif_rd;
         break;    
     case FILE_FD_PIPE1:
         fd->fsal = &pipeif_wr;
-        break;    
+        break;
     case FILE_FD_FIFO:
         fd->fsal = &fifoif;
-        break;    
+        break;
+    #ifdef PLUGIN_NETWORK
+    case FILE_FD_SOCKET:
+        fd->fsal = &fsal_netif;
+        break;
+    #endif
     default:
         fd->fsal = NULL;
         break;

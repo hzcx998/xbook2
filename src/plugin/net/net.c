@@ -44,7 +44,7 @@ void lwip_init_task(void)
     #else
     IP4_ADDR(&ipaddr, 192,168,0,105);
     IP4_ADDR(&gateway, 192,168,0,104);
-    IP4_ADDR(&netmask, 255,255,255, 0);
+    IP4_ADDR(&netmask, 255,255,0, 0);
 
     #endif
 

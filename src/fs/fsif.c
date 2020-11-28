@@ -326,16 +326,11 @@ int sys_chdir(const char *path)
     task_t *cur = task_current;
     if (!cur->fileman)
         return -EINVAL;
-    
-    //printk("%s: path:%s\n", __func__, path);
-    /* 打开目录 */
     dir_t dir = sys_opendir(path);
     if (dir < 0) {
         return -ENOFILE;
     }
     sys_closedir(dir);
-
-    /* 保存路径 */
     int len = strlen(path);
     memset(cur->fileman->cwd, 0, MAX_PATH);
     memcpy(cur->fileman->cwd, path, min(len, MAX_PATH));
@@ -548,4 +543,3 @@ int sys_probedev(const char *name, char *buf, size_t buflen)
         return -EINVAL;
     return device_probe_unused(name, buf, buflen);
 }
-

@@ -130,6 +130,7 @@ int socket_test3(int argc, char *argv[])
         char buf[BUF_LEN] = "hello! Test!\n";
         len = sizeof(struct sockaddr_in);
         sendto(fd, buf, BUF_LEN, 0, (struct sockaddr *)&serv_addr, len);
+        sleep(1);
         printf("client: %s\n", buf);
         memset(buf, 0, BUF_LEN);
         recvfrom(fd, buf, BUF_LEN, 0, &src, &len);
@@ -196,7 +197,7 @@ int socket_test4(int argc, char *argv[])
         printf("chargen_thread(): Listen failed.\n");
         return -1;
     }
-
+    printf("listen fd %d done\n", listenfd);
     /* Wait forever for network input: This could be connections or data */
     for (;;)
     {
