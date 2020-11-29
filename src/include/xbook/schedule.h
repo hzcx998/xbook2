@@ -29,7 +29,7 @@ enum sched_priority_level {
 #define TASK_PRIORITY_REALTIME  16
 #define TASK_PRIORITY_MAX       31
 #define TASK_PRIORITY_MAX_NR    (TASK_PRIORITY_MAX + 1)
-#define TASK_PRIORITY_TURN_DISTANCE   6
+#define TASK_PRIORITY_TURN_DISTANCE   3
 
 typedef struct {
     spinlock_t lock;

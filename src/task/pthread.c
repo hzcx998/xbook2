@@ -52,7 +52,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     task_t *task = (task_t *) mem_alloc(TASK_KERN_STACK_SIZE);
     if (!task)
         return NULL;
-    task_init(task, "pthread", TASK_PRIO_LEVEL_BELOW_NORMAL);
+    task_init(task, "pthread", TASK_PRIO_LEVEL_NORMAL);
     if (parent->tgid == parent->pid) {
         task->tgid = parent->pid;   /* 线程组id指向父进程的pid */
     } else {

@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     //pthread_test(argc, argv);
     // file_test(argc, argv);
     // perm_test(argc, argv);
-    socket_test4(argc, argv);
-
+    // socket_test4(argc, argv);
+    file_test2(argc, argv);
     return 0;
 }

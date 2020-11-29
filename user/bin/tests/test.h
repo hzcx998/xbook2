@@ -35,6 +35,7 @@ int sys_test(int argc, char *argv[]);
 int pthread_test(int argc, char *argv[]);
 
 int file_test(int argc, char *argv[]);
+int file_test2(int argc, char *argv[]);
 
 int perm_test(int argc, char *argv[]);
 

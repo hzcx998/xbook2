@@ -44,6 +44,7 @@ int kernel_main(void)
     file_system_init();
     account_manager_init();
     plugin_init();
+    //spin("test");
     task_start_user();
     return 0;    
 }

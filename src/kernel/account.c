@@ -247,8 +247,7 @@ int account_read_config()
         file_not_exist = 1;
     }
 
-    if (file_not_exist) {  
-        pr_dbg("File Not Exist!\n"); 
+    if (file_not_exist) {
         /* 创建唯一的账户 */
         if (account_push(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD, ACCOUNT_LEVEL_ROOT) < 0) {
             pr_err("add a new account %s to table failed!\n", ROOT_ACCOUNT_NAME);
@@ -259,7 +258,6 @@ int account_read_config()
             return -1;
         }
     } else { /* 账户文件已经存在了，直接读取文件即可。 */ 
-        pr_dbg("File Exist!\n"); 
         if (account_load_from_file(buf) < 0) {
             pr_err("load account from file failed!\n");
             return -1;

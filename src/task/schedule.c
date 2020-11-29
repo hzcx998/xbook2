@@ -1,5 +1,6 @@
 #include <xbook/schedule.h>
 #include <xbook/task.h>
+#include <xbook/clock.h>
 #include <assert.h>
 #include <xbook/debug.h>
 #include <arch/interrupt.h>
@@ -40,6 +41,7 @@ uint8_t sched_calc_new_priority(task_t *task, char adjustment)
 static task_t *sched_queue_fetch_first(sched_unit_t *su)
 {
     task_t *task;
+    /* 总是选择优先级比较高的队列 */
     while (!su->priority_queue[su->dynamic_priority].length) {
         --su->dynamic_priority;
     }
@@ -59,14 +61,16 @@ task_t *get_next_task(sched_unit_t *su)
         task->ticks = task->timeslice;
         task->state = TASK_READY;
     case TASK_READY:
-        // Non-real-time tasks are dynamically prioritized
+        // Non-real-time tasks are dynamically prioritized    
+        #if 0
         if (task->static_priority < TASK_PRIORITY_REALTIME) {
-            --task->priority;
+            task->priority--;
             if ((task->priority < (task->static_priority - TASK_PRIORITY_TURN_DISTANCE)) || 
                 (task->priority < TASK_PRIORITY_LOW)) {
                 task->priority = task->static_priority;
             }
         }
+        #endif
         sched_queue_add_tail(su, task);
     default:
         break;

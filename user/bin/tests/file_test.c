@@ -30,3 +30,31 @@ int file_test(int argc, char *argv[])
     }
     return 0;
 }
+
+int file_test2(int argc, char *argv[])
+{
+    char *buf = malloc(64*1024);
+    if (buf == NULL) {
+        printf("malloc for test failed!\n");
+        return -1;
+    }
+    while (1)
+    {
+        int fd = open("/bin/lua", O_RDONLY);
+        if (fd < 0) {
+            printf("open file failed!\n");
+            break;
+        }
+        while (1)
+        {
+            int rd = read(fd, buf, 64*1024);
+            printf("read %d.\n", rd);
+            if (rd <= 0)
+                break;
+        }
+        close(fd);
+        printf("read done.\n");
+    }
+    free(buf);
+    printf("test end\n");
+}
