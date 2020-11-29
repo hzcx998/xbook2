@@ -20,6 +20,8 @@ int main(int argc, char *argv[])
     // file_test(argc, argv);
     // perm_test(argc, argv);
     // socket_test4(argc, argv);
-    file_test2(argc, argv);
+    // file_test2(argc, argv);
+    backtrace_test(argc, argv);
+    
     return 0;
 }

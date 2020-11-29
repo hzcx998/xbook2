@@ -88,4 +88,6 @@ but make it already an possibility. */
 
 unsigned int phy_mem_get_size_from_hardware();
 
+int backtrace(void **buffer, int size);
+
 #endif   /* _X86_MEMORY_H */

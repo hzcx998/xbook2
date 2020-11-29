@@ -266,7 +266,6 @@ static void put_char(console_hardware_t *obj, char ch)
 
 void console_hardware_putchar(char ch)
 {
-    
     put_char(&console_obj, ch);
 }
 

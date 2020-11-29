@@ -132,7 +132,7 @@ user_clean:
 	$(MAKE) -s -C  $(BIN_DIR) clean
 
 dump:
-	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > kern.dump
+	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > $(KERNSRC)/kern.dump
 
 #-hda $(HDA_IMG) -hdb $(HDB_IMG)
 # 网卡配置: 

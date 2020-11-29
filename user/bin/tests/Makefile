@@ -1,6 +1,6 @@
 X_LIBS		+= libxlibc-0.0.1.a libpthread-0.0.1.a
 
-X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99 -O3
+X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99
 
 NAME		:= tests
 SRC			+= *.c

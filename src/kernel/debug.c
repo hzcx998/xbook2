@@ -7,6 +7,7 @@
 #include <arch/cpu.h>
 #include <arch/debug.h>
 #include <arch/hw.h>
+#include <arch/memory.h>
 #include <stdio.h>
 
 /*
@@ -43,6 +44,7 @@ char *printk_msg[] = {
 };
 
 #define DEBUG_NONE_COLOR    "\e[0m" // 清除属性
+#define BACKTRACE_LEN   3
 
 int printk_level = DEFAULT_LOG_LEVEL;
 
@@ -55,8 +57,15 @@ void panic(const char *fmt, ...)
 	va_list arg = (va_list)((char*)&fmt + 4);
 	vsprintf(buf, fmt, arg);
 	pr_emerg("\npanic: %s", buf);
+    
+    char *bbuf[BACKTRACE_LEN];
+    
+    int n = backtrace(bbuf, BACKTRACE_LEN);
+    int i; for (i = 0; i < n; i++) {
+        pr_dbg("%p -> ", bbuf[i]);
+    }
     interrupt_disable();
-	while(1){
+    while(1){
 		cpu_idle();
 	}
 }
