@@ -17,7 +17,7 @@
 // #define DEBUG_DRV
 
 /* 将显存映射到内核，在内核态也可以操作显存 */
-#define MAP_VRAM_TO_KERN    1
+#define MAP_VRAM_TO_KERN    0
 
 /* VBE信息的内存地址 */
 #define VBE_INFO_ADDR  0x80001100
@@ -98,11 +98,6 @@ typedef struct _device_extension {
     struct vbe_info_block *vbe_info;
     unsigned char *vir_base_addr;    /* 映射到内核的虚拟地址 */
 } device_extension_t;
-
-/*
-mmap(int res, size_t length, int flags);
-munmap(void *addr, size_t length);
-*/
 
 #ifdef DEBUG_DRV
 void dump_vbe_info_block(struct vbe_info_block *info)

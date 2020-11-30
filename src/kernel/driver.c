@@ -17,6 +17,8 @@
 
 // #define DRIVER_FRAMEWROK_DEBUG
 
+/* TODO:添加设备别名机制，通过别名来访问设备 */
+
 LIST_HEAD(driver_list_head);
 device_object_t *device_handle_table[DEVICE_HANDLE_NR];
 DEFINE_SPIN_LOCK_UNLOCKED(driver_lock);
@@ -751,6 +753,8 @@ void *device_mmap(handle_t handle, size_t length, int flags)
     if (!io_complete_check(ioreq, status)) {
         void *mapaddr = NULL;
         if (ioreq->io_status.infomation) {
+            pr_dbg("device memmap paddr=%x, len=%x\n", ioreq->io_status.infomation, length);
+
             if (flags & IO_KERNEL)
                 mapaddr = memio_remap(ioreq->io_status.infomation, length);
             else
@@ -758,6 +762,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
                     PROT_USER | PROT_WRITE, MEM_SPACE_MAP_SHARED | MEM_SPACE_MAP_REMAP);
         }
         io_request_free((ioreq));
+        pr_dbg("device memmap %x\n", mapaddr);
         return mapaddr;
     }
     io_request_free((ioreq));
@@ -1044,6 +1049,11 @@ static off_t devif_ftell(int handle)
     return off;
 }
 
+static void *devif_mmap(int handle, size_t length, int flags)
+{
+    return device_mmap(handle, length, flags);
+}
+
 fsal_t devif;
 
 void driver_framewrok_init()
@@ -1064,4 +1074,5 @@ void driver_framewrok_init()
     devif.lseek     = devif_lseek;
     devif.fsize     = devif_fsize;
     devif.ftell     = devif_ftell;
+    devif.mmap      = devif_mmap;
 }

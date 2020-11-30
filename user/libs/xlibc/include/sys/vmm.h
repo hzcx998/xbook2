@@ -19,6 +19,7 @@ int mstate(mstate_t *ms);
 /* vmm */
 void *heap(void *heap);
 int munmap(void *addr, size_t length);
+void *mmap(int fd, size_t length, int flags);
 
 #ifdef __cplusplus
 }

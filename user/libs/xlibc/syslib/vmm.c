@@ -18,6 +18,17 @@ void *heap(void *heap)
     return syscall1(void *, SYS_HEAP, heap);
 }
 
+/**
+ * mmap() - memory map for file
+ * @fd: file descriptor
+ * @length: file length
+ * @flags: map flags
+ * @return: success is 0, failed is -1 
+ */
+void *mmap(int fd, size_t length, int flags)
+{
+    return syscall3(void * , SYS_MMAP, fd, length, flags);
+}
 
 /**
  * munmap() - ummap memory range

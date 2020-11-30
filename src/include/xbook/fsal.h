@@ -51,6 +51,7 @@ typedef struct {
     int (*access)(const char *, int);
     int (*incref)(int);
     int (*decref)(int);
+    void *(*mmap)(int, size_t, int flags);
     void *extention;
 } fsal_t;
 
