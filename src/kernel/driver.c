@@ -189,6 +189,8 @@ int driver_object_create(driver_func_t func)
         mem_free(drvobj);
         return -1;
     }
+    pr_info("enter driver %s success!\n", drvobj->name.text);
+
     unsigned long flags;        
     spin_lock_irqsave(&driver_lock, flags);
     ASSERT(!list_find(&drvobj->list, &driver_list_head));

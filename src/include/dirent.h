@@ -11,8 +11,6 @@
 #define DE_DIR         0x10     /* dir */
 #define DE_ARCHIVE     0x20     /* archive */
 
-typedef long ssize_t;
-
 typedef int dir_t;
 
 typedef struct dirent {

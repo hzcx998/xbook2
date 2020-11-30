@@ -377,7 +377,7 @@ void task_start_user()
     sched_unit_t *su = sched_get_cur_unit();
 	unsigned long flags;
     interrupt_save_and_disable(flags);
-    su->idle->static_priority = su->idle->priority = TASK_PRIORITY_SYS;
+    su->idle->static_priority = su->idle->priority = TASK_PRIORITY_LOW;
     interrupt_restore_state(flags);
     schedule();
     interrupt_enable();

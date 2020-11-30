@@ -23,7 +23,7 @@
 #include <stdio.h>
 
 /* 配置开始 */
-/* #define DEBUG_AHCI */
+// #define DEBUG_AHCI
 
 /* 配置结束 */
 
@@ -718,9 +718,12 @@ int ahci_device_identify_ahci(struct hba_memory *abar,
 	memcpy(&dev->identify, (void *)dma.v, sizeof(struct ata_identify));
 	dma_free_buffer(&dma);
     #ifdef DEBUG_AHCI
-	printk(KERN_INFO "[ahci]: device %d: num sectors=%d: %x, %x\n", dev->idx,
+	printk(KERN_INFO "[ahci]: device %d: num sectors=%d: %x\n", dev->idx,
 			dev->identify.lba48_addressable_sectors, dev->identify.ss_2);
 	#endif
+
+    if (!dev->identify.lba48_addressable_sectors)
+        return 0;
     return 1;
 }
 
@@ -769,7 +772,7 @@ int ahci_initialize_device(struct hba_memory *abar, device_extension_t *dev)
 	/* power on, spin up */
 	port->command |= (2 | 4);
 	ahci_flush_commands(port);
-	mdelay(1);
+	mdelay(2);
 	/* initialize state */
 	port->interrupt_status = ~0; /* clear pending interrupts */
 	port->interrupt_enable = AHCI_DEFAULT_INT; /* we want some interrupts */
@@ -958,13 +961,16 @@ int ahci_rw_multiple_do(int rw, int min, uint64_t blk, unsigned char *out_buffer
 	int d = min;
 	device_extension_t *dev = ports[d];
 	uint64_t end_blk = dev->identify.lba48_addressable_sectors;
-	if(blk >= end_blk)
-		return 0;
+	if(blk >= end_blk) {
+        pr_err("ahci: lba %d out of range %d\n", blk, end_blk);
+        return 0;
+    }
+		
 	if((blk+count) > end_blk)
 		count = end_blk - blk;
 	if(!count)
 		return 0;
-	int num_pages = ((ATA_SECTOR_SIZE * (count-1)) / PAGE_SIZE) + 1;
+    int num_pages = ((ATA_SECTOR_SIZE * (count-1)) / PAGE_SIZE) + 1;
 	ASSERT(length <= (unsigned)num_pages * 0x1000);
 	struct dma_region dma;
 	dma.p.size = 0x1000 * num_pages;
@@ -1081,7 +1087,6 @@ iostatus_t ahci_read(device_object_t *device, io_request_t *ioreq)
     }
     len = ahci_read_sector(device->device_extension, off,
         ioreq->system_buffer, sectors);
-    
     if (!len) { /* 执行失败 */
         status = IO_FAILED;
         len = 0;

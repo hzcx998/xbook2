@@ -164,9 +164,9 @@ static iostatus_t ramdisk_enter(driver_object_t *driver)
     extension->rwoffset = 0;
     if (extension->buffer == NULL) {
         status = IO_FAILED;
+    } else {
+        memset(extension->buffer, 0, extension->buflen);
     }
-    memset(extension->buffer, 0, extension->buflen);
-    
     return status;
 }
 

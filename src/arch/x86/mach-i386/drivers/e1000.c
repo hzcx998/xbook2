@@ -1765,4 +1765,4 @@ static __init void e1000_driver_entry(void)
     }
 }
 
-driver_initcall(e1000_driver_entry);
+// driver_initcall(e1000_driver_entry);

@@ -457,7 +457,6 @@ static iostatus_t console_enter(driver_object_t *driver)
             devext->y = 0;
         }
     }
-
     return IO_SUCCESS;
 }
 

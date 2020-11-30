@@ -231,7 +231,6 @@ static iostatus_t cpu_driver_enter(driver_object_t *driver)
 
     /* 打印CPU信息 */
     cpu_driver_print(extension);
-
     return status;
 }
 

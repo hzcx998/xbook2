@@ -10,7 +10,7 @@
 
 scheduler_t scheduler;
 
-const uint8_t sched_priority_levels[TASK_PRIO_LEVEL_MAX] = {8, 4, 6, 8, 10, 13, 24};
+const uint8_t sched_priority_levels[TASK_PRIO_LEVEL_MAX] = {1, 0, 1, 2, 3};
 
 /*
 TODO：优化动态优先级：当一个优先级高的线程长期获得优运行时，可以适当调低优先级。
@@ -62,15 +62,12 @@ task_t *get_next_task(sched_unit_t *su)
         task->state = TASK_READY;
     case TASK_READY:
         // Non-real-time tasks are dynamically prioritized    
-        #if 0
-        if (task->static_priority < TASK_PRIORITY_REALTIME) {
+        if (task->priority < TASK_PRIORITY_REALTIME && task->priority > TASK_PRIORITY_LOW) {
             task->priority--;
-            if ((task->priority < (task->static_priority - TASK_PRIORITY_TURN_DISTANCE)) || 
-                (task->priority < TASK_PRIORITY_LOW)) {
+            if ((task->priority <= TASK_PRIORITY_LOW)) {
                 task->priority = task->static_priority;
             }
         }
-        #endif
         sched_queue_add_tail(su, task);
     default:
         break;

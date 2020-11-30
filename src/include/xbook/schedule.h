@@ -8,28 +8,20 @@
 #include "debug.h"
 #include "schedule.h"
 
-/* 
-优先级位于0-31
-实时任务优先级不会动态变化。固定在16-31
-较低的任务有限级可以在1-15之间变化。
- */
 enum sched_priority_level {
     TASK_PRIO_LEVEL_UNKNOWN = 0,
     TASK_PRIO_LEVEL_LOW,
-    TASK_PRIO_LEVEL_BELOW_NORMAL,
     TASK_PRIO_LEVEL_NORMAL,
-    TASK_PRIO_LEVEL_ABOVE_NORMAL,
     TASK_PRIO_LEVEL_HIGH,
     TASK_PRIO_LEVEL_REALTIME,
     TASK_PRIO_LEVEL_MAX
 };
 
-#define TASK_PRIORITY_SYS       0
-#define TASK_PRIORITY_LOW       1
-#define TASK_PRIORITY_REALTIME  16
-#define TASK_PRIORITY_MAX       31
+#define TASK_PRIORITY_LOW       0
+#define TASK_PRIORITY_HIGH      2
+#define TASK_PRIORITY_REALTIME  3
+#define TASK_PRIORITY_MAX       TASK_PRIORITY_REALTIME
 #define TASK_PRIORITY_MAX_NR    (TASK_PRIORITY_MAX + 1)
-#define TASK_PRIORITY_TURN_DISTANCE   3
 
 typedef struct {
     spinlock_t lock;
