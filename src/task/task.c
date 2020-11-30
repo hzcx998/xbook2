@@ -66,7 +66,6 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->errno = 0;
     task->pthread = NULL;
     task->fileman = NULL;
-    task->gmsgpool = NULL;
     task->stack_magic = TASK_STACK_MAGIC;
 }
 

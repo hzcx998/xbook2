@@ -72,13 +72,6 @@ static int copy_file(task_t *child, task_t *parent)
     return fs_fd_copy(parent, child);
 }
 
-static int copy_gui(task_t *child, task_t *parent)
-{
-    if (parent->gmsgpool) {
-        child->gmsgpool = NULL;
-    }
-    return 0;
-}
 
 static int copy_pthread_desc(task_t *child, task_t *parent)
 {
@@ -106,14 +99,10 @@ static int copy_task(task_t *child, task_t *parent)
         goto rollback_vmm;
     if (copy_file(child, parent) < 0)
         goto rollback_pthread_desc;
-    if (copy_gui(child, parent) < 0)
-        goto rollback_file;
     if (copy_exception(child, parent) < 0)
-        goto rollback_gui;
+        goto rollback_file;
     task_stack_build_when_forking(child);
     return 0;
-rollback_gui:
-    // DO nothing
 rollback_file:
     fs_fd_exit(child);
 rollback_pthread_desc:
