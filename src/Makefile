@@ -9,7 +9,7 @@ endif
 ARCH		:= arch/x86
 
 X_ASFLAGS	+= -f elf -I $(ARCH)/include/
-X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -O3 -std=gnu99 -fno-strict-aliasing
+X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99 -fno-strict-aliasing
 X_INCDIRS	+= include/ $(ARCH)/include/ 
 # plugin include
 X_INCDIRS	+= plugin/net/lwip/include/ plugin/net/lwip/include/ipv4/
