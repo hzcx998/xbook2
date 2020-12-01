@@ -13,8 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#include <signal.h>
-#include <sys/exception.h>
+#include <signal.h>
 
 #include "lua.h"
 
@@ -54,9 +53,8 @@ static void lstop (lua_State *L, lua_Debug *ar) {
 ** this function only sets a hook that, when called, will stop the
 ** interpreter.
 */
-static void laction (unsigned int i) {
-  //signal(i, SIG_DFL); /* if another SIGINT happens, terminate process */
-  expcatch(i, NULL);
+static void laction (int i) {
+  signal(i, SIG_DFL); /* if another SIGINT happens, terminate process */
 
   lua_sethook(globalL, lstop, LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT, 1);
 }
@@ -126,7 +124,6 @@ static int msghandler (lua_State *L) {
   return 1;  /* return the traceback */
 }
 
-
 /*
 ** Interface to 'lua_pcall', which sets appropriate message function
 ** and C-signal handler. Used to run all chunks.
@@ -137,12 +134,10 @@ static int docall (lua_State *L, int narg, int nres) {
   lua_pushcfunction(L, msghandler);  /* push message handler */
   lua_insert(L, base);  /* put it under function and args */
   globalL = L;  /* to be available to 'laction' */
-  //signal(SIGINT, laction);  /* set C-signal handler */
-  expcatch(EXP_CODE_INT, laction);
+  signal(SIGINT, laction);  /* set C-signal handler */
 
   status = lua_pcall(L, narg, nres, base);
-  //signal(SIGINT, SIG_DFL); /* reset C-signal handler */
-  expcatch(EXP_CODE_INT, NULL);
+  signal(SIGINT, SIG_DFL); /* reset C-signal handler */
 
   lua_remove(L, base);  /* remove message handler from the stack */
   return status;

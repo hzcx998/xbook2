@@ -137,6 +137,16 @@ static inline void task_wakeup(task_t *task)
     }
 }
 
+static inline void task_detach(task_t *task)
+{
+    if (TASK_NOT_READY(task)) {
+        /* NOTICE: if in a waitlist, must del it. */
+        if (TASK_IN_WAITLIST(task)) {   
+            list_del_init(&task->list);
+        }
+    }
+}
+
 pid_t task_take_pid();
 void task_rollback_pid();
 void tasks_print();

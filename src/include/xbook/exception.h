@@ -5,6 +5,7 @@
 #include <types.h>
 #include <xbook/list.h>
 #include <xbook/spinlock.h>
+#include <xbook/waitqueue.h>
 
 enum exception_code {
     EXP_CODE_UNKNOWN = 0,
@@ -44,7 +45,7 @@ typedef struct {
 
 typedef struct {
 	char *ret_addr;                 /* 记录返回地址 */
-	unsigned long code;             /* 触发器 */
+	unsigned long code;             /* 异常号 */
     trap_frame_t trap_frame;        /* 保存原来的栈框 */
 	char ret_code[8];               /* 构建返回的系统调用代码 */
 } exception_frame_t;
@@ -54,6 +55,8 @@ typedef struct {
     list_t catch_list;
     uint32_t exception_number;
     uint32_t catch_number;
+    int in_user_mode;
+    wait_queue_t wakeup_queue;      /* 需要唤醒的任务的队列 */
     spinlock_t manager_lock;    // 管理器使用的锁
     uint32_t exception_block[EXCEPTION_SETS_SIZE];    // 异常的阻塞情况    
     uint32_t exception_catch[EXCEPTION_SETS_SIZE];    // 异常的捕捉情况    
@@ -71,6 +74,9 @@ bool exception_cause_exit(exception_manager_t *exception_manager);
 
 void exception_frame_build(uint32_t code, exception_handler_t handler, trap_frame_t *frame);
 int exception_return(trap_frame_t *frame);
+
+void exception_enable_block(exception_manager_t *exception_manager, uint32_t code);
+void exception_disable_block(exception_manager_t *exception_manager, uint32_t code);
 
 int sys_expsend(pid_t pid, uint32_t code);
 int sys_expcatch(uint32_t code, exception_handler_t handler);

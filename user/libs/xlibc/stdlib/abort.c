@@ -1,8 +1,13 @@
 #include <stdlib.h>
-#include <sys/exception.h>
 #include <sys/proc.h>
+#include <signal.h>
+#include <stdio.h>
 
 void abort(void)
 {
-    expraise(EXP_CODE_ABORT);
+    signal(SIGABRT, SIG_UNBLOCK);
+    signal(SIGABRT, SIG_DFL);
+    fflush(NULL);
+    raise(SIGABRT);
+    exit(1);    /* shoult never here. */
 }

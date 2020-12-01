@@ -467,6 +467,7 @@ int page_do_fault(trap_frame_t *frame)
         printk(KERN_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
         printk(KERN_EMERG "page fault at %x.\n");
         trap_frame_dump(frame);
+        
         panic("halt...");
     }
     /* 如果故障地址位于内核中， */

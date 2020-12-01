@@ -188,13 +188,15 @@ void trap_frame_dump(trap_frame_t *frame)
 
 void exception_frame_build(uint32_t code, exception_handler_t handler, trap_frame_t *frame)
 {
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
     exception_frame_t *exp_frame = (exception_frame_t *)((frame->esp - sizeof(exception_frame_t)) & -8UL);
     exp_frame->code = code;
     memcpy(&exp_frame->trap_frame, frame, sizeof(trap_frame_t));
     exp_frame->ret_addr = exp_frame->ret_code;
 
     /* 构建返回代码，系统调用封装,模拟系统调用来实现从用户态返回到内核态
-    mov eax, SYS_TRIGRET
+    mov eax, SYS_EXPRET
     int 0x40 */
     exp_frame->ret_code[0] = 0xb8;
     *(uint32_t *)(exp_frame->ret_code + 1) = SYS_EXPRET;    /* 把系统调用号填进去 */
@@ -205,6 +207,7 @@ void exception_frame_build(uint32_t code, exception_handler_t handler, trap_fram
     frame->ds = frame->es = frame->fs = frame->gs = USER_DATA_SEL;
     frame->ss = USER_STACK_SEL;
     frame->cs = USER_CODE_SEL;
+    interrupt_restore_state(flags);
 }
 
 int exception_return(trap_frame_t *frame)
@@ -213,6 +216,7 @@ int exception_return(trap_frame_t *frame)
     exception_manager_t *exception_manager = &task_current->exception_manager; 
     unsigned long irq_flags;
     spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
+    exception_manager->in_user_mode = 0;
     memcpy(frame, &exp_frame->trap_frame, sizeof(trap_frame_t));
     spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
     return frame->eax;

@@ -11,7 +11,7 @@ void exception_manager_init(exception_manager_t *exception_manager)
     
     exception_manager->exception_number = 0;
     exception_manager->catch_number = 0;
-    
+    exception_manager->in_user_mode = 0;
     int i;
     for (i = 0; i < EXCEPTION_SETS_SIZE; i++) {
         exception_manager->exception_block[i] = 0;
@@ -28,7 +28,7 @@ void exception_manager_exit(exception_manager_t *exception_manager)
         mem_free(exp);
     }
     exception_manager->exception_number = 0;
-
+    exception_manager->in_user_mode = 0;
     list_for_each_owner_safe (exp, tmp, &exception_manager->catch_list, list) {
         mem_free(exp);
     }
@@ -51,11 +51,7 @@ static bool exception_was_blocked(exception_manager_t *exception_manager, uint32
 {
     if (code == EXP_CODE_FINALHIT || code == EXP_CODE_STOP)
         return false;
-
-    unsigned long flags;
-    spin_lock_irqsave(&exception_manager->manager_lock, flags);
     bool blocked = exception_manager->exception_block[code / 32] & (1 << (code % 32));
-    spin_unlock_irqrestore(&exception_manager->manager_lock, flags);
     return blocked;
 }
 
@@ -63,10 +59,7 @@ static bool exception_can_catch(exception_manager_t *exception_manager, uint32_t
 {
     if (code == EXP_CODE_FINALHIT || code == EXP_CODE_STOP)
         return false;
-    unsigned long flags;
-    spin_lock_irqsave(&exception_manager->manager_lock, flags);
     bool catch = exception_manager->exception_catch[code / 32] & (1 << (code % 32));
-    spin_unlock_irqrestore(&exception_manager->manager_lock, flags);
     return catch;
 }
 
@@ -92,7 +85,7 @@ static int exception_disable_catch(exception_manager_t *exception_manager, uint3
     return 0;
 }
 
-static void exception_enable_block(exception_manager_t *exception_manager, uint32_t code)
+void exception_enable_block(exception_manager_t *exception_manager, uint32_t code)
 {
     if (code == EXP_CODE_FINALHIT || code == EXP_CODE_STOP)
         return;
@@ -102,7 +95,7 @@ static void exception_enable_block(exception_manager_t *exception_manager, uint3
     spin_unlock_irqrestore(&exception_manager->manager_lock, flags);
 }
 
-static void exception_disable_block(exception_manager_t *exception_manager, uint32_t code)
+void exception_disable_block(exception_manager_t *exception_manager, uint32_t code)
 {
     if (code == EXP_CODE_FINALHIT || code == EXP_CODE_STOP)
         return;
@@ -171,6 +164,9 @@ bool exception_filter(task_t *target, uint32_t code)
     return false;
 }
 
+/**
+ * 只发送异常到队列上，但是不激活该异常。
+ */
 int exception_send(pid_t pid, uint32_t code)
 {
     if (code >= EXP_CODE_MAX_NR || pid < 0)
@@ -179,34 +175,35 @@ int exception_send(pid_t pid, uint32_t code)
     if (!target)
         return -ESRCH;
     exception_manager_t *exception_manager = &target->exception_manager;
-    if (exception_was_blocked(exception_manager, code)) {
-        return 0;
-    }
     unsigned long irq_flags;
+    spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
+    if (exception_was_blocked(exception_manager, code) || exception_manager->in_user_mode) {
+        spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
+        return -EPERM;
+    }
     if (exception_can_catch(exception_manager, code)) {
-        spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
         exception_t *exp = exception_create(code, task_get_pid(task_current), 0);
         if (!exp) {
             spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
             return -ENOMEM; 
         }
         exception_add_catch(exception_manager, exp);
+        spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         task_wakeup(target);
+        return 0;
+    }
+    if (exception_filter(target, code)) {
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         return 0;
     }
-
-    if (exception_filter(target, code))
-        return 0;
-    spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
     exception_t *exp = exception_create(code, task_get_pid(task_current), 0);
     if (!exp) {
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         return -ENOMEM; 
     }
     exception_add_normal(exception_manager, exp);
-    task_wakeup(target);
     spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
+    task_wakeup(target);
     return 0;
 }
 
@@ -298,9 +295,11 @@ static int exception_handle(exception_manager_t *exception_manager, exception_t 
 {
     exception_handler_t handler = exception_manager->handlers[exp->code];
     if (handler) {
-        exception_frame_build(exp->code, handler, frame);
-        exception_manager->handlers[exp->code] = NULL;
         exception_disable_catch(exception_manager, exp->code);
+        exception_frame_build(exp->code, handler, frame);
+        exception_manager->in_user_mode = 1;
+        exception_manager->handlers[exp->code] = NULL;
+        
     }
     return 0;
 }
@@ -310,7 +309,7 @@ int exception_check_user(trap_frame_t *frame)
     exception_manager_t *exception_manager = &task_current->exception_manager;
     unsigned long irq_flags;
     spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
-    if (!exception_manager->catch_number) {
+    if (!exception_manager->catch_number || exception_manager->in_user_mode) { /* 如果已经在用户态就不能再处理用户态的异常，避免嵌套 */
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         return -1;
     }
