@@ -39,13 +39,10 @@ int fs_fd_exit(task_t *task)
 {
     if (!task->fileman)
         return -1;
-    unsigned long irq_flags;
-    spin_lock_irqsave(&task->fileman->lock, irq_flags);
     /* auto exit */
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++)
         sys_close(i);
-    spin_unlock_irqrestore(&task->fileman->lock, irq_flags);
     mem_free(task->fileman);
     task->fileman = NULL;
     return 0;
