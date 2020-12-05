@@ -494,6 +494,7 @@ int page_do_fault(trap_frame_t *frame)
                 (addr + 32 >= frame->esp)) {
                 do_expand_stack(space, addr);
             } else {
+                pr_err("page addr %x\n", addr);
                 printk(KERN_ERR "page fauilt: user pid=%d name=%s user task stack out of range!\n", cur->pid, cur->name);
                 trap_frame_dump(frame);
                 exception_force_self(EXP_CODE_STKFLT);

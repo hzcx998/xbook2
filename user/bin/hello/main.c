@@ -12,6 +12,10 @@ void exit_func2(void)
 }
 
 int main(int argc, char *argv[]) {
+    int i; for (i = 0; i < argc; i++) {
+        printf("arg:%s\n", argv[i]);
+    }
+
     printf("hello, world!\n");
     atexit(exit_func1);
     atexit(exit_func2);

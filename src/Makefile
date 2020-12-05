@@ -13,7 +13,7 @@ X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -s
 X_INCDIRS	+= include/ $(ARCH)/include/ 
 # plugin include
 X_INCDIRS	+= plugin/net/lwip/include/ plugin/net/lwip/include/ipv4/
-X_LDFLAGS	+= -no-pie -e kernel_start -Ttext 0x80100000 -s
+X_LDFLAGS	+= -no-pie -e kernel_start -Ttext 0x80100000
 
 AS			:=	nasm
 LD			:=  ld -m elf_i386

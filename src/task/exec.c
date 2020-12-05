@@ -32,7 +32,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     interrupt_restore_state(flags);
     int fd = kfile_open(pathname, O_RDONLY);
     if (fd < 0) {
-        return -1;
+        goto free_task_arg;
     }
     struct stat sbuf;
     if (kfile_stat(pathname, &sbuf) < 0) {
@@ -65,16 +65,25 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     }
     #else   /* CONFIG_64BIT 64位 elf 头解析 */
     #endif
-    char *tmp_arg = mem_alloc(PAGE_SIZE);
-    if (tmp_arg == NULL) {
-        printk(KERN_ERR "sys_exec_file: it is not a elf format file!\n", name);
-        goto free_tmp_fd;
-    }
+
     char **new_envp = NULL;
-    unsigned long arg_bottom;
-    proc_build_arg((unsigned long) tmp_arg + PAGE_SIZE, &arg_bottom, (char **) envp, &new_envp);
     char **new_argv = NULL;
-    proc_build_arg(arg_bottom, NULL, (char **) argv, &new_argv);
+    char *tmp_arg = NULL;
+    /* 如果任务中带有参数，就不用重新构建新参数 */
+    if (cur->vmm->argbuf) {
+        new_envp = cur->vmm->envp;
+        new_argv = cur->vmm->argv;
+    } else {
+        tmp_arg = mem_alloc(PAGE_SIZE);
+        if (tmp_arg == NULL) {
+            printk(KERN_ERR "sys_exec_file: task %s malloc for tmp arg failed!\n", name);
+            goto free_tmp_fd;
+        }
+        unsigned long arg_bottom;
+        proc_build_arg((unsigned long) tmp_arg + PAGE_SIZE, &arg_bottom, (char **) envp, &new_envp);
+        proc_build_arg(arg_bottom, NULL, (char **) argv, &new_argv); 
+    }
+
     char tmp_name[MAX_TASK_NAMELEN] = {0};
     strcpy(tmp_name, name);
     vmm_unmap_the_mapping_space(cur->vmm);
@@ -89,7 +98,12 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     if(process_frame_init(cur, frame, new_argv, new_envp) < 0){
         goto free_loaded_image;
     }
-    mem_free(tmp_arg);
+    if (cur->vmm->argbuf) {
+        vmm_debuild_argbug(cur->vmm);
+    } else {
+        if (tmp_arg)
+            mem_free(tmp_arg);
+    }
     kfile_close(fd);
     proc_map_space_init(cur);
     pthread_desc_init(cur->pthread);
@@ -103,9 +117,12 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 free_loaded_image:
     sys_exit(-1);
 free_tmp_arg:
-    mem_free(tmp_arg);
+    if (tmp_arg)
+        mem_free(tmp_arg);
 free_tmp_fd:
     kfile_close(fd);
+free_task_arg:
+    vmm_debuild_argbug(cur->vmm);
     return -1;   
 }
 

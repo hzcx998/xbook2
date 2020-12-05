@@ -70,6 +70,32 @@ int fs_fd_copy(task_t *src, task_t *dest)
     return 0;
 }
 
+int fs_fd_copy_only(task_t *src, task_t *dest)
+{
+    if (!src || !dest)
+        return -1;
+    if (!src->fileman || !dest->fileman) {
+        return -1;
+    }
+    unsigned long irq_flags;
+    spin_lock_irqsave(&dest->fileman->lock, irq_flags);
+    memcpy(dest->fileman->cwd, src->fileman->cwd, MAX_PATH);
+    /* only copy fd [0-2]  */
+    int i; for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
+        if (i >= 3)
+            break;
+        if (src->fileman->fds[i].flags != 0) {
+            dest->fileman->fds[i].handle = src->fileman->fds[i].handle;
+            dest->fileman->fds[i].flags = src->fileman->fds[i].flags;
+            dest->fileman->fds[i].offset = src->fileman->fds[i].offset;
+            dest->fileman->fds[i].fsal = src->fileman->fds[i].fsal;
+            fsif_incref(i);
+        }
+    }
+    spin_unlock_irqrestore(&dest->fileman->lock, irq_flags);
+    return 0;
+}
+
 /**
  * fs_fd_reinit - 重新初始化只保留前3个fd
  */

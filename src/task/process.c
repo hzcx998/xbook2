@@ -5,14 +5,19 @@
 #include <string.h>
 #include <math.h>
 #include <xbook/memspace.h>
+#include <xbook/vmm.h>
 #include <string.h>
 #include <xbook/pthread.h>
 #include <xbook/schedule.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
 #include <sys/pthread.h>
+#include <xbook/safety.h>
 #include <xbook/fd.h>
 #include <unistd.h>
+#include <stddef.h>
+#include <errno.h>
+
 
 static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz,
     unsigned long mem_sz, unsigned long vaddr)
@@ -221,13 +226,6 @@ void proc_trap_frame_init(task_t *task)
     user_frame_init(frame);
 }
 
-void proc_entry(void* arg)
-{
-    const char **argv = (const char **) arg;
-    sys_execve(argv[0], argv, NULL);
-    panic("proc: start first process %s failed!\n", argv[0]);
-}
-
 int proc_deal_zombie_child(task_t *parent)
 {
     int zombies = 0;
@@ -277,28 +275,106 @@ void proc_close_other_threads(task_t *thread)
     }
 }
 
-task_t *user_process_start(char *name, char **argv)
+void proc_entry(void* arg)
 {
+    const char *pathname = (const char *) arg;
+    task_t *cur = task_current;
+    sys_execve(pathname, (const char **)cur->vmm->argv, (const char **)cur->vmm->envp);
+    /* rease proc resource */
+    proc_release(cur);
+    /* thread exit. */
+    kern_thread_exit(-1);
+    panic("proc: start INIT process %s failed!\n", pathname);
+}
+
+/**
+ * 创建一个进程
+ * argv: 参数，argv[0]必须指定为文件路径
+ * envp: 环境变量数组
+ * flags: 进程标志，PROC_CREATE_STOPPED，表示创建后进程不立即执行，需要通过process_resume唤醒
+ */
+task_t *process_create(char **argv, char **envp, uint32_t flags)
+{
+    if (!argv || !argv[0])
+        return NULL;
     task_t *task = (task_t *) mem_alloc(TASK_KERN_STACK_SIZE);
     if (!task)
         return NULL;
-    task_init(task, name, TASK_PRIO_LEVEL_NORMAL);
-    task->pid = USER_INIT_PROC_ID;
-    task->tgid = task->pid;
-    if (proc_vmm_init(task)) {
-        mem_free(task);
-        return NULL;
+    task_t *parent = task_current;
+    task_init(task, argv[0], TASK_PRIO_LEVEL_NORMAL);
+    if (flags & PROC_CREATE_INIT) {
+        task->pid = USER_INIT_PROC_ID;
+        task->tgid = task->pid;
+        parent = NULL;
+    } else {
+        task->parent_pid = parent->pid;
     }
+    /* 进程执行前必须初始化文件描述符，内存管理，参数缓冲区 */
     if (fs_fd_init(task) < 0) {
-        proc_vmm_exit(task);
         mem_free(task);
         return NULL;
     }
-    task_stack_build(task, proc_entry, argv);
-    unsigned long flags;
-    interrupt_save_and_disable(flags);
+    /* 需要继承父进程的部分文件描述符 */
+    fs_fd_copy_only(parent, task);
+
+    if (proc_vmm_init(task)) {
+        fs_fd_exit(task);
+        mem_free(task);
+        return NULL;
+    }
+    if (vmm_build_argbug(task->vmm, argv, envp) < 0) {
+        printk(KERN_ERR "process_create: pathname %s build arg buf failed !\n", argv[0]);
+        proc_vmm_exit(task);
+        fs_fd_exit(task);
+        mem_free(task);
+        return NULL;
+    }
+    /* argbuf[0-255] is path name */
+    task_stack_build(task, proc_entry, task->vmm->argbuf);
+    memcpy(task->vmm->argbuf, argv[0], min(MAX_PATH, strlen(argv[0])));
+
+    unsigned long irqflags;
+    interrupt_save_and_disable(irqflags);
     task_add_to_global_list(task);
-    sched_queue_add_tail(sched_get_cur_unit(), task);
-    interrupt_restore_state(flags);    
+    
+    if (flags & PROC_CREATE_STOP) {    /* 阻塞，需要等待唤醒 */
+        task->state = TASK_STOPPED;
+    } else {    /* 进入就绪队列执行 */
+        sched_queue_add_tail(sched_get_cur_unit(), task);
+    }
+    interrupt_restore_state(irqflags);    
     return task;
+}
+
+int sys_create_process(char **argv, char **envp, uint32_t flags)
+{
+    if (!argv)
+        return -EINVAL;
+    if (!argv[0])   // argv[0] -> pathname
+        return -EINVAL;
+    if (mem_copy_from_user(NULL, argv[0], MAX_PATH) < 0)
+        return -EFAULT;
+    task_t *task = process_create(argv, envp, flags & ~PROC_CREATE_INIT);
+    if (task == NULL)
+        return -EPERM;
+    return task->pid;
+}
+
+int sys_resume_process(pid_t pid)
+{
+    task_t *child = task_find_by_pid(pid);
+    if (!child)
+        return -EPERM;
+    task_t *cur = task_current;
+    if (child->parent_pid != cur->pid) {
+        pr_err("run process: task %d not the parent of task %d, no permission do this operation!\n",
+            cur->pid, child->pid);
+        return -EPERM;
+    }
+    if (child->state != TASK_STOPPED) {
+        pr_err("resume process: process %d not stopped!\n", child->pid);
+        return -EBUSY;
+    }
+    task_wakeup(child);   
+    return 0;
 }

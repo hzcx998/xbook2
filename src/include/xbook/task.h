@@ -70,7 +70,7 @@ typedef struct {
     alarm_t alarm;                      
     long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
-    file_man_t *fileman;                
+    file_man_t *fileman;      
     unsigned int stack_magic;
 } task_t;
 

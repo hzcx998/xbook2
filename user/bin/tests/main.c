@@ -23,7 +23,8 @@ int main(int argc, char *argv[])
     // file_test2(argc, argv);
     //backtrace_test(argc, argv);
     //video_test(argc, argv);
-    signal_test(argc, argv);
+    //signal_test(argc, argv);
+    proc_test(argc, argv);
     
     return 0;
 }

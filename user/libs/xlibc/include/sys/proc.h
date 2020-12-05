@@ -9,6 +9,8 @@ extern "C" {
 
 #define PROC_NAME_LEN 32
 
+#define PROC_CREATE_STOP   0X01            /* 创建后停止运行，不执行 */
+
 /* 任务状态 */
 typedef struct _tstate {
     pid_t ts_pid;          /* 进程id */
@@ -33,6 +35,8 @@ unsigned long sleep(unsigned long second);
 void sched_yeild();
 int tstate(tstate_t *ts, int *idx);
 int getver(char *buf, int len);
+int create_process(char *const argv[], char *const envp[], unsigned int flags);
+int resume_process(pid_t pid);
 
 #ifdef __cplusplus
 }

@@ -75,9 +75,9 @@ void display(int year, int month)
     weekFirst = getWeek(year, month, 1);
     printf("      %10s %d  \n", month_name[month - 1], year);
     printf("  Su  Mo  Tu  We  Th  Fr  Sa\n");
-    for(i=0; i<weekFirst; i++) printf("    ");
-    for(i=1; i<=monthDays; i++)
-    {
+    for(i=0; i<weekFirst; i++) 
+        printf("    ");
+    for(i=1; i<=monthDays; i++) {
         printf("%4d", i);
         weekFirst++;
         if(weekFirst>=7) {printf("\n"); weekFirst=0;}
@@ -87,9 +87,12 @@ void display(int year, int month)
 
 int main(int argc, char *argv[])
 {
+    if (argc < 1) {
+        printf("cal: too few args\n");
+        return -1;
+    }
     int year, month;
     walltime_t wt;
-
     /* 解析参数 */
     if (argc == 1) {    /* 只有一个参数，就直接显示当前时间的日历 */
         walltime(&wt);

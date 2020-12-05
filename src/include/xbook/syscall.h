@@ -122,6 +122,8 @@ enum syscall_num {
     SYS_IOCTLSOCKET,
     SYS_SELECT,
     SYS_MMAP,
+    SYS_CREATPROCESS,
+    SYS_RESUMEPROCESS,
     SYSCALL_NR,
 };
 

@@ -117,6 +117,8 @@ void syscall_init()
     syscalls[SYS_ACNTNAME] = sys_account_name;
     syscalls[SYS_ACNTVERIFY] = sys_account_verify;
     syscalls[SYS_MMAP] = sys_mmap;
+    syscalls[SYS_CREATPROCESS] = sys_create_process;
+    syscalls[SYS_RESUMEPROCESS] = sys_resume_process;
     plugin_syscall_init();
 }
 

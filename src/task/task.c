@@ -143,8 +143,12 @@ void kern_thread_exit(int status)
 {
     unsigned long flags;
     interrupt_save_and_disable(flags);
-
     task_t *cur = task_current;
+    if (cur->pid == USER_INIT_PROC_ID) {
+        pr_dbg("init proc can't exit!\n");
+        interrupt_restore_state(flags);
+        return;
+    }
     cur->exit_status = status;
     task_do_cancel(cur);
     cur->parent_pid = USER_INIT_PROC_ID;
@@ -369,7 +373,7 @@ static char *init_argv[2] = {INIT_SBIN_PATH, 0};
 void task_start_user()
 {
     printk(KERN_DEBUG "[task]: start user process.\n");
-    task_t *proc = user_process_start(init_argv[0], init_argv);
+    task_t *proc = process_create(init_argv, NULL, PROC_CREATE_INIT);
     if (proc == NULL)
         panic("kernel start process failed! please check initsrv!\n");
     

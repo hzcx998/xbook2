@@ -5,6 +5,7 @@
 #include <xbook/memspace.h>
 #include <xbook/sharemem.h>
 #include <xbook/safety.h>
+#include <xbook/process.h>
 #include <string.h>
 #include <errno.h>
 
@@ -15,6 +16,9 @@ void vmm_init(vmm_t *vmm)
         panic(KERN_EMERG "task_init_vmm: mem_alloc for page_storege failed!\n");
     }
     vmm->mem_space_head = NULL;
+    vmm->argv = NULL;
+    vmm->envp = NULL;
+    vmm->argbuf = NULL;
 }
 
 void vmm_free(vmm_t *vmm)
@@ -24,6 +28,7 @@ void vmm_free(vmm_t *vmm)
             page_free(kern_vir_addr2phy_addr(vmm->page_storage));
             vmm->page_storage = NULL;
         }
+        vmm_debuild_argbug(vmm);
         mem_free(vmm);
     }
 }
@@ -123,6 +128,7 @@ int vmm_release_space(vmm_t *vmm)
         space = space->next;
         mem_space_free(p);
     }
+    vmm_debuild_argbug(vmm);
     vmm->mem_space_head = NULL;
     vmm->code_start = 0;
     vmm->code_end = 0;
@@ -200,4 +206,29 @@ int vmm_exit_when_fork_failed(vmm_t *child_vmm, vmm_t *parent_vmm)
     }
     vmm_free(child_vmm);    // free vmm, not used after this func.
     return 0;
+}
+
+int vmm_build_argbug(vmm_t *vmm, char **argv, char **envp)
+{
+    char *tmp_arg = mem_alloc(PAGE_SIZE);
+    if (!tmp_arg) {
+        return -1;
+    }
+    memset(tmp_arg, 0, PAGE_SIZE); 
+    /* 构建参数缓冲区 */
+    unsigned long arg_bottom;
+    proc_build_arg((unsigned long) tmp_arg + PAGE_SIZE, &arg_bottom, (char **) envp, &vmm->envp);
+    proc_build_arg(arg_bottom, NULL, (char **) argv, &vmm->argv);
+    vmm->argbuf = tmp_arg;
+    return 0;
+}
+
+void vmm_debuild_argbug(vmm_t *vmm)
+{
+    if (vmm->argbuf) {
+        mem_free(vmm->argbuf);
+        vmm->argbuf = NULL;
+        vmm->argv = NULL;
+        vmm->envp = NULL;
+    }
 }

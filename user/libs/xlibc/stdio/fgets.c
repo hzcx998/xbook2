@@ -22,7 +22,14 @@ char * fgets(char * s, int n, FILE * f)
 			return NULL;
 
 		ret = s;
-		if(*p++ == '\n')
+		/* add \b */
+        if(*p == '\b') {
+            *p = '\0';
+            if (p > s) {
+                --p;
+                *p = '\0';
+            }
+        } else if(*p++ == '\n')
 			break;
 	}
 

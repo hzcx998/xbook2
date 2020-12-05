@@ -116,3 +116,13 @@ int getver(char *buf, int len)
         return -1;
     return syscall2(int, SYS_GETVER, buf, len);
 }
+
+int create_process(char *const argv[], char *const envp[], unsigned int flags)
+{
+    return syscall3(int, SYS_CREATPROCESS, argv, envp, flags);
+}
+
+int resume_process(pid_t pid)
+{
+    return syscall1(int, SYS_RESUMEPROCESS, pid);
+}

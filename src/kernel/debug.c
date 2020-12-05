@@ -50,6 +50,8 @@ int printk_level = DEFAULT_LOG_LEVEL;
 
 int print_gui_console = 0;
 
+DEFINE_SPIN_LOCK_UNLOCKED(print_spin_lock);
+
 void panic(const char *fmt, ...)
 {
 	char buf[256];
@@ -97,6 +99,7 @@ void debug_putstr(char *str, int count)
 
 int printk(const char *fmt, ...)
 {
+    spin_lock(&print_spin_lock);
     int i;
 	char buf[256] = {0,};
 	va_list arg = (va_list)((char*)(&fmt) + 4); /*4是参数fmt所占堆栈中的大小*/
@@ -124,7 +127,8 @@ int printk(const char *fmt, ...)
             debug_putstr(DEBUG_NONE_COLOR, 4);    
         }
     }
-	return i;
+	spin_unlock(&print_spin_lock);
+    return i;
 }
 
 void log_dump_value(unsigned long val)

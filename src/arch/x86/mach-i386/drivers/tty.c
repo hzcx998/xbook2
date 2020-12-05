@@ -258,7 +258,7 @@ iostatus_t tty_devctl(device_object_t *device, io_request_t *ioreq)
     case TTYIO_VISITOR:   /* 设置可以访问键盘的tty */
         tty_set_visitor(device, ioreq->parame.devctl.arg);
     case TTYIO_HOLDER:
-        extension->hold_pid = task_current->pid;
+        extension->hold_pid = *(unsigned long *) ioreq->parame.devctl.arg;
         break;
     case TTYIO_DETACH:
         extension->public->detach_kbd = 1;
