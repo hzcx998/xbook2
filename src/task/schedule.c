@@ -98,10 +98,10 @@ void schedule()
 void sched_print_queue(sched_unit_t *su)
 {
     if (su == NULL) {
-        printk(KERN_ERR "[sched]: unit null!\n");
+        kprint(PRINT_ERR "[sched]: unit null!\n");
         return;
     }
-    printk(KERN_INFO "[sched]: queue list:\n");
+    kprint(PRINT_INFO "[sched]: queue list:\n");
     sched_queue_t *queue;
     task_t *task;
     int i; 
@@ -110,11 +110,11 @@ void sched_print_queue(sched_unit_t *su)
     for (i = 0; i < TASK_PRIORITY_MAX_NR; i++) {
         queue = &su->priority_queue[i];
         if (queue->length > 0) {
-            printk(KERN_NOTICE "qeuue prio: %d\n", queue->priority);
+            kprint(PRINT_NOTICE "qeuue prio: %d\n", queue->priority);
             list_for_each_owner (task, &queue->list, list) {
-                printk(KERN_INFO "task=%s pid=%d prio=%d ->", task->name, task->pid, task->priority);
+                kprint(PRINT_INFO "task=%s pid=%d prio=%d ->", task->name, task->pid, task->priority);
             }
-            printk(KERN_NOTICE "\n");
+            kprint(PRINT_NOTICE "\n");
         }
     }
     spin_unlock_irqrestore(&scheduler.lock, flags);
@@ -135,7 +135,7 @@ void init_sched_unit(sched_unit_t *su, cpuid_t cpuid, unsigned long flags)
         queue = &su->priority_queue[i];
         queue->priority = i;
         queue->length = 0;
-        INIT_LIST_HEAD(&queue->list);
+        list_init(&queue->list);
         spinlock_init(&queue->lock);
     }
 }

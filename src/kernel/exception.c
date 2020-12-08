@@ -6,8 +6,8 @@
 
 void exception_manager_init(exception_manager_t *exception_manager)
 {
-    INIT_LIST_HEAD(&exception_manager->exception_list);
-    INIT_LIST_HEAD(&exception_manager->catch_list);
+    list_init(&exception_manager->exception_list);
+    list_init(&exception_manager->catch_list);
     
     exception_manager->exception_number = 0;
     exception_manager->catch_number = 0;
@@ -43,7 +43,7 @@ exception_t *exception_create(uint32_t code, pid_t source, uint32_t flags)
     exp->code = code;
     exp->source = source;
     exp->flags = flags;
-    INIT_LIST_HEAD(&exp->list);
+    list_init(&exp->list);
     return exp;
 }
 

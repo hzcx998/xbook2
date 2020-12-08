@@ -125,6 +125,6 @@ int process_frame_init(task_t *task, trap_frame_t *frame, char **argv, char **en
 
 void thread_kstack_dump(thread_stack_t *kstack)
 {
-    printk(KERN_INFO "eip:%x func:%x arg:%x ebp:%x ebx:%x esi:%x edi:%x\n", 
+    kprint(PRINT_INFO "eip:%x func:%x arg:%x ebp:%x ebx:%x esi:%x edi:%x\n", 
     kstack->eip, kstack->function, kstack->arg, kstack->ebp, kstack->ebx, kstack->esi, kstack->edi);
 }

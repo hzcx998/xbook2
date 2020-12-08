@@ -32,9 +32,9 @@ unsigned int phy_mem_get_size_from_hardware()
 				totalSize = ards->base_low+ards->length_low;
 			}
 		}
-		printk(KERN_DEBUG "phymem: ards: base %8x length %8x type:%d\n",ards->base_low, ards->length_low, ards->type);
+		kprint(PRINT_DEBUG "phymem: ards: base %8x length %8x type:%d\n",ards->base_low, ards->length_low, ards->type);
 		ards++;
 	}
-    printk(KERN_INFO "phymem: memory size total:%x byte, %d MB\n", totalSize, totalSize / (1024*1024));
+    kprint(PRINT_INFO "phymem: memory size total:%x byte, %d MB\n", totalSize, totalSize / (1024*1024));
 	return totalSize;
 }

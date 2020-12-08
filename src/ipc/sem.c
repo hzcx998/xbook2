@@ -86,13 +86,13 @@ int sem_get(char *name, int value, int semflg)
         if (sem) {
             if (craete_new)
                 goto err;
-            printk(KERN_DEBUG "sem_get: find a exist sem %d.\n", sem->id);
+            kprint(PRINT_DEBUG "sem_get: find a exist sem %d.\n", sem->id);
             retval = sem->id;
         } else {
             sem = sem_alloc(name, value);
             if (sem == NULL)
                 goto err;
-            printk(KERN_DEBUG "sem_get: alloc a new sem %d.\n", sem->id);
+            kprint(PRINT_DEBUG "sem_get: alloc a new sem %d.\n", sem->id);
             retval = sem->id;
         }
     }
@@ -108,7 +108,7 @@ int sem_put(int semid)
     sem = sem_find_by_id(semid);
     if (sem) {
 #if DEBUG_SEM == 1
-        printk(KERN_INFO "sem value %d.\n", atomic_get(&sem->sema.counter));
+        kprint(PRINT_INFO "sem value %d.\n", atomic_get(&sem->sema.counter));
 #endif
         sem_free(sem);
         semaphore_up(&sem_mutex);
@@ -181,7 +181,7 @@ void sem_init()
 {
     sem_table = (sem_t *)mem_alloc(sizeof(sem_t) * SEM_MAX_NR);
     if (sem_table == NULL)
-        panic(KERN_EMERG "sem_init: alloc mem for sem_table failed! :(\n");
+        panic(PRINT_EMERG "sem_init: alloc mem for sem_table failed! :(\n");
     int i;
     for (i = 0; i < SEM_MAX_NR; i++) {
         sem_table[i].id = 1 + i + i * 2;

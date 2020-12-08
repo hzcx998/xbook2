@@ -28,14 +28,14 @@ int fsal_list_dir(char* path)
             if (fsif.readdir(dir, &de) < 0)
                 break;
             if (de.d_attr & DE_DIR) {
-                printk("%s/%s\n", path, de.d_name);
+                kprint("%s/%s\n", path, de.d_name);
                 i = strlen(path);
                 sprintf(&path[i], "/%s", de.d_name);
                 if (fsal_list_dir(path) < 0)
                     break;
                 path[i] = 0;
             } else {
-                printk("%s/%s  size=%d\n", path, de.d_name, de.d_size);
+                kprint("%s/%s  size=%d\n", path, de.d_name, de.d_size);
             }
         }
         fsif.closedir(dir);
@@ -56,11 +56,11 @@ int fsal_disk_mount_init()
         if (fsif.mount(name, ROOT_DIR_PATH, "fat32", 0) < 0) {
             continue;
         }
-        printk("fsal : mount device %s to path %s success.\n", name, ROOT_DIR_PATH);
+        kprint("fsal : mount device %s to path %s success.\n", name, ROOT_DIR_PATH);
         break;
     }
     if (i >= 4) {
-        printk("fsal : mount path %s failed!\n", ROOT_DIR_PATH);
+        kprint("fsal : mount path %s failed!\n", ROOT_DIR_PATH);
         return -1;
     }
     return 0;
@@ -83,9 +83,9 @@ int fsal_init()
 
     /* 创建核心目录 */
     if (kfile_mkdir(HOME_DIR_PATH, 0) < 0)
-        pr_warning("fsal create dir %s failed or dir existed!\n", HOME_DIR_PATH);
+        warnprint("fsal create dir %s failed or dir existed!\n", HOME_DIR_PATH);
     if (kfile_mkdir(ACCOUNT_DIR_PATH, 0) < 0)
-        pr_warning("fsal create dir %s failed or dir existed!\n", ACCOUNT_DIR_PATH);
+        warnprint("fsal create dir %s failed or dir existed!\n", ACCOUNT_DIR_PATH);
         
     char path[MAX_PATH] = {0};
     strcpy(path, "/root");

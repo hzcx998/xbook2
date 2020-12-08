@@ -35,7 +35,7 @@ int kfile_read(int fd, void *buffer, size_t nbytes)
         return -1;
     file_fd_t *ffd = fd_local_to_file(fd);
     if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0) {
-        pr_err("[FS]: %s: fd %d err!\n", __func__, fd);
+        errprint("[FS]: %s: fd %d err!\n", __func__, fd);
         return -1;
     }
     if (!ffd->fsal->read)
@@ -49,7 +49,7 @@ int kfile_write(int fd, void *buffer, size_t nbytes)
         return -EINVAL;
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd)) {
-        pr_err("[FS]: %s: fd %d err! handle=%d flags=%x\n", __func__, 
+        errprint("[FS]: %s: fd %d err! handle=%d flags=%x\n", __func__, 
             fd, ffd->handle, ffd->flags);
         return -EINVAL;
     }

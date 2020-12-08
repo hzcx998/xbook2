@@ -109,8 +109,8 @@ void clean_screen(console_hardware_t *obj)
 #ifdef DEBUG_CONSOLE
 void dump_console(console_hardware_t *obj)
 {
-    printk(PART_TIP "----Console----\n");
-    printk(PART_TIP "origin:%d size:%d x:%d y:%d color:%x chrdev:%x\n",
+    kprint(PART_TIP "----Console----\n");
+    kprint(PART_TIP "origin:%d size:%d x:%d y:%d color:%x chrdev:%x\n",
         obj->originalAddr, obj->screenSize, obj->x, obj->x, obj->color, obj->chrdev);
 }
 #endif /* DEBUG_CONSOLE */

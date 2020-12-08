@@ -13,7 +13,7 @@ void vmm_init(vmm_t *vmm)
 {
     vmm->page_storage = kern_page_copy_storge();
     if (vmm->page_storage == NULL) {
-        panic(KERN_EMERG "task_init_vmm: mem_alloc for page_storege failed!\n");
+        panic(PRINT_EMERG "task_init_vmm: mem_alloc for page_storege failed!\n");
     }
     vmm->mem_space_head = NULL;
     vmm->argv = NULL;
@@ -51,11 +51,11 @@ int sys_mstate(mstate_t *ms)
 
 void vmm_dump(vmm_t *vmm)
 {
-    printk(KERN_DEBUG "code: start=%x, end=%x\n", vmm->code_start, vmm->code_end);
-    printk(KERN_DEBUG "data: start=%x, end=%x\n", vmm->data_start, vmm->data_end);
-    printk(KERN_DEBUG "heap: start=%x, end=%x\n", vmm->heap_start, vmm->heap_end);
-    printk(KERN_DEBUG "map: start=%x, end=%x\n", vmm->map_start, vmm->map_end);
-    printk(KERN_DEBUG "stack: start=%x, end=%x\n", vmm->stack_start, vmm->stack_end);
+    kprint(PRINT_DEBUG "code: start=%x, end=%x\n", vmm->code_start, vmm->code_end);
+    kprint(PRINT_DEBUG "data: start=%x, end=%x\n", vmm->data_start, vmm->data_end);
+    kprint(PRINT_DEBUG "heap: start=%x, end=%x\n", vmm->heap_start, vmm->heap_end);
+    kprint(PRINT_DEBUG "map: start=%x, end=%x\n", vmm->map_start, vmm->map_end);
+    kprint(PRINT_DEBUG "stack: start=%x, end=%x\n", vmm->stack_start, vmm->stack_end);
 }
 
 void vmm_active(vmm_t *vmm)
@@ -94,7 +94,7 @@ int vmm_copy_mem_space(vmm_t *child_vmm, vmm_t *parent_vmm)
     while (p != NULL) {
         mem_space_t *space = mem_space_alloc();
         if (space == NULL) {
-            printk(KERN_ERR "copy_vm_mem_space: mem_alloc for space failed!\n");
+            kprint(PRINT_ERR "copy_vm_mem_space: mem_alloc for space failed!\n");
             return -1;
         }
         *space = *p;
@@ -123,7 +123,7 @@ int vmm_release_space(vmm_t *vmm)
         p = space;
         if (space->flags & MEM_SPACE_MAP_SHARED) {
             if (vmm_dec_share_mem(space) < 0)
-                printk(KERN_ERR "vmm: release space on share map space [%x-%x]\n", space->start, space->end);
+                kprint(PRINT_ERR "vmm: release space on share map space [%x-%x]\n", space->start, space->end);
         }
         space = space->next;
         mem_space_free(p);
@@ -180,10 +180,10 @@ int vmm_exit(vmm_t *vmm)
         return -1;
     }
     if (vmm_unmap_space(vmm)) {
-        printk(KERN_WARING "vmm: exit when unmap space failed!\n");
+        kprint(PRINT_WARING "vmm: exit when unmap space failed!\n");
     }
     if (vmm_release_space(vmm)) {
-        printk(KERN_WARING "vmm: exit when release space failed!\n");
+        kprint(PRINT_WARING "vmm: exit when release space failed!\n");
     }
     return 0;
 }
@@ -198,11 +198,11 @@ int vmm_exit_when_fork_failed(vmm_t *child_vmm, vmm_t *parent_vmm)
     }
     vmm_active(child_vmm); // active child vmm for unmap space
     if (vmm_unmap_space(child_vmm)) {
-        printk(KERN_WARING "vmm: exit when unmap space failed!\n");
+        kprint(PRINT_WARING "vmm: exit when unmap space failed!\n");
     }
     vmm_active(parent_vmm); // active back to parent vmm 
     if (vmm_release_space(child_vmm)) {
-        printk(KERN_WARING "vmm: exit when release space failed!\n");
+        kprint(PRINT_WARING "vmm: exit when release space failed!\n");
     }
     vmm_free(child_vmm);    // free vmm, not used after this func.
     return 0;

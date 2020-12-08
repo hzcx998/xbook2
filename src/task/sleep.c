@@ -6,7 +6,7 @@
 static void task_sleep_timeout_handler(unsigned long arg)
 {
     task_t *task = (task_t *)arg;
-    list_del_init(&task->list);
+    //list_del_init(&task->list);
     task_wakeup(task);
 }
 
@@ -27,7 +27,7 @@ unsigned long task_sleep_by_ticks(clock_t ticks)
     if (timer->timeout > timer_ticks) {
         delta_ticks = timer->timeout - timer_ticks;
         timer_del(timer);
-        //printk("sleep intrrupted!\n");
+        //kprint("sleep intrrupted!\n");
     }
     interrupt_restore_state(flags);    
     return delta_ticks;

@@ -31,7 +31,7 @@ struct __FILE {
 
 int fflush(FILE * f);
 
-#define printf  printk
+#define printf  kprint
 
 #define STR_DEFAULT_LEN 256
 

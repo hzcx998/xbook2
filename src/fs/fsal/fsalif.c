@@ -38,12 +38,12 @@ static int fsalif_open(void *path, int flags)
         return -1;
     fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
-        printk(KERN_ERR "path %s not found!\n", path);
+        kprint(PRINT_ERR "path %s not found!\n", path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk(KERN_ERR "path %s fsal error!\n", path);
+        kprint(PRINT_ERR "path %s fsal error!\n", path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};
@@ -136,17 +136,17 @@ static int fsalif_opendir(char *path)
     
     fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
-        printk(KERN_ERR "path %s not found!\n", path);
+        kprint(PRINT_ERR "path %s not found!\n", path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk(KERN_ERR "path %s fsal error!\n", path);
+        kprint(PRINT_ERR "path %s fsal error!\n", path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0) {
-        printk(KERN_ERR "path %s switch error!\n", path);
+        kprint(PRINT_ERR "path %s switch error!\n", path);
         return -1;
     }
     return fsal->opendir(new_path);
@@ -181,12 +181,12 @@ static int fsalif_mkdir(char *path, mode_t mode)
     
     fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
-        printk(KERN_ERR "path %s not found!\n", path);
+        kprint(PRINT_ERR "path %s not found!\n", path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk(KERN_ERR "path %s fsal error!\n", path);
+        kprint(PRINT_ERR "path %s fsal error!\n", path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};
@@ -201,12 +201,12 @@ static int fsalif_unlink(char *path)
         return -1;
     fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
-        printk("path %s not found!\n", path);
+        kprint("path %s not found!\n", path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk("path %s fsal error!\n", path);
+        kprint("path %s fsal error!\n", path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};
@@ -221,12 +221,12 @@ static int fsalif_rename(char *old_path, char *new_path)
         return -1;
     fsal_path_t *fpath = fsal_path_find(old_path, 1);
     if (fpath == NULL) {
-        printk("path %s not found!\n", old_path);
+        kprint("path %s not found!\n", old_path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk("path %s fsal error!\n", old_path);
+        kprint("path %s fsal error!\n", old_path);
         return -1;
     }
     char old_path2[MAX_PATH] = {0};
@@ -246,12 +246,12 @@ static int fsalif_state(char *path, void *buf)
         return -1;
     fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
-        printk("path %s not found!\n", path);
+        kprint("path %s not found!\n", path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk("path %s fsal error!\n", path);
+        kprint("path %s fsal error!\n", path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};
@@ -277,12 +277,12 @@ static int fsalif_chmod(char *path, mode_t mode)
         return -1;
     fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
-        printk("path %s not found!\n", path);
+        kprint("path %s not found!\n", path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk("path %s fsal error!\n", path);
+        kprint("path %s fsal error!\n", path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};
@@ -309,13 +309,13 @@ static int fsalif_utime(char *path, time_t actime, time_t modtime)
     
     fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
-        printk("path %s not found!\n", path);
+        kprint("path %s not found!\n", path);
         return -1;
     }
 
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk("path %s fsal error!\n", path);
+        kprint("path %s fsal error!\n", path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};
@@ -397,12 +397,12 @@ static int fsalif_rmdir(char *path)
     
     fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
-        printk(KERN_ERR "path %s not found!\n", path);
+        kprint(PRINT_ERR "path %s not found!\n", path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk(KERN_ERR "path %s fsal error!\n", path);
+        kprint(PRINT_ERR "path %s fsal error!\n", path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};
@@ -417,12 +417,12 @@ static int fsalif_chdir(char *path)
         return -1;
     fsal_path_t *fpath = fsal_path_find(path, 1);
     if (fpath == NULL) {
-        printk("path %s not found!\n", path);
+        kprint("path %s not found!\n", path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk("path %s fsal error!\n", path);
+        kprint("path %s fsal error!\n", path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};
@@ -463,21 +463,21 @@ int fsalif_mount(
         return -1;
     
     if (disk_info_find((char *) source) < 0) {
-        printk(KERN_ERR "[%s] %s: source %s not found!\n", FS_MODEL_NAME, __func__, source);
+        kprint(PRINT_ERR "[%s] %s: source %s not found!\n", FS_MODEL_NAME, __func__, source);
         return -1;
     }
     if (fsal_path_find((void *) target, 0) != NULL) {
-        printk(KERN_ERR "[%s] %s: target %s had mounted!\n", FS_MODEL_NAME, __func__, target);
+        kprint(PRINT_ERR "[%s] %s: target %s had mounted!\n", FS_MODEL_NAME, __func__, target);
         return -1;
     }
     fsal_t *fsal = fstype_find((char *)fstype);
     if (fsal == NULL) {
-        printk("[%s] %s: filesystem type %s not found!\n", FS_MODEL_NAME, __func__, fstype);
+        kprint("[%s] %s: filesystem type %s not found!\n", FS_MODEL_NAME, __func__, fstype);
         return -1;
     }
     int retval = fsal->mount(source, target, fstype, mountflags);
     if (retval < 0) {
-        printk(KERN_ERR "[%s] %s: mount fs source %s target %s fstype %s failed!\n",
+        kprint(PRINT_ERR "[%s] %s: mount fs source %s target %s fstype %s failed!\n",
             FS_MODEL_NAME, __func__, source, target, fstype);
         return -1;
     }
@@ -491,12 +491,12 @@ static int fsalif_unmount(char *path, unsigned long flags)
     
     fsal_path_t *fpath = fsal_path_find(path, 0);
     if (fpath == NULL) {
-        printk(KERN_ERR "path %s not found!\n", path);
+        kprint(PRINT_ERR "path %s not found!\n", path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk(KERN_ERR "path %s fsal error!\n", path);
+        kprint(PRINT_ERR "path %s fsal error!\n", path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};
@@ -513,17 +513,17 @@ int fsalif_mkfs(
     if (source == NULL || fstype == NULL)
         return -1;
     if (disk_info_find(source) < 0) {
-        printk(KERN_ERR "[%s] %s: source %s not found!\n", FS_MODEL_NAME, __func__, source);
+        kprint(PRINT_ERR "[%s] %s: source %s not found!\n", FS_MODEL_NAME, __func__, source);
         return -1;
     }
     fsal_t *fsal = fstype_find((char *)fstype);
     if (fsal == NULL) {
-        printk(KERN_ERR "[%s] %s: filesystem type %s not found!\n", FS_MODEL_NAME, __func__, fstype);
+        kprint(PRINT_ERR "[%s] %s: filesystem type %s not found!\n", FS_MODEL_NAME, __func__, fstype);
         return -1;
     }
     int retval = fsal->mkfs(source, fstype, flags);
     if (retval < 0) {
-        printk(KERN_ERR "[%s] %s: make fs source %s fstype %s failed!\n",
+        kprint(PRINT_ERR "[%s] %s: make fs source %s fstype %s failed!\n",
             FS_MODEL_NAME, __func__, source, fstype);
         return -1;
     }
@@ -536,12 +536,12 @@ static int fsalif_access(const char *path, int mode)
         return -1;
     fsal_path_t *fpath = fsal_path_find((void *) path, 1);
     if (fpath == NULL) {
-        printk("path %s not found!\n", path);
+        kprint("path %s not found!\n", path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        printk("path %s fsal error!\n", path);
+        kprint("path %s fsal error!\n", path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};

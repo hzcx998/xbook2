@@ -985,8 +985,8 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
                 status = IO_FAILED;
             } else {
                 #ifdef DEBUG_DRV
-                printk(KERN_DEBUG "key even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
-                printk(KERN_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
+                kprint(PRINT_DEBUG "key even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
+                kprint(PRINT_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
                 #endif        
             }
         } else {
@@ -1000,8 +1000,8 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
         status = IO_FAILED;
     }
     #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "key even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
-    printk(KERN_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
+    kprint(PRINT_DEBUG "key even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
+    kprint(PRINT_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
     #endif     
     ioreq->io_status.status = status;
     /* 调用完成请求 */
@@ -1059,13 +1059,13 @@ void kbd_thread(void *arg) {
 
             input_even_put(&ext->evbuf, &e);
 #ifdef DEBUG_DRV
-            printk(KERN_DEBUG "key even set: type=%d code=%x value=%d\n", e.type, e.code, e.value);
-            printk(KERN_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
+            kprint(PRINT_DEBUG "key even set: type=%d code=%x value=%d\n", e.type, e.code, e.value);
+            kprint(PRINT_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
 #endif
             /* 解析成输入数据并放到缓冲区中 */
             ext->keycode = key;
 #ifdef DEBUG_DRV
-        printk(KERN_DEBUG "kbd_thread: key:%c\n", key);
+        kprint(PRINT_DEBUG "kbd_thread: key:%c\n", key);
 #endif
         }
     }
@@ -1082,7 +1082,7 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
     status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_KEYBOARD, &devobj);
 
     if (status != IO_SUCCESS) {
-        printk(KERN_ERR "keyboard_enter: create device failed!\n");
+        kprint(PRINT_ERR "keyboard_enter: create device failed!\n");
         return status;
     }
     /* neither io mode */
@@ -1108,7 +1108,7 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
     unsigned char *buf = mem_alloc(DEV_FIFO_BUF_LEN);
     if (buf == NULL) {
         status = IO_FAILED;
-        printk(KERN_DEBUG "keyboard_enter: alloc buf failed!\n");
+        kprint(PRINT_DEBUG "keyboard_enter: alloc buf failed!\n");
         return status;
     }
     fifo_io_init(&devext->fifoio, buf, DEV_FIFO_BUF_LEN);
@@ -1163,7 +1163,7 @@ iostatus_t keyboard_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "keyboard_driver_func: driver name=%s\n",
+    kprint(PRINT_DEBUG "keyboard_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
@@ -1173,7 +1173,7 @@ iostatus_t keyboard_driver_func(driver_object_t *driver)
 static __init void ps2keyboard_driver_entry(void)
 {
     if (driver_object_create(keyboard_driver_func) < 0) {
-        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

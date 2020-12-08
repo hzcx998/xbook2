@@ -22,7 +22,7 @@ typedef struct mutex_lock {
 static inline void mutexlock_init(mutexlock_t *mutex)
 {
     spinlock_init(&mutex->wait_lock);
-    INIT_LIST_HEAD(&mutex->wait_list);
+    list_init(&mutex->wait_list);
     mutex->waiters = 0;
 }
 void mutex_unlock(mutexlock_t *mutex);

@@ -94,7 +94,7 @@ int fifo_get(char *name, unsigned long flags)
         } else if (flags & IPC_WRITER) {
             rw = 1;
         } else {
-            printk(KERN_NOTICE "get fifo %s without reader or writer!\n", name);
+            kprint(PRINT_NOTICE "get fifo %s without reader or writer!\n", name);
         }
         if (flags & IPC_EXCL) {
             craete_new = 1;
@@ -184,7 +184,7 @@ int fifo_put(int fifoid)
 int fifo_write(int fifoid, void *buffer, size_t size)
 {
     if (buffer == NULL || !size) {
-        printk(KERN_ERR "%s: arg error!\n");
+        kprint(PRINT_ERR "%s: arg error!\n");
         return -1;
     }
     fifo_t *fifo;
@@ -192,16 +192,16 @@ int fifo_write(int fifoid, void *buffer, size_t size)
     fifo = fifo_find_by_id(fifoid);
     if (fifo == NULL) {
         semaphore_up(&fifo_mutex);
-        printk(KERN_DEBUG "fifo_write: not found fifo id=%d!\n", fifoid);
+        kprint(PRINT_DEBUG "fifo_write: not found fifo id=%d!\n", fifoid);
         return -1;
     }   
     semaphore_up(&fifo_mutex);
     if (fifo->writer == NULL) {
-        printk(KERN_ERR "%s: no writer!\n");
+        kprint(PRINT_ERR "%s: no writer!\n");
         return -1;
     }
     if (fifo->flags & (IPC_NOERROR << 24) && fifo->writer != task_current) {
-        printk(KERN_ERR "%s: writer no current task!\n");
+        kprint(PRINT_ERR "%s: writer no current task!\n");
         return -1;
     }
     fifo->flags |= FIFO_IN_WRITE;
@@ -263,19 +263,19 @@ int fifo_read(int fifoid, void *buffer, size_t size)
     fifo = fifo_find_by_id(fifoid);
     if (fifo == NULL) {
         semaphore_up(&fifo_mutex);    
-        printk(KERN_ERR "fifo_read: not found message queue!\n");
+        kprint(PRINT_ERR "fifo_read: not found message queue!\n");
         return -1;
     }
     semaphore_up(&fifo_mutex);
     if (fifo->reader == NULL) {
-        printk(KERN_ERR "fifo_read: reader null!\n");
+        kprint(PRINT_ERR "fifo_read: reader null!\n");
         return -1;
     }
     if (fifo->flags & (IPC_NOERROR << 16) && (fifo->reader != task_current))
         return -1;
     fifo->flags |= FIFO_IN_READ;
     if (fifo->writer == NULL && (fifo->flags & (IPC_NOSYNC << 16))) {
-        printk(KERN_DEBUG "fifo_read: don't need sync for reader.\n");  
+        kprint(PRINT_DEBUG "fifo_read: don't need sync for reader.\n");  
         return -1;
     }
 
@@ -392,7 +392,7 @@ int fifo_incref(int fifoid)
         } else if (task_current == fifo->writer && atomic_get(&fifo->writeref) > 0) {
             atomic_inc(&fifo->writeref);
         } else {  
-            pr_dbg("[FIFO]: %s: %s: not reader or writer!\n", __func__, task_current->name);
+            dbgprint("[FIFO]: %s: %s: not reader or writer!\n", __func__, task_current->name);
             mutex_unlock(&fifo->mutex);
             semaphore_up(&fifo_mutex);        
             return -1;
@@ -401,7 +401,7 @@ int fifo_incref(int fifoid)
         semaphore_up(&fifo_mutex);        
         return 0;
     }
-    pr_dbg("[FIFO]: %s: %s: fifo not found!\n", __func__, task_current->name);
+    dbgprint("[FIFO]: %s: %s: fifo not found!\n", __func__, task_current->name);
     semaphore_up(&fifo_mutex);
     return -1;
 }
@@ -418,7 +418,7 @@ int fifo_decref(int fifoid)
         } else if (task_current == fifo->writer && atomic_get(&fifo->writeref) > 0) {
             atomic_dec(&fifo->writeref);
         } else {  
-            pr_dbg("[FIFO]: %s: %s: not reader or writer!\n", __func__, task_current->name);
+            dbgprint("[FIFO]: %s: %s: not reader or writer!\n", __func__, task_current->name);
             mutex_unlock(&fifo->mutex);
             semaphore_up(&fifo_mutex);        
             return -1;
@@ -427,7 +427,7 @@ int fifo_decref(int fifoid)
         semaphore_up(&fifo_mutex);        
         return 0;
     }
-    pr_dbg("[FIFO]: %s: %s: fifo not found!\n", __func__, task_current->name);
+    dbgprint("[FIFO]: %s: %s: fifo not found!\n", __func__, task_current->name);
     semaphore_up(&fifo_mutex);
     return -1;
 }
@@ -436,7 +436,7 @@ void fifo_init()
 {
     fifo_table = (fifo_t *)mem_alloc(sizeof(fifo_t) * FIFO_NR);
     if (fifo_table == NULL)
-        panic(KERN_EMERG "fifo_init: alloc mem for fifo_table failed! :(\n");
+        panic(PRINT_EMERG "fifo_init: alloc mem for fifo_table failed! :(\n");
     
     int i;
     for (i = 0; i < FIFO_NR; i++) {

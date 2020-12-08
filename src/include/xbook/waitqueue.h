@@ -20,10 +20,11 @@ void wait_queue_add(wait_queue_t *wait_queue, void *task_ptr);
 void wait_queue_remove(wait_queue_t *wait_queue, void *task_ptr);
 void wait_queue_wakeup(wait_queue_t *wait_queue);
 void wait_queue_wakeup_all(wait_queue_t *wait_queue);
+void wait_queue_sleepon(wait_queue_t *wait_queue);
 
 static inline void wait_queue_init(wait_queue_t *wait_queue)
 {
-	INIT_LIST_HEAD(&wait_queue->wait_list);
+	list_init(&wait_queue->wait_list);
 	spinlock_init(&wait_queue->lock);
 }
 static inline int wait_queue_length(wait_queue_t *wait_queue)

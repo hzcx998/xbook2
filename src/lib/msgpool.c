@@ -42,7 +42,7 @@ int msgpool_destroy(msgpool_t *pool)
     return -1;
 }
 
-int msgpool_push(msgpool_t *pool, void *buf)
+int msgpool_put(msgpool_t *pool, void *buf)
 {
     if (!pool || !buf)
         return -1;
@@ -52,7 +52,6 @@ int msgpool_push(msgpool_t *pool, void *buf)
         wait_queue_add(&pool->waiters, task_current);
         
         mutex_unlock(&pool->mutex);
-        TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
         mutex_lock(&pool->mutex);
     }
@@ -91,7 +90,7 @@ int msgpool_try_push(msgpool_t *pool, void *buf)
     return 0;
 }
 
-int msgpool_pop(msgpool_t *pool, void *buf)
+int msgpool_out(msgpool_t *pool, void *buf)
 {
     if (!pool)
         return -1;
@@ -99,7 +98,6 @@ int msgpool_pop(msgpool_t *pool, void *buf)
     if (msgpool_empty(pool)) {
         wait_queue_add(&pool->waiters, task_current);
         mutex_unlock(&pool->mutex);
-        TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
         mutex_lock(&pool->mutex);
     }

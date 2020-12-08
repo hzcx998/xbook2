@@ -57,12 +57,12 @@ static int account_free(account_t *account)
 
 void account_dump()
 {
-    pr_dbg("Account List:\n");
+    dbgprint("Account List:\n");
     int i;
     for (i = 0; i < ACCOUNT_NR; i++) {
         account_t *account = account_table + i;
         if (account->flags & ACCOUNT_FLAG_USED)
-            pr_dbg("Account:%s pwd:%s attr:%x\n", account->name, account->password, account->flags);
+            dbgprint("Account:%s pwd:%s attr:%x\n", account->name, account->password, account->flags);
     }
 }
 
@@ -240,7 +240,7 @@ int account_read_config()
     if (kfile_access(buf, F_OK) < 0) {
         int fd = kfile_open(buf, O_CREAT | O_RDWR);
         if (fd < 0) {
-            pr_err("create account file %s failed!\n", buf);
+            errprint("create account file %s failed!\n", buf);
             return -1;
         }
         kfile_close(fd);
@@ -250,16 +250,16 @@ int account_read_config()
     if (file_not_exist) {
         /* 创建唯一的账户 */
         if (account_push(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD, ACCOUNT_LEVEL_ROOT) < 0) {
-            pr_err("add a new account %s to table failed!\n", ROOT_ACCOUNT_NAME);
+            errprint("add a new account %s to table failed!\n", ROOT_ACCOUNT_NAME);
             return -1;
         }
         if (account_sync() < 0) {
-            pr_err("sync account failed!\n");
+            errprint("sync account failed!\n");
             return -1;
         }
     } else { /* 账户文件已经存在了，直接读取文件即可。 */ 
         if (account_load_from_file(buf) < 0) {
-            pr_err("load account from file failed!\n");
+            errprint("load account from file failed!\n");
             return -1;
         }
     }
@@ -288,7 +288,7 @@ int account_sync_data()
     strcat(buf, ACCOUNT_FILE_NAME);
     int fd = kfile_open(buf, O_RDWR | O_TRUNC);
     if (fd < 0) {
-        pr_err("open account file %s failed!\n", buf);
+        errprint("open account file %s failed!\n", buf);
         mutex_unlock(&account_mutex_lock);
         return -1;
     }
@@ -298,7 +298,7 @@ int account_sync_data()
             /* U/S,name,password\n */
             char account_buf[ACCOUNT_NAME_LEN + ACCOUNT_PASSWORD_LEN + 8] = {0};
             account_build_file_buf(account, account_buf);
-            // pr_dbg("account buf:%s", account_buf);
+            // dbgprint("account buf:%s", account_buf);
             kfile_write(fd, account_buf, strlen(account_buf));
         }
     }
@@ -333,11 +333,11 @@ int account_login(const char *name, char *password)
 
     account_t *account = account_find_by_name(name);
     if (!account) {
-        pr_err("account %s not exist!\n", name);
+        errprint("account %s not exist!\n", name);
         return -1;
     }
     if (strcmp(account->password, password) != 0) {
-        pr_err("password %s not match!\n", name);
+        errprint("password %s not match!\n", name);
         return -1;
     }
     /* 之前登陆过，但是没有退出登录，强制退出其权限  */
@@ -364,20 +364,20 @@ int account_logout(const char *name)
 
     account_t *account = account_find_by_name(name);
     if (!account) {
-        pr_err("account %s not exist!\n", name);
+        errprint("account %s not exist!\n", name);
         return -1;
     }
     if (!account_current) {
-        pr_err("Current account is null, can't unregister!\n");
+        errprint("Current account is null, can't unregister!\n");
         return -1;
     }
     if (account != account_current) {
-        pr_err("account %s not current account!\n", name);        
+        errprint("account %s not current account!\n", name);        
         return -1;   
     }
     mutex_lock(&account_mutex_lock);
     if (account_current != account) {
-        pr_err("account %s not current!\n", name);
+        errprint("account %s not current!\n", name);
         mutex_unlock(&account_mutex_lock);
         return -1;
     }      
@@ -402,7 +402,7 @@ int account_register(const char *name, char *password, uint32_t flags)
 
     if (account_current) {
         if ((account_current->flags & ACCOUNT_LEVEL_MASK) != ACCOUNT_LEVEL_ROOT) {
-            pr_err("account %s no permission to register account %s!\n", account_current->name, name);
+            errprint("account %s no permission to register account %s!\n", account_current->name, name);
             return -EPERM;
         }
     }
@@ -411,11 +411,11 @@ int account_register(const char *name, char *password, uint32_t flags)
     /* 查看账户是否已经存在了，不存在才创建 */
     account_t *account = account_find_by_name(name);
     if (account) {
-        pr_err("account %s had existed!\n", name);
+        errprint("account %s had existed!\n", name);
         return -1;
     }
     if (account_push(name, password, flags) < 0) {
-        pr_err("account %s push into account table failed!\n", name);
+        errprint("account %s push into account table failed!\n", name);
         return -1;
     }
     /* 创建一个账户对应的主页路径权限 */
@@ -425,20 +425,20 @@ int account_register(const char *name, char *password, uint32_t flags)
     strcat(str, name);
     int index = permission_database_insert(PERMISION_ATTR_HOME | PERMISION_ATTR_RDWR | PERMISION_ATTR_FILE, str);
     if (index < 0) {
-        pr_err("account %s insert home failed!\n", name);
+        errprint("account %s insert home failed!\n", name);
         account_pop(name);
         return -1;
     }
 
     if (account_sync() < 0) {
-        pr_err("account sync failed!\n", name);
+        errprint("account sync failed!\n", name);
         permission_database_delete(index);
         account_pop(name);
         return -1;
     }
 
     if (kfile_mkdir(str, 0) < 0) {
-        pr_warn("create account %s home path %s failed or existed!\n", name, str);
+        warnprint("create account %s home path %s failed or existed!\n", name, str);
     }
     return 0;
 }
@@ -452,7 +452,7 @@ int account_unregister(const char *name)
     }
     if (account_current) {
         if ((account_current->flags & ACCOUNT_LEVEL_MASK) != ACCOUNT_LEVEL_ROOT) {
-            pr_err("account %s no permission to unregister account %s!\n", account_current->name, name);
+            errprint("account %s no permission to unregister account %s!\n", account_current->name, name);
             return -EPERM;
         }
     }
@@ -464,12 +464,12 @@ int account_unregister(const char *name)
         return -1;
 
     if (!account_current) {
-        pr_err("Current account is null, can't unregister!\n");
+        errprint("Current account is null, can't unregister!\n");
         return -1;
     }
 
     if (account == account_current) {
-        pr_err("Account %s using, can't unregister!\n", account_current->name);
+        errprint("Account %s using, can't unregister!\n", account_current->name);
         return -1;
     }
     mutex_lock(&account_mutex_lock);
@@ -477,7 +477,7 @@ int account_unregister(const char *name)
     int cur_level = account_current->flags & ACCOUNT_LEVEL_MASK;
     int acc_level = account->flags & ACCOUNT_LEVEL_MASK;
     if (cur_level >= acc_level) {
-        pr_err("Account %s no permission to unregister account %s!\n", 
+        errprint("Account %s no permission to unregister account %s!\n", 
             account_current->name, account->name);
         mutex_unlock(&account_mutex_lock);
         return -1;
@@ -491,24 +491,24 @@ int account_unregister(const char *name)
     strcat(str, name);
     permission_data_t *data_ptr = permission_database_select(str); // 备份数据
     if (!data_ptr) {
-        pr_err("Account %s home data not found failed!\n", name);
+        errprint("Account %s home data not found failed!\n", name);
         return -1;
     }
     permission_data_t data_backup = *data_ptr;
     if (permission_database_delete_by_data(str) < 0) {
-        pr_err("Account %s delete data from database failed!\n", name);
+        errprint("Account %s delete data from database failed!\n", name);
         return -1;
     }
 
     account_t account_backup = *account;    // 备份账户
     if (account_pop(name) < 0) {
-        pr_err("Account %s pop from account table failed!\n", name);
+        errprint("Account %s pop from account table failed!\n", name);
         permission_database_insert(data_backup.attr, data_backup.str); // 恢复数据
         return -1;
     }
     
     if (account_sync() < 0) {
-        pr_emerg("Sync account when unregister failed!\n");
+        emeprint("Sync account when unregister failed!\n");
         account_push(account_backup.name, account_backup.password,
                 account_backup.flags & ACCOUNT_LEVEL_MASK);   //恢复账户
         permission_database_insert(data_backup.attr, data_backup.str);
@@ -516,7 +516,7 @@ int account_unregister(const char *name)
     }
     
     if (kfile_rmdir(str) < 0) {
-        pr_warn("delect account %s home path %s failed or not existed!\n", name, str);
+        warnprint("delect account %s home path %s failed or not existed!\n", name, str);
     }
     return 0;
 }
@@ -593,10 +593,10 @@ void account_dump_datasets(const char *name)
     account_t *account = account_find_by_name(name);
     if (!account)
         return;
-    pr_dbg("Account datasets:\n");
+    dbgprint("Account datasets:\n");
     int i; for (i = 0; i < PERMISION_DATABASE_LEN; i++) {
         if (account->data_index[i] >= 0) {
-            pr_dbg("solt %d :index %d\n", i, account->data_index[i]);
+            dbgprint("solt %d :index %d\n", i, account->data_index[i]);
         }
     }
 }
@@ -701,6 +701,6 @@ int account_manager_init()
     if (account_login(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD) < 0)
         panic("account: login root failed!\n");
     
-    printk(KERN_INFO "account init: OK!\n");
+    kprint(PRINT_INFO "account init: OK!\n");
     return 0;
 }

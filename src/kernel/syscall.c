@@ -20,7 +20,7 @@ syscall_t syscalls[SYSCALL_NR];
 
 void syscall_default()
 {
-    pr_err("user call a not supported syscall!\n");
+    errprint("user call a not supported syscall!\n");
     exception_raise(EXP_CODE_SYS);
 }
 
@@ -125,7 +125,7 @@ void syscall_init()
 int syscall_error(uint32_t callno)
 {
     if (callno >= SYSCALL_NR) {
-        printk(KERN_ERR "syscall: bad number %d, raise exception!\n", callno);
+        kprint(PRINT_ERR "syscall: bad number %d, raise exception!\n", callno);
         exception_raise(EXP_CODE_SYS);
         return 1;
     }

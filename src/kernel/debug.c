@@ -33,7 +33,7 @@ Background colors
     47	White
 */
 
-char *printk_msg[] = {
+char *kprint_msg[] = {
     "\e[0;35m",     /* Magenta */
     "\e[0;31m",     /* Red */
     "\e[0;33m",     /* Yellow */
@@ -46,7 +46,7 @@ char *printk_msg[] = {
 #define DEBUG_NONE_COLOR    "\e[0m" // 清除属性
 #define BACKTRACE_LEN   3
 
-int printk_level = DEFAULT_LOG_LEVEL;
+int kprint_level = DEFAULT_LOG_LEVEL;
 
 int print_gui_console = 0;
 
@@ -58,13 +58,13 @@ void panic(const char *fmt, ...)
 	/* 4 is the size of fmt in the stack */
 	va_list arg = (va_list)((char*)&fmt + 4);
 	vsprintf(buf, fmt, arg);
-	pr_emerg("\npanic: %s", buf);
+	emeprint("\npanic: %s", buf);
     /*
     char *bbuf[BACKTRACE_LEN];
     
     int n = backtrace(bbuf, BACKTRACE_LEN);
     int i; for (i = 0; i < n; i++) {
-        pr_dbg("%p -> ", bbuf[i]);
+        dbgprint("%p -> ", bbuf[i]);
     }*/
     interrupt_disable();
     while(1){
@@ -74,14 +74,14 @@ void panic(const char *fmt, ...)
 
 void assertion_failure(char *exp, char *file, char *baseFile, int line)
 {
-	printk(KERN_ERR "\nassert(%s) failed:\nfile: %s\nbase_file: %s\nln: %d",
+	kprint(PRINT_ERR "\nassert(%s) failed:\nfile: %s\nbase_file: %s\nln: %d",
 	exp, file, baseFile, line);
 	spin("assertion failure()");
 }
 
 void spin(char * functionName)
 {
-	printk(KERN_NOTICE "spinning in %s", functionName);
+	kprint(PRINT_NOTICE "spinning in %s", functionName);
 	interrupt_disable();
 	while(1){
 		cpu_idle();
@@ -97,7 +97,7 @@ void debug_putstr(char *str, int count)
     }
 }
 
-int printk(const char *fmt, ...)
+int kprint(const char *fmt, ...)
 {
     spin_lock(&print_spin_lock);
     int i;
@@ -111,7 +111,7 @@ int printk(const char *fmt, ...)
     if (*p == '<') {
         if (*(p + 1) >= '0' && *(p + 1) <= (DEFAULT_LOG_MAX + '0') && *(p + 2) == '>') {
             level = *(p + 1) - '0';
-            if (level > printk_level) 
+            if (level > kprint_level) 
                 show = 0;
             p += 3;
             count -= 3;
@@ -119,7 +119,7 @@ int printk(const char *fmt, ...)
     }
     if (show) {
         if (level >= 0) {
-            char *q = printk_msg[level];
+            char *q = kprint_msg[level];
             debug_putstr(q, strlen(q));
         }
         debug_putstr(p, count);
@@ -133,30 +133,30 @@ int printk(const char *fmt, ...)
 
 void log_dump_value(unsigned long val)
 {
-    printk(KERN_DEBUG "debug: %d\n", val);
+    kprint(PRINT_DEBUG "debug: %d\n", val);
 }
 
 void log_dump_buffer(void *buffer, unsigned long len, char factor)
 {
-    printk(KERN_DEBUG "debug: addr=%x len=%d factor=%d\n", buffer, len, factor);
+    kprint(PRINT_DEBUG "debug: addr=%x len=%d factor=%d\n", buffer, len, factor);
     int i;
     if (factor == 1) {
         unsigned char *buf = (unsigned char *)buffer;
         for (i = 0; i < len; i++) {
-            printk("%x ", buf[i]);
+            kprint("%x ", buf[i]);
         }
-        printk("\n");    
+        kprint("\n");    
     } else if (factor == 2) {
         unsigned short *buf = (unsigned short *)buffer;
         for (i = 0; i < len / factor; i++) {
-            printk("%x ", buf[i]);
+            kprint("%x ", buf[i]);
         }
-        printk("\n");    
+        kprint("\n");    
     } else if (factor == 4) {
         unsigned int *buf = (unsigned int *)buffer;
         for (i = 0; i < len / factor; i++) {
-            printk("%x ", buf[i]);
+            kprint("%x ", buf[i]);
         }
-        printk("\n");
+        kprint("\n");
     }    
 }

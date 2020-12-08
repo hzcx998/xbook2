@@ -111,7 +111,7 @@ bool sb16_initialize(device_extension_t *extension)
     int data = sb16_dsp_read();
     if (data != 0xaa)
     {
-        printk(KERN_NOTICE "sb16: sb not ready");
+        kprint(PRINT_NOTICE "sb16: sb not ready");
         return false;
     }
 
@@ -119,7 +119,7 @@ bool sb16_initialize(device_extension_t *extension)
     sb16_dsp_write(0xe1);
     extension->major_version = sb16_dsp_read();
     int vmin = sb16_dsp_read();
-    printk(KERN_INFO "sb16: found version %d.%d\n", extension->major_version, vmin);
+    kprint(PRINT_INFO "sb16: found version %d.%d\n", extension->major_version, vmin);
     vmin = 0;
     return true;
 }
@@ -145,7 +145,7 @@ void sb16_request(device_extension_t *extension)
     sb16_dsp_write((u8)sample_count);
     sb16_dsp_write((u8)(sample_count >> 8));
     #ifdef DEBUG_SB16
-    printk(KERN_DEBUG "sb16: [DMA] [%x] sample_count: %d\n", dma_region->v, length);
+    kprint(PRINT_DEBUG "sb16: [DMA] [%x] sample_count: %d\n", dma_region->v, length);
     #endif
 }
 
@@ -171,14 +171,14 @@ static int sb16_handler(irqno_t irq, void *data)
 
     extension->index_r = (extension->index_r + 1) % DMA_COUNT;
     #ifdef DEBUG_SB16
-    printk(KERN_DEBUG "sb16: [READ FINISH] [%x]\n", dma_region->v);
+    kprint(PRINT_DEBUG "sb16: [READ FINISH] [%x]\n", dma_region->v);
     #endif
     wait_queue_wakeup_all(&extension->waiters);
 
     if (extension->index_r != extension->index_w)
     {
         #ifdef DEBUG_SB16
-        printk(KERN_DEBUG "sb16: [NEW READ]\n");
+        kprint(PRINT_DEBUG "sb16: [NEW READ]\n");
         #endif
         sb16_request(extension);
     }
@@ -234,7 +234,7 @@ static ssize_t __sb16_write(device_extension_t *extension, const u8 *data, ssize
     memcpy((void *)dma_region->v, data, length);
 
     #ifdef DEBUG_SB16
-    printk(KERN_DEBUG "sb16: [WRITE] [%x] %d\n", dma_region->v, length);
+    kprint(PRINT_DEBUG "sb16: [WRITE] [%x] %d\n", dma_region->v, length);
     #endif
     if (extension->index_w == extension->index_r)
     {
@@ -267,7 +267,7 @@ static iostatus_t sb16_write(device_object_t *device, io_request_t *ioreq)
     if (len < 0)
     {
         status = IO_FAILED;
-        printk(KERN_ERR "sb16: write fialed!\n");
+        kprint(PRINT_ERR "sb16: write fialed!\n");
     }
 
     ioreq->io_status.status = status;
@@ -305,7 +305,7 @@ static iostatus_t sb16_enter(driver_object_t *driver)
     status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_SOUND, &devobj);
     if (status != IO_SUCCESS)
     {
-        printk(KERN_ERR "sb16_enter: create device failed!\n");
+        kprint(PRINT_ERR "sb16_enter: create device failed!\n");
         return status;
     }
 
@@ -318,27 +318,27 @@ static iostatus_t sb16_enter(driver_object_t *driver)
     for (int i = 0; i < DMA_COUNT; i++)
     {
         #ifdef DEBUG_SB16
-        printk(KERN_INFO "[i:%d][count:%d]\n", i, DMA_COUNT);
+        kprint(PRINT_INFO "[i:%d][count:%d]\n", i, DMA_COUNT);
         #endif
         extension->dma_region[i].p.size = PAGE_SIZE * 16; // 32 kb
         extension->dma_region[i].p.alignment = 0x1000;
         extension->dma_region[i].flags = DMA_REGION_SPECIAL; // spacil device
         if (dma_alloc_buffer(&extension->dma_region[i]) < 0)
         {
-            printk(KERN_ERR "sb16_enter: alloc dma buffer failed!\n");
+            kprint(PRINT_ERR "sb16_enter: alloc dma buffer failed!\n");
             io_delete_device(devobj);
             status = IO_FAILED;
             return status;
         }
         #ifdef DEBUG_SB16
-        printk(KERN_INFO "sb16: alloc dma buffer vir addr %x phy addr %x\n", extension->dma_region[i].v, extension->dma_region[i].p.address);
+        kprint(PRINT_INFO "sb16: alloc dma buffer vir addr %x phy addr %x\n", extension->dma_region[i].v, extension->dma_region[i].p.address);
         #endif
     }
     wait_queue_init(&extension->waiters);
 
     if (sb16_initialize(extension) == false)
     {
-        printk(KERN_ERR "sb16_enter: create device failed!\n");
+        kprint(PRINT_ERR "sb16_enter: create device failed!\n");
         io_delete_device(devobj);
         status = IO_FAILED;
         return status;
@@ -387,7 +387,7 @@ iostatus_t sb16_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_SB16
-    printk(KERN_DEBUG "sb16_driver_func: driver name=%s\n",
+    kprint(PRINT_DEBUG "sb16_driver_func: driver name=%s\n",
            driver->name.text);
 #endif
     return status;
@@ -397,7 +397,7 @@ static __init void sb16_driver_entry(void)
 {
     if (driver_object_create(sb16_driver_func) < 0)
     {
-        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

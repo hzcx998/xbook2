@@ -19,10 +19,11 @@
 #include <xbook/mutexqueue.h>
 #include <xbook/account.h>
 #include <xbook/plugin.h>
+#include <xbook/lpc.h>
 
 int kernel_main(void)
 {
-    printk(KERN_INFO "welcome to xbook kernel.\n");
+    kprint(PRINT_INFO "welcome to xbook kernel.\n");
     mem_caches_init();
     vir_mem_init();
     irq_description_init();
@@ -44,6 +45,7 @@ int kernel_main(void)
     file_system_init();
     account_manager_init();
     plugin_init();
+    lpc_init();
     //spin("test");
     task_start_user();
     return 0;    

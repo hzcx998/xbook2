@@ -458,26 +458,26 @@ static unsigned char ide_print_error(device_extension_t *ext, unsigned char err)
    	if (err == 0)
       	return err;
 	
-   	printk("IDE:");
-   	if (err == 1) {printk("- Device Fault\n     ");}
+   	kprint("IDE:");
+   	if (err == 1) {kprint("- Device Fault\n     ");}
    	else if (err == 2) {	/* 其它错误 */
 		unsigned char state = in8(ATA_REG_ERROR(ext->channel));
-		if (state & ATA_ERROR_AMNF)	{printk("- No Address Mark Found\n     ");}
-		if (state & ATA_ERROR_TK0NF){printk("- No Media or Media Error\n     ");}
-		if (state & ATA_ERROR_ABRT)	{printk("- Command Aborted\n     ");      	}
-		if (state & ATA_ERROR_MCR) 	{printk("- No Media or Media Error\n     "); }
-		if (state & ATA_ERROR_IDNF) {printk("- ID mark not Found\n     ");      }
-		if (state & ATA_ERROR_MC) 	{printk("- No Media or Media Error\n     "); }
-		if (state & ATA_ERROR_UNC)  {printk("- Uncorrectable Data Error\n     ");}
-		if (state & ATA_ERROR_BBK)  {printk("- Bad Sectors\n     "); }
+		if (state & ATA_ERROR_AMNF)	{kprint("- No Address Mark Found\n     ");}
+		if (state & ATA_ERROR_TK0NF){kprint("- No Media or Media Error\n     ");}
+		if (state & ATA_ERROR_ABRT)	{kprint("- Command Aborted\n     ");      	}
+		if (state & ATA_ERROR_MCR) 	{kprint("- No Media or Media Error\n     "); }
+		if (state & ATA_ERROR_IDNF) {kprint("- ID mark not Found\n     ");      }
+		if (state & ATA_ERROR_MC) 	{kprint("- No Media or Media Error\n     "); }
+		if (state & ATA_ERROR_UNC)  {kprint("- Uncorrectable Data Error\n     ");}
+		if (state & ATA_ERROR_BBK)  {kprint("- Bad Sectors\n     "); }
 	} else  if (err == 3) {	/* 读取错误 */
-		printk("- Reads Nothing\n     ");
+		kprint("- Reads Nothing\n     ");
 	} else if (err == 4)  {	/* 写错误 */
-		printk("- Write Protected\n     ");
+		kprint("- Write Protected\n     ");
 	} else if (err == 5)  {	/* 超时 */
-		printk("- Time Out\n     ");
+		kprint("- Time Out\n     ");
 	}
-	printk("- [%s %s]\n",
+	kprint("- [%s %s]\n",
 		(const char *[]){"Primary", "Secondary"}[ext->channel - channels], // Use the channel as an index into the array
 		(const char *[]){"Master", "Slave"}[ext->drive] // Same as above, using the drive
 		);
@@ -487,49 +487,49 @@ static unsigned char ide_print_error(device_extension_t *ext, unsigned char err)
 #ifdef DEBUG_DRV
 static void dump_ide_channel(struct ide_channel *channel)
 {
-	printk(KERN_DEBUG "dump_ide_channel: ext:%x base:%x irq:%d\n", channel, channel->base, channel->irqno);
+	kprint(PRINT_DEBUG "dump_ide_channel: ext:%x base:%x irq:%d\n", channel, channel->base, channel->irqno);
 }
 
 static void dump_ide_extension(device_extension_t *ext)
 {
-    printk(KERN_DEBUG "dump_ide_extension:  ======================= start\n");
-	printk(KERN_DEBUG "ext:%x channel:%x drive:%d type:%s \n",
+    kprint(PRINT_DEBUG "dump_ide_extension:  ======================= start\n");
+	kprint(PRINT_DEBUG "ext:%x channel:%x drive:%d type:%s \n",
 	 	ext, ext->channel, ext->drive,
 		ext->type == IDE_ATA ? "ATA" : "ATAPI");
 
-	printk(KERN_DEBUG "capabilities:%x command_sets:%x signature:%x\n",
+	kprint(PRINT_DEBUG "capabilities:%x command_sets:%x signature:%x\n",
 		ext->capabilities, ext->command_sets, ext->signature);
 	
 	if (ext->info->cmdSet1 & 0x0400) {
-		printk(KERN_DEBUG "Total Sector(LBA 48):");
+		kprint(PRINT_DEBUG "Total Sector(LBA 48):");
 	} else {
-		printk(KERN_DEBUG "Total Sector(LBA 28):");
+		kprint(PRINT_DEBUG "Total Sector(LBA 28):");
 	}
-	printk("%d\n", ext->size);
+	kprint("%d\n", ext->size);
     
-	printk(KERN_DEBUG "Serial Number:");
+	kprint(PRINT_DEBUG "Serial Number:");
 	
 	int i;
 	for (i = 0; i < 10; i++) {
-		printk("%c%c", (ext->info->Serial_Number[i] >> 8) & 0xff,
+		kprint("%c%c", (ext->info->Serial_Number[i] >> 8) & 0xff,
 			ext->info->Serial_Number[i] & 0xff);
 	}
-    printk("\n");
-	printk(KERN_DEBUG "Fireware Version:");
+    kprint("\n");
+	kprint(PRINT_DEBUG "Fireware Version:");
 	for (i = 0; i < 4; i++) {
-		printk("%c%c", (ext->info->Firmware_Version[i] >> 8) & 0xff,
+		kprint("%c%c", (ext->info->Firmware_Version[i] >> 8) & 0xff,
 			ext->info->Firmware_Version[i] & 0xff);
 	}
-    printk("\n");
-	printk(KERN_DEBUG "Model Number:");
+    kprint("\n");
+	kprint(PRINT_DEBUG "Model Number:");
 	for (i = 0; i < 20; i++) {
-		printk("%c%c", (ext->info->Model_Number[i] >> 8) & 0xff,
+		kprint("%c%c", (ext->info->Model_Number[i] >> 8) & 0xff,
 			ext->info->Model_Number[i] & 0xff);
 	}
-    printk("\n");
-	printk(KERN_DEBUG "LBA supported:%s ",(ext->info->Capabilities0 & 0x0200) ? "Yes" : "No");
-	printk(KERN_DEBUG "LBA48 supported:%s\n",((ext->info->cmdSet1 & 0x0400) ? "Yes" : "No"));
-    printk(KERN_DEBUG "dump_ide_extension: ======================= end \n");
+    kprint("\n");
+	kprint(PRINT_DEBUG "LBA supported:%s ",(ext->info->Capabilities0 & 0x0200) ? "Yes" : "No");
+	kprint(PRINT_DEBUG "LBA48 supported:%s\n",((ext->info->cmdSet1 & 0x0400) ? "Yes" : "No"));
+    kprint(PRINT_DEBUG "dump_ide_extension: ======================= end \n");
 }
 #endif
 
@@ -820,7 +820,7 @@ static void select_cmd(unsigned char rw,
 static void driver_soft_rest(struct ide_channel *channel)
 {
 	char ctrl = in8(ATA_REG_CTL(channel));
-	//printk("ctrl = %x\n", ctrl);
+	//kprint("ctrl = %x\n", ctrl);
 	
 	/* 写入控制寄存器，执行重置，会重置ata通道上的2个磁盘
 	把SRST（位2）置1，就可以软重置
@@ -870,12 +870,12 @@ static int pio_data_transfer(device_extension_t *ext,
 	unsigned char error;
 	if (rw == IDE_READ) {	
 #ifdef DEBUG_DRV
-        printk("PIO read count %d->", count);
+        kprint("PIO read count %d->", count);
 #endif
 		while (i < count) {
 			/* 醒来后开始执行下面代码*/
 			if ((error = busy_wait(ext))) {     //  若失败
-                printk(KERN_ERR "wait driver failed!\n");
+                kprint(PRINT_ERR "wait driver failed!\n");
 				/* 重置磁盘驱动并返回 */
 				rest_driver(ext);
 				return error;
@@ -886,7 +886,7 @@ static int pio_data_transfer(device_extension_t *ext,
 		}
 	} else {
 #ifdef DEBUG_DRV
-        printk("PIO write->");
+        kprint("PIO write->");
 #endif
 		while (i < count) {
 			/* 等待硬盘控制器请求数据 */
@@ -899,7 +899,7 @@ static int pio_data_transfer(device_extension_t *ext,
 			write_to_sector(ext, buf, 1);
             ++i;
 			buf += SECTOR_SIZE;
-            //printk("write success! ");
+            //kprint("write success! ");
 		}
 		/* 刷新写缓冲区 */
 		out8(ATA_REG_CMD(ext->channel), mode > 1 ?
@@ -907,7 +907,7 @@ static int pio_data_transfer(device_extension_t *ext,
 		ide_polling(ext->channel, 0);
 	}
 #ifdef DEBUG_DRV
-        printk("PIO read done\n");
+        kprint("PIO read done\n");
 #endif
 	return 0;
 }
@@ -983,9 +983,9 @@ static int ata_type_transfer(device_extension_t *ext,
 		select_cmd(rw, mode, dma, &cmd);
 
 #ifdef DEBUG_DRV
-			printk("lba mode %d num %d io %d %d %d %d %d %d->",
+			kprint("lba mode %d num %d io %d %d %d %d %d %d->",
 				mode, lba, lbaIO[0], lbaIO[1], lbaIO[2], lbaIO[3], lbaIO[4], lbaIO[5]);
-			printk("rw %d dma %d cmd %x head %d\n",
+			kprint("rw %d dma %d cmd %x head %d\n",
 				rw, dma, cmd, head);
 #endif
 		/* 等待磁盘控制器处于准备状态 */
@@ -1032,7 +1032,7 @@ static int ide_read_sector(device_extension_t *ext,
 	unsigned char error;
 	/* 检查设备是否正确 */
 	if (lba + count > ext->size && ext->type == IDE_ATA) {
-        printk(KERN_ERR "ide_read_sector: out of range!\n");
+        kprint(PRINT_ERR "ide_read_sector: out of range!\n");
 		return -1;
 	} else {
 
@@ -1044,7 +1044,7 @@ static int ide_read_sector(device_extension_t *ext,
 		
 		/* 打印驱动错误信息 */
 		if(ide_print_error(ext, error)) {
-			printk(KERN_ERR "ide_read_sector: ide read error!\n");
+			kprint(PRINT_ERR "ide_read_sector: ide read error!\n");
             return -1;
 		}
 	}
@@ -1101,13 +1101,13 @@ static int ide_clean_disk(device_extension_t *ext, sector_t count)
 	/* 每次写入10个扇区 */
 	char *buffer = mem_alloc(SECTOR_SIZE *10);
 	if (!buffer) {
-		printk("mem_alloc for ide buf failed!\n");
+		kprint("mem_alloc for ide buf failed!\n");
 		return -1;
 	}
 
 	memset(buffer, 0, SECTOR_SIZE *10);
 
-	printk(KERN_DEBUG "ide_clean_disk: count%d\n", count);
+	kprint(PRINT_DEBUG "ide_clean_disk: count%d\n", count);
 	while (done < count) {
 		/* 获取要去操作的扇区数这里用10作为分界 */
 		if ((done + 10) <= count) {
@@ -1115,7 +1115,7 @@ static int ide_clean_disk(device_extension_t *ext, sector_t count)
 		} else {
 			todo = count - done;
 		}
-		//printk(KERN_DEBUG "ide_clean_disk: done %d todo %d\n", done, todo);
+		//kprint(PRINT_DEBUG "ide_clean_disk: done %d todo %d\n", done, todo);
 		ide_write_sector(ext, done, buffer, todo);
 		done += 10;
 	}
@@ -1166,7 +1166,7 @@ iostatus_t ide_read(device_object_t *device, io_request_t *ioreq)
     device_extension_t *ext = device->device_extension;
 
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "ide_read: buf=%x sectors=%d off=%x\n", 
+    kprint(PRINT_DEBUG "ide_read: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.read.offset);
 #endif
     unsigned long off;    
@@ -1199,7 +1199,7 @@ iostatus_t ide_write(device_object_t *device, io_request_t *ioreq)
     device_extension_t *ext = device->device_extension;
 
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "ide_write: buf=%x sectors=%d off=%x\n", 
+    kprint(PRINT_DEBUG "ide_write: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.write.offset);
 #endif    
     unsigned long off;    
@@ -1285,7 +1285,7 @@ static int ide_probe(device_extension_t *ext, int id)
 
     ext->info = mem_alloc(SECTOR_SIZE);
     if (ext->info == NULL) {
-        printk(KERN_ERR "mem_alloc for ide device %d info failed!\n", id);
+        kprint(PRINT_ERR "mem_alloc for ide device %d info failed!\n", id);
         irq_unregister(channel->irqno, (void *)channel);
         
         return -1;
@@ -1302,7 +1302,7 @@ static int ide_probe(device_extension_t *ext, int id)
     //等待硬盘准备好
     while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY) && (--timeout) > 0);
     if (timeout <= 0) {
-        printk(KERN_NOTICE "[ide]: disk %d maybe not ready or not exist!\n", id);
+        kprint(PRINT_NOTICE "[ide]: disk %d maybe not ready or not exist!\n", id);
         irq_unregister(channel->irqno, (void *)channel);
         return -1;
     }
@@ -1340,7 +1340,7 @@ static int ide_probe(device_extension_t *ext, int id)
     ext->rwoffset = 0;
 #ifdef DEBUG_DRV
     dump_ide_extension(ext);
-    pr_dbg("probe IDE disk: base:%x irq:%d\n", channel->base, channel->irqno);
+    dbgprint("probe IDE disk: base:%x irq:%d\n", channel->base, channel->irqno);
 #endif
     
     return 0;
@@ -1361,7 +1361,7 @@ static iostatus_t ide_enter(driver_object_t *driver)
 	可以用轮训的方式来改变这种情况。 
 	 */
 	unsigned char disk_foud = *((unsigned char *)IDE_DISK_NR_ADDR);
-	printk(KERN_INFO "ide_enter: found %d hard disks.\n", disk_foud);
+	kprint(PRINT_INFO "ide_enter: found %d hard disks.\n", disk_foud);
 
 	/* 有磁盘才初始化磁盘 */
 	if (disk_foud > 0) {    
@@ -1371,7 +1371,7 @@ static iostatus_t ide_enter(driver_object_t *driver)
             status = io_create_device(driver, sizeof(device_extension_t), devname, DEVICE_TYPE_DISK, &devobj);
 
             if (status != IO_SUCCESS) {
-                printk(KERN_ERR "ide_enter: create device failed!\n");
+                kprint(PRINT_ERR "ide_enter: create device failed!\n");
                 return status;
             }
             /* buffered io mode */
@@ -1381,7 +1381,7 @@ static iostatus_t ide_enter(driver_object_t *driver)
             string_new(&devext->device_name, devname, DEVICE_NAME_LEN);
             devext->device_object = devobj;
     #ifdef DEBUG_DRV
-            printk(KERN_DEBUG "ide_enter: device extension: device name=%s object=%x\n",
+            kprint(PRINT_DEBUG "ide_enter: device extension: device name=%s object=%x\n",
                 devext->device_name.text, devext->device_object);
     #endif
             /* 填写设备扩展信息 */
@@ -1436,7 +1436,7 @@ iostatus_t ide_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "ide_driver_func: driver name=%s\n",
+    kprint(PRINT_DEBUG "ide_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     return status;
@@ -1445,7 +1445,7 @@ iostatus_t ide_driver_func(driver_object_t *driver)
 static __init void ide_driver_entry(void)
 {
     if (driver_object_create(ide_driver_func) < 0) {
-        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

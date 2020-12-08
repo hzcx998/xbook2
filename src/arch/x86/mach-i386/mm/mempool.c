@@ -17,14 +17,14 @@ void mem_node_init(mem_node_t *node, int ref, uint32_t size)
     node->cache = NULL;
     node->group = NULL;
     node->section = NULL;
-    INIT_LIST_HEAD(&node->list);
+    list_init(&node->list);
 }
 
 void mem_section_init(mem_section_t *mem_section, size_t section_size)  
 {   
     mem_section->node_count = 0;
     mem_section->section_size = section_size;
-    INIT_LIST_HEAD(&mem_section->free_list_head);
+    list_init(&mem_section->free_list_head);
 }
 
 void mem_section_setup(mem_section_t *mem_section, mem_node_t *node_base, size_t section_count)  
@@ -81,7 +81,7 @@ void mem_range_init(unsigned int idx, unsigned int start, size_t len)
         mem_section_init(&mem_range->sections[i], powi(2, i));
     }
 
-    printk(KERN_INFO "mem range: start:%x end:%x pages:%d len:%dMB\n",
+    kprint(PRINT_INFO "mem range: start:%x end:%x pages:%d len:%dMB\n",
         mem_range->start, mem_range->end, mem_range->pages, len / MB);
     
     int section_off = MEM_SECTION_MAX_NR - 1;     
@@ -153,7 +153,7 @@ int mem_range_split_section(mem_range_t *mem_range, mem_section_t *mem_section)
     
     if (tmp_section > top_section) {
         // TODO: 收缩内存
-        printk(KERN_ERR "mempool: no free section left!\n");
+        kprint(PRINT_ERR "mempool: no free section left!\n");
         return -1;
     }
 
@@ -180,7 +180,7 @@ int mem_range_split_section(mem_range_t *mem_range, mem_section_t *mem_section)
 unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
 {
     if (count > MEM_SECTION_MAX_SIZE) {
-        printk(KERN_NOTICE "%s: page count %d too big!\n", __func__, count);
+        kprint(PRINT_NOTICE "%s: page count %d too big!\n", __func__, count);
         return 0;
     }
     mem_range_t *mem_range = NULL;
@@ -207,12 +207,12 @@ unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
     if (list_empty(&mem_section->free_list_head)) {
         if (mem_section->section_size == MEM_SECTION_MAX_SIZE) {    // 没有更大的节
             // TODO: 收缩内存，合并没有使用的小节为大节
-            printk(KERN_ERR "mempool: no free section!\n");
+            kprint(PRINT_ERR "mempool: no free section!\n");
             interrupt_restore_state(flags);
             return 0;
         } else {
             if (mem_range_split_section(mem_range, mem_section) < 0) {
-                printk(KERN_ERR "mempool: split section failed!\n");
+                kprint(PRINT_ERR "mempool: split section failed!\n");
                 interrupt_restore_state(intr_flags);
                 return 0;
             }
@@ -237,13 +237,13 @@ int mem_node_free_pages(unsigned long addr)
     // 放回节点所属的节中去
     mem_section_t *section = MEM_NODE_GET_SECTION(node);
     if (!section) {
-        printk(KERN_WARING "node no section!\n");
+        kprint(PRINT_WARING "node no section!\n");
         return -1;
     }
     unsigned long intr_flags;
     interrupt_save_and_disable(intr_flags);
     if (list_find(&node->list, &section->free_list_head)) {
-        printk(KERN_WARING "addr %x don't need free again!\n", addr);
+        kprint(PRINT_WARING "addr %x don't need free again!\n", addr);
         interrupt_restore_state(intr_flags); 
         return -1;
     }
@@ -275,21 +275,21 @@ void mem_pool_test()
 {
     uint32_t addr = 64 * MB;
     mem_node_t *node = phy_addr_to_mem_node(addr);
-    printk("addr mem node: %x\n", node);
-    printk("new addr: %x\n", mem_node_to_phy_addr(node));
+    kprint("addr mem node: %x\n", node);
+    kprint("new addr: %x\n", mem_node_to_phy_addr(node));
 
     #if 1
     int i;
     for (i = 0; i < MEM_SECTION_MAX_NR; i++) {    
         addr = mem_node_alloc_pages(powi(2, i), MEM_NODE_TYPE_NORMAL);
-        printk("alloc addr: %x\n", addr);
+        kprint("alloc addr: %x\n", addr);
         if (!addr)
             break;
         mem_node_free_pages(addr);
     }
     for (i = 0; i <= MEM_SECTION_MAX_NR; i++) {    
         addr = mem_node_alloc_pages(powi(2, i), MEM_NODE_TYPE_DMA);
-        printk("2 alloc addr: %x\n", addr);
+        kprint("2 alloc addr: %x\n", addr);
         if (!addr)
             break;
         //mem_node_free_pages(addr);

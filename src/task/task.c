@@ -145,7 +145,7 @@ void kern_thread_exit(int status)
     interrupt_save_and_disable(flags);
     task_t *cur = task_current;
     if (cur->pid == USER_INIT_PROC_ID) {
-        pr_dbg("init proc can't exit!\n");
+        dbgprint("init proc can't exit!\n");
         interrupt_restore_state(flags);
         return;
     }
@@ -287,10 +287,10 @@ pid_t sys_get_tid()
 
 void tasks_print()
 {
-    printk("\n----Task----\n");
+    kprint("\n----Task----\n");
     task_t *task;
     list_for_each_owner(task, &task_global_list, global_list) {
-        printk("name %s pid %d ppid %d state %d\n", 
+        kprint("name %s pid %d ppid %d state %d\n", 
             task->name, task->pid, task->parent_pid,  task->state);
     }
 }
@@ -350,9 +350,9 @@ unsigned long sys_unid(int id)
 
 void task_dump(task_t *task)
 {
-    printk("----Task----\n");
-    printk("name:%s pid:%d parent pid:%d state:%d\n", task->name, task->pid, task->parent_pid, task->state);
-    printk("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
+    kprint("----Task----\n");
+    kprint("name:%s pid:%d parent pid:%d state:%d\n", task->name, task->pid, task->parent_pid, task->state);
+    kprint("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
 
 void kern_do_idle(void *arg)
@@ -372,7 +372,7 @@ static char *init_argv[2] = {INIT_SBIN_PATH, 0};
  */
 void task_start_user()
 {
-    printk(KERN_DEBUG "[task]: start user process.\n");
+    kprint(PRINT_DEBUG "[task]: start user process.\n");
     task_t *proc = process_create(init_argv, NULL, PROC_CREATE_INIT);
     if (proc == NULL)
         panic("kernel start process failed! please check initsrv!\n");
@@ -394,5 +394,5 @@ void tasks_init()
     task_init_boot_idle(su);
     task_take_pid(); /* 跳过pid1，预留给INIT进程 */
     task_init_done = 1;
-    printk(KERN_INFO "[ok] tasks init.");
+    kprint(PRINT_INFO "[ok] tasks init.");
 }

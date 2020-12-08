@@ -36,15 +36,15 @@ void drivers_print()
     driver_object_t *drvobj;
     device_object_t *devobj;
     int device_count;
-    printk(KERN_INFO "io system info-> drivers\n");
+    kprint(PRINT_INFO "io system info-> drivers\n");
     list_for_each_owner (drvobj, &driver_list_head, list) {
-        printk(KERN_INFO "driver: name=%s\n", drvobj->name.text);
+        kprint(PRINT_INFO "driver: name=%s\n", drvobj->name.text);
         device_count = 0;
         list_for_each_owner (devobj, &drvobj->device_list, list) {
-            printk(KERN_INFO "        device: name=%s\n", devobj->name.text);
+            kprint(PRINT_INFO "        device: name=%s\n", devobj->name.text);
             device_count++;
         }
-        printk(KERN_INFO "        device: count=%d\n", device_count);
+        kprint(PRINT_INFO "        device: count=%d\n", device_count);
     }
 }
 
@@ -52,13 +52,13 @@ void drivers_print_mini()
 {
     driver_object_t *drvobj;
     device_object_t *devobj;
-    printk(KERN_INFO "io system info-> drivers\n");
+    kprint(PRINT_INFO "io system info-> drivers\n");
     list_for_each_owner (drvobj, &driver_list_head, list) {
         list_for_each_owner (devobj, &drvobj->device_list, list) {
-            printk("%s ", devobj->name.text);
+            kprint("%s ", devobj->name.text);
         }
     }
-    printk("\n");
+    kprint("\n");
 }
 
 static driver_object_t *io_search_driver_by_name(char *drvname)
@@ -158,8 +158,8 @@ device_object_t *io_search_device_by_name(char *name)
 
 void driver_object_init(driver_object_t *driver)
 {
-    INIT_LIST_HEAD(&driver->device_list);
-    INIT_LIST_HEAD(&driver->list);
+    list_init(&driver->device_list);
+    list_init(&driver->list);
     driver->drver_extension = NULL;
     driver->driver_enter = NULL;
     driver->driver_exit = NULL;
@@ -191,7 +191,7 @@ int driver_object_create(driver_func_t func)
         mem_free(drvobj);
         return -1;
     }
-    pr_info("enter driver %s success!\n", drvobj->name.text);
+    infoprint("enter driver %s success!\n", drvobj->name.text);
 
     unsigned long flags;        
     spin_lock_irqsave(&driver_lock, flags);
@@ -217,7 +217,7 @@ int driver_object_delete(driver_object_t *driver)
     spin_unlock_irqrestore(&driver_lock, flags);
     mem_free(driver);
 #ifdef DRIVER_FRAMEWROK_DEBUG
-    printk(KERN_DEBUG "driver_object_delete: driver delete done.\n");
+    kprint(PRINT_DEBUG "driver_object_delete: driver delete done.\n");
 #endif
 
     return status;
@@ -226,7 +226,7 @@ int driver_object_delete(driver_object_t *driver)
 void io_device_queue_init(device_queue_t *queue)
 {
     spinlock_init(&queue->lock);
-    INIT_LIST_HEAD(&queue->list_head);
+    list_init(&queue->list_head);
     wait_queue_init(&queue->wait_queue);
     queue->entry_count = 0;
 }
@@ -317,7 +317,7 @@ iostatus_t io_create_device(
     device_object_t *devobj = mem_alloc(sizeof(device_object_t) + device_extension_size);
     if (devobj == NULL)
         return IO_FAILED;
-    INIT_LIST_HEAD(&devobj->list);
+    list_init(&devobj->list);
     devobj->type = type;
     if (device_extension_size > 0)
         devobj->device_extension = (void *) (devobj + 1); /* 设备扩展的空间位于设备末尾 */
@@ -340,7 +340,7 @@ iostatus_t io_create_device(
     spin_unlock(&driver->device_lock);
     *device = devobj;
 #ifdef DRIVER_FRAMEWROK_DEBUG
-    printk(KERN_DEBUG "io_create_device: create device done.\n");
+    kprint(PRINT_DEBUG "io_create_device: create device done.\n");
 #endif
     return IO_SUCCESS;
 }
@@ -353,7 +353,7 @@ void io_delete_device(
     spin_lock(&driver_lock);
     device_object_t *devobj = device_handle_table_search_by_name(device->name.text);
     if (devobj) {
-        printk(KERN_NOTICE "io_delete_device: device %s is using!\n", 
+        kprint(PRINT_NOTICE "io_delete_device: device %s is using!\n", 
             devobj->name.text);
         device_handle_table_remove(devobj);
     }
@@ -446,7 +446,7 @@ io_request_t *io_build_sync_request(
         ioreq->io_status.infomation = 0;
         ioreq->io_status.status = IO_FAILED;
     }
-    INIT_LIST_HEAD(&ioreq->list);
+    list_init(&ioreq->list);
     ioreq->system_buffer = NULL;
     ioreq->user_buffer = buffer;
     ioreq->mdl_address = NULL;
@@ -454,7 +454,7 @@ io_request_t *io_build_sync_request(
         if (devobj->flags & DO_BUFFERED_IO) {
             if (length >= MAX_MEM_CACHE_SIZE) {
                 length = MAX_MEM_CACHE_SIZE;
-                printk(KERN_WARING "io_build_sync_request: length too big!\n");
+                kprint(PRINT_WARING "io_build_sync_request: length too big!\n");
             }
             ioreq->system_buffer = mem_alloc(length);
             if (ioreq->system_buffer == NULL) {
@@ -598,7 +598,6 @@ int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen
         }
         wait_queue_add(&queue->wait_queue, task_current);
         spin_unlock_irqrestore(&queue->lock, irqflags);
-        TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
         spin_lock_irqsave(&queue->lock, irqflags);   
     }
@@ -611,7 +610,7 @@ int io_device_queue_pickup(device_queue_t *queue, unsigned char *buf, int buflen
     mem_free(entry);
     spin_unlock_irqrestore(&queue->lock, irqflags);
 #if DEBUG_LOCLA == 1
-    printk(KERN_DEBUG "io_device_queue_get: pid=%d len=%d.\n",
+    kprint(PRINT_DEBUG "io_device_queue_get: pid=%d len=%d.\n",
         queue->wait_queue.task->pid, len);
 #endif            
     return len;
@@ -622,7 +621,7 @@ iostatus_t io_device_increase_reference(device_object_t *devobj)
     if (atomic_get(&devobj->reference) >= 0) {
         atomic_inc(&devobj->reference);
     } else {
-        printk(KERN_ERR "device_open: reference %d error!\n", atomic_get(&devobj->reference));
+        kprint(PRINT_ERR "device_open: reference %d error!\n", atomic_get(&devobj->reference));
         return IO_FAILED;
     }
     return IO_SUCCESS;
@@ -633,7 +632,7 @@ iostatus_t io_device_decrease_reference(device_object_t *devobj)
     if (atomic_get(&devobj->reference) >= 0) {
         atomic_dec(&devobj->reference);
     } else {
-        printk(KERN_ERR "device_close: reference %d error!\n", atomic_get(&devobj->reference));
+        kprint(PRINT_ERR "device_close: reference %d error!\n", atomic_get(&devobj->reference));
         return IO_FAILED;    
     }
     return IO_SUCCESS;
@@ -643,19 +642,19 @@ handle_t device_open(char *devname, unsigned int flags)
 {
     device_object_t *devobj = io_search_device_by_name(devname);
     if (devobj == NULL) {
-        printk(KERN_ERR "device_open: device %s not found!\n", devname);
+        kprint(PRINT_ERR "device_open: device %s not found!\n", devname);
         return -1;
     }
     iostatus_t status = io_device_increase_reference(devobj);
     if (status == IO_FAILED) {
-        printk(KERN_ERR "device_open: increase reference failed!\n");
+        kprint(PRINT_ERR "device_open: increase reference failed!\n");
         return -1;
     }
     io_request_t *ioreq = NULL;
     if (atomic_get(&devobj->reference) == 1) {
         ioreq = io_build_sync_request(IOREQ_OPEN, devobj, NULL, 0, 0, NULL);
         if (ioreq == NULL) {
-            printk(KERN_ERR "device_open: alloc io request packet failed!\n", atomic_get(&devobj->reference));
+            kprint(PRINT_ERR "device_open: alloc io request packet failed!\n", atomic_get(&devobj->reference));
             goto rollback_ref;
         }
         ioreq->parame.open.devname = devname;
@@ -666,7 +665,7 @@ handle_t device_open(char *devname, unsigned int flags)
             spin_lock(&driver_lock);
             handle_t handle = device_handle_table_insert(devobj);
             if (handle == -1) {
-                printk(KERN_ERR "device_open: insert device handle tabel failed!\n");
+                kprint(PRINT_ERR "device_open: insert device handle tabel failed!\n");
                 spin_unlock(&driver_lock);
                 return -1;    
             }
@@ -680,7 +679,7 @@ handle_t device_open(char *devname, unsigned int flags)
         return handle;
     }
 rollback_ref:
-    printk(KERN_ERR "device_open: do dispatch failed!\n");
+    kprint(PRINT_ERR "device_open: do dispatch failed!\n");
     io_device_decrease_reference(devobj);
     return -1;
 }
@@ -691,7 +690,7 @@ int device_close(handle_t handle)
         return -1;
     device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
     if (devobj == NULL) {
-        printk(KERN_ERR "device_close: device object error by handle=%d!\n", handle);
+        kprint(PRINT_ERR "device_close: device object error by handle=%d!\n", handle);
         /* 应该激活一个触发器，让调用者停止运行 */
         return -1;
     }
@@ -704,14 +703,14 @@ int device_close(handle_t handle)
     if (!atomic_get(&devobj->reference)) { /* 最后一次关闭才关闭 */    
         ioreq = io_build_sync_request(IOREQ_CLOSE, devobj, NULL, 0, 0, NULL);
         if (ioreq == NULL) {
-            printk(KERN_ERR "device_close: alloc io request packet failed!\n", atomic_get(&devobj->reference));
+            kprint(PRINT_ERR "device_close: alloc io request packet failed!\n", atomic_get(&devobj->reference));
             goto rollback_ref;
         }
         status = io_call_dirver(devobj, ioreq);
         if (!io_complete_check(ioreq, status)) {
             spin_lock(&driver_lock);
             if (device_handle_table_remove(devobj)) {
-                printk(KERN_ERR "device_close: device=%s remove from device handle table failed!\n",
+                kprint(PRINT_ERR "device_close: device=%s remove from device handle table failed!\n",
                     devobj->name.text);
                 spin_unlock(&driver_lock);
                 return -1;
@@ -737,7 +736,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
 
     device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
     if (devobj == NULL) {
-        printk(KERN_ERR "%s: device object error by handle=%d!\n", __func__, handle);
+        kprint(PRINT_ERR "%s: device object error by handle=%d!\n", __func__, handle);
         /* 应该激活一个触发器，让调用者停止运行 */
         return NULL;
     }
@@ -745,7 +744,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
     iostatus_t status = IO_SUCCESS;
     io_request_t *ioreq = io_build_sync_request(IOREQ_MMAP, devobj, NULL, length, flags, NULL);
     if (ioreq == NULL) {
-        printk(KERN_ERR "%s: alloc io request packet failed!\n", __func__);
+        kprint(PRINT_ERR "%s: alloc io request packet failed!\n", __func__);
         return NULL;
     }
 
@@ -753,7 +752,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
     if (!io_complete_check(ioreq, status)) {
         void *mapaddr = NULL;
         if (ioreq->io_status.infomation) {
-            pr_dbg("device memmap paddr=%x, len=%x\n", ioreq->io_status.infomation, length);
+            dbgprint("device memmap paddr=%x, len=%x\n", ioreq->io_status.infomation, length);
 
             if (flags & IO_KERNEL)
                 mapaddr = memio_remap(ioreq->io_status.infomation, length);
@@ -762,7 +761,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
                     PROT_USER | PROT_WRITE, MEM_SPACE_MAP_SHARED | MEM_SPACE_MAP_REMAP);
         }
         io_request_free((ioreq));
-        pr_dbg("device memmap %x\n", mapaddr);
+        dbgprint("device memmap %x\n", mapaddr);
         return mapaddr;
     }
     io_request_free((ioreq));
@@ -775,7 +774,7 @@ int device_incref(handle_t handle)
         return -1;
     device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
     if (devobj == NULL) {
-        printk(KERN_ERR "device_close: device object error by handle=%d!\n", handle);
+        kprint(PRINT_ERR "device_close: device object error by handle=%d!\n", handle);
         /* 应该激活一个触发器，让调用者停止运行 */
         return -1;
     }
@@ -791,7 +790,7 @@ int device_decref(handle_t handle)
     
     device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
     if (devobj == NULL) {
-        printk(KERN_ERR "device_close: device object error by handle=%d!\n", handle);
+        kprint(PRINT_ERR "device_close: device object error by handle=%d!\n", handle);
         /* 应该激活一个触发器，让调用者停止运行 */
         return -1;
     }
@@ -807,7 +806,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
     
     device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
     if (devobj == NULL) {
-        printk(KERN_ERR "device_read: device object error by handle=%d!\n", handle);
+        kprint(PRINT_ERR "device_read: device object error by handle=%d!\n", handle);
         /* 应该激活一个触发器，让调用者停止运行 */
         return -1;
     }
@@ -816,7 +815,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
     io_request_t *ioreq = NULL;
     ioreq = io_build_sync_request(IOREQ_READ, devobj, buffer, length, offset, NULL);
     if (ioreq == NULL) {
-        printk(KERN_ERR "device_read: alloc io request packet failed!\n");
+        kprint(PRINT_ERR "device_read: alloc io request packet failed!\n");
         return -1;
     }
 
@@ -830,7 +829,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
             interrupt_restore_state(flags);
             mem_free(ioreq->system_buffer);
         } else if (devobj->flags & DO_DIRECT_IO) { 
-            printk(KERN_DEBUG "device_read: read done. free mdl.\n");
+            kprint(PRINT_DEBUG "device_read: read done. free mdl.\n");
             mdl_free(ioreq->mdl_address);
             ioreq->mdl_address = NULL;
         }
@@ -838,7 +837,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         return len;
     }
 #ifdef DRIVER_FRAMEWROK_DEBUG
-    printk(KERN_ERR "device_read: do dispatch failed!\n");
+    kprint(PRINT_ERR "device_read: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
     io_request_free(ioreq);
@@ -852,7 +851,7 @@ ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset)
     
     device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
     if (devobj == NULL) {
-        printk(KERN_ERR "device_write: device object error by handle=%d!\n", handle);
+        kprint(PRINT_ERR "device_write: device object error by handle=%d!\n", handle);
         /* 应该激活一个触发器，让调用者停止运行 */
         return -1;
     }
@@ -861,14 +860,14 @@ ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset)
     io_request_t *ioreq = NULL;
     ioreq = io_build_sync_request(IOREQ_WRITE, devobj, buffer, length, offset, NULL);
     if (ioreq == NULL) {
-        printk(KERN_ERR "device_write: alloc io request packet failed!\n");
+        kprint(PRINT_ERR "device_write: alloc io request packet failed!\n");
         return -1;
     }
     status = io_call_dirver(devobj, ioreq);
 
     if (!io_complete_check(ioreq, status)) {
         if (devobj->flags & DO_DIRECT_IO) { 
-            printk(KERN_DEBUG "device_write: write done. free mdl.\n");
+            kprint(PRINT_DEBUG "device_write: write done. free mdl.\n");
             mdl_free(ioreq->mdl_address);
             ioreq->mdl_address = NULL;
         }
@@ -877,7 +876,7 @@ ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset)
         return len;
     }
 #ifdef DRIVER_FRAMEWROK_DEBUG
-    printk(KERN_ERR "device_write: do dispatch failed!\n");
+    kprint(PRINT_ERR "device_write: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
     io_request_free(ioreq);
@@ -891,7 +890,7 @@ ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg)
     
     device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
     if (devobj == NULL) {
-        printk(KERN_ERR "device_devctl: device object error by handle=%d!\n", handle);
+        kprint(PRINT_ERR "device_devctl: device object error by handle=%d!\n", handle);
         /* 应该激活一个触发器，让调用者停止运行 */
         return -1;
     }
@@ -900,7 +899,7 @@ ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg)
     io_request_t *ioreq = NULL;
     ioreq = io_build_sync_request(IOREQ_DEVCTL, devobj, NULL, 0, 0, NULL);
     if (ioreq == NULL) {
-        printk(KERN_ERR "device_devctl: alloc io request packet failed!\n");
+        kprint(PRINT_ERR "device_devctl: alloc io request packet failed!\n");
         return -1;
     }
     ioreq->parame.devctl.code = code;
@@ -913,7 +912,7 @@ ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg)
         return infomation;
     }
 #ifdef DRIVER_FRAMEWROK_DEBUG
-    printk(KERN_ERR "device_devctl: do dispatch failed!\n");
+    kprint(PRINT_ERR "device_devctl: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
     io_request_free(ioreq);
@@ -927,14 +926,14 @@ int io_uninstall_driver(char *drvname)
     if (!drvobj)
         return -1;
     if (driver_object_delete(drvobj)) {
-        printk(KERN_ERR "io_uninstall_driver: delete driver %s failed!\n", drvname);
+        kprint(PRINT_ERR "io_uninstall_driver: delete driver %s failed!\n", drvname);
     }
     return 0;
 }
 
 void dump_device_object(device_object_t *device)
 {
-    printk(KERN_DEBUG "dump_device_object: type=%d driver=%x extension=%x flags=%x reference=%x name=%s\n",
+    kprint(PRINT_DEBUG "dump_device_object: type=%d driver=%x extension=%x flags=%x reference=%x name=%s\n",
         device->type, device->driver, device->device_extension, device->flags,
         atomic_get(&device->reference), device->name.text);
 }

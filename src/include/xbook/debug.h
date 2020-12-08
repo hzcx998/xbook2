@@ -1,14 +1,12 @@
 #ifndef _XBOOK_DEBUG_H
 #define _XBOOK_DEBUG_H
 
-#include "kernel.h"
-
-#define KERN_EMERG      "<0>"      /* system is unuseable */
-#define KERN_ERR        "<1>"      /* error condition */
-#define KERN_WARING     "<2>"      /* waring condition */
-#define KERN_NOTICE     "<3>"      /* normal significant */
-#define KERN_INFO       "<4>"      /* infomational */
-#define KERN_DEBUG      "<5>"      /* debug message */
+#define PRINT_EMERG      "<0>"      /* system is unuseable */
+#define PRINT_ERR        "<1>"      /* error condition */
+#define PRINT_WARING     "<2>"      /* waring condition */
+#define PRINT_NOTICE     "<3>"      /* normal significant */
+#define PRINT_INFO       "<4>"      /* infomational */
+#define PRINT_DEBUG      "<5>"      /* debug message */
 
 #define DEFAULT_LOG_MIN   0
 #define DEFAULT_LOG_MAX   5
@@ -17,29 +15,24 @@
 
 extern int print_gui_console;
 
-int printk(const char *fmt, ...);
-#define pr_fmt(fmt) fmt
-#define pr_emerg(fmt, ...) \
-    printk(KERN_EMERG pr_fmt(fmt), ##__VA_ARGS__)
-#define pr_alert(fmt, ...) \
-    printk(KERN_ALERT pr_fmt(fmt), ##__VA_ARGS__)
-#define pr_crit(fmt, ...) \
-    printk(KERN_CRIT pr_fmt(fmt), ##__VA_ARGS__)
-#define pr_err(fmt, ...) \
-    printk(KERN_ERR pr_fmt(fmt), ##__VA_ARGS__)
-#define pr_warning(fmt, ...) \
-    printk(KERN_WARING pr_fmt(fmt), ##__VA_ARGS__)
-#define pr_warn pr_warning
-#define pr_notice(fmt, ...) \
-    printk(KERN_NOTICE pr_fmt(fmt), ##__VA_ARGS__)
-#define pr_info(fmt, ...) \
-    printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__)
-#define pr_cont(fmt, ...) \
-    printk(KERN_CONT fmt, ##__VA_ARGS__)
-#define pr_dbg(fmt, ...) \
-    printk(KERN_DEBUG fmt, ##__VA_ARGS__)
-#define logger(fmt, ...) \
-        printk("file:%s line:%d " pr_fmt(fmt), __FILE__, __LINE__, ##__VA_ARGS__)
+int kprint(const char *fmt, ...);
+#define print_fmt(fmt) fmt
+#define emeprint(fmt, ...) \
+    kprint(PRINT_EMERG print_fmt(fmt), ##__VA_ARGS__)
+#define errprint(fmt, ...) \
+    kprint(PRINT_ERR print_fmt(fmt), ##__VA_ARGS__)
+#define warnprint(fmt, ...) \
+    kprint(PRINT_WARING print_fmt(fmt), ##__VA_ARGS__)
+#define noteprint(fmt, ...) \
+    kprint(PRINT_NOTICE print_fmt(fmt), ##__VA_ARGS__)
+#define infoprint(fmt, ...) \
+    kprint(PRINT_INFO print_fmt(fmt), ##__VA_ARGS__)
+#define dbgprint(fmt, ...) \
+    kprint(PRINT_DEBUG fmt, ##__VA_ARGS__)
+#define logprint(fmt, ...) \
+        kprint("file:%s line:%d: " PRINT_DEBUG print_fmt(fmt), __FILE__, __LINE__, ##__VA_ARGS__)
+
+#define endl "\n"
 
 void spin(char * func_name);
 void panic(const char *fmt, ...);

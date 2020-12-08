@@ -21,12 +21,12 @@ static void permission_data_init(permission_data_t *permdata, uint32_t attr, cha
 
 void permission_database_dump()
 {
-    pr_dbg("Permission database length:%d\n", permission_db->length);
+    dbgprint("Permission database length:%d\n", permission_db->length);
     int i;
     for (i = 0; i < PERMISION_DATABASE_LEN; i++) {
         permission_data_t *data = &permission_db->datasets[i];
         if (data->attr) {
-            pr_dbg("%d: attr:%x str:%s\n", i, data->attr, data->str);
+            dbgprint("%d: attr:%x str:%s\n", i, data->attr, data->str);
         }
     }
 }
@@ -190,7 +190,7 @@ int permission_database_sync()
     strcat(buf, PERMISSION_FILE_NAME);
     int fd = kfile_open(buf, O_RDWR | O_TRUNC);
     if (fd < 0) {
-        pr_err("open permission file %s failed!\n", buf);
+        errprint("open permission file %s failed!\n", buf);
         mutex_unlock(&permission_db->lock);
         return -1;
     }
@@ -200,7 +200,7 @@ int permission_database_sync()
             /* attr,str\n */
             char permission_buf[PERMISION_STR_LEN + 12] = {0};
             permission_data_to_buf(data, permission_buf);
-            // pr_dbg("permission buf:%s", permission_buf);
+            // dbgprint("permission buf:%s", permission_buf);
             kfile_write(fd, permission_buf, strlen(permission_buf));
         }
     }
@@ -327,7 +327,7 @@ int permission_database_load()
     if (kfile_access(buf, F_OK) < 0) {
         fd = kfile_open(buf, O_CREAT | O_RDWR);
         if (fd < 0) {
-            pr_err("create permision file %s failed!\n", buf);
+            errprint("create permision file %s failed!\n", buf);
             return -1;
         }
         kfile_close(fd);
@@ -335,13 +335,13 @@ int permission_database_load()
     }
     if (file_not_exist) {   
         if (permission_auto_insert() < 0) {
-            pr_err("permision sync file %s failed!\n", buf);
+            errprint("permision sync file %s failed!\n", buf);
             return -1;
         }
     } else {
         /* 存在则直接从文件中解析 */
         if (permission_scan_insert(buf) < 0) {
-            pr_err("permision scan file %s failed!\n", buf);
+            errprint("permision scan file %s failed!\n", buf);
             return -1;
         }
     }

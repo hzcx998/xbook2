@@ -48,7 +48,7 @@ void disk_info_print()
     mutex_lock(&disk_manager_mutex);
     disk_info_t *disk;
     list_for_each_owner (disk, &disk_list_head, list) {
-        pr_info("[diskman]: probe device:%s -> vir:%s type:%d\n",
+        infoprint("[diskman]: probe device:%s -> vir:%s type:%d\n",
             disk->devent.de_name, disk->virname, disk->devent.de_type);
     }
     mutex_unlock(&disk_manager_mutex);
@@ -129,7 +129,7 @@ static int disk_manager_close(int solt)
                 }
                 disk->handle = -1;
             } else if (atomic_get(&disk->ref) == 0) {
-                pr_dbg("[diskman]: close device %d without open!\n", solt);
+                dbgprint("[diskman]: close device %d without open!\n", solt);
                 mutex_unlock(&disk_manager_mutex);
                 return -1;
             }

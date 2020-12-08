@@ -13,7 +13,7 @@
 static int do_copy_share_page(addr_t vaddr, vmm_t *child, vmm_t *parent)
 {
     addr_t paddr = addr_vir2phy(vaddr);
-    pr_dbg("[vmm]: copy share page at vaddr %x phy addr %x\n", vaddr, paddr);   
+    dbgprint("[vmm]: copy share page at vaddr %x phy addr %x\n", vaddr, paddr);   
     vmm_active(child);
     page_link_addr(vaddr, paddr, PAGE_ATTR_WRITE | PAGE_ATTR_USER);
     vmm_active(parent);
@@ -27,7 +27,7 @@ static int do_copy_normal_page(addr_t vaddr, void *buf, vmm_t *child, vmm_t *par
     vmm_active(child);
     paddr = page_alloc_user(1);
     if (!paddr) {
-        printk(KERN_ERR "vmm_copy_mapping: page_alloc_one for vaddr failed!\n");
+        kprint(PRINT_ERR "vmm_copy_mapping: page_alloc_one for vaddr failed!\n");
         vmm_active(parent);
         return -1;
     }
@@ -41,7 +41,7 @@ int vmm_copy_mapping(task_t *child, task_t *parent)
 {
     void *buf = mem_alloc(PAGE_SIZE);
     if (buf == NULL) {
-        printk(KERN_ERR "vmm_copy_mapping: mem_alloc buf for data transform failed!\n");
+        kprint(PRINT_ERR "vmm_copy_mapping: mem_alloc buf for data transform failed!\n");
         return -1;
     }
     mem_space_t *space = parent->vmm->mem_space_head;

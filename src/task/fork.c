@@ -26,8 +26,8 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     child->tgid = child->pid;
     child->state = TASK_READY;
     child->parent_pid = parent->pid;
-    INIT_LIST_HEAD(&child->list);
-    INIT_LIST_HEAD(&child->global_list);
+    list_init(&child->list);
+    list_init(&child->global_list);
     child->kstack = (unsigned char *)((unsigned char *)child + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
     return 0;
 }
@@ -122,12 +122,12 @@ int sys_fork()
     interrupt_save_and_disable(flags);
     task_t *child = mem_alloc(TASK_KERN_STACK_SIZE);
     if (child == NULL) {
-        printk(KERN_ERR "sys_fork: mem_alloc for child task failed!\n");
+        kprint(PRINT_ERR "sys_fork: mem_alloc for child task failed!\n");
         return -1;
     }
     ASSERT(parent->vmm != NULL);
     if (copy_task(child, parent)) {
-        printk(KERN_ERR "sys_fork: copy task failed!\n");
+        kprint(PRINT_ERR "sys_fork: copy task failed!\n");
         mem_free(child);
         interrupt_restore_state(flags);
         return -1;

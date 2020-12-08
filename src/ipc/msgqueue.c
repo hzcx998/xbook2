@@ -46,7 +46,7 @@ msg_queue_t *msg_queue_alloc(char *name)
         if (msgq->name[0] == '\0') {
             memcpy(msgq->name, name, MSGQ_NAME_LEN);
             msgq->name[MSGQ_NAME_LEN - 1] = '\0';
-            INIT_LIST_HEAD(&msgq->msg_list);
+            list_init(&msgq->msg_list);
             msgq->msgs = 0;
             msgq->msgsz = MSG_MAX_LEN;
             wait_queue_init(&msgq->senders);
@@ -117,7 +117,7 @@ int msg_queue_put(int msgid)
 
 void msg_init(msg_t *msg, long type, void *text, size_t length)
 {
-	INIT_LIST_HEAD(&msg->list);
+	list_init(&msg->list);
 	msg->type = type;
 	msg->length = length;
 	memcpy(msg->buf, text, length);
@@ -135,7 +135,7 @@ int msg_queue_send(int msgid, void *msgbuf, size_t size, int msgflg)
     msgq = msg_queue_find_by_id(msgid);
     if (msgq == NULL) {
         semaphore_up(&msg_queue_mutex);
-        printk(KERN_ERR "msg_queue_send: not found message queue!\n");
+        kprint(PRINT_ERR "msg_queue_send: not found message queue!\n");
         return -1;
     }
     semaphore_up(&msg_queue_mutex);
@@ -150,7 +150,6 @@ int msg_queue_send(int msgid, void *msgbuf, size_t size, int msgflg)
         }
         wait_queue_add(&msgq->senders, task_current);
         semaphore_up(&msgq->mutex);
-        TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
         semaphore_down(&msgq->mutex);
     }
@@ -187,7 +186,7 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
     msgq = msg_queue_find_by_id(msgid);
     if (msgq == NULL) {
         semaphore_up(&msg_queue_mutex);    
-        printk(KERN_DEBUG "msg_queue_recv: not found message queue!\n");
+        kprint(PRINT_DEBUG "msg_queue_recv: not found message queue!\n");
         return -1;
     }   
     semaphore_up(&msg_queue_mutex);
@@ -199,7 +198,6 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
         }
         wait_queue_add(&msgq->receivers, task_current);
         semaphore_up(&msgq->mutex);
-        TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
         semaphore_down(&msgq->mutex);
     }
@@ -233,7 +231,7 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
     }
     if (msg == NULL) {
         semaphore_up(&msgq->mutex);
-        printk(KERN_ERR "msg_queue_recv: message not found!\n");
+        kprint(PRINT_ERR "msg_queue_recv: message not found!\n");
         return -1;
     }
     list_del(&msg->list);
@@ -290,11 +288,11 @@ void msg_queue_init()
 {
     msg_queue_table = (msg_queue_t *)mem_alloc(sizeof(msg_queue_t) * MSGQ_MAX_NR);
     if (msg_queue_table == NULL)
-        panic(KERN_EMERG "msg_queue_init: alloc mem for msg_queue_table failed! :(\n");
+        panic(PRINT_EMERG "msg_queue_init: alloc mem for msg_queue_table failed! :(\n");
     int i;
     for (i = 0; i < MSGQ_MAX_NR; i++) {
         msg_queue_table[i].id = 1 + i + i * 2;
-        INIT_LIST_HEAD(&msg_queue_table[i].msg_list);
+        list_init(&msg_queue_table[i].msg_list);
         msg_queue_table[i].msgs = 0;
         semaphore_init(&msg_queue_table[i].mutex, 1);
         memset(msg_queue_table[i].name, 0, MSGQ_NAME_LEN);

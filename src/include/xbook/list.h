@@ -25,7 +25,7 @@ typedef struct list {
         struct list name = LIST_HEAD_INIT(name)
 
 /* 让链表内容指针指向自己本身 */
-static inline void INIT_LIST_HEAD(struct list *list)
+static inline void list_init(struct list *list)
 {
    list->next = list;
    list->prev = list;  
@@ -147,7 +147,7 @@ static inline void list_del_init(struct list *node)
 {
    __list_del_node(node);
    //初始化节点，使得可以成为链表头，我猜的。:-)
-   INIT_LIST_HEAD(node);
+   list_init(node);
 }
 
 /*
@@ -175,7 +175,7 @@ static inline void list_replace_init(struct list *old, struct list *new)
    先把old取代，然后把old节点初始化，使它完全脱离链表。
    */
    list_replace(old, new);
-   INIT_LIST_HEAD(old);
+   list_init(old);
 }
 
 /*

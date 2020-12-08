@@ -104,35 +104,35 @@ void dump_vbe_info_block(struct vbe_info_block *info)
 {
     if (info == NULL)
         return;
-    printk(KERN_DEBUG "VBE info block:\n");
-    printk(KERN_DEBUG "vbe signature:%c%c%c%c\n", info->vbeSignature[0],
+    kprint(PRINT_DEBUG "VBE info block:\n");
+    kprint(PRINT_DEBUG "vbe signature:%c%c%c%c\n", info->vbeSignature[0],
         info->vbeSignature[1], info->vbeSignature[2], info->vbeSignature[3]);
-    printk(KERN_DEBUG "vbe version:%x\n", info->vbeVeision);
-    printk(KERN_DEBUG "OEM string ptr:%x\n", info->oemStringPtr);
+    kprint(PRINT_DEBUG "vbe version:%x\n", info->vbeVeision);
+    kprint(PRINT_DEBUG "OEM string ptr:%x\n", info->oemStringPtr);
     /* 低8位有效，其他位reserved */
-    printk(KERN_DEBUG "capabilities:%x\n", info->capabilities[0]);
-    printk(KERN_DEBUG "video mode ptr:%x\n", info->videoModePtr);
-    printk(KERN_DEBUG "total memory:%d\n", info->totalMemory);
-    printk(KERN_DEBUG "oem software reversion:%x\n", info->oemSoftwareRev);
-    printk(KERN_DEBUG "oem vendor name ptr:%x\n", info->oemVendorNamePtr);
-    printk(KERN_DEBUG "oem product name ptr:%x\n", info->oemProductNamePtr);
-    printk(KERN_DEBUG "oem product reversion ptr:%x\n", info->oemProductRevPtr);
+    kprint(PRINT_DEBUG "capabilities:%x\n", info->capabilities[0]);
+    kprint(PRINT_DEBUG "video mode ptr:%x\n", info->videoModePtr);
+    kprint(PRINT_DEBUG "total memory:%d\n", info->totalMemory);
+    kprint(PRINT_DEBUG "oem software reversion:%x\n", info->oemSoftwareRev);
+    kprint(PRINT_DEBUG "oem vendor name ptr:%x\n", info->oemVendorNamePtr);
+    kprint(PRINT_DEBUG "oem product name ptr:%x\n", info->oemProductNamePtr);
+    kprint(PRINT_DEBUG "oem product reversion ptr:%x\n", info->oemProductRevPtr);
 
-    printk(KERN_DEBUG "oem data:\n");
+    kprint(PRINT_DEBUG "oem data:\n");
     /* 打印oemData */
     unsigned int *p = (unsigned int *) info->oemData;
     int i; 
     for (i = 0; i < 256 / 4; i++) {
-        printk("%x ", p[i]);
+        kprint("%x ", p[i]);
     }
-    printk("\n");
+    kprint("\n");
     
-    printk(KERN_DEBUG "reserved (mode list):\n");
+    kprint(PRINT_DEBUG "reserved (mode list):\n");
     unsigned short *q = (unsigned short *) info->reserved; 
     for (i = 0; i < 222 / 2; i++) {
-        printk("%x ", q[i]);
+        kprint("%x ", q[i]);
     }
-    printk("\n");
+    kprint("\n");
 }
 
 void dump_vbe_mode_info_block(struct vbe_mode_info_block *info)
@@ -140,13 +140,13 @@ void dump_vbe_mode_info_block(struct vbe_mode_info_block *info)
     if (info == NULL)
         return;
 
-    printk(KERN_DEBUG "VBE mode info block:\n");
-    printk(KERN_DEBUG "mode attributes:%x\n", info->modeAttributes);
-    printk(KERN_DEBUG "horizontal resolution in pixels:%d\n", info->xResolution);
-    printk(KERN_DEBUG "vertical resolution in pixels:%d\n", info->yResolution);
-    printk(KERN_DEBUG "bits per pixel:%d\n", info->bitsPerPixel);
-    printk(KERN_DEBUG "physical address for flat memory frame buffer:%x\n", info->phyBasePtr);
-    printk(KERN_DEBUG "bytesPerScanLine:%x\n", info->bytesPerScanLine);
+    kprint(PRINT_DEBUG "VBE mode info block:\n");
+    kprint(PRINT_DEBUG "mode attributes:%x\n", info->modeAttributes);
+    kprint(PRINT_DEBUG "horizontal resolution in pixels:%d\n", info->xResolution);
+    kprint(PRINT_DEBUG "vertical resolution in pixels:%d\n", info->yResolution);
+    kprint(PRINT_DEBUG "bits per pixel:%d\n", info->bitsPerPixel);
+    kprint(PRINT_DEBUG "physical address for flat memory frame buffer:%x\n", info->phyBasePtr);
+    kprint(PRINT_DEBUG "bytesPerScanLine:%x\n", info->bytesPerScanLine);
 }
 #endif  /* DEBUG_DRV */
 
@@ -191,7 +191,7 @@ iostatus_t vbe_mmap(device_object_t *device, io_request_t *ioreq)
 
     ioreq->io_status.infomation = 0;
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "%s: length=%x mode len=%x\n", __func__, 
+    kprint(PRINT_DEBUG "%s: length=%x mode len=%x\n", __func__, 
         ioreq->parame.mmap.length, extension->mode_info->bytesPerScanLine *
         extension->mode_info->yResolution);
 #endif
@@ -201,7 +201,7 @@ iostatus_t vbe_mmap(device_object_t *device, io_request_t *ioreq)
         
         ioreq->io_status.infomation = (unsigned long) extension->mode_info->phyBasePtr;    /* 返回物理地址 */
 #ifdef DEBUG_DRV
-        printk(KERN_DEBUG "%s: get phy addr:%x\n", __func__, ioreq->io_status.infomation);
+        kprint(PRINT_DEBUG "%s: get phy addr:%x\n", __func__, ioreq->io_status.infomation);
 #endif    
         status = IO_SUCCESS;
     }
@@ -219,7 +219,7 @@ static iostatus_t vbe_enter(driver_object_t *driver)
     /* 初始化一些其它内容 */
     status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_VIDEO, &devobj);
     if (status != IO_SUCCESS) {
-        printk(KERN_ERR "vbe_enter: create device failed!\n");
+        kprint(PRINT_ERR "vbe_enter: create device failed!\n");
         return status;
     }
     /* neighter io mode */
@@ -233,7 +233,7 @@ static iostatus_t vbe_enter(driver_object_t *driver)
     
 #ifdef DEBUG_DRV
     
-    printk(KERN_DEBUG "%s: %s: sizeof vbe info block %d mode block %d\n", 
+    kprint(PRINT_DEBUG "%s: %s: sizeof vbe info block %d mode block %d\n", 
         DRV_NAME, __func__, sizeof(struct vbe_info_block), sizeof(struct vbe_mode_info_block));
     
     dump_vbe_info_block(extension->vbe_info);
@@ -248,14 +248,14 @@ static iostatus_t vbe_enter(driver_object_t *driver)
     extension->vir_base_addr = memio_remap(extension->mode_info->phyBasePtr, video_ram_size);
     if (extension->vir_base_addr == NULL) {
         status = IO_FAILED;
-        printk(KERN_ERR "%s: %s: memio_remap for vbe ram failed!\n", 
+        kprint(PRINT_ERR "%s: %s: memio_remap for vbe ram failed!\n", 
             DRV_NAME, __func__);
         return status;
     }
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "%s: %s: " "video ram size: %x bytes\n", 
+    kprint(PRINT_DEBUG "%s: %s: " "video ram size: %x bytes\n", 
         DRV_NAME, __func__, video_ram_size);
-    printk(KERN_DEBUG "%s: %s: " "mapped virtual addr in kernel: %x.\n", 
+    kprint(PRINT_DEBUG "%s: %s: " "mapped virtual addr in kernel: %x.\n", 
         DRV_NAME, __func__, extension->vir_base_addr);
 #endif  /*  DEBUG_DRV */
 #endif  /* MAP_VRAM_TO_KERN */
@@ -294,7 +294,7 @@ iostatus_t vbe_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "vbe_driver_func: driver name=%s\n",
+    kprint(PRINT_DEBUG "vbe_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
@@ -304,7 +304,7 @@ iostatus_t vbe_driver_func(driver_object_t *driver)
 static __init void vbe_driver_entry(void)
 {
     if (driver_object_create(vbe_driver_func) < 0) {
-        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

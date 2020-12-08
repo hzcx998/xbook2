@@ -84,11 +84,11 @@ int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
         return -1;
     pipe_t *pipe = pipe_find(pipeid);
     if (pipe == NULL) {
-        printk(KERN_ERR "%s: pipe %d not found!\n", __func__, pipeid);
+        kprint(PRINT_ERR "%s: pipe %d not found!\n", __func__, pipeid);
         return -1;
     }
     if (atomic_get(&pipe->read_count) <= 0)  {
-        printk(KERN_ERR "%s: pipe %d reader is zero!\n", __func__, pipeid);
+        kprint(PRINT_ERR "%s: pipe %d reader is zero!\n", __func__, pipeid);
         return -1;
     }
 
@@ -111,7 +111,6 @@ int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
         }
         wait_queue_add(&pipe->wait_queue, task_current);
         mutex_unlock(&pipe->mutex);
-        TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
         mutex_lock(&pipe->mutex);
     }
@@ -142,11 +141,11 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
         return -1;
     pipe_t *pipe = pipe_find(pipeid);
     if (pipe == NULL) {
-        printk(KERN_ERR "%s: pipe %d not found!\n", __func__, pipeid);
+        kprint(PRINT_ERR "%s: pipe %d not found!\n", __func__, pipeid);
         return -1;
     }
     if (atomic_get(&pipe->write_count) <= 0) {
-        printk(KERN_ERR "%s: pipe %d writer is zero!\n", __func__, pipeid);
+        kprint(PRINT_ERR "%s: pipe %d writer is zero!\n", __func__, pipeid);
         return -1;
     }
         
@@ -180,7 +179,6 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
             }
             wait_queue_add(&pipe->wait_queue, task_current);
             mutex_unlock(&pipe->mutex);
-            TASK_ENTER_WAITLIST(task_current);
             task_block(TASK_BLOCKED);
             mutex_lock(&pipe->mutex);
         }

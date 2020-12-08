@@ -33,7 +33,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
     mdl->byte_offset = (char *)vaddr - (char *)mdl->start_vaddr;
     if (length > MDL_MAX_SIZE) {
         length = MDL_MAX_SIZE;      /* 剪切长度 */
-        printk(KERN_NOTICE "mdl_alloc: length=%x too long!\n", length);    
+        kprint(PRINT_NOTICE "mdl_alloc: length=%x too long!\n", length);    
     }
     mdl->byte_count = length;
     mdl->task = task_current;
@@ -43,9 +43,9 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
     interrupt_save_and_disable(flags);
 
     unsigned long phyaddr = addr_vir2phy((unsigned long) mdl->start_vaddr);
-    printk(KERN_DEBUG "mdl_alloc: viraddr=%x phyaddr=%x\n", vaddr, phyaddr);
+    kprint(PRINT_DEBUG "mdl_alloc: viraddr=%x phyaddr=%x\n", vaddr, phyaddr);
     unsigned long pages = PAGE_ALIGN(length) / PAGE_SIZE;
-    printk(KERN_DEBUG "mdl_alloc: length=%d pages=%d\n", length, pages);
+    kprint(PRINT_DEBUG "mdl_alloc: length=%d pages=%d\n", length, pages);
     
     /* 分配一个虚拟地址 */
     unsigned long mapped_vaddr = vir_addr_alloc(length);
@@ -60,12 +60,12 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
     page_map_addr_fixed(mapped_vaddr, phyaddr, length, PROT_KERN | PROT_WRITE);
     
     interrupt_restore_state(flags);
-    printk(KERN_DEBUG "mdl_alloc: map success!\n");
+    kprint(PRINT_DEBUG "mdl_alloc: map success!\n");
     
     /* 有请求才进行关联 */
     if (ioreq) {    
         if (later) { /* 插入到末尾 */
-            printk(KERN_DEBUG "mdl_alloc: insert tail.\n");
+            kprint(PRINT_DEBUG "mdl_alloc: insert tail.\n");
     
             mdl_t *cur = ioreq->mdl_address;
             while (cur != NULL) {
@@ -76,7 +76,7 @@ mdl_t *mdl_alloc(void *vaddr, unsigned long length,
                 cur = cur->next;
             }
         } else { /* 队首 */
-            printk(KERN_DEBUG "mdl_alloc: insert head.\n");
+            kprint(PRINT_DEBUG "mdl_alloc: insert head.\n");
     
             mdl->next = ioreq->mdl_address;
             ioreq->mdl_address = mdl;
@@ -94,7 +94,7 @@ void mdl_free(mdl_t *mdl)
 {
     if (mdl == NULL)
         return;
-    printk(KERN_DEBUG "mdl_free: vaddr=%x length=%d byte offset=%d mapped vaddr=%x.\n",
+    kprint(PRINT_DEBUG "mdl_free: vaddr=%x length=%d byte offset=%d mapped vaddr=%x.\n",
         mdl->start_vaddr, mdl->byte_count, mdl->byte_offset, mdl->mapped_vaddr);
     unsigned long flags;    /* 关闭并保存中断 */
     interrupt_save_and_disable(flags);

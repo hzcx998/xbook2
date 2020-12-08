@@ -282,7 +282,7 @@ static iostatus_t buzzer_enter(driver_object_t *driver)
     /* 初始化一些其它内容 */
     status = io_create_device(driver, 0, DEV_NAME, DEVICE_TYPE_BEEP, &devobj);
     if (status != IO_SUCCESS) {
-        printk(KERN_ERR "buzzer_enter: create device failed!\n");
+        kprint(PRINT_ERR "buzzer_enter: create device failed!\n");
         return status;
     }
 
@@ -320,7 +320,7 @@ iostatus_t buzzer_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "buzzer_driver_func: driver name=%s\n",
+    kprint(PRINT_DEBUG "buzzer_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
@@ -330,7 +330,7 @@ iostatus_t buzzer_driver_func(driver_object_t *driver)
 static __init void buzzer_driver_entry(void)
 {
     if (driver_object_create(buzzer_driver_func) < 0) {
-        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

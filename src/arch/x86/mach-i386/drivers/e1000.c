@@ -205,12 +205,12 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
     /* get pci device */
     pci_device_t* pci_device = pci_get_device(PCI_VENDOR_ID_INTEL, E1000_DEV_ID_82540EM);
     if(pci_device == NULL) {
-        printk(KERN_DEBUG "E1000_82540EM init failed: pci_get_device.\n");
+        kprint(PRINT_DEBUG "E1000_82540EM init failed: pci_get_device.\n");
         return -1;
     }
     ext->pci_device = pci_device;
 #ifdef DEBUG_DRV    
-    printk(KERN_DEBUG "find E1000_82540EM device, vendor id: 0x%x, device id: 0x%x\n",\
+    kprint(PRINT_DEBUG "find E1000_82540EM device, vendor id: 0x%x, device id: 0x%x\n",\
             device->vendor_id, device->device_id);
 #endif
 
@@ -221,30 +221,30 @@ static int e1000_get_pci_info(e1000_extension_t* ext)
     mmio_start = pci_device_get_mem_addr(pci_device);
     mmio_len = pci_device_get_mem_len(pci_device);
 
-    // printk(KERN_DEBUG "mmio_start=%x\n", mmio_start);
-    // printk(KERN_DEBUG "mmio_len=%x\n", mmio_len);
+    // kprint(PRINT_DEBUG "mmio_start=%x\n", mmio_start);
+    // kprint(PRINT_DEBUG "mmio_len=%x\n", mmio_len);
 
     ext->hw.hw_addr = (uint8_t*)memio_remap(mmio_start, mmio_len);
 
     /* get io address */
     ext->io_addr = pci_device_get_io_addr(pci_device);
     ext->hw.io_base = pci_device_get_io_addr(pci_device);
-    // printk(KERN_DEBUG "io_base = %d\n", ext->hw.io_base);
+    // kprint(PRINT_DEBUG "io_base = %d\n", ext->hw.io_base);
     if(ext->io_addr == 0) {
-        printk(KERN_DEBUG "E1000_82540EM init failed: INVALID pci device io address.\n");
+        kprint(PRINT_DEBUG "E1000_82540EM init failed: INVALID pci device io address.\n");
         return -1;
     }
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "E1000_81540EM io address: 0x%x\n", ext->io_addr);
+    kprint(PRINT_DEBUG "E1000_81540EM io address: 0x%x\n", ext->io_addr);
 #endif
     /* get irq */
     ext->irq = pci_device_get_irq_line(pci_device);
     if(ext->irq == 0xff) {
-        printk(KERN_DEBUG "E1000_82540EM init failed: INVALID irq.\n");
+        kprint(PRINT_DEBUG "E1000_82540EM init failed: INVALID irq.\n");
         return -1;
     }
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "E1000_82540EM irq: %d\n", ext->irq);
+    kprint(PRINT_DEBUG "E1000_82540EM irq: %d\n", ext->irq);
 #endif
     return 0;
 }
@@ -281,7 +281,7 @@ static int e1000_sw_init(e1000_extension_t* ext)
 
     /* identify the MAC，根据pci_device_id确定mac类型 */
     if(e1000_set_mac_type(hw)) {
-        printk(KERN_DEBUG "Unknown MAC type\n");
+        kprint(PRINT_DEBUG "Unknown MAC type\n");
         return -1;
     }
 
@@ -335,13 +335,13 @@ static int e1000_init_board(e1000_extension_t* ext)
 
     /* 网卡复位 */
     if(e1000_reset_hw(&ext->hw) != E1000_SUCCESS) {
-        printk(KERN_DEBUG "e1000_reset_hw failed\n");
+        kprint(PRINT_DEBUG "e1000_reset_hw failed\n");
         return -1;
     }
 
     /* 确保eeprom良好 */
     if(e1000_validate_eeprom_checksum(&ext->hw) < 0) {
-        printk(KERN_DEBUG "the eeprom checksum is not valid\n");
+        kprint(PRINT_DEBUG "the eeprom checksum is not valid\n");
         return -1;
     }
 
@@ -412,7 +412,7 @@ int e1000_reset(e1000_extension_t* ext)
         E1000_WRITE_REG(&ext->hw, WUC, 0);
     }
     if(e1000_init_hw(&ext->hw)) {
-        printk(KERN_DEBUG "Hardware error\n");
+        kprint(PRINT_DEBUG "Hardware error\n");
     }
 
     /* Enable h/w to recognize an 802.1Q VLAN Ethernet packet */
@@ -442,7 +442,7 @@ static int e1000_init(e1000_extension_t* ext)
 
     /* 对版本进行检测，仅支持82540em网卡 */
     if(pdev->vendor_id != E1000_VENDOR_ID && pdev->device_id != E1000_DEV_ID_82540EM) {
-        printk(KERN_DEBUG "this deiver only support 82540em netcard.\n");
+        kprint(PRINT_DEBUG "this deiver only support 82540em netcard.\n");
         return -1;
     }
 
@@ -453,16 +453,16 @@ static int e1000_init(e1000_extension_t* ext)
 
     /* 复制网卡中的mac地址*/
     if(e1000_read_mac_addr(&ext->hw)) {
-        printk(KERN_DEBUG "EEPEOM read error\n");
+        kprint(PRINT_DEBUG "EEPEOM read error\n");
         return -1;
     }
     //打印mac地址
-    printk(KERN_DEBUG "e1000_mac_addr:");
+    kprint(PRINT_DEBUG "e1000_mac_addr:");
     int i;
     for(i=0; i<5; i++) {
-        printk(KERN_DEBUG "%x-", ext->hw.mac_addr[i]);
+        kprint(PRINT_DEBUG "%x-", ext->hw.mac_addr[i]);
     }
-    printk(KERN_DEBUG "%x\n", ext->hw.mac_addr[5]);
+    kprint(PRINT_DEBUG "%x\n", ext->hw.mac_addr[5]);
 
     e1000_read_part_num(&ext->hw, &(ext->part_num));
 
@@ -496,7 +496,7 @@ static int e1000_init(e1000_extension_t* ext)
     /* reset the hardware with the new setting */
     e1000_reset(ext);
 
-    printk(KERN_DEBUG "Intel(R) PRO/1000 Network Connection\n");
+    kprint(PRINT_DEBUG "Intel(R) PRO/1000 Network Connection\n");
 
     return 0;
 }
@@ -630,17 +630,17 @@ void e1000_free_rx_resources(e1000_extension_t* ext)
 iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
 {
     struct e1000_desc_ring* txdr = &ext->tx_ring;
-    // printk(KERN_DEBUG "tx_ring->count = %d\n", txdr->count);
+    // kprint(PRINT_DEBUG "tx_ring->count = %d\n", txdr->count);
     // pci_device_t* pdev = ext->pci_device;
     int size;
 
     DEBUGFUNC("e1000_setup_tx_rexources start");
 
     size = sizeof(struct e1000_buffer) * txdr->count + 1;
-    // printk(KERN_DEBUG "-------size = %d\n", size);
+    // kprint(PRINT_DEBUG "-------size = %d\n", size);
     txdr->buffer_info = mem_alloc(size);
     if(!txdr->buffer_info) {
-        printk(KERN_DEBUG "---Unable to allocate memory for the transmit desciptor ring\n");
+        kprint(PRINT_DEBUG "---Unable to allocate memory for the transmit desciptor ring\n");
         return -1;
     }
     memset(txdr->buffer_info, 0, size);
@@ -652,12 +652,12 @@ iostatus_t e1000_setup_tx_resources(e1000_extension_t* ext)
     /* 申请DMA空间 */
     txdr->desc = mem_alloc(txdr->size);
     if(!txdr->desc) {
-        printk(KERN_DEBUG "unable to allocate memory the transmit descriptor ring\n");
+        kprint(PRINT_DEBUG "unable to allocate memory the transmit descriptor ring\n");
         mem_free(txdr->buffer_info);
         return -1;
     }
     txdr->dma = kern_vir_addr2phy_addr(txdr->desc);
-    // printk(KERN_DEBUG "-------txdr_dma = %x txdr_size = %d\n", txdr->dma, txdr->size);
+    // kprint(PRINT_DEBUG "-------txdr_dma = %x txdr_size = %d\n", txdr->dma, txdr->size);
     memset(txdr->desc, 0, txdr->size);
 
     txdr->next_to_use = 0;
@@ -685,7 +685,7 @@ iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
     size = sizeof(struct e1000_buffer) * rxdr->count + 1;
     rxdr->buffer_info = mem_alloc(size);
     if(!rxdr->buffer_info) {
-        printk(KERN_DEBUG "unable to allocate memory for the recieve descriptor ring\n");
+        kprint(PRINT_DEBUG "unable to allocate memory for the recieve descriptor ring\n");
         return -1;
     }
     memset(rxdr->buffer_info, 0, size);
@@ -697,12 +697,12 @@ iostatus_t e1000_setup_rx_resources(e1000_extension_t* ext)
     /* 分配DMA空间 */
     rxdr->desc = mem_alloc(rxdr->size);
     if(!rxdr->desc) {
-        printk(KERN_DEBUG "unable to allocate memory for the recieve descriptor ring\n");
+        kprint(PRINT_DEBUG "unable to allocate memory for the recieve descriptor ring\n");
         return -1;
     }
     rxdr->dma = kern_vir_addr2phy_addr(rxdr->desc);
     memset(rxdr->desc, 0, rxdr->size);
-    // printk(KERN_DEBUG "-------rxdr_dma = %x rxdr_size = %d\n", rxdr->dma, rxdr->size);
+    // kprint(PRINT_DEBUG "-------rxdr_dma = %x rxdr_size = %d\n", rxdr->dma, rxdr->size);
 
     rxdr->next_to_clean = 0;
     rxdr->next_to_use = 0;
@@ -896,12 +896,12 @@ static iostatus_t e1000_write(device_object_t* device, io_request_t* ioreq)
     ioreq->io_status.infomation = len;
 
     // for(int i=0; i<len; i++) {
-    //     printk(KERN_DEBUG "%-4x ", *(buf+i));
+    //     kprint(PRINT_DEBUG "%-4x ", *(buf+i));
     //     if(!((i + 1) % 16)) {
-    //         printk(KERN_DEBUG "\n");
+    //         kprint(PRINT_DEBUG "\n");
     //     }
     // }
-    // printk(KERN_DEBUG "len = %d\n", len);
+    // kprint(PRINT_DEBUG "len = %d\n", len);
 
     if(e1000_transmit(device->device_extension, buf, len)) {
         len = -1;
@@ -952,7 +952,7 @@ static iostatus_t e1000_enter(driver_object_t* driver)
     status = io_create_device(driver, sizeof(e1000_extension_t), DEV_NAME, DEVICE_TYPE_PHYSIC_NETCARD, &devobj);
 
     if(status != IO_SUCCESS) {
-        printk(KERN_DEBUG KERN_ERR "e1000_enter: create device failed!\n");
+        kprint(PRINT_DEBUG PRINT_ERR "e1000_enter: create device failed!\n");
         return status;
     }
 
@@ -1012,7 +1012,7 @@ iostatus_t e1000_driver_func(driver_object_t* driver)
 
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
-    printk(KERN_DEBUG "e1000_driver_vim: driver name=%s\n", driver->name.text);
+    kprint(PRINT_DEBUG "e1000_driver_vim: driver name=%s\n", driver->name.text);
     
     return status;
 }
@@ -1160,7 +1160,7 @@ static void e1000_leave_82542_rst(e1000_extension_t* ext)
 static void e1000_configure_rx(e1000_extension_t* ext)
 {
     uint32_t rdba = ext->rx_ring.dma;
-    printk(KERN_DEBUG "rdba = %x\n", rdba);
+    kprint(PRINT_DEBUG "rdba = %x\n", rdba);
     uint32_t rdlen = ext->rx_ring.count * sizeof(struct e1000_rx_desc);
     uint32_t rctl;
     uint32_t rxcsum;
@@ -1261,14 +1261,14 @@ static void e1000_alloc_rx_buffers(e1000_extension_t* ext)
 static void e1000_configure_tx(e1000_extension_t* ext)
 {
     uint32_t tdba = ext->tx_ring.dma;
-    // printk(KERN_DEBUG "tdba = %x\n", tdba);
+    // kprint(PRINT_DEBUG "tdba = %x\n", tdba);
     uint32_t tdlen = ext->tx_ring.count * sizeof(struct e1000_tx_desc);
     uint32_t tctl, tipg;
 
     // E1000_WRITE_REG(&ext->hw, TDBAL, (tdba & 0xffffffffUll));
-    // printk(KERN_DEBUG "tdba_low = %x\n", (tdba & 0xffffffffUll));
+    // kprint(PRINT_DEBUG "tdba_low = %x\n", (tdba & 0xffffffffUll));
     E1000_WRITE_REG(&ext->hw, TDBAL, tdba);
-    // printk(KERN_DEBUG "tdba >> 32 = %x\n", tdba >> 32);
+    // kprint(PRINT_DEBUG "tdba >> 32 = %x\n", tdba >> 32);
     E1000_WRITE_REG(&ext->hw, TDBAH, 0);
 
     E1000_WRITE_REG(&ext->hw, TDLEN, tdlen);
@@ -1301,7 +1301,7 @@ static void e1000_configure_tx(e1000_extension_t* ext)
     /* set the tx interrupt delay register */
     E1000_WRITE_REG(&ext->hw, TIDV, ext->tx_int_delay);
     if(ext->hw.mac_type >= e1000_82540) {
-        // printk(KERN_DEBUG "ext->tx_abs_int_delay = %d\n", ext->tx_abs_int_delay);
+        // kprint(PRINT_DEBUG "ext->tx_abs_int_delay = %d\n", ext->tx_abs_int_delay);
         E1000_WRITE_REG(&ext->hw, TADV, ext->tx_abs_int_delay);
     }
 
@@ -1469,13 +1469,13 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
     boolean_t cleaned = FALSE;
 
     i = rx_ring->next_to_clean;
-    // printk(KERN_DEBUG "rx_ring->next_to_clean = %d\n", i);
+    // kprint(PRINT_DEBUG "rx_ring->next_to_clean = %d\n", i);
     /* 获取接收描述符 */
     rx_desc = E1000_RX_DESC(*rx_ring, i);
-    // printk(KERN_DEBUG "rx_desc_length = %d\n", rx_desc->length);
+    // kprint(PRINT_DEBUG "rx_desc_length = %d\n", rx_desc->length);
 
     while(rx_desc->status & E1000_RXD_STAT_DD) {
-        // printk(KERN_DEBUG "i = %d\n", i);
+        // kprint(PRINT_DEBUG "i = %d\n", i);
         buffer_info = &rx_ring->buffer_info[i];
 #ifdef CONFIG_E1000_NAPI
         if(*work_done >= work_to_do) {
@@ -1487,17 +1487,17 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
 
         buffer = buffer_info->buffer;
         length = byte_little_endian16_to_cpu(rx_desc->length);
-        // printk(KERN_DEBUG "length = %d------rx_desc->length = %d\n", length, rx_desc->length);
+        // kprint(PRINT_DEBUG "length = %d------rx_desc->length = %d\n", length, rx_desc->length);
 
         if(unlikely(!(rx_desc->status & E1000_RXD_STAT_EOP))) {
             /* all receives must fit into a single buffer */
-            printk(KERN_DEBUG "%s: receive packet consumed multiple buffers", netdev->name);
+            kprint(PRINT_DEBUG "%s: receive packet consumed multiple buffers", netdev->name);
             mem_free(buffer);
             goto next_desc;
         }
 
         if(unlikely(rx_desc->errors & E1000_RXD_ERR_FRAME_ERR_MASK)) {
-            printk(KERN_DEBUG "AAAAAAA\n");
+            kprint(PRINT_DEBUG "AAAAAAA\n");
             last_byte = *(buffer + length - 1);
             if(TBI_ACCEPT(&ext->hw, rx_desc->status,
                           rx_desc->errors, length, last_byte)) {
@@ -1517,14 +1517,14 @@ e1000_clean_rx_irq(e1000_extension_t* ext)
         e1000_rx_checksum(ext, rx_desc);
 
         // for(int j=0; j<length; j++) {
-        //     printk(KERN_DEBUG "%-4x ", *(buffer+j));
+        //     kprint(PRINT_DEBUG "%-4x ", *(buffer+j));
         //     if(!((j + 1) % 16)) {
-        //         printk(KERN_DEBUG "\n");
+        //         kprint(PRINT_DEBUG "\n");
         //     }
         // }
 
     	/* 网络接口发送数据包 */
-        // printk(KERN_DEBUG "len = %d\n\n", length - 4);
+        // kprint(PRINT_DEBUG "len = %d\n\n", length - 4);
         io_device_queue_append(&ext->rx_queue, buffer, length - ETHERNET_FCS_SIZE);
         // io_device_queue_append(&ext->rx_queue, buffer, length);
 
@@ -1576,9 +1576,9 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
     eop_desc = E1000_TX_DESC(*tx_ring, eop);
 
     while(eop_desc->upper.data & byte_cpu_to_little_endian32(E1000_TXD_STAT_DD)) {
-        // printk(KERN_DEBUG "i = %d\n", i);
-        // printk(KERN_DEBUG "next_to_watch = %d\n", eop);
-        // printk(KERN_DEBUG "!!!!!!!!!!!\n");
+        // kprint(PRINT_DEBUG "i = %d\n", i);
+        // kprint(PRINT_DEBUG "next_to_watch = %d\n", eop);
+        // kprint(PRINT_DEBUG "!!!!!!!!!!!\n");
         for(cleaned = FALSE; !cleaned; ) {
             tx_desc = E1000_TX_DESC(*tx_ring, i);
             buffer_info = &tx_ring->buffer_info[i];
@@ -1596,8 +1596,8 @@ static boolean_t e1000_clean_tx_irq(e1000_extension_t* ext)
         }
 
         eop = tx_ring->buffer_info[i].next_to_watch;
-        // printk(KERN_DEBUG "i=%d---next_to_watch=%d\n", i, eop);
-        // printk(KERN_DEBUG "-------i=%d\n", i);
+        // kprint(PRINT_DEBUG "i=%d---next_to_watch=%d\n", i, eop);
+        // kprint(PRINT_DEBUG "-------i=%d\n", i);
         eop_desc = E1000_TX_DESC(*tx_ring, eop);
     }
 
@@ -1640,7 +1640,7 @@ e1000_tx_map(e1000_extension_t* ext,
 
         buffer_info->length = size;
         buffer_info->dma = kern_vir_addr2phy_addr(buffer + offset);
-        // printk(KERN_DEBUG "tx_buffer_info->dma = %d\n", buffer_info->dma);
+        // kprint(PRINT_DEBUG "tx_buffer_info->dma = %d\n", buffer_info->dma);
         buffer_info->time_stamp = systicks;
 
         len -= size;
@@ -1748,7 +1748,7 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
     first = ext->tx_ring.next_to_use;
 
     //int count_ = e1000_tx_map(ext, buf, first, max_per_txd, length);
-    // printk(KERN_DEBUG "transmit---tx_length=%d\n", length);
+    // kprint(PRINT_DEBUG "transmit---tx_length=%d\n", length);
     e1000_tx_queue(ext, 
         e1000_tx_map(ext, buf, first, max_per_txd, length), 
         tx_flags);
@@ -1761,7 +1761,7 @@ int e1000_transmit(e1000_extension_t* ext, uint8_t* buf, uint32_t len)
 static __init void e1000_driver_entry(void)
 {
     if (driver_object_create(e1000_driver_func) < 0) {
-        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

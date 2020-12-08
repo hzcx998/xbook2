@@ -18,7 +18,7 @@ static void cut_used_mem()
 {
     unsigned int used_mem = boot_mem_size();
     unsigned int used_pages = DIV_ROUND_UP(used_mem, PAGE_SIZE);
-    printk("phymem: cut used pages %d\n", used_pages);
+    kprint("phymem: cut used pages %d\n", used_pages);
     page_alloc_normal(used_pages);
 }
 

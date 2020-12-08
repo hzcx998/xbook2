@@ -36,11 +36,11 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     }
     struct stat sbuf;
     if (kfile_stat(pathname, &sbuf) < 0) {
-        pr_err("[exec]: %s: file stat failed!\n", __func__);
+        errprint("[exec]: %s: file stat failed!\n", __func__);
         goto free_tmp_fd;
     }
     if (!sbuf.st_size) {
-        pr_err("[exec]: %s: file size is zero!\n", __func__);
+        errprint("[exec]: %s: file size is zero!\n", __func__);
         goto free_tmp_fd;
     }
     #ifdef CONFIG_32BIT     /* 32位 elf 头解析 */
@@ -48,7 +48,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
     kfile_lseek(fd, 0, SEEK_SET);
     if (kfile_read(fd, &elf_header, sizeof(struct Elf32_Ehdr)) != sizeof(struct Elf32_Ehdr)) {
-        printk(KERN_ERR "sys_exec_file: read elf header failed!\n");
+        kprint(PRINT_ERR "sys_exec_file: read elf header failed!\n");
         goto free_tmp_fd;
     }
     if (memcmp(elf_header.e_ident, "\177ELF\1\1\1", 7) || \
@@ -57,10 +57,10 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         elf_header.e_version != 1 || \
         elf_header.e_phnum > 1024 || \
         elf_header.e_phentsize != sizeof(struct Elf32_Phdr)) {
-        printk(KERN_DEBUG "sys_exec_file: ident=%s type=%d machine=%d version=%d phnum=%d\n",
+        kprint(PRINT_DEBUG "sys_exec_file: ident=%s type=%d machine=%d version=%d phnum=%d\n",
             elf_header.e_ident, elf_header.e_type, elf_header.e_machine,
             elf_header.e_version, elf_header.e_phnum, elf_header.e_phentsize);
-        printk(KERN_ERR "sys_exec_file: it is not a elf format file!\n", name);
+        kprint(PRINT_ERR "sys_exec_file: it is not a elf format file!\n", name);
         goto free_tmp_fd;
     }
     #else   /* CONFIG_64BIT 64位 elf 头解析 */
@@ -76,7 +76,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     } else {
         tmp_arg = mem_alloc(PAGE_SIZE);
         if (tmp_arg == NULL) {
-            printk(KERN_ERR "sys_exec_file: task %s malloc for tmp arg failed!\n", name);
+            kprint(PRINT_ERR "sys_exec_file: task %s malloc for tmp arg failed!\n", name);
             goto free_tmp_fd;
         }
         unsigned long arg_bottom;
@@ -89,7 +89,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     vmm_unmap_the_mapping_space(cur->vmm);
     vmm_release_space(cur->vmm);
     if (proc_load_image(cur->vmm, &elf_header, fd) < 0) {
-        printk(KERN_ERR "sys_exec_file: load_image failed!\n");
+        kprint(PRINT_ERR "sys_exec_file: load_image failed!\n");
         goto free_tmp_arg;
     }
     trap_frame_t *frame = (trap_frame_t *)\
@@ -143,7 +143,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
                 name = (char *) newpath;
             }
             if (do_execute((const char *) p, name, argv, envp) < 0) {
-                printk(KERN_ERR "%s: path %s not executable!", __func__, newpath);
+                kprint(PRINT_ERR "%s: path %s not executable!", __func__, newpath);
                 return -1;
             }
         }
@@ -156,7 +156,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
             else 
                 pname =  newpath;
             if (do_execute((const char* )newpath, (char *)pname, argv, envp)) {
-                printk(KERN_ERR "%s: path %s not executable!", __func__, newpath);
+                kprint(PRINT_ERR "%s: path %s not executable!", __func__, newpath);
                 return -1;
             }
         }
@@ -186,6 +186,6 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
             }
         }
     }
-    printk(KERN_ERR "%s: path %s not exist or not executable!\n", __func__, pathname);
+    kprint(PRINT_ERR "%s: path %s not exist or not executable!\n", __func__, pathname);
     return -1;
 }

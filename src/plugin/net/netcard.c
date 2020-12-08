@@ -49,7 +49,7 @@ void netcard_info_print()
 {
     netcard_info_t *netcard;
     list_for_each_owner (netcard, &netcard_list_head, list) {
-        pr_info("[net]: probe device:%s -> vir:%s type:%d\n",
+        infoprint("[net]: probe device:%s -> vir:%s type:%d\n",
             netcard->devent.de_name, netcard->virname, netcard->devent.de_type);
     }
 }

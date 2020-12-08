@@ -67,11 +67,11 @@ typedef enum {
 
 #define DBG 0
 
-#define MSGOUT(S, A, B)	printk(KERN_DEBUG S "\n", A, B)
+#define MSGOUT(S, A, B)	kprint(PRINT_DEBUG S "\n", A, B)
 
 #ifndef DBG
-#define DEBUGOUT(S)		printk(KERN_DEBUG S "\n")
-#define DEBUGOUT1(S, A...)	printk(KERN_DEBUG S "\n", A)
+#define DEBUGOUT(S)		kprint(PRINT_DEBUG S "\n")
+#define DEBUGOUT1(S, A...)	kprint(PRINT_DEBUG S "\n", A)
 #else
 #define DEBUGOUT(S)
 #define DEBUGOUT1(S, A...)

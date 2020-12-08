@@ -131,8 +131,9 @@ int sys_mutex_queue_wait(int handle, void *addr, unsigned int wqflags, unsigned 
                 return -EFAULT; // memory fault
             }
         }
-        wait_queue_add(&mutex_queue->wait_queue, task_current);
+        
         if (wqflags & MUTEX_QUEUE_TIMED) {
+            
             clock_t ticks = 0;
             if (value) {                
                 struct timespec abstm;
@@ -148,13 +149,13 @@ int sys_mutex_queue_wait(int handle, void *addr, unsigned int wqflags, unsigned 
                 ticks = timespec_to_systicks(&newtm);
             }
             if (ticks <= 0) {
-                wait_queue_remove(&mutex_queue->wait_queue, task_current);
                 interrupt_restore_state(flags);
                 return -ETIMEDOUT;
             }
             /* 避免ticks太少影响效应 */
             if (ticks < 2 * MS_PER_TICKS)
                 ticks = 2 * MS_PER_TICKS;
+            wait_queue_add(&mutex_queue->wait_queue, task_current);
             if (task_sleep_by_ticks(ticks) > 0) {
                 interrupt_restore_state(flags);
                 return 0;
@@ -170,7 +171,7 @@ int sys_mutex_queue_wait(int handle, void *addr, unsigned int wqflags, unsigned 
                 return -ETIMEDOUT;
             }
         } else {
-            TASK_ENTER_WAITLIST(task_current);
+            wait_queue_add(&mutex_queue->wait_queue, task_current);
             task_block(TASK_BLOCKED);
         }
     }

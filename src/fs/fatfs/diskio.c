@@ -55,7 +55,7 @@ DSTATUS disk_initialize (
         return STA_NOINIT;
     if (diskman.open(fatfs_drv_map[pdrv]) < 0) {
         stat = STA_NODISK;
-        printk(KERN_ERR "%s: open disk solt %d failed!\n", __func__, fatfs_drv_map[pdrv]);
+        kprint(PRINT_ERR "%s: open disk solt %d failed!\n", __func__, fatfs_drv_map[pdrv]);
     }
     return stat;
 }

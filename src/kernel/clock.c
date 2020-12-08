@@ -74,6 +74,6 @@ void clock_init()
 	softirq_build(TIMER_SOFTIRQ, timer_softirq_handler);
 	softirq_build(SCHED_SOFTIRQ, sched_softirq_handler);
 	if (irq_register(IRQ0_CLOCK, clock_handler, IRQF_DISABLED, "clockirq", "kclock", NULL))
-        printk("register failed!\n");
-    printk(KERN_INFO "[clock] init done\n");
+        kprint("register failed!\n");
+    kprint(PRINT_INFO "[clock] init done\n");
 }

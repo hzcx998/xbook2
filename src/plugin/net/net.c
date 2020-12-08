@@ -68,10 +68,10 @@ void lwip_init_task(void)
     netif_set_default(&lwip_netif);
     netif_set_up(&lwip_netif);
 #if CONFIG_LEVEL == 2
-    printk("[%s] %s: dhcp start.\n", "net", __func__);
+    kprint("[%s] %s: dhcp start.\n", "net", __func__);
     err_t err = dhcp_start(&lwip_netif);
     
-    printk("[%s] %s: dhcp done err=%d.\n", "net", __func__, err);
+    kprint("[%s] %s: dhcp done err=%d.\n", "net", __func__, err);
 #endif
 }
 
@@ -87,13 +87,13 @@ void netin_kthread(void *arg)
 
 void network_init(void)
 {
-    printk("network start.\n");
+    kprint("network start.\n");
     if (netcard_manager_init() < 0) {
-        pr_err("init netcard driver failed!\n");
+        errprint("init netcard driver failed!\n");
         return;
     }
     task_t * netin = kern_thread_start("netin", TASK_PRIO_LEVEL_NORMAL, netin_kthread, NULL);
     if (netin == NULL) {
-        pr_err("[NET]: start kthread netin failed!\n");
+        errprint("[NET]: start kthread netin failed!\n");
     }
 }

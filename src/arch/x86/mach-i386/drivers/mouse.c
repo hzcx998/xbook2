@@ -203,7 +203,7 @@ static int mouse_parse(device_extension_t *extension)
 		extension->phase = 1;
 
 #ifdef DEBUG_DRV		
-        printk(KERN_DEBUG "[%d](B:%x, X:%d, Y:%d)\n", 
+        kprint(PRINT_DEBUG "[%d](B:%x, X:%d, Y:%d)\n", 
             ++extension->seq, extension->mouse_data.byte0, (char)extension->mouse_data.byte1,
             (char)extension->mouse_data.byte2);
 #endif
@@ -370,8 +370,8 @@ iostatus_t mouse_read(device_object_t *device, io_request_t *ioreq)
         } else {
 #ifdef DEBUG_DRV
     #ifdef DEBUG_INFO
-            printk(KERN_DEBUG "mouse even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
-            printk(KERN_DEBUG "mouse even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
+            kprint(PRINT_DEBUG "mouse even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
+            kprint(PRINT_DEBUG "mouse even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
     #endif
 #endif        
         }
@@ -426,7 +426,7 @@ static iostatus_t mouse_enter(driver_object_t *driver)
     status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_MOUSE, &devobj);
 
     if (status != IO_SUCCESS) {
-        printk(KERN_ERR "mouse_enter: create device failed!\n");
+        kprint(PRINT_ERR "mouse_enter: create device failed!\n");
         return status;
     }
     /* neither io mode */
@@ -448,7 +448,7 @@ static iostatus_t mouse_enter(driver_object_t *driver)
     unsigned char *buf = mem_alloc(DEV_FIFO_BUF_LEN);
     if (buf == NULL) {
         status = IO_FAILED;
-        printk(KERN_DEBUG "%s: alloc buf failed!\n", __func__);
+        kprint(PRINT_DEBUG "%s: alloc buf failed!\n", __func__);
         return status;
     }
     fifo_io_init(&devext->fifoio, buf, DEV_FIFO_BUF_LEN);
@@ -511,7 +511,7 @@ iostatus_t mouse_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "mouse_driver_func: driver name=%s\n",
+    kprint(PRINT_DEBUG "mouse_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
@@ -521,7 +521,7 @@ iostatus_t mouse_driver_func(driver_object_t *driver)
 static __init void mouse_driver_entry(void)
 {
     if (driver_object_create(mouse_driver_func) < 0) {
-        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

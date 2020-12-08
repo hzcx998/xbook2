@@ -1,15 +1,25 @@
 #include <xbook/waitqueue.h>
 #include <xbook/task.h>
+#include <xbook/schedule.h>
 
 void wait_queue_add(wait_queue_t *wait_queue, void *task_ptr)
 {
     task_t *task = (task_t *) task_ptr;
-    unsigned long flags;
-    spin_lock_irqsave(&wait_queue->lock, flags);
+    unsigned long iflags;
+    spin_lock_irqsave(&wait_queue->lock, iflags);
 	ASSERT(!list_find(&task->list, &wait_queue->wait_list));
 	list_add_tail(&task->list, &wait_queue->wait_list);
-    spin_unlock_irqrestore(&wait_queue->lock, flags);
+    TASK_ENTER_WAITLIST(task);
+    spin_unlock_irqrestore(&wait_queue->lock, iflags);
 }
+
+void wait_queue_sleepon(wait_queue_t *wait_queue)
+{
+    task_t *cur = (task_t *) task_current;
+    wait_queue_add(wait_queue, cur);
+    task_block(TASK_BLOCKED);
+}
+
 void wait_queue_remove(wait_queue_t *wait_queue, void *task_ptr)
 {
     task_t *task = (task_t *) task_ptr;

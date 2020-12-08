@@ -106,6 +106,8 @@ extern volatile int task_init_done;
 #define TASK_LEAVE_WAITLIST(task) (task)->flags &= ~THREAD_FLAG_WAITLIST
 #define TASK_IN_WAITLIST(task) ((task)->flags & THREAD_FLAG_WAITLIST)
 
+#define TASK_NEED_STATE(__task, __state) while ((__task)->state != __state)
+
 void tasks_init();
 
 void task_init(task_t *task, char *name, uint8_t prio_level);

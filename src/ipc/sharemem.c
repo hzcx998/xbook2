@@ -197,7 +197,7 @@ int share_hal_memio_unmap(const void *shmaddr, int shmflg)
         addr = (unsigned long) shmaddr;
     mem_space_t *sp = mem_space_find(cur->vmm, addr);
     if (sp == NULL) {
-        printk(KERN_DEBUG "share_hal_memio_unmap: not fond space\n");
+        kprint(PRINT_DEBUG "share_hal_memio_unmap: not fond space\n");
         return -1;
     }
     addr = addr_vir2phy(addr);
@@ -213,7 +213,7 @@ int share_hal_memio_unmap(const void *shmaddr, int shmflg)
             atomic_dec(&shm->links);
         }
     } else {
-        printk(KERN_ERR "share_hal_memio_unmap: do unmap at %x failed!\n", addr);
+        kprint(PRINT_ERR "share_hal_memio_unmap: do unmap at %x failed!\n", addr);
     }
     return retval;
 }
@@ -294,7 +294,7 @@ void share_mem_init()
 {
     share_mem_table = (share_mem_t *)mem_alloc(sizeof(share_mem_t) * MAX_SHARE_MEM_NR);
     if (share_mem_table == NULL) /* must be ok! */
-        panic(KERN_EMERG "share_mem_init: alloc mem for share_mem_table failed! :(\n");
+        panic(PRINT_EMERG "share_mem_init: alloc mem for share_mem_table failed! :(\n");
     int i;
     for (i = 0; i < MAX_SHARE_MEM_NR; i++) {
         share_mem_table[i].id = 1 + i + i * 2; /* 共享内存id */

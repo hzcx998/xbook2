@@ -37,7 +37,7 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
 {
     int solt = disk_info_find(source);
     if (solt < 0) {
-        pr_dbg("%s: %s: not find device %s.\n", FS_MODEL_NAME,__func__, source);
+        dbgprint("%s: %s: not find device %s.\n", FS_MODEL_NAME,__func__, source);
         return -1;
     }
     /* 转换成fatfs的物理驱动器 */
@@ -57,7 +57,7 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
 
     int res = diskman.open(solt);
     if (res < 0) {
-        pr_dbg("%s: %s: not find device %s.\n", FS_MODEL_NAME,__func__, source);
+        dbgprint("%s: %s: not find device %s.\n", FS_MODEL_NAME,__func__, source);
         return -1;
     }
     unsigned char buf[512];
@@ -74,7 +74,7 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
             remkfs = 1;
         }
     } else {
-        pr_dbg("%s: %s: no fs on the disk %s.\n", FS_MODEL_NAME,__func__, source);
+        dbgprint("%s: %s: no fs on the disk %s.\n", FS_MODEL_NAME,__func__, source);
         return -1;
     }
     const TCHAR *p;
@@ -91,7 +91,7 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
         } 
         res = f_mkfs(p, (const MKFS_PARM *)&parm, work, sizeof(work));
         if (res != FR_OK) {
-            pr_notice("%s: make fs on drive %s failed with resoult code %d.\n", FS_MODEL_NAME, p, res);
+            noteprint("%s: make fs on drive %s failed with resoult code %d.\n", FS_MODEL_NAME, p, res);
             return -1;
         }
     }
@@ -107,13 +107,13 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
     BYTE delayed = !(flags & MT_DELAYED);  /* 延时挂载 */
     fr = f_mount(fsobj, p, delayed);
     if (fr != FR_OK) {
-        pr_dbg("%s: %s: mount on path %s failed, code %d!\n", FS_MODEL_NAME,__func__, p, fr);
+        dbgprint("%s: %s: mount on path %s failed, code %d!\n", FS_MODEL_NAME,__func__, p, fr);
         mem_free(fsobj);
         return -1;
     }
     fatfs_extention.fsobj = fsobj;
     if (fsal_path_insert((void *)p, target, &fatfs_fsal)) {
-        pr_dbg("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, p);
+        dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, p);
         mem_free(fsobj);
         return -1;
     }
@@ -129,11 +129,11 @@ static int fsal_fatfs_unmount(char *path, unsigned long flags)
     fatfs_extention_t *ext = &fatfs_extention;
     res = f_unmount(p);
     if (res != FR_OK) {
-        pr_dbg("%s: %s: unmount on path %s failed, code %d.\n", FS_MODEL_NAME,__func__, p, res);
+        dbgprint("%s: %s: unmount on path %s failed, code %d.\n", FS_MODEL_NAME,__func__, p, res);
         return -1;
     }
     if (fsal_path_remove((void *) p)) {
-        pr_dbg("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, p);
+        dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, p);
         return -1;
     }
     mem_free(ext->fsobj);
@@ -170,7 +170,7 @@ static int fsal_fatfs_mkfs(char *source, char *fstype, unsigned long flags)
     }
     res = f_mkfs(p, (const MKFS_PARM *)&parm, work, sizeof(work));
     if (res != FR_OK) {
-        pr_dbg("%s:: %s: make fs on drive %s failed with resoult code %d.\n", FS_MODEL_NAME,__func__, p, res);
+        dbgprint("%s:: %s: make fs on drive %s failed with resoult code %d.\n", FS_MODEL_NAME,__func__, p, res);
         return -1;
     }
     return 0;
@@ -226,7 +226,7 @@ static int fsal_fatfs_close(int idx)
     FRESULT fres;
     fres = f_close((FIL *)fp->extension);
     if (fres != FR_OK) {    
-        pr_err("[fatfs]: close file failed!\n");
+        errprint("[fatfs]: close file failed!\n");
         return -1;
     }
     if (fp->extension)
@@ -261,10 +261,10 @@ static int fsal_fatfs_read(int idx, void *buf, size_t size)
         br = 0;
         fr = f_read((FIL *)fp->extension, p, chunk, &br);
         if (fr != FR_OK && !readbytes) { // first time read get error
-            pr_err("fatfs: f_read: err code %d\n", fr);
+            errprint("fatfs: f_read: err code %d\n", fr);
             return -1;
         } else  if (fr != FR_OK ) { // next time read over
-            pr_err("fatfs: f_read: err code %d, rd=%d br=%d\n", fr, readbytes, br);
+            errprint("fatfs: f_read: err code %d, rd=%d br=%d\n", fr, readbytes, br);
             return readbytes + br;
         }
         p += chunk;

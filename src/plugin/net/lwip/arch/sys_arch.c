@@ -155,7 +155,7 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
     st = introduce_thread(thread);
   }
   #ifdef DEBUG_LWIP_ARCH
-  printk("%s: thread %x\n", __func__, thread);
+  kprint("%s: thread %x\n", __func__, thread);
   #endif
   if (NULL == st) {
     LWIP_DEBUGF(SYS_DEBUG, ("sys_thread_new: kern_thread_start %x, st = 0x%lx",
@@ -175,7 +175,7 @@ sys_mbox_new(struct sys_mbox **mb, int size)
     return ERR_MEM;
   }
   #ifdef DEBUG_LWIP_ARCH
-  printk("%s: mb: %x -> mbox: %x\n", __func__, mb, mbox);
+  kprint("%s: mb: %x -> mbox: %x\n", __func__, mb, mbox);
   #endif
   mbox->first = mbox->last = 0;
   mbox->not_empty = sys_sem_new_internal(0);
@@ -196,7 +196,7 @@ sys_mbox_free(struct sys_mbox **mb)
     SYS_STATS_DEC(mbox.used);
     sys_arch_sem_wait(&mbox->mutex, 0);
     #ifdef DEBUG_LWIP_ARCH
-    printk("%s: mb: %x -> mbox: %x\n", __func__, mb, mbox);
+    kprint("%s: mb: %x -> mbox: %x\n", __func__, mb, mbox);
     #endif
     sys_sem_free_internal(mbox->not_empty);
     sys_sem_free_internal(mbox->not_full);
@@ -215,7 +215,7 @@ sys_mbox_trypost(struct sys_mbox **mb, void *msg)
   LWIP_ASSERT("invalid mbox", (mb != NULL) && (*mb != NULL));
   mbox = *mb;
   #ifdef DEBUG_LWIP_ARCH
-  printk("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
+  kprint("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
   #endif
   sys_arch_sem_wait(&mbox->mutex, 0);
 
@@ -254,7 +254,7 @@ sys_mbox_post(struct sys_mbox **mb, void *msg)
   LWIP_ASSERT("invalid mbox", (mb != NULL) && (*mb != NULL));
   mbox = *mb;
   #ifdef DEBUG_LWIP_ARCH
-  printk("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
+  kprint("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
   #endif
   sys_arch_sem_wait(&mbox->mutex, 0);
 
@@ -292,7 +292,7 @@ sys_arch_mbox_tryfetch(struct sys_mbox **mb, void **msg)
   LWIP_ASSERT("invalid mbox", (mb != NULL) && (*mb != NULL));
   mbox = *mb;
   #ifdef DEBUG_LWIP_ARCH
-  printk("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
+  kprint("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
   #endif
   sys_arch_sem_wait(&mbox->mutex, 0);
 
@@ -328,7 +328,7 @@ sys_arch_mbox_fetch(struct sys_mbox **mb, void **msg, u32_t timeout)
   LWIP_ASSERT("invalid mbox", (mb != NULL) && (*mb != NULL));
   mbox = *mb;
   #ifdef DEBUG_LWIP_ARCH
-  printk("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
+  kprint("%s: mb %x -> mbox %x\n", __func__, mb, mbox);
   #endif
   /* The mutex lock is quick so we don't bother with the timeout
      stuff here. */
@@ -392,7 +392,7 @@ sys_sem_new(struct sys_sem **sem, u8_t count)
     return ERR_MEM;
   }
   #ifdef DEBUG_LWIP_ARCH
-  printk("%s: sem %x *sem %x\n", __func__, sem, *sem);
+  kprint("%s: sem %x *sem %x\n", __func__, sem, *sem);
   #endif
   return ERR_OK;
 }
@@ -416,7 +416,7 @@ sys_arch_sem_wait(struct sys_sem **s, u32_t timeout)
   LWIP_ASSERT("invalid sem", (s != NULL) && (*s != NULL));
   sem = *s;
   #ifdef DEBUG_LWIP_ARCH
-  printk("%s: sem %x *sem %x timeout %x\n", __func__, s, sem, timeout);
+  kprint("%s: sem %x *sem %x timeout %x\n", __func__, s, sem, timeout);
   #endif
   clock_t wait_ticks;
   clock_t start, end;
@@ -453,7 +453,7 @@ sys_sem_signal(struct sys_sem **s)
   sem = *s;
 
   #ifdef DEBUG_LWIP_ARCH
-  printk("%s: sem %x *sem %x \n", __func__, s, sem);
+  kprint("%s: sem %x *sem %x \n", __func__, s, sem);
   #endif
   semaphore_up(&(sem->sem));
 }
@@ -472,7 +472,7 @@ sys_sem_free(struct sys_sem **sem)
   if ((sem != NULL) && (*sem != SYS_SEM_NULL)) {
     SYS_STATS_DEC(sem.used);
     #ifdef DEBUG_LWIP_ARCH
-    printk("%s: sem %x *sem %x \n", __func__, sem, *sem);
+    kprint("%s: sem %x *sem %x \n", __func__, sem, *sem);
     #endif
     sys_sem_free_internal(*sem);
     *sem = NULL;

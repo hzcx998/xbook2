@@ -54,7 +54,7 @@ fsal_t *fstype_find(char *name)
 
 int fstype_init()
 {
-    INIT_LIST_HEAD(&fstype_list_head);
+    list_init(&fstype_list_head);
     /* 注册文件系统: FATFS */
     fstype_register(&fatfs_fsal);
     return 0;

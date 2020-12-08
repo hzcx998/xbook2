@@ -100,18 +100,18 @@ low_level_init(struct netif *netif)
     /* 查找第一张网卡 */
     ethernetif->netsolt = netcard_find_by_name("netcard0");
     if (ethernetif->netsolt < 0) {
-        printk("[lwip]: can't found netcard, stop TCP/IP service.\n");
+        kprint("[lwip]: can't found netcard, stop TCP/IP service.\n");
         spin("low_level_init");
     }
     if (drv_netcard.open(ethernetif->netsolt) < 0) {
-        printk("[lwip]: open netcard failed!\n");
+        kprint("[lwip]: open netcard failed!\n");
         spin("low_level_init");
         return;
     }
     u8_t mac_addr[ETHARP_HWADDR_LEN] = {0};
 #if 1
     drv_netcard.ioctl(ethernetif->netsolt, NETIO_GETMAC, (unsigned long) &mac_addr[0]);
-    printk("mac: %x %x %x %x %x %x\n", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+    kprint("mac: %x %x %x %x %x %x\n", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
 #endif
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;

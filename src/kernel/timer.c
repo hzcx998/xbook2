@@ -40,7 +40,7 @@ void timer_init(
     unsigned long arg,
     timer_callback_t callback)
 {
-    INIT_LIST_HEAD(&timer->list);
+    list_init(&timer->list);
     timer->timeout = timer_ticks + timeout;
     timer->arg = arg;
     timer->id = timer_id_next++;

@@ -11,7 +11,7 @@ void mem_space_dump(vmm_t *vmm)
         return;
     mem_space_t *space = vmm->mem_space_head;
     while (space != NULL) {
-        printk(KERN_INFO "space: start=%x end=%x prot=%x flags:%x\n", 
+        kprint(PRINT_INFO "space: start=%x end=%x prot=%x flags:%x\n", 
             space->start, space->end, space->page_prot, space->flags);
         space = space->next;
     }
@@ -74,16 +74,16 @@ int do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
     unsigned long len, unsigned long prot, unsigned long flags)
 {
     if (vmm == NULL || !prot) {
-        printk(KERN_ERR "do_mem_space_map: failed!\n");
+        kprint(PRINT_ERR "do_mem_space_map: failed!\n");
         return -1;
     }
     len = PAGE_ALIGN(len);
     if (!len) {
-        printk(KERN_ERR "do_mem_space_map: len is zero!\n");
+        kprint(PRINT_ERR "do_mem_space_map: len is zero!\n");
         return -1;
     }
     if (len > USER_VMM_SIZE || addr > USER_VMM_SIZE || addr > USER_VMM_SIZE - len) {
-        printk(KERN_ERR "do_mem_space_map: addr and len out of range!\n");
+        kprint(PRINT_ERR "do_mem_space_map: addr and len out of range!\n");
         return -1;
     }
     if (flags & MEM_SPACE_MAP_FIXED) {
@@ -91,13 +91,13 @@ int do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
             return -1;
         mem_space_t* p = mem_space_find(vmm, addr);
         if (p != NULL && addr + len > p->start) {
-            printk(KERN_ERR "do_mem_space_map: this FIXED space had existed!\n");
+            kprint(PRINT_ERR "do_mem_space_map: this FIXED space had existed!\n");
             return -1;
         }
     } else {
         addr = mem_space_get_unmaped(vmm, len);
         if (addr == -1) {
-            printk(KERN_ERR "do_mem_space_map: GetUnmappedMEM_SPACEpace failed!\n");
+            kprint(PRINT_ERR "do_mem_space_map: GetUnmappedMEM_SPACEpace failed!\n");
             return -1;
         }
     }
@@ -106,7 +106,7 @@ int do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
     }
     mem_space_t *space = mem_space_alloc();
     if (!space) {
-        printk(KERN_ERR "do_mem_space_map: mem_alloc for space failed!\n");
+        kprint(PRINT_ERR "do_mem_space_map: mem_alloc for space failed!\n");
         return -1;    
     }
     mem_space_init(space, addr, addr + len, prot, flags);
@@ -123,18 +123,18 @@ int do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
 int do_mem_space_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
 {
     if ((addr & ~PAGE_MASK) || addr > USER_VMM_SIZE || len > USER_VMM_SIZE-addr) {
-        printk(KERN_ERR "do_mem_space_unmap: addr and len error!\n");
+        kprint(PRINT_ERR "do_mem_space_unmap: addr and len error!\n");
         return -1;
     }
     len = PAGE_ALIGN(len);
     if (!len) {
-        printk(KERN_ERR "do_mem_space_unmap: len is zero!\n");
+        kprint(PRINT_ERR "do_mem_space_unmap: len is zero!\n");
         return -1;
     }
     mem_space_t* prev = NULL;
     mem_space_t* space = mem_space_find_prev(vmm, addr, &prev);
     if (space == NULL) {      
-        printk(KERN_ERR "do_mem_space_unmap: not found the space!\n");
+        kprint(PRINT_ERR "do_mem_space_unmap: not found the space!\n");
         return -1;
     }
     
@@ -145,7 +145,7 @@ int do_mem_space_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
     page_unmap_addr_safe(addr, len, space->flags & MEM_SPACE_MAP_SHARED);
     mem_space_t* space_new = mem_space_alloc();
     if (!space_new) {        
-        printk(KERN_ERR "do_mem_space_unmap: mem_alloc for space_new failed!\n");
+        kprint(PRINT_ERR "do_mem_space_unmap: mem_alloc for space_new failed!\n");
         return -1;
     }
     space_new->start = addr + len;
@@ -208,7 +208,7 @@ unsigned long sys_mem_space_expend_heap(unsigned long heap)
     unsigned long old_heap, new_heap;
     vmm_t *vmm = task_current->vmm;
 #ifdef DEBUG_MEM_SPACE    
-    printk(KERN_DEBUG "%s: task %s pid %d vmm heap start %x end %x new %x\n", 
+    kprint(PRINT_DEBUG "%s: task %s pid %d vmm heap start %x end %x new %x\n", 
         __func__, task_current->name, task_current->pid, vmm->heap_start, vmm->heap_end, heap);
 #endif
     /* 如果堆比开始位置都小就退出 */
@@ -224,34 +224,34 @@ unsigned long sys_mem_space_expend_heap(unsigned long heap)
     if (heap <= vmm->heap_end && heap >= vmm->heap_start) {
         if (!do_mem_space_unmap(vmm, new_heap, old_heap - new_heap))
             goto set_heap;
-        printk(KERN_ERR "sys_mem_space_expend_heap: do_mem_space_unmap failed!\n");
+        kprint(PRINT_ERR "sys_mem_space_expend_heap: do_mem_space_unmap failed!\n");
         goto the_end;
     }
     
     if (heap > vmm->heap_start + MAX_MEM_SPACE_HEAP_SIZE) {
-        printk(KERN_ERR "%s: %x out of heap boundary!\n", __func__, heap);
+        kprint(PRINT_ERR "%s: %x out of heap boundary!\n", __func__, heap);
         goto the_end;
     }
     mem_space_t *find;
     if ((find = mem_space_find_intersection(vmm, old_heap, new_heap + PAGE_SIZE))) {
-        printk(KERN_ERR "%s: space intersection! old=%x, new=%x, end=%x\n",
+        kprint(PRINT_ERR "%s: space intersection! old=%x, new=%x, end=%x\n",
             __func__, old_heap, new_heap, new_heap + PAGE_SIZE);
 #ifdef DEBUG_MEM_SPACE   
-        printk(KERN_ERR "%s: find: start=%x, end=%x\n",
+        kprint(PRINT_ERR "%s: find: start=%x, end=%x\n",
             __func__, find->start, find->end);
 
-        printk(KERN_ERR "task=%d.\n", task_current->pid);
+        kprint(PRINT_ERR "task=%d.\n", task_current->pid);
 #endif
         goto the_end;
     }
     if (do_mem_space_expend_heap(vmm, old_heap, new_heap - old_heap) != old_heap) {
-        printk(KERN_ERR "sys_mem_space_expend_heap: do_heap failed! addr %x len %x\n",
+        kprint(PRINT_ERR "sys_mem_space_expend_heap: do_heap failed! addr %x len %x\n",
             old_heap, new_heap - old_heap);
         goto the_end;
     }
 set_heap:
 #ifdef DEBUG_MEM_SPACE   
-    printk(KERN_DEBUG "sys_mem_space_expend_heap: set new heap %x old is %x\n",
+    kprint(PRINT_DEBUG "sys_mem_space_expend_heap: set new heap %x old is %x\n",
         heap, vmm->heap_end);
 #endif
     vmm->heap_end = heap;

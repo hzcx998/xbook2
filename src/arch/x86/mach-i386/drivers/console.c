@@ -139,8 +139,8 @@ static void console_clean(device_extension_t *ext)
 #ifdef DEBUG_CONSOLE
 static void dump_console(device_extension_t *ext)
 {
-    printk(PART_TIP "----Console----\n");
-    printk(PART_TIP "origin:%d size:%d x:%d y:%d color:%x dev:%x\n",
+    kprint(PART_TIP "----Console----\n");
+    kprint(PART_TIP "origin:%d size:%d x:%d y:%d color:%x dev:%x\n",
         ext->original_addr, ext->screen_size, ext->x, ext->x, ext->color, ext->dev);
 }
 #endif /* DEBUG_CONSOLE */
@@ -335,7 +335,7 @@ iostatus_t console_read(device_object_t *device, io_request_t *ioreq)
     }
 #ifdef DEBUG_DRV  
     buf = (uint8_t *)ioreq->system_buffer; 
-    printk(KERN_DEBUG "console_read: %s\n", buf);
+    kprint(PRINT_DEBUG "console_read: %s\n", buf);
 #endif
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = len;
@@ -353,7 +353,7 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
     uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
     int i = len;
 #ifdef DEBUG_DRV    
-    printk(KERN_DEBUG "console_write: %s\n", buf);
+    kprint(PRINT_DEBUG "console_write: %s\n", buf);
 #endif
     while (i > 0) {
         vga_outchar(device->device_extension, *buf);
@@ -423,7 +423,7 @@ static iostatus_t console_enter(driver_object_t *driver)
         status = io_create_device(driver, sizeof(device_extension_t), devname, DEVICE_TYPE_SCREEN, &devobj);
 
         if (status != IO_SUCCESS) {
-            printk(KERN_ERR "console_enter: create device failed!\n");
+            kprint(PRINT_ERR "console_enter: create device failed!\n");
             return status;
         }
         /* buffered io mode */
@@ -433,7 +433,7 @@ static iostatus_t console_enter(driver_object_t *driver)
         string_new(&devext->device_name, devname, DEVICE_NAME_LEN);
         devext->device_object = devobj;
 #ifdef DEBUG_DRV
-        printk(KERN_DEBUG "console_enter: device extension: device name=%s object=%x\n",
+        kprint(PRINT_DEBUG "console_enter: device extension: device name=%s object=%x\n",
             devext->device_name.text, devext->device_object);
 #endif
         /* 设置屏幕大小 */
@@ -488,7 +488,7 @@ iostatus_t console_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    printk(KERN_DEBUG "console_driver_func: driver name=%s\n",
+    kprint(PRINT_DEBUG "console_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     return status;
@@ -497,7 +497,7 @@ iostatus_t console_driver_func(driver_object_t *driver)
 static __init void console_driver_entry(void)
 {
     if (driver_object_create(console_driver_func) < 0) {
-        printk(KERN_ERR "[driver]: %s create driver failed!\n", __func__);
+        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 
