@@ -32,6 +32,7 @@ void sys_exit(int status)
     interrupt_save_and_disable(flags);
     task_t *cur = task_current;
     cur->exit_status = status;
+    task_exit_hook(cur);
     proc_close_other_threads(cur);
     proc_deal_zombie_child(cur);
     adopt_children_to_init(cur);

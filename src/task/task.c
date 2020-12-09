@@ -66,6 +66,8 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->errno = 0;
     task->pthread = NULL;
     task->fileman = NULL;
+    task->exit_hook = NULL;
+    task->exit_hook_arg = NULL;
     task->stack_magic = TASK_STACK_MAGIC;
 }
 
@@ -151,6 +153,7 @@ void kern_thread_exit(int status)
     }
     cur->exit_status = status;
     task_do_cancel(cur);
+    task_exit_hook(cur);
     cur->parent_pid = USER_INIT_PROC_ID;
     task_t *parent = task_find_by_pid(cur->parent_pid); 
     if (parent) {

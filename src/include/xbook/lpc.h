@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "waitqueue.h"
 #include "task.h"
+#include "semaphore.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <types.h>
@@ -31,8 +32,7 @@ typedef enum {
     LPC_PORT_LISTEN,        /* 服务端监听连接 */
     LPC_PORT_ACCEPT,        /* 处于接收连接中 */
     LPC_PORT_CONNECTED,     /* 已经连接上 */
-    
-    LPC_PORT_DISCONNECTED,
+    LPC_PORT_DISCONNECTED,  
 } lpc_port_state_t;
 
 
@@ -43,7 +43,7 @@ typedef struct lpc_port {
     uint32_t id;   
     task_t *server_task;    /* 服务端口任务 */
     task_t *client_task;    /* 客户端任务 */
-    wait_queue_t pending_list;  /* 未决客户端连接线程的等待队列 */
+    semaphore_t connect_sema;   /* 连接端口的信号量 */
     lpc_port_state_t state;
     spinlock_t lock;
     /* 0-3：端口类型 */     
@@ -62,6 +62,7 @@ typedef struct {
 } lpc_message_t;
 
 lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgsz, uint32_t flags);
+int lpc_destroy_port(lpc_port_t *port);
 lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept);
 lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz);
 void lpc_init();

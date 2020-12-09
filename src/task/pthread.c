@@ -120,6 +120,8 @@ void pthread_exit(void *status)
     }
     cur->exit_status = (int)status;
     task_do_cancel(cur);
+    task_exit_hook(cur);
+
     if (cur->flags & THREAD_FLAG_DETACH) {
         if (cur->flags &  THREAD_FLAG_JOINED) {
             task_t *parent = task_find_by_pid(cur->parent_pid);

@@ -36,6 +36,8 @@ typedef enum {
 #define TASK_TIMESLICE_MAX  100
 #define TASK_TIMESLICE_BASE  1
 
+typedef void (*exit_hook_t)(void *);
+
 enum thread_flags {
     THREAD_FLAG_DETACH              = (1 << 0),     /* 线程分离标志，表示自己释放资源 */
     THREAD_FLAG_JOINED              = (1 << 1),     /* 线程被其它线程等待中 */
@@ -70,7 +72,9 @@ typedef struct {
     alarm_t alarm;                      
     long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
-    file_man_t *fileman;      
+    file_man_t *fileman;    
+    exit_hook_t exit_hook;  /* 退出调用的钩子函数 */
+    void *exit_hook_arg;
     unsigned int stack_magic;
 } task_t;
 
@@ -165,5 +169,14 @@ pid_t sys_get_tid();
 int sys_getver(char *buf, int len);
 int sys_tstate(tstate_t *ts, unsigned int *idx);
 unsigned long sys_unid(int id);
+
+static inline void task_exit_hook(task_t *task)
+{
+    if (task->exit_hook) {
+        task->exit_hook(task->exit_hook_arg);
+        task->exit_hook = NULL;
+    }
+}
+
 
 #endif   /* _XBOOK_TASK_H */
