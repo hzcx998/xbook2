@@ -20,7 +20,13 @@ typedef struct {
 msgpool_t *msgpool_create(size_t msgsz, size_t msgcount);
 int msgpool_destroy(msgpool_t *pool);
 int msgpool_put(msgpool_t *pool, void *buf);
-int msgpool_out(msgpool_t *pool, void *buf);
+void *msgpool_push(msgpool_t *pool);
+int msgpool_sync_push(msgpool_t *pool);
+
+int msgpool_get(msgpool_t *pool, void *buf);
+void *msgpool_pop(msgpool_t *pool);
+int msgpool_sync_pop(msgpool_t *pool);
+
 int msgpool_empty(msgpool_t *pool);
 int msgpool_full(msgpool_t *pool);
 int msgpool_try_push(msgpool_t *pool, void *buf);

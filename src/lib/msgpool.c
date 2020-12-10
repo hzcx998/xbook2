@@ -67,6 +67,35 @@ int msgpool_put(msgpool_t *pool, void *buf)
     return 0;
 }
 
+void *msgpool_push(msgpool_t *pool)
+{
+    if (!pool)
+        return NULL;
+    mutex_lock(&pool->mutex);
+    if (msgpool_full(pool)) {
+        wait_queue_add(&pool->waiters, task_current);
+        mutex_unlock(&pool->mutex);
+        task_block(TASK_BLOCKED);
+        mutex_lock(&pool->mutex);
+    }
+    return (void *) pool->head;
+}
+
+int msgpool_sync_push(msgpool_t *pool)
+{
+    if (!pool)
+        return -1;
+    pool->head += pool->msgsz;
+    /* fix out of boundary */
+    if (pool->head >= pool->msgbuf + pool->msgmaxcnt * pool->msgsz)
+        pool->head = pool->msgbuf;
+    pool->msgcount++;
+    if (wait_queue_length(&pool->waiters) > 0)
+        wait_queue_wakeup(&pool->waiters);     /* wake up */
+    mutex_unlock(&pool->mutex);
+    return 0;
+}
+
 int msgpool_try_push(msgpool_t *pool, void *buf)
 {
     if (!pool)
@@ -90,7 +119,7 @@ int msgpool_try_push(msgpool_t *pool, void *buf)
     return 0;
 }
 
-int msgpool_out(msgpool_t *pool, void *buf)
+int msgpool_get(msgpool_t *pool, void *buf)
 {
     if (!pool)
         return -1;
@@ -112,6 +141,35 @@ int msgpool_out(msgpool_t *pool, void *buf)
     if (wait_queue_length(&pool->waiters) > 0)
         wait_queue_wakeup(&pool->waiters);     /* wake up */    
 
+    mutex_unlock(&pool->mutex);
+    return 0;
+}
+
+void *msgpool_pop(msgpool_t *pool)
+{
+    if (!pool)
+        return NULL;
+    mutex_lock(&pool->mutex);
+    if (msgpool_empty(pool)) {
+        wait_queue_add(&pool->waiters, task_current);
+        mutex_unlock(&pool->mutex);
+        task_block(TASK_BLOCKED);
+        mutex_lock(&pool->mutex);
+    }
+    return pool->tail;
+}
+
+int msgpool_sync_pop(msgpool_t *pool)
+{
+    if (!pool)
+        return -1;
+    pool->tail += pool->msgsz;
+    /* fix out of boundary */
+    if (pool->tail >= pool->msgbuf + pool->msgmaxcnt * pool->msgsz)
+        pool->tail = pool->msgbuf;
+    pool->msgcount--;
+    if (wait_queue_length(&pool->waiters) > 0)
+        wait_queue_wakeup(&pool->waiters);     /* wake up */    
     mutex_unlock(&pool->mutex);
     return 0;
 }

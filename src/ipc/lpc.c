@@ -12,7 +12,13 @@
 static LIST_HEAD(lpc_port_list_head);
 static DEFINE_SPIN_LOCK_UNLOCKED(lpc_port_list_lock);
 static uint32_t lpc_port_next_id = 0;
+static uint32_t lpc_msg_next_id = 0;
 
+
+uint32_t lpc_generate_msg_id()
+{
+    return lpc_msg_next_id++;
+}
 lpc_port_t *lpc_find_port_by_name(char *name)
 {
     lpc_port_t *port = NULL, *tmp;
@@ -46,6 +52,15 @@ lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgs
         errprint("lpc create: mem alloc for new port failed!" endl);
         return NULL;
     }
+
+    if (!max_connects || max_connects > LPC_MAX_CONNECT_NR)
+        max_connects = LPC_MAX_CONNECT_NR;
+    port->max_connects = max_connects;
+
+    if (!max_msgsz || max_msgsz > LPC_MAX_MESSAGE_DATA_LEN)
+        max_msgsz = LPC_MAX_MESSAGE_DATA_LEN;
+    port->max_msgsz = max_msgsz;
+
     if (port_type == LPC_PORT_TYPE_SERVER_CONNECTION) {
         port->name = mem_alloc(LPC_PORT_NAME_LEN);
         if (!port->name) {
@@ -55,26 +70,27 @@ lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgs
         }
         memset(port->name, 0, LPC_PORT_NAME_LEN);
         memcpy(port->name, name, min(strlen(name), LPC_PORT_NAME_LEN - 1));
+        port->msgpool = NULL;
+        semaphore_init(&port->sema, 1);
     } else {
         port->name = NULL;
+        port->msgpool = msgpool_create(port->max_msgsz + sizeof(lpc_message_t), LPC_MAX_MESSAGE_NR);
+        if (!port->msgpool) {
+            errprint("lpc create: create messagepool for commmunication port name %s failed!" endl, name);
+            mem_free(port);
+            return NULL;
+        }
+        /* 通信端口信号量 */
+        semaphore_init(&port->sema, 0);
     }
     
-    if (!max_connects || max_connects > LPC_MAX_CONNECT_NR)
-        max_connects = LPC_MAX_CONNECT_NR;
-    port->max_connects = max_connects;
-
-    if (!max_msgsz || max_msgsz > LPC_MAX_MESSAGE_DATA_LEN)
-        max_msgsz = LPC_MAX_MESSAGE_DATA_LEN;
-
     spinlock_init(&port->lock);
-    port->max_msgsz = max_msgsz;
     port->id = lpc_port_next_id++;
     port->state = LPC_PORT_CREATED;
     port->flags = flags;
     port->port = port;
-    port->server_task = NULL;
-    port->client_task = NULL;
-    semaphore_init(&port->connect_sema, 1);
+    port->task = task_current;
+    
     unsigned long iflags;
     spin_lock_irqsave(&lpc_port_list_lock, iflags);
     list_add_tail(&port->list, &lpc_port_list_head);
@@ -94,8 +110,8 @@ int lpc_destroy_port(lpc_port_t *port)
     spin_unlock_irqrestore(&port->lock, iflags);
     if (type == LPC_PORT_TYPE_SERVER_CONNECTION) {
         // 释放信号量
-        while (atomic_get(&port->connect_sema.counter) > 0) {
-            semaphore_up(&port->connect_sema);
+        while (atomic_get(&port->sema.counter) > 0) {
+            semaphore_up(&port->sema);
         }
         mem_free(port->name);
     }
@@ -111,7 +127,7 @@ int lpc_destroy_port(lpc_port_t *port)
 static void lpc_connect_exit_hook(void *arg)
 {
     lpc_port_t *port = (lpc_port_t *) arg;
-    semaphore_up(&port->connect_sema);
+    semaphore_up(&port->sema);
 }
 
 lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz)
@@ -136,13 +152,13 @@ lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz)
     task_t *cur = task_current;
     lpc_port_t *comm_port = NULL;
     while (1) {
-        semaphore_down(&port->connect_sema);
+        semaphore_down(&port->sema);
         if (port->state == LPC_PORT_LISTEN) {
             /* 创建客户端通信端口 */
             comm_port = lpc_create_port("unnamed", 0, port->max_msgsz, LPC_PORT_TYPE_CLIENT_COMMUNICATION);
             if (comm_port == NULL) {
                 errprint("lpc connect: create communication port failed!\n");
-                semaphore_up(&port->connect_sema);
+                semaphore_up(&port->sema);
                 break;
             }
             /* 创建客户端通信端口，唤醒服务线程，并等待其接收请求 */
@@ -152,11 +168,9 @@ lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz)
             port->state = LPC_PORT_ACCEPT;
             port->port = comm_port;
             dbgprint("lpc connect: client sleep on connect list.\n");
-            ASSERT(port->server_task);
-            port->client_task = cur;
-            task_unblock(port->server_task);
-            port->server_task = NULL;
-            
+            ASSERT(port->task);
+            task_unblock(port->task);
+            port->task = cur;
             spin_unlock_irqrestore(&port->lock, iflags);
             /* 如果在阻塞期间被中断导致退出，那么需要设置钩子函数释放信号量 */
             cur->exit_hook = lpc_connect_exit_hook;
@@ -170,10 +184,12 @@ lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz)
                 errprint("lpc connect: server not accept!\n");
                 comm_port = NULL;
             }
+            if (max_msgsz)
+                *max_msgsz = comm_port->max_msgsz;
             /* 服务端会释放信号量 */
             break;
         } else {
-            semaphore_up(&port->connect_sema);
+            semaphore_up(&port->sema);
             /* 端口在销毁中，不能进行连接 */
             if (port->state == LPC_PORT_DISCONNECTED) {
                 errprint("lpc connect: server %d disconnected!\n", port->id);
@@ -187,8 +203,8 @@ lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz)
 static void lpc_accept_exit_hook(void *arg)
 {
     lpc_port_t *port = (lpc_port_t *) arg;
-    task_unblock(port->client_task);
-    port->client_task = NULL;
+    task_unblock(port->task);
+    port->task = NULL;
     if (port->port) {   /* 执行的是服务端的通信端口 */
         lpc_destroy_port(port->port);
         port->port = NULL;
@@ -208,7 +224,7 @@ lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept)
     while (1) {
         spin_lock_irqsave(&port->lock, iflags);
         port->state = LPC_PORT_LISTEN;
-        port->server_task = cur;
+        port->task = cur;
         port->port = port;
         spin_unlock_irqrestore(&port->lock, iflags);
         task_block(TASK_BLOCKED);
@@ -242,48 +258,184 @@ lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept)
     /* 注册一个钩子函数，来保证异常退出时也能唤醒客户端 */
     cur->exit_hook = lpc_accept_exit_hook;
     cur->exit_hook_arg = port;
-    ASSERT(port->client_task);
-    TASK_NEED_STATE(port->client_task, TASK_BLOCKED);
+    ASSERT(port->task);
+    TASK_NEED_STATE(port->task, TASK_BLOCKED);
     cur->exit_hook = NULL;
     cur->exit_hook_arg = NULL;
-    task_unblock(port->client_task);
-    port->client_task = NULL;
+    task_unblock(port->task);
+    port->task = NULL;
     dbgprint("lpc accept: wakeup done\n");
-    semaphore_up(&port->connect_sema);
+    semaphore_up(&port->sema);
     return comm_port;
 }
+
+int lpc_send_port(lpc_port_t *port, void *msg, size_t size)
+{
+    if (!port || !msg)
+        return -EINVAL;
+    if (port->state != LPC_PORT_CONNECTED) {
+        errprint("lpc requset: port %d must be connected!\n", port->id);
+        return -EPERM;
+    }
+    if ((port->flags & LPC_PORT_TYPE_MASK) == LPC_PORT_TYPE_SERVER_CONNECTION) {
+        errprint("lpc requset: port %d must be communication port!\n", port->id);
+        return -EPERM;
+    }
+    lpc_port_t *other_port = port->port;
+    /* make sure another comm port be ture */
+    ASSERT(other_port);
+    ASSERT(other_port->msgpool);
+    /* put msg to msgpool */
+    // msgpool_put(other_port->msgpool, (void *) msg);
+    lpc_message_t *lpc_msg = msgpool_push(other_port->msgpool);
+    ASSERT(lpc_msg);
+
+    if (size > LPC_MAX_MESSAGE_DATA_LEN)
+        size = LPC_MAX_MESSAGE_DATA_LEN;
+
+    lpc_msg->id = lpc_generate_msg_id();
+    lpc_msg->size = size;
+    memcpy(lpc_msg->data, msg, size);
+    msgpool_sync_push(other_port->msgpool);
+    return 0;
+}
+
+int lpc_send_and_reply_port(lpc_port_t *port, void *msg, size_t size)
+{
+    int retstate = lpc_send_port(port, msg, size);
+    if (retstate < 0) {
+        return retstate;
+    }
+    /* 等待对方响应后返回，信号量初始为0，第一次down就会阻塞 */
+    //semaphore_down(&port->port->sema);
+    dbgprint("send and reply\n");
+    return 0;
+}
+
+int lpc_recv_port(lpc_port_t *port, void *msg, size_t *size)
+{
+    if (!port || !msg)
+        return -EINVAL;
+    if (port->state != LPC_PORT_CONNECTED) {
+        errprint("lpc requset: port %d must be connected!\n", port->id);
+        return -EPERM;
+    }
+    if ((port->flags & LPC_PORT_TYPE_MASK) == LPC_PORT_TYPE_SERVER_CONNECTION) {
+        errprint("lpc requset: port %d must be communication port!\n", port->id);
+        return -EPERM;
+    }
+    ASSERT(port->msgpool);
+    /* get msg to msgpool */
+    lpc_message_t *lpc_msg = msgpool_pop(port->msgpool);
+    ASSERT(lpc_msg);
+    *size = lpc_msg->size;
+    memcpy(msg, lpc_msg->data, lpc_msg->size);
+    msgpool_sync_pop(port->msgpool);
+    return 0;
+}
+
+int lpc_recv_and_reply_port(lpc_port_t *port, void *msg, size_t *size)
+{
+    int retstate = lpc_recv_port(port, msg, size);
+    if (retstate < 0) {
+        return retstate;
+    }
+    /* 接收方收到消息后，释放信号量，唤醒休眠者 */
+    // semaphore_up(&port->sema);
+    dbgprint("recv and reply\n");
+    return 0;
+}
+
+#if 0
+int lpc_request_port(lpc_port_t *port, lpc_message_t *msg)
+{
+    if (!port || !msg)
+        return -EINVAL;
+    if (port->state != LPC_PORT_CONNECTED) {
+        errprint("lpc requset: port %d must be connected!\n", port->id);
+        return -EPERM;
+    }
+    if ((port->flags & LPC_PORT_TYPE_MASK) == LPC_PORT_TYPE_SERVER_CONNECTION) {
+        errprint("lpc requset: port %d must be communication port!\n", port->id);
+        return -EPERM;
+    }
+    lpc_port_t *other_port = port->port;
+    /* make sure another comm port be ture */
+    ASSERT(other_port);
+    ASSERT(other_port->msgpool);
+    /* put msg to msgpool */
+    msgpool_put(other_port->msgpool, (void *) msg);
+    return 0;
+}
+
+int lpc_reply_port(lpc_port_t *port, lpc_message_t *msg)
+{
+
+}
+
+int lpc_request_wait_reply_port(lpc_port_t *port, lpc_message_t *msgin, lpc_message_t *msgout)
+{
+    if (!port || !msgin)
+        return -EINVAL;
+    if (port->state != LPC_PORT_CONNECTED) {
+        errprint("lpc requset: port %d must be connected!\n", port->id);
+        return -EPERM;
+    }
+    int type = port->flags & LPC_PORT_TYPE_MASK;
+    if (type == LPC_PORT_TYPE_SERVER_CONNECTION) {
+        errprint("lpc requset: port %d must be communication port!\n", port->id);
+        return -EPERM;
+    }
+    lpc_port_t *other_port = port->port;
+    /* make sure another comm port be ture */
+    ASSERT(other_port);
+    ASSERT(other_port->msgpool);
+    /* put msg to msgpool */
+    msgpool_put(other_port->msgpool, (void *) msgin);
+    /* 等待应答 */
+    // port->task = task_current;
+
+
+    return 0;
+}
+#endif
 
 void lpc_server(void *arg)
 {
     kprint("lpc server start.\n");
-    lpc_port_t *port = lpc_create_port("lpc_comm0", 10, 32, LPC_PORT_TYPE_SERVER_CONNECTION);
+    lpc_port_t *port = lpc_create_port("lpc_comm0", 10, 5, LPC_PORT_TYPE_SERVER_CONNECTION);
     if (port == NULL)
         panic("create port failed!\n");    
     int isaccept = 1; 
+    lpc_port_t *server_comm = lpc_accept_port(port, isaccept);
+    if (server_comm)
+        infoprint("server: accept %d success!\n", server_comm->id);   
+    
+    uint8_t buf[32];
+    size_t buflen;
     while (1) {
-        lpc_port_t *server_comm = lpc_accept_port(port, isaccept);
-        if (server_comm)
-            infoprint("server: accept %d success!\n", server_comm->id);    
-        if (!lpc_destroy_port(port))
-            infoprint("server: close success!\n");    
-        lpc_destroy_port(server_comm);
-
-        port = NULL;
-        isaccept = 0;
+        if (!lpc_recv_and_reply_port(server_comm, buf, &buflen)) {
+            infoprint("server: recv %d ok!\n", buflen);
+        }
     }
 }
 
 void lpc_client_a(void *arg)
 {
     kprint("lpc client a start.\n");
-    lpc_port_t *port = lpc_connect_port("lpc_comm0", NULL);
+    uint32_t max_msgsz;
+    lpc_port_t *port = lpc_connect_port("lpc_comm0", &max_msgsz);
     if (port) {
         infoprint("client A: connect %d success!\n", port->id);
-        lpc_destroy_port(port);
-    }   
-        
+        // lpc_destroy_port(port);
+    }
+    infoprint("client A: connect %d success with %d!\n", port->id, max_msgsz);
+
+    uint8_t buf[32]; 
     while (1) {
-        
+        if (!lpc_send_port(port, buf, 32)) {
+            infoprint("client A: send port ok!\n");
+        }
     }
 }
 
@@ -305,7 +457,6 @@ void lpc_init()
 {
     
     infoprint("lpc init done\n");
-
     kern_thread_start("lpc_server", 0, lpc_server, NULL);
     kern_thread_start("lpc_client_a", 0, lpc_client_a, NULL);
     kern_thread_start("lpc_client_b", 0, lpc_client_b, NULL);
