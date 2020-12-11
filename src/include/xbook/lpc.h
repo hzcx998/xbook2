@@ -33,6 +33,7 @@ typedef enum {
     LPC_PORT_LISTEN,        /* 服务端监听连接 */
     LPC_PORT_ACCEPT,        /* 处于接收连接中 */
     LPC_PORT_CONNECTED,     /* 已经连接上 */
+    LPC_PORT_ACK,     /* 已经连接上 */
     LPC_PORT_DISCONNECTED,  
 } lpc_port_state_t;
 
@@ -43,6 +44,8 @@ typedef struct lpc_port {
     list_t list;        /* on lpc port list */
     uint32_t id;   
     task_t *task;       /* 通信端口指向对方端口的任务，连接端口随着状态改变而改变 */
+    task_t *server;
+    task_t *client;
     semaphore_t sema;   /* 连接端口的信号量 */
     lpc_port_state_t state;
     spinlock_t lock;
@@ -58,6 +61,7 @@ typedef struct lpc_port {
 /* message has different type for different use. */
 typedef struct {
     uint32_t id;
+    uint32_t type;
     uint32_t size;
     uint8_t data[1]; 
 } lpc_message_t;
