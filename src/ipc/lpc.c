@@ -80,7 +80,6 @@ lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgs
     port->state = LPC_PORT_CREATED;
     port->flags = flags;
     port->port = port;
-    port->task = task_current;
     port->server = NULL;
     port->client = NULL;
     port->msg = NULL;
@@ -165,9 +164,9 @@ lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz, void *addr)
             port->state = LPC_PORT_ACCEPT;
             port->port = comm_port;
             dbgprint("lpc connect: client sleep on connect list.\n");
-            ASSERT(port->task);
-            task_unblock(port->task);
-            port->task = cur;
+            ASSERT(port->server);
+            task_unblock(port->server);
+            port->client = cur;
             spin_unlock_irqrestore(&port->lock, iflags);
             /* 如果在阻塞期间被中断导致退出，那么需要设置钩子函数释放信号量 */
             cur->exit_hook = lpc_connect_exit_hook;
@@ -200,8 +199,8 @@ lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz, void *addr)
 static void lpc_accept_exit_hook(void *arg)
 {
     lpc_port_t *port = (lpc_port_t *) arg;
-    task_unblock(port->task);
-    port->task = NULL;
+    task_unblock(port->client);
+    port->client = NULL;
     if (port->port) {   /* 执行的是服务端的通信端口 */
         lpc_destroy_port(port->port);
         port->port = NULL;
@@ -221,7 +220,7 @@ lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept, void *addr)
     while (1) {
         spin_lock_irqsave(&port->lock, iflags);
         port->state = LPC_PORT_LISTEN;
-        port->task = cur;
+        port->server = cur;
         port->port = port;
         spin_unlock_irqrestore(&port->lock, iflags);
         task_block(TASK_BLOCKED);
@@ -263,12 +262,12 @@ lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept, void *addr)
     /* 注册一个钩子函数，来保证异常退出时也能唤醒客户端 */
     cur->exit_hook = lpc_accept_exit_hook;
     cur->exit_hook_arg = port;
-    ASSERT(port->task);
-    TASK_NEED_STATE(port->task, TASK_BLOCKED);
+    ASSERT(port->client);
+    TASK_NEED_STATE(port->client, TASK_BLOCKED);
     cur->exit_hook = NULL;
     cur->exit_hook_arg = NULL;
-    task_unblock(port->task);
-    port->task = NULL;
+    task_unblock(port->client);
+    port->client = NULL;
     dbgprint("lpc accept: wakeup done\n");
     semaphore_up(&port->sema);
     return comm_port;

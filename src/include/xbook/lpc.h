@@ -53,10 +53,9 @@ typedef struct lpc_port {
     struct lpc_port *port;      /* 连接端口指向自己，服务端口指向连接端口 */
     list_t list;        /* on lpc port list */
     uint32_t id;   
-    task_t *task;       /* 通信端口指向对方端口的任务，连接端口随着状态改变而改变 */
     task_t *server;
     task_t *client;
-    semaphore_t sema;   /* 连接端口的信号量 */
+    semaphore_t sema;
     lpc_port_state_t state;
     spinlock_t lock;
     lpc_message_t *msg;
