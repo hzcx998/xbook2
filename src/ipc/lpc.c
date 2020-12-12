@@ -4,6 +4,7 @@
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 #include <xbook/clock.h>
+#include <xbook/sharemem.h>
 #include <string.h>
 #include <stddef.h>
 #include <errno.h>
@@ -57,8 +58,8 @@ lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgs
         max_connects = LPC_MAX_CONNECT_NR;
     port->max_connects = max_connects;
 
-    if (!max_msgsz || max_msgsz > LPC_MAX_MESSAGE_LEN)
-        max_msgsz = LPC_MAX_MESSAGE_LEN;
+    if (!max_msgsz || max_msgsz > LPC_MESSAGE_DATA_LEN)
+        max_msgsz = LPC_MESSAGE_DATA_LEN;
     port->max_msgsz = max_msgsz;
 
     if (port_type == LPC_PORT_TYPE_SERVER_CONNECTION) {
@@ -70,20 +71,10 @@ lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgs
         }
         memset(port->name, 0, LPC_PORT_NAME_LEN);
         memcpy(port->name, name, min(strlen(name), LPC_PORT_NAME_LEN - 1));
-        port->msgpool = NULL;
-        semaphore_init(&port->sema, 1);
     } else {
         port->name = NULL;
-        port->msgpool = msgpool_create(port->max_msgsz + sizeof(lpc_message_t), LPC_MAX_MESSAGE_NR);
-        if (!port->msgpool) {
-            errprint("lpc create: create messagepool for commmunication port name %s failed!" endl, name);
-            mem_free(port);
-            return NULL;
-        }
-        /* 通信端口信号量 */
-        semaphore_init(&port->sema, 1);
     }
-    
+    semaphore_init(&port->sema, 1);
     spinlock_init(&port->lock);
     port->id = lpc_port_next_id++;
     port->state = LPC_PORT_CREATED;
@@ -93,7 +84,6 @@ lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgs
     port->server = NULL;
     port->client = NULL;
     port->msg = NULL;
-    
     unsigned long iflags;
     spin_lock_irqsave(&lpc_port_list_lock, iflags);
     list_add_tail(&port->list, &lpc_port_list_head);
@@ -117,6 +107,10 @@ int lpc_destroy_port(lpc_port_t *port)
             semaphore_up(&port->sema);
         }
         mem_free(port->name);
+    }
+    if (port->msg) {
+        mem_free(port->msg);
+        port->msg = NULL;
     }
     spin_lock_irqsave(&lpc_port_list_lock, iflags);
     list_del_init(&port->list); 
@@ -184,18 +178,12 @@ lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz, void *addr)
             dbgprint("lpc connect: client was wakeup\n");
             if (max_msgsz)
                 *max_msgsz = comm_port->max_msgsz;
-            comm_port->msg = mem_alloc(sizeof(lpc_message_t));
-            if (!comm_port->msg) {
-                lpc_destroy_port(comm_port);
-                errprint("lpc connect: server not accept!\n");
-                comm_port = NULL;
-            } else if (comm_port->state != LPC_PORT_CONNECTED) {
-                mem_free(comm_port->msg);
+            
+            if (comm_port->state != LPC_PORT_CONNECTED) {
                 lpc_destroy_port(comm_port);
                 errprint("lpc connect: server not accept!\n");
                 comm_port = NULL;
             }
-            /* 服务端会释放信号量 */
             break;
         } else {
             semaphore_up(&port->sema);
@@ -255,7 +243,7 @@ lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept, void *addr)
                 lpc_destroy_port(comm_port);
                 errprint("lpc accept: create communication port failed!\n");
                 port->port = NULL;
-                comm_port = NULL;
+                comm_port = NULL; /* not connect */
             } else {
                 /* 端口指向客户端的通信端口 */
                 lpc_port_t *client_port = port->port;
@@ -288,17 +276,16 @@ lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept, void *addr)
 
 void lpc_copy_message(lpc_message_t *dest, lpc_message_t *src)
 {
-    if (src->size > LPC_MAX_MESSAGE_LEN)
-        src->size = LPC_MAX_MESSAGE_LEN;
-    dest->id = src->id;
-    dest->size = src->size;
-    dest->type = src->type;
-    memcpy(dest->data, src->data, src->size);
+    if (src->header.size > LPC_MESSAGE_DATA_LEN)
+        src->header.size = LPC_MESSAGE_DATA_LEN;
+    memcpy(dest->data, src->data, src->header.size);
+    dest->header.id = src->header.id; 
+    dest->header.size = src->header.size;
 }
 
 void lpc_reset_message(lpc_message_t *msg)
 {
-    memset(msg, 0, sizeof(lpc_message_t));
+    memset(msg, 0, sizeof(lpc_message_t));    
 }
 
 int lpc_receive_port(lpc_port_t *port, lpc_message_t *lpc_msg)
@@ -363,13 +350,14 @@ int lpc_request_port(lpc_port_t *port, lpc_message_t *lpc_msg)
     ASSERT(other_port);
 
     uint32_t msgid = lpc_generate_msg_id();
-    lpc_msg->id = msgid;
+    lpc_msg->header.id = msgid;
     while (1) {    
         semaphore_down(&other_port->sema);
         /* 是监听才进行请求 */
         if (other_port->state == LPC_PORT_LISTEN) {
             //infoprint("lpc request: start\n");
             lpc_copy_message(other_port->msg, lpc_msg);
+
             /* 改变状态，并唤醒对方 */
             ASSERT(other_port->state == LPC_PORT_LISTEN);
             other_port->state = LPC_PORT_ACCEPT; /* 接收数据 */
@@ -405,7 +393,7 @@ int lpc_request_port(lpc_port_t *port, lpc_message_t *lpc_msg)
         }
         semaphore_up(&other_port->sema);
     }
-    if (lpc_msg->id != msgid) { // invalid msg
+    if (lpc_msg->header.id != msgid) { // invalid msg
         return -1;
     }
     return 0;
@@ -466,28 +454,23 @@ void lpc_server(void *arg)
     size_t buflen;
     lpc_message_t msg;
     while (1) {
-        #if BOTH
-        if (!lpc_receive_port_and_reply_port(server_comm, buf, &buflen)) {
-            infoprint("server: recv %d ok!\n", buflen);
-        }
-        #else
+        
         lpc_reset_message(&msg);
         if (!lpc_receive_port(server_comm, &msg))
             infoprint("server: recv %d success!\n", server_comm->id);   
 
         /* 处理数据 */
-        if (msg.size > 0) {
+        if (msg.header.size > 0) {
             dbgprint("server: recv %s\n", msg.data);
         }
         
         char *str = "hello, client!\n";
-        memset(msg.data, 0, LPC_MAX_MESSAGE_LEN);
+        memset(msg.data, 0, LPC_MESSAGE_DATA_LEN);
         strcpy(msg.data, str);
-        msg.size = strlen(str);
+        msg.header.size = strlen(str);
         if (!lpc_reply_port(server_comm, &msg))
             infoprint("server: reply %d success!\n", server_comm->id);   
 
-        #endif
     }
 }
 
@@ -508,21 +491,15 @@ void lpc_client_a(void *arg)
     lpc_message_t msg;
     
     while (1) {
-        #if BOTH
-        if (!lpc_send_and_reply_port(port, buf, 32)) {
-            infoprint("client A: send port ok!\n");
-        }
-        #else
         lpc_reset_message(&msg);
         char *str = "hello, lpc!\n";
-        msg.size = strlen(str);
+        msg.header.size = strlen(str);
         strcpy(msg.data, str);
         if (!lpc_request_port(port, &msg))
             infoprint("client A: request %d done!\n", port->id);
-        if (msg.size > 0) {
+        if (msg.header.size > 0) {
             dbgprint("client: echo %s\n", msg.data);
         }
-        #endif
     }
 }
 

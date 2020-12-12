@@ -15,7 +15,7 @@
 
 #define LPC_MAX_CONNECT_NR   64
 
-#define LPC_MAX_MESSAGE_LEN   256
+#define LPC_MESSAGE_DATA_LEN   4096
 
 #define LPC_MAX_MESSAGE_NR   32
 
@@ -37,13 +37,15 @@ typedef enum {
     LPC_PORT_DISCONNECTED,  
 } lpc_port_state_t;
 
+typedef struct {
+    uint32_t id;
+    uint32_t size;
+} lpc_message_header_t;
 
 /* message has different type for different use. */
 typedef struct {
-    uint32_t id;
-    uint32_t type;
-    uint32_t size;
-    uint8_t data[LPC_MAX_MESSAGE_LEN]; 
+    lpc_message_header_t header;
+    uint8_t data[LPC_MESSAGE_DATA_LEN]; 
 } lpc_message_t;
 
 /* local process communication */
@@ -57,7 +59,6 @@ typedef struct lpc_port {
     semaphore_t sema;   /* 连接端口的信号量 */
     lpc_port_state_t state;
     spinlock_t lock;
-    msgpool_t *msgpool;
     lpc_message_t *msg;
     /* 0-3：端口类型 */     
     uint32_t flags;        
