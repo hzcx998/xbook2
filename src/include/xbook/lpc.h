@@ -72,18 +72,9 @@ int lpc_destroy_port(lpc_port_t *port);
 lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept, void *addr);
 lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz, void *addr);
 
-int lpc_request_port(lpc_port_t *port, lpc_message_t *msg);
-int lpc_request_wait_reply_port(lpc_port_t *port, lpc_message_t *msgin, lpc_message_t *msgout);
-
-int lpc_reply_port(lpc_port_t *port, lpc_message_t *msg);
-int lpc_reply_wait_receive_port(lpc_port_t *port, lpc_message_t *msgin, lpc_message_t *msgout);
-int lpc_reply_wait_receive_port_timeout(lpc_port_t *port, lpc_message_t *msgin, lpc_message_t *msgout);
-int lpc_reply_wait_reply_port(lpc_port_t *port, lpc_message_t *msg, lpc_message_t *msgout);
-
-int lpc_send_port(lpc_port_t *port, void *msg, size_t size);
-int lpc_recv_port(lpc_port_t *port, void *msg, size_t *size);
-int lpc_send_and_reply_port(lpc_port_t *port, void *msg, size_t size);
-int lpc_recv_and_reply_port(lpc_port_t *port, void *msg, size_t *size);
+int lpc_reply_port(lpc_port_t *port, lpc_message_t *lpc_msg);
+int lpc_request_port(lpc_port_t *port, lpc_message_t *lpc_msg);
+int lpc_receive_port(lpc_port_t *port, lpc_message_t *lpc_msg);
 
 void lpc_init();
 
