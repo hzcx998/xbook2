@@ -286,6 +286,21 @@ lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept, void *addr)
     return comm_port;
 }
 
+void lpc_copy_message(lpc_message_t *dest, lpc_message_t *src)
+{
+    if (src->size > LPC_MAX_MESSAGE_LEN)
+        src->size = LPC_MAX_MESSAGE_LEN;
+    dest->id = src->id;
+    dest->size = src->size;
+    dest->type = src->type;
+    memcpy(dest->data, src->data, src->size);
+}
+
+void lpc_reset_message(lpc_message_t *msg)
+{
+    memset(msg, 0, sizeof(lpc_message_t));
+}
+
 int lpc_recv(lpc_port_t *port, lpc_message_t *lpc_msg)
 {
     if (!port)
@@ -311,7 +326,8 @@ int lpc_recv(lpc_port_t *port, lpc_message_t *lpc_msg)
     //infoprint("lpc recv: wakeup\n");
     ASSERT(port->state == LPC_PORT_ACCEPT);
     // TODO: 复制参数到消息中
-    memcpy(lpc_msg, port->msg, sizeof(lpc_message_t));
+    //memcpy(lpc_msg, port->msg, sizeof(lpc_message_t));
+    lpc_copy_message(lpc_msg, port->msg);
     semaphore_up(&port->sema);
     
     /* 返回 */
@@ -361,7 +377,8 @@ int lpc_request(lpc_port_t *port, lpc_message_t *lpc_msg)
             //infoprint("lpc request: start\n");
 
             /* TODO: 复制参数给服务端 */
-            memcpy(other_port->msg, lpc_msg, sizeof(lpc_message_t));
+            //memcpy(other_port->msg, lpc_msg, sizeof(lpc_message_t));
+            lpc_copy_message(other_port->msg, lpc_msg);
             /* 改变状态，并唤醒对方 */
             ASSERT(other_port->state == LPC_PORT_LISTEN);
             other_port->state = LPC_PORT_ACCEPT; /* 接收数据 */
@@ -381,7 +398,9 @@ int lpc_request(lpc_port_t *port, lpc_message_t *lpc_msg)
                 semaphore_down(&other_port->sema);    
             }
             /* TODO: 复制参数到客户端 */
-            memcpy(lpc_msg, other_port->msg, sizeof(lpc_message_t));
+            //memcpy(lpc_msg, other_port->msg, sizeof(lpc_message_t));
+            lpc_copy_message(lpc_msg, other_port->msg);
+            
             //infoprint("lpc request: after wait\n");
             ASSERT(other_port->state == LPC_PORT_ACK);
             other_port->state = LPC_PORT_CONNECTED; /* 恢复连接状态 */
@@ -420,8 +439,9 @@ int lpc_reply(lpc_port_t *port, lpc_message_t *lpc_msg)
     port->state = LPC_PORT_ACK;
 
     /* TODO: 发送应答消息 */
-    memcpy(port->msg, lpc_msg, sizeof(lpc_message_t));
-
+    //memcpy(port->msg, lpc_msg, sizeof(lpc_message_t));
+    lpc_copy_message(port->msg, lpc_msg);
+            
     if (port->client) {
         if (port->client->state == TASK_BLOCKED) {
             task_unblock(port->client);
@@ -603,6 +623,7 @@ void lpc_server(void *arg)
             infoprint("server: recv %d ok!\n", buflen);
         }
         #else
+        lpc_reset_message(&msg);
         if (!lpc_recv(server_comm, &msg))
             infoprint("server: recv %d success!\n", server_comm->id);   
 
@@ -610,9 +631,11 @@ void lpc_server(void *arg)
         if (msg.size > 0) {
             dbgprint("server: recv %s\n", msg.data);
         }
+        
+        char *str = "hello, client!\n";
         memset(msg.data, 0, LPC_MAX_MESSAGE_LEN);
-        strcpy(msg.data, "hello, client!\n");
-        msg.size = 10;
+        strcpy(msg.data, str);
+        msg.size = strlen(str);
         if (!lpc_reply(server_comm, &msg))
             infoprint("server: reply %d success!\n", server_comm->id);   
 
@@ -642,8 +665,10 @@ void lpc_client_a(void *arg)
             infoprint("client A: send port ok!\n");
         }
         #else
-        msg.size = 10;
-        strcpy(msg.data, "hello, lpc!\n");
+        lpc_reset_message(&msg);
+        char *str = "hello, lpc!\n";
+        msg.size = strlen(str);
+        strcpy(msg.data, str);
         if (!lpc_request(port, &msg))
             infoprint("client A: request %d done!\n", port->id);
         if (msg.size > 0) {
