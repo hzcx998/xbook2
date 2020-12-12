@@ -15,7 +15,7 @@
 
 #define LPC_MAX_CONNECT_NR   64
 
-#define LPC_MAX_MESSAGE_DATA_LEN   256
+#define LPC_MAX_MESSAGE_LEN   256
 
 #define LPC_MAX_MESSAGE_NR   32
 
@@ -38,6 +38,14 @@ typedef enum {
 } lpc_port_state_t;
 
 
+/* message has different type for different use. */
+typedef struct {
+    uint32_t id;
+    uint32_t type;
+    uint32_t size;
+    uint8_t data[LPC_MAX_MESSAGE_LEN]; 
+} lpc_message_t;
+
 /* local process communication */
 typedef struct lpc_port {
     struct lpc_port *port;      /* 连接端口指向自己，服务端口指向连接端口 */
@@ -50,6 +58,7 @@ typedef struct lpc_port {
     lpc_port_state_t state;
     spinlock_t lock;
     msgpool_t *msgpool;
+    lpc_message_t *msg;
     /* 0-3：端口类型 */     
     uint32_t flags;        
     char *name;
@@ -58,18 +67,10 @@ typedef struct lpc_port {
     uint32_t max_msgsz;
 } lpc_port_t;
 
-/* message has different type for different use. */
-typedef struct {
-    uint32_t id;
-    uint32_t type;
-    uint32_t size;
-    uint8_t data[1]; 
-} lpc_message_t;
-
 lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgsz, uint32_t flags);
 int lpc_destroy_port(lpc_port_t *port);
-lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept);
-lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz);
+lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept, void *addr);
+lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz, void *addr);
 
 int lpc_request_port(lpc_port_t *port, lpc_message_t *msg);
 int lpc_request_wait_reply_port(lpc_port_t *port, lpc_message_t *msgin, lpc_message_t *msgout);
