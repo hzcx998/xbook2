@@ -83,6 +83,7 @@ lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgs
     port->server = NULL;
     port->client = NULL;
     port->msg = NULL;
+    port->connects = 0;
     unsigned long iflags;
     spin_lock_irqsave(&lpc_port_list_lock, iflags);
     list_add_tail(&port->list, &lpc_port_list_head);
@@ -126,7 +127,7 @@ static void lpc_connect_exit_hook(void *arg)
     semaphore_up(&port->sema);
 }
 
-lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz, void *addr)
+lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz)
 {
     if (!name)
         return NULL;
@@ -144,7 +145,11 @@ lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz, void *addr)
         errprint("lpc connect: server %d disconnected!\n", port->id);
         return NULL;
     }
-
+    if (port->max_connects <= port->connects) {
+        errprint("lpc connect: server %d arrive max connects!\n", port->id);
+        return NULL;
+    }
+    
     task_t *cur = task_current;
     lpc_port_t *comm_port = NULL;
     while (1) {
@@ -183,6 +188,9 @@ lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz, void *addr)
                 errprint("lpc connect: server not accept!\n");
                 comm_port = NULL;
             }
+            /* 连接成功就增加一个连接数 */
+            if (comm_port)
+                port->connects++;
             break;
         } else {
             semaphore_up(&port->sema);
@@ -207,7 +215,7 @@ static void lpc_accept_exit_hook(void *arg)
     }
 }
 
-lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept, void *addr)
+lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept)
 {
     if (!port)
         return NULL;
@@ -434,8 +442,90 @@ int lpc_reply_port(lpc_port_t *port, lpc_message_t *lpc_msg)
     return 0;
 }
 
-#define BOTH 0 
+#define USE_SYSAPI 1
 
+#if USE_SYSAPI == 1
+void lpc_server(void *arg)
+{
+    kprint("lpc server start.\n");
+    int port = sys_create_port("lpc_comm0", 10, 64);
+    if (port < 0)
+        panic("create port failed!\n");   
+    kprint("lpc server create %d.\n", port); 
+    int isaccept = 1; 
+    int server_comm = sys_accept_port(port, isaccept);
+    if (server_comm >= 0)
+        infoprint("server: accept %d success!\n", server_comm);   
+    ASSERT(server_comm >= 0);
+    
+
+    uint8_t buf[32];
+    size_t buflen;
+    lpc_message_t msg;
+    while (1) {
+        
+        lpc_reset_message(&msg);
+        if (!sys_receive_port(server_comm, &msg))
+            infoprint("server: recv %d success!\n", msg.header.id);   
+
+        /* 处理数据 */
+        if (msg.header.size > 0) {
+            dbgprint("server: recv %s\n", msg.data);
+        }
+        
+        char *str = "hello, client!\n";
+        memset(msg.data, 0, LPC_MESSAGE_DATA_LEN);
+        strcpy(msg.data, str);
+        msg.header.size = strlen(str);
+        if (!sys_reply_port(server_comm, &msg))
+            infoprint("server: reply %d success!\n", msg.header.id);   
+
+    }
+}
+
+void lpc_client_a(void *arg)
+{
+    kprint("lpc client a start.\n");
+    uint32_t max_msgsz;
+    int port = sys_connect_port("lpc_comm0", &max_msgsz);
+    if (port) {
+        infoprint("client A: connect %d success!\n", port);
+        
+        // lpc_destroy_port(port);
+    }
+    ASSERT(port >= 0);
+    infoprint("client A: connect %d success with %d!\n", port, max_msgsz);
+
+    uint8_t buf[32]; 
+    lpc_message_t msg;
+    
+    while (1) {
+        lpc_reset_message(&msg);
+        char *str = "hello, lpc!\n";
+        msg.header.size = strlen(str);
+        strcpy(msg.data, str);
+        if (!sys_request_port(port, &msg))
+            infoprint("client A: request %d done!\n", msg.header.id);
+        if (msg.header.size > 0) {
+            dbgprint("client: echo %s\n", msg.data);
+        }
+    }
+}
+
+void lpc_client_b(void *arg)
+{
+    kprint("lpc client b start.\n");
+    int port = sys_connect_port("lpc_comm0", NULL);
+    if (port) {
+        infoprint("client B: connect %d success!\n", port);
+        sys_close(port);
+    }
+    
+    while (1) {
+        
+    }
+}
+#else
 void lpc_server(void *arg)
 {
     kprint("lpc server start.\n");
@@ -443,7 +533,7 @@ void lpc_server(void *arg)
     if (port == NULL)
         panic("create port failed!\n");    
     int isaccept = 1; 
-    lpc_port_t *server_comm = lpc_accept_port(port, isaccept, NULL);
+    lpc_port_t *server_comm = lpc_accept_port(port, isaccept);
     if (server_comm)
         infoprint("server: accept %d success!\n", server_comm->id);   
     ASSERT(server_comm);
@@ -477,7 +567,7 @@ void lpc_client_a(void *arg)
 {
     kprint("lpc client a start.\n");
     uint32_t max_msgsz;
-    lpc_port_t *port = lpc_connect_port("lpc_comm0", &max_msgsz, NULL);
+    lpc_port_t *port = lpc_connect_port("lpc_comm0", &max_msgsz);
     if (port) {
         infoprint("client A: connect %d success!\n", port->id);
         
@@ -505,7 +595,7 @@ void lpc_client_a(void *arg)
 void lpc_client_b(void *arg)
 {
     kprint("lpc client b start.\n");
-    lpc_port_t *port = lpc_connect_port("lpc_comm0", NULL, NULL);
+    lpc_port_t *port = lpc_connect_port("lpc_comm0", NULL);
     if (port) {
         infoprint("client B: connect %d success!\n", port->id);
         lpc_destroy_port(port);
@@ -515,6 +605,136 @@ void lpc_client_b(void *arg)
         
     }
 }
+#endif
+
+void lpc_port_table_init(lpc_port_table_t *port_table)
+{
+    int i; for (i = 0; i < LPC_PORT_NR; i++) {
+        port_table->ports[i] = NULL;
+    }
+}
+
+void lpc_port_table_exit(lpc_port_table_t *port_table)
+{
+    int i; for (i = 0; i < LPC_PORT_NR; i++) {
+        if (port_table->ports[i]) {
+            // TODO: destroy port
+
+            port_table->ports[i] = NULL;
+        }
+    }
+}
+
+int lpc_port_table_install(lpc_port_table_t *port_table, lpc_port_t *port)
+{
+    int i; for (i = 0; i < LPC_PORT_NR; i++) {
+        if (port_table->ports[i] == NULL) {
+            port_table->ports[i] = port;
+            return i;
+        }
+    }
+    return -1;
+}
+
+lpc_port_t *lpc_handle2port(lpc_port_table_t *port_table, int phandle)
+{
+    if (LPC_PORT_BAD(phandle))
+        return NULL;
+    return (lpc_port_t *) port_table->ports[phandle];
+}
+
+int lpc_port_table_uninstall(lpc_port_table_t *port_table, lpc_port_t *port)
+{
+    int i; for (i = 0; i < LPC_PORT_NR; i++) {
+        if (port_table->ports[i] == port) {
+            port_table->ports[i] = NULL;
+            return i;
+        }
+    }
+    return -1;
+}
+
+int sys_create_port(char *name, uint32_t max_connects, uint32_t max_msgsz)
+{
+    lpc_port_t *port = lpc_create_port(name, max_connects, max_msgsz, LPC_PORT_TYPE_SERVER_CONNECTION);
+    if (!port)
+        return -EPERM;
+    int phandle = lpc_port_table_install(&task_current->port_table, port);
+    if (phandle < 0) {
+        lpc_destroy_port(port);
+        return -EPERM;
+    }
+    return phandle;
+}
+
+int sys_close_port(int phandle)
+{
+    if (LPC_PORT_BAD(phandle))
+        return -EINVAL;
+    lpc_port_table_t *port_table = &task_current->port_table;
+    lpc_port_t *port = lpc_handle2port(port_table, phandle);
+    if (!port)
+        return -EPERM;
+    if (lpc_destroy_port(port) < 0)
+        return -EPERM;
+    return lpc_port_table_uninstall(port_table, port);
+}
+
+int sys_accept_port(int phandle, bool isaccept)
+{
+    if (LPC_PORT_BAD(phandle))
+        return -EINVAL;
+
+    lpc_port_table_t *port_table = &task_current->port_table;
+    if (lpc_port_table_install(port_table, NULL) < 0) {
+        return -EPERM;
+    }
+    lpc_port_t *port = lpc_accept_port(lpc_handle2port(port_table, phandle), isaccept);
+    if (!port) {
+        return -1;
+    }
+    return lpc_port_table_install(port_table, port);
+}
+
+int sys_connect_port(char *name, uint32_t *max_msgsz)
+{
+    lpc_port_table_t *port_table = &task_current->port_table;
+    if (lpc_port_table_install(port_table, NULL) < 0) {
+        return -EPERM;
+    }
+    lpc_port_t *port = lpc_connect_port(name, max_msgsz);
+    if (!port)
+        return -1;
+    return lpc_port_table_install(port_table, port);
+}
+
+
+int sys_reply_port(int phandle, lpc_message_t *lpc_msg)
+{
+    if (LPC_PORT_BAD(phandle))
+        return -EINVAL;
+    lpc_port_table_t *port_table = &task_current->port_table;
+    lpc_port_t *port = lpc_handle2port(port_table, phandle);
+    return lpc_reply_port(port, lpc_msg);
+}
+
+int sys_receive_port(int phandle, lpc_message_t *lpc_msg)
+{
+    if (LPC_PORT_BAD(phandle))
+        return -EINVAL;
+    lpc_port_table_t *port_table = &task_current->port_table;
+    lpc_port_t *port = lpc_handle2port(port_table, phandle);
+    return lpc_receive_port(port, lpc_msg);
+}
+
+int sys_request_port(int phandle, lpc_message_t *lpc_msg)
+{
+    if (LPC_PORT_BAD(phandle))
+        return -EINVAL;
+    lpc_port_table_t *port_table = &task_current->port_table;
+    lpc_port_t *port = lpc_handle2port(port_table, phandle);
+    return lpc_request_port(port, lpc_msg);
+}
 
 void lpc_init()
 {
@@ -523,5 +743,4 @@ void lpc_init()
     kern_thread_start("lpc_server", 0, lpc_server, NULL);
     kern_thread_start("lpc_client_a", 0, lpc_client_a, NULL);
     kern_thread_start("lpc_client_b", 0, lpc_client_b, NULL);
-    
 }

@@ -48,6 +48,14 @@ enum thread_flags {
     THREAD_FLAG_WAITLIST            = (1 << 6),     /* 在等待链表中 */
 };
 
+/* 本地通信端口表 */
+#define LPC_PORT_NR 8
+typedef struct {
+    void *ports[LPC_PORT_NR];
+} lpc_port_table_t;
+
+#define LPC_PORT_BAD(port)  ((port) < 0 || (port) >= LPC_PORT_NR)
+
 typedef struct {
     unsigned char *kstack;              /* kernel stack, must be first member */
     task_state_t state;
@@ -75,6 +83,7 @@ typedef struct {
     file_man_t *fileman;    
     exit_hook_t exit_hook;  /* 退出调用的钩子函数 */
     void *exit_hook_arg;
+    lpc_port_table_t port_table;
     unsigned int stack_magic;
 } task_t;
 

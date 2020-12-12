@@ -59,6 +59,7 @@ typedef struct lpc_port {
     lpc_port_state_t state;
     spinlock_t lock;
     lpc_message_t *msg;
+    int connects;       // 连接数
     /* 0-3：端口类型 */     
     uint32_t flags;        
     char *name;
@@ -69,12 +70,23 @@ typedef struct lpc_port {
 
 lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgsz, uint32_t flags);
 int lpc_destroy_port(lpc_port_t *port);
-lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept, void *addr);
-lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz, void *addr);
+lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept);
+lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz);
 
 int lpc_reply_port(lpc_port_t *port, lpc_message_t *lpc_msg);
 int lpc_request_port(lpc_port_t *port, lpc_message_t *lpc_msg);
 int lpc_receive_port(lpc_port_t *port, lpc_message_t *lpc_msg);
+
+void lpc_port_table_init(lpc_port_table_t *port_table);
+void lpc_port_table_exit(lpc_port_table_t *port_table);
+
+int sys_create_port(char *name, uint32_t max_connects, uint32_t max_msgsz);
+int sys_close_port(int phandle);
+int sys_accept_port(int phandle, bool isaccept);
+int sys_connect_port(char *name, uint32_t *max_msgsz);
+int sys_reply_port(int phandle, lpc_message_t *lpc_msg);
+int sys_receive_port(int phandle, lpc_message_t *lpc_msg);
+int sys_request_port(int phandle, lpc_message_t *lpc_msg);
 
 void lpc_init();
 

@@ -22,6 +22,7 @@
 #include <xbook/exception.h>
 #include <xbook/safety.h>
 #include <xbook/fd.h>
+#include <xbook/lpc.h>
 #include <math.h>
 #include <errno.h>
 
@@ -63,6 +64,8 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     timer_init(&task->sleep_timer, 0, 0, NULL);
     alarm_init(&task->alarm);
     exception_manager_init(&task->exception_manager);
+    lpc_port_table_init(&task->port_table);
+    
     task->errno = 0;
     task->pthread = NULL;
     task->fileman = NULL;
