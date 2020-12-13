@@ -37,14 +37,11 @@ typedef enum {
     LPC_PORT_DISCONNECTED,  
 } lpc_port_state_t;
 
-typedef struct {
-    uint32_t id;
-    uint32_t size;
-} lpc_message_header_t;
 
 /* message has different type for different use. */
 typedef struct {
-    lpc_message_header_t header;
+    uint32_t id;
+    uint32_t size;
     uint8_t data[LPC_MESSAGE_DATA_LEN]; 
 } lpc_message_t;
 
@@ -70,7 +67,7 @@ typedef struct lpc_port {
 
 lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgsz, uint32_t flags);
 int lpc_destroy_port(lpc_port_t *port);
-lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept);
+lpc_port_t *lpc_accept_port(lpc_port_t *port, int isaccept);
 lpc_port_t *lpc_connect_port(char *name, uint32_t *max_msgsz);
 
 int lpc_reply_port(lpc_port_t *port, lpc_message_t *lpc_msg);
@@ -82,7 +79,7 @@ void lpc_port_table_exit(lpc_port_table_t *port_table);
 
 int sys_create_port(char *name, uint32_t max_connects, uint32_t max_msgsz);
 int sys_close_port(int phandle);
-int sys_accept_port(int phandle, bool isaccept);
+int sys_accept_port(int phandle, int isaccept);
 int sys_connect_port(char *name, uint32_t *max_msgsz);
 int sys_reply_port(int phandle, lpc_message_t *lpc_msg);
 int sys_receive_port(int phandle, lpc_message_t *lpc_msg);

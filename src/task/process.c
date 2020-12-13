@@ -14,6 +14,7 @@
 #include <sys/pthread.h>
 #include <xbook/safety.h>
 #include <xbook/fd.h>
+#include <xbook/lpc.h>
 #include <unistd.h>
 #include <stddef.h>
 #include <errno.h>
@@ -204,6 +205,7 @@ int proc_release(task_t *task)
     proc_pthread_exit(task);
     exception_manager_exit(&task->exception_manager);
     task_do_cancel(task);
+    lpc_port_table_exit(&task->port_table);
     return 0;
 }
 

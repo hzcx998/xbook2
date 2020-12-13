@@ -49,6 +49,8 @@ int video_test(int argc, char *argv[]);
 int signal_test(int argc, char *argv[]);
 int proc_test(int argc, char *argv[]);
 
+int lpc_test(int argc, char *argv[]);
+
 static inline void sys_err(char *str)
 {
     printf("sys err: %s\n", str);

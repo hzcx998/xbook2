@@ -24,7 +24,8 @@ int main(int argc, char *argv[])
     //backtrace_test(argc, argv);
     //video_test(argc, argv);
     //signal_test(argc, argv);
-    proc_test(argc, argv);
+    // proc_test(argc, argv);
+    lpc_test(argc, argv);
     
     return 0;
 }

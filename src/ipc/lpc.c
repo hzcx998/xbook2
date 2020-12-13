@@ -101,7 +101,13 @@ int lpc_destroy_port(lpc_port_t *port)
     int type = port->flags & LPC_PORT_TYPE_MASK;
     port->state = LPC_PORT_DISCONNECTED;
     spin_unlock_irqrestore(&port->lock, iflags);
+
     if (type == LPC_PORT_TYPE_SERVER_CONNECTION) {
+        dbgprint("lpc destroy: server connection\n");
+
+        /* 强制杀死在信号量上的进程 */
+        
+
         // 释放信号量
         while (atomic_get(&port->sema.counter) > 0) {
             semaphore_up(&port->sema);
@@ -109,15 +115,20 @@ int lpc_destroy_port(lpc_port_t *port)
         mem_free(port->name);
     }
     if (port->msg) {
+        dbgprint("lpc destroy: free msg\n");
         mem_free(port->msg);
         port->msg = NULL;
     }
+    dbgprint("lpc destroy: del from list\n");
     spin_lock_irqsave(&lpc_port_list_lock, iflags);
     list_del_init(&port->list); 
     spin_unlock_irqrestore(&lpc_port_list_lock, iflags);
     
+    dbgprint("lpc destroy: free port\n");
+        
     /* TODO: 服务端口不立即释放，需要等待所以连接客户端都响应完毕后才会释放。 */
     mem_free(port);
+    dbgprint("lpc destroy: done\n");
     return 0;
 }
 
@@ -215,7 +226,7 @@ static void lpc_accept_exit_hook(void *arg)
     }
 }
 
-lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept)
+lpc_port_t *lpc_accept_port(lpc_port_t *port, int isaccept)
 {
     if (!port)
         return NULL;
@@ -283,11 +294,11 @@ lpc_port_t *lpc_accept_port(lpc_port_t *port, bool isaccept)
 
 void lpc_copy_message(lpc_message_t *dest, lpc_message_t *src)
 {
-    if (src->header.size > LPC_MESSAGE_DATA_LEN)
-        src->header.size = LPC_MESSAGE_DATA_LEN;
-    memcpy(dest->data, src->data, src->header.size);
-    dest->header.id = src->header.id; 
-    dest->header.size = src->header.size;
+    if (src->size > LPC_MESSAGE_DATA_LEN)
+        src->size = LPC_MESSAGE_DATA_LEN;
+    memcpy(dest->data, src->data, src->size);
+    dest->id = src->id; 
+    dest->size = src->size;
 }
 
 void lpc_reset_message(lpc_message_t *msg)
@@ -357,7 +368,7 @@ int lpc_request_port(lpc_port_t *port, lpc_message_t *lpc_msg)
     ASSERT(other_port);
 
     uint32_t msgid = lpc_generate_msg_id();
-    lpc_msg->header.id = msgid;
+    lpc_msg->id = msgid;
     while (1) {    
         semaphore_down(&other_port->sema);
         /* 是监听才进行请求 */
@@ -400,7 +411,7 @@ int lpc_request_port(lpc_port_t *port, lpc_message_t *lpc_msg)
         }
         semaphore_up(&other_port->sema);
     }
-    if (lpc_msg->header.id != msgid) { // invalid msg
+    if (lpc_msg->id != msgid) { // invalid msg
         return -1;
     }
     return 0;
@@ -458,27 +469,24 @@ void lpc_server(void *arg)
         infoprint("server: accept %d success!\n", server_comm);   
     ASSERT(server_comm >= 0);
     
-
-    uint8_t buf[32];
-    size_t buflen;
     lpc_message_t msg;
     while (1) {
         
         lpc_reset_message(&msg);
         if (!sys_receive_port(server_comm, &msg))
-            infoprint("server: recv %d success!\n", msg.header.id);   
+            infoprint("server: recv %d success!\n", msg.id);   
 
         /* 处理数据 */
-        if (msg.header.size > 0) {
+        if (msg.size > 0) {
             dbgprint("server: recv %s\n", msg.data);
         }
         
         char *str = "hello, client!\n";
         memset(msg.data, 0, LPC_MESSAGE_DATA_LEN);
         strcpy(msg.data, str);
-        msg.header.size = strlen(str);
+        msg.size = strlen(str);
         if (!sys_reply_port(server_comm, &msg))
-            infoprint("server: reply %d success!\n", msg.header.id);   
+            infoprint("server: reply %d success!\n", msg.id);   
 
     }
 }
@@ -502,11 +510,11 @@ void lpc_client_a(void *arg)
     while (1) {
         lpc_reset_message(&msg);
         char *str = "hello, lpc!\n";
-        msg.header.size = strlen(str);
+        msg.size = strlen(str);
         strcpy(msg.data, str);
         if (!sys_request_port(port, &msg))
-            infoprint("client A: request %d done!\n", msg.header.id);
-        if (msg.header.size > 0) {
+            infoprint("client A: request %d done!\n", msg.id);
+        if (msg.size > 0) {
             dbgprint("client: echo %s\n", msg.data);
         }
     }
@@ -549,14 +557,14 @@ void lpc_server(void *arg)
             infoprint("server: recv %d success!\n", server_comm->id);   
 
         /* 处理数据 */
-        if (msg.header.size > 0) {
+        if (msg.size > 0) {
             dbgprint("server: recv %s\n", msg.data);
         }
         
         char *str = "hello, client!\n";
         memset(msg.data, 0, LPC_MESSAGE_DATA_LEN);
         strcpy(msg.data, str);
-        msg.header.size = strlen(str);
+        msg.size = strlen(str);
         if (!lpc_reply_port(server_comm, &msg))
             infoprint("server: reply %d success!\n", server_comm->id);   
 
@@ -582,11 +590,11 @@ void lpc_client_a(void *arg)
     while (1) {
         lpc_reset_message(&msg);
         char *str = "hello, lpc!\n";
-        msg.header.size = strlen(str);
+        msg.size = strlen(str);
         strcpy(msg.data, str);
         if (!lpc_request_port(port, &msg))
             infoprint("client A: request %d done!\n", port->id);
-        if (msg.header.size > 0) {
+        if (msg.size > 0) {
             dbgprint("client: echo %s\n", msg.data);
         }
     }
@@ -619,7 +627,7 @@ void lpc_port_table_exit(lpc_port_table_t *port_table)
     int i; for (i = 0; i < LPC_PORT_NR; i++) {
         if (port_table->ports[i]) {
             // TODO: destroy port
-
+            lpc_destroy_port(port_table->ports[i]);
             port_table->ports[i] = NULL;
         }
     }
@@ -680,7 +688,7 @@ int sys_close_port(int phandle)
     return lpc_port_table_uninstall(port_table, port);
 }
 
-int sys_accept_port(int phandle, bool isaccept)
+int sys_accept_port(int phandle, int isaccept)
 {
     if (LPC_PORT_BAD(phandle))
         return -EINVAL;
@@ -740,7 +748,9 @@ void lpc_init()
 {
     
     infoprint("lpc init done\n");
+    #if 0
     kern_thread_start("lpc_server", 0, lpc_server, NULL);
     kern_thread_start("lpc_client_a", 0, lpc_client_a, NULL);
     kern_thread_start("lpc_client_b", 0, lpc_client_b, NULL);
+    #endif
 }
