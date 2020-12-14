@@ -7,6 +7,7 @@
 #include <xbook/memspace.h>
 #include <xbook/sharemem.h>
 #include <xbook/fd.h>
+#include <xbook/lpc.h>
 #include <string.h>
 
 // #define DEBUG_FORK
@@ -29,6 +30,8 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     list_init(&child->list);
     list_init(&child->global_list);
     child->kstack = (unsigned char *)((unsigned char *)child + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
+    lpc_port_table_init(&child->port_table);
+    child->servport = NULL;
     return 0;
 }
 
@@ -71,7 +74,6 @@ static int copy_file(task_t *child, task_t *parent)
         return -1;
     return fs_fd_copy(parent, child);
 }
-
 
 static int copy_pthread_desc(task_t *child, task_t *parent)
 {

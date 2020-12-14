@@ -50,6 +50,7 @@ typedef struct lpc_port {
     struct lpc_port *port;      /* 连接端口指向自己，服务端口指向连接端口 */
     list_t list;        /* on lpc port list */
     uint32_t id;   
+    task_t *creater; 
     task_t *server;
     task_t *client;
     semaphore_t sema;

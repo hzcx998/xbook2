@@ -78,6 +78,7 @@ lpc_port_t *lpc_create_port(char *name, uint32_t max_connects, uint32_t max_msgs
     spinlock_init(&port->lock);
     port->id = lpc_port_next_id++;
     port->state = LPC_PORT_CREATED;
+    port->creater = task_current;
     port->flags = flags;
     port->port = port;
     port->server = NULL;
@@ -104,14 +105,13 @@ int lpc_destroy_port(lpc_port_t *port)
 
     if (type == LPC_PORT_TYPE_SERVER_CONNECTION) {
         dbgprint("lpc destroy: server connection\n");
-
         /* 强制杀死在信号量上的进程 */
-        
+
 
         // 释放信号量
-        while (atomic_get(&port->sema.counter) > 0) {
+        /*while (atomic_get(&port->sema.counter) > 0) {
             semaphore_up(&port->sema);
-        }
+        }*/
         mem_free(port->name);
     }
     if (port->msg) {
@@ -325,7 +325,10 @@ int lpc_receive_port(lpc_port_t *port, lpc_message_t *lpc_msg)
     port->state = LPC_PORT_LISTEN;
     //infoprint("lpc recv: no req, block\n");
     semaphore_up(&port->sema);
+    
+    /* TODO: 阻塞后，被强制唤醒，就需要调用hook函数 */
     task_block(TASK_BLOCKED);
+
     /* 唤醒后读取数据 */
     semaphore_down(&port->sema);
     //infoprint("lpc recv: wakeup\n");
@@ -624,10 +627,14 @@ void lpc_port_table_init(lpc_port_table_t *port_table)
 
 void lpc_port_table_exit(lpc_port_table_t *port_table)
 {
+    task_t *cur = task_current;
+    lpc_port_t *port;
     int i; for (i = 0; i < LPC_PORT_NR; i++) {
-        if (port_table->ports[i]) {
+        port = port_table->ports[i];
+        if (port) {
             // TODO: destroy port
-            lpc_destroy_port(port_table->ports[i]);
+            if (cur == port->creater)
+                lpc_destroy_port(port);
             port_table->ports[i] = NULL;
         }
     }

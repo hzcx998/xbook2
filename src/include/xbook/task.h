@@ -14,6 +14,8 @@
 #include "msgpool.h"
 #include "spinlock.h"
 #include "exception.h"
+#include "servcall.h"
+
 
 typedef enum {
     TASK_READY = 0,         /* 进程处于就绪状态 */
@@ -84,6 +86,7 @@ typedef struct {
     exit_hook_t exit_hook;  /* 退出调用的钩子函数 */
     void *exit_hook_arg;
     lpc_port_table_t port_table;
+    servport_t *servport;
     unsigned int stack_magic;
 } task_t;
 
