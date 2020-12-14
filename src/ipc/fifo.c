@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <xbook/semaphore.h>
+#include <xbook/schedule.h>
 #include <sys/ipc.h>
 
 fifo_t *fifo_table;

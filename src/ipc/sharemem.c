@@ -6,6 +6,8 @@
 #include <string.h>
 #include <xbook/memspace.h>
 #include <xbook/semaphore.h>
+#include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <sys/ipc.h>
 #include <errno.h>
 

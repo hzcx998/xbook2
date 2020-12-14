@@ -7,6 +7,12 @@
 
 static servport_t servport_table[SERVPORT_NR];
 DEFINE_SPIN_LOCK_UNLOCKED(servport_lock);
+static uint32_t servcall_msg_next_id = 0;
+
+uint32_t servcall_generate_msg_id()
+{
+    return servcall_msg_next_id++;
+}
 
 servport_t *servport_alloc()
 {
@@ -177,17 +183,22 @@ int servport_request(uint32_t port, servmsg_t *msg)
         errprint("serv request: port %d not bounded.\n", port);
         return -EPERM;
     }
+    uint32_t msgid = servcall_generate_msg_id();
+    msg->id = msgid;
     if (msgpool_put(servport->recv_pool, msg) < 0) {
         errprint("serv request: msg put to %d failed!\n", port);
         return -EPERM;
     }
 
-    /*  */
-
     if (msgpool_get(servport->send_pool, msg) < 0) {
         errprint("serv request: msg get from %d failed!\n", port);
         return -EPERM;
     }
+    if (msg->id != msgid) {
+        warnprint("serv request: port %d msg id %d:%d invalid!\n", port, msg->id, msgid);
+        return -EPERM;
+    }
+        
     return 0;
 }
 
@@ -224,8 +235,8 @@ void servcall_thread(void *arg)
     servmsg_t smsg;
     while (1)
     {
-        servport_receive(0, &smsg);
-        infoprint("serv recv: %s\n", smsg.data);
+        if (!servport_receive(0, &smsg))
+            infoprint("serv recv: %d %s\n", smsg.id, smsg.data);
         strcpy(smsg.data, "world!\n");
         servport_reply(0, &smsg);
     }
@@ -235,30 +246,34 @@ void servcall_thread(void *arg)
 void servcall_threada(void *arg)
 {
     infoprint("servcalla start.\n");
+    struct timeval tv;
+    tv.tv_sec = 1;
+    sys_usleep(&tv, NULL);
     servport_bind(0);
     servmsg_t smsg;
     while (1)
     {
         strcpy(smsg.data, "hello!\n");
-        servport_request(0, &smsg);
-        infoprint("serv reply: %s\n", smsg.data);
+        if (!servport_request(0, &smsg))
+            infoprint("A reply: %d %s\n", smsg.id,  smsg.data);
     }
     
 }
 
-
 void servcall_threadb(void *arg)
 {
     infoprint("servcallb start.\n");
+    struct timeval tv;
+    tv.tv_sec = 1;
+    sys_usleep(&tv, NULL);
     servport_bind(0);
     servmsg_t smsg;
     while (1)
     {
         strcpy(smsg.data, "foo!\n");
-        servport_request(0, &smsg);
-        infoprint("serv reply: %s\n", smsg.data);
+        if (!servport_request(0, &smsg))
+            infoprint("B reply: %d %s\n", smsg.id,  smsg.data);
     }
-    
 }
 
 void servcall_init()

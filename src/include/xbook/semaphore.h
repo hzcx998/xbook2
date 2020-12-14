@@ -3,7 +3,6 @@
 
 #include <arch/atomic.h>
 #include <xbook/waitqueue.h>
-#include <xbook/schedule.h>
 #include <xbook/memalloc.h>
 #include <xbook/clock.h>
 
@@ -33,30 +32,10 @@ static inline void semaphore_destroy(semaphore_t *sema)
     atomic_set(&sema->counter, 0);
 }
 
-static inline semaphore_t *semaphore_alloc(int value)
-{
-    semaphore_t *sema = mem_alloc(sizeof(semaphore_t));
-    if (!sema)
-        return NULL;
-    semaphore_init(sema, value);
-    return sema;
-}
+semaphore_t *semaphore_alloc(int value);
+int semaphore_free(semaphore_t *sema);
 
-static inline int semaphore_free(semaphore_t *sema)
-{
-    if (!sema)
-        return -1;
-    semaphore_destroy(sema);
-    mem_free(sema);
-    return 0;
-}
-
-static inline void __semaphore_down(semaphore_t *sema)
-{
-	list_add_tail(&task_current->list, &sema->waiter.wait_list);
-    TASK_ENTER_WAITLIST(task_current);
-	task_block(TASK_BLOCKED);
-}
+void __semaphore_down(semaphore_t *sema, unsigned long iflags);
 
 static inline void semaphore_down(semaphore_t *sema)
 {
@@ -64,10 +43,10 @@ static inline void semaphore_down(semaphore_t *sema)
     interrupt_save_and_disable(flags);
 	if (atomic_get(&sema->counter) > 0) {
 		atomic_dec(&sema->counter);
+        interrupt_restore_state(flags);
     } else {
-		__semaphore_down(sema);
+		__semaphore_down(sema, flags);
 	}
-    interrupt_restore_state(flags);
 }
 
 static inline int semaphore_try_down(semaphore_t *sema)
@@ -84,16 +63,7 @@ static inline int semaphore_try_down(semaphore_t *sema)
 	return 0;
 }
 
-static inline void __semaphore_up(semaphore_t *sema)
-{
-	task_t *waiter = list_first_owner_or_null(&sema->waiter.wait_list, task_t, list);
-	if (waiter) {
-        list_del(&waiter->list);
-        TASK_LEAVE_WAITLIST(waiter);
-        waiter->state = TASK_READY;
-        sched_queue_add_head(sched_get_cur_unit(), waiter);
-    }
-}
+void __semaphore_up(semaphore_t *sema, unsigned long iflags);
 
 static inline void semaphore_up(semaphore_t *sema)
 {
@@ -101,10 +71,10 @@ static inline void semaphore_up(semaphore_t *sema)
     interrupt_save_and_disable(flags);
 	if (list_empty(&sema->waiter.wait_list)) {
 		atomic_inc(&sema->counter);
+        interrupt_restore_state(flags);
  	} else {
-		__semaphore_up(sema);
+        __semaphore_up(sema, flags);
 	}
-    interrupt_restore_state(flags);
 }
 
 /**

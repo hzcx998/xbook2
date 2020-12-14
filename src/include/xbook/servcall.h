@@ -22,6 +22,7 @@ typedef struct {
 
 /* 消息结构 */
 typedef struct {
+    uint32_t id;
     size_t size;
     uint8_t data[SERVMSG_SIZE];
 } servmsg_t;

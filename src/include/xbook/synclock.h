@@ -3,6 +3,7 @@
 
 #include <xbook/semaphore.h>
 #include <xbook/task.h>
+#include <xbook/schedule.h>
 #include <assert.h>
 
 typedef struct synclock {

@@ -1,6 +1,7 @@
 #include <xbook/msgqueue.h>
 #include <xbook/debug.h>
 #include <xbook/safety.h>
+#include <xbook/schedule.h>
 #include <string.h>
 #include <math.h>
 #include <errno.h>
