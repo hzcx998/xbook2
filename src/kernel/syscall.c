@@ -13,6 +13,7 @@
 #include <xbook/account.h>
 #include <xbook/plugin.h>
 #include <xbook/lpc.h>
+#include <xbook/servcall.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <dirent.h>
@@ -120,13 +121,11 @@ void syscall_init()
     syscalls[SYS_MMAP] = sys_mmap;
     syscalls[SYS_CREATPROCESS] = sys_create_process;
     syscalls[SYS_RESUMEPROCESS] = sys_resume_process;
-    syscalls[SYS_CREATE_PORT] = sys_create_port;
-    syscalls[SYS_CLOSE_PORT] = sys_close_port;
-    syscalls[SYS_ACCEPT_PORT] = sys_accept_port;
-    syscalls[SYS_CONNECT_PORT] = sys_connect_port;
-    syscalls[SYS_RECEIVE_PORT] = sys_receive_port;
-    syscalls[SYS_REPLY_PORT] = sys_reply_port;
-    syscalls[SYS_REQUEST_PORT] = sys_request_port;
+    syscalls[SYS_BIND_PORT] = sys_servport_bind;
+    syscalls[SYS_UNBIND_PORT] = sys_servport_unbind;
+    syscalls[SYS_RECEIVE_PORT] = sys_servport_receive;
+    syscalls[SYS_REPLY_PORT] = sys_servport_reply;
+    syscalls[SYS_REQUEST_PORT] = sys_servport_request;
     
     plugin_syscall_init();
 }

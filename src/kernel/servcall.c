@@ -1,6 +1,7 @@
 #include <xbook/servcall.h>
 #include <xbook/task.h>
 #include <xbook/schedule.h>
+#include <xbook/process.h>
 #include <errno.h>
 #include <assert.h>
 #include <string.h>
@@ -118,7 +119,7 @@ int servport_vertify(int port, servport_t **out_servport, task_t *task)
 /**
  * 绑定时检测端口是否已经占用，并分配一个可用端口
  */
-static servport_t *__servport_bind(int port, task_t *cur)
+static servport_t *__sys_servport_bind(int port, task_t *cur)
 {
     if (cur->servport) {
         errprint("serv bind: port %d had bounded on task %d.\n", servport_p2i(cur->servport), cur->pid);
@@ -142,10 +143,10 @@ static servport_t *__servport_bind(int port, task_t *cur)
     return servport;
 }
 
-int servport_bind(int port)
+int sys_servport_bind(int port)
 {
     task_t *cur = task_current;
-    servport_t *servport = __servport_bind(port, cur);
+    servport_t *servport = __sys_servport_bind(port, cur);
     if (!servport)
         return -1;
     int msgcnt = port < 0? 1 : SERVMSG_NR;
@@ -163,7 +164,7 @@ int servport_bind(int port)
     return 0;
 }
 
-int servport_unbind(int port)
+int sys_servport_unbind(int port)
 {
     task_t *cur = task_current;
     servport_t *servport;
@@ -172,7 +173,7 @@ int servport_unbind(int port)
     unsigned long iflags;
     spin_lock_irqsave(&servport->lock, iflags);
     if (msgpool_destroy(servport->msgpool) < 0) {
-        warnprint("serv unbind: port %d destroy recv pool failed!\n", port);
+        warnprint("serv unbind: port %d destroy recv pool failed!\n", servport->my_port);
     }
     servport->msgpool = NULL;
     servport->my_port = -1;
@@ -182,7 +183,7 @@ int servport_unbind(int port)
     return 0;
 }
 
-int servport_request(uint32_t port, servmsg_t *msg)
+int sys_servport_request(uint32_t port, servmsg_t *msg)
 {
     if (BAD_SERVPORT(port)) {
         return -EINVAL;
@@ -213,8 +214,13 @@ int servport_request(uint32_t port, servmsg_t *msg)
     /* 尝试获取消息，如果获取无果，就yeild来降低cpu占用 */
     int try_count = 0;
     while (msgpool_try_get(myservport->msgpool, msg) < 0){
+        // 如果有异常产生，则返回中断错误号
+        if (exception_cause_exit(&task_current->exception_manager)) {
+            noteprint("servport receive: port %d interrupt by exception!\n", myservport->my_port);
+            return -EINTR;
+        }
         try_count++;
-        if (try_count > 20) {
+        if (try_count > SERVPORT_RETRY_GET_CNT) {
             task_yeild();
             try_count = 0;
         }
@@ -228,7 +234,7 @@ int servport_request(uint32_t port, servmsg_t *msg)
     return 0;
 }
 
-int servport_receive(int port, servmsg_t *msg)
+int sys_servport_receive(int port, servmsg_t *msg)
 {
     task_t *cur = task_current;
     servport_t *servport;
@@ -239,8 +245,13 @@ int servport_receive(int port, servmsg_t *msg)
     int try_count = 0;
     /* 尝试获取消息，如果获取无果，就yeild来降低cpu占用 */
     while (msgpool_try_get(servport->msgpool, msg) < 0){
+        // 如果有异常产生，则返回中断错误号
+        if (exception_cause_exit(&task_current->exception_manager)) {
+            noteprint("servport receive: port %d interrupt by exception!\n", port);
+            return -EINTR;
+        }
         try_count++;
-        if (try_count > 20) {
+        if (try_count > SERVPORT_RETRY_GET_CNT) {
             task_yeild();
             try_count = 0;
         }
@@ -248,7 +259,7 @@ int servport_receive(int port, servmsg_t *msg)
     return 0;
 }
 
-int servport_reply(int port, servmsg_t *msg)
+int sys_servport_reply(int port, servmsg_t *msg)
 {
     task_t *cur = task_current;
     servport_t *servport;
@@ -266,18 +277,17 @@ int servport_reply(int port, servmsg_t *msg)
 void servcall_thread(void *arg)
 {
     infoprint("servcall start.\n");
-    servport_bind(0);
-    servport_bind(0);
-    servport_unbind(0);
-    servport_unbind(0);
-    servport_bind(0);
+    sys_servport_bind(0);
+    sys_servport_bind(0);
+    sys_servport_unbind(0);
+    sys_servport_unbind(0);
+    sys_servport_bind(0);
     servmsg_t smsg;
     while (1)
     {
-        if (!servport_receive(0, &smsg))
+        if (!sys_servport_receive(0, &smsg))
             infoprint("serv receive: %d ok\n", smsg.id);
-        // strcpy(smsg.data, "world!\n");
-        if (!servport_reply(0, &smsg))
+        if (!sys_servport_reply(0, &smsg))
             infoprint("serv reply: %d ok\n", smsg.id);
     }
 }
@@ -288,12 +298,12 @@ void servcall_threada(void *arg)
     struct timeval tv;
     tv.tv_sec = 1;
     sys_usleep(&tv, NULL);
-    servport_bind(-1);
+    sys_servport_bind(-1);
     servmsg_t smsg;
     while (1)
     {
         strcpy(smsg.data, "hello!\n");
-        if (!servport_request(0, &smsg))
+        if (!sys_servport_request(0, &smsg))
             infoprint("A request: %d ok\n", smsg.id);
     }
 }
@@ -304,20 +314,22 @@ void servcall_threadb(void *arg)
     struct timeval tv;
     tv.tv_sec = 1;
     sys_usleep(&tv, NULL);
-    servport_bind(-1);
+    sys_servport_bind(-1);
     servmsg_t smsg;
     while (1)
     {
         strcpy(smsg.data, "foo!\n");
-        if (!servport_request(0, &smsg))
+        if (!sys_servport_request(0, &smsg))
             infoprint("B request: %d ok\n", smsg.id);
     }
 }
 
 void servcall_init()
 {
+    #if 0
     kern_thread_start("servcall", 0, servcall_thread, NULL);
     kern_thread_start("servcall", 0, servcall_threada, NULL);
     kern_thread_start("servcall", 0, servcall_threadb, NULL);
     kern_thread_start("servcall", 0, servcall_threadb, NULL);
+    #endif
 }

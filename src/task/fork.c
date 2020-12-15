@@ -30,7 +30,6 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     list_init(&child->list);
     list_init(&child->global_list);
     child->kstack = (unsigned char *)((unsigned char *)child + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
-    lpc_port_table_init(&child->port_table);
     child->servport = NULL;
     return 0;
 }

@@ -9,6 +9,8 @@
 #define SERVMSG_SIZE (4096 - sizeof(size_t))
 #define SERVMSG_NR 8
 
+#define SERVPORT_RETRY_GET_CNT  10
+
 #define BAD_SERVPORT(port) ((port) >= SERVPORT_NR)
 
 enum servport_flags {
@@ -33,16 +35,16 @@ typedef struct {
 /**
  * port: 要绑定的端口号，如果为负，则绑定一个可用的最小端口号
  */
-int servport_bind(int port);
+int sys_servport_bind(int port);
 
 /**
  * port: 要解绑的端口号，如果为负，则解绑当前任务绑定的
  */
-int servport_unbind(int port);
+int sys_servport_unbind(int port);
 
-int servport_request(uint32_t port, servmsg_t *msg);
-int servport_receive(int port, servmsg_t *msg);
-int servport_reply(int port, servmsg_t *msg);
+int sys_servport_request(uint32_t port, servmsg_t *msg);
+int sys_servport_receive(int port, servmsg_t *msg);
+int sys_servport_reply(int port, servmsg_t *msg);
 
 void servcall_init();
 

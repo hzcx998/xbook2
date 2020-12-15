@@ -229,6 +229,8 @@ int exception_raise(uint32_t code)
 
 bool exception_cause_exit(exception_manager_t *exception_manager)
 {
+    unsigned long iflags;
+    spin_lock_irqsave(&exception_manager->manager_lock, iflags);
     exception_t *exp;
     list_for_each_owner (exp, &exception_manager->exception_list, list) {
         if (exp->code != EXP_CODE_CHLD &&
@@ -237,9 +239,22 @@ bool exception_cause_exit(exception_manager_t *exception_manager)
             exp->code != EXP_CODE_CONT &&
             exp->code != EXP_CODE_TRAP &&
             exp->code != EXP_CODE_ALRM) {
+            spin_unlock_irqrestore(&exception_manager->manager_lock, iflags);
             return true;
         }
     }
+    list_for_each_owner (exp, &exception_manager->catch_list, list) {
+        if (exp->code != EXP_CODE_CHLD &&
+            exp->code != EXP_CODE_USER &&
+            exp->code != EXP_CODE_STOP &&
+            exp->code != EXP_CODE_CONT &&
+            exp->code != EXP_CODE_TRAP &&
+            exp->code != EXP_CODE_ALRM) {
+            spin_unlock_irqrestore(&exception_manager->manager_lock, iflags);
+            return true;
+        }
+    }
+    spin_unlock_irqrestore(&exception_manager->manager_lock, iflags);
     return false;
 }
 
@@ -299,7 +314,6 @@ static int exception_handle(exception_manager_t *exception_manager, exception_t 
         exception_frame_build(exp->code, handler, frame);
         exception_manager->in_user_mode = 1;
         exception_manager->handlers[exp->code] = NULL;
-        
     }
     return 0;
 }
@@ -316,10 +330,10 @@ int exception_check_user(trap_frame_t *frame)
     ASSERT(!list_empty(&exception_manager->catch_list));
     exception_t *exp = list_first_owner(&exception_manager->catch_list, exception_t, list);
     exception_del_catch(exception_manager, exp);
+    spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
     exception_t tmp_exp = *exp;
     mem_free(exp);
     exception_handle(exception_manager, &tmp_exp, frame);
-    spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
     return 0;
 }
 

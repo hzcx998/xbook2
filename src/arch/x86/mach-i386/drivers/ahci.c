@@ -622,8 +622,8 @@ int ahci_port_dma_data_transfer(struct hba_memory *abar, struct hba_port *port, 
 	{
 		//tm_schedule();
         // cpu yeild
-        //cpu_pause();
-        task_yeild();
+        cpu_pause();
+        //task_yeild();
 	}
 	if(!timeout) goto port_hung;
 	
@@ -632,8 +632,8 @@ int ahci_port_dma_data_transfer(struct hba_memory *abar, struct hba_port *port, 
 	timeout = ATA_TFD_TIMEOUT;
 	while ((port->task_file_data & (ATA_DEV_BUSY | ATA_DEV_DRQ)) && --timeout)
 	{
-		//cpu_pause();
-        task_yeild();
+		cpu_pause();
+        //task_yeild();
 	}
 	if(!timeout) goto port_hung;
 	
@@ -642,8 +642,8 @@ int ahci_port_dma_data_transfer(struct hba_memory *abar, struct hba_port *port, 
 	{
 		if(!((port->sata_active | port->command_issue) & (1 << slot)))
 			break;
-		//cpu_pause();
-        task_yeild();
+		cpu_pause();
+        //task_yeild();
 	}
 	if(!timeout) goto port_hung;
 	if(port->sata_error)
@@ -936,8 +936,8 @@ int ahci_port_acquire_slot(device_extension_t *dev)
 		}
 		mutex_unlock(&dev->lock);
 		// yeild
-        //cpu_pause();
-        task_yeild();
+        cpu_pause();
+        //task_yeild();
 	}
 }
 

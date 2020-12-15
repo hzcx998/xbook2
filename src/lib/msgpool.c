@@ -30,16 +30,13 @@ int msgpool_destroy(msgpool_t *pool)
     if (wait_queue_length(&pool->waiters) > 0) {
         wait_queue_wakeup_all(&pool->waiters);
     }
-    if (msgpool_empty(pool) && wait_queue_length(&pool->waiters) <= 0) {
-        pool->msgmaxcnt = 0;
-        pool->msgcount     = 0;
-        pool->msgsz     = 0;
-        mem_free(pool->msgbuf);
-        pool->tail = pool->head = pool->msgbuf = NULL;
-        mem_free(pool);
-        return 0;
-    }
-    return -1;
+    pool->msgmaxcnt = 0;
+    pool->msgcount     = 0;
+    pool->msgsz     = 0;
+    mem_free(pool->msgbuf);
+    pool->tail = pool->head = pool->msgbuf = NULL;
+    mem_free(pool);
+    return 0;
 }
 
 int msgpool_put(msgpool_t *pool, void *buf)
