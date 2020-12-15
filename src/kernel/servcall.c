@@ -90,7 +90,7 @@ servport_t *servport_alloci(uint32_t port)
 int servport_vertify(int port, servport_t **out_servport, task_t *task)
 {
     if (!task->servport) {
-        errprint("serv unbind: not port bound on task %d.\n", task->pid);
+        //errprint("serv unbind: not port bound on task %d.\n", task->pid);
         return -EPERM;
     }
     servport_t *servport;
@@ -256,7 +256,8 @@ int servport_reply(int port, servmsg_t *msg)
         return -EPERM;
     /* 从消息中找到需要应答的端口，将应答消息传递回去 */
     servport_t *client_port = servport_i2p(msg->port);
-    ASSERT(client_port);
+    if (!client_port)
+        return -EPERM;
     if (!client_port->msgpool)
         return -EPERM;
     return msgpool_put(client_port->msgpool, msg);
@@ -295,7 +296,6 @@ void servcall_threada(void *arg)
         if (!servport_request(0, &smsg))
             infoprint("A request: %d ok\n", smsg.id);
     }
-    
 }
 
 void servcall_threadb(void *arg)

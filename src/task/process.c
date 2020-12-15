@@ -206,7 +206,19 @@ int proc_release(task_t *task)
     exception_manager_exit(&task->exception_manager);
     task_do_cancel(task);
     lpc_port_table_exit(&task->port_table);
+    servport_unbind(-1);
     return 0;
+}
+
+void proc_exec_init(task_t *task)
+{
+    proc_map_space_init(task);
+    pthread_desc_init(task->pthread);
+    fs_fd_reinit(task);
+    exception_manager_exit(&task->exception_manager);
+    exception_manager_init(&task->exception_manager);
+    task_do_cancel(task);
+    servport_unbind(-1);
 }
 
 int proc_destroy(task_t *task, int thread)

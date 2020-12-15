@@ -67,7 +67,7 @@ int msgpool_put(msgpool_t *pool, void *buf)
     return 0;
 }
 
-void *msgpool_push(msgpool_t *pool)
+void *msgpool_put_buf(msgpool_t *pool)
 {
     if (!pool)
         return NULL;
@@ -81,7 +81,7 @@ void *msgpool_push(msgpool_t *pool)
     return (void *) pool->head;
 }
 
-int msgpool_sync_push(msgpool_t *pool)
+int msgpool_put_buf_sync(msgpool_t *pool)
 {
     if (!pool)
         return -1;
@@ -145,7 +145,7 @@ int msgpool_get(msgpool_t *pool, void *buf)
     return 0;
 }
 
-void *msgpool_pop(msgpool_t *pool)
+void *msgpool_get_buf(msgpool_t *pool)
 {
     if (!pool)
         return NULL;
@@ -159,7 +159,7 @@ void *msgpool_pop(msgpool_t *pool)
     return pool->tail;
 }
 
-int msgpool_sync_pop(msgpool_t *pool)
+int msgpool_get_buf_sync(msgpool_t *pool)
 {
     if (!pool)
         return -1;

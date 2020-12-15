@@ -19,6 +19,7 @@ void proc_trap_frame_init(task_t *task);
 int proc_release(task_t *task);
 int proc_pthread_init(task_t *task);
 int proc_pthread_exit(task_t *task);
+void proc_exec_init(task_t *task);
 
 int proc_res_init(task_t *task);
 int proc_res_exit(task_t *task);
