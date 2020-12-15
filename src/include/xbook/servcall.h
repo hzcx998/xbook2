@@ -2,6 +2,7 @@
 #define _XBOOK_SERVCALL_H
 
 #include "msgpool.h"
+#include "semaphore.h"
 #include <stdint.h>
 
 #define SERVPORT_NR 32
@@ -15,13 +16,15 @@ enum servport_flags {
 };
 /* 每个任务只能绑定一个服务 */
 typedef struct {
-    msgpool_t *recv_pool;   
-    msgpool_t *send_pool;   
+    int my_port;
+    spinlock_t lock;
+    msgpool_t *msgpool; 
     uint32_t flags;
 } servport_t;
 
 /* 消息结构 */
 typedef struct {
+    uint32_t port;
     uint32_t id;
     size_t size;
     uint8_t data[SERVMSG_SIZE];

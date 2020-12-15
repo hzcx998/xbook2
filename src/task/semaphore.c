@@ -20,15 +20,15 @@ int semaphore_free(semaphore_t *sema)
     return 0;
 }
 
-void __semaphore_down(semaphore_t *sema, unsigned long iflags)
+void __semaphore_down(semaphore_t *sema)
 {
 	list_add_tail(&task_current->list, &sema->waiter.wait_list);
     TASK_ENTER_WAITLIST(task_current);
-    interrupt_restore_state(iflags);
+    mutex_unlock(&sema->lock);
 	task_block(TASK_BLOCKED);
 }
 
-void __semaphore_up(semaphore_t *sema, unsigned long iflags)
+void __semaphore_up(semaphore_t *sema)
 {
 	task_t *waiter = list_first_owner_or_null(&sema->waiter.wait_list, task_t, list);
 	if (waiter) {
@@ -37,5 +37,5 @@ void __semaphore_up(semaphore_t *sema, unsigned long iflags)
         waiter->state = TASK_READY;
         sched_queue_add_head(sched_get_cur_unit(), waiter);
     }
-    interrupt_restore_state(iflags);
+    mutex_unlock(&sema->lock);
 }

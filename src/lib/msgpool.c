@@ -96,7 +96,7 @@ int msgpool_sync_push(msgpool_t *pool)
     return 0;
 }
 
-int msgpool_try_push(msgpool_t *pool, void *buf)
+int msgpool_try_put(msgpool_t *pool, void *buf)
 {
     if (!pool)
         return -1;
@@ -174,7 +174,7 @@ int msgpool_sync_pop(msgpool_t *pool)
     return 0;
 }
 
-int msgpool_try_pop(msgpool_t *pool, void *buf)
+int msgpool_try_get(msgpool_t *pool, void *buf)
 {
     if (!pool)
         return -1;
@@ -183,7 +183,6 @@ int msgpool_try_pop(msgpool_t *pool, void *buf)
         mutex_unlock(&pool->mutex);
         return -1;
     }
-        
     if (buf) { /* 有buf才复制 */
         memcpy(buf, pool->tail, pool->msgsz);   /* copy data */
     }

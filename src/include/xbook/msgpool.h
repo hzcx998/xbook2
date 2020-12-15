@@ -29,8 +29,8 @@ int msgpool_sync_pop(msgpool_t *pool);
 
 int msgpool_empty(msgpool_t *pool);
 int msgpool_full(msgpool_t *pool);
-int msgpool_try_push(msgpool_t *pool, void *buf);
-int msgpool_try_pop(msgpool_t *pool, void *buf);
+int msgpool_try_put(msgpool_t *pool, void *buf);
+int msgpool_try_get(msgpool_t *pool, void *buf);
 int msgpool_count(msgpool_t *pool);
 
 #endif /* _XBOOK_MSGPOOL_H */

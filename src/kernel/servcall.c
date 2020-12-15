@@ -22,6 +22,7 @@ servport_t *servport_alloc()
         servport_t *servport = &servport_table[i];
         if (!servport->flags) {
             servport->flags |= SERVPORT_USING;
+            spinlock_init(&servport->lock);
             spin_unlock_irqrestore(&servport_lock, iflags);
             return servport;
         }
@@ -81,6 +82,7 @@ servport_t *servport_alloci(uint32_t port)
     spin_lock_irqsave(&servport_lock, iflags);
     servport_t *servport = servport_i2p(port);
     servport->flags |= SERVPORT_USING;
+    spinlock_init(&servport->lock);
     spin_unlock_irqrestore(&servport_lock, iflags);
     return servport;
 }
@@ -113,41 +115,51 @@ int servport_vertify(int port, servport_t **out_servport, task_t *task)
     return 0;
 }
 
-int servport_bind(int port)
+/**
+ * 绑定时检测端口是否已经占用，并分配一个可用端口
+ */
+static servport_t *__servport_bind(int port, task_t *cur)
 {
-    servport_t *servport;
-    task_t *cur = task_current;
     if (cur->servport) {
         errprint("serv bind: port %d had bounded on task %d.\n", servport_p2i(cur->servport), cur->pid);
-        return -EPERM;
+        return NULL;
     }
+    servport_t *servport;
     if (port >= 0) {
         servport = servport_find(port);
         if (servport) {
             errprint("serv bind: port %d had used.\n", port);
-            return -EPERM;
+            return NULL;
         }
         servport = servport_alloci(port);
     } else {
         servport = servport_alloc();
         if (!servport) {
             errprint("serv bind: no port left.\n");
-            return -EPERM;
+            return NULL;
         }
     }
-    servport->recv_pool = msgpool_create(sizeof(servmsg_t), 4);
-    if (!servport->recv_pool) {
+    return servport;
+}
+
+int servport_bind(int port)
+{
+    task_t *cur = task_current;
+    servport_t *servport = __servport_bind(port, cur);
+    if (!servport)
+        return -1;
+    int msgcnt = port < 0? 1 : SERVMSG_NR;
+    unsigned long iflags;
+    spin_lock_irqsave(&servport->lock, iflags);
+    servport->msgpool = msgpool_create(sizeof(servmsg_t), msgcnt);
+    if (!servport->msgpool) {
+        spin_unlock_irqrestore(&servport->lock, iflags);
         servport_free(servport);
         return -ENOMEM;
     }
-    servport->send_pool = msgpool_create(sizeof(servmsg_t), 4);
-    if (!servport->send_pool) {
-        msgpool_destroy(servport->recv_pool);
-        servport->recv_pool = NULL;
-        servport_free(servport);
-        return -ENOMEM;
-    }
+    servport->my_port = servport_p2i(servport);
     cur->servport = servport;
+    spin_unlock_irqrestore(&servport->lock, iflags);
     return 0;
 }
 
@@ -157,15 +169,14 @@ int servport_unbind(int port)
     servport_t *servport;
     if (servport_vertify(port, &servport, cur) < 0)
         return -EPERM;
-    
-    if (msgpool_destroy(servport->recv_pool) < 0) {
+    unsigned long iflags;
+    spin_lock_irqsave(&servport->lock, iflags);
+    if (msgpool_destroy(servport->msgpool) < 0) {
         warnprint("serv unbind: port %d destroy recv pool failed!\n", port);
     }
-    servport->recv_pool = NULL;
-    if (msgpool_destroy(servport->send_pool) < 0) {
-        warnprint("serv unbind: port %d destroy send pool failed!\n", port);
-    }
-    servport->send_pool = NULL;
+    servport->msgpool = NULL;
+    servport->my_port = -1;
+    spin_unlock_irqrestore(&servport->lock, iflags);
     servport_free(servport);
     cur->servport = NULL;
     return 0;
@@ -177,28 +188,43 @@ int servport_request(uint32_t port, servmsg_t *msg)
         return -EINVAL;
     }
     task_t *cur = task_current;
-    servport_t *servport;
+    servport_t *servport, *myservport;
+    if (servport_vertify(-1, &myservport, cur) < 0)
+        return -EPERM;
     servport = servport_find(port);
     if (!servport) {
         errprint("serv request: port %d not bounded.\n", port);
         return -EPERM;
     }
-    uint32_t msgid = servcall_generate_msg_id();
-    msg->id = msgid;
-    if (msgpool_put(servport->recv_pool, msg) < 0) {
-        errprint("serv request: msg put to %d failed!\n", port);
+    if (servport == myservport) {
+        errprint("serv request: port %d can't request self.\n", port);
         return -EPERM;
     }
 
-    if (msgpool_get(servport->send_pool, msg) < 0) {
-        errprint("serv request: msg get from %d failed!\n", port);
+    /* 生成一个id，用来做消息验证 */
+    uint32_t msgid = servcall_generate_msg_id();
+    msg->id = msgid;
+    msg->port = myservport->my_port;
+    /* 往端口发出请求 */
+    if (msgpool_put(servport->msgpool, msg) < 0) {
+        errprint("serv request: msg put to %d failed!\n", port);
         return -EPERM;
     }
+    /* 尝试获取消息，如果获取无果，就yeild来降低cpu占用 */
+    int try_count = 0;
+    while (msgpool_try_get(myservport->msgpool, msg) < 0){
+        try_count++;
+        if (try_count > 20) {
+            task_yeild();
+            try_count = 0;
+        }
+    }
+    /* 对消息进行验证，看是否存在丢失 */
     if (msg->id != msgid) {
-        warnprint("serv request: port %d msg id %d:%d invalid!\n", port, msg->id, msgid);
+        warnprint("serv request: port %d msg id %d:%d invalid!\n", 
+                myservport->my_port, msg->id, msgid);
         return -EPERM;
     }
-        
     return 0;
 }
 
@@ -208,9 +234,18 @@ int servport_receive(int port, servmsg_t *msg)
     servport_t *servport;
     if (servport_vertify(port, &servport, cur) < 0)
         return -EPERM;
-    if (!servport->recv_pool)
+    if (!servport->msgpool)
         return -EPERM;
-    return msgpool_get(servport->recv_pool, msg);
+    int try_count = 0;
+    /* 尝试获取消息，如果获取无果，就yeild来降低cpu占用 */
+    while (msgpool_try_get(servport->msgpool, msg) < 0){
+        try_count++;
+        if (try_count > 20) {
+            task_yeild();
+            try_count = 0;
+        }
+    }
+    return 0;
 }
 
 int servport_reply(int port, servmsg_t *msg)
@@ -219,9 +254,12 @@ int servport_reply(int port, servmsg_t *msg)
     servport_t *servport;
     if (servport_vertify(port, &servport, cur) < 0)
         return -EPERM;
-    if (!servport->send_pool)
+    /* 从消息中找到需要应答的端口，将应答消息传递回去 */
+    servport_t *client_port = servport_i2p(msg->port);
+    ASSERT(client_port);
+    if (!client_port->msgpool)
         return -EPERM;
-    return msgpool_put(servport->send_pool, msg);
+    return msgpool_put(client_port->msgpool, msg);
 }
 
 void servcall_thread(void *arg)
@@ -236,11 +274,11 @@ void servcall_thread(void *arg)
     while (1)
     {
         if (!servport_receive(0, &smsg))
-            infoprint("serv recv: %d %s\n", smsg.id, smsg.data);
-        strcpy(smsg.data, "world!\n");
-        servport_reply(0, &smsg);
+            infoprint("serv receive: %d ok\n", smsg.id);
+        // strcpy(smsg.data, "world!\n");
+        if (!servport_reply(0, &smsg))
+            infoprint("serv reply: %d ok\n", smsg.id);
     }
-    
 }
 
 void servcall_threada(void *arg)
@@ -249,13 +287,13 @@ void servcall_threada(void *arg)
     struct timeval tv;
     tv.tv_sec = 1;
     sys_usleep(&tv, NULL);
-    servport_bind(0);
+    servport_bind(-1);
     servmsg_t smsg;
     while (1)
     {
         strcpy(smsg.data, "hello!\n");
         if (!servport_request(0, &smsg))
-            infoprint("A reply: %d %s\n", smsg.id,  smsg.data);
+            infoprint("A request: %d ok\n", smsg.id);
     }
     
 }
@@ -266,13 +304,13 @@ void servcall_threadb(void *arg)
     struct timeval tv;
     tv.tv_sec = 1;
     sys_usleep(&tv, NULL);
-    servport_bind(0);
+    servport_bind(-1);
     servmsg_t smsg;
     while (1)
     {
         strcpy(smsg.data, "foo!\n");
         if (!servport_request(0, &smsg))
-            infoprint("B reply: %d %s\n", smsg.id,  smsg.data);
+            infoprint("B request: %d ok\n", smsg.id);
     }
 }
 
@@ -281,5 +319,5 @@ void servcall_init()
     kern_thread_start("servcall", 0, servcall_thread, NULL);
     kern_thread_start("servcall", 0, servcall_threada, NULL);
     kern_thread_start("servcall", 0, servcall_threadb, NULL);
-    
+    kern_thread_start("servcall", 0, servcall_threadb, NULL);
 }
