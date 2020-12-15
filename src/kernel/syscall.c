@@ -12,7 +12,6 @@
 #include <xbook/walltime.h>
 #include <xbook/account.h>
 #include <xbook/plugin.h>
-#include <xbook/lpc.h>
 #include <xbook/servcall.h>
 #include <sys/stat.h>
 #include <sys/time.h>

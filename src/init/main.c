@@ -19,7 +19,6 @@
 #include <xbook/mutexqueue.h>
 #include <xbook/account.h>
 #include <xbook/plugin.h>
-#include <xbook/lpc.h>
 #include <xbook/servcall.h>
 
 int kernel_main(void)
@@ -46,7 +45,6 @@ int kernel_main(void)
     file_system_init();
     account_manager_init();
     plugin_init();
-    lpc_init();
     servcall_init();
     //spin("test");
     task_start_user();

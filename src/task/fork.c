@@ -7,7 +7,6 @@
 #include <xbook/memspace.h>
 #include <xbook/sharemem.h>
 #include <xbook/fd.h>
-#include <xbook/lpc.h>
 #include <string.h>
 
 // #define DEBUG_FORK
