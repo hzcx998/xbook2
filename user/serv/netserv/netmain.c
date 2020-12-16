@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <netserv.h>
+#include <pthread.h>
+#include <sys/servcall.h>
 
 /* lwip interface */
 extern err_t ethernetif_init(struct netif *netif);
@@ -40,6 +42,29 @@ void lwip_init_task(void)
     netif_set_up(&lwip_netif);
 }
 
+#define NETSERV_PORT    10
+
+void *netserv_thread(void *arg)
+{
+    bind_port(NETSERV_PORT);
+    servmsg_t *msg = malloc(sizeof(servmsg_t));
+    if (!msg) {
+        printf("malloc for servmsg failed!\n");
+        return NULL;
+    }
+    while (1) {
+        if (receive_port(NETSERV_PORT, msg) < 0)
+            continue;
+        /* process msg */
+
+        if (reply_port(NETSERV_PORT, msg) < 0) {
+            printf("netserv: reply port failed!\n");
+        }
+    }
+    return NULL;
+}
+
+
 void network_init(void)
 {
     printf("network start.\n");
@@ -50,6 +75,9 @@ void network_init(void)
     }
     lwip_init_task();
     httpserver_init();
+
+    pthread_t thread;
+    pthread_create(&thread, NULL, netserv_thread, NULL);
     while(1) {
         ethernetif_input(&lwip_netif);
 		//todo: add your own user code here
