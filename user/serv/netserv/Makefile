@@ -6,6 +6,7 @@ NAME		:= netserv
 SRC			+= main.c 
 SRC			+= netcard.c 
 SRC			+= netmain.c 
+SRC			+= httpd.c 
 SRC			+= lwip/ 
 
 define CUSTOM_TARGET_CMD

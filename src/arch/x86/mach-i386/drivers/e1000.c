@@ -139,7 +139,6 @@ typedef struct _e1000_extension {
     spinlock_t rx_lock;   //接收锁
 
     device_queue_t rx_queue;   //接收队列
-
 }e1000_extension_t;
 
 iostatus_t e1000_driver_func(driver_object_t* driver);
@@ -809,7 +808,7 @@ static iostatus_t e1000_open(device_object_t* device, io_request_t* ioreq)
     if((err = e1000_up(ext))) {
         goto err_up;
     }
-
+    ext->flags = 0;
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = 0;
     io_complete_request(ioreq);
@@ -868,7 +867,7 @@ static iostatus_t e1000_read(device_object_t* device, io_request_t* ioreq)
 
     len = ioreq->parame.read.length;
 
-    if(ioreq->parame.read.offset & DEV_NOWAIT) {
+    if(ext->flags & DEV_NOWAIT) {
         flags |= IO_NOWAIT;
     }
 
@@ -931,6 +930,12 @@ static iostatus_t e1000_devctl(device_object_t* device, io_request_t* ioreq)
             }
             status = IO_SUCCESS;
             break;
+        case NETIO_SETFLGS:
+            ext->flags = *((unsigned long *) arg);
+            break;
+        case NETIO_GETFLGS:
+            *((unsigned long *) arg) = ext->flags;
+            break;
         default:
             status = IO_FAILED;
             break;
@@ -962,7 +967,7 @@ static iostatus_t e1000_enter(driver_object_t* driver)
     devext = (e1000_extension_t*)devobj->device_extension;   //设备扩展部分位于devobj的尾部
     devext->device_object = devobj;
     devext->hw.back = devext;
-
+    devext->flags = 0;
     /*初始化接收队列，用内核队列结构保存，等待被读取*/
     io_device_queue_init(&devext->rx_queue);
 

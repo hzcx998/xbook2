@@ -107,7 +107,7 @@ low_level_init(struct netif *netif)
     }
     u8_t mac_addr[ETHARP_HWADDR_LEN] = {0};
 #if 1
-    drv_netcard.ioctl(ethernetif->netsolt, NETIO_GETMAC, (unsigned long) &mac_addr[0]);
+    drv_netcard.ioctl(ethernetif->netsolt, NETIO_GETMAC, &mac_addr[0]);
     printf("mac: %x %x %x %x %x %x\n", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
 #endif
   /* set MAC hardware address length */
@@ -126,7 +126,7 @@ low_level_init(struct netif *netif)
   /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
   netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
  
-  /* Do whatever else is needed to initialize interface. */  
+  /* Do whatever else is needed to initialize interface. */
 }
 
 /**

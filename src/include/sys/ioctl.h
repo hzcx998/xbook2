@@ -54,6 +54,8 @@
 /* net */
 #define NETIO_GETMAC        DEVCTL_CODE('n', 1)
 #define NETIO_SETMAC        DEVCTL_CODE('n', 2)
+#define NETIO_SETFLGS       DEVCTL_CODE('n', 3)
+#define NETIO_GETFLGS       DEVCTL_CODE('n', 4)
 
 /* video */
 typedef struct _video_info {

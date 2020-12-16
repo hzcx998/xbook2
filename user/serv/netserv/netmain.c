@@ -14,9 +14,9 @@
 /* lwip interface */
 extern err_t ethernetif_init(struct netif *netif);
 extern void ethernetif_input(struct netif *netif);
+extern void httpserver_init();
 
 struct netif lwip_netif;
-void httpserver_init();
 
 #define CONFIG_LEVEL 0
 
@@ -48,11 +48,13 @@ void network_init(void)
         abort();
         return;
     }
-
     lwip_init_task();
+    httpserver_init();
     while(1) {
         ethernetif_input(&lwip_netif);
 		//todo: add your own user code here
+        //printf("get netpack\n");
         sched_yeild();
 	}
 }
+

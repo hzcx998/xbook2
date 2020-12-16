@@ -128,7 +128,7 @@ static int netcard_write(int solt, void *buffer, size_t size)
     return len;
 }
 
-static int netcard_ioctl(int solt, unsigned int cmd, unsigned long arg)
+static int netcard_ioctl(int solt, unsigned int cmd, void *arg)
 {
     if (IS_BAD_SOLT(solt))
         return -1;

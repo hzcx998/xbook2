@@ -25,7 +25,7 @@ typedef struct {
     int (*close)(int);
     int (*read)(int , void *, size_t );
     int (*write)(int  , void *, size_t );
-    int (*ioctl)(int , unsigned int , unsigned long );
+    int (*ioctl)(int , unsigned int , void *);
 } netcard_drvier_t;
 
 extern netcard_drvier_t drv_netcard;

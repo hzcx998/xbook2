@@ -564,7 +564,6 @@ typedef struct _device_extension {
     uint32_t rx_config;      /* 接收配置 */
 
     device_queue_t rx_queue;    /* 接收队列 */
-
 } device_extension_t;
 
 struct rx_packet_header {
@@ -1496,7 +1495,7 @@ static int rtl8139_init(device_extension_t *ext)
     ext->dev_features = NET_FEATURE_RXALL;
 
     ext->drv_flags = 0;
-
+    ext->flags = 0;
     /* 初始化自旋锁 */
     spinlock_init(&ext->lock);
     spinlock_init(&ext->rx_lock);
@@ -1544,6 +1543,7 @@ static iostatus_t rtl8139_open(device_object_t *device, io_request_t *ioreq)
 
     irq_register(ext->irq, rtl8139_handler, IRQF_SHARED, "IRQ-Network", DEV_NAME, (void *) ext);
     
+    ext->flags = 0;
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = 0;
     io_complete_request(ioreq);
@@ -1608,12 +1608,12 @@ static iostatus_t rtl8139_read(device_object_t *device, io_request_t *ioreq)
     int flags = 0;
 
 #ifdef DEBUG_DRV    
-    kprint(PRINT_DEBUG "rtl8139_write: receive data=%x len=%d flags=%x\n",
+    kprint(PRINT_DEBUG "rtl8139_read: receive data=%x len=%d flags=%x\n",
         buf, ioreq->parame.read.length, ioreq->parame.read.offset);
 #endif
     len = ioreq->parame.read.length;
 
-    if (ioreq->parame.read.offset & DEV_NOWAIT) {
+    if (ext->flags & DEV_NOWAIT) {
         flags |= IO_NOWAIT;
     }
     /* 从网络接收队列中获取一个包 */
@@ -1677,6 +1677,12 @@ static iostatus_t rtl8139_devctl(device_object_t *device, io_request_t *ioreq)
         kprint(PRINT_DEBUG "rtl8139_devctl: copy mac addr to addr %x\n", ioreq->parame.devctl.arg);
 #endif
         status = IO_SUCCESS;
+        break;
+    case NETIO_SETFLGS:
+        extension->flags = *((unsigned long *) arg);
+        break;
+    case NETIO_GETFLGS:
+        *((unsigned long *) arg) = extension->flags;
         break;
     default:
         status = IO_FAILED;
