@@ -125,7 +125,7 @@ void syscall_init()
     syscalls[SYS_RECEIVE_PORT] = sys_servport_receive;
     syscalls[SYS_REPLY_PORT] = sys_servport_reply;
     syscalls[SYS_REQUEST_PORT] = sys_servport_request;
-    
+    syscalls[SYS_SCANDEV] = sys_scandev;
     plugin_syscall_init();
 }
 

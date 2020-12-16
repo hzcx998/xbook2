@@ -66,9 +66,8 @@ develop/local/
 
 develop/rom/bin/
 develop/rom/sbin/
+develop/rom/user/
 develop/bochs/
-
-kern.dump
 
 # linux fixdep
 user/libs/fixdep
@@ -92,6 +91,10 @@ user/sbin/desktop/desktop
 user/sbin/sh/sh
 user/sbin/login/login
 user/sbin/userctl/userctl
+user/sbin/start/start
+
+# service
+user/serv/netserv/netserv
 
 # user app
 

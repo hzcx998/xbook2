@@ -273,8 +273,7 @@ int execute_cmd(int argc, char **argv)
         pid = fork();
 
         if (pid > 0) {  /* 父进程 */
-            // 把子进程设置为前台
-            // ioctl(0, TTYIO_HOLDER, &pid);
+            ioctl(0, TTYIO_HOLDER, &pid);
             /* shell程序等待子进程退出 */
             pid = wait(&status);
             pid = getpid();
@@ -284,7 +283,6 @@ int execute_cmd(int argc, char **argv)
             ioctl(0, TTYIO_HOLDER, &pid);
             /* 子进程执行程序 */
             pid = execv((const char *)argv[0], (char *const *)argv);
-
             /* 如果执行出错就退出 */
             if(pid == -1){
                 printf("sh: bad command %s!\n", argv[0]);

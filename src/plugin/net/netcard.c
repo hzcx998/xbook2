@@ -27,7 +27,7 @@ int netcard_probe_device(device_type_t type)
     netcard_info_t *netcard;
     int card_found = 0;
     do {
-        if (sys_devscan(p, type, &devent))
+        if (sys_scandev(p, type, &devent))
             break;
         netcard = mem_alloc(sizeof(netcard_info_t));
         if (netcard == NULL)

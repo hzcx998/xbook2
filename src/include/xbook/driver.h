@@ -263,7 +263,7 @@ int device_probe_unused(const char *name, char *buf, size_t buflen);
 int io_uninstall_driver(char *drvname);
 
 device_object_t *io_iterative_search_device_by_type(device_object_t *devptr, device_type_t type);
-int sys_devscan(devent_t *de, device_type_t type, devent_t *out);
+int sys_scandev(devent_t *de, device_type_t type, devent_t *out);
 
 /* 事件缓冲区大小，事件个数 */
 #define EVBUF_SIZE        64

@@ -261,13 +261,13 @@ device_object_t *io_iterative_search_device_by_type(device_object_t *devptr, dev
 
 
 /**
- * sys_devscan - 扫描某种类型的设备
+ * sys_scandev - 扫描某种类型的设备
  * @de: 输入的设备项
  * @type: 设备类型
  * @out: 输出设备项
  * @return: 成功返回0，失败返回-1
  */
-int sys_devscan(devent_t *de, device_type_t type, devent_t *out)
+int sys_scandev(devent_t *de, device_type_t type, devent_t *out)
 {
     if (!out)
         return -1;

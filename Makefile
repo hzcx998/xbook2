@@ -43,6 +43,7 @@ USER_DIR	= ./user
 LIBS_DIR	= $(USER_DIR)/libs
 SBIN_DIR	= $(USER_DIR)/sbin
 BIN_DIR		= $(USER_DIR)/bin
+SERV_DIR	= $(USER_DIR)/serv
 
 #kernel disk
 LOADER_OFF 	= 2
@@ -104,6 +105,7 @@ endif
 	$(MAKE) -s -C  $(LIBS_DIR)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
+	$(MAKE) -s -C  $(SERV_DIR)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 
 # 清理环境。
@@ -116,6 +118,7 @@ endif
 	$(MAKE) -s -C  $(LIBS_DIR) clean
 	$(MAKE) -s -C  $(SBIN_DIR) clean
 	$(MAKE) -s -C  $(BIN_DIR) clean
+	$(MAKE) -s -C  $(SERV_DIR) clean
 	-$(RM) -r $(ROM_DIR)/bin
 	-$(RM) -r $(ROM_DIR)/sbin
 	-$(RM) -r $(ROM_DIR)/usr
@@ -124,12 +127,14 @@ endif
 user: 
 	$(MAKE) -s -C  $(LIBS_DIR) && \
 	$(MAKE) -s -C  $(SBIN_DIR) && \
-	$(MAKE) -s -C  $(BIN_DIR)
+	$(MAKE) -s -C  $(BIN_DIR) && \
+	$(MAKE) -s -C  $(SERV_DIR)
 
 user_clean: 
 	$(MAKE) -s -C  $(LIBS_DIR) clean && \
 	$(MAKE) -s -C  $(SBIN_DIR) clean && \
-	$(MAKE) -s -C  $(BIN_DIR) clean
+	$(MAKE) -s -C  $(BIN_DIR) clean && \
+	$(MAKE) -s -C  $(SERV_DIR) clean
 
 dump:
 	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > $(KERNSRC)/kern.dump
@@ -173,6 +178,7 @@ QEMU_ARGUMENT = -m 512M $(QEMU_KVM) \
 		-boot a \
 		-serial stdio \
 		-soundhw sb16 \
+		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no \
 		-soundhw pcspk
 
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \

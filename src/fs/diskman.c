@@ -24,7 +24,7 @@ int disk_manager_probe_device(device_type_t type)
     devent_t devent;
     disk_info_t *disk;
     do {
-        if (sys_devscan(p, type, &devent))
+        if (sys_scandev(p, type, &devent))
             break;
         disk = mem_alloc(sizeof(disk_info_t));
         if (disk == NULL)
