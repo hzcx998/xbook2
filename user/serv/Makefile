@@ -17,3 +17,4 @@ AS			:=	nasm
 export AS LD
 
 MODULE      +=  netserv
+MODULE      +=  testserv

@@ -6,7 +6,8 @@
 #include <stdint.h>
 
 #define SERVPORT_NR 32
-#define SERVMSG_SIZE (4096 - sizeof(size_t))
+#define SERVMSG_HEADER_SIZE (4 * sizeof(uint32_t))
+#define SERVMSG_SIZE (4096 - SERVMSG_HEADER_SIZE)
 #define SERVMSG_NR 8
 
 #define SERVPORT_RETRY_GET_CNT  10
@@ -28,7 +29,8 @@ typedef struct {
 typedef struct {
     uint32_t port;
     uint32_t id;
-    size_t size;
+    uint32_t code;
+    uint32_t size;
     uint8_t data[SERVMSG_SIZE];
 } servmsg_t;
 
