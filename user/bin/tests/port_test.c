@@ -1,10 +1,10 @@
 #include "test.h"
-#include <sys/servcall.h>
+#include <sys/portcomm.h>
 #include <signal.h>
 
 pid_t child_pid;
 
-int servcall_test(int argc, char *argv[])
+int port_comm_test(int argc, char *argv[])
 {
     bind_port(0);
     
@@ -13,13 +13,13 @@ int servcall_test(int argc, char *argv[])
         printf("fork failed!\n");
         return -1;
     }
-    servmsg_t msg;
+    port_msg_t msg;
     int count = 10;
     if (pid > 0) {
         child_pid = pid;
         while (count > 0)
         {
-            servmsg_reset(&msg);
+            port_msg_reset(&msg);
             if (receive_port(0, &msg) < 0)
                 continue;
             
@@ -40,7 +40,7 @@ int servcall_test(int argc, char *argv[])
         bind_port(1);
         while (count > 0)
         {
-            servmsg_reset(&msg);
+            port_msg_reset(&msg);
             char *str = "hello, i am client!\n";
             strcpy(msg.data, str);
             msg.size = strlen(str);

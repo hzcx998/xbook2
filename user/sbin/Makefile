@@ -20,4 +20,4 @@ MODULE      +=  init
 MODULE      +=  sh
 MODULE      +=  login
 MODULE      +=  userctl
-MODULE      +=  start
+MODULE      +=  service

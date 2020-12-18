@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <netserv.h>
-#include <sys/servcall.h>
+#include <sys/portcomm.h>
 
 int main(int argc, char *argv[])
 {

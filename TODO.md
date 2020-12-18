@@ -32,7 +32,7 @@
 
 * 实现消息传递中被中断时资源的释放
 * 2020/12/14
-* servcall 通信问题。
+* port_comm 通信问题。
 
 * 2020/12/16
-* 用servcall实现socket套接字
+* 用port_comm实现socket套接字

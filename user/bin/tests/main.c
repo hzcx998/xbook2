@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     //video_test(argc, argv);
     //signal_test(argc, argv);
     // proc_test(argc, argv);
-    servcall_test(argc, argv);
+    port_comm_test(argc, argv);
     
     return 0;
 }

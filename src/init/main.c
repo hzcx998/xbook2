@@ -19,7 +19,7 @@
 #include <xbook/mutexqueue.h>
 #include <xbook/account.h>
 #include <xbook/plugin.h>
-#include <xbook/servcall.h>
+#include <xbook/portcomm.h>
 
 int kernel_main(void)
 {
@@ -45,7 +45,7 @@ int kernel_main(void)
     file_system_init();
     account_manager_init();
     plugin_init();
-    servcall_init();
+    port_comm_init();
     //spin("test");
     task_start_user();
     return 0;    

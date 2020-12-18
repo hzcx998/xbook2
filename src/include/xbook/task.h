@@ -14,7 +14,7 @@
 #include "msgpool.h"
 #include "spinlock.h"
 #include "exception.h"
-#include "servcall.h"
+#include "portcomm.h"
 
 
 typedef enum {
@@ -86,7 +86,7 @@ typedef struct {
     exit_hook_t exit_hook;  /* 退出调用的钩子函数 */
     void *exit_hook_arg;
     lpc_port_table_t port_table;
-    servport_t *servport;
+    port_comm_t *port_comm;
     unsigned int stack_magic;
 } task_t;
 

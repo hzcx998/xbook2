@@ -68,7 +68,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->fileman = NULL;
     task->exit_hook = NULL;
     task->exit_hook_arg = NULL;
-    task->servport = NULL;
+    task->port_comm = NULL;
     task->stack_magic = TASK_STACK_MAGIC;
 }
 

@@ -91,10 +91,11 @@ user/sbin/desktop/desktop
 user/sbin/sh/sh
 user/sbin/login/login
 user/sbin/userctl/userctl
-user/sbin/start/start
+user/sbin/service/service
 
 # service
 user/serv/netserv/netserv
+user/serv/testserv/testserv
 
 # user app
 
