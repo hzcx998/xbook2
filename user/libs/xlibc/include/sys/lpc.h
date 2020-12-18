@@ -8,6 +8,10 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include "portcomm.h"
+
+#define FIRST_CALL_CODE  (0x00000001)
+#define LAST_CALL_CODE   (0x000FFFFF)
 
 /* the args we support now */
 #define LPC_PARCEL_ARG_NR 8
@@ -39,11 +43,16 @@ typedef struct {
 
 typedef struct {
     lpc_parcel_header_t header;
-    uint32_t code;
-    uint8_t data[1];         // 柔性数组数据
+    uint32_t code;      // call code
+    uint8_t data[1];    // 柔性数组数据
 } *lpc_parcel_t;
 
 typedef bool (*lpc_handler_t)(uint32_t, lpc_parcel_t, lpc_parcel_t);
+
+#define LPC_ID_TEST     PORT_COMM_TEST
+#define LPC_ID_NET      PORT_COMM_NET
+#define LPC_ID_GRAPH    PORT_COMM_GRAPH
+
 
 lpc_parcel_t lpc_parcel_get();
 int lpc_parcel_put(lpc_parcel_t parcel);

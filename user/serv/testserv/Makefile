@@ -4,6 +4,7 @@ X_INCDIRS	+= testserv/include
 
 NAME		:= testserv
 SRC			+= main.c 
+SRC			+= test.client.c 
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

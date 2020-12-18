@@ -1,5 +1,4 @@
 #include <sys/lpc.h>
-#include <sys/portcomm.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

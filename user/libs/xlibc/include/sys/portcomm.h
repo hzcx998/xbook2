@@ -9,16 +9,11 @@ extern "C" {
 #include <stddef.h>
 #include <stdbool.h>
 
-#define FIRST_CALL_CODE  (0x00000001)
-#define LAST_CALL_CODE   (0x000FFFFF)
-
-
-/* 知名服务端口号 */
 enum {
     PORT_COMM_TEST = 0,
     PORT_COMM_NET,
     PORT_COMM_GRAPH,
-    PORT_COMM_LAST = 32
+    PORT_COMM_LAST = 8
 };
 
 typedef struct {

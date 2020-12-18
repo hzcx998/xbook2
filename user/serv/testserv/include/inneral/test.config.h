@@ -1,0 +1,4 @@
+#ifndef _TESTSERV_CONFIG_H
+#define _TESTSERV_CONFIG_H
+
+#endif  /* _TESTSERV_CONFIG_H */
