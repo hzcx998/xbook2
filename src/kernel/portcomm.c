@@ -205,8 +205,8 @@ int sys_port_comm_request(uint32_t port, port_msg_t *msg)
 
     /* 生成一个id，用来做消息验证 */
     uint32_t msgid = port_comm_generate_msg_id();
-    msg->id = msgid;
-    msg->port = myport_comm->my_port;
+    msg->header.id = msgid;
+    msg->header.port = myport_comm->my_port;
     /* 往端口发出请求 */
     if (msgpool_put(port_comm->msgpool, msg) < 0) {
         errprint("port request: msg put to %d failed!\n", port);
@@ -227,9 +227,9 @@ int sys_port_comm_request(uint32_t port, port_msg_t *msg)
         }
     }
     /* 对消息进行验证，看是否存在丢失 */
-    if (msg->id != msgid) {
+    if (msg->header.id != msgid) {
         warnprint("port request: port %d msg id %d:%d invalid!\n", 
-                myport_comm->my_port, msg->id, msgid);
+                myport_comm->my_port, msg->header.id, msgid);
         return -EPERM;
     }
     return 0;
@@ -267,7 +267,7 @@ int sys_port_comm_reply(int port, port_msg_t *msg)
     if (port_comm_vertify(port, &port_comm, cur) < 0)
         return -EPERM;
     /* 从消息中找到需要应答的端口，将应答消息传递回去 */
-    port_comm_t *client_port = port_comm_i2p(msg->port);
+    port_comm_t *client_port = port_comm_i2p(msg->header.port);
     if (!client_port)
         return -EPERM;
     if (!client_port->msgpool)
@@ -287,9 +287,9 @@ void port_comm_thread(void *arg)
     while (1)
     {
         if (!sys_port_comm_receive(0, &smsg))
-            infoprint("port receive: %d ok\n", smsg.id);
+            infoprint("port receive: %d ok\n", smsg.header.id);
         if (!sys_port_comm_reply(0, &smsg))
-            infoprint("port reply: %d ok\n", smsg.id);
+            infoprint("port reply: %d ok\n", smsg.header.id);
     }
 }
 
@@ -305,7 +305,7 @@ void port_comm_threada(void *arg)
     {
         strcpy(smsg.data, "hello!\n");
         if (!sys_port_comm_request(0, &smsg))
-            infoprint("A request: %d ok\n", smsg.id);
+            infoprint("A request: %d ok\n", smsg.header.id);
     }
 }
 
@@ -321,7 +321,7 @@ void port_comm_threadb(void *arg)
     {
         strcpy(smsg.data, "foo!\n");
         if (!sys_port_comm_request(0, &smsg))
-            infoprint("B request: %d ok\n", smsg.id);
+            infoprint("B request: %d ok\n", smsg.header.id);
     }
 }
 

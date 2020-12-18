@@ -39,21 +39,31 @@ typedef struct spinlock {
     atomic_set(&(lock)->count, 0)
 
 #define spin_lock_irqsave(lock, flags) \
-    interrupt_save_and_disable(flags); \
-    spin_lock(lock);
-
+    do { \
+        interrupt_save_and_disable(flags); \
+        spin_lock(lock); \
+    } while (0)
+    
+    
 #define spin_unlock_irqrestore(lock, flags) \
-    spin_unlock(lock); \
-    interrupt_restore_state(flags)
-
+    do { \
+        spin_unlock(lock); \
+        interrupt_restore_state(flags); \
+    } while (0)
+    
 #define spin_lock_irq(lock) \
-    interrupt_disable(); \
-    spin_lock(lock)
+    do { \
+        interrupt_disable(); \
+        spin_lock(lock); \
+    } while (0)
+    
 
 #define spin_unlock_irq(lock) \
-    spin_unlock(lock); \
-    interrupt_enable()
-
+    do { \
+        spin_unlock(lock); \
+        interrupt_enable(); \
+    } while (0)
+    
 /**
  * 非阻塞式获取锁
  * 如果锁已经被使用，就返回一个非0值，不会自旋等待锁释放。

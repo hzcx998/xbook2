@@ -34,8 +34,5 @@ void port_msg_reset(port_msg_t *msg)
 
 void port_msg_copy_header(port_msg_t *src, port_msg_t *dest)
 {
-    dest->size = src->size;
-    dest->reserved0 = src->reserved0;
-    dest->reserved1 = src->reserved1;
-    dest->code = src->code;
+    memcpy(&dest->header, &src->header, sizeof(port_msg_header_t));
 }

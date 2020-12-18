@@ -23,11 +23,11 @@ int port_comm_test(int argc, char *argv[])
             if (receive_port(0, &msg) < 0)
                 continue;
             
-            printf("server: recv %d: %s\n", msg.size, (char *) msg.data);
+            printf("server: recv %d: %s\n", msg.header.size, (char *) msg.data);
 
             char *str = "hello, client!\n";
             strcpy(msg.data, str);
-            msg.size = strlen(str);
+            msg.header.size = strlen(str);
             sleep(1);
             if (!reply_port(0, &msg)) {
                 printf("server: reply ok!\n");
@@ -43,9 +43,9 @@ int port_comm_test(int argc, char *argv[])
             port_msg_reset(&msg);
             char *str = "hello, i am client!\n";
             strcpy(msg.data, str);
-            msg.size = strlen(str);
+            msg.header.size = strlen(str);
             if (!request_port(0, &msg))
-                printf("client: recv %d: %s\n", msg.size, (char *) msg.data);
+                printf("client: recv %d: %s\n", msg.header.size, (char *) msg.data);
             count--;
         }
         printf("client: exit!\n");        

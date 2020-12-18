@@ -12,8 +12,6 @@ extern "C" {
 #define FIRST_CALL_CODE  (0x00000001)
 #define LAST_CALL_CODE   (0x000FFFFF)
 
-#define PORT_MSG_HEADER_SIZE (4 * sizeof(uint32_t))
-#define PORT_MSG_SIZE (4096 - PORT_MSG_HEADER_SIZE)
 
 /* 知名服务端口号 */
 enum {
@@ -26,8 +24,14 @@ enum {
 typedef struct {
     uint32_t reserved0;
     uint32_t reserved1;
-    uint32_t code;
     uint32_t size;
+} port_msg_header_t;
+
+#define PORT_MSG_HEADER_SIZE (sizeof(port_msg_header_t))
+#define PORT_MSG_SIZE (4096 - PORT_MSG_HEADER_SIZE)
+
+typedef struct {
+    port_msg_header_t header;
     uint8_t data[PORT_MSG_SIZE];
 } port_msg_t;
 

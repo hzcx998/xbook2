@@ -8,8 +8,6 @@
 #define PORT_COMM_NR 32
 #define PORT_COMM_UNNAMED_START (PORT_COMM_NR / 4)
 
-#define PORT_MSG_HEADER_SIZE (4 * sizeof(uint32_t))
-#define PORT_MSG_SIZE (4096 - PORT_MSG_HEADER_SIZE)
 #define PORT_MSG_NR 8
 
 #define PORT_COMM_RETRY_GET_CNT  10
@@ -27,12 +25,18 @@ typedef struct {
     uint32_t flags;
 } port_comm_t;
 
-/* 消息结构 */
 typedef struct {
     uint32_t port;
     uint32_t id;
-    uint32_t code;
     uint32_t size;
+} port_msg_header_t;
+
+#define PORT_MSG_HEADER_SIZE (sizeof(port_msg_header_t))
+#define PORT_MSG_SIZE (4096 - PORT_MSG_HEADER_SIZE)
+
+/* 消息结构 */
+typedef struct {
+    port_msg_header_t header;
     uint8_t data[PORT_MSG_SIZE];
 } port_msg_t;
 

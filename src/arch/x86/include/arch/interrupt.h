@@ -15,10 +15,8 @@ void interrupt_enable(void);
     } while (0)
 
 #define interrupt_restore_state(flags)               \
-    do {                                    \
-        eflags_restore_from((unsigned int)flags);\
-    } while (0)
-
+        eflags_restore_from((unsigned int)flags)
+    
 #define	IRQ0_CLOCK          0   // 时钟
 #define	IRQ1_KEYBOARD       1   // 键盘
 #define	IRQ2_CONNECT        2   // 连接从片
