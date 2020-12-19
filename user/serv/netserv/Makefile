@@ -7,6 +7,7 @@ SRC			+= main.c
 SRC			+= netcard.c 
 SRC			+= netmain.c 
 SRC			+= httpd.c 
+SRC			+= netremote.c 
 SRC			+= lwip/ 
 
 define CUSTOM_TARGET_CMD

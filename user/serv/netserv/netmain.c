@@ -14,7 +14,7 @@
 #include <pthread.h>
 #include <sys/lpc.h>
 #include <net.client.h>
-#include <time.h>
+#include <stdlib.h>
 
 /* lwip interface */
 extern err_t ethernetif_init(struct netif *netif);
@@ -45,36 +45,14 @@ void lwip_init_task(void)
     netif_set_up(&lwip_netif);
 }
 
-bool remote_socket(lpc_parcel_t data, lpc_parcel_t reply)
-{
-    int domain; lpc_parcel_read_int(data, (uint32_t *)&domain);
-    int type; lpc_parcel_read_int(data, (uint32_t *)&type);
-    int protocol; lpc_parcel_read_int(data, (uint32_t *)&protocol);
-    int socket_id = lwip_socket(domain, type, protocol);
-    if (socket_id < 0) {
-        lpc_parcel_write_int(reply, -EPERM);
-        return false;    
-    }
-    lpc_parcel_write_int(reply, socket_id);
-    return true;    
-}
+extern bool netserv_echo_main(uint32_t code, lpc_parcel_t data, lpc_parcel_t reply);
 
-static lpc_remote_handler_t net_remote_table[] = {
-    remote_socket
-};
-
-bool netserv_echo_main(uint32_t code, lpc_parcel_t data, lpc_parcel_t reply)
-{
-    if (code >= FIRST_CALL_CODE && code < NETCALL_LAST_CALL)
-        return net_remote_table[code - 1](data, reply);
-    return false;
-}
-
-void *netserv_thread(void *arg)
+static void *netserv_thread(void *arg)
 {
     lpc_echo(LPC_ID_NET, netserv_echo_main);
     return NULL;
 }
+
 extern void client();
 void network_init(void)
 {

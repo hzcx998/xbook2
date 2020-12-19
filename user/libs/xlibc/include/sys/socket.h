@@ -280,6 +280,7 @@ struct _sockfd_set {
     fd_set *errorfds;
 };
 
+/*
 int socket(int domain, int type, int protocol);
 int bind(int sockfd, struct sockaddr *my_addr, int addrlen);
 int connect(int sockfd, struct sockaddr *serv_addr, int addrlen);
@@ -298,6 +299,7 @@ int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optl
 int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 int sockioctl(int sockfd, int request, void *arg);
 int select(int maxfdp, fd_set *readfds, fd_set *writefds, fd_set *errorfds, struct timeval *timeout);
+*/
 
 #ifdef __cplusplus
 }

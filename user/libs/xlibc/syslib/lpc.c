@@ -123,7 +123,7 @@ int lpc_parcel_write_string(lpc_parcel_t parcel, char *str)
     return 0;
 }
 
-int lpc_parcel_write_sequence(lpc_parcel_t parcel, uint8_t *buf, size_t len)
+int lpc_parcel_write_sequence(lpc_parcel_t parcel, void *buf, size_t len)
 {
     int i = lpc_parcel_alloc_arg_solt(parcel);
     if (i < 0)
@@ -234,13 +234,13 @@ int lpc_parcel_read_string(lpc_parcel_t parcel, char **str)
     return 0;
 }
 
-int lpc_parcel_read_sequence(lpc_parcel_t parcel, uint8_t **buf, size_t *len)
+int lpc_parcel_read_sequence(lpc_parcel_t parcel, void **buf, size_t *len)
 {
     int i = lpc_parcel_find_arg_solt(parcel, LPC_PARCEL_ARG_SEQUENCE);
     if (i < 0) 
         return -1;
     if (buf) {
-        *buf = (uint8_t *) &parcel->data[parcel->header.args[i]];
+        *buf = (void *) &parcel->data[parcel->header.args[i]];
     }
     if (len) {
         *len = parcel->header.arglen[i];
