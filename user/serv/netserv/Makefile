@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibc-0.0.1.a libpthread-0.0.1.a
+X_LIBS		+= libxlibc-0.0.1.a libpthread-0.0.1.a libnetsocket-0.0.1.a
 
 X_INCDIRS	+= netserv/include netserv/lwip/include netserv/lwip/include/ipv4
 

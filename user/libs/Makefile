@@ -10,3 +10,4 @@ export AS LD
 MODULE		:= xlibc
 MODULE		+= xlibcpp
 MODULE		+= pthread
+MODULE		+= netsocket

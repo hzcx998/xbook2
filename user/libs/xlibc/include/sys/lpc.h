@@ -48,6 +48,7 @@ typedef struct {
 } *lpc_parcel_t;
 
 typedef bool (*lpc_handler_t)(uint32_t, lpc_parcel_t, lpc_parcel_t);
+typedef bool (*lpc_remote_handler_t) (lpc_parcel_t, lpc_parcel_t);
 
 #define LPC_ID_TEST     PORT_COMM_TEST
 #define LPC_ID_NET      PORT_COMM_NET
