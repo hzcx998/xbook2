@@ -22,13 +22,13 @@ static bool remote_socket(lpc_parcel_t data, lpc_parcel_t reply)
 static bool remote_bind(lpc_parcel_t data, lpc_parcel_t reply)
 {
     int sock;
-    struct sockaddr *my_addr;
+    struct sockaddr my_addr;
     int addrlen;
     lpc_parcel_read_int(data, (uint32_t *)&sock);
     if (sock < 0)
         return false;
-    lpc_parcel_read_sequence(data, (void **)&my_addr, (size_t *)&addrlen);
-    int retval = lwip_bind(sock, my_addr, addrlen);
+    lpc_parcel_read_sequence(data, (void *)&my_addr, (size_t *)&addrlen);
+    int retval = lwip_bind(sock, (const struct sockaddr *)&my_addr, addrlen);
     if (retval < 0) {
         lpc_parcel_write_int(reply, retval);
         return false;    
@@ -40,15 +40,15 @@ static bool remote_bind(lpc_parcel_t data, lpc_parcel_t reply)
 static bool remote_connect(lpc_parcel_t data, lpc_parcel_t reply)
 {
     int sock;
-    struct sockaddr *serv_addr;
+    struct sockaddr serv_addr;
     int addrlen;
     lpc_parcel_read_int(data, (uint32_t *)&sock);
     if (sock < 0) {
         lpc_parcel_write_int(reply, -1);
         return false;    
     }
-    lpc_parcel_read_sequence(data, (void **)&serv_addr, (size_t *)&addrlen);
-    int retval = lwip_connect(sock, serv_addr, addrlen);
+    lpc_parcel_read_sequence(data, (void *)&serv_addr, (size_t *)&addrlen);
+    int retval = lwip_connect(sock, (const struct sockaddr *)&serv_addr, addrlen);
     if (retval < 0) {
         lpc_parcel_write_int(reply, retval);
         return false;    
@@ -108,7 +108,7 @@ static bool remote_send(lpc_parcel_t data, lpc_parcel_t reply)
         lpc_parcel_write_int(reply, -1);
         return false;    
     }
-    lpc_parcel_read_sequence(data, (void **)&buf, (size_t *)&len);
+    lpc_parcel_read_sequence_buf(data, (void **)&buf, (size_t *)&len);
     lpc_parcel_read_int(data, (uint32_t *)&flags);
     
     int sndbytes = lwip_send(sock, buf, len, flags);
@@ -131,7 +131,7 @@ static bool remote_recv(lpc_parcel_t data, lpc_parcel_t reply)
         lpc_parcel_write_int(reply, -1);
         return false;    
     }
-    lpc_parcel_read_sequence(data, (void **)&buf, (size_t *)&len);
+    lpc_parcel_read_sequence_buf(data, (void **)&buf, (size_t *)&len);
     lpc_parcel_read_int(data, (uint32_t *)&flags);
     int recvbytes = lwip_recv(sock, buf, len, flags);
     if (recvbytes < 0) {
@@ -140,6 +140,58 @@ static bool remote_recv(lpc_parcel_t data, lpc_parcel_t reply)
     }
     lpc_parcel_write_int(reply, recvbytes);
     lpc_parcel_write_sequence(reply, buf, recvbytes);
+    return true;    
+}
+
+static bool remote_sendto(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    int sock;
+    void *buf;
+    int len;
+    int flags;
+    struct sockaddr to;
+    socklen_t tolen;
+    lpc_parcel_read_int(data, (uint32_t *)&sock);
+    if (sock < 0) {
+        lpc_parcel_write_int(reply, -1);
+        return false;    
+    }
+    lpc_parcel_read_sequence_buf(data, (void **)&buf, (size_t *)&len);
+    lpc_parcel_read_int(data, (uint32_t *)&flags);
+    lpc_parcel_read_sequence(data, (void *)&to, (size_t *)&tolen);
+    int sndbytes = lwip_sendto(sock, buf, len, flags, (const struct sockaddr *)&to, tolen);
+    if (sndbytes < 0) {
+        lpc_parcel_write_int(reply, sndbytes);
+        return false;
+    }
+    lpc_parcel_write_int(reply, sndbytes);
+    return true;    
+}
+
+static bool remote_recvfrom(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    int sock;
+    void *buf;
+    int len;
+    int flags;
+    lpc_parcel_read_int(data, (uint32_t *)&sock);
+    if (sock < 0) {
+        lpc_parcel_write_int(reply, -1);
+        return false;    
+    }
+    lpc_parcel_read_sequence_buf(data, (void **)&buf, (size_t *)&len);
+    lpc_parcel_read_int(data, (uint32_t *)&flags);
+    struct sockaddr from;
+    socklen_t fromlen;
+    int recvbytes = lwip_recvfrom(sock, buf, len, flags, &from, &fromlen);
+    if (recvbytes < 0) {
+        lpc_parcel_write_int(reply, recvbytes);
+        return false;
+    }
+    lpc_parcel_write_int(reply, recvbytes);
+    lpc_parcel_write_sequence(reply, buf, recvbytes);
+    lpc_parcel_write_sequence(reply, &from, fromlen);
+    
     return true;    
 }
 
@@ -157,6 +209,113 @@ static bool remote_close(lpc_parcel_t data, lpc_parcel_t reply)
     return true;    
 }
 
+static bool remote_ioctl(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    int sock; lpc_parcel_read_int(data, (uint32_t *)&sock);
+    if (sock < 0)
+        return false;
+    int request;
+    void *arg;
+    size_t size;
+    lpc_parcel_read_int(data, (uint32_t *)&request);
+    lpc_parcel_read_sequence_buf(data, (void **)&arg, &size);
+    int retval = lwip_ioctl(sock, request, arg);
+    if (retval < 0) {
+        lpc_parcel_write_int(reply, retval);
+        return false;    
+    }
+    lpc_parcel_write_int(reply, retval);
+    lpc_parcel_write_sequence(reply, arg, size);
+    return true;    
+}
+
+static bool remote_shutdown(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    int sock; lpc_parcel_read_int(data, (uint32_t *)&sock);
+    if (sock < 0)
+        return false;
+    int how; lpc_parcel_read_int(data, (uint32_t *)&how);
+    int retval = lwip_shutdown(sock, how);
+    if (retval < 0) {
+        lpc_parcel_write_int(reply, retval);
+        return false;    
+    }
+    lpc_parcel_write_int(reply, retval);
+    return true;    
+}
+
+static bool remote_getpeername(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    int sock; lpc_parcel_read_int(data, (uint32_t *)&sock);
+    if (sock < 0)
+        return false;
+    struct sockaddr serv_addr;
+    socklen_t addrlen;
+    int retval = lwip_getpeername(sock, &serv_addr, &addrlen);
+    if (retval < 0) {
+        lpc_parcel_write_int(reply, retval);
+        return false;    
+    }
+    lpc_parcel_write_int(reply, retval);
+    lpc_parcel_write_sequence(reply, (void *)&serv_addr, addrlen);
+    return true;    
+}
+
+static bool remote_getsockname(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    int sock; lpc_parcel_read_int(data, (uint32_t *)&sock);
+    if (sock < 0)
+        return false;
+    struct sockaddr serv_addr;
+    socklen_t addrlen;
+    int retval = lwip_getsockname(sock, &serv_addr, &addrlen);
+    if (retval < 0) {
+        lpc_parcel_write_int(reply, retval);
+        return false;    
+    }
+    lpc_parcel_write_int(reply, retval);
+    lpc_parcel_write_sequence(reply, (void *)&serv_addr, addrlen);
+    return true;    
+}
+
+static bool remote_getsockopt(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    int sock; lpc_parcel_read_int(data, (uint32_t *)&sock);
+    if (sock < 0)
+        return false;
+    int level; lpc_parcel_read_int(data, (uint32_t *)&level);
+    int optname; lpc_parcel_read_int(data, (uint32_t *)&optname);
+    unsigned long optval;
+    socklen_t optlen;
+    int retval = lwip_getsockopt(sock, level, optname, (void *)&optval, &optlen);
+    if (retval < 0) {
+        lpc_parcel_write_int(reply, retval);
+        return false;    
+    }
+    lpc_parcel_write_int(reply, retval);
+    lpc_parcel_write_sequence(reply, (void *)&optval, optlen);
+    return true;
+}
+
+static bool remote_setsockopt(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    int sock; lpc_parcel_read_int(data, (uint32_t *)&sock);
+    if (sock < 0)
+        return false;
+    int level; lpc_parcel_read_int(data, (uint32_t *)&level);
+    int optname; lpc_parcel_read_int(data, (uint32_t *)&optname);
+    void *optval;
+    socklen_t optlen;
+    lpc_parcel_read_sequence_buf(data, (void **)&optval, (size_t *)&optlen);
+    int retval = lwip_setsockopt(sock, level, optname, optval, optlen);
+    if (retval < 0) {
+        lpc_parcel_write_int(reply, retval);
+        return false;    
+    }
+    lpc_parcel_write_int(reply, retval);
+    return true;
+}
+
 static lpc_remote_handler_t net_remote_table[] = {
     remote_socket,
     remote_bind,
@@ -166,7 +325,14 @@ static lpc_remote_handler_t net_remote_table[] = {
     remote_send,
     remote_recv,
     remote_close,
-    //remote_ioctl,
+    remote_sendto,
+    remote_recvfrom,
+    remote_ioctl,
+    remote_shutdown,
+    remote_getpeername,
+    remote_getsockname,
+    remote_getsockopt,
+    remote_setsockopt,
 };
 
 bool netserv_echo_main(uint32_t code, lpc_parcel_t data, lpc_parcel_t reply)

@@ -69,7 +69,8 @@ int lpc_parcel_read_long(lpc_parcel_t parcel, uint64_t *num);
 int lpc_parcel_read_short(lpc_parcel_t parcel, uint16_t *num);
 int lpc_parcel_read_char(lpc_parcel_t parcel, uint8_t *num);
 int lpc_parcel_read_string(lpc_parcel_t parcel, char **str);
-int lpc_parcel_read_sequence(lpc_parcel_t parcel, void **buf, size_t *len);
+int lpc_parcel_read_sequence(lpc_parcel_t parcel, void *buf, size_t *len);
+int lpc_parcel_read_sequence_buf(lpc_parcel_t parcel, void **buf, size_t *len);
 int lpc_echo(uint32_t port, lpc_handler_t func);
 int lpc_call(uint32_t port, uint32_t code, lpc_parcel_t data, lpc_parcel_t reply);
 

@@ -26,7 +26,7 @@ int hello(char *str)
     lpc_parcel_read_string(parcel, &sbuf);
     printf("read string:%s\n", sbuf);
     size_t len;
-    lpc_parcel_read_sequence(parcel, &sbuf, &len);
+    lpc_parcel_read_sequence_buf(parcel, &sbuf, &len);
     printf("read seq:%s len: %d\n", sbuf + 1, len);
     lpc_parcel_dump_args(parcel);
     #else

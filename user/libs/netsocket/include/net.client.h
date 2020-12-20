@@ -11,10 +11,15 @@ enum net_client_code {
     NETCALL_accept,
     NETCALL_send,
     NETCALL_recv,
-    //NETCALL_sendto,
-    //NETCALL_recvfrom,
     NETCALL_close,
+    NETCALL_sendto,
+    NETCALL_recvfrom,
     NETCALL_ioctl,
+    NETCALL_shutdown,
+    NETCALL_getpeername,
+    NETCALL_getsockname,
+    NETCALL_getsockopt,
+    NETCALL_setsockopt,
     NETCALL_LAST_CALL,
 };
 

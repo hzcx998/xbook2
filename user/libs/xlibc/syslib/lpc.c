@@ -234,7 +234,22 @@ int lpc_parcel_read_string(lpc_parcel_t parcel, char **str)
     return 0;
 }
 
-int lpc_parcel_read_sequence(lpc_parcel_t parcel, void **buf, size_t *len)
+int lpc_parcel_read_sequence(lpc_parcel_t parcel, void *buf, size_t *len)
+{
+    int i = lpc_parcel_find_arg_solt(parcel, LPC_PARCEL_ARG_SEQUENCE);
+    if (i < 0) 
+        return -1;
+    if (len) {
+        *len = parcel->header.arglen[i];
+    }
+    if (buf) {  
+        memcpy(buf, (void *) &parcel->data[parcel->header.args[i]], parcel->header.arglen[i]);
+    }
+    lpc_parcel_clear_arg(parcel, i);
+    return 0;
+}
+
+int lpc_parcel_read_sequence_buf(lpc_parcel_t parcel, void **buf, size_t *len)
 {
     int i = lpc_parcel_find_arg_solt(parcel, LPC_PARCEL_ARG_SEQUENCE);
     if (i < 0) 

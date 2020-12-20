@@ -7,12 +7,11 @@
 #include <arpa/ip_addr.h>
 #include <sys/time.h>
 
-typedef uint32_t socklen_t;
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef uint32_t socklen_t;
 
 /* members are in network byte order */
 struct sockaddr_in {
