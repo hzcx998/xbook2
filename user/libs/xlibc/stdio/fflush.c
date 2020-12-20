@@ -7,8 +7,9 @@
 
 int fflush(FILE * f)
 {
+    if (!f)
+        return EINVAL;
 	if(!f->write)
 		return EINVAL;
-
 	return __stdio_write_flush(f);
 }

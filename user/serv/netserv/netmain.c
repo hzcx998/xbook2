@@ -53,12 +53,10 @@ static void *netserv_thread(void *arg)
     return NULL;
 }
 
-extern void client();
 void network_init(void)
 {
-    printf("network start.\n");
     if (netcard_manager_init() < 0) {
-        printf("init netcard driver failed!\n");
+        printf("netserv: init netcard driver failed!\n");
         abort();
         return;
     }
@@ -73,19 +71,5 @@ void network_init(void)
         //printf("get netpack\n");
         sched_yeild();
     }
-    
-    #if 0
-    pid_t pid = fork();
-    if (pid > 0) {
-        while(1) {
-            ethernetif_input(&lwip_netif);
-            //todo: add your own user code here
-            //printf("get netpack\n");
-            sched_yeild();
-        }
-    } else {
-       client();
-    }
-    #endif
 }
 

@@ -5,9 +5,6 @@
 
 void abort(void)
 {
-    signal(SIGABRT, SIG_UNBLOCK);
-    signal(SIGABRT, SIG_DFL);
-    fflush(NULL);
-    raise(SIGABRT);
-    exit(1);    /* shoult never here. */
+    fflush(stdout);
+    exit(1);
 }
