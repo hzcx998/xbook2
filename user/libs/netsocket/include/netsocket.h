@@ -3,6 +3,8 @@
 
 #include <sys/socket.h>
 
+/* netsocket not posix */
+
 int net_socket(int domain, int type, int protocol);
 int net_bind(int sock, struct sockaddr *my_addr, int addrlen);
 int net_connect(int sock, struct sockaddr *serv_addr, int addrlen);

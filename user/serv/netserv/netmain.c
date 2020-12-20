@@ -67,6 +67,14 @@ void network_init(void)
 
     pthread_t thread;
     pthread_create(&thread, NULL, netserv_thread, NULL);
+    while(1) {
+        ethernetif_input(&lwip_netif);
+        //todo: add your own user code here
+        //printf("get netpack\n");
+        sched_yeild();
+    }
+    
+    #if 0
     pid_t pid = fork();
     if (pid > 0) {
         while(1) {
@@ -78,5 +86,6 @@ void network_init(void)
     } else {
        client();
     }
+    #endif
 }
 
