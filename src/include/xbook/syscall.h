@@ -2,7 +2,6 @@
 #define _XBOOK_SYSCALL_H
 
 #include <stdint.h>
-#include <xbook/plugin.h>
 
 typedef void * syscall_t;
 

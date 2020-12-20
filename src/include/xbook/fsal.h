@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include <xbook/list.h>
 #include <xbook/spinlock.h>
-#include <xbook/plugin.h>
 
 #define FS_MODEL_NAME  "fsal"
 
@@ -61,9 +60,6 @@ extern fsal_t devif;
 extern fsal_t pipeif_rd;
 extern fsal_t pipeif_wr;
 extern fsal_t fifoif;
-#ifdef PLUGIN_NETWORK
-extern fsal_t fsal_netif;
-#endif /* PLUGIN_NETWORK */
 int fsal_init();
 
 #define INVALID_FD_TYPE(fd, type) (!((fd)->flags & type))

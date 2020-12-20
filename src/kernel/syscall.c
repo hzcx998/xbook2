@@ -11,7 +11,6 @@
 #include <xbook/msgqueue.h>
 #include <xbook/walltime.h>
 #include <xbook/account.h>
-#include <xbook/plugin.h>
 #include <xbook/portcomm.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -126,7 +125,6 @@ void syscall_init()
     syscalls[SYS_REPLY_PORT] = sys_port_comm_reply;
     syscalls[SYS_REQUEST_PORT] = sys_port_comm_request;
     syscalls[SYS_SCANDEV] = sys_scandev;
-    plugin_syscall_init();
 }
 
 int syscall_error(uint32_t callno)
