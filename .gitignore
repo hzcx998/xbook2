@@ -66,7 +66,7 @@ develop/local/
 
 develop/rom/bin/
 develop/rom/sbin/
-develop/rom/user/
+develop/rom/usr/
 develop/bochs/
 
 # linux fixdep
