@@ -158,6 +158,7 @@ typedef struct _device_extension {
     */
     uint8_t button_record;      
     int seq;
+    flags_t flags;
 } device_extension_t;
 
 #if USE_THREAD == 1
@@ -384,15 +385,19 @@ iostatus_t mouse_read(device_object_t *device, io_request_t *ioreq)
     return status;
 }
 
-iostatus_t mouse_devctl(device_object_t *device, io_request_t *ioreq)
+static iostatus_t mouse_devctl(device_object_t *device, io_request_t *ioreq)
 {
-    //device_extension_t *extension = device->device_extension;
-
+    device_extension_t *extension = device->device_extension;
     unsigned int ctlcode = ioreq->parame.devctl.code;
     iostatus_t status;
 
-    switch (ctlcode)
-    {
+    switch (ctlcode) {
+    case EVENIO_SETFLG:
+        extension->flags = *(unsigned int *) ioreq->parame.devctl.arg;
+        break;
+    case EVENIO_GETFLG:
+        *(unsigned int *) ioreq->parame.devctl.arg = extension->flags;
+        break;
     default:
         status = IO_FAILED;
         break;
@@ -402,6 +407,7 @@ iostatus_t mouse_devctl(device_object_t *device, io_request_t *ioreq)
     io_complete_request(ioreq);
     return status;
 }
+
 #if USE_THREAD == 1
 /* 用内核线程来处理到达的数据 */
 void mouse_thread(void *arg) {
@@ -441,6 +447,7 @@ static iostatus_t mouse_enter(driver_object_t *driver)
 	devext->raw_data = 0;
     devext->phase = 0;  /* 步骤0 */
     devext->seq = 0;
+    devext->flags = 0;
     input_even_init(&devext->evbuf);
 
     devext->button_record = 0;

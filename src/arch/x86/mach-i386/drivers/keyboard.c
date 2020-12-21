@@ -970,8 +970,6 @@ static int keyboard_handler(irqno_t irq, void *data)
 iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *ext = device->device_extension;
-
-    
     iostatus_t status = IO_SUCCESS;
     
     /* 直接返回读取的数据 */
@@ -980,8 +978,8 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
     /* 参数正确 */
     if (even && ioreq->parame.read.length == sizeof(input_event_t)) {
         
-        if (ext->flags & KBD_NOBLOCK) {
-            if (input_even_get(&ext->evbuf, even)) {
+        if (ext->flags & DEV_NOWAIT) {
+            if (input_even_get(&ext->evbuf, even) < 0) {
                 status = IO_FAILED;
             } else {
                 #ifdef DEBUG_DRV
@@ -993,7 +991,6 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
             while (1) {
                 if (!input_even_get(&ext->evbuf, even))
                     break;
-                   
             }
         }
     } else {
@@ -1028,6 +1025,9 @@ iostatus_t keyboard_devctl(device_object_t *device, io_request_t *ioreq)
         break;
     case EVENIO_SETFLG:
         extension->flags = *(unsigned int *) ioreq->parame.devctl.arg;
+        break;
+    case EVENIO_GETFLG:
+        *(unsigned int *) ioreq->parame.devctl.arg = extension->flags;
         break;
     default:
         status = IO_FAILED;

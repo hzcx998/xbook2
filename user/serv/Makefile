@@ -19,3 +19,4 @@ export AS LD
 
 MODULE      +=  netserv
 MODULE      +=  testserv
+MODULE      +=  xgui

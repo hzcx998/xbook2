@@ -6,6 +6,7 @@
 #include <xbook/driver.h>
 #include <arch/io.h>
 #include <xbook/hardirq.h>
+#include <sys/ioctl.h>
 
 #define DRV_NAME "input-mouse"
 #define DRV_VERSION "0.1"
@@ -66,20 +67,21 @@ typedef struct _device_extension {
     uint8_t button_record;      
     bool has_wheel;             /* device has wheel ? */
     bool device_present;        /* does device exist ? */
-    u8 data_state;              /* mouse data state, index in data table */
-    u8 data[4];                 /* mouse data get from hardware */
+    uint8_t data_state;              /* mouse data state, index in data table */
+    uint8_t data[4];                 /* mouse data get from hardware */
+    flags_t flags;
 } device_extension_t;
 
-static u8 ps2mouse_read_data();
-static void ps2mouse_write_data(u8 data);
+static uint8_t ps2mouse_read_data();
+static void ps2mouse_write_data(uint8_t data);
 static void ps2mouse_prepare_for_output();
 static void ps2mouse_prepare_for_input();
 static void ps2mouse_expect_ack();
 static void ps2mouse_initialize_device(device_extension_t *devext);
 static void ps2mouse_check_device_presence(device_extension_t *devext);
 static void ps2mouse_initialize(device_extension_t *devext);
-static u8 ps2mouse_wait_then_read(u8 port);
-static void ps2mouse_wait_then_write(u8 port, u8 data);
+static uint8_t ps2mouse_wait_then_read(uint8_t port);
+static void ps2mouse_wait_then_write(uint8_t port, uint8_t data);
 
 static void parse_data_packet(device_extension_t *devext)
 {
@@ -240,11 +242,11 @@ static int mouse_handler(irqno_t irq, void *data)
 	/* 先从硬件获取按键数据 */
     while (1)
     {
-        u8 status = in8(I8042_STATUS);
+        uint8_t status = in8(I8042_STATUS);
         if (!(((status & I8042_WHICH_BUFFER) == I8042_MOUSE_BUFFER) && (status & I8042_BUFFER_FULL)))
             return -1;
 
-        u8 data = in8(I8042_BUFFER);
+        uint8_t data = in8(I8042_BUFFER);
         devext->data[devext->data_state] = data;
 
         switch (devext->data_state) {
@@ -274,13 +276,13 @@ static int mouse_handler(irqno_t irq, void *data)
     return 0;
 }
 
-static void ps2mouse_wait_then_write(u8 port, u8 data)
+static void ps2mouse_wait_then_write(uint8_t port, uint8_t data)
 {
     ps2mouse_prepare_for_output();
     out8(port, data);
 }
 
-static u8 ps2mouse_wait_then_read(u8 port)
+static uint8_t ps2mouse_wait_then_read(uint8_t port)
 {
     ps2mouse_prepare_for_input();
     return in8(port);
@@ -300,7 +302,7 @@ static void ps2mouse_initialize(device_extension_t *devext)
 static void ps2mouse_check_device_presence(device_extension_t *devext)
 {
     ps2mouse_write_data(PS2MOUSE_REQUEST_SINGLE_PACKET);
-    u8 maybe_ack = ps2mouse_read_data();
+    uint8_t maybe_ack = ps2mouse_read_data();
     if (maybe_ack == I8042_ACK) {
         devext->device_present = true;
         kprint(PRINT_INFO "ps2mouse: Device detected\n");
@@ -326,7 +328,7 @@ static void ps2mouse_initialize_device(device_extension_t *devext)
 
     // Enable the PS/2 mouse IRQ (12).
     // NOTE: The keyboard uses IRQ 1 (and is enabled by bit 0 in this register).
-    u8 status = ps2mouse_wait_then_read(I8042_BUFFER) | 2;
+    uint8_t status = ps2mouse_wait_then_read(I8042_BUFFER) | 2;
     ps2mouse_wait_then_write(I8042_STATUS, 0x60);
     ps2mouse_wait_then_write(I8042_BUFFER, status);
 
@@ -339,7 +341,7 @@ static void ps2mouse_initialize_device(device_extension_t *devext)
     ps2mouse_expect_ack();
     ps2mouse_write_data(PS2MOUSE_GET_DEVICE_ID);
     ps2mouse_expect_ack();
-    u8 device_id = ps2mouse_read_data();
+    uint8_t device_id = ps2mouse_read_data();
 
     if (device_id != PS2MOUSE_INTELLIMOUSE_ID) {
         // Send magical wheel initiation sequence.
@@ -373,7 +375,7 @@ static void ps2mouse_initialize_device(device_extension_t *devext)
 
 static void ps2mouse_expect_ack()
 {
-    u8 data = ps2mouse_read_data();
+    uint8_t data = ps2mouse_read_data();
     ASSERT(data == I8042_ACK);
 }
 
@@ -395,7 +397,7 @@ static void ps2mouse_prepare_for_output()
     }
 }
 
-static void ps2mouse_write_data(u8 data)
+static void ps2mouse_write_data(uint8_t data)
 {
     ps2mouse_prepare_for_output();
     out8(I8042_STATUS, 0xd4);
@@ -403,10 +405,34 @@ static void ps2mouse_write_data(u8 data)
     out8(I8042_BUFFER, data);
 }
 
-static u8 ps2mouse_read_data()
+static uint8_t ps2mouse_read_data()
 {
     ps2mouse_prepare_for_input();
     return in8(I8042_BUFFER);
+}
+
+
+static iostatus_t mouse_devctl(device_object_t *device, io_request_t *ioreq)
+{
+    device_extension_t *extension = device->device_extension;
+    unsigned int ctlcode = ioreq->parame.devctl.code;
+    iostatus_t status;
+
+    switch (ctlcode) {
+    case EVENIO_SETFLG:
+        extension->flags = *(unsigned int *) ioreq->parame.devctl.arg;
+        break;
+    case EVENIO_GETFLG:
+        *(unsigned int *) ioreq->parame.devctl.arg = extension->flags;
+        break;
+    default:
+        status = IO_FAILED;
+        break;
+    }
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = 0;
+    io_complete_request(ioreq);
+    return status;
 }
 
 static iostatus_t mouse_read(device_object_t *device, io_request_t *ioreq)
@@ -419,14 +445,20 @@ static iostatus_t mouse_read(device_object_t *device, io_request_t *ioreq)
     /* 参数正确 */
     if (ioreq->user_buffer && ioreq->parame.read.length == sizeof(input_event_t)) {
         input_event_t *even = (input_event_t *) ioreq->user_buffer;
-        
-        if (input_even_get(&ext->evbuf, even)) {
-            status = IO_FAILED;
+        if (ext->flags & DEV_NOWAIT) {
+            if (input_even_get(&ext->evbuf, even)) {
+                status = IO_FAILED;
+            } else {
+    #ifdef DEBUG_PS2MOUSE_EVBUF
+            kprint(PRINT_DEBUG "mouse even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
+            kprint(PRINT_DEBUG "mouse even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
+    #endif        
+            }
         } else {
-#ifdef DEBUG_PS2MOUSE_EVBUF
-        kprint(PRINT_DEBUG "mouse even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
-        kprint(PRINT_DEBUG "mouse even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
-#endif        
+            while (1) {
+                if (!input_even_get(&ext->evbuf, even))
+                    break;
+            }
         }
     } else {
         status = IO_FAILED;
@@ -460,7 +492,7 @@ static iostatus_t mouse_enter(driver_object_t *driver)
     input_even_init(&devext->evbuf);
 
     devext->button_record = 0;
-
+    devext->flags = 0;
     ps2mouse_initialize(devext);
 
     if (!devext->device_present) {  /* device not exist! */
@@ -492,6 +524,7 @@ static iostatus_t mouse_driver_func(driver_object_t *driver)
     driver->driver_exit = mouse_exit;
     
     driver->dispatch_function[IOREQ_READ] = mouse_read;
+    driver->dispatch_function[IOREQ_DEVCTL] = mouse_devctl;
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);

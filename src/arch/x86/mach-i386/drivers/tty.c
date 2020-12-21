@@ -352,7 +352,8 @@ static iostatus_t tty_enter(driver_object_t *driver)
         mem_free(public);
         return IO_FAILED;
     }
-
+    int flags = DEV_NOWAIT;
+    device_devctl(kbd, EVENIO_SETFLG, (unsigned long) &flags);
     int i;
     char devname[DEVICE_NAME_LEN] = {0, };
     
