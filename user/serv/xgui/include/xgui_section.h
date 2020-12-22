@@ -23,7 +23,6 @@ xgui_section_t *xgui_section_new(int width, int height);
 int xgui_section_put(xgui_section_t *section);
 
 int xgui_section_fill_rect(xgui_section_t *section, xgui_color_t color);
-
 int xgui_section_init();
 
 #endif /* _XGUI_SECTION_H */

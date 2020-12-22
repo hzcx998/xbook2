@@ -6,6 +6,7 @@
 #include <sys/ioctl.h>
 #include <sys/exception.h>
 #include <sys/sys.h>
+#include <sys/proc.h>
 
 #include "sh.h"
 
@@ -50,6 +51,11 @@ int main(int argc, char *argv[])
     environ = sh_environment;
 
     print_logo();
+
+    /* 启动自行服务 */
+    char *args[2] = {"xguis", NULL};
+    pid = create_process(args, environ, 0);
+
 
     /* 备份标准输入 */
 	while(1){ 

@@ -15,6 +15,9 @@ typedef struct {
 } xgui_screen_t;
 
 int xgui_screen_init();
-void xgui_screen_out_bitmap(int x, int y, xgui_bitmap_t *bitmap);
+void xgui_screen_write_pixel(int x, int y, xgui_color_t color);
+void xgui_screen_write_bitmap(int x, int y, xgui_bitmap_t *bitmap);
+int xgui_screen_get_width();
+int xgui_screen_get_height();
 
 #endif /* _XGUI_SCREEN_H */

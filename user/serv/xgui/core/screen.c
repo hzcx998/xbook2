@@ -81,11 +81,8 @@ int xgui_screen_init()
     return 0;
 }
 
-static void xgui_screen_out_point(int x, int y, xgui_color_t color) 
+void xgui_screen_write_pixel(int x, int y, xgui_color_t color) 
 {
-    if (x < 0 || x >= xgui_screen.width || 
-        y < 0 || y >= xgui_screen.height)
-        return;
     xgui_screen.out_pixel(x, y, color);
 }
 
@@ -95,7 +92,7 @@ static void xgui_screen_out_point(int x, int y, xgui_color_t color)
  * rect: 在矩阵中绘制某个矩形区域
  * matrix: 需要绘制的矩阵
  */
-void xgui_screen_out_bitmap(int x, int y, xgui_bitmap_t *bitmap) 
+void xgui_screen_write_bitmap(int x, int y, xgui_bitmap_t *bitmap) 
 {
     int x0, y0;
     for (y0 = 0; y0 < bitmap->region.h; y0++) {
@@ -103,7 +100,16 @@ void xgui_screen_out_bitmap(int x, int y, xgui_bitmap_t *bitmap)
         for (x0 = 0; x0 < bitmap->region.w; x0++) {
             int martix_x = bitmap->region.x + x0;
             xgui_color_t color = bitmap->colors[martix_y * bitmap->width + martix_x];
-            xgui_screen_out_point(x + martix_x, y + martix_y, color);
+            xgui_screen_write_pixel(x + martix_x, y + martix_y, color);
         }
     }
+}
+int xgui_screen_get_width()
+{
+    return xgui_screen.width;
+}
+
+int xgui_screen_get_height()
+{
+    return xgui_screen.height;
 }
