@@ -4,7 +4,6 @@
 #include <sys/input.h>
 #include <unistd.h>
 #include "xgui_hal.h"
-
 #ifndef   DEV_NAME
 #define   DEV_NAME  "mouse"
 #endif

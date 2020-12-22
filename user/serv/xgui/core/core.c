@@ -1,4 +1,5 @@
 #include "xgui_hal.h"
+#include "xgui_view.h"
 #include "xgui.h"
 
 int xgui_init()
@@ -12,12 +13,11 @@ int xgui_init()
     if (xgui_keyboard_init() < 0) {
         return -1;
     }
-    int x, y;
-    for (y = 0; y < 600; y++) {
-        for (x = 0; x < 800; x++) {
-            xgui_draw_point(x, y, 0xffffff);
-        }
-    }
+    
+    xgui_section_init();
+    
+    xgui_view_init();
+
     return 0;
 }
 

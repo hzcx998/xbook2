@@ -1,8 +1,8 @@
-#include <xgui_hal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include "xgui_hal.h"
 
 static xgui_keyboard_t xgui_keyboard;
 

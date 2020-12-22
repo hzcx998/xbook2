@@ -142,6 +142,7 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
     shm = share_mem_find_by_id(shmid);
     semaphore_up(&share_mem_mutex);
     if (shm == NULL) {
+        errprint("shm %d not fouded!" endl, shmid);
         return (void *) -1;
     }   
     task_t *cur = task_current;
@@ -149,8 +150,9 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
     unsigned long len = shm->npages * PAGE_SIZE;
     if (shmaddr == NULL) {
         addr = mem_space_get_unmaped(cur->vmm, shm->npages * PAGE_SIZE);
-        if (addr == -1)
+        if (addr == -1) {
             return (void *) -1;
+        }
         if (addr < cur->vmm->map_start || 
             addr + len >= cur->vmm->map_end)
             return (void *) -1;
@@ -280,8 +282,6 @@ int sys_shmem_put(int shmid)
 
 void *sys_shmem_map(int shmid, void *shmaddr, int shmflg)
 {
-    if (mem_copy_from_user(NULL, shmaddr, PAGE_SIZE) < 0)
-        return (void *) -1;
     return share_mem_map(shmid, shmaddr, shmflg);
 }
 

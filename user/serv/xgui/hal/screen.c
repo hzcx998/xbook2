@@ -5,7 +5,7 @@
 #include <sys/ioctl.h>
 #include <sys/vmm.h>
 
-#include <xgui_hal.h>
+#include "xgui_hal.h"
 
 #define XGUI_DEBUG
 
