@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-static xgui_screen_t xgui_screen;
+xgui_screen_t xgui_screen;
 
 static int screen_out_pixel8(int x, int y, xgui_color_t color)
 {
@@ -103,13 +103,4 @@ void xgui_screen_write_bitmap(int x, int y, xgui_bitmap_t *bitmap)
             xgui_screen_write_pixel(x + martix_x, y + martix_y, color);
         }
     }
-}
-int xgui_screen_get_width()
-{
-    return xgui_screen.width;
-}
-
-int xgui_screen_get_height()
-{
-    return xgui_screen.height;
 }

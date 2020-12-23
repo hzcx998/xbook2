@@ -16,6 +16,8 @@ static int keyboard_key_down(int code)
         xgui_view_move_to_top(xgui_view_get_bottom());
     } else if (code == KEY_R || code == KEY_r) {
         xgui_view_move_under_top(xgui_view_get_bottom());
+    } else if (code == KEY_W || code == KEY_w) {
+        xgui_view_hide(xgui_view_get_top());
     }
 
     return 0;

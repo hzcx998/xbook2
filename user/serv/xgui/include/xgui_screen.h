@@ -14,10 +14,10 @@ typedef struct {
     int (*out_pixel)(int x, int y, xgui_color_t color);
 } xgui_screen_t;
 
+extern xgui_screen_t xgui_screen;
+
 int xgui_screen_init();
 void xgui_screen_write_pixel(int x, int y, xgui_color_t color);
 void xgui_screen_write_bitmap(int x, int y, xgui_bitmap_t *bitmap);
-int xgui_screen_get_width();
-int xgui_screen_get_height();
 
 #endif /* _XGUI_SCREEN_H */
