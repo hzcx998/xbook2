@@ -1,6 +1,8 @@
 #ifndef _XGUI_BITMAP_H
 #define _XGUI_BITMAP_H
 
+/* 属于客户端API部分 */
+
 #include "xgui_color.h"
 
 typedef struct {

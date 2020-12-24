@@ -5,6 +5,7 @@ NAME		:= xguis
 SRC			+= main.c
 SRC			+= hal/*.c
 SRC			+= core/*.c
+SRC			+= api/*.c
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \
