@@ -11,3 +11,6 @@ MODULE		:= xlibc
 MODULE		+= xlibcpp
 MODULE		+= pthread
 MODULE		+= netsocket
+MODULE		+= zlib
+MODULE		+= libpng
+MODULE		+= jpeg

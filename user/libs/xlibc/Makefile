@@ -9,4 +9,4 @@ SRC			+= syslib/syscall.asm
 SRC			+= gcc/*.c
 
 TARGET_TYPE	:= static
-NAME		:= xlibc-0.0.1
+NAME		:= xlibc

@@ -1,6 +1,7 @@
 #include "xgui_hal.h"
 #include "xgui_view.h"
-#include "xgui.h"
+#include "xgui_core.h"
+#include <xgui_dotfont.h>
 
 int xgui_init()
 {
@@ -13,8 +14,12 @@ int xgui_init()
     if (xgui_keyboard_init() < 0) {
         return -1;
     }
-    
+
     xgui_section_init();
+    
+    if (xgui_dotfont_init() < 0) {
+        return -1;
+    }
     
     xgui_view_init();
 
@@ -27,5 +32,4 @@ int xgui_loop()
         xgui_mouse_poll();
         xgui_keyboard_poll();
     }
-    
 }

@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibcpp-0.0.1.a libxlibc-0.0.1.a
+X_LIBS		+= libxlibcpp-0.0.1.a libxlibc.a
 
 X_CXXFLAGS  := -fno-builtin -Wall -fno-PIE -m32 -fno-stack-protector -std=c++98
 CXX 		:= g++

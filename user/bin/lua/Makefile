@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibc-0.0.1.a
+X_LIBS		+= libxlibc.a
 
 NAME		:= lua
 SRC			+= lua-5.4.0/*.c

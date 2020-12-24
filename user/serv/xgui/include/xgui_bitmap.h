@@ -43,4 +43,18 @@ void xgui_bitmap_rect(xgui_bitmap_t *bmp, int x, int y, uint32_t width, uint32_t
 void xgui_bitmap_rectfill(xgui_bitmap_t *bmp, int x, int y, uint32_t width, uint32_t height, xgui_color_t color);
 void xgui_bitmap_clear(xgui_bitmap_t *bmp);
 
+void xgui_bitmap_char(
+        xgui_bitmap_t *bmp, 
+        int x,
+        int y,
+        char ch,
+        xgui_color_t color);
+
+void xgui_bitmap_text(
+    xgui_bitmap_t *bmp, 
+    int x,
+    int y,
+    char *text,
+    xgui_color_t color);
+
 #endif /* _XGUI_BITMAP_H */

@@ -2,6 +2,7 @@
 #include "xgui_view.h"
 #include "xgui_misc.h"
 #include "xgui_bitmap.h"
+#include <xgui_dotfont.h>
 #include <math.h>
 
 int xgui_graph_putpixel(xgui_view_t *view, int x, int y, xgui_color_t color)
@@ -229,5 +230,79 @@ void xgui_graph_bitcopy(xgui_view_t *view, int x, int y,
             if (((color >> 24) & 0xff))
                 xgui_graph_putpixel(view, x + i, y + j, color);
         }
+    }
+}
+
+void xgui_graph_char(
+        xgui_view_t *view, 
+        int x,
+        int y,
+        char ch,
+        xgui_color_t color)
+{
+    if (!view)
+        return;
+    if (!view->section)
+        return;
+    xgui_dotfont_t *font = xgui_dotfont_current();
+    if (!font)
+        return;
+    if (!font->addr)
+        return;
+    uint8_t *data = font->addr + ch * font->char_height;
+    unsigned int i;
+	uint8_t d /* data */;
+	for (i = 0; i < 16; i++) {
+		d = data[i];
+		if ((d & 0x80) != 0)
+            xgui_graph_putpixel(view, x + 0, y + i, color);
+		if ((d & 0x40) != 0)
+            xgui_graph_putpixel(view, x + 1, y + i, color);
+		if ((d & 0x20) != 0)
+             xgui_graph_putpixel(view, x + 2, y + i, color);
+		if ((d & 0x10) != 0)
+            xgui_graph_putpixel(view, x + 3, y + i, color);
+		if ((d & 0x08) != 0)
+            xgui_graph_putpixel(view, x + 4, y + i, color);
+		if ((d & 0x04) != 0)
+            xgui_graph_putpixel(view, x + 5, y + i, color);
+		if ((d & 0x02) != 0)
+            xgui_graph_putpixel(view, x + 6, y + i, color);
+		if ((d & 0x01) != 0)
+            xgui_graph_putpixel(view, x + 7, y + i, color);
+	}
+}
+
+void xgui_graph_text(
+    xgui_view_t *view, 
+    int x,
+    int y,
+    char *text,
+    xgui_color_t color)
+{
+    if (!view)
+        return;
+    if (!view->section)
+        return;
+    int cur_x = x;
+    int cur_y = y;
+    xgui_dotfont_t *font = xgui_dotfont_current();
+    while (*text) {
+        switch (*text) {
+        case '\n':
+            cur_x = x;
+            cur_y += font->char_height;
+            break;
+        case '\b':
+            cur_x -= font->char_width;
+            if (cur_x < x)
+                cur_x = x;
+            break;
+        default:
+            xgui_graph_char(view, cur_x, cur_y, *text, color);
+            cur_x += 8;
+            break;
+        }
+        text++;
     }
 }

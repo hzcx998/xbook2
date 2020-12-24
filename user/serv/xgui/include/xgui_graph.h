@@ -20,5 +20,18 @@ void xgui_graph_rectfill(xgui_view_t *view, int x, int y, uint32_t width, uint32
         xgui_graph_rectfill(view, 0, 0, (view)->width, (view)->height, color)
 void xgui_graph_bitcopy(xgui_view_t *view, int x, int y, 
         xgui_bitmap_t *bmp, int bx, int by, int width, int height);
-
+void xgui_graph_char(
+        xgui_view_t *view, 
+        int x,
+        int y,
+        char ch,
+        xgui_color_t color);
+        
+void xgui_graph_text(
+    xgui_view_t *view, 
+    int x,
+    int y,
+    char *text,
+    xgui_color_t color);
+    
 #endif /* _XGUI_GRAPH_H */
