@@ -18,6 +18,5 @@ extern xgui_screen_t xgui_screen;
 
 int xgui_screen_init();
 void xgui_screen_write_pixel(int x, int y, xgui_color_t color);
-void xgui_screen_write_bitmap(int x, int y, xgui_bitmap_t *bitmap);
 
 #endif /* _XGUI_SCREEN_H */

@@ -145,6 +145,7 @@
         "xlocale": "c",
         "xiosbase": "cpp",
         "xstring": "cpp",
-        "xlocnum": "c"
+        "xlocnum": "c",
+        "cmath": "c"
     }
 }
