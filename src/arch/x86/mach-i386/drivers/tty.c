@@ -327,7 +327,11 @@ void tty_thread(void *arg)
                 default:
                     break;
                 }
+            } else {
+                task_yeild();
             }
+        } else {
+            task_yeild();
         }
     }
 }

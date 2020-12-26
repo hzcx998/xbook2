@@ -25,7 +25,6 @@ int xgui_init()
 
     return 0;
 }
-
 int xgui_loop()
 {
     while (1) {
