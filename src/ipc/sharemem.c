@@ -169,6 +169,7 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
         }
         shmaddr = mem_space_mmap(addr, shm->page_addr, shm->npages * PAGE_SIZE,
             PROT_USER | PROT_WRITE, flags);
+        
     } else {
         unsigned long vaddr;
         if (shmflg & IPC_RND)
@@ -188,7 +189,7 @@ void *share_mem_map(int shmid, void *shmaddr, int shmflg)
     return shmaddr;
 }
 
-int share_hal_memio_unmap(const void *shmaddr, int shmflg)
+int share_mem_unmap(const void *shmaddr, int shmflg)
 {
     if (!shmaddr) {
         return -1;
@@ -201,13 +202,14 @@ int share_hal_memio_unmap(const void *shmaddr, int shmflg)
         addr = (unsigned long) shmaddr;
     mem_space_t *sp = mem_space_find(cur->vmm, addr);
     if (sp == NULL) {
-        kprint(PRINT_DEBUG "share_hal_memio_unmap: not fond space\n");
+        kprint(PRINT_DEBUG "share_mem_unmap: not fond space\n");
         return -1;
     }
     addr = addr_vir2phy(addr);
     semaphore_down(&share_mem_mutex);
     share_mem_t *shm = share_mem_find_by_addr(addr);
     semaphore_up(&share_mem_mutex);
+    
     int retval = 0;
     if (!(shm->flags & SHARE_MEM_PRIVATE)) {
         retval = do_mem_space_unmap(cur->vmm, sp->start, sp->end - sp->start);
@@ -217,7 +219,7 @@ int share_hal_memio_unmap(const void *shmaddr, int shmflg)
             atomic_dec(&shm->links);
         }
     } else {
-        kprint(PRINT_ERR "share_hal_memio_unmap: do unmap at %x failed!\n", addr);
+        kprint(PRINT_ERR "share_mem_unmap: do unmap at %x failed!\n", addr);
     }
     return retval;
 }
@@ -285,11 +287,11 @@ void *sys_shmem_map(int shmid, void *shmaddr, int shmflg)
     return share_mem_map(shmid, shmaddr, shmflg);
 }
 
-int sys_shhal_memio_unmap(const void *shmaddr, int shmflg)
+int sys_shmem_unmap(const void *shmaddr, int shmflg)
 {
-    if (mem_copy_from_user(NULL, (void *)shmaddr, PAGE_SIZE) < 0)
-        return -EINVAL;
-    return share_hal_memio_unmap(shmaddr, shmflg);
+    /*if (mem_copy_from_user(NULL, (void *)shmaddr, PAGE_SIZE) < 0)
+        return -EINVAL;*/
+    return share_mem_unmap(shmaddr, shmflg);
 }
 
 void share_mem_init()

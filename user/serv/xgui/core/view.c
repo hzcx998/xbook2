@@ -11,8 +11,9 @@ static LIST_HEAD(view_show_list_head);
 static LIST_HEAD(view_global_list_head);
 static uint16_t *view_id_map;
 static int view_top_z = -1;    
+static int view_next_id = 0;    
 
-xgui_view_t *xgui_view_new(int x, int y, int width, int height)
+xgui_view_t *xgui_view_create(int x, int y, int width, int height)
 {
     xgui_view_t *view = malloc(sizeof(xgui_view_t));
     if (view == NULL) {
@@ -27,6 +28,7 @@ xgui_view_t *xgui_view_new(int x, int y, int width, int height)
     }
     view->x = x;
     view->y = y;
+    view->id = view_next_id++;
     view->z = -1;
     view->width = width;
     view->height = height;
@@ -35,12 +37,23 @@ xgui_view_t *xgui_view_new(int x, int y, int width, int height)
     return view;
 }
 
-int xgui_view_put(xgui_view_t *view)
+xgui_view_t *xgui_view_find_by_id(int id)
+{
+    xgui_view_t *view;
+    list_for_each_owner (view, &view_global_list_head, global_list) {
+        if (view->id == id)
+            return view;
+    }
+    return NULL;
+}
+
+int xgui_view_destroy(xgui_view_t *view)
 {
     if (!view)
         return -1;
-    if (xgui_section_put(view->section) < 0)
+    if (xgui_section_put(view->section) < 0) {
         return -1;
+    }
     if (list_find(&view->list, &view_show_list_head))
         list_del_init(&view->list);
     list_del_init(&view->global_list);
@@ -65,10 +78,10 @@ static void xgui_view_refresh_map(int left, int top, int right, int buttom, int 
     
     xgui_view_t *view;
     xgui_color_t *colors;
-    int z = 0;
+
     /* 刷新高度为[z0-top]区间的视图 */
     list_for_each_owner (view, &view_show_list_head, list) {
-        if (z >= z0) {
+        if (view->z >= z0) {
             view_left = left - view->x;
             xgui_view_top = top - view->y;
             view_right = right - view->x;
@@ -96,12 +109,11 @@ static void xgui_view_refresh_map(int left, int top, int right, int buttom, int 
                         break;
                        /* 不是全透明的，就把视图标识写入到映射表中 */
                     if ((colors[view_y * view->width + view_x] >> 24) & 0xff) {
-                        view_id_map[(screen_y * xgui_screen.width + screen_x)] = z;
+                        view_id_map[(screen_y * xgui_screen.width + screen_x)] = view->z;
                     }
                 }
             }
         }
-        z++;
     }
 }
 
@@ -179,10 +191,11 @@ static void __xgui_view_hiden_by_z(xgui_view_t *view, int z)
     }
     /* 由于隐藏了一个视图，那么，视图顶层的高度就需要减1 */
     view_top_z--;
+    view->z = -1;  /* 隐藏视图后，高度变为-1 */
     /* 刷新视图, [0, view->z - 1] */
     xgui_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, 0);
     xgui_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, 0, old_z - 1);
-    view->z = -1;  /* 隐藏视图后，高度变为-1 */
+    
 }
 
 static void __xgui_view_show_by_z(xgui_view_t *view, int z)
@@ -300,6 +313,15 @@ int xgui_view_hide(xgui_view_t *view)
     return 0;
 }
 
+int xgui_view_show(xgui_view_t *view)
+{
+    if (!view)
+        return -1;
+    xgui_view_move_under_top(view);
+    return 0;
+}
+
+
 int xgui_view_set_xy(xgui_view_t *view, int x, int y)
 {
     if (!view)
@@ -348,12 +370,11 @@ void xgui_refresh_view_by_z(int left, int top, int right, int buttom, int z0, in
     int vx, vy;
     int sx, sy;
     
-    int z = 0;
     xgui_color_t color;
     xgui_color_t *buf;
     xgui_view_t *view;
     list_for_each_owner (view, &view_show_list_head, list) {
-        if (z >= z0 && z <= z1) {
+        if (view->z >= z0 && view->z <= z1) {
             view_left = left - view->x;
             xgui_view_top = top - view->y;
             view_right = right - view->x;
@@ -370,7 +391,7 @@ void xgui_refresh_view_by_z(int left, int top, int right, int buttom, int z0, in
                 sy = view->y + vy;
                 for (vx = view_left; vx < view_right; vx++) {
                     sx = view->x + vx;
-                    if (view_id_map[sy * xgui_screen.width + sx] == z) {
+                    if (view_id_map[sy * xgui_screen.width + sx] == view->z) {
                         buf = (xgui_color_t *)view->section->addr;
                         color = buf[vy * view->width + vx];
                         xgui_screen_write_pixel(sx, sy, color);
@@ -378,7 +399,6 @@ void xgui_refresh_view_by_z(int left, int top, int right, int buttom, int z0, in
                 }
             }
         }
-        z++;
     }
 }
 

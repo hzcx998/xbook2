@@ -32,7 +32,7 @@ int share_mem_get(char *name, unsigned long size, unsigned long flags);
 int share_mem_put(int shmid);
 
 void *share_mem_map(int shmid, void *shmaddr, int shmflg);
-int share_hal_memio_unmap(const void *shmaddr, int shmflg);
+int share_mem_unmap(const void *shmaddr, int shmflg);
 
 void share_mem_init();
 int share_mem_inc(int shmid);
@@ -42,6 +42,6 @@ share_mem_t *share_mem_find_by_addr(addr_t addr);
 int sys_shmem_get(char *name, unsigned long size, unsigned long flags);
 int sys_shmem_put(int shmid);
 void *sys_shmem_map(int shmid, void *shmaddr, int shmflg);
-int sys_shhal_memio_unmap(const void *shmaddr, int shmflg);
+int sys_shmem_unmap(const void *shmaddr, int shmflg);
 
 #endif   /* _XBOOK_SHAREMEM_H */

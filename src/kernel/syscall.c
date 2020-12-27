@@ -96,7 +96,7 @@ void syscall_init()
     syscalls[SYS_SHMGET] = sys_shmem_get;
     syscalls[SYS_SHMPUT] = sys_shmem_put;
     syscalls[SYS_SHMMAP] = sys_shmem_map;
-    syscalls[SYS_SHMUNMAP] = sys_shhal_memio_unmap;
+    syscalls[SYS_SHMUNMAP] = sys_shmem_unmap;
     syscalls[SYS_SEMGET] = sys_sem_get;
     syscalls[SYS_SEMPUT] = sys_sem_put;
     syscalls[SYS_SEMDOWN] = sys_sem_down;

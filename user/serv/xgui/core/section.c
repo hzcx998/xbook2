@@ -62,7 +62,6 @@ int xgui_section_put(xgui_section_t *section)
     if (!section)
         return -1;
     if (xgui_section_close(section) < 0) {
-        printf("close section failed!\n");
         return -1;
     }
     xgui_section_free(section);

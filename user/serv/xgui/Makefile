@@ -1,11 +1,10 @@
-X_LIBS		+= libxlibc.a libpthread.a libpng.a libzlib.a libjpeg.a
+X_LIBS		+= libxlibc.a libpthread.a libpng.a libzlib.a libjpeg.a libxgui.a
 
 X_INCDIRS	+= xgui/include
 NAME		:= xguis
 SRC			+= main.c
 SRC			+= hal/*.c
 SRC			+= core/*.c
-SRC			+= api/*.c
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

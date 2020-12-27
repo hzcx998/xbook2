@@ -1,7 +1,7 @@
 #ifndef _XGUI_SCREEN_H
 #define _XGUI_SCREEN_H
 
-#include "xgui_color.h"
+#include <xgui_color.h>
 #include "xgui_view.h"
 #include "xgui_misc.h"
 

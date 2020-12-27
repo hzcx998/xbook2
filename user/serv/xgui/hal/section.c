@@ -12,7 +12,7 @@ int xgui_section_open(xgui_section_t *section)
     if (section->handle < 0) {
         return -1;
     }
-    section->addr = shmmap(section->handle, NULL, 0);
+    section->addr = shmmap(section->handle, NULL, IPC_RND);
     if (section->addr == (void *)-1) {
         shmput(section->handle);
         return -1;
@@ -24,7 +24,7 @@ int xgui_section_close(xgui_section_t *section)
 {
     if (section->handle < 0 || !section->addr)
         return -1;
-    shmunmap(section->addr, 0);
+    shmunmap(section->addr, IPC_RND);
     shmput(section->handle);
     return 0;
 }

@@ -50,6 +50,7 @@ int signal_test(int argc, char *argv[]);
 int proc_test(int argc, char *argv[]);
 
 int port_comm_test(int argc, char *argv[]);
+int gui_test(int argc, char *argv[]);
 
 static inline void sys_err(char *str)
 {

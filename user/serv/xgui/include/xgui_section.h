@@ -2,7 +2,7 @@
 #define _XGUI_SECTION_H
 
 #include <stddef.h>
-#include "xgui_color.h"
+#include <xgui_color.h>
 
 #define XGUI_SECTION_NR 32
 

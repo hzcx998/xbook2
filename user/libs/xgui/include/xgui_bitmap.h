@@ -3,7 +3,7 @@
 
 /* 属于客户端API部分 */
 
-#include "xgui_color.h"
+#include <xgui_color.h>
 
 typedef struct {
     unsigned int width;

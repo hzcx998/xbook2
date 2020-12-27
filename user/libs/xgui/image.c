@@ -295,7 +295,7 @@ unsigned char *xgui_load_jpg_image(const char *filename, int *width, int *height
         unsigned char *p = buf1[0];
         for (x = 0; x < dinfo.output_width; x++)
         {
-            unsigned char r, g, b, a = 255;
+            unsigned char r = 0, g = 0, b = 0, a = 255;
             uint32_t color;
             if (dinfo.output_components == 3)
             {

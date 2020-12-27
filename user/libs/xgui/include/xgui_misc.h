@@ -1,8 +1,6 @@
 #ifndef _XGUI_MISC_H
 #define _XGUI_MISC_H
 
-#include "xgui_color.h"
-
 typedef struct {
     int left;
     int right;

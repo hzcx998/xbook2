@@ -14,3 +14,4 @@ MODULE		+= netsocket
 MODULE		+= zlib
 MODULE		+= libpng
 MODULE		+= jpeg
+MODULE		+= xgui

@@ -33,6 +33,10 @@ void mem_space_insert(vmm_t *vmm, mem_space_t *space)
     else
         vmm->mem_space_head = (void *)space;
     space->vmm = vmm;
+    /* 共享内存不进行合并处理 */
+    if (space->flags & MEM_SPACE_MAP_SHARED) {
+        return;
+    }
     /* merge prev and space */
     if (prev != NULL && prev->end == space->start) {
         if (prev->page_prot == space->page_prot && prev->flags == space->flags) {
