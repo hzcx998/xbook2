@@ -116,6 +116,12 @@ int port_comm_vertify(int port, port_comm_t **out_port_comm, task_t *task)
     return 0;
 }
 
+static void msgpool_get_callback(msgpool_t *pool, void *buf)
+{
+    port_msg_header_t *mhead = (port_msg_header_t *)pool->tail;
+    memcpy(buf, pool->tail, min(mhead->size, pool->msgsz));   /* copy data */
+}
+
 /**
  * 绑定时检测端口是否已经占用，并分配一个可用端口
  */
@@ -208,13 +214,13 @@ int sys_port_comm_request(uint32_t port, port_msg_t *msg)
     msg->header.id = msgid;
     msg->header.port = myport_comm->my_port;
     /* 往端口发出请求 */
-    if (msgpool_put(port_comm->msgpool, msg) < 0) {
+    if (msgpool_put(port_comm->msgpool, msg, msg->header.size) < 0) {
         errprint("port request: msg put to %d failed!\n", port);
         return -EPERM;
     }
     /* 尝试获取消息，如果获取无果，就yeild来降低cpu占用 */
     int try_count = 0;
-    while (msgpool_try_get(myport_comm->msgpool, msg) < 0){
+    while (msgpool_try_get(myport_comm->msgpool, msg, msgpool_get_callback) < 0){
         // 如果有异常产生，则返回中断错误号
         if (exception_cause_exit(&task_current->exception_manager)) {
             noteprint("port_comm receive: port %d interrupt by exception!\n", myport_comm->my_port);
@@ -245,7 +251,7 @@ int sys_port_comm_receive(int port, port_msg_t *msg)
         return -EPERM;
     int try_count = 0;
     /* 尝试获取消息，如果获取无果，就yeild来降低cpu占用 */
-    while (msgpool_try_get(port_comm->msgpool, msg) < 0){
+    while (msgpool_try_get(port_comm->msgpool, msg, msgpool_get_callback) < 0){
         // 如果有异常产生，则返回中断错误号
         if (exception_cause_exit(&task_current->exception_manager)) {
             noteprint("port_comm receive: port %d interrupt by exception!\n", port);
@@ -272,7 +278,7 @@ int sys_port_comm_reply(int port, port_msg_t *msg)
         return -EPERM;
     if (!client_port->msgpool)
         return -EPERM;
-    return msgpool_put(client_port->msgpool, msg);
+    return msgpool_put(client_port->msgpool, msg, msg->header.size);
 }
 
 void port_comm_thread(void *arg)

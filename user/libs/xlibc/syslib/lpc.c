@@ -341,7 +341,6 @@ int lpc_call(uint32_t port, uint32_t code, lpc_parcel_t data, lpc_parcel_t reply
     // 计算请求头大小
     msg->header.size = sizeof(port_msg_header_t);
     msg->header.size += msglen;
-    
     if (request_port(port, msg) < 0) {
         return -1;
     }
