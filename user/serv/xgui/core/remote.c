@@ -7,7 +7,7 @@
 
 #include "xgui_view.h"
 
-#include "xgui_graph.h"
+#include "xgui_vrender.h"
 
 bool remote_xgui_view_create(lpc_parcel_t data, lpc_parcel_t reply)
 {
@@ -21,7 +21,7 @@ bool remote_xgui_view_create(lpc_parcel_t data, lpc_parcel_t reply)
         lpc_parcel_write_int(reply, -EPERM);
         return false;
     }
-    server_xgui_render_rectfill(view, 0, 0, view->width, view->height, XGUI_WHITE);
+    xgui_vrender_rectfill(view, 0, 0, view->width, view->height, XGUI_WHITE);
     lpc_parcel_write_int(reply, view->id);
     lpc_parcel_write_int(reply, view->section->handle);
     return true;    

@@ -112,14 +112,14 @@ int lpc_parcel_write_string(lpc_parcel_t parcel, char *str)
     if (i < 0)
         return -1;
     int len = strlen(str);
-    int nextpos = parcel->header.nextpos + len + 1;
-    if (nextpos >= LPC_PARCEL_BUF_SIZE)
+    int size = parcel->header.size + len + 1;
+    if (size >= LPC_PARCEL_BUF_SIZE)
         return -1; // no free space
-    lpc_parcel_set_arg(parcel, i, parcel->header.nextpos, len + 1, LPC_PARCEL_ARG_STRING);
-    char *buf = (char *) &parcel->data[parcel->header.nextpos];
+    lpc_parcel_set_arg(parcel, i, parcel->header.size, len + 1, LPC_PARCEL_ARG_STRING);
+    char *buf = (char *) &parcel->data[parcel->header.size];
     memcpy(buf, str, len);
     buf[len] = '\0'; // 末尾追加0
-    parcel->header.nextpos = nextpos;
+    parcel->header.size = size;
     return 0;
 }
 
@@ -128,15 +128,15 @@ int lpc_parcel_write_sequence(lpc_parcel_t parcel, void *buf, size_t len)
     int i = lpc_parcel_alloc_arg_solt(parcel);
     if (i < 0)
         return -1;
-    int nextpos = parcel->header.nextpos + len + 1;
-    if (nextpos >= LPC_PARCEL_BUF_SIZE)
+    int size = parcel->header.size + len + 1;
+    if (size >= LPC_PARCEL_BUF_SIZE)
         return -1; // no free space
-    lpc_parcel_set_arg(parcel, i, parcel->header.nextpos, len, LPC_PARCEL_ARG_SEQUENCE);
-    uint8_t *pbuf = (uint8_t *) &parcel->data[parcel->header.nextpos];
+    lpc_parcel_set_arg(parcel, i, parcel->header.size, len, LPC_PARCEL_ARG_SEQUENCE);
+    uint8_t *pbuf = (uint8_t *) &parcel->data[parcel->header.size];
     if (buf)
         memcpy(pbuf, buf, len);
     pbuf[len] = '\0'; // 末尾追加0
-    parcel->header.nextpos = nextpos;
+    parcel->header.size = size;
     return 0;
 }
 
@@ -297,15 +297,19 @@ int lpc_echo(uint32_t port, lpc_handler_t func)
         /* process msg */
         bool result = false;
         lpc_parcel_t recv_parcel = (lpc_parcel_t) msg_recv->data;
+        lpc_parcel_t reply_parcel = (lpc_parcel_t) msg_reply->data;
         if (func)
             result = func(
                         recv_parcel->code,
                         recv_parcel,
-                        (lpc_parcel_t) msg_reply->data);
+                        reply_parcel);
         if (!result) {
             printf("do serv func failed!\n");
         }
         port_msg_copy_header(msg_recv, msg_reply);
+        // 计算应答头大小
+        msg_reply->header.size = sizeof(_lpc_parcel_t) + reply_parcel->header.size;
+        msg_reply->header.size += sizeof(port_msg_header_t); 
         if (reply_port(port, msg_reply) < 0) {
             printf("reply port failed!\n");
         }
@@ -332,11 +336,18 @@ int lpc_call(uint32_t port, uint32_t code, lpc_parcel_t data, lpc_parcel_t reply
     }
     port_msg_reset(msg);
     data->code = code;
-    memcpy(msg->data, data, PORT_MSG_SIZE);
+    int msglen = sizeof(_lpc_parcel_t) + data->header.size;
+    memcpy(msg->data, data, msglen);
+    // 计算请求头大小
+    msg->header.size = sizeof(port_msg_header_t);
+    msg->header.size += msglen;
+    
     if (request_port(port, msg) < 0) {
         return -1;
     }
-    if (reply)
-        memcpy(reply, msg->data, PORT_MSG_SIZE);
+    if (reply) {
+        lpc_parcel_t reply_ = (lpc_parcel_t) msg->data;
+        memcpy(reply, msg->data, sizeof(_lpc_parcel_t) + reply_->header.size);
+    }
     return 0;
 }

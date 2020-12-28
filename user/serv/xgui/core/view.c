@@ -1,7 +1,7 @@
 #include "xgui_view.h"
 #include "xgui_hal.h"
 #include "xgui_misc.h"
-#include "xgui_graph.h"
+#include "xgui_vrender.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>

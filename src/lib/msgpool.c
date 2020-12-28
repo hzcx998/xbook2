@@ -47,7 +47,6 @@ int msgpool_put(msgpool_t *pool, void *buf)
     mutex_lock(&pool->mutex);
     if (msgpool_full(pool)) {
         wait_queue_add(&pool->waiters, task_current);
-        
         mutex_unlock(&pool->mutex);
         task_block(TASK_BLOCKED);
         mutex_lock(&pool->mutex);

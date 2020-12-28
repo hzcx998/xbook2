@@ -5,7 +5,7 @@
 #include <xgui_dotfont.h>
 #include <math.h>
 
-int server_xgui_render_putpixel(xgui_view_t *view, int x, int y, xgui_color_t color)
+int xgui_vrender_putpixel(xgui_view_t *view, int x, int y, xgui_color_t color)
 {
     if (!view)
         return -1;
@@ -19,7 +19,7 @@ int server_xgui_render_putpixel(xgui_view_t *view, int x, int y, xgui_color_t co
     return 0;
 }
 
-int server_xgui_render_getpixel(xgui_view_t *view, int x, int y, xgui_color_t *color)
+int xgui_vrender_getpixel(xgui_view_t *view, int x, int y, xgui_color_t *color)
 {
     if (!view)
         return -1;
@@ -33,7 +33,7 @@ int server_xgui_render_getpixel(xgui_view_t *view, int x, int y, xgui_color_t *c
     return 0;
 }
 
-void server_xgui_render_clear(xgui_view_t *view)
+void xgui_vrender_clear(xgui_view_t *view)
 {
     if (!view)
         return;
@@ -48,7 +48,7 @@ void server_xgui_render_clear(xgui_view_t *view)
     }
 }
 
-void server_xgui_render_vline(xgui_view_t *view, int x, int y1, int y2, xgui_color_t color)
+void xgui_vrender_vline(xgui_view_t *view, int x, int y1, int y2, xgui_color_t color)
 {
     if (!view)
         return;
@@ -74,7 +74,7 @@ void server_xgui_render_vline(xgui_view_t *view, int x, int y1, int y2, xgui_col
     }
 }
 
-void server_xgui_render_hline(xgui_view_t *view, int x1, int y, int x2, xgui_color_t color)
+void xgui_vrender_hline(xgui_view_t *view, int x1, int y, int x2, xgui_color_t color)
 {
     if (!view)
         return;
@@ -100,7 +100,7 @@ void server_xgui_render_hline(xgui_view_t *view, int x1, int y, int x2, xgui_col
 
 }
 
-void server_xgui_render_line(xgui_view_t *view, int x1, int y1, int x2, int y2, xgui_color_t color)
+void xgui_vrender_line(xgui_view_t *view, int x1, int y1, int x2, int y2, xgui_color_t color)
 {
     if (!view)
         return;
@@ -108,15 +108,15 @@ void server_xgui_render_line(xgui_view_t *view, int x1, int y1, int x2, int y2, 
         return;
     if (x1 == x2) { /* 垂直的线 */
         if (y1 < y2) 
-            server_xgui_render_vline(view, x1, y1, y2, color);
+            xgui_vrender_vline(view, x1, y1, y2, color);
         else 
-            server_xgui_render_vline(view, x1, y2, y1, color);
+            xgui_vrender_vline(view, x1, y2, y1, color);
         return;
     } else if (y1 == y2) {  /* 水平的直线 */
         if (x1 < x2) 
-            server_xgui_render_hline(view, x1, x2, y1, color);
+            xgui_vrender_hline(view, x1, x2, y1, color);
         else 
-            server_xgui_render_hline(view, x2, x1, y1, color);
+            xgui_vrender_hline(view, x2, x1, y1, color);
         return;
     }
     int i, x, y, len, dx, dy;
@@ -158,29 +158,29 @@ void server_xgui_render_line(xgui_view_t *view, int x1, int y1, int x2, int y2, 
 		}	
 	}
 	for(i = 0; i < len; i++){
-        server_xgui_render_putpixel(view, (x >> 10), (y >> 10), color);
+        xgui_vrender_putpixel(view, (x >> 10), (y >> 10), color);
 		x += dx;
 		y += dy;
 	}
 }
 
-void server_xgui_render_rect_ex(xgui_view_t *view, int x1, int y1, int x2, int y2, xgui_color_t color)
+void xgui_vrender_rect_ex(xgui_view_t *view, int x1, int y1, int x2, int y2, xgui_color_t color)
 {
     if (!view)
         return;
     if (!view->section)
         return;
     /* left */
-    server_xgui_render_vline(view, x1, y1, y2, color);
+    xgui_vrender_vline(view, x1, y1, y2, color);
     /* right */
-    server_xgui_render_vline(view, x2, y1, y2, color);
+    xgui_vrender_vline(view, x2, y1, y2, color);
     /* top */
-    server_xgui_render_hline(view, x1, y1, x2, color);
+    xgui_vrender_hline(view, x1, y1, x2, color);
     /* bottom */
-    server_xgui_render_hline(view, x1, y2, x2, color);
+    xgui_vrender_hline(view, x1, y2, x2, color);
 }
 
-void server_xgui_render_rectfill_ex(xgui_view_t *view, int x1, int y1, int x2, int y2, xgui_color_t color)
+void xgui_vrender_rectfill_ex(xgui_view_t *view, int x1, int y1, int x2, int y2, xgui_color_t color)
 {
     if (!view)
         return;
@@ -189,29 +189,29 @@ void server_xgui_render_rectfill_ex(xgui_view_t *view, int x1, int y1, int x2, i
 
     int i;
     for (i = 0; i <= y2 - y1; i++) {
-        server_xgui_render_hline(view, x1, y1 + i, x2, color);
+        xgui_vrender_hline(view, x1, y1 + i, x2, color);
     }
 }
 
-void server_xgui_render_rect(xgui_view_t *view, int x, int y, uint32_t width, uint32_t height, xgui_color_t color)
+void xgui_vrender_rect(xgui_view_t *view, int x, int y, uint32_t width, uint32_t height, xgui_color_t color)
 {
     if (!view)
         return;
     if (!view->section)
         return;
-    server_xgui_render_rect_ex(view, x, y, x + width - 1, y + height - 1, color);
+    xgui_vrender_rect_ex(view, x, y, x + width - 1, y + height - 1, color);
 }
 
-void server_xgui_render_rectfill(xgui_view_t *view, int x, int y, uint32_t width, uint32_t height, xgui_color_t color)
+void xgui_vrender_rectfill(xgui_view_t *view, int x, int y, uint32_t width, uint32_t height, xgui_color_t color)
 {
     if (!view)
         return;
     if (!view->section)
         return;
-    server_xgui_render_rectfill_ex(view, x, y, x + width - 1, y + height - 1, color);
+    xgui_vrender_rectfill_ex(view, x, y, x + width - 1, y + height - 1, color);
 }
 
-void server_xgui_render_bitblt(xgui_view_t *view, int x, int y, 
+void xgui_vrender_bitblt(xgui_view_t *view, int x, int y, 
         xgui_bitmap_t *bmp, int bx, int by, int width, int height)
 {
     if (!view)
@@ -228,12 +228,12 @@ void server_xgui_render_bitblt(xgui_view_t *view, int x, int y,
         for (i = 0; i < w; i++) {
             xgui_bitmap_getpixel(bmp, i + bx, j + by, &color);
             if (((color >> 24) & 0xff))
-                server_xgui_render_putpixel(view, x + i, y + j, color);
+                xgui_vrender_putpixel(view, x + i, y + j, color);
         }
     }
 }
 
-void server_xgui_render_char(
+void xgui_vrender_char(
         xgui_view_t *view, 
         int x,
         int y,
@@ -255,25 +255,25 @@ void server_xgui_render_char(
 	for (i = 0; i < 16; i++) {
 		d = data[i];
 		if ((d & 0x80) != 0)
-            server_xgui_render_putpixel(view, x + 0, y + i, color);
+            xgui_vrender_putpixel(view, x + 0, y + i, color);
 		if ((d & 0x40) != 0)
-            server_xgui_render_putpixel(view, x + 1, y + i, color);
+            xgui_vrender_putpixel(view, x + 1, y + i, color);
 		if ((d & 0x20) != 0)
-             server_xgui_render_putpixel(view, x + 2, y + i, color);
+             xgui_vrender_putpixel(view, x + 2, y + i, color);
 		if ((d & 0x10) != 0)
-            server_xgui_render_putpixel(view, x + 3, y + i, color);
+            xgui_vrender_putpixel(view, x + 3, y + i, color);
 		if ((d & 0x08) != 0)
-            server_xgui_render_putpixel(view, x + 4, y + i, color);
+            xgui_vrender_putpixel(view, x + 4, y + i, color);
 		if ((d & 0x04) != 0)
-            server_xgui_render_putpixel(view, x + 5, y + i, color);
+            xgui_vrender_putpixel(view, x + 5, y + i, color);
 		if ((d & 0x02) != 0)
-            server_xgui_render_putpixel(view, x + 6, y + i, color);
+            xgui_vrender_putpixel(view, x + 6, y + i, color);
 		if ((d & 0x01) != 0)
-            server_xgui_render_putpixel(view, x + 7, y + i, color);
+            xgui_vrender_putpixel(view, x + 7, y + i, color);
 	}
 }
 
-void server_xgui_render_text(
+void xgui_vrender_text(
     xgui_view_t *view, 
     int x,
     int y,
@@ -299,7 +299,7 @@ void server_xgui_render_text(
                 cur_x = x;
             break;
         default:
-            server_xgui_render_char(view, cur_x, cur_y, *text, color);
+            xgui_vrender_char(view, cur_x, cur_y, *text, color);
             cur_x += 8;
             break;
         }

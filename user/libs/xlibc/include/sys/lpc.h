@@ -35,7 +35,7 @@ typedef struct {
     uint16_t arglen[LPC_PARCEL_ARG_NR]; // 表明参数的长度
     uint16_t argtype[LPC_PARCEL_ARG_NR];// 表明参数的类型
     uint32_t argused;       // 如果某位是1，则表示这个参数已经被使用
-    uint32_t nextpos;       // 当参数是字符串或者缓冲区时，记录了下一个缓冲区的位置
+    uint32_t size;          // 数据区的大小
 } lpc_parcel_header_t;
 
 #define LPC_PARCEL_HEADER_SIZE sizeof(lpc_parcel_header_t)
@@ -45,7 +45,7 @@ typedef struct {
     lpc_parcel_header_t header;
     uint32_t code;      // call code
     uint8_t data[1];    // 柔性数组数据
-} *lpc_parcel_t;
+} _lpc_parcel_t, *lpc_parcel_t;
 
 typedef bool (*lpc_handler_t)(uint32_t, lpc_parcel_t, lpc_parcel_t);
 typedef bool (*lpc_remote_handler_t) (lpc_parcel_t, lpc_parcel_t);
