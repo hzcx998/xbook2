@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     //signal_test(argc, argv);
     // proc_test(argc, argv);
     // port_comm_test(argc, argv);
-    gui_test(argc, argv);
+    //gui_test(argc, argv);
     
     return 0;
 }

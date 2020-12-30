@@ -52,11 +52,6 @@ int main(int argc, char *argv[])
 
     print_logo();
 
-    /* 启动自行服务 */
-    char *args[2] = {"xguis", NULL};
-    pid = create_process(args, environ, 0);
-
-
     /* 备份标准输入 */
 	while(1){ 
         /* 显示提示符 */

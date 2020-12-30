@@ -268,7 +268,6 @@ get_vbe_info:
 
     ;获取画面信息， 256字节
 	;cx=输入检查的模式
-	
     ; 获取VBE模式
     ; Input: AX=4F01H
     ;        CX=模式号
