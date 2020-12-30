@@ -16,6 +16,7 @@ int xgui_init()
     }
 
     xgui_section_init();
+    xgui_msgqueue_init();
     
     if (xgui_dotfont_init() < 0) {
         return -1;

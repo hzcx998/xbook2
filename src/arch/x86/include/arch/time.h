@@ -4,7 +4,7 @@
 #include "cpu.h"
 #include "cmos.h"
 
-#define HZ                (100 * 10)
+#define HZ                (100 * 6)
 
 void pit_clock_init();
 

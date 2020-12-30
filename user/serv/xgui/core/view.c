@@ -317,7 +317,7 @@ int xgui_view_show(xgui_view_t *view)
 {
     if (!view)
         return -1;
-    xgui_view_move_under_top(view);
+    xgui_view_move_to_top(view);
     return 0;
 }
 

@@ -3,8 +3,8 @@
 
 #include <sys/time.h>
 
-#define W 1920
-#define H 1080
+#define W 640
+#define H 480
 
 
 int gui_test(int argc, char *argv[])
@@ -60,7 +60,6 @@ int gui_test(int argc, char *argv[])
             XGUI_RGB(c  + 20, c +  40, c + 60));
         xgui_update_view(vhandle0, 0, 0, W, H);
         c++;
-
         fps++;
         gettimeofday(&time2, NULL);
         unsigned long long mtime = (time2.tv_sec - time1.tv_sec) * 1000000 + (time2.tv_usec - time1.tv_usec);

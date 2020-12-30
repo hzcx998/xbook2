@@ -6,8 +6,10 @@
 #include <sys/lpc.h>
 
 #include "xgui_view.h"
-
 #include "xgui_vrender.h"
+#include "xgui_msgqueue.h"
+
+#include <xgui_client.h>
 
 bool remote_xgui_view_create(lpc_parcel_t data, lpc_parcel_t reply)
 {
@@ -104,6 +106,7 @@ bool remote_xgui_view_hide(lpc_parcel_t data, lpc_parcel_t reply)
     lpc_parcel_write_int(reply, retval);
     return true;
 }
+
 bool remote_xgui_view_update(lpc_parcel_t data, lpc_parcel_t reply)
 {
     int id, left, right, top, bottom;
@@ -122,6 +125,29 @@ bool remote_xgui_view_update(lpc_parcel_t data, lpc_parcel_t reply)
     lpc_parcel_write_int(reply, 0);
     return true;
 }
+
+bool remote_xgui_client_open(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    xgui_msgqueue_t *msgq = xgui_msgqueue_create();
+    if (!msgq) {    
+        lpc_parcel_write_int(reply, -1);
+        return false;
+    }
+    /* 封装结构体并返回 */
+    xgui_client_t client;
+    client.handle_msgq = msgq->handle;
+    lpc_parcel_write_int(reply, 0);
+    lpc_parcel_write_sequence(reply, &client, sizeof(xgui_client_t));
+    return true;
+}
+
+bool remote_xgui_client_close(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    lpc_parcel_write_int(reply, 0);
+    lpc_parcel_write_sequence(reply, &client, sizeof(xgui_client_t));
+    return true;
+}
+
 
 static lpc_remote_handler_t gui_remote_table[] = {
     remote_xgui_view_create,

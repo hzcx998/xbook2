@@ -82,10 +82,6 @@ int xgui_section_fill_rect(xgui_section_t *section, xgui_color_t color)
     return 0;
 }
 
-/* 服务端根据客户端的消息，选择一个section，并根据区域进行合并 */
-
-/* 所有有效的节都放在一个节指针表中，对它进行操作，来进行排序 */
-
 int xgui_section_init()
 {
     memset(section_table, 0, sizeof(xgui_section_t) * XGUI_SECTION_NR);
