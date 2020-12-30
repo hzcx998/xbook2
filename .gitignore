@@ -96,8 +96,6 @@ user/sbin/service/service
 # service
 user/serv/netserv/netserv
 user/serv/testserv/testserv
-user/serv/xgui/xguis
-
 # user app
 
 # /bin
