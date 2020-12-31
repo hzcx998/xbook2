@@ -17,7 +17,6 @@ AS			:=	nasm
 export AS LD
 
 MODULE      +=  init
-MODULE      +=  sh
 MODULE      +=  login
 MODULE      +=  userctl
 MODULE      +=  service

@@ -48,10 +48,10 @@ int main(int argc, char *argv[])
     #ifdef _HAS_LOGIN
     pid = getpid();
     ioctl(tty0, TTYIO_HOLDER, &pid);
-    char *_argv[3] = {"-s", "/sbin/sh", NULL};
+    char *_argv[3] = {"-s", "/bin/sh", NULL};
     exit(execv("/sbin/login", _argv));
     #else
-    exit(execv("/sbin/sh", NULL));
+    exit(execv("/bin/sh", NULL));
     #endif
     return 0;
 }

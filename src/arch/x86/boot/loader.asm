@@ -241,6 +241,7 @@ get_memory_info:
 
 %ifdef CONFIG_GRAPHIC
 
+
 ; 使用的分辨率
 VBE_MODE	EQU	VMODE_800_600_16
 ;VBE_MODE	EQU	VMODE_1920_1080_16

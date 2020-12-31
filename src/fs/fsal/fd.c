@@ -172,11 +172,6 @@ void filefd_set_fsal(file_fd_t *fd, unsigned int flags)
     case FILE_FD_FIFO:
         fd->fsal = &fifoif;
         break;
-    #ifdef PLUGIN_NETWORK
-    case FILE_FD_SOCKET:
-        fd->fsal = &fsal_netif;
-        break;
-    #endif
     default:
         fd->fsal = NULL;
         break;
