@@ -122,6 +122,7 @@ endif
 	-$(RM) -r $(ROM_DIR)/bin
 	-$(RM) -r $(ROM_DIR)/sbin
 	-$(RM) -r $(ROM_DIR)/usr
+	-$(RM) -r $(ROM_DIR)/acct
 	-$(RM) -r $(IMAGE_DIR)
 	
 user: 
@@ -168,7 +169,6 @@ QEMU_KVM := -accel hax
 else
 QEMU_KVM := -enable-kvm
 endif
-
 QEMU_KVM := # no virutal
 
 QEMU_ARGUMENT = -m 512M $(QEMU_KVM) \

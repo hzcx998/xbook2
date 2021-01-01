@@ -53,9 +53,11 @@ int main(int argc, char *argv[])
     print_logo();
 
     /* 启动自行服务 */
+    #if 0
     char *args[2] = {"xbrower", NULL};
     pid = create_process(args, environ, 0);
-
+    #endif
+    
     /* 备份标准输入 */
 	while(1){ 
         /* 显示提示符 */
@@ -280,7 +282,7 @@ int execute_cmd(int argc, char **argv)
         if (pid > 0) {  /* 父进程 */
             ioctl(0, TTYIO_HOLDER, &pid);
             /* shell程序等待子进程退出 */
-            pid = wait(&status);
+            pid = waitpid(pid, &status, 0);
             pid = getpid();
             ioctl(0, TTYIO_HOLDER, &pid);
         } else {    /* 子进程 */
@@ -293,8 +295,8 @@ int execute_cmd(int argc, char **argv)
                 printf("sh: bad command %s!\n", argv[0]);
                 pid = getppid();
                 ioctl(0, TTYIO_HOLDER, &pid);
-                sh_exit(-1, 0);
             }
+            sh_exit(-1, 0);
         }
         update_cwdcache();
     }

@@ -6,6 +6,6 @@ typedef struct {
     int right;
     int top;
     int bottom;
-} xgui_rect_t;
+} xbrower_rect_t;
 
 #endif /* _XGUI_MISC_H */

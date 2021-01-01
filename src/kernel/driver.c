@@ -752,7 +752,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
     if (!io_complete_check(ioreq, status)) {
         void *mapaddr = NULL;
         if (ioreq->io_status.infomation) {
-            dbgprint("device memmap paddr=%x, len=%x\n", ioreq->io_status.infomation, length);
+            // dbgprint("device memmap paddr=%x, len=%x\n", ioreq->io_status.infomation, length);
 
             if (flags & IO_KERNEL)
                 mapaddr = memio_remap(ioreq->io_status.infomation, length);
@@ -761,7 +761,6 @@ void *device_mmap(handle_t handle, size_t length, int flags)
                     PROT_USER | PROT_WRITE, MEM_SPACE_MAP_SHARED | MEM_SPACE_MAP_REMAP);
         }
         io_request_free((ioreq));
-        dbgprint("device memmap %x\n", mapaddr);
         return mapaddr;
     }
     io_request_free((ioreq));

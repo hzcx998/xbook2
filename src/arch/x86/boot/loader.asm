@@ -241,10 +241,9 @@ get_memory_info:
 
 %ifdef CONFIG_GRAPHIC
 
-
 ; 使用的分辨率
-VBE_MODE	EQU	VMODE_800_600_16
-;VBE_MODE	EQU	VMODE_1920_1080_16
+;VBE_MODE	EQU	VMODE_800_600_16
+VBE_MODE	EQU	VMODE_1280_1024_16
 
 get_vbe_info:
     push ds

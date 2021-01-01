@@ -30,7 +30,7 @@ extern "C" {
 #include "lvgl/lvgl.h"
 #endif
 
-#include <xgui_msg.h>
+#include <xbrower_msg.h>
 
 /*********************
  *      DEFINES
@@ -61,7 +61,7 @@ bool lv_mousewheel_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data);
  * It is called periodically from the SDL thread to check a key is pressed/released
  * @param msg describes the msg
  */
-void lv_mousewheel_handler(xgui_msg_t *msg);
+void lv_mousewheel_handler(xbrower_msg_t *msg);
 
 /**********************
  *      MACROS

@@ -89,7 +89,6 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
                 return child_pid;
             }
         } else {
-            
             if ((child_pid = wait_one_hangging_child(parent, pid, &wait_status)) >= 0) {
                 interrupt_restore_state(flags);
                 if (status)
@@ -98,8 +97,10 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
             }
         }
         if ((child_pid = proc_deal_zombie_child(parent)) > 0) {
-            interrupt_restore_state(flags);
-            return child_pid;
+            if (pid == -1 || child_pid == pid) {
+                interrupt_restore_state(flags);
+                return child_pid;
+            }
         }
         if (!task_count_children(parent)) {
             interrupt_restore_state(flags);

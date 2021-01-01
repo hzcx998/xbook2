@@ -1,7 +1,7 @@
-#include "xgui_view.h"
-#include "xgui_hal.h"
-#include "xgui_misc.h"
-#include "xgui_vrender.h"
+#include "xbrower_view.h"
+#include "xbrower_hal.h"
+#include "xbrower_misc.h"
+#include "xbrower_render.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -13,14 +13,14 @@ static uint16_t *view_id_map;
 static int view_top_z = -1;    
 static int view_next_id = 0;    
 
-xgui_view_t *xgui_view_create(int x, int y, int width, int height)
+xbrower_view_t *xbrower_view_create(int x, int y, int width, int height)
 {
-    xgui_view_t *view = malloc(sizeof(xgui_view_t));
+    xbrower_view_t *view = malloc(sizeof(xbrower_view_t));
     if (view == NULL) {
         printf("malloc for view failed!\n");
         return NULL;
     }
-    view->section = xgui_section_new(width, height);
+    view->section = xbrower_section_create(width, height);
     if (!view->section) {
         printf("new section failed!\n");
         free(view);
@@ -37,9 +37,9 @@ xgui_view_t *xgui_view_create(int x, int y, int width, int height)
     return view;
 }
 
-xgui_view_t *xgui_view_find_by_id(int id)
+xbrower_view_t *xbrower_view_find_by_id(int id)
 {
-    xgui_view_t *view;
+    xbrower_view_t *view;
     list_for_each_owner (view, &view_global_list_head, global_list) {
         if (view->id == id)
             return view;
@@ -47,11 +47,11 @@ xgui_view_t *xgui_view_find_by_id(int id)
     return NULL;
 }
 
-int xgui_view_destroy(xgui_view_t *view)
+int xbrower_view_destroy(xbrower_view_t *view)
 {
     if (!view)
         return -1;
-    if (xgui_section_put(view->section) < 0) {
+    if (xbrower_section_destroy(view->section) < 0) {
         return -1;
     }
     if (list_find(&view->list, &view_show_list_head))
@@ -61,9 +61,9 @@ int xgui_view_destroy(xgui_view_t *view)
     return 0;
 }
 
-static void xgui_view_refresh_map(int left, int top, int right, int buttom, int z0)
+static void xbrower_view_refresh_map(int left, int top, int right, int buttom, int z0)
 {
-    int view_left, xgui_view_top, view_right, view_buttom;
+    int view_left, xbrower_view_top, view_right, view_buttom;
     int screen_x, screen_y;
     int view_x, view_y;
 
@@ -71,45 +71,45 @@ static void xgui_view_refresh_map(int left, int top, int right, int buttom, int 
         left = 0;
 	if (top < 0)
         top = 0;
-	if (right > xgui_screen.width)
-        right = xgui_screen.width;
-	if (buttom > xgui_screen.height)
-        buttom = xgui_screen.height;
+	if (right > xbrower_screen.width)
+        right = xbrower_screen.width;
+	if (buttom > xbrower_screen.height)
+        buttom = xbrower_screen.height;
     
-    xgui_view_t *view;
-    xgui_color_t *colors;
+    xbrower_view_t *view;
+    xbrower_color_t *colors;
 
     /* 刷新高度为[z0-top]区间的视图 */
     list_for_each_owner (view, &view_show_list_head, list) {
         if (view->z >= z0) {
             view_left = left - view->x;
-            xgui_view_top = top - view->y;
+            xbrower_view_top = top - view->y;
             view_right = right - view->x;
             view_buttom = buttom - view->y;
             if (view_left < 0)
                 view_left = 0;
-            if (xgui_view_top < 0)
-                xgui_view_top = 0;
+            if (xbrower_view_top < 0)
+                xbrower_view_top = 0;
             if (view_right > view->width) 
                 view_right = view->width;
             if (view_buttom > view->height)
                 view_buttom = view->height;
-            colors = (xgui_color_t *)view->section->addr;
-            for(view_y = xgui_view_top; view_y < view_buttom; view_y++){
+            colors = (xbrower_color_t *)view->section->addr;
+            for(view_y = xbrower_view_top; view_y < view_buttom; view_y++){
                 screen_y = view->y + view_y;
                 if (screen_y < 0)
                     continue;
-                if (screen_y >= xgui_screen.height)
+                if (screen_y >= xbrower_screen.height)
                     break;
                 for(view_x = view_left; view_x < view_right; view_x++){
                     screen_x = view->x + view_x;
                     if (screen_x < 0)
                         continue;
-                    if (screen_x >= xgui_screen.width)
+                    if (screen_x >= xbrower_screen.width)
                         break;
                        /* 不是全透明的，就把视图标识写入到映射表中 */
                     if ((colors[view_y * view->width + view_x] >> 24) & 0xff) {
-                        view_id_map[(screen_y * xgui_screen.width + screen_x)] = view->z;
+                        view_id_map[(screen_y * xbrower_screen.width + screen_x)] = view->z;
                     }
                 }
             }
@@ -117,10 +117,10 @@ static void xgui_view_refresh_map(int left, int top, int right, int buttom, int 
     }
 }
 
-static void __xgui_view_adjust_by_z(xgui_view_t *view, int z)
+static void __xbrower_view_adjust_by_z(xbrower_view_t *view, int z)
 {
-    xgui_view_t *tmp;
-    xgui_view_t *old_view = NULL;
+    xbrower_view_t *tmp;
+    xbrower_view_t *old_view = NULL;
     int old_z = view->z;
     if (z > view_top_z) {
         z = view_top_z;
@@ -137,8 +137,8 @@ static void __xgui_view_adjust_by_z(xgui_view_t *view, int z)
         view->z = z;
         list_add_tail(&view->list, &view_show_list_head);
         /* 刷新新视图[z, z] */
-        xgui_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
-        xgui_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
+        xbrower_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
+        xbrower_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
     } else {    /* 不是最高视图，那么就和其它视图交换 */
         if (z > view->z) { /* 如果新高度比原来的高度高 */
             /* 把位于旧视图高度和新视图高度之间（不包括旧视图，但包括新视图高度）的视图下降1层 */
@@ -154,8 +154,8 @@ static void __xgui_view_adjust_by_z(xgui_view_t *view, int z)
             view->z = z;
             list_add_after(&view->list, &old_view->list);
             /* 刷新新视图[z, z] */
-            xgui_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
-            xgui_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
+            xbrower_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
+            xbrower_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
         } else if (z < view->z) { /* 如果新高度比原来的高度低 */
             /* 把位于旧视图高度和新视图高度之间（不包括旧视图，但包括新视图高度）的视图上升1层 */
             list_for_each_owner (tmp, &view_show_list_head, list) {
@@ -170,19 +170,19 @@ static void __xgui_view_adjust_by_z(xgui_view_t *view, int z)
             view->z = z;
             list_add_before(&view->list, &old_view->list);
             /* 刷新新视图[z + 1, old z] */
-            xgui_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z + 1);
-            xgui_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z + 1, old_z);
+            xbrower_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z + 1);
+            xbrower_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z + 1, old_z);
         }
     }
 }
 
-static void __xgui_view_hiden_by_z(xgui_view_t *view, int z)
+static void __xbrower_view_hiden_by_z(xbrower_view_t *view, int z)
 {
     int old_z = view->z;
     list_del_init(&view->list);
     if (view_top_z > old_z) {  /* 旧视图必须在顶视图下面 */
         /* 把位于当前视图后面的视图的高度都向下降1 */
-        xgui_view_t *tmp;
+        xbrower_view_t *tmp;
         list_for_each_owner (tmp, &view_show_list_head, list) {
             if (tmp->z > view->z) {
                 tmp->z--;
@@ -193,15 +193,15 @@ static void __xgui_view_hiden_by_z(xgui_view_t *view, int z)
     view_top_z--;
     view->z = -1;  /* 隐藏视图后，高度变为-1 */
     /* 刷新视图, [0, view->z - 1] */
-    xgui_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, 0);
-    xgui_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, 0, old_z - 1);
+    xbrower_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, 0);
+    xbrower_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, 0, old_z - 1);
     
 }
 
-static void __xgui_view_show_by_z(xgui_view_t *view, int z)
+static void __xbrower_view_show_by_z(xbrower_view_t *view, int z)
 {
-    xgui_view_t *tmp;
-    xgui_view_t *old_view = NULL;
+    xbrower_view_t *tmp;
+    xbrower_view_t *old_view = NULL;
     if (z > view_top_z) {
         view_top_z++;
         z = view_top_z;
@@ -213,8 +213,8 @@ static void __xgui_view_show_by_z(xgui_view_t *view, int z)
         view->z = z;
         list_add_tail(&view->list, &view_show_list_head);
         /* 刷新新视图[z, z] */
-        xgui_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
-        xgui_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
+        xbrower_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
+        xbrower_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
     } else {
         /* 查找和当前视图一样高度的视图 */
         list_for_each_owner(tmp, &view_show_list_head, list) {
@@ -235,8 +235,8 @@ static void __xgui_view_show_by_z(xgui_view_t *view, int z)
         /* 插入到旧视图前面 */
         list_add_before(&view->list, &old_view->list);
         /* 刷新新视图[z, z] */
-        xgui_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
-        xgui_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
+        xbrower_view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
+        xbrower_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
     }
 }
 
@@ -258,71 +258,71 @@ static void __xgui_view_show_by_z(xgui_view_t *view, int z)
  *      当调整到更高的视图时，就只刷新新视图的高度那一层。
  * @return: 成功返回0，失败返回-1
  */
-void xgui_view_set_z(xgui_view_t *view, int z)
+void xbrower_view_set_z(xbrower_view_t *view, int z)
 {
     if (list_find(&view->list, &view_show_list_head)) {
         if (z >= 0) {
-            __xgui_view_adjust_by_z(view, z);
+            __xbrower_view_adjust_by_z(view, z);
         } else { /* 小于0就是要隐藏起来的视图 */
-            __xgui_view_hiden_by_z(view, z);
+            __xbrower_view_hiden_by_z(view, z);
         }
     } else {    /* 插入新视图 */
         if (z >= 0) {
-            __xgui_view_show_by_z(view, z);
+            __xbrower_view_show_by_z(view, z);
         }
     }
 }
 
-int xgui_view_move_to_top(xgui_view_t *view)
+int xbrower_view_move_to_top(xbrower_view_t *view)
 {
     if (!view)
         return -1;
-    xgui_view_set_z(view, view_top_z);
+    xbrower_view_set_z(view, view_top_z);
     return 0;
 }
 
-int xgui_view_move_to_bottom(xgui_view_t *view)
+int xbrower_view_move_to_bottom(xbrower_view_t *view)
 {
     if (!view)
         return -1;
-    xgui_view_set_z(view, 0);
+    xbrower_view_set_z(view, 0);
     return 0;
 }
 
-int xgui_view_move_under_top(xgui_view_t *view)
+int xbrower_view_move_under_top(xbrower_view_t *view)
 {
     if (!view)
         return -1;
-    xgui_view_set_z(view, view_top_z - 1);
+    xbrower_view_set_z(view, view_top_z - 1);
     return 0;
 }
 
-int xgui_view_move_upper_top(xgui_view_t *view)
+int xbrower_view_move_upper_top(xbrower_view_t *view)
 {
     if (!view)
         return -1;
-    xgui_view_set_z(view, view_top_z + 1);
+    xbrower_view_set_z(view, view_top_z + 1);
     return 0;
 }
 
-int xgui_view_hide(xgui_view_t *view)
+int xbrower_view_hide(xbrower_view_t *view)
 {
     if (!view)
         return -1;
-    xgui_view_set_z(view, -1);
+    xbrower_view_set_z(view, -1);
     return 0;
 }
 
-int xgui_view_show(xgui_view_t *view)
+int xbrower_view_show(xbrower_view_t *view)
 {
     if (!view)
         return -1;
-    xgui_view_move_to_top(view);
+    xbrower_view_move_to_top(view);
     return 0;
 }
 
 
-int xgui_view_set_xy(xgui_view_t *view, int x, int y)
+int xbrower_view_set_xy(xbrower_view_t *view, int x, int y)
 {
     if (!view)
         return -1;
@@ -336,65 +336,65 @@ int xgui_view_set_xy(xgui_view_t *view, int x, int y)
         y0 = min(old_y, y);
         x1 = max(old_x + view->width, x + view->width);
         y1 = max(old_y + view->height, y + view->height);
-        xgui_view_refresh_map(x0, y0, x1, y1, 0);
-        xgui_refresh_view_by_z(x0, y0, x1, y1, 0, view->z);
+        xbrower_view_refresh_map(x0, y0, x1, y1, 0);
+        xbrower_refresh_view_by_z(x0, y0, x1, y1, 0, view->z);
     }
     return 0;
 }
 
-xgui_view_t *xgui_view_get_top()
+xbrower_view_t *xbrower_view_get_top()
 {
-    xgui_view_t *view = list_last_owner_or_null(&view_show_list_head, xgui_view_t, list);
+    xbrower_view_t *view = list_last_owner_or_null(&view_show_list_head, xbrower_view_t, list);
     return view;
 }
 
-xgui_view_t *xgui_view_get_bottom()
+xbrower_view_t *xbrower_view_get_bottom()
 {
-    xgui_view_t *view = list_first_owner_or_null(&view_show_list_head, xgui_view_t, list);
+    xbrower_view_t *view = list_first_owner_or_null(&view_show_list_head, xbrower_view_t, list);
     return view;
 }
 
-void xgui_refresh_view_by_z(int left, int top, int right, int buttom, int z0, int z1)
+void xbrower_refresh_view_by_z(int left, int top, int right, int buttom, int z0, int z1)
 {
-    int view_left, xgui_view_top, view_right, view_buttom;
+    int view_left, xbrower_view_top, view_right, view_buttom;
 
     if (left < 0)
         left = 0;
 	if (top < 0)
         top = 0;
-	if (right > xgui_screen.width)
-        right = xgui_screen.width;
-	if (buttom > xgui_screen.height)
-        buttom = xgui_screen.height;
+	if (right > xbrower_screen.width)
+        right = xbrower_screen.width;
+	if (buttom > xbrower_screen.height)
+        buttom = xbrower_screen.height;
     
     int vx, vy;
     int sx, sy;
     
-    xgui_color_t color;
-    xgui_color_t *buf;
-    xgui_view_t *view;
+    xbrower_color_t color;
+    xbrower_color_t *buf;
+    xbrower_view_t *view;
     list_for_each_owner (view, &view_show_list_head, list) {
         if (view->z >= z0 && view->z <= z1) {
             view_left = left - view->x;
-            xgui_view_top = top - view->y;
+            xbrower_view_top = top - view->y;
             view_right = right - view->x;
             view_buttom = buttom - view->y;
             if (view_left < 0)
                 view_left = 0;
-            if (xgui_view_top < 0)
-                xgui_view_top = 0;
+            if (xbrower_view_top < 0)
+                xbrower_view_top = 0;
             if (view_right > view->width) 
                 view_right = view->width;
             if (view_buttom > view->height)
                 view_buttom = view->height;
-            for (vy = xgui_view_top; vy < view_buttom; vy++) {
+            for (vy = xbrower_view_top; vy < view_buttom; vy++) {
                 sy = view->y + vy;
                 for (vx = view_left; vx < view_right; vx++) {
                     sx = view->x + vx;
-                    if (view_id_map[sy * xgui_screen.width + sx] == view->z) {
-                        buf = (xgui_color_t *)view->section->addr;
+                    if (view_id_map[sy * xbrower_screen.width + sx] == view->z) {
+                        buf = (xbrower_color_t *)view->section->addr;
                         color = buf[vy * view->width + vx];
-                        xgui_screen_write_pixel(sx, sy, color);
+                        xbrower_screen_write_pixel(sx, sy, color);
                     }
                 }
             }
@@ -402,12 +402,12 @@ void xgui_refresh_view_by_z(int left, int top, int right, int buttom, int z0, in
     }
 }
 
-void xgui_view_refresh(xgui_view_t *view, int left, int top, int right, int buttom)
+void xbrower_view_refresh(xbrower_view_t *view, int left, int top, int right, int buttom)
 {
     if (view->z >= 0) {
-        xgui_view_refresh_map(view->x + left, view->y + top, view->x + right,
+        xbrower_view_refresh_map(view->x + left, view->y + top, view->x + right,
             view->y + buttom, view->z);
-        xgui_refresh_view_by_z(view->x + left, view->y + top, view->x + right,
+        xbrower_refresh_view_by_z(view->x + left, view->y + top, view->x + right,
             view->y + buttom, view->z, view->z);
     }
 }
@@ -418,9 +418,9 @@ void xgui_view_refresh(xgui_view_t *view, int left, int top, int right, int butt
  * 系统预留窗口
  * top: 鼠标
 */
-int xgui_view_init()
+int xbrower_view_init()
 {
-    size_t id_map_size = xgui_screen.width * xgui_screen.width * sizeof(uint16_t);
+    size_t id_map_size = xbrower_screen.width * xbrower_screen.width * sizeof(uint16_t);
     view_id_map = malloc(id_map_size);
     if (!view_id_map) {
         printf("malloc for view id map failed!\n");
@@ -429,4 +429,13 @@ int xgui_view_init()
     memset(view_id_map, 0, id_map_size);
     
     return 0;
+}
+
+void xbrower_view_exit()
+{
+    xbrower_view_t *view, *next;
+    list_for_each_owner_safe (view, next, &view_global_list_head, global_list) {
+        xbrower_view_destroy(view);
+    }
+    free(view_id_map);
 }

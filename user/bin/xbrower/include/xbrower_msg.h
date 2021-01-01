@@ -32,9 +32,9 @@ typedef struct {
     uint32_t data1;     
     uint32_t data2;     
     uint32_t data3;
-} xgui_msg_t;
+} xbrower_msg_t;
 
-static inline xgui_msg_set(xgui_msg_t *msg, uint32_t id, 
+static inline void xbrower_msg_set(xbrower_msg_t *msg, uint32_t id, 
         uint32_t data0, uint32_t data1, uint32_t data2, uint32_t data3)
 {
     msg->id = id;
@@ -45,17 +45,17 @@ static inline xgui_msg_set(xgui_msg_t *msg, uint32_t id,
 }
 
 /* 获取消息的数据 */
-#define xgui_msg_get_type(msg) ((msg)->id)
+#define xbrower_msg_get_type(msg) ((msg)->id)
 
-#define xgui_msg_get_mouse_x(msg) ((msg)->data0)
-#define xgui_msg_get_mouse_y(msg) ((msg)->data1)
+#define xbrower_msg_get_mouse_x(msg) ((msg)->data0)
+#define xbrower_msg_get_mouse_y(msg) ((msg)->data1)
 
-#define xgui_msg_get_mouse_wheel(msg) ((int)(msg)->data2)
+#define xbrower_msg_get_mouse_wheel(msg) ((int)(msg)->data2)
 
-#define xgui_msg_get_key_code(msg) ((msg)->data0)
-#define xgui_msg_get_key_modify(msg) ((msg)->data1)
+#define xbrower_msg_get_key_code(msg) ((msg)->data0)
+#define xbrower_msg_get_key_modify(msg) ((msg)->data1)
 
-#define xgui_msg_get_timer_id(msg) ((msg)->data0)
-#define xgui_msg_get_timer_time(msg) ((msg)->data1)
+#define xbrower_msg_get_timer_id(msg) ((msg)->data0)
+#define xbrower_msg_get_timer_time(msg) ((msg)->data1)
 
 #endif /* _XGUI_MSG_H */

@@ -1,47 +1,67 @@
-#include "xgui_hal.h"
-#include "xgui_view.h"
-#include "xgui_core.h"
-#include <xgui_dotfont.h>
+#include "xbrower_hal.h"
+#include "xbrower_view.h"
+#include "xbrower_core.h"
+#include <unistd.h>
+#include <sys/ioctl.h>
 
-int xgui_init()
+int xbrower_init()
 {
-    if (xgui_screen_init() < 0) {
+    if (xbrower_screen_init() < 0) {
         return -1;
     }
-    if (xgui_mouse_init() < 0) {
+    if (xbrower_mouse_init() < 0) {
+        xbrower_screen_exit();
         return -1;
     }
-    if (xgui_keyboard_init() < 0) {
+    if (xbrower_keyboard_init() < 0) {
+        xbrower_screen_exit();
+        xbrower_mouse_exit();
         return -1;
     }
 
-    xgui_section_init();
-    
-    if (xgui_dotfont_init() < 0) {
+    if (xbrower_section_init() < 0) {
+        xbrower_screen_exit();
+        xbrower_mouse_exit();
+        xbrower_keyboard_exit();
         return -1;
     }
-    
-    xgui_view_init();
-
+    if (xbrower_view_init() < 0) {
+        xbrower_screen_exit();
+        xbrower_mouse_exit();
+        xbrower_keyboard_exit();
+        xbrower_section_exit();
+        return -1;
+    }
     return 0;
 }
 
-int xgui_loop()
+int xbrower_exit()
+{
+    xbrower_screen_exit();
+    xbrower_mouse_exit();
+    xbrower_keyboard_exit();
+    xbrower_section_exit();
+    xbrower_view_exit();
+    return 0;
+}
+
+/* 输入的获取 */
+int xbrower_loop()
 {
     int i = 0;
     int has_event;
     while (1) {
         has_event = 0;
-        if (!xgui_mouse_poll()) {
+        if (!xbrower_mouse_poll()) {
             has_event = 1;
             i = 0;
         }
-        if (!xgui_keyboard_poll()) {
+        if (!xbrower_keyboard_poll()) {
             has_event = 1;
             i = 0;
         }
         i++;
-        if (i > 10 && !has_event) {
+        if (i > 300 && !has_event) {
             sched_yeild();
         }
     }

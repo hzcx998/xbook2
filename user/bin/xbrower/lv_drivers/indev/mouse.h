@@ -30,7 +30,7 @@ extern "C" {
 #include "lvgl/lvgl.h"
 #endif
 
-#include <xgui_msg.h>
+#include <xbrower_msg.h>
 
 /*********************
  *      DEFINES
@@ -49,6 +49,8 @@ extern "C" {
  */
 void lv_mouse_init(void);
 
+void lv_mouse_exit(void);
+
 /**
  * Get the current position and state of the mouse
  * @param indev_drv pointer to the related input device driver
@@ -60,7 +62,7 @@ bool lv_mouse_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data);
 /**
  * It will be called from the main SDL thread
  */
-void lv_mouse_handler(xgui_msg_t *msg);
+void lv_mouse_handler(xbrower_msg_t *msg);
 
 /**********************
  *      MACROS

@@ -1,7 +1,8 @@
 #ifndef _XGUI_CORE_H
 #define _XGUI_CORE_H
 
-int xgui_init();
-int xgui_loop();
+int xbrower_init();
+int xbrower_exit();
+int xbrower_loop();
 
 #endif /* _XGUI_CORE_H */

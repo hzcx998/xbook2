@@ -66,8 +66,8 @@ develop/local/
 
 develop/rom/bin/
 develop/rom/sbin/
-develop/rom/usr/*
-develop/rom/acct/*
+develop/rom/usr/
+develop/rom/acct/
 develop/bochs/
 
 # linux fixdep
@@ -116,6 +116,7 @@ user/bin/rmdir/rmdir
 user/bin/touch/touch
 user/bin/trig/trig
 user/bin/osver/osver
+user/bin/xbrower/xbrower
 
 # /bin
 user/bin/bosh/bosh

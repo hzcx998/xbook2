@@ -1,4 +1,4 @@
-#include <xgui_image.h>
+#include <xbrower_image.h>
 #include <string.h>
 #include <stdint.h>
 #include <malloc.h>
@@ -22,9 +22,9 @@ typedef struct {
     int channels;       // 通道数
 	int alpha_flag;		//是否有透明通道
 	unsigned char *rgba;//实际rgb数据
-} xgui_image_png_t;
+} xbrower_image_png_t;
 
-static int __xgui_check_png_image(FILE **fp, const char *filename)
+static int __xbrower_check_png_image(FILE **fp, const char *filename)
 {
 	char checkheader[PNG_BYTES_TO_CHECK];
 	*fp = fopen(filename, "rb");
@@ -40,12 +40,12 @@ static int __xgui_check_png_image(FILE **fp, const char *filename)
 	return png_sig_cmp((png_const_bytep)checkheader, 0, PNG_BYTES_TO_CHECK); //0正确, 非0错误
 }
 
-static int __xgui_decode_png_image(const char *filename, xgui_image_png_t *out) //取出png文件中的rgb数据
+static int __xbrower_decode_png_image(const char *filename, xbrower_image_png_t *out) //取出png文件中的rgb数据
 {
 	png_structp png_ptr; //png文件句柄
 	png_infop	info_ptr;//png图像信息句柄
 	FILE *fp;
-	if (__xgui_check_png_image(&fp, filename) != 0) {
+	if (__xbrower_check_png_image(&fp, filename) != 0) {
         #ifdef DEBUG_XGUI_IMAGE
 		printf("[gimage]: file %s is not a png!\n", filename);
 		#endif
@@ -142,10 +142,10 @@ static int __xgui_decode_png_image(const char *filename, xgui_image_png_t *out) 
 	return 0;
 }
 
-unsigned char *xgui_load_png_image(const char *filename, int *width, int *height, int *channels_in_file) 
+unsigned char *xbrower_load_png_image(const char *filename, int *width, int *height, int *channels_in_file) 
 {
-    xgui_image_png_t out;
-    if (__xgui_decode_png_image(filename, &out) < 0)
+    xbrower_image_png_t out;
+    if (__xbrower_decode_png_image(filename, &out) < 0)
         return NULL;
 
     /* expand to 4 bytes per pixel */
@@ -186,7 +186,7 @@ unsigned char *xgui_load_png_image(const char *filename, int *width, int *height
     return (unsigned char *) bitmap;
 }
 
-unsigned char *xgui_load_jpg_image(const char *filename, int *width, int *height, int *channels_in_file)
+unsigned char *xbrower_load_jpg_image(const char *filename, int *width, int *height, int *channels_in_file)
 {
     /*
     １.　分配并初始化一个jpeg解压对象
@@ -331,7 +331,7 @@ unsigned char *xgui_load_jpg_image(const char *filename, int *width, int *height
     return (unsigned char *) bitmap;
 }
 
-unsigned char *xgui_load_image(const char *filename, int *width, int *height, int *channels_in_file) 
+unsigned char *xbrower_load_image(const char *filename, int *width, int *height, int *channels_in_file) 
 {
     char *type =  strrchr(filename, '.');
     if (type == NULL) {
@@ -346,9 +346,9 @@ unsigned char *xgui_load_image(const char *filename, int *width, int *height, in
 
     unsigned char *image = NULL;
     if (!strcmp(type, "png")) {
-        image =  xgui_load_png_image(filename, width, height, channels_in_file);
+        image =  xbrower_load_png_image(filename, width, height, channels_in_file);
     } else if (!strcmp(type, "jpg")) {
-        image =  xgui_load_jpg_image(filename, width, height, channels_in_file);
+        image =  xbrower_load_jpg_image(filename, width, height, channels_in_file);
     }
     if (image == NULL) {
         printf("[gimage]: %s: file %s was unrecognized image format!\n", __func__, filename);
@@ -357,9 +357,9 @@ unsigned char *xgui_load_image(const char *filename, int *width, int *height, in
     return image;
 }
 
-void xgui_resize_image_mode(unsigned char *src_buf, int src_w, int src_h, 
+void xbrower_resize_image_mode(unsigned char *src_buf, int src_w, int src_h, 
         unsigned char *dst_buf, int dst_w, int dst_h, 
-        int num_channels, xgui_image_stretch_mode_t mode)
+        int num_channels, xbrower_image_stretch_mode_t mode)
 {
     int bitcount = num_channels * 8;
 
@@ -411,11 +411,11 @@ void xgui_resize_image_mode(unsigned char *src_buf, int src_w, int src_h,
     }
 }
 
-void xgui_resize_image(unsigned char *src_buf, int src_w, int src_h, 
+void xbrower_resize_image(unsigned char *src_buf, int src_w, int src_h, 
         unsigned char *dst_buf, int dst_w, int dst_h, 
         int num_channels)
 {
-    xgui_resize_image_mode(src_buf, src_w, src_h, 
+    xbrower_resize_image_mode(src_buf, src_w, src_h, 
         dst_buf, dst_w, dst_h, 
         num_channels, GRSZ_BILINEAR);
 }

@@ -3,12 +3,12 @@
 #include <sys/ioctl.h>
 #include <sys/input.h>
 #include <unistd.h>
-#include "xgui_hal.h"
+#include "xbrower_hal.h"
 #ifndef   DEV_NAME
 #define   DEV_NAME  "mouse"
 #endif
 
-int xgui_mouse_open(xgui_mouse_t *mouse)
+int xbrower_mouse_open(xbrower_mouse_t *mouse)
 {
     mouse->handle = opendev(DEV_NAME, 0);
     if (mouse->handle < 0)
@@ -18,12 +18,12 @@ int xgui_mouse_open(xgui_mouse_t *mouse)
     return 0;
 }
 
-int xgui_mouse_close(xgui_mouse_t *mouse)
+int xbrower_mouse_close(xbrower_mouse_t *mouse)
 {
     return close(mouse->handle);
 }
 
-int xgui_mouse_read(xgui_mouse_t *mouse)
+int xbrower_mouse_read(xbrower_mouse_t *mouse)
 {
     static int x_rel = 0;
     static int y_rel = 0;

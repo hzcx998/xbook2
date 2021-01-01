@@ -28,9 +28,10 @@ typedef struct {
     keyevent_t keyevent;            /* 按键事件 */ 
     int (*key_down)(int);
     int (*key_up)(int);    
-} xgui_keyboard_t;
-int xgui_keyboard_read(xgui_keyboard_t *keyboard);
-int xgui_keyboard_init();
-int xgui_keyboard_poll();
+} xbrower_keyboard_t;
+int xbrower_keyboard_read(xbrower_keyboard_t *keyboard);
+int xbrower_keyboard_init();
+int xbrower_keyboard_exit();
+int xbrower_keyboard_poll();
 
 #endif /* _XGUI_KEYBOARD_H */

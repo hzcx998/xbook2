@@ -7,8 +7,8 @@
  *      INCLUDES
  *********************/
 #include "display.h"
-#include "xgui_screen.h"
-#include "xgui_vrender.h"
+#include "xbrower_screen.h"
+#include "xbrower_render.h"
 
 #if USE_GAPI_DISPLAY
 
@@ -23,7 +23,7 @@ extern int lv_winhdl;
 /*********************
  *      DEFINES
  *********************/
-xgui_view_t *lv_display_view = NULL;
+xbrower_view_t *lv_display_view = NULL;
 
 /**********************
  *      TYPEDEFS
@@ -51,16 +51,17 @@ xgui_view_t *lv_display_view = NULL;
 
 int lv_display_init(uint32_t width, uint32_t height)
 {
-    lv_display_view = xgui_view_create(0, 0, width, height);
+    lv_display_view = xbrower_view_create(0, 0, width, height);
     if (!lv_display_view)
         return -1;
-    xgui_view_set_z(lv_display_view, 0);
+    xbrower_view_set_z(lv_display_view, 0);
     return 0;   
 }
 
 void lv_display_exit(void)
 {
-    xgui_view_destroy(lv_display_view);
+    xbrower_view_set_z(lv_display_view, -1);
+    xbrower_view_destroy(lv_display_view);
 }
 
 /**
@@ -74,7 +75,7 @@ void lv_display_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * 
     int32_t x, y;
     for(y = area->y1; y <= area->y2; y++) {
         for(x = area->x1; x <= area->x2; x++) {
-            xgui_vrender_putpixel(lv_display_view, x, y, *(xgui_color_t *) color_p);
+            xbrower_render_putpixel(lv_display_view, x, y, *(xbrower_color_t *) color_p);
             color_p++;
         }
     }
@@ -84,10 +85,10 @@ void lv_display_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * 
 
 void lv_display_get_sizes(uint32_t *width, uint32_t *height) {
     if (width)
-        *width = xgui_screen.width;
+        *width = xbrower_screen.width;
 
     if (height)
-        *height = xgui_screen.height;
+        *height = xbrower_screen.height;
 }
 
 /**********************

@@ -231,6 +231,14 @@ static iostatus_t vbe_enter(driver_object_t *driver)
     extension->vbe_info = (struct vbe_info_block *)VBE_INFO_ADDR;
     extension->mode_info = (struct vbe_mode_info_block *)VBE_MODE_ADDR;
     
+    // 检测版本是否满足
+    if (extension->vbe_info->vbeVeision < 0x0200) {
+        io_delete_device(devobj);
+        kprint(PRINT_ERR "vbe: version %x not supported!\n", extension->vbe_info->vbeVeision);
+        status = IO_FAILED;
+        return status;
+    }
+
 #ifdef DEBUG_DRV
     
     kprint(PRINT_DEBUG "%s: %s: sizeof vbe info block %d mode block %d\n", 

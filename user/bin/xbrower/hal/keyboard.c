@@ -3,13 +3,13 @@
 #include <sys/ioctl.h>
 #include <sys/input.h>
 #include <unistd.h>
-#include "xgui_hal.h"
+#include "xbrower_hal.h"
 
 #ifndef  DEV_NAME 
 #define  DEV_NAME         "kbd"
 #endif
 
-int xgui_keyboard_open(xgui_keyboard_t *keyboard)
+int xbrower_keyboard_open(xbrower_keyboard_t *keyboard)
 {
     keyboard->handle = opendev(DEV_NAME, 0);
     if (keyboard->handle < 0)
@@ -29,12 +29,12 @@ int xgui_keyboard_open(xgui_keyboard_t *keyboard)
     return 0;
 }
 
-int xgui_keyboard_close(xgui_keyboard_t *keyboard)
+int xbrower_keyboard_close(xbrower_keyboard_t *keyboard)
 {
     return close(keyboard->handle);
 }
 
-int xgui_keyboard_read(xgui_keyboard_t *keyboard)
+int xbrower_keyboard_read(xbrower_keyboard_t *keyboard)
 {
     struct input_event event;
     int ret = 0;

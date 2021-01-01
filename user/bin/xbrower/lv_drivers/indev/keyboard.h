@@ -31,7 +31,7 @@ extern "C" {
 #include "lvgl/lvgl.h"
 #endif
 
-#include <xgui_msg.h>
+#include <xbrower_msg.h>
 #include <sys/input.h>
 
 /*********************
@@ -58,7 +58,7 @@ void lv_keyboard_init(void);
  */
 bool lv_keyboard_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data);
 
-void lv_keyboard_handler(xgui_msg_t *msg);
+void lv_keyboard_handler(xbrower_msg_t *msg);
 
 /**********************
  *      MACROS

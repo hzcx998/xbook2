@@ -3,14 +3,14 @@
 
 #include <stdint.h>
 
-typedef unsigned int xgui_color_t;
+typedef unsigned int xbrower_color_t;
 
 typedef struct {
     uint8_t blue;
     uint8_t green;
     uint8_t red;
     uint8_t alpha;
-} xgui_argb_t;
+} xbrower_argb_t;
 
 #define XGUI_ARGB_SUB(a, r, g, b) (((a) << 24) | ((r) << 16) | ((g) << 8) | (b)) 
 #define XGUI_ARGB(a, r, g, b)     XGUI_ARGB_SUB((a) & 0xff, (r)  & 0xff, (g) & 0xff, (b) & 0xff)

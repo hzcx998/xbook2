@@ -9,6 +9,10 @@ int main(int argc, char *argv[])
         return -1;
     }
     char *servname = argv[1];
+    if (access(servname, F_OK) < 0) {
+        printf("start service %s failed!\n", servname);
+        return -1;
+    }
     char *_argv[2] = {servname, NULL};
     pid_t pid = create_process(_argv, environ, PROC_CREATE_STOP);
     if (pid < 0) {

@@ -9,11 +9,12 @@
 #include "mouse.h"
 #if USE_MOUSE != 0
 
-#include "xgui_view.h"
-#include "xgui_screen.h"
-#include "xgui_vrender.h"
-#include "xgui_image.h"
-#include <xgui_bitmap.h>
+#include "xbrower_view.h"
+#include "xbrower_screen.h"
+#include "xbrower_render.h"
+#include "xbrower_image.h"
+#include <xbrower_bitmap.h>
+#include <stdlib.h>
 
 /*********************
  *      DEFINES
@@ -37,7 +38,7 @@ static bool left_button_down = false;
 static int16_t last_x = 0;
 static int16_t last_y = 0;
 
-xgui_view_t *lv_mouse_view = NULL;
+xbrower_view_t *lv_mouse_view = NULL;
 /**********************
  *      MACROS
  **********************/
@@ -52,13 +53,19 @@ xgui_view_t *lv_mouse_view = NULL;
 void lv_mouse_init(void)
 {
     int iw, ih;
-    unsigned char *ibuf = xgui_load_image("/res/cursor.png", &iw, &ih, NULL);
-    lv_mouse_view = xgui_view_create(xgui_screen.width / 2, xgui_screen.height / 2, iw, ih);
-    xgui_bitmap_t ibmp;
-    xgui_bitmap_init(&ibmp, iw, ih, (xgui_color_t *) ibuf);
-    xgui_vrender_bitblt(lv_mouse_view, 0, 0, &ibmp, 0,0,iw, ih);
+    unsigned char *ibuf = xbrower_load_image("/res/cursor.png", &iw, &ih, NULL);
+    lv_mouse_view = xbrower_view_create(xbrower_screen.width / 2, xbrower_screen.height / 2, iw, ih);
+    xbrower_bitmap_t ibmp;
+    xbrower_bitmap_init(&ibmp, iw, ih, (xbrower_color_t *) ibuf);
+    xbrower_render_bitblt(lv_mouse_view, 0, 0, &ibmp, 0,0,iw, ih);
     free(ibuf);
-    xgui_view_move_upper_top(lv_mouse_view);
+    xbrower_view_move_upper_top(lv_mouse_view);
+}
+
+void lv_mouse_exit(void)
+{
+    xbrower_view_set_z(lv_mouse_view, -1);
+    xbrower_view_destroy(lv_mouse_view);
 }
 
 /**
@@ -82,21 +89,21 @@ bool lv_mouse_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
 /**
  * It will be called from the main SDL thread
  */
-void lv_mouse_handler(xgui_msg_t *msg)
+void lv_mouse_handler(xbrower_msg_t *msg)
 {
-    switch(xgui_msg_get_type(msg)) {
+    switch(xbrower_msg_get_type(msg)) {
     case XGUI_MSG_MOUSE_LBTN_DOWN:
         left_button_down = true;
-        last_x = xgui_msg_get_mouse_x(msg) / MONITOR_ZOOM;
-        last_y = xgui_msg_get_mouse_y(msg) / MONITOR_ZOOM;
+        last_x = xbrower_msg_get_mouse_x(msg) / MONITOR_ZOOM;
+        last_y = xbrower_msg_get_mouse_y(msg) / MONITOR_ZOOM;
         break;
     case XGUI_MSG_MOUSE_LBTN_UP:
         left_button_down = false;
         break;
     case XGUI_MSG_MOUSE_MOTION:
-        last_x = xgui_msg_get_mouse_x(msg) / MONITOR_ZOOM;
-        last_y = xgui_msg_get_mouse_y(msg) / MONITOR_ZOOM;
-        xgui_view_set_xy(lv_mouse_view, last_x, last_y);
+        last_x = xbrower_msg_get_mouse_x(msg) / MONITOR_ZOOM;
+        last_y = xbrower_msg_get_mouse_y(msg) / MONITOR_ZOOM;
+        xbrower_view_set_xy(lv_mouse_view, last_x, last_y);
         break;
     default:
         break;

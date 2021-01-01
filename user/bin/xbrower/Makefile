@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibc.a libpthread.a libpng.a libzlib.a libjpeg.a libxgui.a liblvgl.a
+X_LIBS		+= libxlibc.a libpthread.a libpng.a libzlib.a libjpeg.a liblvgl.a
 
 X_INCDIRS	+= xbrower/include xbrower
 

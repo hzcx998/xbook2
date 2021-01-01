@@ -10,13 +10,13 @@
 extern "C" {
 #endif
 
-#include "lvgl.h"
+#include <lvgl.h>
 
 lv_indev_t *lv_window_get_kbd();
 lv_indev_t *lv_window_get_mouse();
 lv_indev_t *lv_window_get_mousewheel();
 void lv_window_set_handler(void (*handler)(void));
-int lv_window_init(char *title, int x, int y, uint32_t width, uint32_t height);
+int lv_window_init(uint32_t width, uint32_t height);
 void lv_window_loop();
 void lv_window_quit();
 void lv_window_exit(); // exit imediately

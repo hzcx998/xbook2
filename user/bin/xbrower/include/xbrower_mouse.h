@@ -8,9 +8,11 @@ typedef struct {
     void (*wheel)(int);
     int x, y;
     int handle;
-} xgui_mouse_t;
+} xbrower_mouse_t;
 
-int xgui_mouse_init();
-int xgui_mouse_poll();
+int xbrower_mouse_init();
+int xbrower_mouse_exit();
+
+int xbrower_mouse_poll();
 
 #endif /* _XGUI_MOUSE_H */

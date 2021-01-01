@@ -8,12 +8,10 @@
 #include  "lv_drv_conf.h"
 #include  "lvgl_window.h"
 
-#include  "xgui_view.h"
+#include  "xbrower_view.h"
 
 #define LV_WINDOW_DELAY_VAL  30000  // 30 ms
 #define LV_WINDOW_TIMER_MS 40       // 40 ms
-
-/* 窗口句柄 */
 
 static int lv_window_delay_val = 0;
 static bool lv_win_exit_flag = false;
@@ -44,55 +42,6 @@ static void do_win_handle(struct _lv_task_t *param)
 
     if (lv_win_handler)
         lv_win_handler();
-}
-
-static int do_win_proc(void *msg)
-{
-    int x, y;
-    uint32_t w, h;
-    #if 0
-    switch (g_msg_get_type(msg))
-    {
-    case GM_MOUSE_LBTN_DOWN:
-    case GM_MOUSE_LBTN_UP:
-    case GM_MOUSE_MOTION:
-        lv_mouse_handler(msg);
-        break;
-    case GM_MOUSE_MBTN_DOWN:
-    case GM_MOUSE_MBTN_UP:
-    case GM_MOUSE_WHEEL_UP:
-    case GM_MOUSE_WHEEL_DOWN:
-        lv_mousewheel_handler(msg);
-        break;
-    case GM_PAINT:
-        g_get_invalid(lv_winhdl, &x, &y, &w, &h);
-        #ifdef LV_DISPLAY_PAINT
-        /* 刷新 */
-        g_paint_window(lv_winhdl, 0, 0, lv_display_render);
-        #endif
-        break;
-    case GM_KEY_DOWN:
-    case GM_KEY_UP:                         /*Button release*/
-        lv_keyboard_handler(msg);
-        break;
-    default:
-        break;
-    }
-    #endif
-    return 0;
-}
-
-static void do_msg_handle(struct _lv_task_t *param)
-{
-    (void)param;
-    #if 0
-    g_msg_t msg;
-    if (!g_try_get_msg(&msg))
-        return;
-    if (g_is_quit_msg(&msg))
-        lv_win_exit_flag = true;
-    do_win_proc(&msg);
-    #endif
 }
 
 static int do_register_drv(uint32_t width, uint32_t height)
@@ -172,41 +121,21 @@ static int do_register_drv(uint32_t width, uint32_t height)
 
 void lv_window_exit()
 {
-    #if 0
-    g_quit();
-    #endif
+    lv_display_exit();
+    lv_mouse_exit();
 }
 
-int lv_window_init(char *title, int x, int y, uint32_t width, uint32_t height)
+int lv_window_init(uint32_t width, uint32_t height)
 {
-    #if 0
-    if (g_init() < 0)
-        return -1;
-    #endif
-    #if 0
-    lv_winhdl = g_new_window(title, x, y, width, height, GW_SHOW);
-    if (lv_winhdl < 0)
-        return -1;
-    #endif
-    
     lv_win_exit_flag = false;
     lv_window_delay_val = LV_WINDOW_DELAY_VAL;
 
     lv_init();
-
-    lv_task_create(do_msg_handle, 0, LV_TASK_PRIO_HIGHEST, NULL);
-    //lv_task_create(do_win_handle, 0, LV_TASK_PRIO_HIGH, NULL);
+    lv_task_create(do_win_handle, 0, LV_TASK_PRIO_HIGH, NULL);
 
     if (do_register_drv(width, height) < 0) {
-        #if 0
-        g_del_window(lv_winhdl);
-        g_quit();
-        #endif
         return -1;
     }
-
-    // 设置退出函数
-    // atexit(lv_window_exit);
     return 0;
 }
 

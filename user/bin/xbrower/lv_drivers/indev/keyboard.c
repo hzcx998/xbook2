@@ -64,13 +64,13 @@ bool lv_keyboard_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
  * @param keycode input keycode
  * @param down whether keydown, 1 is down, 0 is up
  */
-void lv_keyboard_handler(xgui_msg_t *msg)
+void lv_keyboard_handler(xbrower_msg_t *msg)
 {
     /* We only care about SDL_KEYDOWN and SDL_KEYUP events */
-    switch (xgui_msg_get_type(msg))
+    switch (xbrower_msg_get_type(msg))
     {
     case XGUI_MSG_KEY_DOWN:
-        last_key = xgui_msg_get_key_code(msg);   /*Save the pressed key*/
+        last_key = xbrower_msg_get_key_code(msg);   /*Save the pressed key*/
         state = LV_INDEV_STATE_PR;          /*Save the key is pressed now*/
         break;
     case XGUI_MSG_KEY_UP:                         /*Button release*/

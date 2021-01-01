@@ -64,9 +64,9 @@ bool lv_mousewheel_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
  * It is called periodically from the SDL thread to check mouse wheel state
  * @param event describes the event
  */
-void lv_mousewheel_handler(xgui_msg_t *msg)
+void lv_mousewheel_handler(xbrower_msg_t *msg)
 {
-    switch(xgui_msg_get_type(msg)) {
+    switch(xbrower_msg_get_type(msg)) {
     case XGUI_MSG_MOUSE_WHEEL_UP:
         enc_diff = -1;
         break;
