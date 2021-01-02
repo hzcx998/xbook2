@@ -89,7 +89,6 @@ recycle
 user/sbin/init/init
 user/sbin/init/initg
 user/sbin/desktop/desktop
-user/sbin/sh/sh
 user/sbin/login/login
 user/sbin/userctl/userctl
 user/sbin/service/service
@@ -117,6 +116,7 @@ user/bin/touch/touch
 user/bin/trig/trig
 user/bin/osver/osver
 user/bin/xbrower/xbrower
+user/bin/sh/sh
 
 # /bin
 user/bin/bosh/bosh
