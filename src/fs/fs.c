@@ -10,7 +10,7 @@
 
 int file_system_init()
 {
-    kprint(PRINT_INFO "fs: init start.\n");
+    keprint(PRINT_INFO "fs: init start.\n");
     if (disk_manager_init() < 0)
         panic("fs: init disk manager failed!\n");
 
@@ -20,6 +20,6 @@ int file_system_init()
     if (fsal_init() < 0) {
         panic("fs: init fsal failed, service stopped!\n");
     }
-    kprint(PRINT_INFO "fs: init done.\n");
+    keprint(PRINT_INFO "fs: init done.\n");
     return 0;
 }

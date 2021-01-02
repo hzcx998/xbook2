@@ -33,7 +33,7 @@ static inline void sync_lock(synclock_t *lock)
     if (lock->holder != task_current) {
         semaphore_down(&lock->semaphore);
         lock->holder = task_current;
-        ASSERT(lock->reapt_count == 0);
+        assert(lock->reapt_count == 0);
         lock->reapt_count = 1;
     } else {
         lock->reapt_count++;
@@ -42,12 +42,12 @@ static inline void sync_lock(synclock_t *lock)
 
 static inline void sync_unlock(synclock_t *lock)
 {
-    ASSERT(lock->holder == task_current);
+    assert(lock->holder == task_current);
     if (lock->reapt_count > 1) {
         lock->reapt_count--;
         return;
     }
-    ASSERT(lock->reapt_count == 1);    
+    assert(lock->reapt_count == 1);    
     lock->holder = NULL;
     lock->reapt_count = 0;
     semaphore_up(&lock->semaphore);

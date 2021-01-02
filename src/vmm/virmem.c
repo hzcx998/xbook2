@@ -166,7 +166,7 @@ void *memio_remap(unsigned long paddr, size_t size)
     }
     unsigned long vaddr = vir_addr_alloc(size);
     if (vaddr == -1) {
-        kprint("alloc virtual addr for IO remap failed!\n");
+        keprint("alloc virtual addr for IO remap failed!\n");
         return NULL;
     }
 	vir_mem_t *area;

@@ -53,7 +53,7 @@ void timer_add(timer_t *timer)
     interrupt_save_and_disable(flags);
     if (!timer->id)
         timer->id = timer_id_next++;
-    ASSERT(!list_find(&timer->list, &timer_list_head));
+    assert(!list_find(&timer->list, &timer_list_head));
     if (list_empty(&timer_list_head)) {    
         list_add_tail(&timer->list, &timer_list_head);
         minim_timeout_val = timer->timeout;
@@ -79,7 +79,7 @@ void timer_del(timer_t *timer)
 {
     unsigned long flags;
     interrupt_save_and_disable(flags);
-    ASSERT(list_find(&timer->list, &timer_list_head));
+    assert(list_find(&timer->list, &timer_list_head));
     list_del(&timer->list);
     interrupt_restore_state(flags);
 }

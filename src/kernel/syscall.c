@@ -130,7 +130,7 @@ void syscall_init()
 int syscall_error(uint32_t callno)
 {
     if (callno >= SYSCALL_NR) {
-        kprint(PRINT_ERR "syscall: bad number %d, raise exception!\n", callno);
+        keprint(PRINT_ERR "syscall: bad number %d, raise exception!\n", callno);
         exception_raise(EXP_CODE_SYS);
         return 1;
     }

@@ -86,13 +86,13 @@ int sem_get(char *name, int value, int semflg)
         if (sem) {
             if (craete_new)
                 goto err;
-            kprint(PRINT_DEBUG "sem_get: find a exist sem %d.\n", sem->id);
+            keprint(PRINT_DEBUG "sem_get: find a exist sem %d.\n", sem->id);
             retval = sem->id;
         } else {
             sem = sem_alloc(name, value);
             if (sem == NULL)
                 goto err;
-            kprint(PRINT_DEBUG "sem_get: alloc a new sem %d.\n", sem->id);
+            keprint(PRINT_DEBUG "sem_get: alloc a new sem %d.\n", sem->id);
             retval = sem->id;
         }
     }
@@ -108,7 +108,7 @@ int sem_put(int semid)
     sem = sem_find_by_id(semid);
     if (sem) {
 #if DEBUG_SEM == 1
-        kprint(PRINT_INFO "sem value %d.\n", atomic_get(&sem->sema.counter));
+        keprint(PRINT_INFO "sem value %d.\n", atomic_get(&sem->sema.counter));
 #endif
         sem_free(sem);
         semaphore_up(&sem_mutex);

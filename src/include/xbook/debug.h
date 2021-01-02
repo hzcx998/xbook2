@@ -15,22 +15,22 @@
 
 extern int print_gui_console;
 
-int kprint(const char *fmt, ...);
+int keprint(const char *fmt, ...);
 #define print_fmt(fmt) fmt
 #define emeprint(fmt, ...) \
-    kprint(PRINT_EMERG print_fmt(fmt), ##__VA_ARGS__)
+    keprint(PRINT_EMERG print_fmt(fmt), ##__VA_ARGS__)
 #define errprint(fmt, ...) \
-    kprint(PRINT_ERR print_fmt(fmt), ##__VA_ARGS__)
+    keprint(PRINT_ERR print_fmt(fmt), ##__VA_ARGS__)
 #define warnprint(fmt, ...) \
-    kprint(PRINT_WARING print_fmt(fmt), ##__VA_ARGS__)
+    keprint(PRINT_WARING print_fmt(fmt), ##__VA_ARGS__)
 #define noteprint(fmt, ...) \
-    kprint(PRINT_NOTICE print_fmt(fmt), ##__VA_ARGS__)
+    keprint(PRINT_NOTICE print_fmt(fmt), ##__VA_ARGS__)
 #define infoprint(fmt, ...) \
-    kprint(PRINT_INFO print_fmt(fmt), ##__VA_ARGS__)
+    keprint(PRINT_INFO print_fmt(fmt), ##__VA_ARGS__)
 #define dbgprint(fmt, ...) \
-    kprint(PRINT_DEBUG fmt, ##__VA_ARGS__)
+    keprint(PRINT_DEBUG fmt, ##__VA_ARGS__)
 #define logprint(fmt, ...) \
-        kprint("file:%s line:%d: " PRINT_DEBUG print_fmt(fmt), __FILE__, __LINE__, ##__VA_ARGS__)
+        keprint("file:%s line:%d: " PRINT_DEBUG print_fmt(fmt), __FILE__, __LINE__, ##__VA_ARGS__)
 
 #define endl "\n"
 

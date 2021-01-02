@@ -22,7 +22,7 @@
 
 int kernel_main(void)
 {
-    kprint(PRINT_INFO "welcome to xbook kernel.\n");
+    keprint(PRINT_INFO "welcome to xbook kernel.\n");
     mem_caches_init();
     vir_mem_init();
     irq_description_init();
@@ -41,6 +41,7 @@ int kernel_main(void)
     interrupt_enable();
     driver_framewrok_init();
     initcalls_exec();
+    drivers_print();
     file_system_init();
     account_manager_init();
     port_comm_init();

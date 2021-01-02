@@ -33,7 +33,7 @@ Background colors
     47	White
 */
 
-char *kprint_msg[] = {
+char *keprint_msg[] = {
     "\e[0;35m",     /* Magenta */
     "\e[0;31m",     /* Red */
     "\e[0;33m",     /* Yellow */
@@ -46,7 +46,7 @@ char *kprint_msg[] = {
 #define DEBUG_NONE_COLOR    "\e[0m" // 清除属性
 #define BACKTRACE_LEN   3
 
-int kprint_level = DEFAULT_LOG_LEVEL;
+int keprint_level = DEFAULT_LOG_LEVEL;
 
 int print_gui_console = 0;
 
@@ -74,14 +74,14 @@ void panic(const char *fmt, ...)
 
 void assertion_failure(char *exp, char *file, char *baseFile, int line)
 {
-	kprint(PRINT_ERR "\nassert(%s) failed:\nfile: %s\nbase_file: %s\nln: %d",
+	keprint(PRINT_ERR "\nassert(%s) failed:\nfile: %s\nbase_file: %s\nln: %d",
 	exp, file, baseFile, line);
 	spin("assertion failure()");
 }
 
 void spin(char * functionName)
 {
-	kprint(PRINT_NOTICE "spinning in %s", functionName);
+	keprint(PRINT_NOTICE "spinning in %s", functionName);
 	interrupt_disable();
 	while(1){
 		cpu_idle();
@@ -97,7 +97,7 @@ void debug_putstr(char *str, int count)
     }
 }
 
-int kprint(const char *fmt, ...)
+int keprint(const char *fmt, ...)
 {
     spin_lock(&print_spin_lock);
     int i;
@@ -111,7 +111,7 @@ int kprint(const char *fmt, ...)
     if (*p == '<') {
         if (*(p + 1) >= '0' && *(p + 1) <= (DEFAULT_LOG_MAX + '0') && *(p + 2) == '>') {
             level = *(p + 1) - '0';
-            if (level > kprint_level) 
+            if (level > keprint_level) 
                 show = 0;
             p += 3;
             count -= 3;
@@ -119,7 +119,7 @@ int kprint(const char *fmt, ...)
     }
     if (show) {
         if (level >= 0) {
-            char *q = kprint_msg[level];
+            char *q = keprint_msg[level];
             debug_putstr(q, strlen(q));
         }
         debug_putstr(p, count);
@@ -133,30 +133,30 @@ int kprint(const char *fmt, ...)
 
 void log_dump_value(unsigned long val)
 {
-    kprint(PRINT_DEBUG "debug: %d\n", val);
+    keprint(PRINT_DEBUG "debug: %d\n", val);
 }
 
 void log_dump_buffer(void *buffer, unsigned long len, char factor)
 {
-    kprint(PRINT_DEBUG "debug: addr=%x len=%d factor=%d\n", buffer, len, factor);
+    keprint(PRINT_DEBUG "debug: addr=%x len=%d factor=%d\n", buffer, len, factor);
     int i;
     if (factor == 1) {
         unsigned char *buf = (unsigned char *)buffer;
         for (i = 0; i < len; i++) {
-            kprint("%x ", buf[i]);
+            keprint("%x ", buf[i]);
         }
-        kprint("\n");    
+        keprint("\n");    
     } else if (factor == 2) {
         unsigned short *buf = (unsigned short *)buffer;
         for (i = 0; i < len / factor; i++) {
-            kprint("%x ", buf[i]);
+            keprint("%x ", buf[i]);
         }
-        kprint("\n");    
+        keprint("\n");    
     } else if (factor == 4) {
         unsigned int *buf = (unsigned int *)buffer;
         for (i = 0; i < len / factor; i++) {
-            kprint("%x ", buf[i]);
+            keprint("%x ", buf[i]);
         }
-        kprint("\n");
+        keprint("\n");
     }    
 }

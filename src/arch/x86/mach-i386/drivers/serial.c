@@ -209,7 +209,7 @@ iostatus_t serial_read(device_object_t *device, io_request_t *ioreq)
     }
 #ifdef DEBUG_DRV    
     buf = (uint8_t *)ioreq->system_buffer; 
-    kprint(PRINT_DEBUG "serial_write: %s\n", buf);
+    keprint(PRINT_DEBUG "serial_write: %s\n", buf);
 #endif
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = len;
@@ -227,7 +227,7 @@ iostatus_t serial_write(device_object_t *device, io_request_t *ioreq)
     uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
     int i = len;
 #ifdef DEBUG_DRV    
-    kprint(PRINT_DEBUG "serial_write: %s\n", buf);
+    keprint(PRINT_DEBUG "serial_write: %s\n", buf);
 #endif
     while (i > 0) {
         uart_send(device->device_extension, *buf);
@@ -252,7 +252,7 @@ iostatus_t serial_devctl(device_object_t *device, io_request_t *ioreq)
     {
     case DEVCTL_CODE_TEST:
 #ifdef DEBUG_DRV
-        kprint(PRINT_DEBUG "serial_devctl: code=%x arg=%x\n", ctlcode, ioreq->parame.devctl.arg);
+        keprint(PRINT_DEBUG "serial_devctl: code=%x arg=%x\n", ctlcode, ioreq->parame.devctl.arg);
 #endif
         status = IO_SUCCESS;
         break;
@@ -284,7 +284,7 @@ static iostatus_t serial_enter(driver_object_t *driver)
         status = io_create_device(driver, sizeof(device_extension_t), devname, DEVICE_TYPE_SERIAL_PORT, &devobj);
 
         if (status != IO_SUCCESS) {
-            kprint(PRINT_ERR "serial_enter: create device failed!\n");
+            keprint(PRINT_ERR "serial_enter: create device failed!\n");
             return status;
         }
         /* buffered io mode */
@@ -294,7 +294,7 @@ static iostatus_t serial_enter(driver_object_t *driver)
         string_new(&devext->device_name, devname, DEVICE_NAME_LEN);
         devext->device_object = devobj;
 #ifdef DEBUG_DRV
-        kprint(PRINT_DEBUG "serial_enter: device extension: device name=%s object=%x\n",
+        keprint(PRINT_DEBUG "serial_enter: device extension: device name=%s object=%x\n",
             devext->device_name.text, devext->device_object);
 #endif        
         /* 根据ID设置iobase和irq */
@@ -339,7 +339,7 @@ static iostatus_t serial_enter(driver_object_t *driver)
         /* irq号 */
         devext->irq = irq;
 #ifdef DEBUG_DRV
-        kprint(PRINT_DEBUG "serial_enter: com%d, base:%x irq:%d\n", id, iobase, irq);
+        keprint(PRINT_DEBUG "serial_enter: com%d, base:%x irq:%d\n", id, iobase, irq);
 #endif  /* DEBUG_SERIAL */
         
         /* ----执行设备的初始化---- */
@@ -406,7 +406,7 @@ iostatus_t serial_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    kprint(PRINT_DEBUG "serial_driver_func: driver name=%s\n",
+    keprint(PRINT_DEBUG "serial_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     return status;
@@ -415,7 +415,7 @@ iostatus_t serial_driver_func(driver_object_t *driver)
 static __init void serial_driver_entry(void)
 {
     if (driver_object_create(serial_driver_func) < 0) {
-        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
+        keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

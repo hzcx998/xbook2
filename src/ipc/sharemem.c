@@ -202,7 +202,7 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
         addr = (unsigned long) shmaddr;
     mem_space_t *sp = mem_space_find(cur->vmm, addr);
     if (sp == NULL) {
-        kprint(PRINT_DEBUG "share_mem_unmap: not fond space\n");
+        keprint(PRINT_DEBUG "share_mem_unmap: not fond space\n");
         return -1;
     }
     addr = addr_vir2phy(addr);
@@ -219,7 +219,7 @@ int share_mem_unmap(const void *shmaddr, int shmflg)
             atomic_dec(&shm->links);
         }
     } else {
-        kprint(PRINT_ERR "share_mem_unmap: do unmap at %x failed!\n", addr);
+        keprint(PRINT_ERR "share_mem_unmap: do unmap at %x failed!\n", addr);
     }
     return retval;
 }

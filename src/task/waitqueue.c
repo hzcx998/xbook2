@@ -7,7 +7,7 @@ void wait_queue_add(wait_queue_t *wait_queue, void *task_ptr)
     task_t *task = (task_t *) task_ptr;
     unsigned long iflags;
     spin_lock_irqsave(&wait_queue->lock, iflags);
-	ASSERT(!list_find(&task->list, &wait_queue->wait_list));
+	assert(!list_find(&task->list, &wait_queue->wait_list));
 	list_add_tail(&task->list, &wait_queue->wait_list);
     TASK_ENTER_WAITLIST(task);
     spin_unlock_irqrestore(&wait_queue->lock, iflags);

@@ -84,11 +84,11 @@ int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
         return -1;
     pipe_t *pipe = pipe_find(pipeid);
     if (pipe == NULL) {
-        kprint(PRINT_ERR "%s: pipe %d not found!\n", __func__, pipeid);
+        keprint(PRINT_ERR "%s: pipe %d not found!\n", __func__, pipeid);
         return -1;
     }
     if (atomic_get(&pipe->read_count) <= 0)  {
-        kprint(PRINT_ERR "%s: pipe %d reader is zero!\n", __func__, pipeid);
+        keprint(PRINT_ERR "%s: pipe %d reader is zero!\n", __func__, pipeid);
         return -1;
     }
 
@@ -141,11 +141,11 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
         return -1;
     pipe_t *pipe = pipe_find(pipeid);
     if (pipe == NULL) {
-        kprint(PRINT_ERR "%s: pipe %d not found!\n", __func__, pipeid);
+        keprint(PRINT_ERR "%s: pipe %d not found!\n", __func__, pipeid);
         return -1;
     }
     if (atomic_get(&pipe->write_count) <= 0) {
-        kprint(PRINT_ERR "%s: pipe %d writer is zero!\n", __func__, pipeid);
+        keprint(PRINT_ERR "%s: pipe %d writer is zero!\n", __func__, pipeid);
         return -1;
     }
         

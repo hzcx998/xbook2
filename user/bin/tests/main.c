@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
     // proc_test(argc, argv);
     // port_comm_test(argc, argv);
     //gui_test(argc, argv);
-    
+    view_test(argc, argv);
+
     return 0;
 }

@@ -27,7 +27,7 @@ uint8_t sched_calc_base_priority(uint32_t level)
 uint8_t sched_calc_new_priority(task_t *task, char adjustment)
 {
     char priority = task->priority;
-    ASSERT((priority < TASK_PRIORITY_REALTIME));
+    assert((priority < TASK_PRIORITY_REALTIME));
     if ((priority < TASK_PRIORITY_REALTIME)) {
         priority = priority + adjustment;
         if (priority >= TASK_PRIORITY_REALTIME)
@@ -98,10 +98,10 @@ void schedule()
 void sched_print_queue(sched_unit_t *su)
 {
     if (su == NULL) {
-        kprint(PRINT_ERR "[sched]: unit null!\n");
+        keprint(PRINT_ERR "[sched]: unit null!\n");
         return;
     }
-    kprint(PRINT_INFO "[sched]: queue list:\n");
+    keprint(PRINT_INFO "[sched]: queue list:\n");
     sched_queue_t *queue;
     task_t *task;
     int i; 
@@ -110,11 +110,11 @@ void sched_print_queue(sched_unit_t *su)
     for (i = 0; i < TASK_PRIORITY_MAX_NR; i++) {
         queue = &su->priority_queue[i];
         if (queue->length > 0) {
-            kprint(PRINT_NOTICE "qeuue prio: %d\n", queue->priority);
+            keprint(PRINT_NOTICE "qeuue prio: %d\n", queue->priority);
             list_for_each_owner (task, &queue->list, list) {
-                kprint(PRINT_INFO "task=%s pid=%d prio=%d ->", task->name, task->pid, task->priority);
+                keprint(PRINT_INFO "task=%s pid=%d prio=%d ->", task->name, task->pid, task->priority);
             }
-            kprint(PRINT_NOTICE "\n");
+            keprint(PRINT_NOTICE "\n");
         }
     }
     spin_unlock_irqrestore(&scheduler.lock, flags);

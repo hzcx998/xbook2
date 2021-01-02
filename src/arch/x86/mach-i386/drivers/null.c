@@ -21,7 +21,7 @@ iostatus_t null_read(device_object_t *device, io_request_t *ioreq)
 {
     iostatus_t status = IO_SUCCESS;
 #ifdef DEBUG_DRV
-    kprint(PRINT_DEBUG "null_read: data:\n");
+    keprint(PRINT_DEBUG "null_read: data:\n");
 #endif
     int len = ioreq->parame.read.length;
     unsigned char *data = (unsigned char *) ioreq->user_buffer;
@@ -40,11 +40,11 @@ iostatus_t null_write(device_object_t *device, io_request_t *ioreq)
 {
     iostatus_t status = IO_SUCCESS;
 #ifdef DEBUG_DRV
-    kprint(PRINT_DEBUG "null_write: data:\n");
+    keprint(PRINT_DEBUG "null_write: data:\n");
     int len = ioreq->parame.write.length;
     unsigned char *data = (unsigned char *) ioreq->user_buffer;
     while (len-- > 0) {
-        kprint("%x ", *data);
+        keprint("%x ", *data);
         data++;
     }
 #endif
@@ -62,7 +62,7 @@ static iostatus_t null_enter(driver_object_t *driver)
     /* 初始化一些其它内容 */
     status = io_create_device(driver, 0, DEV_NAME, DEVICE_TYPE_VIRTUAL_CHAR, &devobj);
     if (status != IO_SUCCESS) {
-        kprint(PRINT_ERR "null_enter: create device failed!\n");
+        keprint(PRINT_ERR "null_enter: create device failed!\n");
         return status;
     }
     /* neighter io mode */
@@ -96,7 +96,7 @@ iostatus_t null_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    kprint(PRINT_DEBUG "null_driver_func: driver name=%s\n",
+    keprint(PRINT_DEBUG "null_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
@@ -106,7 +106,7 @@ iostatus_t null_driver_func(driver_object_t *driver)
 static __init void null_driver_entry(void)
 {
     if (driver_object_create(null_driver_func) < 0) {
-        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
+        keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

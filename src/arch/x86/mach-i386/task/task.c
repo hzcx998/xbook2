@@ -52,6 +52,8 @@ static void kernel_thread_entry(task_func_t *function, void *arg)
 {
     interrupt_enable();  /* 在启动前需要打开中断，避免启动后不能产生时钟中断调度 */
     function(arg);
+    // 如何函数返回了，那么就需要调用线程退出
+    kern_thread_exit(0);
 }
 
 void task_stack_build(task_t *task, task_func_t *function, void *arg)
@@ -125,6 +127,6 @@ int process_frame_init(task_t *task, trap_frame_t *frame, char **argv, char **en
 
 void thread_kstack_dump(thread_stack_t *kstack)
 {
-    kprint(PRINT_INFO "eip:%x func:%x arg:%x ebp:%x ebx:%x esi:%x edi:%x\n", 
+    keprint(PRINT_INFO "eip:%x func:%x arg:%x ebp:%x ebx:%x esi:%x edi:%x\n", 
     kstack->eip, kstack->function, kstack->arg, kstack->ebp, kstack->ebx, kstack->esi, kstack->edi);
 }

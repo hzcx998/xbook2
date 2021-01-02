@@ -95,7 +95,7 @@ int fifo_get(char *name, unsigned long flags)
         } else if (flags & IPC_WRITER) {
             rw = 1;
         } else {
-            kprint(PRINT_NOTICE "get fifo %s without reader or writer!\n", name);
+            keprint(PRINT_NOTICE "get fifo %s without reader or writer!\n", name);
         }
         if (flags & IPC_EXCL) {
             craete_new = 1;
@@ -185,7 +185,7 @@ int fifo_put(int fifoid)
 int fifo_write(int fifoid, void *buffer, size_t size)
 {
     if (buffer == NULL || !size) {
-        kprint(PRINT_ERR "%s: arg error!\n");
+        keprint(PRINT_ERR "%s: arg error!\n");
         return -1;
     }
     fifo_t *fifo;
@@ -193,16 +193,16 @@ int fifo_write(int fifoid, void *buffer, size_t size)
     fifo = fifo_find_by_id(fifoid);
     if (fifo == NULL) {
         semaphore_up(&fifo_mutex);
-        kprint(PRINT_DEBUG "fifo_write: not found fifo id=%d!\n", fifoid);
+        keprint(PRINT_DEBUG "fifo_write: not found fifo id=%d!\n", fifoid);
         return -1;
     }   
     semaphore_up(&fifo_mutex);
     if (fifo->writer == NULL) {
-        kprint(PRINT_ERR "%s: no writer!\n");
+        keprint(PRINT_ERR "%s: no writer!\n");
         return -1;
     }
     if (fifo->flags & (IPC_NOERROR << 24) && fifo->writer != task_current) {
-        kprint(PRINT_ERR "%s: writer no current task!\n");
+        keprint(PRINT_ERR "%s: writer no current task!\n");
         return -1;
     }
     fifo->flags |= FIFO_IN_WRITE;
@@ -264,19 +264,19 @@ int fifo_read(int fifoid, void *buffer, size_t size)
     fifo = fifo_find_by_id(fifoid);
     if (fifo == NULL) {
         semaphore_up(&fifo_mutex);    
-        kprint(PRINT_ERR "fifo_read: not found message queue!\n");
+        keprint(PRINT_ERR "fifo_read: not found message queue!\n");
         return -1;
     }
     semaphore_up(&fifo_mutex);
     if (fifo->reader == NULL) {
-        kprint(PRINT_ERR "fifo_read: reader null!\n");
+        keprint(PRINT_ERR "fifo_read: reader null!\n");
         return -1;
     }
     if (fifo->flags & (IPC_NOERROR << 16) && (fifo->reader != task_current))
         return -1;
     fifo->flags |= FIFO_IN_READ;
     if (fifo->writer == NULL && (fifo->flags & (IPC_NOSYNC << 16))) {
-        kprint(PRINT_DEBUG "fifo_read: don't need sync for reader.\n");  
+        keprint(PRINT_DEBUG "fifo_read: don't need sync for reader.\n");  
         return -1;
     }
 

@@ -16,7 +16,7 @@ void initcalls_exec(void)
 		(*call)();
 		call++;
 	}
-    kprint(PRINT_INFO "do init call done.\n");
+    keprint(PRINT_INFO "do init call done.\n");
 }
 
 void exitcalls_exec(void)

@@ -63,18 +63,18 @@ DEFINE_MUTEX_LOCK(large_mem_mutex);
 
 void mem_cache_dump(mem_cache_t *cache)
 {
-	kprint("----Mem Cache----\n");
-	kprint("object size %d count %d\n", cache->object_size, cache->object_count);
-	kprint("flags %x name %s\n", cache->flags, cache->name);
-	kprint("full %x partial %x free %x\n", cache->full_groups, cache->partial_groups, cache->free_groups);
+	keprint("----Mem Cache----\n");
+	keprint("object size %d count %d\n", cache->object_size, cache->object_count);
+	keprint("flags %x name %s\n", cache->flags, cache->name);
+	keprint("full %x partial %x free %x\n", cache->full_groups, cache->partial_groups, cache->free_groups);
 }
 
 void mem_group_dump(mem_group_t *group)
 {
-	kprint("----Mem Group----\n");
-	kprint("map bits %x len %d\n", group->map.bits, group->map.byte_length);
-	kprint("objects %x flags %x list %x\n", group->objects, group->flags, group->list);
-	kprint("using %d free %x\n", group->using_count, group->free_count);
+	keprint("----Mem Group----\n");
+	keprint("map bits %x len %d\n", group->map.bits, group->map.byte_length);
+	keprint("objects %x flags %x list %x\n", group->objects, group->flags, group->list);
+	keprint("using %d free %x\n", group->using_count, group->free_count);
 }
 
 int mem_cache_init(mem_cache_t *cache, char *name, size_t size, flags_t flags)
@@ -145,7 +145,7 @@ static int mem_group_init(
 		unsigned int pages = DIV_ROUND_UP(cache->object_count * cache->object_size, PAGE_SIZE); 
 		group->objects = mem_cache_page_alloc(pages);
 		if (group->objects == NULL) {
-			kprint(PRINT_ERR "alloc page for mem objects failed\n");
+			keprint(PRINT_ERR "alloc page for mem objects failed\n");
 			return -1;
 		}
 		int i;
@@ -167,11 +167,11 @@ static int mem_group_create(mem_cache_t *cache, flags_t flags)
 	mem_group_t *group;
 	group = mem_cache_page_alloc(1);
 	if (group == NULL) {
-		kprint(PRINT_ERR "alloc page for mem group failed!\n");
+		keprint(PRINT_ERR "alloc page for mem group failed!\n");
 		return -1;
 	}
 	if (mem_group_init(cache, group, flags)) {
-		kprint(PRINT_ERR "init mem group failed!\n");
+		keprint(PRINT_ERR "init mem group failed!\n");
 		goto free_group;
 	}
 	return 0;
@@ -186,7 +186,7 @@ static int mem_caches_build()
 	mem_cache_t *mem_cache = &mem_caches[0];
 	while (cachesz->cache_size) {
 		if (mem_cache_init(mem_cache, "mem cache", cachesz->cache_size, 0)) {
-			kprint("create mem cache failed!\n");
+			keprint("create mem cache failed!\n");
 			return -1;
 		}
 		cachesz->mem_cache = mem_cache;
@@ -201,7 +201,7 @@ static void *mem_cache_do_alloc(mem_cache_t *cache, mem_group_t *group)
 	void *object;
 	int idx = bitmap_scan(&group->map, 1);
 	if (idx == -1) {
-		kprint(PRINT_EMERG "bitmap scan failed!\n");
+		keprint(PRINT_EMERG "bitmap scan failed!\n");
 		return NULL;
 	}
 	bitmap_set(&group->map, idx, 1);
@@ -264,7 +264,7 @@ void *mem_alloc(size_t size)
         mutex_lock(&large_mem_mutex);
         list_add(&obj->list, &large_mem_object_list);
         mutex_unlock(&large_mem_mutex);
-        kprint(PRINT_DEBUG "[memcache]: alloc large mem object %x\n", obj->addr);
+        keprint(PRINT_DEBUG "[memcache]: alloc large mem object %x\n", obj->addr);
 		return obj->addr;
 	}
 	cache_size_t *cachesz = &cache_size[0];
@@ -328,7 +328,7 @@ void mem_free(void *object)
                 mem_cache_page_free(obj->addr);
                 mem_free(obj);
                 mutex_unlock(&large_mem_mutex);
-                kprint(PRINT_DEBUG "[memcache]: free large mem object %x\n", object);
+                keprint(PRINT_DEBUG "[memcache]: free large mem object %x\n", object);
                 return;
             }
         }

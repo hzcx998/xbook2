@@ -61,12 +61,12 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
             /* 创建一对管道 */
             pipe_in = create_pipe();
             if (pipe_in == NULL) {
-                kprint(PRINT_ERR "ptty_open: create in pipe failed!\n");
+                keprint(PRINT_ERR "ptty_open: create in pipe failed!\n");
                 goto err_pipe_in;
             }
             pipe_out = create_pipe();
             if (pipe_out == NULL) {
-                kprint(PRINT_ERR "ptty_open: create out pipe failed!\n");
+                keprint(PRINT_ERR "ptty_open: create out pipe failed!\n");
                 goto err_pipe_out;
             }
 
@@ -76,7 +76,7 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
             /* 创建一个other_devobj终端设备 */
             status = io_create_device(device->driver, sizeof(device_extension_t), devname, DEVICE_TYPE_VIRTUAL_CHAR, &devobj);
             if (status != IO_SUCCESS) {
-                kprint(PRINT_ERR "ptty_open: create master device failed!\n");
+                keprint(PRINT_ERR "ptty_open: create master device failed!\n");
                 goto err_create_dev;
             }
             /* neither io mode */
@@ -110,9 +110,9 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
     
     status = IO_SUCCESS;
     #ifdef PTTY_DEBUG
-    kprint(PRINT_INFO "ptty_open: device %s ref %d success!\n", device->name.text, atomic_get(&device->reference));
+    keprint(PRINT_INFO "ptty_open: device %s ref %d success!\n", device->name.text, atomic_get(&device->reference));
     
-    kprint(PRINT_INFO "ptty_open: other device %s ref %d success!\n", extension->other_devobj->name.text,
+    keprint(PRINT_INFO "ptty_open: other device %s ref %d success!\n", extension->other_devobj->name.text,
         atomic_get(&extension->other_devobj->reference));
     #endif
     goto err_no;
@@ -143,7 +143,7 @@ iostatus_t ptty_close(device_object_t *device, io_request_t *ioreq)
             devext = extension->other_devobj->device_extension;
             if (!devext->opened) { // closed
                 #ifdef PTTY_DEBUG
-                kprint(PRINT_NOTICE "ptty_close: master clear pipe.\n");
+                keprint(PRINT_NOTICE "ptty_close: master clear pipe.\n");
                 #endif
                 pipe_clear(devext->pipe_in);
                 pipe_clear(devext->pipe_out);
@@ -160,7 +160,7 @@ iostatus_t ptty_close(device_object_t *device, io_request_t *ioreq)
             devext = extension->other_devobj->device_extension;
             if (!devext->opened) { // closed
                 #ifdef PTTY_DEBUG
-                kprint(PRINT_NOTICE "ptty_close: slaver clear pipe.\n");
+                keprint(PRINT_NOTICE "ptty_close: slaver clear pipe.\n");
                 #endif
                 pipe_clear(devext->pipe_in);
                 pipe_clear(devext->pipe_out);
@@ -170,7 +170,7 @@ iostatus_t ptty_close(device_object_t *device, io_request_t *ioreq)
     extension->flags = 0;
     extension->hold_pid = -1;
     #ifdef PTTY_DEBUG
-    kprint(PRINT_INFO "ptty_close: device %s success!\n", device->name.text);
+    keprint(PRINT_INFO "ptty_close: device %s success!\n", device->name.text);
     #endif
 
     status = IO_SUCCESS;
@@ -193,14 +193,14 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
     if (extension->hold_pid == task_current->pid) {
         
         #ifdef PTTY_DEBUG
-        kprint(PRINT_INFO "ptty_read: buf %x len %d.\n", buf, len);
+        keprint(PRINT_INFO "ptty_read: buf %x len %d.\n", buf, len);
         #endif
         /* 从读端读取 */
         if ((len = pipe_read(extension->pipe_in->id, buf, len)) < 0)
             goto err_rd;
 
     } else {
-        kprint(PRINT_ERR "[ptty]: pid %d read but not holder, abort!\n", task_current->pid);
+        keprint(PRINT_ERR "[ptty]: pid %d read but not holder, abort!\n", task_current->pid);
         /* 不是前台任务就触发任务的硬件触发器 */
         exception_force_self(EXP_CODE_TTIN);
         goto err_rd;
@@ -208,7 +208,7 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
     status = IO_SUCCESS;
 err_rd:
 #ifdef PTTY_DEBUG
-    kprint(PRINT_INFO "ptty_read: read %d bytes.\n", len);
+    keprint(PRINT_INFO "ptty_read: read %d bytes.\n", len);
 #endif    
     ioreq->io_status.infomation = len;
     ioreq->io_status.status = status;
@@ -225,7 +225,7 @@ iostatus_t ptty_write(device_object_t *device, io_request_t *ioreq)
     uint8_t *buf = (uint8_t *) ioreq->user_buffer;
     int len = ioreq->parame.write.length;
     #ifdef PTTY_DEBUG
-    kprint(PRINT_INFO "ptty_write: buf %x len %d.\n", buf, len);
+    keprint(PRINT_INFO "ptty_write: buf %x len %d.\n", buf, len);
     #endif
     // if (extension->hold_pid == task_current->pid) {
     /* 从写端写入 */
@@ -234,7 +234,7 @@ iostatus_t ptty_write(device_object_t *device, io_request_t *ioreq)
     
     #if 0
     } else {
-        kprint(PRINT_ERR "[ptty]: pid %d write but not holder, abort!\n", task_current->pid);
+        keprint(PRINT_ERR "[ptty]: pid %d write but not holder, abort!\n", task_current->pid);
         exception_force_self(EXP_CODE_TTOU);
         goto err_wr;
     }*/
@@ -242,7 +242,7 @@ iostatus_t ptty_write(device_object_t *device, io_request_t *ioreq)
     status = IO_SUCCESS;
 err_wr:
 #ifdef PTTY_DEBUG
-    kprint(PRINT_INFO "ptty_write: write %d bytes.\n", len);
+    keprint(PRINT_INFO "ptty_write: write %d bytes.\n", len);
 #endif
     ioreq->io_status.infomation = len;
     ioreq->io_status.status = status;
@@ -330,7 +330,7 @@ static iostatus_t ptty_enter(driver_object_t *driver)
         /* 初始化一些其它内容 */
         status = io_create_device(driver, sizeof(device_extension_t), devname, DEVICE_TYPE_VIRTUAL_CHAR, &devobj);
         if (status != IO_SUCCESS) {
-            kprint(PRINT_ERR "ptty_enter: create device failed!\n");
+            keprint(PRINT_ERR "ptty_enter: create device failed!\n");
             return status;
         }
         /* neither io mode */
@@ -380,7 +380,7 @@ iostatus_t ptty_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef PTTY_DEBUG
-    kprint(PRINT_DEBUG "ptty_driver_func: driver name=%s\n",
+    keprint(PRINT_DEBUG "ptty_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
@@ -390,7 +390,7 @@ iostatus_t ptty_driver_func(driver_object_t *driver)
 static __init void ptty_driver_entry(void)
 {
     if (driver_object_create(ptty_driver_func) < 0) {
-        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
+        keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

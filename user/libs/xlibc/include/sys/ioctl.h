@@ -79,6 +79,16 @@ typedef struct _video_info {
 #define SNDIO_STOP          DEVCTL_CODE('s', 2) /* stop play */
 #define SNDIO_SETFREQ       DEVCTL_CODE('s', 3) /* set play freq */
 
+/* view */
+#define VIEWIO_SHOW         DEVCTL_CODE('v', 1)
+#define VIEWIO_HIDE         DEVCTL_CODE('v', 2)
+#define VIEWIO_SETPOS       DEVCTL_CODE('v', 3)
+#define VIEWIO_GETPOS       DEVCTL_CODE('v', 4)
+#define VIEWIO_WRBMP        DEVCTL_CODE('v', 5)
+#define VIEWIO_RDBMP        DEVCTL_CODE('v', 6)
+#define VIEWIO_SETFLGS      DEVCTL_CODE('v', 7)
+#define VIEWIO_GETFLGS      DEVCTL_CODE('v', 8)
+
 #ifdef __cplusplus
 }
 #endif

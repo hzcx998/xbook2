@@ -243,7 +243,7 @@ get_memory_info:
 
 ; 使用的分辨率
 ;VBE_MODE	EQU	VMODE_800_600_16
-VBE_MODE	EQU	VMODE_1280_1024_16
+VBE_MODE	EQU	VMODE_1024_768_16
 
 get_vbe_info:
     push ds
@@ -261,6 +261,7 @@ get_vbe_info:
 	cmp	ax, 0x004f	
 	jne	.vbe_error
     
+
 	;检查VBE版本，必须是VBE 2.0及其以上
 	mov	ax, [es:di + 4]
 	cmp	ax, 0x0200      ; VBE2.0的BCD码是0x200

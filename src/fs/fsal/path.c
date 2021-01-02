@@ -162,7 +162,7 @@ int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path)
 
 void fsal_path_print()
 {
-    kprint("%s: fsal path info:\n", FS_MODEL_NAME);
+    keprint("%s: fsal path info:\n", FS_MODEL_NAME);
     fsal_path_t *fpath;
     unsigned long irq_flags;
     spin_lock_irqsave(&fsal_path_table_lock, irq_flags);
@@ -170,7 +170,7 @@ void fsal_path_print()
     for (i = 0; i < FASL_PATH_NR; i++) {
         fpath = &fsal_path_table[i];
         if (fpath->fsal > 0) {
-            kprint("fasl alpath=%s path=%s fsal=%x\n", fpath->alpath, fpath->path, fpath->fsal);
+            keprint("fasl alpath=%s path=%s fsal=%x\n", fpath->alpath, fpath->path, fpath->fsal);
         }
     }
     spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
@@ -194,7 +194,7 @@ static char *parse_path_afterward(char *path, char *name)
 
 void wash_path(char *old_path, char *new_path)
 {
-    ASSERT(old_path[0] == '/');
+    assert(old_path[0] == '/');
     char name[MAX_PATH] = {0};    
     char* sub_path = old_path;
     sub_path = parse_path_afterward(sub_path, name);

@@ -25,7 +25,7 @@ static void timer_softirq_handler(softirq_action_t *action)
 static void sched_softirq_handler(softirq_action_t *action)
 {
     task_t *current = task_current;
-    ASSERT(current->stack_magic == TASK_STACK_MAGIC);
+    assert(current->stack_magic == TASK_STACK_MAGIC);
     current->elapsed_ticks++;
 	if (current->ticks <= 0) {
 		schedule();
@@ -74,6 +74,6 @@ void clock_init()
 	softirq_build(TIMER_SOFTIRQ, timer_softirq_handler);
 	softirq_build(SCHED_SOFTIRQ, sched_softirq_handler);
 	if (irq_register(IRQ0_CLOCK, clock_handler, IRQF_DISABLED, "clockirq", "kclock", NULL))
-        kprint("register failed!\n");
-    kprint(PRINT_INFO "[clock] init done\n");
+        keprint("register failed!\n");
+    keprint(PRINT_INFO "[clock] init done\n");
 }

@@ -80,7 +80,7 @@ void task_free(task_t *task)
 
 void task_add_to_global_list(task_t *task)
 {
-    ASSERT(!list_find(&task->global_list, &task_global_list));
+    assert(!list_find(&task->global_list, &task_global_list));
     list_add_tail(&task->global_list, &task_global_list);
 }
 
@@ -174,7 +174,7 @@ void kern_thread_exit(int status)
 
 void task_activate_when_sched(task_t *task)
 {
-    ASSERT(task != NULL);
+    assert(task != NULL);
     spin_lock(&task->lock);
     task->state = TASK_RUNNING;
     spin_unlock(&task->lock);
@@ -185,7 +185,7 @@ void task_block(task_state_t state)
 {
     unsigned long flags;
     interrupt_save_and_disable(flags);
-    ASSERT ((state == TASK_BLOCKED) || 
+    assert((state == TASK_BLOCKED) || 
             (state == TASK_WAITING) || 
             (state == TASK_STOPPED) ||
             (state == TASK_HANGING) ||
@@ -207,7 +207,7 @@ void task_unblock(task_t *task)
     }
     if (task->state != TASK_READY) {
         sched_unit_t *su = sched_get_cur_unit();
-        ASSERT(!sched_queue_has_task(su, task));
+        assert(!sched_queue_has_task(su, task));
         if (sched_queue_has_task(su, task)) {
             panic("task_unblock: task has already in ready list!\n");
         }
@@ -291,10 +291,10 @@ pid_t sys_get_tid()
 
 void tasks_print()
 {
-    kprint("\n----Task----\n");
+    keprint("\n----Task----\n");
     task_t *task;
     list_for_each_owner(task, &task_global_list, global_list) {
-        kprint("name %s pid %d ppid %d state %d\n", 
+        keprint("name %s pid %d ppid %d state %d\n", 
             task->name, task->pid, task->parent_pid,  task->state);
     }
 }
@@ -354,9 +354,9 @@ unsigned long sys_unid(int id)
 
 void task_dump(task_t *task)
 {
-    kprint("----Task----\n");
-    kprint("name:%s pid:%d parent pid:%d state:%d\n", task->name, task->pid, task->parent_pid, task->state);
-    kprint("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
+    keprint("----Task----\n");
+    keprint("name:%s pid:%d parent pid:%d state:%d\n", task->name, task->pid, task->parent_pid, task->state);
+    keprint("exit code:%d stack magic:%d\n", task->exit_status, task->stack_magic);
 }
 
 void kern_do_idle(void *arg)
@@ -376,7 +376,7 @@ static char *init_argv[2] = {INIT_SBIN_PATH, 0};
  */
 void task_start_user()
 {
-    kprint(PRINT_DEBUG "[task]: start user process.\n");
+    keprint(PRINT_DEBUG "[task]: start user process.\n");
     task_t *proc = process_create(init_argv, NULL, PROC_CREATE_INIT);
     if (proc == NULL)
         panic("kernel start process failed! please check initsrv!\n");
@@ -398,5 +398,5 @@ void tasks_init()
     task_init_boot_idle(su);
     task_take_pid(); /* 跳过pid1，预留给INIT进程 */
     task_init_done = 1;
-    kprint(PRINT_INFO "[ok] tasks init.");
+    keprint(PRINT_INFO "[ok] tasks init.");
 }

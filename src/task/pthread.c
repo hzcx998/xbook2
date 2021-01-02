@@ -115,7 +115,7 @@ void pthread_exit(void *status)
     task_t *cur = task_current;
     atomic_dec(&cur->pthread->thread_count);   
     if (atomic_get(&cur->pthread->thread_count) == 0) {
-        kprint(PRINT_DEBUG "pthread_exit: pid=%d no other threads, exit process!\n", cur->pid);
+        keprint(PRINT_DEBUG "pthread_exit: pid=%d no other threads, exit process!\n", cur->pid);
         sys_exit((int) status);
     }
     cur->exit_status = (int)status;
@@ -160,14 +160,14 @@ int sys_thread_detach(pthread_t thread)
     task_t *task = task_find_by_pid(thread);
     if (task == NULL)
         return -1;
-    kprint(PRINT_DEBUG "sys_thread_detach: thread=%s pid=%d tgid=%d ppid=%d set detach.\n",
+    keprint(PRINT_DEBUG "sys_thread_detach: thread=%s pid=%d tgid=%d ppid=%d set detach.\n",
         task->name, task->pid, task->tgid, task->parent_pid);
     task->flags |= THREAD_FLAG_DETACH;
     if (task->flags & THREAD_FLAG_JOINED) {
         task_t *parent = task_find_by_pid(task->parent_pid);
         if (parent != NULL && parent->state == TASK_WAITING) {
             if (parent->tgid == task->tgid) {
-                kprint(PRINT_DEBUG "pthread_exit: pid=%d parent %s pid=%d joining, wakeup it.\n",
+                keprint(PRINT_DEBUG "pthread_exit: pid=%d parent %s pid=%d joining, wakeup it.\n",
                     task->pid, parent->name, parent->pid);
                 parent->flags &= ~THREAD_FLAG_JOINING;
                 task_unblock(parent);

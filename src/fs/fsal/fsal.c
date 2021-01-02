@@ -28,14 +28,14 @@ int fsal_list_dir(char* path)
             if (fsif.readdir(dir, &de) < 0)
                 break;
             if (de.d_attr & DE_DIR) {
-                kprint("%s/%s\n", path, de.d_name);
+                keprint("%s/%s\n", path, de.d_name);
                 i = strlen(path);
                 sprintf(&path[i], "/%s", de.d_name);
                 if (fsal_list_dir(path) < 0)
                     break;
                 path[i] = 0;
             } else {
-                kprint("%s/%s  size=%d\n", path, de.d_name, de.d_size);
+                keprint("%s/%s  size=%d\n", path, de.d_name, de.d_size);
             }
         }
         fsif.closedir(dir);
@@ -56,11 +56,11 @@ int fsal_disk_mount_init()
         if (fsif.mount(name, ROOT_DIR_PATH, "fat32", 0) < 0) {
             continue;
         }
-        kprint("fsal : mount device %s to path %s success.\n", name, ROOT_DIR_PATH);
+        keprint("fsal : mount device %s to path %s success.\n", name, ROOT_DIR_PATH);
         break;
     }
     if (i >= 4) {
-        kprint("fsal : mount path %s failed!\n", ROOT_DIR_PATH);
+        keprint("fsal : mount path %s failed!\n", ROOT_DIR_PATH);
         return -1;
     }
     return 0;

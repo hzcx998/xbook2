@@ -36,6 +36,7 @@ typedef struct _device_public {
     handle_t visitor_id;        /* 可访问者设备id */
     int detach_kbd;             /* 分离键盘 */
     struct _device_extension *extensions[TTY_DEVICE_NR];
+    int counts; // 打开的tty数量
 } device_public_t;
 
 typedef struct _device_extension {
@@ -59,56 +60,6 @@ static int tty_set_visitor(device_object_t *device, int visitor)
     extension->public->visitor_id = visitor;
     return 0;
 }
-
-iostatus_t tty_open(device_object_t *device, io_request_t *ioreq)
-{
-    iostatus_t status = IO_SUCCESS;
-    device_extension_t *extension = device->device_extension;
-    
-    char devname[DEVICE_NAME_LEN] = {0, };
-    memset(devname, 0, DEVICE_NAME_LEN);
-    sprintf(devname, "%s%d", CON_DEVICE_NAME, extension->device_id);
-    extension->con = device_open(devname, 0);
-    if (extension->con < 0) {   /* 打开失败就释放资源 */
-        status = IO_FAILED;
-    } else { /* 打开成功 */
-        if (extension->hold_pid == -1) {    /* 首次打开，持有者就是打开者 */
-            extension->hold_pid = task_current->pid;
-#ifdef DEBUG_DRV
-            kprint(PRINT_DEBUG "tty_open: open tty=%d.\n", extension->device_id);
-#endif        
-        }
-    }
-
-    ioreq->io_status.status = status;
-    ioreq->io_status.infomation = 0;
-    io_complete_request(ioreq);
-    return status;
-}
-
-iostatus_t tty_close(device_object_t *device, io_request_t *ioreq)
-{
-    iostatus_t status = IO_SUCCESS;
-    device_extension_t *extension = device->device_extension;
-    
-    if (extension->con >= 0) {
-        if (device_close(extension->con))
-            status = IO_FAILED;
-        extension->con = -1;
-        extension->hold_pid = -1;
-#ifdef DEBUG_DRV
-        kprint(PRINT_DEBUG "tty_close: close tty=%d.\n", extension->device_id);
-#endif
-    } else {
-        status = IO_FAILED;
-    }
-
-    ioreq->io_status.status = status;
-    ioreq->io_status.infomation = 0;
-    io_complete_request(ioreq);
-    return status;
-}
-
 
 /* 将小键盘的按键转换成主键盘上面的按键 */
 static unsigned char _g_keycode_map_table[] = {
@@ -267,11 +218,11 @@ iostatus_t tty_devctl(device_object_t *device, io_request_t *ioreq)
         extension->public->detach_kbd = 0;
         break;
     case TIOCSFLGS:
-        if (mem_copy_from_user(&extension->flags, (void *)arg, 4) < 0)
+        if (mem_copy_from_user(&extension->flags, (void *)arg, sizeof(unsigned long)) < 0)
             status = IO_FAILED;
         break;        
     case TIOCGFLGS:
-        if (mem_copy_to_user((void *)arg, &extension->flags, 4) < 0)
+        if (mem_copy_to_user((void *)arg, &extension->flags, sizeof(unsigned long)) < 0)
             status = IO_FAILED;
         break;        
     default:
@@ -310,7 +261,7 @@ void tty_thread(void *arg)
                             if (extension->lctl && (event.code == 'c' || event.code == 'C')) {
                                 // ctl + c
                                 exception_send(extension->hold_pid, EXP_CODE_INT);
-                                //kprint("hold pid=%d\n", extension->hold_pid);
+                                //keprint("hold pid=%d\n", extension->hold_pid);
                             } else {
                                 /* put into fifo buf */
                                 fifo_io_put(&extension->fifoio, event.code);
@@ -337,6 +288,60 @@ void tty_thread(void *arg)
 }
 
 
+iostatus_t tty_open(device_object_t *device, io_request_t *ioreq)
+{
+    iostatus_t status = IO_SUCCESS;
+    device_extension_t *extension = device->device_extension;
+    
+    char devname[DEVICE_NAME_LEN] = {0, };
+    memset(devname, 0, DEVICE_NAME_LEN);
+    sprintf(devname, "%s%d", CON_DEVICE_NAME, extension->device_id);
+    extension->con = device_open(devname, 0);
+    if (extension->con < 0) {   /* 打开失败就释放资源 */
+        status = IO_FAILED;
+    } else { /* 打开成功 */
+        if (extension->hold_pid == -1) {    /* 首次打开，持有者就是打开者 */
+            extension->hold_pid = task_current->pid;
+#ifdef DEBUG_DRV
+            keprint(PRINT_DEBUG "tty_open: open tty=%d.\n", extension->device_id);
+#endif        
+        }
+    }
+    if (extension->public->counts == 0) {
+        kern_thread_start("tty", TASK_PRIO_LEVEL_NORMAL, tty_thread, extension->public);
+        extension->public->counts++;
+    }
+    
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = 0;
+    io_complete_request(ioreq);
+    return status;
+}
+
+iostatus_t tty_close(device_object_t *device, io_request_t *ioreq)
+{
+    iostatus_t status = IO_SUCCESS;
+    device_extension_t *extension = device->device_extension;
+    
+    if (extension->con >= 0) {
+        if (device_close(extension->con))
+            status = IO_FAILED;
+        extension->con = -1;
+        extension->hold_pid = -1;
+#ifdef DEBUG_DRV
+        keprint(PRINT_DEBUG "tty_close: close tty=%d.\n", extension->device_id);
+#endif
+    } else {
+        status = IO_FAILED;
+    }
+
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = 0;
+    io_complete_request(ioreq);
+    return status;
+}
+
+
 static iostatus_t tty_enter(driver_object_t *driver)
 {
     iostatus_t status;
@@ -349,10 +354,11 @@ static iostatus_t tty_enter(driver_object_t *driver)
         return IO_FAILED;
     }
     public->visitor_id = -1;
+    public->counts = 0;
     /* 打开键盘设备 */
     handle_t kbd = device_open(KBD_DEVICE_NAME, 0);
     if (kbd < 0) {
-        kprint(PRINT_DEBUG "tty_enter: open keyboard device failed!\n");
+        keprint(PRINT_DEBUG "tty_enter: open keyboard device failed!\n");
         mem_free(public);
         return IO_FAILED;
     }
@@ -368,7 +374,7 @@ static iostatus_t tty_enter(driver_object_t *driver)
         status = io_create_device(driver, sizeof(device_extension_t), devname, DEVICE_TYPE_VIRTUAL_CHAR, &devobj);
 
         if (status != IO_SUCCESS) {
-            kprint(PRINT_ERR "tty_enter: create device failed!\n");
+            keprint(PRINT_ERR "tty_enter: create device failed!\n");
             device_close(kbd);
             mem_free(public);
             return status;
@@ -387,7 +393,7 @@ static iostatus_t tty_enter(driver_object_t *driver)
         unsigned char *buf = mem_alloc(DEV_FIFO_BUF_LEN);
         if (buf == NULL) {
             status = IO_FAILED;
-            kprint(PRINT_DEBUG "keyboard_enter: alloc buf failed!\n");
+            keprint(PRINT_DEBUG "keyboard_enter: alloc buf failed!\n");
             device_close(kbd);
             mem_free(public);
             io_delete_device(devobj);
@@ -401,8 +407,6 @@ static iostatus_t tty_enter(driver_object_t *driver)
         public->extensions[i] = extension;
         public->detach_kbd = 0; /* 键盘尚未分离 */
     }
-
-    kern_thread_start("tty", TASK_PRIO_LEVEL_NORMAL, tty_thread, public);
 
     return status;
 }
@@ -437,7 +441,7 @@ iostatus_t tty_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    kprint(PRINT_DEBUG "tty_driver_func: driver name=%s\n",
+    keprint(PRINT_DEBUG "tty_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
@@ -447,7 +451,7 @@ iostatus_t tty_driver_func(driver_object_t *driver)
 static __init void tty_driver_entry(void)
 {
     if (driver_object_create(tty_driver_func) < 0) {
-        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
+        keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

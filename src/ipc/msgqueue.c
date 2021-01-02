@@ -136,7 +136,7 @@ int msg_queue_send(int msgid, void *msgbuf, size_t size, int msgflg)
     msgq = msg_queue_find_by_id(msgid);
     if (msgq == NULL) {
         semaphore_up(&msg_queue_mutex);
-        kprint(PRINT_ERR "msg_queue_send: not found message queue!\n");
+        keprint(PRINT_ERR "msg_queue_send: not found message queue!\n");
         return -1;
     }
     semaphore_up(&msg_queue_mutex);
@@ -187,7 +187,7 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
     msgq = msg_queue_find_by_id(msgid);
     if (msgq == NULL) {
         semaphore_up(&msg_queue_mutex);    
-        kprint(PRINT_DEBUG "msg_queue_recv: not found message queue!\n");
+        keprint(PRINT_DEBUG "msg_queue_recv: not found message queue!\n");
         return -1;
     }   
     semaphore_up(&msg_queue_mutex);
@@ -232,7 +232,7 @@ int msg_queue_recv(int msgid, void *msgbuf, size_t msgsz, long msgtype, int msgf
     }
     if (msg == NULL) {
         semaphore_up(&msgq->mutex);
-        kprint(PRINT_ERR "msg_queue_recv: message not found!\n");
+        keprint(PRINT_ERR "msg_queue_recv: message not found!\n");
         return -1;
     }
     list_del(&msg->list);

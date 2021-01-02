@@ -66,13 +66,13 @@ port_comm_t *port_comm_find(uint32_t port)
 uint32_t port_comm_p2i(port_comm_t *port_comm)
 {
     uint32_t index = port_comm - port_comm_table; 
-    ASSERT(index < PORT_COMM_NR);
+    assert(index < PORT_COMM_NR);
     return index;
 }
 
 port_comm_t *port_comm_i2p(uint32_t port)
 {
-    ASSERT(port < PORT_COMM_NR);
+    assert(port < PORT_COMM_NR);
     port_comm_t *port_comm = port_comm_table + port; 
     return port_comm;
 }

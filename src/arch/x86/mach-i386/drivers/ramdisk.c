@@ -43,7 +43,7 @@ iostatus_t ramdisk_read(device_object_t *device, io_request_t *ioreq)
     if (off + (length / SECTOR_SIZE)  >= extension->sectors) {
 		status = IO_FAILED;
 #ifdef DEBUG_DRV
-        kprint(PRINT_DEBUG "ramdisk_read: read disk offset=%d counts=%d failed!\n",
+        keprint(PRINT_DEBUG "ramdisk_read: read disk offset=%d counts=%d failed!\n",
             off, (length / SECTOR_SIZE));
 #endif
 
@@ -52,13 +52,13 @@ iostatus_t ramdisk_read(device_object_t *device, io_request_t *ioreq)
 		memcpy(ioreq->user_buffer, extension->buffer + off * SECTOR_SIZE, length);
         ioreq->io_status.infomation = length;
 #ifdef DEBUG_DRV
-        kprint(PRINT_DEBUG "ramdisk_read: read disk offset=%d counts=%d ok.\n",
+        keprint(PRINT_DEBUG "ramdisk_read: read disk offset=%d counts=%d ok.\n",
             off, (length / SECTOR_SIZE));
 #endif
 
 	}
 #ifdef DEBUG_DRV
-    kprint(PRINT_DEBUG "ramdisk_read: io status:%d\n", status);
+    keprint(PRINT_DEBUG "ramdisk_read: io status:%d\n", status);
 #endif
     ioreq->io_status.status = status;
     io_complete_request(ioreq);
@@ -79,7 +79,7 @@ iostatus_t ramdisk_write(device_object_t *device, io_request_t *ioreq)
     /* 判断越界 */
     if (off + (length / SECTOR_SIZE)  >= extension->sectors) {
 #ifdef DEBUG_DRV
-        kprint(PRINT_DEBUG "ramdisk_write: write disk offset=%d counts=%d failed!\n",
+        keprint(PRINT_DEBUG "ramdisk_write: write disk offset=%d counts=%d failed!\n",
             off, (length / SECTOR_SIZE));
 #endif
 		status = IO_FAILED;
@@ -89,12 +89,12 @@ iostatus_t ramdisk_write(device_object_t *device, io_request_t *ioreq)
 		memcpy(extension->buffer + off * SECTOR_SIZE, ioreq->user_buffer, length);
         ioreq->io_status.infomation = length;
 #ifdef DEBUG_DRV
-        kprint(PRINT_DEBUG "ramdisk_write: write disk offset=%d counts=%d ok.\n",
+        keprint(PRINT_DEBUG "ramdisk_write: write disk offset=%d counts=%d ok.\n",
             off, (length / SECTOR_SIZE));
 #endif
 	}
 #ifdef DEBUG_DRV
-    kprint(PRINT_DEBUG "ramdisk_write: io status:%d\n", status);
+    keprint(PRINT_DEBUG "ramdisk_write: io status:%d\n", status);
 #endif
     ioreq->io_status.status = status;
     io_complete_request(ioreq);
@@ -112,7 +112,7 @@ iostatus_t ramdisk_devctl(device_object_t *device, io_request_t *ioreq)
     case DISKIO_GETSIZE:
         *((unsigned int *) arg) = extension->sectors; 
 #ifdef DEBUG_DRV
-        kprint(PRINT_DEBUG "ramdisk_devctl: get disk sectors=%d\n", extension->sectors);
+        keprint(PRINT_DEBUG "ramdisk_devctl: get disk sectors=%d\n", extension->sectors);
 #endif
         break;
     case DISKIO_CLEAR:
@@ -120,7 +120,7 @@ iostatus_t ramdisk_devctl(device_object_t *device, io_request_t *ioreq)
         memset(extension->buffer, 0, extension->buflen);
         ioreq->io_status.infomation = 0;
 #ifdef DEBUG_DRV
-        kprint(PRINT_DEBUG "ramdisk_devctl: clear disk sectors=%d\n", extension->sectors);
+        keprint(PRINT_DEBUG "ramdisk_devctl: clear disk sectors=%d\n", extension->sectors);
 #endif        
         break;
     case DISKIO_SETOFF:
@@ -151,7 +151,7 @@ static iostatus_t ramdisk_enter(driver_object_t *driver)
     status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_VIRTUAL_DISK, &devobj);
 
     if (status != IO_SUCCESS) {
-        kprint(PRINT_ERR "ramdisk_enter: create device failed!\n");
+        keprint(PRINT_ERR "ramdisk_enter: create device failed!\n");
         return status;
     }
     /* neighter io mode */
@@ -198,7 +198,7 @@ iostatus_t ramdisk_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    kprint(PRINT_DEBUG "ramdisk_driver_func: driver name=%s\n",
+    keprint(PRINT_DEBUG "ramdisk_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
@@ -208,7 +208,7 @@ iostatus_t ramdisk_driver_func(driver_object_t *driver)
 static __init void ramdisk_driver_entry(void)
 {
     if (driver_object_create(ramdisk_driver_func) < 0) {
-        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
+        keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

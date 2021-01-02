@@ -29,9 +29,9 @@ static void pci_device_bar_init(pci_device_bar_t *bar, unsigned int addr_reg_val
 
 void pci_device_bar_dump(pci_device_bar_t *bar)
 {
-    kprint(PRINT_DEBUG "pci_device_bar_dump: type: %s\n", bar->type == PCI_BAR_TYPE_IO ? "io base address" : "mem base address");
-    kprint(PRINT_DEBUG "pci_device_bar_dump: base address: %x\n", bar->base_addr);
-    kprint(PRINT_DEBUG "pci_device_bar_dump: len: %x\n", bar->length);
+    keprint(PRINT_DEBUG "pci_device_bar_dump: type: %s\n", bar->type == PCI_BAR_TYPE_IO ? "io base address" : "mem base address");
+    keprint(PRINT_DEBUG "pci_device_bar_dump: base address: %x\n", bar->base_addr);
+    keprint(PRINT_DEBUG "pci_device_bar_dump: len: %x\n", bar->length);
 }
 
 static void pci_device_init(
@@ -110,35 +110,35 @@ int pci_free_device(pci_device_t *device)
 
 void pci_device_dump(pci_device_t *device)
 {
-    kprint(PRINT_DEBUG "pci_device_dump: vendor id:      0x%x\n", device->vendor_id);
-    kprint(PRINT_DEBUG "pci_device_dump: device id:      0x%x\n", device->device_id);
-	kprint(PRINT_DEBUG "pci_device_dump: class code:     0x%x\n", device->class_code);
-    kprint(PRINT_DEBUG "pci_device_dump: revision id:    0x%x\n", device->revision_id);
-    kprint(PRINT_DEBUG "pci_device_dump: multi function: %d\n", device->multi_function);
-    kprint(PRINT_DEBUG "pci_device_dump: card bus CIS pointer: %x\n", device->card_bus_pointer);
-    kprint(PRINT_DEBUG "pci_device_dump: subsystem vendor id: %x\n", device->subsystem_vendor_id);
-    kprint(PRINT_DEBUG "pci_device_dump: subsystem device id: %x\n", device->subsystem_device_id);
-    kprint(PRINT_DEBUG "pci_device_dump: expansion ROM base address: %x\n", device->expansion_rom_base_addr);
-    kprint(PRINT_DEBUG "pci_device_dump: capability list pointer:  %x\n", device->capability_list);
-    kprint(PRINT_DEBUG "pci_device_dump: irq line: %d\n", device->irq_line);
-    kprint(PRINT_DEBUG "pci_device_dump: irq pin:  %d\n", device->irq_pin);
-    kprint(PRINT_DEBUG "pci_device_dump: min Gnt: %d\n", device->min_gnt);
-    kprint(PRINT_DEBUG "pci_device_dump: max Lat:  %d\n", device->max_lat);
+    keprint(PRINT_DEBUG "pci_device_dump: vendor id:      0x%x\n", device->vendor_id);
+    keprint(PRINT_DEBUG "pci_device_dump: device id:      0x%x\n", device->device_id);
+	keprint(PRINT_DEBUG "pci_device_dump: class code:     0x%x\n", device->class_code);
+    keprint(PRINT_DEBUG "pci_device_dump: revision id:    0x%x\n", device->revision_id);
+    keprint(PRINT_DEBUG "pci_device_dump: multi function: %d\n", device->multi_function);
+    keprint(PRINT_DEBUG "pci_device_dump: card bus CIS pointer: %x\n", device->card_bus_pointer);
+    keprint(PRINT_DEBUG "pci_device_dump: subsystem vendor id: %x\n", device->subsystem_vendor_id);
+    keprint(PRINT_DEBUG "pci_device_dump: subsystem device id: %x\n", device->subsystem_device_id);
+    keprint(PRINT_DEBUG "pci_device_dump: expansion ROM base address: %x\n", device->expansion_rom_base_addr);
+    keprint(PRINT_DEBUG "pci_device_dump: capability list pointer:  %x\n", device->capability_list);
+    keprint(PRINT_DEBUG "pci_device_dump: irq line: %d\n", device->irq_line);
+    keprint(PRINT_DEBUG "pci_device_dump: irq pin:  %d\n", device->irq_pin);
+    keprint(PRINT_DEBUG "pci_device_dump: min Gnt: %d\n", device->min_gnt);
+    keprint(PRINT_DEBUG "pci_device_dump: max Lat:  %d\n", device->max_lat);
     int i;
 	for (i = 0; i < PCI_MAX_BAR_NR; i++) {
         if (device->bar[i].type != PCI_BAR_TYPE_INVALID) {
-            kprint(PRINT_DEBUG "pci_device_dump: bar %d:\n", i);
+            keprint(PRINT_DEBUG "pci_device_dump: bar %d:\n", i);
 			pci_device_bar_dump(&device->bar[i]);
         }
     }
-    kprint("\n");
+    keprint("\n");
 }
 
 static void pci_scan_device(unsigned char bus, unsigned char device, unsigned char function)
 {
     
 #ifdef DEBUG_PCI
-    kprint(PRINT_DEBUG "pci_scan_device: pci device at bus: %d, device: %d function: %d\n", 
+    keprint(PRINT_DEBUG "pci_scan_device: pci device at bus: %d, device: %d function: %d\n", 
         bus, device, function);
 #endif
     unsigned int val = pci_read_config(bus, device, function, PCI_DEVICE_VENDER);
@@ -297,14 +297,14 @@ void pci_enable_bus_mastering(pci_device_t *device)
 {
     unsigned int val = pci_read_config(device->bus, device->dev, device->function, PCI_STATUS_COMMAND);
 #ifdef DEBUG_PCI
-    kprint(PRINT_DEBUG "pci_enable_bus_mastering: before command: %x\n", val);    
+    keprint(PRINT_DEBUG "pci_enable_bus_mastering: before command: %x\n", val);    
 #endif
 	val |= 4;
     pci_write_config(device->bus, device->dev, device->function, PCI_STATUS_COMMAND, val);
 
     val = pci_read_config(device->bus, device->dev, device->function, PCI_STATUS_COMMAND);
 #ifdef DEBUG_PCI
-    kprint(PRINT_DEBUG "pci_enable_bus_mastering: after command: %x\n", val);    
+    keprint(PRINT_DEBUG "pci_enable_bus_mastering: after command: %x\n", val);    
 #endif
 }
 
@@ -377,9 +377,9 @@ void pci_init()
 	for (i = 0; i < PCI_MAX_DEV_NRICE_NR; i++) {
 		pci_devices[i].flags = PCI_DEVICE_INVALID;
 	}
-    kprint(PRINT_INFO "[pci]: begin sacn device.\n");
+    keprint(PRINT_INFO "[pci]: begin sacn device.\n");
 
 	pci_scan_all_buses();
 
-    kprint(PRINT_INFO "pci_init: pci type device found %d.\n", pic_get_device_connected());
+    keprint(PRINT_INFO "pci_init: pci type device found %d.\n", pic_get_device_connected());
 }

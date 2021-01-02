@@ -122,12 +122,12 @@ int sys_fork()
     interrupt_save_and_disable(flags);
     task_t *child = mem_alloc(TASK_KERN_STACK_SIZE);
     if (child == NULL) {
-        kprint(PRINT_ERR "sys_fork: mem_alloc for child task failed!\n");
+        keprint(PRINT_ERR "sys_fork: mem_alloc for child task failed!\n");
         return -1;
     }
-    ASSERT(parent->vmm != NULL);
+    assert(parent->vmm != NULL);
     if (copy_task(child, parent)) {
-        kprint(PRINT_ERR "sys_fork: copy task failed!\n");
+        keprint(PRINT_ERR "sys_fork: copy task failed!\n");
         mem_free(child);
         interrupt_restore_state(flags);
         return -1;

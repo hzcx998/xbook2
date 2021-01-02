@@ -44,6 +44,7 @@ typedef enum _device_type {
     DEVICE_TYPE_NETWORK,                 /* 网络设备 */
     DEVICE_TYPE_BUS_EXTERNDER,           /* BUS总线扩展设备 */
     DEVICE_TYPE_ACPI,                    /* ACPI设备 */
+    DEVICE_TYPE_VIEW,                   /* 视图设备 */
     MAX_DEVICE_TYPE_NR
 } device_type_t;
 

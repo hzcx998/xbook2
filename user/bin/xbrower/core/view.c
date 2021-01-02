@@ -420,7 +420,7 @@ void xbrower_view_refresh(xbrower_view_t *view, int left, int top, int right, in
 */
 int xbrower_view_init()
 {
-    size_t id_map_size = xbrower_screen.width * xbrower_screen.width * sizeof(uint16_t);
+    size_t id_map_size = xbrower_screen.width * xbrower_screen.height * sizeof(uint16_t);
     view_id_map = malloc(id_map_size);
     if (!view_id_map) {
         printf("malloc for view id map failed!\n");

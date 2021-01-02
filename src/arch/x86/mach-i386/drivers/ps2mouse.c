@@ -214,15 +214,15 @@ static void parse_data_packet(device_extension_t *devext)
     }
 
 #ifdef DEBUG_PS2MOUSE
-    kprint(PRINT_DEBUG "PS2 Mouse: Buttons %x\n", devext->data[0] & 0x07);
-    kprint(PRINT_DEBUG "Mouse: X %d, Y %d, Z %d\n", x, y, z);
+    keprint(PRINT_DEBUG "PS2 Mouse: Buttons %x\n", devext->data[0] & 0x07);
+    keprint(PRINT_DEBUG "Mouse: X %d, Y %d, Z %d\n", x, y, z);
 #endif /* DEBUG_PS2MOUSE */
 }
 
 static void ps2mouse_commit_packet(device_extension_t *devext) {
     devext->data_state = 0;
 #ifdef DEBUG_PS2MOUSE
-    kprint(PRINT_DEBUG "PS2Mouse: raw data: %d, %d %s %s\n",
+    keprint(PRINT_DEBUG "PS2Mouse: raw data: %d, %d %s %s\n",
         devext->data[1],
         devext->data[2],
         (devext->data[0] & 1) ? "Left" : "",
@@ -252,7 +252,7 @@ static int mouse_handler(irqno_t irq, void *data)
         switch (devext->data_state) {
         case 0:
             if (!(data & 0x08)) {
-                kprint(PRINT_ERR "PS2Mouse: Stream out of sync.\n");
+                keprint(PRINT_ERR "PS2Mouse: Stream out of sync.\n");
                 break;
             }
             ++devext->data_state;
@@ -268,7 +268,7 @@ static int mouse_handler(irqno_t irq, void *data)
             ps2mouse_commit_packet(devext);
             break;
         case 3:
-            ASSERT(devext->has_wheel);
+            assert(devext->has_wheel);
             ps2mouse_commit_packet(devext);
             break;
         }
@@ -305,7 +305,7 @@ static void ps2mouse_check_device_presence(device_extension_t *devext)
     uint8_t maybe_ack = ps2mouse_read_data();
     if (maybe_ack == I8042_ACK) {
         devext->device_present = true;
-        kprint(PRINT_INFO "ps2mouse: Device detected\n");
+        keprint(PRINT_INFO "ps2mouse: Device detected\n");
 
         // the mouse will send a packet of data, since that's what we asked
         // for. we don't care about the content.
@@ -314,7 +314,7 @@ static void ps2mouse_check_device_presence(device_extension_t *devext)
         ps2mouse_read_data();
     } else {
         devext->device_present = false;
-        kprint(PRINT_INFO "ps2mouse: Device not detected\n");
+        keprint(PRINT_INFO "ps2mouse: Device not detected\n");
     }
 }
 
@@ -365,9 +365,9 @@ static void ps2mouse_initialize_device(device_extension_t *devext)
 
     if (device_id == PS2MOUSE_INTELLIMOUSE_ID) {
         devext->has_wheel = true;
-        kprint(PRINT_INFO "ps2mouse: Mouse wheel enabled!\n");
+        keprint(PRINT_INFO "ps2mouse: Mouse wheel enabled!\n");
     } else {
-        kprint(PRINT_INFO "ps2mouse: No mouse wheel detected!\n");
+        keprint(PRINT_INFO "ps2mouse: No mouse wheel detected!\n");
     }
 
 	irq_register(devext->irq, mouse_handler, IRQF_DISABLED, "IRQ12_MOUSE", DRV_NAME, (void *) devext);
@@ -376,7 +376,7 @@ static void ps2mouse_initialize_device(device_extension_t *devext)
 static void ps2mouse_expect_ack()
 {
     uint8_t data = ps2mouse_read_data();
-    ASSERT(data == I8042_ACK);
+    assert(data == I8042_ACK);
 }
 
 static void ps2mouse_prepare_for_input()
@@ -450,8 +450,8 @@ static iostatus_t mouse_read(device_object_t *device, io_request_t *ioreq)
                 status = IO_FAILED;
             } else {
     #ifdef DEBUG_PS2MOUSE_EVBUF
-            kprint(PRINT_DEBUG "mouse even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
-            kprint(PRINT_DEBUG "mouse even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
+            keprint(PRINT_DEBUG "mouse even get: type=%d code=%x value=%d\n", even->type, even->code, even->value);
+            keprint(PRINT_DEBUG "mouse even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
     #endif        
             }
         } else {
@@ -480,7 +480,7 @@ static iostatus_t mouse_enter(driver_object_t *driver)
     status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_MOUSE, &devobj);
 
     if (status != IO_SUCCESS) {
-        kprint(PRINT_ERR "mouse_enter: create device failed!\n");
+        keprint(PRINT_ERR "mouse_enter: create device failed!\n");
         return status;
     }
     /* neither io mode */
@@ -534,8 +534,8 @@ static iostatus_t mouse_driver_func(driver_object_t *driver)
 static __init void ps2mouse_driver_entry(void)
 {
     if (driver_object_create(mouse_driver_func) < 0) {
-        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
+        keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 
-driver_initcall(ps2mouse_driver_entry);
+// driver_initcall(ps2mouse_driver_entry);

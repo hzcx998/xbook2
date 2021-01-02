@@ -70,7 +70,7 @@ void interrupt_general_handler(unsigned int esp)
             {
                 unsigned long addr = 0x00;
                 addr = cpu_cr2_read(); /* cr2 saved the fault addr */
-                kprint("page fault addr:%x\n", addr);
+                keprint("page fault addr:%x\n", addr);
             }            
         case EP_DIVIDE:
         case EP_DEVICE_NOT_AVAILABLE:
@@ -157,32 +157,32 @@ int irq_unregister_handler(unsigned char irq)
 
 void trap_frame_dump(trap_frame_t *frame)
 {
-    kprint(PRINT_DEBUG "Trap frame:\n");
-    kprint("Vector name: %s \n", interrupt_names[frame->vec_no]);
+    keprint(PRINT_DEBUG "Trap frame:\n");
+    keprint("Vector name: %s \n", interrupt_names[frame->vec_no]);
 
-    kprint(PRINT_DEBUG "Vector:%d edi:%x esi:%x ebp:%x esp dummy:%x ebx:%x edx:%x ecx:%x eax:%x\n",
+    keprint(PRINT_DEBUG "Vector:%d edi:%x esi:%x ebp:%x esp dummy:%x ebx:%x edx:%x ecx:%x eax:%x\n",
         frame->vec_no, frame->edi, frame->esi, frame->ebp, frame->esp_dummy,
         frame->ebx, frame->edx, frame->ecx, frame->eax);
-    kprint(PRINT_DEBUG "gs:%x fs:%x es:%x ds:%x error code:%x eip:%x cs:%x eflags:%x esp:%x ss:%x\n",
+    keprint(PRINT_DEBUG "gs:%x fs:%x es:%x ds:%x error code:%x eip:%x cs:%x eflags:%x esp:%x ss:%x\n",
         frame->gs, frame->fs, frame->es, frame->ds, frame->error_code,
         frame->eip, frame->cs, frame->eflags, frame->esp, frame->ss);
 	if(frame->error_code != 0xFFFFFFFF){
 		if(frame->error_code & 1){
-			kprint(PRINT_DEBUG "    External Event: NMI,hard interruption,ect.\n");
+			keprint(PRINT_DEBUG "    External Event: NMI,hard interruption,ect.\n");
 		}else{
-			kprint(PRINT_DEBUG "    Not External Event: inside.\n");
+			keprint(PRINT_DEBUG "    Not External Event: inside.\n");
 		}
 		if(frame->error_code & (1 << 1)){
-			kprint(PRINT_DEBUG "    IDT: selector in idt.\n");
+			keprint(PRINT_DEBUG "    IDT: selector in idt.\n");
 		}else{
-			kprint(PRINT_DEBUG "    IDT: selector in gdt or ldt.\n");
+			keprint(PRINT_DEBUG "    IDT: selector in gdt or ldt.\n");
 		}
 		if(frame->error_code & (1 <<2 )){
-			kprint(PRINT_DEBUG "    TI: selector in ldt.\n");
+			keprint(PRINT_DEBUG "    TI: selector in ldt.\n");
 		}else{
-			kprint(PRINT_DEBUG "    TI: selector in gdt.\n");
+			keprint(PRINT_DEBUG "    TI: selector in gdt.\n");
 		}
-		kprint(PRINT_DEBUG "    Selector: idx %d\n", (frame->error_code&0xfff8)>>3);
+		keprint(PRINT_DEBUG "    Selector: idx %d\n", (frame->error_code&0xfff8)>>3);
 	}
 }
 

@@ -34,7 +34,7 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
     int ret = (int)mem_space_mmap(vaddr_page, 0, occupy_pages * PAGE_SIZE, 
             PROT_USER | PROT_WRITE, MEM_SPACE_MAP_FIXED);
     if (ret < 0) {
-        kprint(PRINT_ERR "proc_load_segment: mem_space_mmap failed!\n");
+        keprint(PRINT_ERR "proc_load_segment: mem_space_mmap failed!\n");
         return -1;
     }
     kfile_lseek(fd, offset, SEEK_SET);
@@ -335,7 +335,7 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
         return NULL;
     }
     if (vmm_build_argbug(task->vmm, argv, envp) < 0) {
-        kprint(PRINT_ERR "process_create: pathname %s build arg buf failed !\n", argv[0]);
+        keprint(PRINT_ERR "process_create: pathname %s build arg buf failed !\n", argv[0]);
         proc_vmm_exit(task);
         fs_fd_exit(task);
         mem_free(task);

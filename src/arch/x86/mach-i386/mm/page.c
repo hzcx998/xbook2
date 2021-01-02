@@ -53,7 +53,7 @@ void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
 	pte_t *pte = vir_addr_to_table_entry(vaddr);
 
 	if (*pde & PAGE_ATTR_PRESENT) {
-        ASSERT(!(*pte & PAGE_ATTR_PRESENT)); 
+        assert(!(*pte & PAGE_ATTR_PRESENT)); 
         if (!(*pte & PAGE_ATTR_PRESENT)) {
             *pte = (paddr | prot | PAGE_ATTR_PRESENT);
         } else {
@@ -68,7 +68,7 @@ void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
         *pde = (page_table | prot | PAGE_ATTR_PRESENT);
         memset((void *)((unsigned long)pte & PAGE_MASK), 0, PAGE_SIZE);
         
-        ASSERT(!(*pte & PAGE_ATTR_PRESENT));
+        assert(!(*pte & PAGE_ATTR_PRESENT));
         *pte = (paddr | prot | PAGE_ATTR_PRESENT);
     }
 }
@@ -145,7 +145,7 @@ int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
 
         unsigned long page_addr = page_alloc_user(trunk);
         if (!page_addr) {
-            kprint(PRINT_ERR "%s: map no free pages for %d count!\n", __func__, len / PAGE_SIZE);
+            keprint(PRINT_ERR "%s: map no free pages for %d count!\n", __func__, len / PAGE_SIZE);
             interrupt_restore_state(flags);
             return -1;
         }
@@ -250,7 +250,7 @@ int page_map_addr_safe(unsigned long start, unsigned long len, unsigned long pro
         if (!(*pde & PAGE_ATTR_PRESENT) || !(*pte & PAGE_ATTR_PRESENT)) {
             page_addr = page_alloc_user(1);
             if (!page_addr) {
-                kprint("error: user_map_vaddr -> map pages failed!\n");
+                keprint("error: user_map_vaddr -> map pages failed!\n");
                 interrupt_restore_state(flags);
                 return -1;
             }
@@ -406,7 +406,7 @@ static int do_page_no_write(unsigned long addr)
 
 static inline void do_vir_mem_fault(unsigned long addr)
 {
-    kprint("do_vir_mem_fault\n");
+    keprint("do_vir_mem_fault\n");
     /* TODO: 如果是在vir_mem区域中，就进行页复制，不是的话，就发出段信号。 */
     exception_force_self(EXP_CODE_SEGV);
 }
@@ -421,25 +421,25 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
 {
 	/* 没有写标志，说明该段内存不支持内存写入，就直接返回吧 */
 	if (write) {
-		kprint(PRINT_DEBUG "page: %s: addr %x have write protection.\n", __func__);
+		keprint(PRINT_DEBUG "page: %s: addr %x have write protection.\n", __func__);
 		int ret = do_page_no_write(addr);
 		if (ret) {
-            kprint(PRINT_EMERG "page: %s: page not writable!", __func__);    
+            keprint(PRINT_EMERG "page: %s: page not writable!", __func__);    
             exception_force_self(EXP_CODE_SEGV);
             return -1;
         }
 
 		/* 虽然写入的写标志，但是还是会出现缺页故障，在此则处理一下缺页 */
 		if (do_handle_no_page(addr, space->page_prot)) {
-            kprint(PRINT_EMERG "page: %s: hand no page failed!", __func__);
+            keprint(PRINT_EMERG "page: %s: hand no page failed!", __func__);
             exception_force_self(EXP_CODE_SEGV);
 			return -1; 
         }
 		return 0;
 	} else {
-		kprint(PRINT_DEBUG "page: %s: no write protection\n", __func__);
+		keprint(PRINT_DEBUG "page: %s: no write protection\n", __func__);
 	}
-    kprint(PRINT_EMERG "page: %s: page protection!", __func__);
+    keprint(PRINT_EMERG "page: %s: page protection!", __func__);
     exception_force_self(EXP_CODE_SEGV);
     return -1;
 }
@@ -463,9 +463,9 @@ int page_do_fault(trap_frame_t *frame)
 
     /* in kernel page fault */
     if (!(frame->error_code & PAGE_ERR_USER) && addr >= KERN_BASE_VIR_ADDR) {
-        kprint("task name=%s pid=%d\n", cur->name, cur->pid);
-        kprint(PRINT_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
-        kprint(PRINT_EMERG "page fault at %x.\n");
+        keprint("task name=%s pid=%d\n", cur->name, cur->pid);
+        keprint(PRINT_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
+        keprint(PRINT_EMERG "page fault at %x.\n");
         trap_frame_dump(frame);
         
         panic("halt...");
@@ -473,7 +473,7 @@ int page_do_fault(trap_frame_t *frame)
     /* 如果故障地址位于内核中， */
     if (addr >= USER_VMM_SIZE) {
         /* TODO: 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
-        kprint(PRINT_ERR "page fauilt: user pid=%d name=%s access unmaped vir_mem area.\n", cur->pid, cur->name);
+        keprint(PRINT_ERR "page fauilt: user pid=%d name=%s access unmaped vir_mem area.\n", cur->pid, cur->name);
         trap_frame_dump(frame);
         do_vir_mem_fault(addr);
         return -1;
@@ -481,7 +481,7 @@ int page_do_fault(trap_frame_t *frame)
     /* 故障地址在用户空间 */
     mem_space_t *space = mem_space_find(cur->vmm, addr);
     if (space == NULL) {    
-        kprint(PRINT_ERR "page fauilt: user pid=%d name=%s user access user unknown space.\n", cur->pid, cur->name);
+        keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user access user unknown space.\n", cur->pid, cur->name);
         trap_frame_dump(frame);
         exception_force_self(EXP_CODE_SEGV);
         return -1;
@@ -495,7 +495,7 @@ int page_do_fault(trap_frame_t *frame)
                 do_expand_stack(space, addr);
             } else {
                 errprint("page addr %x\n", addr);
-                kprint(PRINT_ERR "page fauilt: user pid=%d name=%s user task stack out of range!\n", cur->pid, cur->name);
+                keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user task stack out of range!\n", cur->pid, cur->name);
                 trap_frame_dump(frame);
                 exception_force_self(EXP_CODE_STKFLT);
                 return -1;  

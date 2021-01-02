@@ -24,7 +24,7 @@ fifo_buf_t *fifo_buf_alloc(unsigned int size)
 
     /* 如果size不是2的n次幂，就调整为2的n次幂 */
     if (!is_power_of_2(size)) {
-        ASSERT(size < 0x80000000);
+        assert(size < 0x80000000);
         size = roundup_pow_of_two(size);
     }
 

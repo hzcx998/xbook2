@@ -140,7 +140,7 @@ long walltime_make_timestamp(walltime_t *wt)
 
 void walltime_printf()
 {
-	kprint(PRINT_INFO "time:%d:%d:%d date:%d/%d/%d\n", \
+	keprint(PRINT_INFO "time:%d:%d:%d date:%d/%d/%d\n", \
 		walltime.hour, walltime.minute, walltime.second,\
 		walltime.year, walltime.month, walltime.day);
 	char *week_day[7];
@@ -151,7 +151,7 @@ void walltime_printf()
 	week_day[4] = "Thursday";
 	week_day[5] = "Friday";
 	week_day[6] = "Saturday";
-	kprint(PRINT_INFO "week day:%d %s year day:%d\n", walltime.week_day, week_day[walltime.week_day], walltime.year_day);
+	keprint(PRINT_INFO "week day:%d %s year day:%d\n", walltime.week_day, week_day[walltime.week_day], walltime.year_day);
 }
 
 void walltime_init()

@@ -63,11 +63,11 @@ char cpu_unknown_info[] = "Unknown";
 
 static void cpu_driver_print(device_extension_t *extension)
 {
-    kprint(PRINT_INFO "CPU info:\n");
-    kprint(PRINT_INFO "vendor: %s brand: %s\n", extension->vendor, extension->brand);
-    kprint(PRINT_INFO "family: %s model: %s\n", extension->family_str, extension->model_str);
-    kprint(PRINT_INFO "type: 0x%x stepping: 0x%x\n", extension->type, extension->stepping);
-    kprint(PRINT_INFO "max cpuid: 0x%x max cpuid ext: 0x%x\n", extension->max_cpuid, extension->max_cpuidex);
+    keprint(PRINT_INFO "CPU info:\n");
+    keprint(PRINT_INFO "vendor: %s brand: %s\n", extension->vendor, extension->brand);
+    keprint(PRINT_INFO "family: %s model: %s\n", extension->family_str, extension->model_str);
+    keprint(PRINT_INFO "type: 0x%x stepping: 0x%x\n", extension->type, extension->stepping);
+    keprint(PRINT_INFO "max cpuid: 0x%x max cpuid ext: 0x%x\n", extension->max_cpuid, extension->max_cpuidex);
 }
 static void cpu_driver_initialize(device_extension_t *extension)
 {
@@ -194,7 +194,7 @@ static iostatus_t cpu_driver_read(device_object_t *device, io_request_t *ioreq)
     iostatus_t status = IO_SUCCESS;
     device_extension_t *extension = (device_extension_t *) device->device_extension;
 #ifdef DEBUG_DRV
-    kprint(PRINT_DEBUG "null_read: data:\n");
+    keprint(PRINT_DEBUG "null_read: data:\n");
 #endif
     int len = -1;
     unsigned char *data = (unsigned char *) ioreq->user_buffer;
@@ -220,7 +220,7 @@ static iostatus_t cpu_driver_enter(driver_object_t *driver)
     status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_VIRTUAL_CHAR, &devobj);
 
     if (status != IO_SUCCESS) {
-        kprint(PRINT_ERR "cpu_driver_enter: create device failed!\n");
+        keprint(PRINT_ERR "cpu_driver_enter: create device failed!\n");
         return status;
     }
     /* neighter io mode */
@@ -261,7 +261,7 @@ static iostatus_t cpu_driver_func(driver_object_t *driver)
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    kprint(PRINT_DEBUG "cpu_driver_func: driver name=%s\n",
+    keprint(PRINT_DEBUG "cpu_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
@@ -271,7 +271,7 @@ static iostatus_t cpu_driver_func(driver_object_t *driver)
 static __init void cpu_driver_entry(void)
 {
     if (driver_object_create(cpu_driver_func) < 0) {
-        kprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
+        keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 

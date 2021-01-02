@@ -104,17 +104,17 @@ struct e1000_adapter;
 #include <drivers/e1000_hw.h>
 
 #ifdef DBG
-#define E1000_DBG(args...) kprint(PRINT_DEBUG "e1000: " args)
+#define E1000_DBG(args...) keprint(PRINT_DEBUG "e1000: " args)
 #else
 #define E1000_DBG(args...)
 #endif
 
-#define E1000_ERR(args...) kprint(PRINT_ERR "e1000: " args)
+#define E1000_ERR(args...) keprint(PRINT_ERR "e1000: " args)
 
 #define PFX "e1000: "
 #define DPRINTK(nlevel, klevel, fmt, args...) \
 	(void)((NETIF_MSG_##nlevel & adapter->msg_enable) && \
-	kprint(KERN_##klevel PFX "%s: %s: " fmt, adapter->netdev->name, \
+	keprint(KERN_##klevel PFX "%s: %s: " fmt, adapter->netdev->name, \
 		__FUNCTION__ , ## args))
 
 #define E1000_MAX_INTR 10

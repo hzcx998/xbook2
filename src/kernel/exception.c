@@ -113,7 +113,7 @@ void exception_add_normal(exception_manager_t *exception_manager, exception_t *e
 
 void exception_del_normal(exception_manager_t *exception_manager, exception_t *exp)
 {
-    ASSERT(list_find(&exp->list, &exception_manager->exception_list));
+    assert(list_find(&exp->list, &exception_manager->exception_list));
     list_del_init(&exp->list);
     exception_manager->exception_number--;
 }
@@ -126,7 +126,7 @@ void exception_add_catch(exception_manager_t *exception_manager, exception_t *ex
 
 void exception_del_catch(exception_manager_t *exception_manager, exception_t *exp)
 {
-    ASSERT(list_find(&exp->list, &exception_manager->catch_list));
+    assert(list_find(&exp->list, &exception_manager->catch_list));
     list_del_init(&exp->list);
     exception_manager->catch_number--;
 }
@@ -290,7 +290,7 @@ int exception_check_kernel(trap_frame_t *frame)
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         return -1;
     }
-    ASSERT(!list_empty(&exception_manager->exception_list));
+    assert(!list_empty(&exception_manager->exception_list));
     while (1) {
         exception_t *exp = list_first_owner_or_null(&exception_manager->exception_list, exception_t, list);
         if (!exp)
@@ -327,7 +327,7 @@ int exception_check_user(trap_frame_t *frame)
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         return -1;
     }
-    ASSERT(!list_empty(&exception_manager->catch_list));
+    assert(!list_empty(&exception_manager->catch_list));
     exception_t *exp = list_first_owner(&exception_manager->catch_list, exception_t, list);
     exception_del_catch(exception_manager, exp);
     spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);

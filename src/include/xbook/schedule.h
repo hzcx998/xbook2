@@ -81,7 +81,7 @@ static inline int sched_queue_has_task(sched_unit_t *su, task_t *task)
 static inline void sched_queue_add_tail(sched_unit_t *su, task_t *task)
 {    
     sched_queue_t *queue = su->priority_queue + task->priority;
-    ASSERT(!list_find(&task->list, &queue->list));
+    assert(!list_find(&task->list, &queue->list));
     list_add_tail(&task->list, &queue->list);
     queue->length++;
     su->tasknr++;
@@ -94,7 +94,7 @@ static inline void sched_queue_add_tail(sched_unit_t *su, task_t *task)
 static inline void sched_queue_add_head(sched_unit_t *su, task_t *task)
 {
     sched_queue_t *queue = su->priority_queue + task->priority;
-    ASSERT(!list_find(&task->list, &queue->list));
+    assert(!list_find(&task->list, &queue->list));
     list_add_tail(&task->list, &queue->list);
     queue->length++;
     su->tasknr++;
