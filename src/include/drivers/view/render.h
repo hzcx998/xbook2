@@ -19,5 +19,6 @@ void view_render_rectfill(view_t *view, int x, int y, uint32_t width, uint32_t h
         view_render_rectfill(view, 0, 0, (view)->width, (view)->height, color)
 void view_render_bitblt(view_t *view, int x, int y, 
         view_bitmap_t *bmp, int bx, int by, int width, int height);
+void view_render_draw_shade(view_t *shade, view_rect_t *rect, int draw);
 
 #endif /* _XBOOK_DRIVERS_VIEW_VRENDER_H */

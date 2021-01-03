@@ -1,6 +1,7 @@
 #include "drivers/view/hal.h"
 #include "drivers/view/view.h"
 #include "drivers/view/msg.h"
+#include "drivers/view/env.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -85,6 +86,19 @@ static void mouse_button_up(int button)
     view_put_global_msg(&msg);
 }
 
+void view_mouse_set_state(view_mouse_state_t state)
+{
+    if (view_mouse.state == state)
+        return;
+    keprint("mouse state %d -> %d\n", view_mouse.state, state);
+    view_mouse.state = state;
+}
+
+int view_mouse_is_state(view_mouse_state_t state)
+{
+    return view_mouse.state == state;
+}
+
 int view_mouse_init()
 {
     if (view_mouse_open(&view_mouse) < 0) {
@@ -96,6 +110,7 @@ int view_mouse_init()
     view_mouse.wheel = mouse_wheel;
     view_mouse.x = view_screen.width / 2;
     view_mouse.y = view_screen.height / 2;
+    view_mouse.state = VIEW_MOUSE_NORMAL;
 
     /* 创建鼠标视图 */
     view_t *view = view_create(view_mouse.x, view_mouse.y, 32, 32);
@@ -103,7 +118,8 @@ int view_mouse_init()
     view_render_rectfill(view, 0, 0, view->width, view->height, VIEW_RED);
     view_move_upper_top(view);
     view_mouse.view = view;
-
+    // 将鼠标视图设置为高等级最低图层
+    view_env_set_high_level_lower(view);
     return 0;
 }
 

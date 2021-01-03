@@ -56,11 +56,10 @@ void view_render_vline(view_t *view, int x, int y1, int y2, view_color_t color)
     int offset = 0;
     int i = 0;
 
+    if (x < 0)
+        return;
+
     if (x > (view->width - 1))
-        return;
-    if (y1 > (view->height - 1))
-        return;
-    if (y2 > (view->height - 1))
         return;
 
     for (i = 0; i <= y2 - y1; i++)
@@ -82,10 +81,7 @@ void view_render_hline(view_t *view, int x1, int y, int x2, view_color_t color)
 
     int offset = 0;
     int i = 0;
-    
-    if (x1 > (view->width - 1))
-        return;
-    if (x2 > (view->width - 1))
+    if (y < 0)
         return;
     if (y > (view->height - 1))
         return;
@@ -206,7 +202,19 @@ void view_render_rectfill(view_t *view, int x, int y, uint32_t width, uint32_t h
         return;
     if (!view->section)
         return;
-    view_render_rectfill_ex(view, x, y, x + width - 1, y + height - 1, color);
+    int i, j;
+    int vx, vy;
+    for (j = 0; j < height; j++) {
+        vy = y + j;
+        if (vy >= view->height)
+            break;
+        for (i = 0; i < width; i++) {
+            vx = x + i;
+            if (vx >= view->width)
+                break;
+            view_render_putpixel(view, vx, vy, color);
+        }
+    }
 }
 
 void view_render_bitblt(view_t *view, int x, int y, 
@@ -228,5 +236,73 @@ void view_render_bitblt(view_t *view, int x, int y,
             if (((color >> 24) & 0xff))
                 view_render_putpixel(view, x + i, y + j, color);
         }
+    }
+}
+
+/**
+ * 在遮罩图层里面绘制一个矩形，矩形位置和大小就是缩放中的窗口
+ */
+void view_render_draw_shade(view_t *shade, view_rect_t *rect, int draw)
+{ 
+    if (!shade || !rect)
+        return;
+    
+    view_color_t color;
+
+    /* 如果有绘制，就根据绘制窗口绘制容器 */
+    if (draw) {
+        color = VIEW_BLACK;
+        /* 绘制边框 */
+        view_render_rectfill(shade, rect->x + 1, rect->y + 1,
+            rect->w.uw-1, 1, color);
+        view_render_rectfill(shade, rect->x + 1, rect->y + 1,
+            1, rect->h.uh - 1, color);
+        view_render_rectfill(shade, rect->x + rect->w.uw - 1, rect->y + 1,
+            1, rect->h.uh - 1, color);
+        view_render_rectfill(shade, rect->x + 1, rect->y + rect->h.uh - 1,
+            rect->w.uw - 1, 1, color);
+
+        color = VIEW_WHITE;
+        view_render_rectfill(shade, rect->x, rect->y,
+            rect->w.uw-1, 1, color);
+        view_render_rectfill(shade, rect->x, rect->y, 1,
+            rect->h.uh - 1, color);
+        view_render_rectfill(shade, rect->x + rect->w.uw - 2, rect->y,
+            1, rect->h.uh - 1, color);
+        view_render_rectfill(shade, rect->x, rect->y + rect->h.uh - 2,
+            rect->w.uw - 1, 1, color);
+
+        view_refresh_rect(shade, rect->x, rect->y,
+            rect->w.uw, 2);
+        view_refresh_rect(shade, rect->x, rect->y,
+            2, rect->h.uh);
+        view_refresh_rect(shade, rect->x + rect->w.uw - 2, rect->y,
+            2, rect->h.uh);
+        view_refresh_rect(shade, rect->x, rect->y + rect->h.uh - 2,
+            rect->w.uw, 2);
+        
+    } else {
+        color = VIEW_NONE;
+        /* 先绘制边框 */
+        view_render_rectfill(shade, rect->x, rect->y,
+            rect->w.uw, 2, color);
+        view_render_rectfill(shade, rect->x, rect->y,
+            2, rect->h.uh, color);
+        view_render_rectfill(shade, rect->x + rect->w.uw - 2, rect->y,
+            2, rect->h.uh, color);
+        view_render_rectfill(shade, rect->x, rect->y + rect->h.uh - 2,
+            rect->w.uw, 2, color);
+        view_render_rectfill(shade, rect->x, rect->y + rect->h.uh - 2,
+            rect->w.uw, 2, color);
+
+        /* 刷新时需要刷新当前图层以及其一下的图层，才能擦除留痕 */
+        view_refresh_rect_from_bottom(shade, rect->x, rect->y,
+            rect->w.uw, 2);
+        view_refresh_rect_from_bottom(shade, rect->x, rect->y,
+            2, rect->h.uh);
+        view_refresh_rect_from_bottom(shade, rect->x + rect->w.uw - 2, rect->y,
+            2, rect->h.uh);
+        view_refresh_rect_from_bottom(shade, rect->x, rect->y + rect->h.uh - 2,
+            rect->w.uw, 2);
     }
 }

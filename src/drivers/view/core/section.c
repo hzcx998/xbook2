@@ -68,6 +68,14 @@ int view_section_destroy(view_section_t *section)
     return 0;
 }
 
+int view_section_clear(view_section_t *section)
+{
+    if (!section)
+        return -1;
+    memset(section->addr, 0, section->size);
+    return 0;
+}
+
 int view_section_init()
 {
     memset(section_table, 0, sizeof(view_section_t) * VIEW_SECTION_NR);

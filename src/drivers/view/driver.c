@@ -163,6 +163,21 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
             view_refresh(view, vio->x, vio->y, vio->x + vio->bw, vio->y + vio->bh);
         }
         break;
+    case VIEWIO_SETTYPE:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            if (view_set_type(view, *(int *)arg) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case VIEWIO_GETTYPE:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            *(int *)arg = view_get_type(view);
+        }
+        break;
     default:
         status = IO_FAILED;
         break;

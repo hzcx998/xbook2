@@ -46,6 +46,14 @@ int view_core_init()
         view_keyboard_exit();
         return -1;
     }
+    if (view_env_init() < 0) {
+        view_global_msg_exit();
+        view_screen_exit();
+        view_mouse_exit();
+        view_keyboard_exit();
+        view_section_exit();
+        view_keyboard_exit();
+    }
     kern_thread_start("driver-view", TASK_PRIO_LEVEL_NORMAL, view_thread, NULL);
     return 0;
 }

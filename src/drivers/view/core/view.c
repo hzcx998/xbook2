@@ -14,7 +14,6 @@ static LIST_HEAD(view_global_list_head);
 static uint16_t *view_id_map;
 static int view_top_z = -1;    
 static int view_next_id = 0;    
-static view_t *view_focused = NULL;
 
 view_t *view_create(int x, int y, int width, int height)
 {
@@ -42,6 +41,15 @@ view_t *view_create(int x, int y, int width, int height)
     view->z = -1;
     view->width = width;
     view->height = height;
+    view->type = 0;
+    int i;
+    for (i = 0; i < VIEW_DRAG_REGION_NR; i++) {
+        view_region_reset(&view->drag_regions[i]);
+    }
+    view_region_init(&view->drag_regions[0], 0, 0, view->width, view->height);
+    view_region_init(&view->min_resize_region, 0, 0, 32, 32);
+    view_region_init(&view->resize_region, 8, 8, view->width - 8, view->height - 8);
+
     list_init(&view->list);
     list_add(&view->global_list, &view_global_list_head);
     return view;
@@ -80,6 +88,20 @@ int view_destroy(view_t *view)
     return 0;
 }
 
+int view_set_type(view_t *view, int type)
+{
+    if (type < VIEW_TYPE_FIXED && type > VIEW_TYPE_FLOAT)
+        return -1;
+    view->type = type;
+    return 0;
+}
+
+int view_get_type(view_t *view)
+{
+    return view->type;
+}
+
+
 int view_get_msg(view_t *view, void *buf, int flags)
 {
     if (!view)
@@ -112,9 +134,10 @@ int view_put_msg(view_t *view, void *buf, int flags)
     return 0;
 }
 
-view_t *view_get_focused()
+void view_clear(view_t *view)
 {
-    return view_focused;
+    if (view && view->section)
+        view_section_clear(view->section);
 }
 
 static void view_refresh_map(int left, int top, int right, int buttom, int z0)
@@ -194,7 +217,7 @@ static void __view_adjust_by_z(view_t *view, int z)
         list_add_tail(&view->list, &view_show_list_head);
         /* 刷新新视图[z, z] */
         view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
-        view_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
+        view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
     } else {    /* 不是最高视图，那么就和其它视图交换 */
         if (z > view->z) { /* 如果新高度比原来的高度高 */
             /* 把位于旧视图高度和新视图高度之间（不包括旧视图，但包括新视图高度）的视图下降1层 */
@@ -211,7 +234,7 @@ static void __view_adjust_by_z(view_t *view, int z)
             list_add_after(&view->list, &old_view->list);
             /* 刷新新视图[z, z] */
             view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
-            view_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
+            view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
         } else if (z < view->z) { /* 如果新高度比原来的高度低 */
             /* 把位于旧视图高度和新视图高度之间（不包括旧视图，但包括新视图高度）的视图上升1层 */
             list_for_each_owner (tmp, &view_show_list_head, list) {
@@ -227,7 +250,7 @@ static void __view_adjust_by_z(view_t *view, int z)
             list_add_before(&view->list, &old_view->list);
             /* 刷新新视图[z + 1, old z] */
             view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z + 1);
-            view_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z + 1, old_z);
+            view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z + 1, old_z);
         }
     }
 }
@@ -250,7 +273,7 @@ static void __view_hiden_by_z(view_t *view, int z)
     view->z = -1;  /* 隐藏视图后，高度变为-1 */
     /* 刷新视图, [0, view->z - 1] */
     view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, 0);
-    view_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, 0, old_z - 1);
+    view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, 0, old_z - 1);
     
 }
 
@@ -270,7 +293,7 @@ static void __view_show_by_z(view_t *view, int z)
         list_add_tail(&view->list, &view_show_list_head);
         /* 刷新新视图[z, z] */
         view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
-        view_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
+        view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
     } else {
         /* 查找和当前视图一样高度的视图 */
         list_for_each_owner(tmp, &view_show_list_head, list) {
@@ -292,7 +315,7 @@ static void __view_show_by_z(view_t *view, int z)
         list_add_before(&view->list, &old_view->list);
         /* 刷新新视图[z, z] */
         view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
-        view_refresh_view_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
+        view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
     }
 }
 
@@ -316,6 +339,8 @@ static void __view_show_by_z(view_t *view, int z)
  */
 void view_set_z(view_t *view, int z)
 {
+    if (view->z == z)
+        return;
     if (list_find(&view->list, &view_show_list_head)) {
         if (z >= 0) {
             __view_adjust_by_z(view, z);
@@ -327,6 +352,21 @@ void view_set_z(view_t *view, int z)
             __view_show_by_z(view, z);
         }
     }
+}
+
+int view_drag_rect_check(view_t *view, int x, int y)
+{
+    view_region_t *rect;
+    int i; 
+    for (i = 0; i < VIEW_DRAG_REGION_NR; i++) {
+        rect = &view->drag_regions[i];
+        if (view_region_valid(rect)) {
+            if (view_region_in_range(rect, x, y)) {
+                return 1;
+            }   
+        }
+    }
+    return 0;
 }
 
 int view_move_to_top(view_t *view)
@@ -393,7 +433,7 @@ int view_set_xy(view_t *view, int x, int y)
         x1 = max(old_x + view->width, x + view->width);
         y1 = max(old_y + view->height, y + view->height);
         view_refresh_map(x0, y0, x1, y1, 0);
-        view_refresh_view_by_z(x0, y0, x1, y1, 0, view->z);
+        view_refresh_by_z(x0, y0, x1, y1, 0, view->z);
     }
     return 0;
 }
@@ -410,7 +450,7 @@ view_t *view_get_bottom()
     return view;
 }
 
-void view_refresh_view_by_z(int left, int top, int right, int buttom, int z0, int z1)
+void view_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1)
 {
     int view_left, view_top, view_right, view_buttom;
 
@@ -463,9 +503,64 @@ void view_refresh(view_t *view, int left, int top, int right, int buttom)
     if (view->z >= 0) {
         view_refresh_map(view->x + left, view->y + top, view->x + right,
             view->y + buttom, view->z);
-        view_refresh_view_by_z(view->x + left, view->y + top, view->x + right,
+        view_refresh_by_z(view->x + left, view->y + top, view->x + right,
             view->y + buttom, view->z, view->z);
     }
+}
+
+void view_refresh_rect(view_t *view, int x, int y, uint32_t width, uint32_t height)
+{
+    view_refresh(view, x, y, x + width, y + height);
+}
+
+/**
+ * 刷新图层以及其下面的所有图层
+ */
+void view_refresh_from_bottom(view_t *view, int left, int top, int right, int buttom)
+{
+    if (view->z >= 0) {
+        view_refresh_map(view->x + left, view->y + top, view->x + right,
+            view->y + buttom, 0);
+        view_refresh_by_z(view->x + left, view->y + top, view->x + right,
+            view->y + buttom, 0, view->z);
+    }
+}
+
+void view_refresh_rect_from_bottom(view_t *view, int x, int y, uint32_t width, uint32_t height)
+{
+    view_refresh_from_bottom(view, x, y, x + width, y + height);
+}
+
+/**
+ * 重新设置图层的大小，并擦除之前的显示内容
+ * 
+ */
+int view_resize(view_t *view, int x, int y, uint32_t width, uint32_t height)
+{
+    if (!view || !width || !height)
+        return -1;
+    
+    if (!view->section) {
+        return -1;
+    }
+    view_section_t *new_sction = view_section_create(width, height);
+    if (!new_sction) {
+        errprint("view resize create section failed!\n");
+        return -1;
+    }
+    /* 先将原来位置里面的内容绘制成透明 */
+    view_section_clear(view->section);
+    /* 重新设置位置才能完整刷新图层 */
+    view_set_xy(view, x, y);
+    /* 销毁旧的缓冲区 */
+    view_section_destroy(view->section);
+    /* 重新绑定缓冲区 */
+    view->section = new_sction;
+    view->width = new_sction->width;
+    view->height = new_sction->height;
+
+    view_region_init(&view->resize_region, 8, 8, view->width - 8, view->height - 8);
+    return 0;
 }
 
 /**

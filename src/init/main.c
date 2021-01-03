@@ -41,7 +41,6 @@ int kernel_main(void)
     interrupt_enable();
     driver_framewrok_init();
     initcalls_exec();
-    drivers_print();
     file_system_init();
     account_manager_init();
     port_comm_init();

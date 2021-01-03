@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-/* GUI message */
+/* view message */
 enum {
     VIEW_MSG_NONE = 0,
     VIEW_MSG_KEY_DOWN,
@@ -23,6 +23,18 @@ enum {
     VIEW_MSG_MOUSE_WHEEL_LEFT,
     VIEW_MSG_MOUSE_WHEEL_RIGHT,
     VIEW_MSG_TIMER,
+    VIEW_MSG_QUIT,
+    VIEW_MSG_ENTER,
+    VIEW_MSG_LEAVE,
+    VIEW_MSG_RESIZE,
+    VIEW_MSG_ACTIVATE,
+    VIEW_MSG_INACTIVATE,
+    VIEW_MSG_MOVE,
+    VIEW_MSG_CREATE,
+    VIEW_MSG_CLOSE,
+    VIEW_MSG_HIDE,
+    VIEW_MSG_SHOW,
+    VIEW_MSG_PAINT,
     VIEW_MSG_NR,
 };
 
@@ -79,8 +91,11 @@ static inline void view_msg_reset(view_msg_t *msg)
 #define view_msg_get_timer_time(msg) ((msg)->data1)
 
 int view_global_msg_init();
+void view_global_msg_exit();
 int view_get_global_msg(view_msg_t *msg);
 int view_put_global_msg(view_msg_t *msg);
+
+
 
 int view_dispatch_keycode_msg(view_msg_t *msg);
 int view_dispatch_mouse_msg(view_msg_t *msg);

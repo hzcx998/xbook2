@@ -88,5 +88,7 @@ typedef struct _video_info {
 #define VIEWIO_RDBMP        DEVCTL_CODE('v', 6)
 #define VIEWIO_SETFLGS      DEVCTL_CODE('v', 7)
 #define VIEWIO_GETFLGS      DEVCTL_CODE('v', 8)
+#define VIEWIO_SETTYPE      DEVCTL_CODE('v', 9)
+#define VIEWIO_GETTYPE      DEVCTL_CODE('v', 10)
 
 #endif   /* _SYS_IOCTL_H */

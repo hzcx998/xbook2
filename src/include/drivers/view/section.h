@@ -21,6 +21,7 @@ view_section_t *view_section_get_ptr(int section_id);
 int view_section_get_id(view_section_t *section);
 view_section_t *view_section_create(int width, int height);
 int view_section_destroy(view_section_t *section);
+int view_section_clear(view_section_t *section);
 
 int view_section_fill_rect(view_section_t *section, view_color_t color);
 int view_section_init();

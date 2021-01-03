@@ -1,6 +1,7 @@
 #include <drivers/view/msg.h>
 #include <drivers/view/view.h>
 #include <drivers/view/mouse.h>
+#include <drivers/view/env.h>
 #include <stddef.h>
 
 static msgpool_t *view_global_msgpool = NULL;
@@ -11,6 +12,12 @@ int view_global_msg_init()
     if (view_global_msgpool == NULL)
         return -1;
     return 0;
+}
+
+void view_global_msg_exit()
+{
+    if (view_global_msgpool)
+        msgpool_destroy(view_global_msgpool);
 }
 
 int view_get_global_msg(view_msg_t *msg)
@@ -28,7 +35,7 @@ int view_put_global_msg(view_msg_t *msg)
  */
 int view_dispatch_keycode_msg(view_msg_t *msg)
 {
-    view_t *view = view_get_focused();
+    view_t *view = view_env_get_activity();
     int val = -1;
     /* 发送给聚焦图层 */
     if (view) {
@@ -46,6 +53,9 @@ int view_dispatch_keycode_msg(view_msg_t *msg)
  */
 int view_dispatch_mouse_msg(view_msg_t *msg)
 {
+    if (!view_env_filter_mouse_msg(msg))
+        return 0;
+
     list_t *list_head = view_get_show_list();
     view_t *view;
     list_for_each_owner_reverse (view, list_head, list) {
@@ -57,6 +67,16 @@ int view_dispatch_mouse_msg(view_msg_t *msg)
         if (local_mx >= 0 && local_mx < view->width && 
             local_my >= 0 && local_my < view->height) {
             /* 发送消息给目标图层 */
+
+            /* 如果是在图层上点击了鼠标左键，那么就进行激活 */
+            if (view_msg_get_type(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
+                view_env_try_activate(view);
+            }
+            view_env_do_mouse_hover(view, msg, local_mx, local_my);
+            if (!view_env_do_resize(view, msg, local_mx, local_my)) 
+                return 0;
+            view_env_do_drag(view, msg, local_mx, local_my);
+
             view_msg_t m;
             view_msg_header(&m, msg->id, view->id);
             view_msg_data(&m, local_mx, local_my, msg->data0, msg->data1);
