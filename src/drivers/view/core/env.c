@@ -405,7 +405,6 @@ int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
                 view_mouse.click_x = -1;
                 view_mouse.click_y = -1;
             }
-            
         }
     }
     return -1;
@@ -413,7 +412,6 @@ int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
 
 int view_env_init()
 {
-    
     #ifdef CONFIG_SHADE_VIEW
     shade_view = view_create(0, 0, view_screen.width, view_screen.height);
     if (shade_view == NULL) {

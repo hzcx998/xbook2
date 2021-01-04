@@ -90,6 +90,7 @@ typedef struct _video_info {
 #define VIEWIO_GETFLGS      DEVCTL_CODE('v', 8)
 #define VIEWIO_SETTYPE      DEVCTL_CODE('v', 9)
 #define VIEWIO_GETTYPE      DEVCTL_CODE('v', 10)
+#define VIEWIO_REFRESH      DEVCTL_CODE('v', 11)
 
 #ifdef __cplusplus
 }

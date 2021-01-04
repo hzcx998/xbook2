@@ -57,6 +57,7 @@ typedef struct {
     int bw;     // 位图宽度
     int bh;     // 位图高度
     viewbmp_t bmp;
+    char refresh;
 } viewio_t;
 
 #endif /* _XBOOK_DRIVERS_VIEW_BITMAP_H */

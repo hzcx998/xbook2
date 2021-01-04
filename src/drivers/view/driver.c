@@ -160,7 +160,8 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
         } else {
             viewio_t *vio = (viewio_t *) arg;
             view_render_bitblt(view, vio->x, vio->y, (view_bitmap_t *)&vio->bmp, vio->bx, vio->by, vio->bw, vio->bh);
-            view_refresh(view, vio->x, vio->y, vio->x + vio->bw, vio->y + vio->bh);
+            if (vio->refresh)
+                view_refresh(view, vio->x, vio->y, vio->x + vio->bw, vio->y + vio->bh);
         }
         break;
     case VIEWIO_SETTYPE:
@@ -176,6 +177,14 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
             status = IO_FAILED;
         } else {
             *(int *)arg = view_get_type(view);
+        }
+        break;
+    case VIEWIO_REFRESH:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            view_region_t *vreg = (view_region_t *) arg;
+            view_refresh(view, vreg->left, vreg->top, vreg->right, vreg->bottom);
         }
         break;
     default:

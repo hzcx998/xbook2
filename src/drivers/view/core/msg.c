@@ -66,8 +66,6 @@ int view_dispatch_mouse_msg(view_msg_t *msg)
         local_my = msg->data1 - view->y;
         if (local_mx >= 0 && local_mx < view->width && 
             local_my >= 0 && local_my < view->height) {
-            /* 发送消息给目标图层 */
-
             /* 如果是在图层上点击了鼠标左键，那么就进行激活 */
             if (view_msg_get_type(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
                 view_env_try_activate(view);
@@ -76,7 +74,7 @@ int view_dispatch_mouse_msg(view_msg_t *msg)
             if (!view_env_do_resize(view, msg, local_mx, local_my)) 
                 return 0;
             view_env_do_drag(view, msg, local_mx, local_my);
-
+            
             view_msg_t m;
             view_msg_header(&m, msg->id, view->id);
             view_msg_data(&m, local_mx, local_my, msg->data0, msg->data1);

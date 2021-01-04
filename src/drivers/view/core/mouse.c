@@ -111,12 +111,12 @@ int view_mouse_init()
     view_mouse.x = view_screen.width / 2;
     view_mouse.y = view_screen.height / 2;
     view_mouse.state = VIEW_MOUSE_NORMAL;
-
     /* 创建鼠标视图 */
     view_t *view = view_create(view_mouse.x, view_mouse.y, 32, 32);
-    //assert(view);
+    assert(view);
     view_render_rectfill(view, 0, 0, view->width, view->height, VIEW_RED);
     view_move_upper_top(view);
+    view_set_type(view, VIEW_TYPE_FLOAT);
     view_mouse.view = view;
     // 将鼠标视图设置为高等级最低图层
     view_env_set_high_level_lower(view);

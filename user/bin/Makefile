@@ -11,6 +11,7 @@ X_INCDIRS	+= $(LIBS_DIR)/xlibc/include $(LIBS_DIR)/pthread/include $(LIBS_DIR)/n
 				$(LIBS_DIR)/jpeg \
 				$(LIBS_DIR)/lvgl \
 				$(LIBS_DIR)/lvgl/include \
+				$(LIBS_DIR)/libview/include \
 				
 X_LDFLAGS	+= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 X_LIBDIRS	+= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \
@@ -20,6 +21,7 @@ X_LIBDIRS	+= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \
 				$(LIBS_DIR)/libpng \
 				$(LIBS_DIR)/jpeg \
 				$(LIBS_DIR)/lvgl \
+				$(LIBS_DIR)/libview \
 				
 LD			:= ld -m elf_i386
 AS			:=	nasm
