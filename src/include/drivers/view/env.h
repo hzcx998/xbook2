@@ -15,7 +15,9 @@ void view_env_do_mouse_hover(view_t *view, view_msg_t *msg, int lcmx, int lcmy);
 void view_env_do_drag(view_t *view, view_msg_t *msg, int lcmx, int lcmy);
 int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy);
 int view_env_filter_mouse_msg(view_msg_t *msg);
-
+int view_try_resize(view_t *view, view_rect_t *rect);
+uint32_t view_env_get_screensize();
 int view_env_init();
+int view_env_exit();
 
 #endif /* _XBOOK_DRIVERS_VIEW_ENV_H */

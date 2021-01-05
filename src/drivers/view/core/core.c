@@ -6,13 +6,18 @@
 #include <xbook/schedule.h>
 #include <assert.h>
 
-static void view_thread(void *arg)
+static task_t *view_thread;
+static int view_thread_exit;
+
+static void view_thread_entry(void *arg)
 {
     view_core_loop();
 }
 
 int view_core_init()
 {
+    view_thread_exit = 0;
+    view_thread = NULL;
     if (view_screen_init() < 0) {
         return -1;
     }
@@ -53,18 +58,37 @@ int view_core_init()
         view_keyboard_exit();
         view_section_exit();
         view_keyboard_exit();
+        return -1;
     }
-    kern_thread_start("driver-view", TASK_PRIO_LEVEL_NORMAL, view_thread, NULL);
+    view_thread = kern_thread_start("driver-view", TASK_PRIO_LEVEL_NORMAL, view_thread_entry, NULL);
+    if (!view_thread) {
+        view_env_exit();
+        view_global_msg_exit();
+        view_keyboard_exit();
+        view_mouse_exit();
+        view_exit();
+        view_section_exit();
+        view_screen_exit();
+        return -1;
+    }
     return 0;
 }
 
 int view_core_exit()
 {
-    view_screen_exit();
-    view_mouse_exit();
+    /* 先停掉线程,等待线程退出 */
+    view_thread_exit = 1;
+    while (view_thread_exit)
+        task_yeild();
+    view_thread = NULL;
+    
+    view_env_exit();
+    view_global_msg_exit();
     view_keyboard_exit();
-    view_section_exit();
+    view_mouse_exit();
     view_exit();
+    view_section_exit();
+    view_screen_exit();
     return 0;
 }
 
@@ -74,7 +98,7 @@ int view_core_loop()
     int i = 0;
     int has_event;
     view_msg_t msg;
-    while (1) {
+    while (!view_thread_exit) {
         if (!view_mouse_poll()) {
             i = 0;
         }
@@ -122,4 +146,6 @@ int view_core_loop()
             }
         }
     }
+    view_thread_exit = 0;
+    kern_thread_exit(0);
 }

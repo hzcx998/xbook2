@@ -26,7 +26,7 @@ int port_comm_test(int argc, char *argv[])
             printf("server: recv %d: %s\n", msg.header.size, (char *) msg.data);
 
             char *str = "hello, client!\n";
-            strcpy(msg.data, str);
+            strcpy((char *)msg.data, str);
             msg.header.size = strlen(str);
             sleep(1);
             if (!reply_port(0, &msg)) {
@@ -42,7 +42,7 @@ int port_comm_test(int argc, char *argv[])
         {
             port_msg_reset(&msg);
             char *str = "hello, i am client!\n";
-            strcpy(msg.data, str);
+            strcpy((char *)msg.data, str);
             msg.header.size = strlen(str);
             if (!request_port(0, &msg))
                 printf("client: recv %d: %s\n", msg.header.size, (char *) msg.data);
@@ -51,4 +51,5 @@ int port_comm_test(int argc, char *argv[])
         printf("client: exit!\n");        
         sleep(1);
     }
+    return 0;
 }

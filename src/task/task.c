@@ -128,6 +128,7 @@ task_t *kern_thread_start(char *name, uint8_t prio_level, task_func_t *func, voi
     if (!task)
         return NULL;
     task_init(task, name, prio_level);
+    task->flags |= THREAD_FLAG_KERNEL;
     if (fs_fd_init(task) < 0) {
         mem_free(task);
         return NULL;
@@ -158,6 +159,7 @@ void kern_thread_exit(int status)
     cur->parent_pid = USER_INIT_PROC_ID;
     task_t *parent = task_find_by_pid(cur->parent_pid); 
     if (parent) {
+        keprint("kern thread exit with parent\n");
         if (parent->state == TASK_WAITING) {
             interrupt_restore_state(flags);
             task_unblock(parent);
@@ -167,6 +169,7 @@ void kern_thread_exit(int status)
             task_block(TASK_ZOMBIE);
         }
     } else {
+        keprint("kern thread exit without parent\n");
         interrupt_restore_state(flags);
         task_block(TASK_ZOMBIE); 
     }

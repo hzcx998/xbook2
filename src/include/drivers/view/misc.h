@@ -26,33 +26,33 @@ typedef struct {
     int bottom;
 } view_region_t;
 
-static inline void view_region_reset(view_region_t *rect)
+static inline void view_region_reset(view_region_t *region)
 {
-    rect->left = -1;
-    rect->top = -1;
-    rect->right = -1;
-    rect->bottom = -1;
+    region->left = -1;
+    region->top = -1;
+    region->right = -1;
+    region->bottom = -1;
 }
 
-static inline void view_region_init(view_region_t *rect, int left, int top, int right, int bottom)
+static inline void view_region_init(view_region_t *region, int left, int top, int right, int bottom)
 {
-    rect->left = left;
-    rect->top = top;
-    rect->right = right;
-    rect->bottom = bottom;
+    region->left = left;
+    region->top = top;
+    region->right = right;
+    region->bottom = bottom;
 }
 
-static inline int view_region_valid(view_region_t *rect)
+static inline int view_region_valid(view_region_t *region)
 {
-    if (rect->left != -1 && rect->right != -1 &&
-        rect->top != -1 && rect->bottom != -1)
+    if (region->left != -1 && region->right != -1 &&
+        region->top != -1 && region->bottom != -1)
         return 1;
     return 0;
 }
 
-#define view_region_in_range(rect, x, y) \
-        ((rect)->left <= (x) && (x) < (rect)->right && \
-        (rect)->top <= (y) && (y) < (rect)->bottom)
+#define view_region_in_range(region, x, y) \
+        ((region)->left <= (x) && (x) < (region)->right && \
+        (region)->top <= (y) && (y) < (region)->bottom)
 
 static inline void view_rect_reset(view_rect_t *rect)
 {

@@ -32,6 +32,10 @@ int view_keyboard_open(view_keyboard_t *keyboard)
 
 int view_keyboard_close(view_keyboard_t *keyboard)
 {
+    int flags;
+    device_devctl(keyboard->handle, EVENIO_GETFLG, (unsigned long) &flags);
+    flags &= ~DEV_NOWAIT;
+    device_devctl(keyboard->handle, EVENIO_SETFLG, (unsigned long) &flags);
     return device_close(keyboard->handle);
 }
 

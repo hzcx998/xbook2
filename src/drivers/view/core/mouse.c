@@ -99,6 +99,20 @@ int view_mouse_is_state(view_mouse_state_t state)
     return view_mouse.state == state;
 }
 
+int view_mouse_show()
+{
+    if (view_mouse.view->z < 0) {
+        view_move_upper_top(view_mouse.view);
+    }
+}
+
+int view_mouse_hide()
+{
+    if (view_mouse.view->z >= 0) {
+        view_hide(view_mouse.view);
+    }
+}
+
 int view_mouse_init()
 {
     if (view_mouse_open(&view_mouse) < 0) {
@@ -114,10 +128,15 @@ int view_mouse_init()
     /* 创建鼠标视图 */
     view_t *view = view_create(view_mouse.x, view_mouse.y, 32, 32);
     assert(view);
+    
+    // 清空视图，不显示
     view_render_rectfill(view, 0, 0, view->width, view->height, VIEW_RED);
-    view_move_upper_top(view);
+    
     view_set_type(view, VIEW_TYPE_FIXED);
+    // 设置鼠标图层为0，最开始的最高图层
+    view_set_z(view, 0);
     view_mouse.view = view;
+
     // 将鼠标视图设置为高等级最低图层
     view_env_set_high_level_lower(view);
     return 0;
@@ -125,6 +144,11 @@ int view_mouse_init()
 
 int view_mouse_exit()
 {
+    if (view_mouse.view) {
+        view_hide(view_mouse.view);
+        view_destroy(view_mouse.view);
+        view_mouse.view = NULL;
+    }
     view_mouse_close(&view_mouse);
     return 0;
 }

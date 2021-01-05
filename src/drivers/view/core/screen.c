@@ -79,7 +79,7 @@ int view_screen_init()
         view_screen.out_pixel = screen_out_pixel32;
         break;
     default:
-        keprint("xbrower: unknown screen bpp\n");
+        keprint("view: unknown screen bpp\n");
         view_screen_close(&view_screen);
         return -1;
     }

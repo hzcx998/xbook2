@@ -111,16 +111,17 @@ void view_env_do_mouse_hover(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
 
 void view_env_do_drag(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
 {
-    if (view->type != VIEW_TYPE_FIXED) {        
-        /* 检测可移动区域 */
-        if (!view_drag_rect_check(view, lcmx, lcmy))
-            return;
-        if (view_msg_get_type(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
-            view_mouse.local_x = lcmx;
-            view_mouse.local_y = lcmy;
-            drag_view = view;
-            view_mouse_set_state(VIEW_MOUSE_NORMAL);
-        }
+    if (view->type == VIEW_TYPE_FIXED  || !(view->attr & VIEW_ATTR_MOVEABLE)) {
+        return;
+    }        
+    /* 检测可移动区域 */
+    if (!view_drag_rect_check(view, lcmx, lcmy))
+        return;
+    if (view_msg_get_type(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
+        view_mouse.local_x = lcmx;
+        view_mouse.local_y = lcmy;
+        drag_view = view;
+        view_mouse_set_state(VIEW_MOUSE_NORMAL);
     }
 }
 
@@ -227,6 +228,10 @@ int view_calc_resize(view_t *view, int mx, int my, view_rect_t *out_rect)
     return 0;
 }
 
+uint32_t view_env_get_screensize()
+{
+    return (view_screen.width << 16) | view_screen.height;
+}
 
 /**
  * 尝试调整图层大小，并发送RESIZE消息给指定图层
@@ -367,7 +372,7 @@ int view_env_filter_mouse_msg(view_msg_t *msg)
 
 int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
 {
-    if (view->type == VIEW_TYPE_FIXED) {
+    if (view->type == VIEW_TYPE_FIXED || !(view->attr & VIEW_ATTR_RESIZABLE)) {
         return -1;    
     }
     if (view_region_valid(&view->resize_region)) {
@@ -424,5 +429,23 @@ int view_env_init()
     view_set_z(shade_view, -1);
     view_rect_reset(&shade_rect);
     #endif /* CONFIG_SHADE_VIEW */
+    return 0;
+}
+
+int view_env_exit()
+{
+    view_activity = NULL;
+    view_high_level_lower = NULL;
+
+    mouse_hover_view = NULL;
+    resize_view = NULL;
+    drag_view = NULL;
+    #ifdef CONFIG_SHADE_VIEW
+    if (shade_view) {
+        view_hide(shade_view);
+        view_destroy(shade_view);
+        shade_view = NULL;
+    }
+    #endif
     return 0;
 }

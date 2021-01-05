@@ -48,6 +48,38 @@ int uview_set_type(int vfd, int type)
     return ioctl(vfd, VIEWIO_SETTYPE, &type);
 }
 
+int uview_set_moveable(int vfd)
+{
+    if (vfd < 0)
+        return -1;
+    int attr = UVIEW_ATTR_MOVEABLE;
+    return ioctl(vfd, VIEWIO_ADDATTR, &attr);
+}
+
+int uview_set_unmoveable(int vfd)
+{
+    if (vfd < 0)
+        return -1;
+    int attr = UVIEW_ATTR_MOVEABLE;
+    return ioctl(vfd, VIEWIO_DELATTR, &attr);
+}
+
+int uview_set_resizable(int vfd)
+{
+    if (vfd < 0)
+        return -1;
+    int attr = UVIEW_ATTR_RESIZABLE;
+    return ioctl(vfd, VIEWIO_ADDATTR, &attr);
+}
+
+int uview_set_unresizable(int vfd)
+{
+    if (vfd < 0)
+        return -1;
+    int attr = UVIEW_ATTR_RESIZABLE;
+    return ioctl(vfd, VIEWIO_DELATTR, &attr);
+}
+
 int uview_set_wait(int vfd, int iswait)
 {
     if (vfd < 0)
@@ -67,6 +99,33 @@ int uview_show(int vfd)
     if (vfd < 0)
         return -1;
     return ioctl(vfd, VIEWIO_SHOW, 0);
+}
+
+int uview_get_screensize(int vfd, int *width, int *height)
+{
+    if (vfd < 0)
+        return -1;
+    uint32_t screensize;
+    if (ioctl(vfd, VIEWIO_GETSCREENSZ, &screensize) < 0)
+        return -1;
+    if (width)
+        *width = (screensize >> 16)  & 0xffff;
+    if (height)
+        *height = screensize & 0xffff;
+    return 0;
+}
+
+
+int uview_resize(int vfd, int x, int y, int width, int height)
+{
+    if (vfd < 0)
+        return -1;
+    uview_rect_t rect;
+    rect.x = x;
+    rect.y = y;
+    rect.w.sw = width;
+    rect.h.sh = height;
+    return ioctl(vfd, VIEWIO_RESIZE, &rect);
 }
 
 int uview_hide(int vfd)

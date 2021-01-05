@@ -24,18 +24,25 @@
 
 #define DEV_NAME "view"
 
-extern int view_entry();
-
 typedef struct _device_extension {
     view_t *view;
     unsigned long flags;
 } device_extension_t;
+
+static int view_open_count;
 
 static iostatus_t view_open(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
     iostatus_t status = IO_SUCCESS;
     int flags = ioreq->parame.open.flags;
+    if (!view_open_count) {
+        if (view_core_init() < 0) {
+            errprint("init view driver failed!\n");
+            return IO_FAILED;
+        }
+    }
+    view_open_count++;
     // 高16为宽度，低16位为高度
     if (extension->view == NULL) {
         extension->view = view_create(0, 0, (flags >> 16) & 0xffff, flags & 0xffff);
@@ -62,9 +69,19 @@ static iostatus_t view_close(device_object_t *device, io_request_t *ioreq)
         if (view_destroy(extension->view) < 0) {
             view_set_z(extension->view, z);
             status = IO_FAILED;
+            errprint("view destroy failed!\n");
             goto end_close;
         }
         extension->view = NULL;
+    }
+    extension->flags = 0;
+    --view_open_count;
+    if (view_open_count <= 0) {
+        if (view_core_exit() < 0) {
+            errprint("init view driver failed!\n");
+            status = IO_FAILED;
+        }
+        view_open_count = 0;
     }
 end_close:
     ioreq->io_status.status = status;
@@ -187,6 +204,38 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
             view_refresh(view, vreg->left, vreg->top, vreg->right, vreg->bottom);
         }
         break;
+    case VIEWIO_ADDATTR:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            if (view_add_attr(view, *(int *)arg) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case VIEWIO_DELATTR:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            if (view_del_attr(view, *(int *)arg) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case VIEWIO_RESIZE:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            view_rect_t *rect = (view_rect_t *) arg;
+            if (view_try_resize(view, rect) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case VIEWIO_GETSCREENSZ:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            *(int *)arg = view_env_get_screensize();
+        }
+        break;
     default:
         status = IO_FAILED;
         break;
@@ -201,12 +250,8 @@ static iostatus_t view_driver_enter(driver_object_t *driver)
     iostatus_t status;
     device_object_t *devobj;
     device_extension_t *extension;
-    
-    if (view_core_init() < 0) {
-        errprint("init view driver failed!\n");
-        return IO_FAILED;
-    }
-
+    view_open_count = 0;
+    /* 创建视图设备 */
     int i;
     char devname[DEVICE_NAME_LEN] = {0, };
     for (i = 0; i < VIEW_MAX_NR; i++) {

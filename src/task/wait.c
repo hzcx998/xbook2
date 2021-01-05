@@ -22,9 +22,12 @@ static int wait_any_hangging_child(task_t *parent, int *status)
                 pid_t child_pid = child->pid;
                 if (status != NULL)
                     *status = child->exit_status;
+                /* 如果是单执行流，并且不是内核线程 */
                 if (TASK_IS_SINGAL_THREAD(child)) {
+                    dbgprint("child is singal\n");
                     proc_destroy(child, 0);
                 } else {
+                    dbgprint("child is not singal\n");
                     proc_destroy(child, 1);
                 }     
                 return child_pid;

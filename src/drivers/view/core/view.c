@@ -41,13 +41,14 @@ view_t *view_create(int x, int y, int width, int height)
     view->z = -1;
     view->width = width;
     view->height = height;
-    view->type = 0;
+    view->type = VIEW_TYPE_FIXED;
+    view->attr = 0;
     int i;
     for (i = 0; i < VIEW_DRAG_REGION_NR; i++) {
         view_region_reset(&view->drag_regions[i]);
     }
     view_region_init(&view->drag_regions[0], 0, 0, view->width, view->height);
-    view_region_init(&view->min_resize_region, 0, 0, 32, 32);
+    view_region_init(&view->min_resize_region, 0, 0, VIEW_RESIZE_SIZE_MIN, VIEW_RESIZE_SIZE_MIN);
     view_region_init(&view->resize_region, VIEW_RESIZE_BORDER_SIZE,
         VIEW_RESIZE_BORDER_SIZE, view->width - VIEW_RESIZE_BORDER_SIZE,
         view->height - VIEW_RESIZE_BORDER_SIZE);
@@ -95,6 +96,8 @@ int view_set_type(view_t *view, int type)
     if (type < VIEW_TYPE_FIXED && type > VIEW_TYPE_FLOAT)
         return -1;
     view->type = type;
+    if (view->type == VIEW_TYPE_WINDOW)
+        view->attr |= (VIEW_ATTR_MOVEABLE | VIEW_ATTR_RESIZABLE);
     return 0;
 }
 
@@ -103,6 +106,21 @@ int view_get_type(view_t *view)
     return view->type;
 }
 
+int view_add_attr(view_t *view, int attr)
+{
+    if (!view)
+        return -1;
+    view->attr |= attr;
+    return 0;
+}
+
+int view_del_attr(view_t *view, int attr)
+{
+    if (!view)
+        return -1;
+    view->attr &= ~attr;
+    return 0;
+}
 
 int view_get_msg(view_t *view, void *buf, int flags)
 {
@@ -565,7 +583,6 @@ int view_resize(view_t *view, int x, int y, uint32_t width, uint32_t height)
     view_region_init(&view->resize_region, VIEW_RESIZE_BORDER_SIZE,
         VIEW_RESIZE_BORDER_SIZE, view->width - VIEW_RESIZE_BORDER_SIZE,
         view->height - VIEW_RESIZE_BORDER_SIZE);
-
     return 0;
 }
 
@@ -584,11 +601,6 @@ int view_init()
         return -1;
     }
     memset(view_id_map, 0, id_map_size);
-
-    view_t *view = view_create(0, 0, view_screen.width, view_screen.height);
-    assert(view);
-    view_render_rectfill(view, 0, 0, view->width, view->height, VIEW_BLACK);
-    view_set_z(view, 0);
     return 0;
 }
 
@@ -598,5 +610,10 @@ void view_exit()
     list_for_each_owner_safe (view, next, &view_global_list_head, global_list) {
         view_destroy(view);
     }
+    list_init(&view_show_list_head);
+    list_init(&view_global_list_head);
     free(view_id_map);
+    view_id_map = NULL;
+    view_top_z = -1;
+    view_next_id = 0;
 }

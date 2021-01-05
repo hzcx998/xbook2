@@ -21,6 +21,10 @@ int view_mouse_open(view_mouse_t *mouse)
 
 int view_mouse_close(view_mouse_t *mouse)
 {
+    int flags;
+    device_devctl(mouse->handle, EVENIO_GETFLG, (unsigned long) &flags);
+    flags &= ~DEV_NOWAIT;
+    device_devctl(mouse->handle, EVENIO_SETFLG, (unsigned long) &flags);
     return device_close(mouse->handle);
 }
 

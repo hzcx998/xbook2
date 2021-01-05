@@ -221,9 +221,9 @@ void proc_exec_init(task_t *task)
 
 int proc_destroy(task_t *task, int thread)
 {
-    if (task->vmm == NULL)
-        return -1;
     if (!thread) {
+        if (task->vmm == NULL)
+            return -1;
         vmm_free(task->vmm);
         task->vmm = NULL;    
     }

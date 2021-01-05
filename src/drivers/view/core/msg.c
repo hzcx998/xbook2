@@ -18,6 +18,7 @@ void view_global_msg_exit()
 {
     if (view_global_msgpool)
         msgpool_destroy(view_global_msgpool);
+    view_global_msgpool = NULL;
 }
 
 int view_get_global_msg(view_msg_t *msg)

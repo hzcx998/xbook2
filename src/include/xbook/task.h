@@ -48,6 +48,7 @@ enum thread_flags {
     THREAD_FLAG_CANCEL_ASYCHRONOUS  = (1 << 4),     /* 线程收到取消信号时立即退出 */
     THREAD_FLAG_CANCELED            = (1 << 5),     /* 线程已经标记上取消点 */
     THREAD_FLAG_WAITLIST            = (1 << 6),     /* 在等待链表中 */
+    THREAD_FLAG_KERNEL              = (1 << 7),     /* 内核中的线程 */
 };
 
 /* 本地通信端口表 */
@@ -100,9 +101,14 @@ extern volatile int task_init_done;
 #define TASK_IN_SAME_THREAD_GROUP(a, b) \
         ((a)->tgid == (b)->tgid)
 
+#define TASK_IS_KERNEL_THREAD(task) \
+        ((task)->flags & THREAD_FLAG_KERNEL)
+
+/* 判断是用户态进程或者是用户态单线程 */
 #define TASK_IS_SINGAL_THREAD(task) \
-        (((task)->pthread && (atomic_get(&(task)->pthread->thread_count) <= 1))  || \
-        (task)->pthread == NULL)
+        ((((task)->pthread && \
+        (atomic_get(&(task)->pthread->thread_count) <= 1))  || \
+        (task)->pthread == NULL) && !TASK_IS_KERNEL_THREAD(task))
 
 #define TASK_CHECK_THREAD_CANCELATION_POTINT(task) \
     do { \

@@ -30,6 +30,7 @@ enum view_attr {
 
 /* 调整视图大小地边框大小 */
 #define VIEW_RESIZE_BORDER_SIZE  4
+#define VIEW_RESIZE_SIZE_MIN  16
 
 /* 视图用来表达逻辑上的图层 */
 typedef struct {
@@ -66,6 +67,8 @@ int view_resize(view_t *view, int x, int y, uint32_t width, uint32_t height);
 
 int view_set_type(view_t *view, int type);
 int view_get_type(view_t *view);
+int view_add_attr(view_t *view, int attr);
+int view_del_attr(view_t *view, int attr);
 
 int view_move_to_top(view_t *view);
 int view_move_to_bottom(view_t *view);

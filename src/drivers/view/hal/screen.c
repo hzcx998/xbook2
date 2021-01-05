@@ -48,6 +48,7 @@ int view_screen_open(view_screen_t *screen)
         device_close(fd);
         return -1;
     }
+    keprint("view: screen memory map at %x size %x\n", vram, vram_size);
     screen->vram_start = vram;
     screen->handle = fd;
     return 0;
