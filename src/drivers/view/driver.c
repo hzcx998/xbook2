@@ -158,7 +158,7 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
         if (view == NULL) {
             status = IO_FAILED;
         } else {
-            viewio_t *vio = (viewio_t *) arg;
+            uview_io_t *vio = (uview_io_t *) arg;
             view_render_bitblt(view, vio->x, vio->y, (view_bitmap_t *)&vio->bmp, vio->bx, vio->by, vio->bw, vio->bh);
             if (vio->refresh)
                 view_refresh(view, vio->x, vio->y, vio->x + vio->bw, vio->y + vio->bh);

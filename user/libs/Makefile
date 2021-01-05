@@ -15,5 +15,5 @@ MODULE		+= jpeg
 MODULE		+= libpng
 MODULE		+= zlib
 MODULE		+= lvgl
-MODULE		+= libview
+MODULE		+= uview
 

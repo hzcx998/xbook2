@@ -1,5 +1,5 @@
-#ifndef _LIB_VIEW_SHAPE_H
-#define _LIB_VIEW_SHAPE_H
+#ifndef _LIB_UVIEW_SHAPE_H
+#define _LIB_UVIEW_SHAPE_H
 
 #include <stdint.h>
 
@@ -8,9 +8,9 @@ typedef struct {
     int top;
     int right;
     int bottom;
-} view_region_t;
+} uview_region_t;
 
-static inline void view_region_reset(view_region_t *rect)
+static inline void uview_region_reset(uview_region_t *rect)
 {
     rect->left = -1;
     rect->top = -1;
@@ -18,7 +18,7 @@ static inline void view_region_reset(view_region_t *rect)
     rect->bottom = -1;
 }
 
-static inline void view_region_init(view_region_t *rect, int left, int top, int right, int bottom)
+static inline void uview_region_init(uview_region_t *rect, int left, int top, int right, int bottom)
 {
     rect->left = left;
     rect->top = top;
@@ -26,7 +26,7 @@ static inline void view_region_init(view_region_t *rect, int left, int top, int 
     rect->bottom = bottom;
 }
 
-static inline int view_region_valid(view_region_t *rect)
+static inline int uview_region_valid(uview_region_t *rect)
 {
     if (rect->left != -1 && rect->right != -1 &&
         rect->top != -1 && rect->bottom != -1)
@@ -34,8 +34,8 @@ static inline int view_region_valid(view_region_t *rect)
     return 0;
 }
 
-#define view_region_in_range(rect, x, y) \
+#define uview_region_in_range(rect, x, y) \
         ((rect)->left <= (x) && (x) < (rect)->right && \
         (rect)->top <= (y) && (y) < (rect)->bottom)
 
-#endif  /* _LIB_VIEW_SHAPE_H */
+#endif  /* _LIB_UVIEW_SHAPE_H */

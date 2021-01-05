@@ -48,7 +48,9 @@ view_t *view_create(int x, int y, int width, int height)
     }
     view_region_init(&view->drag_regions[0], 0, 0, view->width, view->height);
     view_region_init(&view->min_resize_region, 0, 0, 32, 32);
-    view_region_init(&view->resize_region, 8, 8, view->width - 8, view->height - 8);
+    view_region_init(&view->resize_region, VIEW_RESIZE_BORDER_SIZE,
+        VIEW_RESIZE_BORDER_SIZE, view->width - VIEW_RESIZE_BORDER_SIZE,
+        view->height - VIEW_RESIZE_BORDER_SIZE);
 
     list_init(&view->list);
     list_add(&view->global_list, &view_global_list_head);
@@ -559,7 +561,11 @@ int view_resize(view_t *view, int x, int y, uint32_t width, uint32_t height)
     view->width = new_sction->width;
     view->height = new_sction->height;
 
-    view_region_init(&view->resize_region, 8, 8, view->width - 8, view->height - 8);
+    /* 重新设置调整大小地区域 */
+    view_region_init(&view->resize_region, VIEW_RESIZE_BORDER_SIZE,
+        VIEW_RESIZE_BORDER_SIZE, view->width - VIEW_RESIZE_BORDER_SIZE,
+        view->height - VIEW_RESIZE_BORDER_SIZE);
+
     return 0;
 }
 

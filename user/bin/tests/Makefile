@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibc.a libpthread.a libnetsocket.a libview.a
+X_LIBS		+= libxlibc.a libpthread.a libnetsocket.a libuview.a
 
 X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99
 

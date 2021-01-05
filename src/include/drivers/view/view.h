@@ -20,7 +20,16 @@ enum view_type {
     VIEW_TYPE_FLOAT,
 };
 
+enum view_attr {
+    VIEW_ATTR_RESIZABLE     = 0x01,
+    VIEW_ATTR_MOVEABLE      = 0x02,
+};
+
 #define VIEW_DRAG_REGION_NR   4
+
+
+/* 调整视图大小地边框大小 */
+#define VIEW_RESIZE_BORDER_SIZE  4
 
 /* 视图用来表达逻辑上的图层 */
 typedef struct {
@@ -35,6 +44,8 @@ typedef struct {
     view_section_t *section;
     msgpool_t *msgpool;
     char type;
+    char attr;       // 视图的属性
+    
     // 区域设置
     view_region_t drag_regions[VIEW_DRAG_REGION_NR];
     view_region_t min_resize_region;

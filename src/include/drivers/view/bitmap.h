@@ -47,7 +47,7 @@ typedef struct {
     unsigned int width;
     unsigned int height;
     unsigned int *bits;
-} viewbmp_t;
+} uview_bitmap_t;
 
 typedef struct {
     int x;      // 视图x
@@ -56,8 +56,8 @@ typedef struct {
     int by;     // 位图y
     int bw;     // 位图宽度
     int bh;     // 位图高度
-    viewbmp_t bmp;
+    uview_bitmap_t bmp;
     char refresh;
-} viewio_t;
+} uview_io_t;
 
 #endif /* _XBOOK_DRIVERS_VIEW_BITMAP_H */

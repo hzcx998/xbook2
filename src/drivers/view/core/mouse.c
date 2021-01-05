@@ -116,7 +116,7 @@ int view_mouse_init()
     assert(view);
     view_render_rectfill(view, 0, 0, view->width, view->height, VIEW_RED);
     view_move_upper_top(view);
-    view_set_type(view, VIEW_TYPE_FLOAT);
+    view_set_type(view, VIEW_TYPE_FIXED);
     view_mouse.view = view;
     // 将鼠标视图设置为高等级最低图层
     view_env_set_high_level_lower(view);
