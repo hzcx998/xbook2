@@ -3,6 +3,6 @@
 
 int view_core_init();
 int view_core_exit();
-int view_core_loop();
+void view_core_loop();
 
 #endif /* _XBOOK_DRIVERS_VIEW_CORE_H */

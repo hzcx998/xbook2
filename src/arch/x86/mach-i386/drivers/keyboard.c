@@ -1015,9 +1015,9 @@ iostatus_t keyboard_devctl(device_object_t *device, io_request_t *ioreq)
     unsigned int leds;
     iostatus_t status;
 
-    switch (ctlcode)
-    {
+    switch (ctlcode) {
     case EVENIO_GETLED:
+        keprint("keyboard devctl getled\n");
         leds =  extension->num_lock | 
             (extension->caps_lock << 1) |
             (extension->scroll_lock << 2);

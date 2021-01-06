@@ -45,5 +45,6 @@ int view_section_close(view_section_t *section)
     if (!section->addr)
         return -1;
     free(section->addr);
+    section->addr = NULL;
     return 0;
 }

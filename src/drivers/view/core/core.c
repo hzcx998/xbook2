@@ -2,6 +2,7 @@
 #include "drivers/view/view.h"
 #include "drivers/view/core.h"
 #include "drivers/view/msg.h"
+#include "drivers/view/env.h"
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 #include <assert.h>
@@ -93,24 +94,24 @@ int view_core_exit()
 }
 
 /* 输入的获取 */
-int view_core_loop()
+void view_core_loop()
 {
-    int i = 0;
-    int has_event;
+    int yeild_count = 0;
     view_msg_t msg;
     while (!view_thread_exit) {
+            
         if (!view_mouse_poll()) {
-            i = 0;
+            yeild_count = 0;
         }
         #if 0
         if (!view_keyboard_poll()) {
             i = 0;
         }
         #endif
-        i++;
+        yeild_count++;
         view_msg_reset(&msg);
         if (view_get_global_msg(&msg) < 0) {
-            if (i > 300)
+            if (yeild_count > 300)
                 task_yeild();
             continue;
         }

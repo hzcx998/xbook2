@@ -264,7 +264,7 @@ void *mem_alloc(size_t size)
         mutex_lock(&large_mem_mutex);
         list_add(&obj->list, &large_mem_object_list);
         mutex_unlock(&large_mem_mutex);
-        keprint(PRINT_DEBUG "[memcache]: alloc large mem object %x\n", obj->addr);
+        //keprint(PRINT_DEBUG "[memcache]: alloc large mem object %x\n", obj->addr);
 		return obj->addr;
 	}
 	cache_size_t *cachesz = &cache_size[0];
@@ -328,7 +328,7 @@ void mem_free(void *object)
                 mem_cache_page_free(obj->addr);
                 mem_free(obj);
                 mutex_unlock(&large_mem_mutex);
-                keprint(PRINT_DEBUG "[memcache]: free large mem object %x\n", object);
+                // keprint(PRINT_DEBUG "[memcache]: free large mem object %x\n", object);
                 return;
             }
         }

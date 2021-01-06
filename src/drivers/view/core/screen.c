@@ -3,7 +3,7 @@
 #include <xbook/debug.h>
 
 view_screen_t view_screen;
-
+static int first_init = 0;
 static int screen_out_pixel8(int x, int y, view_color_t color)
 {
     uint32_t  r, g, b;
@@ -61,28 +61,37 @@ int view_screen_init()
     if (view_screen_open(&view_screen) < 0) {
         return -1;
     }
-    switch (view_screen.bpp) 
-    {
-    case 8:
-        view_screen.out_pixel = screen_out_pixel8;
-        break;
-    case 15:
-        view_screen.out_pixel = screen_out_pixel15;
-        break;
-    case 16:
-        view_screen.out_pixel = screen_out_pixel16;
-        break;
-    case 24:
-        view_screen.out_pixel = screen_out_pixel24;
-        break;
-    case 32:
-        view_screen.out_pixel = screen_out_pixel32;
-        break;
-    default:
-        keprint("view: unknown screen bpp\n");
-        view_screen_close(&view_screen);
-        return -1;
+    
+    if (!first_init) { /* 只进行一次映射 */
+        if (view_screen_map(&view_screen) < 0) {
+            view_screen_close(&view_screen);
+            return -1;
+        }
+        switch (view_screen.bpp) {
+        case 8:
+            view_screen.out_pixel = screen_out_pixel8;
+            break;
+        case 15:
+            view_screen.out_pixel = screen_out_pixel15;
+            break;
+        case 16:
+            view_screen.out_pixel = screen_out_pixel16;
+            break;
+        case 24:
+            view_screen.out_pixel = screen_out_pixel24;
+            break;
+        case 32:
+            view_screen.out_pixel = screen_out_pixel32;
+            break;
+        default:
+            keprint("view: unknown screen bpp\n");
+            view_screen_unmap(&view_screen);
+            view_screen_close(&view_screen);
+            return -1;
+        }
+        first_init = 1;
     }
+    
     return 0;
 }
 

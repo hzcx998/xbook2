@@ -17,6 +17,7 @@
 #include <drivers/view/render.h>
 #include <drivers/view/bitmap.h>
 #include <drivers/view/msg.h>
+#include <drivers/view/env.h>
 
 
 #define DRV_NAME "view"
@@ -38,7 +39,7 @@ static iostatus_t view_open(device_object_t *device, io_request_t *ioreq)
     int flags = ioreq->parame.open.flags;
     if (!view_open_count) {
         if (view_core_init() < 0) {
-            errprint("init view driver failed!\n");
+            errprint("view driver: init view driver core failed!\n", device->name.text);
             return IO_FAILED;
         }
     }
@@ -53,6 +54,7 @@ static iostatus_t view_open(device_object_t *device, io_request_t *ioreq)
         view_render_rectfill(extension->view, 0, 0, 
             extension->view->width, extension->view->height, VIEW_WHITE);
     }
+
 end_open:
     ioreq->io_status.status = status;
     io_complete_request(ioreq);
@@ -69,7 +71,7 @@ static iostatus_t view_close(device_object_t *device, io_request_t *ioreq)
         if (view_destroy(extension->view) < 0) {
             view_set_z(extension->view, z);
             status = IO_FAILED;
-            errprint("view destroy failed!\n");
+            errprint("view driver: view close %s failed!\n", device->name.text);
             goto end_close;
         }
         extension->view = NULL;

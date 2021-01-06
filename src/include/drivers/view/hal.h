@@ -8,6 +8,8 @@
 
 int view_screen_open(view_screen_t *screen);
 int view_screen_close(view_screen_t *screen);
+int view_screen_map(view_screen_t *screen);
+int view_screen_unmap(view_screen_t *screen);
 
 int view_mouse_open(view_mouse_t *mouse);
 int view_mouse_close(view_mouse_t *mouse);

@@ -5,40 +5,30 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
+#include <xbook/memcache.h>
 
-static view_section_t section_table[VIEW_SECTION_NR];
+static LIST_HEAD(view_section_list_head);
 
 static view_section_t *view_section_alloc(int width, int height)
 {
-    view_section_t *section;
-    int i; for (i = 0; i < VIEW_SECTION_NR; i++) {
-        section = &section_table[i];
-        if (!section->flags) {
-            section->width = width;
-            section->height = height;
-            section->size = width * height * sizeof(view_color_t);
-            return section;
-        }
-    }
-    return NULL;
+    view_section_t *section = mem_alloc(sizeof(view_section_t));
+    if (!section)
+        return NULL;
+    section->handle = -1;
+    section->addr = NULL;
+    section->width = width;
+    section->height = height;
+    section->size = width * height * sizeof(view_color_t);
+    list_add(&section->list, &view_section_list_head);
+    return section;
 }
 
 static void view_section_free(view_section_t *section)
 {
-    assert(section >= section_table && section < &section_table[VIEW_SECTION_NR]);
-    section->flags = 0;
-}
-
-view_section_t *view_section_get_ptr(int section_id)
-{
-    assert(section_id >= 0 && section_id < VIEW_SECTION_NR);
-    return section_table + section_id;
-}
-
-int view_section_get_id(view_section_t *section)
-{
-    assert(section >= section_table && section < &section_table[VIEW_SECTION_NR]);
-    return section - section_table;
+    if (section) {
+        list_del(&section->list);
+        mem_free(section);
+    }
 }
 
 view_section_t *view_section_create(int width, int height)
@@ -52,7 +42,6 @@ view_section_t *view_section_create(int width, int height)
         keprint("oepn section failed!\n");
         return NULL;
     }
-    section->flags |= VIEW_SECTION_USING;
     memset(section->addr, 0, section->size);
     return section;
 }
@@ -78,18 +67,15 @@ int view_section_clear(view_section_t *section)
 
 int view_section_init()
 {
-    memset(section_table, 0, sizeof(view_section_t) * VIEW_SECTION_NR);
+    list_init(&view_section_list_head);
     return 0;
 }
 
 int view_section_exit()
 {
-    view_section_t *section;
-    int i; for (i = 0; i < VIEW_SECTION_NR; i++) {
-        section = &section_table[i];
-        if (section->flags) {
-            view_section_destroy(section);
-        }
+    view_section_t *section, *next;
+    list_for_each_owner_safe (section, next, &view_section_list_head, list) {
+        view_section_free(section);
     }
     return 0;
 }

@@ -40,6 +40,8 @@ int view_keyboard_init()
 
 int view_keyboard_exit()
 {
+    view_keyboard.key_down = NULL;
+    view_keyboard.key_up = NULL;
     view_keyboard_close(&view_keyboard);
     return 0;
 }

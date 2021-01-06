@@ -159,7 +159,6 @@ void kern_thread_exit(int status)
     cur->parent_pid = USER_INIT_PROC_ID;
     task_t *parent = task_find_by_pid(cur->parent_pid); 
     if (parent) {
-        keprint("kern thread exit with parent\n");
         if (parent->state == TASK_WAITING) {
             interrupt_restore_state(flags);
             task_unblock(parent);
@@ -169,7 +168,6 @@ void kern_thread_exit(int status)
             task_block(TASK_ZOMBIE);
         }
     } else {
-        keprint("kern thread exit without parent\n");
         interrupt_restore_state(flags);
         task_block(TASK_ZOMBIE); 
     }

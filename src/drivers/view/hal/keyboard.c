@@ -15,7 +15,6 @@ int view_keyboard_open(view_keyboard_t *keyboard)
     keyboard->handle = device_open(DEV_NAME, 0);
     if (keyboard->handle < 0)
         return -1;
-
     keyboard->ledstate = 0;
     int ledstate;
     device_devctl(keyboard->handle, EVENIO_GETLED, (unsigned long) &ledstate);
@@ -24,7 +23,6 @@ int view_keyboard_open(view_keyboard_t *keyboard)
 
     if ( ledstate & 0x02 )
         keyboard->ledstate |= VIEW_KMOD_CAPS;
-
     int flags = DEV_NOWAIT;   // no block
     device_devctl(keyboard->handle, EVENIO_SETFLG, (unsigned long) &flags);
     return 0;
@@ -32,10 +30,12 @@ int view_keyboard_open(view_keyboard_t *keyboard)
 
 int view_keyboard_close(view_keyboard_t *keyboard)
 {
+    #if 0   /* 需要取消原来的设置，但是目前打开了 */
     int flags;
     device_devctl(keyboard->handle, EVENIO_GETFLG, (unsigned long) &flags);
     flags &= ~DEV_NOWAIT;
     device_devctl(keyboard->handle, EVENIO_SETFLG, (unsigned long) &flags);
+    #endif
     return device_close(keyboard->handle);
 }
 

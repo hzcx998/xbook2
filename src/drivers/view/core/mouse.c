@@ -101,16 +101,22 @@ int view_mouse_is_state(view_mouse_state_t state)
 
 int view_mouse_show()
 {
+    if (!view_mouse.view)
+        return -1;
     if (view_mouse.view->z < 0) {
-        view_move_upper_top(view_mouse.view);
+        return view_move_upper_top(view_mouse.view);
     }
+    return -1;
 }
 
 int view_mouse_hide()
 {
+    if (!view_mouse.view)
+        return -1;
     if (view_mouse.view->z >= 0) {
-        view_hide(view_mouse.view);
+        return view_hide(view_mouse.view);
     }
+    return -1;
 }
 
 int view_mouse_init()

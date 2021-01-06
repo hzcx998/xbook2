@@ -2,13 +2,13 @@
 #define _XBOOK_DRIVERS_VIEW_SECTION_H
 
 #include <stddef.h>
+#include <xbook/list.h>
 #include <drivers/view/color.h>
 
 #define VIEW_SECTION_NR 32
 
-#define VIEW_SECTION_USING 0X01
-
 typedef struct {
+    list_t list;
     int handle;
     void *addr;  // 共享内存地址
     int width;
