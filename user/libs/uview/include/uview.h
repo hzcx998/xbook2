@@ -5,6 +5,7 @@
 #include "uview_bitmap.h"
 #include "uview_msg.h"
 #include "uview_shape.h"
+#include "uview_image.h"
 
 /* 视图类型 */
 enum uview_type {

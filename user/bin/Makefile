@@ -50,3 +50,4 @@ MODULE      +=  osver
 MODULE      +=  lua
 MODULE      +=  sh
 MODULE      +=  xbrower
+MODULE      +=  desktop

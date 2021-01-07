@@ -56,6 +56,17 @@ void view_screen_write_pixel(int x, int y, view_color_t color)
     view_screen.out_pixel(x, y, color);
 }
 
+void view_screen_clear() 
+{
+    view_color_t color = VIEW_BLACK;
+    int x, y;
+    for (y = 0; y < view_screen.height; y++) {
+        for (x = 0; x < view_screen.width; x++) {
+            view_screen_write_pixel(x, y, color);
+        }
+    }
+}
+
 int view_screen_init()
 {
     if (view_screen_open(&view_screen) < 0) {
@@ -97,6 +108,8 @@ int view_screen_init()
 
 int view_screen_exit()
 {
+    /* 清屏 */
+    view_screen_clear();
     view_screen_close(&view_screen);
     return 0;
 }
