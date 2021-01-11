@@ -1,17 +1,14 @@
 #include <uview.h>
 #include <stdlib.h>
+#include <string.h>
 
 uview_bitmap_t *uview_bitmap_create(unsigned int width, unsigned int height)
 {
-    uview_bitmap_t *bitmap = malloc(sizeof(uview_bitmap_t));
+    uview_bitmap_t *bitmap = malloc(sizeof(uview_bitmap_t) + width * height * sizeof(uview_color_t));
     if (bitmap == NULL) {
         return NULL;
     }
-    bitmap->bits = malloc(width * height * sizeof(uview_color_t));
-    if (bitmap->bits == NULL) {
-        free(bitmap);
-        return NULL;
-    }
+    bitmap->bits = (uview_color_t *) (bitmap + 1);
     int i;
     for (i = 0; i < width * height; i++) {
         bitmap->bits[i] = 0;  // 清0
@@ -25,10 +22,13 @@ int uview_bitmap_destroy(uview_bitmap_t *bitmap)
 {
     if (!bitmap)
         return -1;
-    if (bitmap->bits)
-        free(bitmap->bits);
     free(bitmap);
     return 0;
+}
+
+void uview_bitmap_clear(uview_bitmap_t *bitmap)
+{
+    memset(bitmap->bits, 0, bitmap->width * bitmap->height * sizeof(uview_color_t));
 }
 
 void uview_bitmap_putpixel(uview_bitmap_t *bmp, int x, int y, uview_color_t color)

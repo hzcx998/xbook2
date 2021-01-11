@@ -12,6 +12,7 @@ X_INCDIRS	+= $(LIBS_DIR)/xlibc/include $(LIBS_DIR)/pthread/include $(LIBS_DIR)/n
 				$(LIBS_DIR)/lvgl \
 				$(LIBS_DIR)/lvgl/include \
 				$(LIBS_DIR)/uview/include \
+				$(LIBS_DIR)/dotfont \
 				
 X_LDFLAGS	+= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 X_LIBDIRS	+= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \

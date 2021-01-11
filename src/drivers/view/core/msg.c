@@ -60,8 +60,8 @@ int view_dispatch_mouse_msg(view_msg_t *msg)
     list_t *list_head = view_get_show_list();
     view_t *view;
     list_for_each_owner_reverse (view, list_head, list) {
-        /* 固定视图就跳过 */
-        if (view->type == VIEW_TYPE_FIXED)
+        /* 鼠标视图就跳过 */
+        if (view == view_mouse.view)
             continue;
         int local_mx, local_my;
         local_mx = msg->data0 - view->x;

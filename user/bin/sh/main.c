@@ -53,8 +53,8 @@ int main(int argc, char *argv[])
     print_logo();
 
     /* 启动自行服务 */
-    #if 0
-    char *args[2] = {"xbrower", NULL};
+    #if 1
+    char *args[2] = {"desktop", NULL};
     pid = create_process(args, environ, 0);
     #endif
     

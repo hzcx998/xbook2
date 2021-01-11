@@ -154,7 +154,7 @@ int uview_bitblt(int vfd, int vx, int vy, uview_bitmap_t *vbmp)
     uview_io_t vio;
     memset(&vio, 0, sizeof(uview_io_t));
     vio.x = vx;
-    vio.x = vy;
+    vio.y = vy;
     vio.bmp.width = vbmp->width;
     vio.bmp.height = vbmp->height;
     vio.bmp.bits = vbmp->bits;
@@ -173,7 +173,7 @@ int uview_bitblt_update(int vfd, int vx, int vy, uview_bitmap_t *vbmp)
     uview_io_t vio;
     memset(&vio, 0, sizeof(uview_io_t));
     vio.x = vx;
-    vio.x = vy;
+    vio.y = vy;
     vio.bmp.width = vbmp->width;
     vio.bmp.height = vbmp->height;
     vio.bmp.bits = vbmp->bits;
@@ -193,7 +193,7 @@ int uview_bitblt_ex(int vfd, int vx, int vy, uview_bitmap_t *vbmp,
     uview_io_t vio;
     memset(&vio, 0, sizeof(uview_io_t));
     vio.x = vx;
-    vio.x = vy;
+    vio.y = vy;
     vio.bmp.width = vbmp->width;
     vio.bmp.height = vbmp->height;
     vio.bmp.bits = vbmp->bits;
@@ -213,7 +213,7 @@ int uview_bitblt_update_ex(int vfd, int vx, int vy, uview_bitmap_t *vbmp,
     uview_io_t vio;
     memset(&vio, 0, sizeof(uview_io_t));
     vio.x = vx;
-    vio.x = vy;
+    vio.y = vy;
     vio.bmp.width = vbmp->width;
     vio.bmp.height = vbmp->height;
     vio.bmp.bits = vbmp->bits;
