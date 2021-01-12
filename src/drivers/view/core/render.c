@@ -226,6 +226,7 @@ void view_render_bitblt(view_t *view, int x, int y,
         return;
     int w = min(width, bmp->width - bx);
     int h = min(height, bmp->height - by);
+
     if (w <= 0 || h <= 0)
         return;
     view_color_t color;

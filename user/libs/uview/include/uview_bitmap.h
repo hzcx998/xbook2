@@ -53,4 +53,7 @@ void uview_bitmap_rect(uview_bitmap_t *bmp, int x, int y, uint32_t width, uint32
 void uview_bitmap_rectfill(uview_bitmap_t *bmp, int x, int y, uint32_t width, uint32_t height, uview_color_t color);
 void uview_bitmap_clear(uview_bitmap_t *bmp);
 
+void uview_bitmap_bitblt(uview_bitmap_t *dest, int dest_x, int dest_y,
+        uview_bitmap_t *src, int src_x, int src_y, uint32_t width, uint32_t height);
+
 #endif  /* _LIB_UVIEW_BITMAP_H */

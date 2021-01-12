@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <ctype.h>
 #include <sys/ioctl.h>
 #include <sys/exception.h>

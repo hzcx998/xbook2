@@ -25,9 +25,9 @@ typedef struct {
 typedef struct {
     dotfont_t fonts[DOTF_MAX_NR];
     dotfont_t *current;
-} dotfont_lib_t;
+} dotfont_library_t;
 
-static dotfont_t *dotfont_find(dotfont_lib_t *dotflib, char *name)
+static dotfont_t *dotfont_find(dotfont_library_t *dotflib, char *name)
 {
     dotfont_t *dotfont;
     int i;
@@ -40,7 +40,7 @@ static dotfont_t *dotfont_find(dotfont_lib_t *dotflib, char *name)
     return NULL;
 }
 
-static int dotfont_install(dotfont_lib_t *dotflib,
+static int dotfont_install(dotfont_library_t *dotflib,
         char type, char *name, uint8_t *addr,
         uint32_t char_width, uint32_t char_height)
 {
@@ -61,7 +61,7 @@ static int dotfont_install(dotfont_lib_t *dotflib,
     return -1;
 }
 
-static int dotfont_uninstall(dotfont_lib_t *dotflib, char *name)
+static int dotfont_uninstall(dotfont_library_t *dotflib, char *name)
 {
     dotfont_t *dotfont = dotfont_find(dotflib, name);
     if (!dotfont)
@@ -74,7 +74,7 @@ static int dotfont_uninstall(dotfont_lib_t *dotflib, char *name)
     return 0;
 }
 
-static int dotfont_set_default(dotfont_lib_t *dotflib, char *name)
+static int dotfont_set_default(dotfont_library_t *dotflib, char *name)
 {
     dotfont_t *dotfont = dotfont_find(dotflib, name);
     if (!dotfont)
@@ -83,14 +83,14 @@ static int dotfont_set_default(dotfont_lib_t *dotflib, char *name)
     return 0;
 }
 
-static dotfont_t *dotfont_get_current(dotfont_lib_t *dotflib)
+static dotfont_t *dotfont_get_current(dotfont_library_t *dotflib)
 {
     return dotflib->current;
 }
 
 #include "dotfont_standard.h"
 
-static int dotfont_init(dotfont_lib_t *dotflib) 
+static int dotfont_init(dotfont_library_t *dotflib) 
 {
     if (!dotflib)
         return -1;
@@ -104,7 +104,7 @@ static int dotfont_init(dotfont_lib_t *dotflib)
     return 0;
 }
 
-static int dotfont_exit(dotfont_lib_t *dotflib)
+static int dotfont_exit(dotfont_library_t *dotflib)
 {
     if (!dotflib)
         return -1;

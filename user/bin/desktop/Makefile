@@ -1,7 +1,7 @@
 X_LIBS		+= libxlibc.a libuview.a libzlib.a libpng.a libjpeg.a
 
 NAME		:= desktop
-SRC			+= main.c
+SRC			+= *.c
 
 define CUSTOM_TARGET_CMD
 echo [APP] $@; \

@@ -5,7 +5,7 @@
 #include <assert.h>
 
 #include <pthread.h>
-#include <dotfont.h>
+#include "xtk.h"
 
 void win_thread();
 
@@ -94,64 +94,7 @@ int main(int argc, char *argv[])
 #define WIN_W 320
 #define WIN_H 240
 
-dotfont_lib_t dotflib;
 
-void dotfont_char_to_bitmap(dotfont_t *font, char ch,
-        uview_bitmap_t *bmp, int x, int y, uint32_t color)
-{
-    uint8_t *addr = dotfont_get_addr(font, ch);
-    assert(addr);
-    int i, j;
-	uint8_t d /* data */;
-	for (i = 0; i < 16; i++) {
-		d = addr[i];
-        for (j = (8 - 1); j >= 0; j--) {
-            if ((d & (1 << j))) {
-                uview_bitmap_putpixel(bmp, x + (8 - 1) - j, y + i, color);
-            }
-        }
-    }
-}
-
-int dotfont_text_to_bitmap(char *text, uint32_t color, char *family, uview_bitmap_t *bmp, int x, int y)
-{
-    dotfont_t *stdfnt =  dotfont_find(&dotflib, family);
-    if (!stdfnt)
-        return -1;
-    char *p = text;
-    int _x = x, _y = y;
-    while (*p) {
-        switch (*p)
-        {
-        case '\b':
-            _x -= dotfont_get_char_width(stdfnt);
-            dotfont_char_to_bitmap(stdfnt, ' ', bmp, _x, _y, color);
-            break;
-        case '\n':
-            _x = x;
-            _y += dotfont_get_char_height(stdfnt);
-            break;
-        default:
-            dotfont_char_to_bitmap(stdfnt, *p, bmp, _x, _y, color);
-            _x += dotfont_get_char_width(stdfnt);
-            break;
-        }
-        p++;
-    }
-    return 0;
-}
-
-int uview_dotfont_text(int uview, int x, int y, uint32_t w, uint32_t h, char *text, uint32_t color, char *family)
-{
-    if (uview < 0)
-        return -1;
-    uview_bitmap_t *bmp = uview_bitmap_create(w, h);
-    assert(bmp);
-    dotfont_text_to_bitmap(text, color, family, bmp, 0, 0);
-    uview_bitblt_update(uview, x, y, bmp);
-    uview_bitmap_destroy(bmp);
-    return 0;
-}
 
 void win_thread()
 {
@@ -163,24 +106,22 @@ void win_thread()
     uview_set_type(win_fd, UVIEW_TYPE_WINDOW);
     uview_show(win_fd);
 
-    dotfont_init(&dotflib);
-
     uview_bitmap_t *bmp = uview_bitmap_create(WIN_W, WIN_H);
     assert(bmp);
-
-    dotfont_t *stdfnt =  dotfont_get_current(&dotflib);
-    uview_bitmap_t *fbmp = uview_bitmap_create(8, 16);
-    dotfont_char_to_bitmap(stdfnt, 'A', fbmp, 0, 0, UVIEW_RED);
-    uview_bitblt_update(win_fd, 0, 0, fbmp);
-    uview_bitmap_destroy(fbmp);
     
-    fbmp = uview_bitmap_create(400, 300);
-    dotfont_text_to_bitmap("hello, world!\nabc\bdef", UVIEW_RED, DOTF_STANDARD_NAME,
+    xtk_text_init();
+
+    uview_bitmap_t *fbmp = uview_bitmap_create(100, 20);
+    assert(fbmp);
+    xtk_text_to_bitmap("hello, world!\nabc\bdef", UVIEW_BLUE, DOTF_STANDARD_NAME,
         fbmp, 0, 0);
     uview_bitblt_update(win_fd, 100, 100, fbmp);
     uview_bitmap_destroy(fbmp);
     
-    uview_dotfont_text(win_fd, 100, 20, 400, 300, "hello, world!\nabc\bdef", UVIEW_RED, DOTF_STANDARD_NAME);
+    xtk_dotfont_text(win_fd, 100, 20, 400, 300, "hello, world!", UVIEW_RED, DOTF_STANDARD_NAME);
+    
+
+    xtk_test(win_fd, bmp);
 
     uview_msg_t msg;
     while (1) {
