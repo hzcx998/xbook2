@@ -1,7 +1,7 @@
 #include "xtk_text.h"
 #include <assert.h>
 
-static dotfont_library_t __dotflib;
+dotfont_library_t __xtk_dotflib;
 
 static void xtk_char_to_bitmap(dotfont_t *font, char ch,
         uview_bitmap_t *bmp, int x, int y, uint32_t color)
@@ -23,7 +23,7 @@ static void xtk_char_to_bitmap(dotfont_t *font, char ch,
 int xtk_text_to_bitmap(char *text, uint32_t color, char *family,
         uview_bitmap_t *bmp, int x, int y)
 {
-    dotfont_t *stdfnt =  dotfont_find(&__dotflib, family);
+    dotfont_t *stdfnt =  dotfont_find(&__xtk_dotflib, family);
     if (!stdfnt)
         return -1;
     char *p = text;
@@ -31,13 +31,9 @@ int xtk_text_to_bitmap(char *text, uint32_t color, char *family,
     while (*p) {
         switch (*p)
         {
-        case '\b':
-            _x -= dotfont_get_char_width(stdfnt);
-            xtk_char_to_bitmap(stdfnt, ' ', bmp, _x, _y, color);
-            break;
         case '\n':
-            _x = x;
-            _y += dotfont_get_char_height(stdfnt);
+        case '\b':
+        case '\t':
             break;
         default:
             xtk_char_to_bitmap(stdfnt, *p, bmp, _x, _y, color);
@@ -49,21 +45,8 @@ int xtk_text_to_bitmap(char *text, uint32_t color, char *family,
     return 0;
 }
 
-int xtk_dotfont_text(int uview, int x, int y, uint32_t w, uint32_t h,
-        char *text, uint32_t color, char *family)
-{
-    if (uview < 0)
-        return -1;
-    uview_bitmap_t *bmp = uview_bitmap_create(w, h);
-    assert(bmp);
-    xtk_text_to_bitmap(text, color, family, bmp, 0, 0);
-    uview_bitblt_update(uview, x, y, bmp);
-    uview_bitmap_destroy(bmp);
-    return 0;
-}
-
 int xtk_text_init()
 {
-    dotfont_init(&__dotflib);
+    dotfont_init(&__xtk_dotflib);
     return 0;
 }

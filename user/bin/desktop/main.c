@@ -118,9 +118,6 @@ void win_thread()
     uview_bitblt_update(win_fd, 100, 100, fbmp);
     uview_bitmap_destroy(fbmp);
     
-    xtk_dotfont_text(win_fd, 100, 20, 400, 300, "hello, world!", UVIEW_RED, DOTF_STANDARD_NAME);
-    
-
     xtk_test(win_fd, bmp);
 
     uview_msg_t msg;
