@@ -22,7 +22,9 @@ xtk_spirit_t *xtk_spirit_create(int x, int y, int width, int height)
     spilit->style.color = UVIEW_BLACK;
     spilit->style.align = XTK_ALIGN_LEFT;
     spilit->text = NULL;
-
+    spilit->image = NULL;
+    spilit->bitmap = NULL;
+    
     spilit->style.background_color = UVIEW_NONE;
     spilit->style.background_align = XTK_ALIGN_LEFT;
     spilit->background_image = NULL;
@@ -36,6 +38,18 @@ int xtk_spirit_destroy(xtk_spirit_t *spilit)
     if (spilit->background_image) {
         xtk_image_destroy(spilit->background_image);
         spilit->background_image = NULL;
+    }
+    if (spilit->image) {
+        xtk_image_destroy(spilit->image);
+        spilit->image = NULL;
+    }
+    if (spilit->bitmap) {
+        uview_bitmap_destroy(spilit->bitmap);
+        spilit->bitmap = NULL;
+    }
+    if (spilit->text) {
+        free(spilit->text);
+        spilit->text = NULL;
     }
     free(spilit);
     return 0;
@@ -83,7 +97,7 @@ int xtk_spirit_set_text(xtk_spirit_t *spilit, char *text)
     return 0;
 }
 
-int xtk_spirit_auto(xtk_spirit_t *spilit)
+int xtk_spirit_auto_size(xtk_spirit_t *spilit)
 {
     if (!spilit)
         return -1;
@@ -114,7 +128,50 @@ int xtk_spirit_set_background_image(xtk_spirit_t *spilit, char *filename)
     xtk_image_t *img = xtk_image_load(filename);
     if (!img)
         return -1;
+    if (spilit->background_image) {
+        xtk_image_destroy(spilit->background_image);
+        spilit->background_image = NULL;
+    }
     spilit->background_image = img;
+    return 0;
+}
+
+int xtk_spirit_set_image(xtk_spirit_t *spilit, char *filename)
+{
+    if (!spilit)
+        return -1;
+    if (filename == NULL) {
+        if (spilit->image)
+            xtk_image_destroy(spilit->image);
+        spilit->image = NULL;
+        return 0;
+    }
+    xtk_image_t *img = xtk_image_load(filename);
+    if (!img)
+        return -1;
+    if (spilit->image) {
+        xtk_image_destroy(spilit->image);
+        spilit->image = NULL;
+    }
+    spilit->image = img;
+    return 0;
+}
+
+int xtk_spirit_set_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp)
+{
+    if (!spilit)
+        return -1;
+    if (bmp == NULL) {
+        if (spilit->bitmap)
+            uview_bitmap_destroy(spilit->bitmap);
+        spilit->bitmap = NULL;
+        return 0;
+    }
+    if (spilit->bitmap) {
+        uview_bitmap_destroy(spilit->bitmap);
+        spilit->bitmap = NULL;
+    }
+    spilit->bitmap = bmp;
     return 0;
 }
 
@@ -176,12 +233,27 @@ int xtk_spirit_to_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp)
 
         uview_bitmap_bitblt(bmp, start_x + off_x, start_y + off_y, &srcbmp, 0, 0, srcbmp.width, srcbmp.height);
     }
-    if (spilit->style.border_color != UVIEW_NONE) {
-        uview_bitmap_rect(bmp, start_x - 1, start_y - 1, spilit->width + 2, spilit->height + 2,
-            spilit->style.border_color);
+    
+    /* 前景 */
+    if (spilit->bitmap) {
+        // 根据对齐方式设置显示位置
+        __xtk_calc_aligin_pos(spilit->style.align, spilit->width, spilit->height, 
+            spilit->bitmap->width, spilit->bitmap->height, &off_x, &off_y);
+        uview_bitmap_bitblt(bmp, start_x + off_x, start_y + off_y, spilit->bitmap, 0, 0,
+            spilit->bitmap->width, spilit->bitmap->height);
+    }
+    if (spilit->image) {
+        // 根据对齐方式设置显示位置
+        __xtk_calc_aligin_pos(spilit->style.align, spilit->width, spilit->height, spilit->image->w,
+            spilit->image->h, &off_x, &off_y);
+        uview_bitmap_t srcbmp;
+        uview_bitmap_init(&srcbmp, 
+            (unsigned int) spilit->image->w,
+            (unsigned int) spilit->image->h,
+            (uview_color_t *) spilit->image->buf);
+        uview_bitmap_bitblt(bmp, start_x + off_x, start_y + off_y, &srcbmp, 0, 0, srcbmp.width, srcbmp.height);
     }
 
-    /* 前景 */
     if (spilit->text && spilit->style.color != UVIEW_NONE) {
         dotfont_t *dotfont = dotfont_find(&__xtk_dotflib, DOTF_STANDARD_NAME);
         assert(dotfont);
@@ -191,6 +263,12 @@ int xtk_spirit_to_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp)
             dotfont_get_char_height(dotfont), &off_x, &off_y);
         xtk_text_to_bitmap(spilit->text, spilit->style.color, DOTF_STANDARD_NAME,
             bmp, start_x + off_x, start_y + off_y);
+    }
+
+    /* 边框 */
+    if (spilit->style.border_color != UVIEW_NONE) {
+        uview_bitmap_rect(bmp, start_x, start_y, spilit->width, spilit->height,
+            spilit->style.border_color);
     }
     return 0;
 }

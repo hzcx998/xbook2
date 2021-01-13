@@ -30,9 +30,13 @@ typedef struct {
     int y;
     int width;
     int height;
-    xtk_image_t *background_image;
-    char *text;
     xtk_style_t style;
+    /* back */
+    xtk_image_t *background_image;
+    /* front */
+    char *text;
+    xtk_image_t *image;
+    uview_bitmap_t *bitmap;
 } xtk_spirit_t;
 
 xtk_spirit_t *xtk_spirit_create(int x, int y, int width, int height);
@@ -40,8 +44,10 @@ int xtk_spirit_destroy(xtk_spirit_t *spilit);
 int xtk_spirit_set_pos(xtk_spirit_t *spilit, int x, int y);
 int xtk_spirit_set_size(xtk_spirit_t *spilit, int width, int height);
 int xtk_spirit_set_text(xtk_spirit_t *spilit, char *text);
-int xtk_spirit_auto(xtk_spirit_t *spilit);
+int xtk_spirit_auto_size(xtk_spirit_t *spilit);
 int xtk_spirit_set_background_image(xtk_spirit_t *spilit, char *filename);
 int xtk_spirit_to_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
+int xtk_spirit_set_image(xtk_spirit_t *spilit, char *filename);
+int xtk_spirit_set_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
 
 #endif /* _LIB_XTK_SPIRIT_H */
