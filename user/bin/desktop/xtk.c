@@ -22,8 +22,6 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     uview_bitmap_destroy(bmp);
     xtk_image_destroy(img);
 
-
-
     xtk_spirit_t *spirit = xtk_spirit_create(100, 100, 100, 24);
     assert(spirit);
     spirit->style.background_align = XTK_ALIGN_CENTER;
@@ -48,6 +46,11 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     
     uview_bitmap_t *bmp1 = uview_bitmap_create(spirit->width, spirit->height);
     assert(bmp1);
+    
+    xtk_collision_t *collision = xtk_collision_create(0, 0, spirit->width, spirit->height);
+    assert(collision);
+    xtk_spirit_set_collision(spirit, collision);
+    xtk_collision_set_visible(collision, XTK_COLLISION_VISIBLE);
     xtk_spirit_set_pos(spirit, 0, 0);
     xtk_spirit_to_bitmap(spirit, bmp1);
 

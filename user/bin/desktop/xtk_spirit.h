@@ -3,6 +3,7 @@
 
 #include <uview.h>
 #include "xtk_image.h"
+#include "xtk_collision.h"
 
 typedef unsigned int xtk_color_t;
 
@@ -37,6 +38,8 @@ typedef struct {
     char *text;
     xtk_image_t *image;
     uview_bitmap_t *bitmap;
+    /* extension */
+    xtk_collision_t *collision;
 } xtk_spirit_t;
 
 xtk_spirit_t *xtk_spirit_create(int x, int y, int width, int height);
@@ -49,5 +52,7 @@ int xtk_spirit_set_background_image(xtk_spirit_t *spilit, char *filename);
 int xtk_spirit_to_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
 int xtk_spirit_set_image(xtk_spirit_t *spilit, char *filename);
 int xtk_spirit_set_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
+int xtk_spirit_set_collision(xtk_spirit_t *spilit, xtk_collision_t *collision);
+int xtk_spirit_show_collision(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
 
 #endif /* _LIB_XTK_SPIRIT_H */

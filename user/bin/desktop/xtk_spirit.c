@@ -28,6 +28,8 @@ xtk_spirit_t *xtk_spirit_create(int x, int y, int width, int height)
     spilit->style.background_color = UVIEW_NONE;
     spilit->style.background_align = XTK_ALIGN_LEFT;
     spilit->background_image = NULL;
+
+    spilit->collision = NULL;
     return spilit;
 }
 
@@ -175,6 +177,24 @@ int xtk_spirit_set_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp)
     return 0;
 }
 
+int xtk_spirit_set_collision(xtk_spirit_t *spilit, xtk_collision_t *collision)
+{
+    if (!spilit)
+        return -1;
+    if (collision == NULL) {
+        if (spilit->collision)
+            xtk_collision_destroy(spilit->collision);
+        spilit->collision = NULL;
+        return 0;
+    }
+    if (spilit->collision) {
+        xtk_collision_destroy(spilit->collision);
+        spilit->collision = NULL;
+    }
+    spilit->collision = collision;
+    return 0;
+}
+
 static void __xtk_calc_aligin_pos(xtk_align_t align, int box_width, int box_height, 
         int width, int height, int *out_x, int *out_y)
 {
@@ -269,6 +289,20 @@ int xtk_spirit_to_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp)
     if (spilit->style.border_color != UVIEW_NONE) {
         uview_bitmap_rect(bmp, start_x, start_y, spilit->width, spilit->height,
             spilit->style.border_color);
+    }
+
+    xtk_spirit_show_collision(spilit, bmp);
+
+    return 0;
+}
+
+int xtk_spirit_show_collision(xtk_spirit_t *spilit, uview_bitmap_t *bmp)
+{
+    if (!spilit)
+        return -1;
+    /* 包围盒 */
+    if (spilit->collision) {
+        xtk_collision_show(spilit->collision, bmp, spilit->x, spilit->y);
     }
     return 0;
 }
