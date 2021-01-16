@@ -60,7 +60,41 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     #else
     uview_bitblt_update(fd, 100, 200, bmp1);
     #endif
+
     xtk_spirit_destroy(spirit);
+    uview_bitmap_destroy(bmp1);
+
+
+    xtk_spirit_t *label0 = xtk_label_create("hello");
+    xtk_spirit_set_pos(label0, 20, 150);
+    xtk_spirit_to_bitmap(label0, wbmp);
+    
+    xtk_spirit_t *label1 = xtk_label_create("world");
+    xtk_spirit_set_pos(label1, 20, 200);
+    xtk_spirit_to_bitmap(label1, wbmp);
+    
+    xtk_spirit_destroy(label0);
+    xtk_spirit_destroy(label1);
+
+    uview_bitblt_update(fd, 0, 0, wbmp);
+
+    xtk_spirit_t *win = xtk_window_create("test", 400, 300, 200, 300, XTK_WINDOW_SHOW);
+    assert(win);
+    
+    xtk_spirit_t *win1 = xtk_window_create("win1", 100, 100, 640, 480, XTK_WINDOW_SHOW);
+    assert(win1);
+    
+    #if 0
+    xtk_window_t *pwin = XTK_WINDOW(win);
+    uview_bitmap_rectfill(win->bitmap, 0, 0, win->width, win->height, UVIEW_GRAY);
+    uview_bitmap_rectfill(win->bitmap, pwin->style->border_width, pwin->style->border_width + pwin->style->navigation_height,
+        pwin->content_width, pwin->content_height, UVIEW_WHITE);
+    
+    uview_bitblt(pwin->view, 0, 0, win->bitmap);
+
+    uview_show(pwin->view);
+    #endif
+
     while (1) {
         /* co de */
     }
