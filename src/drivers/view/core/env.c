@@ -308,7 +308,7 @@ int view_env_filter_mouse_msg(view_msg_t *msg)
             }
             drag_view = NULL;
             view_mouse_set_state(VIEW_MOUSE_NORMAL);
-            return 0;
+            return -1; /* 弹起时还需要处理数据 */
         }
     }
     if (msg->id == VIEW_MSG_MOUSE_MOTION) {

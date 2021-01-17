@@ -5,6 +5,9 @@
 
 #include <dotfont.h>
 
+
+xtk_spirit_t *btn_root;
+xtk_spirit_t *win_root;
 void xtk_test(int fd, uview_bitmap_t *wbmp)
 {
     xtk_image_t *img = xtk_image_load2("/res/cursor.png", 32, 32);
@@ -78,12 +81,18 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
 
     uview_bitblt_update(fd, 0, 0, wbmp);
 
-    xtk_spirit_t *win = xtk_window_create("test", 400, 300, 200, 300, XTK_WINDOW_SHOW);
-    assert(win);
+    win_root = xtk_window_create("test", 400, 300, 200, 300, XTK_WINDOW_SHOW);
+    assert(win_root);
     
-    xtk_spirit_t *win1 = xtk_window_create("win1", 100, 100, 640, 480, XTK_WINDOW_SHOW);
+    btn_root = xtk_button_create_with_label("hello");
+    assert(btn_root);
+    xtk_spirit_set_pos(btn_root, 100, 100);
+    xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
+    uview_bitblt_update(XTK_WINDOW(win_root)->view, 0, 0, win_root->bitmap);
+
+    /*xtk_spirit_t *win1 = xtk_window_create("win1", 100, 100, 640, 480, XTK_WINDOW_SHOW);
     assert(win1);
-    
+    */
     #if 0
     xtk_window_t *pwin = XTK_WINDOW(win);
     uview_bitmap_rectfill(win->bitmap, 0, 0, win->width, win->height, UVIEW_GRAY);
@@ -95,7 +104,92 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     uview_show(pwin->view);
     #endif
 
+    int win_fd = XTK_WINDOW(win_root)->view;
+    uview_msg_t msg;
     while (1) {
-        /* co de */
+        if (uview_get_msg(win_fd, &msg) < 0) {
+            continue;
+        }
+
+        switch (uview_msg_get_type(&msg)) {
+        case UVIEW_MSG_MOUSE_MOTION:
+            {
+                int x = uview_msg_get_mouse_x(&msg);
+                int y = uview_msg_get_mouse_y(&msg);
+                xtk_mouse_motion(x, y);
+            }
+            break;
+        case UVIEW_MSG_MOUSE_LBTN_DOWN:
+            {
+                int x = uview_msg_get_mouse_x(&msg);
+                int y = uview_msg_get_mouse_y(&msg);
+                xtk_mouse_lbtn_down(x, y);
+            }
+            break;
+        case UVIEW_MSG_MOUSE_LBTN_UP:
+            {
+                int x = uview_msg_get_mouse_x(&msg);
+                int y = uview_msg_get_mouse_y(&msg);
+                xtk_mouse_lbtn_up(x, y);
+            }
+            break;
+        default:
+            break;
+        }
+    }    
+}
+
+void xtk_mouse_motion(int x, int y)
+{
+    //printf("mouse motion: %d, %d\n", x, y);
+
+    /* 检测窗口上的容器树里面的所有内容，直到遇到一个适合的容器，就结束 */
+    xtk_button_t *btn = XTK_BUTTON(btn_root); 
+    if (XTK_IN_SPIRIT(btn_root, x, y)) {
+        if (btn->state == XTK_BUTTON_IDLE) {
+            xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
+        }
+    } else {
+        xtk_button_change_state(btn, XTK_BUTTON_IDLE);
+    }
+    // 更新
+    xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
+    uview_bitblt_update_ex(XTK_WINDOW(win_root)->view, btn_root->x, btn_root->y,
+        win_root->bitmap, btn_root->x, btn_root->y, btn_root->width, btn_root->height);
+    
+}
+
+void xtk_mouse_lbtn_down(int x, int y)
+{
+    printf("mouse down: %d, %d\n", x, y);
+
+    /* 检测窗口上的容器树里面的所有内容，直到遇到一个适合的容器，就结束 */
+    xtk_button_t *btn = XTK_BUTTON(btn_root); 
+    if (XTK_IN_SPIRIT(btn_root, x, y)) {
+        if (btn->state == XTK_BUTTON_TOUCH) {
+            xtk_button_change_state(btn, XTK_BUTTON_CLICK);
+            // 更新
+            xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
+            uview_bitblt_update_ex(XTK_WINDOW(win_root)->view, btn_root->x, btn_root->y,
+                win_root->bitmap, btn_root->x, btn_root->y, btn_root->width, btn_root->height);        
+        }
+    }
+    
+}
+
+void xtk_mouse_lbtn_up(int x, int y)
+{
+    printf("mouse up: %d, %d\n", x, y);
+
+    xtk_button_t *btn = XTK_BUTTON(btn_root); 
+    if (XTK_IN_SPIRIT(btn_root, x, y)) {
+        if (btn->state == XTK_BUTTON_CLICK) {
+            printf("mouse call signal: %d, %d\n", x, y);
+            xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
+            // 更新
+            xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
+            uview_bitblt_update_ex(XTK_WINDOW(win_root)->view, btn_root->x, btn_root->y,
+                win_root->bitmap, btn_root->x, btn_root->y, btn_root->width, btn_root->height);     
+        }
     }
 }

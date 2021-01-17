@@ -38,7 +38,7 @@ static void mouse_wheel(int wheel)
 
 static void mouse_button_down(int button)
 {
-    keprint("mouse button: %d down\n", button);
+    //keprint("mouse button: %d down\n", button);
 
     int id = -1;
     switch (button) {

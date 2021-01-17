@@ -42,6 +42,10 @@ typedef struct {
     xtk_collision_t *collision;
 } xtk_spirit_t;
 
+#define XTK_IN_SPIRIT(spirit, _x, _y) \
+        ((spirit)->x <= (_x) && (spirit)->y <= (_y) && \
+        (_x) < (spirit)->x + (spirit)->width  && (_y) < (spirit)->y + (spirit)->height)
+
 void xtk_spirit_init(xtk_spirit_t *spirit, int x, int y, int width, int height);
 int xtk_spirit_cleanup(xtk_spirit_t *spirit);
 xtk_spirit_t *xtk_spirit_create(int x, int y, int width, int height);

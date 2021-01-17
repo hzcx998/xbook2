@@ -95,7 +95,6 @@ int main(int argc, char *argv[])
 #define WIN_H 240
 
 
-
 void win_thread()
 {
     int win_fd = uview_open(WIN_W, WIN_H);
@@ -137,6 +136,27 @@ void win_thread()
             uview_bitmap_rectfill(bmp, 0, 0, WIN_W, WIN_H, UVIEW_GREEN);
             uview_bitblt_update(win_fd, 0, 0, bmp);
             printf("inactivate\n");
+            break;
+        case UVIEW_MSG_MOUSE_MOTION:
+            {
+                int x = uview_msg_get_mouse_x(&msg);
+                int y = uview_msg_get_mouse_y(&msg);
+                xtk_mouse_motion(x, y);
+            }
+            break;
+        case UVIEW_MSG_MOUSE_LBTN_DOWN:
+            {
+                int x = uview_msg_get_mouse_x(&msg);
+                int y = uview_msg_get_mouse_y(&msg);
+                xtk_mouse_lbtn_down(x, y);
+            }
+            break;
+        case UVIEW_MSG_MOUSE_LBTN_UP:
+            {
+                int x = uview_msg_get_mouse_x(&msg);
+                int y = uview_msg_get_mouse_y(&msg);
+                xtk_mouse_lbtn_up(x, y);
+            }
             break;
         default:
             break;
