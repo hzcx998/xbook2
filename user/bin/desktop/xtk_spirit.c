@@ -1,5 +1,4 @@
-#include "xtk_spirit.h"
-#include "xtk_text.h"
+#include "xtk.h"
 #include <uview.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -9,6 +8,8 @@ extern dotfont_library_t __xtk_dotflib;
 
 void xtk_spirit_init(xtk_spirit_t *spirit, int x, int y, int width, int height)
 {
+    list_init(&spirit->list);
+    spirit->type = XTK_SPIRIT_TYPE_UNKNOWN;
     spirit->x = x;
     spirit->y = y;
     spirit->width = width;
@@ -27,7 +28,9 @@ void xtk_spirit_init(xtk_spirit_t *spirit, int x, int y, int width, int height)
     spirit->background_image = NULL;
 
     spirit->collision = NULL;
-    return spirit;
+    spirit->container = NULL;
+    spirit->attached_container = NULL;
+    spirit->view = -1;
 }
 
 xtk_spirit_t *xtk_spirit_create(int x, int y, int width, int height)
@@ -78,6 +81,22 @@ int xtk_spirit_set_pos(xtk_spirit_t *spirit, int x, int y)
         return -1;
     spirit->x = x;
     spirit->y = y;
+    return 0;
+}
+
+int xtk_spirit_set_type(xtk_spirit_t *spirit, xtk_spirit_type_t type)
+{
+    if (!spirit)
+        return -1;
+    spirit->type = type;
+    return 0;
+}
+
+int xtk_spirit_set_view(xtk_spirit_t *spirit, int view)
+{
+    if (!spirit)
+        return -1;
+    spirit->view = view;
     return 0;
 }
 
@@ -240,11 +259,19 @@ static void __xtk_calc_aligin_pos(xtk_align_t align, int box_width, int box_heig
     *out_y = y;
 }
 
+int xtk_spirit_calc_aligin_pos(xtk_spirit_t *spirit, int width, int height, int *out_x, int *out_y)
+{
+    if (!spirit)
+        return -1;
+    __xtk_calc_aligin_pos(spirit->style.align, spirit->width, spirit->height,
+        width, height, out_x, out_y);
+    return 0;
+}
 
 /* 将精灵渲染到bmp位图中 */
 int xtk_spirit_to_bitmap(xtk_spirit_t *spirit, uview_bitmap_t *bmp)
 {
-    if (!spirit)
+    if (!spirit || !bmp)
         return -1;
 
     int start_x = spirit->x;
@@ -321,3 +348,92 @@ int xtk_spirit_show_collision(xtk_spirit_t *spirit, uview_bitmap_t *bmp)
     }
     return 0;
 }
+
+void xtk_spirit_adjust_pos_by_type_all(xtk_spirit_t *spirit)
+{
+    xtk_container_t *container = spirit->container;
+    if (!container)
+        return;
+    
+    xtk_spirit_t *tmp;
+    switch (spirit->type) {
+    case XTK_SPIRIT_TYPE_WINDOW:
+        {
+            // 相对位置
+            int x = 0;
+            int y = 0;
+            // 根据不容的容器规则，进行位置布局
+            list_for_each_owner (tmp, &container->children_list, list) {
+                xtk_spirit_set_pos(tmp, x, y);
+                x += tmp->width;
+            }
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+void xtk_spirit_show_child(xtk_spirit_t *root_spirit, xtk_spirit_t *spirit)
+{
+    xtk_container_t *container = spirit->container;
+    if (!container)
+        return;
+    xtk_spirit_t *tmp;
+    // 根据不容的容器规则，进行位置布局
+    xtk_spirit_adjust_pos_by_type_all(spirit);
+
+    list_for_each_owner (tmp, &container->children_list, list) {    
+        // 转换成位图后，刷新显示
+        xtk_spirit_to_bitmap(tmp, root_spirit->bitmap);
+        uview_bitblt_update_ex(root_spirit->view, tmp->x, tmp->y,
+            root_spirit->bitmap, tmp->x, tmp->y, tmp->width, tmp->height);
+         
+        // 如果有容器的话，那么就需要遍历子容器
+        if (tmp->container) {
+            xtk_spirit_show_child(root_spirit, tmp);
+        }
+    }
+}
+
+/**
+ * 显示精灵到已添加到的容器中
+ */
+int xtk_spirit_show(xtk_spirit_t *spirit)
+{
+    if (!spirit)
+        return -1;
+    if (!spirit->attached_container)
+        return -1;
+    xtk_spirit_t *attached_spirit = (xtk_spirit_t *)spirit->attached_container->spirit;
+    if (!attached_spirit->bitmap)
+        return -1;
+    // 如果本身是容器，那么就显示子容器
+    if (spirit->type == XTK_SPIRIT_TYPE_BOX) {
+        xtk_spirit_t *child;
+        list_for_each_owner (child, &spirit->container->children_list, list) {
+            xtk_spirit_show(child);
+        }
+    } else {
+        xtk_spirit_to_bitmap(spirit, attached_spirit->bitmap);
+        if (UVIEW_BAD_ID(attached_spirit->view))
+            return -1;
+        uview_bitblt_update_ex(attached_spirit->view, spirit->x, spirit->y,
+            attached_spirit->bitmap, spirit->x, spirit->y, spirit->width, spirit->height);
+    }
+    return 0;
+}
+
+/**
+ * 显示精灵下面的所有精灵
+ */
+int xtk_spirit_show_all(xtk_spirit_t *spirit)
+{
+    if (!spirit)
+        return -1;
+
+    xtk_spirit_t *root_spirit = spirit;
+    xtk_spirit_show_child(root_spirit, spirit);
+    return 0;
+}
+

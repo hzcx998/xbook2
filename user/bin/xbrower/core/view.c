@@ -32,7 +32,7 @@ xbrower_view_t *xbrower_view_create(int x, int y, int width, int height)
     view->z = -1;
     view->width = width;
     view->height = height;
-    init_list(&view->list);
+    list_init(&view->list);
     list_add(&view->global_list, &view_global_list_head);
     return view;
 }

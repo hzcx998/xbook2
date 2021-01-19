@@ -2,8 +2,10 @@
 #define _LIB_XTK_SPIRIT_H
 
 #include <uview.h>
+#include <sys/list.h>
 #include "xtk_image.h"
 #include "xtk_collision.h"
+#include "xtk_container_struct.h"
 
 typedef unsigned int xtk_color_t;
 
@@ -26,11 +28,24 @@ typedef struct {
     xtk_align_t align;
 } xtk_style_t;
 
+typedef enum {
+    XTK_SPIRIT_TYPE_UNKNOWN = 0,
+    XTK_SPIRIT_TYPE_WINDOW,
+    XTK_SPIRIT_TYPE_LABEL,
+    XTK_SPIRIT_TYPE_BUTTON,
+    XTK_SPIRIT_TYPE_BOX,
+    XTK_SPIRIT_TYPE_TABLE,
+    XTK_SPIRIT_TYPE_FIXED,
+} xtk_spirit_type_t;
+
 typedef struct {
+    list_t list;
+    xtk_spirit_type_t type;
     int x;
     int y;
     int width;
     int height;
+    int view;   // 精灵所在的视图
     xtk_style_t style;
     /* back */
     xtk_image_t *background_image;
@@ -40,6 +55,8 @@ typedef struct {
     uview_bitmap_t *bitmap;
     /* extension */
     xtk_collision_t *collision;
+    xtk_container_t *container;    // 每个精灵对应一个容器
+    xtk_container_t *attached_container;    // 每个精灵附加到的容器
 } xtk_spirit_t;
 
 #define XTK_IN_SPIRIT(spirit, _x, _y) \
@@ -53,12 +70,21 @@ int xtk_spirit_destroy(xtk_spirit_t *spilit);
 int xtk_spirit_set_pos(xtk_spirit_t *spilit, int x, int y);
 int xtk_spirit_set_size(xtk_spirit_t *spilit, int width, int height);
 int xtk_spirit_set_text(xtk_spirit_t *spilit, char *text);
+int xtk_spirit_set_type(xtk_spirit_t *spirit, xtk_spirit_type_t type);
 int xtk_spirit_auto_size(xtk_spirit_t *spilit);
 int xtk_spirit_set_background_image(xtk_spirit_t *spilit, char *filename);
 int xtk_spirit_to_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
 int xtk_spirit_set_image(xtk_spirit_t *spilit, char *filename);
 int xtk_spirit_set_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
 int xtk_spirit_set_collision(xtk_spirit_t *spilit, xtk_collision_t *collision);
+int xtk_spirit_set_view(xtk_spirit_t *spirit, int view);
+
+int xtk_spirit_calc_aligin_pos(xtk_spirit_t *spirit, int width, int height, int *out_x, int *out_y);
+
+
+// show
 int xtk_spirit_show_collision(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
+int xtk_spirit_show_all(xtk_spirit_t *spirit);
+int xtk_spirit_show(xtk_spirit_t *spirit);
 
 #endif /* _LIB_XTK_SPIRIT_H */

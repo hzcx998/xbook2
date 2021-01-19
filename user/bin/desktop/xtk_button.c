@@ -8,12 +8,14 @@ xtk_spirit_t *xtk_button_create()
     if (!button)
         return NULL;
     button->state = XTK_BUTTON_IDLE;
-    xtk_spirit_init(&button->spirit, 0, 0, XTK_BUTTON_WIDTH_DEFAULT, XTK_BUTTON_HEIGHT_DEFAULT);
     button->color_idle = UVIEW_WHITE;
     button->color_touch = UVIEW_RED;
     button->color_click = UVIEW_BLUE;
-
+    
     xtk_spirit_t *spirit = &button->spirit;
+    xtk_spirit_init(spirit, 0, 0, XTK_BUTTON_WIDTH_DEFAULT, XTK_BUTTON_HEIGHT_DEFAULT);
+    xtk_spirit_set_type(spirit, XTK_SPIRIT_TYPE_BUTTON);
+    
     spirit->style.border_color = UVIEW_GRAY;
     spirit->style.background_color = button->color_idle;
     spirit->style.color = UVIEW_BLACK;

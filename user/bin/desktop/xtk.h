@@ -18,6 +18,8 @@ dialog
 #include "xtk_label.h"
 #include "xtk_button.h"
 #include "xtk_window.h"
+#include "xtk_container.h"
+#include "xtk_box.h"
 
 void xtk_test(int fd, uview_bitmap_t *wbmp);
 

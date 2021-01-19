@@ -19,6 +19,8 @@ enum uview_attr {
     UVIEW_ATTR_MOVEABLE      = 0x02,
 };
 
+#define UVIEW_BAD_ID(view)  (view < 0)
+
 int uview_open(int width, int height);
 int uview_close(int vfd);
 int uview_set_pos(int vfd, int x, int y);

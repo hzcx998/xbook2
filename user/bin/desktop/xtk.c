@@ -67,7 +67,6 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     xtk_spirit_destroy(spirit);
     uview_bitmap_destroy(bmp1);
 
-
     xtk_spirit_t *label0 = xtk_label_create("hello");
     xtk_spirit_set_pos(label0, 20, 150);
     xtk_spirit_to_bitmap(label0, wbmp);
@@ -86,13 +85,42 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     
     btn_root = xtk_button_create_with_label("hello");
     assert(btn_root);
-    xtk_spirit_set_pos(btn_root, 100, 100);
-    xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
-    uview_bitblt_update(XTK_WINDOW(win_root)->view, 0, 0, win_root->bitmap);
+    //xtk_spirit_set_pos(btn_root, 100, 100);
+    //xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
+    //uview_bitblt_update(XTK_WINDOW(win_root)->view, 0, 0, win_root->bitmap);
+    xtk_spirit_t *btn1 = xtk_button_create_with_label("world");
+    assert(btn1);
+    xtk_spirit_t *btn2 = xtk_button_create_with_label("xbook2");
+    assert(btn2);
+    
+    xtk_spirit_t *box0 = xtk_box_create(XTK_ORIENTATION_HORIZONTAL, 0);
+    assert(box0);
+    
+    #if 1
+    xtk_container_add(XTK_CONTAINER(win_root), box0);
 
+    // 添加一个容器
+    xtk_container_add(XTK_CONTAINER(box0), btn_root);
+    xtk_container_add(XTK_CONTAINER(box0), btn1);
+    xtk_container_add(XTK_CONTAINER(box0), btn2);
+    
+    #if 0 
+    xtk_spirit_show(btn_root);
+    xtk_spirit_show(btn1);
+    xtk_spirit_show(btn2);
+    #else
+    xtk_spirit_show(box0);
+    #endif
+    #else
+    xtk_container_add(XTK_CONTAINER(win_root), btn_root);
+    xtk_spirit_show(btn_root);
+    #endif
+
+    //xtk_spirit_show_all(win_root);
     /*xtk_spirit_t *win1 = xtk_window_create("win1", 100, 100, 640, 480, XTK_WINDOW_SHOW);
     assert(win1);
     */
+
     #if 0
     xtk_window_t *pwin = XTK_WINDOW(win);
     uview_bitmap_rectfill(win->bitmap, 0, 0, win->width, win->height, UVIEW_GRAY);
@@ -104,7 +132,7 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     uview_show(pwin->view);
     #endif
 
-    int win_fd = XTK_WINDOW(win_root)->view;
+    int win_fd = win_root->view;
     uview_msg_t msg;
     while (1) {
         if (uview_get_msg(win_fd, &msg) < 0) {
@@ -154,7 +182,7 @@ void xtk_mouse_motion(int x, int y)
     }
     // 更新
     xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
-    uview_bitblt_update_ex(XTK_WINDOW(win_root)->view, btn_root->x, btn_root->y,
+    uview_bitblt_update_ex(win_root->view, btn_root->x, btn_root->y,
         win_root->bitmap, btn_root->x, btn_root->y, btn_root->width, btn_root->height);
     
 }
@@ -170,11 +198,10 @@ void xtk_mouse_lbtn_down(int x, int y)
             xtk_button_change_state(btn, XTK_BUTTON_CLICK);
             // 更新
             xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
-            uview_bitblt_update_ex(XTK_WINDOW(win_root)->view, btn_root->x, btn_root->y,
+            uview_bitblt_update_ex(win_root->view, btn_root->x, btn_root->y,
                 win_root->bitmap, btn_root->x, btn_root->y, btn_root->width, btn_root->height);        
-        }
+        } 
     }
-    
 }
 
 void xtk_mouse_lbtn_up(int x, int y)
@@ -188,7 +215,7 @@ void xtk_mouse_lbtn_up(int x, int y)
             xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
             // 更新
             xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
-            uview_bitblt_update_ex(XTK_WINDOW(win_root)->view, btn_root->x, btn_root->y,
+            uview_bitblt_update_ex(win_root->view, btn_root->x, btn_root->y,
                 win_root->bitmap, btn_root->x, btn_root->y, btn_root->width, btn_root->height);     
         }
     }

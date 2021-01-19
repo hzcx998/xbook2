@@ -67,9 +67,9 @@ int xtk_window_draw_border(xtk_window_t *window,
     xtk_text_to_bitmap(navigation->title->text, text_c, DOTF_STANDARD_NAME, spirit->bitmap,
         navigation->title->x, navigation->title->y);
 
-    uview_bitblt(window->view, 0, 0, spirit->bitmap);
+    uview_bitblt(spirit->view, 0, 0, spirit->bitmap);
     if (redraw_bg) {
-        uview_update(window->view, 0, 0, spirit->width, spirit->height);
+        uview_update(spirit->view, 0, 0, spirit->width, spirit->height);
     }
     return 0;
 }
@@ -114,37 +114,55 @@ xtk_spirit_t *xtk_window_create(char *title, int x, int y, int width, int height
     // 初始化精灵
     int new_width = window->style->border_thick * 2 + width;
     int new_height = window->style->border_thick * 2 + height + window->style->navigation_height;
-    xtk_spirit_init(&window->spirit, x, y, new_width, new_height);
-
-    uview_bitmap_t *bmp = uview_bitmap_create(new_width, new_height);
-    if (!bmp) {
-        xtk_spirit_cleanup(&window->spirit);
+    
+    xtk_spirit_t *spirit = &window->spirit;
+    xtk_spirit_init(spirit, x, y, new_width, new_height);
+    xtk_spirit_set_type(spirit, XTK_SPIRIT_TYPE_WINDOW);
+    
+    // 创建窗口容器，只能容纳一个容器
+    spirit->container = xtk_container_create(XTK_CONTAINER_SINGAL, spirit);
+    if (!spirit->container) {
+        xtk_spirit_cleanup(spirit);
         free(window);
         return NULL;
     }
-    xtk_spirit_set_bitmap(&window->spirit, bmp);
+
+    uview_bitmap_t *bmp = uview_bitmap_create(new_width, new_height);
+    if (!bmp) {
+        xtk_container_destroy(spirit->container);
+        spirit->container = NULL;
+        xtk_spirit_cleanup(spirit);
+        free(window);
+        return NULL;
+    }
+    xtk_spirit_set_bitmap(spirit, bmp);
 
     if (xtk_window_create_navigation(window, title) < 0) {
-        xtk_spirit_cleanup(&window->spirit);
+        xtk_container_destroy(spirit->container);
+        spirit->container = NULL;
+        xtk_spirit_cleanup(spirit);
         free(window);
         return NULL;
     }
 
     // 创建视图
-    window->view = uview_open(new_width, new_height);
-    if (window->view < 0) {
+    int view = uview_open(new_width, new_height);
+    if (view < 0) {
+        xtk_container_destroy(spirit->container);
+        spirit->container = NULL;
         xtk_window_destroy_navigation(window);
-        xtk_spirit_cleanup(&window->spirit);
+        xtk_spirit_cleanup(spirit);
         free(window);
         return NULL;
     }
-    uview_set_type(window->view, UVIEW_TYPE_WINDOW);
-    uview_set_pos(window->view, x, y);
-    
+    uview_set_type(view, UVIEW_TYPE_WINDOW);
+    uview_set_pos(view, x, y);
+    xtk_spirit_set_view(spirit, view);
+
     xtk_window_draw_border(window, 1, 1);
     
     if (flags & XTK_WINDOW_SHOW)
-        uview_show(window->view);
+        uview_show(view);
 
-    return &window->spirit;
+    return spirit;
 }

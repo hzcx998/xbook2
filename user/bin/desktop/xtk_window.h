@@ -32,7 +32,6 @@ typedef struct {
     int content_width;
     int content_height;
     xtk_window_style_t *style;
-    int view;               // 窗口视图
     uint32_t winflgs;       // 窗口的标志
     xtk_window_navigation_t navigation;
 } xtk_window_t;
