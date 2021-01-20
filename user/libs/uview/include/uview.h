@@ -25,7 +25,7 @@ int uview_open(int width, int height);
 int uview_close(int vfd);
 int uview_set_pos(int vfd, int x, int y);
 int uview_set_type(int vfd, int type);
-int uview_set_wait(int vfd, int iswait);
+int uview_set_wait(int vfd, int is_nowait);
 int uview_show(int vfd);
 int uview_hide(int vfd);
 int uview_update(int vfd, int left, int top, int right, int bottom);

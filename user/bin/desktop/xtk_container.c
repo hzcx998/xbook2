@@ -50,7 +50,7 @@ int xtk_container_child_size_all(xtk_container_t *container, xtk_orientation_t o
 }
 
 
-int xtk_container_add(xtk_container_t *container, xtk_spirit_t *spirit)
+int xtk_container_add2(xtk_container_t *container, xtk_spirit_t *spirit)
 {
     if (!container)
         return -1;
@@ -72,26 +72,17 @@ int xtk_container_add(xtk_container_t *container, xtk_spirit_t *spirit)
     // 添加到容器中
     list_add_tail(&spirit->list, &container->children_list);
     
-    xtk_spirit_t *attached_spirit = (xtk_spirit_t *)container->spirit;
-
     // 资源绑定: 附加容器、视图
+    xtk_spirit_t *attached_spirit = (xtk_spirit_t *)container->spirit;
     spirit->attached_container = container;
     xtk_spirit_set_view(spirit, attached_spirit->view);
 
     // 根据容器的类型设置位置信息
     if (spirit->type == XTK_SPIRIT_TYPE_BOX) {
-        xtk_box_t *box = XTK_BOX(spirit);
-        if (box->orientation == XTK_ORIENTATION_HORIZONTAL) {
-            xtk_spirit_set_size(spirit, attached_spirit->width - 2, 48 - 2);
-            xtk_spirit_set_bitmap(spirit, uview_bitmap_create(spirit->width, spirit->height));
-        } else if (box->orientation == XTK_ORIENTATION_VERTICAL) {
-            xtk_spirit_set_size(spirit, 48 - 2, attached_spirit->height - 2);
-            xtk_spirit_set_bitmap(spirit, uview_bitmap_create(spirit->width, spirit->height));
-        } else {
-
-        }
+        xtk_spirit_set_size(spirit, attached_spirit->width, attached_spirit->height);
+        xtk_spirit_set_bitmap(spirit, uview_bitmap_create(spirit->width, spirit->height));
     }
-
+    
     // 调整位置，大小等
     int start_x = 0, start_y = 0;
     if (container->type == XTK_CONTAINER_SINGAL) {
@@ -133,6 +124,24 @@ int xtk_container_add(xtk_container_t *container, xtk_spirit_t *spirit)
             }
         }
     }
+    return 0;
+}
+
+int xtk_container_add(xtk_container_t *container, xtk_spirit_t *spirit)
+{
+    if (!container)
+        return -1;
+    // 防止自己添加自己
+    if (container->spirit == spirit)
+        return -1;
+    
+    // 添加到容器中
+    list_add_tail(&spirit->list, &container->children_list);
+    
+    // 资源绑定: 附加容器、视图
+    xtk_spirit_t *attached_spirit = (xtk_spirit_t *)container->spirit;
+    spirit->attached_container = container;
+    xtk_spirit_set_view(spirit, attached_spirit->view);
     return 0;
 }
 

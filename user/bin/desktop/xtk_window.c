@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+LIST_HEAD(xtk_window_list_head);
+
 static xtk_window_style_t __xtk_window_style_defult = {
     4, 
     24,
@@ -15,7 +17,150 @@ static xtk_window_style_t __xtk_window_style_defult = {
     UVIEW_RGB(118, 118, 118),
 };
 
+void xtk_mouse_motion(xtk_spirit_t *spirit, int x, int y)
+{
+    xtk_container_t *container = spirit->container;
+    if (!container)
+        return;
+    xtk_spirit_t *tmp;
+    list_for_each_owner (tmp, &container->children_list, list) {
+        switch (tmp->type)
+        {
+        case XTK_SPIRIT_TYPE_LABEL:
+            {
 
+            }
+            break;
+        case XTK_SPIRIT_TYPE_BUTTON:
+            {
+                xtk_button_t *btn = XTK_BUTTON(tmp);
+                if (XTK_IN_SPIRIT(tmp, x, y)) {
+                    if (btn->state == XTK_BUTTON_IDLE) {
+                        xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
+                    }
+                } else {
+                    xtk_button_change_state(btn, XTK_BUTTON_IDLE);
+                }
+                xtk_spirit_show(tmp);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+
+void xtk_mouse_lbtn_down(xtk_spirit_t *spirit, int x, int y)
+{
+    xtk_container_t *container = spirit->container;
+    if (!container)
+        return;
+    xtk_spirit_t *tmp;
+    list_for_each_owner (tmp, &container->children_list, list) {
+        switch (tmp->type)
+        {
+        case XTK_SPIRIT_TYPE_LABEL:
+            {
+
+            }
+            break;
+        case XTK_SPIRIT_TYPE_BUTTON:
+            {
+                xtk_button_t *btn = XTK_BUTTON(tmp);
+                if (XTK_IN_SPIRIT(tmp, x, y)) {
+                    if (btn->state == XTK_BUTTON_TOUCH) {
+                        xtk_button_change_state(btn, XTK_BUTTON_CLICK);
+                        xtk_spirit_show(tmp);   
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+void xtk_mouse_lbtn_up(xtk_spirit_t *spirit, int x, int y)
+{
+    xtk_container_t *container = spirit->container;
+    if (!container)
+        return;
+    xtk_spirit_t *tmp;
+    list_for_each_owner (tmp, &container->children_list, list) {
+        switch (tmp->type)
+        {
+        case XTK_SPIRIT_TYPE_LABEL:
+            {
+
+            }
+            break;
+        case XTK_SPIRIT_TYPE_BUTTON:
+            {
+                xtk_button_t *btn = XTK_BUTTON(tmp);
+                if (XTK_IN_SPIRIT(tmp, x, y)) {
+                    if (btn->state == XTK_BUTTON_CLICK) {
+                        printf("mouse call signal: %d, %d\n", x, y);
+                        xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
+                        xtk_spirit_show(tmp);
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+/* 过滤窗口消息，成功返回0，失败返回-1 */
+int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
+{
+    switch (uview_msg_get_type(msg)) {
+    case UVIEW_MSG_MOUSE_MOTION:
+        {
+            int x = uview_msg_get_mouse_x(msg);
+            int y = uview_msg_get_mouse_y(msg);
+            xtk_mouse_motion(spirit, x, y);
+        }
+        break;
+    case UVIEW_MSG_MOUSE_LBTN_DOWN:
+        {
+            int x = uview_msg_get_mouse_x(msg);
+            int y = uview_msg_get_mouse_y(msg);
+            xtk_mouse_lbtn_down(spirit, x, y);
+        }
+        break;
+    case UVIEW_MSG_MOUSE_LBTN_UP:
+        {
+            int x = uview_msg_get_mouse_x(msg);
+            int y = uview_msg_get_mouse_y(msg);
+            xtk_mouse_lbtn_up(spirit, x, y);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+int xtk_window_main()
+{
+    xtk_spirit_t *tmp;
+    uview_msg_t msg;
+    while (1) {
+        list_for_each_owner (tmp, &xtk_window_list_head, list) {
+            uview_set_wait(tmp->view, 1);
+            if (uview_get_msg(tmp->view, &msg) < 0) {
+                continue;
+            }
+            // 处理内置消息
+            xtk_window_filter_msg(tmp, &msg);
+            // 处理用户消息
+            // xtk_window_user_msg(&msg);
+        }
+    }
+}
 
 /**
  * 绘制窗口边框
@@ -96,6 +241,14 @@ static int xtk_window_destroy_navigation(xtk_window_t *window)
     return 0;
 } 
 
+int xtk_window_show(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+    uview_show(window->spirit.view);
+    return 0;
+}
+
 xtk_spirit_t *xtk_window_create(char *title, int x, int y, int width, int height, uint32_t flags)
 {
     if (!title || width <= 0 || height <= 0)
@@ -118,7 +271,8 @@ xtk_spirit_t *xtk_window_create(char *title, int x, int y, int width, int height
     xtk_spirit_t *spirit = &window->spirit;
     xtk_spirit_init(spirit, x, y, new_width, new_height);
     xtk_spirit_set_type(spirit, XTK_SPIRIT_TYPE_WINDOW);
-    
+    spirit->style.align = XTK_ALIGN_CENTER;
+
     // 创建窗口容器，只能容纳一个容器
     spirit->container = xtk_container_create(XTK_CONTAINER_SINGAL, spirit);
     if (!spirit->container) {
@@ -161,6 +315,9 @@ xtk_spirit_t *xtk_window_create(char *title, int x, int y, int width, int height
 
     xtk_window_draw_border(window, 1, 1);
     
+    // 添加到窗口链表
+    list_add(&spirit->list, &xtk_window_list_head);
+
     if (flags & XTK_WINDOW_SHOW)
         uview_show(view);
 

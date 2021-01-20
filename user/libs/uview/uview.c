@@ -80,14 +80,14 @@ int uview_set_unresizable(int vfd)
     return ioctl(vfd, VIEWIO_DELATTR, &attr);
 }
 
-int uview_set_wait(int vfd, int iswait)
+int uview_set_wait(int vfd, int is_nowait)
 {
     if (vfd < 0)
         return -1;
     int vflags;
     if (ioctl(vfd, VIEWIO_GETFLGS, &vflags) < 0)
         return -1;
-    if (iswait)
+    if (is_nowait)
         vflags |= DEV_NOWAIT;
     else
         vflags &= ~DEV_NOWAIT;

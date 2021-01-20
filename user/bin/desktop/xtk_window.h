@@ -38,6 +38,8 @@ typedef struct {
 
 #define XTK_WINDOW(spirit)  ((xtk_window_t *)(spirit))
 xtk_spirit_t *xtk_window_create(char *title, int x, int y, int width, int height, uint32_t flags);
+int xtk_window_show(xtk_window_t *window);
 
+int xtk_window_main();
 
 #endif /* _LIB_XTK_WINDOW_H */

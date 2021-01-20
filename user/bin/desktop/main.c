@@ -118,7 +118,7 @@ void win_thread()
     uview_bitmap_destroy(fbmp);
     
     xtk_test(win_fd, bmp);
-
+    #if 0 
     uview_msg_t msg;
     while (1) {
         if (uview_get_msg(win_fd, &msg) < 0) {
@@ -161,5 +161,6 @@ void win_thread()
         default:
             break;
         }
-    }    
+    }  
+    #endif  
 }

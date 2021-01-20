@@ -5,6 +5,14 @@
 
 #include <dotfont.h>
 
+int xtk_main()
+{
+    // 在根窗口/面板中进行消息获取
+    
+    xtk_window_main();
+    return 0;
+}
+
 
 xtk_spirit_t *btn_root;
 xtk_spirit_t *win_root;
@@ -85,53 +93,29 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     
     btn_root = xtk_button_create_with_label("hello");
     assert(btn_root);
-    //xtk_spirit_set_pos(btn_root, 100, 100);
-    //xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
-    //uview_bitblt_update(XTK_WINDOW(win_root)->view, 0, 0, win_root->bitmap);
+
     xtk_spirit_t *btn1 = xtk_button_create_with_label("world");
     assert(btn1);
     xtk_spirit_t *btn2 = xtk_button_create_with_label("xbook2");
     assert(btn2);
-    
-    xtk_spirit_t *box0 = xtk_box_create(XTK_ORIENTATION_HORIZONTAL, 0);
-    assert(box0);
-    
-    #if 1
-    xtk_container_add(XTK_CONTAINER(win_root), box0);
 
-    // 添加一个容器
-    xtk_container_add(XTK_CONTAINER(box0), btn_root);
-    xtk_container_add(XTK_CONTAINER(box0), btn1);
-    xtk_container_add(XTK_CONTAINER(box0), btn2);
+    xtk_spirit_set_pos(btn_root, 100, 50);    
+    xtk_spirit_set_pos(btn1, 100, 100);
+    xtk_spirit_set_pos(btn2, 100, 150);
+
+    xtk_container_add(XTK_CONTAINER(win_root), btn_root);
+    xtk_container_add(XTK_CONTAINER(win_root), btn1);
+    xtk_container_add(XTK_CONTAINER(win_root), btn2);
     
-    #if 0 
-    xtk_spirit_show(btn_root);
+    #if 0
     xtk_spirit_show(btn1);
     xtk_spirit_show(btn2);
     #else
-    xtk_spirit_show(box0);
-    #endif
-    #else
-    xtk_container_add(XTK_CONTAINER(win_root), btn_root);
-    xtk_spirit_show(btn_root);
+    xtk_spirit_show_all(win_root);
     #endif
 
-    //xtk_spirit_show_all(win_root);
-    /*xtk_spirit_t *win1 = xtk_window_create("win1", 100, 100, 640, 480, XTK_WINDOW_SHOW);
-    assert(win1);
-    */
 
     #if 0
-    xtk_window_t *pwin = XTK_WINDOW(win);
-    uview_bitmap_rectfill(win->bitmap, 0, 0, win->width, win->height, UVIEW_GRAY);
-    uview_bitmap_rectfill(win->bitmap, pwin->style->border_width, pwin->style->border_width + pwin->style->navigation_height,
-        pwin->content_width, pwin->content_height, UVIEW_WHITE);
-    
-    uview_bitblt(pwin->view, 0, 0, win->bitmap);
-
-    uview_show(pwin->view);
-    #endif
-
     int win_fd = win_root->view;
     uview_msg_t msg;
     while (1) {
@@ -165,8 +149,10 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
             break;
         }
     }    
+    #endif
+    xtk_main();
 }
-
+#if 0
 void xtk_mouse_motion(int x, int y)
 {
     //printf("mouse motion: %d, %d\n", x, y);
@@ -220,3 +206,4 @@ void xtk_mouse_lbtn_up(int x, int y)
         }
     }
 }
+#endif

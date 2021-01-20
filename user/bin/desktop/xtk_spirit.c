@@ -408,19 +408,12 @@ int xtk_spirit_show(xtk_spirit_t *spirit)
     xtk_spirit_t *attached_spirit = (xtk_spirit_t *)spirit->attached_container->spirit;
     if (!attached_spirit->bitmap)
         return -1;
-    // 如果本身是容器，那么就显示子容器
-    if (spirit->type == XTK_SPIRIT_TYPE_BOX) {
-        xtk_spirit_t *child;
-        list_for_each_owner (child, &spirit->container->children_list, list) {
-            xtk_spirit_show(child);
-        }
-    } else {
-        xtk_spirit_to_bitmap(spirit, attached_spirit->bitmap);
-        if (UVIEW_BAD_ID(attached_spirit->view))
-            return -1;
-        uview_bitblt_update_ex(attached_spirit->view, spirit->x, spirit->y,
-            attached_spirit->bitmap, spirit->x, spirit->y, spirit->width, spirit->height);
-    }
+    
+    xtk_spirit_to_bitmap(spirit, attached_spirit->bitmap);
+    if (UVIEW_BAD_ID(attached_spirit->view))
+        return -1;
+    uview_bitblt_update_ex(attached_spirit->view, spirit->x, spirit->y,
+        attached_spirit->bitmap, spirit->x, spirit->y, spirit->width, spirit->height);
     return 0;
 }
 
@@ -431,9 +424,12 @@ int xtk_spirit_show_all(xtk_spirit_t *spirit)
 {
     if (!spirit)
         return -1;
-
-    xtk_spirit_t *root_spirit = spirit;
-    xtk_spirit_show_child(root_spirit, spirit);
+    xtk_container_t *container = spirit->container;
+    if (!container)
+        return;
+    xtk_spirit_t *tmp;
+    list_for_each_owner (tmp, &container->children_list, list) {    
+        xtk_spirit_show(tmp);
+    }
     return 0;
 }
-
