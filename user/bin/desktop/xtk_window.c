@@ -17,103 +17,6 @@ static xtk_window_style_t __xtk_window_style_defult = {
     UVIEW_RGB(118, 118, 118),
 };
 
-void xtk_mouse_motion(xtk_spirit_t *spirit, int x, int y)
-{
-    xtk_container_t *container = spirit->container;
-    if (!container)
-        return;
-    xtk_spirit_t *tmp;
-    list_for_each_owner (tmp, &container->children_list, list) {
-        switch (tmp->type)
-        {
-        case XTK_SPIRIT_TYPE_LABEL:
-            {
-
-            }
-            break;
-        case XTK_SPIRIT_TYPE_BUTTON:
-            {
-                xtk_button_t *btn = XTK_BUTTON(tmp);
-                if (XTK_IN_SPIRIT(tmp, x, y)) {
-                    if (btn->state == XTK_BUTTON_IDLE) {
-                        xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
-                    }
-                } else {
-                    xtk_button_change_state(btn, XTK_BUTTON_IDLE);
-                }
-                xtk_spirit_show(tmp);
-            }
-            break;
-        default:
-            break;
-        }
-    }
-}
-
-
-void xtk_mouse_lbtn_down(xtk_spirit_t *spirit, int x, int y)
-{
-    xtk_container_t *container = spirit->container;
-    if (!container)
-        return;
-    xtk_spirit_t *tmp;
-    list_for_each_owner (tmp, &container->children_list, list) {
-        switch (tmp->type)
-        {
-        case XTK_SPIRIT_TYPE_LABEL:
-            {
-
-            }
-            break;
-        case XTK_SPIRIT_TYPE_BUTTON:
-            {
-                xtk_button_t *btn = XTK_BUTTON(tmp);
-                if (XTK_IN_SPIRIT(tmp, x, y)) {
-                    if (btn->state == XTK_BUTTON_TOUCH) {
-                        xtk_button_change_state(btn, XTK_BUTTON_CLICK);
-                        xtk_spirit_show(tmp);   
-                    }
-                }
-            }
-            break;
-        default:
-            break;
-        }
-    }
-}
-
-void xtk_mouse_lbtn_up(xtk_spirit_t *spirit, int x, int y)
-{
-    xtk_container_t *container = spirit->container;
-    if (!container)
-        return;
-    xtk_spirit_t *tmp;
-    list_for_each_owner (tmp, &container->children_list, list) {
-        switch (tmp->type)
-        {
-        case XTK_SPIRIT_TYPE_LABEL:
-            {
-
-            }
-            break;
-        case XTK_SPIRIT_TYPE_BUTTON:
-            {
-                xtk_button_t *btn = XTK_BUTTON(tmp);
-                if (XTK_IN_SPIRIT(tmp, x, y)) {
-                    if (btn->state == XTK_BUTTON_CLICK) {
-                        printf("mouse call signal: %d, %d\n", x, y);
-                        xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
-                        xtk_spirit_show(tmp);
-                    }
-                }
-            }
-            break;
-        default:
-            break;
-        }
-    }
-}
-
 /* 过滤窗口消息，成功返回0，失败返回-1 */
 int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
 {
@@ -122,43 +25,53 @@ int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
         {
             int x = uview_msg_get_mouse_x(msg);
             int y = uview_msg_get_mouse_y(msg);
-            xtk_mouse_motion(spirit, x, y);
+            if (!xtk_mouse_motion(spirit, x, y))
+                return 0;
         }
         break;
     case UVIEW_MSG_MOUSE_LBTN_DOWN:
         {
             int x = uview_msg_get_mouse_x(msg);
             int y = uview_msg_get_mouse_y(msg);
-            xtk_mouse_lbtn_down(spirit, x, y);
+            if (!xtk_mouse_lbtn_down(spirit, x, y))
+                return 0;
         }
         break;
     case UVIEW_MSG_MOUSE_LBTN_UP:
         {
             int x = uview_msg_get_mouse_x(msg);
             int y = uview_msg_get_mouse_y(msg);
-            xtk_mouse_lbtn_up(spirit, x, y);
+            if (!xtk_mouse_lbtn_up(spirit, x, y))
+                return 0;
         }
         break;
     default:
         break;
     }
+    return -1;
+}
+
+int xtk_window_user_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
+{
+
+    return 0;
 }
 
 int xtk_window_main()
 {
     xtk_spirit_t *tmp;
     uview_msg_t msg;
-    while (1) {
-        list_for_each_owner (tmp, &xtk_window_list_head, list) {
-            uview_set_wait(tmp->view, 1);
-            if (uview_get_msg(tmp->view, &msg) < 0) {
-                continue;
-            }
-            // 处理内置消息
-            xtk_window_filter_msg(tmp, &msg);
-            // 处理用户消息
-            // xtk_window_user_msg(&msg);
+    list_for_each_owner (tmp, &xtk_window_list_head, list) {
+        uview_set_wait(tmp->view, 1);
+        if (uview_get_msg(tmp->view, &msg) < 0) {
+            continue;
         }
+        // 处理内置消息
+        if (!xtk_window_filter_msg(tmp, &msg))
+            continue;
+        
+        // 处理用户消息
+        xtk_window_user_msg(tmp, &msg);
     }
 }
 

@@ -8,11 +8,11 @@
 int xtk_main()
 {
     // 在根窗口/面板中进行消息获取
-    
-    xtk_window_main();
+    while (1) {
+        xtk_window_main();
+    }
     return 0;
 }
-
 
 xtk_spirit_t *btn_root;
 xtk_spirit_t *win_root;
@@ -99,13 +99,18 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     xtk_spirit_t *btn2 = xtk_button_create_with_label("xbook2");
     assert(btn2);
 
+    xtk_spirit_t *l0 = xtk_label_create("welcome to me!");
+    assert(l0);
+    
     xtk_spirit_set_pos(btn_root, 100, 50);    
     xtk_spirit_set_pos(btn1, 100, 100);
     xtk_spirit_set_pos(btn2, 100, 150);
-
+    xtk_spirit_set_pos(l0, 20, 150);
+    
     xtk_container_add(XTK_CONTAINER(win_root), btn_root);
     xtk_container_add(XTK_CONTAINER(win_root), btn1);
     xtk_container_add(XTK_CONTAINER(win_root), btn2);
+    xtk_container_add(XTK_CONTAINER(win_root), l0);
     
     #if 0
     xtk_spirit_show(btn1);
