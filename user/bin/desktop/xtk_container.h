@@ -6,9 +6,10 @@
 
 #define XTK_CONTAINER(spirit) ((xtk_container_t *)((spirit)->container))
 
-xtk_container_t *xtk_container_create(xtk_container_type_t type, xtk_spirit_t *spirit);
+xtk_container_t *xtk_container_create(xtk_spirit_t *spirit);
 int xtk_container_destroy(xtk_container_t *container);
 int xtk_container_add(xtk_container_t *container, xtk_spirit_t *spirit);
 int xtk_container_remove(xtk_container_t *container, xtk_spirit_t *spirit);
+int xtk_container_remove_and_destroy_all(xtk_container_t *container);
 
 #endif /* _LIB_XTK_CONTAINER_H */

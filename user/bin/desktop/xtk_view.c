@@ -33,3 +33,13 @@ void xtk_view_remove(xtk_view_t *view)
     if (list_find(&view->list, &xtk_view_list_head))
         list_del(&view->list);
 }
+
+xtk_view_t *xtk_view_find(int view)
+{
+    xtk_view_t *pview;
+    list_for_each_owner (pview, &xtk_view_list_head, list) {
+        if (pview->view == view)
+            return pview;
+    }
+    return pview;
+}

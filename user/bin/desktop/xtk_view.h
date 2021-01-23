@@ -20,5 +20,6 @@ xtk_view_t *xtk_view_create();
 int xtk_view_destroy(xtk_view_t *view);
 void xtk_view_add(xtk_view_t *view);
 void xtk_view_remove(xtk_view_t *view);
+xtk_view_t *xtk_view_find(int view);
 
 #endif /* _LIB_XTK_VIEW_H */

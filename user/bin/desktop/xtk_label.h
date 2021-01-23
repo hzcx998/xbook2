@@ -25,11 +25,20 @@ static inline int xtk_label_length(xtk_spirit_t *label)
     return strlen(label->text);
 }
 
+static inline int xtk_label_width(xtk_spirit_t *label)
+{
+    if (!label)
+        return -1;        
+    return strlen(label->text) * 8;
+}
+
 static inline int xtk_label_set_text(xtk_spirit_t *label, char *text)
 {
     if (!label)
         return -1;
-    return xtk_spirit_set_text(label, text);
+    xtk_spirit_set_text(label, text);
+    xtk_spirit_auto_size(label);
+    return 0;
 }
 
 static inline char *xtk_label_get_text(xtk_spirit_t *label)

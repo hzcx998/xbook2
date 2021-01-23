@@ -7,9 +7,21 @@
 
 int xtk_main()
 {
-    // 在根窗口/面板中进行消息获取
-    while (1) {
-        xtk_window_main();
+    xtk_spirit_t *spirit;
+    uview_msg_t msg;
+    xtk_view_t *pview;
+    while (1) {    
+        xtk_view_for_each (pview) {
+            uview_set_wait(pview->view, 1);
+            if (uview_get_msg(pview->view, &msg) < 0) {
+                continue;
+            }
+            // 遍历每一个视图来获取上面的精灵
+            list_for_each_owner (spirit, &pview->spirit_list_head, list) {
+                xtk_window_main(spirit, &msg);
+                // xtk_xxx_main
+            }
+        }
     }
     return 0;
 }
@@ -88,7 +100,7 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
 
     uview_bitblt_update(fd, 0, 0, wbmp);
 
-    win_root = xtk_window_create("test", 400, 300, 200, 300, XTK_WINDOW_SHOW);
+    win_root = xtk_window_create2("test", 400, 300, 200, 300, XTK_WINDOW_SHOW);
     assert(win_root);
    
     
@@ -120,6 +132,26 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     xtk_spirit_show_all(win_root);
     #endif
 
+    xtk_spirit_t *win0 = xtk_window_create(XTK_WINDOW_TOPLEVEL);
+    assert(win0);
+    assert(xtk_window_set_title(XTK_WINDOW(win0), "hello, world!") == 0);
+    assert(xtk_window_set_title(XTK_WINDOW(win0), "hello, world2345!") == 0);
+    assert(xtk_window_set_title(XTK_WINDOW(win0), "hello, !") == 0);
+    
+    xtk_window_set_resizable(XTK_WINDOW(win0), false);
+    xtk_spirit_show(win0);
+
+    #if 0
+    xtk_spirit_t *win1 = xtk_window_create(XTK_WINDOW_POPUP);
+    assert(win1);
+
+    xtk_spirit_t *btn4 = xtk_button_create_with_label("xbook2");
+    assert(btn4);
+    xtk_spirit_set_pos(btn4, 100, 50);   
+    
+    xtk_container_add(XTK_CONTAINER(win1), btn4);
+    xtk_spirit_show(win1);
+    #endif
 
     #if 0
     int win_fd = win_root->view;

@@ -78,9 +78,9 @@ int xtk_spirit_set_image(xtk_spirit_t *spilit, char *filename);
 int xtk_spirit_set_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
 int xtk_spirit_set_collision(xtk_spirit_t *spilit, xtk_collision_t *collision);
 int xtk_spirit_set_view(xtk_spirit_t *spirit, int view);
+int xtk_spirit_set_container(xtk_spirit_t *spirit, xtk_container_t *container);
 
 int xtk_spirit_calc_aligin_pos(xtk_spirit_t *spirit, int width, int height, int *out_x, int *out_y);
-
 
 // show
 int xtk_spirit_show_collision(xtk_spirit_t *spilit, uview_bitmap_t *bmp);

@@ -143,8 +143,7 @@ int xtk_spirit_auto_size(xtk_spirit_t *spirit)
         assert(dotfont);
         int w = dotfont_get_char_width(dotfont) * len;
         int h = dotfont_get_char_height(dotfont);
-        if (w > spirit->width)
-            spirit->width = w + 4;
+        spirit->width = w + 4;
         if (h > spirit->height)
             spirit->height = h + 4;
     }
@@ -208,6 +207,24 @@ int xtk_spirit_set_bitmap(xtk_spirit_t *spirit, uview_bitmap_t *bmp)
         spirit->bitmap = NULL;
     }
     spirit->bitmap = bmp;
+    return 0;
+}
+
+int xtk_spirit_set_container(xtk_spirit_t *spirit, xtk_container_t *container)
+{
+    if (!spirit)
+        return -1;
+    if (container == NULL) {
+        if (spirit->container)
+            xtk_container_destroy(spirit->container);
+        spirit->container = NULL;
+        return 0;
+    }
+    if (spirit->container) {
+        xtk_container_destroy(spirit->container);
+        spirit->container = NULL;
+    }
+    spirit->container = container;
     return 0;
 }
 
@@ -403,6 +420,10 @@ int xtk_spirit_show(xtk_spirit_t *spirit)
 {
     if (!spirit)
         return -1;
+    if (spirit->type == XTK_SPIRIT_TYPE_WINDOW) {
+        uview_show(spirit->view);
+        return 0;
+    }
     if (!spirit->attached_container)
         return -1;
     xtk_spirit_t *attached_spirit = (xtk_spirit_t *)spirit->attached_container->spirit;
@@ -426,7 +447,7 @@ int xtk_spirit_show_all(xtk_spirit_t *spirit)
         return -1;
     xtk_container_t *container = spirit->container;
     if (!container)
-        return;
+        return -1;
     xtk_spirit_t *tmp;
     list_for_each_owner (tmp, &container->children_list, list) {    
         xtk_spirit_show(tmp);
