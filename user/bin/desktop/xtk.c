@@ -90,6 +90,7 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
 
     win_root = xtk_window_create("test", 400, 300, 200, 300, XTK_WINDOW_SHOW);
     assert(win_root);
+   
     
     btn_root = xtk_button_create_with_label("hello");
     assert(btn_root);

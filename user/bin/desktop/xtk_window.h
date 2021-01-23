@@ -24,11 +24,12 @@ typedef struct {
 
 typedef struct {
     xtk_spirit_t *title;
-
+    
 } xtk_window_navigation_t;
 
 typedef struct {
-    xtk_spirit_t spirit;    // 放到第一个成员，实现继承
+    xtk_spirit_t spirit;            // 放到第一个成员，实现继承
+    xtk_spirit_t window_spirit;     // 绘制窗口内容
     int content_width;
     int content_height;
     xtk_window_style_t *style;

@@ -1,6 +1,7 @@
 #include "xtk_button.h"
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 
 xtk_spirit_t *xtk_button_create()
 {
@@ -40,6 +41,7 @@ void xtk_button_change_state(xtk_button_t *button, xtk_button_state_t state)
     if (button->state == state)
         return;
     xtk_spirit_t *spirit = &button->spirit;
+    printf("state %d to %d\n", button->state, state);
     button->state = state;
     switch (state) {
     case XTK_BUTTON_IDLE:    

@@ -21,6 +21,7 @@ dialog
 #include "xtk_container.h"
 #include "xtk_box.h"
 #include "xtk_mouse.h"
+#include "xtk_view.h"
 
 void xtk_test(int fd, uview_bitmap_t *wbmp);
 #if 0

@@ -63,7 +63,7 @@ static void mouse_button_down(int button)
 
 static void mouse_button_up(int button)
 {
-    keprint("mouse button: %d up\n", button);
+    //keprint("mouse button: %d up\n", button);
     
     int id = -1;
     switch (button) {
@@ -90,7 +90,7 @@ void view_mouse_set_state(view_mouse_state_t state)
 {
     if (view_mouse.state == state)
         return;
-    keprint("mouse state %d -> %d\n", view_mouse.state, state);
+    //keprint("mouse state %d -> %d\n", view_mouse.state, state);
     view_mouse.state = state;
 }
 

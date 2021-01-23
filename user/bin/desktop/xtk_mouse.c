@@ -40,6 +40,7 @@ int xtk_mouse_motion(xtk_spirit_t *spirit, int x, int y)
 
 int xtk_mouse_lbtn_down(xtk_spirit_t *spirit, int x, int y)
 {
+    printf("down\n");
     xtk_container_t *container = spirit->container;
     if (!container)
         return -1;
@@ -73,6 +74,8 @@ int xtk_mouse_lbtn_down(xtk_spirit_t *spirit, int x, int y)
 
 int xtk_mouse_lbtn_up(xtk_spirit_t *spirit, int x, int y)
 {
+    printf("up\n");
+    
     xtk_container_t *container = spirit->container;
     if (!container)
         return -1;
