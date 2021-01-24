@@ -10,6 +10,7 @@ canvas
 dialog
 */
 
+#include "xtk_color.h"
 #include "xtk_text.h"
 #include "xtk_image.h"
 #include "xtk_spirit.h"

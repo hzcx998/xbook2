@@ -52,8 +52,13 @@ xtk_spirit_t *xtk_window_create2(char *title, int x, int y, int width, int heigh
 xtk_spirit_t *xtk_window_create(xtk_window_type_t type);
 int xtk_window_set_title(xtk_window_t *window, char *title);
 int xtk_window_set_resizable(xtk_window_t *window, bool resizable);
+xtk_surface_t *xtk_window_get_surface(xtk_window_t *window);
 
 int xtk_window_show(xtk_window_t *window);
+
+int xtk_window_flip(xtk_window_t *window);
+int xtk_window_update(xtk_window_t *window, int x, int y, int w, int h);
+
 
 int xtk_window_main(xtk_spirit_t *spirit, uview_msg_t *msg);
 

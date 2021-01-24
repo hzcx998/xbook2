@@ -4,8 +4,8 @@
 #include <uview.h>
 #include <sys/list.h>
 #include "xtk_image.h"
-#include "xtk_collision.h"
 #include "xtk_container_struct.h"
+#include "xtk_surface.h"
 
 typedef unsigned int xtk_color_t;
 
@@ -52,9 +52,8 @@ typedef struct {
     /* front */
     char *text;
     xtk_image_t *image;
-    uview_bitmap_t *bitmap;
+    xtk_surface_t *surface;
     /* extension */
-    xtk_collision_t *collision;
     xtk_container_t *container;    // 每个精灵对应一个容器
     xtk_container_t *attached_container;    // 每个精灵附加到的容器
 } xtk_spirit_t;
@@ -73,17 +72,15 @@ int xtk_spirit_set_text(xtk_spirit_t *spilit, char *text);
 int xtk_spirit_set_type(xtk_spirit_t *spirit, xtk_spirit_type_t type);
 int xtk_spirit_auto_size(xtk_spirit_t *spilit);
 int xtk_spirit_set_background_image(xtk_spirit_t *spilit, char *filename);
-int xtk_spirit_to_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
+int xtk_spirit_to_surface(xtk_spirit_t *spilit, xtk_surface_t *surface);
 int xtk_spirit_set_image(xtk_spirit_t *spilit, char *filename);
-int xtk_spirit_set_bitmap(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
-int xtk_spirit_set_collision(xtk_spirit_t *spilit, xtk_collision_t *collision);
+int xtk_spirit_set_surface(xtk_spirit_t *spilit, xtk_surface_t *surface);
 int xtk_spirit_set_view(xtk_spirit_t *spirit, int view);
 int xtk_spirit_set_container(xtk_spirit_t *spirit, xtk_container_t *container);
 
 int xtk_spirit_calc_aligin_pos(xtk_spirit_t *spirit, int width, int height, int *out_x, int *out_y);
 
 // show
-int xtk_spirit_show_collision(xtk_spirit_t *spilit, uview_bitmap_t *bmp);
 int xtk_spirit_show_all(xtk_spirit_t *spirit);
 int xtk_spirit_show(xtk_spirit_t *spirit);
 

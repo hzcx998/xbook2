@@ -48,20 +48,20 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     xtk_spirit_t *spirit = xtk_spirit_create(100, 100, 100, 24);
     assert(spirit);
     spirit->style.background_align = XTK_ALIGN_CENTER;
-    spirit->style.background_color = UVIEW_BLUE;
+    spirit->style.background_color = XTK_BLUE;
     xtk_spirit_set_text(spirit, "abcdef!asdasdasd");
     xtk_spirit_set_background_image(spirit, "/res/cursor.png");
     xtk_spirit_auto_size(spirit);
-    xtk_spirit_to_bitmap(spirit, wbmp);
+    xtk_spirit_to_surface(spirit, wbmp);
     uview_bitblt_update(fd, 0, 0, wbmp);
     uview_bitmap_t *bmp0 = uview_bitmap_create(32, 32);
     assert(bmp0);
-    uview_bitmap_rectfill(bmp0, 0, 0, 32, 32, UVIEW_BLACK);
-    spirit->style.background_color = UVIEW_GREEN;
-    spirit->style.border_color = UVIEW_YELLOW;
-    spirit->style.color = UVIEW_WHITE;
+    uview_bitmap_rectfill(bmp0, 0, 0, 32, 32, XTK_BLACK);
+    spirit->style.background_color = XTK_GREEN;
+    spirit->style.border_color = XTK_YELLOW;
+    spirit->style.color = XTK_WHITE;
     spirit->style.align = XTK_ALIGN_CENTER;
-    xtk_spirit_set_bitmap(spirit, bmp0);
+    xtk_spirit_set_surface(spirit, bmp0);
     
     xtk_spirit_set_text(spirit, "hello, world!\n");
     xtk_spirit_set_background_image(spirit, NULL);
@@ -70,12 +70,8 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     uview_bitmap_t *bmp1 = uview_bitmap_create(spirit->width, spirit->height);
     assert(bmp1);
     
-    xtk_collision_t *collision = xtk_collision_create(0, 0, spirit->width, spirit->height);
-    assert(collision);
-    xtk_spirit_set_collision(spirit, collision);
-    xtk_collision_set_visible(collision, XTK_COLLISION_VISIBLE);
     xtk_spirit_set_pos(spirit, 0, 0);
-    xtk_spirit_to_bitmap(spirit, bmp1);
+    xtk_spirit_to_surface(spirit, bmp1);
 
     #if 0
     uview_bitmap_bitblt(wbmp, 100, 200, bmp1, 0, 0, 100, 24);
@@ -89,11 +85,11 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
 
     xtk_spirit_t *label0 = xtk_label_create("hello");
     xtk_spirit_set_pos(label0, 20, 150);
-    xtk_spirit_to_bitmap(label0, wbmp);
+    xtk_spirit_to_surface(label0, wbmp);
     
     xtk_spirit_t *label1 = xtk_label_create("world");
     xtk_spirit_set_pos(label1, 20, 200);
-    xtk_spirit_to_bitmap(label1, wbmp);
+    xtk_spirit_to_surface(label1, wbmp);
     
     xtk_spirit_destroy(label0);
     xtk_spirit_destroy(label1);
@@ -141,107 +137,34 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     xtk_window_set_resizable(XTK_WINDOW(win0), false);
     xtk_spirit_show(win0);
 
-    #if 0
-    xtk_spirit_t *win1 = xtk_window_create(XTK_WINDOW_POPUP);
-    assert(win1);
-
-    xtk_spirit_t *btn4 = xtk_button_create_with_label("xbook2");
-    assert(btn4);
-    xtk_spirit_set_pos(btn4, 100, 50);   
+    xtk_surface_t *surface0 = xtk_window_get_surface(XTK_WINDOW(win0));
     
-    xtk_container_add(XTK_CONTAINER(win1), btn4);
-    xtk_spirit_show(win1);
-    #endif
+    xtk_surface_rectfill(surface0, 0, 0, 100, 100, XTK_BLUE);
+    xtk_surface_rectfill(surface0, 50, 50, 100, 100, XTK_GREEN);
+    
+    xtk_surface_t *surface1 = xtk_surface_create(100, 200);
+    assert(surface1);
 
-    #if 0
-    int win_fd = win_root->view;
-    uview_msg_t msg;
-    while (1) {
-        if (uview_get_msg(win_fd, &msg) < 0) {
-            continue;
-        }
+    xtk_surface_rectfill(surface1, 0, 0, surface1->w, surface1->h, XTK_BLACK);
+    xtk_surface_blit(surface1, NULL, surface0, NULL);
 
-        switch (uview_msg_get_type(&msg)) {
-        case UVIEW_MSG_MOUSE_MOTION:
-            {
-                int x = uview_msg_get_mouse_x(&msg);
-                int y = uview_msg_get_mouse_y(&msg);
-                xtk_mouse_motion(x, y);
-            }
-            break;
-        case UVIEW_MSG_MOUSE_LBTN_DOWN:
-            {
-                int x = uview_msg_get_mouse_x(&msg);
-                int y = uview_msg_get_mouse_y(&msg);
-                xtk_mouse_lbtn_down(x, y);
-            }
-            break;
-        case UVIEW_MSG_MOUSE_LBTN_UP:
-            {
-                int x = uview_msg_get_mouse_x(&msg);
-                int y = uview_msg_get_mouse_y(&msg);
-                xtk_mouse_lbtn_up(x, y);
-            }
-            break;
-        default:
-            break;
-        }
-    }    
-    #endif
+    xtk_surface_rectfill(surface1, 0, 0, surface1->w, surface1->h, XTK_YELLOW);
+    xtk_rect_t dstrect = {100, 50, 50, 50};
+    xtk_surface_blit(surface1, NULL, surface0, &dstrect);
+    
+    xtk_surface_rectfill(surface1, 0, 0, surface1->w, surface1->h, XTK_GRAY);
+    xtk_rect_t srcrect = {50, 50, 25, 25};
+    
+    dstrect.x = 200;
+    dstrect.y = 150;
+    xtk_surface_blit(surface1, &srcrect, surface0, &dstrect);
+    
+    //xtk_window_flip(XTK_WINDOW(win0));
+
+    xtk_window_update(XTK_WINDOW(win0), 0, 0, win0->width, win0->height);
+    //xtk_window_update(XTK_WINDOW(win0), 20, 10, 100, 100);
+    //xtk_window_update(XTK_WINDOW(win0), -20, -10, 100, 100);
+    //xtk_window_update(XTK_WINDOW(win0), 20, 10, 400, 300);
+    
     xtk_main();
 }
-#if 0
-void xtk_mouse_motion(int x, int y)
-{
-    //printf("mouse motion: %d, %d\n", x, y);
-
-    /* 检测窗口上的容器树里面的所有内容，直到遇到一个适合的容器，就结束 */
-    xtk_button_t *btn = XTK_BUTTON(btn_root); 
-    if (XTK_IN_SPIRIT(btn_root, x, y)) {
-        if (btn->state == XTK_BUTTON_IDLE) {
-            xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
-        }
-    } else {
-        xtk_button_change_state(btn, XTK_BUTTON_IDLE);
-    }
-    // 更新
-    xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
-    uview_bitblt_update_ex(win_root->view, btn_root->x, btn_root->y,
-        win_root->bitmap, btn_root->x, btn_root->y, btn_root->width, btn_root->height);
-    
-}
-
-void xtk_mouse_lbtn_down(int x, int y)
-{
-    printf("mouse down: %d, %d\n", x, y);
-
-    /* 检测窗口上的容器树里面的所有内容，直到遇到一个适合的容器，就结束 */
-    xtk_button_t *btn = XTK_BUTTON(btn_root); 
-    if (XTK_IN_SPIRIT(btn_root, x, y)) {
-        if (btn->state == XTK_BUTTON_TOUCH) {
-            xtk_button_change_state(btn, XTK_BUTTON_CLICK);
-            // 更新
-            xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
-            uview_bitblt_update_ex(win_root->view, btn_root->x, btn_root->y,
-                win_root->bitmap, btn_root->x, btn_root->y, btn_root->width, btn_root->height);        
-        } 
-    }
-}
-
-void xtk_mouse_lbtn_up(int x, int y)
-{
-    printf("mouse up: %d, %d\n", x, y);
-
-    xtk_button_t *btn = XTK_BUTTON(btn_root); 
-    if (XTK_IN_SPIRIT(btn_root, x, y)) {
-        if (btn->state == XTK_BUTTON_CLICK) {
-            printf("mouse call signal: %d, %d\n", x, y);
-            xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
-            // 更新
-            xtk_spirit_to_bitmap(btn_root, win_root->bitmap);
-            uview_bitblt_update_ex(win_root->view, btn_root->x, btn_root->y,
-                win_root->bitmap, btn_root->x, btn_root->y, btn_root->width, btn_root->height);     
-        }
-    }
-}
-#endif

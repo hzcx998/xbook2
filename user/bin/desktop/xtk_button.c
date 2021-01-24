@@ -24,7 +24,7 @@ xtk_spirit_t *xtk_button_create()
     return spirit;
 }
 
-xtk_spirit_t *xtk_button_create_with_label(const char *label)
+xtk_spirit_t *xtk_button_create_with_label(char *label)
 {
     xtk_spirit_t *spirit = xtk_button_create();
     if (!spirit)

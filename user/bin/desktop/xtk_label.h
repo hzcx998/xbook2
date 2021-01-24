@@ -10,7 +10,7 @@ static inline xtk_spirit_t *xtk_label_create(char *text)
     xtk_spirit_t *spirit = xtk_spirit_create(0, 0, 0, 0);
     if (!spirit)
         return NULL;
-    spirit->style.background_color = UVIEW_WHITE;
+    spirit->style.background_color = XTK_WHITE;
     spirit->style.align = XTK_ALIGN_CENTER;
     xtk_spirit_set_text(spirit, text);
     xtk_spirit_set_type(spirit, XTK_SPIRIT_TYPE_LABEL);

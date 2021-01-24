@@ -15,19 +15,18 @@ void xtk_spirit_init(xtk_spirit_t *spirit, int x, int y, int width, int height)
     spirit->width = width;
     spirit->height = height;
     
-    spirit->style.border_color = UVIEW_NONE;
+    spirit->style.border_color = XTK_NONE_COLOR;
     
-    spirit->style.color = UVIEW_BLACK;
+    spirit->style.color = XTK_BLACK;
     spirit->style.align = XTK_ALIGN_LEFT;
     spirit->text = NULL;
     spirit->image = NULL;
-    spirit->bitmap = NULL;
+    spirit->surface = NULL;
     
-    spirit->style.background_color = UVIEW_NONE;
+    spirit->style.background_color = XTK_NONE_COLOR;
     spirit->style.background_align = XTK_ALIGN_LEFT;
     spirit->background_image = NULL;
 
-    spirit->collision = NULL;
     spirit->container = NULL;
     spirit->attached_container = NULL;
     spirit->view = -1;
@@ -54,9 +53,9 @@ int xtk_spirit_cleanup(xtk_spirit_t *spirit)
         xtk_image_destroy(spirit->image);
         spirit->image = NULL;
     }
-    if (spirit->bitmap) {
-        uview_bitmap_destroy(spirit->bitmap);
-        spirit->bitmap = NULL;
+    if (spirit->surface) {
+        xtk_surface_destroy(spirit->surface);
+        spirit->surface = NULL;
     }
     if (spirit->text) {
         free(spirit->text);
@@ -137,7 +136,7 @@ int xtk_spirit_auto_size(xtk_spirit_t *spirit)
 {
     if (!spirit)
         return -1;
-    if (spirit->text && spirit->style.color != UVIEW_NONE) {
+    if (spirit->text && spirit->style.color != XTK_NONE_COLOR) {
         int len = strlen(spirit->text);
         dotfont_t *dotfont = dotfont_find(&__xtk_dotflib, DOTF_STANDARD_NAME);
         assert(dotfont);
@@ -192,21 +191,21 @@ int xtk_spirit_set_image(xtk_spirit_t *spirit, char *filename)
     return 0;
 }
 
-int xtk_spirit_set_bitmap(xtk_spirit_t *spirit, uview_bitmap_t *bmp)
+int xtk_spirit_set_surface(xtk_spirit_t *spirit, xtk_surface_t *surface)
 {
     if (!spirit)
         return -1;
-    if (bmp == NULL) {
-        if (spirit->bitmap)
-            uview_bitmap_destroy(spirit->bitmap);
-        spirit->bitmap = NULL;
+    if (surface == NULL) {
+        if (spirit->surface)
+            xtk_surface_destroy(spirit->surface);
+        spirit->surface = NULL;
         return 0;
     }
-    if (spirit->bitmap) {
-        uview_bitmap_destroy(spirit->bitmap);
-        spirit->bitmap = NULL;
+    if (spirit->surface) {
+        xtk_surface_destroy(spirit->surface);
+        spirit->surface = NULL;
     }
-    spirit->bitmap = bmp;
+    spirit->surface = surface;
     return 0;
 }
 
@@ -225,24 +224,6 @@ int xtk_spirit_set_container(xtk_spirit_t *spirit, xtk_container_t *container)
         spirit->container = NULL;
     }
     spirit->container = container;
-    return 0;
-}
-
-int xtk_spirit_set_collision(xtk_spirit_t *spirit, xtk_collision_t *collision)
-{
-    if (!spirit)
-        return -1;
-    if (collision == NULL) {
-        if (spirit->collision)
-            xtk_collision_destroy(spirit->collision);
-        spirit->collision = NULL;
-        return 0;
-    }
-    if (spirit->collision) {
-        xtk_collision_destroy(spirit->collision);
-        spirit->collision = NULL;
-    }
-    spirit->collision = collision;
     return 0;
 }
 
@@ -286,9 +267,9 @@ int xtk_spirit_calc_aligin_pos(xtk_spirit_t *spirit, int width, int height, int 
 }
 
 /* 将精灵渲染到bmp位图中 */
-int xtk_spirit_to_bitmap(xtk_spirit_t *spirit, uview_bitmap_t *bmp)
+int xtk_spirit_to_surface(xtk_spirit_t *spirit, xtk_surface_t *surface)
 {
-    if (!spirit || !bmp)
+    if (!spirit || !surface)
         return -1;
 
     int start_x = spirit->x;
@@ -296,72 +277,68 @@ int xtk_spirit_to_bitmap(xtk_spirit_t *spirit, uview_bitmap_t *bmp)
 
     int off_x = 0, off_y = 0;
     /* 背景 */
-    if (spirit->style.background_color != UVIEW_NONE) {
-        uview_bitmap_rectfill(bmp, start_x, start_y, spirit->width, spirit->height,
+    if (spirit->style.background_color != XTK_NONE_COLOR) {
+        xtk_surface_rectfill(surface, start_x, start_y, spirit->width, spirit->height,
             spirit->style.background_color);
+        
     }
     if (spirit->background_image) {
         // 根据对齐方式设置显示位置
         __xtk_calc_aligin_pos(spirit->style.background_align, spirit->width, spirit->height, spirit->background_image->w,
             spirit->background_image->h, &off_x, &off_y);
-        uview_bitmap_t srcbmp;
-        uview_bitmap_init(&srcbmp, 
+        xtk_surface_t src_surface;
+        xtk_surface_init(&src_surface, 
             (unsigned int) spirit->background_image->w,
             (unsigned int) spirit->background_image->h,
             (uview_color_t *) spirit->background_image->buf);
 
-        uview_bitmap_bitblt(bmp, start_x + off_x, start_y + off_y, &srcbmp, 0, 0, srcbmp.width, srcbmp.height);
+        xtk_rect_t srcrect = {0, 0, src_surface.w, src_surface.h};
+        xtk_rect_t dstrect = {start_x + off_x, start_y + off_y, surface->w, surface->h};
+        xtk_surface_blit(surface, &dstrect, &src_surface, &srcrect);
     }
     
     /* 前景 */
-    if (spirit->bitmap) {
+    if (spirit->surface) {
         // 根据对齐方式设置显示位置
         __xtk_calc_aligin_pos(spirit->style.align, spirit->width, spirit->height, 
-            spirit->bitmap->width, spirit->bitmap->height, &off_x, &off_y);
-        uview_bitmap_bitblt(bmp, start_x + off_x, start_y + off_y, spirit->bitmap, 0, 0,
-            spirit->bitmap->width, spirit->bitmap->height);
+            spirit->surface->w, spirit->surface->h, &off_x, &off_y);
+        
+        xtk_rect_t srcrect = {0, 0, spirit->surface->w, spirit->surface->h};
+        xtk_rect_t dstrect = {start_x + off_x, start_y + off_y, surface->w, surface->h};
+        xtk_surface_blit(surface, &dstrect, spirit->surface, &srcrect);
     }
     if (spirit->image) {
         // 根据对齐方式设置显示位置
         __xtk_calc_aligin_pos(spirit->style.align, spirit->width, spirit->height, spirit->image->w,
             spirit->image->h, &off_x, &off_y);
-        uview_bitmap_t srcbmp;
-        uview_bitmap_init(&srcbmp, 
+        xtk_surface_t src_surface;
+        xtk_surface_init(&src_surface, 
             (unsigned int) spirit->image->w,
             (unsigned int) spirit->image->h,
             (uview_color_t *) spirit->image->buf);
-        uview_bitmap_bitblt(bmp, start_x + off_x, start_y + off_y, &srcbmp, 0, 0, srcbmp.width, srcbmp.height);
+        
+        xtk_rect_t srcrect = {0, 0, src_surface.w, src_surface.h};
+        xtk_rect_t dstrect = {start_x + off_x, start_y + off_y, surface->w, surface->h};
+        xtk_surface_blit(surface, &dstrect, &src_surface, &srcrect);
     }
 
-    if (spirit->text && spirit->style.color != UVIEW_NONE) {
+    if (spirit->text && spirit->style.color != XTK_NONE_COLOR) {
         dotfont_t *dotfont = dotfont_find(&__xtk_dotflib, DOTF_STANDARD_NAME);
         assert(dotfont);
 
         __xtk_calc_aligin_pos(spirit->style.align, spirit->width, spirit->height, 
             dotfont_get_char_width(dotfont) * strlen(spirit->text),
             dotfont_get_char_height(dotfont), &off_x, &off_y);
+        uview_bitmap_t bmp;
+        uview_bitmap_init(&bmp, surface->w, surface->h, (uview_color_t *) surface->pixels);
         xtk_text_to_bitmap(spirit->text, spirit->style.color, DOTF_STANDARD_NAME,
-            bmp, start_x + off_x, start_y + off_y);
+            &bmp, start_x + off_x, start_y + off_y);
     }
 
     /* 边框 */
-    if (spirit->style.border_color != UVIEW_NONE) {
-        uview_bitmap_rect(bmp, start_x, start_y, spirit->width, spirit->height,
+    if (spirit->style.border_color != XTK_NONE_COLOR) {
+        xtk_surface_rect(surface, start_x, start_y, spirit->width, spirit->height,
             spirit->style.border_color);
-    }
-
-    xtk_spirit_show_collision(spirit, bmp);
-
-    return 0;
-}
-
-int xtk_spirit_show_collision(xtk_spirit_t *spirit, uview_bitmap_t *bmp)
-{
-    if (!spirit)
-        return -1;
-    /* 包围盒 */
-    if (spirit->collision) {
-        xtk_collision_show(spirit->collision, bmp, spirit->x, spirit->y);
     }
     return 0;
 }
@@ -391,28 +368,6 @@ void xtk_spirit_adjust_pos_by_type_all(xtk_spirit_t *spirit)
     }
 }
 
-void xtk_spirit_show_child(xtk_spirit_t *root_spirit, xtk_spirit_t *spirit)
-{
-    xtk_container_t *container = spirit->container;
-    if (!container)
-        return;
-    xtk_spirit_t *tmp;
-    // 根据不容的容器规则，进行位置布局
-    xtk_spirit_adjust_pos_by_type_all(spirit);
-
-    list_for_each_owner (tmp, &container->children_list, list) {    
-        // 转换成位图后，刷新显示
-        xtk_spirit_to_bitmap(tmp, root_spirit->bitmap);
-        uview_bitblt_update_ex(root_spirit->view, tmp->x, tmp->y,
-            root_spirit->bitmap, tmp->x, tmp->y, tmp->width, tmp->height);
-         
-        // 如果有容器的话，那么就需要遍历子容器
-        if (tmp->container) {
-            xtk_spirit_show_child(root_spirit, tmp);
-        }
-    }
-}
-
 /**
  * 显示精灵到已添加到的容器中
  */
@@ -427,14 +382,17 @@ int xtk_spirit_show(xtk_spirit_t *spirit)
     if (!spirit->attached_container)
         return -1;
     xtk_spirit_t *attached_spirit = (xtk_spirit_t *)spirit->attached_container->spirit;
-    if (!attached_spirit->bitmap)
+    if (!attached_spirit->surface)
         return -1;
     
-    xtk_spirit_to_bitmap(spirit, attached_spirit->bitmap);
+    xtk_spirit_to_surface(spirit, attached_spirit->surface);
     if (UVIEW_BAD_ID(attached_spirit->view))
         return -1;
+    
+    uview_bitmap_t bmp;
+    uview_bitmap_init(&bmp, attached_spirit->surface->w, attached_spirit->surface->h, (uview_color_t *) attached_spirit->surface->pixels);
     uview_bitblt_update_ex(attached_spirit->view, spirit->x, spirit->y,
-        attached_spirit->bitmap, spirit->x, spirit->y, spirit->width, spirit->height);
+        &bmp, spirit->x, spirit->y, spirit->width, spirit->height);
     return 0;
 }
 

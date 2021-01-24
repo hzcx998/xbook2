@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 #include "xtk_spirit.h"
-#include "xtk_collision.h"
 
 typedef enum {
     XTK_BUTTON_IDLE = 0,
@@ -14,7 +13,6 @@ typedef enum {
 typedef struct {
     xtk_spirit_t spirit;
     xtk_button_state_t state;
-    xtk_collision_t collision;
     xtk_color_t color_idle;
     xtk_color_t color_touch;
     xtk_color_t color_click;
@@ -26,7 +24,7 @@ typedef struct {
 #define XTK_BUTTON_HEIGHT_DEFAULT  24
 
 xtk_spirit_t *xtk_button_create();
-xtk_spirit_t *xtk_button_create_with_label(const char *label);
+xtk_spirit_t *xtk_button_create_with_label(char *label);
 void xtk_button_change_state(xtk_button_t *button, xtk_button_state_t state);
 
 #endif /* _LIB_XTK_BUTTON_H */

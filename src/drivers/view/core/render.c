@@ -224,6 +224,10 @@ void view_render_bitblt(view_t *view, int x, int y,
         return;
     if (!view->section)
         return;
+    if (width > bmp->width)
+        width = bmp->width;
+    if (height > bmp->height)
+        height = bmp->height;
     int w = min(width, bmp->width - bx);
     int h = min(height, bmp->height - by);
 
