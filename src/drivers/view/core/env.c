@@ -30,6 +30,8 @@ static view_t *shade_view = NULL;
 static view_rect_t shade_rect; /* 遮罩图层矩形区域 */
 #endif
 
+extern int view_last_x, view_last_y;
+
 view_t *view_env_get_activity()
 {
     return view_activity;
@@ -216,13 +218,11 @@ int view_calc_resize(view_t *view, int mx, int my, view_rect_t *out_rect)
         //errprint("calc size invalid!\n");
         return -1;  /* invalid rect */
     }
-    if (view_region_valid(&view->min_resize_region)) {
-        if (rect.w.sw < view->min_resize_region.right) {
-            rect.w.sw = view->min_resize_region.right;
-        }
-        if (rect.h.sh < view->min_resize_region.bottom) {
-            rect.h.sh = view->min_resize_region.bottom;
-        }
+    if (rect.w.sw < view->width_min) {
+        rect.w.sw = view->width_min;
+    }
+    if (rect.h.sh < view->height_min) {
+        rect.h.sh = view->height_min;
     }
     *out_rect = rect; /* 转换矩形 */
     return 0;
@@ -233,11 +233,21 @@ uint32_t view_env_get_screensize()
     return (view_screen.width << 16) | view_screen.height;
 }
 
+uint32_t view_env_get_mousepos()
+{
+    return (view_mouse.x << 16) | view_mouse.y;
+}
+
+uint32_t view_env_get_lastpos()
+{
+    return (view_last_x << 16) | view_last_y;
+}
+
 /**
  * 尝试调整图层大小，并发送RESIZE消息给指定图层
  * 
  */
-int view_try_resize(view_t *view, view_rect_t *rect)
+int view_env_try_resize(view_t *view, view_rect_t *rect)
 {
     if (!view || !rect)
         return -1;
@@ -275,7 +285,7 @@ int view_env_filter_mouse_msg(view_msg_t *msg)
                 keprint(" to (%d, %d), (%d, %d)\n",
                     rect.x, rect.y, rect.w.sw, rect.h.sh);
                 #endif /* DEBUG_GUI_LAYER */
-                view_try_resize(resize_view, &rect);
+                view_env_try_resize(resize_view, &rect);
                 
                 #ifdef CONFIG_SHADE_VIEW
                 view_set_z(shade_view, -1); /* 隐藏遮罩图层 */

@@ -45,6 +45,9 @@ typedef struct {
     int y;
     int width;
     int height;
+    int width_min;
+    int height_min;
+    int visible;        // 可见性
     int view;   // 精灵所在的视图
     xtk_style_t style;
     /* back */
@@ -68,6 +71,7 @@ xtk_spirit_t *xtk_spirit_create(int x, int y, int width, int height);
 int xtk_spirit_destroy(xtk_spirit_t *spilit);
 int xtk_spirit_set_pos(xtk_spirit_t *spilit, int x, int y);
 int xtk_spirit_set_size(xtk_spirit_t *spilit, int width, int height);
+int xtk_spirit_set_size_request(xtk_spirit_t *spirit, int width, int height);
 int xtk_spirit_set_text(xtk_spirit_t *spilit, char *text);
 int xtk_spirit_set_type(xtk_spirit_t *spirit, xtk_spirit_type_t type);
 int xtk_spirit_auto_size(xtk_spirit_t *spilit);
@@ -77,11 +81,12 @@ int xtk_spirit_set_image(xtk_spirit_t *spilit, char *filename);
 int xtk_spirit_set_surface(xtk_spirit_t *spilit, xtk_surface_t *surface);
 int xtk_spirit_set_view(xtk_spirit_t *spirit, int view);
 int xtk_spirit_set_container(xtk_spirit_t *spirit, xtk_container_t *container);
-
 int xtk_spirit_calc_aligin_pos(xtk_spirit_t *spirit, int width, int height, int *out_x, int *out_y);
 
-// show
 int xtk_spirit_show_all(xtk_spirit_t *spirit);
 int xtk_spirit_show(xtk_spirit_t *spirit);
+
+int xtk_spirit_hide(xtk_spirit_t *spirit);
+int xtk_spirit_hide_all(xtk_spirit_t *spirit);
 
 #endif /* _LIB_XTK_SPIRIT_H */

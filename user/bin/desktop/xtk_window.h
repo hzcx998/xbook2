@@ -31,6 +31,13 @@ typedef struct {
     uview_color_t text_color_inactive;
 } xtk_window_style_t;
 
+typedef enum {
+    XTK_WIN_POS_NONE = 0,   /* 不固定 */
+    XTK_WIN_POS_CENTER,     /* 居中 */
+    XTK_WIN_POS_MOUSE,      /* 出现在鼠标位置 */
+    XTK_WIN_POS_CENTER_ALWAYS,      /* 窗口总是居中 */
+} xtk_window_position_t;
+
 typedef struct {
     xtk_spirit_t *title;
     
@@ -52,13 +59,14 @@ xtk_spirit_t *xtk_window_create2(char *title, int x, int y, int width, int heigh
 xtk_spirit_t *xtk_window_create(xtk_window_type_t type);
 int xtk_window_set_title(xtk_window_t *window, char *title);
 int xtk_window_set_resizable(xtk_window_t *window, bool resizable);
+int xtk_window_set_position(xtk_window_t *window, xtk_window_position_t pos);
+
 xtk_surface_t *xtk_window_get_surface(xtk_window_t *window);
 
 int xtk_window_show(xtk_window_t *window);
 
 int xtk_window_flip(xtk_window_t *window);
 int xtk_window_update(xtk_window_t *window, int x, int y, int w, int h);
-
 
 int xtk_window_main(xtk_spirit_t *spirit, uview_msg_t *msg);
 

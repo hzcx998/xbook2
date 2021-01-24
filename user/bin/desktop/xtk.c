@@ -134,7 +134,15 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     assert(xtk_window_set_title(XTK_WINDOW(win0), "hello, world2345!") == 0);
     assert(xtk_window_set_title(XTK_WINDOW(win0), "hello, !") == 0);
     
-    xtk_window_set_resizable(XTK_WINDOW(win0), false);
+    xtk_window_set_resizable(XTK_WINDOW(win0), true);
+    xtk_window_set_position(XTK_WINDOW(win0), XTK_WIN_POS_NONE);
+    xtk_spirit_set_size_request(win0, 100, 100);
+
+    
+    xtk_spirit_t *btn10 = xtk_button_create_with_label("6666");
+    assert(btn10);
+    xtk_spirit_set_pos(btn10, 0, 50);
+    
     xtk_spirit_show(win0);
 
     xtk_surface_t *surface0 = xtk_window_get_surface(XTK_WINDOW(win0));
@@ -162,6 +170,12 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     //xtk_window_flip(XTK_WINDOW(win0));
 
     xtk_window_update(XTK_WINDOW(win0), 0, 0, win0->width, win0->height);
+
+    xtk_container_add(XTK_CONTAINER(win0), btn10);
+    xtk_spirit_show_all(win0);
+
+    // assert(xtk_spirit_hide_all(win0) == 0);
+
     //xtk_window_update(XTK_WINDOW(win0), 20, 10, 100, 100);
     //xtk_window_update(XTK_WINDOW(win0), -20, -10, 100, 100);
     //xtk_window_update(XTK_WINDOW(win0), 20, 10, 400, 300);

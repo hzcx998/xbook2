@@ -14,6 +14,7 @@ static LIST_HEAD(view_global_list_head);
 static uint16_t *view_id_map;
 static int view_top_z = -1;    
 static int view_next_id = 0;    
+int view_last_x, view_last_y; // 上一个关闭的视图的位置
 
 view_t *view_create(int x, int y, int width, int height)
 {
@@ -41,6 +42,9 @@ view_t *view_create(int x, int y, int width, int height)
     view->z = -1;
     view->width = width;
     view->height = height;
+    view->width_min = VIEW_RESIZE_SIZE_MIN;
+    view->height_min = VIEW_RESIZE_SIZE_MIN;
+    
     view->type = VIEW_TYPE_FIXED;
     view->attr = 0;
     int i;
@@ -48,7 +52,6 @@ view_t *view_create(int x, int y, int width, int height)
         view_region_reset(&view->drag_regions[i]);
     }
     view_region_init(&view->drag_regions[0], 0, 0, view->width, view->height);
-    view_region_init(&view->min_resize_region, 0, 0, VIEW_RESIZE_SIZE_MIN, VIEW_RESIZE_SIZE_MIN);
     view_region_init(&view->resize_region, VIEW_RESIZE_BORDER_SIZE,
         VIEW_RESIZE_BORDER_SIZE, view->width - VIEW_RESIZE_BORDER_SIZE,
         view->height - VIEW_RESIZE_BORDER_SIZE);
@@ -77,6 +80,10 @@ int view_destroy(view_t *view)
 {
     if (!view)
         return -1;
+    // 记录上一个销毁的视图的位置
+    view_last_x = view->x;
+    view_last_y = view->y;
+    
     if (msgpool_destroy(view->msgpool) < 0) {
         return -1;
     }
@@ -158,6 +165,19 @@ void view_clear(view_t *view)
 {
     if (view && view->section)
         view_section_clear(view->section);
+}
+
+int view_set_size_min(view_t *view, int width, int height)
+{
+    if (!view)
+        return -1;
+    view->width_min = width;
+    if (view->width_min < VIEW_RESIZE_SIZE_MIN)
+        view->width_min = VIEW_RESIZE_SIZE_MIN;
+    view->height_min = width;
+    if (view->height_min < VIEW_RESIZE_SIZE_MIN)
+        view->height_min = VIEW_RESIZE_SIZE_MIN;
+    return 0;
 }
 
 static void view_refresh_map(int left, int top, int right, int buttom, int z0)
@@ -294,7 +314,6 @@ static void __view_hiden_by_z(view_t *view, int z)
     /* 刷新视图, [0, view->z - 1] */
     view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, 0);
     view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, 0, old_z - 1);
-    
 }
 
 static void __view_show_by_z(view_t *view, int z)
@@ -433,7 +452,11 @@ int view_show(view_t *view)
 {
     if (!view)
         return -1;
-    view_move_to_top(view);
+    if (view->z < 0)
+        view_move_to_top(view);
+    else
+        view_move_under_top(view);
+
     return 0;
 }
 
@@ -601,6 +624,8 @@ int view_init()
         return -1;
     }
     memset(view_id_map, 0, id_map_size);
+
+    view_last_x = view_last_y = 0;
     return 0;
 }
 

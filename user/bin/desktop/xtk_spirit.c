@@ -1,6 +1,7 @@
 #include "xtk.h"
 #include <uview.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include <dotfont.h>
 
@@ -14,7 +15,9 @@ void xtk_spirit_init(xtk_spirit_t *spirit, int x, int y, int width, int height)
     spirit->y = y;
     spirit->width = width;
     spirit->height = height;
-    
+    spirit->width_min = 0;
+    spirit->height_min = 0;
+    spirit->visible = 0;
     spirit->style.border_color = XTK_NONE_COLOR;
     
     spirit->style.color = XTK_BLACK;
@@ -105,6 +108,24 @@ int xtk_spirit_set_size(xtk_spirit_t *spirit, int width, int height)
         return -1;
     spirit->width = width;
     spirit->height = height;
+    return 0;
+}
+
+int xtk_spirit_set_size_request(xtk_spirit_t *spirit, int width, int height)
+{
+    if (!spirit)
+        return -1;
+    spirit->width_min = width;
+    spirit->height_min = height;
+    // 根据不同的精灵类型做出不同的行为操作
+    switch (spirit->type)
+    {
+    case XTK_SPIRIT_TYPE_WINDOW:
+        uview_set_size_min(spirit->view, width, height);
+        break;    
+    default:
+        break;
+    }
     return 0;
 }
 
@@ -369,16 +390,22 @@ void xtk_spirit_adjust_pos_by_type_all(xtk_spirit_t *spirit)
 }
 
 /**
- * 显示精灵到已添加到的容器中
+ * 显示精灵
  */
 int xtk_spirit_show(xtk_spirit_t *spirit)
 {
     if (!spirit)
         return -1;
-    if (spirit->type == XTK_SPIRIT_TYPE_WINDOW) {
+    spirit->visible = 1;
+    // 处理特殊精灵
+    switch (spirit->type) {
+    case XTK_SPIRIT_TYPE_WINDOW:
         uview_show(spirit->view);
         return 0;
+    default:
+        break;
     }
+    // 默认情况
     if (!spirit->attached_container)
         return -1;
     xtk_spirit_t *attached_spirit = (xtk_spirit_t *)spirit->attached_container->spirit;
@@ -391,8 +418,9 @@ int xtk_spirit_show(xtk_spirit_t *spirit)
     
     uview_bitmap_t bmp;
     uview_bitmap_init(&bmp, attached_spirit->surface->w, attached_spirit->surface->h, (uview_color_t *) attached_spirit->surface->pixels);
-    uview_bitblt_update_ex(attached_spirit->view, spirit->x, spirit->y,
-        &bmp, spirit->x, spirit->y, spirit->width, spirit->height);
+    uview_bitblt_update_ex(attached_spirit->view, attached_spirit->x + spirit->x,
+        attached_spirit->y + spirit->y, &bmp, spirit->x, spirit->y, 
+        spirit->width, spirit->height);
     return 0;
 }
 
@@ -410,5 +438,62 @@ int xtk_spirit_show_all(xtk_spirit_t *spirit)
     list_for_each_owner (tmp, &container->children_list, list) {    
         xtk_spirit_show(tmp);
     }
+    xtk_spirit_show(spirit);
+    return 0;
+}
+
+/**
+ * 隐藏精灵
+ */
+int xtk_spirit_hide(xtk_spirit_t *spirit)
+{
+    if (!spirit)
+        return -1;
+
+    spirit->visible = 0;
+    // 处理特殊精灵
+    switch (spirit->type) {
+    case XTK_SPIRIT_TYPE_WINDOW:
+        uview_hide(spirit->view);
+        return 0;
+    default:
+        break;
+    }
+    // 默认情况
+    if (!spirit->attached_container)
+        return -1;
+    xtk_spirit_t *attached_spirit = (xtk_spirit_t *)spirit->attached_container->spirit;
+    if (!attached_spirit->surface)
+        return -1;
+
+    // 在精灵位置绘制一个背景色的图形
+    xtk_surface_t *surface = xtk_surface_create(spirit->width, spirit->height);
+    assert(surface);
+    xtk_surface_rectfill(surface, 0, 0, surface->w, surface->h, attached_spirit->style.background_color);
+    
+    uview_bitmap_t bmp;
+    uview_bitmap_init(&bmp, surface->w, surface->h, (uview_color_t *) surface->pixels);
+    uview_bitblt_update(attached_spirit->view, attached_spirit->x + spirit->x,
+        attached_spirit->y + spirit->y, &bmp);
+    
+    xtk_surface_destroy(surface);
+    return 0;
+}
+
+/**
+ * 隐藏精灵下面的所有精灵
+ */
+int xtk_spirit_hide_all(xtk_spirit_t *spirit)
+{
+    if (!spirit)
+        return -1;
+    xtk_container_t *container = spirit->container;
+    if (!container)
+        return -1;
+    xtk_spirit_t *tmp;
+    list_for_each_owner (tmp, &container->children_list, list) {    
+        xtk_spirit_hide(tmp);
+    }
+    xtk_spirit_hide(spirit);
     return 0;
 }

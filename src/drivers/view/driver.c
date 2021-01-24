@@ -227,7 +227,7 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
             status = IO_FAILED;
         } else {
             view_rect_t *rect = (view_rect_t *) arg;
-            if (view_try_resize(view, rect) < 0)
+            if (view_env_try_resize(view, rect) < 0)
                 status = IO_FAILED;
         }
         break;
@@ -238,6 +238,30 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
             *(int *)arg = view_env_get_screensize();
         }
         break;
+    case VIEWIO_GETLASTPOS:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            *(unsigned int *)arg = view_env_get_lastpos();
+        }
+        break;
+    case VIEWIO_GETMOUSEPOS:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            *(unsigned int *)arg = view_env_get_mousepos();
+        }
+        break;
+    case VIEWIO_SETSIZEMIN:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            unsigned int size_min = *(unsigned int *)arg;
+            view_set_size_min(view, (size_min >> 16) & 0xffff, size_min & 0xffff);
+        }
+        break;
+    
+    
     default:
         status = IO_FAILED;
         break;

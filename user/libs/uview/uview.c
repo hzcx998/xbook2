@@ -41,6 +41,14 @@ int uview_set_pos(int vfd, int x, int y)
     return ioctl(vfd, VIEWIO_SETPOS, &pos);
 }
 
+int uview_set_size_min(int vfd, int width, int height)
+{
+    if (vfd < 0)
+        return -1;
+    unsigned int sz = (width << 16) | height;
+    return ioctl(vfd, VIEWIO_SETSIZEMIN, &sz);
+}
+
 int uview_set_type(int vfd, int type)
 {
     if (vfd < 0)
@@ -237,4 +245,32 @@ int uview_post_msg(int vfd, uview_msg_t *msg)
     if (vfd < 0)
         return -1;
     return write(vfd, msg, sizeof(uview_msg_t));
+}
+
+int uview_get_lastpos(int vfd, int *x, int *y)
+{
+    if (vfd < 0)
+        return -1;
+    uint32_t lastpos;
+    if (ioctl(vfd, VIEWIO_GETLASTPOS, &lastpos) < 0)
+        return -1;
+    if (x)
+        *x = (lastpos >> 16)  & 0xffff;
+    if (y)
+        *y = lastpos & 0xffff;
+    return 0;
+}
+
+int uview_get_mousepos(int vfd, int *x, int *y)
+{
+    if (vfd < 0)
+        return -1;
+    uint32_t mousepos;
+    if (ioctl(vfd, VIEWIO_GETMOUSEPOS, &mousepos) < 0)
+        return -1;
+    if (x)
+        *x = (mousepos >> 16)  & 0xffff;
+    if (y)
+        *y = mousepos & 0xffff;
+    return 0;
 }

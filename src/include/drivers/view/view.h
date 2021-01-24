@@ -39,6 +39,8 @@ typedef struct {
     int id;
     int width;
     int height;
+    int width_min;
+    int height_min;
     int x;
     int y;
     int z;
@@ -49,7 +51,6 @@ typedef struct {
     
     // 区域设置
     view_region_t drag_regions[VIEW_DRAG_REGION_NR];
-    view_region_t min_resize_region;
     view_region_t resize_region;
 } view_t;
 
@@ -77,6 +78,8 @@ int view_move_upper_top(view_t *view);
 int view_hide(view_t *view);
 int view_show(view_t *view);
 void view_clear(view_t *view);
+
+int view_set_size_min(view_t *view, int width, int height);
 
 int view_drag_rect_check(view_t *view, int x, int y);
 

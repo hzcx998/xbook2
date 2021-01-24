@@ -95,5 +95,8 @@ typedef struct _video_info {
 #define VIEWIO_DELATTR      DEVCTL_CODE('v', 13)
 #define VIEWIO_RESIZE       DEVCTL_CODE('v', 14)
 #define VIEWIO_GETSCREENSZ  DEVCTL_CODE('v', 15)
+#define VIEWIO_GETLASTPOS   DEVCTL_CODE('v', 16)
+#define VIEWIO_GETMOUSEPOS  DEVCTL_CODE('v', 17)
+#define VIEWIO_SETSIZEMIN   DEVCTL_CODE('v', 18)
 
 #endif   /* _SYS_IOCTL_H */

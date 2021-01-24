@@ -26,6 +26,7 @@ int uview_close(int vfd);
 int uview_set_pos(int vfd, int x, int y);
 int uview_set_type(int vfd, int type);
 int uview_set_wait(int vfd, int is_nowait);
+int uview_set_size_min(int vfd, int width, int height);
 int uview_show(int vfd);
 int uview_hide(int vfd);
 int uview_update(int vfd, int left, int top, int right, int bottom);
@@ -44,5 +45,7 @@ int uview_set_resizable(int vfd);
 int uview_set_unresizable(int vfd);
 int uview_resize(int vfd, int x, int y, int width, int height);
 int uview_get_screensize(int vfd, int *width, int *height);
+int uview_get_lastpos(int vfd, int *x, int *y);
+int uview_get_mousepos(int vfd, int *x, int *y);
 
 #endif  /* _LIB_UVIEW_H */

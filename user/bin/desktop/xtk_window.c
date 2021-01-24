@@ -272,12 +272,13 @@ xtk_spirit_t *xtk_window_create2(char *title, int x, int y, int width, int heigh
     return spirit;
 }
 
-int xtk_window_spirit_setup(xtk_spirit_t *spirit, int x, int y, int width, int height)
+int xtk_window_spirit_setup(xtk_window_t *window, xtk_spirit_t *spirit, int x, int y, int width, int height)
 {
     xtk_spirit_init(spirit, x, y, width, height);
     xtk_spirit_set_type(spirit, XTK_SPIRIT_TYPE_WINDOW);
     spirit->style.align = XTK_ALIGN_CENTER;
-
+    spirit->style.background_color = window->style->background_color_inactive;
+    
     xtk_container_t *container = xtk_container_create(spirit);
     if (!container) {
         return -1;
@@ -360,10 +361,10 @@ static xtk_spirit_t *xtk_window_create_toplevel(xtk_window_t *window)
     int new_height = window->style->border_thick * 2 + height + window->style->navigation_height;
     
     xtk_spirit_t *window_spirit = &window->window_spirit;
-    xtk_window_spirit_setup(window_spirit, 0, 0, new_width, new_height);
+    xtk_window_spirit_setup(window, window_spirit, 0, 0, new_width, new_height);
     
     xtk_spirit_t *spirit = &window->spirit;
-    if (xtk_window_spirit_setup(spirit, window->style->border_thick, 
+    if (xtk_window_spirit_setup(window, spirit, window->style->border_thick, 
         window->style->border_thick + window->style->navigation_height,
         width, height) < 0)
     {
@@ -398,7 +399,7 @@ static xtk_spirit_t *xtk_window_create_popup(xtk_window_t *window)
     window->content_height = height;
     window->style = NULL;
     xtk_spirit_t *spirit = &window->spirit;
-    if (xtk_window_spirit_setup(spirit, 0, 0, width, height) < 0) {
+    if (xtk_window_spirit_setup(window, spirit, 0, 0, width, height) < 0) {
         return NULL;
     }
     if (xtk_window_view_setup(window, 0, 0, width, height) < 0) {
@@ -510,4 +511,42 @@ int xtk_window_update(xtk_window_t *window, int x, int y, int w, int h)
         spirit->surface->pixels);
     return uview_bitblt_update_ex(spirit->view, spirit->x + x, spirit->y + y,
             &bmp, x, y, ex - x, ey - y);
+}
+
+int xtk_window_set_position(xtk_window_t *window, xtk_window_position_t pos)
+{
+    if (!window)
+        return -1;
+    xtk_spirit_t *spirit = &window->window_spirit;
+    if (spirit->view < 0)
+        return -1;
+    switch (pos) {
+    case XTK_WIN_POS_NONE:
+        {
+            int vx = 0, vy = 0;
+            uview_get_lastpos(spirit->view, &vx, &vy);
+            uview_set_pos(spirit->view, vx, vy);
+        }
+        break;
+    case XTK_WIN_POS_CENTER_ALWAYS:
+        uview_set_unmoveable(spirit->view);
+    case XTK_WIN_POS_CENTER:
+        {
+            int w = 0, h = 0;
+            uview_get_screensize(spirit->view, &w, &h);
+            uview_set_pos(spirit->view, w / 2 - spirit->width / 2,
+                h / 2 - spirit->height / 2);
+        }
+        break;    
+    case XTK_WIN_POS_MOUSE:
+        {
+            int mx = 0, my = 0;
+            uview_get_mousepos(spirit->view, &mx, &my);
+            uview_set_pos(spirit->view, mx, my);
+        }
+        break;  
+    default:
+        break;
+    }
+    return 0;
 }
