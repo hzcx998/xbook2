@@ -166,6 +166,24 @@ void win_thread()
     #endif  
 }
 
+void win_proc(xtk_window_t *window, uview_msg_t *msg)
+{
+    printf("msg %d\n", uview_msg_get_type(msg));
+    switch (uview_msg_get_type(msg)) {
+    case UVIEW_MSG_MOUSE_MOTION:
+        {
+            int x = uview_msg_get_mouse_x(msg);
+            int y = uview_msg_get_mouse_y(msg);    
+            printf("mouse %d, %d\n", x, y);
+        }
+        
+        break;
+    
+    default:
+        break;
+    }
+}
+
 xtk_spirit_t *btn_root;
 xtk_spirit_t *win_root;
 void xtk_test(int fd, uview_bitmap_t *wbmp)
@@ -240,10 +258,10 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     xtk_init(NULL, NULL);
 
     win_root = xtk_window_create(XTK_WINDOW_TOPLEVEL);  
-//    win_root = xtk_window_create2("test", 400, 300, 200, 300, XTK_WINDOW_SHOW);
     assert(win_root);
     xtk_window_set_title(XTK_WINDOW(win_root), "test");
-    
+    xtk_window_set_position(XTK_WINDOW(win_root), XTK_WIN_POS_MOUSE);
+
     btn_root = xtk_button_create_with_label("hello");
     assert(btn_root);
 
@@ -265,13 +283,8 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     xtk_container_add(XTK_CONTAINER(win_root), btn2);
     xtk_container_add(XTK_CONTAINER(win_root), l0);
     
-    #if 0
-    xtk_spirit_show(btn1);
-    xtk_spirit_show(btn2);
-    #else
     xtk_spirit_show_all(win_root);
-    #endif
-
+    
     xtk_spirit_t *win0 = xtk_window_create(XTK_WINDOW_TOPLEVEL);
     assert(win0);
     assert(xtk_window_set_title(XTK_WINDOW(win0), "hello, world!") == 0);
@@ -279,10 +292,9 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     assert(xtk_window_set_title(XTK_WINDOW(win0), "hello, !") == 0);
     
     xtk_window_set_resizable(XTK_WINDOW(win0), true);
-    xtk_window_set_position(XTK_WINDOW(win0), XTK_WIN_POS_NONE);
+    xtk_window_set_position(XTK_WINDOW(win0), XTK_WIN_POS_CENTER);
     xtk_spirit_set_size_request(win0, 100, 100);
 
-    
     xtk_spirit_t *btn10 = xtk_button_create_with_label("6666");
     assert(btn10);
     xtk_spirit_set_pos(btn10, 0, 50);
@@ -310,25 +322,12 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     dstrect.x = 200;
     dstrect.y = 150;
     xtk_surface_blit(surface1, &srcrect, surface0, &dstrect);
-    
-    //xtk_window_flip(XTK_WINDOW(win0));
 
     xtk_window_update(XTK_WINDOW(win0), 0, 0, win0->width, win0->height);
 
     xtk_container_add(XTK_CONTAINER(win0), btn10);
     xtk_spirit_show_all(win0);
 
-/*
-    assert(!xtk_spirit_destroy(win0));
-    assert(!xtk_spirit_destroy(win_root));
-  */  
-    // assert(xtk_spirit_hide_all(win0) == 0);
-
-    //xtk_window_update(XTK_WINDOW(win0), 20, 10, 100, 100);
-    //xtk_window_update(XTK_WINDOW(win0), -20, -10, 100, 100);
-    //xtk_window_update(XTK_WINDOW(win0), 20, 10, 400, 300);
-    
-    xtk_main_quit();
+    xtk_window_set_routine(XTK_WINDOW(win0), win_proc);
     xtk_main();
-    xtk_exit(0);
 }

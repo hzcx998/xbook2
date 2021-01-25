@@ -88,7 +88,7 @@ int uview_set_unresizable(int vfd)
     return ioctl(vfd, VIEWIO_DELATTR, &attr);
 }
 
-int uview_set_wait(int vfd, int is_nowait)
+int uview_set_nowait(int vfd, int is_nowait)
 {
     if (vfd < 0)
         return -1;

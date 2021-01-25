@@ -16,30 +16,81 @@ static xtk_window_style_t __xtk_window_style_defult = {
     XTK_RGB(118, 118, 118),
 };
 
-/* 过滤窗口消息，成功返回0，失败返回-1 */
+void xtk_window_user_msg(xtk_window_t *window, uview_msg_t *msg)
+{
+    // 转换鼠标坐标位置为窗口内容的坐标
+    switch (uview_msg_get_type(msg)) {
+    case UVIEW_MSG_MOUSE_MOTION:
+    case UVIEW_MSG_MOUSE_LBTN_DBLCLK:
+    case UVIEW_MSG_MOUSE_LBTN_DOWN:
+    case UVIEW_MSG_MOUSE_LBTN_UP:
+    case UVIEW_MSG_MOUSE_MBTN_DBLCLK:
+    case UVIEW_MSG_MOUSE_MBTN_DOWN:
+    case UVIEW_MSG_MOUSE_MBTN_UP:
+    case UVIEW_MSG_MOUSE_RBTN_DBLCLK:
+    case UVIEW_MSG_MOUSE_RBTN_DOWN:
+    case UVIEW_MSG_MOUSE_RBTN_UP:
+    case UVIEW_MSG_MOUSE_WHEEL_UP:
+    case UVIEW_MSG_MOUSE_WHEEL_DOWN:
+    case UVIEW_MSG_MOUSE_WHEEL_LEFT:
+    case UVIEW_MSG_MOUSE_WHEEL_RIGHT:
+        {
+            uview_msg_get_mouse_x(msg) = uview_msg_get_mouse_x(msg) - window->spirit.x;
+            uview_msg_get_mouse_y(msg) = uview_msg_get_mouse_y(msg) - window->spirit.y;
+
+            int x = uview_msg_get_mouse_x(msg);
+            int y = uview_msg_get_mouse_y(msg);
+            // 超出返回，就不传递过去
+            if (x < 0 || y < 0 || x >= window->spirit.width || y >= window->spirit.height) {
+                return;
+            }
+        }
+        break;
+    default:
+        break;
+    }
+    // 调用用户处理函数
+    if (window->routine)
+        window->routine(window, msg);
+}
+
+/** 
+ * 过滤窗口消息
+ * 成功返回0，失败返回-1 
+ */
 int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
 {
     switch (uview_msg_get_type(msg)) {
+    case UVIEW_MSG_LEAVE:
+    case UVIEW_MSG_ENTER:
     case UVIEW_MSG_MOUSE_MOTION:
         {
-            int x = uview_msg_get_mouse_x(msg);
-            int y = uview_msg_get_mouse_y(msg);
+            int x = uview_msg_get_mouse_x(msg) - spirit->x;
+            int y = uview_msg_get_mouse_y(msg) - spirit->y;
             if (!xtk_mouse_motion(spirit, x, y))
                 return 0;
         }
         break;
+    case UVIEW_MSG_HIDE:
+        xtk_mouse_motion(spirit, -1, -1);
+        xtk_spirit_hide(spirit);
+        return 0;
+    case UVIEW_MSG_SHOW:
+        xtk_mouse_motion(spirit, -1, -1);
+        xtk_spirit_show(spirit);
+        return 0; 
     case UVIEW_MSG_MOUSE_LBTN_DOWN:
         {
-            int x = uview_msg_get_mouse_x(msg);
-            int y = uview_msg_get_mouse_y(msg);
+            int x = uview_msg_get_mouse_x(msg) - spirit->x;
+            int y = uview_msg_get_mouse_y(msg) - spirit->y;
             if (!xtk_mouse_lbtn_down(spirit, x, y))
                 return 0;
         }
         break;
     case UVIEW_MSG_MOUSE_LBTN_UP:
         {
-            int x = uview_msg_get_mouse_x(msg);
-            int y = uview_msg_get_mouse_y(msg);
+            int x = uview_msg_get_mouse_x(msg) - spirit->x;
+            int y = uview_msg_get_mouse_y(msg) - spirit->y;
             if (!xtk_mouse_lbtn_up(spirit, x, y))
                 return 0;
         }
@@ -50,20 +101,13 @@ int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
     return -1;
 }
 
-int xtk_window_user_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
-{
-
-    return 0;
-}
-
+/**
+ * 窗口逻辑
+ * 返回0表示消息被截断，返回-1表示消息还可以继续传递
+ */
 int xtk_window_main(xtk_spirit_t *spirit, uview_msg_t *msg)
 {
-    // 处理内置消息
-    if (!xtk_window_filter_msg(spirit, msg))
-        return 0;
-    // 处理用户消息
-    xtk_window_user_msg(spirit, msg);
-    return 0;
+    return xtk_window_filter_msg(spirit, msg);
 }
 
 int xtk_window_quit(xtk_spirit_t *spirit)
@@ -424,6 +468,7 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
         return NULL;
     memset(window, 0, sizeof(xtk_window_t));
     window->type = type;
+    window->routine = NULL;
     xtk_spirit_t *spirit = NULL;
     if (type == XTK_WINDOW_TOPLEVEL) {
         spirit = xtk_window_create_toplevel(window);
@@ -582,6 +627,14 @@ int xtk_window_set_default_size(xtk_window_t *window, int width, int height)
     window->content_width = width;
     window->content_height = height;
     // 调整精灵的大小
-    
+
+    return 0;
+}
+
+int xtk_window_set_routine(xtk_window_t *window, xtk_window_routine_t routine)
+{
+    if (!window)
+        return -1;
+    window->routine = routine;
     return 0;
 }

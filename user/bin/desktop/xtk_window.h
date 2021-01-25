@@ -43,6 +43,8 @@ typedef struct {
     
 } xtk_window_navigation_t;
 
+typedef void (*xtk_window_routine_t) (xtk_spirit_t *, uview_msg_t *);
+
 typedef struct {
     xtk_spirit_t spirit;            // 放到第一个成员，实现继承
     xtk_spirit_t window_spirit;     // 绘制窗口内容
@@ -52,16 +54,18 @@ typedef struct {
     uint32_t winflgs;       // 窗口的标志
     xtk_window_navigation_t navigation;
     xtk_window_type_t type;
+    xtk_window_routine_t routine;
 } xtk_window_t;
 
 #define XTK_WINDOW(spirit)  ((xtk_window_t *)(spirit))
-xtk_spirit_t *xtk_window_create2(char *title, int x, int y, int width, int height, uint32_t flags);
+
 xtk_spirit_t *xtk_window_create(xtk_window_type_t type);
 int xtk_window_destroy(xtk_window_t *window);
 int xtk_window_set_title(xtk_window_t *window, char *title);
 int xtk_window_set_default_size(xtk_window_t *window, int width, int height);
 int xtk_window_set_resizable(xtk_window_t *window, bool resizable);
 int xtk_window_set_position(xtk_window_t *window, xtk_window_position_t pos);
+int xtk_window_set_routine(xtk_window_t *window, xtk_window_routine_t routine);
 
 xtk_surface_t *xtk_window_get_surface(xtk_window_t *window);
 
@@ -72,5 +76,7 @@ int xtk_window_update(xtk_window_t *window, int x, int y, int w, int h);
 
 int xtk_window_main(xtk_spirit_t *spirit, uview_msg_t *msg);
 int xtk_window_quit(xtk_spirit_t *spirit);
+
+void xtk_window_user_msg(xtk_window_t *window, uview_msg_t *msg);
 
 #endif /* _LIB_XTK_WINDOW_H */

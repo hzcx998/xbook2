@@ -37,6 +37,7 @@ int xtk_container_add(xtk_container_t *container, xtk_spirit_t *spirit)
     // 资源绑定: 附加容器、视图
     xtk_spirit_t *attached_spirit = (xtk_spirit_t *)container->spirit;
     spirit->attached_container = container;
+    xtk_spirit_set_pos(spirit, spirit->x + attached_spirit->x, spirit->y + attached_spirit->y);
     xtk_spirit_set_view(spirit, attached_spirit->view);
     return 0;
 }
