@@ -455,11 +455,10 @@ int view_show(view_t *view)
         return -1;
     if (view->z < 0) {
         view_move_to_top(view);
-        // 第一次显示需要激活
-        view_env_try_activate(view);
     } else {
         view_move_under_top(view);
-    } 
+    }
+    view_env_try_activate(view);
     return 0;
 }
 

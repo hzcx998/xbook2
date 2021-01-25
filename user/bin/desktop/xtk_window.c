@@ -56,7 +56,8 @@ void xtk_window_user_msg(xtk_window_t *window, uview_msg_t *msg)
 
 /** 
  * 过滤窗口消息
- * 成功返回0，失败返回-1 
+ * 成功过滤返回0，没有失败返回-1或者1
+ * 1和-1都要进行消息捕捉，而0不用
  */
 int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
 {
@@ -78,7 +79,7 @@ int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
     case UVIEW_MSG_SHOW:
         xtk_mouse_motion(spirit, -1, -1);
         xtk_spirit_show(spirit);
-        return 0; 
+        return 0;
     case UVIEW_MSG_ACTIVATE:
         {
             xtk_window_t *window = XTK_WINDOW(spirit);
@@ -113,10 +114,19 @@ int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
                 return 0;
         }
         break;
+    case UVIEW_MSG_RESIZE:
+        {
+            /* 响应大小调整 */
+            
+            /* 调整窗口后，鼠标位置发生了改变，需要做一次位置检测 */
+            xtk_mouse_motion(spirit, -1, -1);
+            return 1;   // 需要捕捉用户消息   
+        }
+        break;
     default:
         break;
     }
-    return -1;
+    return -1;  // 需要捕捉用户消息
 }
 
 /**
@@ -187,15 +197,14 @@ int xtk_window_draw_border(xtk_window_t *window,
     if (navigation->title)
         navigation->title->style.color = text_c;
     
+    // 刷新到屏幕上
     uview_bitmap_t bmp;
     uview_bitmap_init(&bmp, spirit->surface->w, spirit->surface->h, (uview_color_t *) spirit->surface->pixels);
     uview_bitblt(spirit->view, 0, 0, &bmp);
-    if (redraw_bg) {
-        uview_update(spirit->view, 0, 0, spirit->width, spirit->height);
-    }
+    uview_update(spirit->view, 0, 0, spirit->width, spirit->height);
     
     // TODO: 刷新所有精灵
-    xtk_spirit_show_all(&window->window_spirit);
+    xtk_spirit_show_children(&window->window_spirit);
     return 0;
 }
 

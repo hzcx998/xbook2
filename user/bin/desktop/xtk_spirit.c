@@ -450,7 +450,7 @@ int xtk_spirit_show(xtk_spirit_t *spirit)
 /**
  * 显示精灵下面的所有精灵
  */
-int xtk_spirit_show_all(xtk_spirit_t *spirit)
+int xtk_spirit_show_children(xtk_spirit_t *spirit)
 {
     if (!spirit)
         return -1;
@@ -461,6 +461,17 @@ int xtk_spirit_show_all(xtk_spirit_t *spirit)
     list_for_each_owner (tmp, &container->children_list, list) {    
         xtk_spirit_show(tmp);
     }
+    return 0;
+}
+/**
+ * 显示精灵下面的所有精灵
+ */
+int xtk_spirit_show_all(xtk_spirit_t *spirit)
+{
+    if (!spirit)
+        return -1;
+    if (xtk_spirit_show_children(spirit) < 0)
+        return -1;
     xtk_spirit_show(spirit);
     return 0;
 }

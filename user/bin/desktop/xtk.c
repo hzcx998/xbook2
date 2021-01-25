@@ -41,24 +41,22 @@ int xtk_main()
     xtk_spirit_t *spirit;
     uview_msg_t msg;
     xtk_view_t *pview;
-    int filter_flags; 
+    int filter_val; 
     while (__xtk_main_loop) {    
         xtk_view_for_each (pview) {
             uview_set_nowait(pview->view, 1);
             if (uview_get_msg(pview->view, &msg) < 0) {
                 continue;
             }
-            filter_flags = 0;
+            filter_val = 0;
             // 遍历每一个视图来获取上面的精灵
-            list_for_each_owner (spirit, &pview->spirit_list_head, list) {
-                if (!xtk_window_main(spirit, &msg)) {
-                    filter_flags = 1; // 过滤消息
+            list_for_each_owner (spirit, &pview->spirit_list_head, list) {                
+                if ((filter_val = xtk_window_main(spirit, &msg)) >= 0)
                     break;
-                }
             }
 
-            // 处理用户消息
-            if (!filter_flags)
+            // 没有过滤掉才处理用户消息
+            if (filter_val)
                 xtk_window_user_msg(XTK_WINDOW(pview->spirit), &msg);
         }
     }

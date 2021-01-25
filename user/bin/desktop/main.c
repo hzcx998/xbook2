@@ -260,7 +260,11 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     win_root = xtk_window_create(XTK_WINDOW_TOPLEVEL);  
     assert(win_root);
     xtk_window_set_title(XTK_WINDOW(win_root), "test");
-    xtk_window_set_position(XTK_WINDOW(win_root), XTK_WIN_POS_MOUSE);
+    // xtk_window_set_position(XTK_WINDOW(win_root), XTK_WIN_POS_MOUSE);
+
+    xtk_window_set_position(XTK_WINDOW(win_root), XTK_WIN_POS_NONE);
+    
+
 
     btn_root = xtk_button_create_with_label("hello");
     assert(btn_root);

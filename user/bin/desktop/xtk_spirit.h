@@ -86,6 +86,7 @@ int xtk_spirit_calc_aligin_pos(xtk_spirit_t *spirit, int width, int height, int 
 
 int xtk_spirit_show_all(xtk_spirit_t *spirit);
 int xtk_spirit_show(xtk_spirit_t *spirit);
+int xtk_spirit_show_children(xtk_spirit_t *spirit);
 
 int xtk_spirit_hide(xtk_spirit_t *spirit);
 int xtk_spirit_hide_all(xtk_spirit_t *spirit);
