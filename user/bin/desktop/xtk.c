@@ -51,13 +51,13 @@ int xtk_main()
             filter_val = 0;
             // 遍历每一个视图来获取上面的精灵
             list_for_each_owner (spirit, &pview->spirit_list_head, list) {                
-                if ((filter_val = xtk_window_main(spirit, &msg)) >= 0)
+                if (!(filter_val = xtk_window_main(spirit, &msg)))
                     break;
             }
 
             // 没有过滤掉才处理用户消息
             if (filter_val)
-                xtk_window_user_msg(XTK_WINDOW(pview->spirit), &msg);
+                xtk_window_filter_msg(XTK_WINDOW(pview->spirit), &msg);
         }
     }
     return 0;

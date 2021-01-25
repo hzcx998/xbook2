@@ -16,8 +16,22 @@ static xtk_window_style_t __xtk_window_style_defult = {
     XTK_RGB(118, 118, 118),
 };
 
-void xtk_window_user_msg(xtk_window_t *window, uview_msg_t *msg)
+static int xtk_window_change_size(xtk_window_t *window, int width, int height)
 {
+    if (!window)
+        return -1;
+    xtk_spirit_t *spirit = &window->spirit;
+    printf("xtk change size: from (%d, %d) to (%d, %d)", spirit->width, spirit->height, width, height);
+    return 0;
+}
+
+/**
+ * 
+ * 
+ */
+void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
+{
+    xtk_spirit_t *spirit = &window->spirit;
     // 转换鼠标坐标位置为窗口内容的坐标
     switch (uview_msg_get_type(msg)) {
     case UVIEW_MSG_MOUSE_MOTION:
@@ -35,17 +49,38 @@ void xtk_window_user_msg(xtk_window_t *window, uview_msg_t *msg)
     case UVIEW_MSG_MOUSE_WHEEL_LEFT:
     case UVIEW_MSG_MOUSE_WHEEL_RIGHT:
         {
-            uview_msg_get_mouse_x(msg) = uview_msg_get_mouse_x(msg) - window->spirit.x;
-            uview_msg_get_mouse_y(msg) = uview_msg_get_mouse_y(msg) - window->spirit.y;
+            uview_msg_get_mouse_x(msg) = uview_msg_get_mouse_x(msg) - spirit->x;
+            uview_msg_get_mouse_y(msg) = uview_msg_get_mouse_y(msg) - spirit->y;
 
             int x = uview_msg_get_mouse_x(msg);
             int y = uview_msg_get_mouse_y(msg);
             // 超出返回，就不传递过去
-            if (x < 0 || y < 0 || x >= window->spirit.width || y >= window->spirit.height) {
+            if (x < 0 || y < 0 || x >= spirit->width || y >= spirit->height) {
                 return;
             }
         }
         break;
+    case UVIEW_MSG_HIDE:
+        xtk_mouse_motion(spirit, -1, -1);
+        xtk_spirit_hide(spirit);
+        return;
+    case UVIEW_MSG_SHOW:
+        xtk_mouse_motion(spirit, -1, -1);
+        xtk_spirit_show(spirit);
+        return;
+    case UVIEW_MSG_ACTIVATE:
+        xtk_window_set_active(window, true);
+        return;    
+    case UVIEW_MSG_INACTIVATE:
+        xtk_window_set_active(window, false);
+        return;    
+    case UVIEW_MSG_RESIZE:
+        /* 响应大小调整 */
+        xtk_window_change_size(XTK_WINDOW(spirit), uview_msg_get_resize_width(msg),
+            uview_msg_get_resize_height(msg));
+        /* 调整窗口后，鼠标位置发生了改变，需要做一次位置检测 */
+        xtk_mouse_motion(spirit, -1, -1);
+        return;
     default:
         break;
     }
@@ -54,12 +89,11 @@ void xtk_window_user_msg(xtk_window_t *window, uview_msg_t *msg)
         window->routine(window, msg);
 }
 
-/** 
- * 过滤窗口消息
- * 成功过滤返回0，没有失败返回-1或者1
- * 1和-1都要进行消息捕捉，而0不用
+/**
+ * 窗口逻辑
+ * 返回0表示消息被截断，返回-1表示消息还可以继续传递
  */
-int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
+int xtk_window_main(xtk_spirit_t *spirit, uview_msg_t *msg)
 {
     switch (uview_msg_get_type(msg)) {
     case UVIEW_MSG_LEAVE:
@@ -72,32 +106,7 @@ int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
                 return 0;
         }
         break;
-    case UVIEW_MSG_HIDE:
-        xtk_mouse_motion(spirit, -1, -1);
-        xtk_spirit_hide(spirit);
-        return 0;
-    case UVIEW_MSG_SHOW:
-        xtk_mouse_motion(spirit, -1, -1);
-        xtk_spirit_show(spirit);
-        return 0;
-    case UVIEW_MSG_ACTIVATE:
-        {
-            xtk_window_t *window = XTK_WINDOW(spirit);
-            if (window->type == XTK_WINDOW_TOPLEVEL) {
-                xtk_window_set_active(window, true);
-                return 0;    
-            }
-        }
-        break;
-    case UVIEW_MSG_INACTIVATE:
-        {
-            xtk_window_t *window = XTK_WINDOW(spirit);
-            if (window->type == XTK_WINDOW_TOPLEVEL) {
-                xtk_window_set_active(window, false);
-                return 0;    
-            }
-        }
-        break;
+    
     case UVIEW_MSG_MOUSE_LBTN_DOWN:
         {
             int x = uview_msg_get_mouse_x(msg) - spirit->x;
@@ -114,28 +123,10 @@ int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
                 return 0;
         }
         break;
-    case UVIEW_MSG_RESIZE:
-        {
-            /* 响应大小调整 */
-            
-            /* 调整窗口后，鼠标位置发生了改变，需要做一次位置检测 */
-            xtk_mouse_motion(spirit, -1, -1);
-            return 1;   // 需要捕捉用户消息   
-        }
-        break;
     default:
         break;
     }
-    return -1;  // 需要捕捉用户消息
-}
-
-/**
- * 窗口逻辑
- * 返回0表示消息被截断，返回-1表示消息还可以继续传递
- */
-int xtk_window_main(xtk_spirit_t *spirit, uview_msg_t *msg)
-{
-    return xtk_window_filter_msg(spirit, msg);
+    return -1;  // 需要进一步处理
 }
 
 int xtk_window_quit(xtk_spirit_t *spirit)

@@ -78,6 +78,6 @@ int xtk_window_update(xtk_window_t *window, int x, int y, int w, int h);
 int xtk_window_main(xtk_spirit_t *spirit, uview_msg_t *msg);
 int xtk_window_quit(xtk_spirit_t *spirit);
 
-void xtk_window_user_msg(xtk_window_t *window, uview_msg_t *msg);
+void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg);
 
 #endif /* _LIB_XTK_WINDOW_H */
