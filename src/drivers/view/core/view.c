@@ -3,6 +3,7 @@
 #include "drivers/view/misc.h"
 #include "drivers/view/render.h"
 #include "drivers/view/msg.h"
+#include "drivers/view/env.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -452,11 +453,13 @@ int view_show(view_t *view)
 {
     if (!view)
         return -1;
-    if (view->z < 0)
+    if (view->z < 0) {
         view_move_to_top(view);
-    else
+        // 第一次显示需要激活
+        view_env_try_activate(view);
+    } else {
         view_move_under_top(view);
-
+    } 
     return 0;
 }
 

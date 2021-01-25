@@ -66,6 +66,7 @@ int xtk_window_set_default_size(xtk_window_t *window, int width, int height);
 int xtk_window_set_resizable(xtk_window_t *window, bool resizable);
 int xtk_window_set_position(xtk_window_t *window, xtk_window_position_t pos);
 int xtk_window_set_routine(xtk_window_t *window, xtk_window_routine_t routine);
+int xtk_window_set_active(xtk_window_t *window, bool is_active);
 
 xtk_surface_t *xtk_window_get_surface(xtk_window_t *window);
 

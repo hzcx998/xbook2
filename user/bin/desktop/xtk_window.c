@@ -79,6 +79,24 @@ int xtk_window_filter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
         xtk_mouse_motion(spirit, -1, -1);
         xtk_spirit_show(spirit);
         return 0; 
+    case UVIEW_MSG_ACTIVATE:
+        {
+            xtk_window_t *window = XTK_WINDOW(spirit);
+            if (window->type == XTK_WINDOW_TOPLEVEL) {
+                xtk_window_set_active(window, true);
+                return 0;    
+            }
+        }
+        break;
+    case UVIEW_MSG_INACTIVATE:
+        {
+            xtk_window_t *window = XTK_WINDOW(spirit);
+            if (window->type == XTK_WINDOW_TOPLEVEL) {
+                xtk_window_set_active(window, false);
+                return 0;    
+            }
+        }
+        break;
     case UVIEW_MSG_MOUSE_LBTN_DOWN:
         {
             int x = uview_msg_get_mouse_x(msg) - spirit->x;
@@ -139,24 +157,29 @@ int xtk_window_draw_border(xtk_window_t *window,
     }
     xtk_spirit_t *spirit = &window->window_spirit;
     assert(spirit->surface);
-
+    int border_thick = window->style->border_thick;
     /* 需要清空位图 */
     xtk_surface_clear(spirit->surface);
     if (redraw_bg)
-        xtk_surface_rectfill(spirit->surface, 1, 1, spirit->width - 2, spirit->height - 2, back);
+        xtk_surface_rectfill(spirit->surface, border_thick, border_thick, 
+            spirit->width - border_thick * 2, spirit->height - border_thick * 2, back);
     
-    int navigation_bottom = window->style->border_thick + window->style->navigation_height;
+    int navigation_bottom = border_thick + window->style->navigation_height;
 
     // 绘制导航栏
-    xtk_surface_rectfill(spirit->surface, 1, 
-        navigation_bottom - 1,
-        spirit->width - 2, 1, border);
+    xtk_surface_rectfill(spirit->surface, border_thick, border_thick, 
+        spirit->width - border_thick * 2, window->style->navigation_height, back);
+    xtk_surface_rectfill(spirit->surface, border_thick, 
+        navigation_bottom - border_thick,
+        spirit->width - border_thick * 2, border_thick, border);
     
     /* 基础边框 */
-    xtk_surface_rectfill(spirit->surface, 0, 0, spirit->width, 1, border);
-    xtk_surface_rectfill(spirit->surface, 0, spirit->height - 1, spirit->width, 1, border);
-    xtk_surface_rectfill(spirit->surface, 0, 0, 1, spirit->height, border);
-    xtk_surface_rectfill(spirit->surface, spirit->width - 1, 0, 1, spirit->height, border);
+    xtk_surface_rectfill(spirit->surface, 0, 0, spirit->width, border_thick, border);
+    xtk_surface_rectfill(spirit->surface, 0, spirit->height - border_thick, spirit->width,
+        border_thick, border);
+    xtk_surface_rectfill(spirit->surface, 0, 0, border_thick, spirit->height, border);
+    xtk_surface_rectfill(spirit->surface, spirit->width - border_thick, 0, 
+        border_thick, spirit->height, border);
 
     /* TODO: 修改按钮，标题，图标颜色 */
     xtk_window_navigation_t *navigation = &window->navigation;
@@ -170,10 +193,9 @@ int xtk_window_draw_border(xtk_window_t *window,
     if (redraw_bg) {
         uview_update(spirit->view, 0, 0, spirit->width, spirit->height);
     }
-
+    
     // TODO: 刷新所有精灵
     xtk_spirit_show_all(&window->window_spirit);
-
     return 0;
 }
 
@@ -213,112 +235,8 @@ int xtk_window_show(xtk_window_t *window)
 {
     if (!window)
         return -1;
-    uview_show(window->window_spirit.view);
+    uview_show(window->spirit.view);
     return 0;
-}
-
-xtk_spirit_t *xtk_window_create2(char *title, int x, int y, int width, int height, uint32_t flags)
-{
-    if (!title || width <= 0 || height <= 0)
-        return NULL;
-    if (strlen(title) <= 0)
-        return NULL;
-    xtk_window_t *window = malloc(sizeof(xtk_window_t));
-    if (!window)
-        return NULL;
-
-    window->content_width = width;
-    window->content_height = height;
-
-    window->style = &__xtk_window_style_defult;
-
-    // 初始化精灵
-    int new_width = window->style->border_thick * 2 + width;
-    int new_height = window->style->border_thick * 2 + height + window->style->navigation_height;
-    
-    xtk_spirit_t *window_spirit = &window->window_spirit;
-    xtk_spirit_init(window_spirit, 0, 0, new_width, new_height);
-    xtk_spirit_set_type(window_spirit, XTK_SPIRIT_TYPE_WINDOW);
-    window_spirit->style.align = XTK_ALIGN_CENTER;
-
-    xtk_spirit_t *spirit = &window->spirit;
-    xtk_spirit_init(spirit, 0, 0, width, height);
-    xtk_spirit_set_type(spirit, XTK_SPIRIT_TYPE_WINDOW);
-    spirit->style.align = XTK_ALIGN_CENTER;
-
-    // 创建窗口容器，只能容纳一个容器
-    window_spirit->container = xtk_container_create(window_spirit);
-    if (!window_spirit->container) {
-        xtk_spirit_cleanup(window_spirit);
-        free(window);
-        return NULL;
-    }
-
-    spirit->container = xtk_container_create(spirit);
-    if (!spirit->container) {
-        xtk_spirit_cleanup(window_spirit);
-        free(window);
-        return NULL;
-    }
-
-    xtk_surface_t *bmp = xtk_surface_create(new_width, new_height);
-    if (!bmp) {
-        xtk_container_destroy(window_spirit->container);
-        window_spirit->container = NULL;
-        xtk_spirit_cleanup(window_spirit);
-        free(window);
-        return NULL;
-    }
-    xtk_spirit_set_surface(window_spirit, bmp);
-
-    bmp = xtk_surface_create(width, height);
-    if (!bmp) {
-        xtk_container_destroy(window_spirit->container);
-        window_spirit->container = NULL;
-        xtk_spirit_cleanup(window_spirit);
-        free(window);
-        return NULL;
-    }
-    xtk_spirit_set_surface(spirit, bmp);
-
-    // 创建导航栏
-    if (xtk_window_create_navigation(window) < 0) {
-        xtk_container_destroy(window_spirit->container);
-        window_spirit->container = NULL;
-        xtk_spirit_cleanup(window_spirit);
-        free(window);
-        return NULL;
-    }
-
-    // 创建视图
-    int view = uview_open(new_width, new_height);
-    if (view < 0) {
-        xtk_container_destroy(window_spirit->container);
-        window_spirit->container = NULL;
-        xtk_window_destroy_navigation(window);
-        xtk_spirit_cleanup(window_spirit);
-        free(window);
-        return NULL;
-    }
-    uview_set_type(view, UVIEW_TYPE_WINDOW);
-    uview_set_pos(view, x, y);
-    // 绑定视图
-    xtk_spirit_set_view(window_spirit, view);
-    xtk_spirit_set_view(spirit, view);
-
-    xtk_window_draw_border(window, 1, 1);
-    
-    xtk_view_t *pview = xtk_view_create();
-    assert(pview);
-    pview->view = view;
-    list_add(&window_spirit->list, &pview->spirit_list_head);
-    list_add(&spirit->list, &pview->spirit_list_head);    
-    xtk_view_add(pview);
-    
-    if (flags & XTK_WINDOW_SHOW)
-        uview_show(view);
-
-    return spirit;
 }
 
 int xtk_window_spirit_setup(xtk_window_t *window, xtk_spirit_t *spirit, int x, int y, int width, int height)
@@ -548,10 +466,11 @@ int xtk_window_flip(xtk_window_t *window)
 {
     if (!window)
         return -1;
+    xtk_spirit_t *spirit = &window->spirit;
     uview_bitmap_t bmp;
-    uview_bitmap_init(&bmp, window->spirit.surface->w, window->spirit.surface->h,
-        window->spirit.surface->pixels);
-    return uview_bitblt_update(window->spirit.view, window->spirit.x, window->spirit.y,
+    uview_bitmap_init(&bmp, spirit->surface->w, spirit->surface->h,
+        spirit->surface->pixels);
+    return uview_bitblt_update(spirit->view, spirit->x, spirit->y,
             &bmp);
 }
 
@@ -636,5 +555,13 @@ int xtk_window_set_routine(xtk_window_t *window, xtk_window_routine_t routine)
     if (!window)
         return -1;
     window->routine = routine;
+    return 0;
+}
+
+int xtk_window_set_active(xtk_window_t *window, bool is_active)
+{
+    if (!window)
+        return -1;
+    xtk_window_draw_border(window, is_active, 0);
     return 0;
 }
