@@ -24,6 +24,12 @@ dialog
 #include "xtk_mouse.h"
 #include "xtk_view.h"
 
+int xtk_init(int *argc, char **argv[]);
+int xtk_exit(int exit_code);
+
+int xtk_main();
+int xtk_main_quit();
+
 void xtk_test(int fd, uview_bitmap_t *wbmp);
 #if 0
 void xtk_mouse_motion(int x, int y);

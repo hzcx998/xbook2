@@ -574,3 +574,14 @@ int xtk_window_set_position(xtk_window_t *window, xtk_window_position_t pos)
     }
     return 0;
 }
+
+int xtk_window_set_default_size(xtk_window_t *window, int width, int height)
+{
+    if (!window)
+        return -1;
+    window->content_width = width;
+    window->content_height = height;
+    // 调整精灵的大小
+    
+    return 0;
+}

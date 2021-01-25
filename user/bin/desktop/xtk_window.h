@@ -59,6 +59,7 @@ xtk_spirit_t *xtk_window_create2(char *title, int x, int y, int width, int heigh
 xtk_spirit_t *xtk_window_create(xtk_window_type_t type);
 int xtk_window_destroy(xtk_window_t *window);
 int xtk_window_set_title(xtk_window_t *window, char *title);
+int xtk_window_set_default_size(xtk_window_t *window, int width, int height);
 int xtk_window_set_resizable(xtk_window_t *window, bool resizable);
 int xtk_window_set_position(xtk_window_t *window, xtk_window_position_t pos);
 
