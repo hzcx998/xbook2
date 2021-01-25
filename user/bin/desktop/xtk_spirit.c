@@ -71,9 +71,32 @@ int xtk_spirit_destroy(xtk_spirit_t *spirit)
 {
     if (!spirit)
         return -1;
+    
+    /* 根据不同的类型进行销毁 */
+    switch (spirit->type) {
+    case XTK_SPIRIT_TYPE_WINDOW:
+        return xtk_window_destroy(XTK_WINDOW(spirit));
+    default:
+        break;
+    }
     if (xtk_spirit_cleanup(spirit) < 0)
         return -1;
     free(spirit);
+    return 0;
+}
+
+int xtk_spirit_destroy_all(xtk_spirit_t *spirit)
+{
+    if (!spirit)
+        return -1;
+    xtk_container_t *container = spirit->container;
+    if (!container)
+        return -1;
+    xtk_spirit_t *tmp, *next;
+    list_for_each_owner_safe (tmp, next, &container->children_list, list) {    
+        xtk_spirit_destroy(tmp);
+    }
+    xtk_spirit_destroy(spirit);
     return 0;
 }
 

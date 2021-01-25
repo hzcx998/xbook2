@@ -9,6 +9,7 @@ xtk_view_t *xtk_view_create()
     view->view = -1;
     list_init(&view->list);
     list_init(&view->spirit_list_head);
+    view->spirit = NULL;
     return view;
 }
 

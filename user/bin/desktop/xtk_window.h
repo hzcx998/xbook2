@@ -57,6 +57,7 @@ typedef struct {
 #define XTK_WINDOW(spirit)  ((xtk_window_t *)(spirit))
 xtk_spirit_t *xtk_window_create2(char *title, int x, int y, int width, int height, uint32_t flags);
 xtk_spirit_t *xtk_window_create(xtk_window_type_t type);
+int xtk_window_destroy(xtk_window_t *window);
 int xtk_window_set_title(xtk_window_t *window, char *title);
 int xtk_window_set_resizable(xtk_window_t *window, bool resizable);
 int xtk_window_set_position(xtk_window_t *window, xtk_window_position_t pos);
@@ -69,5 +70,6 @@ int xtk_window_flip(xtk_window_t *window);
 int xtk_window_update(xtk_window_t *window, int x, int y, int w, int h);
 
 int xtk_window_main(xtk_spirit_t *spirit, uview_msg_t *msg);
+int xtk_window_quit(xtk_spirit_t *spirit);
 
 #endif /* _LIB_XTK_WINDOW_H */

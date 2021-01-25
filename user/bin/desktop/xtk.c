@@ -26,6 +26,20 @@ int xtk_main()
     return 0;
 }
 
+int xtk_main_quit()
+{
+    // 退出xtk_view
+    xtk_view_t *pview, *pnext;
+    xtk_view_for_each_safe (pview, pnext) {
+        assert(pview->spirit);
+        xtk_window_quit(pview->spirit);
+            // xtk_xxx_quit
+    }
+    // 退出...
+    exit(EXIT_SUCCESS);
+    return 0;
+}
+
 xtk_spirit_t *btn_root;
 xtk_spirit_t *win_root;
 void xtk_test(int fd, uview_bitmap_t *wbmp)
@@ -96,9 +110,11 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
 
     uview_bitblt_update(fd, 0, 0, wbmp);
 
-    win_root = xtk_window_create2("test", 400, 300, 200, 300, XTK_WINDOW_SHOW);
+
+    win_root = xtk_window_create(XTK_WINDOW_TOPLEVEL);  
+//    win_root = xtk_window_create2("test", 400, 300, 200, 300, XTK_WINDOW_SHOW);
     assert(win_root);
-   
+    xtk_window_set_title(XTK_WINDOW(win_root), "test");
     
     btn_root = xtk_button_create_with_label("hello");
     assert(btn_root);
@@ -174,11 +190,16 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     xtk_container_add(XTK_CONTAINER(win0), btn10);
     xtk_spirit_show_all(win0);
 
+/*
+    assert(!xtk_spirit_destroy(win0));
+    assert(!xtk_spirit_destroy(win_root));
+  */  
     // assert(xtk_spirit_hide_all(win0) == 0);
 
     //xtk_window_update(XTK_WINDOW(win0), 20, 10, 100, 100);
     //xtk_window_update(XTK_WINDOW(win0), -20, -10, 100, 100);
     //xtk_window_update(XTK_WINDOW(win0), 20, 10, 400, 300);
     
+    xtk_main_quit();
     xtk_main();
 }

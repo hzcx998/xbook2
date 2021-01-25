@@ -63,7 +63,12 @@ int xtk_window_main(xtk_spirit_t *spirit, uview_msg_t *msg)
         return 0;
     // 处理用户消息
     xtk_window_user_msg(spirit, msg);
-    return -1;
+    return 0;
+}
+
+int xtk_window_quit(xtk_spirit_t *spirit)
+{
+    return xtk_spirit_destroy_all(spirit);
 }
 
 /**
@@ -327,6 +332,7 @@ int xtk_window_view_setup(xtk_window_t *window, int x, int y, int width, int hei
         list_add(&window->window_spirit.list, &pview->spirit_list_head);
     }
     xtk_view_add(pview);
+    pview->spirit = &window->spirit;
     return 0;
 }
 
@@ -341,8 +347,10 @@ int xtk_window_view_setdown(xtk_window_t *window)
     if (window->type == XTK_WINDOW_TOPLEVEL) {
         list_del(&window->window_spirit.list);
     }
+    pview->spirit = NULL;
     xtk_view_remove(pview);
     uview_close(pview->view);
+    xtk_view_destroy(pview);
     return 0;
 }
 
@@ -425,6 +433,22 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
     if (!spirit)
         free(window);
     return spirit;
+}
+
+int xtk_window_destroy(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+
+    if (xtk_window_view_setdown(window) < 0)
+        return -1;
+    if (window->type == XTK_WINDOW_TOPLEVEL) {
+        xtk_window_destroy_navigation(window);
+        xtk_window_spirit_setdown(&window->window_spirit);
+    }
+    xtk_window_spirit_setdown(&window->spirit);
+    free(window);
+    return 0;
 }
 
 int xtk_window_set_title(xtk_window_t *window, char *title)
