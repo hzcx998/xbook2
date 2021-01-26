@@ -449,6 +449,14 @@ int view_hide(view_t *view)
     return 0;
 }
 
+int view_set_drag_region(view_t *view, view_region_t *region)
+{
+    if (!view)
+        return -1;
+    view_region_copy(&view->drag_regions, region);
+    return 0;
+}
+
 int view_show(view_t *view)
 {
     if (!view)

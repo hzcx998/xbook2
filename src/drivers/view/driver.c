@@ -226,8 +226,8 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
         if (view == NULL) {
             status = IO_FAILED;
         } else {
-            view_rect_t *rect = (view_rect_t *) arg;
-            if (view_env_try_resize(view, rect) < 0)
+            unsigned int vsize = *(unsigned int *)arg;
+            if (view_env_try_resize_ex(view, (vsize >> 16) & 0xffff, vsize & 0xffff) < 0)
                 status = IO_FAILED;
         }
         break;
@@ -260,8 +260,14 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
             view_set_size_min(view, (size_min >> 16) & 0xffff, size_min & 0xffff);
         }
         break;
-    
-    
+    case VIEWIO_SET_DRAG_REGION:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            view_region_t *vreg = (view_region_t *) arg;
+            view_set_drag_region(view, vreg);
+        }
+        break;
     default:
         status = IO_FAILED;
         break;

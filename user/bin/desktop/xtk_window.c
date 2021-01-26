@@ -16,19 +16,60 @@ static xtk_window_style_t __xtk_window_style_defult = {
     XTK_RGB(118, 118, 118),
 };
 
+/**
+ * width和height是整个视图的大小，所以，求创窗口大小时需要进行计算。
+ */
 static int xtk_window_change_size(xtk_window_t *window, int width, int height)
 {
     if (!window)
         return -1;
     xtk_spirit_t *spirit = &window->spirit;
-    printf("xtk change size: from (%d, %d) to (%d, %d)", spirit->width, spirit->height, width, height);
+    int content_width, content_height;
+    
+    if (window->type == XTK_WINDOW_TOPLEVEL) {
+        content_width = width - window->style->border_thick * 2;
+        content_height = height - window->style->border_thick * 2 - window->style->navigation_height;
+    } else {
+        content_width = width;
+        content_height = height;
+    }
+
+    window->content_width = content_width;
+    window->content_height = content_height;
+
+    // 调整窗口精灵大小
+    xtk_spirit_reset_size(spirit, content_width, content_height);
+    if (window->type == XTK_WINDOW_TOPLEVEL) {
+        xtk_spirit_reset_size(&window->window_spirit, width, height);
+        // 重绘窗口
+        xtk_window_draw_border(window, 1, 1);
+    }
+    // 设置可移动区域大小
+    xtk_window_reset_mobile_area(window);
+        
+    // TODO: 调整子精灵的位置和大小
+
+    // 显示精灵子控件
+    xtk_spirit_show_children(spirit);
     return 0;
 }
 
 /**
- * 
- * 
+ * width和height是内容窗口的大小
  */
+int xtk_window_resize(xtk_window_t *window, int width, int height)
+{
+    int win_width, win_height;
+    if (window->type == XTK_WINDOW_TOPLEVEL) {
+        win_width = width + window->style->border_thick * 2;
+        win_height = height + window->style->border_thick * 2 + window->style->navigation_height;
+    } else {
+        win_height = width;
+        win_height = height;
+    }
+    return uview_resize(window->spirit.view, win_width, win_height);
+}
+
 void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
 {
     xtk_spirit_t *spirit = &window->spirit;
@@ -95,6 +136,7 @@ void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
  */
 int xtk_window_main(xtk_spirit_t *spirit, uview_msg_t *msg)
 {
+    // 每个窗口精灵都需要进行这些消息检测
     switch (uview_msg_get_type(msg)) {
     case UVIEW_MSG_LEAVE:
     case UVIEW_MSG_ENTER:
@@ -212,18 +254,38 @@ static int xtk_window_create_navigation(xtk_window_t *window)
     xtk_spirit_t *btn_close = xtk_button_create_with_label("X");
     assert(btn_close);
 
-    int x = window->window_spirit.width - window->style->border_thick - btn_close->width;
+    int x = window->style->border_thick;
     int y = window->style->border_thick + window->style->navigation_height / 2;
     xtk_spirit_set_pos(btn_close, x, y - btn_close->height / 2);
-    x -= btn_maxim->width;
-    xtk_spirit_set_pos(btn_maxim, x, y - btn_maxim->height / 2);
-    x -= btn_close->width;
+    
+    x += btn_close->width;
     xtk_spirit_set_pos(btn_minim, x, y - btn_minim->height / 2);
     
+    x += btn_minim->width;
+    xtk_spirit_set_pos(btn_maxim, x, y - btn_maxim->height / 2);
+    
+    xtk_container_add(XTK_CONTAINER(window_spirit), btn_close);
     xtk_container_add(XTK_CONTAINER(window_spirit), btn_minim);
     xtk_container_add(XTK_CONTAINER(window_spirit), btn_maxim);
-    xtk_container_add(XTK_CONTAINER(window_spirit), btn_close);
+
     return 0;
+}
+
+static int xtk_window_navigation_button_width(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+    xtk_container_t *container = window->window_spirit.container;
+    if (!container)
+        return -1;
+    xtk_spirit_t *spirit;
+    int width = 0;
+    list_for_each_owner (spirit, &container->children_list, list) {
+        if (spirit->type == XTK_SPIRIT_TYPE_BUTTON) {
+            width += spirit->width;
+        }
+    }
+    return width;
 }
 
 static int xtk_window_destroy_navigation(xtk_window_t *window)
@@ -355,7 +417,7 @@ static xtk_spirit_t *xtk_window_create_toplevel(xtk_window_t *window)
         xtk_window_spirit_setdown(spirit);
         return NULL;
     }
-    
+    xtk_window_reset_mobile_area(window);
     // 窗口需要绘制
     xtk_window_draw_border(window, 1, 1);
     return spirit;
@@ -376,6 +438,7 @@ static xtk_spirit_t *xtk_window_create_popup(xtk_window_t *window)
         xtk_window_view_setdown(window);
         return NULL;
     }
+    xtk_window_reset_mobile_area(window);
     return spirit;
 }
 
@@ -427,14 +490,15 @@ int xtk_window_set_title(xtk_window_t *window, char *title)
         navigation->title = xtk_label_create(title);
         if (!navigation->title)
             return -1;
-        navigation->title->style.background_color = UVIEW_NONE_COLOR;
+        navigation->title->style.background_color = XTK_NONE_COLOR;
+        navigation->title->style.align = XTK_ALIGN_LEFT;
         // 第一次创建需要添加到容器中
         xtk_container_add(XTK_CONTAINER(&window->window_spirit), navigation->title);
     } else {
         xtk_label_set_text(navigation->title, title);
     }
     // 调整位置
-    int x = window->style->border_thick;
+    int x = window->style->border_thick * 2 + xtk_window_navigation_button_width(window);
     int y = window->style->border_thick + window->style->navigation_height / 2  - \
         navigation->title->height / 2;
     xtk_spirit_set_pos(navigation->title, x, y);
@@ -452,6 +516,28 @@ int xtk_window_set_resizable(xtk_window_t *window, bool resizable)
         uview_set_resizable(spirit->view);
     else
         uview_set_unresizable(spirit->view);
+    return 0;
+}
+
+int xtk_window_reset_mobile_area(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+    int left, top, right, bottom; 
+    if (window->type == XTK_WINDOW_TOPLEVEL) {
+        left = window->style->border_thick;
+        left += xtk_window_navigation_button_width(window); // 加上按钮占用的长度
+
+        top = window->style->border_thick;
+        right = window->window_spirit.width - window->style->border_thick;
+        bottom = window->style->border_thick + window->style->navigation_height;
+    } else {
+        left = window->spirit.x;
+        top = window->spirit.y;
+        right = window->spirit.width;
+        bottom = window->spirit.height;
+    }
+    uview_set_drag_region(window->spirit.view, left, top, right, bottom);
     return 0;
 }
 

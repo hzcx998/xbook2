@@ -98,6 +98,7 @@ typedef struct _video_info {
 #define VIEWIO_GETLASTPOS   DEVCTL_CODE('v', 16)
 #define VIEWIO_GETMOUSEPOS  DEVCTL_CODE('v', 17)
 #define VIEWIO_SETSIZEMIN   DEVCTL_CODE('v', 18)
+#define VIEWIO_SET_DRAG_REGION  DEVCTL_CODE('v', 19)
 
 #ifdef __cplusplus
 }

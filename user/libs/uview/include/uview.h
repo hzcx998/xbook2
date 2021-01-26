@@ -43,9 +43,12 @@ int uview_set_moveable(int vfd);
 int uview_set_unmoveable(int vfd);
 int uview_set_resizable(int vfd);
 int uview_set_unresizable(int vfd);
-int uview_resize(int vfd, int x, int y, int width, int height);
+int uview_resize(int vfd, int width, int height);
 int uview_get_screensize(int vfd, int *width, int *height);
 int uview_get_lastpos(int vfd, int *x, int *y);
 int uview_get_mousepos(int vfd, int *x, int *y);
+
+int uview_set_drag_region(int vfd, int left, int top, int right, int bottom);
+
 
 #endif  /* _LIB_UVIEW_H */

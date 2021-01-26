@@ -16,7 +16,7 @@ int view_test(int argc, char *argv[])
     int screen_w, screen_h;
     uview_set_type(screen_fd, UVIEW_TYPE_FIXED);
     uview_get_screensize(screen_fd, &screen_w, &screen_h);
-    uview_resize(screen_fd, 0, 0, screen_w, screen_h);
+    uview_resize(screen_fd, screen_w, screen_h);
     // 调整大小后重绘
     uview_msg_t msg;
     if (!uview_get_msg(screen_fd, &msg)) {

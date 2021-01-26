@@ -253,6 +253,23 @@ int xtk_spirit_set_surface(xtk_spirit_t *spirit, xtk_surface_t *surface)
     return 0;
 }
 
+int xtk_spirit_reset_size(xtk_spirit_t *spirit, int width, int height)
+{
+    if (!spirit)
+        return -1;
+    spirit->width = width;
+    spirit->height = height;
+    
+    // resize surface
+    if (spirit->surface) {
+        xtk_spirit_set_surface(spirit, NULL);
+        xtk_surface_t *surface = xtk_surface_create(width, height);
+        assert(surface);
+        xtk_spirit_set_surface(spirit, surface);
+    }
+    return 0;
+}
+
 int xtk_spirit_set_container(xtk_spirit_t *spirit, xtk_container_t *container)
 {
     if (!spirit)

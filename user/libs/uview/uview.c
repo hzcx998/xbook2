@@ -123,17 +123,12 @@ int uview_get_screensize(int vfd, int *width, int *height)
     return 0;
 }
 
-
-int uview_resize(int vfd, int x, int y, int width, int height)
+int uview_resize(int vfd, int width, int height)
 {
     if (vfd < 0)
         return -1;
-    uview_rect_t rect;
-    rect.x = x;
-    rect.y = y;
-    rect.w.sw = width;
-    rect.h.sh = height;
-    return ioctl(vfd, VIEWIO_RESIZE, &rect);
+    unsigned int vsize = ((width & 0xffff ) << 16) | (height & 0xffff);
+    return ioctl(vfd, VIEWIO_RESIZE, &vsize);
 }
 
 int uview_hide(int vfd)
@@ -153,6 +148,18 @@ int uview_update(int vfd, int left, int top, int right, int bottom)
     region.right = right;
     region.bottom = bottom;
     return ioctl(vfd, VIEWIO_REFRESH, &region);
+}
+
+int uview_set_drag_region(int vfd, int left, int top, int right, int bottom)
+{
+    if (vfd < 0)
+        return -1;
+    uview_region_t region;
+    region.left = left;
+    region.top = top;
+    region.right = right;
+    region.bottom = bottom;
+    return ioctl(vfd, VIEWIO_SET_DRAG_REGION, &region);
 }
 
 int uview_bitblt(int vfd, int vx, int vy, uview_bitmap_t *vbmp)

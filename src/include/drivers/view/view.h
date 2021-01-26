@@ -83,6 +83,8 @@ int view_set_size_min(view_t *view, int width, int height);
 
 int view_drag_rect_check(view_t *view, int x, int y);
 
+int view_set_drag_region(view_t *view, view_region_t *region);
+
 list_t *view_get_show_list();
 
 void view_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1);

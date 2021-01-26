@@ -259,6 +259,16 @@ int view_env_try_resize(view_t *view, view_rect_t *rect)
     return view_try_put_msg(view, &m);
 }
 
+int view_env_try_resize_ex(view_t *view, int width, int height)
+{
+    view_rect_t rect;
+    rect.x = view->x;
+    rect.y = view->y;
+    rect.w.uw = width;
+    rect.h.uh = height;
+    return view_env_try_resize(view, &rect);
+}
+
 /**
  * 派发鼠标的过滤消息
  * 如果成功过滤返回0，没有过滤就返回-1，表示消息还需要进一步处理

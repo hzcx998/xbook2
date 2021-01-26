@@ -17,11 +17,12 @@ int open_desktop()
         printf("open view dev failed!\n");
         return -1;
     }
+    
     int screen_w, screen_h;
     uview_set_type(screen_fd, UVIEW_TYPE_FIXED);
     /* 获取并调整桌面大小 */
     uview_get_screensize(screen_fd, &screen_w, &screen_h);
-    uview_resize(screen_fd, 0, 0, screen_w, screen_h);
+    uview_resize(screen_fd, screen_w, screen_h);
     // 调整大小后重绘
     uview_msg_t msg;
     int get_msg_done = 0;
@@ -263,8 +264,7 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     // xtk_window_set_position(XTK_WINDOW(win_root), XTK_WIN_POS_MOUSE);
 
     xtk_window_set_position(XTK_WINDOW(win_root), XTK_WIN_POS_NONE);
-    
-
+    xtk_window_resize(XTK_WINDOW(win_root), 640, 480);
 
     btn_root = xtk_button_create_with_label("hello");
     assert(btn_root);
