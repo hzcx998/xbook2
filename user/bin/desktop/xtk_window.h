@@ -40,7 +40,6 @@ typedef enum {
 
 typedef struct {
     xtk_spirit_t *title;
-    
 } xtk_window_navigation_t;
 
 typedef void (*xtk_window_routine_t) (xtk_spirit_t *, uview_msg_t *);

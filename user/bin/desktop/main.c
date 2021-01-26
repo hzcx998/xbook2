@@ -167,7 +167,7 @@ void win_thread()
     #endif  
 }
 
-void win_proc(xtk_window_t *window, uview_msg_t *msg)
+void win_proc(xtk_spirit_t *window, uview_msg_t *msg)
 {
     printf("msg %d\n", uview_msg_get_type(msg));
     switch (uview_msg_get_type(msg)) {

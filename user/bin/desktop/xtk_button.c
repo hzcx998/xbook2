@@ -1,4 +1,4 @@
-#include "xtk_button.h"
+#include "xtk.h"
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
@@ -9,17 +9,17 @@ xtk_spirit_t *xtk_button_create()
     if (!button)
         return NULL;
     button->state = XTK_BUTTON_IDLE;
-    button->color_idle = UVIEW_WHITE;
-    button->color_touch = UVIEW_RED;
-    button->color_click = UVIEW_BLUE;
-    
+    button->color_idle = XTK_WHITE;
+    button->color_touch = XTK_RGB_SUB(button->color_idle, 0x40, 0x40, 0x40);
+    button->color_click = XTK_RGB_SUB(button->color_idle, 0x20, 0x20, 0x20);
+
     xtk_spirit_t *spirit = &button->spirit;
     xtk_spirit_init(spirit, 0, 0, XTK_BUTTON_WIDTH_DEFAULT, XTK_BUTTON_HEIGHT_DEFAULT);
     xtk_spirit_set_type(spirit, XTK_SPIRIT_TYPE_BUTTON);
     
-    spirit->style.border_color = UVIEW_GRAY;
+    spirit->style.border_color = XTK_GRAY;
     spirit->style.background_color = button->color_idle;
-    spirit->style.color = UVIEW_BLACK;
+    spirit->style.color = XTK_BLACK;
     spirit->style.align = XTK_ALIGN_CENTER;
     return spirit;
 }

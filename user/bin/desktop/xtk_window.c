@@ -59,7 +59,7 @@ static int xtk_window_change_size(xtk_window_t *window, int width, int height)
  */
 int xtk_window_resize(xtk_window_t *window, int width, int height)
 {
-    int win_width, win_height;
+    int win_width = 0, win_height = 0;
     if (window->type == XTK_WINDOW_TOPLEVEL) {
         win_width = width + window->style->border_thick * 2;
         win_height = height + window->style->border_thick * 2 + window->style->navigation_height;
@@ -127,7 +127,7 @@ void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
     }
     // 调用用户处理函数
     if (window->routine)
-        window->routine(window, msg);
+        window->routine(spirit, msg);
 }
 
 /**
@@ -230,12 +230,26 @@ int xtk_window_draw_border(xtk_window_t *window,
     if (navigation->title)
         navigation->title->style.color = text_c;
     
+    xtk_container_t *container = spirit->container;
+    assert(container);
+    xtk_spirit_t *btn_spirit;
+    xtk_button_t *btn;
+    list_for_each_owner (btn_spirit, &container->children_list, list) {
+        if (btn_spirit->type == XTK_SPIRIT_TYPE_BUTTON) {
+            btn = XTK_BUTTON(btn_spirit);
+            btn->color_idle = back;
+            btn->color_touch = XTK_RGB_SUB(back, 0x40, 0x40, 0x40);
+            btn->color_click = XTK_RGB_SUB(back, 0x20, 0x20, 0x20);
+            btn_spirit->style.background_color = btn->color_idle;
+        }
+    }
+
     // 刷新到屏幕上
     uview_bitmap_t bmp;
     uview_bitmap_init(&bmp, spirit->surface->w, spirit->surface->h, (uview_color_t *) spirit->surface->pixels);
     uview_bitblt(spirit->view, 0, 0, &bmp);
     uview_update(spirit->view, 0, 0, spirit->width, spirit->height);
-    
+
     // TODO: 刷新所有精灵
     xtk_spirit_show_children(&window->window_spirit);
     return 0;
@@ -247,26 +261,26 @@ static int xtk_window_create_navigation(xtk_window_t *window)
     navigation->title = NULL;
     xtk_spirit_t *window_spirit = &window->window_spirit;
 
-    xtk_spirit_t *btn_minim = xtk_button_create_with_label("-");
-    assert(btn_minim);
-    xtk_spirit_t *btn_maxim = xtk_button_create_with_label("O");
-    assert(btn_maxim);
-    xtk_spirit_t *btn_close = xtk_button_create_with_label("X");
-    assert(btn_close);
+    xtk_spirit_t *spirit_minim = xtk_button_create_with_label("-");
+    assert(spirit_minim);
+    xtk_spirit_t *spirit_maxim = xtk_button_create_with_label("O");
+    assert(spirit_maxim);
+    xtk_spirit_t *spirit_close = xtk_button_create_with_label("X");
+    assert(spirit_close);
 
     int x = window->style->border_thick;
     int y = window->style->border_thick + window->style->navigation_height / 2;
-    xtk_spirit_set_pos(btn_close, x, y - btn_close->height / 2);
+    xtk_spirit_set_pos(spirit_close, x, y - spirit_close->height / 2);
     
-    x += btn_close->width;
-    xtk_spirit_set_pos(btn_minim, x, y - btn_minim->height / 2);
+    x += spirit_close->width;
+    xtk_spirit_set_pos(spirit_minim, x, y - spirit_minim->height / 2);
     
-    x += btn_minim->width;
-    xtk_spirit_set_pos(btn_maxim, x, y - btn_maxim->height / 2);
+    x += spirit_minim->width;
+    xtk_spirit_set_pos(spirit_maxim, x, y - spirit_maxim->height / 2);
     
-    xtk_container_add(XTK_CONTAINER(window_spirit), btn_close);
-    xtk_container_add(XTK_CONTAINER(window_spirit), btn_minim);
-    xtk_container_add(XTK_CONTAINER(window_spirit), btn_maxim);
+    xtk_container_add(XTK_CONTAINER(window_spirit), spirit_close);
+    xtk_container_add(XTK_CONTAINER(window_spirit), spirit_minim);
+    xtk_container_add(XTK_CONTAINER(window_spirit), spirit_maxim);
 
     return 0;
 }
@@ -544,7 +558,7 @@ int xtk_window_reset_mobile_area(xtk_window_t *window)
 xtk_surface_t *xtk_window_get_surface(xtk_window_t *window)
 {
     if (!window)
-        return -1;
+        return NULL;
     return window->spirit.surface;
 }
 
