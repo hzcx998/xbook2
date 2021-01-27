@@ -2,6 +2,7 @@
 #define _LIB_XTK_WINDOW_H
 
 #include <stddef.h>
+#include <stdbool.h>
 #include "xtk_spirit.h"
 #include "xtk_view.h"
 
@@ -63,11 +64,14 @@ int xtk_window_destroy(xtk_window_t *window);
 int xtk_window_set_title(xtk_window_t *window, char *title);
 int xtk_window_set_default_size(xtk_window_t *window, int width, int height);
 int xtk_window_set_resizable(xtk_window_t *window, bool resizable);
+int xtk_window_set_fixed(xtk_window_t *window, bool fiexed);
 int xtk_window_set_position(xtk_window_t *window, xtk_window_position_t pos);
 int xtk_window_set_routine(xtk_window_t *window, xtk_window_routine_t routine);
 int xtk_window_set_active(xtk_window_t *window, bool is_active);
 int xtk_window_reset_mobile_area(xtk_window_t *window);
 int xtk_window_resize(xtk_window_t *window, int width, int height);
+int xtk_window_get_screen(xtk_window_t *window, int *width, int *height);
+int xtk_window_resize_to_screen(xtk_window_t *window);
 
 xtk_surface_t *xtk_window_get_surface(xtk_window_t *window);
 
@@ -83,6 +87,9 @@ void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg);
 
 int xtk_window_draw_border(xtk_window_t *window, 
         int is_active, int redraw_bg);
+int xtk_window_draw_no_border(xtk_window_t *window);
+
+int xtk_window_load_mouse_cursors(xtk_window_t *window, char *pathname);
 
 
 #endif /* _LIB_XTK_WINDOW_H */

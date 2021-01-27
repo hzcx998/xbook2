@@ -252,6 +252,7 @@ int view_env_try_resize(view_t *view, view_rect_t *rect)
         return -1;
     if (view_resize(view, rect->x, rect->y, rect->w.uw, rect->h.uh) < 0)
         return -1;
+    keprint("view id %d\n", view->id);
     view_msg_t m;
     view_msg_header(&m, VIEW_MSG_RESIZE, view->id);
     view_msg_data(&m, rect->x, rect->y, rect->w.uw, rect->h.uh);

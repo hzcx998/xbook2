@@ -24,6 +24,9 @@ static int xtk_window_change_size(xtk_window_t *window, int width, int height)
     if (!window)
         return -1;
     xtk_spirit_t *spirit = &window->spirit;
+    
+    printf("xtk window change size: %d %d\n", width, height);
+    
     int content_width, content_height;
     
     if (window->type == XTK_WINDOW_TOPLEVEL) {
@@ -43,10 +46,12 @@ static int xtk_window_change_size(xtk_window_t *window, int width, int height)
         xtk_spirit_reset_size(&window->window_spirit, width, height);
         // 重绘窗口
         xtk_window_draw_border(window, 1, 1);
+    } else if (window->type == XTK_WINDOW_POPUP) {
+        xtk_window_draw_no_border(window);
     }
     // 设置可移动区域大小
     xtk_window_reset_mobile_area(window);
-        
+    
     // TODO: 调整子精灵的位置和大小
 
     // 显示精灵子控件
@@ -64,7 +69,7 @@ int xtk_window_resize(xtk_window_t *window, int width, int height)
         win_width = width + window->style->border_thick * 2;
         win_height = height + window->style->border_thick * 2 + window->style->navigation_height;
     } else {
-        win_height = width;
+        win_width = width;
         win_height = height;
     }
     return uview_resize(window->spirit.view, win_width, win_height);
@@ -95,6 +100,7 @@ void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
 
             int x = uview_msg_get_mouse_x(msg);
             int y = uview_msg_get_mouse_y(msg);
+            
             // 超出返回，就不传递过去
             if (x < 0 || y < 0 || x >= spirit->width || y >= spirit->height) {
                 return;
@@ -110,18 +116,24 @@ void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
         xtk_spirit_show(spirit);
         return;
     case UVIEW_MSG_ACTIVATE:
-        xtk_window_set_active(window, true);
-        return;    
+        if (window->type == XTK_WINDOW_TOPLEVEL) {
+            xtk_window_set_active(window, true);        
+            return;    
+        }
+        break;
     case UVIEW_MSG_INACTIVATE:
-        xtk_window_set_active(window, false);
-        return;    
+        if (window->type == XTK_WINDOW_TOPLEVEL) {
+            xtk_window_set_active(window, false);        
+            return;
+        }
+        break;
     case UVIEW_MSG_RESIZE:
         /* 响应大小调整 */
         xtk_window_change_size(XTK_WINDOW(spirit), uview_msg_get_resize_width(msg),
             uview_msg_get_resize_height(msg));
         /* 调整窗口后，鼠标位置发生了改变，需要做一次位置检测 */
         xtk_mouse_motion(spirit, -1, -1);
-        return;
+        break;
     default:
         break;
     }
@@ -255,6 +267,29 @@ int xtk_window_draw_border(xtk_window_t *window,
     return 0;
 }
 
+/**
+ * 简单绘制没有边框的窗口
+ */
+int xtk_window_draw_no_border(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+    uview_color_t back = window->style->background_color_active;
+    xtk_spirit_t *spirit = &window->spirit;
+    assert(spirit->surface);
+
+    // 绘制内容
+    xtk_surface_clear(spirit->surface);
+    xtk_surface_rectfill(spirit->surface, 0, 0, spirit->width, spirit->height, back);
+
+    // 刷新到屏幕上
+    uview_bitmap_t bmp;
+    uview_bitmap_init(&bmp, spirit->surface->w, spirit->surface->h, (uview_color_t *) spirit->surface->pixels);
+    uview_bitblt(spirit->view, 0, 0, &bmp);
+    uview_update(spirit->view, 0, 0, spirit->width, spirit->height);
+    return 0;
+}
+
 static int xtk_window_create_navigation(xtk_window_t *window)
 {
     xtk_window_navigation_t *navigation = &window->navigation;
@@ -328,12 +363,12 @@ int xtk_window_spirit_setup(xtk_window_t *window, xtk_spirit_t *spirit, int x, i
     }
     xtk_spirit_set_container(spirit, container);
     
-    xtk_surface_t *bmp = xtk_surface_create(width, height);
-    if (!bmp) {
+    xtk_surface_t *surface = xtk_surface_create(width, height);
+    if (!surface) {
         xtk_spirit_set_container(spirit, NULL);
         return -1;
     }
-    xtk_spirit_set_surface(spirit, bmp);
+    xtk_spirit_set_surface(spirit, surface);
     return 0;
 }
 
@@ -400,8 +435,6 @@ static xtk_spirit_t *xtk_window_create_toplevel(xtk_window_t *window)
     window->content_width = width;
     window->content_height = height;
 
-    window->style = &__xtk_window_style_defult;
-
     // 初始化精灵
     int new_width = window->style->border_thick * 2 + width;
     int new_height = window->style->border_thick * 2 + height + window->style->navigation_height;
@@ -443,7 +476,6 @@ static xtk_spirit_t *xtk_window_create_popup(xtk_window_t *window)
     int height = XTK_WINDOW_HEIGHT_DEFAULT;
     window->content_width = width;
     window->content_height = height;
-    window->style = NULL;
     xtk_spirit_t *spirit = &window->spirit;
     if (xtk_window_spirit_setup(window, spirit, 0, 0, width, height) < 0) {
         return NULL;
@@ -464,6 +496,8 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
     memset(window, 0, sizeof(xtk_window_t));
     window->type = type;
     window->routine = NULL;
+    window->style = &__xtk_window_style_defult;
+
     xtk_spirit_t *spirit = NULL;
     if (type == XTK_WINDOW_TOPLEVEL) {
         spirit = xtk_window_create_toplevel(window);
@@ -663,5 +697,58 @@ int xtk_window_set_active(xtk_window_t *window, bool is_active)
     if (!window)
         return -1;
     xtk_window_draw_border(window, is_active, 0);
+    return 0;
+}
+
+int xtk_window_set_fixed(xtk_window_t *window, bool fiexed)
+{
+    if (!window)
+        return -1;
+    if (fiexed) {
+        if (window->type == XTK_WINDOW_POPUP) { // popup类型才可以设置成固定
+            uview_set_type(window->spirit.view, UVIEW_TYPE_FIXED);
+        }
+        uview_set_unmoveable(window->spirit.view);
+        // uview_set_unresizable(window->spirit.view);
+    } else {
+        if (window->type == XTK_WINDOW_POPUP) { // popup类型才需要还原
+            uview_set_type(window->spirit.view, UVIEW_TYPE_WINDOW);
+        }
+        uview_set_moveable(window->spirit.view);
+    }
+    return 0;
+}
+
+int xtk_window_get_screen(xtk_window_t *window, int *width, int *height)
+{
+    if (!window)
+        return -1;
+    return uview_get_screensize(window->spirit.view, width, height);
+}
+
+int xtk_window_resize_to_screen(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+    int width = 0;
+    int height = 0;
+    if (xtk_window_get_screen(window, &width, &height) < 0) {
+        printf("%s: get screen size failed!\n", __func__);
+        return -1;
+    }
+    if (!width || !height) {
+        printf("%s: get screen size error!\n", __func__);
+        return -1;
+    }
+    return xtk_window_resize(window, width, height);
+}
+
+int xtk_window_load_mouse_cursors(xtk_window_t *window, char *pathname)
+{
+    if (!window)
+        return -1;
+    if (window->spirit.view < 0)
+        return -1;
+    xtk_mouse_load_cursors(window->spirit.view, pathname);    
     return 0;
 }

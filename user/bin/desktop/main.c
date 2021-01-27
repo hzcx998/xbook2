@@ -9,65 +9,33 @@
 
 void win_thread();
 
-int open_desktop()
+#define MOUSE_CURSOR_DIR            "/system/cursors"
+#define BACKGROUND_IMAGE_NAME       "/system/background/picture.jpg"
+
+void desktop_setup(xtk_spirit_t *spirit)
 {
-    /* 创建桌面视图 */
-    int screen_fd = uview_open(32, 32);
-    if (screen_fd < 0) {
-        printf("open view dev failed!\n");
-        return -1;
-    }
+    xtk_spirit_show(spirit);
+    // 加载鼠标光标
+    xtk_window_load_mouse_cursors(XTK_WINDOW(spirit), MOUSE_CURSOR_DIR);
     
-    int screen_w, screen_h;
-    uview_set_type(screen_fd, UVIEW_TYPE_FIXED);
-    /* 获取并调整桌面大小 */
-    uview_get_screensize(screen_fd, &screen_w, &screen_h);
-    uview_resize(screen_fd, screen_w, screen_h);
-    // 调整大小后重绘
-    uview_msg_t msg;
-    int get_msg_done = 0;
-    if (!uview_get_msg(screen_fd, &msg)) {
-        switch (uview_msg_get_type(&msg)) {
-        case UVIEW_MSG_RESIZE:
-            {
-                screen_w = uview_msg_get_resize_width(&msg);
-                screen_h = uview_msg_get_resize_height(&msg);
-                get_msg_done = 1;
-            }
-            break;
-        default:
-            break;
-        }
+    // 加载壁纸
+    xtk_image_t *img = xtk_image_load(BACKGROUND_IMAGE_NAME);
+    if (!img)
+        return;
+    if (xtk_image_resize2(img, spirit->width, spirit->height, sizeof(uint32_t)) < 0) {
+        xtk_image_destroy(img);
+        img = NULL;
+        return;
     }
-    if (!get_msg_done) {
-        close(screen_fd);
-        return -1;
-    }
-    /* 加载背景图片 */
-    int iw, ih, ic;
-    unsigned char *ibuf = uview_load_image("/background/lack.jpg", &iw, &ih, &ic);
-    if (!ibuf) {
-        close(screen_fd);
-        return -1;
-    }
-    // 绘制桌面
-    uint32_t *screen_bits = malloc(screen_w * screen_h * sizeof(uview_color_t));
-    assert(screen_bits);
-    uview_bitmap_t screen_vbmp;
-    uview_bitmap_init(&screen_vbmp, screen_w, screen_h, screen_bits);
-    /* 调整大小为屏幕大小 */
-    uview_resize_image(ibuf, iw, ih, 
-        (unsigned char *) screen_bits, screen_w, screen_h, 4);
-    /* 释放图片的原始数据 */
-    free(ibuf);
-    uview_bitblt_update(screen_fd, 0, 0, &screen_vbmp);
-    /* 释放位图 */
-    free(screen_bits);
-
-    // 需要先显示桌面
-    uview_show(screen_fd);
-
+    xtk_surface_t *surface = xtk_window_get_surface(XTK_WINDOW(spirit));
+    assert(surface);
     
+    xtk_surface_t img_surface;
+    xtk_surface_init(&img_surface, img->w, img->h, (uint32_t *) img->buf);
+    xtk_surface_blit(&img_surface, NULL, surface, NULL);
+    // 刷新到窗口里面
+    xtk_window_flip(XTK_WINDOW(spirit));
+    xtk_image_destroy(img);
 
     // 创建子进程
     pid_t pid = fork();
@@ -75,54 +43,48 @@ int open_desktop()
         win_thread();
         exit(-1);
     }
-
-    // 消息循环
-    while (1) {
-        if (uview_get_msg(screen_fd, &msg)) {
-
-        }
-    }
-    return 0;
 }
 
+void desktop_proc(xtk_spirit_t *spirit, uview_msg_t *msg)
+{
+    int type = uview_msg_get_type(msg);
+    //printf("msg: %d\n", type);
+    switch (type) {
+    case UVIEW_MSG_RESIZE: // 收到调整大小消息，再显示精灵
+        desktop_setup(spirit);
+        break;
+    default:
+        break;
+    }
+}
+
+int open_desktop()
+{
+    if (xtk_init(NULL, NULL) < 0) {
+        printf("xtk_init failed!\n");
+        return -1;
+    }
+    xtk_spirit_t *screen_window = xtk_window_create(XTK_WINDOW_POPUP);
+    if (!screen_window) {
+        printf("xtk create desktop failed!\n");
+        return -1;
+    }
+    // 设置为固定窗口，不能移动
+    xtk_window_set_fixed(XTK_WINDOW(screen_window), true);
+    // 显示到屏幕上后再调整大小
+    assert(xtk_window_resize_to_screen(XTK_WINDOW(screen_window)) == 0);
+    // 禁止窗口大小调整
+    xtk_window_set_resizable(XTK_WINDOW(screen_window), false);
+    xtk_window_set_routine(XTK_WINDOW(screen_window), desktop_proc);
+    xtk_main();
+    return 0;
+}
 
 int main(int argc, char *argv[]) 
 {
-    
     if (open_desktop() < 0)
         return -1;
     return 0;
-}
-
-#define WIN_W 320
-#define WIN_H 240
-
-void xtk_test(int fd, uview_bitmap_t *wbmp);
-
-void win_thread()
-{
-    int win_fd = uview_open(WIN_W, WIN_H);
-    if (win_fd < 0) {
-        printf("open view dev failed!\n");
-        return;
-    }
-    uview_set_type(win_fd, UVIEW_TYPE_WINDOW);
-    uview_show(win_fd);
-
-    uview_bitmap_t *bmp = uview_bitmap_create(WIN_W, WIN_H);
-    assert(bmp);
-    
-    xtk_text_init();
-
-    uview_bitmap_t *fbmp = uview_bitmap_create(100, 20);
-    assert(fbmp);
-    xtk_text_to_bitmap("hello, world!\nabc\bdef", UVIEW_BLUE, DOTF_STANDARD_NAME,
-        fbmp, 0, 0);
-    uview_bitblt_update(win_fd, 100, 100, fbmp);
-    uview_bitmap_destroy(fbmp);
-    
-    xtk_test(win_fd, bmp);
-    
 }
 
 void win_proc(xtk_spirit_t *window, uview_msg_t *msg)
@@ -133,11 +95,9 @@ void win_proc(xtk_spirit_t *window, uview_msg_t *msg)
         {
             int x = uview_msg_get_mouse_x(msg);
             int y = uview_msg_get_mouse_y(msg);    
-            //printf("mouse %d, %d\n", x, y);
+            printf("mouse %d, %d\n", x, y);
         }
-        
         break;
-    
     default:
         break;
     }
@@ -145,61 +105,8 @@ void win_proc(xtk_spirit_t *window, uview_msg_t *msg)
 
 xtk_spirit_t *btn_root;
 xtk_spirit_t *win_root;
-void xtk_test(int fd, uview_bitmap_t *wbmp)
+void win_thread()
 {    
-    xtk_mouse_load_cursors(fd, "/system/cursors");
-
-    xtk_spirit_t *spirit = xtk_spirit_create(100, 100, 100, 24);
-    assert(spirit);
-    spirit->style.background_align = XTK_ALIGN_CENTER;
-    spirit->style.background_color = XTK_BLUE;
-    xtk_spirit_set_text(spirit, "abcdef!asdasdasd");
-    xtk_spirit_set_background_image(spirit, "/res/cursor.png");
-    xtk_spirit_auto_size(spirit);
-    xtk_spirit_to_surface(spirit, wbmp);
-    uview_bitblt_update(fd, 0, 0, wbmp);
-    uview_bitmap_t *bmp0 = uview_bitmap_create(32, 32);
-    assert(bmp0);
-    uview_bitmap_rectfill(bmp0, 0, 0, 32, 32, XTK_BLACK);
-    spirit->style.background_color = XTK_GREEN;
-    spirit->style.border_color = XTK_YELLOW;
-    spirit->style.color = XTK_WHITE;
-    spirit->style.align = XTK_ALIGN_CENTER;
-    xtk_spirit_set_surface(spirit, bmp0);
-    
-    xtk_spirit_set_text(spirit, "hello, world!\n");
-    xtk_spirit_set_background_image(spirit, NULL);
-    xtk_spirit_auto_size(spirit);
-    
-    uview_bitmap_t *bmp1 = uview_bitmap_create(spirit->width, spirit->height);
-    assert(bmp1);
-    
-    xtk_spirit_set_pos(spirit, 0, 0);
-    xtk_spirit_to_surface(spirit, bmp1);
-
-    #if 0
-    uview_bitmap_bitblt(wbmp, 100, 200, bmp1, 0, 0, 100, 24);
-    uview_bitblt_update(fd, 0, 0, wbmp);
-    #else
-    uview_bitblt_update(fd, 100, 200, bmp1);
-    #endif
-
-    xtk_spirit_destroy(spirit);
-    uview_bitmap_destroy(bmp1);
-
-    xtk_spirit_t *label0 = xtk_label_create("hello");
-    xtk_spirit_set_pos(label0, 20, 150);
-    xtk_spirit_to_surface(label0, wbmp);
-    
-    xtk_spirit_t *label1 = xtk_label_create("world");
-    xtk_spirit_set_pos(label1, 20, 200);
-    xtk_spirit_to_surface(label1, wbmp);
-    
-    xtk_spirit_destroy(label0);
-    xtk_spirit_destroy(label1);
-
-    uview_bitblt_update(fd, 0, 0, wbmp);
-
     // xtk start
     xtk_init(NULL, NULL);
 

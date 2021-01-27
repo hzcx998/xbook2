@@ -10,7 +10,9 @@ static int __xtk_main_loop = 0;
 int xtk_init(int *argc, char **argv[])
 {
     if (!__xtk_init_done) {
-        // TODO: init everything...
+        // TODO: init everything...    
+        xtk_text_init();
+
         __xtk_main_loop = 1;
 
         __xtk_init_done = 1;
@@ -44,20 +46,21 @@ int xtk_main()
     int filter_val; 
     while (__xtk_main_loop) {    
         xtk_view_for_each (pview) {
+            
             uview_set_nowait(pview->view, 1);
             if (uview_get_msg(pview->view, &msg) < 0) {
                 continue;
             }
-            filter_val = 0;
+            filter_val = 1; /* 消息没有过滤掉 */
             // 遍历每一个视图来获取上面的精灵
             list_for_each_owner (spirit, &pview->spirit_list_head, list) {                
                 if (!(filter_val = xtk_window_main(spirit, &msg)))
                     break;
             }
-
+            spirit = pview->spirit;
             // 没有过滤掉才处理用户消息
             if (filter_val)
-                xtk_window_filter_msg(XTK_WINDOW(pview->spirit), &msg);
+                xtk_window_filter_msg(XTK_WINDOW(spirit), &msg);
         }
     }
     return 0;

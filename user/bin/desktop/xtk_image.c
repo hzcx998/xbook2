@@ -41,6 +41,21 @@ int xtk_image_resize(xtk_image_t *img, int w, int h)
     return 0;
 }
 
+int xtk_image_resize2(xtk_image_t *img, int w, int h, int out_channels)
+{
+    if (!img)
+        return -1;
+    unsigned char *buf = malloc(w * h * out_channels);
+    if (!buf)
+        return -1;
+    uview_resize_image(img->buf, img->w, img->h, buf, w, h, out_channels);
+    free(img->buf);
+    img->buf = buf;
+    img->w = w;
+    img->h = h;
+    return 0;
+}
+
 xtk_image_t *xtk_image_load2(char *filename, int w, int h)
 {
     xtk_image_t *img = xtk_image_load(filename);

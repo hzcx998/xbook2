@@ -93,7 +93,7 @@ void view_mouse_set_state(view_mouse_state_t state)
 {
     if (view_mouse.state == state)
         return;
-    keprint("mouse state %d -> %d\n", view_mouse.state, state);
+    // keprint("mouse state %d -> %d\n", view_mouse.state, state);
     view_mouse.state = state;
     view_mouse_draw(state);
 }
@@ -234,19 +234,6 @@ int view_mouse_init()
     view_mouse.view = view;
     view_set_type(view, VIEW_TYPE_FIXED);
 
-    view_mouse_state_info_t state_info;
-    state_info.off_x = 0;
-    state_info.off_y = 0;
-    state_info.bmp = view_bitmap_create(view->width, view->height);
-    state_info.state = VIEW_MOUSE_NORMAL;
-    view_bitmap_rectfill(state_info.bmp, 0, 0, view->width, view->height, VIEW_RED);
-    view_mouse_set_state_info(&state_info);
-
-    state_info.bmp = view_bitmap_create(view->width, view->height);
-    state_info.state = VIEW_MOUSE_HOLD;
-    view_bitmap_rectfill(state_info.bmp, 0, 0, view->width, view->height, VIEW_GREEN);
-    view_mouse_set_state_info(&state_info);
-    
     view_mouse_draw(view_mouse.state);    // 绘制视图
     view_set_z(view, 0);    // 设置鼠标图层为0，最开始的最高图层
 
