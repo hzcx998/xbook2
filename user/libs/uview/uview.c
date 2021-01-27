@@ -159,7 +159,7 @@ int uview_set_drag_region(int vfd, int left, int top, int right, int bottom)
     region.top = top;
     region.right = right;
     region.bottom = bottom;
-    return ioctl(vfd, VIEWIO_SET_DRAG_REGION, &region);
+    return ioctl(vfd, VIEWIO_SETDRAGREGION, &region);
 }
 
 int uview_bitblt(int vfd, int vx, int vy, uview_bitmap_t *vbmp)

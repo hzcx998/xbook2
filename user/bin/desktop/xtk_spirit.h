@@ -17,6 +17,25 @@ typedef enum {
     XTK_ALIGN_CENTER,
 } xtk_align_t;
 
+/* 鼠标光标状态,和uview_mouse保持一致 */
+typedef enum {
+    XTK_CURSOR_NORMAL = 0,        /* 普通 */
+    XTK_CURSOR_HOLD,              /* 抓取 */
+    XTK_CURSOR_HELP,              /* 帮助 */
+    XTK_CURSOR_PEN,               /* 画笔 */
+    XTK_CURSOR_BUSY,              /* 繁忙 */
+    XTK_CURSOR_ACCURATE,          /* 精确选择 */
+    XTK_CURSOR_TEXT,              /* 文本选择 */
+    XTK_CURSOR_UNUSABLE,          /* 不可用 */
+    XTK_CURSOR_VRESIZE,           /* 垂直调整大小 */
+    XTK_CURSOR_HRESIZE,           /* 水平调整大小 */
+    XTK_CURSOR_DRESIZE1,          /* 对角线调整大小1(斜上) */
+    XTK_CURSOR_DRESIZE2,          /* 对角线调整大小2(斜下) */
+    XTK_CURSOR_RESIZEALL,         /* 移动 */
+    XTK_CURSOR_HAND,              /* 手 */
+    XTK_CURSOR_STATE_NR,
+} xtk_cursor_state_t;
+
 typedef struct {
     /* border */
     xtk_color_t border_color;
@@ -26,6 +45,7 @@ typedef struct {
     /* font */
     xtk_color_t color;
     xtk_align_t align;
+    xtk_cursor_state_t cursor;
 } xtk_style_t;
 
 typedef enum {

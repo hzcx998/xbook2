@@ -123,7 +123,6 @@ void view_env_do_drag(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
         view_mouse.local_x = lcmx;
         view_mouse.local_y = lcmy;
         drag_view = view;
-        view_mouse_set_state(VIEW_MOUSE_NORMAL);
     }
 }
 
@@ -396,7 +395,7 @@ int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
         return -1;    
     }
     if (view_region_valid(&view->resize_region)) {
-        /* 不在区域里面才能拖拽 */
+        /* 不在区域里面才能调整大小 */
         if (!view_region_in_range(&view->resize_region, lcmx, lcmy)) {
             if (view_msg_get_type(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
                 resize_view = view;
@@ -425,7 +424,13 @@ int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
             }
             return 0;
         } else {
-            if (view_mouse.state != VIEW_MOUSE_NORMAL) {
+            // 由于不是在调整范围内，但是还处于调整状态，就换成普通状态
+            if ((view_mouse.state == VIEW_MOUSE_HRESIZE || 
+                view_mouse.state == VIEW_MOUSE_VRESIZE || 
+                view_mouse.state == VIEW_MOUSE_DRESIZE1 ||
+                view_mouse.state == VIEW_MOUSE_DRESIZE2 ||
+                view_mouse.state == VIEW_MOUSE_RESIZEALL)) 
+            {
                 view_mouse_set_state(VIEW_MOUSE_NORMAL);
                 view_mouse.click_x = -1;
                 view_mouse.click_y = -1;

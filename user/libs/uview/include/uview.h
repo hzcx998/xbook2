@@ -6,6 +6,7 @@
 #include "uview_msg.h"
 #include "uview_shape.h"
 #include "uview_image.h"
+#include "uview_mouse.h"
 
 /* 视图类型 */
 enum uview_type {
@@ -18,6 +19,7 @@ enum uview_attr {
     UVIEW_ATTR_RESIZABLE     = 0x01,
     UVIEW_ATTR_MOVEABLE      = 0x02,
 };
+
 
 #define UVIEW_BAD_ID(view)  (view < 0)
 

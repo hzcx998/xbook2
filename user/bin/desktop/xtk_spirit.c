@@ -30,6 +30,8 @@ void xtk_spirit_init(xtk_spirit_t *spirit, int x, int y, int width, int height)
     spirit->style.background_align = XTK_ALIGN_LEFT;
     spirit->background_image = NULL;
 
+    spirit->style.cursor = XTK_CURSOR_NORMAL;   // 默认光标
+
     spirit->container = NULL;
     spirit->attached_container = NULL;
     spirit->view = -1;

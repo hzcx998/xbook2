@@ -18,6 +18,7 @@
 #include <drivers/view/bitmap.h>
 #include <drivers/view/msg.h>
 #include <drivers/view/env.h>
+#include <drivers/view/mouse.h>
 
 
 #define DRV_NAME "view"
@@ -260,12 +261,29 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
             view_set_size_min(view, (size_min >> 16) & 0xffff, size_min & 0xffff);
         }
         break;
-    case VIEWIO_SET_DRAG_REGION:
+    case VIEWIO_SETDRAGREGION:
         if (view == NULL) {
             status = IO_FAILED;
         } else {
             view_region_t *vreg = (view_region_t *) arg;
             view_set_drag_region(view, vreg);
+        }
+        break;
+    case VIEWIO_SETMOUSESTATE:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            view_mouse_state_t state = *(view_mouse_state_t *) arg;
+            view_mouse_set_state(state);
+        }
+        break;
+    case VIEWIO_SETMOUSESTATEINFO:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            view_mouse_state_info_t *sinfo = (view_mouse_state_info_t *) arg;
+            if (view_mouse_set_state_info_ex(sinfo) < 0)
+                status = IO_FAILED;
         }
         break;
     default:

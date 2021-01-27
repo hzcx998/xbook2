@@ -67,6 +67,8 @@ int open_desktop()
     // 需要先显示桌面
     uview_show(screen_fd);
 
+    
+
     // 创建子进程
     pid_t pid = fork();
     if (!pid) {
@@ -120,62 +122,18 @@ void win_thread()
     uview_bitmap_destroy(fbmp);
     
     xtk_test(win_fd, bmp);
-    #if 0 
-    uview_msg_t msg;
-    while (1) {
-        if (uview_get_msg(win_fd, &msg) < 0) {
-            continue;
-        }
-
-        switch (uview_msg_get_type(&msg))
-        {
-        case UVIEW_MSG_ACTIVATE:
-            uview_bitmap_rectfill(bmp, 0, 0, WIN_W, WIN_H, UVIEW_BLUE);
-            uview_bitblt_update(win_fd, 0, 0, bmp);
-            printf("activate\n");
-            break;
-        case UVIEW_MSG_INACTIVATE:
-            uview_bitmap_rectfill(bmp, 0, 0, WIN_W, WIN_H, UVIEW_GREEN);
-            uview_bitblt_update(win_fd, 0, 0, bmp);
-            printf("inactivate\n");
-            break;
-        case UVIEW_MSG_MOUSE_MOTION:
-            {
-                int x = uview_msg_get_mouse_x(&msg);
-                int y = uview_msg_get_mouse_y(&msg);
-                xtk_mouse_motion(x, y);
-            }
-            break;
-        case UVIEW_MSG_MOUSE_LBTN_DOWN:
-            {
-                int x = uview_msg_get_mouse_x(&msg);
-                int y = uview_msg_get_mouse_y(&msg);
-                xtk_mouse_lbtn_down(x, y);
-            }
-            break;
-        case UVIEW_MSG_MOUSE_LBTN_UP:
-            {
-                int x = uview_msg_get_mouse_x(&msg);
-                int y = uview_msg_get_mouse_y(&msg);
-                xtk_mouse_lbtn_up(x, y);
-            }
-            break;
-        default:
-            break;
-        }
-    }  
-    #endif  
+    
 }
 
 void win_proc(xtk_spirit_t *window, uview_msg_t *msg)
 {
-    printf("msg %d\n", uview_msg_get_type(msg));
+    //printf("msg %d\n", uview_msg_get_type(msg));
     switch (uview_msg_get_type(msg)) {
     case UVIEW_MSG_MOUSE_MOTION:
         {
             int x = uview_msg_get_mouse_x(msg);
             int y = uview_msg_get_mouse_y(msg);    
-            printf("mouse %d, %d\n", x, y);
+            //printf("mouse %d, %d\n", x, y);
         }
         
         break;
@@ -188,21 +146,8 @@ void win_proc(xtk_spirit_t *window, uview_msg_t *msg)
 xtk_spirit_t *btn_root;
 xtk_spirit_t *win_root;
 void xtk_test(int fd, uview_bitmap_t *wbmp)
-{
-    xtk_image_t *img = xtk_image_load2("/res/cursor.png", 32, 32);
-    assert(img);
-    
-    uview_bitmap_t *bmp = uview_bitmap_create(img->w, img->h);
-    assert(bmp);
-    
-    uview_bitmap_t srcbmp;
-    uview_bitmap_init(&srcbmp, img->w, img->h, (uview_color_t *) img->buf);
-    
-    uview_bitmap_bitblt(bmp, 0, 0, &srcbmp, 0, 0, srcbmp.width, srcbmp.height);
-    uview_bitblt_update(fd, 0, 0, bmp);
-    
-    uview_bitmap_destroy(bmp);
-    xtk_image_destroy(img);
+{    
+    xtk_mouse_load_cursors(fd, "/system/cursors");
 
     xtk_spirit_t *spirit = xtk_spirit_create(100, 100, 100, 24);
     assert(spirit);
@@ -268,14 +213,19 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
 
     btn_root = xtk_button_create_with_label("hello");
     assert(btn_root);
+    btn_root->style.cursor = XTK_CURSOR_HAND;
 
     xtk_spirit_t *btn1 = xtk_button_create_with_label("world");
     assert(btn1);
+    btn1->style.cursor = XTK_CURSOR_HAND;
+    
     xtk_spirit_t *btn2 = xtk_button_create_with_label("xbook2");
     assert(btn2);
-
+    btn2->style.cursor = XTK_CURSOR_HAND;
+    
     xtk_spirit_t *l0 = xtk_label_create("welcome to me!");
     assert(l0);
+    l0->style.cursor = XTK_CURSOR_TEXT;
     
     xtk_spirit_set_pos(btn_root, 100, 50);    
     xtk_spirit_set_pos(btn1, 100, 100);
@@ -302,7 +252,7 @@ void xtk_test(int fd, uview_bitmap_t *wbmp)
     xtk_spirit_t *btn10 = xtk_button_create_with_label("6666");
     assert(btn10);
     xtk_spirit_set_pos(btn10, 0, 50);
-    
+    btn10->style.cursor = XTK_CURSOR_PEN;
     xtk_spirit_show(win0);
 
     xtk_surface_t *surface0 = xtk_window_get_surface(XTK_WINDOW(win0));

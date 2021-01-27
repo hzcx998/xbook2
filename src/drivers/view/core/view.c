@@ -453,7 +453,7 @@ int view_set_drag_region(view_t *view, view_region_t *region)
 {
     if (!view)
         return -1;
-    view_region_copy(&view->drag_regions, region);
+    view_region_copy(&view->drag_regions[0], region);
     return 0;
 }
 
