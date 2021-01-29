@@ -60,6 +60,7 @@ typedef enum {
 
 typedef struct {
     list_t list;
+    list_t signal_list;
     xtk_spirit_type_t type;
     int x;
     int y;

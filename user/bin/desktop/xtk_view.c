@@ -3,6 +3,12 @@
 
 LIST_HEAD(xtk_view_list_head);
 
+int xtk_view_init()
+{
+    list_init(&xtk_view_list_head);
+    return 0;
+}
+
 xtk_view_t *xtk_view_create()
 {
     xtk_view_t *view = (xtk_view_t *) malloc(sizeof(xtk_view_t));
@@ -31,8 +37,7 @@ void xtk_view_add(xtk_view_t *view)
 
 void xtk_view_remove(xtk_view_t *view)
 {
-    if (list_find(&view->list, &xtk_view_list_head))
-        list_del(&view->list);
+    list_del(&view->list);
 }
 
 xtk_view_t *xtk_view_find(int view)

@@ -9,6 +9,9 @@
 enum {
     XTK_WINDOW_ACTIVE       = (1 << 1), /* 窗口处于激活状态 */
     XTK_WINDOW_SHOW         = (1 << 2), /* 窗口处于显示状态 */
+    XTK_WINDOW_MAXIM        = (1 << 3), /* 窗口处于最大化状态 */
+    XTK_WINDOW_RESIZABLE    = (1 << 4), /* 可调整窗口大小 */
+    XTK_WINDOW_DISABLERESIZE = (1 << 5), /* 禁止调整大小标志 */
 };
 
 typedef enum {
@@ -55,6 +58,7 @@ typedef struct {
     xtk_window_navigation_t navigation;
     xtk_window_type_t type;
     xtk_window_routine_t routine;
+    xtk_rect_t backup_win_info;
 } xtk_window_t;
 
 #define XTK_WINDOW(spirit)  ((xtk_window_t *)(spirit))
@@ -71,6 +75,7 @@ int xtk_window_set_active(xtk_window_t *window, bool is_active);
 int xtk_window_reset_mobile_area(xtk_window_t *window);
 int xtk_window_resize(xtk_window_t *window, int width, int height);
 int xtk_window_get_screen(xtk_window_t *window, int *width, int *height);
+int xtk_window_get_position(xtk_window_t *window, int *x, int *y);
 int xtk_window_resize_to_screen(xtk_window_t *window);
 
 xtk_surface_t *xtk_window_get_surface(xtk_window_t *window);
@@ -90,6 +95,7 @@ int xtk_window_draw_border(xtk_window_t *window,
 int xtk_window_draw_no_border(xtk_window_t *window);
 
 int xtk_window_load_mouse_cursors(xtk_window_t *window, char *pathname);
+int xtk_window_maxim(xtk_window_t *window);
 
 
 #endif /* _LIB_XTK_WINDOW_H */

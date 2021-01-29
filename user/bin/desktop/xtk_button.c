@@ -3,6 +3,15 @@
 #include <assert.h>
 #include <stdio.h>
 
+static int xtk_button_create_signals(xtk_spirit_t *spirit)
+{
+    assert(!xtk_signal_create(spirit, "pressed"));
+    assert(!xtk_signal_create(spirit, "released"));
+    assert(!xtk_signal_create(spirit, "enter"));
+    assert(!xtk_signal_create(spirit, "leave"));
+    return 0;
+}
+
 xtk_spirit_t *xtk_button_create()
 {
     xtk_button_t *button = malloc(sizeof(xtk_button_t));
@@ -21,6 +30,12 @@ xtk_spirit_t *xtk_button_create()
     spirit->style.background_color = button->color_idle;
     spirit->style.color = XTK_BLACK;
     spirit->style.align = XTK_ALIGN_CENTER;
+    
+    if (xtk_button_create_signals(spirit) < 0) {
+        xtk_spirit_cleanup(spirit);
+        free(button);
+        return NULL;
+    }
     return spirit;
 }
 

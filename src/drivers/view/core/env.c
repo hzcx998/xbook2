@@ -42,6 +42,11 @@ void view_env_set_activity(view_t *view)
     view_activity = view;
 }
 
+void view_env_set_hover(view_t *view)
+{
+    mouse_hover_view = view;
+}
+
 view_t *view_env_get_high_level_lower()
 {
     return view_high_level_lower;
@@ -64,6 +69,7 @@ int view_env_try_activate(view_t *view)
     view_t *activity = view_activity;
     int val = -1;
     if (activity != view) {
+        keprint("active %x -> %x\n", activity, view);
         view_msg_t m;
         view_msg_reset(&m);
         if (activity) {
@@ -71,13 +77,15 @@ int view_env_try_activate(view_t *view)
             val = view_try_put_msg(activity, &m);
         }
         view_env_set_activity(view);
-        if (view->type == VIEW_TYPE_WINDOW) {
-            /* 把图层切换到最高等级图层的下面 */
-            assert(view_high_level_lower);
-            view_set_z(view, view_high_level_lower->z - 1);
+        if (view) {
+            if (view->type == VIEW_TYPE_WINDOW) {
+                /* 把图层切换到最高等级图层的下面 */
+                assert(view_high_level_lower);
+                view_set_z(view, view_high_level_lower->z - 1);
+            }
+            view_msg_header(&m, VIEW_MSG_ACTIVATE, view->id);
+            val = view_try_put_msg(view, &m);
         }
-        view_msg_header(&m, VIEW_MSG_ACTIVATE, view->id);
-        val = view_try_put_msg(view, &m);
     }
     return val;
 }
@@ -88,13 +96,17 @@ void view_env_do_mouse_hover(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
         /* enter view */
         view_msg_t m;
         view_msg_reset(&m);
-        view_msg_header(&m, VIEW_MSG_ENTER, view->id);
-        view_msg_data(&m, lcmx, lcmy, msg->data0, msg->data1);
-        view_try_put_msg(view, &m);
+        if (view) {
+            view_msg_header(&m, VIEW_MSG_ENTER, view->id);
+            view_msg_data(&m, lcmx, lcmy, msg->data0, msg->data1);
+            view_try_put_msg(view, &m);    
+        }
         /* leave hover */
-        view_msg_header(&m, VIEW_MSG_LEAVE, mouse_hover_view->id);
-        view_msg_data(&m, msg->data0 - mouse_hover_view->x, msg->data1 - mouse_hover_view->y, 0, 0);
-        view_try_put_msg(mouse_hover_view, &m);
+        if (mouse_hover_view) {
+            view_msg_header(&m, VIEW_MSG_LEAVE, mouse_hover_view->id);
+            view_msg_data(&m, msg->data0 - mouse_hover_view->x, msg->data1 - mouse_hover_view->y, 0, 0);
+            view_try_put_msg(mouse_hover_view, &m);
+        }
 
         /* 如果进入了不同的图层，那么，当为调整图层大小时，就需要取消调整行为 */
         if (view_mouse.state != VIEW_MOUSE_NORMAL) {

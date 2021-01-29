@@ -10,6 +10,7 @@ extern dotfont_library_t __xtk_dotflib;
 void xtk_spirit_init(xtk_spirit_t *spirit, int x, int y, int width, int height)
 {
     list_init(&spirit->list);
+    list_init(&spirit->signal_list);
     spirit->type = XTK_SPIRIT_TYPE_UNKNOWN;
     spirit->x = x;
     spirit->y = y;
@@ -77,7 +78,17 @@ int xtk_spirit_destroy(xtk_spirit_t *spirit)
     /* 根据不同的类型进行销毁 */
     switch (spirit->type) {
     case XTK_SPIRIT_TYPE_WINDOW:
-        return xtk_window_destroy(XTK_WINDOW(spirit));
+        {
+            // 触发删除事件
+            bool emit_result = xtk_signal_emit_by_name(spirit, "delete_event");
+            if (emit_result == true)
+                return 0;
+            // 再触发销毁事件
+            emit_result = xtk_signal_emit_by_name(spirit, "destroy");
+            if (emit_result == true)    // 如果成功销毁，那么就直接返回
+                return 0;
+            return xtk_window_destroy(XTK_WINDOW(spirit));        
+        }
     default:
         break;
     }

@@ -7,18 +7,17 @@
 static int __xtk_init_done = 0;
 static int __xtk_main_loop = 0;
 
+int __xtk_has_window_close = 0;
+
 int xtk_init(int *argc, char **argv[])
 {
-    if (!__xtk_init_done) {
-        // TODO: init everything...    
-        xtk_text_init();
-
-        __xtk_main_loop = 1;
-
-        __xtk_init_done = 1;
-        return 0;
-    }
-    return -1;
+    // TODO: init everything...    
+    xtk_text_init();
+    xtk_view_init();
+    __xtk_main_loop = 1;
+    __xtk_has_window_close = 0;
+    __xtk_init_done = 1;
+    return 0;
 }
 
 int xtk_exit(int exit_code)
@@ -42,20 +41,32 @@ int xtk_main()
     }
     xtk_spirit_t *spirit;
     uview_msg_t msg;
-    xtk_view_t *pview;
+    xtk_view_t *pview, *vnext;
     int filter_val; 
-    while (__xtk_main_loop) {    
-        xtk_view_for_each (pview) {
-            
+    
+    printf("view len:%d\n", xtk_view_length());
+    while (__xtk_main_loop && xtk_view_length() > 0) {    
+        xtk_view_for_each_safe (pview, vnext) {
             uview_set_nowait(pview->view, 1);
             if (uview_get_msg(pview->view, &msg) < 0) {
                 continue;
             }
+            __xtk_has_window_close = 0; /* 没有窗口关闭 */
             filter_val = 1; /* 消息没有过滤掉 */
+
             // 遍历每一个视图来获取上面的精灵
             list_for_each_owner (spirit, &pview->spirit_list_head, list) {                
                 if (!(filter_val = xtk_window_main(spirit, &msg)))
                     break;
+                if (__xtk_has_window_close)
+                    break;
+            }
+
+            // 需要检测一下是否有窗口已经关闭掉了，如果是那么就不再往后面执行
+            if (__xtk_has_window_close) {
+                printf("xtk has window close!!!\n");
+                printf("view len:%d\n", xtk_view_length());
+                continue;
             }
             spirit = pview->spirit;
             // 没有过滤掉才处理用户消息
@@ -63,6 +74,7 @@ int xtk_main()
                 xtk_window_filter_msg(XTK_WINDOW(spirit), &msg);
         }
     }
+    printf("end of xtk main\n");
     return 0;
 }
 

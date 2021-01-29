@@ -72,6 +72,16 @@ view_t *view_find_by_id(int id)
     return NULL;
 }
 
+view_t *view_find_by_z(int z)
+{
+    view_t *view;
+    list_for_each_owner (view, &view_global_list_head, global_list) {
+        if (view->z == z)
+            return view;
+    }
+    return NULL;
+}
+
 list_t *view_get_show_list()
 {
     return &view_show_list_head;
@@ -441,6 +451,22 @@ int view_move_upper_top(view_t *view)
     return 0;
 }
 
+int view_move_under_view(view_t *view, view_t *target)
+{
+    if (!view)
+        return -1;
+    view_set_z(view, target->z - 1);
+    return 0;
+}
+
+int view_move_upper_view(view_t *view, view_t *target)
+{
+    if (!view)
+        return -1;
+    view_set_z(view, target->z + 1);
+    return 0;
+}
+
 int view_hide(view_t *view)
 {
     if (!view)
@@ -466,7 +492,6 @@ int view_show(view_t *view)
     } else {
         view_move_under_top(view);
     }
-    view_env_try_activate(view);
     return 0;
 }
 

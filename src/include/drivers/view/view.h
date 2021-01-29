@@ -61,6 +61,8 @@ int view_destroy(view_t *view);
 view_t *view_get_top();
 view_t *view_get_bottom();
 view_t *view_find_by_id(int id);
+view_t *view_find_by_z(int z);
+
 int view_set_xy(view_t *view, int x, int y);
 
 void view_set_z(view_t *view, int z);
@@ -75,6 +77,10 @@ int view_move_to_top(view_t *view);
 int view_move_to_bottom(view_t *view);
 int view_move_under_top(view_t *view);
 int view_move_upper_top(view_t *view);
+
+int view_move_under_view(view_t *view, view_t *target);
+int view_move_upper_view(view_t *view, view_t *target);
+
 int view_hide(view_t *view);
 int view_show(view_t *view);
 void view_clear(view_t *view);

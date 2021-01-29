@@ -41,6 +41,20 @@ int uview_set_pos(int vfd, int x, int y)
     return ioctl(vfd, VIEWIO_SETPOS, &pos);
 }
 
+int uview_get_pos(int vfd, int *x, int *y)
+{
+    if (vfd < 0)
+        return -1;
+    int pos = 0;
+    if (ioctl(vfd, VIEWIO_GETPOS, &pos) < 0)
+        return -1;
+    if (x)
+        *x = (pos >> 16) & 0xffff;
+    if (y)
+        *y = pos & 0xffff;
+    return 0;
+}
+
 int uview_set_size_min(int vfd, int width, int height)
 {
     if (vfd < 0)

@@ -103,13 +103,31 @@ void win_proc(xtk_spirit_t *window, uview_msg_t *msg)
     }
 }
 
+bool btn_event(xtk_spirit_t *spirit, void *data)
+{
+    printf("btn event: %s\n", (char *) data);
+    return true;
+}
+
+bool delete_event(xtk_spirit_t *spirit, void *data)
+{
+    printf("delete window event\n");
+    return false;
+}
+
+bool destroy_event(xtk_spirit_t *spirit, void *data)
+{
+    printf("destroy window event\n");
+    return false;
+}
+
 xtk_spirit_t *btn_root;
 xtk_spirit_t *win_root;
 void win_thread()
 {    
     // xtk start
     xtk_init(NULL, NULL);
-
+    #if 1
     win_root = xtk_window_create(XTK_WINDOW_TOPLEVEL);  
     assert(win_root);
     xtk_window_set_title(XTK_WINDOW(win_root), "test");
@@ -144,8 +162,14 @@ void win_thread()
     xtk_container_add(XTK_CONTAINER(win_root), btn2);
     xtk_container_add(XTK_CONTAINER(win_root), l0);
     
+    xtk_signal_connect(btn2, "enter", btn_event, "enter");
+    xtk_signal_connect(btn2, "leave", btn_event, "leave");
+    xtk_signal_connect(btn2, "released", btn_event, "released");
+    xtk_signal_connect(btn2, "pressed", btn_event, "pressed");
+
     xtk_spirit_show_all(win_root);
-    
+    #endif
+
     xtk_spirit_t *win0 = xtk_window_create(XTK_WINDOW_TOPLEVEL);
     assert(win0);
     assert(xtk_window_set_title(XTK_WINDOW(win0), "hello, world!") == 0);
@@ -156,6 +180,9 @@ void win_thread()
     xtk_window_set_position(XTK_WINDOW(win0), XTK_WIN_POS_CENTER);
     xtk_spirit_set_size_request(win0, 100, 100);
 
+    xtk_signal_connect(win0, "delete_event", delete_event, NULL);
+    xtk_signal_connect(win0, "destroy", destroy_event, NULL);
+    
     xtk_spirit_t *btn10 = xtk_button_create_with_label("6666");
     assert(btn10);
     xtk_spirit_set_pos(btn10, 0, 50);
@@ -190,5 +217,6 @@ void win_thread()
     xtk_spirit_show_all(win0);
 
     xtk_window_set_routine(XTK_WINDOW(win0), win_proc);
+    // xtk_main_quit();
     xtk_main();
 }

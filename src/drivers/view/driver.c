@@ -75,6 +75,11 @@ static iostatus_t view_close(device_object_t *device, io_request_t *ioreq)
             errprint("view driver: view close %s failed!\n", device->name.text);
             goto end_close;
         }
+        // 切换激活视图
+        view_env_try_activate(view_find_by_z(view_env_get_high_level_lower()->z - 1));
+        // 切换鼠标悬挂视图
+        view_env_set_hover(NULL);
+        
         extension->view = NULL;
     }
     extension->flags = 0;
@@ -140,6 +145,7 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
             status = IO_FAILED;
         } else {
             view_show(view);
+            view_env_try_activate(view);
         }
         break;
     case VIEWIO_HIDE:
@@ -147,6 +153,10 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
             status = IO_FAILED;
         } else {
             view_hide(view);
+            // TODO: 切换激活的视图
+            view_env_try_activate(view_find_by_z(view_env_get_high_level_lower()->z - 1));
+            // 切换鼠标悬挂视图
+            view_env_set_hover(NULL);
         }
         break;
     case VIEWIO_SETPOS:

@@ -20,10 +20,15 @@ extern list_t xtk_view_list_head;
 #define xtk_view_for_each_safe(_view, _next_view) \
         list_for_each_owner_safe((_view), (_next_view), &xtk_view_list_head, list)
 
+#define xtk_view_length() \
+        list_length(&xtk_view_list_head)
+
+
 xtk_view_t *xtk_view_create();
 int xtk_view_destroy(xtk_view_t *view);
 void xtk_view_add(xtk_view_t *view);
 void xtk_view_remove(xtk_view_t *view);
 xtk_view_t *xtk_view_find(int view);
+int xtk_view_init();
 
 #endif /* _LIB_XTK_VIEW_H */

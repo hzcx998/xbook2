@@ -77,8 +77,6 @@ int view_dispatch_mouse_msg(view_msg_t *msg)
                 return 0;
             view_env_do_drag(view, msg, local_mx, local_my);
             
-            // keprint("mouse msg %d %d\n", local_mx, local_my);
-
             view_msg_t m;
             view_msg_header(&m, msg->id, view->id);
             view_msg_data(&m, local_mx, local_my, msg->data0, msg->data1);

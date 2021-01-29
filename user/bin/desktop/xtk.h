@@ -14,6 +14,7 @@ dialog
 #include "xtk_text.h"
 #include "xtk_image.h"
 #include "xtk_spirit.h"
+#include "xtk_signal.h"
 
 // 更高级的抽象
 #include "xtk_label.h"

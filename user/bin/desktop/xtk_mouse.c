@@ -24,8 +24,9 @@ int xtk_mouse_motion(xtk_spirit_t *spirit, int x, int y)
                 if (XTK_IN_SPIRIT(tmp, x, y)) {
                     uview_set_mouse_state(spirit->view, tmp->style.cursor);                        
                     if (btn->state == XTK_BUTTON_IDLE) {
+                        xtk_signal_emit_by_name(tmp, "enter");
                         xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
-                        xtk_spirit_show(tmp);
+                        xtk_spirit_show(tmp);    
                         return 0;
                     }
                 } else {
@@ -33,6 +34,7 @@ int xtk_mouse_motion(xtk_spirit_t *spirit, int x, int y)
                         xtk_button_change_state(btn, XTK_BUTTON_IDLE);
                         xtk_spirit_show(tmp);
                         uview_set_mouse_state(spirit->view, XTK_CURSOR_NORMAL);
+                        xtk_signal_emit_by_name(tmp, "leave");
                     }
                 }
             }
@@ -67,6 +69,14 @@ int xtk_mouse_lbtn_down(xtk_spirit_t *spirit, int x, int y)
                 if (XTK_IN_SPIRIT(tmp, x, y)) {
                     uview_set_mouse_state(spirit->view, tmp->style.cursor);                        
                     if (btn->state == XTK_BUTTON_TOUCH) {
+                        xtk_signal_emit_by_name(tmp, "pressed");
+                        xtk_button_change_state(btn, XTK_BUTTON_CLICK);
+                        xtk_spirit_show(tmp);                     
+                        return 0;  
+                    }
+                } else {
+                    if (btn->state == XTK_BUTTON_TOUCH) {
+                        xtk_signal_emit_by_name(tmp, "pressed");
                         xtk_button_change_state(btn, XTK_BUTTON_CLICK);
                         xtk_spirit_show(tmp);                     
                         return 0;  
@@ -108,6 +118,7 @@ int xtk_mouse_lbtn_up(xtk_spirit_t *spirit, int x, int y)
                         //printf("mouse call signal: %d, %d\n", x, y);
                         xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
                         xtk_spirit_show(tmp);
+                        xtk_signal_emit_by_name(tmp, "released");
                         return 0;
                     }
                 }

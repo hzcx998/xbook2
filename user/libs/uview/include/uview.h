@@ -49,6 +49,7 @@ int uview_resize(int vfd, int width, int height);
 int uview_get_screensize(int vfd, int *width, int *height);
 int uview_get_lastpos(int vfd, int *x, int *y);
 int uview_get_mousepos(int vfd, int *x, int *y);
+int uview_get_pos(int vfd, int *x, int *y);
 
 int uview_set_drag_region(int vfd, int left, int top, int right, int bottom);
 

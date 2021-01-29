@@ -290,6 +290,30 @@ int xtk_window_draw_no_border(xtk_window_t *window)
     return 0;
 }
 
+static bool xtk_window_close_button_event(xtk_spirit_t *spirit, void *data)
+{
+    xtk_window_t *window = (xtk_window_t *) data;
+    xtk_spirit_destroy(&window->spirit);
+    return true;
+}
+
+static bool xtk_window_minim_button_event(xtk_spirit_t *spirit, void *data)
+{
+    xtk_window_t *window = (xtk_window_t *) data;
+    xtk_spirit_hide(&window->spirit);
+    return true;
+}
+
+static bool xtk_window_maxim_button_event(xtk_spirit_t *spirit, void *data)
+{
+    xtk_window_t *window = (xtk_window_t *) data;
+    /* 根据窗口当前状态进行状态变换，如果没有处于窗口最大化就进行窗口最大化
+        如果已经是最大化就恢复原来的窗口大小
+    */
+    xtk_window_maxim(window);
+    return true;
+}
+
 static int xtk_window_create_navigation(xtk_window_t *window)
 {
     xtk_window_navigation_t *navigation = &window->navigation;
@@ -317,6 +341,10 @@ static int xtk_window_create_navigation(xtk_window_t *window)
     xtk_container_add(XTK_CONTAINER(window_spirit), spirit_minim);
     xtk_container_add(XTK_CONTAINER(window_spirit), spirit_maxim);
 
+    // 设置按钮信号事件
+    xtk_signal_connect(spirit_close, "released", xtk_window_close_button_event, window);
+    xtk_signal_connect(spirit_minim, "released", xtk_window_minim_button_event, window);
+    xtk_signal_connect(spirit_maxim, "released", xtk_window_maxim_button_event, window);
     return 0;
 }
 
@@ -435,6 +463,9 @@ static xtk_spirit_t *xtk_window_create_toplevel(xtk_window_t *window)
     window->content_width = width;
     window->content_height = height;
 
+    // 可以调整大小
+    window->winflgs |= XTK_WINDOW_RESIZABLE;
+        
     // 初始化精灵
     int new_width = window->style->border_thick * 2 + width;
     int new_height = window->style->border_thick * 2 + height + window->style->navigation_height;
@@ -476,6 +507,9 @@ static xtk_spirit_t *xtk_window_create_popup(xtk_window_t *window)
     int height = XTK_WINDOW_HEIGHT_DEFAULT;
     window->content_width = width;
     window->content_height = height;
+    // 可以调整大小
+    window->winflgs |= XTK_WINDOW_RESIZABLE;
+    
     xtk_spirit_t *spirit = &window->spirit;
     if (xtk_window_spirit_setup(window, spirit, 0, 0, width, height) < 0) {
         return NULL;
@@ -497,17 +531,25 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
     window->type = type;
     window->routine = NULL;
     window->style = &__xtk_window_style_defult;
-
+    window->winflgs = 0;
+    xtk_rect_init(&window->backup_win_info, 0, 0, 0, 0);
     xtk_spirit_t *spirit = NULL;
     if (type == XTK_WINDOW_TOPLEVEL) {
         spirit = xtk_window_create_toplevel(window);
     } else if (type == XTK_WINDOW_POPUP) {
         spirit = xtk_window_create_popup(window);
     }
-    if (!spirit)
+    if (!spirit) {
         free(window);
+    } else {
+        //printf("add window signal\n");
+        assert(!xtk_signal_create(spirit, "delete_event"));
+        assert(!xtk_signal_create(spirit, "destroy"));
+    }
     return spirit;
 }
+
+extern int __xtk_has_window_close;
 
 int xtk_window_destroy(xtk_window_t *window)
 {
@@ -522,6 +564,8 @@ int xtk_window_destroy(xtk_window_t *window)
     }
     xtk_window_spirit_setdown(&window->spirit);
     free(window);
+    // 检查到有窗口销毁
+    __xtk_has_window_close = 1;
     return 0;
 }
 
@@ -560,10 +604,13 @@ int xtk_window_set_resizable(xtk_window_t *window, bool resizable)
     if (!window)
         return -1;
     xtk_spirit_t *spirit = &window->window_spirit;
-    if (resizable)
+    if (resizable) {
+        window->winflgs |= XTK_WINDOW_RESIZABLE;
         uview_set_resizable(spirit->view);
-    else
+    } else {
+        window->winflgs &= ~XTK_WINDOW_RESIZABLE;
         uview_set_unresizable(spirit->view);
+    }
     return 0;
 }
 
@@ -750,5 +797,64 @@ int xtk_window_load_mouse_cursors(xtk_window_t *window, char *pathname)
     if (window->spirit.view < 0)
         return -1;
     xtk_mouse_load_cursors(window->spirit.view, pathname);    
+    return 0;
+}
+
+int xtk_window_set_position_absolute(xtk_window_t *window, int x, int y)
+{
+    if (!window)
+        return -1;
+    if (window->spirit.type == XTK_SPIRIT_TYPE_WINDOW) {
+        uview_set_pos(window->spirit.view, x, y);
+        return 0;
+    }
+    return -1;
+}
+
+int xtk_window_get_position(xtk_window_t *window, int *x, int *y)
+{
+    if (!window)
+        return -1;
+    if (window->spirit.view < 0)
+        return -1;
+    return uview_get_pos(window->spirit.view, x, y);
+}
+
+int xtk_window_maxim(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+    xtk_rect_t info_rect;
+    if (window->winflgs & XTK_WINDOW_MAXIM) {
+        // 从备份的信息恢复原来的大小和位置
+        info_rect = window->backup_win_info;
+        window->winflgs &= ~XTK_WINDOW_MAXIM;
+
+        if (window->winflgs & XTK_WINDOW_DISABLERESIZE) {
+            xtk_window_set_resizable(window, true);
+            window->winflgs &= ~XTK_WINDOW_DISABLERESIZE; // 清除禁止调整大小标志
+        }
+    } else {
+        int wx = 0, wy = 0;
+        xtk_window_get_position(window, &wx, &wy);
+        // 备份原来的大小和位置
+        xtk_rect_init(&window->backup_win_info, wx, wy,
+            window->window_spirit.width, window->window_spirit.height);
+
+        // 设置要调整成的大小和位置
+        xtk_window_get_screen(window, &info_rect.w, &info_rect.h);
+        xtk_rect_init(&info_rect, 0, 0, info_rect.w, info_rect.h);
+
+        window->winflgs |= XTK_WINDOW_MAXIM;
+        if (window->winflgs & XTK_WINDOW_RESIZABLE) {
+            // 小窗口是可以调整大小的，就要禁用大小调整
+            xtk_window_set_resizable(window, false);
+            window->winflgs |= XTK_WINDOW_DISABLERESIZE; // 记录禁止调整大小标志
+        }
+    }
+    // 重新设置和大小
+    xtk_window_resize(window, info_rect.w, info_rect.h);
+    xtk_window_set_position_absolute(window, info_rect.x, info_rect.y);
+    
     return 0;
 }

@@ -8,6 +8,14 @@ typedef struct {
     uint32_t w, h;
 } xtk_rect_t;
 
+static inline void xtk_rect_init(xtk_rect_t *rect, int x, int y, uint32_t w, uint32_t h)
+{
+    rect->x = x;
+    rect->y = y;
+    rect->w = w;
+    rect->h = h;
+}
+
 typedef struct {
     uint32_t w, h;
     uint32_t *pixels;

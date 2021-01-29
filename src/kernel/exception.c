@@ -286,11 +286,10 @@ int exception_check_kernel(trap_frame_t *frame)
     exception_manager_t *exception_manager = &task_current->exception_manager;
     unsigned long irq_flags;
     spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
-    if (!exception_manager->exception_number) {
+    if (!exception_manager->exception_number || !list_empty(&exception_manager->exception_list)) {
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         return -1;
     }
-    assert(!list_empty(&exception_manager->exception_list));
     while (1) {
         exception_t *exp = list_first_owner_or_null(&exception_manager->exception_list, exception_t, list);
         if (!exp)
@@ -323,11 +322,11 @@ int exception_check_user(trap_frame_t *frame)
     exception_manager_t *exception_manager = &task_current->exception_manager;
     unsigned long irq_flags;
     spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
-    if (!exception_manager->catch_number || exception_manager->in_user_mode) { /* 如果已经在用户态就不能再处理用户态的异常，避免嵌套 */
+    if (!exception_manager->catch_number || exception_manager->in_user_mode || !list_empty(&exception_manager->catch_list)) { /* 如果已经在用户态就不能再处理用户态的异常，避免嵌套 */
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         return -1;
     }
-    assert(!list_empty(&exception_manager->catch_list));
+    
     exception_t *exp = list_first_owner(&exception_manager->catch_list, exception_t, list);
     exception_del_catch(exception_manager, exp);
     spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
