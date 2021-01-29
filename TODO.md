@@ -34,18 +34,6 @@
 * 2021/1/17
 * 修改字体库的接口，使得它简单易用
 * 添加布局容器，水平盒子，垂直盒子，格子布局，自由布局
-* 完成信号槽
 * 精灵的位置和大小调整
-* 2021/1/29
-* 完成窗口按钮对应的信号处理，关闭，最小化，最大化等。
-1: 当点击主窗口的最右上角的“关闭按钮”;
-2: 或者程序调用gtk_widget_destroy()函数销毁widget;
-
-以上都会产生两个信号: delete_event和destroy,但二者存在如下关系，
-(1): 首先GTK会发出"delete_event信号";
-(2): 如果用g_signal_connect (G_OBJECT (window), "delete_event", G_CALLBACK (DeleteEvent), NULL);
-注册了对应的回调函数,并且 函数DeleteEvent()返回值是: TRUE, 那么GTK不再会发出"destroy"信号.
-(3): 如果回调函数DeleteEvent()返回FALSE，那么GTK会发出"destroy"信号,此时可以用g_signal_connect ()来
-捕获此信号.
-
-* 需要修复窗口关闭的BUG。
+* 优化内核视图管理
+* 

@@ -237,8 +237,8 @@ int view_mouse_init()
     view_mouse_draw(view_mouse.state);    // 绘制视图
     view_set_z(view, 0);    // 设置鼠标图层为0，最开始的最高图层
 
-    // 将鼠标视图设置为高等级最低图层
-    view_env_set_high_level_lower(view);
+    // 最开始，中间图层就是鼠标图层
+    view_env_set_middle(view);
     return 0;
 }
 

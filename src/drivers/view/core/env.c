@@ -9,12 +9,19 @@
 最底层：用于实现桌面系统
 中层：用于实现窗口系统
 高层：用于实现任务栏，鼠标，悬浮窗
+
+中层视图的作用：
+隔离窗口和高层，所以，带有窗口属性的视图只能位于中层以下。
+
+activity 和 hover 视图主要用于对窗口的判断
+当有窗口显示或者隐藏时，就需要切换激活窗口以及当前hover窗口。
+
 */
 
 /* 获取活动中的视图，也就是当前获得按键操作权的视图 */
 static view_t *view_activity = NULL;
-/* 高层视图的最低视图 */
-static view_t *view_high_level_lower = NULL;
+/* 中间的视图 */
+static view_t *view_middle = NULL;
 
 /* 鼠标悬停的视图 */
 static view_t *mouse_hover_view = NULL;
@@ -47,14 +54,14 @@ void view_env_set_hover(view_t *view)
     mouse_hover_view = view;
 }
 
-view_t *view_env_get_high_level_lower()
+view_t *view_env_get_middle()
 {
-    return view_high_level_lower;
+    return view_middle;
 }
 
-void view_env_set_high_level_lower(view_t *view)
+void view_env_set_middle(view_t *view)
 {
-    view_high_level_lower = view;
+    view_middle = view;
 }
 
 /**
@@ -69,7 +76,6 @@ int view_env_try_activate(view_t *view)
     view_t *activity = view_activity;
     int val = -1;
     if (activity != view) {
-        keprint("active %x -> %x\n", activity, view);
         view_msg_t m;
         view_msg_reset(&m);
         if (activity) {
@@ -80,8 +86,8 @@ int view_env_try_activate(view_t *view)
         if (view) {
             if (view->type == VIEW_TYPE_WINDOW) {
                 /* 把图层切换到最高等级图层的下面 */
-                assert(view_high_level_lower);
-                view_set_z(view, view_high_level_lower->z - 1);
+                assert(view_middle);
+                view_move_under_view(view, view_middle);
             }
             view_msg_header(&m, VIEW_MSG_ACTIVATE, view->id);
             val = view_try_put_msg(view, &m);
@@ -92,7 +98,7 @@ int view_env_try_activate(view_t *view)
 
 void view_env_do_mouse_hover(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
 {
-    if (mouse_hover_view && mouse_hover_view != view ) { /* 从其他图层进入当前图层 */
+    if (mouse_hover_view != view ) { /* 从其他图层进入当前图层 */
         /* enter view */
         view_msg_t m;
         view_msg_reset(&m);
@@ -136,6 +142,43 @@ void view_env_do_drag(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
         view_mouse.local_y = lcmy;
         drag_view = view;
     }
+}
+
+view_t *view_env_find_hover_view()
+{
+    list_t *list_head = view_get_show_list();
+    view_t *view;
+    list_for_each_owner_reverse (view, list_head, list) {
+        /* 鼠标视图就跳过 */
+        if (view == view_mouse.view)
+            continue;
+        int local_mx, local_my;
+        local_mx = view_mouse.x - view->x;
+        local_my = view_mouse.y - view->y;
+        if (local_mx >= 0 && local_mx < view->width && 
+            local_my >= 0 && local_my < view->height) {
+            return view;
+        }
+    }
+    return NULL;
+    
+}
+
+int view_env_reset_hover_and_activity()
+{
+    // 切换激活的视图
+    view_env_try_activate(view_find_by_z(view_env_get_middle()->z - 1));
+    // 切换鼠标悬挂视图
+    view_env_set_hover(NULL);
+    // 查找鼠标悬挂的图层
+    view_t *view = view_env_find_hover_view();
+    if (!view)
+        return -1;
+    // 模拟鼠标移动消息
+    view_msg_t msg;
+    view_msg_data(&msg, view_mouse.x, view_mouse.y, 0, 0);
+    view_env_do_mouse_hover(view, &msg, view_mouse.x - view->x, view_mouse.y - view->y);   
+    return 0;
 }
 
 /**
@@ -366,7 +409,7 @@ int view_env_filter_mouse_msg(view_msg_t *msg)
                 view_render_draw_shade(shade_view, &rect, 1); /* 绘制新内容 */
                 view_rect_copy(&shade_rect, &rect); /* 保存新区域 */
                 if (shade_view->z < 0) {
-                    view_set_z(shade_view, view_env_get_high_level_lower()->z);
+                    view_set_z(shade_view, view_env_get_middle()->z);
                 }
                 #endif /* CONFIG_SHADE_VIEW */
 
@@ -390,7 +433,7 @@ int view_env_filter_mouse_msg(view_msg_t *msg)
             view_rect_copy(&shade_rect, &rect); /* 保存新区域 */
             if (shade_view->z < 0) { /* 没显示就显示 */
                 view_clear(shade_view);
-                view_set_z(shade_view, view_env_get_high_level_lower()->z);
+                view_set_z(shade_view, view_env_get_middle()->z);
             }
             #else
             //view_set_xy(drag_view, wx, wy);
@@ -473,8 +516,8 @@ int view_env_init()
 int view_env_exit()
 {
     view_activity = NULL;
-    view_high_level_lower = NULL;
-
+    view_middle = NULL;
+ 
     mouse_hover_view = NULL;
     resize_view = NULL;
     drag_view = NULL;

@@ -7,8 +7,8 @@
 view_t *view_env_get_activity();
 void view_env_set_activity(view_t *view);
 
-view_t *view_env_get_high_level_lower();
-void view_env_set_high_level_lower(view_t *view);
+view_t *view_env_get_middle();
+void view_env_set_middle(view_t *view);
 
 void view_env_set_hover(view_t *view);
 
@@ -22,6 +22,9 @@ int view_env_try_resize_ex(view_t *view, int width, int height);
 uint32_t view_env_get_screensize();
 uint32_t view_env_get_mousepos();
 uint32_t view_env_get_lastpos();
+
+int view_env_reset_hover_and_activity();
+
 
 int view_env_init();
 int view_env_exit();

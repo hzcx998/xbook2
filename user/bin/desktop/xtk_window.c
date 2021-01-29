@@ -562,6 +562,7 @@ int xtk_window_destroy(xtk_window_t *window)
         xtk_window_destroy_navigation(window);
         xtk_window_spirit_setdown(&window->window_spirit);
     }
+    xtk_signal_destroy_all(&window->spirit);
     xtk_window_spirit_setdown(&window->spirit);
     free(window);
     // 检查到有窗口销毁
