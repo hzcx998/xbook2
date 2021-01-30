@@ -89,6 +89,9 @@ int view_dispatch_mouse_msg(view_msg_t *msg)
 
 int view_dispatch_target_msg(view_msg_t *msg)
 {
+    if (msg->target == VIEW_TARGET_NONE)
+        return -1;
+    
     view_t *view = view_find_by_id(msg->target);
     if (!view) {
         return -1;

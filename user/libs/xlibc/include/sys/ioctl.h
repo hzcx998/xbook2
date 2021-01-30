@@ -101,6 +101,7 @@ typedef struct _video_info {
 #define VIEWIO_SETDRAGREGION  DEVCTL_CODE('v', 19)
 #define VIEWIO_SETMOUSESTATE  DEVCTL_CODE('v', 20)
 #define VIEWIO_SETMOUSESTATEINFO  DEVCTL_CODE('v', 21)
+#define VIEWIO_GETVID       DEVCTL_CODE('v', 22)
 
 #ifdef __cplusplus
 }

@@ -33,7 +33,7 @@ int xtk_exit(int exit_code)
     return 0;
 }
 
-int xtk_main()
+int xtk_main_poll()
 {
     if (!__xtk_init_done) {
         perror("xtk_init not called before xtk_main!");
@@ -43,9 +43,7 @@ int xtk_main()
     uview_msg_t msg;
     xtk_view_t *pview, *vnext;
     int filter_val; 
-    
-    printf("view len:%d\n", xtk_view_length());
-    while (__xtk_main_loop && xtk_view_length() > 0) {    
+    if (__xtk_main_loop && xtk_view_length() > 0) {    
         xtk_view_for_each_safe (pview, vnext) {
             uview_set_nowait(pview->view, 1);
             if (uview_get_msg(pview->view, &msg) < 0) {
@@ -64,8 +62,6 @@ int xtk_main()
 
             // 需要检测一下是否有窗口已经关闭掉了，如果是那么就不再往后面执行
             if (__xtk_has_window_close) {
-                printf("xtk has window close!!!\n");
-                printf("view len:%d\n", xtk_view_length());
                 continue;
             }
             spirit = pview->spirit;
@@ -74,7 +70,17 @@ int xtk_main()
                 xtk_window_filter_msg(XTK_WINDOW(spirit), &msg);
         }
     }
-    printf("end of xtk main\n");
+    return 0;
+}
+int xtk_main()
+{
+    if (!__xtk_init_done) {
+        perror("xtk_init not called before xtk_main!");
+        abort();
+    }
+    while (__xtk_main_loop && xtk_view_length()) {
+        xtk_main_poll();
+    }
     return 0;
 }
 

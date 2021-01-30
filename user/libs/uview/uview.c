@@ -261,6 +261,18 @@ int uview_get_msg(int vfd, uview_msg_t *msg)
     return read(vfd, msg, sizeof(uview_msg_t));
 }
 
+int uview_get_vid(int vfd, int *vid)
+{
+    if (vfd < 0)
+        return -1;
+    int _vid = -1;
+    if (ioctl(vfd, VIEWIO_GETVID, &_vid) < 0)
+        return -1;
+    if (vid)
+        *vid = _vid;
+    return 0;
+}
+
 int uview_post_msg(int vfd, uview_msg_t *msg)
 {
     if (vfd < 0)

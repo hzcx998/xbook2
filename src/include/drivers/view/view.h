@@ -11,7 +11,7 @@
 // 32个视图
 #define VIEW_MAX_NR 32
 
-#define VIEW_MSGPOOL_MSG_NR 16   // 默认消息数量
+#define VIEW_MSGPOOL_MSG_NR 128   // 默认消息数量
 
 /* 视图类型 */
 enum view_type {

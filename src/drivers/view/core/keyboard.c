@@ -12,7 +12,7 @@ static int keyboard_key_down(int code)
 {
     keprint("keyboard key: %d down\n", code);
     view_msg_t msg;
-    view_msg_header(&msg, VIEW_MSG_KEY_DOWN, -1);
+    view_msg_header(&msg, VIEW_MSG_KEY_DOWN, VIEW_TARGET_NONE);
     view_msg_data(&msg, code, 0, 0, 0);
     view_put_global_msg(&msg);
     return 0;
@@ -22,7 +22,7 @@ static int keyboard_key_up(int code)
 {
     keprint("keyboard key: %d up\n", code);
     view_msg_t msg;
-    view_msg_header(&msg, VIEW_MSG_KEY_UP, -1);
+    view_msg_header(&msg, VIEW_MSG_KEY_UP, VIEW_TARGET_NONE);
     view_msg_data(&msg, code, 0, 0, 0);
     view_put_global_msg(&msg);
     return 0;

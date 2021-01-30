@@ -38,6 +38,8 @@ enum {
     VIEW_MSG_NR,
 };
 
+#define VIEW_TARGET_NONE    -1
+
 typedef struct {
     uint32_t id;        /* 消息id */
     int target;         /* 消息目标 */
@@ -94,7 +96,6 @@ int view_global_msg_init();
 void view_global_msg_exit();
 int view_get_global_msg(view_msg_t *msg);
 int view_put_global_msg(view_msg_t *msg);
-
 
 
 int view_dispatch_keycode_msg(view_msg_t *msg);

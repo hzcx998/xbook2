@@ -1,6 +1,9 @@
 #include "xtk.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+
+
 
 int xtk_signal_create(xtk_spirit_t *spirit, const char *name)
 {

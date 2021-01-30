@@ -80,24 +80,20 @@ void xtk_surface_hline(xtk_surface_t *surface, int x1, int x2, int y, uint32_t c
     if (!surface)
         return;
 
-    int offset = 0;
-    int i = 0;
-    
-    if (x1 > (surface->w - 1))
-        return;
-    if (x2 < 0)
-        return;
     if (y > (surface->h - 1))
         return;
     if (y < 0)
         return;
 
-    offset = ((surface->w) * y + x1);
-    if (offset >= (surface->w * surface->h - 1))
-        return;
-    for (i = 0; i <= x2 - x1; i++ )
-        *(surface->pixels + offset + i) = color;
+    if (x1 < 0)
+        x1 = 0;
+    if (x2 > surface->w - 1)
+        x2 = surface->w - 1;
 
+    uint32_t *pixels = surface->pixels + (y * surface->w + x1);
+    int i;
+    for (i = 0; i <= x2 - x1; i++ )
+        *(pixels + i) = color;
 }
 
 void xtk_surface_line(xtk_surface_t *surface, int x1, int y1, int x2, int y2, uint32_t color)

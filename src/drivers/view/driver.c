@@ -289,6 +289,13 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
                 status = IO_FAILED;
         }
         break;
+    case VIEWIO_GETVID:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            *(unsigned int *)arg = view->id; 
+        }
+        break;
     default:
         status = IO_FAILED;
         break;

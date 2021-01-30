@@ -87,15 +87,39 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void win_proc(xtk_spirit_t *window, uview_msg_t *msg)
+uint32_t win_color = 0;
+int win_update = 0;
+void win_proc(xtk_spirit_t *spirit, uview_msg_t *msg)
 {
     //printf("msg %d\n", uview_msg_get_type(msg));
+    xtk_window_t *window = XTK_WINDOW(spirit);
     switch (uview_msg_get_type(msg)) {
     case UVIEW_MSG_MOUSE_MOTION:
         {
             int x = uview_msg_get_mouse_x(msg);
             int y = uview_msg_get_mouse_y(msg);    
-            printf("mouse %d, %d\n", x, y);
+            // printf("mouse %d, %d\n", x, y);
+        }
+        break;
+    case UVIEW_MSG_PAINT:
+        {
+            xtk_rect_t rect;
+            if (!xtk_window_get_invalid(window, &rect)) {
+                if (xtk_rect_valid(&rect)) {
+                    // printf("rect: %d, %d, %d, %d\n", rect.x, rect.y, rect.w, rect.h);
+                    xtk_surface_t *surface = xtk_window_get_surface(window);
+                    xtk_surface_rectfill(surface, rect.x, rect.y, rect.w, rect.h, XTK_RGB(win_color, win_color * 2, win_color + 10)); // 重绘窗口
+                    win_color += 5;
+                    char title[32] = {0,};
+                    sprintf(title, "update:%d", win_update);
+                    xtk_window_set_title(window, title);
+                    win_update++;
+                    xtk_window_flip(window); // 刷新窗口
+
+                    xtk_window_invalid_window(window); // 重新设置无效区域
+                    xtk_window_paint(window);   // 发出绘制窗口消息
+                }
+            }
         }
         break;
     default:
@@ -127,7 +151,7 @@ void win_thread()
 {    
     // xtk start
     xtk_init(NULL, NULL);
-    #if 1
+    #if 0
     win_root = xtk_window_create(XTK_WINDOW_TOPLEVEL);  
     assert(win_root);
     xtk_window_set_title(XTK_WINDOW(win_root), "test");
@@ -217,6 +241,10 @@ void win_thread()
     xtk_spirit_show_all(win0);
 
     xtk_window_set_routine(XTK_WINDOW(win0), win_proc);
+    
+    // 设置无效区域，触发绘图消息
+    xtk_window_invalid_window(XTK_WINDOW(win0));
+    xtk_window_paint(XTK_WINDOW(win0));
     // xtk_main_quit();
     xtk_main();
 }

@@ -21,7 +21,7 @@ static void mouse_motion(void)
         view_mouse.y = view_screen.height - 1;
     //keprint("mouse pos: %d, %d\n", view_mouse.x, view_mouse.y);
     view_msg_t msg;
-    view_msg_header(&msg, VIEW_MSG_MOUSE_MOTION, -1);
+    view_msg_header(&msg, VIEW_MSG_MOUSE_MOTION, VIEW_TARGET_NONE);
     view_msg_data(&msg, view_mouse.x, view_mouse.y, 0, 0);
     view_put_global_msg(&msg);
     // move mouse
@@ -33,7 +33,7 @@ static void mouse_wheel(int wheel)
     keprint("mouse wheel: %d\n", wheel);
     int id = (wheel == 0) ? VIEW_MSG_MOUSE_WHEEL_UP : VIEW_MSG_MOUSE_WHEEL_DOWN;
     view_msg_t msg;
-    view_msg_header(&msg, id, -1);
+    view_msg_header(&msg, id, VIEW_TARGET_NONE);
     view_msg_data(&msg, view_mouse.x, view_mouse.y, 0, 0);
     view_put_global_msg(&msg);
 }
@@ -58,7 +58,7 @@ static void mouse_button_down(int button)
     }
 
     view_msg_t msg;
-    view_msg_header(&msg, id, -1);
+    view_msg_header(&msg, id, VIEW_TARGET_NONE);
     view_msg_data(&msg, view_mouse.x, view_mouse.y, 0, 0);
     view_put_global_msg(&msg);
 }
@@ -83,7 +83,7 @@ static void mouse_button_up(int button)
     }
 
     view_msg_t msg;
-    view_msg_header(&msg, id, -1);
+    view_msg_header(&msg, id, VIEW_TARGET_NONE);
     view_msg_data(&msg, view_mouse.x, view_mouse.y, 0, 0);
     view_put_global_msg(&msg);
 }

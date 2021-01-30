@@ -2,6 +2,7 @@
 #define _LIB_XTK_SURFACE_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 typedef struct {
     int x, y;
@@ -14,6 +15,21 @@ static inline void xtk_rect_init(xtk_rect_t *rect, int x, int y, uint32_t w, uin
     rect->y = y;
     rect->w = w;
     rect->h = h;
+}
+
+static inline int xtk_rect_valid(xtk_rect_t *rect)
+{
+    if (rect->w <= 0 || rect->h <= 0)
+        return 0;
+    return 1;
+}
+
+static inline void xtk_rect_merge(xtk_rect_t *dst, xtk_rect_t *src)
+{
+    dst->x = min(dst->x, src->x);
+    dst->y = min(dst->y, src->y);
+    dst->w = max(dst->w, src->w);
+    dst->h = max(dst->h, src->h);
 }
 
 typedef struct {

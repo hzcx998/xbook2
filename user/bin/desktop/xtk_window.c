@@ -211,6 +211,7 @@ int xtk_window_draw_border(xtk_window_t *window,
         window->winflgs |= XTK_WINDOW_ACTIVE;
     }
     xtk_spirit_t *spirit = &window->window_spirit;
+    spirit->style.background_color = back;
     assert(spirit->surface);
     int border_thick = window->style->border_thick;
     /* 需要清空位图 */
@@ -532,6 +533,7 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
     window->routine = NULL;
     window->style = &__xtk_window_style_defult;
     window->winflgs = 0;
+    xtk_rect_init(&window->invalid_rect, 0, 0, 0, 0);
     xtk_rect_init(&window->backup_win_info, 0, 0, 0, 0);
     xtk_spirit_t *spirit = NULL;
     if (type == XTK_WINDOW_TOPLEVEL) {
@@ -549,6 +551,53 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
     return spirit;
 }
 
+int xtk_window_invalid_rect(xtk_window_t *window, xtk_rect_t *rect)
+{
+    if (!window)
+        return -1;
+    if (xtk_rect_valid(&window->invalid_rect)) {
+        xtk_rect_merge(&window->invalid_rect, rect);
+    } else {
+        xtk_rect_init(&window->invalid_rect, rect->x, rect->y, rect->w, rect->h);
+    }
+    return 0;
+}
+
+int xtk_window_invalid_window(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+    xtk_spirit_t *spirit = &window->spirit;
+    xtk_rect_init(&window->invalid_rect, 0, 0, spirit->width, spirit->height);
+    return 0;
+}
+
+int xtk_window_get_invalid(xtk_window_t *window, xtk_rect_t *rect)
+{
+    if (!window || !rect)
+        return -1;
+    if (xtk_rect_valid(&window->invalid_rect)) {
+        *rect = window->invalid_rect;
+        xtk_rect_init(&window->invalid_rect, 0, 0, 0, 0);
+        return 0;
+    }
+    return -1;
+}
+
+int xtk_window_paint(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+    if (xtk_rect_valid(&window->invalid_rect)) {
+        int vid = -1;
+        if (!uview_get_vid(window->spirit.view, &vid)) {
+            uview_msg_t msg;
+            uview_msg_header(&msg, UVIEW_MSG_PAINT, vid);
+            uview_post_msg(window->spirit.view, &msg);
+        }
+    }
+    return 0;
+}
 extern int __xtk_has_window_close;
 
 int xtk_window_destroy(xtk_window_t *window)
@@ -588,6 +637,8 @@ int xtk_window_set_title(xtk_window_t *window, char *title)
         // 第一次创建需要添加到容器中
         xtk_container_add(XTK_CONTAINER(&window->window_spirit), navigation->title);
     } else {
+        // 隐藏原来的数据
+        xtk_spirit_hide(navigation->title);
         xtk_label_set_text(navigation->title, title);
     }
     // 调整位置
@@ -595,8 +646,8 @@ int xtk_window_set_title(xtk_window_t *window, char *title)
     int y = window->style->border_thick + window->style->navigation_height / 2  - \
         navigation->title->height / 2;
     xtk_spirit_set_pos(navigation->title, x, y);
-    // 设置标题后需要重绘边框
-    xtk_window_draw_border(window, window->winflgs & XTK_WINDOW_ACTIVE, 1);
+    // 显示精灵
+    xtk_spirit_show(navigation->title);
     return 0;
 }
 
@@ -843,7 +894,7 @@ int xtk_window_maxim(xtk_window_t *window)
             window->window_spirit.width, window->window_spirit.height);
 
         // 设置要调整成的大小和位置
-        xtk_window_get_screen(window, &info_rect.w, &info_rect.h);
+        xtk_window_get_screen(window, (int *) &info_rect.w, (int *) &info_rect.h);
         xtk_rect_init(&info_rect, 0, 0, info_rect.w, info_rect.h);
 
         window->winflgs |= XTK_WINDOW_MAXIM;

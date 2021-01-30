@@ -59,6 +59,7 @@ typedef struct {
     xtk_window_type_t type;
     xtk_window_routine_t routine;
     xtk_rect_t backup_win_info;
+    xtk_rect_t invalid_rect;    // 无效区域，用PAIN消息
 } xtk_window_t;
 
 #define XTK_WINDOW(spirit)  ((xtk_window_t *)(spirit))
@@ -97,5 +98,9 @@ int xtk_window_draw_no_border(xtk_window_t *window);
 int xtk_window_load_mouse_cursors(xtk_window_t *window, char *pathname);
 int xtk_window_maxim(xtk_window_t *window);
 
+int xtk_window_invalid_rect(xtk_window_t *window, xtk_rect_t *rect);
+int xtk_window_invalid_window(xtk_window_t *window);
+int xtk_window_paint(xtk_window_t *window);
+int xtk_window_get_invalid(xtk_window_t *window, xtk_rect_t *rect);
 
 #endif /* _LIB_XTK_WINDOW_H */

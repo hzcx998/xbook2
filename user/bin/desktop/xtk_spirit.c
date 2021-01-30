@@ -531,16 +531,14 @@ int xtk_spirit_hide(xtk_spirit_t *spirit)
         return -1;
 
     // 在精灵位置绘制一个背景色的图形
-    xtk_surface_t *surface = xtk_surface_create(spirit->width, spirit->height);
-    assert(surface);
-    xtk_surface_rectfill(surface, 0, 0, surface->w, surface->h, attached_spirit->style.background_color);
-    
+    int sx = attached_spirit->x + spirit->x;
+    int sy = attached_spirit->y + spirit->y;
+    xtk_surface_rectfill(attached_spirit->surface, sx, sy, spirit->width, spirit->height, 
+        attached_spirit->style.background_color);
     uview_bitmap_t bmp;
-    uview_bitmap_init(&bmp, surface->w, surface->h, (uview_color_t *) surface->pixels);
-    uview_bitblt_update(attached_spirit->view, attached_spirit->x + spirit->x,
-        attached_spirit->y + spirit->y, &bmp);
-    
-    xtk_surface_destroy(surface);
+    uview_bitmap_init(&bmp, attached_spirit->surface->w, attached_spirit->surface->h, (uview_color_t *) attached_spirit->surface->pixels);
+    uview_bitblt_update_ex(attached_spirit->view, sx, sy, &bmp, spirit->x, spirit->y, 
+        spirit->width, spirit->height);
     return 0;
 }
 
