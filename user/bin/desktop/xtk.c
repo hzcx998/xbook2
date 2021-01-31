@@ -2,6 +2,7 @@
 #include <uview.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <unistd.h>
 #include <dotfont.h>
 
 static int __xtk_init_done = 0;
@@ -52,6 +53,7 @@ int xtk_main_poll()
                 uview_set_nowait(pview->view, 0);
             }
             if (uview_get_msg(pview->view, &msg) < 0) {
+                sched_yeild();
                 continue;
             }
             __xtk_has_window_close = 0; /* 没有窗口关闭 */

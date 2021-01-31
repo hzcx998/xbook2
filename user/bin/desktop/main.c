@@ -82,6 +82,7 @@ int open_desktop()
     return 0;
 }
 
+
 int main(int argc, char *argv[]) 
 {
     // 分离当前的tty和键盘

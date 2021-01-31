@@ -8,6 +8,9 @@
 #include "drivers/view/msg.h"
 #include "drivers/view/misc.h"
 
+/* 配置有透明叠加的图层：但是性能会有一定下降 */
+/* #define CONFIG_VIEW_ALPAH */
+
 // 32个视图
 #define VIEW_MAX_NR 32
 
@@ -99,11 +102,14 @@ void view_refresh_rect(view_t *view, int x, int y, uint32_t width, uint32_t heig
 #define view_self_refresh(view) view_refresh((view), 0, 0, view->width, view->height)
 void view_refresh_rect_from_bottom(view_t *view, int x, int y, uint32_t width, uint32_t height);
 
-
 int view_get_msg(view_t *view, void *buf, int flags);
 int view_put_msg(view_t *view, void *buf, int flags);
 
 #define view_try_get_msg(view, buf) view_get_msg(view, buf, VIEW_MSG_NOWAIT)
 #define view_try_put_msg(view, buf) view_put_msg(view, buf, VIEW_MSG_NOWAIT)
+
+void view_refresh_map(int left, int top, int right, int buttom, int z0);
+int view_init_refresh();
+
 
 #endif /* _XBOOK_DRIVERS_VIEW_H */

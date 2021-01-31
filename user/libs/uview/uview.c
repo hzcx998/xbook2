@@ -38,7 +38,7 @@ int uview_set_pos(int vfd, int x, int y)
     if (vfd < 0)
         return -1;
     int pos = (x << 16) | y;
-    return ioctl(vfd, VIEWIO_SETPOS, &pos);
+    return fastio(vfd, VIEWIO_SETPOS, &pos);
 }
 
 int uview_get_pos(int vfd, int *x, int *y)
@@ -46,7 +46,7 @@ int uview_get_pos(int vfd, int *x, int *y)
     if (vfd < 0)
         return -1;
     int pos = 0;
-    if (ioctl(vfd, VIEWIO_GETPOS, &pos) < 0)
+    if (fastio(vfd, VIEWIO_GETPOS, &pos) < 0)
         return -1;
     if (x)
         *x = (pos >> 16) & 0xffff;
@@ -60,14 +60,14 @@ int uview_set_size_min(int vfd, int width, int height)
     if (vfd < 0)
         return -1;
     unsigned int sz = (width << 16) | height;
-    return ioctl(vfd, VIEWIO_SETSIZEMIN, &sz);
+    return fastio(vfd, VIEWIO_SETSIZEMIN, &sz);
 }
 
 int uview_set_type(int vfd, int type)
 {
     if (vfd < 0)
         return -1;
-    return ioctl(vfd, VIEWIO_SETTYPE, &type);
+    return fastio(vfd, VIEWIO_SETTYPE, &type);
 }
 
 int uview_set_moveable(int vfd)
@@ -75,7 +75,7 @@ int uview_set_moveable(int vfd)
     if (vfd < 0)
         return -1;
     int attr = UVIEW_ATTR_MOVEABLE;
-    return ioctl(vfd, VIEWIO_ADDATTR, &attr);
+    return fastio(vfd, VIEWIO_ADDATTR, &attr);
 }
 
 int uview_set_unmoveable(int vfd)
@@ -83,7 +83,7 @@ int uview_set_unmoveable(int vfd)
     if (vfd < 0)
         return -1;
     int attr = UVIEW_ATTR_MOVEABLE;
-    return ioctl(vfd, VIEWIO_DELATTR, &attr);
+    return fastio(vfd, VIEWIO_DELATTR, &attr);
 }
 
 int uview_set_resizable(int vfd)
@@ -91,7 +91,7 @@ int uview_set_resizable(int vfd)
     if (vfd < 0)
         return -1;
     int attr = UVIEW_ATTR_RESIZABLE;
-    return ioctl(vfd, VIEWIO_ADDATTR, &attr);
+    return fastio(vfd, VIEWIO_ADDATTR, &attr);
 }
 
 int uview_set_unresizable(int vfd)
@@ -99,7 +99,7 @@ int uview_set_unresizable(int vfd)
     if (vfd < 0)
         return -1;
     int attr = UVIEW_ATTR_RESIZABLE;
-    return ioctl(vfd, VIEWIO_DELATTR, &attr);
+    return fastio(vfd, VIEWIO_DELATTR, &attr);
 }
 
 int uview_set_nowait(int vfd, int is_nowait)
@@ -107,20 +107,20 @@ int uview_set_nowait(int vfd, int is_nowait)
     if (vfd < 0)
         return -1;
     int vflags;
-    if (ioctl(vfd, VIEWIO_GETFLGS, &vflags) < 0)
+    if (fastio(vfd, VIEWIO_GETFLGS, &vflags) < 0)
         return -1;
     if (is_nowait)
         vflags |= DEV_NOWAIT;
     else
         vflags &= ~DEV_NOWAIT;
-    return ioctl(vfd, VIEWIO_SETFLGS, &vflags);
+    return fastio(vfd, VIEWIO_SETFLGS, &vflags);
 }
 
 int uview_show(int vfd)
 {
     if (vfd < 0)
         return -1;
-    return ioctl(vfd, VIEWIO_SHOW, 0);
+    return fastio(vfd, VIEWIO_SHOW, 0);
 }
 
 int uview_get_screensize(int vfd, int *width, int *height)
@@ -128,7 +128,7 @@ int uview_get_screensize(int vfd, int *width, int *height)
     if (vfd < 0)
         return -1;
     uint32_t screensize;
-    if (ioctl(vfd, VIEWIO_GETSCREENSZ, &screensize) < 0)
+    if (fastio(vfd, VIEWIO_GETSCREENSZ, &screensize) < 0)
         return -1;
     if (width)
         *width = (screensize >> 16)  & 0xffff;
@@ -142,14 +142,14 @@ int uview_resize(int vfd, int width, int height)
     if (vfd < 0)
         return -1;
     unsigned int vsize = ((width & 0xffff ) << 16) | (height & 0xffff);
-    return ioctl(vfd, VIEWIO_RESIZE, &vsize);
+    return fastio(vfd, VIEWIO_RESIZE, &vsize);
 }
 
 int uview_hide(int vfd)
 {
     if (vfd < 0)
         return -1;
-    return ioctl(vfd, VIEWIO_HIDE, 0);
+    return fastio(vfd, VIEWIO_HIDE, 0);
 }
 
 int uview_update(int vfd, int left, int top, int right, int bottom)
@@ -173,7 +173,7 @@ int uview_set_drag_region(int vfd, int left, int top, int right, int bottom)
     region.top = top;
     region.right = right;
     region.bottom = bottom;
-    return ioctl(vfd, VIEWIO_SETDRAGREGION, &region);
+    return fastio(vfd, VIEWIO_SETDRAGREGION, &region);
 }
 
 int uview_bitblt(int vfd, int vx, int vy, uview_bitmap_t *vbmp)
@@ -266,7 +266,7 @@ int uview_get_vid(int vfd, int *vid)
     if (vfd < 0)
         return -1;
     int _vid = -1;
-    if (ioctl(vfd, VIEWIO_GETVID, &_vid) < 0)
+    if (fastio(vfd, VIEWIO_GETVID, &_vid) < 0)
         return -1;
     if (vid)
         *vid = _vid;
@@ -285,7 +285,7 @@ int uview_get_lastpos(int vfd, int *x, int *y)
     if (vfd < 0)
         return -1;
     uint32_t lastpos;
-    if (ioctl(vfd, VIEWIO_GETLASTPOS, &lastpos) < 0)
+    if (fastio(vfd, VIEWIO_GETLASTPOS, &lastpos) < 0)
         return -1;
     if (x)
         *x = (lastpos >> 16)  & 0xffff;
@@ -299,7 +299,7 @@ int uview_get_mousepos(int vfd, int *x, int *y)
     if (vfd < 0)
         return -1;
     uint32_t mousepos;
-    if (ioctl(vfd, VIEWIO_GETMOUSEPOS, &mousepos) < 0)
+    if (fastio(vfd, VIEWIO_GETMOUSEPOS, &mousepos) < 0)
         return -1;
     if (x)
         *x = (mousepos >> 16)  & 0xffff;
@@ -320,7 +320,7 @@ int uview_add_timer(int vfd, unsigned long interval)
         interval = UVIEW_TIMER_MAXIMUM;
     unsigned long timer_id_and_interval = interval;
     /* 输入时为定时器间隔，输出时为定时器id */
-    if (ioctl(vfd, VIEWIO_ADDTIMER, &timer_id_and_interval) < 0)
+    if (fastio(vfd, VIEWIO_ADDTIMER, &timer_id_and_interval) < 0)
         return -1;
     return timer_id_and_interval;
 }
@@ -329,7 +329,7 @@ int uview_del_timer(int vfd, unsigned long timer_id)
 {
     if (vfd < 0)
         return -1;
-    if (ioctl(vfd, VIEWIO_DELTIMER, &timer_id) < 0)
+    if (fastio(vfd, VIEWIO_DELTIMER, &timer_id) < 0)
         return -1;
     return 0;
 }
@@ -345,7 +345,7 @@ int uview_restart_timer(int vfd, unsigned long timer_id, unsigned long interval)
     uviewio_timer_t vio_timer;
     vio_timer.timer_id = timer_id;
     vio_timer.interval = interval;
-    if (ioctl(vfd, VIEWIO_RESTARTTIMER, &vio_timer) < 0)
+    if (fastio(vfd, VIEWIO_RESTARTTIMER, &vio_timer) < 0)
         return -1;
     return 0;
 }

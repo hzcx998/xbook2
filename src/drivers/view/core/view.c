@@ -10,9 +10,9 @@
 #include <string.h>
 #include <sys/ioctl.h>
 
-static LIST_HEAD(view_show_list_head);
-static LIST_HEAD(view_global_list_head);
-static uint16_t *view_id_map;
+LIST_HEAD(view_show_list_head);
+LIST_HEAD(view_global_list_head);
+uint16_t *view_id_map;
 static int view_top_z = -1;    
 static int view_next_id = 0;    
 int view_last_x, view_last_y; // 上一个关闭的视图的位置
@@ -189,62 +189,6 @@ int view_set_size_min(view_t *view, int width, int height)
     if (view->height_min < VIEW_RESIZE_SIZE_MIN)
         view->height_min = VIEW_RESIZE_SIZE_MIN;
     return 0;
-}
-
-static void view_refresh_map(int left, int top, int right, int buttom, int z0)
-{
-    int view_left, view_top, view_right, view_buttom;
-    int screen_x, screen_y;
-    int view_x, view_y;
-
-    if (left < 0)
-        left = 0;
-	if (top < 0)
-        top = 0;
-	if (right > view_screen.width)
-        right = view_screen.width;
-	if (buttom > view_screen.height)
-        buttom = view_screen.height;
-    
-    view_t *view;
-    view_color_t *colors;
-
-    /* 刷新高度为[z0-top]区间的视图 */
-    list_for_each_owner (view, &view_show_list_head, list) {
-        if (view->z >= z0) {
-            view_left = left - view->x;
-            view_top = top - view->y;
-            view_right = right - view->x;
-            view_buttom = buttom - view->y;
-            if (view_left < 0)
-                view_left = 0;
-            if (view_top < 0)
-                view_top = 0;
-            if (view_right > view->width) 
-                view_right = view->width;
-            if (view_buttom > view->height)
-                view_buttom = view->height;
-            colors = (view_color_t *)view->section->addr;
-            for(view_y = view_top; view_y < view_buttom; view_y++){
-                screen_y = view->y + view_y;
-                if (screen_y < 0)
-                    continue;
-                if (screen_y >= view_screen.height)
-                    break;
-                for(view_x = view_left; view_x < view_right; view_x++){
-                    screen_x = view->x + view_x;
-                    if (screen_x < 0)
-                        continue;
-                    if (screen_x >= view_screen.width)
-                        break;
-                       /* 不是全透明的，就把视图标识写入到映射表中 */
-                    if ((colors[view_y * view->width + view_x] >> 24) & 0xff) {
-                        view_id_map[(screen_y * view_screen.width + screen_x)] = view->z;
-                    }
-                }
-            }
-        }
-    }
 }
 
 static void __view_adjust_by_z(view_t *view, int z)
@@ -528,87 +472,6 @@ view_t *view_get_bottom()
     return view;
 }
 
-void view_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1)
-{
-    int view_left, view_top, view_right, view_buttom;
-
-    if (left < 0)
-        left = 0;
-	if (top < 0)
-        top = 0;
-	if (right > view_screen.width)
-        right = view_screen.width;
-	if (buttom > view_screen.height)
-        buttom = view_screen.height;
-    
-    int vx, vy;
-    int sx, sy;
-    
-    view_color_t color;
-    view_color_t *buf;
-    view_t *view;
-    list_for_each_owner (view, &view_show_list_head, list) {
-        if (view->z >= z0 && view->z <= z1) {
-            view_left = left - view->x;
-            view_top = top - view->y;
-            view_right = right - view->x;
-            view_buttom = buttom - view->y;
-            if (view_left < 0)
-                view_left = 0;
-            if (view_top < 0)
-                view_top = 0;
-            if (view_right > view->width) 
-                view_right = view->width;
-            if (view_buttom > view->height)
-                view_buttom = view->height;
-            for (vy = view_top; vy < view_buttom; vy++) {
-                sy = view->y + vy;
-                for (vx = view_left; vx < view_right; vx++) {
-                    sx = view->x + vx;
-                    if (view_id_map[sy * view_screen.width + sx] == view->z) {
-                        buf = (view_color_t *)view->section->addr;
-                        color = buf[vy * view->width + vx];
-                        view_screen_write_pixel(sx, sy, color);
-                    }
-                }
-            }
-        }
-    }
-}
-
-void view_refresh(view_t *view, int left, int top, int right, int buttom)
-{
-    if (view->z >= 0) {
-        view_refresh_map(view->x + left, view->y + top, view->x + right,
-            view->y + buttom, view->z);
-        view_refresh_by_z(view->x + left, view->y + top, view->x + right,
-            view->y + buttom, view->z, view->z);
-    }
-}
-
-void view_refresh_rect(view_t *view, int x, int y, uint32_t width, uint32_t height)
-{
-    view_refresh(view, x, y, x + width, y + height);
-}
-
-/**
- * 刷新图层以及其下面的所有图层
- */
-void view_refresh_from_bottom(view_t *view, int left, int top, int right, int buttom)
-{
-    if (view->z >= 0) {
-        view_refresh_map(view->x + left, view->y + top, view->x + right,
-            view->y + buttom, 0);
-        view_refresh_by_z(view->x + left, view->y + top, view->x + right,
-            view->y + buttom, 0, view->z);
-    }
-}
-
-void view_refresh_rect_from_bottom(view_t *view, int x, int y, uint32_t width, uint32_t height)
-{
-    view_refresh_from_bottom(view, x, y, x + width, y + height);
-}
-
 /**
  * 重新设置图层的大小，并擦除之前的显示内容
  * 
@@ -661,6 +524,11 @@ int view_init()
     memset(view_id_map, 0, id_map_size);
 
     view_last_x = view_last_y = 0;
+    if (view_init_refresh() < 0) {
+        keprint("view init refresh failed!\n");
+        mem_free(view_id_map);
+        return -1;;
+    }
     return 0;
 }
 

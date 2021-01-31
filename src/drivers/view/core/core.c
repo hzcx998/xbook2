@@ -96,23 +96,13 @@ int view_core_exit()
 /* 输入的获取 */
 void view_core_loop()
 {
-    int yeild_count = 0;
     view_msg_t msg;
-    while (!view_thread_exit) {
-            
-        if (!view_mouse_poll()) {
-            yeild_count = 0;
-        }
-        #if 1
-        if (!view_keyboard_poll()) {
-            yeild_count = 0;
-        }
-        #endif
-        yeild_count++;
+    while (!view_thread_exit) {        
+        view_mouse_poll();
+        view_keyboard_poll();
         view_msg_reset(&msg);
         if (view_get_global_msg(&msg) < 0) {
-            if (yeild_count > 300)
-                task_yeild();
+            task_yeild();
             continue;
         }
         if (is_view_msg_valid(&msg)) {
