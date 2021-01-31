@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+static xtk_timer_t *xtk_window_find_timer(xtk_window_t *window, uint32_t timer_id);
+
 static xtk_window_style_t __xtk_window_style_defult = {
     1, 
     24,
@@ -185,6 +187,7 @@ int xtk_keyboard_fileter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
     return 0;
 }
 
+
 void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
 {
     xtk_spirit_t *spirit = &window->spirit;
@@ -251,6 +254,22 @@ void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
             }
         }
         break;
+    case UVIEW_MSG_TIMER:
+        {
+            // 寻找定时器
+            unsigned int timer_id = uview_msg_get_timer_id(msg);
+            xtk_timer_t *timer = xtk_window_find_timer(window, timer_id);
+            if (timer) {
+                if (timer->callback) {
+                    bool timer_restart = timer->callback(spirit, timer_id, timer->calldata);
+                    // 返回值为true就继续执行触发定时器
+                    if (timer_restart) {
+                        xtk_window_restart_timer(window, timer_id);
+                    } 
+                }
+            }
+            return;
+        }
     default:
         break;
     }
@@ -668,6 +687,7 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
     window->winflgs = 0;
     xtk_rect_init(&window->invalid_rect, 0, 0, 0, 0);
     xtk_rect_init(&window->backup_win_info, 0, 0, 0, 0);
+    list_init(&window->timer_list_head);
     xtk_spirit_t *spirit = NULL;
     if (type == XTK_WINDOW_TOPLEVEL) {
         spirit = xtk_window_create_toplevel(window);
@@ -1062,4 +1082,58 @@ int xtk_window_maxim(xtk_window_t *window)
     xtk_window_set_position_absolute(window, info_rect.x, info_rect.y);
     
     return 0;
+}
+
+uint32_t xtk_window_add_timer(xtk_window_t *window, uint32_t interval,
+        xtk_timer_callback_t function, void *data)
+{
+    if (!window)
+        return 0;
+    xtk_timer_t *timer = xtk_timer_create(interval, function, data);
+    if (!timer)
+        return 0;
+    int timer_id = uview_add_timer(window->spirit.view, interval);
+    if (timer_id < 0) {
+        xtk_timer_destroy(timer);
+        return 0;
+    }
+    timer->timer_id = timer_id;
+    list_add(&timer->list, &window->timer_list_head);
+    return timer->timer_id;
+}
+
+int xtk_window_remove_timer(xtk_window_t *window, uint32_t timer_id)
+{
+    if (!window)
+        return -1;
+    xtk_timer_t *timer = xtk_window_find_timer(window, timer_id);
+    if (!timer)
+        return -1;
+    list_del_init(&timer->list);
+    uview_del_timer(window->spirit.view, timer->timer_id);
+    xtk_timer_destroy(timer);
+    return 0;
+}
+
+int xtk_window_restart_timer(xtk_window_t *window, uint32_t timer_id)
+{
+    if (!window)
+        return -1;
+    xtk_timer_t *timer = xtk_window_find_timer(window, timer_id);
+    if (!timer)
+        return -1;
+    return uview_restart_timer(window->spirit.view, timer_id, timer->interval);
+}
+
+static xtk_timer_t *xtk_window_find_timer(xtk_window_t *window, uint32_t timer_id)
+{
+    if (!window)
+        return NULL;
+    xtk_timer_t *timer;
+    list_for_each_owner (timer, &window->timer_list_head, list) {
+        if (timer->timer_id == timer_id) {
+            return timer; 
+        }
+    }
+    return NULL;
 }

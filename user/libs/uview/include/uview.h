@@ -51,8 +51,19 @@ int uview_get_lastpos(int vfd, int *x, int *y);
 int uview_get_mousepos(int vfd, int *x, int *y);
 int uview_get_pos(int vfd, int *x, int *y);
 int uview_get_vid(int vfd, int *vid);
-
 int uview_set_drag_region(int vfd, int left, int top, int right, int bottom);
 
+typedef struct {
+    unsigned long timer_id;
+    unsigned long interval;
+} uviewio_timer_t;
+
+// 定时器间隔的最大值和最小值
+#define UVIEW_TIMER_MINIMUM 0x0000000A
+#define UVIEW_TIMER_MAXIMUM 0x7FFFFFFF
+
+int uview_add_timer(int vfd, unsigned long interval);
+int uview_del_timer(int vfd, unsigned long timer_id);
+int uview_restart_timer(int vfd, unsigned long timer_id, unsigned long interval);
 
 #endif  /* _LIB_UVIEW_H */

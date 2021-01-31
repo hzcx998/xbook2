@@ -25,6 +25,14 @@ uint32_t view_env_get_lastpos();
 
 int view_env_reset_hover_and_activity();
 
+typedef struct {
+    unsigned long timer_id;
+    unsigned long interval;
+} viewio_timer_t;
+
+int view_env_add_timer(view_t *view, uint32_t interval);
+int view_env_del_timer(view_t *view, unsigned long timer_id);
+int view_env_restart_timer(view_t *view, unsigned long timer_id, uint32_t interval);
 
 int view_env_init();
 int view_env_exit();

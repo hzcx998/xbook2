@@ -3,6 +3,8 @@
 #include <drivers/view/mouse.h>
 #include <drivers/view/screen.h>
 #include <drivers/view/render.h>
+#include <xbook/timer.h>
+#include <xbook/clock.h>
 
 /*
 视图环境被分成3个层级
@@ -494,6 +496,58 @@ int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
         }
     }
     return -1;
+}
+
+static void view_env_timer_callback(timer_t *timer_self, void *arg)
+{
+    view_t *view = (view_t *) arg;
+    if (!view)
+        return;
+    view_msg_t msg;
+    view_msg_header(&msg, VIEW_MSG_TIMER, view->id);
+    view_msg_data(&msg, timer_self->id, 0, 0, 0);
+    view_put_msg(view, &msg, VIEW_MSG_NOWAIT);
+    // 释放定时器资源
+    mem_free(timer_self);
+}
+
+int view_env_add_timer(view_t *view, uint32_t interval)
+{
+    timer_t *timer = timer_alloc();
+    if (!timer)
+        return -1;
+    timer_init(timer, MSEC_TO_TICKS(interval) , view, view_env_timer_callback);
+    timer_add(timer);
+    return timer->id;
+}
+
+int view_env_restart_timer(view_t *view, unsigned long timer_id, uint32_t interval)
+{
+    timer_t *timer = timer_find(timer_id);
+    // 定时器正在执行中就重新设置间隔
+    if (timer) {
+        timer_modify(timer, MSEC_TO_TICKS(interval));
+        return 0;
+    }
+    // 定时器没有再执行队列上才重新添加
+    timer = timer_alloc();
+    if (!timer)
+        return -1;
+    timer_init(timer, MSEC_TO_TICKS(interval), view, view_env_timer_callback);
+    timer->id = timer_id; // 重新设置定时器id
+    timer_add(timer);
+    return 0;
+}
+
+int view_env_del_timer(view_t *view, unsigned long timer_id)
+{
+    timer_t *timer = timer_find(timer_id);
+    if (!timer)
+        return -1;
+    if (timer_cancel(timer) < 0)
+        return -1;
+    mem_free(timer);
+    return 0;
 }
 
 int view_env_init()

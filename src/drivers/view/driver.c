@@ -296,6 +296,37 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
             *(unsigned int *)arg = view->id; 
         }
         break;
+    case VIEWIO_ADDTIMER:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            unsigned long interval = *(unsigned long *) arg;
+            int timer_id = view_env_add_timer(view, interval);
+            if (timer_id < 0)
+                status = IO_FAILED;
+            // 回写timer id
+            *(unsigned long *) arg = timer_id;
+        }
+        break;
+    case VIEWIO_DELTIMER:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            unsigned long timer_id = *(unsigned long *) arg;
+            if (view_env_del_timer(view, timer_id) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case VIEWIO_RESTARTTIMER:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            viewio_timer_t *vio_timer = (viewio_timer_t *) arg;
+            if (view_env_restart_timer(view, vio_timer->timer_id, vio_timer->interval) < 0)
+                status = IO_FAILED;
+        }
+        break;
+        
     default:
         status = IO_FAILED;
         break;

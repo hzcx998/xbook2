@@ -307,3 +307,45 @@ int uview_get_mousepos(int vfd, int *x, int *y)
         *y = mousepos & 0xffff;
     return 0;
 }
+
+int uview_add_timer(int vfd, unsigned long interval)
+{
+    if (vfd < 0)
+        return -1;
+    if (!interval)
+        return -1;
+    if (interval < UVIEW_TIMER_MINIMUM)
+        interval = UVIEW_TIMER_MINIMUM;
+    if (interval > UVIEW_TIMER_MAXIMUM)
+        interval = UVIEW_TIMER_MAXIMUM;
+    unsigned long timer_id_and_interval = interval;
+    /* 输入时为定时器间隔，输出时为定时器id */
+    if (ioctl(vfd, VIEWIO_ADDTIMER, &timer_id_and_interval) < 0)
+        return -1;
+    return timer_id_and_interval;
+}
+
+int uview_del_timer(int vfd, unsigned long timer_id)
+{
+    if (vfd < 0)
+        return -1;
+    if (ioctl(vfd, VIEWIO_DELTIMER, &timer_id) < 0)
+        return -1;
+    return 0;
+}
+
+int uview_restart_timer(int vfd, unsigned long timer_id, unsigned long interval)
+{
+    if (vfd < 0)
+        return -1;
+    if (interval < UVIEW_TIMER_MINIMUM)
+        interval = UVIEW_TIMER_MINIMUM;
+    if (interval > UVIEW_TIMER_MAXIMUM)
+        interval = UVIEW_TIMER_MAXIMUM;
+    uviewio_timer_t vio_timer;
+    vio_timer.timer_id = timer_id;
+    vio_timer.interval = interval;
+    if (ioctl(vfd, VIEWIO_RESTARTTIMER, &vio_timer) < 0)
+        return -1;
+    return 0;
+}

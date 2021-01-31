@@ -146,6 +146,7 @@
         "xiosbase": "cpp",
         "xstring": "cpp",
         "xlocnum": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "render.h": "c"
     }
 }

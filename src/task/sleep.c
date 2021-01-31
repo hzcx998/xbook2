@@ -3,7 +3,7 @@
 #include <xbook/clock.h>
 #include <xbook/schedule.h>
 
-static void task_sleep_timeout_handler(unsigned long arg)
+static void task_sleep_timeout_handler(timer_t *timer_self, void *arg)
 {
     task_t *task = (task_t *)arg;
     //list_del_init(&task->list);

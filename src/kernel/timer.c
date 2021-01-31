@@ -15,14 +15,12 @@
 LIST_HEAD(timer_list_head);
 unsigned long timer_id_next = 1; /* 从1开始，0是无效的id */
 static clock_t minim_timeout_val = 0;
-
-static void timer_idle_handler(unsigned long arg);
-static DEFINE_TIMER(timer_idle, TIMER_IDLE_TIMEOUT, 0, timer_idle_handler);
+static timer_t timer_idle;
 
 /* idle定时器超时
  * 重新调整所有定时器的值，所有值都减去timer_ticks（idle除外）
  */
-static void timer_idle_handler(unsigned long arg)
+static void timer_idle_handler(timer_t *timer_self, void *arg)
 {
     clock_t dt = timer_idle.timeout;
     timer_ticks -= dt;
@@ -37,7 +35,7 @@ static void timer_idle_handler(unsigned long arg)
 void timer_init(
     timer_t *timer,
     unsigned long timeout,
-    unsigned long arg,
+    void *arg,
     timer_callback_t callback)
 {
     list_init(&timer->list);
@@ -103,6 +101,21 @@ void timer_modify(timer_t *timer, unsigned long timeout)
     interrupt_restore_state(flags);
 }
 
+timer_t *timer_find(unsigned long id)
+{
+    timer_t *timer, *tmr_find = NULL;
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
+    list_for_each_owner (timer, &timer_list_head, list) {
+        if (timer->id == id) {
+            tmr_find = timer;
+            break;
+        }
+    }
+    interrupt_restore_state(flags);
+    return tmr_find;
+}
+
 int timer_cancel(timer_t *timer)
 {
     int retval = -1;
@@ -118,7 +131,7 @@ int timer_cancel(timer_t *timer)
 static void timer_do_action(timer_t *timer)
 {
     list_del(&timer->list);
-    timer->callback(timer->arg);
+    timer->callback(timer, timer->arg);
 }
 
 void timer_update_ticks()
@@ -170,6 +183,7 @@ long sys_usleep(struct timeval *inv, struct timeval *outv)
 
 int timers_init()
 {
+    timer_init(&timer_idle, TIMER_IDLE_TIMEOUT, NULL, timer_idle_handler);
     timer_add(&timer_idle);
     return 0;
 }

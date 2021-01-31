@@ -5,13 +5,15 @@
 #include "memcache.h"
 #include <sys/time.h>
 
-typedef void (*timer_callback_t) (unsigned long); 
+struct timer_struct;
+// callback(timer, arg)
+typedef void (*timer_callback_t) (struct timer_struct *, void *); 
 
 /* 定时器 */
 typedef struct timer_struct {
     list_t list;                /* 定时器链表 */
     clock_t timeout;            /* 超时点，以ticks为单位 */
-    unsigned long arg;          /* 参数 */
+    void *arg;                  /* 参数 */
     unsigned long id;           /* 定时器的id值 */
     timer_callback_t callback;  /* 回调函数 */
 } timer_t;
@@ -31,12 +33,12 @@ typedef struct timer_struct {
 #define timer_free(timer)   mem_free(timer)
 
 #define timer_set_handler(tmr, handler) (tmr)->callback = (timer_callback_t)(handler)
-#define timer_set_arg(tmr, _arg) (tmr)->arg = (unsigned long )(_arg)
+#define timer_set_arg(tmr, _arg) (tmr)->arg = (void *)(_arg)
 
 void timer_init(
     timer_t *timer,
     unsigned long timeout,
-    unsigned long arg,
+    void *arg,
     timer_callback_t callback);
 
 void timer_add(timer_t *timer);
@@ -44,6 +46,8 @@ void timer_del(timer_t *timer);
 void timer_modify(timer_t *timer, unsigned long timeout);
 int timer_cancel(timer_t *timer);
 int timer_alive(timer_t *timer);
+
+timer_t *timer_find(unsigned long id);
 
 void timer_update_ticks();
 long sys_usleep(struct timeval *inv, struct timeval *outv);

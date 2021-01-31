@@ -86,4 +86,6 @@ static inline void uview_msg_reset(uview_msg_t *msg)
 #define uview_msg_get_resize_width(msg) ((msg)->data2)
 #define uview_msg_get_resize_height(msg) ((msg)->data3)
 
+#define uview_msg_get_timer_id(msg) ((msg)->data0)
+
 #endif  /* _LIB_UVIEW_MSG_H */

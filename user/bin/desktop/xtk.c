@@ -43,9 +43,14 @@ int xtk_main_poll()
     uview_msg_t msg;
     xtk_view_t *pview, *vnext;
     int filter_val; 
-    if (__xtk_main_loop && xtk_view_length() > 0) {    
+    int view_nr = xtk_view_length();
+    if (__xtk_main_loop && view_nr > 0) {    
         xtk_view_for_each_safe (pview, vnext) {
-            uview_set_nowait(pview->view, 1);
+            if (view_nr > 1) {
+                uview_set_nowait(pview->view, 1);
+            } else {
+                uview_set_nowait(pview->view, 0);
+            }
             if (uview_get_msg(pview->view, &msg) < 0) {
                 continue;
             }

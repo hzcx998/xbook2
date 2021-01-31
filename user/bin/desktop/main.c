@@ -186,7 +186,7 @@ bool destroy_event(xtk_spirit_t *spirit, void *data)
     printf("destroy window event\n");
     return false;
 }
-
+static int fps = 0;
 void win_paint(xtk_spirit_t *spirit, xtk_rect_t *rect)
 {
     xtk_window_t *window = XTK_WINDOW(spirit);
@@ -194,14 +194,33 @@ void win_paint(xtk_spirit_t *spirit, xtk_rect_t *rect)
     xtk_surface_rectfill(surface, rect->x, rect->y, rect->w, rect->h, 
         XTK_RGB(win_color, win_color * 2, win_color + 10)); // 重绘窗口
     win_color += 5;
-    char title[32] = {0,};
-    sprintf(title, "update:%d", win_update);
-    xtk_window_set_title(window, title);
+    
     win_update++;
     xtk_window_flip(window); // 刷新窗口
-
+    fps++;
     xtk_window_invalid_window(window); // 重新设置无效区域
     xtk_window_paint(window);   // 发出绘制窗口消息
+}
+
+bool win_timeout2(xtk_spirit_t *spirit, uint32_t timer_id, void *data)
+{
+    static int count = 0;
+    printf("timeout %d\n", timer_id);
+    count++;
+    if (count > 100) {
+        xtk_window_remove_timer(XTK_WINDOW(spirit), timer_id);
+        return false;
+    }
+    return true;
+}
+
+bool win_timeout(xtk_spirit_t *spirit, uint32_t timer_id, void *data)
+{
+    char title[32] = {0,};
+    sprintf(title, "fps:%d", fps);
+    xtk_window_set_title(XTK_WINDOW(spirit), title);
+    fps = 0;
+    return true;
 }
 
 xtk_spirit_t *btn_root;
@@ -314,7 +333,15 @@ void win_thread()
     xtk_window_invalid_window(XTK_WINDOW(win0));
     xtk_window_paint(XTK_WINDOW(win0));
 
-
+    xtk_window_add_timer(XTK_WINDOW(win0), 1000, win_timeout, NULL);
+    
+    #if 0
+    xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout2, NULL);
+    xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout, NULL);
+    xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout2, NULL);
+    xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout, NULL);
+    xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout2, NULL);
+    #endif
     // xtk_main_quit();
     xtk_main();
 }
