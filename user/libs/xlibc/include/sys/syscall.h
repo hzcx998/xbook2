@@ -105,6 +105,9 @@ enum syscall_num {
     SYS_RECEIVE_PORT,
     SYS_REPLY_PORT,
     SYS_REQUEST_PORT,
+    SYS_FASTIO,
+    SYS_FASTREAD,
+    SYS_FASTWRITE,
     SYSCALL_NR,
 };
 

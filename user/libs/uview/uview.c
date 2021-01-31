@@ -161,7 +161,7 @@ int uview_update(int vfd, int left, int top, int right, int bottom)
     region.top = top;
     region.right = right;
     region.bottom = bottom;
-    return ioctl(vfd, VIEWIO_REFRESH, &region);
+    return fastio(vfd, VIEWIO_REFRESH, &region);
 }
 
 int uview_set_drag_region(int vfd, int left, int top, int right, int bottom)
@@ -192,7 +192,7 @@ int uview_bitblt(int vfd, int vx, int vy, uview_bitmap_t *vbmp)
     vio.bw = vbmp->width;
     vio.bh = vbmp->height;
     vio.refresh = 0; // no refresh
-    return ioctl(vfd, VIEWIO_WRBMP, &vio);
+    return fastio(vfd, VIEWIO_WRBMP, &vio);
 }
 
 int uview_bitblt_update(int vfd, int vx, int vy, uview_bitmap_t *vbmp)
@@ -211,7 +211,7 @@ int uview_bitblt_update(int vfd, int vx, int vy, uview_bitmap_t *vbmp)
     vio.bw = vbmp->width;
     vio.bh = vbmp->height;
     vio.refresh = 1; // with refresh
-    return ioctl(vfd, VIEWIO_WRBMP, &vio);
+    return fastio(vfd, VIEWIO_WRBMP, &vio);
 }
 
 int uview_bitblt_ex(int vfd, int vx, int vy, uview_bitmap_t *vbmp, 
@@ -231,7 +231,7 @@ int uview_bitblt_ex(int vfd, int vx, int vy, uview_bitmap_t *vbmp,
     vio.bw = bw;
     vio.bh = bh;
     vio.refresh = 0; // no refresh
-    return ioctl(vfd, VIEWIO_WRBMP, &vio);
+    return fastio(vfd, VIEWIO_WRBMP, &vio);
 }
 
 int uview_bitblt_update_ex(int vfd, int vx, int vy, uview_bitmap_t *vbmp, 
@@ -251,14 +251,14 @@ int uview_bitblt_update_ex(int vfd, int vx, int vy, uview_bitmap_t *vbmp,
     vio.bw = bw;
     vio.bh = bh;
     vio.refresh = 1; // with refresh
-    return ioctl(vfd, VIEWIO_WRBMP, &vio);
+    return fastio(vfd, VIEWIO_WRBMP, &vio);
 }
 
 int uview_get_msg(int vfd, uview_msg_t *msg)
 {
     if (vfd < 0)
         return -1;
-    return read(vfd, msg, sizeof(uview_msg_t));
+    return fastread(vfd, msg, sizeof(uview_msg_t));
 }
 
 int uview_get_vid(int vfd, int *vid)
@@ -277,7 +277,7 @@ int uview_post_msg(int vfd, uview_msg_t *msg)
 {
     if (vfd < 0)
         return -1;
-    return write(vfd, msg, sizeof(uview_msg_t));
+    return fastwrite(vfd, msg, sizeof(uview_msg_t));
 }
 
 int uview_get_lastpos(int vfd, int *x, int *y)

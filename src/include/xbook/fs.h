@@ -34,6 +34,9 @@ int sys_dup2(int oldfd, int newfd);
 int sys_pipe(int fd[2]);
 long sys_fsize(int fd);
 void *sys_mmap(int fd, size_t length, int flags);
+int sys_fastio(int fd, int cmd, void *arg);
+int sys_fastread(int fd, void *buffer, size_t nbytes);
+int sys_fastwrite(int fd, void *buffer, size_t nbytes);
 
 int sys_mount(
     char *source,         /* 需要挂载的资源 */

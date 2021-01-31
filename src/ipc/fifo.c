@@ -545,4 +545,5 @@ fsal_t fifoif = {
     .access     = NULL,
     .incref     = fifoif_incref,
     .decref     = fifoif_decref,
+    .fastio     = NULL,
 };

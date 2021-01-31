@@ -23,6 +23,8 @@ typedef struct {
     int (*close)(int );
     int (*read)(int , void *, size_t );
     int (*write)(int , void *, size_t );
+    int (*fastread)(int , void *, size_t );
+    int (*fastwrite)(int , void *, size_t );
     int (*lseek)(int , off_t , int );
     int (*opendir)(char *);
     int (*closedir)(int);
@@ -51,6 +53,7 @@ typedef struct {
     int (*incref)(int);
     int (*decref)(int);
     void *(*mmap)(int, size_t, int flags);
+    int (*fastio)(int, int, void *);
     void *extention;
 } fsal_t;
 

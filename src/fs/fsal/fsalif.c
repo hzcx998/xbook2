@@ -588,4 +588,5 @@ fsal_t fsif = {
     .access     = fsalif_access,
     .incref     = fsalif_incref,
     .decref     = fsalif_decref,
+    .fastio     = NULL,
 };

@@ -50,6 +50,9 @@ enum _io_request_function {
     IOREQ_WRITE,                    /* 设备写入派遣索引 */
     IOREQ_DEVCTL,                   /* 设备控制派遣索引 */
     IOREQ_MMAP,                     /* 设备内存映射派遣索引 */
+    IOREQ_FASTIO,                   /* 设备快速IO派遣索引 */
+    IOREQ_FASTREAD,                 /* 设备快速读取派遣索引 */
+    IOREQ_FASTWRITE,                /* 设备快速写入派遣索引 */
     MAX_IOREQ_FUNCTION_NR
 };
 
@@ -175,6 +178,8 @@ typedef struct _device_object
 
 /* 派遣函数定义 */ 
 typedef iostatus_t (*driver_dispatch_t)(device_object_t *device, io_request_t *ioreq);
+/* 派遣函数定义 */ 
+typedef iostatus_t (*driver_dispatch_fastio_t)(device_object_t *, int , void *);
 
 /* 驱动标准函数定义 */
 typedef iostatus_t (*driver_func_t)(struct _driver_object *driver);

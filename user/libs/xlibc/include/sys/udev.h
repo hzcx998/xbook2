@@ -1,6 +1,8 @@
 #ifndef _SYS_UDEV_H
 #define _SYS_UDEV_H
 
+#include <stddef.h>
+
 #define DEVICE_NAME_LEN 32
 
 /* 设备项 */
@@ -38,5 +40,8 @@ typedef enum _device_type {
 } device_type_t;
 
 int scandev(devent_t *de, device_type_t type, devent_t *out_de);
+int fastio(int fd, int cmd, void *arg);
+int fastread(int fd, void *buf, size_t size);
+int fastwrite(int fd, void *buf, size_t size);
 
 #endif   /* _SYS_UDEV_H */

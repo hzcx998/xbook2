@@ -112,6 +112,42 @@ int sys_read(int fd, void *buffer, size_t nbytes)
     return ffd->fsal->read(ffd->handle, buffer, nbytes);
 }
 
+int sys_fastread(int fd, void *buffer, size_t nbytes)
+{
+    if (fd < 0 || !nbytes || !buffer)
+        return -EINVAL;
+    #ifdef FSIF_USER_CHECK
+    if (mem_copy_to_user(buffer, NULL, nbytes) < 0)
+        return -EINVAL;
+    #endif
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd)) {
+        errprint("[FS]: %s: fd %d err!\n", __func__, fd);
+        return -EINVAL;
+    }
+    if (!ffd->fsal->fastread)
+        return -ENOSYS;
+    return ffd->fsal->fastread(ffd->handle, buffer, nbytes);
+}
+
+int sys_fastwrite(int fd, void *buffer, size_t nbytes)
+{
+    if (fd < 0 || !nbytes || !buffer)
+        return -EINVAL;
+    #ifdef FSIF_USER_CHECK
+    if (mem_copy_to_user(buffer, NULL, nbytes) < 0)
+        return -EINVAL;
+    #endif
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd)) {
+        errprint("[FS]: %s: fd %d err!\n", __func__, fd);
+        return -EINVAL;
+    }
+    if (!ffd->fsal->fastwrite)
+        return -ENOSYS;
+    return ffd->fsal->fastwrite(ffd->handle, buffer, nbytes);
+}
+
 int sys_write(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0 || !nbytes || !buffer)
@@ -139,6 +175,16 @@ int sys_ioctl(int fd, int cmd, void *arg)
     if (!ffd->fsal->ioctl)
         return -ENOSYS;
     return ffd->fsal->ioctl(ffd->handle, cmd, (unsigned long )arg);
+}
+
+int sys_fastio(int fd, int cmd, void *arg)
+{
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
+    if (!ffd->fsal->fastio)
+        return -ENOSYS;
+    return ffd->fsal->fastio(ffd->handle, cmd, arg);
 }
 
 int sys_fcntl(int fd, int cmd, long arg)

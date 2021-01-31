@@ -147,6 +147,7 @@
         "xstring": "cpp",
         "xlocnum": "c",
         "cmath": "c",
-        "render.h": "c"
+        "render.h": "c",
+        "udev.h": "c"
     }
 }

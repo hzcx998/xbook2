@@ -46,9 +46,9 @@ int xtk_main_poll()
     int view_nr = xtk_view_length();
     if (__xtk_main_loop && view_nr > 0) {    
         xtk_view_for_each_safe (pview, vnext) {
-            if (view_nr > 1) {
+            if (view_nr > 1) { // 2个及其以上的视图才不阻塞
                 uview_set_nowait(pview->view, 1);
-            } else {
+            } else {    // 只有一个的时候就要阻塞
                 uview_set_nowait(pview->view, 0);
             }
             if (uview_get_msg(pview->view, &msg) < 0) {

@@ -395,6 +395,7 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
     case DEVICE_TYPE_MOUSE:
     case DEVICE_TYPE_VIRTUAL_CHAR:
     case DEVICE_TYPE_BEEP:
+    case DEVICE_TYPE_VIEW:
         spin_lock(&device->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
@@ -422,6 +423,33 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
     if (func)
         status = func(device, ioreq);
     
+    return status;
+}
+
+
+static iostatus_t fastio_call_dirver(device_object_t *device, int arg, void *buf, int dispatch)
+{
+    iostatus_t status= IO_SUCCESS;
+    driver_dispatch_fastio_t func = NULL;
+    /* 根据设备类型选择不同的锁 */
+    switch (device->type) {
+    case DEVICE_TYPE_VIEW:
+        spin_lock(&device->lock.spinlock);
+        break;
+    default:
+        break;
+    }
+    func = (driver_dispatch_fastio_t )device->driver->dispatch_function[dispatch];
+    if (func)
+        status = func(device, arg, buf);
+
+    switch (device->type) {
+    case DEVICE_TYPE_VIEW:
+        spin_unlock(&device->lock.spinlock);
+        break;
+    default:
+        break;
+    }
     return status;
 }
 
@@ -528,6 +556,7 @@ void io_complete_request(io_request_t *ioreq)
     case DEVICE_TYPE_MOUSE:
     case DEVICE_TYPE_VIRTUAL_CHAR:
     case DEVICE_TYPE_BEEP:
+    case DEVICE_TYPE_VIEW:
         spin_unlock(&ioreq->devobj->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
@@ -1051,6 +1080,54 @@ static void *devif_mmap(int handle, size_t length, int flags)
     return device_mmap(handle, length, flags);
 }
 
+static int devif_fastio(int handle, int cmd, void *arg)
+{
+    if (IS_BAD_DEVICE_HANDLE(handle))
+        return -1;
+    device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
+    if (devobj == NULL) {
+        keprint(PRINT_ERR "device_read: device object error by handle=%d!\n", handle);
+        return -1;
+    }
+    iostatus_t status = IO_SUCCESS;
+    status = fastio_call_dirver(devobj, cmd, arg, IOREQ_FASTIO);
+    if (status == IO_SUCCESS)
+        return 0;
+    return -1;
+}
+
+static int devif_fastread(int handle, void *buf, size_t size)
+{
+    if (IS_BAD_DEVICE_HANDLE(handle))
+        return -1;
+    device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
+    if (devobj == NULL) {
+        keprint(PRINT_ERR "device_read: device object error by handle=%d!\n", handle);
+        return -1;
+    }
+    iostatus_t status = IO_SUCCESS;
+    status = fastio_call_dirver(devobj, size, buf, IOREQ_FASTREAD);
+    if (status == IO_SUCCESS)
+        return 0;
+    return -1;
+}
+
+static int devif_fastwrite(int handle, void *buf, size_t size)
+{
+    if (IS_BAD_DEVICE_HANDLE(handle))
+        return -1;
+    device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
+    if (devobj == NULL) {
+        keprint(PRINT_ERR "device_read: device object error by handle=%d!\n", handle);
+        return -1;
+    }
+    iostatus_t status = IO_SUCCESS;
+    status = fastio_call_dirver(devobj, size, buf, IOREQ_FASTWRITE);
+    if (status == IO_SUCCESS)
+        return 0;
+    return -1;
+}
+
 fsal_t devif;
 
 void driver_framewrok_init()
@@ -1072,4 +1149,7 @@ void driver_framewrok_init()
     devif.fsize     = devif_fsize;
     devif.ftell     = devif_ftell;
     devif.mmap      = devif_mmap;
+    devif.fastio    = devif_fastio;
+    devif.fastread  = devif_fastread;
+    devif.fastwrite = devif_fastwrite;
 }

@@ -46,6 +46,8 @@ void desktop_setup(xtk_spirit_t *spirit)
     }
 }
 
+
+
 void desktop_proc(xtk_spirit_t *spirit, uview_msg_t *msg)
 {
     int type = uview_msg_get_type(msg);
@@ -58,7 +60,6 @@ void desktop_proc(xtk_spirit_t *spirit, uview_msg_t *msg)
         break;
     }
 }
-
 int open_desktop()
 {
     if (xtk_init(NULL, NULL) < 0) {
@@ -89,6 +90,7 @@ int main(int argc, char *argv[])
         return -1;
     return 0;
 }
+
 
 uint32_t win_color = 0;
 int win_update = 0;
