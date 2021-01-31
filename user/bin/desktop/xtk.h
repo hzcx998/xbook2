@@ -24,6 +24,7 @@ dialog
 #include "xtk_box.h"
 #include "xtk_mouse.h"
 #include "xtk_view.h"
+#include "xtk_keyboard.h"
 
 int xtk_init(int *argc, char **argv[]);
 int xtk_exit(int exit_code);

@@ -103,9 +103,9 @@ void view_core_loop()
         if (!view_mouse_poll()) {
             yeild_count = 0;
         }
-        #if 0
+        #if 1
         if (!view_keyboard_poll()) {
-            i = 0;
+            yeild_count = 0;
         }
         #endif
         yeild_count++;

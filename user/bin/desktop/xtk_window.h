@@ -47,6 +47,7 @@ typedef struct {
 } xtk_window_navigation_t;
 
 typedef void (*xtk_window_routine_t) (xtk_spirit_t *, uview_msg_t *);
+typedef void (*xtk_win_paint_callback_t) (xtk_spirit_t *, xtk_rect_t *);
 
 typedef struct {
     xtk_spirit_t spirit;            // 放到第一个成员，实现继承
@@ -58,6 +59,7 @@ typedef struct {
     xtk_window_navigation_t navigation;
     xtk_window_type_t type;
     xtk_window_routine_t routine;
+    xtk_win_paint_callback_t paint_callback;
     xtk_rect_t backup_win_info;
     xtk_rect_t invalid_rect;    // 无效区域，用PAIN消息
 } xtk_window_t;
@@ -102,5 +104,7 @@ int xtk_window_invalid_rect(xtk_window_t *window, xtk_rect_t *rect);
 int xtk_window_invalid_window(xtk_window_t *window);
 int xtk_window_paint(xtk_window_t *window);
 int xtk_window_get_invalid(xtk_window_t *window, xtk_rect_t *rect);
+
+int xtk_window_paint_callback(xtk_window_t *window, xtk_win_paint_callback_t callback);
 
 #endif /* _LIB_XTK_WINDOW_H */

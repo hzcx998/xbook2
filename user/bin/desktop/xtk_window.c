@@ -75,37 +75,143 @@ int xtk_window_resize(xtk_window_t *window, int width, int height)
     return uview_resize(window->spirit.view, win_width, win_height);
 }
 
+/**
+ * 过滤鼠标消息，过滤掉返回1，没有返回0
+ */
+int xtk_mouse_fileter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
+{
+    uview_msg_get_mouse_x(msg) = uview_msg_get_mouse_x(msg) - spirit->x;
+    uview_msg_get_mouse_y(msg) = uview_msg_get_mouse_y(msg) - spirit->y;
+    int x = uview_msg_get_mouse_x(msg);
+    int y = uview_msg_get_mouse_y(msg);
+    if (x < 0 || y < 0 || x >= spirit->width || y >= spirit->height) {
+        return 1;
+    }
+    int msg_type = uview_msg_get_type(msg);
+    xtk_event_t event;
+    int tmpval = -1;
+    switch (msg_type) {
+    case UVIEW_MSG_MOUSE_MOTION:
+        event.type = XTK_MOUSE_MOTION;                
+        event.motion.x = x;
+        event.motion.y = y;
+        if (xtk_signal_emit_arg(spirit, "motion_notify", &event))
+            return 1;
+        break;
+    case UVIEW_MSG_MOUSE_LBTN_DBLCLK:
+    case UVIEW_MSG_MOUSE_LBTN_DOWN:
+    case UVIEW_MSG_MOUSE_MBTN_DBLCLK:
+    case UVIEW_MSG_MOUSE_MBTN_DOWN:
+    case UVIEW_MSG_MOUSE_RBTN_DBLCLK:
+    case UVIEW_MSG_MOUSE_RBTN_DOWN:
+        if (msg_type == UVIEW_MSG_MOUSE_LBTN_DOWN || msg_type == UVIEW_MSG_MOUSE_LBTN_DBLCLK) {
+            tmpval = UVIEW_BTN_LEFT;
+        } else if (msg_type == UVIEW_MSG_MOUSE_MBTN_DOWN || msg_type == UVIEW_MSG_MOUSE_MBTN_DBLCLK) {
+            tmpval = UVIEW_BTN_MIDDLE;
+        } else if (msg_type == UVIEW_MSG_MOUSE_RBTN_DOWN || msg_type == UVIEW_MSG_MOUSE_RBTN_DBLCLK) {
+            tmpval = UVIEW_BTN_RIGHT;
+        }
+        event.type = XTK_MOUSE_BUTTON_DOWN;
+        event.button.state = XTK_PRESSED;
+        event.button.button = tmpval;
+        event.button.x = x;
+        event.button.y = y;
+        if (xtk_signal_emit_arg(spirit, "button_press", &event))
+            return 1;
+        break;
+    case UVIEW_MSG_MOUSE_LBTN_UP:
+    case UVIEW_MSG_MOUSE_MBTN_UP:
+    case UVIEW_MSG_MOUSE_RBTN_UP:
+        if (msg_type == UVIEW_MSG_MOUSE_LBTN_UP) {
+            tmpval = UVIEW_BTN_LEFT;
+        } else if (msg_type == UVIEW_MSG_MOUSE_MBTN_UP) {
+            tmpval = UVIEW_BTN_MIDDLE;
+        } else if (msg_type == UVIEW_MSG_MOUSE_RBTN_UP) {
+            tmpval = UVIEW_BTN_RIGHT;
+        }
+        event.type = XTK_MOUSE_BUTTON_UP;
+        event.button.state = XTK_RELEASED;
+        event.button.button = tmpval;
+        event.button.x = x;
+        event.button.y = y;
+        if (xtk_signal_emit_arg(spirit, "button_release", &event))
+            return 1;
+        break;
+    case UVIEW_MSG_MOUSE_WHEEL_UP:
+    case UVIEW_MSG_MOUSE_WHEEL_DOWN:
+    case UVIEW_MSG_MOUSE_WHEEL_LEFT:
+    case UVIEW_MSG_MOUSE_WHEEL_RIGHT:
+        if (msg_type == UVIEW_MSG_MOUSE_WHEEL_UP) {
+            tmpval = XTK_WHEEL_UP;
+        } else if (msg_type == UVIEW_MSG_MOUSE_WHEEL_DOWN) {
+            tmpval = XTK_WHEEL_DOWN;
+        } else if (msg_type == UVIEW_MSG_MOUSE_WHEEL_LEFT) {
+            tmpval = XTK_WHEEL_LEFT;
+        } else if (msg_type == UVIEW_MSG_MOUSE_WHEEL_RIGHT) {
+            tmpval = XTK_WHEEL_RIGHT;
+        }
+        event.type = XTK_MOUSE_WHEEL;
+        event.wheel.wheel = tmpval;
+        event.wheel.x = x;
+        event.wheel.y = y;
+        if (xtk_signal_emit_arg(spirit, "button_scroll", &event))
+            return 1;
+        break;
+    default :
+        break;
+    }
+    return 0;
+}
+
+int xtk_keyboard_fileter_msg(xtk_spirit_t *spirit, uview_msg_t *msg)
+{
+    xtk_event_t event;
+    int msg_type = uview_msg_get_type(msg);
+    if (msg_type == UVIEW_MSG_KEY_DOWN) {
+        event.type = XTK_KEY_DOWN;
+        event.key.state = XTK_PRESSED;
+        event.key.keycode.code = uview_msg_get_key_code(msg);
+        event.key.keycode.modify = uview_msg_get_key_modify(msg);
+        if (xtk_signal_emit_arg(spirit, "key_press", &event))
+            return 1;
+    } else if (msg_type == UVIEW_MSG_KEY_UP) {
+        event.type = XTK_KEY_UP;
+        event.key.state = XTK_RELEASED;
+        event.key.keycode.code = uview_msg_get_key_code(msg);
+        event.key.keycode.modify = uview_msg_get_key_modify(msg);
+        if (xtk_signal_emit_arg(spirit, "key_release", &event))
+            return 1;
+    }
+    return 0;
+}
+
 void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
 {
     xtk_spirit_t *spirit = &window->spirit;
+    int msg_type = uview_msg_get_type(msg);
     // 转换鼠标坐标位置为窗口内容的坐标
-    switch (uview_msg_get_type(msg)) {
+    switch (msg_type) {
     case UVIEW_MSG_MOUSE_MOTION:
     case UVIEW_MSG_MOUSE_LBTN_DBLCLK:
     case UVIEW_MSG_MOUSE_LBTN_DOWN:
-    case UVIEW_MSG_MOUSE_LBTN_UP:
     case UVIEW_MSG_MOUSE_MBTN_DBLCLK:
     case UVIEW_MSG_MOUSE_MBTN_DOWN:
-    case UVIEW_MSG_MOUSE_MBTN_UP:
     case UVIEW_MSG_MOUSE_RBTN_DBLCLK:
     case UVIEW_MSG_MOUSE_RBTN_DOWN:
+    case UVIEW_MSG_MOUSE_LBTN_UP:
+    case UVIEW_MSG_MOUSE_MBTN_UP:
     case UVIEW_MSG_MOUSE_RBTN_UP:
     case UVIEW_MSG_MOUSE_WHEEL_UP:
     case UVIEW_MSG_MOUSE_WHEEL_DOWN:
     case UVIEW_MSG_MOUSE_WHEEL_LEFT:
     case UVIEW_MSG_MOUSE_WHEEL_RIGHT:
-        {
-            uview_msg_get_mouse_x(msg) = uview_msg_get_mouse_x(msg) - spirit->x;
-            uview_msg_get_mouse_y(msg) = uview_msg_get_mouse_y(msg) - spirit->y;
-
-            int x = uview_msg_get_mouse_x(msg);
-            int y = uview_msg_get_mouse_y(msg);
-            
-            // 超出返回，就不传递过去
-            if (x < 0 || y < 0 || x >= spirit->width || y >= spirit->height) {
-                return;
-            }
-        }
+        if (xtk_mouse_fileter_msg(spirit, msg))
+            return;
+        break;
+    case UVIEW_MSG_KEY_DOWN:
+    case UVIEW_MSG_KEY_UP:
+        if (xtk_keyboard_fileter_msg(spirit, msg))
+            return;
         break;
     case UVIEW_MSG_HIDE:
         xtk_mouse_motion(spirit, -1, -1);
@@ -129,10 +235,21 @@ void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
         break;
     case UVIEW_MSG_RESIZE:
         /* 响应大小调整 */
-        xtk_window_change_size(XTK_WINDOW(spirit), uview_msg_get_resize_width(msg),
+        xtk_window_change_size(window, uview_msg_get_resize_width(msg),
             uview_msg_get_resize_height(msg));
         /* 调整窗口后，鼠标位置发生了改变，需要做一次位置检测 */
         xtk_mouse_motion(spirit, -1, -1);
+        break;
+    case UVIEW_MSG_PAINT:
+        if (window->paint_callback) {
+            xtk_rect_t rect;
+            if (!xtk_window_get_invalid(window, &rect)) {
+                if (xtk_rect_valid(&rect)) {
+                    window->paint_callback(spirit, &rect);
+                    return;
+                }
+            }
+        }
         break;
     default:
         break;
@@ -149,34 +266,49 @@ void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
 int xtk_window_main(xtk_spirit_t *spirit, uview_msg_t *msg)
 {
     // 每个窗口精灵都需要进行这些消息检测
+    int x = uview_msg_get_mouse_x(msg) - spirit->x;
+    int y = uview_msg_get_mouse_y(msg) - spirit->y;
     switch (uview_msg_get_type(msg)) {
     case UVIEW_MSG_LEAVE:
     case UVIEW_MSG_ENTER:
     case UVIEW_MSG_MOUSE_MOTION:
-        {
-            int x = uview_msg_get_mouse_x(msg) - spirit->x;
-            int y = uview_msg_get_mouse_y(msg) - spirit->y;
-            if (!xtk_mouse_motion(spirit, x, y))
-                return 0;
-        }
+        if (!xtk_mouse_motion(spirit, x, y))
+            return 0;
         break;
-    
     case UVIEW_MSG_MOUSE_LBTN_DOWN:
-        {
-            int x = uview_msg_get_mouse_x(msg) - spirit->x;
-            int y = uview_msg_get_mouse_y(msg) - spirit->y;
-            if (!xtk_mouse_lbtn_down(spirit, x, y))
-                return 0;
-        }
+        if (!xtk_mouse_btn_down(spirit, UVIEW_BTN_LEFT, x, y))
+            return 0;
+        break;
+    case UVIEW_MSG_MOUSE_MBTN_DOWN:
+        if (!xtk_mouse_btn_down(spirit, UVIEW_BTN_MIDDLE, x, y))
+            return 0;
+        break;
+    case UVIEW_MSG_MOUSE_RBTN_DOWN:
+        if (!xtk_mouse_btn_down(spirit, UVIEW_BTN_RIGHT, x, y))
+            return 0;
         break;
     case UVIEW_MSG_MOUSE_LBTN_UP:
-        {
-            int x = uview_msg_get_mouse_x(msg) - spirit->x;
-            int y = uview_msg_get_mouse_y(msg) - spirit->y;
-            if (!xtk_mouse_lbtn_up(spirit, x, y))
-                return 0;
-        }
+        if (!xtk_mouse_btn_up(spirit, UVIEW_BTN_LEFT, x, y))
+            return 0;
         break;
+    case UVIEW_MSG_MOUSE_MBTN_UP:
+        if (!xtk_mouse_btn_up(spirit, UVIEW_BTN_MIDDLE, x, y))
+            return 0;
+        break;
+    case UVIEW_MSG_MOUSE_RBTN_UP:
+        if (!xtk_mouse_btn_up(spirit, UVIEW_BTN_RIGHT, x, y))
+            return 0;
+        break;
+    case UVIEW_MSG_KEY_DOWN:
+        if (!xtk_keyboard_key_down(spirit, uview_msg_get_key_code(msg), 
+            uview_msg_get_key_modify(msg)))
+            return 0;
+        break;
+    case UVIEW_MSG_KEY_UP:
+        if (!xtk_keyboard_key_up(spirit, uview_msg_get_key_code(msg), 
+            uview_msg_get_key_modify(msg)))
+            return 0;
+        break;        
     default:
         break;
     }
@@ -341,11 +473,11 @@ static int xtk_window_create_navigation(xtk_window_t *window)
     xtk_container_add(XTK_CONTAINER(window_spirit), spirit_close);
     xtk_container_add(XTK_CONTAINER(window_spirit), spirit_minim);
     xtk_container_add(XTK_CONTAINER(window_spirit), spirit_maxim);
-
+    
     // 设置按钮信号事件
-    xtk_signal_connect(spirit_close, "released", xtk_window_close_button_event, window);
-    xtk_signal_connect(spirit_minim, "released", xtk_window_minim_button_event, window);
-    xtk_signal_connect(spirit_maxim, "released", xtk_window_maxim_button_event, window);
+    xtk_signal_connect(spirit_close, "button_release", XTK_CALLBACK(xtk_window_close_button_event), window);
+    xtk_signal_connect(spirit_minim, "button_release", XTK_CALLBACK(xtk_window_minim_button_event), window);
+    xtk_signal_connect(spirit_maxim, "button_release", XTK_CALLBACK(xtk_window_maxim_button_event), window);
     return 0;
 }
 
@@ -531,6 +663,7 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
     memset(window, 0, sizeof(xtk_window_t));
     window->type = type;
     window->routine = NULL;
+    window->paint_callback = NULL;
     window->style = &__xtk_window_style_defult;
     window->winflgs = 0;
     xtk_rect_init(&window->invalid_rect, 0, 0, 0, 0);
@@ -546,7 +679,18 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
     } else {
         //printf("add window signal\n");
         assert(!xtk_signal_create(spirit, "delete_event"));
-        assert(!xtk_signal_create(spirit, "destroy"));
+        assert(!xtk_signal_create(spirit, "destroy_event"));
+
+        // mouse
+        assert(!xtk_signal_create(spirit, "button_press"));
+        assert(!xtk_signal_create(spirit, "button_release"));
+        assert(!xtk_signal_create(spirit, "motion_notify"));        
+        assert(!xtk_signal_create(spirit, "button_scroll"));
+
+        // keyboard
+        assert(!xtk_signal_create(spirit, "key_press"));
+        assert(!xtk_signal_create(spirit, "key_release"));
+        
     }
     return spirit;
 }
@@ -598,6 +742,15 @@ int xtk_window_paint(xtk_window_t *window)
     }
     return 0;
 }
+
+int xtk_window_paint_callback(xtk_window_t *window, xtk_win_paint_callback_t callback)
+{
+    if (!window)
+        return -1;
+    window->paint_callback = callback;
+    return 0;
+}
+
 extern int __xtk_has_window_close;
 
 int xtk_window_destroy(xtk_window_t *window)

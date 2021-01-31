@@ -48,7 +48,7 @@ int xtk_signal_destroy_all(xtk_spirit_t *spirit)
 
 int xtk_signal_connect(xtk_spirit_t *spirit,
     const char *name,
-    xtk_callback_t func,
+    void *func,
     void *data)
 {
     if (!spirit || !name)
@@ -72,12 +72,36 @@ bool xtk_signal_emit_by_name(xtk_spirit_t *spirit,
     xtk_signal_t *sig;
     list_for_each_owner (sig, &spirit->signal_list, list) {
         if (!strcmp(sig->name, name)) {
-            if (sig->callback)
-                return sig->callback(spirit, sig->calldata);
+            if (sig->callback) {
+                xtk_callback_t callback = (xtk_callback_t) sig->callback;
+                return callback(spirit, sig->calldata);
+            }
             break;
         }
     }
-    printf("waring: xtk signal %x:%s not found!\n", spirit, name);
+    // printf("waring: xtk signal %x:%s not found!\n", spirit, name);
+    return false;
+}
+
+/**
+ * 发送信号，并传入一个参数
+ */
+bool xtk_signal_emit_arg(xtk_spirit_t *spirit,
+    const char *name, void *arg)
+{
+    if (!spirit || !name)
+        return false;
+    xtk_signal_t *sig;
+    list_for_each_owner (sig, &spirit->signal_list, list) {
+        if (!strcmp(sig->name, name)) {
+            if (sig->callback) {
+                xtk_callback_event_t callback = (xtk_callback_event_t) sig->callback;
+                return callback(spirit, arg, sig->calldata);
+            }
+            break;
+        }
+    }
+    // printf("waring: xtk signal %x:%s not found!\n", spirit, name);
     return false;
 }
 
@@ -90,8 +114,10 @@ bool xtk_signal_emit(xtk_spirit_t *spirit,
     xtk_signal_t *sig;
     list_for_each_owner (sig, &spirit->signal_list, list) {
         if (id == signal_id) {
-            if (sig->callback)
-                return sig->callback(spirit, sig->calldata);
+            if (sig->callback) {
+                xtk_callback_t callback = (xtk_callback_t) sig->callback;
+                return callback(spirit, sig->calldata);
+            }
             break;
         }
         id++;

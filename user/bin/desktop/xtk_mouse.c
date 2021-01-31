@@ -20,21 +20,21 @@ int xtk_mouse_motion(xtk_spirit_t *spirit, int x, int y)
             break;
         case XTK_SPIRIT_TYPE_BUTTON:
             {
-                xtk_button_t *btn = XTK_BUTTON(tmp);
+                xtk_button_t *button = XTK_BUTTON(tmp);
                 if (XTK_IN_SPIRIT(tmp, x, y)) {
                     uview_set_mouse_state(spirit->view, tmp->style.cursor);                        
-                    if (btn->state == XTK_BUTTON_IDLE) {
-                        xtk_signal_emit_by_name(tmp, "enter");
-                        xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
+                    if (button->state == XTK_BUTTON_IDLE) {
+                        xtk_signal_emit_by_name(tmp, "enter_notify");
+                        xtk_button_change_state(button, XTK_BUTTON_TOUCH);
                         xtk_spirit_show(tmp);    
                         return 0;
                     }
                 } else {
-                    if (btn->state != XTK_BUTTON_IDLE) {
-                        xtk_button_change_state(btn, XTK_BUTTON_IDLE);
+                    if (button->state != XTK_BUTTON_IDLE) {
+                        xtk_button_change_state(button, XTK_BUTTON_IDLE);
                         xtk_spirit_show(tmp);
                         uview_set_mouse_state(spirit->view, XTK_CURSOR_NORMAL);
-                        xtk_signal_emit_by_name(tmp, "leave");
+                        xtk_signal_emit_by_name(tmp, "leave_notify");
                     }
                 }
             }
@@ -46,7 +46,7 @@ int xtk_mouse_motion(xtk_spirit_t *spirit, int x, int y)
     return -1;
 }
 
-int xtk_mouse_lbtn_down(xtk_spirit_t *spirit, int x, int y)
+int xtk_mouse_btn_down(xtk_spirit_t *spirit, int btn, int x, int y)
 {
     printf("down\n");
     xtk_container_t *container = spirit->container;
@@ -65,19 +65,21 @@ int xtk_mouse_lbtn_down(xtk_spirit_t *spirit, int x, int y)
             break;
         case XTK_SPIRIT_TYPE_BUTTON:
             {
-                xtk_button_t *btn = XTK_BUTTON(tmp);
+                if (btn != UVIEW_BTN_LEFT)
+                    break;
+                xtk_button_t *button = XTK_BUTTON(tmp);
                 if (XTK_IN_SPIRIT(tmp, x, y)) {
                     uview_set_mouse_state(spirit->view, tmp->style.cursor);                        
-                    if (btn->state == XTK_BUTTON_TOUCH) {
-                        xtk_signal_emit_by_name(tmp, "pressed");
-                        xtk_button_change_state(btn, XTK_BUTTON_CLICK);
+                    if (button->state == XTK_BUTTON_TOUCH) {
+                        xtk_signal_emit_by_name(tmp, "button_press");
+                        xtk_button_change_state(button, XTK_BUTTON_CLICK);
                         xtk_spirit_show(tmp);                     
                         return 0;  
                     }
                 } else {
-                    if (btn->state == XTK_BUTTON_TOUCH) {
-                        xtk_signal_emit_by_name(tmp, "pressed");
-                        xtk_button_change_state(btn, XTK_BUTTON_CLICK);
+                    if (button->state == XTK_BUTTON_TOUCH) {
+                        xtk_signal_emit_by_name(tmp, "button_press");
+                        xtk_button_change_state(button, XTK_BUTTON_CLICK);
                         xtk_spirit_show(tmp);                     
                         return 0;  
                     }
@@ -91,7 +93,7 @@ int xtk_mouse_lbtn_down(xtk_spirit_t *spirit, int x, int y)
     return -1;
 }
 
-int xtk_mouse_lbtn_up(xtk_spirit_t *spirit, int x, int y)
+int xtk_mouse_btn_up(xtk_spirit_t *spirit, int btn, int x, int y)
 {
     printf("up\n");
     
@@ -111,14 +113,17 @@ int xtk_mouse_lbtn_up(xtk_spirit_t *spirit, int x, int y)
             break;
         case XTK_SPIRIT_TYPE_BUTTON:
             {
-                xtk_button_t *btn = XTK_BUTTON(tmp);
+                if (btn != UVIEW_BTN_LEFT)
+                    break;
+                    
+                xtk_button_t *button = XTK_BUTTON(tmp);
                 if (XTK_IN_SPIRIT(tmp, x, y)) {
                     uview_set_mouse_state(spirit->view, tmp->style.cursor);                        
-                    if (btn->state == XTK_BUTTON_CLICK) {
-                        //printf("mouse call signal: %d, %d\n", x, y);
-                        xtk_button_change_state(btn, XTK_BUTTON_TOUCH);
+                    if (button->state == XTK_BUTTON_CLICK) {
+                        // printf("mouse call signal: %d, %d\n", x, y);
+                        xtk_button_change_state(button, XTK_BUTTON_TOUCH);
                         xtk_spirit_show(tmp);
-                        xtk_signal_emit_by_name(tmp, "released");
+                        xtk_signal_emit_by_name(tmp, "button_release");
                         return 0;
                     }
                 }

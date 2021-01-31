@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <uview.h>
 #include <assert.h>
+#include <sys/ioctl.h>
 
 #include <pthread.h>
 #include "xtk.h"
@@ -82,6 +83,8 @@ int open_desktop()
 
 int main(int argc, char *argv[]) 
 {
+    // 分离当前的tty和键盘
+    ioctl(STDIN_FILENO, TTYIO_DETACH, 0);
     if (open_desktop() < 0)
         return -1;
     return 0;
@@ -98,33 +101,72 @@ void win_proc(xtk_spirit_t *spirit, uview_msg_t *msg)
         {
             int x = uview_msg_get_mouse_x(msg);
             int y = uview_msg_get_mouse_y(msg);    
-            // printf("mouse %d, %d\n", x, y);
+            printf("mouse %d, %d\n", x, y);
         }
         break;
-    case UVIEW_MSG_PAINT:
+    case UVIEW_MSG_KEY_DOWN:
         {
-            xtk_rect_t rect;
-            if (!xtk_window_get_invalid(window, &rect)) {
-                if (xtk_rect_valid(&rect)) {
-                    // printf("rect: %d, %d, %d, %d\n", rect.x, rect.y, rect.w, rect.h);
-                    xtk_surface_t *surface = xtk_window_get_surface(window);
-                    xtk_surface_rectfill(surface, rect.x, rect.y, rect.w, rect.h, XTK_RGB(win_color, win_color * 2, win_color + 10)); // 重绘窗口
-                    win_color += 5;
-                    char title[32] = {0,};
-                    sprintf(title, "update:%d", win_update);
-                    xtk_window_set_title(window, title);
-                    win_update++;
-                    xtk_window_flip(window); // 刷新窗口
-
-                    xtk_window_invalid_window(window); // 重新设置无效区域
-                    xtk_window_paint(window);   // 发出绘制窗口消息
-                }
-            }
-        }
+            int key = uview_msg_get_key_code(msg);
+            int modify = uview_msg_get_key_modify(msg);
+            printf("key down key:%d(%c), modify: %x\n", key, key, modify);            
+        }   
+        break;
+    case UVIEW_MSG_KEY_UP:
+        {
+            int key = uview_msg_get_key_code(msg);
+            int modify = uview_msg_get_key_modify(msg);
+            printf("key up key:%d(%c), modify: %x\n", key, key, modify);            
+        }  
         break;
     default:
         break;
     }
+}
+
+bool win_mouse_motion(xtk_spirit_t *spirit, xtk_event_t *event, void *arg)
+{
+    printf("win mouse motion %d %d\n", event->motion.x, event->motion.y);
+    return true;
+}
+
+bool win_mouse_press(xtk_spirit_t *spirit, xtk_event_t *event, void *arg)
+{
+    printf("win mouse press %d %d %d\n", event->button.button, event->motion.x, event->motion.y);
+    return true;
+}
+
+bool win_mouse_release(xtk_spirit_t *spirit, xtk_event_t *event, void *arg)
+{
+    printf("win mouse release %d %d %d\n", event->button.button, event->motion.x, event->motion.y);
+    return true;
+}
+
+bool win_key_press(xtk_spirit_t *spirit, xtk_event_t *event, void *arg)
+{
+    printf("win key press %d %d\n", event->key.keycode.code, event->key.keycode.modify);
+    switch (event->key.keycode.code)
+    {
+    case UVIEW_KEY_SPACE:
+        printf("space down!\n");
+        break;
+    
+    default:
+        break;
+    }
+    
+    return true;
+}
+
+bool win_key_release(xtk_spirit_t *spirit, xtk_event_t *event, void *arg)
+{
+    printf("win key release %d %d\n", event->key.keycode.code, event->key.keycode.modify);
+    return true;
+}
+
+bool win_mouse_wheel(xtk_spirit_t *spirit, xtk_event_t *event, void *arg)
+{
+    printf("win mouse wheel %d %d %d\n", event->wheel.wheel, event->wheel.x, event->wheel.y);
+    return true;
 }
 
 bool btn_event(xtk_spirit_t *spirit, void *data)
@@ -143,6 +185,23 @@ bool destroy_event(xtk_spirit_t *spirit, void *data)
 {
     printf("destroy window event\n");
     return false;
+}
+
+void win_paint(xtk_spirit_t *spirit, xtk_rect_t *rect)
+{
+    xtk_window_t *window = XTK_WINDOW(spirit);
+    xtk_surface_t *surface = xtk_window_get_surface(window);
+    xtk_surface_rectfill(surface, rect->x, rect->y, rect->w, rect->h, 
+        XTK_RGB(win_color, win_color * 2, win_color + 10)); // 重绘窗口
+    win_color += 5;
+    char title[32] = {0,};
+    sprintf(title, "update:%d", win_update);
+    xtk_window_set_title(window, title);
+    win_update++;
+    xtk_window_flip(window); // 刷新窗口
+
+    xtk_window_invalid_window(window); // 重新设置无效区域
+    xtk_window_paint(window);   // 发出绘制窗口消息
 }
 
 xtk_spirit_t *btn_root;
@@ -186,10 +245,10 @@ void win_thread()
     xtk_container_add(XTK_CONTAINER(win_root), btn2);
     xtk_container_add(XTK_CONTAINER(win_root), l0);
     
-    xtk_signal_connect(btn2, "enter", btn_event, "enter");
-    xtk_signal_connect(btn2, "leave", btn_event, "leave");
-    xtk_signal_connect(btn2, "released", btn_event, "released");
-    xtk_signal_connect(btn2, "pressed", btn_event, "pressed");
+    xtk_signal_connect(btn2, "enter_notify", XTK_CALLBACK(btn_event), "enter");
+    xtk_signal_connect(btn2, "leave_notify", XTK_CALLBACK(btn_event), "leave");
+    xtk_signal_connect(btn2, "button_release", XTK_CALLBACK(btn_event), "released");
+    xtk_signal_connect(btn2, "button_presse", XTK_CALLBACK(btn_event), "pressed");
 
     xtk_spirit_show_all(win_root);
     #endif
@@ -204,8 +263,16 @@ void win_thread()
     xtk_window_set_position(XTK_WINDOW(win0), XTK_WIN_POS_CENTER);
     xtk_spirit_set_size_request(win0, 100, 100);
 
-    xtk_signal_connect(win0, "delete_event", delete_event, NULL);
-    xtk_signal_connect(win0, "destroy", destroy_event, NULL);
+    xtk_signal_connect(win0, "delete_event", XTK_CALLBACK(delete_event), NULL);
+    xtk_signal_connect(win0, "destroy_event", XTK_CALLBACK(destroy_event), NULL);
+    
+    xtk_signal_connect(win0, "motion_notify", XTK_CALLBACK(win_mouse_motion), NULL);
+    xtk_signal_connect(win0, "button_press", XTK_CALLBACK(win_mouse_press), NULL);
+    xtk_signal_connect(win0, "button_release", XTK_CALLBACK(win_mouse_release), NULL);
+    xtk_signal_connect(win0, "button_scroll", XTK_CALLBACK(win_mouse_wheel), NULL);
+    
+    xtk_signal_connect(win0, "key_press", XTK_CALLBACK(win_key_press), NULL);
+    xtk_signal_connect(win0, "key_release", XTK_CALLBACK(win_key_release), NULL);
     
     xtk_spirit_t *btn10 = xtk_button_create_with_label("6666");
     assert(btn10);
@@ -242,9 +309,12 @@ void win_thread()
 
     xtk_window_set_routine(XTK_WINDOW(win0), win_proc);
     
+    xtk_window_paint_callback(XTK_WINDOW(win0), win_paint);
     // 设置无效区域，触发绘图消息
     xtk_window_invalid_window(XTK_WINDOW(win0));
     xtk_window_paint(XTK_WINDOW(win0));
+
+
     // xtk_main_quit();
     xtk_main();
 }

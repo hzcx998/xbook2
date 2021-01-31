@@ -5,10 +5,10 @@
 
 static int xtk_button_create_signals(xtk_spirit_t *spirit)
 {
-    assert(!xtk_signal_create(spirit, "pressed"));
-    assert(!xtk_signal_create(spirit, "released"));
-    assert(!xtk_signal_create(spirit, "enter"));
-    assert(!xtk_signal_create(spirit, "leave"));
+    assert(!xtk_signal_create(spirit, "button_press"));
+    assert(!xtk_signal_create(spirit, "button_release"));
+    assert(!xtk_signal_create(spirit, "enter_notify"));
+    assert(!xtk_signal_create(spirit, "leave_notify"));
     return 0;
 }
 
