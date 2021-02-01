@@ -984,7 +984,7 @@ int xtk_window_set_default_size(xtk_window_t *window, int width, int height)
     window->content_width = width;
     window->content_height = height;
     // 调整精灵的大小
-
+    xtk_window_resize(window, width, height);
     return 0;
 }
 

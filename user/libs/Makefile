@@ -17,3 +17,4 @@ MODULE		+= zlib
 MODULE		+= lvgl
 MODULE		+= uview
 MODULE		+= xtk
+MODULE		+= gato

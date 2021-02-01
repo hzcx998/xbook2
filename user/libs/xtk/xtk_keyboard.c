@@ -3,7 +3,6 @@
 
 int xtk_keyboard_key_down(xtk_spirit_t *spirit, int keycode, int modify)
 {
-    printf("key down %d %d\n", keycode, modify);
     xtk_container_t *container = spirit->container;
     if (!container)
         return -1;
@@ -31,7 +30,6 @@ int xtk_keyboard_key_down(xtk_spirit_t *spirit, int keycode, int modify)
 
 int xtk_keyboard_key_up(xtk_spirit_t *spirit, int keycode, int modify)
 {
-    printf("key up %d %d\n", keycode, modify);
     xtk_container_t *container = spirit->container;
     if (!container)
         return -1;

@@ -19,33 +19,25 @@ int view_core_init()
 {
     view_thread_exit = 0;
     view_thread = NULL;
-    if (view_screen_init() < 0) {
-        return -1;
-    }
     if (view_section_init() < 0) {
-        view_screen_exit();
         return -1;
     }
     if (view_init() < 0) {
-        view_screen_exit();
         view_mouse_exit();        
         return -1;
     }
     if (view_mouse_init() < 0) {
-        view_screen_exit();
         view_mouse_exit();
         view_keyboard_exit();
         return -1;
     }
     if (view_keyboard_init() < 0) {
-        view_screen_exit();
         view_mouse_exit();
         view_keyboard_exit();
         view_section_exit();
         return -1;
     }
     if (view_global_msg_init() < 0) {
-        view_screen_exit();
         view_mouse_exit();
         view_keyboard_exit();
         view_section_exit();
@@ -54,7 +46,6 @@ int view_core_init()
     }
     if (view_env_init() < 0) {
         view_global_msg_exit();
-        view_screen_exit();
         view_mouse_exit();
         view_keyboard_exit();
         view_section_exit();
@@ -69,7 +60,6 @@ int view_core_init()
         view_mouse_exit();
         view_exit();
         view_section_exit();
-        view_screen_exit();
         return -1;
     }
     return 0;
@@ -89,7 +79,6 @@ int view_core_exit()
     view_mouse_exit();
     view_exit();
     view_section_exit();
-    view_screen_exit();
     return 0;
 }
 

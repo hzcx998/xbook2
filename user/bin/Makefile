@@ -14,6 +14,7 @@ X_INCDIRS	+= $(LIBS_DIR)/xlibc/include $(LIBS_DIR)/pthread/include $(LIBS_DIR)/n
 				$(LIBS_DIR)/uview/include \
 				$(LIBS_DIR)/dotfont \
 				$(LIBS_DIR)/xtk \
+				$(LIBS_DIR)/gato \
 				
 X_LDFLAGS	+= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 X_LIBDIRS	+= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \
@@ -25,6 +26,7 @@ X_LIBDIRS	+= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \
 				$(LIBS_DIR)/lvgl \
 				$(LIBS_DIR)/uview \
 				$(LIBS_DIR)/xtk \
+				$(LIBS_DIR)/gato \
 				
 LD			:= ld -m elf_i386
 AS			:=	nasm
@@ -54,3 +56,4 @@ MODULE      +=  lua
 MODULE      +=  sh
 MODULE      +=  xbrower
 MODULE      +=  desktop
+MODULE      +=  gato

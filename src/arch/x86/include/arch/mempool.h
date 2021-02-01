@@ -17,8 +17,8 @@ enum {
     MEM_RANGE_NR
 };
 
-#define MEM_SECTION_MAX_NR      12
-#define MEM_SECTION_MAX_SIZE    2048    // (2 ^ 11) : 8 MB
+#define MEM_SECTION_MAX_NR      13
+#define MEM_SECTION_MAX_SIZE    4096    // (2 ^ 12) : 16 MB
 
 typedef struct {
     list_t free_list_head;

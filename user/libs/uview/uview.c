@@ -120,7 +120,7 @@ int uview_show(int vfd)
 {
     if (vfd < 0)
         return -1;
-    return fastio(vfd, VIEWIO_SHOW, 0);
+    return fastio(vfd, VIEWIO_SHOW, NULL);
 }
 
 int uview_get_screensize(int vfd, int *width, int *height)

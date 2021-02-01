@@ -464,6 +464,7 @@ int page_do_fault(trap_frame_t *frame)
 
     /* in kernel page fault */
     if (!(frame->error_code & PAGE_ERR_USER) && addr >= KERN_BASE_VIR_ADDR) {
+        
         keprint("task name=%s pid=%d\n", cur->name, cur->pid);
         keprint(PRINT_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
         keprint(PRINT_EMERG "page fault at %x.\n");

@@ -28,12 +28,12 @@
 
 /* 最大的mem的对象的大小 */
 #ifdef CONFIG_LARGE_ALLOCS 
-	#define MAX_MEM_CACHE_SIZE (2*1024*1024)
+	#define MAX_MEM_CACHE_SIZE (4*1024*1024)
 #else
 	#define MAX_MEM_CACHE_SIZE (128*1024)
 #endif
 
-#define MAX_MEM_OBJECT_SIZE     (24 * MB)
+#define MAX_MEM_OBJECT_SIZE     (32 * MB)
 
 typedef struct mem_group {
     list_t list;           // 指向cache中的某个链表（full, partial, free）

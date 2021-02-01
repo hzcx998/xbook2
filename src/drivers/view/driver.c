@@ -597,10 +597,17 @@ static iostatus_t view_fastio(device_object_t *device, int cmd, void *arg)
 
 static iostatus_t view_driver_enter(driver_object_t *driver)
 {
-    iostatus_t status;
+    iostatus_t status = IO_SUCCESS;
     device_object_t *devobj;
     device_extension_t *extension;
     view_open_count = 0;
+    
+    // 初始化屏幕
+    if (view_screen_init() < 0) {
+        status = IO_FAILED;
+        return status;
+    }
+
     /* 创建视图设备 */
     int i;
     char devname[DEVICE_NAME_LEN] = {0, };
@@ -610,7 +617,6 @@ static iostatus_t view_driver_enter(driver_object_t *driver)
         /* 初始化一些其它内容 */
         status = io_create_device(driver, sizeof(device_extension_t), devname, DEVICE_TYPE_VIEW, &devobj);
         if (status != IO_SUCCESS) {
-            view_core_exit();
             errprint("view driver: create device failed!\n");
             return status;
         }
@@ -620,7 +626,6 @@ static iostatus_t view_driver_enter(driver_object_t *driver)
         extension->view = NULL;
         extension->flags = 0;
     }
-    
     return status;
 }
 

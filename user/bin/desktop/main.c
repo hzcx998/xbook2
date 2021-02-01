@@ -40,8 +40,17 @@ void desktop_setup(xtk_spirit_t *spirit)
 
     // 创建子进程
     pid_t pid = fork();
+    #if 0
     if (!pid) {
         win_thread();
+        exit(-1);
+    }
+
+    // 创建子进程
+    pid = fork();
+    #endif
+    if (!pid) {
+        execv("/usr/gato", NULL);
         exit(-1);
     }
 }
@@ -79,7 +88,7 @@ int open_desktop()
     xtk_window_set_resizable(XTK_WINDOW(screen_window), false);
     xtk_window_set_routine(XTK_WINDOW(screen_window), desktop_proc);
     
-    // xtk_main();
+    xtk_main();
     while (xtk_poll()) {
         /* code */
     }
@@ -194,13 +203,14 @@ bool destroy_event(xtk_spirit_t *spirit, void *data)
     printf("destroy window event\n");
     return false;
 }
+
 static int fps = 0;
 void win_paint(xtk_spirit_t *spirit, xtk_rect_t *rect)
 {
     xtk_window_t *window = XTK_WINDOW(spirit);
     win_color += 5;
 
-    #if 1
+    #if 0
         assert(!xtk_window_mmap(window));
         #if 0
         xtk_surface_t *surface = xtk_window_get_surface(window);
@@ -331,6 +341,7 @@ void win_thread()
     assert(btn10);
     xtk_spirit_set_pos(btn10, 0, 50);
     btn10->style.cursor = XTK_CURSOR_PEN;
+    
     xtk_spirit_show(win0);
 
     xtk_surface_t *surface0 = xtk_window_get_surface(XTK_WINDOW(win0));
@@ -355,6 +366,7 @@ void win_thread()
     dstrect.y = 150;
     xtk_surface_blit(surface1, &srcrect, surface0, &dstrect);
 
+
     xtk_window_update(XTK_WINDOW(win0), 0, 0, win0->width, win0->height);
 
     xtk_container_add(XTK_CONTAINER(win0), btn10);
@@ -369,6 +381,7 @@ void win_thread()
 
     xtk_window_add_timer(XTK_WINDOW(win0), 1000, win_timeout, NULL);
     
+
     #if 0
     xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout2, NULL);
     xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout, NULL);
