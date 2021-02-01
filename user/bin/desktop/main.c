@@ -6,7 +6,7 @@
 #include <sys/ioctl.h>
 
 #include <pthread.h>
-#include "xtk.h"
+#include <xtk.h>
 
 void win_thread();
 

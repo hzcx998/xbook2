@@ -1,14 +1,7 @@
 #ifndef _LIB_XTK_H
 #define _LIB_XTK_H
 
-#include <stdint.h>
-
-/* X tool kit
-window
-spirit
-canvas
-dialog
-*/
+#define _XTK_VER "0.1"
 
 #include "xtk_color.h"
 #include "xtk_text.h"
@@ -34,10 +27,4 @@ int xtk_main_quit();
 
 int xtk_poll();
 
-void xtk_test(int fd, uview_bitmap_t *wbmp);
-#if 0
-void xtk_mouse_motion(int x, int y);
-void xtk_mouse_lbtn_down(int x, int y);
-void xtk_mouse_lbtn_up(int x, int y);
-#endif
 #endif /* _LIB_XTK_H */

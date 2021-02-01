@@ -16,4 +16,4 @@ MODULE		+= libpng
 MODULE		+= zlib
 MODULE		+= lvgl
 MODULE		+= uview
-
+MODULE		+= xtk
