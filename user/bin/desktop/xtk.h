@@ -32,6 +32,8 @@ int xtk_exit(int exit_code);
 int xtk_main();
 int xtk_main_quit();
 
+int xtk_poll();
+
 void xtk_test(int fd, uview_bitmap_t *wbmp);
 #if 0
 void xtk_mouse_motion(int x, int y);

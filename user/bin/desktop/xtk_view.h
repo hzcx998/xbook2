@@ -10,6 +10,7 @@ typedef struct {
     int view;
     list_t spirit_list_head;
     xtk_spirit_t *spirit;
+    int nowait;
 } xtk_view_t;
 
 extern list_t xtk_view_list_head;
@@ -30,5 +31,6 @@ void xtk_view_add(xtk_view_t *view);
 void xtk_view_remove(xtk_view_t *view);
 xtk_view_t *xtk_view_find(int view);
 int xtk_view_init();
+int xtk_view_exit();
 
 #endif /* _LIB_XTK_VIEW_H */

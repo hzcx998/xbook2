@@ -79,7 +79,11 @@ int open_desktop()
     xtk_window_set_resizable(XTK_WINDOW(screen_window), false);
     xtk_window_set_routine(XTK_WINDOW(screen_window), desktop_proc);
     
-    xtk_main();
+    // xtk_main();
+    while (xtk_poll()) {
+        /* code */
+    }
+    
     return 0;
 }
 
@@ -213,7 +217,6 @@ void win_paint(xtk_spirit_t *spirit, xtk_rect_t *rect)
         #endif
         // 更新区域
         xtk_window_refresh(window, rect->x, rect->y, rect->w, rect->h);
-        
         if (xtk_window_munmap(window) < 0)
             printf("munmap failed\n");
 
@@ -375,5 +378,5 @@ void win_thread()
     #endif
 
     // xtk_main_quit();
-    xtk_main();
+    xtk_exit(xtk_main());
 }

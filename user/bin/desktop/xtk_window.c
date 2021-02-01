@@ -875,8 +875,11 @@ xtk_surface_t *xtk_window_get_mmap_surface(xtk_window_t *window)
 {
     if (!window)
         return NULL;
-    if (!window->mmap_surface.pixels || !window->mmap_surface.w || window->mmap_surface.h)
+    if (!window->mmap_surface.pixels || !window->mmap_surface.w || !window->mmap_surface.h)
         return NULL;
+    assert(window->mmap_surface.pixels);
+    assert(window->mmap_surface.w);
+    assert(window->mmap_surface.h);
     return &window->mmap_surface;
 }
 

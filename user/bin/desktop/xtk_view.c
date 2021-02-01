@@ -9,6 +9,16 @@ int xtk_view_init()
     return 0;
 }
 
+int xtk_view_exit()
+{
+    xtk_view_t *pview, *pview_next;
+    list_for_each_owner_safe (pview, pview_next, &xtk_view_list_head, list) {
+        xtk_view_remove(pview);
+        xtk_view_destroy(pview);
+    }
+    return 0;
+}
+
 xtk_view_t *xtk_view_create()
 {
     xtk_view_t *view = (xtk_view_t *) malloc(sizeof(xtk_view_t));
@@ -16,6 +26,7 @@ xtk_view_t *xtk_view_create()
     list_init(&view->list);
     list_init(&view->spirit_list_head);
     view->spirit = NULL;
+    view->nowait = 0;
     return view;
 }
 
