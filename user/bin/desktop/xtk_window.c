@@ -757,7 +757,7 @@ int xtk_window_paint(xtk_window_t *window)
         if (!uview_get_vid(window->spirit.view, &vid)) {
             uview_msg_t msg;
             uview_msg_header(&msg, UVIEW_MSG_PAINT, vid);
-            uview_post_msg(window->spirit.view, &msg);
+            uview_send_msg(window->spirit.view, &msg);
         }
     }
     return 0;

@@ -273,7 +273,7 @@ int uview_get_vid(int vfd, int *vid)
     return 0;
 }
 
-int uview_post_msg(int vfd, uview_msg_t *msg)
+int uview_send_msg(int vfd, uview_msg_t *msg)
 {
     if (vfd < 0)
         return -1;

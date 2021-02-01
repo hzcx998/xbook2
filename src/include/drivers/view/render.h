@@ -5,6 +5,12 @@
 #include "drivers/view/view.h"
 #include <drivers/view/bitmap.h>
 
+#define view_render_putpixel_fast(view, x, y, color) \
+    do { \
+        view_color_t *_vbuf = (view_color_t *)(view)->section->addr; \
+        _vbuf[(y) * (view)->width + (x)] = color; \
+    } while (0)
+
 int view_render_putpixel(view_t *view, int x, int y, view_color_t color);
 int view_render_getpixel(view_t *view, int x, int y, view_color_t *color);
 void view_render_clear(view_t *view);

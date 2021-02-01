@@ -25,6 +25,8 @@ int view_bitmap_destroy(view_bitmap_t *bitmap);
 void view_bitmap_putpixel(view_bitmap_t *bmp, int x, int y, view_color_t color);
 int view_bitmap_getpixel(view_bitmap_t *bmp, int x, int y, view_color_t *color);
 
+#define view_bitmap_getpixel_fast(bmp, x, y) ((bmp)->bits[(y) * (bmp)->width + (x)])
+
 static inline void view_bitmap_putpixel_unsafe(view_bitmap_t *bmp, int x, int y, view_color_t color)
 {
     bmp->bits[y * bmp->width + x] = color;

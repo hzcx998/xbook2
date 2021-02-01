@@ -78,6 +78,7 @@ int open_desktop()
     // 禁止窗口大小调整
     xtk_window_set_resizable(XTK_WINDOW(screen_window), false);
     xtk_window_set_routine(XTK_WINDOW(screen_window), desktop_proc);
+    
     xtk_main();
     return 0;
 }
@@ -194,8 +195,10 @@ void win_paint(xtk_spirit_t *spirit, xtk_rect_t *rect)
 {
     xtk_window_t *window = XTK_WINDOW(spirit);
     xtk_surface_t *surface = xtk_window_get_surface(window);
+    #if 1
     xtk_surface_rectfill(surface, rect->x, rect->y, rect->w, rect->h, 
         XTK_RGB(win_color, win_color * 2, win_color + 10)); // 重绘窗口
+    #endif
     win_color += 5;
     
     win_update++;
@@ -222,6 +225,7 @@ bool win_timeout(xtk_spirit_t *spirit, uint32_t timer_id, void *data)
     char title[32] = {0,};
     sprintf(title, "fps:%d", fps);
     xtk_window_set_title(XTK_WINDOW(spirit), title);
+    printf("%s\n", title);
     fps = 0;
     return true;
 }

@@ -52,21 +52,39 @@ void view_refresh_map(int left, int top, int right, int buttom, int z0)
             if (view_buttom > view->height)
                 view_buttom = view->height;
             colors = (view_color_t *)view->section->addr;
+            /* 进入循环前进行位置预判，然后调整位置 */
+            // view_top
+            screen_y = view->y + view_top;
+            if (screen_y < 0) {
+                view_top += -screen_y;
+            }
+            if (screen_y >= view_screen.height)
+                continue;
+            // view_buttom
+            screen_y = view->y + view_buttom;
+            if (screen_y >= view_screen.height) {
+                view_buttom -= screen_y - view_screen.height;
+            }
+
+            // view_left
+            screen_x = view->x + view_left;
+            if (screen_x < 0) {
+                view_left += -screen_x;
+            }
+            if (screen_x >= view_screen.width)
+                continue;
+            // view_right
+            screen_x = view->x + view_right;
+            if (screen_x < 0) {
+                view_right -= screen_x - view_screen.width;
+            }
+            
             for(view_y = view_top; view_y < view_buttom; view_y++){
                 screen_y = view->y + view_y;
-                if (screen_y < 0)
-                    continue;
-                if (screen_y >= view_screen.height)
-                    break;
                 for(view_x = view_left; view_x < view_right; view_x++){
-                    screen_x = view->x + view_x;
-                    if (screen_x < 0)
-                        continue;
-                    if (screen_x >= view_screen.width)
-                        break;
-                       /* 不是全透明的，就把视图标识写入到映射表中 */
+                    /* 不是全透明的，就把视图标识写入到映射表中 */
                     if ((colors[view_y * view->width + view_x] >> 24) & 0xff) {
-                        view_id_map[(screen_y * view_screen.width + screen_x)] = view->z;
+                        view_id_map[(screen_y * view_screen.width + (view->x + view_x))] = view->z;
                     }
                 }
             }

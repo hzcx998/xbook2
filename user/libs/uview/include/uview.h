@@ -39,7 +39,7 @@ int uview_bitblt_ex(int vfd, int vx, int vy, uview_bitmap_t *vbmp,
 int uview_bitblt_update_ex(int vfd, int vx, int vy, uview_bitmap_t *vbmp, 
         int bx, int by, int bw, int bh);
 int uview_get_msg(int vfd, uview_msg_t *msg);
-int uview_post_msg(int vfd, uview_msg_t *msg);
+int uview_send_msg(int vfd, uview_msg_t *msg);
 
 int uview_set_moveable(int vfd);
 int uview_set_unmoveable(int vfd);

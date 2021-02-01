@@ -176,7 +176,7 @@ void xtk_surface_rectfill_ex(xtk_surface_t *surface, int x1, int y1, int x2, int
 {
     if (!surface)
         return;
-
+    
     int i;
     for (i = 0; i <= y2 - y1; i++) {
         xtk_surface_hline(surface, x1, x2, y1 + i, color);
