@@ -73,6 +73,7 @@ int view_resize(view_t *view, int x, int y, uint32_t width, uint32_t height);
 
 int view_set_type(view_t *view, int type);
 int view_get_type(view_t *view);
+
 int view_add_attr(view_t *view, int attr);
 int view_del_attr(view_t *view, int attr);
 
@@ -111,5 +112,7 @@ int view_put_msg(view_t *view, void *buf, int flags);
 void view_refresh_map(int left, int top, int right, int buttom, int z0);
 int view_init_refresh();
 
+void *view_get_vram_start(view_t *view);
+size_t view_get_vram_size(view_t *view);
 
 #endif /* _XBOOK_DRIVERS_VIEW_H */

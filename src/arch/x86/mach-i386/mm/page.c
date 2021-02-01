@@ -300,7 +300,8 @@ int page_unmap_addr_safe(unsigned long start, unsigned long len, char fixed)
                 pages--;
                 if (!pages) {
                     if (is_page_table_empty((pte_t *)((unsigned long)pte & PAGE_MASK))) {
-                        page_free(*pde & PAGE_MASK);            
+                        page_free(*pde & PAGE_MASK);      
+                        *pde &= ~PAGE_ATTR_PRESENT;      
                     }
                     goto end_unmap;
                 }

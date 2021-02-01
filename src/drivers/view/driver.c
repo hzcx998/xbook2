@@ -159,6 +159,32 @@ static iostatus_t view_fastwrite(device_object_t *device, size_t size, void *buf
     return status;
 }
 
+static iostatus_t view_mmap(device_object_t *device, io_request_t *ioreq)
+{
+    device_extension_t *extension = device->device_extension;
+    iostatus_t status = IO_SUCCESS;
+    view_t *view = extension->view;
+    if (view) {
+        ioreq->io_status.infomation = 0;
+        /* 检测参数大小 */
+        if (ioreq->parame.mmap.length <= view_get_vram_size(view)) {
+            void *addr = view_get_vram_start(view);
+            if (!addr) {
+                status = IO_FAILED;
+            } else {
+                unsigned long paddr = addr_vir2phy((unsigned long) addr);
+                ioreq->io_status.infomation = (unsigned long) paddr;     /* 返回物理地址 */        
+            }
+        }
+    } else {
+        status = IO_FAILED;
+    }
+    
+    ioreq->io_status.status = status;
+    io_complete_request(ioreq);
+    return status;
+}
+
 static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
@@ -627,6 +653,7 @@ static iostatus_t view_driver_func(driver_object_t *driver)
     driver->dispatch_function[IOREQ_FASTIO] = (void *) view_fastio;
     driver->dispatch_function[IOREQ_FASTREAD] = (void *) view_fastread;
     driver->dispatch_function[IOREQ_FASTWRITE] = (void *) view_fastwrite;
+    driver->dispatch_function[IOREQ_MMAP] = view_mmap;
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);

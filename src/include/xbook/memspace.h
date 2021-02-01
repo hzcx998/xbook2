@@ -45,6 +45,9 @@ int mem_space_unmmap(uint32_t addr, uint32_t len);
 unsigned long sys_mem_space_expend_heap(unsigned long heap);
 unsigned long mem_space_get_unmaped(vmm_t *vmm, unsigned len);
 
+void *mem_space_mmap_viraddr(uint32_t addr, uint32_t vaddr,
+        uint32_t len, uint32_t prot, uint32_t flags);
+
 #define sys_munmap  mem_space_unmmap
 
 static inline void mem_space_init(mem_space_t *space, unsigned long start,

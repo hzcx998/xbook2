@@ -50,15 +50,11 @@ static inline void xtk_surface_init(xtk_surface_t *surface, uint32_t width, uint
 void xtk_surface_putpixel(xtk_surface_t *surface, int x, int y, uint32_t color);
 int xtk_surface_getpixel(xtk_surface_t *surface, int x, int y, uint32_t *color);
 
-static inline void xtk_surface_putpixel_unsafe(xtk_surface_t *surface, int x, int y, uint32_t color)
-{
-    surface->pixels[y * surface->w + x] = color;
-}
+#define xtk_surface_putpixel_fast(surface, x, y, color) \
+        (surface)->pixels[(y) * (surface)->w + (x)] = (color)
 
-static inline void xtk_surface_getpixel_unsafe(xtk_surface_t *surface, int x, int y, uint32_t *color)
-{
-    *color = surface->pixels[y * surface->h + x];
-}
+#define xtk_surface_getpixel_fast(surface, x, y) \
+        (surface)->pixels[(y) * (surface)->w + (x)]
 
 void xtk_surface_vline(xtk_surface_t *surface, int x, int y1, int y2, uint32_t color);
 void xtk_surface_hline(xtk_surface_t *surface, int x1, int y, int x2, uint32_t color);

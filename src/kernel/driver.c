@@ -782,11 +782,26 @@ void *device_mmap(handle_t handle, size_t length, int flags)
         if (ioreq->io_status.infomation) {
             // dbgprint("device memmap paddr=%x, len=%x\n", ioreq->io_status.infomation, length);
 
-            if (flags & IO_KERNEL)
+            if (flags & IO_KERNEL) {
+                // 设备映射到内核地址中
                 mapaddr = memio_remap(ioreq->io_status.infomation, length);
-            else
-                mapaddr = mem_space_mmap(0, ioreq->io_status.infomation, length, 
-                    PROT_USER | PROT_WRITE, MEM_SPACE_MAP_SHARED | MEM_SPACE_MAP_REMAP);
+            } else {
+                switch (devobj->type) {
+                case DEVICE_TYPE_VIEW:
+                    {
+                        uint32_t vaddr = (uint32_t)kern_phy_addr2vir_addr(ioreq->io_status.infomation);
+                        /* 如果是虚拟设备，映射地址在内核中，就要映射虚拟地址（有可能不连续） */
+                        mapaddr = mem_space_mmap_viraddr(0, vaddr, length, 
+                            PROT_USER | PROT_WRITE, MEM_SPACE_MAP_SHARED | MEM_SPACE_MAP_REMAP);
+                    }
+                    break;
+                default:
+                    /* 默认设备就是映射连续的物理地址 */
+                    mapaddr = mem_space_mmap(0, ioreq->io_status.infomation, length, 
+                        PROT_USER | PROT_WRITE, MEM_SPACE_MAP_SHARED | MEM_SPACE_MAP_REMAP);
+                    break;
+                }
+            }
         }
         io_request_free((ioreq));
         return mapaddr;

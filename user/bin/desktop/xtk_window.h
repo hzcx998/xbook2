@@ -65,6 +65,7 @@ typedef struct {
     xtk_rect_t backup_win_info;
     xtk_rect_t invalid_rect;    // 无效区域，用PAIN消息
     list_t timer_list_head;     // 定时器
+    xtk_surface_t mmap_surface;
 } xtk_window_t;
 
 #define XTK_WINDOW(spirit)  ((xtk_window_t *)(spirit))
@@ -107,11 +108,16 @@ int xtk_window_invalid_rect(xtk_window_t *window, xtk_rect_t *rect);
 int xtk_window_invalid_window(xtk_window_t *window);
 int xtk_window_paint(xtk_window_t *window);
 int xtk_window_get_invalid(xtk_window_t *window, xtk_rect_t *rect);
+int xtk_window_refresh(xtk_window_t *window, int x, int y, int w, int h);
 
 int xtk_window_paint_callback(xtk_window_t *window, xtk_win_paint_callback_t callback);
 
 uint32_t xtk_window_add_timer(xtk_window_t *window, uint32_t interval, xtk_timer_callback_t function, void *data);
 int xtk_window_remove_timer(xtk_window_t *window, uint32_t timer_id);
 int xtk_window_restart_timer(xtk_window_t *window, uint32_t timer_id);
+
+int xtk_window_mmap(xtk_window_t *window);
+int xtk_window_munmap(xtk_window_t *window);
+xtk_surface_t *xtk_window_get_mmap_surface(xtk_window_t *window);
 
 #endif /* _LIB_XTK_WINDOW_H */

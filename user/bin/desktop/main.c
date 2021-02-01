@@ -194,15 +194,39 @@ static int fps = 0;
 void win_paint(xtk_spirit_t *spirit, xtk_rect_t *rect)
 {
     xtk_window_t *window = XTK_WINDOW(spirit);
-    xtk_surface_t *surface = xtk_window_get_surface(window);
-    #if 1
-    xtk_surface_rectfill(surface, rect->x, rect->y, rect->w, rect->h, 
-        XTK_RGB(win_color, win_color * 2, win_color + 10)); // 重绘窗口
-    #endif
     win_color += 5;
-    
+
+    #if 1
+        assert(!xtk_window_mmap(window));
+        #if 0
+        xtk_surface_t *surface = xtk_window_get_surface(window);
+        #else
+        xtk_surface_t *surface = xtk_window_get_mmap_surface(window);
+        #endif
+        xtk_surface_rectfill(surface, spirit->x + rect->x, spirit->y + rect->y, rect->w, rect->h, 
+            XTK_RGB(win_color, win_color * 2, win_color + 10)); // 重绘窗口
+        #if 0
+        // 复制到映射surface里面
+        xtk_rect_t dstrect;
+        xtk_rect_init(&dstrect, spirit->x, spirit->y, spirit->width, spirit->height);
+        xtk_surface_blit(surface, NULL, &window->mmap_surface, &dstrect);
+        #endif
+        // 更新区域
+        xtk_window_refresh(window, rect->x, rect->y, rect->w, rect->h);
+        
+        if (xtk_window_munmap(window) < 0)
+            printf("munmap failed\n");
+
+    #else
+        xtk_surface_t *surface = xtk_window_get_surface(window);
+        #if 1
+        xtk_surface_rectfill(surface, rect->x, rect->y, rect->w, rect->h, 
+            XTK_RGB(win_color, win_color * 2, win_color + 10)); // 重绘窗口
+        #endif
+        xtk_window_flip(window); // 刷新窗口
+    #endif
+
     win_update++;
-    xtk_window_flip(window); // 刷新窗口
     fps++;
     xtk_window_invalid_window(window); // 重新设置无效区域
     xtk_window_paint(window);   // 发出绘制窗口消息
@@ -349,6 +373,7 @@ void win_thread()
     xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout, NULL);
     xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout2, NULL);
     #endif
+
     // xtk_main_quit();
     xtk_main();
 }

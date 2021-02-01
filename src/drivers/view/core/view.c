@@ -507,6 +507,23 @@ int view_resize(view_t *view, int x, int y, uint32_t width, uint32_t height)
     return 0;
 }
 
+void *view_get_vram_start(view_t *view)
+{
+    if (!view)
+        return NULL;
+    if (!view->section)
+        return NULL;
+    return view->section->addr;
+}
+
+size_t view_get_vram_size(view_t *view)
+{
+    if (!view)
+        return 0;
+    if (!view->section)
+        return 0;
+    return view->section->size;
+}
 /**
  * button: 桌面
  * 一般窗口

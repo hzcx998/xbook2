@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <sys/vmm.h>
 
 static xtk_timer_t *xtk_window_find_timer(xtk_window_t *window, uint32_t timer_id);
 
@@ -685,6 +686,8 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
     window->paint_callback = NULL;
     window->style = &__xtk_window_style_defult;
     window->winflgs = 0;
+    xtk_surface_init(&window->mmap_surface, 0, 0, NULL);
+
     xtk_rect_init(&window->invalid_rect, 0, 0, 0, 0);
     xtk_rect_init(&window->backup_win_info, 0, 0, 0, 0);
     list_init(&window->timer_list_head);
@@ -868,6 +871,15 @@ xtk_surface_t *xtk_window_get_surface(xtk_window_t *window)
     return window->spirit.surface;
 }
 
+xtk_surface_t *xtk_window_get_mmap_surface(xtk_window_t *window)
+{
+    if (!window)
+        return NULL;
+    if (!window->mmap_surface.pixels || !window->mmap_surface.w || window->mmap_surface.h)
+        return NULL;
+    return &window->mmap_surface;
+}
+
 int xtk_window_flip(xtk_window_t *window)
 {
     if (!window)
@@ -905,6 +917,23 @@ int xtk_window_update(xtk_window_t *window, int x, int y, int w, int h)
         spirit->surface->pixels);
     return uview_bitblt_update_ex(spirit->view, spirit->x + x, spirit->y + y,
             &bmp, x, y, ex - x, ey - y);
+}
+
+int xtk_window_refresh(xtk_window_t *window, int x, int y, int w, int h)
+{
+    if (!window)
+        return -1;
+    xtk_spirit_t *spirit = &window->spirit;
+    
+    if (x >= spirit->width)
+        return 0;
+    if (y >= spirit->height)
+        return 0;
+    int left = spirit->x + x;
+    int top = spirit->y + y;
+    int right = left + w;
+    int buttom = top + h;
+    return uview_update(spirit->view, left, top, right, buttom);
 }
 
 int xtk_window_set_position(xtk_window_t *window, xtk_window_position_t pos)
@@ -1136,4 +1165,35 @@ static xtk_timer_t *xtk_window_find_timer(xtk_window_t *window, uint32_t timer_i
         }
     }
     return NULL;
+}
+
+int xtk_window_mmap(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+    xtk_spirit_t *spirit;
+    if (window->type == XTK_WINDOW_TOPLEVEL) {
+        spirit = &window->window_spirit;
+    } else {
+        spirit = &window->spirit;
+    }
+    size_t view_size = spirit->width * spirit->height * sizeof(xtk_color_t);
+    void *addr = mmap(window->spirit.view, view_size, 0);
+    if (addr == (void *) -1)
+        return -1;
+    xtk_surface_init(&window->mmap_surface, spirit->width, spirit->height, addr);
+    return 0;
+}
+
+int xtk_window_munmap(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+    
+    if (!window->mmap_surface.pixels)
+        return -1;
+    if (!munmap(window->mmap_surface.pixels, window->mmap_surface.w * 
+        window->mmap_surface.h * sizeof(xtk_color_t)))
+        xtk_surface_init(&window->mmap_surface, 0, 0, NULL);
+    return 0;
 }

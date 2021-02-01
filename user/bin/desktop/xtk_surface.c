@@ -6,11 +6,15 @@
 
 xtk_surface_t *xtk_surface_create(uint32_t width, uint32_t height)
 {
-    xtk_surface_t *surface = malloc(sizeof(xtk_surface_t) + width * height * sizeof(uint32_t));
+    xtk_surface_t *surface = malloc(sizeof(xtk_surface_t));
     if (surface == NULL) {
         return NULL;
     }
-    surface->pixels = (uint32_t *) (surface + 1);
+    surface->pixels = (uint32_t *) malloc(width * height * sizeof(uint32_t));
+    if (!surface->pixels) {
+        free(surface);
+        return NULL;
+    }
     memset(surface->pixels, 0, width * height * sizeof(uint32_t));
     surface->w = width;
     surface->h = height;
@@ -21,6 +25,9 @@ int xtk_surface_destroy(xtk_surface_t *surface)
 {
     if (!surface)
         return -1;
+    if (!surface->pixels)
+        return -1;
+    free(surface->pixels);
     free(surface);
     return 0;
 }
@@ -53,6 +60,8 @@ void xtk_surface_vline(xtk_surface_t *surface, int x, int y1, int y2, uint32_t c
 {
     if (!surface)
         return;
+    if (!surface->pixels)
+        return;
 
     int offset = 0;
     int i = 0;
@@ -79,6 +88,8 @@ void xtk_surface_hline(xtk_surface_t *surface, int x1, int x2, int y, uint32_t c
 {
     if (!surface)
         return;
+    if (!surface->pixels)
+        return;
 
     if (y > (surface->h - 1))
         return;
@@ -100,6 +111,9 @@ void xtk_surface_line(xtk_surface_t *surface, int x1, int y1, int x2, int y2, ui
 {
     if (!surface)
         return;
+    if (!surface->pixels)
+        return;
+
     if (x1 == x2) { /* 垂直的线 */
         if (y1 < y2) 
             xtk_surface_vline(surface, x1, y1, y2, color);
@@ -162,6 +176,9 @@ void xtk_surface_rect_ex(xtk_surface_t *surface, int x1, int y1, int x2, int y2,
 {
     if (!surface)
         return;
+    if (!surface->pixels)
+        return;
+
     /* left */
     xtk_surface_vline(surface, x1, y1, y2, color);
     /* right */
@@ -175,6 +192,8 @@ void xtk_surface_rect_ex(xtk_surface_t *surface, int x1, int y1, int x2, int y2,
 void xtk_surface_rectfill_ex(xtk_surface_t *surface, int x1, int y1, int x2, int y2, uint32_t color)
 {
     if (!surface)
+        return;
+    if (!surface->pixels)
         return;
     
     int i;
@@ -227,23 +246,23 @@ void xtk_surface_blit(xtk_surface_t *src, xtk_rect_t *srcrect, xtk_surface_t *ds
     }
 
     uint32_t color = 0;
-    int src_x = srcrect->x; 
+
+    int src_x;
+    int src_w;
     int src_y = srcrect->y;
-    int src_w = srcrect->w; 
     int src_h = srcrect->h;
-    int dst_x = dstrect->x;
+    int dst_x;
+    int dst_w;
     int dst_y = dstrect->y;
-    int dst_w = dstrect->w;
     int dst_h = dstrect->h;
     while (src_h > 0 && dst_h > 0) {
         for (src_x = srcrect->x, dst_x = dstrect->x, src_w = srcrect->w, dst_w = dstrect->w;
             src_w > 0 && dst_w > 0;
             src_x++, dst_x++, src_w--, dst_w--)
         {
-            if (!xtk_surface_getpixel(src, src_x, src_y, &color)) {
-                if (((color >> 24) & 0xff))
-                    xtk_surface_putpixel(dst, dst_x, dst_y, color);
-            }   
+            color = xtk_surface_getpixel_fast(src, src_x, src_y);
+            if (((color >> 24) & 0xff))
+                xtk_surface_putpixel_fast(dst, dst_x, dst_y, color);   
         }
         src_y++;
         dst_y++;

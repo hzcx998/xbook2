@@ -124,6 +124,65 @@ int do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
     return addr;
 }
 
+int do_mem_space_map_viraddr(vmm_t *vmm, unsigned long addr, unsigned long vaddr, 
+    unsigned long len, unsigned long prot, unsigned long flags)
+{
+    if (vmm == NULL || !prot) {
+        keprint(PRINT_ERR "do_mem_space_map: failed!\n");
+        return -1;
+    }
+    len = PAGE_ALIGN(len);
+    if (!len) {
+        keprint(PRINT_ERR "do_mem_space_map: len is zero!\n");
+        return -1;
+    }
+    if (len > USER_VMM_SIZE || addr > USER_VMM_SIZE || addr > USER_VMM_SIZE - len) {
+        keprint(PRINT_ERR "do_mem_space_map: addr and len out of range!\n");
+        return -1;
+    }
+    if (flags & MEM_SPACE_MAP_FIXED) {
+        if (addr & ~PAGE_MASK)
+            return -1;
+        mem_space_t* p = mem_space_find(vmm, addr);
+        if (p != NULL && addr + len > p->start) {
+            keprint(PRINT_ERR "do_mem_space_map: this FIXED space had existed!\n");
+            return -1;
+        }
+    } else {
+        addr = mem_space_get_unmaped(vmm, len);
+        if (addr == -1) {
+            keprint(PRINT_ERR "do_mem_space_map: GetUnmappedMEM_SPACEpace failed!\n");
+            return -1;
+        }
+    }
+    if (flags & MEM_SPACE_MAP_REMAP) {
+        prot |= PROT_REMAP;
+    }
+    mem_space_t *space = mem_space_alloc();
+    if (!space) {
+        keprint(PRINT_ERR "do_mem_space_map: mem_alloc for space failed!\n");
+        return -1;    
+    }
+    mem_space_init(space, addr, addr + len, prot, flags);
+    mem_space_insert(vmm, space);
+    /* 如果是共享映射，就映射成共享的地址，需要指定物理地址 */
+    if (flags & MEM_SPACE_MAP_SHARED) {
+        /* 单页映射，避免虚拟地址不连续造成的映射问题 */
+        unsigned long vend = vaddr + len;
+        unsigned long paddr;
+        unsigned long vstart = addr;
+        while (vaddr < vend) {
+            paddr = kern_vir_addr2phy_addr(vaddr);
+            page_map_addr_fixed(vstart, paddr, PAGE_SIZE, prot);
+            vaddr += PAGE_SIZE;
+            vstart += PAGE_SIZE;
+        }
+    } else {
+        page_map_addr_safe(addr, len, prot); 
+    }
+    return addr;
+}
+
 int do_mem_space_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
 {
     if ((addr & ~PAGE_MASK) || addr > USER_VMM_SIZE || len > USER_VMM_SIZE-addr) {
@@ -143,10 +202,12 @@ int do_mem_space_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
     }
     
     if (addr < space->start || addr + len > space->end) {
+        // 不在范围内，需要进行控件拓展
+        // noteprint("unmap: addr out of range: addr%x -> [%x-%x]\n", addr, space->start, space->end);
         return 0;
     }
-    
     page_unmap_addr_safe(addr, len, space->flags & MEM_SPACE_MAP_SHARED);
+
     mem_space_t* space_new = mem_space_alloc();
     if (!space_new) {        
         keprint(PRINT_ERR "do_mem_space_unmap: mem_alloc for space_new failed!\n");
@@ -171,6 +232,12 @@ void *mem_space_mmap(uint32_t addr, uint32_t paddr, uint32_t len, uint32_t prot,
 {
     task_t *current = task_current;
     return (void *)do_mem_space_map(current->vmm, addr, paddr, len, prot, flags);
+}
+
+void *mem_space_mmap_viraddr(uint32_t addr, uint32_t vaddr, uint32_t len, uint32_t prot, uint32_t flags)
+{
+    task_t *current = task_current;
+    return (void *)do_mem_space_map_viraddr(current->vmm, addr, vaddr, len, prot, flags);
 }
 
 int mem_space_unmmap(uint32_t addr, uint32_t len)
