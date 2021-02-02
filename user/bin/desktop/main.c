@@ -58,10 +58,14 @@ void desktop_setup(xtk_spirit_t *spirit)
     // 创建子进程
     pid = fork();
     if (!pid) {
-        execv("/usr/gato", NULL);
+        char *_argv[3] = {
+            "/usr/infones",
+            "/res/nes/mario.nes",
+            NULL
+        };
+        execv("/usr/infones", _argv);
         exit(-1);
     }
-    
 }
 
 int open_desktop()

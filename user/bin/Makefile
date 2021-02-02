@@ -57,3 +57,4 @@ MODULE      +=  sh
 MODULE      +=  xbrower
 MODULE      +=  desktop
 MODULE      +=  gato
+MODULE      +=  infones

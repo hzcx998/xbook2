@@ -28,6 +28,7 @@ int xtk_surface_destroy(xtk_surface_t *surface)
     if (!surface->pixels)
         return -1;
     free(surface->pixels);
+    surface->pixels = NULL;
     free(surface);
     return 0;
 }

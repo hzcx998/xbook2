@@ -56,15 +56,22 @@ static int xtk_window_change_size(xtk_window_t *window, int width, int height)
     if (!window)
         return -1;
     xtk_spirit_t *spirit = &window->spirit;
-    // 如果大小和原来一样，那么就不用调整大小
-    // printf("xtk window change size: from %d %d to %d %d\n", spirit->width, spirit->height, width, height);
-    if (width == spirit->width && height == spirit->height) {
-        // printf("xtk window change size: from %d %d to %d %d same, just return.\n", spirit->width, spirit->height, width, height);
+
+    // 计算新内容大小
+    int content_width = 0, content_height = 0;
+    xtk_window_calc_content_size(window, width, height, &content_width, &content_height);
+
+    // 内容一样大，那么就不调整
+    /*
+    printf("xtk window change size: from %d %d to %d %d\n", window->content_width,
+        window->content_height, content_width, content_height);*/
+    if (window->content_width == content_width && window->content_height == content_height) {
+        /*printf("xtk window change size: from %d %d to %d %d same, just return.\n", 
+        window->content_width, window->content_height, content_width, content_height);
+        */
         return 0;
     }
-    
-    int content_width, content_height;
-    xtk_window_calc_content_size(window, width, height, &content_width, &content_height);
+
     window->content_width = content_width;
     window->content_height = content_height;
 
@@ -735,6 +742,17 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
         assert(!xtk_signal_create(spirit, "key_release"));
         
     }
+    return spirit;
+}
+
+xtk_spirit_t *xtk_window_create_simple(char *title, int x, int y, int width, int height)
+{
+    xtk_spirit_t *spirit = xtk_window_create(XTK_WINDOW_TOPLEVEL);
+    if (!spirit)
+        return NULL;
+    xtk_window_set_title(XTK_WINDOW(spirit), title);
+    xtk_window_set_default_size(XTK_WINDOW(spirit), width, height);
+    xtk_window_set_position_absolute(XTK_WINDOW(spirit), x, y);
     return spirit;
 }
 
