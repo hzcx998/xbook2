@@ -20,7 +20,7 @@ void view_refresh_map(int left, int top, int right, int buttom, int z0)
     return;
     #endif         
     
-    int view_left, view_top, view_right, view_buttom;
+    int view_left, view_top, view_right, view_buttom; // 视图内部坐标位置
     int screen_x, screen_y;
     int view_x, view_y;
 
@@ -36,6 +36,8 @@ void view_refresh_map(int left, int top, int right, int buttom, int z0)
     view_t *view;
     view_color_t *colors;
 
+    uint32_t *src;
+    uint16_t *map;
     /* 刷新高度为[z0-top]区间的视图 */
     list_for_each_owner (view, &view_show_list_head, list) {
         if (view->z >= z0) {
@@ -51,6 +53,7 @@ void view_refresh_map(int left, int top, int right, int buttom, int z0)
                 view_right = view->width;
             if (view_buttom > view->height)
                 view_buttom = view->height;
+
             colors = (view_color_t *)view->section->addr;
             /* 进入循环前进行位置预判，然后调整位置 */
             // view_top
@@ -81,10 +84,12 @@ void view_refresh_map(int left, int top, int right, int buttom, int z0)
             
             for(view_y = view_top; view_y < view_buttom; view_y++){
                 screen_y = view->y + view_y;
+                src = &((uint32_t *) colors)[view_y * view->width]; 
+                map = &view_id_map[(screen_y * view_screen.width + view->x)];
                 for(view_x = view_left; view_x < view_right; view_x++){
                     /* 不是全透明的，就把视图标识写入到映射表中 */
-                    if ((colors[view_y * view->width + view_x] >> 24) & 0xff) {
-                        view_id_map[(screen_y * view_screen.width + (view->x + view_x))] = view->z;
+                    if ((src[view_x] >> 24) & 0xff) {
+                        map[view_x] = view->z;
                     }
                 }
             }
@@ -100,15 +105,19 @@ static inline void view_refresh_block32(view_t *view, int view_left, int view_to
     int view_x, view_y;
     #ifdef CONFIG_VIEW_ALPAH
     view_argb_t *src_rgb, *dst_rgb;
+    #else
+    uint32_t *dst;
+    uint32_t *src;
+    uint16_t *map;
     #endif
     /* 优化整个块 */
     for (view_y = view_top; view_y < view_buttom; view_y++)
     {
         screen_y = view->y + view_y;
         #ifndef CONFIG_VIEW_ALPAH
-        uint32_t *dst = &((uint32_t *)view_screen.vram_start)[view_screen.width * screen_y + view->x];
-        uint32_t *src = &((uint32_t *) view->section->addr)[view_y * view->width]; 
-        uint16_t *map = &view_id_map[(screen_y * view_screen.width + view->x)];
+        dst = &((uint32_t *)view_screen.vram_start)[view_screen.width * screen_y + view->x];
+        src = &((uint32_t *) view->section->addr)[view_y * view->width]; 
+        map = &view_id_map[(screen_y * view_screen.width + view->x)];
         #else
         dst_rgb = (view_argb_t *) (screen_backup_buffer + (screen_y * view_screen.width + view->x));
         src_rgb = (view_argb_t *) view->section->addr;
@@ -152,15 +161,19 @@ static inline void view_refresh_block24(view_t *view, int view_left, int view_to
     int view_x, view_y;
     #ifdef CONFIG_VIEW_ALPAH
     view_argb_t *src_rgb, *dst_rgb;
+    #else
+    uint8_t *dst;
+    uint32_t *src;
+    uint16_t *map;
     #endif
     /* 优化整个块 */
     for (view_y = view_top; view_y < view_buttom; view_y++)
     {
         screen_y = view->y + view_y;
         #ifndef CONFIG_VIEW_ALPAH
-        uint8_t *dst = &((uint8_t *)view_screen.vram_start)[(view_screen.width * screen_y + view->x) * 3];
-        uint32_t *src = &((uint32_t *) view->section->addr)[view_y * view->width]; 
-        uint16_t *map = &view_id_map[(screen_y * view_screen.width + view->x)];
+        dst = &((uint8_t *)view_screen.vram_start)[(view_screen.width * screen_y + view->x) * 3];
+        src = &((uint32_t *) view->section->addr)[view_y * view->width]; 
+        map = &view_id_map[(screen_y * view_screen.width + view->x)];
         #else
         dst_rgb = (view_argb_t *) (screen_backup_buffer + (screen_y * view_screen.width + view->x));
         src_rgb = (view_argb_t *) view->section->addr;
@@ -204,15 +217,19 @@ static inline void view_refresh_block16(view_t *view, int view_left, int view_to
     int view_x, view_y;
     #ifdef CONFIG_VIEW_ALPAH
     view_argb_t *src_rgb, *dst_rgb;
+    #else
+    uint16_t *dst;
+    uint32_t *src;
+    uint16_t *map;
     #endif
     /* 优化整个块 */
     for (view_y = view_top; view_y < view_buttom; view_y++)
     {
         screen_y = view->y + view_y;
         #ifndef CONFIG_VIEW_ALPAH
-        uint16_t *dst = &((uint16_t *)view_screen.vram_start)[(view_screen.width * screen_y + view->x)];
-        uint32_t *src = &((uint32_t *) view->section->addr)[view_y * view->width]; 
-        uint16_t *map = &view_id_map[(screen_y * view_screen.width + view->x)];
+        dst = &((uint16_t *)view_screen.vram_start)[(view_screen.width * screen_y + view->x)];
+        src = &((uint32_t *) view->section->addr)[view_y * view->width]; 
+        map = &view_id_map[(screen_y * view_screen.width + view->x)];
         #else
         dst_rgb = (view_argb_t *) (screen_backup_buffer + (screen_y * view_screen.width + view->x));
         src_rgb = (view_argb_t *) view->section->addr;
@@ -253,15 +270,19 @@ static inline void view_refresh_block15(view_t *view, int view_left, int view_to
     int view_x, view_y;
     #ifdef CONFIG_VIEW_ALPAH
     view_argb_t *src_rgb, *dst_rgb;
+    #else
+    uint16_t *dst;
+    uint32_t *src;
+    uint16_t *map;
     #endif
     /* 优化整个块 */
     for (view_y = view_top; view_y < view_buttom; view_y++)
     {
         screen_y = view->y + view_y;
         #ifndef CONFIG_VIEW_ALPAH
-        uint16_t *dst = &((uint16_t *)view_screen.vram_start)[(view_screen.width * screen_y + view->x)];
-        uint32_t *src = &((uint32_t *) view->section->addr)[view_y * view->width]; 
-        uint16_t *map = &view_id_map[(screen_y * view_screen.width + view->x)];
+        dst = &((uint16_t *)view_screen.vram_start)[(view_screen.width * screen_y + view->x)];
+        src = &((uint32_t *) view->section->addr)[view_y * view->width]; 
+        map = &view_id_map[(screen_y * view_screen.width + view->x)];
         #else
         dst_rgb = (view_argb_t *) (screen_backup_buffer + (screen_y * view_screen.width + view->x));
         src_rgb = (view_argb_t *) view->section->addr;
@@ -302,15 +323,19 @@ static inline void view_refresh_block8(view_t *view, int view_left, int view_top
     int view_x, view_y;
     #ifdef CONFIG_VIEW_ALPAH
     view_argb_t *src_rgb, *dst_rgb;
+    #else
+    uint8_t *dst;
+    uint32_t *src;
+    uint16_t *map;
     #endif
     /* 优化整个块 */
     for (view_y = view_top; view_y < view_buttom; view_y++)
     {
         screen_y = view->y + view_y;
         #ifndef CONFIG_VIEW_ALPAH
-        uint8_t *dst = &((uint8_t *)view_screen.vram_start)[(view_screen.width * screen_y + view->x)];
-        uint32_t *src = &((uint32_t *) view->section->addr)[view_y * view->width]; 
-        uint16_t *map = &view_id_map[(screen_y * view_screen.width + view->x)];
+        dst = &((uint8_t *)view_screen.vram_start)[(view_screen.width * screen_y + view->x)];
+        src = &((uint32_t *) view->section->addr)[view_y * view->width]; 
+        map = &view_id_map[(screen_y * view_screen.width + view->x)];
         #else
         dst_rgb = (view_argb_t *) (screen_backup_buffer + (screen_y * view_screen.width + view->x));
         src_rgb = (view_argb_t *) view->section->addr;

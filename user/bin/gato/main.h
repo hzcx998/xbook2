@@ -5,11 +5,14 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <assert.h>
 #include <sys/time.h>
 #include <xtk.h>
 
 #include <gato.h>
+
+#define XTK_USE_MMAP
+#define XTK_USE_POPUP
 
 #if 0
 static SDL_Window *gWindow = NULL;
@@ -21,6 +24,11 @@ static xtk_surface_t *gSurface = NULL;
 static int mouse_x, mouse_y;
 
 #endif
+
+#ifdef XTK_USE_MMAP
+static xtk_surface_t *gSurfaceMmap = NULL;
+#endif
+
 
 bool mouse_motion(xtk_spirit_t *spirit, xtk_event_t *event, void *arg)
 {
@@ -44,8 +52,12 @@ static void frambuffer_init()
         exit(-1);
     }
     printf("xtk init done!\n");
-      
+    
+    #ifdef XTK_USE_POPUP
+    gWindow = xtk_window_create(XTK_WINDOW_POPUP);
+    #else
     gWindow = xtk_window_create(XTK_WINDOW_TOPLEVEL);
+    #endif
     if (!gWindow) {
         printf("xtk new window failed!\n");
         xtk_exit(-1);
@@ -68,6 +80,9 @@ static void frambuffer_close()
     SDL_DestroyWindow(gWindow);
     SDL_Quit();
     #else
+    #ifdef XTK_USE_MMAP
+    xtk_window_munmap(XTK_WINDOW(gWindow));  
+    #endif
     xtk_exit(0);
     #endif
 }
@@ -148,20 +163,42 @@ int main(int argc, char *argv[])
         #else
         #endif
         if (!gSurface) {
-            gSurface = xtk_window_get_surface(XTK_WINDOW(gWindow));
+            #ifdef XTK_USE_MMAP
+            assert(!xtk_window_mmap(XTK_WINDOW(gWindow))); 
+            #ifndef XTK_USE_POPUP
+            gSurfaceMmap = xtk_window_get_mmap_surface(XTK_WINDOW(gWindow));
+            #endif
+            #endif
+            #ifdef XTK_USE_POPUP
+                gSurface = xtk_window_get_mmap_surface(XTK_WINDOW(gWindow));            
+            #else
+                gSurface = xtk_window_get_surface(XTK_WINDOW(gWindow));
+            #endif
             surface_wrap(surface, (color_t *)gSurface->pixels, W, H);
         }
         sample(surface, (float)fps);
         #if 0
         SDL_UpdateWindowSurface(gWindow);
         #else
+        #ifdef XTK_USE_MMAP
+        #ifndef XTK_USE_POPUP
+        xtk_rect_t rect;
+        xtk_rect_init(&rect, gWindow->x, gWindow->y, gWindow->width, gWindow->height);
+        xtk_surface_blit(gSurface, NULL, gSurfaceMmap, &rect);
+        #endif
+        xtk_window_refresh(XTK_WINDOW(gWindow), 0, 0, gSurface->w, gSurface->h);
+        #else
         xtk_window_flip(XTK_WINDOW(gWindow));
+        #endif
         #endif
         fps++;
         gettimeofday(&time2, NULL);
         unsigned long long mtime = (time2.tv_sec - time1.tv_sec) * 1000000 + (time2.tv_usec - time1.tv_usec);
         if (mtime > 1000000) {
-            printf("fps %d\n", fps);
+            char title[32] = {0,};
+            sprintf(title, "gato-fps:%d", fps);
+            printf("%s\n", title);
+            xtk_window_set_title(XTK_WINDOW(gWindow), title);
             fps = 0;
             time1 = time2;
         }

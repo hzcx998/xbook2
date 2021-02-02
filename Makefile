@@ -169,7 +169,7 @@ QEMU_KVM := -accel hax
 else
 QEMU_KVM := -enable-kvm
 endif
-QEMU_KVM := # no virutal
+#QEMU_KVM := # no virutal
 
 QEMU_ARGUMENT = -m 1024M $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \

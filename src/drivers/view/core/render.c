@@ -231,22 +231,18 @@ void view_render_bitblt(view_t *view, int x, int y,
         height = bmp->height;
     int w = min(width, bmp->width - bx);
     int h = min(height, bmp->height - by);
-
     if (w <= 0 || h <= 0)
         return;
     view_color_t color;
-    int i, j;
     int vy, by2;
-    for (j = 0; j < h; j++) {
-        vy = y + j;
-        by2 = j + by;
-        for (i = 0; i < w; i++) {
-            //view_bitmap_getpixel(bmp, i + bx, j + by, &color);
-            color = view_bitmap_getpixel_fast(bmp, i + bx, by2);
-            // view_bitmap_getpixel_unsafe(bmp, i + bx, j + by, &color);
+    int vx, bx2;
+    int vy2 = y + h;
+    int vx2 = x + w;
+    for (vy = y, by2 = by; vy < vy2; vy++, by2++) {
+        for (vx = x, bx2 = bx; vx < vx2; vx++, bx2++) {
+            color = view_bitmap_getpixel_fast(bmp, bx2, by2);
             if (((color >> 24) & 0xff)) {
-                //view_render_putpixel(view, x + i, vy, color);
-                view_render_putpixel_fast(view, x + i, vy, color);
+                view_render_putpixel_fast(view, vx, vy, color);
             }
         }
     }

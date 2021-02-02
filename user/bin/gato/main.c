@@ -4,8 +4,8 @@
 
 #include <gato.h>
 
-#define W 1024
-#define H 768
+#define W 1920
+#define H 1080
 #define N 10
 #define M 11
 #define fclampf(v, a, b) fminf(fmaxf(a, v), b)

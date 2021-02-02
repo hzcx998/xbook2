@@ -38,21 +38,23 @@ void desktop_setup(xtk_spirit_t *spirit)
     xtk_window_flip(XTK_WINDOW(spirit));
     xtk_image_destroy(img);
 
+    #if 0
     // 创建子进程
     pid_t pid = fork();
-    #if 0
+    
     if (!pid) {
         win_thread();
         exit(-1);
     }
-
+    #else
     // 创建子进程
-    pid = fork();
-    #endif
+    pid_t pid = fork();
     if (!pid) {
         execv("/usr/gato", NULL);
         exit(-1);
     }
+    #endif
+    
 }
 
 

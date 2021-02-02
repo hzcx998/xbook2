@@ -248,7 +248,8 @@ get_memory_info:
 
 ; 使用的分辨率
 ;VBE_MODE	EQU	VMODE_800_600_32
-VBE_MODE	EQU	VMODE_1024_768_16
+VBE_MODE	EQU	VMODE_1920_1080_32
+;VBE_MODE	EQU	VMODE_1024_768_32
 
 get_vbe_info:
     push ds
