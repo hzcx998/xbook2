@@ -33,6 +33,22 @@ int xtk_surface_destroy(xtk_surface_t *surface)
     return 0;
 }
 
+int xtk_surface_resize(xtk_surface_t *surface, uint32_t width, uint32_t height)
+{
+    if (!surface)
+        return -1;
+    if (!surface->pixels)
+        return -1;
+    uint32_t *new_pixels = malloc(width * height * sizeof(uint32_t));
+    if (!new_pixels)
+        return -1;
+    free(surface->pixels);
+    surface->pixels = new_pixels;
+    surface->w = width;
+    surface->h = height;
+    return 0;
+}
+
 void xtk_surface_clear(xtk_surface_t *surface)
 {
     memset(surface->pixels, 0, surface->w * surface->h * sizeof(uint32_t));
@@ -270,4 +286,63 @@ void xtk_surface_blit(xtk_surface_t *src, xtk_rect_t *srcrect, xtk_surface_t *ds
         src_h--;
         dst_h--;
     }
+}
+
+static void __xtk_surface_scaled(unsigned char *src_buf, int src_w, int src_h, 
+        unsigned char *dst_buf, int dst_w, int dst_h, 
+        int num_channels)
+{
+    int bitcount = num_channels * 8;
+
+    //原图像缓存
+    // int src_bufsz = src_w * num_channels * src_h;
+    int src_linesz = bitcount * src_w / 8;
+
+    // int des_bufsz = ((dst_w * bitcount + 31) / 32) * 4 * dst_h;
+    int des_linesz = ((dst_w * bitcount + 31) / 32) * 4;
+    double rate_h = (double)src_h / dst_h;
+    double rate_w = (double)src_w / dst_w;
+    int i, j;
+
+    for (i = 0; i < dst_h; i++) {
+        //选取最邻近的点
+        int tsrc_h = (int)(rate_h * i + 0.5);
+        for (j = 0; j < dst_w; j++)
+        {
+            int tsrc_w = (int)(rate_w * j + 0.5);
+            memcpy(&dst_buf[i * des_linesz] + j * bitcount / 8,&src_buf[tsrc_h * src_linesz] + tsrc_w * bitcount / 8,bitcount / 8);
+        }
+    }
+}
+
+void xtk_surface_blit_scaled(xtk_surface_t *src, xtk_rect_t *srcrect, xtk_surface_t *dst, xtk_rect_t *dstrect)
+{
+    if (!src || !dst)
+        return;
+    // 处理src内部矩形
+    xtk_rect_t _srcrect;
+    if (!srcrect) {
+        _srcrect.x = 0;
+        _srcrect.y = 0;
+        _srcrect.w = src->w;
+        _srcrect.h = src->h;
+        srcrect = &_srcrect;
+    } else {
+        srcrect->w = min(srcrect->w, src->w);
+        srcrect->h = min(srcrect->h, src->h);
+    }
+    // 处理dst内部矩形
+    xtk_rect_t _dstrect;
+    if (!dstrect) {
+        _dstrect.x = 0;
+        _dstrect.y = 0;
+        _dstrect.w = dst->w;
+        _dstrect.h = dst->h;
+        dstrect = &_dstrect;
+    } else {
+        dstrect->w = min(dstrect->w, dst->w);
+        dstrect->h = min(dstrect->h, dst->h);
+    }
+    __xtk_surface_scaled((unsigned char *) src->pixels, srcrect->w, srcrect->h,
+        (unsigned char *) dst->pixels, dstrect->w, dstrect->h, 4);
 }

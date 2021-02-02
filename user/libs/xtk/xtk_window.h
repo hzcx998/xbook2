@@ -122,5 +122,6 @@ xtk_surface_t *xtk_window_get_mmap_surface(xtk_window_t *window);
 
 xtk_spirit_t *xtk_window_create_simple(char *title, int x, int y, int width, int height);
 int xtk_window_set_position_absolute(xtk_window_t *window, int x, int y);
+int xtk_window_set_size_minim(xtk_window_t *window, int width, int height);
 
 #endif /* _LIB_XTK_WINDOW_H */

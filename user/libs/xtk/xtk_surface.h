@@ -66,5 +66,7 @@ void xtk_surface_rectfill(xtk_surface_t *surface, int x, int y, uint32_t width, 
 void xtk_surface_clear(xtk_surface_t *surface);
 
 void xtk_surface_blit(xtk_surface_t *src, xtk_rect_t *srcrect, xtk_surface_t *dst, xtk_rect_t *dstrect);
+int xtk_surface_resize(xtk_surface_t *surface, uint32_t width, uint32_t height);
+void xtk_surface_blit_scaled(xtk_surface_t *src, xtk_rect_t *srcrect, xtk_surface_t *dst, xtk_rect_t *dstrect);
 
 #endif /* _LIB_XTK_SURFACE_H */

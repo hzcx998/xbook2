@@ -637,19 +637,13 @@ int xtk_window_view_setdown(xtk_window_t *window)
 
 static xtk_spirit_t *xtk_window_create_toplevel(xtk_window_t *window)
 {
-    int width = XTK_WINDOW_WIDTH_DEFAULT;
-    int height = XTK_WINDOW_HEIGHT_DEFAULT;
+    int width = window->content_width;
+    int height = window->content_height;
     
-    window->content_width = width;
-    window->content_height = height;
-
-    // 可以调整大小
-    window->winflgs |= XTK_WINDOW_RESIZABLE;
-        
     // 初始化精灵
-    int new_width = window->style->border_thick * 2 + width;
-    int new_height = window->style->border_thick * 2 + height + window->style->navigation_height;
-    
+    int new_width = 0, new_height = 0;
+    xtk_window_calc_view_size(window, width, height, &new_width, &new_height);
+
     xtk_spirit_t *window_spirit = &window->window_spirit;
     xtk_window_spirit_setup(window, window_spirit, 0, 0, new_width, new_height);
     
@@ -683,13 +677,9 @@ static xtk_spirit_t *xtk_window_create_toplevel(xtk_window_t *window)
 
 static xtk_spirit_t *xtk_window_create_popup(xtk_window_t *window)
 {
-    int width = XTK_WINDOW_WIDTH_DEFAULT;
-    int height = XTK_WINDOW_HEIGHT_DEFAULT;
-    window->content_width = width;
-    window->content_height = height;
-    // 可以调整大小
-    window->winflgs |= XTK_WINDOW_RESIZABLE;
-    
+    int width = window->content_width;
+    int height = window->content_height;
+
     xtk_spirit_t *spirit = &window->spirit;
     if (xtk_window_spirit_setup(window, spirit, 0, 0, width, height) < 0) {
         return NULL;
@@ -712,9 +702,11 @@ xtk_spirit_t *xtk_window_create(xtk_window_type_t type)
     window->routine = NULL;
     window->paint_callback = NULL;
     window->style = &__xtk_window_style_defult;
-    window->winflgs = 0;
-    xtk_surface_init(&window->mmap_surface, 0, 0, NULL);
+    window->winflgs = XTK_WINDOW_RESIZABLE;
+    window->content_width = XTK_WINDOW_WIDTH_DEFAULT;
+    window->content_height = XTK_WINDOW_HEIGHT_DEFAULT;
 
+    xtk_surface_init(&window->mmap_surface, 0, 0, NULL);
     xtk_rect_init(&window->invalid_rect, 0, 0, 0, 0);
     xtk_rect_init(&window->backup_win_info, 0, 0, 0, 0);
     list_init(&window->timer_list_head);
@@ -1071,6 +1063,17 @@ int xtk_window_set_fixed(xtk_window_t *window, bool fiexed)
     return 0;
 }
 
+int xtk_window_set_size_minim(xtk_window_t *window, int width, int height)
+{
+    if (!window)
+        return -1;
+    int vwidth = 0, vheight = 0;
+    xtk_window_calc_view_size(window, width, height, &vwidth, &vheight);
+    // size是视图大小，需要计算
+    uview_set_size_min(window->spirit.view, vwidth, vheight);
+    return 0;
+}
+
 int xtk_window_get_screen(xtk_window_t *window, int *width, int *height)
 {
     if (!window)
@@ -1152,6 +1155,7 @@ int xtk_window_maxim(xtk_window_t *window)
         xtk_window_get_screen(window, (int *) &info_rect.w, (int *) &info_rect.h);
         xtk_rect_init(&info_rect, 0, 0, info_rect.w, info_rect.h);
 
+        
         window->winflgs |= XTK_WINDOW_MAXIM;
         if (window->winflgs & XTK_WINDOW_RESIZABLE) {
             // 小窗口是可以调整大小的，就要禁用大小调整
@@ -1159,6 +1163,10 @@ int xtk_window_maxim(xtk_window_t *window)
             window->winflgs |= XTK_WINDOW_DISABLERESIZE; // 记录禁止调整大小标志
         }
     }
+    // printf("xtk: window maixm: %d, %d\n", info_rect.w, info_rect.h);
+    // 需要将屏幕（视图）大小转换成窗口内容大小    
+    xtk_window_calc_content_size(window, info_rect.w, info_rect.h, 
+        (int *) &info_rect.w, (int *) &info_rect.h);
     // 重新设置和大小
     xtk_window_resize(window, info_rect.w, info_rect.h);
     xtk_window_set_position_absolute(window, info_rect.x, info_rect.y);

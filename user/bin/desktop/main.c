@@ -39,6 +39,7 @@ void desktop_setup(xtk_spirit_t *spirit)
     xtk_window_flip(XTK_WINDOW(spirit));
     xtk_image_destroy(img);
 
+    #if 0
     #if 1
     // 创建子进程
     pid_t pid = fork();
@@ -55,8 +56,9 @@ void desktop_setup(xtk_spirit_t *spirit)
         exit(-1);
     }
     #endif
+    #endif
     // 创建子进程
-    pid = fork();
+    pid_t pid = fork();
     if (!pid) {
         char *_argv[3] = {
             "/usr/infones",
@@ -139,7 +141,7 @@ void win_proc(xtk_spirit_t *spirit, uview_msg_t *msg)
 
 bool win_mouse_motion(xtk_spirit_t *spirit, xtk_event_t *event, void *arg)
 {
-    printf("win mouse motion %d %d\n", event->motion.x, event->motion.y);
+    // printf("win mouse motion %d %d\n", event->motion.x, event->motion.y);
     return true;
 }
 

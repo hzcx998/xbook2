@@ -156,7 +156,7 @@ int xtk_spirit_set_size_request(xtk_spirit_t *spirit, int width, int height)
     switch (spirit->type)
     {
     case XTK_SPIRIT_TYPE_WINDOW:
-        uview_set_size_min(spirit->view, width, height);
+        xtk_window_set_size_minim(XTK_WINDOW(spirit), width, height);
         break;    
     default:
         break;
@@ -269,16 +269,20 @@ int xtk_spirit_reset_size(xtk_spirit_t *spirit, int width, int height)
 {
     if (!spirit)
         return -1;
-    spirit->width = width;
-    spirit->height = height;
-    
     // resize surface
     if (spirit->surface) {
+        #if 1
+        if (xtk_surface_resize(spirit->surface, width, height) < 0)
+            return -1;
+        #else
         xtk_spirit_set_surface(spirit, NULL);
         xtk_surface_t *surface = xtk_surface_create(width, height);
         assert(surface);
         xtk_spirit_set_surface(spirit, surface);
+        #endif
     }
+    spirit->width = width;
+    spirit->height = height;
     return 0;
 }
 

@@ -19,9 +19,9 @@
 #define SOUND_DEVICE "sb16"
 #endif /* CONFIG_SOUND */
 
-// 刷新间隔（ms）
-#define FRAME_TIMEOUT 31
+#define FPS_TIMEOUT 1000
 
+#define DELAY_MS    0
 void start_application( char *filename );
 int InfoNES_Load( const char *pszFileName );
 void InfoNES_Main();
@@ -61,6 +61,7 @@ int sound_fd;
 
 xtk_spirit_t *window;
 xtk_surface_t *surface;
+xtk_surface_t *tmp_surface;
 
 static bool win_key_press(xtk_spirit_t *spirit, xtk_event_t *event, void *arg);
 static bool win_key_release(xtk_spirit_t *spirit, xtk_event_t *event, void *arg);
@@ -143,21 +144,23 @@ void start_application( char *filename )
         printf("[infones] get window surface failed!\n");
         return;
     }
-    if (!surface->pixels) {
-        printf("[infones] get window surface failed!\n");
+    tmp_surface = xtk_surface_create(NES_DISP_WIDTH, NES_DISP_HEIGHT);
+    if (!tmp_surface) {
+        printf("[infones] create tmp surface failed!\n");
         return;
     }
-    printf("[infones] get window surface %x %d %d\n", surface->pixels, surface->w, surface->h);
-    
-    xtk_surface_rectfill(surface, 0, 0, surface->w, surface->h, XTK_RED);
+
     printf("[infones] get window surface done! %d %d\n", surface->w, surface->h);
+    
+    /* 设置允许调整的最小大小 */
+    xtk_spirit_set_size_request(window, NES_DISP_WIDTH, NES_DISP_HEIGHT);
     /* 设置窗口界面 */
     xtk_spirit_show(window);
 
     /* 设置键盘按键信号 */
     xtk_signal_connect(window, "key_press", win_key_press, NULL);
     xtk_signal_connect(window, "key_release", win_key_release, NULL);
-    xtk_window_add_timer(XTK_WINDOW(window), FRAME_TIMEOUT, win_timer, NULL);
+    xtk_window_add_timer(XTK_WINDOW(window), FPS_TIMEOUT, win_timer, NULL);
     InfoNES_Main();    
   } else {
       printf("[infones] InfoNES_Load failed!\n");
@@ -265,10 +268,15 @@ static bool win_key_release(xtk_spirit_t *spirit, xtk_event_t *event, void *arg)
     return true;
 }
 
+static int win_fps = 0;
 static bool win_timer(xtk_spirit_t *spirit, uint32_t tmid, void *arg)
 {
     // 定时器产生时刷新
-    xtk_window_flip(XTK_WINDOW(window));
+    char title[32] = {0,};
+    sprintf(title, "fps:%d", win_fps);
+    xtk_window_set_title(XTK_WINDOW(spirit), title);
+    printf("%s\n", title);
+    win_fps = 0;
     return true;    // 需要继续产生
 }
 
@@ -567,7 +575,8 @@ guchar  pbyRgbBuf[ NES_DISP_WIDTH * NES_DISP_HEIGHT * 3 ];
 /*===================================================================*/
 void InfoNES_LoadFrame()
 {
-   DWORD *q = (DWORD *)surface->pixels;
+    // 先绘制到临时surface
+   DWORD *q = (DWORD *)tmp_surface->pixels;
   // Exchange 16-bit to 24-bit
   for (register int y = 0; y < NES_DISP_HEIGHT; y++)
   {
@@ -578,11 +587,88 @@ void InfoNES_LoadFrame()
       *q++ = ((wColor & 0x7c00) << 9) | ((wColor & 0x03e0) << 6) | ((wColor & 0x001f) << 3) | (0xff << 24);
     }
   }
+  // 调整到窗口surface
+  xtk_surface_blit_scaled(tmp_surface, NULL, surface, NULL);
+  xtk_window_flip(XTK_WINDOW(window));
+  win_fps++;
 
-  /* 已经绘制好内容了，直接绘制到窗口 */
-  //xtk_window_flip(XTK_WINDOW(window));
-  //mdelay(15);
+
+/*
+* 延时计算算法：
+* base = 原始大小
+* distance = max - base
+* max_delay = 10
+* single = distance / max_delay
+* coutn = distacne / single
+* delay = max_delay - count
+*/
+#define MAX_DELAYS   15
+  uint32_t distance_bytes = (surface->w * surface->h * sizeof(uint32_t)) - (NES_DISP_HEIGHT * NES_DISP_WIDTH * 4);
+  uint32_t single = distance_bytes / MAX_DELAYS;
+  uint32_t countn = 0;
+  if (single > 0)
+    countn = distance_bytes / single;
+  uint32_t delay = MAX_DELAYS - countn;
+  
+  // printf("distance:%d, single:%d, countn:%d dealy:%d\n", distance_bytes, single, countn, delay);
+  mdelay(delay); // 屏幕越大，延时越小，屏幕越小，延时越大
 }
+
+/**
+ * delay := 13
+ * N1 = 240* 256=61,440     fps~=75 (NICE)
+ * N2 = 1024*768=786,432    fps~=38
+ * N3 = N2/N1 = 12.8        N2/N1 ~= 1.98
+ * 
+ * delay := 10
+ * N1 = 240* 256=61,440     fps~=75 (NICE)
+ * N2 = 1024*768=786,432    fps~=38
+ * N3 = N2/N1 = 12.8        N2/N1 ~= 1.98
+ * delay := 5
+ * N1 = 240* 256=61,440     fps~=75
+ * N2 = 1024*768=786,432    fps~=45
+ * N3 = N2/N1 = 12.8        N2/N1 ~= 1.67
+ * delay := 0
+ * N1 = 240* 256=61,440     fps~=75
+ * N2 = 1024*768=786,432    fps~=48 (NICE)
+ * N3 = N2/N1 = 12.8        N2/N1 ~= 1.56
+ * 
+ * distance: 10             fps~=10
+ *                          N2/N1 ~= 0.42
+ * 
+ * 像素差值：724992/ 13 (12.8) = 55768
+ * 像素差值：724992/ 10 = 72500
+ * 
+ * 每个差值对应的是55768个大小。
+ * 
+ * 大小对应的延时关系
+ * 1延时对应的大小改变值：55768
+ * 
+ * max - base = left
+ * left / 13 = single（55768）
+ * single（55768） 
+ * 
+ * 
+ * base ：延时10
+ * base + 1* cell：9
+ * max = base + 10* cell：0
+ * 
+ * size - base = left
+ * left / 10 = single(72500)
+ * 
+ * count = left / single(72500)
+ * 
+ * delay = 10 - count
+ * 
+ * 
+ * 延时计算算法：
+ * base = 原始大小
+ * distance = max - base
+ * max_delay = 10
+ * single = distance / max_delay
+ * coutn = distacne / single
+ * delay = max_delay - count
+ */
 
 int PollEvent(void)
 {
@@ -697,7 +783,6 @@ void InfoNES_SoundOutput( int samples, BYTE *wave1, BYTE *wave2, BYTE *wave3, BY
 /*===================================================================*/
 void InfoNES_Wait() 
 {
-    
 }
 
 /*===================================================================*/
