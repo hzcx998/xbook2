@@ -20,6 +20,8 @@ enum uview_attr {
     UVIEW_ATTR_MOVEABLE      = 0x02,
 };
 
+#define UVIEW_MAX_SIZE_WIDTH     1920
+#define UVIEW_MAX_SIZE_HEIGHT    1080
 
 #define UVIEW_BAD_ID(view)  (view < 0)
 
@@ -52,6 +54,7 @@ int uview_get_mousepos(int vfd, int *x, int *y);
 int uview_get_pos(int vfd, int *x, int *y);
 int uview_get_vid(int vfd, int *vid);
 int uview_set_drag_region(int vfd, int left, int top, int right, int bottom);
+void uview_repair_size(int *width, int *height);
 
 typedef struct {
     unsigned long timer_id;

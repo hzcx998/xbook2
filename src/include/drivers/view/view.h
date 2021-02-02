@@ -35,6 +35,10 @@ enum view_attr {
 #define VIEW_RESIZE_BORDER_SIZE  4
 #define VIEW_RESIZE_SIZE_MIN  16
 
+/* 视图支持的最大大小 */
+#define VIEW_MAX_SIZE_WIDTH     1920
+#define VIEW_MAX_SIZE_HEIGHT    1080
+
 /* 视图用来表达逻辑上的图层 */
 typedef struct {
     list_t list;        // 显示的视图链表
@@ -55,6 +59,7 @@ typedef struct {
     // 区域设置
     view_region_t drag_regions[VIEW_DRAG_REGION_NR];
     view_region_t resize_region;
+    spinlock_t lock;
 } view_t;
 
 int view_init();

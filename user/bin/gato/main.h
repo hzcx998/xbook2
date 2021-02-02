@@ -11,7 +11,7 @@
 
 #include <gato.h>
 
-#define XTK_USE_MMAP
+// #define XTK_USE_MMAP
 #define XTK_USE_POPUP
 
 #if 0
@@ -60,7 +60,7 @@ static void frambuffer_init()
     #endif
     if (!gWindow) {
         printf("xtk new window failed!\n");
-        xtk_exit(-1);
+        exit(-1);
     }
     xtk_window_set_title(XTK_WINDOW(gWindow), "gato");
     printf("xtk win done!\n");
@@ -74,7 +74,6 @@ static void frambuffer_init()
     #ifdef XTK_USE_MMAP
     assert(!xtk_window_mmap(XTK_WINDOW(gWindow))); 
     gSurface = xtk_window_get_mmap_surface(XTK_WINDOW(gWindow));
-    
     #else
     gSurface = xtk_window_get_surface(XTK_WINDOW(gWindow));
     #endif
@@ -92,7 +91,7 @@ static void frambuffer_close()
     #ifdef XTK_USE_MMAP
     xtk_window_munmap(XTK_WINDOW(gWindow));  
     #endif
-    xtk_exit(0);
+    xtk_main_quit(0);
     #endif
 }
 

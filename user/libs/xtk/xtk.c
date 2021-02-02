@@ -10,29 +10,38 @@ static int __xtk_main_loop = 0;
 
 int __xtk_has_window_close = 0;
 
+int xtk_check_main_loop()
+{
+    return __xtk_main_loop;
+}
+
 int xtk_init(int *argc, char **argv[])
 {
     // TODO: init everything...    
     xtk_text_init();
     xtk_view_init();
+    atexit(xtk_exit);
     __xtk_main_loop = 1;
     __xtk_has_window_close = 0;
     __xtk_init_done = 1;
     return 0;
 }
 
-int xtk_exit(int exit_code)
+void xtk_exit(void)
 {
-    if (!__xtk_init_done) {
-        perror("xtk_init not called before xtk_exit!");
-    }
-    // TODO: do exit everything
-    xtk_view_exit();
+    if (__xtk_init_done) {
+        xtk_view_t *pview, *pnext;
+        xtk_view_for_each_safe (pview, pnext) {
+            assert(pview->spirit);
+            xtk_window_quit(pview->spirit);
+        }
+        
+        // TODO: do exit everything
+        xtk_view_exit();
 
-    __xtk_init_done = 0;
-    printf("xtk: exit now.\n");
-    exit(exit_code);
-    return 0;
+        printf("xtk: exit now.\n");
+        __xtk_init_done = 0;
+    }
 }
 
 int xtk_main()
@@ -70,11 +79,16 @@ int xtk_main()
             list_for_each_owner (spirit, &pview->spirit_list_head, list) {                
                 if (!(filter_val = xtk_window_main(spirit, &msg)))
                     break;
+                if (!__xtk_main_loop) {
+                    return 0;
+                }
                 if (__xtk_has_window_close)
                     break;
             }
-
             // 需要检测一下是否有窗口已经关闭掉了，如果是那么就不再往后面执行
+            if (!__xtk_main_loop) {
+                return 0;
+            }
             if (__xtk_has_window_close) {
                 continue;
             }
@@ -117,11 +131,17 @@ int xtk_poll()
                 list_for_each_owner (spirit, &pview->spirit_list_head, list) {                
                     if (!(filter_val = xtk_window_main(spirit, &msg)))
                         break;
+                    if (!__xtk_main_loop) {
+                        return 0;
+                    }
                     if (__xtk_has_window_close)
                         break;
                 }
 
                 // 需要检测一下是否有窗口已经关闭掉了，如果是那么就不再往后面执行
+                if (!__xtk_main_loop) {
+                    return 0;
+                }
                 if (__xtk_has_window_close) {
                     continue;
                 }
@@ -139,17 +159,6 @@ int xtk_poll()
 
 int xtk_main_quit()
 {
-    if (!__xtk_init_done) {
-        perror("xtk_init not called before xtk_main_quit!");
-        abort();
-    }
-    // 退出xtk_view
-    xtk_view_t *pview, *pnext;
-    xtk_view_for_each_safe (pview, pnext) {
-        assert(pview->spirit);
-        xtk_window_quit(pview->spirit);
-            // xtk_xxx_quit
-    }
     __xtk_main_loop = 0;
     return 0;
 }

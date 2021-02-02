@@ -20,11 +20,12 @@
 #include "xtk_keyboard.h"
 
 int xtk_init(int *argc, char **argv[]);
-int xtk_exit(int exit_code);
+void xtk_exit(void);
 
 int xtk_main();
 int xtk_main_quit();
 
 int xtk_poll();
+int xtk_check_main_loop();
 
 #endif /* _LIB_XTK_H */

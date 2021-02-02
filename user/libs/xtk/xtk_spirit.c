@@ -79,14 +79,13 @@ int xtk_spirit_destroy(xtk_spirit_t *spirit)
     switch (spirit->type) {
     case XTK_SPIRIT_TYPE_WINDOW:
         {
-            // 触发删除事件
-            bool emit_result = xtk_signal_emit_by_name(spirit, "delete_event");
-            if (emit_result == true)
-                return 0;
-            // 再触发销毁事件
-            emit_result = xtk_signal_emit_by_name(spirit, "destroy");
-            if (emit_result == true)    // 如果成功销毁，那么就直接返回
-                return 0;
+            if (xtk_check_main_loop()) { // 处于main loop中才触发事件
+                // 触发删除事件
+                if (xtk_signal_emit_by_name(spirit, "delete_event"))
+                    return 0;
+                // 再触发销毁事件
+                xtk_signal_emit_by_name(spirit, "destroy_event");
+            }
             return xtk_window_destroy(XTK_WINDOW(spirit));        
         }
     default:

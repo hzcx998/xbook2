@@ -12,6 +12,7 @@ int uview_open(int width, int height)
 {
     if (width <= 0 || height <= 0)
         return -1;
+    uview_repair_size(&width, &height);
     int flags = (width << 16) | height;
     char buf[12] = {0};
     if (probedev("view", buf, 12) < 0) {
@@ -348,4 +349,16 @@ int uview_restart_timer(int vfd, unsigned long timer_id, unsigned long interval)
     if (fastio(vfd, VIEWIO_RESTARTTIMER, &vio_timer) < 0)
         return -1;
     return 0;
+}
+
+void uview_repair_size(int *width, int *height)
+{
+    if (*width > UVIEW_MAX_SIZE_WIDTH) {
+        printf("uview: width repair from %d to %d.\n", *width, UVIEW_MAX_SIZE_WIDTH);
+        *width = UVIEW_MAX_SIZE_WIDTH;
+    }
+    if (*height > UVIEW_MAX_SIZE_HEIGHT) {
+        printf("uview: height repair from %d to %d.\n", *height, UVIEW_MAX_SIZE_HEIGHT);
+        *height = UVIEW_MAX_SIZE_HEIGHT;
+    }
 }

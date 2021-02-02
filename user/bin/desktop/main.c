@@ -31,6 +31,7 @@ void desktop_setup(xtk_spirit_t *spirit)
     xtk_surface_t *surface = xtk_window_get_surface(XTK_WINDOW(spirit));
     assert(surface);
     
+
     xtk_surface_t img_surface;
     xtk_surface_init(&img_surface, img->w, img->h, (uint32_t *) img->buf);
     xtk_surface_blit(&img_surface, NULL, surface, NULL);
@@ -38,7 +39,7 @@ void desktop_setup(xtk_spirit_t *spirit)
     xtk_window_flip(XTK_WINDOW(spirit));
     xtk_image_destroy(img);
 
-    #if 0
+    #if 1
     // 创建子进程
     pid_t pid = fork();
     
@@ -54,6 +55,12 @@ void desktop_setup(xtk_spirit_t *spirit)
         exit(-1);
     }
     #endif
+    // 创建子进程
+    pid = fork();
+    if (!pid) {
+        execv("/usr/gato", NULL);
+        exit(-1);
+    }
     
 }
 
@@ -114,7 +121,7 @@ int win_update = 0;
 void win_proc(xtk_spirit_t *spirit, uview_msg_t *msg)
 {
     //printf("msg %d\n", uview_msg_get_type(msg));
-    xtk_window_t *window = XTK_WINDOW(spirit);
+    //xtk_window_t *window = XTK_WINDOW(spirit);
     switch (uview_msg_get_type(msg)) {
     case UVIEW_MSG_MOUSE_MOTION:
         {
@@ -194,9 +201,12 @@ bool btn_event(xtk_spirit_t *spirit, void *data)
     return true;
 }
 
+
 bool delete_event(xtk_spirit_t *spirit, void *data)
 {
     printf("delete window event\n");
+    //xtk_main_quit();
+    printf("delete window event done\n");
     return false;
 }
 
@@ -212,7 +222,8 @@ void win_paint(xtk_spirit_t *spirit, xtk_rect_t *rect)
     xtk_window_t *window = XTK_WINDOW(spirit);
     win_color += 5;
 
-    #if 0
+
+    #if 1
         assert(!xtk_window_mmap(window));
         #if 0
         xtk_surface_t *surface = xtk_window_get_surface(window);
@@ -275,7 +286,7 @@ void win_thread()
 {    
     // xtk start
     xtk_init(NULL, NULL);
-    #if 0
+    #if 1
     win_root = xtk_window_create(XTK_WINDOW_TOPLEVEL);  
     assert(win_root);
     xtk_window_set_title(XTK_WINDOW(win_root), "test");
@@ -392,6 +403,5 @@ void win_thread()
     xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout2, NULL);
     #endif
 
-    // xtk_main_quit();
-    xtk_exit(xtk_main());
+    xtk_main();
 }

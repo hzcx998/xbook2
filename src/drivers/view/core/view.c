@@ -17,6 +17,24 @@ static int view_top_z = -1;
 static int view_next_id = 0;    
 int view_last_x, view_last_y; // 上一个关闭的视图的位置
 
+/* 视图链表管理的自旋锁 */
+DEFINE_SPIN_LOCK(view_list_spin_lock);
+
+/* 视图全局变量自旋锁 */
+DEFINE_SPIN_LOCK(view_global_lock);
+
+void view_max_size_repair(int *width, int *height)
+{
+    if (*width > VIEW_MAX_SIZE_WIDTH) {
+        noteprint("kernel view: width repair from %d to %d.\n", *width, VIEW_MAX_SIZE_WIDTH);
+        *width = VIEW_MAX_SIZE_WIDTH;
+    }
+    if (*height > VIEW_MAX_SIZE_HEIGHT) {
+        noteprint("kernel view: height repair from %d to %d.\n", *height, VIEW_MAX_SIZE_HEIGHT);
+        *height = VIEW_MAX_SIZE_HEIGHT;
+    }
+}
+
 view_t *view_create(int x, int y, int width, int height)
 {
     view_t *view = mem_alloc(sizeof(view_t));
@@ -39,8 +57,11 @@ view_t *view_create(int x, int y, int width, int height)
     }
     view->x = x;
     view->y = y;
+    spin_lock(&view_global_lock);
     view->id = view_next_id++;
+    spin_unlock(&view_global_lock);
     view->z = -1;
+    view_max_size_repair(&width, &height);
     view->width = width;
     view->height = height;
     view->width_min = VIEW_RESIZE_SIZE_MIN;
@@ -58,27 +79,38 @@ view_t *view_create(int x, int y, int width, int height)
         view->height - VIEW_RESIZE_BORDER_SIZE);
 
     list_init(&view->list);
+    spin_lock(&view_global_lock);
     list_add(&view->global_list, &view_global_list_head);
+    spin_unlock(&view_global_lock);
+    spinlock_init(&view->lock);
     return view;
 }
 
 view_t *view_find_by_id(int id)
 {
     view_t *view;
+    spin_lock(&view_global_lock);
     list_for_each_owner (view, &view_global_list_head, global_list) {
-        if (view->id == id)
+        if (view->id == id) {
+            spin_unlock(&view_global_lock);
             return view;
+        }
     }
+    spin_unlock(&view_global_lock);
     return NULL;
 }
 
 view_t *view_find_by_z(int z)
 {
     view_t *view;
+    spin_lock(&view_global_lock);
     list_for_each_owner (view, &view_global_list_head, global_list) {
-        if (view->z == z)
+        if (view->z == z) {
             return view;
+            spin_unlock(&view_global_lock);
+        }
     }
+    spin_unlock(&view_global_lock);
     return NULL;
 }
 
@@ -91,6 +123,7 @@ int view_destroy(view_t *view)
 {
     if (!view)
         return -1;
+    
     // 记录上一个销毁的视图的位置
     view_last_x = view->x;
     view_last_y = view->y;
@@ -98,13 +131,18 @@ int view_destroy(view_t *view)
     if (msgpool_destroy(view->msgpool) < 0) {
         return -1;
     }
+    
     if (view_section_destroy(view->section) < 0) {
         return -1;
     }
+    spin_lock(&view_list_spin_lock);
     if (list_find(&view->list, &view_show_list_head))
         list_del_init(&view->list);
-        
+    spin_unlock(&view_list_spin_lock);
+    
+    spin_lock(&view_global_lock);
     list_del_init(&view->global_list);
+    spin_unlock(&view_global_lock);
     free(view);
     return 0;
 }
@@ -182,6 +220,7 @@ int view_set_size_min(view_t *view, int width, int height)
 {
     if (!view)
         return -1;
+    view_max_size_repair(&width, &height);
     view->width_min = width;
     if (view->width_min < VIEW_RESIZE_SIZE_MIN)
         view->width_min = VIEW_RESIZE_SIZE_MIN;
@@ -196,12 +235,17 @@ static void __view_adjust_by_z(view_t *view, int z)
     view_t *tmp;
     view_t *old_view = NULL;
     int old_z = view->z;
+    
+    spin_lock(&view_global_lock);
     if (z > view_top_z) {
         z = view_top_z;
     }
+    
+    spin_lock(&view_list_spin_lock);
     /* 先从链表中移除 */
     list_del_init(&view->list);
     if (z == view_top_z) {
+        spin_unlock(&view_global_lock);
         /* 其它视图降低高度 */
         list_for_each_owner (tmp, &view_show_list_head, list) {
             if (tmp->z > view->z) {
@@ -210,10 +254,14 @@ static void __view_adjust_by_z(view_t *view, int z)
         }
         view->z = z;
         list_add_tail(&view->list, &view_show_list_head);
+        
+        spin_unlock(&view_list_spin_lock);
+        
         /* 刷新新视图[z, z] */
         view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
         view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
     } else {    /* 不是最高视图，那么就和其它视图交换 */
+        spin_unlock(&view_global_lock);
         if (z > view->z) { /* 如果新高度比原来的高度高 */
             /* 把位于旧视图高度和新视图高度之间（不包括旧视图，但包括新视图高度）的视图下降1层 */
             list_for_each_owner (tmp, &view_show_list_head, list) {
@@ -227,6 +275,9 @@ static void __view_adjust_by_z(view_t *view, int z)
             assert(old_view);
             view->z = z;
             list_add_after(&view->list, &old_view->list);
+            
+            spin_unlock(&view_list_spin_lock);
+        
             /* 刷新新视图[z, z] */
             view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
             view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
@@ -243,6 +294,9 @@ static void __view_adjust_by_z(view_t *view, int z)
             assert(old_view);  
             view->z = z;
             list_add_before(&view->list, &old_view->list);
+            
+            spin_unlock(&view_list_spin_lock);
+        
             /* 刷新新视图[z + 1, old z] */
             view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z + 1);
             view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z + 1, old_z);
@@ -253,6 +307,7 @@ static void __view_adjust_by_z(view_t *view, int z)
 static void __view_hiden_by_z(view_t *view, int z)
 {
     int old_z = view->z;
+    spin_lock(&view_list_spin_lock);
     list_del_init(&view->list);
     if (view_top_z > old_z) {  /* 旧视图必须在顶视图下面 */
         /* 把位于当前视图后面的视图的高度都向下降1 */
@@ -266,6 +321,7 @@ static void __view_hiden_by_z(view_t *view, int z)
     /* 由于隐藏了一个视图，那么，视图顶层的高度就需要减1 */
     view_top_z--;
     view->z = -1;  /* 隐藏视图后，高度变为-1 */
+    spin_unlock(&view_list_spin_lock);
     /* 刷新视图, [0, view->z - 1] */
     view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, 0);
     view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, 0, old_z - 1);
@@ -275,20 +331,26 @@ static void __view_show_by_z(view_t *view, int z)
 {
     view_t *tmp;
     view_t *old_view = NULL;
+    
+    spin_lock(&view_global_lock);
     if (z > view_top_z) {
         view_top_z++;
         z = view_top_z;
     } else {
         view_top_z++;
     }
+    spin_lock(&view_list_spin_lock);
     /* 如果新高度就是最高的视图，就直接插入到视图队列末尾 */
     if (z == view_top_z) {
+        spin_unlock(&view_global_lock);
         view->z = z;
         list_add_tail(&view->list, &view_show_list_head);
+        spin_unlock(&view_list_spin_lock);
         /* 刷新新视图[z, z] */
         view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
         view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
     } else {
+        spin_unlock(&view_global_lock);
         /* 查找和当前视图一样高度的视图 */
         list_for_each_owner(tmp, &view_show_list_head, list) {
             if (tmp->z == z) {
@@ -307,6 +369,7 @@ static void __view_show_by_z(view_t *view, int z)
         view->z = z;
         /* 插入到旧视图前面 */
         list_add_before(&view->list, &old_view->list);
+        spin_unlock(&view_list_spin_lock);
         /* 刷新新视图[z, z] */
         view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
         view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
@@ -335,17 +398,27 @@ void view_set_z(view_t *view, int z)
 {
     if (view->z == z)
         return;
+    
+    unsigned long iflags;
+    spin_lock_irqsave(&view->lock, iflags);
+
+    spin_lock(&view_list_spin_lock);    
     if (list_find(&view->list, &view_show_list_head)) {
+        spin_unlock(&view_list_spin_lock);    
+    
         if (z >= 0) {
             __view_adjust_by_z(view, z);
         } else { /* 小于0就是要隐藏起来的视图 */
             __view_hiden_by_z(view, z);
         }
     } else {    /* 插入新视图 */
+        spin_unlock(&view_list_spin_lock);    
+    
         if (z >= 0) {
             __view_show_by_z(view, z);
         }
     }
+    spin_unlock_irqrestore(&view->lock, iflags);
 }
 
 int view_drag_rect_check(view_t *view, int x, int y)
@@ -444,6 +517,10 @@ int view_set_xy(view_t *view, int x, int y)
 {
     if (!view)
         return -1;
+        
+    unsigned long iflags;
+    spin_lock_irqsave(&view->lock, iflags);
+
     int old_x = view->x;
     int old_y = view->y;
     view->x = x;
@@ -457,18 +534,24 @@ int view_set_xy(view_t *view, int x, int y)
         view_refresh_map(x0, y0, x1, y1, 0);
         view_refresh_by_z(x0, y0, x1, y1, 0, view->z);
     }
+
+    spin_unlock_irqrestore(&view->lock, iflags);
     return 0;
 }
 
 view_t *view_get_top()
 {
+    spin_lock(&view_list_spin_lock);    
     view_t *view = list_last_owner_or_null(&view_show_list_head, view_t, list);
+    spin_unlock(&view_list_spin_lock);    
     return view;
 }
 
 view_t *view_get_bottom()
 {
+    spin_lock(&view_list_spin_lock);    
     view_t *view = list_first_owner_or_null(&view_show_list_head, view_t, list);
+    spin_unlock(&view_list_spin_lock);    
     return view;
 }
 
@@ -484,11 +567,16 @@ int view_resize(view_t *view, int x, int y, uint32_t width, uint32_t height)
     if (!view->section) {
         return -1;
     }
+    view_max_size_repair((int *) &width, (int *) &height);
     view_section_t *new_sction = view_section_create(width, height);
     if (!new_sction) {
         errprint("view resize create section failed!\n");
         return -1;
     }
+    
+    unsigned long iflags;
+    spin_lock_irqsave(&view->lock, iflags);
+    
     /* 先将原来位置里面的内容绘制成透明 */
     view_section_clear(view->section);
     /* 重新设置位置才能完整刷新图层 */
@@ -504,6 +592,8 @@ int view_resize(view_t *view, int x, int y, uint32_t width, uint32_t height)
     view_region_init(&view->resize_region, VIEW_RESIZE_BORDER_SIZE,
         VIEW_RESIZE_BORDER_SIZE, view->width - VIEW_RESIZE_BORDER_SIZE,
         view->height - VIEW_RESIZE_BORDER_SIZE);
+    
+    spin_unlock_irqrestore(&view->lock, iflags);
     return 0;
 }
 

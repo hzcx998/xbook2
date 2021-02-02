@@ -27,6 +27,7 @@ static char *image_path[M] = {
 
 static void motion_get_xy(int *x, int *y);
 
+
 static surface_t *image_get(int index, int width, int height)
 {
 	if (image[index] == 0)

@@ -19,6 +19,7 @@
 #include <drivers/view/msg.h>
 #include <drivers/view/env.h>
 #include <drivers/view/mouse.h>
+#include <drivers/view/screen.h>
 
 
 #define DRV_NAME "view"

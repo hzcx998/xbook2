@@ -4,8 +4,8 @@
 #include <string.h>
 
 extern list_t view_show_list_head;
-extern list_t view_global_list_head;
 extern uint16_t *view_id_map;
+extern spinlock_t view_list_spin_lock;
 
 typedef void (*view_refresh_block_t) (view_t *, int , int , int, int);
 static view_refresh_block_t view_refresh_block = NULL;
@@ -38,6 +38,8 @@ void view_refresh_map(int left, int top, int right, int buttom, int z0)
 
     uint32_t *src;
     uint16_t *map;
+    unsigned long iflags;
+    spin_lock_irqsave(&view_list_spin_lock, iflags);
     /* 刷新高度为[z0-top]区间的视图 */
     list_for_each_owner (view, &view_show_list_head, list) {
         if (view->z >= z0) {
@@ -95,6 +97,7 @@ void view_refresh_map(int left, int top, int right, int buttom, int z0)
             }
         }
     }
+    spin_unlock_irqrestore(&view_list_spin_lock, iflags);
 }
 
 static inline void view_refresh_block32(view_t *view, int view_left, int view_top, int view_right, int view_buttom)
@@ -369,7 +372,7 @@ static inline void view_refresh_block8(view_t *view, int view_left, int view_top
 }
 
 #ifdef CONFIG_VIEW_ALPAH
-static void __layer_refresh_copy(int left, int top, int right, int buttom)
+static void view_refresh_copy(int left, int top, int right, int buttom)
 {
     int screen_x, screen_y;
 
@@ -440,6 +443,8 @@ void view_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1)
 	if (buttom > view_screen.height)
         buttom = view_screen.height;
     view_t *view;
+    unsigned long iflags;
+    spin_lock_irqsave(&view_list_spin_lock, iflags);
     list_for_each_owner (view, &view_show_list_head, list) {
         #ifndef CONFIG_VIEW_ALPAH /* 全部图层都要进行计算 */
         if (view->z >= z0 && view->z <= z1) {
@@ -464,8 +469,10 @@ void view_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1)
     }
     
     #ifdef CONFIG_VIEW_ALPAH  /* 将指定区域刷新到屏幕 */
-    __layer_refresh_copy(left, top, right, buttom);
+    view_refresh_copy(left, top, right, buttom);
     #endif
+    spin_unlock_irqrestore(&view_list_spin_lock, iflags);
+    
 }
 
 void view_refresh(view_t *view, int left, int top, int right, int buttom)
@@ -488,12 +495,16 @@ void view_refresh_rect(view_t *view, int x, int y, uint32_t width, uint32_t heig
  */
 void view_refresh_from_bottom(view_t *view, int left, int top, int right, int buttom)
 {
+    unsigned long iflags;
+    spin_lock_irqsave(&view->lock, iflags);
+    
     if (view->z >= 0) {
         view_refresh_map(view->x + left, view->y + top, view->x + right,
             view->y + buttom, 0);
         view_refresh_by_z(view->x + left, view->y + top, view->x + right,
             view->y + buttom, 0, view->z);
     }
+    spin_unlock_irqrestore(&view->lock, iflags);
 }
 
 void view_refresh_rect_from_bottom(view_t *view, int x, int y, uint32_t width, uint32_t height)

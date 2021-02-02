@@ -149,6 +149,7 @@
         "cmath": "c",
         "render.h": "c",
         "udev.h": "c",
-        "view.h": "c"
+        "view.h": "c",
+        "ios": "c"
     }
 }

@@ -5,6 +5,7 @@
 #include <sys/vmm.h>
 
 static xtk_timer_t *xtk_window_find_timer(xtk_window_t *window, uint32_t timer_id);
+static int xtk_window_destroy_timer_all(xtk_window_t *window);
 
 static xtk_window_style_t __xtk_window_style_defult = {
     1, 
@@ -18,6 +19,34 @@ static xtk_window_style_t __xtk_window_style_defult = {
     XTK_RGB(25, 25, 25),      // text
     XTK_RGB(118, 118, 118),
 };
+
+void xtk_window_calc_content_size(xtk_window_t *window, int vwidth, int vheight, int *cwidth, int *cheight)
+{
+    int content_width, content_height;
+    if (window->type == XTK_WINDOW_TOPLEVEL) {
+        content_width = vwidth - window->style->border_thick * 2;
+        content_height = vheight - window->style->border_thick * 2 - window->style->navigation_height;
+    } else {
+        content_width = vwidth;
+        content_height = vheight;
+    }
+    *cwidth = content_width;
+    *cheight = content_height;
+}
+
+void xtk_window_calc_view_size(xtk_window_t *window, int cwidth, int cheight, int *vwidth, int *vheight)
+{
+    int view_width, view_height;
+    if (window->type == XTK_WINDOW_TOPLEVEL) {
+        view_width = cwidth + window->style->border_thick * 2;
+        view_height = cheight + window->style->border_thick * 2 + window->style->navigation_height;
+    } else {
+        view_width = cwidth;
+        view_height = cheight;
+    }
+    *vwidth = view_width;
+    *vheight = view_height;
+}
 
 /**
  * width和height是整个视图的大小，所以，求创窗口大小时需要进行计算。
@@ -35,15 +64,7 @@ static int xtk_window_change_size(xtk_window_t *window, int width, int height)
     }
     
     int content_width, content_height;
-    
-    if (window->type == XTK_WINDOW_TOPLEVEL) {
-        content_width = width - window->style->border_thick * 2;
-        content_height = height - window->style->border_thick * 2 - window->style->navigation_height;
-    } else {
-        content_width = width;
-        content_height = height;
-    }
-
+    xtk_window_calc_content_size(window, width, height, &content_width, &content_height);
     window->content_width = content_width;
     window->content_height = content_height;
 
@@ -72,13 +93,8 @@ static int xtk_window_change_size(xtk_window_t *window, int width, int height)
 int xtk_window_resize(xtk_window_t *window, int width, int height)
 {
     int win_width = 0, win_height = 0;
-    if (window->type == XTK_WINDOW_TOPLEVEL) {
-        win_width = width + window->style->border_thick * 2;
-        win_height = height + window->style->border_thick * 2 + window->style->navigation_height;
-    } else {
-        win_width = width;
-        win_height = height;
-    }
+    xtk_window_calc_view_size(window, width, height, &win_width, &win_height);
+    uview_repair_size(&win_width, &win_height);
     return uview_resize(window->spirit.view, win_width, win_height);
 }
 
@@ -242,7 +258,7 @@ void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
         }
         break;
     case UVIEW_MSG_RESIZE:
-        /* 响应大小调整 */
+        /* 响应大小调整, width和height是视图的大小 */
         xtk_window_change_size(window, uview_msg_get_resize_width(msg),
             uview_msg_get_resize_height(msg));
         /* 调整窗口后，鼠标位置发生了改变，需要做一次位置检测 */
@@ -784,6 +800,10 @@ int xtk_window_destroy(xtk_window_t *window)
 {
     if (!window)
         return -1;
+    
+    /* 销毁资源 */
+    xtk_window_destroy_timer_all(window);
+    xtk_window_munmap(window);
 
     if (xtk_window_view_setdown(window) < 0)
         return -1;
@@ -985,12 +1005,15 @@ int xtk_window_set_default_size(xtk_window_t *window, int width, int height)
 {
     if (!window)
         return -1;
-    window->content_width = width;
-    window->content_height = height;
+    int vwidth, vheight; // 视图大小
+    xtk_window_calc_view_size(window, width, height, &vwidth, &vheight);
+    uview_repair_size(&vwidth, &vheight);
+    xtk_window_calc_content_size(window, vwidth, vheight, &width, &height);
+    
     // 调整精灵的大小
     if (xtk_window_resize(window, width, height) < 0)
         return -1;
-    if (xtk_window_change_size(window, width, height) < 0)
+    if (xtk_window_change_size(window, vwidth, vheight) < 0)
         return -1;
     return 0;
 }
@@ -1041,17 +1064,19 @@ int xtk_window_resize_to_screen(xtk_window_t *window)
 {
     if (!window)
         return -1;
-    int width = 0;
-    int height = 0;
-    if (xtk_window_get_screen(window, &width, &height) < 0) {
+    int vwidth = 0;
+    int vheight = 0;
+    if (xtk_window_get_screen(window, &vwidth, &vheight) < 0) {
         printf("%s: get screen size failed!\n", __func__);
         return -1;
     }
-    if (!width || !height) {
+    if (!vwidth || !vheight) {
         printf("%s: get screen size error!\n", __func__);
         return -1;
     }
-    return xtk_window_resize(window, width, height);
+    int cwidth = 0, cheight = 0;
+    xtk_window_calc_content_size(window, vwidth, vheight, &cwidth, &cheight);
+    return xtk_window_resize(window, cwidth, cheight);
 }
 
 int xtk_window_load_mouse_cursors(xtk_window_t *window, char *pathname)
@@ -1162,6 +1187,19 @@ int xtk_window_restart_timer(xtk_window_t *window, uint32_t timer_id)
     if (!timer)
         return -1;
     return uview_restart_timer(window->spirit.view, timer_id, timer->interval);
+}
+
+static int xtk_window_destroy_timer_all(xtk_window_t *window)
+{
+    if (!window)
+        return -1;
+    xtk_timer_t *timer, *timer_next;
+    list_for_each_owner_safe (timer, timer_next, &window->timer_list_head, list) {
+        list_del_init(&timer->list);
+        uview_del_timer(window->spirit.view, timer->timer_id);
+        xtk_timer_destroy(timer);
+    }
+    return 0;
 }
 
 static xtk_timer_t *xtk_window_find_timer(xtk_window_t *window, uint32_t timer_id)
