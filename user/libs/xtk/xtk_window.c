@@ -27,8 +27,12 @@ static int xtk_window_change_size(xtk_window_t *window, int width, int height)
     if (!window)
         return -1;
     xtk_spirit_t *spirit = &window->spirit;
-    
-    printf("xtk window change size: %d %d\n", width, height);
+    // 如果大小和原来一样，那么就不用调整大小
+    // printf("xtk window change size: from %d %d to %d %d\n", spirit->width, spirit->height, width, height);
+    if (width == spirit->width && height == spirit->height) {
+        // printf("xtk window change size: from %d %d to %d %d same, just return.\n", spirit->width, spirit->height, width, height);
+        return 0;
+    }
     
     int content_width, content_height;
     
@@ -984,7 +988,10 @@ int xtk_window_set_default_size(xtk_window_t *window, int width, int height)
     window->content_width = width;
     window->content_height = height;
     // 调整精灵的大小
-    xtk_window_resize(window, width, height);
+    if (xtk_window_resize(window, width, height) < 0)
+        return -1;
+    if (xtk_window_change_size(window, width, height) < 0)
+        return -1;
     return 0;
 }
 

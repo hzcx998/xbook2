@@ -66,10 +66,19 @@ static void frambuffer_init()
     printf("xtk win done!\n");
     
     xtk_window_set_default_size(XTK_WINDOW(gWindow), W, H);
+    
     //xtk_window_set_position(XTK_WINDOW(gWindow), XTK_WIN_POS_CENTER);
     
     xtk_spirit_show(gWindow);
-
+    
+    #ifdef XTK_USE_MMAP
+    assert(!xtk_window_mmap(XTK_WINDOW(gWindow))); 
+    gSurface = xtk_window_get_mmap_surface(XTK_WINDOW(gWindow));
+    
+    #else
+    gSurface = xtk_window_get_surface(XTK_WINDOW(gWindow));
+    #endif
+            
     xtk_signal_connect(gWindow, "motion_notify", mouse_motion, NULL);
     #endif
 }
@@ -143,6 +152,7 @@ int main(int argc, char *argv[])
     #if 0
     surface_wrap(surface, gSurface->pixels, W, H);
     #else
+    surface_wrap(surface, (color_t *)gSurface->pixels, W, H);
     #endif
     while (xtk_poll())
     {
@@ -162,20 +172,6 @@ int main(int argc, char *argv[])
         }
         #else
         #endif
-        if (!gSurface) {
-            #ifdef XTK_USE_MMAP
-            assert(!xtk_window_mmap(XTK_WINDOW(gWindow))); 
-            #ifndef XTK_USE_POPUP
-            gSurfaceMmap = xtk_window_get_mmap_surface(XTK_WINDOW(gWindow));
-            #endif
-            #endif
-            #ifdef XTK_USE_POPUP
-                gSurface = xtk_window_get_mmap_surface(XTK_WINDOW(gWindow));            
-            #else
-                gSurface = xtk_window_get_surface(XTK_WINDOW(gWindow));
-            #endif
-            surface_wrap(surface, (color_t *)gSurface->pixels, W, H);
-        }
         sample(surface, (float)fps);
         #if 0
         SDL_UpdateWindowSurface(gWindow);
@@ -208,7 +204,7 @@ int main(int argc, char *argv[])
         fps =  1000000.0f / mtime;
         #endif
     }
-    printf("xtk exit\n");
+    printf("gato exit\n");
 exit_main:
     frambuffer_close();
 #endif
