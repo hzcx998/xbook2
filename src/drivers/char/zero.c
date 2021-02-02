@@ -10,18 +10,18 @@
 #include <sys/ioctl.h>
 #include <stdio.h>
 
-#define DRV_NAME "virt-null"
+#define DRV_NAME "virt-zero"
 #define DRV_VERSION "0.1"
 
-#define DEV_NAME "null"
+#define DEV_NAME "zero"
 
 // #define DEBUG_DRV
 
-iostatus_t null_read(device_object_t *device, io_request_t *ioreq)
+iostatus_t zero_read(device_object_t *device, io_request_t *ioreq)
 {
     iostatus_t status = IO_SUCCESS;
 #ifdef DEBUG_DRV
-    keprint(PRINT_DEBUG "null_read: data:\n");
+    keprint(PRINT_DEBUG "zero_read: data:\n");
 #endif
     int len = ioreq->parame.read.length;
     unsigned char *data = (unsigned char *) ioreq->user_buffer;
@@ -36,25 +36,7 @@ iostatus_t null_read(device_object_t *device, io_request_t *ioreq)
     return status;
 }
 
-iostatus_t null_write(device_object_t *device, io_request_t *ioreq)
-{
-    iostatus_t status = IO_SUCCESS;
-#ifdef DEBUG_DRV
-    keprint(PRINT_DEBUG "null_write: data:\n");
-    int len = ioreq->parame.write.length;
-    unsigned char *data = (unsigned char *) ioreq->user_buffer;
-    while (len-- > 0) {
-        keprint("%x ", *data);
-        data++;
-    }
-#endif
-    ioreq->io_status.status = status;
-    ioreq->io_status.infomation = ioreq->parame.write.length;
-    io_complete_request(ioreq);
-    return status;
-}
-
-static iostatus_t null_enter(driver_object_t *driver)
+static iostatus_t zero_enter(driver_object_t *driver)
 {
     iostatus_t status;
     
@@ -62,7 +44,7 @@ static iostatus_t null_enter(driver_object_t *driver)
     /* 初始化一些其它内容 */
     status = io_create_device(driver, 0, DEV_NAME, DEVICE_TYPE_VIRTUAL_CHAR, &devobj);
     if (status != IO_SUCCESS) {
-        keprint(PRINT_ERR "null_enter: create device failed!\n");
+        keprint(PRINT_ERR "zero_enter: create device failed!\n");
         return status;
     }
     /* neighter io mode */
@@ -70,7 +52,7 @@ static iostatus_t null_enter(driver_object_t *driver)
     return status;
 }
 
-static iostatus_t null_exit(driver_object_t *driver)
+static iostatus_t zero_exit(driver_object_t *driver)
 {
     /* 遍历所有对象 */
     device_object_t *devobj, *next;
@@ -82,32 +64,31 @@ static iostatus_t null_exit(driver_object_t *driver)
     return IO_SUCCESS;
 }
 
-iostatus_t null_driver_func(driver_object_t *driver)
+iostatus_t zero_driver_func(driver_object_t *driver)
 {
     iostatus_t status = IO_SUCCESS;
     
     /* 绑定驱动信息 */
-    driver->driver_enter = null_enter;
-    driver->driver_exit = null_exit;
+    driver->driver_enter = zero_enter;
+    driver->driver_exit = zero_exit;
 
-    driver->dispatch_function[IOREQ_READ] = null_read;
-    driver->dispatch_function[IOREQ_WRITE] = null_write;
+    driver->dispatch_function[IOREQ_READ] = zero_read;
 
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);
 #ifdef DEBUG_DRV
-    keprint(PRINT_DEBUG "null_driver_func: driver name=%s\n",
+    keprint(PRINT_DEBUG "zero_driver_func: driver name=%s\n",
         driver->name.text);
 #endif
     
     return status;
 }
 
-static __init void null_driver_entry(void)
+static __init void zero_driver_entry(void)
 {
-    if (driver_object_create(null_driver_func) < 0) {
+    if (driver_object_create(zero_driver_func) < 0) {
         keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 
-driver_initcall(null_driver_entry);
+driver_initcall(zero_driver_entry);

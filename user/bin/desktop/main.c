@@ -64,20 +64,6 @@ void desktop_setup(xtk_spirit_t *spirit)
     
 }
 
-
-
-void desktop_proc(xtk_spirit_t *spirit, uview_msg_t *msg)
-{
-    int type = uview_msg_get_type(msg);
-    //printf("msg: %d\n", type);
-    switch (type) {
-    case UVIEW_MSG_RESIZE: // 收到调整大小消息，再显示精灵
-        desktop_setup(spirit);
-        break;
-    default:
-        break;
-    }
-}
 int open_desktop()
 {
     if (xtk_init(NULL, NULL) < 0) {
@@ -95,13 +81,11 @@ int open_desktop()
     assert(xtk_window_resize_to_screen(XTK_WINDOW(screen_window)) == 0);
     // 禁止窗口大小调整
     xtk_window_set_resizable(XTK_WINDOW(screen_window), false);
-    xtk_window_set_routine(XTK_WINDOW(screen_window), desktop_proc);
-    
-    xtk_main();
+    desktop_setup(screen_window);
+
     while (xtk_poll()) {
         /* code */
     }
-    
     return 0;
 }
 
@@ -379,7 +363,6 @@ void win_thread()
     dstrect.y = 150;
     xtk_surface_blit(surface1, &srcrect, surface0, &dstrect);
 
-
     xtk_window_update(XTK_WINDOW(win0), 0, 0, win0->width, win0->height);
 
     xtk_container_add(XTK_CONTAINER(win0), btn10);
@@ -393,8 +376,6 @@ void win_thread()
     xtk_window_paint(XTK_WINDOW(win0));
 
     xtk_window_add_timer(XTK_WINDOW(win0), 1000, win_timeout, NULL);
-    
-
     #if 0
     xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout2, NULL);
     xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout, NULL);
@@ -402,6 +383,5 @@ void win_thread()
     xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout, NULL);
     xtk_window_add_timer(XTK_WINDOW(win0), 20, win_timeout2, NULL);
     #endif
-
     xtk_main();
 }
