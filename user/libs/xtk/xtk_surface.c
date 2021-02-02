@@ -343,6 +343,7 @@ void xtk_surface_blit_scaled(xtk_surface_t *src, xtk_rect_t *srcrect, xtk_surfac
         dstrect->w = min(dstrect->w, dst->w);
         dstrect->h = min(dstrect->h, dst->h);
     }
+    /* TODO: 添加对矩形区域的判断，目前只做了整个表面的缩放 */
     __xtk_surface_scaled((unsigned char *) src->pixels, srcrect->w, srcrect->h,
         (unsigned char *) dst->pixels, dstrect->w, dstrect->h, 4);
 }

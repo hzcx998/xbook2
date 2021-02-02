@@ -114,7 +114,7 @@ int xtk_window_paint_callback(xtk_window_t *window, xtk_win_paint_callback_t cal
 
 uint32_t xtk_window_add_timer(xtk_window_t *window, uint32_t interval, xtk_timer_callback_t function, void *data);
 int xtk_window_remove_timer(xtk_window_t *window, uint32_t timer_id);
-int xtk_window_restart_timer(xtk_window_t *window, uint32_t timer_id);
+int xtk_window_restart_timer(xtk_window_t *window, uint32_t timer_id, int interval);
 
 int xtk_window_mmap(xtk_window_t *window);
 int xtk_window_munmap(xtk_window_t *window);

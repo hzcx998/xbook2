@@ -58,3 +58,4 @@ MODULE      +=  xbrower
 MODULE      +=  desktop
 MODULE      +=  gato
 MODULE      +=  infones
+MODULE      +=  invader

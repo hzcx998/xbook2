@@ -592,12 +592,11 @@ void InfoNES_LoadFrame()
   xtk_window_flip(XTK_WINDOW(window));
   win_fps++;
 
-
 /*
 * 延时计算算法：
 * base = 原始大小
 * distance = max - base
-* max_delay = 10
+* max_delay = MAX_DELAYS
 * single = distance / max_delay
 * coutn = distacne / single
 * delay = max_delay - count
@@ -613,62 +612,6 @@ void InfoNES_LoadFrame()
   // printf("distance:%d, single:%d, countn:%d dealy:%d\n", distance_bytes, single, countn, delay);
   mdelay(delay); // 屏幕越大，延时越小，屏幕越小，延时越大
 }
-
-/**
- * delay := 13
- * N1 = 240* 256=61,440     fps~=75 (NICE)
- * N2 = 1024*768=786,432    fps~=38
- * N3 = N2/N1 = 12.8        N2/N1 ~= 1.98
- * 
- * delay := 10
- * N1 = 240* 256=61,440     fps~=75 (NICE)
- * N2 = 1024*768=786,432    fps~=38
- * N3 = N2/N1 = 12.8        N2/N1 ~= 1.98
- * delay := 5
- * N1 = 240* 256=61,440     fps~=75
- * N2 = 1024*768=786,432    fps~=45
- * N3 = N2/N1 = 12.8        N2/N1 ~= 1.67
- * delay := 0
- * N1 = 240* 256=61,440     fps~=75
- * N2 = 1024*768=786,432    fps~=48 (NICE)
- * N3 = N2/N1 = 12.8        N2/N1 ~= 1.56
- * 
- * distance: 10             fps~=10
- *                          N2/N1 ~= 0.42
- * 
- * 像素差值：724992/ 13 (12.8) = 55768
- * 像素差值：724992/ 10 = 72500
- * 
- * 每个差值对应的是55768个大小。
- * 
- * 大小对应的延时关系
- * 1延时对应的大小改变值：55768
- * 
- * max - base = left
- * left / 13 = single（55768）
- * single（55768） 
- * 
- * 
- * base ：延时10
- * base + 1* cell：9
- * max = base + 10* cell：0
- * 
- * size - base = left
- * left / 10 = single(72500)
- * 
- * count = left / single(72500)
- * 
- * delay = 10 - count
- * 
- * 
- * 延时计算算法：
- * base = 原始大小
- * distance = max - base
- * max_delay = 10
- * single = distance / max_delay
- * coutn = distacne / single
- * delay = max_delay - count
- */
 
 int PollEvent(void)
 {

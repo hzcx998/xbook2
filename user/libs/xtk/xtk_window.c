@@ -292,7 +292,7 @@ void xtk_window_filter_msg(xtk_window_t *window, uview_msg_t *msg)
                     bool timer_restart = timer->callback(spirit, timer_id, timer->calldata);
                     // 返回值为true就继续执行触发定时器
                     if (timer_restart) {
-                        xtk_window_restart_timer(window, timer_id);
+                        xtk_window_restart_timer(window, timer_id, -1);
                     } 
                 }
             }
@@ -1205,14 +1205,16 @@ int xtk_window_remove_timer(xtk_window_t *window, uint32_t timer_id)
     return 0;
 }
 
-int xtk_window_restart_timer(xtk_window_t *window, uint32_t timer_id)
+int xtk_window_restart_timer(xtk_window_t *window, uint32_t timer_id, int interval)
 {
     if (!window)
         return -1;
     xtk_timer_t *timer = xtk_window_find_timer(window, timer_id);
     if (!timer)
         return -1;
-    return uview_restart_timer(window->spirit.view, timer_id, timer->interval);
+    if (interval <= 0)
+        interval = timer->interval;
+    return uview_restart_timer(window->spirit.view, timer_id, interval);
 }
 
 static int xtk_window_destroy_timer_all(xtk_window_t *window)
