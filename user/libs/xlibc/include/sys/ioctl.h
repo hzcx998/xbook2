@@ -35,16 +35,13 @@ extern "C" {
 #define DISKIO_GETOFF    DEVCTL_CODE('d', 4)
 
 /* tty */
-#define TTYIO_CLEAR      CONIO_CLEAR
-#define TTYIO_SCROLL     CONIO_SCROLL
-#define TTYIO_SETCOLOR   CONIO_SETCOLOR
-#define TTYIO_GETCOLOR   CONIO_GETCOLOR
-#define TTYIO_SETPOS     CONIO_SETPOS
-#define TTYIO_GETPOS     CONIO_GETPOS
-#define TTYIO_HOLDER     DEVCTL_CODE('t', 1)
-#define TTYIO_VISITOR    DEVCTL_CODE('t', 2)
-#define TTYIO_DETACH        DEVCTL_CODE('t', 3)
-#define TTYIO_COMBINE       DEVCTL_CODE('t', 4)
+#define TTYIO_CLEAR         CONIO_CLEAR
+#define TTYIO_SCROLL        CONIO_SCROLL
+#define TTYIO_SETCOLOR      CONIO_SETCOLOR
+#define TTYIO_GETCOLOR      CONIO_GETCOLOR
+#define TTYIO_SETPOS        CONIO_SETPOS
+#define TTYIO_GETPOS        CONIO_GETPOS
+#define TTYIO_HOLDER        DEVCTL_CODE('t', 1)
 #define TIOCGPTN            DEVCTL_CODE('t', 5) /* get presudo tty number */
 #define TIOCSPTLCK          DEVCTL_CODE('t', 6) /* set presudo tty lock */
 #define TIOCSFLGS           DEVCTL_CODE('t', 7) /* set flags */

@@ -991,6 +991,7 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
             while (1) {
                 if (!input_even_get(&ext->evbuf, even))
                     break;
+                task_yeild();
             }
         }
     } else {

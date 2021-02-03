@@ -37,9 +37,6 @@
 #define TTYIO_SETPOS        CONIO_SETPOS
 #define TTYIO_GETPOS        CONIO_GETPOS
 #define TTYIO_HOLDER        DEVCTL_CODE('t', 1)
-#define TTYIO_VISITOR       DEVCTL_CODE('t', 2)
-#define TTYIO_DETACH        DEVCTL_CODE('t', 3)
-#define TTYIO_COMBINE       DEVCTL_CODE('t', 4)
 #define TIOCGPTN            DEVCTL_CODE('t', 5) /* get presudo tty number */
 #define TIOCSPTLCK          DEVCTL_CODE('t', 6) /* set presudo tty lock */
 #define TIOCSFLGS           DEVCTL_CODE('t', 7) /* set flags */
@@ -49,6 +46,7 @@
 
 /* tty flags */
 #define TTYFLG_ECHO    0x01
+#define TTYFLG_NOWAIT  0x02
 
 
 /* net */
