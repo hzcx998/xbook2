@@ -158,20 +158,24 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
     device_extension_t *extension = device->device_extension;
     
     iostatus_t status = IO_FAILED;
-    if (extension->public->current_device == extension->device_id) {  /* 可拜访者设备id */
+    // if (extension->public->current_device == extension->device_id) {  /* 可拜访者设备id */
         // get key code from keyboard fifo buf
         uint8_t *buf = ioreq->user_buffer;
         size_t len = ioreq->parame.read.length;
         size_t read_count = 0;
-        if (extension->public->current_device == TTY_DEVICE_RAW) {
-            // 判断是否有数据
-            if (extension->flags & TTYFLG_NOWAIT) {
-                int iolen = fifo_io_len(&extension->fifoio);
-                if (iolen <= 0) {
-                    status = IO_FAILED;
-                    goto end_read;
-                }
+        // 判断是否有数据
+        if (extension->flags & TTYFLG_NOWAIT) {
+            int iolen = fifo_io_len(&extension->fifoio);
+            if (iolen <= 0) {
+                status = IO_FAILED;
+                goto end_read;
             }
+        }
+        // 等待是当前设备
+        while (extension->public->current_device != extension->device_id) {
+            task_yeild();
+        }
+        if (extension->public->current_device == TTY_DEVICE_RAW) {
             while (len > 0) {
                 uint8_t code = fifo_io_get(&extension->fifoio);
                 if (code > 0) {
@@ -188,6 +192,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
         } else {
             /* 前台任务 */
             if (extension->hold_pid == task_current->pid) {
+                
                 while (len > 0) {
                     uint8_t code = fifo_io_get(&extension->fifoio);
                     if (code > 0) {
@@ -208,7 +213,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
             }
         }
         
-    }
+    // }
 end_read:
     ioreq->io_status.status = status;
     /* 调用完成请求 */
@@ -221,10 +226,8 @@ iostatus_t tty_write(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
     iostatus_t status = IO_SUCCESS;
-
     ioreq->io_status.infomation = device_write(extension->con,
         ioreq->user_buffer, ioreq->parame.write.length, ioreq->parame.write.offset);
-    
     ioreq->io_status.status = status;
     /* 调用完成请求 */
     io_complete_request(ioreq);
@@ -240,6 +243,9 @@ iostatus_t tty_devctl(device_object_t *device, io_request_t *ioreq)
     ssize_t retval = 0;
     switch (ioreq->parame.devctl.code)
     {    
+    case TTYIO_SELECT:
+        tty_set_current(extension, *(unsigned long *)arg);
+        break;
     case TTYIO_HOLDER:
         extension->hold_pid = *(unsigned long *) ioreq->parame.devctl.arg;
         break;
@@ -281,7 +287,6 @@ static int tty_process(device_extension_t *extension, int code)
         case KEY_F8:
             {
                 int device_id = code - KEY_F1;
-                keprint("tty: set new visitor %d\n", device_id);
                 tty_set_current(extension, device_id);
             }
             return 0;
@@ -329,7 +334,6 @@ void tty_thread(void *arg)
                                 /* put into fifo buf */
                                 fifo_io_put(&extension->fifoio, event.code);
                                 fifo_io_put(&extension->fifoio, 0); // key down
-                                
                             }
                         }
                     } else {

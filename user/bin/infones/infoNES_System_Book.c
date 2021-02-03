@@ -19,9 +19,16 @@
 #define SOUND_DEVICE "sb16"
 #endif /* CONFIG_SOUND */
 
-#define FPS_TIMEOUT 1000
 
-#define DELAY_MS    0
+#define _USE_XTK_MMAP
+// #define _USE_FPS_CALC
+
+#ifdef _USE_FPS_CALC
+#define FPS_TIMEOUT 1000
+#endif
+
+#define MAX_DELAYS   10
+
 void start_application( char *filename );
 int InfoNES_Load( const char *pszFileName );
 void InfoNES_Main();
@@ -58,8 +65,6 @@ WORD NesPalette[ 64 ] =
 /* For Sound Emulation */
 short final_wave[2048];
 int sound_fd;
-
-#define XTK_USE_MMAP
 
 xtk_spirit_t *window;
 xtk_surface_t *surface;
@@ -99,7 +104,7 @@ int main(int argc, char **argv)
 void exit_application()
 {
     InfoNES_Fin(); /* 结束nes */
-    #ifdef XTK_USE_MMAP
+    #ifdef _USE_XTK_MMAP
     xtk_window_munmap(XTK_WINDOW(window));
     #endif
     xtk_main_quit();
@@ -142,7 +147,7 @@ void start_application( char *filename )
         printf("[infones] create window failed!\n");
         return;
     }
-    #ifdef XTK_USE_MMAP
+    #ifdef _USE_XTK_MMAP
     if (xtk_window_mmap(XTK_WINDOW(window)) < 0) {
         xtk_spirit_destroy(window);
         return;
@@ -170,7 +175,9 @@ void start_application( char *filename )
     /* 设置键盘按键信号 */
     xtk_signal_connect(window, "key_press", win_key_press, NULL);
     xtk_signal_connect(window, "key_release", win_key_release, NULL);
+    #ifdef _USE_FPS_CALC
     xtk_window_add_timer(XTK_WINDOW(window), FPS_TIMEOUT, win_timer, NULL);
+    #endif
     InfoNES_Main();    
   } else {
       printf("[infones] InfoNES_Load failed!\n");
@@ -278,6 +285,7 @@ static bool win_key_release(xtk_spirit_t *spirit, xtk_event_t *event, void *arg)
     return true;
 }
 
+#ifdef _USE_FPS_CALC
 static int win_fps = 0;
 static bool win_timer(xtk_spirit_t *spirit, uint32_t tmid, void *arg)
 {
@@ -289,7 +297,7 @@ static bool win_timer(xtk_spirit_t *spirit, uint32_t tmid, void *arg)
     win_fps = 0;
     return true;    // 需要继续产生
 }
-
+#endif
 /*===================================================================*/
 /*                                                                   */
 /*           LoadSRAM() : Load a SRAM                                */
@@ -598,7 +606,7 @@ void InfoNES_LoadFrame()
     }
   }
   // 调整到窗口surface
-  #ifndef XTK_USE_MMAP
+  #ifndef _USE_XTK_MMAP
   xtk_surface_blit_scaled(tmp_surface, NULL, surface, NULL);
   xtk_window_flip(XTK_WINDOW(window));
   #else
@@ -607,7 +615,9 @@ void InfoNES_LoadFrame()
   xtk_surface_blit_scaled(tmp_surface, NULL, surface, &rect);
   xtk_window_refresh(XTK_WINDOW(window), 0, 0, window->width, window->height);
   #endif
+  #ifdef _USE_FPS_CALC 
   win_fps++;
+  #endif
 /*
 * 延时计算算法：
 * base = 原始大小
@@ -617,7 +627,6 @@ void InfoNES_LoadFrame()
 * coutn = distacne / single
 * delay = max_delay - count
 */
-#define MAX_DELAYS   10
   uint32_t distance_bytes = (window->width, window->height * sizeof(uint32_t)) - (NES_DISP_HEIGHT * NES_DISP_WIDTH * 4);
   uint32_t single = distance_bytes / MAX_DELAYS;
   uint32_t countn = 0;

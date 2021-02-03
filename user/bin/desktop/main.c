@@ -106,7 +106,9 @@ int open_desktop()
 int main(int argc, char *argv[]) 
 {
     // 分离当前的tty和键盘
-    // ioctl(STDIN_FILENO, TTYIO_DETACH, 0);
+    /*unsigned long raw = TTYIO_RAW;
+    ioctl(STDIN_FILENO, TTYIO_SELECT, &raw);
+    */
     if (open_desktop() < 0)
         return -1;
     return 0;

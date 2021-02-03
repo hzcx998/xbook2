@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     print_logo();
 
     /* 启动自行服务 */
-    #if 1
+    #if 0
     char *args[2] = {"desktop", NULL};
     pid = create_process(args, environ, 0);
     #endif
@@ -124,7 +124,9 @@ void readline(char *buf, uint32_t count)
     char *pos = buf;
     while (len < count)
     {
-        read(STDIN_FILENO, pos, 1);
+        if (read(STDIN_FILENO, pos, 1) < 0)
+            continue;
+        
         if (*pos == '\n') {
             *(pos) = '\0'; // 修改成0
             break;

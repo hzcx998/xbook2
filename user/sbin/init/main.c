@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 
 // #define _HAS_LOGIN
+#define _HAS_GRAPH
 
 int main(int argc, char *argv[])
 {
@@ -41,10 +42,25 @@ int main(int argc, char *argv[])
             int _pid;
             _pid = waitpid(-1, &status, 0);    /* wait any child exit */
             if (_pid > 1) {
-                printf("[INIT]: process[%d] exit with status %d.\n", _pid, status);
+                printf("initd: process[%d] exit with status %d.\n", _pid, status);
             }
         }
     }
+
+    #ifdef _HAS_GRAPH
+    pid_t g_pid =  fork();
+    if (g_pid < 0) {
+        printf("initd: fork graph process error! stop service.\n");
+        close(tty2);
+        close(tty1);
+        close(tty0);
+        return -1;
+    } else if (!g_pid) { // 子进程执行应用程序
+        // 执行图形
+        exit(execv("/usr/desktop", NULL));
+    } // 父进程执行shell
+    #endif
+
     #ifdef _HAS_LOGIN
     pid = getpid();
     ioctl(tty0, TTYIO_HOLDER, &pid);
@@ -53,5 +69,6 @@ int main(int argc, char *argv[])
     #else
     exit(execv("/bin/sh", NULL));
     #endif
+
     return 0;
 }

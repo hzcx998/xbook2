@@ -37,12 +37,13 @@
 #define TTYIO_SETPOS        CONIO_SETPOS
 #define TTYIO_GETPOS        CONIO_GETPOS
 #define TTYIO_HOLDER        DEVCTL_CODE('t', 1)
+#define TTYIO_SELECT        DEVCTL_CODE('t', 2)
 #define TIOCGPTN            DEVCTL_CODE('t', 5) /* get presudo tty number */
 #define TIOCSPTLCK          DEVCTL_CODE('t', 6) /* set presudo tty lock */
 #define TIOCSFLGS           DEVCTL_CODE('t', 7) /* set flags */
 #define TIOCGFLGS           DEVCTL_CODE('t', 8) /* get flags */
 #define TIOCGFG             DEVCTL_CODE('t', 9) /* get front group task */
-
+#define TTYIO_RAW           7
 
 /* tty flags */
 #define TTYFLG_ECHO    0x01

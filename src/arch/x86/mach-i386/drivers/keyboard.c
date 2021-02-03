@@ -497,7 +497,6 @@ typedef struct _device_extension {
 	int	column;		/* 数据位于哪一列 */
 
     fifo_io_t fifoio;
-    unsigned int keycode;       /* 解析出来的键值 */
     input_even_buf_t evbuf;     /* 事件缓冲区 */
     uint32_t flags;
     uint32_t opened;
@@ -979,6 +978,7 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
     if (even && ioreq->parame.read.length == sizeof(input_event_t)) {
         
         if (ext->flags & DEV_NOWAIT) {
+            // 解析
             if (input_even_get(&ext->evbuf, even) < 0) {
                 status = IO_FAILED;
             } else {
@@ -989,6 +989,7 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
             }
         } else {
             while (1) {
+                // 解析
                 if (!input_even_get(&ext->evbuf, even))
                     break;
                 task_yeild();
@@ -1062,8 +1063,6 @@ void kbd_thread(void *arg) {
             keprint(PRINT_DEBUG "key even set: type=%d code=%x value=%d\n", e.type, e.code, e.value);
             keprint(PRINT_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
 #endif
-            /* 解析成输入数据并放到缓冲区中 */
-            ext->keycode = key;
 #ifdef DEBUG_DRV
         keprint(PRINT_DEBUG "kbd_thread: key:%c\n", key);
 #endif
@@ -1091,7 +1090,6 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
     devext->device_object = devobj;
 
     devext->irq = IRQ1;
-    devext->keycode = 0;
     devext->flags = 0;
     devext->opened = 0;
     
