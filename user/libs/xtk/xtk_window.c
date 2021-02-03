@@ -71,9 +71,12 @@ static int xtk_window_change_size(xtk_window_t *window, int width, int height)
         */
         return 0;
     }
-
+    
     window->content_width = content_width;
     window->content_height = content_height;
+
+    if (xtk_window_mmap_resize(window, width, height) < 0) /* 尝试调整映射窗口大小 */
+        return -1;
 
     // 调整窗口精灵大小
     xtk_spirit_reset_size(spirit, content_width, content_height);
@@ -1271,5 +1274,25 @@ int xtk_window_munmap(xtk_window_t *window)
     if (!munmap(window->mmap_surface.pixels, window->mmap_surface.w * 
         window->mmap_surface.h * sizeof(xtk_color_t)))
         xtk_surface_init(&window->mmap_surface, 0, 0, NULL);
+    return 0;
+}
+
+int xtk_window_mmap_resize(xtk_window_t *window, int width, int height)
+{
+    if (!window)
+        return -1;
+    if (!window->mmap_surface.pixels) //没有映射过就返回0，不算做失败，只是不做后面的处理而已
+        return 0;
+    // 重新映射
+    size_t view_size = width * height * sizeof(xtk_color_t);
+    void *addr = mmap(window->spirit.view, view_size, 0);
+    if (addr == (void *) -1)
+        return -1;
+    // 取消之前的映射
+    if (xtk_window_munmap(window) < 0) {
+        munmap(addr, view_size);
+        return -1;
+    }
+    xtk_surface_init(&window->mmap_surface, width, height, addr);
     return 0;
 }

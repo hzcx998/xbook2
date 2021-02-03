@@ -288,29 +288,29 @@ void xtk_surface_blit(xtk_surface_t *src, xtk_rect_t *srcrect, xtk_surface_t *ds
     }
 }
 
-static void __xtk_surface_scaled(unsigned char *src_buf, int src_w, int src_h, 
-        unsigned char *dst_buf, int dst_w, int dst_h, 
-        int num_channels)
+void xtk_surface_blit_scaled_lower(xtk_surface_t *src, xtk_rect_t *srcrect, xtk_surface_t *dst, xtk_rect_t *dstrect)
 {
-    int bitcount = num_channels * 8;
-
-    //原图像缓存
+    unsigned char *src_buf = (unsigned char *) src->pixels;
+    unsigned char *dst_buf = (unsigned char *) dst->pixels;
+    int bitcount = 4 * 8;
     // int src_bufsz = src_w * num_channels * src_h;
-    int src_linesz = bitcount * src_w / 8;
+    int src_linesz = bitcount * src->w / 8;
 
     // int des_bufsz = ((dst_w * bitcount + 31) / 32) * 4 * dst_h;
-    int des_linesz = ((dst_w * bitcount + 31) / 32) * 4;
-    double rate_h = (double)src_h / dst_h;
-    double rate_w = (double)src_w / dst_w;
+    int des_linesz = ((dst->w * bitcount + 31) / 32) * 4;
+    double rate_h = (double)srcrect->h / dstrect->h;
+    double rate_w = (double)srcrect->w / dstrect->w;
     int i, j;
 
-    for (i = 0; i < dst_h; i++) {
+    for (i = 0; i < dstrect->h; i++) {
         //选取最邻近的点
-        int tsrc_h = (int)(rate_h * i + 0.5);
-        for (j = 0; j < dst_w; j++)
-        {
-            int tsrc_w = (int)(rate_w * j + 0.5);
-            memcpy(&dst_buf[i * des_linesz] + j * bitcount / 8,&src_buf[tsrc_h * src_linesz] + tsrc_w * bitcount / 8,bitcount / 8);
+        int tsrc_h = (int)(rate_h * (i + srcrect->y) + 0.5); // src_y
+        for (j = 0; j < dstrect->w; j++) {
+            int tsrc_w = (int)(rate_w * (j + srcrect->x) + 0.5);   // src_x
+            // copy pixels
+            memcpy(&dst_buf[(i + dstrect->y) * des_linesz] + (j + dstrect->x) * bitcount / 8,
+                &src_buf[tsrc_h * src_linesz] + tsrc_w * bitcount / 8,
+                bitcount / 8);
         }
     }
 }
@@ -330,6 +330,14 @@ void xtk_surface_blit_scaled(xtk_surface_t *src, xtk_rect_t *srcrect, xtk_surfac
     } else {
         srcrect->w = min(srcrect->w, src->w);
         srcrect->h = min(srcrect->h, src->h);
+        if (srcrect->x < 0)
+            srcrect->x = 0;
+        if (srcrect->y < 0)
+            srcrect->y = 0;
+        if (srcrect->x >= src->w)
+            return;
+        if (srcrect->y >= src->h)
+            return;
     }
     // 处理dst内部矩形
     xtk_rect_t _dstrect;
@@ -342,8 +350,14 @@ void xtk_surface_blit_scaled(xtk_surface_t *src, xtk_rect_t *srcrect, xtk_surfac
     } else {
         dstrect->w = min(dstrect->w, dst->w);
         dstrect->h = min(dstrect->h, dst->h);
+        if (dstrect->x < 0)
+            dstrect->x = 0;
+        if (dstrect->y < 0)
+            dstrect->y = 0;
+        if (dstrect->x >= dst->w)
+            return;
+        if (dstrect->y >= dst->h)
+            return;
     }
-    /* TODO: 添加对矩形区域的判断，目前只做了整个表面的缩放 */
-    __xtk_surface_scaled((unsigned char *) src->pixels, srcrect->w, srcrect->h,
-        (unsigned char *) dst->pixels, dstrect->w, dstrect->h, 4);
+    xtk_surface_blit_scaled_lower(src, srcrect, dst, dstrect);
 }

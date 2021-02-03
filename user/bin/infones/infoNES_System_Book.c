@@ -59,6 +59,8 @@ WORD NesPalette[ 64 ] =
 short final_wave[2048];
 int sound_fd;
 
+#define XTK_USE_MMAP
+
 xtk_spirit_t *window;
 xtk_surface_t *surface;
 xtk_surface_t *tmp_surface;
@@ -97,7 +99,9 @@ int main(int argc, char **argv)
 void exit_application()
 {
     InfoNES_Fin(); /* 结束nes */
-
+    #ifdef XTK_USE_MMAP
+    xtk_window_munmap(XTK_WINDOW(window));
+    #endif
     xtk_main_quit();
     exit(-1);   /* 退出进程 */
 }
@@ -138,20 +142,26 @@ void start_application( char *filename )
         printf("[infones] create window failed!\n");
         return;
     }
-    printf("[infones] create window done!\n");
+    #ifdef XTK_USE_MMAP
+    if (xtk_window_mmap(XTK_WINDOW(window)) < 0) {
+        xtk_spirit_destroy(window);
+        return;
+    }
+    surface = xtk_window_get_mmap_surface(XTK_WINDOW(window));
+    #else
     surface = xtk_window_get_surface(XTK_WINDOW(window));
+    #endif
     if (!surface) {
         printf("[infones] get window surface failed!\n");
         return;
     }
+    
     tmp_surface = xtk_surface_create(NES_DISP_WIDTH, NES_DISP_HEIGHT);
     if (!tmp_surface) {
         printf("[infones] create tmp surface failed!\n");
         return;
     }
 
-    printf("[infones] get window surface done! %d %d\n", surface->w, surface->h);
-    
     /* 设置允许调整的最小大小 */
     xtk_spirit_set_size_request(window, NES_DISP_WIDTH, NES_DISP_HEIGHT);
     /* 设置窗口界面 */
@@ -588,10 +598,16 @@ void InfoNES_LoadFrame()
     }
   }
   // 调整到窗口surface
+  #ifndef XTK_USE_MMAP
   xtk_surface_blit_scaled(tmp_surface, NULL, surface, NULL);
   xtk_window_flip(XTK_WINDOW(window));
+  #else
+  xtk_rect_t rect;
+  xtk_rect_init(&rect, window->x, window->y, window->width, window->height);
+  xtk_surface_blit_scaled(tmp_surface, NULL, surface, &rect);
+  xtk_window_refresh(XTK_WINDOW(window), 0, 0, window->width, window->height);
+  #endif
   win_fps++;
-
 /*
 * 延时计算算法：
 * base = 原始大小
@@ -601,8 +617,8 @@ void InfoNES_LoadFrame()
 * coutn = distacne / single
 * delay = max_delay - count
 */
-#define MAX_DELAYS   15
-  uint32_t distance_bytes = (surface->w * surface->h * sizeof(uint32_t)) - (NES_DISP_HEIGHT * NES_DISP_WIDTH * 4);
+#define MAX_DELAYS   10
+  uint32_t distance_bytes = (window->width, window->height * sizeof(uint32_t)) - (NES_DISP_HEIGHT * NES_DISP_WIDTH * 4);
   uint32_t single = distance_bytes / MAX_DELAYS;
   uint32_t countn = 0;
   if (single > 0)

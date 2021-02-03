@@ -119,6 +119,7 @@ int xtk_window_restart_timer(xtk_window_t *window, uint32_t timer_id, int interv
 int xtk_window_mmap(xtk_window_t *window);
 int xtk_window_munmap(xtk_window_t *window);
 xtk_surface_t *xtk_window_get_mmap_surface(xtk_window_t *window);
+int xtk_window_mmap_resize(xtk_window_t *window, int width, int height);
 
 xtk_spirit_t *xtk_window_create_simple(char *title, int x, int y, int width, int height);
 int xtk_window_set_position_absolute(xtk_window_t *window, int x, int y);

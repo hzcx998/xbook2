@@ -60,7 +60,7 @@ void desktop_setup(xtk_spirit_t *spirit)
     // 创建子进程
     pid_t pid = fork();
     if (!pid) {
-        #if 0
+        #if 1
         char *_argv[3] = {
             "/usr/infones",
             "/res/nes/mario.nes",
