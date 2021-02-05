@@ -5,18 +5,19 @@
 #include <arch/cpu.h>
 #include <sys/proc.h>
 #include <types.h>
-#include <list.h>
+#include "list.h"
 #include "vmm.h"
-#include "trigger.h"
 #include "timer.h"
 #include "alarm.h"
 #include "pthread.h"
 #include "fs.h"
 #include "msgpool.h"
 #include "spinlock.h"
+#include "exception.h"
+#include "portcomm.h"
 
-/* task state */
-typedef enum task_state {
+
+typedef enum {
     TASK_READY = 0,         /* 进程处于就绪状态 */
     TASK_RUNNING,           /* 进程正在运行中 */
     TASK_BLOCKED,           /* 进程由于某种原因被阻塞 */
@@ -27,24 +28,18 @@ typedef enum task_state {
 } task_state_t;
 
 #define MAX_TASK_NAMELEN 32
-
-/* 栈魔数，用于检测内核栈是否向下越界 */
 #define TASK_STACK_MAGIC 0X19980325
+#define MAX_TASK_STACK_ARG_NR 16
+#define TASK_KERN_STACK_SIZE    8192
 
-/* 栈中保存的最大参数个数 */
-#define MAX_STACK_ARGC 16
+#define USER_INIT_PROC_ID       1
 
-/* 内核栈大小为8kb */
-#define TASK_KSTACK_SIZE    8192
+#define TASK_TIMESLICE_MIN  1
+#define TASK_TIMESLICE_MAX  100
+#define TASK_TIMESLICE_BASE  1
 
-/* init 进程的pid */
-#define INIT_PROC_PID       1
+typedef void (*exit_hook_t)(void *);
 
-/* 时间片界限 */
-#define TASK_MIN_TIMESLICE  1
-#define TASK_MAX_TIMESLICE  100
-
-/* 线程的标志 */
 enum thread_flags {
     THREAD_FLAG_DETACH              = (1 << 0),     /* 线程分离标志，表示自己释放资源 */
     THREAD_FLAG_JOINED              = (1 << 1),     /* 线程被其它线程等待中 */
@@ -52,80 +47,101 @@ enum thread_flags {
     THREAD_FLAG_CANCEL_DISABLE      = (1 << 3),     /* 线程不能被取消 */
     THREAD_FLAG_CANCEL_ASYCHRONOUS  = (1 << 4),     /* 线程收到取消信号时立即退出 */
     THREAD_FLAG_CANCELED            = (1 << 5),     /* 线程已经标记上取消点 */
-    SERVER_RECEVING                 = (1 << 6),     /* 服务器处于接受中 */
-    CLIENT_SENDING                  = (1 << 7),     /* 客户端正在发送中 */
+    THREAD_FLAG_WAITLIST            = (1 << 6),     /* 在等待链表中 */
+    THREAD_FLAG_KERNEL              = (1 << 7),     /* 内核中的线程 */
 };
 
-typedef struct _task {
+/* 本地通信端口表 */
+#define LPC_PORT_NR 8
+typedef struct {
+    void *ports[LPC_PORT_NR];
+} lpc_port_table_t;
+
+#define LPC_PORT_BAD(port)  ((port) < 0 || (port) >= LPC_PORT_NR)
+
+typedef struct {
     unsigned char *kstack;              /* kernel stack, must be first member */
-    task_state_t state;                 /* 任务的状态 */
-    spinlock_t lock;                    /* 保护进程自己的锁 */
-    cpuid_t cpuid;                      /* 进程的cpuid */
-    pid_t pid;                          /* 自己的进程id */
-    pid_t parent_pid;                   /* 父进程id */
+    task_state_t state;
+    spinlock_t lock;
+    cpuid_t cpuid;
+    pid_t pid;                          /* process id */
+    pid_t parent_pid;
     pid_t tgid;                         /* 线程组id：线程属于哪个进程，和pid一样，就说明是主线程，不然就是子线程 */
-    unsigned long flags;                /* 标志 */
-    unsigned long priority;             /* 任务的动态优先级 */
-    unsigned long static_priority;      /* 任务的静态优先级 */
+    unsigned long flags;                
+    char priority;             /* 任务的动态优先级 */
+    char static_priority;      /* 任务的静态优先级 */
     unsigned long ticks;                /* 运行的ticks，当前剩余的timeslice */
     unsigned long timeslice;            /* 时间片，可以动态调整 */
     unsigned long elapsed_ticks;        /* 任务执行总共占用的时间片数 */
-    int exit_status;                    /* 退出时的状态 */
-    char name[MAX_TASK_NAMELEN];        /* 任务的名字 */
-    struct vmm *vmm;                    /* 进程虚拟内存管理 */
-    list_t list;                        /* 处于所在队列的链表 */
+    int exit_status;                    
+    char name[MAX_TASK_NAMELEN];        
+    struct vmm *vmm;                    
+    list_t list;                        /* 处于所在队列的链表，就绪队列，阻塞队列等 */
     list_t global_list;                 /* 全局任务队列，用来查找所有存在的任务 */
-    triggers_t *triggers;               /* 触发器, 内核线程没有触发器 */
-    timer_t *sleep_timer;               /* 休眠时的定时器 */
-    alarm_t alarm;                      /* 闹钟 */
-    long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
+    exception_manager_t exception_manager;         
+    timer_t sleep_timer;               
+    alarm_t alarm;                      
+    long errcode;                       /* 错误码：用户多线程时用来标记每一个线程的错误码 */
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
-    file_man_t *fileman;                /* 文件管理 */
-    msgpool_t *gmsgpool;                /* 任务的图形消息池 */
-    unsigned int stack_magic;           /* 任务的魔数 */
+    file_man_t *fileman;    
+    exit_hook_t exit_hook;  /* 退出调用的钩子函数 */
+    void *exit_hook_arg;
+    lpc_port_table_t port_table;
+    port_comm_t *port_comm;
+    unsigned int stack_magic;
 } task_t;
 
 extern list_t task_global_list;
+extern volatile int task_init_done;
 
-#define GET_TASK_TRAP_FRAME(task) \
+#define TASK_GET_TRAP_FRAME(task) \
         ((trap_frame_t *) (((unsigned char *) (task) + \
-        TASK_KSTACK_SIZE) - sizeof(trap_frame_t)))
+        TASK_KERN_STACK_SIZE) - sizeof(trap_frame_t)))
 
-/* 判断是否在通过个线程组 */
-#define IN_SAME_THREAD_GROUP(a, b) \
+#define TASK_IN_SAME_THREAD_GROUP(a, b) \
         ((a)->tgid == (b)->tgid)
 
-/* 判断任务是否为单线程，也就是主进程 */
-#define IN_SINGAL_THREAD(task) \
-        (((task)->pthread && (atomic_get(&(task)->pthread->thread_count) <= 1))  || \
-        (task)->pthread == NULL)
+#define TASK_IS_KERNEL_THREAD(task) \
+        ((task)->flags & THREAD_FLAG_KERNEL)
 
-/* 检测线程处于取消点 */
-#define CHECK_THREAD_CANCELATION_POTINT(task) \
+/* 判断是用户态进程或者是用户态单线程 */
+#define TASK_IS_SINGAL_THREAD(task) \
+        ((((task)->pthread && \
+        (atomic_get(&(task)->pthread->thread_count) <= 1))  || \
+        (task)->pthread == NULL) && !TASK_IS_KERNEL_THREAD(task))
+
+#define TASK_CHECK_THREAD_CANCELATION_POTINT(task) \
     do { \
         if (!((task)->flags & THREAD_FLAG_CANCEL_DISABLE) && \
             (task)->flags & THREAD_FLAG_CANCELED) { \
             pthread_exit((void *) THREAD_FLAG_CANCELED); \
         } \
     } while (0)
-    
-        
-void init_tasks();
-void kernel_pause();
 
-void task_init(task_t *task, char *name, int priority);
+#define TASK_WAS_STOPPED(task) ((task)->state == TASK_STOPPED)
+
+#define TASK_NOT_READY(task) ((task)->state == TASK_BLOCKED || \
+        (task)->state == TASK_WAITING || \
+        (task)->state == TASK_STOPPED)
+
+#define TASK_ENTER_WAITLIST(task) (task)->flags |= THREAD_FLAG_WAITLIST
+#define TASK_LEAVE_WAITLIST(task) (task)->flags &= ~THREAD_FLAG_WAITLIST
+#define TASK_IN_WAITLIST(task) ((task)->flags & THREAD_FLAG_WAITLIST)
+
+#define TASK_NEED_STATE(__task, __state) while ((__task)->state != __state)
+
+void tasks_init();
+
+void task_init(task_t *task, char *name, uint8_t prio_level);
 void task_free(task_t *task);
+void task_dump(task_t *task);
 
-void dump_task(task_t *task);
+task_t *kern_thread_start(char *name, uint8_t prio_level, task_func_t *func, void *arg);
+void kern_thread_exit(int status);
 
-void make_task_stack(task_t *task, task_func_t *function, void *arg);
-task_t *kthread_start(char *name, int priority, task_func_t *func, void *arg);
-void kthread_exit(int status);
-
-task_t *find_task_by_pid(pid_t pid);
-void task_global_list_add(task_t *task);
-
-void task_activate(task_t *task);
+task_t *task_find_by_pid(pid_t pid);
+void task_add_to_global_list(task_t *task);
+void task_activate_when_sched(task_t *task);
 
 void task_block(task_state_t state);
 void task_unblock(task_t *task);
@@ -134,36 +150,51 @@ void task_yeild();
 void task_set_timeslice(task_t *task, uint32_t timeslice);
 
 #define task_sleep() task_block(TASK_BLOCKED) 
-
 static inline void task_wakeup(task_t *task)
 {
-    if ((task->state == TASK_BLOCKED) || 
-        (task->state == TASK_WAITING) ||
-        (task->state == TASK_STOPPED)) {    
+    if (TASK_NOT_READY(task)) {
+        /* NOTICE: if in a waitlist, must del it. */
+        if (TASK_IN_WAITLIST(task)) {   
+            list_del_init(&task->list);
+        }
         task_unblock(task);
     }
 }
 
+static inline void task_detach(task_t *task)
+{
+    if (TASK_NOT_READY(task)) {
+        /* NOTICE: if in a waitlist, must del it. */
+        if (TASK_IN_WAITLIST(task)) {   
+            list_del_init(&task->list);
+        }
+    }
+}
+
+pid_t task_take_pid();
+void task_rollback_pid();
+void tasks_print();
+void task_start_user();
+unsigned long task_sleep_by_ticks(clock_t ticks);
+int task_count_children(task_t *parent);
+int task_do_cancel(task_t *task);
+pid_t task_get_pid(task_t *task);
+
 #define sys_sched_yeild     task_yeild
-
-task_t *process_create(char *name, char **argv);
-
-pid_t fork_pid();
-void print_task();
-
-void start_user();
-
 pid_t sys_get_pid();
 pid_t sys_get_ppid();
 pid_t sys_get_tid();
 int sys_getver(char *buf, int len);
-
 int sys_tstate(tstate_t *ts, unsigned int *idx);
-unsigned long sys_sleep(unsigned long second);
-unsigned long task_sleep_by_ticks(clock_t ticks);
+unsigned long sys_unid(int id);
 
-void close_one_thread(task_t *thread);
-void close_other_threads(task_t *thread);
-void pthread_exit(void *status);
+static inline void task_exit_hook(task_t *task)
+{
+    if (task->exit_hook) {
+        task->exit_hook(task->exit_hook_arg);
+        task->exit_hook = NULL;
+    }
+}
+
 
 #endif   /* _XBOOK_TASK_H */

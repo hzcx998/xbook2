@@ -8,7 +8,6 @@
 #define KERNEL_FILE_ADDR    0x10000
 
 typedef void (*entry_point_t)();
-void put_char2(char ch);
 
 static int read_file(unsigned char *base, void *buffer, unsigned int offset, unsigned int size)
 {
@@ -19,8 +18,6 @@ static int read_file(unsigned char *base, void *buffer, unsigned int offset, uns
 
 void setup_kernel()
 {
-    print_str("setup kernel.\n"); 
-
     /* 读取文件头 */
     struct Elf32_Ehdr elf_header;
     memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
@@ -36,7 +33,6 @@ void setup_kernel()
         elf_header.e_phnum > 1024 || \
         elf_header.e_phentsize != sizeof(struct Elf32_Phdr)) {
         
-        /* 头文件检测出错 */
         print_str("setup_kernel: kernel file format not elf!\n");
         char *v = (char *)0xb8002;
         *v = 'q';
@@ -45,7 +41,7 @@ void setup_kernel()
     }
 
     struct Elf32_Phdr prog_header;
-    /* 获取程序头起始偏移 */
+
     Elf32_Off prog_header_off = elf_header.e_phoff;
     Elf32_Half prog_header_size = elf_header.e_phentsize;
     #ifdef DEBUG_SETUP
@@ -55,12 +51,11 @@ void setup_kernel()
     print_int(prog_header_size);
     print_str("\n");
     #endif
-    /* 遍历所有程序头 */
+
     unsigned long grog_idx = 0;
     while (grog_idx < elf_header.e_phnum) {
         memset(&prog_header, 0, prog_header_size);
         
-        /* 读取程序头 */
         read_file(file, (void *)&prog_header, prog_header_off, prog_header_size);
 #ifdef DEBUG_SETUP      
         print_str("segment : vma:");
@@ -99,50 +94,9 @@ void setup_kernel()
     entry_point();    /* 跳转到入口执行 */
 }
 
-/**
- * setup_entry - 进入内核前的准备
- */
 void setup_entry()
 {   
-    /* 设置并启动分页机制 */
     setup_paging();
-
-    /* 分析内核文件，并加载到内存 */
     setup_kernel();
-
-    
     print_str("error: kernel shold never be here!\n");
-}
-
-int cx = 0, cy = 0;
-
-/**
- * put_char - 控制台上输出一个字符
- * @console: 控制台
- * @ch: 字符
- */
-void put_char2(char ch)
-{
-
-	char *vram = (char *)(0xb8000 + 
-        (cy * 80 + cx) *2) ;
-
-    *vram++ = ch;
-    *vram++ = 0x07;
-
-    cx = cx + 1;
-    
-    if (cx == 0) {
-        *vram++ = 'E';
-        *vram = 0x05;
-        while (1)
-        {
-            /* code */
-        }
-        
-    }
-    if (cx > 80 - 1) {
-        cx = 0;
-        cy++;
-    }
 }

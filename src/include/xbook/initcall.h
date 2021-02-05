@@ -27,8 +27,8 @@ typedef void (*exitcall_t)(void);
 #define driver_exitcall(fn)		__define_exitcall("0", fn, 0)
 #define filter_exitcall(fn)		__define_exitcall("1", fn, 1)
 
-void do_initcalls(void);
-void do_exitcalls(void);
+void initcalls_exec(void);
+void exitcalls_exec(void);
 
 #ifdef __cplusplus
 }

@@ -43,9 +43,7 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
 #endif
 
 #ifndef __cplusplus
-//#define bool _Bool      //C语言下实现Bool
 #define bool char      
-
 #define true 1
 #define false 0
 #endif

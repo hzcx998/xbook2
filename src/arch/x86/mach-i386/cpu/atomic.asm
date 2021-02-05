@@ -1,55 +1,42 @@
 [section .text]
 [bits 32]
 ;lock 锁定的是内存地址，所以操作对象值必须时内存才行
-
-; void __atomic_add(int *a, int b);
-global __atomic_add
-__atomic_add:
+global mem_atomic_add
+mem_atomic_add:
 	mov eax, [esp + 4]	; a
 	mov ebx, [esp + 8]	; b
-	; 通过lock前缀，让运算时原子运算
 	lock add [eax], ebx	; *a += b
 	ret
-; void __atomic_sub(int *a, int b);
-global __atomic_sub
-__atomic_sub:
-	mov eax, [esp + 4]	; a
-	mov ebx, [esp + 8]	; b
-	; 通过lock前缀，让运算时原子运算
-	lock sub [eax], ebx	; *a -= b
+
+global mem_atomic_sub
+mem_atomic_sub:
+	mov eax, [esp + 4]
+	mov ebx, [esp + 8]
+	lock sub [eax], ebx
 	ret
 
-; void __atomic_inc(int *a);
-global __atomic_inc
-__atomic_inc:
-	mov eax, [esp + 4]	; a
-	; 通过lock前缀，让运算时原子运算
-	lock inc dword [eax]	; ++*a
+global mem_atomic_inc
+mem_atomic_inc:
+	mov eax, [esp + 4]
+	lock inc dword [eax]
 	ret
 	
-
-; void __atomic_dec(int *a);
-global __atomic_dec
-__atomic_dec:
-	mov eax, [esp + 4]	; a
-	; 通过lock前缀，让运算时原子运算
-	lock dec dword [eax]	; --*a
+global mem_atomic_dec
+mem_atomic_dec:
+	mov eax, [esp + 4]
+	lock dec dword [eax]
 	ret
 
-; void __atomic_or(int *a, int b);
-global __atomic_or
-__atomic_or:
-	mov eax, [esp + 4]	; a
-	mov ebx, [esp + 8]	; b
-	; 通过lock前缀，让运算时原子运算
-	lock or [eax], ebx	; *a |= b
+global mem_atomic_or
+mem_atomic_or:
+	mov eax, [esp + 4]
+	mov ebx, [esp + 8]
+	lock or [eax], ebx
 	ret
 
-; void __atomic_and(int *a, int b);
-global __atomic_and
-__atomic_and:
-	mov eax, [esp + 4]	; a
-	mov ebx, [esp + 8]	; b
-	; 通过lock前缀，让运算时原子运算
-	lock and [eax], ebx	; *a &= b
+global mem_atomic_and
+mem_atomic_and:
+	mov eax, [esp + 4]
+	mov ebx, [esp + 8]
+	lock and [eax], ebx
 	ret

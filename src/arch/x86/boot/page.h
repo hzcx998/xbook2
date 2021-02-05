@@ -1,8 +1,8 @@
-#ifndef _SETUP_PAGE_H
-#define _SETUP_PAGE_H
+#ifndef _BOOT_PAGE_H
+#define _BOOT_PAGE_H
 
 /* 分页机制 */
-#define PAGE_DIR_PHY_ADDR 0x201000    /* 内核页目录表地址 */
+#define KERN_PAGE_DIR_PHY_ADDR 0x201000    /* 内核页目录表地址 */
 #define PAGE_TBL_PHY_ADDR 0x202000    /* 内核页表地址 */
 
 /* 页面属性 */
@@ -19,4 +19,4 @@
 
 void setup_paging();
 
-#endif  /* _SETUP_PAGE_H */
+#endif  /* _BOOT_PAGE_H */

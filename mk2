@@ -13,8 +13,8 @@ endif
 
 # images and rom
 IMAGE_DIR	= develop/local
-HDA_VHD		= $(IMAGE_DIR)/c.vhd
-HDB_VHD		= $(IMAGE_DIR)/d.vhd
+HDA_VHD		= $(IMAGE_DIR)/0.vhd
+HDB_VHD		= $(IMAGE_DIR)/1.vhd
 
 HDA_VMDK	= $(IMAGE_DIR)/c-flat.vmdk
 HDB_VMDK	= $(IMAGE_DIR)/d-flat.vmdk

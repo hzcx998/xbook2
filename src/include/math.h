@@ -38,4 +38,21 @@ static inline unsigned long roundup_pow_of_two(unsigned long x)
     return 1UL << fls(x - 1);
 }
 
+static inline int powi(int x, int n)
+{
+    int res = 1;
+    if(n < 0){
+        x = 1 / x;
+        n = -n;
+    }
+    while(n){
+        if(n & 1)
+            res *= x;
+        x *= x;
+        n >>= 1;
+    }
+    return res;
+}
+
+
 #endif /* _XBOOK_MATH_H */

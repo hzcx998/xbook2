@@ -1,7 +1,7 @@
 #ifndef _XBOOK_DRIVER_H
 #define _XBOOK_DRIVER_H
 
-#include <list.h>
+#include <xbook/list.h>
 #include "string.h"
 #include "spinlock.h"
 #include "mutexlock.h"
@@ -50,6 +50,9 @@ enum _io_request_function {
     IOREQ_WRITE,                    /* 设备写入派遣索引 */
     IOREQ_DEVCTL,                   /* 设备控制派遣索引 */
     IOREQ_MMAP,                     /* 设备内存映射派遣索引 */
+    IOREQ_FASTIO,                   /* 设备快速IO派遣索引 */
+    IOREQ_FASTREAD,                 /* 设备快速读取派遣索引 */
+    IOREQ_FASTWRITE,                /* 设备快速写入派遣索引 */
     MAX_IOREQ_FUNCTION_NR
 };
 
@@ -84,10 +87,10 @@ enum _device_object_flags {
     DO_DISPENSE                 = (1 << 2),     /* 分发位 */
 };
 
-typedef struct _drver_extension 
+typedef struct _driver_extension 
 {
     unsigned long unused;
-} drver_extension_t;
+} driver_extension_t;
 
 typedef struct _io_parame {
     union 
@@ -175,6 +178,8 @@ typedef struct _device_object
 
 /* 派遣函数定义 */ 
 typedef iostatus_t (*driver_dispatch_t)(device_object_t *device, io_request_t *ioreq);
+/* 派遣函数定义 */ 
+typedef iostatus_t (*driver_dispatch_fastio_t)(device_object_t *, int , void *);
 
 /* 驱动标准函数定义 */
 typedef iostatus_t (*driver_func_t)(struct _driver_object *driver);
@@ -197,7 +202,7 @@ typedef struct _driver_object
 } driver_object_t;
 
 
-void init_driver_arch();
+void driver_framewrok_init();
 
 iostatus_t io_create_device(
     driver_object_t *driver,
@@ -246,13 +251,15 @@ int io_device_queue_pickup(
     int flags
 );
 
+#define DISKOFF_MAX  (~0UL)
+
 handle_t device_open(char *devname, unsigned int flags);
 int device_close(handle_t handle);
 ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset);
 ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset);
 ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg);
-int device_grow(handle_t handle);
-int device_degrow(handle_t handle);
+int device_incref(handle_t handle);
+int device_decref(handle_t handle);
 void *device_mmap(handle_t handle, size_t length, int flags);
 
 void dump_device_object(device_object_t *device);
@@ -261,7 +268,7 @@ int device_probe_unused(const char *name, char *buf, size_t buflen);
 int io_uninstall_driver(char *drvname);
 
 device_object_t *io_iterative_search_device_by_type(device_object_t *devptr, device_type_t type);
-int sys_devscan(devent_t *de, device_type_t type, devent_t *out);
+int sys_scandev(devent_t *de, device_type_t type, devent_t *out);
 
 /* 事件缓冲区大小，事件个数 */
 #define EVBUF_SIZE        64
@@ -276,5 +283,8 @@ typedef struct _input_even_buf {
 int input_even_init(input_even_buf_t *evbuf);
 int input_even_put(input_even_buf_t *evbuf, input_event_t *even);
 int input_even_get(input_even_buf_t *evbuf, input_event_t *even);
+
+void drivers_print();
+void drivers_print_mini();
 
 #endif   /* _XBOOK_DRIVER_H */

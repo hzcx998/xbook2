@@ -5,7 +5,8 @@
 #include <stddef.h>
 #include <xbook/config.h>
 #include <xbook/bitmap.h>
-#include <list.h>
+#include <xbook/list.h>
+#include <xbook/mutexlock.h>
 #include <const.h>
 
 /*
@@ -55,7 +56,7 @@ typedef struct mem_cache {
     unsigned long object_size;    // group中每个对象的大小
     flags_t flags;              // cache的标志位
     unsigned long object_count;  // 每个group中有多少个对象
-    
+    mutexlock_t mutex;
     char name[MEM_CACHE_NAME_LEN];     // cache的名字
 } mem_cache_t;
 
@@ -70,10 +71,10 @@ typedef struct {
     void *addr;     /* 虚拟地址 */
 } large_mem_object_t;
 
-int init_mem_caches();
+int mem_caches_init();
 
-void *kmalloc(size_t size);
-void kfree(void *object);
+void *mem_alloc(size_t size);
+void mem_free(void *object);
 int ksharink();
 
 int mem_cache_init(mem_cache_t *cache, char *name, size_t size, flags_t flags);

@@ -1,33 +1,26 @@
 #include <assert.h>
 #include <xbook/timer.h>
-#include <xbook/ktime.h>
+#include <sys/walltime.h>
 #include <xbook/task.h>
 #include <xbook/clock.h>
+#include <xbook/safety.h>
 #include <errno.h>
 #include <string.h>
 #include <arch/interrupt.h>
 #include <arch/time.h>
 
-// #define DEBUG_TIMER
-
-LIST_HEAD(timer_list_head);
-
-unsigned long timer_id_next = 1; /* 从1开始，0是无效的id */
-
-/* 下一个超时的值 */
-static clock_t minim_timeout_val = 0;
-
 /* 30day = 30 * 60 * 60 * 24 * HZ */
 #define TIMER_IDLE_TIMEOUT  (2592000 * HZ)
 
-static void timer_idle_handler(unsigned long arg);
-/* 定义idle定时器 */
-static DEFINE_TIMER(timer_idle, TIMER_IDLE_TIMEOUT, 0, timer_idle_handler);
+LIST_HEAD(timer_list_head);
+unsigned long timer_id_next = 1; /* 从1开始，0是无效的id */
+static clock_t minim_timeout_val = 0;
+static timer_t timer_idle;
 
 /* idle定时器超时
  * 重新调整所有定时器的值，所有值都减去timer_ticks（idle除外）
  */
-static void timer_idle_handler(unsigned long arg)
+static void timer_idle_handler(timer_t *timer_self, void *arg)
 {
     clock_t dt = timer_idle.timeout;
     timer_ticks -= dt;
@@ -36,98 +29,91 @@ static void timer_idle_handler(unsigned long arg)
         if (tmp != &timer_idle)
             tmp->timeout -= dt;
     }
-    timer_add(&timer_idle); // add idle again
-    #ifdef DEBUG_TIMER 
-    printk(KERN_NOTICE "[timer]: timer idle timeout!\n");
-    #endif
+    timer_add(&timer_idle);
 }
 
 void timer_init(
     timer_t *timer,
     unsigned long timeout,
-    unsigned long arg,
+    void *arg,
     timer_callback_t callback)
 {
-    INIT_LIST_HEAD(&timer->list);
+    list_init(&timer->list);
     timer->timeout = timer_ticks + timeout;
     timer->arg = arg;
     timer->id = timer_id_next++;
     timer->callback = callback;
 }
 
-/**
- * 将定时器按超时点进行排序，插入到合适的位置，从小到大插入排序
- * 
- */
 void timer_add(timer_t *timer)
 {
     unsigned long flags;
-    save_intr(flags);
-    if (!timer->id) /* 无效id，重新分配 */
+    interrupt_save_and_disable(flags);
+    if (!timer->id)
         timer->id = timer_id_next++;
-    /* 定时器必须不在队列中 */
-    ASSERT(!list_find(&timer->list, &timer_list_head));
-    
-    if (list_empty(&timer_list_head)) { // null list, add to tail    
+    assert(!list_find(&timer->list, &timer_list_head));
+    if (list_empty(&timer_list_head)) {    
         list_add_tail(&timer->list, &timer_list_head);
         minim_timeout_val = timer->timeout;
-        #ifdef DEBUG_TIMER 
-        printk("[timer]: timer list is null, timeout %d - %x add to tail!\n", timer->timeout, timer->timeout);
-        #endif /* DEBUG_TIMER */
     } else {
-        /* 插入最前面或者中间 */
         timer_t *first = list_first_owner(&timer_list_head, timer_t, list);
-        if (timer->timeout < first->timeout) { // add to head
+        if (timer->timeout < first->timeout) {
             list_add(&timer->list, &timer_list_head);
             minim_timeout_val = timer->timeout;
-            #ifdef DEBUG_TIMER 
-            printk("[timer]: timer is early, timeout %d add to head!\n", timer->timeout);
-            #endif /* DEBUG_TIMER */
-        } else {    // add to middle
+        } else {
             timer_t *tmp;
             list_for_each_owner (tmp, &timer_list_head, list) {
                 if (timer->timeout >= tmp->timeout) {
                     list_add_after(&timer->list, &tmp->list);
-                    #ifdef DEBUG_TIMER 
-                    printk("[timer]: timer is normal, timeout %d add to middle!\n", timer->timeout);
-                    #endif /* DEBUG_TIMER */
                     break;
                 }
             }
         }
     }
-    /* 根据超时的时间点插入到对应的位置 */
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 void timer_del(timer_t *timer)
 {
     unsigned long flags;
-    save_intr(flags);
-    /* 定时器必须在队列中 */
-    ASSERT(list_find(&timer->list, &timer_list_head));
+    interrupt_save_and_disable(flags);
+    assert(list_find(&timer->list, &timer_list_head));
     list_del(&timer->list);
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
 int timer_alive(timer_t *timer)
 {
     int alive = 0; 
     unsigned long flags;
-    save_intr(flags);
-    /* 定时器必须在队列中 */
+    interrupt_save_and_disable(flags);
     if (list_find(&timer->list, &timer_list_head))
         alive = 1;
-    restore_intr(flags);
+    interrupt_restore_state(flags);
     return alive;
 }
 
-void timer_mod(timer_t *timer, unsigned long timeout)
+void timer_modify(timer_t *timer, unsigned long timeout)
 {
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_and_disable(flags);
     timer->timeout = timer_ticks + timeout;
-    restore_intr(flags);
+    interrupt_restore_state(flags);
+}
+
+timer_t *timer_find(unsigned long id)
+{
+    timer_t *timer, *tmr_find = NULL;
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
+    list_for_each_owner (timer, &timer_list_head, list) {
+        if (timer->id == id) {
+            tmr_find = timer;
+            break;
+        }
+    }
+    interrupt_restore_state(flags);
+    return tmr_find;
 }
 
 int timer_cancel(timer_t *timer)
@@ -142,87 +128,62 @@ int timer_cancel(timer_t *timer)
     return retval;
 }
 
-static void do_timer_action(timer_t *timer)
+static void timer_do_action(timer_t *timer)
 {
-    list_del(&timer->list); /* 从定时器链表删除 */
-    /* 调用定时器回调 */
-    timer->callback(timer->arg);
+    list_del(&timer->list);
+    timer->callback(timer, timer->arg);
 }
 
-/**
- * update_timers - 更新定时器
- * 
- */
-void update_timers()
+void timer_update_ticks()
 {
     timer_t *timer, *next;
     unsigned long flags;
-    save_intr(flags);
+    interrupt_save_and_disable(flags);
     if (timer_ticks < minim_timeout_val) { // no timer timeout
-        restore_intr(flags);
+        interrupt_restore_state(flags);
         return;
     }
     list_for_each_owner_safe (timer, next, &timer_list_head, list) {
         if (timer->timeout > timer_ticks) {
             break;
         }
-        do_timer_action(timer); // time out
+        timer_do_action(timer); // time out
     }
-
-    /* update minim */
     minim_timeout_val = timer->timeout;
-
-    restore_intr(flags);
+    interrupt_restore_state(flags);
 }
 
-/**
- * 以微妙为单位进行休眠。
- * 如果毫秒数小于等于2就是延时
- * 不然就是定时器阻塞休眠。
- */
 long sys_usleep(struct timeval *inv, struct timeval *outv)
 {
+    if (!inv)
+        return -EINVAL;
     struct timeval tv;
     unsigned long ticks;
-
-    memcpy(&tv, inv, sizeof(struct timeval));
-    #ifdef DEBUG_TIMER 
-    printk("[timer]: usleep sec %d, usec %d\n", tv.tv_sec, tv.tv_usec);
-    #endif
-    /* 检测参数 */
+    if (mem_copy_from_user(&tv, inv, sizeof(struct timeval)) < 0)
+        return -EFAULT;
     if (tv.tv_usec >= 1000000 || tv.tv_sec < 0 || tv.tv_usec < 0)
         return -EINVAL;
-
     /* 如果小于2毫秒就用延时的方式 */
     if (tv.tv_usec < 2000L && tv.tv_sec == 0) {
         udelay(tv.tv_usec);
         return 0;
     }
-    /* 计算ticks */
     ticks = timeval_to_systicks(&tv);
-    #ifdef DEBUG_TIMER 
-    printk("[timer]: usleep ticks %d\n", ticks);
-    #endif
-    /* 休眠一定的ticks */
     ticks = task_sleep_by_ticks(ticks);
-    #ifdef DEBUG_TIMER 
-    printk("[timer]: usleep left ticks %d\n", ticks);
-    #endif
-    /* 如果还剩下ticks，就传回去 */
     if (ticks > 0) {
         if (outv) {
             systicks_to_timeval(ticks, &tv);
-            memcpy(outv, &tv, sizeof(struct timeval));
+            if (mem_copy_to_user(outv, &tv, sizeof(struct timeval)) < 0)
+                return -EFAULT;
         }
-        return -EINTR;  /* 休眠被打断 */
+        return -EINTR;
     }
     return 0;
 }
 
-int init_timer_system()
+int timers_init()
 {
-    /* 创建一个idle定时器，并插入到链表中 */
+    timer_init(&timer_idle, TIMER_IDLE_TIMEOUT, NULL, timer_idle_handler);
     timer_add(&timer_idle);
-
     return 0;
 }

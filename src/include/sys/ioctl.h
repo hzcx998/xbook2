@@ -26,6 +26,8 @@
 /* disk */
 #define DISKIO_GETSIZE      DEVCTL_CODE('d', 1)
 #define DISKIO_CLEAR        DEVCTL_CODE('d', 2)
+#define DISKIO_SETOFF       DEVCTL_CODE('d', 3)
+#define DISKIO_GETOFF       DEVCTL_CODE('d', 4)
 
 /* tty */
 #define TTYIO_CLEAR         CONIO_CLEAR
@@ -35,18 +37,24 @@
 #define TTYIO_SETPOS        CONIO_SETPOS
 #define TTYIO_GETPOS        CONIO_GETPOS
 #define TTYIO_HOLDER        DEVCTL_CODE('t', 1)
-#define TTYIO_VISITOR       DEVCTL_CODE('t', 2)
-#define TTYIO_DETACH        DEVCTL_CODE('t', 3)
-#define TTYIO_COMBINE       DEVCTL_CODE('t', 4)
+#define TTYIO_SELECT        DEVCTL_CODE('t', 2)
 #define TIOCGPTN            DEVCTL_CODE('t', 5) /* get presudo tty number */
 #define TIOCSPTLCK          DEVCTL_CODE('t', 6) /* set presudo tty lock */
 #define TIOCSFLGS           DEVCTL_CODE('t', 7) /* set flags */
 #define TIOCGFLGS           DEVCTL_CODE('t', 8) /* get flags */
 #define TIOCGFG             DEVCTL_CODE('t', 9) /* get front group task */
+#define TTYIO_RAW           7
+
+/* tty flags */
+#define TTYFLG_ECHO    0x01
+#define TTYFLG_NOWAIT  0x02
+
 
 /* net */
 #define NETIO_GETMAC        DEVCTL_CODE('n', 1)
 #define NETIO_SETMAC        DEVCTL_CODE('n', 2)
+#define NETIO_SETFLGS       DEVCTL_CODE('n', 3)
+#define NETIO_GETFLGS       DEVCTL_CODE('n', 4)
 
 /* video */
 typedef struct _video_info {
@@ -59,6 +67,7 @@ typedef struct _video_info {
 /* even */
 #define EVENIO_GETLED     DEVCTL_CODE('e', 1) /* get led states */
 #define EVENIO_SETFLG     DEVCTL_CODE('e', 2) /* set flags */
+#define EVENIO_GETFLG     DEVCTL_CODE('e', 3) /* get flags */
 
 /* pipe */
 #define PIPEIO_SETRW        DEVCTL_CODE('p', 1) /* set reader or writer */
@@ -68,6 +77,34 @@ typedef struct _video_info {
 #define SNDIO_PLAY          DEVCTL_CODE('s', 1) /* play */
 #define SNDIO_STOP          DEVCTL_CODE('s', 2) /* stop play */
 #define SNDIO_SETFREQ       DEVCTL_CODE('s', 3) /* set play freq */
+
+/* view */
+#define VIEWIO_SHOW         DEVCTL_CODE('v', 1)
+#define VIEWIO_HIDE         DEVCTL_CODE('v', 2)
+#define VIEWIO_SETPOS       DEVCTL_CODE('v', 3)
+#define VIEWIO_GETPOS       DEVCTL_CODE('v', 4)
+#define VIEWIO_WRBMP        DEVCTL_CODE('v', 5)
+#define VIEWIO_RDBMP        DEVCTL_CODE('v', 6)
+#define VIEWIO_SETFLGS      DEVCTL_CODE('v', 7)
+#define VIEWIO_GETFLGS      DEVCTL_CODE('v', 8)
+#define VIEWIO_SETTYPE      DEVCTL_CODE('v', 9)
+#define VIEWIO_GETTYPE      DEVCTL_CODE('v', 10)
+#define VIEWIO_REFRESH      DEVCTL_CODE('v', 11)
+#define VIEWIO_ADDATTR      DEVCTL_CODE('v', 12)
+#define VIEWIO_DELATTR      DEVCTL_CODE('v', 13)
+#define VIEWIO_RESIZE       DEVCTL_CODE('v', 14)
+#define VIEWIO_GETSCREENSZ  DEVCTL_CODE('v', 15)
+#define VIEWIO_GETLASTPOS   DEVCTL_CODE('v', 16)
+#define VIEWIO_GETMOUSEPOS  DEVCTL_CODE('v', 17)
+#define VIEWIO_SETSIZEMIN   DEVCTL_CODE('v', 18)
+#define VIEWIO_SETDRAGREGION  DEVCTL_CODE('v', 19)
+#define VIEWIO_SETMOUSESTATE  DEVCTL_CODE('v', 20)
+#define VIEWIO_SETMOUSESTATEINFO  DEVCTL_CODE('v', 21)
+#define VIEWIO_GETVID       DEVCTL_CODE('v', 22)
+#define VIEWIO_ADDTIMER     DEVCTL_CODE('v', 23)
+#define VIEWIO_DELTIMER     DEVCTL_CODE('v', 24)
+#define VIEWIO_RESTARTTIMER     DEVCTL_CODE('v', 25)
+
 
 
 #endif   /* _SYS_IOCTL_H */

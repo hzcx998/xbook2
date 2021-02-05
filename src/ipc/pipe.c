@@ -1,9 +1,8 @@
 #include <xbook/pipe.h>
-#include <xbook/trigger.h>
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
 
-#include <fsal/fsal.h>
+#include <xbook/fsal.h>
 #include <types.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -14,13 +13,13 @@ static kobjid_t pipe_next_id = 0;
  
 pipe_t *create_pipe()
 {
-    pipe_t *pipe = kmalloc(sizeof(pipe_t));
+    pipe_t *pipe = mem_alloc(sizeof(pipe_t));
     if (pipe == NULL) {
         return NULL;
     }
     pipe->fifo = fifo_buf_alloc(PIPE_SIZE);
     if (pipe->fifo == NULL) {
-        kfree(pipe);
+        mem_free(pipe);
         return NULL;
     }
     atomic_set(&pipe->read_count, 1);
@@ -32,7 +31,6 @@ pipe_t *create_pipe()
     pipe_next_id++;
     mutexlock_init(&pipe->mutex);
     wait_queue_init(&pipe->wait_queue);
-    /* add to pipe list */
     list_add_tail(&pipe->list, &pipe_list_head);
     return pipe;
 }
@@ -43,7 +41,7 @@ int destroy_pipe(pipe_t *pipe)
         return -1;
     list_del_init(&pipe->list);
     fifo_buf_free(pipe->fifo);
-    kfree(pipe);
+    mem_free(pipe);
     return 0;
 }
 
@@ -80,79 +78,54 @@ pipe_t *pipe_find(kobjid_t id)
  * 3.管道中没有数据，如果写端全部关闭，则返回0.
  * 4.如果写端没有全部关闭，则阻塞。
  */
-int __pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
+int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
 {
     if (!buffer || !bytes)
         return -1;
-    /* find the pipe id */
     pipe_t *pipe = pipe_find(pipeid);
     if (pipe == NULL) {
-        printk(KERN_ERR "%s: pipe %d not found!\n", __func__, pipeid);
+        keprint(PRINT_ERR "%s: pipe %d not found!\n", __func__, pipeid);
         return -1;
     }
     if (atomic_get(&pipe->read_count) <= 0)  {
-        printk(KERN_ERR "%s: pipe %d reader is zero!\n", __func__, pipeid);
+        keprint(PRINT_ERR "%s: pipe %d reader is zero!\n", __func__, pipeid);
         return -1;
     }
 
     int rdsize = 0;
     int chunk;
-    // 
-    
     mutex_lock(&pipe->mutex);
-
-    /* 没有数据就要检查写端状态，如果关闭则返回0，不然就读取阻塞，等待有数据后，读取数据返回 */
-    if (fifo_buf_len(pipe->fifo) <= 0) {
-        /* 写端全部被关闭，返回0 */
+    
+    while (fifo_buf_len(pipe->fifo) <= 0) {
         if (atomic_get(&pipe->write_count) <= 0) {
             mutex_unlock(&pipe->mutex);
             return 0;
         }
-        if (pipe->rdflags & PIPE_NOWAIT) {  /* 无阻塞 */
+        if (pipe->rdflags & PIPE_NOWAIT) {
             mutex_unlock(&pipe->mutex);
             return -1;
         }
-        /* 添加到等待队列 */
-        wait_queue_add(&pipe->wait_queue, current_task);
+        if (exception_cause_exit(&task_current->exception_manager)) {
+            mutex_unlock(&pipe->mutex);
+            return -1;
+        }
+        wait_queue_add(&pipe->wait_queue, task_current);
         mutex_unlock(&pipe->mutex);
-        task_block(TASK_BLOCKED); /* 阻塞自己，等待唤醒 */
+        task_block(TASK_BLOCKED);
         mutex_lock(&pipe->mutex);
     }
-    /* 获取缓冲区大小，如果有数据，则直接读取数据，然后返回 */
-    
-    chunk = min(bytes, PIPE_SIZE); /* 获取一次能读取的数据量 */
-    chunk = min(chunk, fifo_buf_len(pipe->fifo)); /* 获取能读取的数据量 */
+    chunk = min(bytes, PIPE_SIZE);
+    chunk = min(chunk, fifo_buf_len(pipe->fifo));
     chunk = fifo_buf_get(pipe->fifo, buffer, chunk);
     rdsize += chunk;
-    /* 读取完数据后，此时写者可能因为管道满了而阻塞，所以尝试唤醒 */
+    
     if (atomic_get(&pipe->write_count) > 0) {
         if (wait_queue_length(&pipe->wait_queue) > 0)
             wait_queue_wakeup(&pipe->wait_queue);
     }
-    
     mutex_unlock(&pipe->mutex);
-
     return rdsize;
 }
-
-int pipe_read(kobjid_t pipeid, void *buffer, size_t bytes)
-{
-    char *buf = (char *) buffer;
-    int rd = 0, tmp;
-    while (bytes > 0) {
-        tmp = __pipe_read(pipeid, buf, bytes);
-        if (tmp < 0 && rd == 0) { // 第一次读取就出错
-            return -1;
-        } else if (tmp < 0) { // 还是没有数据
-            return rd;
-        }
-        rd += tmp;
-        buf += tmp;
-        bytes -= tmp;
-    }
-    return rd;
-}
-
 
 /**
  * 从管道写入数据。
@@ -166,20 +139,18 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
 {
     if (!buffer || !bytes)
         return -1;
-    /* find the pipe id */
     pipe_t *pipe = pipe_find(pipeid);
     if (pipe == NULL) {
-        printk(KERN_ERR "%s: pipe %d not found!\n", __func__, pipeid);
+        keprint(PRINT_ERR "%s: pipe %d not found!\n", __func__, pipeid);
         return -1;
     }
     if (atomic_get(&pipe->write_count) <= 0) {
-        printk(KERN_ERR "%s: pipe %d writer is zero!\n", __func__, pipeid);
+        keprint(PRINT_ERR "%s: pipe %d writer is zero!\n", __func__, pipeid);
         return -1;
     }
         
     if (atomic_get(&pipe->read_count) <= 0) {
-        /* 没有读端时写入，触发管道异常 */
-        sys_trigger_active(TRIGHSOFT, current_task->pid);
+        exception_force_self(EXP_CODE_PIPE);
         return -1;
     } 
         
@@ -190,79 +161,61 @@ int pipe_write(kobjid_t pipeid, void *buffer, size_t bytes)
     unsigned char *buf = buffer;
     int chunk = 0;
     int wrsize = 0;
-    /* 只要还有数据，就不停地写入，直到写完为止 */
     while (left_size > 0) {
-        chunk = min(left_size, PIPE_SIZE); /* 获取一次要写入的数据量 */
-        chunk = min(chunk, fifo_buf_avali(pipe->fifo)); /* 获取能写入的数据量 */
-
-        /* 把数据存入缓冲区 */
-        chunk = fifo_buf_put(pipe->fifo, buf + off, chunk);
-        
-        off += chunk;
-        left_size -= chunk;
-        wrsize += chunk;
-        /* try wakeup reader */
-        if (atomic_get(&pipe->read_count) > 0) {
-            if (wait_queue_length(&pipe->wait_queue) > 0)
-                wait_queue_wakeup(&pipe->wait_queue);
-        }
-        
-        /* 如果fifo缓冲区为已经满了，并且还需要写入数据，就进入抉择阶段 */
-        if (fifo_buf_avali(pipe->fifo) <= 0 && left_size > 0) {
-            if (pipe->wrflags & PIPE_NOWAIT) {  /* 无阻塞 */
+        while (fifo_buf_avali(pipe->fifo) <= 0) {
+            if ((pipe->wrflags & PIPE_NOWAIT) || 
+                exception_cause_exit(&task_current->exception_manager)) {
                 mutex_unlock(&pipe->mutex);
                 return -1;
             }
-            /* 添加到等待队列 */
-            wait_queue_add(&pipe->wait_queue, current_task);
+            if (atomic_get(&pipe->read_count) <= 0) {
+                exception_force_self(EXP_CODE_PIPE);
+                mutex_unlock(&pipe->mutex);
+                return -1;
+            }
+            if (atomic_get(&pipe->read_count) > 0) {
+                if (wait_queue_length(&pipe->wait_queue) > 0)
+                    wait_queue_wakeup(&pipe->wait_queue);
+            }
+            wait_queue_add(&pipe->wait_queue, task_current);
             mutex_unlock(&pipe->mutex);
-            task_block(TASK_BLOCKED); /* 阻塞自己，等待唤醒 */
+            task_block(TASK_BLOCKED);
             mutex_lock(&pipe->mutex);
         }
+        chunk = min(left_size, PIPE_SIZE);
+        chunk = min(chunk, fifo_buf_avali(pipe->fifo));
+        chunk = fifo_buf_put(pipe->fifo, buf + off, chunk);
+        off += chunk;
+        left_size -= chunk;
+        wrsize += chunk;
+    }
+    if (atomic_get(&pipe->read_count) > 0) {
+        if (wait_queue_length(&pipe->wait_queue) > 0)
+            wait_queue_wakeup(&pipe->wait_queue);
     }
     mutex_unlock(&pipe->mutex);
     return wrsize;
 }
 
-/**
- * pipe_close - 关闭管道
- * @pipeid: 管道id
- * @rw: 读写端口（0：读端，1：写端）
- * 
- * 成功关闭返回0，失败返回-1
- */
 int pipe_close(kobjid_t pipeid, int rw)
 {
-    /* find the pipe id */
     pipe_t *pipe = pipe_find(pipeid);
     if (pipe == NULL) {
         return -1;
     }
     if (rw) {
         atomic_dec(&pipe->write_count);
-        //pr_dbg("[pipe]: %s: close write pipe %d.\n", __func__, atomic_get(&pipe->write_count));
     } else {
         atomic_dec(&pipe->read_count);
-        //pr_dbg("[pipe]: %s: close read pipe %d.\n", __func__, atomic_get(&pipe->read_count));
     }
-    /* both closed */
     if (atomic_get(&pipe->write_count) <= 0 && atomic_get(&pipe->read_count) <= 0) {
         destroy_pipe(pipe);
-        //pr_dbg("[pipe]: %s: destroy pipe.\n", __func__);
     }
     return 0;
 }
 
-/**
- * pipe_close - 关闭管道
- * @pipeid: 管道id
- * @rw: 读写端口（0：读端，1：写端）
- * 
- * 读写端都关闭返回1，只关闭一个返回0，失败返回-1
- */
 int pipe_ioctl(kobjid_t pipeid, unsigned int cmd, unsigned long arg, int rw)
 {
-    /* find the pipe id */
     pipe_t *pipe = pipe_find(pipeid);
     if (pipe == NULL) {
         return -1;
@@ -286,13 +239,12 @@ int pipe_ioctl(kobjid_t pipeid, unsigned int cmd, unsigned long arg, int rw)
     return err;
 }
 
-int pipe_grow(kobjid_t pipeid, int rw)
+int pipe_incref(kobjid_t pipeid, int rw)
 {
     pipe_t *pipe = pipe_find(pipeid);
     if (pipe == NULL) {
         return -1;
     }
-
     mutex_lock(&pipe->mutex);
     if (rw) 
         atomic_inc(&pipe->write_count);
@@ -301,3 +253,159 @@ int pipe_grow(kobjid_t pipeid, int rw)
     mutex_unlock(&pipe->mutex);
     return 0;
 }
+
+int pipe_decref(kobjid_t pipeid, int rw)
+{
+    pipe_t *pipe = pipe_find(pipeid);
+    if (pipe == NULL) {
+        return -1;
+    }
+    mutex_lock(&pipe->mutex);
+    if (rw) 
+        atomic_dec(&pipe->write_count);
+    else
+        atomic_dec(&pipe->read_count);
+    mutex_unlock(&pipe->mutex);
+    return 0;
+}
+
+/* 接口封装 */
+static int pipeif_rd_close(int handle)
+{
+    return pipe_close(handle, 0);
+}
+
+static int pipeif_wr_close(int handle)
+{
+    return pipe_close(handle, 1);
+}
+
+static int pipeif_rd_incref(int handle)
+{
+    return pipe_incref(handle, 0);
+}
+
+static int pipeif_wr_incref(int handle)
+{
+    return pipe_incref(handle, 1);
+}
+
+static int pipeif_rd_decref(int handle)
+{
+    return pipe_decref(handle, 0);
+}
+
+static int pipeif_wr_decref(int handle)
+{
+    return pipe_decref(handle, 1);
+}
+
+static int pipeif_read(int handle, void *buf, size_t size)
+{
+    return pipe_read(handle, buf, size);
+}
+
+static int pipeif_write(int handle, void *buf, size_t size)
+{
+    return pipe_write(handle, buf, size);
+}
+
+static int pipeif_rd_ioctl(int handle, int cmd, unsigned long arg)
+{
+    return pipe_ioctl(handle, cmd, arg, 0);
+}
+
+static int pipeif_wr_ioctl(int handle, int cmd, unsigned long arg)
+{
+    return pipe_ioctl(handle, cmd, arg, 1);
+}
+
+static int pipeif_rd_fcntl(int handle, int cmd, long arg)
+{
+    return pipe_ioctl(handle, cmd, (unsigned long) arg, 0);
+}
+
+static int pipeif_wr_fcntl(int handle, int cmd, long arg)
+{
+    return pipe_ioctl(handle, cmd, (unsigned long) arg, 1);
+}
+
+fsal_t pipeif_rd = {
+    .name       = "pipeif_rd",
+    .subtable   = NULL,
+    .mkfs       = NULL,
+    .mount      = NULL,
+    .unmount    = NULL,
+    .open       = NULL,
+    .close      = pipeif_rd_close,
+    .read       = pipeif_read,
+    .write      = NULL,
+    .lseek      = NULL,
+    .opendir    = NULL,
+    .closedir   = NULL,
+    .readdir    = NULL,
+    .mkdir      = NULL,
+    .unlink     = NULL,
+    .rename     = NULL,
+    .ftruncate  = NULL,
+    .fsync      = NULL,
+    .state      = NULL,
+    .chmod      = NULL,
+    .fchmod     = NULL,
+    .utime      = NULL,
+    .feof       = NULL,
+    .ferror     = NULL,
+    .ftell      = NULL,
+    .fsize      = NULL,
+    .rewind     = NULL,
+    .rewinddir  = NULL,
+    .rmdir      = NULL,
+    .chdir      = NULL,
+    .ioctl      = pipeif_rd_ioctl,
+    .fcntl      = pipeif_rd_fcntl,
+    .fstat      = NULL,
+    .access     = NULL,
+    .incref     = pipeif_rd_incref,
+    .decref     = pipeif_rd_decref,
+    .fastio     = NULL,
+};
+
+fsal_t pipeif_wr = {
+    .name       = "pipeif_wr",
+    .subtable   = NULL,
+    .mkfs       = NULL,
+    .mount      = NULL,
+    .unmount    = NULL,
+    .open       = NULL,
+    .close      = pipeif_wr_close,
+    .read       = NULL,
+    .write      = pipeif_write,
+    .lseek      = NULL,
+    .opendir    = NULL,
+    .closedir   = NULL,
+    .readdir    = NULL,
+    .mkdir      = NULL,
+    .unlink     = NULL,
+    .rename     = NULL,
+    .ftruncate  = NULL,
+    .fsync      = NULL,
+    .state      = NULL,
+    .chmod      = NULL,
+    .fchmod     = NULL,
+    .utime      = NULL,
+    .feof       = NULL,
+    .ferror     = NULL,
+    .ftell      = NULL,
+    .fsize      = NULL,
+    .rewind     = NULL,
+    .rewinddir  = NULL,
+    .rmdir      = NULL,
+    .chdir      = NULL,
+    .ioctl      = pipeif_wr_ioctl,
+    .fcntl      = pipeif_wr_fcntl,
+    .fstat      = NULL,
+    .access     = NULL,
+    .incref     = pipeif_wr_incref,
+    .decref     = pipeif_wr_decref,
+    .fastio     = NULL,
+};

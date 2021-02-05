@@ -1,5 +1,3 @@
-SRC	+= diskman.c
-SRC	+= fs.c
-SRC	+= fsif.c
+SRC	+= *.c
 SRC	+= fsal/
 SRC	+= fatfs/

@@ -3,9 +3,7 @@
 
 #include <stdint.h>
 
-/* 任务状态 */
-typedef struct tss 
-{
+typedef struct {
 	uint32_t backlink;
 	uint32_t esp0;	//we will use esp 
 	uint32_t ss0;	//stack segment
@@ -35,8 +33,8 @@ typedef struct tss
 	uint32_t iobase;
 } tss_t;
 
-void init_tss();
-tss_t *get_tss();
-void update_tss_info(unsigned long task_addr);
+void tss_init();
+tss_t *tss_get_from_cpu0();
+void tss_update_info(unsigned long task_addr);
 
 #endif	/*_X86_CPU_H*/

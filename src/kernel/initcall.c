@@ -6,27 +6,17 @@ extern initcall_t __initcall_end[];
 extern exitcall_t __exitcall_start[];
 extern exitcall_t __exitcall_end[];
 
-void do_initcalls(void)
+void initcalls_exec(void)
 {
-	initcall_t * call;
-
-	call =  &(*__initcall_start);
-	while(call < &(*__initcall_end))
-	{
-		(*call)();
-		call++;
-	}
-    printk(KERN_INFO "do init call done.\n");
+	initcall_t * func =  &(*__initcall_start);
+	for (;func < &(*__initcall_end); func++)
+		(*func)();
+    keprint(PRINT_INFO "do init call done.\n");
 }
 
-void do_exitcalls(void)
+void exitcalls_exec(void)
 {
-	exitcall_t * call;
-
-	call =  &(*__exitcall_start);
-	while(call < &(*__exitcall_end))
-	{
-		(*call)();
-		call++;
-	}
+    initcall_t * func =  &(*__exitcall_start);
+	for (;func < &(*__exitcall_end); func++)
+		(*func)();
 }

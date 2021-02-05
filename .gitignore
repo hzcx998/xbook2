@@ -1,5 +1,6 @@
 # Prerequisites
 *.d
+*.tmp
 
 # Object files
 *.o
@@ -48,6 +49,7 @@
 *.su
 *.idb
 *.pdb
+*.dump
 
 # Kernel Module Compile Results
 *.mod*
@@ -64,17 +66,16 @@ develop/local/
 
 develop/rom/bin/
 develop/rom/sbin/
-develop/rom/usr/
-
+develop/rom/acct/
 develop/bochs/
 
 # linux fixdep
-library/fixdep
-system/fixdep
-user/fixdep
+user/libs/fixdep
+user/sbin/fixdep
+user/bin/fixdep
 src/fixdep
 
-# linux tools
+# linux tools 
 tools/fatfs/fatfs
 
 # dir
@@ -83,52 +84,27 @@ recycle
 # need commit to git
 !scripts/fixdep.exe
 
-# system app
-system/init/init
-system/init/initg
-system/desktop/desktop
-system/sh/sh
-
-# user app
+# system bin
+user/sbin/init/init
+user/sbin/login/login
 
 # /bin
-user/cat/cat
-user/cpuinfo/cpuinfo
-user/echo/echo
-user/cp/cp
-user/date/date
-user/ls/ls
-user/mem/mem
-user/mkdir/mkdir
-user/mv/mv
-user/ps/ps
-user/rename/rename
-user/rm/rm
-user/rmdir/rmdir
-user/touch/touch
-user/trig/trig
-user/ver/ver
-
-# /usr
-user/bosh/bosh
-user/c4/c4
-user/cpptests/cpptests
-user/freeterm/freeterm
-user/gato/gato
-user/hello/hello
-user/infones/infones
-user/invader/invader
-user/lua/lua
-user/lvgl/lv
-user/lvgl2/lv2
-user/microui/mui
-user/socket_client/socket_client
-user/socket_server/socket_server
-user/tests/tests
-user/vt100/vt100
-user/win/win
-user/cal/cal
-user/sound/sound
-user/wavplayer/wavplayer
-user/mp3player/mp3player
-
+user/bin/cat/cat
+user/bin/cal/cal
+user/bin/cp/cp
+user/bin/cpuinfo/cpuinfo
+user/bin/date/date
+user/bin/echo/echo
+user/bin/ls/ls
+user/bin/mem/mem
+user/bin/mkdir/mkdir
+user/bin/mv/mv
+user/bin/osver/osver
+user/bin/ps/ps
+user/bin/rename/rename
+user/bin/rm/rm
+user/bin/rmdir/rmdir
+user/bin/sh/sh
+user/bin/sys/sys
+user/bin/test/test
+user/bin/touch/touch

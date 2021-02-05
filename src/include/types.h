@@ -36,7 +36,7 @@ typedef signed long long		s64_t;
 typedef unsigned long long		u64_t;
 
 typedef long long   loff_t;
-/* 在线程中作为形参 */
+typedef long int irqno_t;
 typedef void task_func_t(void *);
 
 #endif  /* _XBOOK_TYPES_H */

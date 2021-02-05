@@ -1,6 +1,6 @@
 SRC	+= memcache.c
-SRC	+= vmarea.c
+SRC	+= virmem.c
 SRC	+= vmm.c
-SRC	+= vmspace.c
+SRC	+= memspace.c
 SRC	+= mdl.c
 SRC	+= dma.c

@@ -1,30 +1,22 @@
-#ifndef _ARCH_INTERRUPT_H
-#define _ARCH_INTERRUPT_H
+#ifndef _X86_INTERRUPT_H
+#define _X86_INTERRUPT_H
 
 #include "atomic.h"
 #include "registers.h"
 
 
-void __disable_intr(void);
-void __enable_intr(void);
+void interrupt_disable(void);
+void interrupt_enable(void);
 
-/* save intr status and disable intr */
-#define __save_intr(flags)                  \
+#define interrupt_save_and_disable(flags)                  \
     do {                                    \
-        flags = (unsigned int)load_eflags();\
-        __disable_intr();                   \
+        flags = (unsigned int)eflags_save_to();\
+        interrupt_disable();                   \
     } while (0)
 
-/* restore intr status and enable intr */
-#define __restore_intr(flags)               \
-    do {                                    \
-        store_eflags((unsigned int)flags);\
-    } while (0)
-
-
-/* 中断分配管理 */
-
-/* IRQ */
+#define interrupt_restore_state(flags)               \
+        eflags_restore_from((unsigned int)flags)
+    
 #define	IRQ0_CLOCK          0   // 时钟
 #define	IRQ1_KEYBOARD       1   // 键盘
 #define	IRQ2_CONNECT        2   // 连接从片
@@ -43,7 +35,6 @@ void __enable_intr(void);
 #define	IRQ14_HARDDISK      14  // 硬盘
 #define	IRQ15_RESERVE       15  // 保留
 
-//EFLAGS
 #define	EFLAGS_MBS (1<<1)
 #define	EFLAGS_IF_1 (1<<9)
 #define	EFLAGS_IF_0 0
@@ -51,7 +42,6 @@ void __enable_intr(void);
 #define	EFLAGS_IOPL_1 (1<<12)
 #define	EFLAGS_IOPL_0 (0<<12)
 
-/* IF 位是在 eflags寄存器的低9位 */
 #define EFLAGS_IF (EFLAGS_IF_1 << 9)
 
 enum {
@@ -77,17 +67,16 @@ enum {
     EP_SIMD_FLOAT_POINT,                    /* SIMD浮点异常：SSE和SSE2浮点指令（奔腾III开始支持） */
 };
 
-/* IRQ中断在idt中的起始位置 */
-#define IRQ_START	0X20
-// 目前需要支持的中断数
+#define IRQ_OFF_IN_IDT	0X20
 #define MAX_INTERRUPT_NR 0x81
 
 typedef struct trap_frame {
-    unsigned int vec_no;	 // kernel.S 宏VECTOR中push %1压入的中断号
+    unsigned int vec_no;
     unsigned int edi;
     unsigned int esi;
     unsigned int ebp;
-    unsigned int esp_dummy;	 // 虽然pushad把esp也压入,但esp是不断变化的,所以会被popad忽略
+    // 虽然pushad把esp也压入,但esp是不断变化的,所以会被popad忽略
+    unsigned int esp_dummy;
     unsigned int ebx;
     unsigned int edx;
     unsigned int ecx;
@@ -96,8 +85,8 @@ typedef struct trap_frame {
     unsigned int fs;
     unsigned int es;
     unsigned int ds;
-
-    unsigned int error_code;		 // errorCode会被压入在eip之后
+    // error_code会被压入在eip之后
+    unsigned int error_code;
     unsigned int eip;
     unsigned int cs;
     unsigned int eflags;
@@ -107,27 +96,20 @@ typedef struct trap_frame {
     unsigned int ss;
 } __attribute__((packed)) trap_frame_t;
 
-//中断处理函数的类型
-typedef void* intr_handler_t;
+typedef void* interrupt_handler_t;
 
-void __register_intr_handler(unsigned char interrupt, intr_handler_t function);
-void __unregister_intr_handler(unsigned char interrupt);
+void interrupt_register_handler(unsigned char interrupt, interrupt_handler_t function);
+void unregister_interrupt_handler(unsigned char interrupt);
 
-void __register_irq_handler(unsigned char irq, intr_handler_t function);
-void __unregister_irq_handler(unsigned char irq);
+int irq_register_handler(unsigned char irq, interrupt_handler_t function);
+int irq_unregister_handler(unsigned char irq);
 
-void dump_trap_frame(trap_frame_t *frame);
+void trap_frame_dump(trap_frame_t *frame);
 
-void init_intr_expection(void);
+void interrupt_expection_init(void);
 
-#define enable_intr     __enable_intr
-#define disable_intr    __disable_intr
+void interrupt_exit();
 
-#define save_intr     __save_intr
-#define restore_intr    __restore_intr
-
-/* ----中断上半部分---- */
-/* IRQ 编号 */
 enum {
     IRQ0 = 0,
     IRQ1,
@@ -148,57 +130,4 @@ enum {
     NR_IRQS
 };
 
-#define IRQF_DISABLED       0x01
-#define IRQF_SHARED         0x02
-#define IRQF_TIMER          0x03
-
-/* hardware interrupt controller */
-struct hardware_intr_controller {
-    void (*enable)(unsigned int irq);
-    void (*disable)(unsigned int irq);
-    unsigned int (*install)(unsigned int irq, void *arg);
-    void (*uninstall)(unsigned int irq);
-    /* 接收到中断后确定中断已经接收 */ 
-    void (*ack)(unsigned int irq);
-};
-
-/* var: hardware_intr_contorller must be support in arch */
-extern struct hardware_intr_controller hardware_intr_contorller;
-
-#define enable_irq(n) hardware_intr_contorller.enable(n)
-#define disable_irq(n) hardware_intr_contorller.disable(n)
-
-/* irq对应的处理 */
-typedef struct irq_action {
-    unsigned long data;
-    int (*handler)(unsigned long, unsigned long);
-    unsigned long flags;
-    struct irq_action *next;     // 指向下一个行动
-    /* 表示设备名字 */
-    char *name;
-} irq_action_t;
-
-typedef struct irq_description {
-    /* 硬件控制器，用来控制中断的硬件底层操作 */
-    struct hardware_intr_controller *controller;
-    struct irq_action *action;
-    unsigned long flags;
-    atomic_t device_count;       // 记录注册的设备数量
-
-    /* 表示irq名字 */
-    char *irqname;
-} irq_description_t;
-
-int register_irq(unsigned long irq,
-    int (*handler)(unsigned long, unsigned long), 
-    unsigned long flags,
-    char *irqname,
-    char *devname,
-    unsigned long data);
-int unregister_irq(unsigned long irq, void *data);
-
-int handle_irq(unsigned long irq, trap_frame_t *frame);
-
-void init_irq_description();
-
-#endif  /* _ARCH_INTERRUPT_H */
+#endif  /* _X86_INTERRUPT_H */

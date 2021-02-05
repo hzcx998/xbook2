@@ -34,10 +34,11 @@ fifo_t *fifo_alloc(char *name);
 int fifo_free(fifo_t *FIFO);
 int fifo_get(char *name, unsigned long flags);
 int fifo_put(int fifoid);
-int fifo_write(int fifoid, void *buffer, size_t size, int fifoflg);
-int fifo_read(int fifoid, void *buffer, size_t size, int fifoflg);
+int fifo_write(int fifoid, void *buffer, size_t size);
+int fifo_read(int fifoid, void *buffer, size_t size);
 int fifo_ctl(int fifoid, unsigned int cmd, unsigned long arg);
-int fifo_grow(int fifoid);
-void init_fifo();
+int fifo_incref(int fifoid);
+int fifo_decref(int fifoid);
+void fifo_init();
 
 #endif   /* _XBOOK_FIFO_H */

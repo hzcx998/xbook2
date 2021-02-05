@@ -9,12 +9,12 @@
 
 /* memory description list(MDL) 内存描述链表 */
 typedef struct _mdl {
-    struct _mdl *next;      /* 下一个mdl */
-    task_t *task;           /* 所在的任务 */
-    void *mapped_vaddr;     /* 映射后的地址，整页 */
-    void *start_vaddr;      /* 开始的虚拟地址，整页 */
+    struct _mdl *next;          /* 下一个mdl */
+    task_t *task;               /* 所在的任务 */
+    void *mapped_vaddr;         /* 映射后的地址，整页 */
+    void *start_vaddr;          /* 开始的虚拟地址，整页 */
     unsigned long byte_count;   /* 映射的字节数 */
-    unsigned long byte_offset;   /* 映射的字节数 */
+    unsigned long byte_offset;  /* 映射的字节数 */
 } mdl_t;
 
 #define MDL_GET_BYTE_COUNT(mdl) ((mdl)->byte_count)

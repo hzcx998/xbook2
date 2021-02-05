@@ -1,27 +1,25 @@
-#ifndef _ARCH_IO_H
-#define _ARCH_IO_H
+#ifndef _X86_IO_H
+#define _X86_IO_H
 
-unsigned char __in8(unsigned int port);
-unsigned short __in16(unsigned int port);
-unsigned int __in32(unsigned int port);
-void __out8(unsigned int port, unsigned int data);
-void __out16(unsigned int port, unsigned int data);
-void __out32(unsigned int port, unsigned int data);
+unsigned char ioport_in8(unsigned int port);
+unsigned short ioport_in16(unsigned int port);
+unsigned int ioport_in32(unsigned int port);
+void ioport_out8(unsigned int port, unsigned int data);
+void ioport_out16(unsigned int port, unsigned int data);
+void ioport_out32(unsigned int port, unsigned int data);
 
-void __io_read(unsigned short port, void* buf, unsigned int n);
-void __io_write(unsigned short port, void* buf, unsigned int n);
+void ioport_read_bytes(unsigned short port, void* buf, unsigned int n);
+void ioport_write_bytes(unsigned short port, void* buf, unsigned int n);
 
-#define in8         __in8
-#define in16        __in16
-#define in32        __in32
+#define in8         ioport_in8
+#define in16        ioport_in16
+#define in32        ioport_in32
 
-#define out8        __out8
-#define out16       __out16
-#define out32       __out32
+#define out8        ioport_out8
+#define out16       ioport_out16
+#define out32       ioport_out32
 
-#define io_read     __io_read
-#define io_write    __io_write
+#define io_read     ioport_read_bytes
+#define io_write    ioport_write_bytes
 
-#define io_mfence() 	__asm__ __volatile__ ("mfence	\n\t":::"memory")
-
-#endif  /* _ARCH_IO_H */
+#endif  /* _X86_IO_H */

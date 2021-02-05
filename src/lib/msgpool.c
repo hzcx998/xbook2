@@ -1,5 +1,5 @@
 #include <xbook/msgpool.h>
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 #include <xbook/schedule.h>
 #include <string.h>
 
@@ -7,13 +7,13 @@ msgpool_t *msgpool_create(size_t msgsz, size_t msgcount)
 {
     if (!msgsz || !msgcount)
         return NULL;
-    msgpool_t *pool = kmalloc(sizeof(msgpool_t));
+    msgpool_t *pool = mem_alloc(sizeof(msgpool_t));
     if (pool == NULL)
         return NULL;
     pool->msgcount  = 0;
     pool->msgsz     = msgsz;
     pool->msgmaxcnt = msgcount;
-    pool->msgbuf    = kmalloc(msgcount * msgsz);
+    pool->msgbuf    = mem_alloc(msgcount * msgsz);
     if (pool->msgbuf == NULL)
         return NULL;
     memset(pool->msgbuf, 0, msgcount * msgsz);
@@ -30,32 +30,28 @@ int msgpool_destroy(msgpool_t *pool)
     if (wait_queue_length(&pool->waiters) > 0) {
         wait_queue_wakeup_all(&pool->waiters);
     }
-    if (msgpool_empty(pool) && wait_queue_length(&pool->waiters) <= 0) {
-        pool->msgmaxcnt = 0;
-        pool->msgcount     = 0;
-        pool->msgsz     = 0;
-        kfree(pool->msgbuf);
-        pool->tail = pool->head = pool->msgbuf = NULL;
-        kfree(pool);
-        return 0;
-    }
-    return -1;
+    pool->msgmaxcnt = 0;
+    pool->msgcount     = 0;
+    pool->msgsz     = 0;
+    mem_free(pool->msgbuf);
+    pool->tail = pool->head = pool->msgbuf = NULL;
+    mem_free(pool);
+    return 0;
 }
 
-int msgpool_push(msgpool_t *pool, void *buf)
+int msgpool_put(msgpool_t *pool, void *buf, size_t size)
 {
     if (!pool || !buf)
         return -1;
         
     mutex_lock(&pool->mutex);
     if (msgpool_full(pool)) {
-        wait_queue_add(&pool->waiters, current_task);
-        
+        wait_queue_add(&pool->waiters, task_current);
         mutex_unlock(&pool->mutex);
         task_block(TASK_BLOCKED);
         mutex_lock(&pool->mutex);
     }
-    memcpy(pool->head, buf, pool->msgsz);   /* copy data */
+    memcpy(pool->head, buf, min(pool->msgsz, size));   /* copy data */
     pool->head += pool->msgsz;
     /* fix out of boundary */
     if (pool->head >= pool->msgbuf + pool->msgmaxcnt * pool->msgsz)
@@ -67,7 +63,7 @@ int msgpool_push(msgpool_t *pool, void *buf)
     return 0;
 }
 
-int msgpool_try_push(msgpool_t *pool, void *buf)
+int msgpool_try_put(msgpool_t *pool, void *buf, size_t size)
 {
     if (!pool)
         return -1;
@@ -77,8 +73,7 @@ int msgpool_try_push(msgpool_t *pool, void *buf)
         mutex_unlock(&pool->mutex);
         return -1;
     }
-        
-    memcpy(pool->head, buf, pool->msgsz);   /* copy data */
+    memcpy(pool->head, buf, min(pool->msgsz, size));   /* copy data */
     pool->head += pool->msgsz;
     /* fix out of boundary */
     if (pool->head >= pool->msgbuf + pool->msgmaxcnt * pool->msgsz)
@@ -90,19 +85,23 @@ int msgpool_try_push(msgpool_t *pool, void *buf)
     return 0;
 }
 
-int msgpool_pop(msgpool_t *pool, void *buf)
+int msgpool_get(msgpool_t *pool, void *buf, msgpool_get_func_t callback)
 {
     if (!pool)
         return -1;
     mutex_lock(&pool->mutex);
     if (msgpool_empty(pool)) {
-        wait_queue_add(&pool->waiters, current_task);
+        wait_queue_add(&pool->waiters, task_current);
         mutex_unlock(&pool->mutex);
         task_block(TASK_BLOCKED);
         mutex_lock(&pool->mutex);
     }
     if (buf) { /* 有buf才复制 */
-        memcpy(buf, pool->tail, pool->msgsz);   /* copy data */
+        if (callback) {
+            callback(pool, buf);
+        } else {
+            memcpy(buf, pool->tail, pool->msgsz);   /* copy data */
+        }
     }
     pool->tail += pool->msgsz;
     /* fix out of boundary */
@@ -116,7 +115,7 @@ int msgpool_pop(msgpool_t *pool, void *buf)
     return 0;
 }
 
-int msgpool_try_pop(msgpool_t *pool, void *buf)
+int msgpool_try_get(msgpool_t *pool, void *buf, msgpool_get_func_t callback)
 {
     if (!pool)
         return -1;
@@ -125,9 +124,12 @@ int msgpool_try_pop(msgpool_t *pool, void *buf)
         mutex_unlock(&pool->mutex);
         return -1;
     }
-        
     if (buf) { /* 有buf才复制 */
-        memcpy(buf, pool->tail, pool->msgsz);   /* copy data */
+        if (callback) {
+            callback(pool, buf);
+        } else {
+            memcpy(buf, pool->tail, pool->msgsz);   /* copy data */
+        }
     }
     pool->tail += pool->msgsz;
     /* fix out of boundary */

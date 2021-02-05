@@ -3,12 +3,12 @@
 
 #include "stddef.h"
 #include "types.h"
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
 
 void abort(void);
 
-#define malloc  kmalloc
-#define free    kfree
+#define malloc  mem_alloc
+#define free    mem_free
 
 #define RAND_MAX 0x7fff
 

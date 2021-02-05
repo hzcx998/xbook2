@@ -50,7 +50,7 @@
 #include <linux/delay.h>
 #include <linux/timer.h>
 #include <linux/slab.h>
-#include <linux/vmalloc.h>
+#include <linux/vir_mem_alloc.h>
 #include <linux/interrupt.h>
 #include <linux/string.h>
 #include <linux/pagemap.h>
@@ -104,17 +104,17 @@ struct e1000_adapter;
 #include <drivers/e1000_hw.h>
 
 #ifdef DBG
-#define E1000_DBG(args...) printk(KERN_DEBUG "e1000: " args)
+#define E1000_DBG(args...) keprint(PRINT_DEBUG "e1000: " args)
 #else
 #define E1000_DBG(args...)
 #endif
 
-#define E1000_ERR(args...) printk(KERN_ERR "e1000: " args)
+#define E1000_ERR(args...) keprint(PRINT_ERR "e1000: " args)
 
 #define PFX "e1000: "
 #define DPRINTK(nlevel, klevel, fmt, args...) \
 	(void)((NETIF_MSG_##nlevel & adapter->msg_enable) && \
-	printk(KERN_##klevel PFX "%s: %s: " fmt, adapter->netdev->name, \
+	keprint(KERN_##klevel PFX "%s: %s: " fmt, adapter->netdev->name, \
 		__FUNCTION__ , ## args))
 
 #define E1000_MAX_INTR 10

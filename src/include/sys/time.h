@@ -21,9 +21,16 @@ struct timezone {
 #ifndef _TIMESPEC
 #define _TIMESPEC
 struct timespec {
-    time_t tv_sec; // seconds
-    long tv_nsec; // and nanoseconds
+    time_t ts_sec; // seconds
+    long ts_nsec; // and nanoseconds
 };
 #endif
+
+int sys_gettimeofday(struct timeval *tv, struct timezone *tz);
+int sys_clock_gettime(clockid_t clockid, struct timespec *ts);
+unsigned long timeval_to_systicks(struct timeval *tv);
+void systicks_to_timeval(unsigned long ticks, struct timeval *tv);
+unsigned long timespec_to_systicks(struct timespec *ts);
+void systicks_to_timespec(unsigned long ticks, struct timespec *ts);
 
 #endif  /* _SYS_TIME_H */

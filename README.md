@@ -1,26 +1,19 @@
 # xbook2操作系统内核
 xbook2操作系统内核是一个基于intel x86平台的32位处理器的系统内核，可运行在qemu，bochs，virtual box，vmware等虚拟机中。也可以在物理机上面运行（需要有系统支持的驱动才行）
 
-尽力了3个多月混合内核阶段，我发现微内核一个非常非常非常严重的问题就是效率，性能问题。我也知道我写得代码很烂，但是相比于宏内核的效率，的确差很多。于是，冥思苦想，还是做回宏内核，拥抱小可爱。
-
 xbook2被设计成一个跨处理器平台的架构，有ARCH目录，可以在里面添加一个新的处理器平台。不过目前也是尽量将平台相关的分离到arch里面，并为完全分离出来，待后面多实现几个平台后，才能更好的让处理器平台和内核部分进行更优化的分离。  
 
 内核结构示意图：
 ```
 USER MODE:
-+---------------------------------+
-|shell | text edit | compiler     |
-+---------------------------------+  
-\                           /
 +---------------------------+
-|  xlibc | pthread          |   
+|  libs | apps          |   
 +---------------------------+
 KERNEL MODE: 
 +---------------------------+  
-|net+lwip | fs+fatfs | gui  |
+| FSAL                      |
 +---------------------------+
-\                           /   
-+---------------------------+
++---------------------------+  
 |task | ipc | vmm | drivers |
 +---------------------------+
 |            arch           | 
@@ -30,8 +23,15 @@ KERNEL MODE:
 |          hardware         |
 +---------------------------+
 ```
-截图：
-![desktop0](https://gitee.com/hzc1998/xbook2/raw/master/develop/screenshoot/desktop0.png)
+
+| 目录            | 描述                                      |
+| ------------- | --------------------------------------- |
+| develop       | 开发时用到的磁盘镜像，ROM文件系统内容等   |
+| doc           | 操作系统相关的文档                               |
+| scripts       | 用到的xbuild脚本和其它配置文件 |
+| src           | xbook2内核的源码                  |
+| tools         | 内核开发需要用到的工具                         |
+| user          | 和用户相关的内容，库，应用程序等  |
 
 系统功能列表：
 ```
@@ -40,9 +40,9 @@ KERNEL MODE:
 管道通信，共享内存，消息队列，信号量
 
 IDE硬盘驱动，PS/2鼠标，键盘驱动，VBE视频驱动
-RTL8139网卡驱动，UART串口驱动
+UART串口驱动
 
-FATFS文件系统，LWIP网络协议
+FATFS文件系统
 PTHREAD线程库
 ```
 
@@ -57,9 +57,11 @@ PTHREAD线程库
 
 ## Windows环境搭建
 ```
-1.下载我提取的工具包：http://www.book-os.org/tools/BuildTools-v6.zip, 下载后配置解压目录环境变量到系统环境变量Path里面。
+1.下载我提取的工具包：http://www.book-os.org/tools/BuildTools-v7.zip, 下载后配置解压目录环境变量到系统环境变量Path里面。（注意，如果你的电脑上已经有mingw或者cygwin环境，请把这个工具包的环境变量放到靠前的位置，不然不会执行工具包里面的程序）
 
 2.下载qemu最新版：https://www.qemu.org/ 下载后安装，配置安装目录环境变量到系统环境变量Path里面，或者下载我提取的版本：http://www.book-os.org/tools/Qemu-i386.rar，下载后配置解压目录环境变量到系统环境变量Path里面。
+
+3.下载windows下面的qemu加速扩展程序HAXM v7.6.5：https://github.com/intel/haxm/releases，下载后安装即可.
 ```
 
 ## Linux环境搭建
@@ -74,21 +76,23 @@ PTHREAD线程库
     
 ```
 
-## 编译使用命令：
+## 编译时build后直接run即可（可加-jn参数多线程编译，n是线程数。）：
+```bash
+> make build    # 构建环境
+> make run      # 编译并运行，默认使用qemu虚拟机运行
 ```
+
+## 编译时可用的命令：
+```bash
 > make          # 只编译源码
 > make build    # 构建环境
 > make debuild  # 清理环境
 > make run      # 编译并运行，默认使用qemu虚拟机运行
 > make qemu     # 使用qemu虚拟机运行
-> make qemudbg  # 使用qemu虚拟机进行调试
 > make clean    # 清除编译产生的对象文件以及可执行文件
-> make usr      # 只编译用户程序（在开发应用时常用）
-> make lib      # 只编译库（在开发库时常用）
+> make user     # 只编译用户程序（在开发应用时常用）
+> make user_clean     # 只清除用户态生成的内容
 ```
-
-## 其它文档
-* [xbook应用程序开发指南](https://github.com/hzcx998/xbook2/blob/develop/doc/appdev-helper.md)
 
 联系方式：
 开源官网：www.book-os.org  

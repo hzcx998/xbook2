@@ -3,6 +3,6 @@
 
 #include <arch/page.h>
 
-#define KERN_VADDR      PAGE_OFFSET
+#define KERN_VADDR      KERN_BASE_VIR_ADDR
 
 #endif   /* _XBOOK_KERNEL_H */

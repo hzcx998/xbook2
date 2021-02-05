@@ -32,10 +32,10 @@ static inline unsigned long set_bit(int nr, unsigned long *addr)
 
    addr += nr >> 5;                 //nr大于31时，把高27的值做为当前地址的偏移，  
    mask = 1 << (nr & 0x1f);         //获取31范围内的值，并把1向左偏移该位数  
-   disable_intr();              //关所有中断  
+   interrupt_disable();              //关所有中断  
    retval = (mask & *addr) != 0;    //位置置1  
    *addr |= mask;  
-   enable_intr();               //开所有中断  
+   interrupt_enable();               //开所有中断  
    
    return retval;                   //返回置数值  
 } 
@@ -54,10 +54,10 @@ static inline unsigned long clear_bit(int nr, unsigned long *addr)
 
    addr += nr >> 5;  
    mask = 1 << (nr & 0x1f);  
-   disable_intr();  
+   interrupt_disable();  
    retval = (mask & *addr) != 0;  
    *addr &= ~mask;
-   enable_intr();  
+   interrupt_enable();  
    return retval;  
 }  
   

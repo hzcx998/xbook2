@@ -34,7 +34,6 @@ entry:
 
 	jmp LOADER_SEG:0
 
-;clean screan
 clean_screen:
 	mov ax, 0x02
 	int 0x10

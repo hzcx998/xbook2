@@ -17,14 +17,17 @@ typedef struct {
     wait_queue_t waiters;   /* message waiters */
 } msgpool_t;
 
+typedef void (*msgpool_get_func_t)(msgpool_t *, void *);
+
 msgpool_t *msgpool_create(size_t msgsz, size_t msgcount);
 int msgpool_destroy(msgpool_t *pool);
-int msgpool_push(msgpool_t *pool, void *buf);
-int msgpool_pop(msgpool_t *pool, void *buf);
+int msgpool_put(msgpool_t *pool, void *buf, size_t size);
+int msgpool_get(msgpool_t *pool, void *buf, msgpool_get_func_t callback);
+int msgpool_try_put(msgpool_t *pool, void *buf, size_t size);
+int msgpool_try_get(msgpool_t *pool, void *buf, msgpool_get_func_t callback);
+
 int msgpool_empty(msgpool_t *pool);
 int msgpool_full(msgpool_t *pool);
-int msgpool_try_push(msgpool_t *pool, void *buf);
-int msgpool_try_pop(msgpool_t *pool, void *buf);
 int msgpool_count(msgpool_t *pool);
 
 #endif /* _XBOOK_MSGPOOL_H */

@@ -4,7 +4,7 @@
 [section .text]
 
 extern kernel_main
-extern init_arch
+extern arch_init
 
 global kernel_start
 ;这个标签是整个内核的入口，从loader跳转到这儿
@@ -22,8 +22,6 @@ kernel_start:
 	mov byte [0x800b8000+160*4+10], 'L'
 	mov byte [0x800b8000+160*4+11], 0X07
 	
-	;init all segment registeres
-	;设置一下段
 	mov ax, 0x10	;the data 
 	mov ds, ax 
 	mov es, ax 
@@ -32,13 +30,9 @@ kernel_start:
 	mov ss, ax 
 	mov esp, KERNEL_STACK_TOP
 
-	;初始化平台架构
-	call init_arch					;into arch
-	
-	;初始化平台成功，接下来跳入到内核中去执行
+	call arch_init
 	call kernel_main
-
-stop:
+kernel_stop:
 	hlt
-	jmp stop
+	jmp kernel_stop
 jmp $	

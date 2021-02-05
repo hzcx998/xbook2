@@ -25,7 +25,7 @@
 #define	DA_386TSS		0x89	/* 可用 386 任务状态段类型值		*/
 
 /* 选择子类型值说明 */
-/* 其中, SA_ : Selector Attribute */
+/* 其中, SA : Selector Attribute */
 #define	SA_RPL0		0
 #define	SA_RPL1		1
 #define	SA_RPL2		2
@@ -36,50 +36,43 @@
 
 //index of descriptor
 #define	INDEX_DUMMY 0
-#define	INDEX_KERNEL_C 1
-#define	INDEX_KERNEL_RW 2
+#define	INDEX_KERNEL_CODE 1
+#define	INDEX_KERNEL_DATA 2
 #define	INDEX_TSS 3
-#define	INDEX_USER_C 4
-#define	INDEX_USER_RW 5
-#define	INDEX_SERVE_C 6
-#define	INDEX_SERVE_RW 7
+#define	INDEX_USER_CODE 4
+#define	INDEX_USER_DATA 5
 
-//选择子...
-//内核代码，数据，栈，视频
-
-#define KERNEL_CODE_SEL ((INDEX_KERNEL_C << 3) + (SA_TIG << 2) + SA_RPL0)
-#define KERNEL_DATA_SEL ((INDEX_KERNEL_RW << 3) + (SA_TIG << 2) + SA_RPL0)
+#define KERNEL_CODE_SEL ((INDEX_KERNEL_CODE << 3) + (SA_TIG << 2) + SA_RPL0)
+#define KERNEL_DATA_SEL ((INDEX_KERNEL_DATA << 3) + (SA_TIG << 2) + SA_RPL0)
 #define KERNEL_STACK_SEL KERNEL_DATA_SEL 
 
-//用户代码，数据，栈
-#define USER_CODE_SEL ((INDEX_USER_C << 3) + (SA_TIG << 2) + SA_RPL3)
-#define USER_DATA_SEL ((INDEX_USER_RW << 3) + (SA_TIG << 2) + SA_RPL3)
+#define USER_CODE_SEL ((INDEX_USER_CODE << 3) + (SA_TIG << 2) + SA_RPL3)
+#define USER_DATA_SEL ((INDEX_USER_DATA << 3) + (SA_TIG << 2) + SA_RPL3)
 #define USER_STACK_SEL USER_DATA_SEL 
 
-//TSS
 #define KERNEL_TSS_SEL ((INDEX_TSS << 3) + (SA_TIG << 2) + SA_RPL0)
-
-
-//用户代码，数据，栈
-#define SERVE_CODE_SEL ((INDEX_SERVE_C << 3) + (SA_TIG << 2) + SA_RPL1)
-#define SERVE_DATA_SEL ((INDEX_SERVE_RW << 3) + (SA_TIG << 2) + SA_RPL1)
-#define SERVE_STACK_SEL SERVE_DATA_SEL 
-
 
 /* GDT 的虚拟地址 */
 #define GDT_VADDR			0x80200000
 #define GDT_LIMIT		    0x000007ff
 
-/*
-段描述符结构
-*/
+#define GDT_OFF2PTR(gdt, off)    (gdt + off) 
+
+#define GDT_BOUND_BOTTOM   0
+#define GDT_BOUND_TOP      0xffffffff
+
+#define GDT_KERNEL_CODE_ATTR        (DA_CR | DA_DPL0 | DA_32 | DA_G)
+#define GDT_KERNEL_DATA_ATTR        (DA_DRW | DA_DPL0 | DA_32 | DA_G)
+#define GDT_USER_CODE_ATTR          (DA_CR | DA_DPL3 | DA_32 | DA_G)
+#define GDT_USER_DATA_ATTR          (DA_DRW | DA_DPL3 | DA_32 | DA_G)
+#define GDT_TSS_ATTR                (DA_386TSS)
+
 struct segment_descriptor {
 	unsigned short limit_low, base_low;
 	unsigned char base_mid, access_right;
 	unsigned char limit_high, base_high;
 };
 
-//初始化段描述符
-void init_segment_descriptor();
+void segment_descriptor_init();
 
 #endif	/*_X86_SEGMENT_H*/

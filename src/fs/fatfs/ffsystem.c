@@ -5,7 +5,8 @@
 
 
 #include "ff.h"
-#include <xbook/kmalloc.h>
+#include <xbook/memalloc.h>
+#include <xbook/walltime.h>
 
 #if FF_USE_LFN == 3	/* Dynamic memory allocation */
 
@@ -17,7 +18,7 @@ void* ff_memalloc (	/* Returns pointer to the allocated memory block (null if no
 	UINT msize		/* Number of bytes to allocate */
 )
 {
-	return kmalloc(msize);	/* Allocate a new memory block with POSIX API */
+	return mem_alloc(msize);	/* Allocate a new memory block with POSIX API */
 }
 
 
@@ -29,7 +30,7 @@ void ff_memfree (
 	void* mblock	/* Pointer to the memory block to free (nothing to do if null) */
 )
 {
-	kfree(mblock);	/* Free the memory block with POSIX API */
+	mem_free(mblock);	/* Free the memory block with POSIX API */
 }
 
 #endif
@@ -55,8 +56,12 @@ int ff_cre_syncobj (	/* 1:Function succeeded, 0:Could not create the sync object
 )
 {
 	/* Win32 */
-	*sobj = CreateMutex(NULL, FALSE, NULL);
-	return (int)(*sobj != INVALID_HANDLE_VALUE);
+	//*sobj = CreateMutex(NULL, FALSE, NULL);
+	//return (int)(*sobj != INVALID_HANDLE_VALUE);
+
+    /* xbook2 */
+    *sobj = semaphore_alloc(1);
+    return (int)(*sobj != NULL);
 
 	/* uITRON */
 //	T_CSEM csem = {TA_TPRI,1,1};
@@ -91,8 +96,10 @@ int ff_del_syncobj (	/* 1:Function succeeded, 0:Could not delete due to an error
 )
 {
 	/* Win32 */
-	return (int)CloseHandle(sobj);
-
+	//return (int)CloseHandle(sobj);
+    
+    /* xbook2 */
+    return semaphore_free(sobj);
 	/* uITRON */
 //	return (int)(del_sem(sobj) == E_OK);
 
@@ -122,8 +129,11 @@ int ff_req_grant (	/* 1:Got a grant to access the volume, 0:Could not get a gran
 )
 {
 	/* Win32 */
-	return (int)(WaitForSingleObject(sobj, FF_FS_TIMEOUT) == WAIT_OBJECT_0);
+	//return (int)(WaitForSingleObject(sobj, FF_FS_TIMEOUT) == WAIT_OBJECT_0);
 
+    /* xbook2 */
+    return (semaphore_down_timeout(sobj, FF_FS_TIMEOUT) == 0);
+    
 	/* uITRON */
 //	return (int)(wai_sem(sobj) == E_OK);
 
@@ -151,8 +161,11 @@ void ff_rel_grant (
 )
 {
 	/* Win32 */
-	ReleaseMutex(sobj);
+	//ReleaseMutex(sobj);
 
+    /* xbook2 */
+    semaphore_up(sobj);
+	
 	/* uITRON */
 //	sig_sem(sobj);
 
@@ -168,3 +181,17 @@ void ff_rel_grant (
 
 #endif
 
+#if FF_FS_NORTC == 0
+
+DWORD get_fattime (void)
+{
+    DWORD value = (((walltime.year - 1980) & 0x7f) << 25) |
+            ((walltime.month & 0xf) << 21) |
+            ((walltime.day & 0x1f) << 16) |
+            ((walltime.hour & 0x1f) << 11) |
+            ((walltime.minute & 0x3f) << 5) |
+            ((walltime.second / 2) & 0x1f);
+    return value;
+}
+
+#endif /* FF_FS_NORTC */

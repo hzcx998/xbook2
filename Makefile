@@ -17,6 +17,7 @@ TRUNC		= truncate
 RM			= rm
 DD			= dd
 MKDIR		= mkdir
+OBJDUMP		= objdump
 
 # virtual machine
 QEMU 		= qemu-system-i386
@@ -37,9 +38,11 @@ HDA_SZ		= 33554432 # 32 MB
 HDB_SZ		= 33554432
 
 # environment dir
-LIBRARY_DIR	= ./library
-SYSTEM_DIR	= ./system
 USER_DIR	= ./user
+
+LIBS_DIR	= $(USER_DIR)/libs
+SBIN_DIR	= $(USER_DIR)/sbin
+BIN_DIR		= $(USER_DIR)/bin
 
 #kernel disk
 LOADER_OFF 	= 2
@@ -53,8 +56,8 @@ KERNEL_CNTS	= 1024		# assume 512kb
 
 # arch dir
 
-KERNSRC		= src
-ARCH	= $(KERNSRC)/arch/x86
+KERNSRC		= ./src
+ARCH		= $(KERNSRC)/arch/x86
 
 # kernel boot binary
 BOOT_BIN 	= $(ARCH)/boot/boot.bin
@@ -65,7 +68,7 @@ SETUP_BIN 	= $(ARCH)/boot/setup.bin
 KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 
 # 参数
-.PHONY: all kernel build debuild qemu qemudbg lib sys usr
+.PHONY: all kernel build debuild qemu qemudbg user user_clean dump
 
 # 默认所有动作，编译内核后，把引导、内核、init服务、文件服务和rom文件写入磁盘
 all : kernel 
@@ -80,17 +83,16 @@ run: qemu
 
 # 先写rom，在编译内核
 kernel:
-	@$(MAKE) -s -C  ./src
+	@$(MAKE) -s -C  $(KERNSRC)
 
 clean:
-	@$(MAKE) -s -C ./src clean
+	@$(MAKE) -s -C $(KERNSRC) clean
 
 # 构建环境。镜像>工具>环境>rom
-build:
+build: 
 	-$(MKDIR) $(IMAGE_DIR)
 	-$(MKDIR) $(ROM_DIR)/bin
 	-$(MKDIR) $(ROM_DIR)/sbin
-	-$(MKDIR) $(ROM_DIR)/usr
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG) 
@@ -98,9 +100,9 @@ ifeq ($(OS),Windows_NT)
 else
 	$(MAKE) -s -C  $(FATFS_DIR)
 endif
-	$(MAKE) -s -C  $(LIBRARY_DIR)
-	$(MAKE) -s -C  $(SYSTEM_DIR)
-	$(MAKE) -s -C  $(USER_DIR)
+	$(MAKE) -s -C  $(LIBS_DIR)
+	$(MAKE) -s -C  $(SBIN_DIR)
+	$(MAKE) -s -C  $(BIN_DIR)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 
 # 清理环境。
@@ -110,35 +112,27 @@ ifeq ($(OS),Windows_NT)
 else
 	$(MAKE) -s -C  $(FATFS_DIR) clean
 endif
-	$(MAKE) -s -C  $(LIBRARY_DIR) clean
-	$(MAKE) -s -C  $(SYSTEM_DIR) clean
-	$(MAKE) -s -C  $(USER_DIR) clean
+	$(MAKE) -s -C  $(LIBS_DIR) clean
+	$(MAKE) -s -C  $(SBIN_DIR) clean
+	$(MAKE) -s -C  $(BIN_DIR) clean
 	-$(RM) -r $(ROM_DIR)/bin
 	-$(RM) -r $(ROM_DIR)/sbin
-	-$(RM) -r $(ROM_DIR)/usr
+	-$(RM) -r $(ROM_DIR)/acct
 	-$(RM) -r $(IMAGE_DIR)
 	
-# 重新编译所有库
-lib: 
-	$(MAKE) -s -C  $(LIBRARY_DIR)
+user: 
+	$(MAKE) -s -C  $(LIBS_DIR) && \
+	$(MAKE) -s -C  $(SBIN_DIR) && \
+	$(MAKE) -s -C  $(BIN_DIR)
 
-lib_c: 
-	$(MAKE) -s -C  $(LIBRARY_DIR) clean
-	
-# 重新编译所有系统程序
-sys: 
-	$(MAKE) -s -C  $(SYSTEM_DIR)
+user_clean: 
+	$(MAKE) -s -C  $(LIBS_DIR) clean && \
+	$(MAKE) -s -C  $(SBIN_DIR) clean && \
+	$(MAKE) -s -C  $(BIN_DIR) clean
 
-sys_c: 
-	$(MAKE) -s -C  $(SYSTEM_DIR) clean
+dump:
+	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > $(KERNSRC)/kern.dump
 
-# 不清理编译
-usr:
-	$(MAKE) -s -C  $(USER_DIR)
-	
-usr_c:
-	$(MAKE) -s -C  $(USER_DIR) clean
-	
 #-hda $(HDA_IMG) -hdb $(HDB_IMG)
 # 网卡配置: 
 #	-net nic,vlan=0,model=rtl8139,macaddr=12:34:56:78:9a:be
@@ -162,9 +156,15 @@ usr_c:
 		-device ahci,id=ahci \
 		-device ide-drive,drive=disk0,bus=ahci.0 \
 		-device ide-drive,drive=disk1,bus=ahci.1 \
+               
+ifeq ($(OS),Windows_NT)
+QEMU_KVM := -accel hax
+else
+QEMU_KVM := -enable-kvm
+endif
+QEMU_KVM := # no virutal
 
-
-QEMU_ARGUMENT = -m 512M \
+QEMU_ARGUMENT = -m 1024M $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
 		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
