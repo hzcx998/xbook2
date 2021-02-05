@@ -18,5 +18,3 @@ export AS LD
 
 MODULE      +=  init
 MODULE      +=  login
-MODULE      +=  userctl
-MODULE      +=  service

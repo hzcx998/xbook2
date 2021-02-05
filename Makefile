@@ -43,7 +43,6 @@ USER_DIR	= ./user
 LIBS_DIR	= $(USER_DIR)/libs
 SBIN_DIR	= $(USER_DIR)/sbin
 BIN_DIR		= $(USER_DIR)/bin
-SERV_DIR	= $(USER_DIR)/serv
 
 #kernel disk
 LOADER_OFF 	= 2
@@ -94,7 +93,6 @@ build:
 	-$(MKDIR) $(IMAGE_DIR)
 	-$(MKDIR) $(ROM_DIR)/bin
 	-$(MKDIR) $(ROM_DIR)/sbin
-	-$(MKDIR) $(ROM_DIR)/usr
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG) 
@@ -105,7 +103,6 @@ endif
 	$(MAKE) -s -C  $(LIBS_DIR)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
-	$(MAKE) -s -C  $(SERV_DIR)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 
 # 清理环境。
@@ -118,24 +115,20 @@ endif
 	$(MAKE) -s -C  $(LIBS_DIR) clean
 	$(MAKE) -s -C  $(SBIN_DIR) clean
 	$(MAKE) -s -C  $(BIN_DIR) clean
-	$(MAKE) -s -C  $(SERV_DIR) clean
 	-$(RM) -r $(ROM_DIR)/bin
 	-$(RM) -r $(ROM_DIR)/sbin
-	-$(RM) -r $(ROM_DIR)/usr
 	-$(RM) -r $(ROM_DIR)/acct
 	-$(RM) -r $(IMAGE_DIR)
 	
 user: 
 	$(MAKE) -s -C  $(LIBS_DIR) && \
 	$(MAKE) -s -C  $(SBIN_DIR) && \
-	$(MAKE) -s -C  $(BIN_DIR) && \
-	$(MAKE) -s -C  $(SERV_DIR)
+	$(MAKE) -s -C  $(BIN_DIR)
 
 user_clean: 
 	$(MAKE) -s -C  $(LIBS_DIR) clean && \
 	$(MAKE) -s -C  $(SBIN_DIR) clean && \
-	$(MAKE) -s -C  $(BIN_DIR) clean && \
-	$(MAKE) -s -C  $(SERV_DIR) clean
+	$(MAKE) -s -C  $(BIN_DIR) clean
 
 dump:
 	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > $(KERNSRC)/kern.dump
