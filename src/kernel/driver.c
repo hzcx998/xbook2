@@ -1090,7 +1090,7 @@ static off_t devif_ftell(int handle)
     return off;
 }
 
-static void *devif_mmap(int handle, size_t length, int flags)
+static void *devif_mmap(int handle, void *addr, size_t length, int prot, int flags, off_t offset)
 {
     return device_mmap(handle, length, flags);
 }

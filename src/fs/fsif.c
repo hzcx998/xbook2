@@ -207,14 +207,19 @@ int sys_lseek(int fd, off_t offset, int whence)
     return ffd->fsal->lseek(ffd->handle, offset, whence);
 }
 
-void *sys_mmap(int fd, size_t length, int flags)
+void *__sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return NULL;
     if (!ffd->fsal->mmap)
         return NULL;
-    return ffd->fsal->mmap(ffd->handle, length, flags);
+    return ffd->fsal->mmap(ffd->handle, addr, length, prot, flags, offset);
+}
+
+void *sys_mmap(mmap_args_t *args)
+{
+    return __sys_mmap(args->addr, args->length, args->prot, args->flags, args->fd, args->offset);
 }
 
 int sys_access(const char *path, int mode)

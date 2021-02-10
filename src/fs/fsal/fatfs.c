@@ -181,14 +181,15 @@ static int fsal_fatfs_open(void *path, int flags)
     fsal_file_t *fp = fsal_file_alloc();
     if (fp == NULL)
         return -1;
+    const TCHAR *p = (const TCHAR *) path;
     fp->extension = mem_alloc(sizeof(fatfs_file_extention_t));
     if (!fp->extension) {
+        errprint("fatfs: alloc file %s extension for open failed!\n", p);
         fsal_file_free(fp);
         return -ENOMEM;
     }
 
     fp->fsal = &fatfs_fsal;
-    const TCHAR *p = (const TCHAR *) path;
 
     BYTE mode = 0;  /* 文件打开模式 */
     if (flags & O_RDONLY) {
@@ -209,6 +210,7 @@ static int fsal_fatfs_open(void *path, int flags)
     FRESULT fres;
     fres = f_open((FIL *)fp->extension, p, mode);
     if (fres != FR_OK) {
+        errprint("fatfs: open file %s failed!\n", p);
         mem_free(fp->extension);
         fsal_file_free(fp);
         return -1;

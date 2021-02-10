@@ -8,7 +8,7 @@
 int proc_test(int argc, char *argv[])
 {
     #if TEST_N == 0
-    char *_argv[3] = {"/usr/hello", "hello, world!\n", NULL};
+    char *_argv[3] = {"/bin/hello", "hello, world!\n", NULL};
     #elif  TEST_N == 1
     char *_argv[2] = {"cal", NULL};
     #elif  TEST_N == 2
