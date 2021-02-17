@@ -312,7 +312,7 @@ static unsigned int kbd_keymap[MAX_SCAN_CODE_NR * KEYMAP_COLS] = {
 /* 0x34 - '.'		*/	'.',		'>',		0,
 /* 0x35 - '/'		*/	'/',		'?',		KBD_PAD_SLASH,
 /* 0x36 - r. SHIFT	*/	KBD_SHIFT_R,	KBD_SHIFT_R,	0,
-/* 0x37 - '*'		*/	'*',		'*',    	0,
+/* 0x37 - '*'		*/	KBD_PAD_STAR,		'*',    	0,
 /* 0x38 - ALT		*/	KBD_ALT_L,		KBD_ALT_L,  	KBD_ALT_R,
 /* 0x39 - ' '		*/	' ',		' ',		0,
 /* 0x3A - caps_lock	*/	KBD_CAPS_LOCK,	KBD_CAPS_LOCK,	0,
@@ -817,13 +817,13 @@ unsigned int keyboard_do_read(device_extension_t *ext)
 			break;
 		case KBD_NUM_LOCK:
 			if (make) {
-				ext->num_lock    = !ext->num_lock;
+             	ext->num_lock    = !ext->num_lock;
 				set_leds(ext);
 			}
 			break;
 		case KBD_SCROLL_LOCK:
 			if (make) {
-				ext->scroll_lock = !ext->scroll_lock;
+             	ext->scroll_lock = !ext->scroll_lock;
 				set_leds(ext);
 			}
 			break;	
@@ -903,7 +903,7 @@ unsigned int keyboard_do_read(device_extension_t *ext)
                 }
                 break;
             }
-#endif /* CONFIG_PAD */
+#endif /* CONFIG_PAD_FIX */
         }
         /* 如果有组合件，就需要合成成为组合后的按钮，可以是ctl+alt+shift+按键的格式 */
         key |= ext->shift_left	? KBD_FLAG_SHIFT_L	: 0;
@@ -920,7 +920,7 @@ unsigned int keyboard_do_read(device_extension_t *ext)
         /* 设置锁标志 */
         key |= ext->num_lock ? KBD_FLAG_NUM : 0;
         key |= ext->caps_lock ? KBD_FLAG_CAPS : 0;
-
+        
         /* 把按键输出 */
         return key;
 	}
@@ -1047,7 +1047,7 @@ void kbd_thread(void *arg) {
     while (1) {
         key = 0;
         key = keyboard_do_read(ext);
-        if (key > 0) {
+        if (key > 0 && (key & KBD_KEY_MASK)) {
             input_event_t e;
             e.type = EV_KEY;
             if (key & KBD_FLAG_BREAK) {

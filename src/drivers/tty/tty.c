@@ -66,8 +66,8 @@ static int tty_set_current(device_extension_t *extension, int visitor)
 
 /* 将小键盘的按键转换成主键盘上面的按键 */
 static unsigned char __keycode_map_table[] = {
-    KEY_KP_PERIOD,      KEY_PERIOD,
-    KEY_KP_MULTIPLY,    KEY_ASTERISK,     /* * */
+    KEY_KP_PERIOD,      KEY_PERIOD,          /* . */
+    KEY_KP_MULTIPLY,    KEY_ASTERISK,        /* * */
     KEY_KP_PLUS,        KEY_PLUS,            /* + */
     KEY_KP_MINUS,       KEY_MINUS,           /* - */
     KEY_KP_DIVIDE,      KEY_SLASH,           /* / */
