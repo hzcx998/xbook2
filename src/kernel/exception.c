@@ -383,3 +383,12 @@ int sys_excetion_return(unsigned int ebx, unsigned int ecx, unsigned int esi, un
 {
     return exception_return(frame);
 }
+
+int sys_expmask(uint32_t *mask)
+{
+    if (!mask)
+        return -EINVAL;
+    exception_manager_t *exception_manager = &task_current->exception_manager;
+    *mask = exception_manager->exception_block[0];
+    return 0;
+}

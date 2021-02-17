@@ -128,6 +128,7 @@ void syscall_init()
     syscalls[SYS_FASTIO] = sys_fastio;
     syscalls[SYS_FASTREAD] = sys_fastread;
     syscalls[SYS_FASTWRITE] = sys_fastwrite;
+    syscalls[SYS_EXPMASK] = sys_expmask;
 }
 
 int syscall_error(uint32_t callno)
