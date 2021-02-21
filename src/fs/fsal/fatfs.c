@@ -199,7 +199,9 @@ static int fsal_fatfs_open(void *path, int flags)
     } else if (flags & O_RDWR) {
         mode |= FA_READ | FA_WRITE;
     }
-    if (flags & O_TRUNC) {
+    if (flags & O_EXCL) {
+        mode |= FA_CREATE_NEW;
+    } else if (flags & O_TRUNC) {
         mode |= FA_CREATE_ALWAYS;
     } else if (flags & O_APPEND) {
         mode |= FA_OPEN_APPEND;

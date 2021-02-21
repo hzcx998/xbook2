@@ -14,6 +14,8 @@
 
 #define FILE_FD_TYPE_MASK   0XFF
 
+#define FILE_FD_CLOEXEC   0X1000    /* 执行时关闭fd的标志 */
+
 int fs_fd_init(task_t *task);
 int fs_fd_exit(task_t *task);
 int local_fd_install(int resid, unsigned int flags);

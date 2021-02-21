@@ -80,7 +80,6 @@ int unlink(const char *path);
 int ftruncate(int fd, off_t offset);
 int fsync(int fd);
 int ioctl(int fd, int cmd, void *arg);
-int fcntl(int fd, int cmd, long arg);
 
 int dup(int fd);
 int dup2(int oldfd, int newfd);

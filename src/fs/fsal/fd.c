@@ -107,8 +107,14 @@ int fs_fd_reinit(task_t *cur)
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         if (cur->fileman->fds[i].flags != 0) {
-            if (i >= 3)
+            /* 超过3的直接关闭，没有超过的，就检测是否含有CLOEXEC标志，有就关闭。 */
+            if (i < 3) {
+                if (cur->fileman->fds[i].flags & FILE_FD_CLOEXEC)
+                    sys_close(i);
+            } else {
                 sys_close(i);
+            }
+
         }
     }
     return 0;

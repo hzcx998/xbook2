@@ -17,6 +17,7 @@
 #include <xbook/account.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
+#include <fcntl.h>
 
 // #define DEBUG_FSIF
 
@@ -194,7 +195,29 @@ int sys_fcntl(int fd, int cmd, long arg)
         return -EINVAL;
     if (!ffd->fsal->fcntl)
         return -ENOSYS;
-    return ffd->fsal->fcntl(ffd->handle, cmd, (unsigned long )arg);   
+    
+    switch (cmd) {
+    case F_DUPFD:
+        return sys_dup(fd);
+    case F_GETFD:
+        return (ffd->flags & FILE_FD_CLOEXEC) ? FD_CLOEXEC : FD_NCLOEXEC;
+        break;
+    case F_SETFD:
+        if (arg & FD_CLOEXEC)
+            ffd->flags |= FILE_FD_CLOEXEC;
+        else
+            ffd->flags &= ~FILE_FD_CLOEXEC;
+        break;
+    case F_GETFL:
+        /* TODO: return file flags */
+        break;
+    case F_SETFL:
+        /* TODO: set file flags */
+        break;
+    default:
+        break;
+    }
+    return -1;
 }
 
 int sys_lseek(int fd, off_t offset, int whence)
