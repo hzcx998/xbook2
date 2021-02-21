@@ -53,6 +53,7 @@ int port_comm_test(int argc, char *argv[]);
 int gui_test(int argc, char *argv[]);
 int file_test3(int argc, char *argv[]);
 int fcntl_test(int argc, char *argv[]);
+int tty_test(int argc, char *argv[]);
 
 static inline void sys_err(char *str)
 {
