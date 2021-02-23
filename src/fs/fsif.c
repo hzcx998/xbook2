@@ -210,6 +210,7 @@ int sys_fcntl(int fd, int cmd, long arg)
         break;
     case F_GETFL:
         /* TODO: return file flags */
+        return 0;
         break;
     case F_SETFL:
         /* TODO: set file flags */
@@ -428,7 +429,8 @@ int sys_getcwd(char *buf, int bufsz)
     task_t *cur = task_current;
     if (!cur->fileman)
         return -EINVAL;
-    if (mem_copy_to_user(buf, cur->fileman->cwd, min(bufsz, MAX_PATH)) < 0)
+    if (mem_copy_to_user(buf, cur->fileman->cwd, min((bufsz == 0) ? MAX_PATH : bufsz,
+        MAX_PATH)) < 0)
         return -EINVAL;
     return 0;
 }

@@ -18,6 +18,7 @@ extern "C" {
 #define	__PDP_ENDIAN	3412
 
 #define __BYTE_ORDER __LITTLE_ENDIAN
+#define __FLOAT_WORD_ORDER __BYTE_ORDER
 
 # define LITTLE_ENDIAN	__LITTLE_ENDIAN
 # define BIG_ENDIAN	__BIG_ENDIAN

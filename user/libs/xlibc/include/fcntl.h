@@ -50,7 +50,7 @@ extern "C" {
 #define O_NOCTTY    0x800   // 不设置为控制tty
 #define O_EXCL      0x1000  // 打开时文件一定要不存在才行
 
-int fcntl(int fd, int cmd, long arg);
+int fcntl(int fd, int cmd, ...);
 
 #ifdef __cplusplus
 }

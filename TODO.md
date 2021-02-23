@@ -19,5 +19,15 @@
 
 * 2020/11/3
 * 需添加：磁盘换页机制
-* 2021/12/31
+* 2020/12/31
 * 编写文档，描述内核结构
+* 2021/2/22
+* 移植bash，把缺少的函数补上，不做具体实现。
+{
+接口：sys/times, unistd/id.c,tcgetattr, tcsetattr,pwd.c
+    gethostname, umask, termios.c
+修改:signames.h改成bookos的
+处理：SIGTSTP
+bug on bash: locale.c->loca_shiftstates
+修复：bash pwd命令出错，可能是环境变量问题。修改环境变量以及目录配置。
+} 

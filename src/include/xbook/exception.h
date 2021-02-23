@@ -83,6 +83,7 @@ int sys_expcatch(uint32_t code, exception_handler_t handler);
 int sys_expblock(uint32_t code, uint32_t state);
 int sys_excetion_return(unsigned int ebx, unsigned int ecx, unsigned int esi, unsigned int edi, trap_frame_t *frame);
 int sys_expmask(uint32_t *mask);
+void *sys_exphandler(uint32_t code);
 
 int exception_check_kernel(trap_frame_t *frame);
 

@@ -34,6 +34,7 @@ AS			:=	nasm
 export AS LD
 
 # bin
+MODULE      +=  bash
 MODULE      +=  echo
 MODULE      +=  cat
 MODULE      +=  cal

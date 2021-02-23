@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 
-errno_t __errno = 0;
+errno_t volatile __errno = 0;
 
 static char *__errno_string[] = {
     "ENULL", 

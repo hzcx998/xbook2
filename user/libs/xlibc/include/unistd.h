@@ -7,48 +7,12 @@ extern "C" {
 
 #include <types.h>
 #include <stddef.h>
-
-/* 高4位是属性位 */
-#define S_IFSOCK 0x90    //scoket
-#define S_IFLNK 0x50     //符号连接
-#define S_IFIFO 0x30     //先进先出
-#define S_IFBLK 0x80     //区块装置
-#define S_IFCHR 0x40     //字符装置
-#define S_IFDIR 0x20     //目录
-#define S_IFREG 0x10     //一般文件
-
-#define S_IREAD 0x04     //文件所有者具可读取权限
-#define S_IWRITE 0x02    //文件所有者具可写入权限
-#define S_IEXEC 0x01     //文件所有者具可执行权限
-
-//上述的文件类型在POSIX中定义了检查这些类型的宏定义：
-
-
-#define S_ISDIR(m)			((m) & S_IFDIR )    //是否为目录
-#define S_ISCHR(m)			((m) & S_IFCHR )    //是否为字符设备
-#define S_ISBLK(m)			((m) & S_IFBLK )    //是否为块设备
-#define S_ISREG(m)			((m) & S_IFREG )    //是否为一般文件
-#define S_ISLNK(m)			((m) & S_IFLNK )    //判断是否为符号连接
-#define S_ISFIFO(m)			((m) & S_IFIFO )    //先进先出
-#define S_ISSOCK(m)			((m) & S_IFSOCK )   //是否为socket
+#include <fcntl.h>
 
 /* 文件模式 */
 #define M_IREAD  (1 << 2)     //文件可读取权限
 #define M_IWRITE (1 << 1)    //文件可写入权限
 #define M_IEXEC  (1 << 0)     //文件可执行权限
-
-/* file open 文件打开 */
-#define O_RDONLY    0x01
-#define O_WRONLY    0x02
-#define O_RDWR      0x04
-#define O_CREAT     0x08
-#define O_TRUNC     0x10
-#define O_APPEND    0x20
-#define O_EXEC      0x80
-#define O_TEXT      0x100   // 文本模式打开        
-#define O_BINARY    0x200   // 二进制模式打开
-#define O_NONBLOCK  0x400   // 无阻塞
-#define O_NOCTTY    0x800   // 不设置为控制tty
 
 #ifndef SEEK_SET
 /* file seek */
@@ -70,10 +34,10 @@ extern "C" {
 int brk(void *addr);
 void *sbrk(int increment);
 
-int open(const char *path, int flags);
+int open(const char *path, int flags, ...);
 int close(int fd);
 int read(int fd, void *buffer, size_t nbytes);
-int write(int fd, void *buffer, size_t nbytes);
+int write(int fd, const void *buffer, size_t nbytes);
 int lseek(int fd, off_t offset, int whence);
 int access(const char *filenpath, int mode);
 int unlink(const char *path);
@@ -91,7 +55,7 @@ int rmdir(const char *path);
 int _rename(const char *source, const char *target);
 
 int chdir(const char *path);
-int getcwd(char *buf, int bufsz);
+char *getcwd(char *buf, int bufsz);
 
 int execve(const char *pathname, char *const argv[], char *const envp[]);
 int execle(const char *pathname, char *const envp[], const char *arg, ...);
@@ -113,6 +77,48 @@ int pipe(int fd[2]);
 int probedev(const char *name, char *buf, size_t buflen);
 int opendev(const char *devname, int flags);
 int openfifo(const char *fifoname, int flags);
+
+#define mkfifo openfifo
+
+/* id */
+int setuid(uid_t uid);
+uid_t getuid(void);
+uid_t geteuid(void);
+
+int setgid(gid_t gid);
+gid_t getgid(void);
+
+gid_t getegid(void);
+
+pid_t getpgrp(void);
+pid_t tcgetpgrp( int filedes );
+int tcsetpgrp( int filedes, pid_t pgrpid );
+
+int gethostname(char *name, size_t len);
+
+enum {
+    _SC_ARG_MAX = 0,
+    _SC_CHILD_MAX,
+    _SC_HOST_NAME_MAX,
+    _SC_LOGIN_NAME_MAX,
+    _SC_NGROUPS_MAX,
+    _SC_CLK_TCK,
+    _SC_OPEN_MAX,
+    _SC_PAGESIZE,
+    _SC_PAGE_SIZE,
+    _SC_RE_DUP_MAX,
+    _SC_STREAM_MAX,
+    _SC_SYMLOOP_MAX,
+    _SC_TTY_NAME_MAX,
+    _SC_TZNAME_MAX,
+    _SC_VERSION,
+};
+
+long sysconf(int name);
+
+#define getmaxgroups()  sysconf(_SC_NGROUPS_MAX)
+#define getmaxchild()   sysconf(_SC_CHILD_MAX)
+#define getdtablesize() sysconf(_SC_OPEN_MAX)
 
 #include <sys/proc.h>
 #include <getopt.h>

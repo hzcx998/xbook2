@@ -392,3 +392,11 @@ int sys_expmask(uint32_t *mask)
     *mask = exception_manager->exception_block[0];
     return 0;
 }
+
+void *sys_exphandler(uint32_t code)
+{
+    if (code >= EXP_CODE_MAX_NR)
+        return (void *) NULL;
+    exception_manager_t *exception_manager = &task_current->exception_manager;
+    return exception_manager->handlers[code];
+}

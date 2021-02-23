@@ -129,6 +129,7 @@ void syscall_init()
     syscalls[SYS_FASTREAD] = sys_fastread;
     syscalls[SYS_FASTWRITE] = sys_fastwrite;
     syscalls[SYS_EXPMASK] = sys_expmask;
+    syscalls[SYS_EXPHANDLER] = sys_exphandler;
 }
 
 int syscall_error(uint32_t callno)

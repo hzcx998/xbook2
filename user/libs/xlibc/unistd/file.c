@@ -3,22 +3,26 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <math.h>
 #include <sys/dir.h>
 #include <sys/syscall.h>
 #include <sys/stat.h>
 
-int open(const char *path, int flags)
+int open(const char *path, int flags, ...)
 {
+    /* arg3:... unused */
     if (path == NULL)
         return -1;
     char full_path[MAX_PATH] = {0};
     build_path(path, full_path);
     const char *p = (const char *) full_path;
     int retval = syscall2(int, SYS_OPEN, p, flags);
-    if (retval < -1) {
+    if (retval < 0) {
         _set_errno(-retval);
         retval = -1;
+    } else {
+        _set_errno(0);
     }
     return retval;
 }
@@ -37,7 +41,7 @@ int read(int fd, void *buffer, size_t nbytes)
     return syscall3(int, SYS_READ, fd, buffer, nbytes);
 }
 
-int write(int fd, void *buffer, size_t nbytes)
+int write(int fd, const void *buffer, size_t nbytes)
 {
     if (fd < 0)
         return -1;
@@ -51,10 +55,14 @@ int ioctl(int fd, int cmd, void *arg)
     return syscall3(int, SYS_IOCTL, fd, cmd, arg);
 }
 
-int fcntl(int fd, int cmd, long arg)
+int fcntl(int fd, int cmd, ...)
 {
     if (fd < 0)
         return -1;
+    va_list argptr;
+    va_start( argptr, cmd);
+    long arg = va_arg( argptr, long);
+    va_end( argptr);
     return syscall3(int, SYS_FCNTL, fd, cmd, arg);
 }
 

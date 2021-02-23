@@ -13,9 +13,21 @@ extern "C" {
 #include "environ.h"
 
 #define RAND_MAX 0x7fff
+#define MB_CUR_MAX 1
+
+typedef struct { int quot, rem; } div_t;
+typedef struct { long quot, rem; } ldiv_t;
+typedef struct { long long quot, rem; } lldiv_t;
+
+div_t div(int num, int den);
+ldiv_t ldiv(long num, long den);
+lldiv_t lldiv(long long num, long long den);
 
 void srand(unsigned long seed);
 int rand();
+
+int random();
+void srandom(unsigned long seed);
 
 void qsort( void  * base, size_t n_elements, size_t el_size,
     int  (* compare ) (void const *, void const *) );
@@ -42,6 +54,12 @@ long int labs(long int const i);
 void atexit(void (*func)(void));
 
 int system(const char * cmd);
+
+char *realpath(const char *path, char *resolved_path);
+
+void* bsearch (const void* key, const void* base,
+    size_t num, size_t size,
+    int (*compar)(const void*,const void*));
 
 #ifdef __cplusplus
 }

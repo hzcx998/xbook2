@@ -245,6 +245,8 @@ double fmax(double, double);
 float fmaxf(float, float);
 double fmin(double, double);
 float fminf(float, float);
+float copysignf(float x, float y);
+double copysign(double x, double y);
 
 /*
  * libm kernel functions

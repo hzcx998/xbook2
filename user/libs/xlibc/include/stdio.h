@@ -71,8 +71,11 @@ struct __FILE {
 #define stdout		(__stdio_get_stdout())
 #define stderr		(__stdio_get_stderr())
 
+#define fileno(stream)  ((stream)->fd)      
+
 FILE * fopen(const char * path, const char * mode);
 FILE * freopen(const char * path, const char * mode, FILE * f);
+FILE * fdopen(int fildes, const char * mode);
 int fclose(FILE * f);
 
 int remove(const char * path);
@@ -126,6 +129,8 @@ int snprintf(char * buf, size_t n, const char * fmt, ...);
 int sscanf(const char * buf, const char * fmt, ...);
 
 #define vsprintf(buf, fmt, ap)  vsnprintf(buf, BUFSIZ, fmt, ap)
+
+int vfprintf(FILE *f, const char *fmt, va_list ap);
 
 void perror(const char* str);
 
