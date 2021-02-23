@@ -193,15 +193,19 @@ int sys_fcntl(int fd, int cmd, long arg)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
-    if (!ffd->fsal->fcntl)
-        return -ENOSYS;
-    
+    int newfd = -1;
     switch (cmd) {
-    case F_DUPFD:
-        return sys_dup(fd);
+    case F_DUPFD: /* 复制一个基于arg（basefd）的最小的fd */
+    {
+        if (ffd->fsal->incref(ffd->handle) < 0)
+            return -EINVAL;
+        keprint("F_DUPFD: %d#%d\n", fd, arg);
+        newfd = local_fd_install_based(ffd->handle, ffd->flags & FILE_FD_TYPE_MASK, arg);
+        keprint("F_DUPFD: %d->%d\n", fd, newfd);
+        return newfd;
+    }
     case F_GETFD:
         return (ffd->flags & FILE_FD_CLOEXEC) ? FD_CLOEXEC : FD_NCLOEXEC;
-        break;
     case F_SETFD:
         if (arg & FD_CLOEXEC)
             ffd->flags |= FILE_FD_CLOEXEC;
@@ -211,7 +215,6 @@ int sys_fcntl(int fd, int cmd, long arg)
     case F_GETFL:
         /* TODO: return file flags */
         return 0;
-        break;
     case F_SETFL:
         /* TODO: set file flags */
         break;

@@ -25,9 +25,9 @@
 * 移植bash，把缺少的函数补上，不做具体实现。
 {
 接口：sys/times, unistd/id.c,tcgetattr, tcsetattr,pwd.c
-    gethostname, umask, termios.c
+    gethostname, umask, termios.c,mkfifo
 修改:signames.h改成bookos的
 处理：SIGTSTP
 bug on bash: locale.c->loca_shiftstates
-修复：bash pwd命令出错，可能是环境变量问题。修改环境变量以及目录配置。
+修复：bash管道不能使用
 } 
