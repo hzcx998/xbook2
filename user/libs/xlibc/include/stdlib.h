@@ -15,6 +15,9 @@ extern "C" {
 #define RAND_MAX 0x7fff
 #define MB_CUR_MAX 1
 
+#define	EXIT_FAILURE	1	/* Failing exit status.  */
+#define	EXIT_SUCCESS	0	/* Successful exit status.  */
+
 typedef struct { int quot, rem; } div_t;
 typedef struct { long quot, rem; } ldiv_t;
 typedef struct { long long quot, rem; } lldiv_t;

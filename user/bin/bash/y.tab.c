@@ -85,6 +85,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "chartypes.h"
 #include <signal.h>
 

@@ -16,7 +16,7 @@ aliaspath = $(prefix)/data/locale
 X_CFLAGS	+= -DPROGRAM='"$(Program)"' -DCONF_HOSTTYPE='"$(Machine)"'\
 			-DCONF_OSTYPE='"$(OS)"' -DCONF_MACHTYPE='"$(MACHTYPE)"' \
 			-DCONF_VENDOR='"$(VENDOR)"' -DLOCALEDIR='"$(localedir)"' -DPACKAGE='"$(PACKAGE)"' \
-			-DHAVE_CONFIG_H -DLIBDIR=\"$(prefix)/libdata -DLOCALE_ALIAS_PATH=\"$(aliaspath)\" \
+			-DHAVE_CONFIG_H -DLIBDIR=\"$(prefix)/libdata\" -DLOCALE_ALIAS_PATH=\"$(aliaspath)\" \
 			-D__XBOOK__ -DIN_LIBINTL
 			
 NAME		:= bash
