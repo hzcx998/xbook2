@@ -175,9 +175,23 @@ int chdir(const char *path)
     return syscall1(int, SYS_CHDIR, p);
 }
 
-int getcwd(char *buf, int bufsz)
+char *getcwd(char *buf, int bufsz)
 {
-    return syscall2(int, SYS_GETCWD, buf, bufsz);
+    char *_buf = buf;
+    if (!_buf) {
+        _buf = malloc(MAX_PATH);
+        if (!_buf)
+            return NULL;
+        memset(_buf, 0, MAX_PATH);
+        bufsz = MAX_PATH;
+    }
+    if (syscall2(int, SYS_GETCWD, _buf, bufsz) < 0) {
+        if (!buf) {
+            free(_buf);
+            _buf = NULL;
+        }
+    }
+    return _buf;
 }
 
 static struct _dirdes *__alloc_dirdes()

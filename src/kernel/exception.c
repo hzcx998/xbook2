@@ -275,6 +275,7 @@ static int exception_dispatch(exception_manager_t *exception_manager, exception_
         // TODO: add trace trap code here.
         break;
     default:
+        keprint("task exit because of excption:%d\n", exp->code);
         sys_exit(-exp->code);
         break;
     }
@@ -382,4 +383,21 @@ int sys_expblock(uint32_t code, uint32_t state)
 int sys_excetion_return(unsigned int ebx, unsigned int ecx, unsigned int esi, unsigned int edi, trap_frame_t *frame)
 {
     return exception_return(frame);
+}
+
+int sys_expmask(uint32_t *mask)
+{
+    if (!mask)
+        return -EINVAL;
+    exception_manager_t *exception_manager = &task_current->exception_manager;
+    *mask = exception_manager->exception_block[0];
+    return 0;
+}
+
+void *sys_exphandler(uint32_t code)
+{
+    if (code >= EXP_CODE_MAX_NR)
+        return (void *) NULL;
+    exception_manager_t *exception_manager = &task_current->exception_manager;
+    return exception_manager->handlers[code];
 }

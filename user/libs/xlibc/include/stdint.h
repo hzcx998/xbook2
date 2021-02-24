@@ -32,7 +32,6 @@ typedef signed short    s16;
 typedef unsigned char   u8;
 typedef signed char     s8;
 
-typedef int ptrdiff_t;
 typedef int intptr_t;
 #if 0
 typedef unsigned int	UINT;	/* int must be 16-bit or 32-bit */

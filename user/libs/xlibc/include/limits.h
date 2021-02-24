@@ -32,7 +32,10 @@ extern "C" {
 #define CHAR_MAX    UCHAR_MAX
 #endif  /* _CHAR_UNSIGNED */
 
-#define MB_LEN_MAX    5             /* max. # bytes in multibyte char */
+#ifndef MB_LEN_MAX
+#define MB_LEN_MAX    1             /* max. # bytes in multibyte char */
+#endif
+
 #define SHRT_MIN    (-32768)        /* minimum (signed) short value */
 #define SHRT_MAX      32767         /* maximum (signed) short value */
 #define USHRT_MAX     0xffff        /* maximum unsigned short value */

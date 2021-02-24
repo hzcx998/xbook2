@@ -32,6 +32,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     interrupt_restore_state(flags);
     int fd = kfile_open(pathname, O_RDONLY);
     if (fd < 0) {
+        errprint("[exec]: %s: file %s not exist!\n", __func__, pathname);
         goto free_task_arg;
     }
     struct stat sbuf;
@@ -178,10 +179,16 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
                         pname++;
                     else 
                         pname =  finalpath;
-                    do_execute((const char* )finalpath, (char *)pname, argv, envp);
+                    if (do_execute((const char* )finalpath, (char *)pname, argv, envp) < 0)
+                        keprint(PRINT_ERR "%s: path %s not executable!\n", __func__, pathname);                
                 }
                 env++;
                 memset(newpath, 0, MAX_PATH);
+            }
+        } else {
+            if (do_execute((const char* )pathname, (char *)pathname, argv, envp)) {
+                keprint(PRINT_ERR "%s: path %s not executable!", __func__, newpath);
+                return -1;
             }
         }
     }

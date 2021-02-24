@@ -396,6 +396,7 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
     case DEVICE_TYPE_VIRTUAL_CHAR:
     case DEVICE_TYPE_BEEP:
     case DEVICE_TYPE_VIEW:
+    case DEVICE_TYPE_SOUND:
         spin_lock(&device->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
@@ -557,6 +558,7 @@ void io_complete_request(io_request_t *ioreq)
     case DEVICE_TYPE_VIRTUAL_CHAR:
     case DEVICE_TYPE_BEEP:
     case DEVICE_TYPE_VIEW:
+    case DEVICE_TYPE_SOUND:
         spin_unlock(&ioreq->devobj->lock.spinlock);
         break;
     case DEVICE_TYPE_DISK:
@@ -1090,7 +1092,7 @@ static off_t devif_ftell(int handle)
     return off;
 }
 
-static void *devif_mmap(int handle, size_t length, int flags)
+static void *devif_mmap(int handle, void *addr, size_t length, int prot, int flags, off_t offset)
 {
     return device_mmap(handle, length, flags);
 }

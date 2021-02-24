@@ -19,7 +19,7 @@ int video_test(int argc, char *argv[])
 
     int bytes_per_pixel = video_info.bits_per_pixel / 8;
     size_t fb_len = bytes_per_pixel * video_info.y_resolution * video_info.x_resolution; 
-    void *fb_buf = mmap(fb0, fb_len, 0);
+    void *fb_buf = xmmap(fb0, fb_len, 0);
     if (fb_buf == NULL) {
         printf("mmap failed!\n");
         close(fb0);
@@ -34,10 +34,10 @@ int video_test(int argc, char *argv[])
     /* 查看1s可刷新的次数，测试10次，求平均数 */
     while (test_count < 10)
     {
-        memset(fb_buf, 0xff, fb_len);
-        memset(fb_buf, 0xff, fb_len);
-        memset(fb_buf, 0xff, fb_len);
-        memset(fb_buf, 0xff, fb_len);
+        memset(fb_buf, test_count * 10, fb_len);
+        memset(fb_buf, test_count * 10, fb_len);
+        memset(fb_buf, test_count * 10, fb_len);
+        memset(fb_buf, test_count * 10, fb_len);
         
         fps++;
         gettimeofday(&time2, NULL);
@@ -51,7 +51,7 @@ int video_test(int argc, char *argv[])
         }
     }
     printf("total fps:%d , per fps in 10s:%d\n", total_fps, total_fps / 10);
-    munmap(fb_buf, fb_len);
+    xmunmap(fb_buf, fb_len);
     close(fb0);
     printf("video test done!\n");
     return 0;

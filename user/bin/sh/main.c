@@ -54,7 +54,8 @@ int main(int argc, char *argv[])
 
     /* 启动自行服务 */
     #if 0
-    char *args[2] = {"desktop", NULL};
+    char *args[10] = {"tcc", "-m32", "-nostdlib","-Wl,-Ttext=0x1000","-I/usr/local/include", 
+        "-L/usr/local/lib", "-lxlibc", "hello.c", NULL};
     pid = create_process(args, environ, 0);
     #endif
     

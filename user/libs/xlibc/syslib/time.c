@@ -1,5 +1,6 @@
 #include <sys/time.h>
 #include <sys/syscall.h>
+#include <sys/proc.h>
 #include <time.h>
 #include <errno.h>
 /**
@@ -100,5 +101,7 @@ void mdelay(time_t msec)
         ticks = 1;
 
     clock_t start = getticks();
-    while (getticks() - start < ticks) {}
+    while (getticks() - start < ticks) {
+        sched_yeild();
+    }
 }

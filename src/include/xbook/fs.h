@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <xbook/spinlock.h>
 #include <xbook/fsal.h>
+#include <xbook/memspace.h>
 
 int file_system_init();
 
@@ -33,7 +34,7 @@ int sys_dup(int oldfd);
 int sys_dup2(int oldfd, int newfd);
 int sys_pipe(int fd[2]);
 long sys_fsize(int fd);
-void *sys_mmap(int fd, size_t length, int flags);
+void *sys_mmap(mmap_args_t *args);
 int sys_fastio(int fd, int cmd, void *arg);
 int sys_fastread(int fd, void *buffer, size_t nbytes);
 int sys_fastwrite(int fd, void *buffer, size_t nbytes);

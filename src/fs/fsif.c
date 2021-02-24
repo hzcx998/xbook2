@@ -17,6 +17,7 @@
 #include <xbook/account.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
+#include <fcntl.h>
 
 // #define DEBUG_FSIF
 
@@ -192,9 +193,33 @@ int sys_fcntl(int fd, int cmd, long arg)
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
-    if (!ffd->fsal->fcntl)
-        return -ENOSYS;
-    return ffd->fsal->fcntl(ffd->handle, cmd, (unsigned long )arg);   
+    int newfd = -1;
+    switch (cmd) {
+    case F_DUPFD: /* 复制一个基于arg（basefd）的最小的fd */
+    {
+        if (ffd->fsal->incref(ffd->handle) < 0)
+            return -EINVAL;
+        newfd = local_fd_install_based(ffd->handle, ffd->flags & FILE_FD_TYPE_MASK, arg);
+        return newfd;
+    }
+    case F_GETFD:
+        return (ffd->flags & FILE_FD_CLOEXEC) ? FD_CLOEXEC : FD_NCLOEXEC;
+    case F_SETFD:
+        if (arg & FD_CLOEXEC)
+            ffd->flags |= FILE_FD_CLOEXEC;
+        else
+            ffd->flags &= ~FILE_FD_CLOEXEC;
+        break;
+    case F_GETFL:
+        /* TODO: return file flags */
+        return 0;
+    case F_SETFL:
+        /* TODO: set file flags */
+        break;
+    default:
+        break;
+    }
+    return -1;
 }
 
 int sys_lseek(int fd, off_t offset, int whence)
@@ -207,14 +232,19 @@ int sys_lseek(int fd, off_t offset, int whence)
     return ffd->fsal->lseek(ffd->handle, offset, whence);
 }
 
-void *sys_mmap(int fd, size_t length, int flags)
+void *__sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return NULL;
     if (!ffd->fsal->mmap)
         return NULL;
-    return ffd->fsal->mmap(ffd->handle, length, flags);
+    return ffd->fsal->mmap(ffd->handle, addr, length, prot, flags, offset);
+}
+
+void *sys_mmap(mmap_args_t *args)
+{
+    return __sys_mmap(args->addr, args->length, args->prot, args->flags, args->fd, args->offset);
 }
 
 int sys_access(const char *path, int mode)
@@ -400,7 +430,8 @@ int sys_getcwd(char *buf, int bufsz)
     task_t *cur = task_current;
     if (!cur->fileman)
         return -EINVAL;
-    if (mem_copy_to_user(buf, cur->fileman->cwd, min(bufsz, MAX_PATH)) < 0)
+    if (mem_copy_to_user(buf, cur->fileman->cwd, min((bufsz == 0) ? MAX_PATH : bufsz,
+        MAX_PATH)) < 0)
         return -EINVAL;
     return 0;
 }

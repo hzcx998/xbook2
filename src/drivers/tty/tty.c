@@ -66,8 +66,8 @@ static int tty_set_current(device_extension_t *extension, int visitor)
 
 /* 将小键盘的按键转换成主键盘上面的按键 */
 static unsigned char __keycode_map_table[] = {
-    KEY_KP_PERIOD,      KEY_PERIOD,
-    KEY_KP_MULTIPLY,    KEY_ASTERISK,     /* * */
+    KEY_KP_PERIOD,      KEY_PERIOD,          /* . */
+    KEY_KP_MULTIPLY,    KEY_ASTERISK,        /* * */
     KEY_KP_PLUS,        KEY_PLUS,            /* + */
     KEY_KP_MINUS,       KEY_MINUS,           /* - */
     KEY_KP_DIVIDE,      KEY_SLASH,           /* / */
@@ -255,6 +255,15 @@ iostatus_t tty_devctl(device_object_t *device, io_request_t *ioreq)
     case TIOCGFLGS:
         *(unsigned long *)arg = extension->flags;
         break;        
+    case TIOCISTTY:
+        *(unsigned long *)arg = 1;
+        break;        
+    case TIOCNAME:
+        {
+            char *buf = (char *)arg;
+            strncpy(buf, device->name.text, strlen(device->name.text));
+        }
+        break;
     default:
         retval = device_devctl(extension->con, ioreq->parame.devctl.code,
             ioreq->parame.devctl.arg);

@@ -21,6 +21,7 @@ void* memmove(void* dst,const void* src,uint32_t count);
 void * memchr(const void * s, int c, size_t n);
 
 #define bzero(str, n) memset(str, 0, n) 
+#define bcopy(s, d, n) ((void) memcpy ((d), (s), (n)))
 
 char* strcpy(char* _dst, const char* _src);
 uint32_t strlen(const char* str);

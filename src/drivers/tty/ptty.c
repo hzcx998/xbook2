@@ -305,6 +305,15 @@ iostatus_t ptty_devctl(device_object_t *device, io_request_t *ioreq)
             status = IO_FAILED;
         }
         break;
+    case TIOCISTTY:
+        *(unsigned long *) ioreq->parame.devctl.arg = 1;
+        break;
+    case TIOCNAME:
+        {
+            char *buf = (char *)ioreq->parame.devctl.arg;
+            strncpy(buf, device->name.text, strlen(device->name.text));
+        }
+        break;
     default:
         break;
     }

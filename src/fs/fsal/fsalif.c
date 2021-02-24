@@ -47,12 +47,16 @@ static int fsalif_open(void *path, int flags)
         return -1;
     }
     char new_path[MAX_PATH] = {0};
-    if (fsal_path_switch(fpath, new_path, path) < 0)
+    if (fsal_path_switch(fpath, new_path, path) < 0) {
+        keprint(PRINT_ERR "path %s switch error!\n", path);
         return -1;
-    
+    }
+
     int handle = fsal->open(new_path, flags);
     if (handle >= 0)
         fsalif_incref(handle);
+    else
+        keprint(PRINT_ERR "path %s real open error!\n", path);
     return handle;
 }
 

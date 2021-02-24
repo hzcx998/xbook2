@@ -150,6 +150,19 @@
         "render.h": "c",
         "udev.h": "c",
         "view.h": "c",
-        "ios": "c"
+        "ios": "c",
+        "fcntl.h": "c",
+        "signames.h": "c",
+        "xmalloc.h": "c",
+        "alias.h": "c",
+        "builtext.h": "c",
+        "builtins.h": "c",
+        "pcomplete.h": "c",
+        "rldefs.h": "c",
+        "rlconf.h": "c",
+        "readline.h": "c",
+        "config-bot.h": "c",
+        "tcc.h": "c",
+        "libtcc.h": "c"
     }
 }

@@ -21,8 +21,8 @@ struct timezone {
 #ifndef _TIMESPEC
 #define _TIMESPEC
 struct timespec {
-    time_t ts_sec; // seconds
-    long ts_nsec; // and nanoseconds
+    time_t tv_sec; // seconds
+    long tv_nsec; // and nanoseconds
 };
 #endif
 

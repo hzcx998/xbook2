@@ -107,20 +107,31 @@ int fs_fd_reinit(task_t *cur)
     int i;
     for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
         if (cur->fileman->fds[i].flags != 0) {
-            if (i >= 3)
+            /* 超过3的直接关闭，没有超过的，就检测是否含有CLOEXEC标志，有就关闭。 */
+            if (i < 3) {
+                if (cur->fileman->fds[i].flags & FILE_FD_CLOEXEC)
+                    sys_close(i);
+            } else {
                 sys_close(i);
+            }
+
         }
     }
     return 0;
 }
 
-int fsal_fd_alloc()
+/**
+ * fsal_fd_alloc - 分配一个文件描述符
+ * @parma:  basefd: 起始文件描述符，表示从这个开始分配
+ * @return: 返回一个可用的最小的文件描述符
+ */
+int fsal_fd_alloc(int basefd)
 {
     task_t *cur = task_current;
     unsigned long irq_flags;
     spin_lock_irqsave(&cur->fileman->lock, irq_flags);
     int i;
-    for (i = 0; i < LOCAL_FILE_OPEN_NR; i++) {
+    for (i = basefd; i < LOCAL_FILE_OPEN_NR; i++) {
         if (cur->fileman->fds[i].flags == 0) {
             cur->fileman->fds[i].flags = FSAL_FILE_FD_IS_BAD;
             cur->fileman->fds[i].handle = -1;
@@ -178,16 +189,8 @@ void filefd_set_fsal(file_fd_t *fd, unsigned int flags)
     }
 }
 
-/**
- * local_fd_install - 安装到进程本地文件描述符表
- */
-int local_fd_install(int resid, unsigned int flags)
+static void __local_fd_install(int resid, unsigned int flags, int fd)
 {
-    if (OUT_RANGE(resid, 0, FSAL_FILE_OPEN_NR))
-        return -1;
-    int fd = fsal_fd_alloc();
-    if (fd < 0)
-        return -1;
     task_t *cur = task_current;
     unsigned long irq_flags;
     spin_lock_irqsave(&cur->fileman->lock, irq_flags);
@@ -197,6 +200,34 @@ int local_fd_install(int resid, unsigned int flags)
     filefd_set_fsal(&cur->fileman->fds[fd], flags);
     /* 根据不同的标志设置不同的fsal指针 */
     spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
+}
+
+/**
+ * 从0开始找空闲的fd
+ */
+int local_fd_install(int resid, unsigned int flags)
+{
+    if (OUT_RANGE(resid, 0, FSAL_FILE_OPEN_NR))
+        return -1;
+    int fd = fsal_fd_alloc(0);
+    if (fd < 0)
+        return -1;
+    __local_fd_install(resid, flags, fd);
+    return fd;
+}
+
+
+/**
+ * @parma:  basefd: 从basefd开始找最小的空闲的fd来进行安装
+ */
+int local_fd_install_based(int resid, unsigned int flags, int basefd)
+{
+    if (OUT_RANGE(resid, 0, FSAL_FILE_OPEN_NR))
+        return -1;
+    int fd = fsal_fd_alloc(basefd);
+    if (fd < 0)
+        return -1;
+    __local_fd_install(resid, flags, fd);
     return fd;
 }
 
@@ -209,15 +240,7 @@ int local_fd_install_to(int resid, int newfd, unsigned int flags)
         return -1;
     if (OUT_RANGE(newfd, 0, LOCAL_FILE_OPEN_NR))
         return -1;
-    task_t *cur = task_current;
-    unsigned long irq_flags;
-    spin_lock_irqsave(&cur->fileman->lock, irq_flags);
-    cur->fileman->fds[newfd].handle = resid;
-    cur->fileman->fds[newfd].flags = FSAL_FILE_FD_IS_BAD;
-    cur->fileman->fds[newfd].flags |= flags;
-    cur->fileman->fds[newfd].offset = 0;
-    filefd_set_fsal(&cur->fileman->fds[newfd], flags);
-    spin_unlock_irqrestore(&cur->fileman->lock, irq_flags);
+    __local_fd_install(resid, flags, newfd);
     return newfd;
 }
 

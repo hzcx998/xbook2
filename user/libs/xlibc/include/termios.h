@@ -293,7 +293,9 @@ extern int tcsendbreak(int fildes,int duration);
  
 //使用termios结构指针termios_p所指的数据，设置与终相关的参数
 extern int tcsetattr(int fildes,int optional_actions,struct termios *termios_p);
- 
+
+extern char *tgoto(const char *cap, int col, int row);
+
 #ifdef __cplusplus
 }
 #endif
