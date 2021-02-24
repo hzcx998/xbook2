@@ -169,8 +169,8 @@ QEMU_ARGUMENT = -m 1024M $(QEMU_KVM) \
 		-fda $(FLOPPYA_IMG) \
 		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
 		-boot a \
-		-serial stdio \
 		-soundhw sb16 \
+		-serial stdio  \
 		-soundhw pcspk
 
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
@@ -183,3 +183,4 @@ qemu: all
 # 调试配置：-S -gdb tcp::10001,ipv4
 qemudbg: all
 	$(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
+
