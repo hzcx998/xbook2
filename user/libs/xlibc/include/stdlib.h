@@ -38,6 +38,7 @@ unsigned long strtoul(const char * nptr, char ** endptr, int base);
 unsigned long long strtoull(const char * nptr, char ** endptr, int base);
 double strtod(const char * nptr, char ** endptr);
 float strtof(const char * nptr, char ** endptr);
+#define strtold strtod
 
 intmax_t strtoimax(const char * nptr, char ** endptr, int base);
 uintmax_t strtoumax(const char * nptr, char ** endptr, int base);

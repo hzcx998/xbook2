@@ -4414,8 +4414,11 @@ initialize_job_control (force)
 	 since trying to use job control tty pgrp manipulations on a non-tty
 	 is going to fail. */
       if (forced_interactive && isatty (fileno (stderr)) == 0)
-	shell_tty = open ("/dev/tty", O_RDWR|O_NONBLOCK);
-
+        #if defined(__XBOOK__)
+        shell_tty = openclass ("tty", O_RDWR|O_NONBLOCK);
+        #else
+        shell_tty = open ("/dev/tty", O_RDWR|O_NONBLOCK);
+        #endif
       /* Get our controlling terminal.  If job_control is set, or
 	 interactive is set, then this is an interactive shell no
 	 matter where fd 2 is directed. */

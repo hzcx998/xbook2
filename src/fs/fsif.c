@@ -199,9 +199,7 @@ int sys_fcntl(int fd, int cmd, long arg)
     {
         if (ffd->fsal->incref(ffd->handle) < 0)
             return -EINVAL;
-        keprint("F_DUPFD: %d#%d\n", fd, arg);
         newfd = local_fd_install_based(ffd->handle, ffd->flags & FILE_FD_TYPE_MASK, arg);
-        keprint("F_DUPFD: %d->%d\n", fd, newfd);
         return newfd;
     }
     case F_GETFD:

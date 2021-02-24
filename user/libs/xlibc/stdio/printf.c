@@ -9,7 +9,7 @@
 int printf(const char * fmt, ...)
 {
 	va_list ap;
-	char buf[SZ_1K] = {0};
+	char buf[SZ_4K] = {0};
 	int rv;
 
 	va_start(ap, fmt);

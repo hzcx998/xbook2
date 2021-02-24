@@ -212,7 +212,7 @@ static int fsal_fatfs_open(void *path, int flags)
     FRESULT fres;
     fres = f_open((FIL *)fp->extension, p, mode);
     if (fres != FR_OK) {
-        errprint("fatfs: open file %s failed!\n", p);
+        errprint("fatfs: open file %s failed! errcode:%d, flags:%x\n", p, fres, flags);
         mem_free(fp->extension);
         fsal_file_free(fp);
         return -1;

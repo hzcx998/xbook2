@@ -5,7 +5,7 @@ int64_t __divmoddi4(int64_t num, int64_t den, int64_t * rem_p)
     int64_t quot = 0, qbit = 1;
 
     if (den == 0) {
-	asm volatile ("int $0");
+	__asm__ __volatile__ ("int $0");
 	return 0;		/* If trap returns... */
     }
 

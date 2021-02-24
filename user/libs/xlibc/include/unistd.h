@@ -75,8 +75,10 @@ int pipe(int fd[2]);
 
 /* supported by xbook kernel */
 int probedev(const char *name, char *buf, size_t buflen);
+int openclass(const char *cname, int flags);
 int opendev(const char *devname, int flags);
 int openfifo(const char *fifoname, int flags);
+int openclass(const char *cname, int flags);
 
 #define mkfifo openfifo
 

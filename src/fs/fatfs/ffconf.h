@@ -259,7 +259,7 @@
 */
 
 
-#define FF_FS_LOCK		1
+#define FF_FS_LOCK		0
 /* The option FF_FS_LOCK switches file lock function to control duplicated file open
 /  and illegal operation to open objects. This option must be 0 when FF_FS_READONLY
 /  is 1.
@@ -273,7 +273,7 @@
 
 /* #include <somertos.h>	// O/S definitions */
 #include <xbook/semaphore.h>
-#define FF_FS_REENTRANT	1
+#define FF_FS_REENTRANT	0
 #define FF_FS_TIMEOUT	1000
 #define FF_SYNC_t		semaphore_t*
 /* The option FF_FS_REENTRANT switches the re-entrancy (thread safe) of the FatFs

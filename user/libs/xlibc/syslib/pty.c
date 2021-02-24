@@ -7,13 +7,7 @@
 #ifndef _HAS_OPENPT
 int posix_openpt(int flags)
 {
-    char devname[32] = {0};
-    if (probedev("ptm", devname, 32) < 0)
-        return -1; 
-
-    int fd_master;
-    fd_master = opendev(devname, flags);
-    return fd_master;
+    return openclass("ptm", flags);
 }
 #endif
 

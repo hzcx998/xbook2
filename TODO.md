@@ -23,11 +23,14 @@
 * 编写文档，描述内核结构
 * 2021/2/22
 * 移植bash，把缺少的函数补上，不做具体实现。
-{
-接口：sys/times, unistd/id.c,tcgetattr, tcsetattr,pwd.c
-    gethostname, umask, termios.c,mkfifo
-修改:signames.h改成bookos的
-处理：SIGTSTP
-bug on bash: locale.c->loca_shiftstates
-修复：bash管道不能使用
-} 
+    {
+    接口：sys/times, unistd/id.c,tcgetattr, tcsetattr,pwd.c
+        gethostname, umask, termios.c,mkfifo
+    修改:signames.h改成bookos的，
+    处理：SIGTSTP
+    bug on bash: locale.c->loca_shiftstates
+    修复：bash管道不能使用。不能执行shell脚本。
+    计划：补充空函数，完善后在尝试进行修复。
+    }
+* 2021/2/23
+* 移植coreutils

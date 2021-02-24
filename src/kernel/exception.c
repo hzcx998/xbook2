@@ -275,6 +275,7 @@ static int exception_dispatch(exception_manager_t *exception_manager, exception_
         // TODO: add trace trap code here.
         break;
     default:
+        keprint("task exit because of excption:%d\n", exp->code);
         sys_exit(-exp->code);
         break;
     }

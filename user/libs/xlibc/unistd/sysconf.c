@@ -16,7 +16,7 @@ long sysconf(int name)
     case _SC_CLK_TCK:
         return 1000;
     case _SC_OPEN_MAX:
-        return 32;
+        return 128;
     case _SC_PAGESIZE:
         return 4096;
     case _SC_PAGE_SIZE:

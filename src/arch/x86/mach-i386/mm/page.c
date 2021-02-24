@@ -408,6 +408,7 @@ static int do_page_no_write(unsigned long addr)
 static inline void do_vir_mem_fault(unsigned long addr)
 {
     keprint("do_vir_mem_fault\n");
+    keprint(PRINT_EMERG "page fault at %x.\n", addr);
     /* TODO: 如果是在vir_mem区域中，就进行页复制，不是的话，就发出段信号。 */
     exception_force_self(EXP_CODE_SEGV);
 }
@@ -467,7 +468,7 @@ int page_do_fault(trap_frame_t *frame)
         
         keprint("task name=%s pid=%d\n", cur->name, cur->pid);
         keprint(PRINT_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
-        keprint(PRINT_EMERG "page fault at %x.\n");
+        keprint(PRINT_EMERG "page fault at %x.\n", addr);
         trap_frame_dump(frame);
         
         panic("halt...");
@@ -476,6 +477,7 @@ int page_do_fault(trap_frame_t *frame)
     if (addr >= USER_VMM_SIZE) {
         /* TODO: 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
         keprint(PRINT_ERR "page fauilt: user pid=%d name=%s access unmaped vir_mem area.\n", cur->pid, cur->name);
+        keprint(PRINT_EMERG "page fault at %x.\n", addr);
         trap_frame_dump(frame);
         do_vir_mem_fault(addr);
         return -1;
@@ -484,6 +486,7 @@ int page_do_fault(trap_frame_t *frame)
     mem_space_t *space = mem_space_find(cur->vmm, addr);
     if (space == NULL) {    
         keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user access user unknown space.\n", cur->pid, cur->name);
+        keprint(PRINT_EMERG "page fault at %x.\n", addr);
         trap_frame_dump(frame);
         exception_force_self(EXP_CODE_SEGV);
         return -1;
@@ -499,7 +502,7 @@ int page_do_fault(trap_frame_t *frame)
                 errprint("page addr %x\n", addr);
                 keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user task stack out of range!\n", cur->pid, cur->name);
                 trap_frame_dump(frame);
-                exception_force_self(EXP_CODE_STKFLT);
+                exception_force_self(EXP_CODE_SEGV);
                 return -1;  
             }
         }
