@@ -111,6 +111,7 @@ enum syscall_num {
     SYS_FASTWRITE,
     SYS_EXPMASK,
     SYS_EXPHANDLER,
+    SYS_SYSCONF,
     SYSCALL_NR,
 };
 

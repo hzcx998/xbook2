@@ -256,6 +256,7 @@ static iostatus_t sb16_open(device_object_t *device, io_request_t *ioreq)
 
     device_extension_t *extension = (device_extension_t *)device->device_extension;
     extension->index_r = extension->index_w = 0;
+    // TODO: 重置寄存器状态
     io_complete_request(ioreq);
     return status;
 }

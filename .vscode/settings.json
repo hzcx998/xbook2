@@ -163,6 +163,8 @@
         "readline.h": "c",
         "config-bot.h": "c",
         "tcc.h": "c",
-        "libtcc.h": "c"
+        "libtcc.h": "c",
+        "portcomm.h": "c",
+        "dirent.h": "c"
     }
 }

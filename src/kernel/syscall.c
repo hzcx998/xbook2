@@ -12,6 +12,7 @@
 #include <xbook/walltime.h>
 #include <xbook/account.h>
 #include <xbook/portcomm.h>
+#include <xbook/config.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <dirent.h>
@@ -130,6 +131,7 @@ void syscall_init()
     syscalls[SYS_FASTWRITE] = sys_fastwrite;
     syscalls[SYS_EXPMASK] = sys_expmask;
     syscalls[SYS_EXPHANDLER] = sys_exphandler;
+    syscalls[SYS_SYSCONF] = sys_sysconf;
 }
 
 int syscall_error(uint32_t callno)
