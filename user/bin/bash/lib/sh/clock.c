@@ -81,7 +81,6 @@ print_clock_t (fp, t)
 
   minutes = timestamp / 60;
   seconds = timestamp % 60;
-
   fprintf (fp, "%ldm%d%c%03ds",  minutes, seconds, locale_decpoint(), seconds_fraction);
 }
 #endif /* HAVE_TIMES */

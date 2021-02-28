@@ -38,7 +38,8 @@
 #    if defined (HZ)
 #      define CLK_TCK HZ
 #    else
-#      define CLK_TCK 60
+//#      define CLK_TCK 60
+#      define CLK_TCK (100 * 10)
 #    endif
 #  endif /* !CLK_TCK */
 #endif /* !HAVE_SYSCONF && !_SC_CLK_TCK */

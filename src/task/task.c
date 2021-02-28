@@ -52,6 +52,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->timeslice = TASK_TIMESLICE_BASE + 1;
     task->ticks = task->timeslice;
     task->elapsed_ticks = 0;
+    task->syscall_ticks = task->syscall_ticks_delta = 0;
     task->vmm = NULL;
     task->pid = task_take_pid();
     task->tgid = task->pid; /* 默认都是主线程，需要的时候修改 */

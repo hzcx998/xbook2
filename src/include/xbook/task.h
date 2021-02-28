@@ -4,6 +4,7 @@
 #include <arch/page.h>
 #include <arch/cpu.h>
 #include <sys/proc.h>
+#include <sys/time.h>
 #include <types.h>
 #include "list.h"
 #include "vmm.h"
@@ -73,6 +74,8 @@ typedef struct {
     unsigned long ticks;                /* 运行的ticks，当前剩余的timeslice */
     unsigned long timeslice;            /* 时间片，可以动态调整 */
     unsigned long elapsed_ticks;        /* 任务执行总共占用的时间片数 */
+    unsigned long syscall_ticks;        /* 执行系统调用总共占用的时间片数 */
+    clock_t syscall_ticks_delta;  /* 执行单个系统调用占用的时间片数 */
     int exit_status;                    
     char name[MAX_TASK_NAMELEN];        
     struct vmm *vmm;                    
@@ -88,6 +91,7 @@ typedef struct {
     void *exit_hook_arg;
     lpc_port_table_t port_table;
     port_comm_t *port_comm;
+    struct tms times;
     unsigned int stack_magic;
 } task_t;
 

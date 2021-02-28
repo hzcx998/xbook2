@@ -111,6 +111,7 @@ enum syscall_num {
     SYS_EXPMASK,
     SYS_EXPHANDLER,
     SYS_SYSCONF,
+    SYS_TIMES,
     SYSCALL_NR,
 };
 

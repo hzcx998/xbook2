@@ -1,7 +1,7 @@
 #include <sys/times.h>
+#include <sys/syscall.h>
 
 clock_t times(struct tms *buf)
 {
-    // unsupported!
-    return 0;
+    return syscall1(clock_t, SYS_TIMES, buf);
 }

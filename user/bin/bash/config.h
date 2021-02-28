@@ -906,7 +906,7 @@
 // #define HAVE_STRSIGNAL 1
 
 /* Define if you have the sysconf function. */
-// #define HAVE_SYSCONF 1
+#define HAVE_SYSCONF 1
 
 /* Define if you have the syslog function. */
 // #define HAVE_SYSLOG 1

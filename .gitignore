@@ -106,6 +106,7 @@ user/bin/rm/rm
 user/bin/rmdir/rmdir
 user/bin/sh/sh
 user/bin/sys/sys
-user/bin/test/test
+user/bin/tests/tests
 user/bin/touch/touch
 user/bin/bash/bash
+user/bin/hello/hello
