@@ -831,7 +831,8 @@ int ahci_initialize_device(struct hba_memory *abar, device_extension_t *dev)
 	for(i=0;i<HBA_COMMAND_HEADER_NUM;i++) {
 		dev->ch_dmas[i].p.size = 0x1000;
 		dev->ch_dmas[i].p.alignment = 0x1000;
-		dma_alloc_buffer(&dev->ch_dmas[i]);
+		dev->ch_dmas[i].flags = DMA_REGION_SPECIAL;
+        dma_alloc_buffer(&dev->ch_dmas[i]);
 		dev->ch[i] = (void *)dev->ch_dmas[i].v;
 		memset(h, 0, sizeof(*h));
 		h->command_table_base_l = low32(dev->ch_dmas[i].p.address);

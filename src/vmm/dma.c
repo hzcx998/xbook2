@@ -18,7 +18,7 @@ int dma_alloc_buffer(struct dma_region *d)
             return -1;
         vaddr = (addr_t) kern_phy_addr2vir_addr(d->p.address);
     } else { // normal
-        d->p.address = page_alloc_user(npages);
+        d->p.address = page_alloc_normal(npages);
         if(d->p.address == 0)
 	    	return -1;
         

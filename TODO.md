@@ -24,7 +24,7 @@
 * 2021/2/22
 * 移植bash，把缺少的函数补上，不做具体实现。
     {
-    接口：sys/times, unistd/id.c,tcgetattr, tcsetattr,pwd.c
+    接口：unistd/id.c,tcgetattr, tcsetattr,pwd.c
         gethostname, umask, termios.c,mkfifo
     修改:signames.h改成bookos的，
     处理：SIGTSTP
