@@ -113,6 +113,7 @@ enum syscall_num {
     SYS_EXPHANDLER,
     SYS_SYSCONF,
     SYS_TIMES,
+    SYS_GETHOSTNAME,
     SYSCALL_NR,
 };
 

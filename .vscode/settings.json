@@ -165,6 +165,7 @@
         "tcc.h": "c",
         "libtcc.h": "c",
         "portcomm.h": "c",
-        "dirent.h": "c"
+        "dirent.h": "c",
+        "safety.h": "c"
     }
 }

@@ -12,7 +12,7 @@
 #include <xbook/walltime.h>
 #include <xbook/account.h>
 #include <xbook/portcomm.h>
-#include <xbook/config.h>
+#include <xbook/kernel.h>
 #include <xbook/schedule.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -141,6 +141,7 @@ void syscall_init()
     syscalls[SYS_EXPHANDLER] = sys_exphandler;
     syscalls[SYS_SYSCONF] = sys_sysconf;
     syscalls[SYS_TIMES] = sys_times;
+    syscalls[SYS_GETHOSTNAME] = sys_gethostname;
 }
 
 int syscall_check(uint32_t callno)

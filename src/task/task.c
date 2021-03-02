@@ -21,6 +21,7 @@
 #include <xbook/process.h>
 #include <xbook/exception.h>
 #include <xbook/safety.h>
+#include <xbook/kernel.h>
 #include <xbook/fd.h>
 #include <math.h>
 #include <errno.h>
@@ -339,8 +340,8 @@ int sys_getver(char *buf, int len)
     if (!buf || !len)
         return -EINVAL;
     char tbuf[32] = {0};
-    strcpy(tbuf, OS_NAME);
-    strcat(tbuf, OS_VERSION);
+    strcpy(tbuf, KERNEL_NAME);
+    strcat(tbuf, KERNEL_VERSION);
     if (mem_copy_to_user(buf, tbuf, min(len, strlen(tbuf))) < 0)
         return -EFAULT;
     return 0;
