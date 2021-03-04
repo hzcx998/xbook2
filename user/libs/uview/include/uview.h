@@ -5,7 +5,6 @@
 #include "uview_bitmap.h"
 #include "uview_msg.h"
 #include "uview_shape.h"
-#include "uview_image.h"
 #include "uview_mouse.h"
 #include "uview_keycode.h"
 
