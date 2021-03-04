@@ -229,7 +229,7 @@ int view_mouse_init()
     }
 
     /* 创建鼠标视图 */
-    view_t *view = view_create(view_mouse.x, view_mouse.y, VIEW_MOUSE_SIZE, VIEW_MOUSE_SIZE);
+    view_t *view = view_create(view_mouse.x, view_mouse.y, VIEW_MOUSE_SIZE, VIEW_MOUSE_SIZE, 0);
     assert(view);
     view_mouse.view = view;
     view_set_type(view, VIEW_TYPE_FIXED);

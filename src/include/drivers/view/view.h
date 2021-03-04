@@ -64,7 +64,7 @@ typedef struct {
 
 int view_init();
 void view_exit();
-view_t *view_create(int x, int y, int width, int height);
+view_t *view_create(int x, int y, int width, int height, int type);
 int view_destroy(view_t *view);
 view_t *view_get_top();
 view_t *view_get_bottom();

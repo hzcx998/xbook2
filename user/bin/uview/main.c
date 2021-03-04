@@ -6,7 +6,7 @@
 static void child();
 int main(int argc, char **argv)
 {
-    int vid1 = uview_open(100, 100);
+    int vid1 = uview_open(100, 100, UVIEW_TYPE_FIXED);
     if (vid1 < 0) {
         printf("open %d failed!\n", vid1);
         return -1;
@@ -27,6 +27,8 @@ int main(int argc, char **argv)
     {
         if (read(vid1, &msg, sizeof(uview_msg_t)) >= 0) {
             int target = uview_msg_get_target(&msg);
+            printf("msg id:%d, target:%d\n", uview_msg_get_type(&msg), target);
+
             switch (uview_msg_get_type(&msg))
             {
             case UVIEW_MSG_CREATE:
@@ -92,6 +94,7 @@ int main(int argc, char **argv)
                 tcount++;
                 break;
             default:
+                
                 break;
             }
             
@@ -102,7 +105,7 @@ int main(int argc, char **argv)
 
 static void child()
 {
-    int vid = uview_open(320, 240);
+    int vid = uview_open(320, 240, UVIEW_TYPE_WINDOW);
     if (vid < 0) {
         printf("open %d failed!\n", vid);
         exit(-1);

@@ -35,7 +35,7 @@ void view_max_size_repair(int *width, int *height)
     }
 }
 
-view_t *view_create(int x, int y, int width, int height)
+view_t *view_create(int x, int y, int width, int height, int type)
 {
     view_t *view = mem_alloc(sizeof(view_t));
     if (view == NULL) {
@@ -68,7 +68,7 @@ view_t *view_create(int x, int y, int width, int height)
     view->height_min = VIEW_RESIZE_SIZE_MIN;
 
     view->attr = 0;
-    view->type = VIEW_TYPE_FIXED;
+    view_set_type(view, type);
     int i;
     for (i = 0; i < VIEW_DRAG_REGION_NR; i++) {
         view_region_reset(&view->drag_regions[i]);
@@ -83,7 +83,7 @@ view_t *view_create(int x, int y, int width, int height)
     list_add(&view->global_list, &view_global_list_head);
     spin_unlock(&view_global_lock);
     spinlock_init(&view->lock);
-    
+
     view_render_rectfill(view, 0, 0, 
         view->width, view->height, VIEW_WHITE);
     return view;

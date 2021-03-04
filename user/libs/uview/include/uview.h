@@ -25,7 +25,7 @@ enum uview_attr {
 
 #define UVIEW_BAD_ID(view)  ((view) < 0)
 
-int uview_open(int width, int height);
+int uview_open(int width, int height, int type);
 int uview_close(int vfd);
 int uview_set_pos(int vfd, int x, int y);
 int uview_set_type(int vfd, int type);

@@ -562,8 +562,12 @@ int view_env_send_to_monitor(view_t *view, int mid)
 {
     if (!monitor_view || !view)
         return -1;
+    /* 监视器不监视自己的状态改变 */
+    if (monitor_view->id == view->id)
+        return -1;
     view_msg_t msg;
     view_msg_header(&msg, mid, view->id);
+    view_msg_data(&msg, view->type, 0, 0, 0);
     return view_put_msg(monitor_view, &msg, VIEW_MSG_NOWAIT);
 }
 
@@ -586,7 +590,7 @@ int view_env_set_monitor(view_t *view, int is_monitor)
 int view_env_init()
 {
     #ifdef CONFIG_SHADE_VIEW
-    shade_view = view_create(0, 0, view_screen.width, view_screen.height);
+    shade_view = view_create(0, 0, view_screen.width, view_screen.height, 0);
     if (shade_view == NULL) {
         keprint("create window shade layer failed!\n");
         return -1;
