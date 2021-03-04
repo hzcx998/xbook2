@@ -34,6 +34,9 @@ int view_env_add_timer(view_t *view, uint32_t interval);
 int view_env_del_timer(view_t *view, unsigned long timer_id);
 int view_env_restart_timer(view_t *view, unsigned long timer_id, uint32_t interval);
 
+int view_env_send_to_monitor(view_t *view, int mid);
+int view_env_set_monitor(view_t *view, int is_taskbar);
+
 int view_env_init();
 int view_env_exit();
 

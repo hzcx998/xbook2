@@ -107,7 +107,6 @@ typedef struct _video_info {
 #define VIEWIO_ADDTIMER     DEVCTL_CODE('v', 23)
 #define VIEWIO_DELTIMER     DEVCTL_CODE('v', 24)
 #define VIEWIO_RESTARTTIMER     DEVCTL_CODE('v', 25)
-
-
+#define VIEWIO_SETMONITOR   DEVCTL_CODE('v', 26)
 
 #endif   /* _SYS_IOCTL_H */

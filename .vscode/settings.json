@@ -166,6 +166,8 @@
         "libtcc.h": "c",
         "portcomm.h": "c",
         "dirent.h": "c",
-        "safety.h": "c"
+        "safety.h": "c",
+        "uview.h": "c",
+        "uview_mouse.h": "c"
     }
 }

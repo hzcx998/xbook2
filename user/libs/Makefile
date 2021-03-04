@@ -11,3 +11,4 @@ MODULE		:= xlibc
 MODULE		+= xlibcpp
 MODULE		+= pthread
 MODULE		+= netsocket
+MODULE		+= uview

@@ -9,8 +9,8 @@
 #include <arch/interrupt.h>
 #include <arch/time.h>
 
-/* 30day = 30 * 60 * 60 * 24 * HZ */
-#define TIMER_IDLE_TIMEOUT  (2592000 * HZ)
+/* 10day = 10 * 60 * 60 * 24 * HZ */
+#define TIMER_IDLE_TIMEOUT  (864000 * HZ)
 
 LIST_HEAD(timer_list_head);
 unsigned long timer_id_next = 1; /* 从1开始，0是无效的id */

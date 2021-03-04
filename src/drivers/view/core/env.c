@@ -24,6 +24,8 @@ activity 和 hover 视图主要用于对窗口的判断
 static view_t *view_activity = NULL;
 /* 中间的视图 */
 static view_t *view_middle = NULL;
+/* 中间的视图 */
+static view_t *monitor_view = NULL;
 
 /* 鼠标悬停的视图 */
 static view_t *mouse_hover_view = NULL;
@@ -83,6 +85,8 @@ int view_env_try_activate(view_t *view)
         if (activity) {
             view_msg_header(&m, VIEW_MSG_INACTIVATE, activity->id);
             val = view_try_put_msg(activity, &m);
+
+            view_env_send_to_monitor(activity, VIEW_MSG_INACTIVATE);
         }
         view_env_set_activity(view);
         if (view) {
@@ -93,6 +97,8 @@ int view_env_try_activate(view_t *view)
             }
             view_msg_header(&m, VIEW_MSG_ACTIVATE, view->id);
             val = view_try_put_msg(view, &m);
+            
+            view_env_send_to_monitor(view, VIEW_MSG_ACTIVATE);
         }
     }
     return val;
@@ -547,6 +553,34 @@ int view_env_del_timer(view_t *view, unsigned long timer_id)
         return -1;
     mem_free(timer);
     return 0;
+}
+
+/**
+ * 给任务条发送消息
+ */
+int view_env_send_to_monitor(view_t *view, int mid)
+{
+    if (!monitor_view || !view)
+        return -1;
+    view_msg_t msg;
+    view_msg_header(&msg, mid, view->id);
+    return view_put_msg(monitor_view, &msg, VIEW_MSG_NOWAIT);
+}
+
+int view_env_set_monitor(view_t *view, int is_monitor)
+{
+    if (!view)
+        return -1;
+    if (is_monitor) {
+        monitor_view = view;
+        return 0;
+    } else {
+        if (monitor_view == view) {
+            monitor_view = NULL;
+            return 0;
+        }
+    }
+    return -1;
 }
 
 int view_env_init()
