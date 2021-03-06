@@ -76,6 +76,7 @@ static iostatus_t view_close(device_object_t *device, io_request_t *ioreq)
             goto end_close;
         }
         view_env_send_to_monitor(extension->view, VIEW_MSG_CLOSE);
+        view_env_check_monitor_exit(extension->view);
         view_env_reset_hover_and_activity();
         extension->view = NULL;
     }

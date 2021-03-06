@@ -587,6 +587,21 @@ int view_env_set_monitor(view_t *view, int is_monitor)
     return -1;
 }
 
+/**
+ * 检测是否是监视视图退出，是的话，就要置NULL监控视图
+ * 
+*/
+int view_env_check_monitor_exit(view_t *view)
+{
+    if (!view)
+        return -1;
+    if (view == monitor_view)
+        monitor_view = NULL;
+    return 0;
+}
+
+
+
 int view_env_init()
 {
     #ifdef CONFIG_SHADE_VIEW

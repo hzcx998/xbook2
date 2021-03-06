@@ -36,6 +36,7 @@ int view_env_restart_timer(view_t *view, unsigned long timer_id, uint32_t interv
 
 int view_env_send_to_monitor(view_t *view, int mid);
 int view_env_set_monitor(view_t *view, int is_taskbar);
+int view_env_check_monitor_exit(view_t *view);
 
 int view_env_init();
 int view_env_exit();
