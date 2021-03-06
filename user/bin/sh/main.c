@@ -202,11 +202,6 @@ int buildin_cmd_cd(int argc, char **argv)
 		printf("cd: only support 1 argument!\n");
 		return -1;
 	}
-    /*int i;
-    for (i = 0; i < argc; i++) {
-        printf("%s",argv[i]);
-    }*/
-
     /* 只有1个参数，是cd，那么不处理 */
     if (argc == 1) {
         return 0; 
