@@ -186,7 +186,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
                 memset(newpath, 0, MAX_PATH);
             }
         } else {
-            if (do_execute((const char* )pathname, (char *)pathname, argv, envp)) {
+            if (do_execute((const char* )pathname, (char *)pathname, argv, envp) < 0) {
                 keprint(PRINT_ERR "%s: path %s not executable!", __func__, newpath);
                 return -1;
             }

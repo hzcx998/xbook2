@@ -86,7 +86,7 @@ int view_env_try_activate(view_t *view)
             view_msg_header(&m, VIEW_MSG_INACTIVATE, activity->id);
             val = view_try_put_msg(activity, &m);
 
-            view_env_send_to_monitor(activity, VIEW_MSG_INACTIVATE);
+            view_env_send_to_monitor(activity, VIEW_MSG_INACTIVATE, 0);
         }
         view_env_set_activity(view);
         if (view) {
@@ -98,7 +98,7 @@ int view_env_try_activate(view_t *view)
             view_msg_header(&m, VIEW_MSG_ACTIVATE, view->id);
             val = view_try_put_msg(view, &m);
             
-            view_env_send_to_monitor(view, VIEW_MSG_ACTIVATE);
+            view_env_send_to_monitor(view, VIEW_MSG_ACTIVATE, 0);
         }
     }
     return val;
@@ -145,7 +145,7 @@ void view_env_do_drag(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
     /* 检测可移动区域 */
     if (!view_drag_rect_check(view, lcmx, lcmy))
         return;
-    if (view_msg_get_type(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
+    if (view_msg_get_id(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
         view_mouse.local_x = lcmx;
         view_mouse.local_y = lcmy;
         drag_view = view;
@@ -338,14 +338,14 @@ int view_env_try_resize_ex(view_t *view, int width, int height)
 int view_env_filter_mouse_msg(view_msg_t *msg)
 {
     /* 按下鼠标左键，并且在调整图层大小或者拖拽图层，就要截断消息 */
-    if (view_msg_get_type(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
+    if (view_msg_get_id(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
         if (resize_view) /* 有调整大小图层时不允许产生鼠标左键单击消息 */
             return 0;
         if (drag_view) /* 有拖拽图层时不允许产生鼠标左键单击消息 */
             return 0;
     }
     /* 鼠标左键弹起时进行释放 */
-    if (view_msg_get_type(msg) == VIEW_MSG_MOUSE_LBTN_UP) {
+    if (view_msg_get_id(msg) == VIEW_MSG_MOUSE_LBTN_UP) {
         if (resize_view) {
             view_rect_t rect;
             if (!view_calc_resize(resize_view, msg->data0, msg->data1, &rect)) {
@@ -460,7 +460,7 @@ int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
     if (view_region_valid(&view->resize_region)) {
         /* 不在区域里面才能调整大小 */
         if (!view_region_in_range(&view->resize_region, lcmx, lcmy)) {
-            if (view_msg_get_type(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
+            if (view_msg_get_id(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
                 resize_view = view;
                 view_mouse.click_x = msg->data0;
                 view_mouse.click_y = msg->data1;
@@ -558,7 +558,7 @@ int view_env_del_timer(view_t *view, unsigned long timer_id)
 /**
  * 给任务条发送消息
  */
-int view_env_send_to_monitor(view_t *view, int mid)
+int view_env_send_to_monitor(view_t *view, int mid, int arg)
 {
     if (!monitor_view || !view)
         return -1;
@@ -567,7 +567,7 @@ int view_env_send_to_monitor(view_t *view, int mid)
         return -1;
     view_msg_t msg;
     view_msg_header(&msg, mid, view->id);
-    view_msg_data(&msg, view->type, 0, 0, 0);
+    view_msg_data(&msg, view->type, arg, 0, 0);
     return view_put_msg(monitor_view, &msg, VIEW_MSG_NOWAIT);
 }
 

@@ -48,12 +48,15 @@ static iostatus_t view_open(device_object_t *device, io_request_t *ioreq)
     view_open_count++;
     // 0~12:宽度，13~26：高度，27~31：type
     if (extension->view == NULL) {
-        extension->view = view_create(0, 0, (flags >> 12) & 0x1fff, flags & 0x1fff, (flags >> 26) & 0x1f);
+        int width = (flags >> 12) & 0x1fff;
+        int height = flags & 0x1fff;
+        int type = (flags >> 26) & 0x1f;
+        extension->view = view_create(0, 0, width, height, type);
         if (extension->view == NULL) {
             status = IO_FAILED;
             goto end_open;
         }
-        view_env_send_to_monitor(extension->view, VIEW_MSG_CREATE);
+        view_env_send_to_monitor(extension->view, VIEW_MSG_CREATE, 0);
     }
 
 end_open:
@@ -75,7 +78,7 @@ static iostatus_t view_close(device_object_t *device, io_request_t *ioreq)
             errprint("view driver: view close %s failed!\n", device->name.text);
             goto end_close;
         }
-        view_env_send_to_monitor(extension->view, VIEW_MSG_CLOSE);
+        view_env_send_to_monitor(extension->view, VIEW_MSG_CLOSE, 0);
         view_env_check_monitor_exit(extension->view);
         view_env_reset_hover_and_activity();
         extension->view = NULL;
@@ -138,6 +141,11 @@ static int __view_write_msg(view_msg_t *msg, int flags)
     if (!view) {
         errprint("view target %d not found!\n", msg->target);
         return -1;
+    }
+    /* 监视特殊消息 */
+    if (view_msg_get_id(msg) == VIEW_MSG_SETICON) {
+        // 将消息转发给监视器
+        view_env_send_to_monitor(view, VIEW_MSG_SETICON, msg->data1);
     }
     /* 转发-发送消息 */
     return view_put_msg(view, msg, flags);
@@ -212,7 +220,7 @@ static iostatus_t __view_ioctl(device_extension_t *extension, int cmd, void *arg
             status = IO_FAILED;
         } else {
             if (!view_show(view)) {
-                view_env_send_to_monitor(view, VIEW_MSG_SHOW);
+                view_env_send_to_monitor(view, VIEW_MSG_SHOW, 0);
                 view_env_try_activate(view);
             }
         }
@@ -222,7 +230,7 @@ static iostatus_t __view_ioctl(device_extension_t *extension, int cmd, void *arg
             status = IO_FAILED;
         } else {
             if (!view_hide(view)) {
-                view_env_send_to_monitor(view, VIEW_MSG_HIDE);
+                view_env_send_to_monitor(view, VIEW_MSG_HIDE, 0);
                 view_env_reset_hover_and_activity();
             }
         }

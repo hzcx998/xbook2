@@ -96,7 +96,7 @@ void view_core_loop()
         }
         if (is_view_msg_valid(&msg)) {
             /* 处理消息 */
-            switch (view_msg_get_type(&msg)) {
+            switch (view_msg_get_id(&msg)) {
             case VIEW_MSG_KEY_DOWN:
             case VIEW_MSG_KEY_UP:
                 /* 键盘消息发送到聚焦的图层 */

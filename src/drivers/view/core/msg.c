@@ -69,7 +69,7 @@ int view_dispatch_mouse_msg(view_msg_t *msg)
         if (local_mx >= 0 && local_mx < view->width && 
             local_my >= 0 && local_my < view->height) {
             /* 如果是在图层上点击了鼠标左键，那么就进行激活 */
-            if (view_msg_get_type(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
+            if (view_msg_get_id(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
                 view_env_try_activate(view);
             }
             view_env_do_mouse_hover(view, msg, local_mx, local_my);

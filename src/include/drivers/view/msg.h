@@ -35,6 +35,7 @@ enum {
     VIEW_MSG_HIDE,
     VIEW_MSG_SHOW,
     VIEW_MSG_PAINT,
+    VIEW_MSG_SETICON,
     VIEW_MSG_NR,
 };
 
@@ -79,7 +80,7 @@ static inline void view_msg_reset(view_msg_t *msg)
 #define is_view_msg_valid(msg) ((msg)->id > VIEW_MSG_NONE)
 
 /* 获取消息的数据 */
-#define view_msg_get_type(msg) ((msg)->id)
+#define view_msg_get_id(msg) ((msg)->id)
 
 #define view_msg_get_mouse_x(msg) ((msg)->data0)
 #define view_msg_get_mouse_y(msg) ((msg)->data1)

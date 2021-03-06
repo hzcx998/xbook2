@@ -13,7 +13,7 @@ int uview_open(int width, int height, int type)
     if (width <= 0 || height <= 0)
         return -1;
     uview_repair_size(&width, &height);
-    int flags = ((width & 0x1f) << 26) | ((width & 0x1fff) << 12) | (height & 0x1fff);
+    int flags = ((type & 0x1f) << 26) | ((width & 0x1fff) << 12) | (height & 0x1fff);
     int vfd = openclass("view", flags);
     if (vfd < 0) {
         printf("uview: open view failed!\n");

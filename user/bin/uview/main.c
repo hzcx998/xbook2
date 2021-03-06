@@ -27,9 +27,9 @@ int main(int argc, char **argv)
     {
         if (read(vid1, &msg, sizeof(uview_msg_t)) >= 0) {
             int target = uview_msg_get_target(&msg);
-            printf("msg id:%d, target:%d\n", uview_msg_get_type(&msg), target);
+            printf("msg id:%d, target:%d\n", uview_msg_get_id(&msg), target);
 
-            switch (uview_msg_get_type(&msg))
+            switch (uview_msg_get_id(&msg))
             {
             case UVIEW_MSG_CREATE:
                 childid = target;
@@ -93,6 +93,9 @@ int main(int argc, char **argv)
                 printf("tcount:%d\n", tcount);
                 tcount++;
                 break;
+            case UVIEW_MSG_SETICON:
+                printf("\n\n#get seticon:%d type:%d\n", uview_msg_get_type(&msg), uview_msg_get_icontype(&msg));
+                break;
             default:
                 
                 break;
@@ -113,6 +116,13 @@ static void child()
     uview_show(vid);
     int vreadid;
     uview_get_vid(vid, &vreadid);
+
+    uview_msg_t xmsg;
+    uview_msg_header(&xmsg, UVIEW_MSG_SETICON, vreadid);
+    uview_msg_data(&xmsg, 0, 1, 0, 0);
+    if (uview_send_msg(vid, &xmsg) < 0)
+        return -1;
+
     uview_msg_t msg;
     bool loop = true;
     while (loop)
@@ -121,7 +131,7 @@ static void child()
             int target = uview_msg_get_target(&msg);
             if (vreadid == target)
                 printf("child same %d\n", target);
-            switch (uview_msg_get_type(&msg))
+            switch (uview_msg_get_id(&msg))
             {
             case UVIEW_MSG_CREATE:
                 printf("child get create msg from %d\n", target);
