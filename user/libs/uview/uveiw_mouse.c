@@ -1,4 +1,5 @@
 #include "uview_mouse.h"
+#include "uview_io.h"
 #include <sys/ioctl.h>
 #include <unistd.h>
 

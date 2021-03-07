@@ -38,6 +38,9 @@ int view_env_send_to_monitor(view_t *view, int mid, int arg);
 int view_env_set_monitor(view_t *view, int is_taskbar);
 int view_env_check_monitor_exit(view_t *view);
 
+int view_env_set_winmaxim_rect(view_rect_t *rect);
+int view_env_get_winmaxim_rect(view_rect_t *rect);
+
 int view_env_init();
 int view_env_exit();
 

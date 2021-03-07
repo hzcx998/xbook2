@@ -57,6 +57,9 @@ int uview_set_drag_region(int vfd, int left, int top, int right, int bottom);
 void uview_repair_size(int *width, int *height);
 int uview_set_monitor(int vfd, int is_taskbar);
 
+int uview_set_win_maxim_rect(int vfd, int x, int y, int width, int height);
+int uview_get_win_maxim_rect(int vfd, int *x, int *y, int *width, int *height);
+
 typedef struct {
     unsigned long timer_id;
     unsigned long interval;

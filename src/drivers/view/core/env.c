@@ -43,6 +43,9 @@ static view_rect_t shade_rect; /* 遮罩图层矩形区域 */
 
 extern int view_last_x, view_last_y;
 
+/* 窗口最大化的区域，默认是整个桌面，不过需要在任务条初始化完成后重新设置 */
+static view_rect_t window_maxim_rect;
+
 view_t *view_env_get_activity()
 {
     return view_activity;
@@ -600,7 +603,21 @@ int view_env_check_monitor_exit(view_t *view)
     return 0;
 }
 
+int view_env_set_winmaxim_rect(view_rect_t *rect)
+{
+    if (!rect)
+        return -1;
+    window_maxim_rect = *rect;
+    return 0;
+}
 
+int view_env_get_winmaxim_rect(view_rect_t *rect)
+{
+    if (!rect)
+        return -1;
+    *rect = window_maxim_rect;
+    return 0;
+}
 
 int view_env_init()
 {
@@ -616,6 +633,9 @@ int view_env_init()
     view_set_z(shade_view, -1);
     view_rect_reset(&shade_rect);
     #endif /* CONFIG_SHADE_VIEW */
+
+    view_rect_init(&window_maxim_rect, 0, 0, view_screen.width, view_screen.height);
+    
     return 0;
 }
 

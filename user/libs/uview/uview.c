@@ -5,6 +5,8 @@
 #include <string.h>
 #include <sys/ioctl.h>
 
+#include "uview_io.h"
+
 /**
  * 打开用户态视图
  */
@@ -363,4 +365,35 @@ void uview_repair_size(int *width, int *height)
         printf("uview: height repair from %d to %d.\n", *height, UVIEW_MAX_SIZE_HEIGHT);
         *height = UVIEW_MAX_SIZE_HEIGHT;
     }
+}
+
+int uview_set_win_maxim_rect(int vfd, int x, int y, int width, int height)
+{
+    if (vfd < 0)
+        return -1;
+    if (width < 0 || height < 0)
+        return -1;
+    uview_rect_t rect;
+    uview_rect_init(&rect, x, y, width, height);
+    if (fastio(vfd, VIEWIO_SETWINMAXIMRECT, &rect) < 0)
+        return -1;
+    return 0;
+}
+
+int uview_get_win_maxim_rect(int vfd, int *x, int *y, int *width, int *height)
+{
+    if (vfd < 0)
+        return -1;
+    uview_rect_t rect;
+    if (fastio(vfd, VIEWIO_GETWINMAXIMRECT, &rect) < 0)
+        return -1;
+    if (x)
+        *x = rect.x;
+    if (y)
+        *y = rect.y;
+    if (width)
+        *width = rect.w.sw;
+    if (height)
+        *height = rect.h.sh;
+    return 0;
 }

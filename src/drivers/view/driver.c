@@ -417,6 +417,22 @@ static iostatus_t __view_ioctl(device_extension_t *extension, int cmd, void *arg
                 status = IO_FAILED;
         }
         break;
+    case VIEWIO_SETWINMAXIMRECT:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            if (view_env_set_winmaxim_rect((view_rect_t *) arg) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case VIEWIO_GETWINMAXIMRECT:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            if (view_env_get_winmaxim_rect((view_rect_t *) arg) < 0)
+                status = IO_FAILED;
+        }
+        break;
     default:
         status = IO_FAILED;
         break;

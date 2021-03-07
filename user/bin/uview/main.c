@@ -13,7 +13,8 @@ int main(int argc, char **argv)
     }
     uview_set_pos(vid1, 200, 400);
     uview_set_monitor(vid1, 1);
-
+    uview_set_win_maxim_rect(vid1, 10, 10, 100, 150);
+    
     uview_show(vid1);
     if (!fork())
         child();
@@ -116,6 +117,11 @@ static void child()
     uview_show(vid);
     int vreadid;
     uview_get_vid(vid, &vreadid);
+
+    int x, y, w, h;
+    uview_get_win_maxim_rect(vid, &x, &y, &w, &h);
+
+    printf("get rect:%d,%d,%d,%d\n", x, y, w, h);
 
     uview_msg_t xmsg;
     uview_msg_header(&xmsg, UVIEW_MSG_SETICON, vreadid);
