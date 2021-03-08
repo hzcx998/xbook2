@@ -34,7 +34,6 @@ static view_t *resize_view = NULL;
 /* 拖拽时的视图 */
 static view_t *drag_view = NULL;
 
-#define CONFIG_SHADE_VIEW
 #ifdef CONFIG_SHADE_VIEW
 /* 拖拽或者调整视图大小时的视图 */
 static view_t *shade_view = NULL;
@@ -446,7 +445,7 @@ int view_env_filter_mouse_msg(view_msg_t *msg)
                 view_set_z(shade_view, view_env_get_middle()->z);
             }
             #else
-            //view_set_xy(drag_view, wx, wy);
+            view_set_xy(drag_view, wx, wy);
             #endif /* CONFIG_SHADE_VIEW */
             view_mouse_set_state(VIEW_MOUSE_HOLD);
             return 0;

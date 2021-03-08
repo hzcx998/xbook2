@@ -34,6 +34,13 @@ char *sh_environment[4] = {
 
 int main(int argc, char *argv[])
 {
+    /* 尝试解析单个命令参数 */
+    char *cmdstr = NULL;
+    if (argc >= 3) {
+        if (!strcmp(argv[1], "-c")) {
+            cmdstr = argv[2];
+        }
+    }
     sh_stdin_backup = dup(0);
     sh_stdout_backup = dup(1);
     sh_stderr_backup = dup(2);
@@ -49,7 +56,22 @@ int main(int argc, char *argv[])
     
     // set environment value
     environ = sh_environment;
-
+    
+    if (cmdstr) {   // 有单条命令就执行单条命令
+        // printf("sh: exec: %s\n", cmdstr);
+        /* 解析成参数 */
+        argc = -1;
+        argc = cmd_parse(cmdstr, cmd_argv, ' ');
+        if(argc == -1){
+            printf("sh: num of arguments exceed %d\n",MAX_ARG_NR);
+            return -1;
+        }
+        /* 管道执行 */
+        if (execute_cmd(argc, cmd_argv)) {
+            printf("sh: execute cmd %s falied!\n", cmd_argv[0]);
+        }
+        return -1;
+    }
     print_logo();
 
     /* 启动自行服务 */

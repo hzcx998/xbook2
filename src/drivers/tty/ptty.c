@@ -188,23 +188,25 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
     iostatus_t status = IO_FAILED;
     uint8_t *buf = (uint8_t *) ioreq->user_buffer;
     int len = ioreq->parame.read.length;
-
+#if 0
     /* 前台任务 */
     if (extension->hold_pid == task_current->pid) {
         
         #ifdef PTTY_DEBUG
         keprint(PRINT_INFO "ptty_read: buf %x len %d.\n", buf, len);
         #endif
+#endif
         /* 从读端读取 */
         if ((len = pipe_read(extension->pipe_in->id, buf, len)) < 0)
             goto err_rd;
-
+#if 0
     } else {
         keprint(PRINT_ERR "[ptty]: pid %d read but not holder, abort!\n", task_current->pid);
         /* 不是前台任务就触发任务的硬件触发器 */
         exception_force_self(EXP_CODE_TTIN);
         goto err_rd;
     }
+#endif
     status = IO_SUCCESS;
 err_rd:
 #ifdef PTTY_DEBUG
