@@ -278,9 +278,9 @@ iostatus_t tty_devctl(device_object_t *device, io_request_t *ioreq)
 }
 
 /**
- * 成功处理返回0，没有处理掉返回-1
+ * 处理切换按键，成功处理返回0，没有处理掉返回-1
 */
-static int tty_process(device_extension_t *extension, int code)
+static int tty_process_switch(device_extension_t *extension, int code)
 {
     /* ctl + alt + key */
     if (extension->modify_ctl && extension->modify_alt) {
@@ -304,6 +304,17 @@ static int tty_process(device_extension_t *extension, int code)
         }
         return 0;
     }
+    return -1;
+}
+
+/**
+ * 成功处理返回0，没有处理掉返回-1
+*/
+static int tty_process(device_extension_t *extension, int code)
+{
+    /* ctl + alt + key */
+    if (!tty_process_switch(extension, code))
+        return 0;
     if (extension->modify_ctl) {
         switch (code) {
         case 'c':
@@ -338,8 +349,8 @@ void tty_thread(void *arg)
                     /* 按下的按键 */
                     if ((event.value) > 0) {
                         if (!tty_filter_keycode_down(extension, event.code, 0)) {
-                            /* 处理内部按键 */
-                            if (tty_process(extension, event.code) < 0) {
+                            /* 只处理切换的按键 */
+                            if (tty_process_switch(extension, event.code) < 0) {
                                 /* put into fifo buf */
                                 fifo_io_put(&extension->fifoio, event.code);
                                 fifo_io_put(&extension->fifoio, 0); // key down

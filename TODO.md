@@ -40,3 +40,4 @@
 * grub引导启动
 * 使用iso文件系统，dvd驱动。
 * 添加无shade时窗口大小调整。
+* ptty对CTL+C字符的特殊处理：给组发送KILL INI
