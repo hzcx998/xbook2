@@ -99,7 +99,7 @@ user/bin/ls/ls
 user/bin/mem/mem
 user/bin/mkdir/mkdir
 user/bin/mv/mv
-user/bin/osver/osver
+user/bin/uname/uname
 user/bin/ps/ps
 user/bin/rename/rename
 user/bin/rm/rm
@@ -110,3 +110,4 @@ user/bin/tests/tests
 user/bin/touch/touch
 user/bin/bash/bash
 user/bin/hello/hello
+user/bin/uview/uview

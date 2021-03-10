@@ -113,6 +113,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     user_set_entry_point(frame, (unsigned long)elf_header.e_entry);
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
+
     kernel_switch_to_user(frame);
 free_loaded_image:
     sys_exit(-1);

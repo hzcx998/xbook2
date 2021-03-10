@@ -298,13 +298,16 @@ int execute_cmd(int argc, char **argv)
     
         /* 创建一个进程 */
         pid = fork();
-
-        if (pid > 0) {  /* 父进程 */
+        if (pid == -1) {
+            printf("sh: do fork failed!\n");
+            return -1;
+        } else if (pid > 0) {  /* 父进程 */
             ioctl(0, TTYIO_HOLDER, &pid);
             /* shell程序等待子进程退出 */
             pid = waitpid(pid, &status, 0);
             pid = getpid();
             ioctl(0, TTYIO_HOLDER, &pid);
+            
         } else {    /* 子进程 */
             pid = getpid();
             ioctl(0, TTYIO_HOLDER, &pid);
@@ -316,7 +319,7 @@ int execute_cmd(int argc, char **argv)
                 pid = getppid();
                 ioctl(0, TTYIO_HOLDER, &pid);
             }
-            sh_exit(-1, 0);
+            exit(pid);
         }
         update_cwdcache();
     }

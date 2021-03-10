@@ -335,12 +335,22 @@ int sys_tstate(tstate_t *ts, unsigned int *idx)
     return -ESRCH;
 }
 
+void task_set_cwd(task_t *task, const char *path)
+{
+    if (!task || !path)
+        return -1;
+    int len = strlen(path);
+    memset(task->fileman->cwd, 0, MAX_PATH);
+    memcpy(task->fileman->cwd, path, min(len, MAX_PATH));
+}
+
 int sys_getver(char *buf, int len)
 {
     if (!buf || !len)
         return -EINVAL;
     char tbuf[32] = {0};
     strcpy(tbuf, KERNEL_NAME);
+    strcat(tbuf, "-");
     strcat(tbuf, KERNEL_VERSION);
     if (mem_copy_to_user(buf, tbuf, min(len, strlen(tbuf))) < 0)
         return -EFAULT;

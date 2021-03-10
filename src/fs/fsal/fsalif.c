@@ -55,8 +55,9 @@ static int fsalif_open(void *path, int flags)
     int handle = fsal->open(new_path, flags);
     if (handle >= 0)
         fsalif_incref(handle);
-    else
+    /*else
         keprint(PRINT_ERR "path %s real open error!\n", path);
+    */
     return handle;
 }
 

@@ -417,9 +417,7 @@ int sys_chdir(const char *path)
         return -ENOFILE;
     }
     sys_closedir(dir);
-    int len = strlen(path);
-    memset(cur->fileman->cwd, 0, MAX_PATH);
-    memcpy(cur->fileman->cwd, path, min(len, MAX_PATH));
+    task_set_cwd(cur, path);
     return 0;
 }
 

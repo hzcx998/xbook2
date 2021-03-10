@@ -18,7 +18,7 @@ AS			:=	nasm
 export AS LD
 
 # bin
-#MODULE      +=  bash
+MODULE      +=  bash
 MODULE      +=  uview
 MODULE      +=  echo
 MODULE      +=  cat
@@ -37,5 +37,5 @@ MODULE      +=  rmdir
 MODULE      +=  touch
 MODULE      +=  tests
 MODULE      +=  hello
-MODULE      +=  osver
+MODULE      +=  uname
 MODULE      +=  sh
