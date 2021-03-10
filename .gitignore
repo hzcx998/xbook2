@@ -87,6 +87,7 @@ recycle
 # system bin
 user/sbin/init/init
 user/sbin/login/login
+user/sbin/netserv/netserv
 
 # /bin
 user/bin/cat/cat

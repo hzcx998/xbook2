@@ -18,7 +18,7 @@ int socket_test(int argc, char *argv[])
         exit(0); 
     }
 
-    printf("socket fd: %d\n", sockfd); 
+    printf("socket ID: %d\n", sockfd); 
 
     memset(&servaddr, 0, sizeof(servaddr)); 
     servaddr.sin_family = AF_INET; 
@@ -53,44 +53,46 @@ int socket_test2(int argc, char *argv[])
     printf("socket2 test start!\n");
         
     int err;
-    int fd = net_socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) {
+    int my_socke = net_socket(AF_INET, SOCK_STREAM, 0);
+    if (my_socke < 0) {
         printf("create socket failed!\n");
         return -1;
     }
-    printf("create socket %d\n", fd);
+    printf("create socket %d\n", my_socke);
     struct sockaddr_in myaddr;
     memset(&myaddr, 0, sizeof(struct sockaddr_in));
     myaddr.sin_addr.s_addr = htonl(0);
     myaddr.sin_port = htons(8080);
     myaddr.sin_family = AF_INET;
     
-    err = net_bind(fd, (struct sockaddr *) &myaddr, sizeof(struct sockaddr));
+    err = net_bind(my_socke, (struct sockaddr *) &myaddr, sizeof(struct sockaddr));
     if (err < 0) {
         printf("socket bind failed!\n");
         return -1;
     }
 
-    err = net_listen(fd, 5);
+    err = net_listen(my_socke, 5);
     if (err < 0) {
         printf("socket listen failed!\n");
         return -1;
     }
 
-    int client_fd;
-    while (1) {
-        client_fd = net_accept(fd, NULL, NULL);
-        printf("accept %d done!\n", client_fd);
-        if (client_fd >= 0) {
+    int client_sock;
+    int count = 0;
+    while (count < 3) {
+        client_sock = net_accept(my_socke, NULL, NULL);
+        printf("accept %d done!\n", client_sock);
+        if (client_sock >= 0) {
             char buf[512];
             memset(buf, 0, 512);
-            net_recv(client_fd, buf, 512, 0);
+            net_recv(client_sock, buf, 512, 0);
             printf("recv done %s!\n", buf);
             
-            net_send(client_fd, buf, strlen(buf), 0);
+            net_send(client_sock, buf, strlen(buf), 0);
             printf("send done!\n");
 
-            close(client_fd);
+            net_close(client_sock);
+            count++;
         }
     }
     return 0;

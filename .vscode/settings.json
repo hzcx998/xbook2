@@ -168,6 +168,7 @@
         "dirent.h": "c",
         "safety.h": "c",
         "uview.h": "c",
-        "uview_mouse.h": "c"
+        "uview_mouse.h": "c",
+        "lpc.h": "c"
     }
 }

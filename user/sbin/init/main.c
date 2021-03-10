@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 
 // #define _HAS_LOGIN
+#define _HAS_NETSERV
 
 int main(int argc, char *argv[])
 {
@@ -45,6 +46,18 @@ int main(int argc, char *argv[])
             }
         }
     }
+    #ifdef _HAS_NETSERV
+    pid = fork();
+    if (pid < 0) {
+        printf("[INIT]: fork process error! stop service.\n");
+        close(tty2);
+        close(tty1);
+        close(tty0);
+        return -1;
+    } else if (pid == 0) { /* 子进程执行服务 */
+        exit(execv("/sbin/netserv", NULL));
+    }
+    #endif
 
     #ifdef _HAS_LOGIN
     pid = getpid();
@@ -54,6 +67,5 @@ int main(int argc, char *argv[])
     #else
     exit(execv("/bin/sh", NULL));
     #endif
-
     return 0;
 }
