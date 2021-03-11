@@ -4,7 +4,7 @@
 #include <sys/ioctl.h>
 
 // #define _HAS_LOGIN
-#define _HAS_NETSERV
+// #define _HAS_NETSERV
 
 int main(int argc, char *argv[])
 {
@@ -59,13 +59,13 @@ int main(int argc, char *argv[])
     }
     #endif
 
+    setpgrp();
+    tcsetpgrp(STDIN_FILENO, getpgrp());
     #ifdef _HAS_LOGIN
-    pid = getpid();
-    ioctl(tty0, TTYIO_HOLDER, &pid);
     char *_argv[3] = {"-s", "/bin/sh", NULL};
     exit(execv("/sbin/login", _argv));
     #else
-    exit(execv("/bin/sh", NULL));
+    exit(execv("/bin/bash", NULL));
     #endif
     return 0;
 }

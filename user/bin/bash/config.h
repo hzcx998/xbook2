@@ -915,7 +915,7 @@
 #define HAVE_TCGETATTR 1
 
 /* Define if you have the tcgetpgrp function.  */
-// #define HAVE_TCGETPGRP 1
+#define HAVE_TCGETPGRP 1
 
 /* Define if you have the times function.  */
 #define HAVE_TIMES 1

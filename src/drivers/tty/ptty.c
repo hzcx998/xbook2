@@ -40,7 +40,7 @@ typedef struct _device_extension {
     device_object_t *other_devobj; // other devobj
     int type;      /* 设备类型 */
     int device_id;  /* 设备id */
-    pid_t hold_pid; /* 持有控制权的进程 */
+    pid_t pgrp; 
     pipe_t *pipe_in;
     pipe_t *pipe_out;
     int flags;      
@@ -96,7 +96,7 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
             devext->locked = 1; // locked
             devext->flags = 0;
             devext->opened = 0;
-            extension->hold_pid = -1;
+            extension->pgrp = -1;
         }
     } else {
         /* 如果设备上锁了，就不能打开 */
@@ -106,7 +106,7 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
         
     }
     extension->opened = 1; // 打开
-    extension->hold_pid = task_current->pid;   
+    extension->pgrp = task_current->pid;   
     
     status = IO_SUCCESS;
     #ifdef PTTY_DEBUG
@@ -168,7 +168,7 @@ iostatus_t ptty_close(device_object_t *device, io_request_t *ioreq)
         }
     }
     extension->flags = 0;
-    extension->hold_pid = -1;
+    extension->pgrp = -1;
     #ifdef PTTY_DEBUG
     keprint(PRINT_INFO "ptty_close: device %s success!\n", device->name.text);
     #endif
@@ -190,7 +190,7 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
     int len = ioreq->parame.read.length;
 #if 0
     /* 前台任务 */
-    if (extension->hold_pid == task_current->pid) {
+    if (extension->pgrp == task_current->pgid) {
         
         #ifdef PTTY_DEBUG
         keprint(PRINT_INFO "ptty_read: buf %x len %d.\n", buf, len);
@@ -201,7 +201,7 @@ iostatus_t ptty_read(device_object_t *device, io_request_t *ioreq)
             goto err_rd;
 #if 0
     } else {
-        keprint(PRINT_ERR "[ptty]: pid %d read but not holder, abort!\n", task_current->pid);
+        keprint(PRINT_ERR "[ptty]: pid %d read but not group, abort!\n", task_current->pid);
         /* 不是前台任务就触发任务的硬件触发器 */
         exception_force_self(EXP_CODE_TTIN);
         goto err_rd;
@@ -219,27 +219,49 @@ err_rd:
     return status;
 }
 
+static int __ptty_write(device_extension_t *extension, char *buf, int len)
+{
+    char *p = (char *) buf;
+    int n = 0;
+    while (*p && len > 0) {
+        /* 处理特殊字符 */
+        switch (*p) {
+        case '\003':
+            exception_send_group(extension->pgrp, EXP_CODE_INT);
+            return n;
+        default:
+            if (pipe_write(extension->pipe_out->id, p, 1) < 0)
+                return -1;
+            n++;
+            break;
+        }
+        len--;
+        p++;
+    }
+    return n;
+}
+
 iostatus_t ptty_write(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
     iostatus_t status = IO_SUCCESS;
 
-    uint8_t *buf = (uint8_t *) ioreq->user_buffer;
+    char *buf = (char *) ioreq->user_buffer;
     int len = ioreq->parame.write.length;
     #ifdef PTTY_DEBUG
     keprint(PRINT_INFO "ptty_write: buf %x len %d.\n", buf, len);
     #endif
-    // if (extension->hold_pid == task_current->pid) {
-    /* 从写端写入 */
-    if ((len = pipe_write(extension->pipe_out->id, buf, len)) < 0)
-        goto err_wr;
+    //if (extension->pgrp == task_current->pgid) {
     
+    /* 过滤特殊字符 */
+    if ((len = __ptty_write(extension, buf, len)) < 0)
+        goto err_wr;
     #if 0
     } else {
-        keprint(PRINT_ERR "[ptty]: pid %d write but not holder, abort!\n", task_current->pid);
+        keprint(PRINT_ERR "[ptty]: pid %d write but not group, abort!\n", task_current->pid);
         exception_force_self(EXP_CODE_TTOU);
         goto err_wr;
-    }*/
+    }
     #endif
     status = IO_SUCCESS;
 err_wr:
@@ -293,14 +315,19 @@ iostatus_t ptty_devctl(device_object_t *device, io_request_t *ioreq)
     case TIOCGFLGS:
         *(unsigned long *) ioreq->parame.devctl.arg = extension->flags;
         break;
-    case TTYIO_HOLDER:
-        extension->hold_pid = *(unsigned long *) ioreq->parame.devctl.arg;
+    case TIOCSPGRP:
+        extension->pgrp = *(unsigned long *)ioreq->parame.devctl.arg;
+        // noteprint("task %s pid=%d set pgrp:%d\n", task_current->name, task_current->pid, extension->pgrp);
+        break;
+    case TIOCGPGRP:
+        *(unsigned long *)ioreq->parame.devctl.arg = extension->pgrp;
+        // noteprint("task %s pid=%d get pgrp:%d\n", task_current->name, task_current->pid, extension->pgrp);
         break;
     case TIOCGFG: /* get front group tasks */
         if (extension->other_devobj && extension->type == PTTY_MASTER) {
             extension = extension->other_devobj->device_extension;
-            if (extension->hold_pid > 0)
-                *(unsigned long *)ioreq->parame.devctl.arg = extension->hold_pid;
+            if (extension->pgrp > 0)
+                *(unsigned long *)ioreq->parame.devctl.arg = extension->pgrp;
             else
                 status = IO_FAILED;    
         } else {
@@ -354,7 +381,7 @@ static iostatus_t ptty_enter(driver_object_t *driver)
         extension->other_devobj = NULL;
         extension->locked = 0;
         extension->flags = 0;
-        extension->hold_pid = -1;
+        extension->pgrp = -1;
         extension->opened = 0;
     }
     status = IO_SUCCESS;

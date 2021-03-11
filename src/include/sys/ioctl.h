@@ -36,7 +36,6 @@
 #define TTYIO_GETCOLOR      CONIO_GETCOLOR
 #define TTYIO_SETPOS        CONIO_SETPOS
 #define TTYIO_GETPOS        CONIO_GETPOS
-#define TTYIO_HOLDER        DEVCTL_CODE('t', 1)
 #define TTYIO_SELECT        DEVCTL_CODE('t', 2)
 #define TIOCGPTN            DEVCTL_CODE('t', 5) /* get presudo tty number */
 #define TIOCSPTLCK          DEVCTL_CODE('t', 6) /* set presudo tty lock */
@@ -45,6 +44,8 @@
 #define TIOCGFG             DEVCTL_CODE('t', 9) /* get front group task */
 #define TIOCISTTY           DEVCTL_CODE('t', 10) /* check is tty */
 #define TIOCNAME            DEVCTL_CODE('t', 11) /* get tty name */
+#define TIOCGPGRP           DEVCTL_CODE('t', 12)
+#define TIOCSPGRP           DEVCTL_CODE('t', 13)
 
 #define TTYIO_RAW           7
 

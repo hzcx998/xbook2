@@ -68,6 +68,7 @@ typedef struct {
     pid_t pid;                          /* process id */
     pid_t parent_pid;
     pid_t tgid;                         /* 线程组id：线程属于哪个进程，和pid一样，就说明是主线程，不然就是子线程 */
+    pid_t pgid;                         /* 进程组ID：用于终端控制 */
     unsigned long flags;                
     char priority;             /* 任务的动态优先级 */
     char static_priority;      /* 任务的静态优先级 */
@@ -185,10 +186,15 @@ int task_do_cancel(task_t *task);
 pid_t task_get_pid(task_t *task);
 void task_set_cwd(task_t *task, const char *path);
 
+int task_is_child(pid_t pid, pid_t child_pid);
+
 #define sys_sched_yeild     task_yeild
 pid_t sys_get_pid();
 pid_t sys_get_ppid();
 pid_t sys_get_tid();
+pid_t sys_get_pgid(pid_t pid);
+int sys_set_pgid(pid_t pid, pid_t pgid);
+
 int sys_getver(char *buf, int len);
 int sys_tstate(tstate_t *ts, unsigned int *idx);
 unsigned long sys_unid(int id);

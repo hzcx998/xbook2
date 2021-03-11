@@ -1,6 +1,8 @@
 #ifndef _TERMIOS_H
 #define _TERMIOS_H
- 
+
+#include <sys/ioctl.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,10 +52,10 @@ extern "C" {
 #define TIOCSCTTY   0x540E
  
 //读取指定终端设备进程的组id
-#define TIOCGPGRP   0x540F
- 
+#define TIOCGPGRP   DEVCTL_CODE('t', 12)
+
 //设置指定终端设备进程的组id
-#define TIOCSPGRP   0x5410
+#define TIOCSPGRP   DEVCTL_CODE('t', 13)
 //返回输出队列中还未送出的字符数
 #define TIOCOUTQ    0x5411
 //模拟终端输入，该命令以一个指向字符的指针作为参数，并假装该字符是在终端上键入的，用户必须

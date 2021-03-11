@@ -21,8 +21,7 @@ int proc_test(int argc, char *argv[])
         return -1;
     }
     printf("create process ok %d\n", pid);
-    ioctl(STDIN_FILENO, TTYIO_HOLDER, &pid);
-    
+
     if (resume_process(pid) < 0)
         printf("resume process failed\n");
     printf("resume process ok %d\n", pid);
@@ -30,7 +29,6 @@ int proc_test(int argc, char *argv[])
     waitpid(pid, &status, 0);
     printf("child process %d exit with %d\n", pid, status);
     pid = getpid();
-    ioctl(STDIN_FILENO, TTYIO_HOLDER, &pid);
     
     return 0;
 }

@@ -87,12 +87,17 @@ int setuid(uid_t uid);
 uid_t getuid(void);
 uid_t geteuid(void);
 
-int setgid(gid_t gid);
 gid_t getgid(void);
-
 gid_t getegid(void);
 
+int setgid(gid_t gid);
+
+/* process grpub */
+pid_t getpgid( pid_t pid);
 pid_t getpgrp(void);
+int setpgrp(void);
+int setpgid(pid_t pid,pid_t pgid);
+
 pid_t tcgetpgrp( int filedes );
 int tcsetpgrp( int filedes, pid_t pgrpid );
 
@@ -121,6 +126,7 @@ long sysconf(int name);
 #define getmaxgroups()  sysconf(_SC_NGROUPS_MAX)
 #define getmaxchild()   sysconf(_SC_CHILD_MAX)
 #define getdtablesize() sysconf(_SC_OPEN_MAX)
+
 
 #include <sys/proc.h>
 #include <getopt.h>

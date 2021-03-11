@@ -142,6 +142,8 @@ void syscall_init()
     syscalls[SYS_SYSCONF] = sys_sysconf;
     syscalls[SYS_TIMES] = sys_times;
     syscalls[SYS_GETHOSTNAME] = sys_gethostname;
+    syscalls[SYS_GETPGID] = sys_get_pgid;
+    syscalls[SYS_SETPGID] = sys_set_pgid;
 }
 
 int syscall_check(uint32_t callno)

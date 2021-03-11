@@ -66,6 +66,7 @@ typedef struct {
 void exception_manager_init(exception_manager_t *exception_manager);
 void exception_manager_exit(exception_manager_t *exception_manager);
 int exception_send(pid_t pid, uint32_t code);
+int exception_send_group(pid_t pgid, uint32_t code);
 int exception_force(pid_t pid, uint32_t code);
 int exception_copy(exception_manager_t *dest, exception_manager_t *src);
 int exception_force_self(uint32_t code);

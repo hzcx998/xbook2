@@ -43,7 +43,7 @@ typedef struct _device_public {
 
 typedef struct _device_extension {
     device_object_t *device_object; /* 设备对象 */
-    pid_t hold_pid;         /* 持有控制权的进程 */
+    pid_t pgrp;             /* 进程组ID */
     int device_id;          /* 设备id */
     handle_t con;           /* 对于的控制台设备 */
     handle_t kbd;           /* 对于的键盘设备 */
@@ -191,7 +191,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
             status = IO_SUCCESS;
         } else {
             /* 前台任务 */
-            if (extension->hold_pid == task_current->pid) {
+            if (extension->pgrp == task_current->pgid) {
                 
                 while (len > 0) {
                     uint8_t code = fifo_io_get(&extension->fifoio);
@@ -208,7 +208,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
                 status = IO_SUCCESS;
             
             } else {    /* 不是前台任务就触发任务的硬件触发器 */
-                noteprint("pid %d not holder %d ! send TTIN exception.\n", task_current->pid, extension->hold_pid);
+                noteprint("pid %d not process group %d ! send TTIN exception.\n", task_current->pid, extension->pgrp);
                 exception_force_self(EXP_CODE_TTIN);
             }
         }
@@ -222,16 +222,40 @@ end_read:
     return status;
 }
 
+static int __tty_write(device_extension_t *extension, char *buf, int len)
+{
+    char *p = (char *) buf;
+    int n = 0;
+    while (*p && len > 0) {
+        /* 处理特殊字符 */
+        switch (*p) {
+        case '\003':
+            exception_send_group(extension->pgrp, EXP_CODE_INT);
+            return n;
+        default:
+            if (device_write(extension->con, p, 1, 0) < 0)
+                return -1;
+            n++;
+            break;
+        }
+        len--;
+        p++;
+    }
+    return n;
+}
+
 iostatus_t tty_write(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
     iostatus_t status = IO_SUCCESS;
-    ioreq->io_status.infomation = device_write(extension->con,
-        ioreq->user_buffer, ioreq->parame.write.length, ioreq->parame.write.offset);
+    int len = __tty_write(extension, ioreq->user_buffer, ioreq->parame.write.length);
+    if (len < 0)
+        status = IO_FAILED;
+    
     ioreq->io_status.status = status;
+    ioreq->io_status.infomation = len;
     /* 调用完成请求 */
     io_complete_request(ioreq);
-
     return status;
 }
 
@@ -246,15 +270,20 @@ iostatus_t tty_devctl(device_object_t *device, io_request_t *ioreq)
     case TTYIO_SELECT:
         tty_set_current(extension, *(unsigned long *)arg);
         break;
-    case TTYIO_HOLDER:
-        extension->hold_pid = *(unsigned long *) ioreq->parame.devctl.arg;
-        break;
     case TIOCSFLGS:
         extension->flags = *(unsigned long *)arg;
         break;        
     case TIOCGFLGS:
         *(unsigned long *)arg = extension->flags;
-        break;        
+        break;    
+    case TIOCSPGRP:
+        extension->pgrp = *(unsigned long *)arg;
+        // noteprint("task %s pid=%d set pgrp:%d\n", task_current->name, task_current->pid, extension->pgrp);
+        break;
+    case TIOCGPGRP:
+        *(unsigned long *)arg = extension->pgrp;
+        // noteprint("task %s pid=%d get pgrp:%d\n", task_current->name, task_current->pid, extension->pgrp);
+        break;
     case TIOCISTTY:
         *(unsigned long *)arg = 1;
         break;        
@@ -320,8 +349,8 @@ static int tty_process(device_extension_t *extension, int code)
         case 'c':
         case 'C':
             // ctl + c
-            exception_send(extension->hold_pid, EXP_CODE_INT);
-            //keprint("hold pid=%d\n", extension->hold_pid);
+            /* 往进程组发送INT消息 */
+            exception_send_group(extension->pgrp, EXP_CODE_INT);
             break;
         default:
             return -1;
@@ -407,8 +436,8 @@ iostatus_t tty_open(device_object_t *device, io_request_t *ioreq)
     if (extension->con < 0) {   /* 打开失败就释放资源 */
         status = IO_FAILED;
     } else { /* 打开成功 */
-        if (extension->hold_pid == -1) {    /* 首次打开，持有者就是打开者 */
-            extension->hold_pid = task_current->pid;
+        if (extension->pgrp == -1) {    /* 首次打开，组就是当前任务的组 */
+            extension->pgrp = task_current->pgid;   /* 绑定组 */
 #ifdef DEBUG_DRV
             keprint(PRINT_DEBUG "tty_open: open tty=%d.\n", extension->device_id);
 #endif        
@@ -434,7 +463,7 @@ iostatus_t tty_close(device_object_t *device, io_request_t *ioreq)
         if (device_close(extension->con))
             status = IO_FAILED;
         extension->con = -1;
-        extension->hold_pid = -1;
+        extension->pgrp = -1;
 #ifdef DEBUG_DRV
         keprint(PRINT_DEBUG "tty_close: close tty=%d.\n", extension->device_id);
 #endif
@@ -489,7 +518,7 @@ static iostatus_t tty_enter(driver_object_t *driver)
         extension = (device_extension_t *)devobj->device_extension;
         extension->device_object = devobj;
         extension->device_id = i;   
-        extension->hold_pid = -1;   /* 没有进程持有 */
+        extension->pgrp = -1;
         extension->kbd = kbd;
         extension->con = -1;    /* 没有控制台 */
         extension->modify_ctl = 0;

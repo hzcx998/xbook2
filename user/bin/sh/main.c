@@ -47,9 +47,6 @@ int main(int argc, char *argv[])
     
 	update_cwdcache();
     
-    int pid = getpid();
-    ioctl(0, TTYIO_HOLDER, &pid);
-
     expcatch(EXP_CODE_USER, sh_exit_handler);
     expblock(EXP_CODE_TERM);
     expblock(EXP_CODE_INT);
@@ -302,22 +299,17 @@ int execute_cmd(int argc, char **argv)
             printf("sh: do fork failed!\n");
             return -1;
         } else if (pid > 0) {  /* 父进程 */
-            ioctl(0, TTYIO_HOLDER, &pid);
             /* shell程序等待子进程退出 */
             pid = waitpid(pid, &status, 0);
             pid = getpid();
-            ioctl(0, TTYIO_HOLDER, &pid);
-            
         } else {    /* 子进程 */
             pid = getpid();
-            ioctl(0, TTYIO_HOLDER, &pid);
             /* 子进程执行程序 */
             pid = execv((const char *)argv[0], (char *const *)argv);
             /* 如果执行出错就退出 */
             if(pid == -1){
                 printf("sh: bad command %s!\n", argv[0]);
                 pid = getppid();
-                ioctl(0, TTYIO_HOLDER, &pid);
             }
             exit(pid);
         }

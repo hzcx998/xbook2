@@ -41,7 +41,6 @@ extern "C" {
 #define TTYIO_GETCOLOR      CONIO_GETCOLOR
 #define TTYIO_SETPOS        CONIO_SETPOS
 #define TTYIO_GETPOS        CONIO_GETPOS
-#define TTYIO_HOLDER        DEVCTL_CODE('t', 1)
 #define TTYIO_SELECT        DEVCTL_CODE('t', 2)
 #define TIOCGPTN            DEVCTL_CODE('t', 5) /* get presudo tty number */
 #define TIOCSPTLCK          DEVCTL_CODE('t', 6) /* set presudo tty lock */

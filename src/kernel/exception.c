@@ -108,27 +108,27 @@ void exception_disable_block(exception_manager_t *exception_manager, uint32_t co
 void exception_add_normal(exception_manager_t *exception_manager, exception_t *exp)
 {
     list_add_tail(&exp->list, &exception_manager->exception_list);
-    exception_manager->exception_number++;
+    ++exception_manager->exception_number;
 }
 
 void exception_del_normal(exception_manager_t *exception_manager, exception_t *exp)
 {
     assert(list_find(&exp->list, &exception_manager->exception_list));
     list_del_init(&exp->list);
-    exception_manager->exception_number--;
+    --exception_manager->exception_number;
 }
 
 void exception_add_catch(exception_manager_t *exception_manager, exception_t *exp)
 {
     list_add_tail(&exp->list, &exception_manager->catch_list);
-    exception_manager->catch_number++;
+    ++exception_manager->catch_number;
 }
 
 void exception_del_catch(exception_manager_t *exception_manager, exception_t *exp)
 {
     assert(list_find(&exp->list, &exception_manager->catch_list));
     list_del_init(&exp->list);
-    exception_manager->catch_number--;
+    --exception_manager->catch_number;
 }
 
 int exception_copy(exception_manager_t *dest, exception_manager_t *src) 
@@ -204,6 +204,21 @@ int exception_send(pid_t pid, uint32_t code)
     exception_add_normal(exception_manager, exp);
     spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
     task_wakeup(target);
+    //errprint("exception_send: pid=%d, code=%d\n", target->pid, exp->code);
+    return 0;
+}
+
+int exception_send_group(pid_t pgid, uint32_t code)
+{
+    if (pgid < 0)
+        return -1;
+    task_t *task;
+    list_for_each_owner (task, &task_global_list, global_list) {
+        if (task->pgid == pgid) {
+            // noteprint("exception: send group: gid=%d, pid=%d, name=%s\n", pgid, task->pid, task->name);
+            exception_send(task->pid, code);
+        }
+    }
     return 0;
 }
 
@@ -238,6 +253,8 @@ bool exception_cause_exit(exception_manager_t *exception_manager)
             exp->code != EXP_CODE_STOP &&
             exp->code != EXP_CODE_CONT &&
             exp->code != EXP_CODE_TRAP &&
+            exp->code != EXP_CODE_INT &&
+            exp->code != EXP_CODE_TERM &&
             exp->code != EXP_CODE_ALRM) {
             spin_unlock_irqrestore(&exception_manager->manager_lock, iflags);
             return true;
@@ -249,6 +266,8 @@ bool exception_cause_exit(exception_manager_t *exception_manager)
             exp->code != EXP_CODE_STOP &&
             exp->code != EXP_CODE_CONT &&
             exp->code != EXP_CODE_TRAP &&
+            exp->code != EXP_CODE_INT &&
+            exp->code != EXP_CODE_TERM &&
             exp->code != EXP_CODE_ALRM) {
             spin_unlock_irqrestore(&exception_manager->manager_lock, iflags);
             return true;
@@ -261,6 +280,8 @@ bool exception_cause_exit(exception_manager_t *exception_manager)
 static int exception_dispatch(exception_manager_t *exception_manager, exception_t *exp)
 {
     task_t *cur = task_current;
+    // errprint("exception_dispatch: pid=%d, code=%d\n", cur->pid, exp->code);
+        
     switch (exp->code) {
     case EXP_CODE_CHLD:
     case EXP_CODE_USER:
@@ -287,14 +308,18 @@ int exception_check_kernel(trap_frame_t *frame)
     exception_manager_t *exception_manager = &task_current->exception_manager;
     unsigned long irq_flags;
     spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
-    if (!exception_manager->exception_number || !list_empty(&exception_manager->exception_list)) {
+    if (exception_manager->exception_number == 0 || list_empty(&exception_manager->exception_list)) {
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         return -1;
     }
+    
+    //errprint("exception_check_kernel: pid=%d\n", task_current->pid);
     while (1) {
         exception_t *exp = list_first_owner_or_null(&exception_manager->exception_list, exception_t, list);
         if (!exp)
             break;
+        
+        //errprint("exception_check_kernel: pid=%d, code=%d\n", task_current->pid, exp->code);
         exception_del_normal(exception_manager, exp);
         exception_t tmp_exp = *exp;
         mem_free(exp);
@@ -310,10 +335,8 @@ static int exception_handle(exception_manager_t *exception_manager, exception_t 
 {
     exception_handler_t handler = exception_manager->handlers[exp->code];
     if (handler) {
-        exception_disable_catch(exception_manager, exp->code);
         exception_frame_build(exp->code, handler, frame);
         exception_manager->in_user_mode = 1;
-        exception_manager->handlers[exp->code] = NULL;
     }
     return 0;
 }
@@ -323,7 +346,7 @@ int exception_check_user(trap_frame_t *frame)
     exception_manager_t *exception_manager = &task_current->exception_manager;
     unsigned long irq_flags;
     spin_lock_irqsave(&exception_manager->manager_lock, irq_flags);
-    if (!exception_manager->catch_number || exception_manager->in_user_mode || !list_empty(&exception_manager->catch_list)) { /* 如果已经在用户态就不能再处理用户态的异常，避免嵌套 */
+    if (exception_manager->catch_number == 0 || exception_manager->in_user_mode || list_empty(&exception_manager->catch_list)) { /* 如果已经在用户态就不能再处理用户态的异常，避免嵌套 */
         spin_unlock_irqrestore(&exception_manager->manager_lock, irq_flags);
         return -1;
     }

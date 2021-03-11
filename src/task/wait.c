@@ -4,6 +4,7 @@
 #include <xbook/process.h>
 #include <xbook/safety.h>
 #include <xbook/fd.h>
+#include <errno.h>
 
 /*
 僵尸进程：当进程P调用exit时，其父进程没有wait，那么它就变成一个僵尸进程。
@@ -114,7 +115,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
         interrupt_restore_state(flags);
         task_block(TASK_WAITING);
         if (exception_cause_exit(&parent->exception_manager)) {
-            break;
+            return -EINTR;
         }
     }
     return -1;

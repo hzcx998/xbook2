@@ -317,10 +317,14 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     if (flags & PROC_CREATE_INIT) {
         task->pid = USER_INIT_PROC_ID;
         task->tgid = task->pid;
+        task->pgid = 0; /* init是组长, gid=0 */
         parent = NULL;
     } else {
         task->parent_pid = parent->pid;
     }
+    if (parent)
+        task->pgid = parent->pgid;
+    
     /* 进程执行前必须初始化文件描述符，内存管理，参数缓冲区 */
     if (fs_fd_init(task) < 0) {
         mem_free(task);

@@ -57,6 +57,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->vmm = NULL;
     task->pid = task_take_pid();
     task->tgid = task->pid; /* 默认都是主线程，需要的时候修改 */
+    task->pgid = -1;
     task->parent_pid = -1;
     task->exit_status = 0;
     // set kernel stack as the top of task mem struct
@@ -113,6 +114,14 @@ task_t *task_find_by_pid(pid_t pid)
     }
     interrupt_restore_state(flags);
     return NULL;
+}
+
+int task_is_child(pid_t pid, pid_t child_pid)
+{
+    task_t *child = task_find_by_pid(child_pid);
+    if (!child)
+        return 0;
+    return (child->parent_pid == pid);
 }
 
 /**
@@ -290,6 +299,48 @@ pid_t sys_get_ppid()
 pid_t sys_get_tid()
 {
     return task_current->pid;
+}
+
+/**
+ * 设置pgid时，进程只能为自己和子进程设置pgid
+ */
+int sys_set_pgid(pid_t pid, pid_t pgid)
+{
+    if (pid < 0 || pgid < -1)
+        return -EINVAL;
+    task_t *task = NULL;
+    task_t *cur = task_current;
+    
+    if (!pid) { /* pid=0：get current task pgid */
+        task = cur;
+    } else {
+        task = task_find_by_pid(pid);
+        if (!task)
+            return -ESRCH;
+    }
+    if (!pgid) {    /* 使用pid对应进程的pid */
+        pgid = task->pid;
+    }
+    /* pid不是自己的子进程或者是自己就退出 */
+    if (task->pid != cur->pid && !task_is_child(cur->pid, task->pid))
+        return -EPERM;
+    task->pgid = pgid;
+    return 0;
+}
+
+pid_t sys_get_pgid(pid_t pid)
+{
+    if (pid < 0)
+        return -EINVAL;
+    task_t *task = NULL;
+    if (!pid) { /* pid=0：get current task pgid */
+        task = task_current;
+    } else {
+        task = task_find_by_pid(pid);
+        if (!task)
+            return -ESRCH;
+    }
+    return task->pgid;
 }
 
 void tasks_print()
