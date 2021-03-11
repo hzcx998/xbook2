@@ -73,7 +73,7 @@ int pty_test2(int argc, char *argv[])
         return -1;
     }
     /* 设置进程组 */
-    tcsetpgrp(fdm, getpgrp());
+    // tcsetpgrp(fdm, getpgrp());
 
     printf("fd: %d\n", fds);
     char buf[32] = {0, };

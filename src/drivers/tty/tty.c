@@ -229,7 +229,8 @@ static int __tty_write(device_extension_t *extension, char *buf, int len)
     while (*p && len > 0) {
         /* 处理特殊字符 */
         switch (*p) {
-        case '\003':
+        case '\003': /* CTRL + INT */
+            noteprint("tty send EXP_CODE_INT to group %d\n", extension->pgrp);
             exception_send_group(extension->pgrp, EXP_CODE_INT);
             return n;
         default:

@@ -72,7 +72,7 @@ int exception_copy(exception_manager_t *dest, exception_manager_t *src);
 int exception_force_self(uint32_t code);
 int exception_raise(uint32_t code);
 bool exception_cause_exit(exception_manager_t *exception_manager);
-
+bool exception_cause_exit_when_wait(exception_manager_t *exception_manager);
 void exception_frame_build(uint32_t code, exception_handler_t handler, trap_frame_t *frame);
 int exception_return(trap_frame_t *frame);
 

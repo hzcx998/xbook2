@@ -114,7 +114,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
         }
         interrupt_restore_state(flags);
         task_block(TASK_WAITING);
-        if (exception_cause_exit(&parent->exception_manager)) {
+        if (exception_cause_exit_when_wait(&parent->exception_manager)) {
             return -EINTR;
         }
     }

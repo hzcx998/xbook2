@@ -103,11 +103,10 @@ iostatus_t ptty_open(device_object_t *device, io_request_t *ioreq)
         if (extension->locked) {
             goto err_no;
         }
-        
     }
     extension->opened = 1; // 打开
-    extension->pgrp = task_current->pid;   
-    
+    extension->pgrp = task_current->pgid;
+
     status = IO_SUCCESS;
     #ifdef PTTY_DEBUG
     keprint(PRINT_INFO "ptty_open: device %s ref %d success!\n", device->name.text, atomic_get(&device->reference));
@@ -226,8 +225,20 @@ static int __ptty_write(device_extension_t *extension, char *buf, int len)
     while (*p && len > 0) {
         /* 处理特殊字符 */
         switch (*p) {
-        case '\003':
-            exception_send_group(extension->pgrp, EXP_CODE_INT);
+        case '\003':    /* CTRL + INT */
+            // noteprint("ptty send EXP_CODE_INT to group %d\n", extension->pgrp);
+            /* 如果是master，就往slaver的缓冲区中写入 */
+            if (extension->type == PTTY_MASTER) {
+                if (extension->other_devobj) {
+                    device_extension_t *slaver = extension->other_devobj->device_extension;
+                    if (slaver) {
+                        // noteprint("ptty send EXP_CODE_INT to slaver group %d\n", slaver->pgrp);
+                        exception_send_group(slaver->pgrp, EXP_CODE_INT);
+                    }
+                }
+            } else {
+                exception_send_group(extension->pgrp, EXP_CODE_INT);
+            }
             return n;
         default:
             if (pipe_write(extension->pipe_out->id, p, 1) < 0)

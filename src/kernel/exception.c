@@ -253,8 +253,6 @@ bool exception_cause_exit(exception_manager_t *exception_manager)
             exp->code != EXP_CODE_STOP &&
             exp->code != EXP_CODE_CONT &&
             exp->code != EXP_CODE_TRAP &&
-            exp->code != EXP_CODE_INT &&
-            exp->code != EXP_CODE_TERM &&
             exp->code != EXP_CODE_ALRM) {
             spin_unlock_irqrestore(&exception_manager->manager_lock, iflags);
             return true;
@@ -266,14 +264,36 @@ bool exception_cause_exit(exception_manager_t *exception_manager)
             exp->code != EXP_CODE_STOP &&
             exp->code != EXP_CODE_CONT &&
             exp->code != EXP_CODE_TRAP &&
-            exp->code != EXP_CODE_INT &&
-            exp->code != EXP_CODE_TERM &&
             exp->code != EXP_CODE_ALRM) {
             spin_unlock_irqrestore(&exception_manager->manager_lock, iflags);
             return true;
         }
     }
     spin_unlock_irqrestore(&exception_manager->manager_lock, iflags);
+    return false;
+}
+
+bool exception_cause_exit_when_wait(exception_manager_t *exception_manager)
+{
+    if (exception_cause_exit(exception_manager)) {
+        unsigned long iflags;
+        spin_lock_irqsave(&exception_manager->manager_lock, iflags);
+        exception_t *exp;
+        list_for_each_owner (exp, &exception_manager->exception_list, list) {
+            if (exp->code != EXP_CODE_INT) {
+                spin_unlock_irqrestore(&exception_manager->manager_lock, iflags);
+                return true;
+            }
+        }
+        list_for_each_owner (exp, &exception_manager->catch_list, list) {
+            if (exp->code != EXP_CODE_INT) {
+                spin_unlock_irqrestore(&exception_manager->manager_lock, iflags);
+                return true;
+            }
+        }
+        spin_unlock_irqrestore(&exception_manager->manager_lock, iflags);
+        return false;
+    }
     return false;
 }
 
