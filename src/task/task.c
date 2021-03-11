@@ -367,6 +367,7 @@ int sys_tstate(tstate_t *ts, unsigned int *idx)
         if (n == index) {
             tmp_ts.ts_pid = task->pid;
             tmp_ts.ts_ppid = task->parent_pid;
+            tmp_ts.ts_pgid = task->pgid;
             tmp_ts.ts_tgid = task->tgid;
             tmp_ts.ts_state = task->state;
             tmp_ts.ts_priority = task->priority;
@@ -386,13 +387,14 @@ int sys_tstate(tstate_t *ts, unsigned int *idx)
     return -ESRCH;
 }
 
-void task_set_cwd(task_t *task, const char *path)
+int task_set_cwd(task_t *task, const char *path)
 {
     if (!task || !path)
-        return -1;
+        return -EINVAL;
     int len = strlen(path);
     memset(task->fileman->cwd, 0, MAX_PATH);
     memcpy(task->fileman->cwd, path, min(len, MAX_PATH));
+    return 0;
 }
 
 int sys_getver(char *buf, int len)

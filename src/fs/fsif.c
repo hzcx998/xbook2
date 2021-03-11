@@ -417,8 +417,7 @@ int sys_chdir(const char *path)
         return -ENOFILE;
     }
     sys_closedir(dir);
-    task_set_cwd(cur, path);
-    return 0;
+    return task_set_cwd(cur, path);
 }
 
 int sys_getcwd(char *buf, int bufsz)

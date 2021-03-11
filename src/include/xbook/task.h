@@ -184,7 +184,7 @@ unsigned long task_sleep_by_ticks(clock_t ticks);
 int task_count_children(task_t *parent);
 int task_do_cancel(task_t *task);
 pid_t task_get_pid(task_t *task);
-void task_set_cwd(task_t *task, const char *path);
+int task_set_cwd(task_t *task, const char *path);
 
 int task_is_child(pid_t pid, pid_t child_pid);
 
