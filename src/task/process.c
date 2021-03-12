@@ -68,6 +68,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
                     prog_header.p_memsz - prog_header.p_filesz);    
             }
             prog_end = prog_header.p_vaddr + prog_header.p_memsz;
+            
             if (prog_header.p_flags == ELF32_PHDR_CODE) {
                 vmm->code_start = prog_header.p_vaddr;
                 vmm->code_end = prog_end;
@@ -78,6 +79,14 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
                 vmm->data_start = prog_header.p_vaddr;
                 vmm->data_end = prog_end;
                 vmm->heap_start = vmm->data_end + PAGE_SIZE;                
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
+            } else if (prog_header.p_flags == ELF32_PHDR_CODE_DATA) {
+                vmm->code_start = prog_header.p_vaddr;
+                vmm->code_end = prog_end;
+                vmm->data_start = prog_header.p_vaddr;
+                vmm->data_end = prog_end;
+                vmm->heap_start = vmm->code_end + PAGE_SIZE;
                 vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
                 vmm->heap_end = vmm->heap_start;
             }

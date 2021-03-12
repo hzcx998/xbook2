@@ -40,8 +40,4 @@
 * grub引导启动
 * 使用iso文件系统，dvd驱动。
 * 添加无shade时窗口大小调整。
-* ptty对CTL+C字符的特殊处理：给组发送KILL INI
-* 添加进程组，会话等概念。
-* sh启动后，会设置tty的pgrp为当前进程的pid，那么自己就是组长，自己屏蔽组，子进程执行如果没屏蔽就会收到信号，然后就正常启动子进程。当产生ctrl+c时，就发送到绑定的gprp中。
-* init启动后设pgid为自己的pid，产生的子进程也会和init在同一个组，init是组长。
-当启动sh后，sh设置pgid为自己的pid，那么sh就在新的组了，其创建的子进程和它有相同的pgid。sh是组长。
+* 设置bash kill信号显示为xbook2信号。
