@@ -39,4 +39,3 @@
 * 完善sb16声卡驱动。
 * grub引导启动
 * 使用iso文件系统，dvd驱动。
-* 设置bash kill信号显示为xbook2信号。

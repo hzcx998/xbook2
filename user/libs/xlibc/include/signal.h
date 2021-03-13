@@ -37,7 +37,7 @@ extern "C" {
 #define SIGVTALRM   (SIG_UNUSED + 2)
 #define SIGPROF     (SIG_UNUSED + 3)
 #define SIGQUIT     (SIG_UNUSED + 4)
-#define SIG_UNUSED_ (SIGPROF + 1)
+#define SIG_UNUSED_ (SIGQUIT + 1)
 #define NSIG        SIG_UNUSED_
 
 #define IS_BAD_SIGNAL(signo) \
