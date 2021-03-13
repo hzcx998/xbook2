@@ -28,7 +28,7 @@ void vmm_free(vmm_t *vmm)
             page_free(kern_vir_addr2phy_addr(vmm->page_storage));
             vmm->page_storage = NULL;
         }
-        vmm_debuild_argbug(vmm);
+        vmm_debuild_argbuf(vmm);
         mem_free(vmm);
     }
 }
@@ -128,7 +128,7 @@ int vmm_release_space(vmm_t *vmm)
         space = space->next;
         mem_space_free(p);
     }
-    vmm_debuild_argbug(vmm);
+    vmm_debuild_argbuf(vmm);
     vmm->mem_space_head = NULL;
     vmm->code_start = 0;
     vmm->code_end = 0;
@@ -143,27 +143,35 @@ int vmm_release_space(vmm_t *vmm)
     return 0;
 }
 
+/**
+ * BUG: 当执行内存取消映射时，就会产生内存bug。
+ */
 int vmm_unmap_space(vmm_t *vmm)
 {
     if (vmm == NULL)
         return -1;
     mem_space_t *space = (mem_space_t *)vmm->mem_space_head;
     while (space != NULL) {
-        page_unmap_addr_safe(space->start, space->end - space->start, space->flags & MEM_SPACE_MAP_SHARED);
+        /* 堆栈和代码数据的映射和解除映射有所不同，需要单独处理 */
+        if ((space->flags & MEM_SPACE_MAP_STACK) || (space->flags & MEM_SPACE_MAP_HEAP)) {
+            page_unmap_addr(space->start, space->end - space->start);
+        } else {
+            page_unmap_addr_safe(space->start, space->end - space->start, space->flags & MEM_SPACE_MAP_SHARED);
+        }
         space = space->next;
     }
     return 0;
 }
 
-/* 只取消空间中的映射部分的映射 */
+/* 取消动态映射部分，进程执行前都需要确保这片区域是没有被映射的 */
 int vmm_unmap_the_mapping_space(vmm_t *vmm)
 {
     if (vmm == NULL)
         return -1; 
     mem_space_t *space = (mem_space_t *)vmm->mem_space_head;
     while (space != NULL) {
-        if (space->start >= MEM_SPACE_MAP_ADDR_START &&
-            space->end <= MEM_SPACE_MAP_ADDR_START + MAX_MEM_SPACE_MAP_SIZE) {
+        if (space->start >= vmm->map_start &&
+            space->end <= vmm->map_end) {
             page_unmap_addr_safe(space->start, space->end - space->start, space->flags & MEM_SPACE_MAP_SHARED);
         }
         space = space->next;
@@ -179,12 +187,15 @@ int vmm_exit(vmm_t *vmm)
     if (vmm->mem_space_head == NULL) {
         return -1;
     }
+    
     if (vmm_unmap_space(vmm)) {
         keprint(PRINT_WARING "vmm: exit when unmap space failed!\n");
     }
+    
     if (vmm_release_space(vmm)) {
         keprint(PRINT_WARING "vmm: exit when release space failed!\n");
     }
+    
     return 0;
 }
 
@@ -223,7 +234,7 @@ int vmm_build_argbug(vmm_t *vmm, char **argv, char **envp)
     return 0;
 }
 
-void vmm_debuild_argbug(vmm_t *vmm)
+void vmm_debuild_argbuf(vmm_t *vmm)
 {
     if (vmm->argbuf) {
         mem_free(vmm->argbuf);

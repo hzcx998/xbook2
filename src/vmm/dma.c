@@ -2,6 +2,7 @@
 #include <arch/memio.h>
 #include <xbook/virmem.h>
 #include <xbook/dma.h>
+#include <xbook/debug.h>
 #include <math.h>
 
 int dma_alloc_buffer(struct dma_region *d)
@@ -16,23 +17,12 @@ int dma_alloc_buffer(struct dma_region *d)
         d->p.address = page_alloc_dma(npages);
         if(d->p.address == 0)
             return -1;
-        vaddr = (addr_t) kern_phy_addr2vir_addr(d->p.address);
     } else { // normal
         d->p.address = page_alloc_normal(npages);
         if(d->p.address == 0)
 	    	return -1;
-        
-        vaddr = vir_addr_alloc(d->p.size);
-        if (vaddr == 0) {
-            page_free(d->p.address);
-            return -1;
-        }
-        if (hal_memio_remap(d->p.address, vaddr, d->p.size) < 0) {
-            vir_addr_free(vaddr, d->p.size);
-            page_free(d->p.address);
-            return -1;
-        }
     }
+    vaddr = (addr_t) kern_phy_addr2vir_addr(d->p.address);
 	
 	d->v = vaddr;
 	return 0;
@@ -44,16 +34,8 @@ int dma_free_buffer(struct dma_region *d)
     if (!d->p.size || !d->p.address || !d->v)
         return -1;
     
-    if (d->flags & DMA_REGION_SPECIAL) {
-        page_free(d->p.address);
-    } else {
-        if (hal_memio_unmap(d->v, d->p.size) < 0) {
-            return -1;
-        }
-
-        vir_addr_free(d->v, d->p.size);
-        page_free(d->p.address);
-    }
+    page_free(d->p.address);
+    
     d->p.address = d->v = 0;
 	
     return 0;

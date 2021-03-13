@@ -22,6 +22,13 @@ static void cut_used_mem()
     page_alloc_normal(used_pages);
 }
 
+/**
+ * 将物理内存划分为3个区域。
+ * DMA区域：专门提供给DMA设备使用，在初始化时已经映射到虚拟地址，所以可以直接把物理地址转换成虚拟地址。
+ * NORMAL区域：专门提供给内核使用，在初始化时已经映射到虚拟地址，所以可以直接把物理地址转换成虚拟地址。
+ * USER区域：专门提供给用户进程空间使用，由于是在使用过程中才映射的，所以不能直接物理地址转虚拟地址。
+ *          只能使用计算公式把虚拟地址转物理地址。
+ */
 int physic_memory_init()
 {
     total_pmem_size = phy_mem_get_size_from_hardware();
@@ -34,9 +41,12 @@ int physic_memory_init()
     unsigned int normal_size;
     unsigned int user_size;
     
-    normal_size = (total_pmem_size - 
-        (NORMAL_MEM_ADDR + DYNAMIC_MAP_MEM_SIZE + KERN_BLACKHOLE_MEM_SIZE)) / 2; 
-    user_size = total_pmem_size - normal_size - NORMAL_MEM_ADDR;
+    unsigned int unused_size;
+    
+    unused_size = KERN_BLACKHOLE_MEM_SIZE + NORMAL_MEM_ADDR;
+    
+    normal_size = (total_pmem_size - unused_size) / 2; 
+    user_size = total_pmem_size - unused_size - normal_size;
     
     if (normal_size > 1*GB) {
         unsigned int more_size = normal_size - 1*GB;
@@ -44,15 +54,24 @@ int physic_memory_init()
         normal_size -= more_size;
     }
     
+    noteprint("total size:%x %d MB\n", total_pmem_size, total_pmem_size / MB);
+    noteprint("normal size:%x %d MB\n", normal_size, normal_size / MB);
+    noteprint("user size:%x %d MB\n", user_size, user_size / MB);
+    noteprint("unused size:%x %d MB\n", unused_size, unused_size / MB);
+    
     /* 由于引导中只映射了0~8MB，所以这里从DMA开始 */
     kern_page_map_early(DMA_MEM_ADDR, NORMAL_MEM_ADDR + normal_size);
+    
     boot_mem_init(KERN_BASE_VIR_ADDR + NORMAL_MEM_ADDR , KERN_BASE_VIR_ADDR + (NORMAL_MEM_ADDR + normal_size));
     
     mem_range_init(MEM_RANGE_DMA, DMA_MEM_ADDR, DMA_MEM_SIZE);
     mem_range_init(MEM_RANGE_NORMAL, NORMAL_MEM_ADDR, normal_size);
-    mem_range_init(MEM_RANGE_USER, NORMAL_MEM_ADDR + normal_size, user_size);
-    //mem_pool_test();
+    mem_range_init(MEM_RANGE_USER, NORMAL_MEM_ADDR + normal_size, user_size - KERN_BLACKHOLE_MEM_SIZE);
     
     cut_used_mem();
+    
+    // mem_pool_test();
+    
+    // spin("memcheck");
     return 0;
 }   

@@ -18,6 +18,7 @@
 #include <xbook/bitops.h>
 #include <xbook/dma.h>
 #include <xbook/task.h>
+#include <xbook/virmem.h>
 #include <assert.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
@@ -429,11 +430,11 @@ pci_device_t *get_ahci_pci (void)
 	#endif
     //pci_device_dump(ahci);
     
-	hba_mem = (void *)(addr_t)ahci->bar[5].base_addr;
     pci_enable_bus_mastering(ahci);
 
     /* 映射IO物理内存地址到虚拟地址中，才能对设备映射到内存的地址进行操作 */
-    if (hal_memio_remap((addr_t)hba_mem, (addr_t)ahci->bar[5].base_addr, ahci->bar[5].length) < 0) {
+    hba_mem = memio_remap((addr_t)ahci->bar[5].base_addr, ahci->bar[5].length);
+    if (hba_mem == NULL) {
         errprint("[ahci] device memio_remap on %x length %x failed!\n", ahci->bar[5].base_addr, ahci->bar[5].length);
         return NULL;
     }

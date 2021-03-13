@@ -13,6 +13,8 @@
 #include <xbook/fsal.h>
 #include <xbook/fd.h>
 
+
+
 /**
  * exec使用新的镜像以及堆栈替换原有的内容。
  * 注意，加载代码和数据的过程中，不会释放掉已经映射的内容，
@@ -100,7 +102,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         goto free_loaded_image;
     }
     if (cur->vmm->argbuf) {
-        vmm_debuild_argbug(cur->vmm);
+        vmm_debuild_argbuf(cur->vmm);
     } else {
         if (tmp_arg)
             mem_free(tmp_arg);
@@ -123,7 +125,7 @@ free_tmp_arg:
 free_tmp_fd:
     kfile_close(fd);
 free_task_arg:
-    vmm_debuild_argbug(cur->vmm);
+    vmm_debuild_argbuf(cur->vmm);
     return -1;   
 }
 
