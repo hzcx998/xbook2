@@ -8,10 +8,3 @@
 * page_map_addr_safe: 映射一片内存区域，如果虚拟地址对应的物理地址不存在才为其分配物理地址，已经存在就默认使用原来的物理页。
 * page_unmap_addr: 取消一片内存区域的映射，会释放虚拟地址里面的物理页
 * page_unmap_addr_safe: 取消一片内存区域的映射，会释放虚拟地址里面的物理页。如果存在物理页才释放物理页。如果是固定的区域，那么就不会释放物理页。
-
-# 进程执行时，内存状况
-load加载代码段和数据段：mem_space_mmap -> SHARE ? page_map_addr_fixed(单页) : page_map_addr_safe (单页)
-heap堆：do_handle_no_page -> page_map_addr (单页)
-stack： 初始化时：mem_space_mmap -> page_map_addr_safe (单页)
-        扩展时：do_handle_no_page -> page_map_addr (单页)
-        
