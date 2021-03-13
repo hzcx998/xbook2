@@ -200,14 +200,13 @@ int view_calc_resize(view_t *view, int mx, int my, view_rect_t *out_rect)
 {
     if (!view)
         return -1;
-
     int sx, sy; // screen x, y
     sx = mx - view_mouse.click_x;
     sy = my - view_mouse.click_y;
     if (!sx && !sy) { /* 没有移动，没有调整 */
         return -1;
     }
-    
+
     int cx, cy; // center x, y
     cx = view->width / 2 + view->x;
     cy = view->height / 2 + view->y;
@@ -242,6 +241,7 @@ int view_calc_resize(view_t *view, int mx, int my, view_rect_t *out_rect)
         } else {    /* 右边调整 */
             rect.x = view->x;
             rect.y = view->y;
+            
             rect.w.sw = view->width + sx;
             rect.h.sh = view->height;
         }
@@ -420,6 +420,12 @@ int view_env_filter_mouse_msg(view_msg_t *msg)
                 if (shade_view->z < 0) {
                     view_set_z(shade_view, view_env_get_middle()->z);
                 }
+                #else
+                view_env_try_resize(resize_view, &rect);
+                
+                /* 更新点击位置 */
+                view_mouse.click_x = msg->data0;
+                view_mouse.click_y = msg->data1;
                 #endif /* CONFIG_SHADE_VIEW */
 
                 return 0;

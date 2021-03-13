@@ -41,6 +41,8 @@ void mem_section_setup(mem_section_t *mem_section, mem_node_t *node_base, size_t
 
 mem_range_t *mem_range_get_by_mem_node(mem_node_t *node)
 {
+    if (!node)
+        return NULL;
     int i;
     mem_range_t *mem_range;
     for (i = 0; i < MEM_RANGE_NR; i++) {
@@ -56,6 +58,8 @@ mem_range_t *mem_range_get_by_mem_node(mem_node_t *node)
 
 mem_range_t *mem_range_get_by_phy_addr(unsigned int addr)
 {
+    if (!addr)
+        return NULL;
     int i;
     mem_range_t *mem_range;
     for (i = 0; i < MEM_RANGE_NR; i++) {
@@ -120,6 +124,8 @@ void mem_range_init(unsigned int idx, unsigned int start, size_t len)
 
 mem_node_t *phy_addr_to_mem_node(unsigned int addr)
 { 
+    if (!addr)
+        return NULL;
     mem_range_t *mem_range = mem_range_get_by_phy_addr(addr);
     if (!mem_range)
         return NULL;
@@ -131,6 +137,8 @@ mem_node_t *phy_addr_to_mem_node(unsigned int addr)
 
 unsigned int mem_node_to_phy_addr(mem_node_t *node)
 { 
+    if (!node)
+        return 0;
     mem_range_t *mem_range = mem_range_get_by_mem_node(node);
     if (!mem_range)
         return 0;
@@ -141,6 +149,8 @@ unsigned int mem_node_to_phy_addr(mem_node_t *node)
 
 int mem_range_split_section(mem_range_t *mem_range, mem_section_t *mem_section)
 {
+    if (!mem_range || !mem_section)
+        return 0;
     /* 已经有节有空闲的节点，成功返回！ */
     if (!list_empty(&mem_section->free_list_head))
         return 0;
@@ -181,6 +191,8 @@ int mem_range_split_section(mem_range_t *mem_range, mem_section_t *mem_section)
 
 unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
 {
+    if (!count)
+        return 0;
     if (count > MEM_SECTION_MAX_SIZE) {
         keprint(PRINT_NOTICE "%s: page count %d too big!\n", __func__, count);
         return 0;
@@ -232,6 +244,8 @@ unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
 
 int mem_node_free_pages(unsigned long addr)
 {
+    if (!addr)
+        return -1;
     mem_node_t *node = phy_addr_to_mem_node(addr);
     if (!node)
         return -1;
@@ -239,7 +253,7 @@ int mem_node_free_pages(unsigned long addr)
     // 放回节点所属的节中去
     mem_section_t *section = MEM_NODE_GET_SECTION(node);
     if (!section) {
-        keprint(PRINT_WARING "node %x addr %x no section!\n", node, addr);
+        // keprint(PRINT_WARING "node %x addr %x no section!\n", node, addr);
         return -1;
     }
     unsigned long intr_flags;

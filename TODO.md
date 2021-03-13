@@ -25,7 +25,7 @@
 * 移植bash，把缺少的函数补上，不做具体实现。
     {
     接口：unistd/id.c,tcgetattr, tcsetattr,pwd.c
-        gethostname, umask, termios.c,mkfifo
+        umask, termios.c,mkfifo
     修改:signames.h改成bookos的，
     处理：SIGTSTP
     bug on bash: locale.c->loca_shiftstates
@@ -39,6 +39,4 @@
 * 完善sb16声卡驱动。
 * grub引导启动
 * 使用iso文件系统，dvd驱动。
-* 添加无shade时窗口大小调整。
 * 设置bash kill信号显示为xbook2信号。
-* 梳理内存管理调用，优化调用关系网。

@@ -9,7 +9,7 @@
 #include "drivers/view/misc.h"
 
 /* 配置有透明叠加的图层：但是性能会有一定下降 */
-/* #define CONFIG_VIEW_ALPAH */
+// #define CONFIG_VIEW_ALPAH
 
 /* 拖拽窗口时显示小矩形，不用直接拖拽整个窗口 */
 #define CONFIG_SHADE_VIEW
