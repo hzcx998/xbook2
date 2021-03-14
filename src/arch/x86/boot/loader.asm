@@ -3,7 +3,7 @@
 %include "config.inc"
 
 ; 配置图形模式
-%define CONFIG_GRAPHIC
+;%define CONFIG_GRAPHIC
 ; 启动图形模式
 ;%define CONFIG_GRAPHIC_ENABLE
 
