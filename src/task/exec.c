@@ -152,6 +152,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
         }
     } else if ((*p == '.' && *(p+1) == '/') || (*p == '.' && *(p+1) == '.' && *(p+2) == '/')) {    /* 当前目录 */
         build_path(p, newpath);
+        //keprint("build path: %s -> %s\n", p, newpath);
         if (!kfile_access(newpath, F_OK)) {
             char *pname = strrchr(newpath, '/');
             if (pname)
@@ -175,7 +176,8 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
                 }
                 strcat(newpath, p);
                 char finalpath[MAX_PATH] = {0};
-                wash_path(newpath, finalpath);
+                /* 清洗路径时第一个字符必须是'/' */
+                wash_path(strchr(newpath, '/'), finalpath);
                 if (!kfile_access(finalpath, F_OK)) {
                     char *pname = strrchr(finalpath, '/');
                     if (pname)
