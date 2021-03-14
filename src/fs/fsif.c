@@ -433,6 +433,17 @@ int sys_getcwd(char *buf, int bufsz)
     return 0;
 }
 
+int kfile_getcwd(char *buf, int bufsz)
+{
+    if (!buf)
+        return -EINVAL;
+    task_t *cur = task_current;
+    if (!cur->fileman)
+        return -EINVAL;
+    memcpy(buf, cur->fileman->cwd, min((bufsz == 0) ? MAX_PATH : bufsz, MAX_PATH));
+    return 0;
+}
+
 dir_t sys_opendir(const char *path)
 {
     if (!path)

@@ -228,22 +228,37 @@ void wash_path(char *old_path, char *new_path)
 
 static void make_abs_path(const char *path, char *abspath)
 {
-    if (*path != '/') {
-        if (!sys_getcwd(abspath, MAX_PATH)) {
+    /*
+    判断是否有磁盘符，如果有，就说明是绝对路径，不然就是相对路径。
+    如果是相对路径，那么就需要读取当前的工作目录
+    */
+    if (*path != '/') { /* 不是'/'，表明不是绝对路径 */
+        /* 获取当前工作目录 */
+        if (!kfile_getcwd(abspath, MAX_PATH)) {
+            /* 检测当前工作目录是否是合格的目录
+            必须要有一个'/'，表明是根目录 */
             char *p = strchr(abspath, '/');
-            if (p != NULL) {
-                if (!((p[0] == '/') && (p[1] == 0))) {
+            if (p != NULL) {    /* 找到一个'/' */
+                if (!((p[0] == '/') && (p[1] == 0))) { /* 在'/'后面还有内容 */
                     strcat(abspath, "/");
                 }
             }
         }
     }
+
+    /* 想要直接进入根目录'/' */
     if (path[0] == '/' && path[1] == '\0') {
         abspath[0] = '/';
         abspath[1] = '\0';
     } else {
+        /* 不是进入根目录。如果是相对路径，就会和工作路径拼合，
+        不是的话就是绝对路径。
+        */
+        strcat(abspath, "/");   // 添加分割符，避免末尾没有分隔符多余的会在清洗阶段删除
         strcat(abspath, path);
+        /* 没有'/'，那么就需要在这个后面添加一个'/' */
         if (strchr(abspath, '/') == NULL) {
+            warnprint("path %s only drive, add a '/'.\n", path);
             strcat(abspath, "/");
         }
     }
