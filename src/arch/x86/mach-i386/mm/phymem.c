@@ -6,20 +6,13 @@
 #include <xbook/debug.h>
 #include <math.h>
 #include <string.h>
+#include <assert.h>
 
 static volatile unsigned long total_pmem_size;
 
 unsigned long mem_get_total_page_nr()
 {
     return total_pmem_size / PAGE_SIZE;
-}
-
-static void cut_used_mem()
-{
-    unsigned int used_mem = boot_mem_size();
-    unsigned int used_pages = DIV_ROUND_UP(used_mem, PAGE_SIZE);
-    keprint("phymem: cut used pages %d\n", used_pages);
-    page_alloc_normal(used_pages);
 }
 
 /**
@@ -32,6 +25,7 @@ static void cut_used_mem()
 int physic_memory_init()
 {
     total_pmem_size = phy_mem_get_size_from_hardware();
+    assert(total_pmem_size >= (300 * MB));
     /* 根据内存大小划分区域
     如果内存大于1GB:
         1G预留128MB给非连续内存，其余给内核和用户程序平分，内核多余的部分分给用户
@@ -62,14 +56,12 @@ int physic_memory_init()
     /* 由于引导中只映射了0~8MB，所以这里从DMA开始 */
     kern_page_map_early(DMA_MEM_ADDR, NORMAL_MEM_ADDR + normal_size);
     
-    boot_mem_init(KERN_BASE_VIR_ADDR + NORMAL_MEM_ADDR , KERN_BASE_VIR_ADDR + (NORMAL_MEM_ADDR + normal_size));
-    
+    /* normal size前面是boot mem，后面是normal mem */
+    boot_mem_init(KERN_BASE_VIR_ADDR + BOOT_MEM_ADDR, BOOT_MEM_SIZE);
     mem_range_init(MEM_RANGE_DMA, DMA_MEM_ADDR, DMA_MEM_SIZE);
-    mem_range_init(MEM_RANGE_NORMAL, NORMAL_MEM_ADDR, normal_size);
+    mem_range_init(MEM_RANGE_NORMAL, BOOT_MEM_ADDR + BOOT_MEM_SIZE, normal_size - BOOT_MEM_SIZE);
     mem_range_init(MEM_RANGE_USER, NORMAL_MEM_ADDR + normal_size, user_size - KERN_BLACKHOLE_MEM_SIZE);
-    
-    cut_used_mem();
-    
+
     // mem_pool_test();
     
     // spin("memcheck");

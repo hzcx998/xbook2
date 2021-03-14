@@ -164,8 +164,8 @@ QEMU_KVM := -enable-kvm
 endif
 QEMU_KVM := # no virutal
 
-QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
-		-name "XBOOK Development Platform for x86" \
+QEMU_ARGUMENT = -m 3224m $(QEMU_KVM) \
+		-name "Xbook2 Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
 		-drive id=disk0,file=$(HDA_IMG),if=none \
 		-drive id=disk1,file=$(HDB_IMG),if=none \

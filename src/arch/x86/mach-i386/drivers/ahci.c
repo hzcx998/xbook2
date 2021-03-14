@@ -676,7 +676,7 @@ int ahci_device_identify_ahci(struct hba_memory *abar,
 	dma.p.alignment = 0x1000;
 	dma.flags = DMA_REGION_SPECIAL;
 	dma_alloc_buffer(&dma);
-	ahci_write_prdt(abar, port, dev, 0, 0, 512, (addr_t)dma.v);
+    ahci_write_prdt(abar, port, dev, 0, 0, 512, (addr_t)dma.v);
 	ahci_initialize_command_header(abar,
 			port, dev, 0, 0, 0, 1, fis_len);
 	ahci_initialize_fis_host_to_device(abar,

@@ -82,14 +82,15 @@ void mem_range_init(unsigned int idx, unsigned int start, size_t len)
     mem_range->end = start + len;
     mem_range->pages = len / PAGE_SIZE;
     mem_range->node_table = boot_mem_alloc(mem_range->pages * sizeof(mem_node_t));
+    if (mem_range->node_table == NULL) {
+        panic("mem range %d: start=%x len=%x node table alloc null!\n",
+            idx, start, len);  
+    }
     int i;
     for (i = 0; i < MEM_SECTION_MAX_NR; i++) {    
         mem_section_init(&mem_range->sections[i], powi(2, i));
     }
 
-    keprint(PRINT_INFO "mem range: start:%x end:%x pages:%d len:%dMB\n",
-        mem_range->start, mem_range->end, mem_range->pages, len / MB);
-    
     int section_off = MEM_SECTION_MAX_NR - 1;     
     size_t section_size = powi(2, section_off);
     mem_section_t *mem_section;

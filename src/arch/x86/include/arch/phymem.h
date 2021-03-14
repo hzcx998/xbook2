@@ -21,6 +21,9 @@
 #define NORMAL_MEM_ADDR             (DMA_MEM_ADDR+DMA_MEM_SIZE) 
 #define TOP_MEM_ADDR                0xFFFFFFFF 
 
+#define BOOT_MEM_ADDR                NORMAL_MEM_ADDR
+#define BOOT_MEM_SIZE                (32 * MB)  // 4G内存需要占用32M引导内存
+
 /* 空内存，当前页目录表物理地址的映射（不可访问） */
 #define KERN_BLACKHOLE_MEM_SIZE            (4 * MB)
 #define KERN_LIMIT_MEM_ADDR                (TOP_MEM_ADDR - KERN_BLACKHOLE_MEM_SIZE + 1)

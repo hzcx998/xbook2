@@ -11,11 +11,13 @@ int main(int argc, char **argv)
         printf("open %d failed!\n", vid1);
         return -1;
     }
+    
     uview_set_pos(vid1, 200, 400);
     uview_set_monitor(vid1, 1);
     uview_set_win_maxim_rect(vid1, 10, 10, 100, 150);
     
     uview_show(vid1);
+
     if (!fork())
         child();
     uview_msg_t msg;

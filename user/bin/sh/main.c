@@ -71,13 +71,13 @@ int main(int argc, char *argv[])
     }
     print_logo();
 
+
     /* 启动自行服务 */
     #if 0
-    char *args[10] = {"tcc", "-m32", "-nostdlib","-Wl,-Ttext=0x1000","-I/usr/local/include", 
-        "-L/usr/local/lib", "-lxlibc", "hello.c", NULL};
-    pid = create_process(args, environ, 0);
+    if (!fork())
+        execl("/bin/uview", "/bin/uview", NULL);
+
     #endif
-    
     /* 备份标准输入 */
 	while(1){ 
         /* 显示提示符 */

@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     char *_argv[3] = {"-s", "/bin/sh", NULL};
     exit(execv("/sbin/login", _argv));
     #else
-    exit(execv("/bin/bash", NULL));
+    exit(execv("/bin/sh", NULL));
     #endif
     return 0;
 }

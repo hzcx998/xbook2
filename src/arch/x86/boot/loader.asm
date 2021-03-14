@@ -5,7 +5,7 @@
 ; 配置图形模式
 %define CONFIG_GRAPHIC
 ; 启动图形模式
-%define CONFIG_GRAPHIC_ENABLE
+;%define CONFIG_GRAPHIC_ENABLE
 
 org 0x90000
 [bits 16]

@@ -47,7 +47,7 @@ Divisor = 115200 / BaudRate
 /* 串口调试端口的索引 */
 #define SERIAL_DEGUB_IDX    0
 
-// #define SERIAL_SEND_TIMEOUT
+#define SERIAL_SEND_TIMEOUT
 
 enum FifoControlRegisterBits {
     FIFO_ENABLE = 1,                             /* Enable FIFOs */

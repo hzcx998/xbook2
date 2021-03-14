@@ -172,6 +172,7 @@
         "lpc.h": "c",
         "termios.h": "c",
         "signal.h": "c",
-        "exception.h": "c"
+        "exception.h": "c",
+        "bootmem.h": "c"
     }
 }

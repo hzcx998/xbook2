@@ -25,7 +25,7 @@ int dma_alloc_buffer(struct dma_region *d)
     vaddr = (addr_t) kern_phy_addr2vir_addr(d->p.address);
 	
 	d->v = vaddr;
-	return 0;
+    return 0;
 }
 
 int dma_free_buffer(struct dma_region *d)
@@ -39,4 +39,9 @@ int dma_free_buffer(struct dma_region *d)
     d->p.address = d->v = 0;
 	
     return 0;
+}
+
+void dma_buffer_dump(struct dma_region *d)
+{
+    keprint("dma vir addr:%x, phy addr:%x, size:%x, flags:%x\n", d->v, d->p.address, d->p.size, d->flags);
 }
