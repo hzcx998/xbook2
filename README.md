@@ -59,7 +59,7 @@ PTHREAD线程库
 
 1.下载我提取的工具包：[BuildTools](https://gitee.com/hzc1998/bookos-web-db/blob/master/tools/BuildTools.zip), 下载后配置解压目录环境变量到系统环境变量Path里面。（注意，如果你的电脑上已经有mingw或者cygwin环境，请把这个工具包的环境变量放到靠前的位置，不然不会执行工具包里面的程序）
 
-2.下载qemu最新版：[Qemu](https://www.qemu.org/) 下载后安装，配置安装目录环境变量到系统环境变量Path里面，或者下载我提取的版本：[Qemu-i386](http://www.book-os.org/tools/Qemu-i386.rar)，下载后配置解压目录环境变量到系统环境变量Path里面。
+2.下载qemu最新版：[Qemu](https://www.qemu.org/) 下载后安装，配置安装目录环境变量到系统环境变量Path里面，或者下载我提取的版本：[Qemu-i386](https://gitee.com/hzc1998/bookos-web-db/blob/master/tools/Qemu-i386.rar)，下载后配置解压目录环境变量到系统环境变量Path里面。
 
 3.如果想要用虚拟机加速，下载windows下面的qemu加速扩展程序[HAXM](https://github.com/intel/haxm/releases) v7.6.5：，下载后安装即可.
 
