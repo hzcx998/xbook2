@@ -173,6 +173,7 @@
         "termios.h": "c",
         "signal.h": "c",
         "exception.h": "c",
-        "bootmem.h": "c"
+        "bootmem.h": "c",
+        "netsocket.h": "c"
     }
 }

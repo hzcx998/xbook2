@@ -26,7 +26,6 @@
     {
     接口：unistd/id.c,tcgetattr, tcsetattr,pwd.c
         umask, termios.c,mkfifo
-    修改:signames.h改成bookos的，
     处理：SIGTSTP
     bug on bash: locale.c->loca_shiftstates
     修复：bash管道不能使用。不能执行shell脚本。
@@ -39,4 +38,3 @@
 * 完善sb16声卡驱动。
 * grub引导启动
 * 使用iso文件系统，dvd驱动。
-* 内核对相对路径的支持。
