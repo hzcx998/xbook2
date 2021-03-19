@@ -123,6 +123,34 @@ static int fsalif_write(int idx, void *buf, size_t size)
     return fsal->write(idx, buf, size);
 }
 
+static int fsalif_fastread(int idx, void *buf, size_t size)
+{
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    fsal_t *fsal = fp->fsal;
+    if (fsal == NULL)
+        return -1;
+    if (!fsal->fastread)
+        return -ENOSYS;
+    return fsal->fastread(idx, buf, size);
+}
+
+static int fsalif_fastwrite(int idx, void *buf, size_t size)
+{
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -EINVAL;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    fsal_t *fsal = fp->fsal;
+    if (fsal == NULL) {
+        errprint("fsalif write: idx %d fsal null\n", fsal);
+        return -1;
+    }
+    if (!fsal->fastwrite)
+        return -ENOSYS;
+    return fsal->write(idx, buf, size);
+}
+
 static int fsalif_lseek(int idx, off_t off, int whence)
 {
     if (FSAL_BAD_FILE_IDX(idx))
@@ -504,6 +532,19 @@ static int fsalif_ioctl(int idx, int cmd, unsigned long arg)
     return fsal->ioctl(idx, cmd, arg);
 }
 
+static int fsalif_fastio(int idx, int cmd, void *arg)
+{
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    fsal_t *fsal = fp->fsal;
+    if (fsal == NULL)
+        return -1;
+    if (!fsal->fastio)
+        return -ENOSYS;
+    return fsal->fastio(idx, cmd, arg);
+}
+
 static int fsalif_fcntl(int idx, int cmd, long arg)
 {
     if (FSAL_BAD_FILE_IDX(idx))
@@ -616,6 +657,19 @@ static int fsalif_access(const char *path, int mode)
     return fsal->access(new_path, mode);
 }
 
+static void *fsalif_mmap(int idx, void *addr, size_t length, int prot, int flags, off_t offset)
+{
+    if (FSAL_BAD_FILE_IDX(idx))
+        return (void *) -EINVAL;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    fsal_t *fsal = fp->fsal;
+    if (fsal == NULL)
+        return (void *) -1;
+    if (!fsal->mmap)
+        return (void *) -ENOSYS;
+    return fsal->mmap(idx, addr, length, prot, flags, offset);
+}
+
 /* 文件的抽象层接口 */
 fsal_t fsif = {
     .name       = "fsif",
@@ -654,5 +708,8 @@ fsal_t fsif = {
     .access     = fsalif_access,
     .incref     = fsalif_incref,
     .decref     = fsalif_decref,
-    .fastio     = NULL,
+    .fastread   = fsalif_fastread,
+    .fastwrite  = fsalif_fastwrite,
+    .fastio     = fsalif_fastio,
+    .mmap       = fsalif_mmap,
 };

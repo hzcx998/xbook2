@@ -788,20 +788,20 @@ rollback_ref:
 void *device_mmap(handle_t handle, size_t length, int flags)
 {
     if (IS_BAD_DEVICE_HANDLE(handle))
-        return NULL;
+        return (void *) -1;
 
     device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
     if (devobj == NULL) {
         keprint(PRINT_ERR "%s: device object error by handle=%d!\n", __func__, handle);
         /* 应该激活一个触发器，让调用者停止运行 */
-        return NULL;
+        return (void *) -1;
     }
     
     iostatus_t status = IO_SUCCESS;
     io_request_t *ioreq = io_build_sync_request(IOREQ_MMAP, devobj, NULL, length, flags, NULL);
     if (ioreq == NULL) {
         keprint(PRINT_ERR "%s: alloc io request packet failed!\n", __func__);
-        return NULL;
+        return (void *) -1;
     }
 
     status = io_call_dirver(devobj, ioreq);
@@ -835,7 +835,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
         return mapaddr;
     }
     io_request_free((ioreq));
-    return NULL;
+    return (void *) -1;
 }
 
 int device_incref(handle_t handle)
@@ -1222,10 +1222,10 @@ static off_t devif_ftell(int idx)
 static void *devif_mmap(int idx, void *addr, size_t length, int prot, int flags, off_t offset)
 {
     if (FSAL_BAD_FILE_IDX(idx))
-        return NULL;
+        return (void *) -1;
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     if (FSAL_BAD_FILE(fp)) 
-        return NULL;
+        return (void *) -1;
     devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
     return device_mmap(ext->handle, length, flags);
 }

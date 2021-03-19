@@ -155,7 +155,6 @@ iostatus_t serial_close(device_object_t *device, io_request_t *ioreq)
 {
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = 0;
-    keprint("serial close\n");
     io_complete_request(ioreq);
     return IO_SUCCESS;
 }
