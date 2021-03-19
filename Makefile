@@ -172,6 +172,7 @@ QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 		-device ahci,id=ahci \
 		-device ide-drive,drive=disk0,bus=ahci.0 \
 		-device ide-drive,drive=disk1,bus=ahci.1 \
+		-rtc base=localtime \
 		-boot a \
 		-soundhw sb16 \
 		-serial stdio  \
