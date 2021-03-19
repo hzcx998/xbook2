@@ -64,13 +64,6 @@ int fsal_disk_mount_init()
         keprint("fsal : mount path %s failed!\n", ROOT_DIR_PATH);
         return -1;
     }
-
-    /* 挂载设备目录 */
-    if (fsif.mount(name, DEV_DIR_PATH, "devfs", 0) < 0) {
-        keprint("fsal : mount path %s failed!\n", ROOT_DIR_PATH);
-        return -1;
-    }
-
     return 0;
 }
 
@@ -85,6 +78,7 @@ int fsal_init()
     if (fsal_path_init() < 0) {
         return -1;
     }
+    /* 挂载根目录 */
     if (fsal_disk_mount_init() < 0) {
         return -1;
     }
@@ -94,18 +88,15 @@ int fsal_init()
         warnprint("fsal create dir %s failed or dir existed!\n", HOME_DIR_PATH);
     if (kfile_mkdir(ACCOUNT_DIR_PATH, 0) < 0)
         warnprint("fsal create dir %s failed or dir existed!\n", ACCOUNT_DIR_PATH);
-        
+    
+    /* 挂载设备目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
+    if (fsif.mount("disk0", DEV_DIR_PATH, "devfs", 0) < 0) {
+        keprint("fsal : mount path %s failed!\n", ROOT_DIR_PATH);
+        return -1;
+    }
+    
     char path[MAX_PATH] = {0};
     strcpy(path, "/root");
     //fsal_list_dir(path);
-
-    /* 测试设备文件 */
-    int fd = kfile_open("/dev/com0", 0);
-    if (fd < 0)
-        warnprint("fsal open device failed!\n");
-    char *str = "hello, devfs!\n";
-    keprint("write: %d\n", kfile_write(fd, str, strlen(str)));
-    kfile_close(fd);
-    keprint("fsal init done\n");
     return 0;
 }

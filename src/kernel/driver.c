@@ -34,13 +34,14 @@ typedef struct {
     devent_t *curptr;
 } devfs_dir_extention_t;
 
-
-
 /* TODO:添加设备别名机制，通过别名来访问设备 */
 
 LIST_HEAD(driver_list_head);
 device_object_t *device_handle_table[DEVICE_HANDLE_NR];
 DEFINE_SPIN_LOCK_UNLOCKED(driver_lock);
+
+/* 设备文件系统创建时间和日期 */
+static uint16_t devfs_create_time = 0, devfs_create_date = 0;
 
 static iostatus_t default_device_dispatch(device_object_t *device, io_request_t *ioreq)
 {
@@ -1303,10 +1304,14 @@ static int fsal_devfs_mount(char *source, char *target, char *fstype, unsigned l
         errprint("mount devfs type %s failed!\n", fstype);
         return -1;
     }
+    if (kfile_mkdir(DEV_DIR_PATH, 0) < 0)
+        warnprint("fsal create dir %s failed or dir existed!\n", DEV_DIR_PATH);
     if (fsal_path_insert(DEVFS_PATH, target, &devfs_fsal)) {
         dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, target);
         return -1;
     }
+    devfs_create_time = WTM_WR_TIME(walltime.hour, walltime.minute, walltime.second);
+    devfs_create_date = WTM_WR_DATE(walltime.year, walltime.month, walltime.day);
     return 0;
 }
 
@@ -1316,6 +1321,8 @@ static int fsal_devfs_unmount(char *path, unsigned long flags)
         dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, path);
         return -1;
     }
+    if (kfile_rmdir(DEV_DIR_PATH) < 0)
+        warnprint("fsal remove dir %s failed or dir existed!\n", DEV_DIR_PATH);
     return 0;
 }
 
@@ -1412,21 +1419,28 @@ static int fsal_devfs_state(char *path, void *buf)
     char *p = devfs_path_translate((const char *) path);
     if (!p)
         return -1;
-    /* 打开获取设备信息 */
-    device_object_t *devobj = io_search_device_by_name(p);
-    if (!devobj) {
-        errprint("devfs: state: device %s not found!\n", p);
-        return -ESRCH;
-    }
-    stat_t *stat = (stat_t *)buf;
-    mode_t mode = S_IREAD | S_IWRITE;
-    mode |= S_IFREG;
-    size_t size = 0;
+    stat_t *st = (stat_t *)buf;
+    mode_t mode = 0;
 
-    stat->st_mode = mode;
-    stat->st_size = 0;
-    stat->st_atime = (devobj->mdate << 16) | devobj->mtime;
-    stat->st_ctime = stat->st_mtime = stat->st_atime;
+    if (*p == '\0') {   // 访问的是devfs的根目录，既/dev目录或者/dev/
+        // noteprint("state: /dev or /dev/, return dir info.");
+        mode = S_IREAD | S_IFDIR; 
+        st->st_size = 0;
+        st->st_atime = (devfs_create_date << 16) | devfs_create_time;
+        st->st_ctime = st->st_mtime = st->st_atime;
+    } else {
+        /* 打开获取设备信息 */
+        device_object_t *devobj = io_search_device_by_name(p);
+        if (!devobj) {
+            errprint("devfs: state: device %s not found!\n", p);
+            return -ESRCH;
+        }
+        mode = S_IREAD | S_IWRITE | S_IFREG;
+        st->st_size = 0;
+        st->st_atime = (devobj->mdate << 16) | devobj->mtime;
+        st->st_ctime = st->st_mtime = st->st_atime;
+    }
+    st->st_mode = mode;        
     return 0;
 }
 
