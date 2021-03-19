@@ -224,25 +224,7 @@ end_read:
 
 static int __tty_write(device_extension_t *extension, char *buf, int len)
 {
-    char *p = (char *) buf;
-    int n = 0;
-    while (*p && len > 0) {
-        /* 处理特殊字符 */
-        switch (*p) {
-        case '\003': /* CTRL + INT */
-            noteprint("tty send EXP_CODE_INT to group %d\n", extension->pgrp);
-            exception_send_group(extension->pgrp, EXP_CODE_INT);
-            return n;
-        default:
-            if (device_write(extension->con, p, 1, 0) < 0)
-                return -1;
-            n++;
-            break;
-        }
-        len--;
-        p++;
-    }
-    return n;
+    return device_write(extension->con, buf, len, 0);
 }
 
 iostatus_t tty_write(device_object_t *device, io_request_t *ioreq)

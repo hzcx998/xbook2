@@ -3,8 +3,8 @@
 int tty_test(int argc, char *argv[])
 {
     int fd;
-    char * file = "tty0";
-    fd = opendev (file, O_RDONLY);
+    char * file = "/dev/tty0";
+    fd = open (file, O_RDONLY);
     printf("%s", file);
     if(isatty(fd))
     {

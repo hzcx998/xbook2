@@ -3,8 +3,8 @@
 int perm_test(int argc, char *argv[])
 {
     printf("Perm test\n");
-    int fd = opendev("disk0", 0);
-    printf("opendev %d\n", fd);
+    int fd = open("/dev/disk0", 0);
+    printf("open %d\n", fd);
     
     int retval = login("jason", "1234");
     printf("login %d\n", retval);

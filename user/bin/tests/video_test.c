@@ -5,7 +5,7 @@
 
 int video_test(int argc, char *argv[])
 {
-    int fb0 = opendev("video", 0);
+    int fb0 = open("/dev/video", 0);
     if (fb0 < 0) {
         printf("open video device failed!\n");
         return -1;

@@ -74,7 +74,10 @@ static int netcard_open(int solt)
     netcard_info_t *netcard;
     list_for_each_owner (netcard, &netcard_list_head, list) {
         if (netcard->solt == solt) {
-            netcard->handle = opendev(netcard->devent.de_name, 0);
+            char name[MAX_PATH] = {0};
+            strcat(name, "/dev/");
+            strcat(name, netcard->devent.de_name);
+            netcard->handle = open(name, 0);
             if (netcard->handle < 0)
                 return -1;
             netcard_solt_cache[solt] = netcard->handle;

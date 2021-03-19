@@ -25,7 +25,7 @@ int pty_test(int argc, char *argv[])
     }
     
     printf("slave tty %s\n", sname);
-    int fds = opendev(sname, O_RDWR);
+    int fds = open(sname, O_RDWR);
     if (fds < 0) {
         printf("open slave failed!\n");
         return -1;
@@ -67,13 +67,11 @@ int pty_test2(int argc, char *argv[])
     }
     
     printf("slave tty %s\n", sname);
-    int fds = opendev(sname, O_RDWR);
+    int fds = open(sname, O_RDWR);
     if (fds < 0) {
         printf("open slave failed!\n");
         return -1;
     }
-    /* 设置进程组 */
-    // tcsetpgrp(fdm, getpgrp());
 
     printf("fd: %d\n", fds);
     char buf[32] = {0, };

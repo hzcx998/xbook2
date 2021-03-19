@@ -45,6 +45,7 @@ int fsal_list_dir(char* path)
 
 int fsal_disk_mount_init()
 {
+    /* 挂载根磁盘 */
     char name[32];
     int i;
     for (i = 0; i < 4; i++) {
@@ -63,6 +64,13 @@ int fsal_disk_mount_init()
         keprint("fsal : mount path %s failed!\n", ROOT_DIR_PATH);
         return -1;
     }
+
+    /* 挂载设备目录 */
+    if (fsif.mount(name, DEV_DIR_PATH, "devfs", 0) < 0) {
+        keprint("fsal : mount path %s failed!\n", ROOT_DIR_PATH);
+        return -1;
+    }
+
     return 0;
 }
 
@@ -89,6 +97,15 @@ int fsal_init()
         
     char path[MAX_PATH] = {0};
     strcpy(path, "/root");
-    fsal_list_dir(path);
+    //fsal_list_dir(path);
+
+    /* 测试设备文件 */
+    int fd = kfile_open("/dev/com0", 0);
+    if (fd < 0)
+        warnprint("fsal open device failed!\n");
+    char *str = "hello, devfs!\n";
+    keprint("write: %d\n", kfile_write(fd, str, strlen(str)));
+    kfile_close(fd);
+    keprint("fsal init done\n");
     return 0;
 }

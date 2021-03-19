@@ -63,26 +63,6 @@ int sys_openfifo(const char *fifoname, int flags)
     return local_fd_install(handle, FILE_FD_FIFO);
 }
 
-int sys_opendev(const char *path, int flags)
-{
-    if (!path)
-        return -EINVAL; 
-    #ifdef FSIF_USER_CHECK
-    if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
-        return -EINVAL;
-    #endif
-    if (!devif.open) 
-        return -ENOSYS;
-    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_DEVICE)) {
-        return -EPERM;
-    }
-    int handle;
-    handle = devif.open((void *)path, flags);
-    if (handle < 0)
-        return -ENODEV;
-    return local_fd_install(handle, FILE_FD_DEVICE);
-}
-
 int sys_close(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);

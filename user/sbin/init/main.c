@@ -9,22 +9,16 @@
 int main(int argc, char *argv[])
 {
     /* 打开tty，用来进行基础地输入输出 */
-    int tty0 = opendev("tty0", O_RDONLY);
+    int tty0 = open("/dev/tty0", O_RDONLY);
     if (tty0 < 0) {
         return -1;
     }
-    int tty1 = opendev("tty0", O_WRONLY);
+    int tty1 = open("/dev/tty0", O_WRONLY);
     if (tty1 < 0) {
         close(tty0);
         return -1;
     }
-    
-    int tty2 = opendev("tty0", O_WRONLY);
-    if (tty2 < 0) {
-        close(tty1);
-        close(tty0);
-        return -1;
-    }
+    int tty2 = dup(tty1);
 
     /* 创建一个子进程 */
     int pid = fork();

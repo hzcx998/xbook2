@@ -171,9 +171,6 @@ void filefd_set_fsal(file_fd_t *fd, unsigned int flags)
     case FILE_FD_NORMAL:
         fd->fsal = &fsif;
         break;    
-    case FILE_FD_DEVICE:
-        fd->fsal = &devif;
-        break;
     case FILE_FD_PIPE0:
         fd->fsal = &pipeif_rd;
         break;    

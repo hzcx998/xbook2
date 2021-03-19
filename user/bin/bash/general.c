@@ -589,21 +589,15 @@ check_dev_tty ()
 {
   int tty_fd;
   char *tty;
-#if defined(__XBOOK__)
-  tty_fd = openclass ("tty", O_RDWR|O_NONBLOCK);
-#else
+
   tty_fd = open ("/dev/tty", O_RDWR|O_NONBLOCK);
-#endif
+
   if (tty_fd < 0)
     {
       tty = (char *)ttyname (fileno (stdin));
       if (tty == 0)
 	return;
-      #if defined(__XBOOK__)
-      tty_fd = opendev (tty, O_RDWR|O_NONBLOCK);
-      #else
       tty_fd = open (tty, O_RDWR|O_NONBLOCK);
-      #endif
     }
   if (tty_fd >= 0)
     close (tty_fd);

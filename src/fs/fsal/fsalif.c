@@ -51,7 +51,8 @@ static int fsalif_open(void *path, int flags)
         keprint(PRINT_ERR "path %s switch error!\n", path);
         return -1;
     }
-
+    if (!fsal->open)
+        return -ENOSYS;
     int handle = fsal->open(new_path, flags);
     if (handle >= 0)
         fsalif_incref(handle);
@@ -76,6 +77,8 @@ static int fsalif_close(int idx)
     if (!fsal_file_need_close(fp)) {
         return 0;   /* no need to close */
     }
+    if (!fsal->close)
+        return -ENOSYS;
     return fsal->close(idx);
 }
 
@@ -87,6 +90,8 @@ static int fsalif_ftruncate(int idx, off_t offset)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->ftruncate)
+        return -ENOSYS;
     return fsal->ftruncate(idx, offset);
 }
 
@@ -98,17 +103,23 @@ static int fsalif_read(int idx, void *buf, size_t size)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->read)
+        return -ENOSYS;
     return fsal->read(idx, buf, size);
 }
 
 static int fsalif_write(int idx, void *buf, size_t size)
 {
     if (FSAL_BAD_FILE_IDX(idx))
-        return -1;
+        return -EINVAL;
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
-    if (fsal == NULL)
+    if (fsal == NULL) {
+        errprint("fsalif write: idx %d fsal null\n", fsal);
         return -1;
+    }
+    if (!fsal->write)
+        return -ENOSYS;
     return fsal->write(idx, buf, size);
 }
 
@@ -120,6 +131,8 @@ static int fsalif_lseek(int idx, off_t off, int whence)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->lseek)
+        return -ENOSYS;
     return fsal->lseek(idx, off, whence);
 }
 
@@ -131,6 +144,8 @@ static int fsalif_fsync(int idx)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->fsync)
+        return -ENOSYS;
     return fsal->fsync(idx);
 }
 
@@ -154,6 +169,8 @@ static int fsalif_opendir(char *path)
         keprint(PRINT_ERR "path %s switch error!\n", path);
         return -1;
     }
+    if (!fsal->opendir)
+        return -ENOSYS;
     return fsal->opendir(new_path);
 }
 
@@ -165,6 +182,8 @@ static int fsalif_closedir(int idx)
     fsal_t *fsal = pdir->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->closedir)
+        return -ENOSYS;
     return fsal->closedir(idx);
 }
 
@@ -176,6 +195,8 @@ static int fsalif_readdir(int idx, void *buf)
     fsal_t *fsal = pdir->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->readdir)
+        return -ENOSYS;
     return fsal->readdir(idx, buf);
 }
 
@@ -197,6 +218,8 @@ static int fsalif_mkdir(char *path, mode_t mode)
     char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
+    if (!fsal->mkdir)
+        return -ENOSYS;
     return fsal->mkdir(new_path, mode);
 }
 
@@ -217,6 +240,8 @@ static int fsalif_unlink(char *path)
     char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
+    if (!fsal->unlink)
+        return -ENOSYS;
     return fsal->unlink(new_path);
 }
 
@@ -241,6 +266,8 @@ static int fsalif_rename(char *old_path, char *new_path)
     char new_path2[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path2, new_path) < 0)
         return -1;
+    if (!fsal->rename)
+        return -ENOSYS;
     return fsal->rename(old_path2, new_path2);
 }
 
@@ -260,8 +287,12 @@ static int fsalif_state(char *path, void *buf)
         return -1;
     }
     char new_path[MAX_PATH] = {0};
-    if (fsal_path_switch(fpath, new_path, path) < 0)
+    if (fsal_path_switch(fpath, new_path, path) < 0) {
+        errprint("path %s switch error!\n", path);
         return -1;
+    }
+    if (!fsal->state)
+        return -ENOSYS;
     return fsal->state(new_path, buf);
 }
 
@@ -273,6 +304,8 @@ static int fsalif_fstat(int idx, void *buf)
     fsal_t *fsal = pdir->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->fstat)
+        return -ENOSYS;
     return fsal->fstat(idx, buf);
 }
 
@@ -293,6 +326,8 @@ static int fsalif_chmod(char *path, mode_t mode)
     char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
+    if (!fsal->chmod)
+        return -ENOSYS;
     return fsal->chmod(new_path, mode);
 }
 
@@ -304,6 +339,8 @@ static int fsalif_fchmod(int idx, mode_t mode)
     fsal_t *fsal = pdir->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->fchmod)
+        return -ENOSYS;
     return fsal->fchmod(idx, mode);
 }
 
@@ -326,6 +363,8 @@ static int fsalif_utime(char *path, time_t actime, time_t modtime)
     char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
+    if (!fsal->utime)
+        return -ENOSYS;
     return fsal->utime(new_path, actime, modtime);
 }
 
@@ -337,6 +376,8 @@ static int fsalif_feof(int idx)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->feof)
+        return -ENOSYS;
     return fsal->feof(idx);
 }
 
@@ -348,6 +389,8 @@ static int fsalif_ferror(int idx)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->ferror)
+        return -ENOSYS;
     return fsal->ferror(idx);
 }
 
@@ -359,6 +402,8 @@ static off_t fsalif_ftell(int idx)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->ftell)
+        return -ENOSYS;
     return fsal->ftell(idx);
 }
 
@@ -370,6 +415,8 @@ static size_t fsalif_fsize(int idx)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->fsize)
+        return -ENOSYS;
     return fsal->fsize(idx);
 }
 
@@ -381,6 +428,8 @@ static int fsalif_rewind(int idx)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->rewind)
+        return -ENOSYS;
     return fsal->rewind(idx);
 }
 
@@ -392,6 +441,8 @@ static int fsalif_rewinddir(int idx)
     fsal_t *fsal = fdir->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->rewinddir)
+        return -ENOSYS;
     return fsal->rewinddir(idx);
 }
 
@@ -413,6 +464,8 @@ static int fsalif_rmdir(char *path)
     char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
+    if (!fsal->rmdir)
+        return -ENOSYS;
     return fsal->rmdir(new_path);
 }
 
@@ -433,6 +486,8 @@ static int fsalif_chdir(char *path)
     char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, path) < 0)
         return -1;
+    if (!fsal->chdir)
+        return -ENOSYS;
     return fsal->chdir(new_path);
 }
 
@@ -444,6 +499,8 @@ static int fsalif_ioctl(int idx, int cmd, unsigned long arg)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->ioctl)
+        return -ENOSYS;
     return fsal->ioctl(idx, cmd, arg);
 }
 
@@ -455,6 +512,8 @@ static int fsalif_fcntl(int idx, int cmd, long arg)
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return -1;
+    if (!fsal->fcntl)
+        return -ENOSYS;
     return fsal->fcntl(idx, cmd, arg);
 }
 
@@ -552,6 +611,8 @@ static int fsalif_access(const char *path, int mode)
     char new_path[MAX_PATH] = {0};
     if (fsal_path_switch(fpath, new_path, (char *) path) < 0)
         return -1;
+    if (!fsal->access)
+        return -ENOSYS;
     return fsal->access(new_path, mode);
 }
 

@@ -1,6 +1,7 @@
 #include <xbook/driver.h>
 #include <math.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include <xbook/debug.h>
 #include <assert.h>
@@ -14,8 +15,26 @@
 #include <xbook/schedule.h>
 #include <xbook/initcall.h>
 #include <xbook/fsal.h>
+#include <xbook/path.h>
+#include <xbook/file.h>
+#include <xbook/dir.h>
+#include <xbook/walltime.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 // #define DRIVER_FRAMEWROK_DEBUG
+
+typedef struct {
+    handle_t handle;
+} devfs_file_extention_t;
+
+typedef struct {
+    devent_t devent;
+    devent_t *curptr;
+} devfs_dir_extention_t;
+
+
 
 /* TODO:添加设备别名机制，通过别名来访问设备 */
 
@@ -276,7 +295,7 @@ int sys_scandev(devent_t *de, device_type_t type, devent_t *out)
     spin_lock(&driver_lock);
     list_for_each_owner (drvobj, &driver_list_head, list) {
         list_for_each_owner (devobj, &drvobj->device_list, list) {
-            if (devobj->type == type) {
+            if (devobj->type == type || type == DEVICE_TYPE_ANY) {
                 if (de == NULL) {
                     memset(out->de_name, 0, DEVICE_NAME_LEN);
                     strcpy(out->de_name, devobj->name.text);
@@ -330,6 +349,10 @@ iostatus_t io_create_device(
         mem_free(devobj);
         return IO_FAILED;
     }
+    /* 设置创建日期 */
+    devobj->mtime = WTM_WR_TIME(walltime.hour, walltime.minute, walltime.second);
+    devobj->mdate = WTM_WR_DATE(walltime.year, walltime.month, walltime.day);
+
     devobj->driver = driver;
     spinlock_init(&devobj->lock.spinlock);    /* 初始化设备锁-自旋锁 */
     mutexlock_init(&devobj->lock.mutexlock);  /* 初始化设备锁-互斥锁 */
@@ -421,9 +444,8 @@ iostatus_t io_call_dirver(device_object_t *device, io_request_t *ioreq)
     } else if (ioreq->flags & IOREQ_MMAP_OPERATION) {
         func = device->driver->dispatch_function[IOREQ_MMAP];
     }
-    if (func)
+    if (func) 
         status = func(device, ioreq);
-    
     return status;
 }
 
@@ -716,8 +738,10 @@ rollback_ref:
 
 int device_close(handle_t handle)
 {
-    if (IS_BAD_DEVICE_HANDLE(handle))
+    if (IS_BAD_DEVICE_HANDLE(handle)) {
+        keprint(PRINT_ERR "device_close: device handle error by handle=%d!\n", handle);
         return -1;
+    }
     device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
     if (devobj == NULL) {
         keprint(PRINT_ERR "device_close: device object error by handle=%d!\n", handle);
@@ -727,6 +751,7 @@ int device_close(handle_t handle)
     
     iostatus_t status = io_device_decrease_reference(devobj);
     if (status == IO_FAILED) {
+        keprint(PRINT_ERR "device_close: device object decrese reference by handle=%d!\n", handle);
         return -1;
     }
     io_request_t *ioreq = NULL;
@@ -1035,75 +1060,188 @@ int input_even_get(input_even_buf_t *evbuf, input_event_t *even)
     return 0;
 }
 
+/**
+ * 将devfs路径名字转换成设备名。
+ * devfs路径必须是DEVFS_PATH/xxx
+ * 因此需要返回xxx这个设备名
+ */
+void *devfs_path_translate(const char *pathname)
+{
+    if (!pathname)
+        return NULL;
+    if (strncmp(pathname, (const char *) DEVFS_PATH, strlen(DEVFS_PATH)) != 0) {   /* 校验路径，不是设备文件系统就退出 */
+        return NULL;
+    }
+    char *p = (char *) pathname;
+    p += strlen(DEVFS_PATH);
+    while (*p && *p == '/')
+        p++;
+    return p;
+}
+
 static int devif_open(void *pathname, int flags)
 {
-    char *p = (char *) pathname;
-    return device_open(p, flags);
+    char *p = devfs_path_translate((const char *) pathname);
+    if (!p)
+        return -1;
+    fsal_file_t *fp = fsal_file_alloc();
+    if (fp == NULL)
+        return -1;
+    fp->extension = mem_alloc(sizeof(devfs_file_extention_t));
+    if (!fp->extension) {
+        errprint("devfs: alloc file %s extension for open failed!\n", p);
+        fsal_file_free(fp);
+        return -ENOMEM;
+    }
+    fp->fsal = &devfs_fsal;
+    handle_t handle = device_open(p, flags);
+    if (handle < 0) {
+        mem_free(fp->extension);
+        fsal_file_free(fp);
+        return -1;
+    }
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    ext->handle = handle;
+    return FSAL_FILE2IDX(fp);
 }
 
 static int devif_close(int handle)
 {
-    return device_close(handle);
+    if (FSAL_BAD_FILE_IDX(handle))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(handle);
+    if (FSAL_BAD_FILE(fp))
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    int retval = device_close(ext->handle);
+    if (retval < 0)
+        warnprint("devfs: close fd %d, handle %d failed!\n", handle, ext->handle);
+    if (fp->extension)
+        mem_free(fp->extension);
+    fp->extension = NULL;
+    if (fsal_file_free(fp) < 0)
+        return -1;
+    return 0;
 }
 
-static int devif_incref(int handle)
+static int devif_incref(int idx)
 {
-    return device_incref(handle);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    return device_incref(ext->handle);
 }
 
-static int devif_decref(int handle)
+static int devif_decref(int idx)
 {
-    return device_decref(handle);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    return device_decref(ext->handle);
 }
 
-static int devif_read(int handle, void *buf, size_t size)
+static int devif_read(int idx, void *buf, size_t size)
 {
-    return device_read(handle, buf, size, DISKOFF_MAX);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    return device_read(ext->handle, buf, size, DISKOFF_MAX);
 }
 
-static int devif_write(int handle, void *buf, size_t size)
+static int devif_write(int idx, void *buf, size_t size)
 {
-    return device_write(handle, buf, size, DISKOFF_MAX);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    return device_write(ext->handle, buf, size, DISKOFF_MAX);
 }
 
-static int devif_ioctl(int handle, int cmd, unsigned long arg)
+static int devif_ioctl(int idx, int cmd, unsigned long arg)
 {
-    return device_devctl(handle, cmd, arg);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    return device_devctl(ext->handle, cmd, arg);
 }
 
-static int devif_lseek(int handle, off_t off, int whence)
+static int devif_lseek(int idx, off_t off, int whence)
 {
-    return device_devctl(handle, DISKIO_SETOFF, (unsigned long) &off);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    return device_devctl(ext->handle, DISKIO_SETOFF, (unsigned long) &off);
 }
 
-static size_t devif_fsize(int handle)
+static size_t devif_fsize(int idx)
 {
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
     int size = 0;
-    if (device_devctl(handle, DISKIO_GETSIZE, (unsigned long) &size) < 0)
+    if (device_devctl(ext->handle, DISKIO_GETSIZE, (unsigned long) &size) < 0)
         return 0;
     return size;
 }
 
-static off_t devif_ftell(int handle)
+static off_t devif_ftell(int idx)
 {
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
     off_t off = 0;
-    if (device_devctl(handle, DISKIO_GETOFF, (unsigned long) &off) < 0)
+    if (device_devctl(ext->handle, DISKIO_GETOFF, (unsigned long) &off) < 0)
         return 0;
     return off;
 }
 
-static void *devif_mmap(int handle, void *addr, size_t length, int prot, int flags, off_t offset)
+static void *devif_mmap(int idx, void *addr, size_t length, int prot, int flags, off_t offset)
 {
-    return device_mmap(handle, length, flags);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return NULL;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return NULL;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    return device_mmap(ext->handle, length, flags);
 }
 
-static int devif_fastio(int handle, int cmd, void *arg)
+static int devif_fastio(int idx, int cmd, void *arg)
 {
-    if (IS_BAD_DEVICE_HANDLE(handle))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    if (IS_BAD_DEVICE_HANDLE(ext->handle))
+        return -1;
+    device_object_t *devobj = GET_DEVICE_BY_HANDLE(ext->handle);
     if (devobj == NULL) {
-        keprint(PRINT_ERR "device_read: device object error by handle=%d!\n", handle);
+        keprint(PRINT_ERR "device_read: device object error by handle=%d!\n", ext->handle);
         return -1;
     }
     iostatus_t status = IO_SUCCESS;
@@ -1113,13 +1251,19 @@ static int devif_fastio(int handle, int cmd, void *arg)
     return -1;
 }
 
-static int devif_fastread(int handle, void *buf, size_t size)
+static int devif_fastread(int idx, void *buf, size_t size)
 {
-    if (IS_BAD_DEVICE_HANDLE(handle))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    if (IS_BAD_DEVICE_HANDLE(ext->handle))
+        return -1;
+    device_object_t *devobj = GET_DEVICE_BY_HANDLE(ext->handle);
     if (devobj == NULL) {
-        keprint(PRINT_ERR "device_read: device object error by handle=%d!\n", handle);
+        keprint(PRINT_ERR "device_read: device object error by handle=%d!\n", ext->handle);
         return -1;
     }
     iostatus_t status = IO_SUCCESS;
@@ -1129,13 +1273,19 @@ static int devif_fastread(int handle, void *buf, size_t size)
     return -1;
 }
 
-static int devif_fastwrite(int handle, void *buf, size_t size)
+static int devif_fastwrite(int idx, void *buf, size_t size)
 {
-    if (IS_BAD_DEVICE_HANDLE(handle))
+    if (FSAL_BAD_FILE_IDX(idx))
         return -1;
-    device_object_t *devobj = GET_DEVICE_BY_HANDLE(handle);
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
+    if (IS_BAD_DEVICE_HANDLE(ext->handle))
+        return -1;
+    device_object_t *devobj = GET_DEVICE_BY_HANDLE(ext->handle);
     if (devobj == NULL) {
-        keprint(PRINT_ERR "device_read: device object error by handle=%d!\n", handle);
+        keprint(PRINT_ERR "device_read: device object error by handle=%d!\n", ext->handle);
         return -1;
     }
     iostatus_t status = IO_SUCCESS;
@@ -1145,7 +1295,140 @@ static int devif_fastwrite(int handle, void *buf, size_t size)
     return -1;
 }
 
-fsal_t devif;
+fsal_t devfs_fsal;
+
+static int fsal_devfs_mount(char *source, char *target, char *fstype, unsigned long flags)
+{
+    if (strcmp(fstype, "devfs")) {
+        errprint("mount devfs type %s failed!\n", fstype);
+        return -1;
+    }
+    if (fsal_path_insert(DEVFS_PATH, target, &devfs_fsal)) {
+        dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, target);
+        return -1;
+    }
+    return 0;
+}
+
+static int fsal_devfs_unmount(char *path, unsigned long flags)
+{
+    if (fsal_path_remove((void *) path)) {
+        dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, path);
+        return -1;
+    }
+    return 0;
+}
+
+static int fsal_devfs_opendir(char *path)
+{
+    char *p = devfs_path_translate((const char *) path);
+    if (!p)
+        return -1;
+    /* devfs没有子目录，因此必须为0 */
+    if (*p != '\0') {
+        errprint("devfs: no sub dir %s\n", p);    
+        return -1;
+    }
+    fsal_dir_t *pdir = fsal_dir_alloc();
+    if (!pdir)
+        return -1;
+    pdir->extension = mem_alloc(sizeof(devfs_dir_extention_t));
+    if (!pdir->extension) {
+        fsal_dir_free(pdir);
+        return -ENOMEM;
+    }
+    pdir->fsal = &devfs_fsal;
+    
+    devfs_dir_extention_t *ext = (devfs_dir_extention_t *) pdir->extension;
+    memset(&ext->devent, 0, sizeof(devent_t));
+    ext->curptr = NULL;
+    return FSAL_D2I(pdir);
+}
+
+static int fsal_devfs_closedir(int idx)
+{
+    if (FSAL_IS_BAD_DIR(idx))
+        return -1;
+    fsal_dir_t *pdir = FSAL_I2D(idx);
+    if (!pdir->flags)
+        return -1;
+
+    if (pdir->extension)
+        mem_free(pdir->extension);
+    pdir->extension = NULL;
+    if (fsal_dir_free(pdir) < 0)
+        return -1;
+    return 0;
+}
+
+static int fsal_devfs_readdir(int idx, void *buf)
+{
+    if (FSAL_IS_BAD_DIR(idx))
+        return -1;
+    fsal_dir_t *pdir = FSAL_I2D(idx);
+    if (!pdir->flags)   
+        return -1;
+    
+    /* 储存在扩展中 */
+    devfs_dir_extention_t *ext = (devfs_dir_extention_t *) pdir->extension;
+    if (sys_scandev(ext->curptr, DEVICE_TYPE_ANY, &ext->devent) < 0)
+        return -EPERM;
+    if (ext->devent.de_name == '\0') 
+        return -1;
+    /* 打开获取设备信息 */
+    device_object_t *devobj = io_search_device_by_name(ext->devent.de_name);
+    if (!devobj) {
+        errprint("devfs: state: device %s not found!\n", ext->devent.de_name);
+        return -ESRCH;
+    }
+    ext->curptr = &ext->devent;
+
+    dirent_t *dire = (dirent_t *)buf;
+    /* TODO: set dire member */
+    dire->d_attr = 0;
+    dire->d_size = 0;
+    dire->d_time = devobj->mtime;
+    dire->d_date = devobj->mdate;
+    memcpy(dire->d_name, ext->devent.de_name, min(strlen(ext->devent.de_name), DEVICE_NAME_LEN));
+    dire->d_name[DIR_NAME_LEN - 1] = '\0';
+    return 0;
+}
+
+static int fsal_devfs_rewinddir(int idx)
+{
+    if (FSAL_IS_BAD_DIR(idx))
+        return -1;
+    fsal_dir_t *pdir = FSAL_I2D(idx);
+    if (!pdir->flags)   
+        return -1;
+    devfs_dir_extention_t *ext = (devfs_dir_extention_t *) pdir->extension;
+    ext->curptr = NULL;
+    memset(&ext->devent, 0, sizeof(devent_t));
+    return 0;
+}
+
+static int fsal_devfs_state(char *path, void *buf)
+{
+    char *p = devfs_path_translate((const char *) path);
+    if (!p)
+        return -1;
+    /* 打开获取设备信息 */
+    device_object_t *devobj = io_search_device_by_name(p);
+    if (!devobj) {
+        errprint("devfs: state: device %s not found!\n", p);
+        return -ESRCH;
+    }
+    stat_t *stat = (stat_t *)buf;
+    mode_t mode = S_IREAD | S_IWRITE;
+    mode |= S_IFREG;
+    size_t size = 0;
+
+    stat->st_mode = mode;
+    stat->st_size = 0;
+    stat->st_atime = (devobj->mdate << 16) | devobj->mtime;
+    stat->st_ctime = stat->st_mtime = stat->st_atime;
+    return 0;
+}
 
 void driver_framewrok_init()
 {
@@ -1153,20 +1436,34 @@ void driver_framewrok_init()
     for (i = 0; i < DEVICE_HANDLE_NR; i++) {
         device_handle_table[i] = NULL;
     }
-    memset(&devif, 0, sizeof(fsal_t));
-    devif.name = "devif";
-    devif.open      = devif_open;
-    devif.close     = devif_close;
-    devif.incref    = devif_incref;
-    devif.decref    = devif_decref;
-    devif.read      = devif_read;
-    devif.write     = devif_write;
-    devif.ioctl     = devif_ioctl;
-    devif.lseek     = devif_lseek;
-    devif.fsize     = devif_fsize;
-    devif.ftell     = devif_ftell;
-    devif.mmap      = devif_mmap;
-    devif.fastio    = devif_fastio;
-    devif.fastread  = devif_fastread;
-    devif.fastwrite = devif_fastwrite;
+
+    /* devfs */
+    memset(&devfs_fsal, 0, sizeof(fsal_t));
+    list_init(&devfs_fsal.list);
+    devfs_fsal.name = "devfs";
+    devfs_fsal.subtable   = NULL;
+    devfs_fsal.mount      =fsal_devfs_mount,
+    devfs_fsal.unmount    =fsal_devfs_unmount,
+    devfs_fsal.open      = devif_open;
+    devfs_fsal.close     = devif_close;
+    devfs_fsal.incref    = devif_incref;
+    devfs_fsal.decref    = devif_decref;
+    devfs_fsal.read      = devif_read;
+    devfs_fsal.write     = devif_write;
+    devfs_fsal.ioctl     = devif_ioctl;
+    devfs_fsal.lseek     = devif_lseek;
+    devfs_fsal.fsize     = devif_fsize;
+    devfs_fsal.ftell     = devif_ftell;
+    devfs_fsal.mmap      = devif_mmap;
+    devfs_fsal.fastio    = devif_fastio;
+    devfs_fsal.fastread  = devif_fastread;
+    devfs_fsal.fastwrite = devif_fastwrite;
+    
+    devfs_fsal.opendir = fsal_devfs_opendir;
+    devfs_fsal.closedir = fsal_devfs_closedir;
+    devfs_fsal.readdir = fsal_devfs_readdir;
+    devfs_fsal.rewinddir = fsal_devfs_rewinddir;
+    devfs_fsal.state = fsal_devfs_state;
+
+    devfs_fsal.extention  = NULL;
 }

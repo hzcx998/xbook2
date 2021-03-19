@@ -6,7 +6,6 @@
 
 #define FSAL_FILE_FD_IS_BAD   (1 << 31)    /* alloced */
 #define FILE_FD_NORMAL  0X01    /* is normal file */
-#define FILE_FD_DEVICE  0X02    /* is a device */
 #define FILE_FD_SOCKET  0X04    /* is a socket */
 #define FILE_FD_FIFO    0X08    /* is a fifo */
 #define FILE_FD_PIPE0   0X10    /* is a pipe0: read */

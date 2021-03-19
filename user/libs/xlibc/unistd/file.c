@@ -152,11 +152,6 @@ int probedev(const char *name, char *buf, size_t buflen)
     return syscall3(int, SYS_PROBEDEV, name, buf, buflen);
 }
 
-int opendev(const char *devname, int flags)
-{
-    return syscall2(int, SYS_OPENDEV, devname, flags);
-}
-
 int openfifo(const char *fifoname, int flags)
 {
     return syscall2(int, SYS_OPENFIFO, fifoname, flags);

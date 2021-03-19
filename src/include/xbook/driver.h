@@ -10,6 +10,7 @@
 #include <sys/res.h>
 #include <sys/input.h>
 #include "initcall.h"
+#include "fsal.h"
 
 #define DRIVER_NAME_LEN 32
 
@@ -169,6 +170,8 @@ typedef struct _device_object
     atomic_t reference;                 /* 引用计数，管理设备打开情况 */
     io_request_t *cur_ioreq;            /* 当前正在处理的io请求 */
     string_t name;                      /* 名字 */
+    uint16_t mtime;                     /* 设备修改时的时间 */
+    uint16_t mdate;                     /* 设备修改时的日期 */
     struct {
         spinlock_t spinlock;            /* 设备自旋锁 */
         mutexlock_t mutexlock;          /* 设备互斥锁 */
@@ -286,5 +289,9 @@ int input_even_get(input_even_buf_t *evbuf, input_event_t *even);
 
 void drivers_print();
 void drivers_print_mini();
+
+#define DEVFS_PATH  "/devfs"
+/* 导出devfs */
+extern fsal_t devfs_fsal;
 
 #endif   /* _XBOOK_DRIVER_H */

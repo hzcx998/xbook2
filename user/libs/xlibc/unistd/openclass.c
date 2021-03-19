@@ -1,11 +1,14 @@
 #include <unistd.h>
+#include <string.h>
 
 int openclass(const char *cname, int flags)
 {
+    char _devname[32] = {0};
     char devname[32] = {0};
-    if (probedev(cname, devname, 32) < 0)
+    if (probedev(cname, _devname, 32) < 0)
         return -1; 
-    int fd;
-    fd = opendev(devname, flags);
+    strcat(devname, "/dev/");
+    strcat(devname, _devname);
+    int fd = open(devname, flags);
     return fd;
 }

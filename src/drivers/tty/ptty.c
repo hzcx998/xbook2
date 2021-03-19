@@ -227,7 +227,7 @@ static int __ptty_write(device_extension_t *extension, char *buf, int len)
         switch (*p) {
         case '\003':    /* CTRL + INT */
             // noteprint("ptty send EXP_CODE_INT to group %d\n", extension->pgrp);
-            /* 如果是master，就往slaver的缓冲区中写入 */
+            /* 如果是master，就往slaver发送INT异常，slaver就不处理 */
             if (extension->type == PTTY_MASTER) {
                 if (extension->other_devobj) {
                     device_extension_t *slaver = extension->other_devobj->device_extension;
@@ -236,10 +236,8 @@ static int __ptty_write(device_extension_t *extension, char *buf, int len)
                         exception_send_group(slaver->pgrp, EXP_CODE_INT);
                     }
                 }
-            } else {
-                exception_send_group(extension->pgrp, EXP_CODE_INT);
+                return n;
             }
-            return n;
         default:
             if (pipe_write(extension->pipe_out->id, p, 1) < 0)
                 return -1;
