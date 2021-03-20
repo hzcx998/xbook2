@@ -177,6 +177,7 @@
         "netsocket.h": "c",
         "fatfs.h": "c",
         "file.h": "c",
-        "istream": "c"
+        "istream": "c",
+        "hardirq.h": "c"
     }
 }

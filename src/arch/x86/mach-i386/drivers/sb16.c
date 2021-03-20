@@ -168,7 +168,6 @@ static int sb16_handler(irqno_t irq, void *data)
     in8(DSP_STATUS); // 8 bit interrupt
     if (extension->major_version >= 4)
         in8(DSP_R_ACK); // 16 bit interrupt
-
     extension->index_r = (extension->index_r + 1) % DMA_COUNT;
     #ifdef DEBUG_SB16
     keprint(PRINT_DEBUG "sb16: [READ FINISH] [%x]\n", dma_region->v);
@@ -257,6 +256,18 @@ static iostatus_t sb16_open(device_object_t *device, io_request_t *ioreq)
     device_extension_t *extension = (device_extension_t *)device->device_extension;
     extension->index_r = extension->index_w = 0;
     // TODO: 重置寄存器状态
+    io_complete_request(ioreq);
+    return status;
+}
+
+static iostatus_t sb16_close(device_object_t *device, io_request_t *ioreq)
+{
+    iostatus_t status = IO_SUCCESS;
+    
+    device_extension_t *extension = (device_extension_t *)device->device_extension;
+    // TODO: 重置寄存器状态
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = 0;
     io_complete_request(ioreq);
     return status;
 }
@@ -382,6 +393,7 @@ iostatus_t sb16_driver_func(driver_object_t *driver)
     driver->driver_exit = sb16_exit;
 
     driver->dispatch_function[IOREQ_OPEN] = sb16_open;
+    driver->dispatch_function[IOREQ_CLOSE] = sb16_close;
     driver->dispatch_function[IOREQ_WRITE] = sb16_write;
     driver->dispatch_function[IOREQ_DEVCTL] = sb16_devctl;
 
