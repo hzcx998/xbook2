@@ -10,9 +10,9 @@ void cpu_get_attached_list(cpuid_t *cpu_list, unsigned int *count);
 void cpu_init();
 
 void cpu_do_sleep();
-void cpu_do_nohing(void);
+#define cpu_do_nothing() __asm__ __volatile__("nop")
 void cpu_do_udelay(int usec);
-static inline void cpu_do_pause(void)
+__attribute__((always_inline)) static inline void cpu_do_pause(void)
 {
 	__asm__ __volatile__ ("pause");
 }

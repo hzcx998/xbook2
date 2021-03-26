@@ -5,7 +5,8 @@
 #include "registers.h"
 
 
-void interrupt_disable(void);
+#define interrupt_disable() __asm__ __volatile__("cli")
+#define interrupt_enable() __asm__ __volatile__("sti")
 void interrupt_enable(void);
 
 #define interrupt_save_and_disable(flags)                  \

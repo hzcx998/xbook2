@@ -34,6 +34,7 @@ static void interrupt_descriptor_init()
    	for (i = 0; i < MAX_IDT_NR; i++) {
       	gate_descriptor_set(IDT_OFF2PTR(idt0, i), 0, 0, 0, 0); 
    	}
+
 	gate_descriptor_set(IDT_OFF2PTR(idt0, 0x00), exception_entry0x00, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL0); 
 	gate_descriptor_set(IDT_OFF2PTR(idt0, 0x01), exception_entry0x01, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL0); 
 	gate_descriptor_set(IDT_OFF2PTR(idt0, 0x02), exception_entry0x02, KERNEL_CODE_SEL, DA_386IGate, DA_GATE_DPL0); 

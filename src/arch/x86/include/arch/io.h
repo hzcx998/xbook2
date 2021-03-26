@@ -1,13 +1,49 @@
 #ifndef _X86_IO_H
 #define _X86_IO_H
-
-unsigned char ioport_in8(unsigned int port);
-unsigned short ioport_in16(unsigned int port);
-unsigned int ioport_in32(unsigned int port);
-void ioport_out8(unsigned int port, unsigned int data);
-void ioport_out16(unsigned int port, unsigned int data);
-void ioport_out32(unsigned int port, unsigned int data);
-
+/* copyright (c) 2021 AlanCui*/
+__attribute__((always_inline)) inline static unsigned long ioport_in32(unsigned short port)
+{
+    unsigned long tmp = 0;
+    __asm__ __volatile__("inl %%dx,%%eax"
+                         : "=a"(tmp)
+                         : "d"(port)
+                         :);
+    return tmp;
+}
+__attribute__((always_inline)) inline static unsigned short ioport_in16(unsigned short port)
+{
+    unsigned short tmp = 0;
+    __asm__ __volatile__("inw %%dx,%%ax"
+                         : "=a"(tmp)
+                         : "d"(port)
+                         :);
+    return tmp;
+}
+__attribute__((always_inline)) inline static unsigned char ioport_in8(unsigned short port)
+{
+    unsigned char tmp = 0;
+    __asm__ __volatile__("inb %%dx,%%al"
+                         : "=a"(tmp)
+                         : "d"(port)
+                         :);
+    return tmp;
+}
+__attribute__((always_inline)) inline static void ioport_out32(unsigned short port, unsigned long data)
+{
+    __asm__ __volatile__("outl %%eax,%%dx" ::"d"(port), "a"(data)
+                         :);
+}
+__attribute__((always_inline)) inline static void ioport_out16(unsigned short port, unsigned short data)
+{
+    __asm__ __volatile__("outw %%ax,%%dx" ::"d"(port), "a"(data)
+                         :);
+}
+__attribute__((always_inline)) inline static void ioport_out8(unsigned short port, unsigned char data)
+{
+    __asm__ __volatile__("outb %%al,%%dx" ::"d"(port), "a"(data)
+                         :);
+}
+/* copyright (c) 2021 AlanCui END*/
 void ioport_read_bytes(unsigned short port, void* buf, unsigned int n);
 void ioport_write_bytes(unsigned short port, void* buf, unsigned int n);
 
