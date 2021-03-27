@@ -20,7 +20,7 @@ MKDIR		= mkdir
 OBJDUMP		= objdump
 
 # virtual machine
-QEMU 		= qemu-system-i386
+QEMU 		= /home/lee/Desktop/Computer_Systems/qemu/build/qemu-system-i386
 
 # images and rom
 IMAGE_DIR	= develop/image
@@ -171,7 +171,7 @@ QEMU_KVM := -enable-kvm
 endif
 #QEMU_KVM := # no virutal
 
-QEMU_ARGUMENT = -m 512M $(QEMU_KVM) \
+QEMU_ARGUMENT = -m 512M \
 		-name "XBOOK Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
 		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
