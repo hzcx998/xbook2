@@ -111,7 +111,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 
     /* proc exec init */
     proc_exec_init(cur);
-
+    
     user_set_entry_point(frame, (unsigned long)elf_header.e_entry);
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);

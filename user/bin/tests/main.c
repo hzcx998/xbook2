@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 	//trig_test(argc, argv);
 
     //trig_test(argc, argv);
-    //math_test(argc, argv);
+    math_test(argc, argv);
     //http_test(argc, argv);
     //xlibc_test(argc, argv);
     //buddy_test(argc, argv);
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     //file_test3(argc, argv);
     // tty_test(argc, argv);
     //id_test(argc, argv);
-    pty_test2(argc, argv);
+    //pty_test2(argc, argv);
     printf("tests done!\n");
     return 0;
 }
