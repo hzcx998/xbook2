@@ -88,7 +88,7 @@ kernel:
 
 clean:
 	@$(MAKE) -s -C $(KERNSRC) clean
-
+	rm -rf $(FLOPPYA_IMG) $(HDA_IMG) $(HDB_IMG)
 # 构建环境。镜像>工具>环境>rom
 build: 
 	-$(MKDIR) $(IMAGE_DIR)
