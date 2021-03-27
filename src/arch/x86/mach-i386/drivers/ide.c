@@ -120,6 +120,8 @@ struct ide_channel {
    	struct _device_extension *ext;	// 通道上面的设备
 	char who;		    /* 通道上主磁盘在活动还是从磁盘在活动 */
 	char what;		    /* 执行的是什么操作 */
+	bool expecting_intr;// 表示等待硬盘的中断
+	semaphore_t disk_done;  // 用于阻塞、唤醒驱动程序
 } channels[2];
 
 typedef struct _device_extension {
@@ -140,8 +142,6 @@ typedef struct _device_extension {
 	/* 状态信息 */
 	unsigned int read_sectors;	// 读取了多少扇区
 	unsigned int write_sectors;	// 写入了多少扇区
- 	bool expecting_intr;// 表示等待硬盘的中断
-	semaphore_t disk_done;  // 用于阻塞、唤醒驱动程序
 } device_extension_t;
 
 /* 磁盘信息结构体 */
@@ -580,7 +580,7 @@ static void write_to_sector(device_extension_t *ext, void* buf, unsigned int cou
 static void send_cmd(struct ide_channel* channel, unsigned char cmd)
 {
 	device_extension_t *ext = channel->ext;
-	ext->expecting_intr = true;
+	channel->expecting_intr = true;
 	keprint("send_cmd-ext->device_name-::%s:\n",ext->device_name.text);
    	out8(ATA_REG_CMD(channel), cmd);
 }
@@ -1237,15 +1237,15 @@ static int ide_handler(irqno_t irq, void *data)
 {
     struct ide_channel *channel = (struct ide_channel *)data;
 	device_extension_t *ext = channel->ext;
-	keprint("ide_handler-0-irq::0x%x::-channel::0x%x::-ext::0x%x-channel->who::0x%x::-ext->expecting_intr::0x%x:\n",irq,channel,ext,channel->who,ext->expecting_intr);
+	keprint("ide_handler-0-irq::0x%x::-channel::0x%x::-ext::0x%x-channel->who::0x%x::-channel->expecting_intr::0x%x:\n",irq,channel,ext,channel->who,channel->expecting_intr);
 	keprint("ide_handler-1-ext->device_name::%s:\n",ext->device_name.text);
-	if (ext->expecting_intr){
-	ext->expecting_intr = false;
-	keprint("ide_handler-2-ext->device_name::%s::-&ext->disk_done::0x%x:\n",ext->device_name.text,&ext->disk_done);
+	if (channel->expecting_intr){
+	channel->expecting_intr = false;
+	keprint("ide_handler-2-ext->device_name::%s::-&channel->disk_done::0x%x:\n",ext->device_name.text,&channel->disk_done);
 
     	int ata_status = in8(ATA_REG_STATUS(channel));
 #if semaphore_debug
-    	semaphore_up(&ext->disk_done);
+    	semaphore_up(&channel->disk_done);
 #endif
 	keprint("ide_handler--irq::0x%x-::0x%x:\n",irq,ata_status);
 	/* 获取状态，做出错判断 */
@@ -1307,8 +1307,8 @@ static int ide_probe(device_extension_t *ext, int id)
 
     ext->info = mem_alloc(SECTOR_SIZE);
 #if semaphore_debug
-    semaphore_init(&ext->disk_done,0);
-    keprint("ide_probe-&ext->disk_done-::0x%x:\n",&ext->disk_done);
+    semaphore_init(&channel->disk_done,0);
+    keprint("ide_probe-&channel->disk_done-::0x%x:\n",&channel->disk_done);
 #endif
     if (ext->info == NULL) {
         keprint(PRINT_ERR "mem_alloc for ide device %d info failed!\n", id);
@@ -1319,7 +1319,7 @@ static int ide_probe(device_extension_t *ext, int id)
 
     /* 重置驱动器 */
     rest_driver(ext);
-    keprint("rest_driver(ext);-1-ext->disk_done::0x%x:\n",&ext->disk_done);
+    keprint("rest_driver(ext);-1-channel->disk_done::0x%x:\n",&channel->disk_done);
 
     keprint("2--ext->device_name-::%s-channelno-::%d:\n",ext->device_name.text,channelno);
     /* 获取磁盘的磁盘信息 */
@@ -1338,9 +1338,9 @@ static int ide_probe(device_extension_t *ext, int id)
     send_cmd(channel, ATA_CMD_IDENTIFY);
     keprint("send_cmd(channel, ATA_CMD_IDENTIFY);---1::\n");
 #if semaphore_debug
-    semaphore_down(&ext->disk_done);
+    semaphore_down(&channel->disk_done);
 #endif
-    keprint("send_cmd(channel, ATA_CMD_IDENTIFY);---2::");
+    keprint("send_cmd(channel, ATA_CMD_IDENTIFY);---2::\n");
     err = ide_polling(channel, 1);
     if (err) {
         ide_print_error(ext, err);
