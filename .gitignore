@@ -97,6 +97,7 @@ user/sbin/service/service
 # service
 user/serv/netserv/
 user/serv/testserv/testserv
+user/sbin/netserv/
 # user app
 
 # /bin
