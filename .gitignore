@@ -75,6 +75,7 @@ user/libs/fixdep
 user/sbin/fixdep
 user/bin/fixdep
 src/fixdep
+user/serv/fixdep
 
 # linux tools 
 tools/fatfs/fatfs
@@ -94,7 +95,7 @@ user/sbin/userctl/userctl
 user/sbin/service/service
 
 # service
-user/serv/netserv/netserv
+user/serv/netserv/
 user/serv/testserv/testserv
 # user app
 
@@ -118,7 +119,9 @@ user/bin/osver/osver
 user/bin/xbrower/xbrower
 user/bin/sh/sh
 
+
 # /bin
+user/bin/bash/
 user/bin/bosh/bosh
 user/bin/c4/c4
 user/bin/cpptests/cpptests
@@ -141,3 +144,4 @@ user/bin/sound/sound
 user/bin/wavplayer/wavplayer
 user/bin/mp3player/mp3player
 user/bin/hello/hello
+user/bin/uname/
