@@ -36,8 +36,10 @@ mouse: enabled=0
 # in the DLX Linux example I'm enabling keyboard_mapping so that paste 
 # will work.  Cut&Paste is currently implemented on win32 and X windows only.
 
-#/dev/tty9
+#dev=/dev/tty9   /dev/ptyp0 /dev/stdout
 #com1: enabled=1, mode=file, dev="develop/bochs/output.txt"
-#com1: enabled=1, mode=term, dev=/dev/stdout    
+#com1: enabled=1, mode=mouse
+com1:enabled=1, mode=term, dev=/dev/pts/1
+#log:/dev/pts/1
 
 #keyboard: enabled=1, map=$bxshare/keymaps/x11-pc-us.map
