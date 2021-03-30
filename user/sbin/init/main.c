@@ -24,9 +24,9 @@ int main(int argc, char *argv[])
         close(tty0);
         return -1;
     }
-
     /* 创建一个子进程 */
     int pid = fork();
+    printf("/user/sbin/init--0::%d:\n",pid);
     if (pid < 0) {
         printf("[INIT]: fork process error! stop service.\n");
         close(tty2);
@@ -46,12 +46,18 @@ int main(int argc, char *argv[])
         }
     }
     #ifdef _HAS_LOGIN
+printf("/user/sbin/init--1:\n");
     pid = getpid();
     ioctl(tty0, TTYIO_HOLDER, &pid);
     char *_argv[3] = {"-s", "/bin/sh", NULL};
     exit(execv("/sbin/login", _argv));
+    
     #else
-    exit(execv("/bin/sh", NULL));
+    printf("/user/sbin/init-2-0\n");
+    int status = execv("/bin/sh", NULL);
+    printf("/user/sbin/init-2-status::%d:\n",status);
+    exit(status);
+
     #endif
     return 0;
 }

@@ -712,6 +712,7 @@ LV_ATTRIBUTE_FAST_MEM void _lv_memset(void * dst, uint8_t v, size_t len)
  */
 LV_ATTRIBUTE_FAST_MEM void _lv_memset_00(void * dst, size_t len)
 {
+    printf("_lv_memset_00-dst::0x%x-len::%d:\n",dst,len);
     uint8_t * d8 = (uint8_t *) dst;
     uintptr_t d_align = (lv_uintptr_t) d8 & ALIGN_MASK;
 

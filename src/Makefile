@@ -2,7 +2,7 @@ sinclude ../scripts/env.mk
 
 ifeq ("$(origin G)", "command line")
 ifeq ($(G),on)
-X_CFLAGS	+= -O0 -g -ggdb
+X_CFLAGS	+= -g -ggdb
 endif
 endif
 

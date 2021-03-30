@@ -44,19 +44,26 @@ void *memset_sh(void* src, uint8_t value, uint32_t size)
 
 int main(int argc, char *argv[])
 {
+    printf("/user/bin/sh-main-1::0x%x-::%d\n",sh_cwd_cache,MAX_PATH);
     sh_stdin_backup = dup(0);
     sh_stdout_backup = dup(1);
     sh_stderr_backup = dup(2);
+     printf("/user/bin/sh-main-2:\n");
     update_cwdcache();
+     printf("/user/bin/sh-main-3:\n");
     int pid = getpid();
+ printf("/user/bin/sh-main-4:\n");
     ioctl(0, TTYIO_HOLDER, &pid);
+ printf("/user/bin/sh-main-5:\n");
     expcatch(EXP_CODE_USER, sh_exit_handler);
     expblock(EXP_CODE_TERM);
     expblock(EXP_CODE_INT);
+     printf("/user/bin/sh-main-6:\n");
     // set environment value
     environ = sh_environment;
 
     print_logo();
+ printf("/user/bin/sh-main-7:\n");
     /* 启动自行服务 */
     #if 0
     char *args[2] = {"xbrower", NULL};
@@ -94,16 +101,27 @@ int main(int argc, char *argv[])
 
 void update_cwdcache()
 {
+    char cwd_cache[10] = {'1','2','3','4','5','6','7','8','9','0'};
+printf("update_cwdcache-0-sh_cwd_cache::%s-cwd_cache-::%s:\n",sh_cwd_cache,cwd_cache);
     memset_sh(sh_cwd_cache, 0, MAX_PATH);
+    printf("update_cwdcache-1:\n");
     char buf[32] = {0};
     memset_sh(buf, 0, 32);
+printf("update_cwdcache-2:\n");
     accountname(buf, 32);
+printf("update_cwdcache-3:\n");
     strcat(sh_cwd_cache, "[");
+printf("update_cwdcache-4:\n");
     strcat(sh_cwd_cache, buf);
+printf("update_cwdcache-5:\n");
     getcwd(buf, 32);
+printf("update_cwdcache-6:\n");
     strcat(sh_cwd_cache, " ");
+printf("update_cwdcache-7:\n");
     strcat(sh_cwd_cache, buf);
+printf("update_cwdcache-8:\n");
     strcat(sh_cwd_cache, "]");
+printf("update_cwdcache-9:\n");
 }
 
 /**

@@ -36,11 +36,17 @@ char* itoa(char ** ps, int val, int base)
 
 void *memset(void* src, uint8_t value, uint32_t size) 
 {
+	
+	//printf("void *memset-1-::0x%x-value-::%d-size-::0x%x:\n",src,value,size);
 	uint8_t* s = (uint8_t*)src;
+	//printf("void *memset-2-::0x%x:\n",s);
 	while (size > 0){
 		*s++ = value;
 		--size;
+               // printf("void *memset-3-::%s::-::0x%x:\n",s,size);
 	}
+	//printf("void *memset-4-src::%s::-::0x%x:\n",src,src);
+	//printf("void *memset-5-:\n");
 	return src;
 }
 

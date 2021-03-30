@@ -177,6 +177,7 @@ void print_hex(unsigned int num)
 
 void *memset(void* src, unsigned char value, unsigned int size) 
 {
+	//keprint("lib.c-memset-::0x%x-::%d-size::0x%x:\n",src,value,size);
 	unsigned char* s = (unsigned char *)src;
 	while (size > 0){
 		*s++ = value;

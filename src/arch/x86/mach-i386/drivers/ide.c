@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <xbook/semaphore.h>
 /* 配置开始 */
-#define DEBUG_DRV
+//#define DEBUG_DRV
 
 /* 配置结束 */
 
@@ -581,7 +581,7 @@ static void send_cmd(struct ide_channel* channel, unsigned char cmd)
 {
 	device_extension_t *ext = channel->ext;
 	channel->expecting_intr = true;
-	keprint("send_cmd-ext->device_name-::%s:\n",ext->device_name.text);
+	//keprint("send_cmd-ext->device_name-::%s:\n",ext->device_name.text);
    	out8(ATA_REG_CMD(channel), cmd);
 }
 
@@ -650,7 +650,7 @@ static int ide_polling(struct ide_channel* channel, unsigned int advanced_check)
     while ((ata_status & ATA_STATUS_BUSY) && (--i)){
     // Wait for BSY to be zero.
     ata_status = in8(ATA_REG_STATUS(channel));
-    keprint("ide_polling-1-ata_staus-::0x%x::0x%x:",ata_status,i);
+    //keprint("ide_polling-1-ata_staus-::0x%x::0x%x:",ata_status,i);
     }
     if (advanced_check) {
 		unsigned char state = in8(ATA_REG_STATUS(channel)); // Read Status Register.
@@ -669,7 +669,7 @@ static int ide_polling(struct ide_channel* channel, unsigned int advanced_check)
 		// (V) Check DRQ:
 		// -------------------------------------------------
 		// BSY = 0; DF = 0; ERR = 0 so we should check for DRQ now.
-		keprint("ide_polling-2-state-::0x%x:",state);
+		//keprint("ide_polling-2-state-::0x%x:",state);
 		if ((state & ATA_STATUS_DRQ) == 0)
 			return 3; // DRQ should be set
 	}
@@ -1237,17 +1237,17 @@ static int ide_handler(irqno_t irq, void *data)
 {
     struct ide_channel *channel = (struct ide_channel *)data;
 	device_extension_t *ext = channel->ext;
-	keprint("ide_handler-0-irq::0x%x::-channel::0x%x::-ext::0x%x-channel->who::0x%x::-channel->expecting_intr::0x%x:\n",irq,channel,ext,channel->who,channel->expecting_intr);
-	keprint("ide_handler-1-ext->device_name::%s:\n",ext->device_name.text);
+	//keprint("ide_handler-0-irq::0x%x::-channel::0x%x::-ext::0x%x-channel->who::0x%x::-channel->expecting_intr::0x%x:\n",irq,channel,ext,channel->who,channel->expecting_intr);
+	//keprint("ide_handler-1-ext->device_name::%s:\n",ext->device_name.text);
 	if (channel->expecting_intr){
 	channel->expecting_intr = false;
-	keprint("ide_handler-2-ext->device_name::%s::-&channel->disk_done::0x%x:\n",ext->device_name.text,&channel->disk_done);
+	//keprint("ide_handler-2-ext->device_name::%s::-&channel->disk_done::0x%x:\n",ext->device_name.text,&channel->disk_done);
 
     	int ata_status = in8(ATA_REG_STATUS(channel));
 #if semaphore_debug
     	semaphore_up(&channel->disk_done);
 #endif
-	keprint("ide_handler--irq::0x%x-::0x%x:\n",irq,ata_status);
+	//keprint("ide_handler--irq::0x%x-::0x%x:\n",irq,ata_status);
 	/* 获取状态，做出错判断 */
 	if (ata_status & ATA_STATUS_ERR) {
 		/* 尝试重置驱动 */
@@ -1274,7 +1274,7 @@ static int ide_probe(device_extension_t *ext, int id)
 	char err;
     
     channel = &channels[channelno];
-    keprint("1--ext->device_name-::%s-channelno-::%d:\n",ext->device_name.text,channelno);
+    //keprint("1--ext->device_name-::%s-channelno-::%d:\n",ext->device_name.text,channelno);
     /* 为每个ide通道初始化端口基址及中断向量 */
     switch (channelno) {
     case 0:
@@ -1297,7 +1297,7 @@ static int ide_probe(device_extension_t *ext, int id)
 #ifdef DEBUG_DRV
     dump_ide_channel(channel);
 #endif
-    keprint("rest_driver(ext);---0::\n");
+    //keprint("rest_driver(ext);---0::\n");
     channel->ext = ext;
 
     /* 填写设备信息 */
@@ -1308,7 +1308,7 @@ static int ide_probe(device_extension_t *ext, int id)
     ext->info = mem_alloc(SECTOR_SIZE);
 #if semaphore_debug
     semaphore_init(&channel->disk_done,0);
-    keprint("ide_probe-&channel->disk_done-::0x%x:\n",&channel->disk_done);
+    //keprint("ide_probe-&channel->disk_done-::0x%x:\n",&channel->disk_done);
 #endif
     if (ext->info == NULL) {
         keprint(PRINT_ERR "mem_alloc for ide device %d info failed!\n", id);
@@ -1318,15 +1318,15 @@ static int ide_probe(device_extension_t *ext, int id)
     }
 
     /* 重置驱动器 */
-    rest_driver(ext);
-    keprint("rest_driver(ext);-1-channel->disk_done::0x%x:\n",&channel->disk_done);
+    //rest_driver(ext);
+    //keprint("rest_driver(ext);-1-channel->disk_done::0x%x:\n",&channel->disk_done);
 
-    keprint("2--ext->device_name-::%s-channelno-::%d:\n",ext->device_name.text,channelno);
+    //keprint("2--ext->device_name-::%s-channelno-::%d:\n",ext->device_name.text,channelno);
     /* 获取磁盘的磁盘信息 */
     select_disk(ext, 0, 0);
     int timeout = 1000; // 等待超时，如果没有IDE设备存在，就会超时
     //keprint("!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY) &&---1::\n");
-    keprint("3--ext->device_name-::%s-channelno-::%d-channel->who::0x%x-ext::0x%x:\n",ext->device_name.text,channelno,channel->who,ext);
+    //keprint("3--ext->device_name-::%s-channelno-::%d-channel->who::0x%x-ext::0x%x:\n",ext->device_name.text,channelno,channel->who,ext);
     //等待硬盘准备好
     while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY) && (--timeout) > 0);
     if (timeout <= 0) {
@@ -1334,13 +1334,13 @@ static int ide_probe(device_extension_t *ext, int id)
         irq_unregister(channel->irqno, (void *)channel);
         return -1;
     }
-    keprint("4--ext->device_name-::%s-channelno-::%d:\n",ext->device_name.text,channelno);
+    //keprint("4--ext->device_name-::%s-channelno-::%d:\n",ext->device_name.text,channelno);
     send_cmd(channel, ATA_CMD_IDENTIFY);
-    keprint("send_cmd(channel, ATA_CMD_IDENTIFY);---1::\n");
+    //keprint("send_cmd(channel, ATA_CMD_IDENTIFY);---1::\n");
 #if semaphore_debug
     semaphore_down(&channel->disk_done);
 #endif
-    keprint("send_cmd(channel, ATA_CMD_IDENTIFY);---2::\n");
+    //keprint("send_cmd(channel, ATA_CMD_IDENTIFY);---2::\n");
     err = ide_polling(channel, 1);
     if (err) {
         ide_print_error(ext, err);
