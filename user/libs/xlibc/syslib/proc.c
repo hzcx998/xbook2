@@ -92,12 +92,12 @@ unsigned long sleep(unsigned long second)
 }
 
 /**
- * sched_yeild - 让出cpu
+ * sched_yield - 让出cpu
  * 
  */
-void sched_yeild()
+void sched_yield()
 {
-    syscall0(int, SYS_SCHED_YEILD);
+    syscall0(int, SYS_SCHED_YIELD);
 }
 
 

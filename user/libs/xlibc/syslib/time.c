@@ -102,6 +102,6 @@ void mdelay(time_t msec)
 
     clock_t start = getticks();
     while (getticks() - start < ticks) {
-        sched_yeild();
+        sched_yield();
     }
 }

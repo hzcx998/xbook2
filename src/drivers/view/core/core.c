@@ -70,7 +70,7 @@ int view_core_exit()
     /* 先停掉线程,等待线程退出 */
     view_thread_exit = 1;
     while (view_thread_exit)
-        task_yeild();
+        task_yield();
     view_thread = NULL;
     
     view_env_exit();
@@ -91,7 +91,7 @@ void view_core_loop()
         view_keyboard_poll();
         view_msg_reset(&msg);
         if (view_get_global_msg(&msg) < 0) {
-            task_yeild();
+            task_yield();
             continue;
         }
         if (is_view_msg_valid(&msg)) {

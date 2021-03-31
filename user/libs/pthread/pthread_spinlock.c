@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-/* 自选一定次数后，才进行yeild */
+/* 自选一定次数后，才进行yield */
 #define __SPIN_COUNT    10
 
 int pthread_spin_init(pthread_spinlock_t *lock, int pshared)
@@ -43,7 +43,7 @@ int pthread_spin_lock(pthread_spinlock_t *lock)
             if (pthread_spin_trylock(lock) == 0)
                 return 0;
         } 
-        sched_yeild();
+        sched_yield();
     }
     return 0;
 }

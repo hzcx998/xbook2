@@ -52,7 +52,7 @@ clock_t clock_delay_by_ticks(clock_t ticks)
 {
     clock_t start = systicks;
     while (systicks - start < ticks)
-        task_yeild();
+        task_yield();
     return ticks;
 }
 

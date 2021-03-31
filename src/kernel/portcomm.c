@@ -218,7 +218,7 @@ int sys_port_comm_request(uint32_t port, port_msg_t *msg)
         errprint("port request: msg put to %d failed!\n", port);
         return -EPERM;
     }
-    /* 尝试获取消息，如果获取无果，就yeild来降低cpu占用 */
+    /* 尝试获取消息，如果获取无果，就yield来降低cpu占用 */
     int try_count = 0;
     while (msgpool_try_get(myport_comm->msgpool, msg, msgpool_get_callback) < 0){
         // 如果有异常产生，则返回中断错误号
@@ -228,7 +228,7 @@ int sys_port_comm_request(uint32_t port, port_msg_t *msg)
         }
         try_count++;
         if (try_count > PORT_COMM_RETRY_GET_CNT) {
-            task_yeild();
+            task_yield();
             try_count = 0;
         }
     }
@@ -250,7 +250,7 @@ int sys_port_comm_receive(int port, port_msg_t *msg)
     if (!port_comm->msgpool)
         return -EPERM;
     int try_count = 0;
-    /* 尝试获取消息，如果获取无果，就yeild来降低cpu占用 */
+    /* 尝试获取消息，如果获取无果，就yield来降低cpu占用 */
     while (msgpool_try_get(port_comm->msgpool, msg, msgpool_get_callback) < 0){
         // 如果有异常产生，则返回中断错误号
         if (exception_cause_exit(&task_current->exception_manager)) {
@@ -259,7 +259,7 @@ int sys_port_comm_receive(int port, port_msg_t *msg)
         }
         try_count++;
         if (try_count > PORT_COMM_RETRY_GET_CNT) {
-            task_yeild();
+            task_yield();
             try_count = 0;
         }
     }
