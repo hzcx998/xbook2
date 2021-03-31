@@ -32,15 +32,6 @@ char *sh_environment[4] = {
     NULL
 };
 
-void *memset_sh(void* src, uint8_t value, uint32_t size) 
-{
-	uint8_t* s = (uint8_t*)src;
-	while (size > 0){
-		*s++ = value;
-		--size;   
-	}
-	return src;
-}
 
 int main(int argc, char *argv[])
 {
@@ -68,7 +59,7 @@ int main(int argc, char *argv[])
         /* 显示提示符 */
 		print_prompt();
         
-		//memset_sh(cmd_line, 0, CMD_LINE_LEN);
+		//memset(cmd_line, 0, CMD_LINE_LEN);
 		/* 读取命令行 */
 		readline(cmd_line, CMD_LINE_LEN);
 		
@@ -94,9 +85,9 @@ int main(int argc, char *argv[])
 
 void update_cwdcache()
 {
-    memset_sh(sh_cwd_cache, 0, MAX_PATH);
+    memset(sh_cwd_cache, 0, MAX_PATH);
     char buf[32] = {0};
-    memset_sh(buf, 0, 32);
+    memset(buf, 0, 32);
     accountname(buf, 32);
     strcat(sh_cwd_cache, "[");
     strcat(sh_cwd_cache, buf);

@@ -87,7 +87,6 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
                 interrupt_restore_state(flags);
                 if (status)
                     mem_copy_to_user(status, &wait_status, sizeof(int *));
-keprint("sys_waitpid-1-::%d:\n",child_pid);
                 return child_pid;
             }
         } else {
@@ -95,14 +94,12 @@ keprint("sys_waitpid-1-::%d:\n",child_pid);
                 interrupt_restore_state(flags);
                 if (status)
                     mem_copy_to_user(status, &wait_status, sizeof(int *));
-keprint("sys_waitpid-2-::%d:\n",child_pid);
                 return child_pid;
             }
         }
         if ((child_pid = proc_deal_zombie_child(parent)) > 0) {
             if (pid == -1 || child_pid == pid) {
                 interrupt_restore_state(flags);
-		keprint("sys_waitpid-3-::%d:\n",child_pid);
                 return child_pid;
             }
         }
