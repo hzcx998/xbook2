@@ -1,13 +1,28 @@
 # MIT License
 # Copyright (c) 2020 Jason Hu, Zhu Yu
-all:
 
+# System environment variable.
+ifeq ($(OS),Windows_NT)
+	HOSTOS		:= windows
+else
+	ifeq ($(shell uname),Darwin)
+		HOSTOS		:= macos
+	else
+		ifeq ($(shell uname),Linux)
+			HOSTOS		:= linux
+		else
+			HOSTOS		:= unix-like
+		endif
+	endif
+endif
+
+all:
 # tools
 MAKE		= make
 FATFS_DIR	= tools/fatfs
 
 # System environment variable.
-ifeq ($(OS),Windows_NT)
+ifeq ($(HOSTOS),windows)
 	FATFS_BIN		:= fatfs
 else
 	FATFS_BIN		:= $(FATFS_DIR)/fatfs
@@ -27,7 +42,7 @@ endif
 ifeq ($(HOSTOS),linux)
 QEMU         = /home/lee/Desktop/Computer_Systems/qemu/build/qemu-system-i386
 else 
-QEMU 		= qemu-system-i386
+QEMU 	     = qemu-system-i386
 endif
 
 # images and rom
@@ -108,7 +123,7 @@ build:
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG) 
-ifeq ($(OS),Windows_NT)
+ifeq ($(HOSTOS),windows)
 else
 	$(MAKE) -s -C  $(FATFS_DIR)
 endif
@@ -121,7 +136,7 @@ endif
 # 清理环境。
 debuild: 
 	$(MAKE) -s -C  $(KERNSRC) clean
-ifeq ($(OS),Windows_NT)
+ifeq ($(HOSTOS),windows)
 else
 	$(MAKE) -s -C  $(FATFS_DIR) clean
 endif
@@ -174,7 +189,7 @@ dump:
 		-device ide-drive,drive=disk0,bus=ahci.0 \
 		-device ide-drive,drive=disk1,bus=ahci.1 \
                
-ifeq ($(OS),Windows_NT)
+ifeq ($(HOSTOS),windows)
 QEMU_KVM := -accel hax
 else
 QEMU_KVM := -enable-kvm
