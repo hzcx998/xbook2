@@ -1,3 +1,18 @@
+# System environment variable.
+ifeq ($(OS),Windows_NT)
+	HOSTOS		:= windows
+else
+	ifeq ($(shell uname),Darwin)
+		HOSTOS		:= macos
+	else
+		ifeq ($(shell uname),Linux)
+			HOSTOS		:= linux
+		else
+			HOSTOS		:= unix-like
+		endif
+	endif
+endif
+
 # tools
 RM			= rm
 
@@ -40,10 +55,11 @@ OBJS = 	main.o \
 # all need to do
 all: $(BIN) 
 
-$(BIN): $(OBJS)
 ifeq ($(HOSTOS),macos)
+$(BIN): $(OBJS)
 	$(CC) $(OBJS) -o $(BIN)
 else
+$(BIN): $(OBJS)
 	$(CC) $(OBJS) -o $(BIN) $(LIBS)
 endif
 
