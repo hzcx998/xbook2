@@ -185,6 +185,5 @@ qemu: all
 	$(QEMU) $(QEMU_ARGUMENT)
 
 # 调试配置：-S -gdb tcp::10001,ipv4
-qemudbg: all
+qemudbg:
 	$(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
-
