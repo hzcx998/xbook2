@@ -17,7 +17,11 @@ X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector
 X_INCDIRS	:=
 X_LDFLAGS	:= -no-pie -e _start -Ttext 0x91000
 AS			:=	nasm
-LD			:=  ld -m elf_i386
+ifeq ($(HOSTOS),macos)
+LD			:= x86_64-elf-ld -m elf_i386
+else
+LD			:= ld -m elf_i386
+endif
 
 export AS LD
 

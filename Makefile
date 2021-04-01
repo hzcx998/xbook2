@@ -17,10 +17,18 @@ TRUNC		= truncate
 RM			= rm
 DD			= dd
 MKDIR		= mkdir
+ifeq ($(HOSTOS),macos)
+OBJDUMP		= x86_64-elf-objdump
+else 
 OBJDUMP		= objdump
+endif
 
 # virtual machine
-QEMU 		= /home/lee/Desktop/Computer_Systems/qemu/build/qemu-system-i386
+ifeq ($(HOSTOS),linux)
+QEMU         = /home/lee/Desktop/Computer_Systems/qemu/build/qemu-system-i386
+else 
+QEMU 		= qemu-system-i386
+endif
 
 # images and rom
 IMAGE_DIR	= develop/image
@@ -90,7 +98,7 @@ clean:
 	@$(MAKE) -s -C $(KERNSRC) clean
 	rm -rf $(FLOPPYA_IMG) $(HDA_IMG) $(HDB_IMG)
 	find ./ -name ".*.o.cmd" | xargs rm -rf  
-	#find ./ -name ".*.o" | xargs rm -rf   
+	find ./ -name ".*.o" | xargs rm -rf   
 # 构建环境。镜像>工具>环境>rom
 build: 
 	-$(MKDIR) $(IMAGE_DIR)

@@ -2,7 +2,7 @@
 RM			= rm
 
 # System environment variable.
-ifeq ($(OS),Windows_NT)
+ifeq ($(HOSTOS),windows)
 	# !!! if you wanto complie this tools in windows, you need use gcc for windows
 	# and config your own path. Below is my path.
 	CC       = 	D:/Softwares/Mingw/bin/gcc.exe 		# need mingw gcc for windows
@@ -17,15 +17,11 @@ ifeq ($(OS),Windows_NT)
 	BIN = ./fatfs.exe
 
 else
-
-	ifeq ($(shell uname),Linux)
 		CC       	= gcc
 		INCS     = -I /usr/include -I /usr/local/include
 		LIBS     = -static-libgcc
 		# out file
 		BIN = ./fatfs
-
-	endif
 endif
 
 # flags	
@@ -45,7 +41,11 @@ OBJS = 	main.o \
 all: $(BIN) 
 
 $(BIN): $(OBJS)
+ifeq ($(HOSTOS),macos)
+	$(CC) $(OBJS) -o $(BIN)
+else
 	$(CC) $(OBJS) -o $(BIN) $(LIBS)
+endif
 
 %.o : %.c
 	@echo [CC] $@ $<

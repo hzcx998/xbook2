@@ -14,7 +14,11 @@ X_INCDIRS	+= include/ $(ARCH)/include/
 X_LDFLAGS	+= -no-pie -e kernel_start -Ttext 0x80100000
 
 AS			:=	nasm
-LD			:=  ld -m elf_i386
+ifeq ($(HOSTOS),macos)
+LD			:= x86_64-elf-ld -m elf_i386
+else
+LD			:= ld -m elf_i386
+endif
 export AS LD
 
 SRC			+= $(ARCH)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/
