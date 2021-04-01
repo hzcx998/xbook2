@@ -112,3 +112,5 @@ user/bin/touch/touch
 user/bin/bash/bash
 user/bin/hello/hello
 user/bin/uview/uview
+user/bin/mp3player/mp3player
+user/bin/wavplayer/wavplayer
