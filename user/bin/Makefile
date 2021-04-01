@@ -12,8 +12,14 @@ X_LIBDIRS	+= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \
 				$(LIBS_DIR)/netsocket \
 				$(LIBS_DIR)/uview \
 				
-LD			:= ld -m elf_i386
 AS			:=	nasm
+
+# MacOS
+ifeq ($(shell uname),Darwin)
+	LD			:=  i386-elf-ld -m elf_i386
+else
+	LD			:=  ld -m elf_i386
+endif
 
 export AS LD
 

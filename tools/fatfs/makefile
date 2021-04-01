@@ -24,6 +24,14 @@ else
 		LIBS     = -static-libgcc
 		# out file
 		BIN = ./fatfs
+	endif
+
+	ifeq ($(shell uname),Darwin)
+		CC       	= gcc
+		INCS     = -I /usr/include -I /usr/local/include
+		LIBS     = 
+		# out file
+		BIN = ./fatfs
 
 	endif
 endif
