@@ -226,6 +226,8 @@ void proc_exec_init(task_t *task)
     exception_manager_init(&task->exception_manager);
     task_do_cancel(task);
     sys_port_comm_unbind(-1);
+    
+    fpu_init(&task->fpu, 1); /* 需要初始化fpu */
 }
 
 int proc_destroy(task_t *task, int thread)
@@ -300,6 +302,7 @@ void proc_entry(void* arg)
 {
     const char *pathname = (const char *) arg;
     task_t *cur = task_current;
+    
     sys_execve(pathname, (const char **)cur->vmm->argv, (const char **)cur->vmm->envp);
     /* rease proc resource */
     proc_release(cur);

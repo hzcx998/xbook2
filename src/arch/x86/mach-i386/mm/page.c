@@ -126,7 +126,7 @@ void page_unlink_addr(unsigned long vaddr)
 		*pte &= ~PAGE_ATTR_PRESENT;
         tlb_flush_one(vaddr);    
     } else {
-        warnprint("page_unlink_addr: addr %x phy addr not present!\n", vaddr);
+        //warnprint("page_unlink_addr: addr %x phy addr not present!\n", vaddr);
     }
 }
 
