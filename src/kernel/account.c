@@ -330,7 +330,7 @@ int account_login(const char *name, char *password)
         return -1;
     }
     if (strcmp(account->password, password) != 0) {
-        errprint("password %s not match!\n", name);
+        errprint("password %s not match!\n", password);
         return -1;
     }
     /* 之前登陆过，但是没有退出登录，强制退出其权限  */
@@ -691,9 +691,11 @@ int account_manager_init()
         panic("account manager read config failed!\n");
 
     /* default login root */
+    
     if (account_login(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD) < 0)
         panic("account: login root failed!\n");
     
     keprint(PRINT_INFO "account init: done.\n");
+
     return 0;
 }
