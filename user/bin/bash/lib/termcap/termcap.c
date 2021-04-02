@@ -292,7 +292,7 @@ tgetst1 (ptr, area)
 short ospeed;
 /* If OSPEED is 0, we use this as the actual baud rate.  */
 int tputs_baud_rate;
-__private_extern__ char PC = '\0';
+static char PC = '\0';
 
 /* Actual baud rate if positive;
    - baud rate / 100 if negative.  */
