@@ -178,6 +178,7 @@
         "fatfs.h": "c",
         "file.h": "c",
         "istream": "c",
-        "hardirq.h": "c"
+        "hardirq.h": "c",
+        "sconf.h": "c"
     }
 }
