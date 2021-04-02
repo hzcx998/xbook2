@@ -312,7 +312,7 @@ static unsigned int kbd_keymap[MAX_SCAN_CODE_NR * KEYMAP_COLS] = {
 /* 0x34 - '.'		*/	'.',		'>',		0,
 /* 0x35 - '/'		*/	'/',		'?',		KBD_PAD_SLASH,
 /* 0x36 - r. SHIFT	*/	KBD_SHIFT_R,	KBD_SHIFT_R,	0,
-/* 0x37 - '*'		*/	'*',		'*',    	0,
+/* 0x37 - '*'		*/	KBD_PAD_STAR,		'*',    	0,
 /* 0x38 - ALT		*/	KBD_ALT_L,		KBD_ALT_L,  	KBD_ALT_R,
 /* 0x39 - ' '		*/	' ',		' ',		0,
 /* 0x3A - caps_lock	*/	KBD_CAPS_LOCK,	KBD_CAPS_LOCK,	0,
@@ -497,7 +497,6 @@ typedef struct _device_extension {
 	int	column;		/* 数据位于哪一列 */
 
     fifo_io_t fifoio;
-    unsigned int keycode;       /* 解析出来的键值 */
     input_even_buf_t evbuf;     /* 事件缓冲区 */
     uint32_t flags;
     uint32_t opened;
@@ -818,13 +817,13 @@ unsigned int keyboard_do_read(device_extension_t *ext)
 			break;
 		case KBD_NUM_LOCK:
 			if (make) {
-				ext->num_lock    = !ext->num_lock;
+             	ext->num_lock    = !ext->num_lock;
 				set_leds(ext);
 			}
 			break;
 		case KBD_SCROLL_LOCK:
 			if (make) {
-				ext->scroll_lock = !ext->scroll_lock;
+             	ext->scroll_lock = !ext->scroll_lock;
 				set_leds(ext);
 			}
 			break;	
@@ -904,7 +903,7 @@ unsigned int keyboard_do_read(device_extension_t *ext)
                 }
                 break;
             }
-#endif /* CONFIG_PAD */
+#endif /* CONFIG_PAD_FIX */
         }
         /* 如果有组合件，就需要合成成为组合后的按钮，可以是ctl+alt+shift+按键的格式 */
         key |= ext->shift_left	? KBD_FLAG_SHIFT_L	: 0;
@@ -921,7 +920,7 @@ unsigned int keyboard_do_read(device_extension_t *ext)
         /* 设置锁标志 */
         key |= ext->num_lock ? KBD_FLAG_NUM : 0;
         key |= ext->caps_lock ? KBD_FLAG_CAPS : 0;
-
+        
         /* 把按键输出 */
         return key;
 	}
@@ -979,6 +978,7 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
     if (even && ioreq->parame.read.length == sizeof(input_event_t)) {
         
         if (ext->flags & DEV_NOWAIT) {
+            // 解析
             if (input_even_get(&ext->evbuf, even) < 0) {
                 status = IO_FAILED;
             } else {
@@ -989,8 +989,10 @@ iostatus_t keyboard_read(device_object_t *device, io_request_t *ioreq)
             }
         } else {
             while (1) {
+                // 解析
                 if (!input_even_get(&ext->evbuf, even))
                     break;
+                task_yeild();
             }
         }
     } else {
@@ -1045,7 +1047,7 @@ void kbd_thread(void *arg) {
     while (1) {
         key = 0;
         key = keyboard_do_read(ext);
-        if (key > 0) {
+        if (key > 0 && (key & KBD_KEY_MASK)) {
             input_event_t e;
             e.type = EV_KEY;
             if (key & KBD_FLAG_BREAK) {
@@ -1061,8 +1063,6 @@ void kbd_thread(void *arg) {
             keprint(PRINT_DEBUG "key even set: type=%d code=%x value=%d\n", e.type, e.code, e.value);
             keprint(PRINT_DEBUG "key even buf: head=%d tail=%d\n", ext->evbuf.head, ext->evbuf.tail);
 #endif
-            /* 解析成输入数据并放到缓冲区中 */
-            ext->keycode = key;
 #ifdef DEBUG_DRV
         keprint(PRINT_DEBUG "kbd_thread: key:%c\n", key);
 #endif
@@ -1090,7 +1090,6 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
     devext->device_object = devobj;
 
     devext->irq = IRQ1;
-    devext->keycode = 0;
     devext->flags = 0;
     devext->opened = 0;
     

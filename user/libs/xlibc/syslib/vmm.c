@@ -18,16 +18,22 @@ void *heap(void *heap)
     return syscall1(void *, SYS_HEAP, heap);
 }
 
+void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+{
+    mmap_args_t args = {addr, length, prot, flags, fd, offset};
+    return syscall1(void * , SYS_MMAP, &args);
+}
+
 /**
- * mmap() - memory map for file
+ * xmmap() - memory map for file for xbook
  * @fd: file descriptor
  * @length: file length
  * @flags: map flags
  * @return: success is 0, failed is -1 
  */
-void *mmap(int fd, size_t length, int flags)
+void *xmmap(int fd, size_t length, int flags)
 {
-    return syscall3(void * , SYS_MMAP, fd, length, flags);
+    return mmap(NULL, length, 0, flags, fd, 0); // prot = PROT_READ | PROT_WRITE
 }
 
 /**
@@ -40,6 +46,18 @@ void *mmap(int fd, size_t length, int flags)
 int munmap(void *addr, size_t length)
 {
     return syscall2(int , SYS_MUNMAP, addr, length);
+}
+
+/**
+ * xmunmap() - ummap memory range for xbook
+ * @addr: start addr
+ * @length: memory length
+ * 
+ * @return: success is 0, failed is -1 
+ */
+int xmunmap(void *addr, size_t length)
+{
+    return munmap(addr, length);
 }
 
 

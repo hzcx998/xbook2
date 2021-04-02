@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define CPU_DEV "cpu0"
+#define CPU_DEV "/dev/cpu0"
 
 int main(int argc, char *argv[]) {
-    int fd = opendev(CPU_DEV, O_RDONLY);
+    int fd = open(CPU_DEV, O_RDONLY);
     if (fd < 0) {
         printf("cpuinfo: open cpu device failed!\n");
         return -1;

@@ -19,5 +19,5 @@ int arch_init()
     physic_memory_init();
     pic_init();
     pci_init();
-	return 0;
+    return 0;
 }

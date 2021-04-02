@@ -66,7 +66,6 @@ USER_DIR	= ./user
 LIBS_DIR	= $(USER_DIR)/libs
 SBIN_DIR	= $(USER_DIR)/sbin
 BIN_DIR		= $(USER_DIR)/bin
-SERV_DIR	= $(USER_DIR)/serv
 
 #kernel disk
 LOADER_OFF 	= 2
@@ -121,7 +120,6 @@ build:
 	-$(MKDIR) $(IMAGE_DIR)
 	-$(MKDIR) $(ROM_DIR)/bin
 	-$(MKDIR) $(ROM_DIR)/sbin
-	-$(MKDIR) $(ROM_DIR)/usr
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG) 
@@ -132,7 +130,6 @@ endif
 	$(MAKE) -s -C  $(LIBS_DIR)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
-	$(MAKE) -s -C  $(SERV_DIR)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 
 # 清理环境。
@@ -145,24 +142,20 @@ endif
 	$(MAKE) -s -C  $(LIBS_DIR) clean
 	$(MAKE) -s -C  $(SBIN_DIR) clean
 	$(MAKE) -s -C  $(BIN_DIR) clean
-	$(MAKE) -s -C  $(SERV_DIR) clean
 	-$(RM) -r $(ROM_DIR)/bin
 	-$(RM) -r $(ROM_DIR)/sbin
-	-$(RM) -r $(ROM_DIR)/usr
 	-$(RM) -r $(ROM_DIR)/acct
 	-$(RM) -r $(IMAGE_DIR)
 	
 user: 
 	$(MAKE) -s -C  $(LIBS_DIR) && \
 	$(MAKE) -s -C  $(SBIN_DIR) && \
-	$(MAKE) -s -C  $(BIN_DIR) && \
-	$(MAKE) -s -C  $(SERV_DIR)
+	$(MAKE) -s -C  $(BIN_DIR)
 
 user_clean: 
 	$(MAKE) -s -C  $(LIBS_DIR) clean && \
 	$(MAKE) -s -C  $(SBIN_DIR) clean && \
-	$(MAKE) -s -C  $(BIN_DIR) clean && \
-	$(MAKE) -s -C  $(SERV_DIR) clean
+	$(MAKE) -s -C  $(BIN_DIR) clean
 
 dump:
 	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > $(KERNSRC)/kern.dump
@@ -196,17 +189,23 @@ QEMU_KVM := -accel hax
 else
 QEMU_KVM := -enable-kvm
 endif
-#QEMU_KVM := # no virutal
+QEMU_KVM := # no virutal
 
-QEMU_ARGUMENT = -m 512M \
-		-name "XBOOK Development Platform for x86" \
+QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
+		-name "Xbook2 Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
-		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
+		-drive id=disk0,file=$(HDA_IMG),if=none \
+		-drive id=disk1,file=$(HDB_IMG),if=none \
+		-device ahci,id=ahci \
+		-device ide-drive,drive=disk0,bus=ahci.0 \
+		-device ide-drive,drive=disk1,bus=ahci.1 \
+		-rtc base=localtime \
 		-boot a \
-		-serial stdio \
 		-soundhw sb16 \
-		-soundhw pcspk
-
+		-serial stdio  \
+		-soundhw pcspk \
+		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no
+		
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 #		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
 
@@ -217,3 +216,4 @@ qemu: all
 # 调试配置：-S -gdb tcp::10001,ipv4
 qemudbg: all
 	$(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
+

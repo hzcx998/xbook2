@@ -13,10 +13,7 @@
 
 #define DEV_NAME "com"
 
-/* 传输方法：0->user, 1->buffered, 2->direct  */
-#define TRANS_METHOD 1
-
-// #define DEBUG_DRV
+/* #define DEBUG_DRV */
 
 /* 串口的地址是IO地址 */
 #define COM1_BASE   0X3F8
@@ -199,7 +196,7 @@ iostatus_t serial_read(device_object_t *device, io_request_t *ioreq)
 {
     unsigned long len = ioreq->parame.read.length;
     
-    uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
+    uint8_t *buf = (uint8_t *)ioreq->user_buffer; 
     int i = len;
     
     while (i > 0) {
@@ -208,7 +205,7 @@ iostatus_t serial_read(device_object_t *device, io_request_t *ioreq)
         buf++;
     }
 #ifdef DEBUG_DRV    
-    buf = (uint8_t *)ioreq->system_buffer; 
+    buf = (uint8_t *)ioreq->user_buffer; 
     keprint(PRINT_DEBUG "serial_write: %s\n", buf);
 #endif
     ioreq->io_status.status = IO_SUCCESS;
@@ -222,9 +219,10 @@ iostatus_t serial_read(device_object_t *device, io_request_t *ioreq)
 
 iostatus_t serial_write(device_object_t *device, io_request_t *ioreq)
 {
-    unsigned long len = ioreq->parame.write.length;
     
-    uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
+    unsigned long len = ioreq->parame.write.length;
+    uint8_t *buf = (uint8_t *)ioreq->user_buffer; 
+
     int i = len;
 #ifdef DEBUG_DRV    
     keprint(PRINT_DEBUG "serial_write: %s\n", buf);
@@ -288,7 +286,7 @@ static iostatus_t serial_enter(driver_object_t *driver)
             return status;
         }
         /* buffered io mode */
-        devobj->flags = DO_BUFFERED_IO;
+        devobj->flags = 0;
 
         devext = (device_extension_t *)devobj->device_extension;
         string_new(&devext->device_name, devname, DEVICE_NAME_LEN);

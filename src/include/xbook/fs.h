@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <xbook/spinlock.h>
 #include <xbook/fsal.h>
+#include <xbook/memspace.h>
 
 int file_system_init();
 
@@ -33,7 +34,10 @@ int sys_dup(int oldfd);
 int sys_dup2(int oldfd, int newfd);
 int sys_pipe(int fd[2]);
 long sys_fsize(int fd);
-void *sys_mmap(int fd, size_t length, int flags);
+void *sys_mmap(mmap_args_t *args);
+int sys_fastio(int fd, int cmd, void *arg);
+int sys_fastread(int fd, void *buffer, size_t nbytes);
+int sys_fastwrite(int fd, void *buffer, size_t nbytes);
 
 int sys_mount(
     char *source,         /* 需要挂载的资源 */
@@ -48,7 +52,6 @@ int sys_mkfs(char *source,         /* 需要创建FS的设备 */
     unsigned long flags   /* 标志 */
 );
 
-int sys_opendev(const char *path, int flags);
 int sys_probedev(const char *name, char *buf, size_t buflen);
 int sys_openfifo(const char *fifoname, int flags);
 
@@ -65,5 +68,6 @@ int kfile_lseek(int fd, off_t offset, int whence);
 int kfile_close(int fd);
 int kfile_mkdir(const char *path, mode_t mode);
 int kfile_rmdir(const char *path);
+int kfile_getcwd(char *buf, int bufsz);
 
 #endif /* _XBOOK_FS_H */

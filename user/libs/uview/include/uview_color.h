@@ -25,6 +25,6 @@ typedef struct {
 #define UVIEW_GRAY       UVIEW_RGB(195, 195, 195)
 #define UVIEW_LEAD       UVIEW_RGB(127, 127, 127)
 #define UVIEW_YELLOW     UVIEW_RGB(255, 255, 0)
-#define UVIEW_NONE       UVIEW_ARGB(0, 0, 0, 0)
+#define UVIEW_NONE_COLOR UVIEW_ARGB(0, 0, 0, 0)
 
 #endif  /* _LIB_UVIEW_COLOR_H */

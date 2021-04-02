@@ -21,6 +21,8 @@ typedef unsigned short wchar_t;
 
 #endif /* __cplusplus */
 
+typedef long int ptrdiff_t;
+
 /*
  *这里是define类型的
  */
@@ -43,8 +45,19 @@ typedef unsigned short wchar_t;
 __buildin_expect((x), 1)表示x的值为真的可能性更大.
 __buildin_expect((x), 0)表示x的值为假的可能性更大. 
 */
-#define likely(x) __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
+#if 0 /* no likely in stddef */
+#if defined (__GNUC__)
+#  define unlikely(expr) __builtin_expect ((expr), 0)
+#else
+#  define unlikely(expr)  (expr)
+#endif
+
+#if defined (__GNUC__)
+#  define likely(x) __builtin_expect(!!(x), 1)
+#else
+#  define likely(expr)  (expr)
+#endif
+#endif
 
 #ifndef NULL
 #ifdef __cplusplus

@@ -10,6 +10,7 @@
 #include <sys/res.h>
 #include <sys/input.h>
 #include "initcall.h"
+#include "fsal.h"
 
 #define DRIVER_NAME_LEN 32
 
@@ -50,6 +51,9 @@ enum _io_request_function {
     IOREQ_WRITE,                    /* 设备写入派遣索引 */
     IOREQ_DEVCTL,                   /* 设备控制派遣索引 */
     IOREQ_MMAP,                     /* 设备内存映射派遣索引 */
+    IOREQ_FASTIO,                   /* 设备快速IO派遣索引 */
+    IOREQ_FASTREAD,                 /* 设备快速读取派遣索引 */
+    IOREQ_FASTWRITE,                /* 设备快速写入派遣索引 */
     MAX_IOREQ_FUNCTION_NR
 };
 
@@ -166,6 +170,8 @@ typedef struct _device_object
     atomic_t reference;                 /* 引用计数，管理设备打开情况 */
     io_request_t *cur_ioreq;            /* 当前正在处理的io请求 */
     string_t name;                      /* 名字 */
+    uint16_t mtime;                     /* 设备修改时的时间 */
+    uint16_t mdate;                     /* 设备修改时的日期 */
     struct {
         spinlock_t spinlock;            /* 设备自旋锁 */
         mutexlock_t mutexlock;          /* 设备互斥锁 */
@@ -175,6 +181,8 @@ typedef struct _device_object
 
 /* 派遣函数定义 */ 
 typedef iostatus_t (*driver_dispatch_t)(device_object_t *device, io_request_t *ioreq);
+/* 派遣函数定义 */ 
+typedef iostatus_t (*driver_dispatch_fastio_t)(device_object_t *, int , void *);
 
 /* 驱动标准函数定义 */
 typedef iostatus_t (*driver_func_t)(struct _driver_object *driver);
@@ -281,5 +289,9 @@ int input_even_get(input_even_buf_t *evbuf, input_event_t *even);
 
 void drivers_print();
 void drivers_print_mini();
+
+#define DEVFS_PATH  "/devfs"
+/* 导出devfs */
+extern fsal_t devfs_fsal;
 
 #endif   /* _XBOOK_DRIVER_H */

@@ -56,6 +56,13 @@ static inline int uview_region_valid(uview_region_t *region)
         ((region)->left <= (x) && (x) < (region)->right && \
         (region)->top <= (y) && (y) < (region)->bottom)
 
+static inline void uview_rect_init(uview_rect_t *rect, int x, int y, int width, int height)
+{
+    rect->x = x;
+    rect->y = y;
+    rect->w.uw = width;
+    rect->h.uh = height;
+}
 
 static inline void uview_rect_reset(uview_rect_t *rect)
 {

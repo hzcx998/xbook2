@@ -46,15 +46,15 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("   PID   PPID     STAT    PRO      TICKS    NAME\n");
+    printf("   PID   PPID   PGID     STAT    PRO      TICKS    NAME\n");
     while (!tstate(&ts, &num)) {
         /* 如果没有全部标志，就只显示用户进程。也就是ppid不为-1的进程 */
         if (!all) {
             if (ts.ts_ppid == -1)
                 continue;
         }
-        printf("%6d %6d %8s %6d %10d    %s\n", 
-            ts.ts_pid, ts.ts_ppid, proc_print_status[(unsigned char) ts.ts_state], ts.ts_priority,
+        printf("%6d %6d %6d %8s %6d %10d    %s\n", 
+            ts.ts_pid, ts.ts_ppid, ts.ts_pgid, proc_print_status[(unsigned char) ts.ts_state], ts.ts_priority,
             ts.ts_runticks, ts.ts_name);
     }
     return 0;

@@ -7,16 +7,40 @@
 view_t *view_env_get_activity();
 void view_env_set_activity(view_t *view);
 
-view_t *view_env_get_high_level_lower();
-void view_env_set_high_level_lower(view_t *view);
+view_t *view_env_get_middle();
+void view_env_set_middle(view_t *view);
+
+void view_env_set_hover(view_t *view);
 
 int view_env_try_activate(view_t *view);
 void view_env_do_mouse_hover(view_t *view, view_msg_t *msg, int lcmx, int lcmy);
 void view_env_do_drag(view_t *view, view_msg_t *msg, int lcmx, int lcmy);
 int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy);
 int view_env_filter_mouse_msg(view_msg_t *msg);
-int view_try_resize(view_t *view, view_rect_t *rect);
+int view_env_try_resize(view_t *view, view_rect_t *rect);
+int view_env_try_resize_ex(view_t *view, int width, int height);
 uint32_t view_env_get_screensize();
+uint32_t view_env_get_mousepos();
+uint32_t view_env_get_lastpos();
+
+int view_env_reset_hover_and_activity();
+
+typedef struct {
+    unsigned long timer_id;
+    unsigned long interval;
+} viewio_timer_t;
+
+int view_env_add_timer(view_t *view, uint32_t interval);
+int view_env_del_timer(view_t *view, unsigned long timer_id);
+int view_env_restart_timer(view_t *view, unsigned long timer_id, uint32_t interval);
+
+int view_env_send_to_monitor(view_t *view, int mid, int arg);
+int view_env_set_monitor(view_t *view, int is_taskbar);
+int view_env_check_monitor_exit(view_t *view);
+
+int view_env_set_winmaxim_rect(view_rect_t *rect);
+int view_env_get_winmaxim_rect(view_rect_t *rect);
+
 int view_env_init();
 int view_env_exit();
 

@@ -60,8 +60,8 @@ int view_dispatch_mouse_msg(view_msg_t *msg)
     list_t *list_head = view_get_show_list();
     view_t *view;
     list_for_each_owner_reverse (view, list_head, list) {
-        /* 固定视图就跳过 */
-        if (view->type == VIEW_TYPE_FIXED)
+        /* 鼠标视图就跳过 */
+        if (view == view_mouse.view)
             continue;
         int local_mx, local_my;
         local_mx = msg->data0 - view->x;
@@ -69,7 +69,7 @@ int view_dispatch_mouse_msg(view_msg_t *msg)
         if (local_mx >= 0 && local_mx < view->width && 
             local_my >= 0 && local_my < view->height) {
             /* 如果是在图层上点击了鼠标左键，那么就进行激活 */
-            if (view_msg_get_type(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
+            if (view_msg_get_id(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
                 view_env_try_activate(view);
             }
             view_env_do_mouse_hover(view, msg, local_mx, local_my);
@@ -89,6 +89,9 @@ int view_dispatch_mouse_msg(view_msg_t *msg)
 
 int view_dispatch_target_msg(view_msg_t *msg)
 {
+    if (msg->target == VIEW_TARGET_NONE)
+        return -1;
+    
     view_t *view = view_find_by_id(msg->target);
     if (!view) {
         return -1;

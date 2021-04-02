@@ -4,6 +4,7 @@
 /* 属于客户端API部分 */
 
 #include <drivers/view/color.h>
+#include "misc.h"
 
 typedef struct {
     unsigned int width;
@@ -24,6 +25,8 @@ int view_bitmap_destroy(view_bitmap_t *bitmap);
 void view_bitmap_putpixel(view_bitmap_t *bmp, int x, int y, view_color_t color);
 int view_bitmap_getpixel(view_bitmap_t *bmp, int x, int y, view_color_t *color);
 
+#define view_bitmap_getpixel_fast(bmp, x, y) ((bmp)->bits[(y) * (bmp)->width + (x)])
+
 static inline void view_bitmap_putpixel_unsafe(view_bitmap_t *bmp, int x, int y, view_color_t color)
 {
     bmp->bits[y * bmp->width + x] = color;
@@ -42,6 +45,8 @@ void view_bitmap_rectfill_ex(view_bitmap_t *bmp, int x1, int y1, int x2, int y2,
 void view_bitmap_rect(view_bitmap_t *bmp, int x, int y, uint32_t width, uint32_t height, view_color_t color);
 void view_bitmap_rectfill(view_bitmap_t *bmp, int x, int y, uint32_t width, uint32_t height, view_color_t color);
 void view_bitmap_clear(view_bitmap_t *bmp);
+
+void view_bitmap_blit(view_bitmap_t *src, view_rect_t *srcrect, view_bitmap_t *dst, view_rect_t *dstrect);
 
 typedef struct {
     unsigned int width;

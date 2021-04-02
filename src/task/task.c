@@ -21,6 +21,7 @@
 #include <xbook/process.h>
 #include <xbook/exception.h>
 #include <xbook/safety.h>
+#include <xbook/kernel.h>
 #include <xbook/fd.h>
 #include <math.h>
 #include <errno.h>
@@ -52,18 +53,21 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->timeslice = TASK_TIMESLICE_BASE + 1;
     task->ticks = task->timeslice;
     task->elapsed_ticks = 0;
+    task->syscall_ticks = task->syscall_ticks_delta = 0;
     task->vmm = NULL;
     task->pid = task_take_pid();
     task->tgid = task->pid; /* 默认都是主线程，需要的时候修改 */
+    task->pgid = -1;
     task->parent_pid = -1;
     task->exit_status = 0;
     // set kernel stack as the top of task mem struct
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KERN_STACK_SIZE);
     task->flags = 0;
-    timer_init(&task->sleep_timer, 0, 0, NULL);
+    fpu_init(&task->fpu, 0);
+    timer_init(&task->sleep_timer, 0, NULL, NULL);
     alarm_init(&task->alarm);
     exception_manager_init(&task->exception_manager);
-    task->errno = 0;
+    task->errcode = 0;
     task->pthread = NULL;
     task->fileman = NULL;
     task->exit_hook = NULL;
@@ -111,6 +115,14 @@ task_t *task_find_by_pid(pid_t pid)
     }
     interrupt_restore_state(flags);
     return NULL;
+}
+
+int task_is_child(pid_t pid, pid_t child_pid)
+{
+    task_t *child = task_find_by_pid(child_pid);
+    if (!child)
+        return 0;
+    return (child->parent_pid == pid);
 }
 
 /**
@@ -290,6 +302,48 @@ pid_t sys_get_tid()
     return task_current->pid;
 }
 
+/**
+ * 设置pgid时，进程只能为自己和子进程设置pgid
+ */
+int sys_set_pgid(pid_t pid, pid_t pgid)
+{
+    if (pid < 0 || pgid < -1)
+        return -EINVAL;
+    task_t *task = NULL;
+    task_t *cur = task_current;
+    
+    if (!pid) { /* pid=0：get current task pgid */
+        task = cur;
+    } else {
+        task = task_find_by_pid(pid);
+        if (!task)
+            return -ESRCH;
+    }
+    if (!pgid) {    /* 使用pid对应进程的pid */
+        pgid = task->pid;
+    }
+    /* pid不是自己的子进程或者是自己就退出 */
+    if (task->pid != cur->pid && !task_is_child(cur->pid, task->pid))
+        return -EPERM;
+    task->pgid = pgid;
+    return 0;
+}
+
+pid_t sys_get_pgid(pid_t pid)
+{
+    if (pid < 0)
+        return -EINVAL;
+    task_t *task = NULL;
+    if (!pid) { /* pid=0：get current task pgid */
+        task = task_current;
+    } else {
+        task = task_find_by_pid(pid);
+        if (!task)
+            return -ESRCH;
+    }
+    return task->pgid;
+}
+
 void tasks_print()
 {
     keprint("\n----Task----\n");
@@ -314,6 +368,7 @@ int sys_tstate(tstate_t *ts, unsigned int *idx)
         if (n == index) {
             tmp_ts.ts_pid = task->pid;
             tmp_ts.ts_ppid = task->parent_pid;
+            tmp_ts.ts_pgid = task->pgid;
             tmp_ts.ts_tgid = task->tgid;
             tmp_ts.ts_state = task->state;
             tmp_ts.ts_priority = task->priority;
@@ -333,13 +388,24 @@ int sys_tstate(tstate_t *ts, unsigned int *idx)
     return -ESRCH;
 }
 
+int task_set_cwd(task_t *task, const char *path)
+{
+    if (!task || !path)
+        return -EINVAL;
+    int len = strlen(path);
+    memset(task->fileman->cwd, 0, MAX_PATH);
+    memcpy(task->fileman->cwd, path, min(len, MAX_PATH));
+    return 0;
+}
+
 int sys_getver(char *buf, int len)
 {
     if (!buf || !len)
         return -EINVAL;
     char tbuf[32] = {0};
-    strcpy(tbuf, OS_NAME);
-    strcat(tbuf, OS_VERSION);
+    strcpy(tbuf, KERNEL_NAME);
+    strcat(tbuf, "-");
+    strcat(tbuf, KERNEL_VERSION);
     if (mem_copy_to_user(buf, tbuf, min(len, strlen(tbuf))) < 0)
         return -EFAULT;
     return 0;

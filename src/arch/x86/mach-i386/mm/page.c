@@ -45,6 +45,9 @@ bool page_writable(unsigned long vaddr, unsigned long nbytes)
     return true;
 }
 
+/**
+ * va虚拟地址和pa物理地址进行连接，虚拟地址必须是没有连接过的地址才行
+ */
 void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
 {
     unsigned long vaddr = (unsigned long )va;
@@ -73,6 +76,10 @@ void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
     }
 }
 
+/**
+ * 连接地址，如果虚拟地址里面已经存放了物理地址，那么就需要先释放对应的物理地址，然后再
+ * 进行地址连接
+ */
 void page_link_addr_unsafe(unsigned long va, unsigned long pa, unsigned long prot)
 {
     unsigned long vaddr = (unsigned long )va;
@@ -109,20 +116,29 @@ void page_link_addr_unsafe(unsigned long va, unsigned long pa, unsigned long pro
     }
 }
 
+/**
+ * 修清除改虚拟地址对应的物理页连接，并释放对应的物理页
+ */
 void page_unlink_addr(unsigned long vaddr)
 {
 	pte_t *pte = vir_addr_to_table_entry(vaddr);
 	if (*pte & PAGE_ATTR_PRESENT) {
 		*pte &= ~PAGE_ATTR_PRESENT;
-        tlb_flush_one(vaddr);        
+        tlb_flush_one(vaddr);    
+    } else {
+        //warnprint("page_unlink_addr: addr %x phy addr not present!\n", vaddr);
     }
 }
 
+/**
+ * 映射一片区域的虚拟地址，物理地址是根据需要分配（安全连接）
+ */
 int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
 {
     unsigned long flags;
     interrupt_save_and_disable(flags);
-    unsigned long first = start & PAGE_MASK;
+    start &= PAGE_MASK;
+    unsigned long end = start + len;
     len = PAGE_ALIGN(len);
     unsigned int attr = 0;    
     if (prot & PROT_USER)
@@ -135,33 +151,24 @@ int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
     else
         attr |= PAGE_ATTR_READ;
 
-	unsigned long pages = len / PAGE_SIZE;
-    while (pages > 0) { 
-        uint32_t trunk;
-        if ((pages / MEM_SECTION_MAX_SIZE) > 0)
-            trunk = MEM_SECTION_MAX_SIZE;
-        else
-            trunk = pages;
-
-        unsigned long page_addr = page_alloc_user(trunk);
+    while (start < end) { 
+        unsigned long page_addr = page_alloc_user(1);
         if (!page_addr) {
-            keprint(PRINT_ERR "%s: map no free pages for %d count!\n", __func__, len / PAGE_SIZE);
+            keprint(PRINT_ERR "%s: alloc user page failed!\n", __func__);
             interrupt_restore_state(flags);
             return -1;
         }
-        
-        pages -= trunk;
-        while (trunk > 0) {
-            --trunk;
-            page_link_addr(first, page_addr, attr);
-            first += PAGE_SIZE;
-            page_addr += PAGE_SIZE;
-        }
+        page_link_addr(start, page_addr, attr);
+        start += PAGE_SIZE;
     }
     interrupt_restore_state(flags);
 	return 0;
 }
 
+
+/**
+ * 映射一片区域的虚拟地址，物理地址使用指定的地址（安全连接）
+ */
 int page_map_addr_fixed(unsigned long start, unsigned long addr, unsigned long len, unsigned long prot)
 {
     unsigned long flags;
@@ -196,12 +203,18 @@ int page_map_addr_fixed(unsigned long start, unsigned long addr, unsigned long l
 	return 0;
 }
 
+/**
+ * 通过计算把虚拟地址转换为物理地址
+ */
 unsigned long addr_vir2phy(unsigned long vaddr)
 {
 	pte_t* pte = vir_addr_to_table_entry(vaddr);
 	return ((*pte & 0xfffff000) + (vaddr & 0x00000fff));
 }
 
+/**
+ * 取消一片内存区域的映射，会释放虚拟地址里面的物理页
+ */
 int page_unmap_addr(unsigned long vaddr, unsigned long len)
 {
 	if (!len)
@@ -211,17 +224,19 @@ int page_unmap_addr(unsigned long vaddr, unsigned long len)
 	len = PAGE_ALIGN(len);
 	unsigned long paddr, start = (unsigned long)vaddr & PAGE_MASK;
     unsigned long end = start + len;
-	
-	paddr = addr_vir2phy(start);
 	while (start < end)	{
+        paddr = addr_vir2phy(start);
 		page_unlink_addr(start);
+	    page_free(paddr);
 		start += PAGE_SIZE;
 	}
-	page_free(paddr);
     interrupt_restore_state(flags);
 	return 0;
 }
 
+/**
+ * 映射一片内存区域，如果虚拟地址对应的物理地址不存在才为其分配物理地址，已经存在就默认使用原来的物理页。
+ */
 int page_map_addr_safe(unsigned long start, unsigned long len, unsigned long prot)
 {
     unsigned long flags;
@@ -274,11 +289,17 @@ static int is_page_table_empty(pte_t *page_table)
     return 1;   // empty
 }
 
+
+/**
+ * 取消一片内存区域的映射，会释放虚拟地址里面的物理页。如果存在物理页才释放物理页。
+ * 如果是固定的区域，那么就不会释放物理页。
+ */
 int page_unmap_addr_safe(unsigned long start, unsigned long len, char fixed)
 {
     unsigned long flags;
     interrupt_save_and_disable(flags);
     unsigned long vaddr = (unsigned long )start & PAGE_MASK;
+    unsigned long paddr;
     len = PAGE_ALIGN(len);
     unsigned long pages = DIV_ROUND_UP(len, PAGE_SIZE);
     unsigned long pte_idx;       /* pte -> physic page */
@@ -290,25 +311,27 @@ int page_unmap_addr_safe(unsigned long start, unsigned long len, char fixed)
         if ((*pde & PAGE_ATTR_PRESENT)) {
             while ((pte_idx = PAGE_TABLE_ENTRY_IDX(vaddr)) < PAGE_TABLE_ENTRY_NR) {
                 pte = vir_addr_to_table_entry(vaddr);
+                paddr = addr_vir2phy(vaddr);
                 if (*pte & PAGE_ATTR_PRESENT) {
                     /* free physic page if not fixed */
                     if (!fixed)
-                        page_free(*pte & PAGE_MASK);
+                        page_free(paddr);
                     *pte &= ~PAGE_ATTR_PRESENT;
+                    tlb_flush_one(vaddr);    
                 }
+                
                 vaddr += PAGE_SIZE;
                 pages--;
                 if (!pages) {
                     if (is_page_table_empty((pte_t *)((unsigned long)pte & PAGE_MASK))) {
-                        page_free(*pde & PAGE_MASK);            
+                        page_free(*pde & PAGE_MASK);      
+                        *pde &= ~PAGE_ATTR_PRESENT;      
                     }
                     goto end_unmap;
                 }
                 if (pte_idx == PAGE_TABLE_ENTRY_NR - 1)
                     break;
             }
-            page_free(*pde & PAGE_MASK);
-            *pde &= ~PAGE_ATTR_PRESENT;
         } else {
             vaddr += PAGE_SIZE;
             --pages;
@@ -339,6 +362,11 @@ unsigned long *kern_page_dir_copy_to()
     return (unsigned long *)vaddr;
 }
 
+/**
+ * 将物理地址[start, end]区间映射到高端地址
+ * [HIGH+start, HIGH+end]
+ * 并且只能通过高端地址来访问这段地址
+ */
 void kern_page_map_early(unsigned int start, unsigned int end)
 {
 	unsigned int *pdt = (unsigned int *)KERN_PAGE_DIR_VIR_ADDR;
@@ -407,6 +435,7 @@ static int do_page_no_write(unsigned long addr)
 static inline void do_vir_mem_fault(unsigned long addr)
 {
     keprint("do_vir_mem_fault\n");
+    keprint(PRINT_EMERG "page fault at %x.\n", addr);
     /* TODO: 如果是在vir_mem区域中，就进行页复制，不是的话，就发出段信号。 */
     exception_force_self(EXP_CODE_SEGV);
 }
@@ -463,9 +492,10 @@ int page_do_fault(trap_frame_t *frame)
 
     /* in kernel page fault */
     if (!(frame->error_code & PAGE_ERR_USER) && addr >= KERN_BASE_VIR_ADDR) {
+        
         keprint("task name=%s pid=%d\n", cur->name, cur->pid);
         keprint(PRINT_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
-        keprint(PRINT_EMERG "page fault at %x.\n");
+        keprint(PRINT_EMERG "page fault at %x.\n", addr);
         trap_frame_dump(frame);
         
         panic("halt...");
@@ -474,6 +504,7 @@ int page_do_fault(trap_frame_t *frame)
     if (addr >= USER_VMM_SIZE) {
         /* TODO: 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
         keprint(PRINT_ERR "page fauilt: user pid=%d name=%s access unmaped vir_mem area.\n", cur->pid, cur->name);
+        keprint(PRINT_EMERG "page fault at %x.\n", addr);
         trap_frame_dump(frame);
         do_vir_mem_fault(addr);
         return -1;
@@ -482,6 +513,7 @@ int page_do_fault(trap_frame_t *frame)
     mem_space_t *space = mem_space_find(cur->vmm, addr);
     if (space == NULL) {    
         keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user access user unknown space.\n", cur->pid, cur->name);
+        keprint(PRINT_EMERG "page fault at %x.\n", addr);
         trap_frame_dump(frame);
         exception_force_self(EXP_CODE_SEGV);
         return -1;
@@ -497,7 +529,7 @@ int page_do_fault(trap_frame_t *frame)
                 errprint("page addr %x\n", addr);
                 keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user task stack out of range!\n", cur->pid, cur->name);
                 trap_frame_dump(frame);
-                exception_force_self(EXP_CODE_STKFLT);
+                exception_force_self(EXP_CODE_SEGV);
                 return -1;  
             }
         }

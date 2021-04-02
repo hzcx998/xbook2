@@ -19,33 +19,25 @@ int view_core_init()
 {
     view_thread_exit = 0;
     view_thread = NULL;
-    if (view_screen_init() < 0) {
-        return -1;
-    }
     if (view_section_init() < 0) {
-        view_screen_exit();
         return -1;
     }
     if (view_init() < 0) {
-        view_screen_exit();
         view_mouse_exit();        
         return -1;
     }
     if (view_mouse_init() < 0) {
-        view_screen_exit();
         view_mouse_exit();
         view_keyboard_exit();
         return -1;
     }
     if (view_keyboard_init() < 0) {
-        view_screen_exit();
         view_mouse_exit();
         view_keyboard_exit();
         view_section_exit();
         return -1;
     }
     if (view_global_msg_init() < 0) {
-        view_screen_exit();
         view_mouse_exit();
         view_keyboard_exit();
         view_section_exit();
@@ -54,7 +46,6 @@ int view_core_init()
     }
     if (view_env_init() < 0) {
         view_global_msg_exit();
-        view_screen_exit();
         view_mouse_exit();
         view_keyboard_exit();
         view_section_exit();
@@ -69,7 +60,6 @@ int view_core_init()
         view_mouse_exit();
         view_exit();
         view_section_exit();
-        view_screen_exit();
         return -1;
     }
     return 0;
@@ -89,35 +79,24 @@ int view_core_exit()
     view_mouse_exit();
     view_exit();
     view_section_exit();
-    view_screen_exit();
     return 0;
 }
 
 /* 输入的获取 */
 void view_core_loop()
 {
-    int yeild_count = 0;
     view_msg_t msg;
-    while (!view_thread_exit) {
-            
-        if (!view_mouse_poll()) {
-            yeild_count = 0;
-        }
-        #if 0
-        if (!view_keyboard_poll()) {
-            i = 0;
-        }
-        #endif
-        yeild_count++;
+    while (!view_thread_exit) {        
+        view_mouse_poll();
+        view_keyboard_poll();
         view_msg_reset(&msg);
         if (view_get_global_msg(&msg) < 0) {
-            if (yeild_count > 300)
-                task_yeild();
+            task_yeild();
             continue;
         }
         if (is_view_msg_valid(&msg)) {
             /* 处理消息 */
-            switch (view_msg_get_type(&msg)) {
+            switch (view_msg_get_id(&msg)) {
             case VIEW_MSG_KEY_DOWN:
             case VIEW_MSG_KEY_UP:
                 /* 键盘消息发送到聚焦的图层 */

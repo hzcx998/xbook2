@@ -1,5 +1,7 @@
 #include <drivers/view/bitmap.h>
 #include <stdlib.h>
+#include <stddef.h>
+#include <string.h>
 #include <xbook/memalloc.h>
 
 view_bitmap_t *view_bitmap_create(unsigned int width, unsigned int height)
@@ -197,4 +199,64 @@ void view_bitmap_rectfill(view_bitmap_t *bmp, int x, int y, uint32_t width, uint
     if (!bmp)
         return;
     view_bitmap_rectfill_ex(bmp, x, y, x + width - 1, y + height - 1, color);
+}
+
+void view_bitmap_clear(view_bitmap_t *bmp)
+{
+    memset(bmp->bits, 0, bmp->width * bmp->height * sizeof(view_color_t));
+}
+
+void view_bitmap_blit(view_bitmap_t *src, view_rect_t *srcrect, view_bitmap_t *dst, view_rect_t *dstrect)
+{
+    if (!src || !dst)
+        return;
+    // 处理src内部矩形
+    view_rect_t _srcrect;
+    if (!srcrect) {
+        _srcrect.x = 0;
+        _srcrect.y = 0;
+        _srcrect.w.sw = src->width;
+        _srcrect.h.sh = src->height;
+        srcrect = &_srcrect;
+    } else {
+        srcrect->w.sw = min(srcrect->w.sw, src->width);
+        srcrect->h.sh = min(srcrect->h.sh, src->height);
+    }
+    // 处理dst内部矩形
+    view_rect_t _dstrect;
+    if (!dstrect) {
+        _dstrect.x = 0;
+        _dstrect.y = 0;
+        _dstrect.w.sw = dst->width;
+        _dstrect.h.sh = dst->height;
+        dstrect = &_dstrect;
+    } else {
+        dstrect->w.sw = min(dstrect->w.sw, dst->width);
+        dstrect->h.sh = min(dstrect->h.sh, dst->height);
+    }
+
+    uint32_t color = 0;
+    int src_x = srcrect->x; 
+    int src_y = srcrect->y;
+    int src_w = srcrect->w.sw; 
+    int src_h = srcrect->h.sh;
+    int dst_x = dstrect->x;
+    int dst_y = dstrect->y;
+    int dst_w = dstrect->w.sw;
+    int dst_h = dstrect->h.sh;
+    while (src_h > 0 && dst_h > 0) {
+        for (src_x = srcrect->x, dst_x = dstrect->x, src_w = srcrect->w.sw, dst_w = dstrect->w.sw;
+            src_w > 0 && dst_w > 0;
+            src_x++, dst_x++, src_w--, dst_w--)
+        {
+            if (!view_bitmap_getpixel(src, src_x, src_y, &color)) {
+                if (((color >> 24) & 0xff))
+                    view_bitmap_putpixel(dst, dst_x, dst_y, color);
+            }   
+        }
+        src_y++;
+        dst_y++;
+        src_h--;
+        dst_h--;
+    }
 }

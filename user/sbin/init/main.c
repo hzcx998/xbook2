@@ -4,26 +4,22 @@
 #include <sys/ioctl.h>
 
 // #define _HAS_LOGIN
+// #define _HAS_NETSERV
 
 int main(int argc, char *argv[])
 {
     /* 打开tty，用来进行基础地输入输出 */
-    int tty0 = opendev("tty0", O_RDONLY);
+    int tty0 = open("/dev/tty0", O_RDONLY);
     if (tty0 < 0) {
         return -1;
     }
-    int tty1 = opendev("tty0", O_WRONLY);
+    int tty1 = open("/dev/tty0", O_WRONLY);
     if (tty1 < 0) {
         close(tty0);
         return -1;
     }
-    
-    int tty2 = opendev("tty0", O_WRONLY);
-    if (tty2 < 0) {
-        close(tty1);
-        close(tty0);
-        return -1;
-    }
+    int tty2 = dup(tty1);
+
     /* 创建一个子进程 */
     int pid = fork();
     if (pid < 0) {
@@ -40,19 +36,30 @@ int main(int argc, char *argv[])
             int _pid;
             _pid = waitpid(-1, &status, 0);    /* wait any child exit */
             if (_pid > 1) {
-                printf("[INIT]: process[%d] exit with status %d.\n", _pid, status);
+                printf("initd: process[%d] exit with status %d.\n", _pid, status);
             }
         }
     }
+    #ifdef _HAS_NETSERV
+    pid = fork();
+    if (pid < 0) {
+        printf("[INIT]: fork process error! stop service.\n");
+        close(tty2);
+        close(tty1);
+        close(tty0);
+        return -1;
+    } else if (pid == 0) { /* 子进程执行服务 */
+        exit(execv("/sbin/netserv", NULL));
+    }
+    #endif
+
+    setpgrp();
+    tcsetpgrp(STDIN_FILENO, getpgrp());
     #ifdef _HAS_LOGIN
-    pid = getpid();
-    ioctl(tty0, TTYIO_HOLDER, &pid);
     char *_argv[3] = {"-s", "/bin/sh", NULL};
     exit(execv("/sbin/login", _argv));
     #else
-    int status = execv("/bin/sh", NULL);
-    exit(status);
-
+    exit(execv("/bin/sh", NULL));
     #endif
     return 0;
 }

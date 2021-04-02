@@ -133,20 +133,17 @@ int memcmp(const void * s1, const void *s2, int n)
 	}
 	return 0;
 }
-char* strrchr(const char* str, int c)
-{
-   
-    char* ret = NULL;
-    while (*str)
-    {
-        if (*str == (char)c)
-            ret = (char *)str;
-        str++;
-    }
-    if ((char)c == *str)
-        ret = (char *)str;
 
-    return ret;
+char * strrchr(const char * str,int ch)
+{
+    if (!str)
+        return NULL;
+    char * start = (char *)str;
+    while(*str++);/*get the end of the string*/
+    while(--str != start && *str != (char)ch);
+    if(*str == (char)ch)
+        return((char *)str);
+    return NULL;
 }
 
 char* strcat(char* strDest , const char* strSrc)
@@ -199,7 +196,7 @@ char *strchr(const char *s, int c)
         return NULL;
     }
 
-    while(*s != '\0')
+    while(*s != '\0' || (*s == c))
     {
         if(*s == (char)c )
         {

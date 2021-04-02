@@ -5,22 +5,11 @@ LIBS_DIR	:= ../libs
 X_ASFLAGS	+= -f elf -I $(DIR_XLIBC)/indlude 
 X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99
 X_INCDIRS	+= $(LIBS_DIR)/xlibc/include $(LIBS_DIR)/pthread/include $(LIBS_DIR)/netsocket/include \
-				$(LIBS_DIR)/xbrower/include \
-				$(LIBS_DIR)/zlib \
-				$(LIBS_DIR)/libpng \
-				$(LIBS_DIR)/jpeg \
-				$(LIBS_DIR)/lvgl \
-				$(LIBS_DIR)/lvgl/include \
 				$(LIBS_DIR)/uview/include \
-				
+
 X_LDFLAGS	+= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 X_LIBDIRS	+= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \
 				$(LIBS_DIR)/netsocket \
-				$(LIBS_DIR)/xbrower \
-				$(LIBS_DIR)/zlib \
-				$(LIBS_DIR)/libpng \
-				$(LIBS_DIR)/jpeg \
-				$(LIBS_DIR)/lvgl \
 				$(LIBS_DIR)/uview \
 				
 ifeq ($(HOSTOS),macos)
@@ -33,6 +22,8 @@ AS			:=	nasm
 export AS LD
 
 # bin
+MODULE      +=  bash
+MODULE      +=  uview
 MODULE      +=  echo
 MODULE      +=  cat
 MODULE      +=  cal
@@ -50,8 +41,7 @@ MODULE      +=  rmdir
 MODULE      +=  touch
 MODULE      +=  tests
 MODULE      +=  hello
-MODULE      +=  osver
-MODULE      +=  lua
+MODULE      +=  uname
 MODULE      +=  sh
-MODULE      +=  xbrower
-MODULE      +=  desktop
+MODULE      +=  wavplayer
+MODULE      +=  mp3player

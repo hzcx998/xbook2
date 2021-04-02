@@ -50,9 +50,23 @@ static inline int view_region_valid(view_region_t *region)
     return 0;
 }
 
+static inline void view_region_copy(view_region_t *dst, view_region_t *src)
+{
+    *dst = *src;
+}
+
 #define view_region_in_range(region, x, y) \
         ((region)->left <= (x) && (x) < (region)->right && \
         (region)->top <= (y) && (y) < (region)->bottom)
+
+
+static inline void view_rect_init(view_rect_t *rect, int x, int y, int width, int height)
+{
+    rect->x = x;
+    rect->y = y;
+    rect->w.uw = width;
+    rect->h.uh = height;
+}
 
 static inline void view_rect_reset(view_rect_t *rect)
 {

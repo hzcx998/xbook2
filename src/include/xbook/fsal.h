@@ -23,6 +23,8 @@ typedef struct {
     int (*close)(int );
     int (*read)(int , void *, size_t );
     int (*write)(int , void *, size_t );
+    int (*fastread)(int , void *, size_t );
+    int (*fastwrite)(int , void *, size_t );
     int (*lseek)(int , off_t , int );
     int (*opendir)(char *);
     int (*closedir)(int);
@@ -50,13 +52,13 @@ typedef struct {
     int (*access)(const char *, int);
     int (*incref)(int);
     int (*decref)(int);
-    void *(*mmap)(int, size_t, int flags);
+    void *(*mmap)(int , void *, size_t, int, int, off_t);
+    int (*fastio)(int, int, void *);
     void *extention;
 } fsal_t;
 
 /* 文件抽象层接口 */
 extern fsal_t fsif;
-extern fsal_t devif;
 extern fsal_t pipeif_rd;
 extern fsal_t pipeif_wr;
 extern fsal_t fifoif;

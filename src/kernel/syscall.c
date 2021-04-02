@@ -12,11 +12,20 @@
 #include <xbook/walltime.h>
 #include <xbook/account.h>
 #include <xbook/portcomm.h>
+#include <xbook/kernel.h>
+#include <xbook/schedule.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <dirent.h>
 
 syscall_t syscalls[SYSCALL_NR];
+
+typedef unsigned long (*syscall_func_t)(
+    unsigned long,
+    unsigned long,
+    unsigned long,
+    unsigned long,
+    void *); 
 
 void syscall_default()
 {
@@ -110,7 +119,6 @@ void syscall_init()
     syscalls[SYS_EXPCATCH] = sys_expcatch;
     syscalls[SYS_EXPBLOCK] = sys_expblock;
     syscalls[SYS_EXPRET] = sys_excetion_return;
-    syscalls[SYS_OPENDEV] = sys_opendev;
     syscalls[SYS_OPENFIFO] = sys_openfifo;
     syscalls[SYS_ACNTLOGIN] = sys_account_login;
     syscalls[SYS_ACNTREGISTER] = sys_account_register;
@@ -125,9 +133,19 @@ void syscall_init()
     syscalls[SYS_REPLY_PORT] = sys_port_comm_reply;
     syscalls[SYS_REQUEST_PORT] = sys_port_comm_request;
     syscalls[SYS_SCANDEV] = sys_scandev;
+    syscalls[SYS_FASTIO] = sys_fastio;
+    syscalls[SYS_FASTREAD] = sys_fastread;
+    syscalls[SYS_FASTWRITE] = sys_fastwrite;
+    syscalls[SYS_EXPMASK] = sys_expmask;
+    syscalls[SYS_EXPHANDLER] = sys_exphandler;
+    syscalls[SYS_SYSCONF] = sys_sysconf;
+    syscalls[SYS_TIMES] = sys_times;
+    syscalls[SYS_GETHOSTNAME] = sys_gethostname;
+    syscalls[SYS_GETPGID] = sys_get_pgid;
+    syscalls[SYS_SETPGID] = sys_set_pgid;
 }
 
-int syscall_error(uint32_t callno)
+int syscall_check(uint32_t callno)
 {
     if (callno >= SYSCALL_NR) {
         keprint(PRINT_ERR "syscall: bad number %d, raise exception!\n", callno);
@@ -135,4 +153,19 @@ int syscall_error(uint32_t callno)
         return 1;
     }
     return 0;
+}
+
+unsigned long syscall_dispatch(trap_frame_t *frame)
+{
+    task_t *cur = task_current;
+    /* 开始统计时间 */
+    cur->syscall_ticks_delta = sys_get_ticks();
+    // TODO: call different func in different arch
+    syscall_func_t func = (syscall_func_t)syscalls[frame->eax];
+    unsigned long retval = func(frame->ebx, frame->ecx, frame->esi,
+                            frame->edi, frame);
+    /* 结束统计时间 */
+    cur->syscall_ticks_delta = sys_get_ticks() - cur->syscall_ticks_delta;
+    cur->syscall_ticks += cur->syscall_ticks_delta;
+    return retval;
 }

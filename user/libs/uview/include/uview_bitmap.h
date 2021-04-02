@@ -22,14 +22,17 @@ typedef struct {
     char refresh;
 } uview_io_t;
 
+uview_bitmap_t *uview_bitmap_create(unsigned int width, unsigned int height);
+int uview_bitmap_destroy(uview_bitmap_t *bitmap);
+
 static inline void uview_bitmap_init(uview_bitmap_t *vbmp, unsigned int width, unsigned int height, uview_color_t *bits)
 {
     vbmp->width = width;
     vbmp->height = height;
     vbmp->bits = bits;
 }
-void view_bitmap_putpixel(uview_bitmap_t *bmp, int x, int y, uview_color_t color);
-int view_bitmap_getpixel(uview_bitmap_t *bmp, int x, int y, uview_color_t *color);
+void uview_bitmap_putpixel(uview_bitmap_t *bmp, int x, int y, uview_color_t color);
+int uview_bitmap_getpixel(uview_bitmap_t *bmp, int x, int y, uview_color_t *color);
 
 static inline void uview_bitmap_putpixel_unsafe(uview_bitmap_t *bmp, int x, int y, uview_color_t color)
 {
@@ -49,5 +52,8 @@ void uview_bitmap_rectfill_ex(uview_bitmap_t *bmp, int x1, int y1, int x2, int y
 void uview_bitmap_rect(uview_bitmap_t *bmp, int x, int y, uint32_t width, uint32_t height, uview_color_t color);
 void uview_bitmap_rectfill(uview_bitmap_t *bmp, int x, int y, uint32_t width, uint32_t height, uview_color_t color);
 void uview_bitmap_clear(uview_bitmap_t *bmp);
+
+void uview_bitmap_bitblt(uview_bitmap_t *dest, int dest_x, int dest_y,
+        uview_bitmap_t *src, int src_x, int src_y, uint32_t width, uint32_t height);
 
 #endif  /* _LIB_UVIEW_BITMAP_H */

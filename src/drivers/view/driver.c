@@ -18,6 +18,8 @@
 #include <drivers/view/bitmap.h>
 #include <drivers/view/msg.h>
 #include <drivers/view/env.h>
+#include <drivers/view/mouse.h>
+#include <drivers/view/screen.h>
 
 
 #define DRV_NAME "view"
@@ -44,15 +46,17 @@ static iostatus_t view_open(device_object_t *device, io_request_t *ioreq)
         }
     }
     view_open_count++;
-    // 高16为宽度，低16位为高度
+    // 0~12:宽度，13~26：高度，27~31：type
     if (extension->view == NULL) {
-        extension->view = view_create(0, 0, (flags >> 16) & 0xffff, flags & 0xffff);
+        int width = (flags >> 12) & 0x1fff;
+        int height = flags & 0x1fff;
+        int type = (flags >> 26) & 0x1f;
+        extension->view = view_create(0, 0, width, height, type);
         if (extension->view == NULL) {
             status = IO_FAILED;
             goto end_open;
         }
-        view_render_rectfill(extension->view, 0, 0, 
-            extension->view->width, extension->view->height, VIEW_WHITE);
+        view_env_send_to_monitor(extension->view, VIEW_MSG_CREATE, 0);
     }
 
 end_open:
@@ -74,6 +78,9 @@ static iostatus_t view_close(device_object_t *device, io_request_t *ioreq)
             errprint("view driver: view close %s failed!\n", device->name.text);
             goto end_close;
         }
+        view_env_send_to_monitor(extension->view, VIEW_MSG_CLOSE, 0);
+        view_env_check_monitor_exit(extension->view);
+        view_env_reset_hover_and_activity();
         extension->view = NULL;
     }
     extension->flags = 0;
@@ -109,6 +116,41 @@ static iostatus_t view_read(device_object_t *device, io_request_t *ioreq)
     return status;
 }
 
+static iostatus_t view_fastread(device_object_t *device, size_t size, void *buf)
+{
+    device_extension_t *extension = device->device_extension;
+    iostatus_t status = IO_SUCCESS;
+    view_t *view = extension->view;
+    if (view && size > 0) {
+        if (view_get_msg(view, buf, 
+            (extension->flags & DEV_NOWAIT) > 0 ? VIEW_MSG_NOWAIT : 0) < 0)
+            status = IO_FAILED;
+    } else {
+        status = IO_FAILED;
+    }
+    return status;
+}
+
+static int __view_write_msg(view_msg_t *msg, int flags)
+{
+    if (msg->target == VIEW_TARGET_NONE) {
+        errprint("view target %d none!\n", msg->target);
+        return -1;        
+    }
+    view_t *view = view_find_by_id(msg->target);
+    if (!view) {
+        errprint("view target %d not found!\n", msg->target);
+        return -1;
+    }
+    /* 监视特殊消息 */
+    if (view_msg_get_id(msg) == VIEW_MSG_SETICON) {
+        // 将消息转发给监视器
+        view_env_send_to_monitor(view, VIEW_MSG_SETICON, msg->data1);
+    }
+    /* 转发-发送消息 */
+    return view_put_msg(view, msg, flags);
+}
+
 static iostatus_t view_write(device_object_t *device, io_request_t *ioreq)
 {
     device_extension_t *extension = device->device_extension;
@@ -116,7 +158,7 @@ static iostatus_t view_write(device_object_t *device, io_request_t *ioreq)
     /* 往消息池放入消息 */
     view_t *view = extension->view;
     if (view && ioreq->parame.write.length > 0) {
-        if (view_put_msg(view, ioreq->user_buffer, 
+        if (__view_write_msg(ioreq->user_buffer, 
             (extension->flags & DEV_NOWAIT) > 0 ? VIEW_MSG_NOWAIT : 0) < 0)
             status = IO_FAILED;
     } else {
@@ -127,25 +169,70 @@ static iostatus_t view_write(device_object_t *device, io_request_t *ioreq)
     return status;
 }
 
-static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
+static iostatus_t view_fastwrite(device_object_t *device, size_t size, void *buf)
 {
     device_extension_t *extension = device->device_extension;
-    unsigned long arg = ioreq->parame.devctl.arg;
     iostatus_t status = IO_SUCCESS;
     view_t *view = extension->view;
-    switch (ioreq->parame.devctl.code) {    
+    if (view && size > 0) {
+        if (__view_write_msg(buf, 
+            (extension->flags & DEV_NOWAIT) > 0 ? VIEW_MSG_NOWAIT : 0) < 0)
+            status = IO_FAILED;
+    } else {
+        status = IO_FAILED;
+    }
+    return status;
+}
+
+static iostatus_t view_mmap(device_object_t *device, io_request_t *ioreq)
+{
+    device_extension_t *extension = device->device_extension;
+    iostatus_t status = IO_SUCCESS;
+    view_t *view = extension->view;
+    if (view) {
+        ioreq->io_status.infomation = 0;
+        /* 检测参数大小 */
+        if (ioreq->parame.mmap.length <= view_get_vram_size(view)) {
+            void *addr = view_get_vram_start(view);
+            if (!addr) {
+                status = IO_FAILED;
+            } else {
+                unsigned long paddr = addr_vir2phy((unsigned long) addr);
+                ioreq->io_status.infomation = (unsigned long) paddr;     /* 返回物理地址 */        
+            }
+        }
+    } else {
+        status = IO_FAILED;
+    }
+    
+    ioreq->io_status.status = status;
+    io_complete_request(ioreq);
+    return status;
+}
+
+static iostatus_t __view_ioctl(device_extension_t *extension, int cmd, void *arg)
+{
+    iostatus_t status = IO_SUCCESS;
+    view_t *view = extension->view;
+    switch (cmd) {    
     case VIEWIO_SHOW:
         if (view == NULL) {
             status = IO_FAILED;
         } else {
-            view_show(view);
+            if (!view_show(view)) {
+                view_env_send_to_monitor(view, VIEW_MSG_SHOW, 0);
+                view_env_try_activate(view);
+            }
         }
         break;
     case VIEWIO_HIDE:
         if (view == NULL) {
             status = IO_FAILED;
         } else {
-            view_hide(view);
+            if (!view_hide(view)) {
+                view_env_send_to_monitor(view, VIEW_MSG_HIDE, 0);
+                view_env_reset_hover_and_activity();
+            }
         }
         break;
     case VIEWIO_SETPOS:
@@ -226,8 +313,8 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
         if (view == NULL) {
             status = IO_FAILED;
         } else {
-            view_rect_t *rect = (view_rect_t *) arg;
-            if (view_try_resize(view, rect) < 0)
+            unsigned int vsize = *(unsigned int *)arg;
+            if (view_env_try_resize_ex(view, (vsize >> 16) & 0xffff, vsize & 0xffff) < 0)
                 status = IO_FAILED;
         }
         break;
@@ -238,21 +325,150 @@ static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
             *(int *)arg = view_env_get_screensize();
         }
         break;
+    case VIEWIO_GETLASTPOS:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            *(unsigned int *)arg = view_env_get_lastpos();
+        }
+        break;
+    case VIEWIO_GETMOUSEPOS:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            *(unsigned int *)arg = view_env_get_mousepos();
+        }
+        break;
+    case VIEWIO_SETSIZEMIN:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            unsigned int size_min = *(unsigned int *)arg;
+            view_set_size_min(view, (size_min >> 16) & 0xffff, size_min & 0xffff);
+        }
+        break;
+    case VIEWIO_SETDRAGREGION:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            view_region_t *vreg = (view_region_t *) arg;
+            view_set_drag_region(view, vreg);
+        }
+        break;
+    case VIEWIO_SETMOUSESTATE:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            view_mouse_state_t state = *(view_mouse_state_t *) arg;
+            view_mouse_set_state(state);
+        }
+        break;
+    case VIEWIO_SETMOUSESTATEINFO:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            view_mouse_state_info_t *sinfo = (view_mouse_state_info_t *) arg;
+            if (view_mouse_set_state_info_ex(sinfo) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case VIEWIO_GETVID:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            *(unsigned int *)arg = view->id; 
+        }
+        break;
+    case VIEWIO_ADDTIMER:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            unsigned long interval = *(unsigned long *) arg;
+            int timer_id = view_env_add_timer(view, interval);
+            if (timer_id < 0)
+                status = IO_FAILED;
+            // 回写timer id
+            *(unsigned long *) arg = timer_id;
+        }
+        break;
+    case VIEWIO_DELTIMER:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            unsigned long timer_id = *(unsigned long *) arg;
+            if (view_env_del_timer(view, timer_id) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case VIEWIO_RESTARTTIMER:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            viewio_timer_t *vio_timer = (viewio_timer_t *) arg;
+            if (view_env_restart_timer(view, vio_timer->timer_id, vio_timer->interval) < 0)
+                status = IO_FAILED;
+        }
+        break;   
+    case VIEWIO_SETMONITOR:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            if (view_env_set_monitor(view, *(int *)arg) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case VIEWIO_SETWINMAXIMRECT:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            if (view_env_set_winmaxim_rect((view_rect_t *) arg) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case VIEWIO_GETWINMAXIMRECT:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            if (view_env_get_winmaxim_rect((view_rect_t *) arg) < 0)
+                status = IO_FAILED;
+        }
+        break;
     default:
         status = IO_FAILED;
         break;
     }
-    ioreq->io_status.status = status;
-    io_complete_request(ioreq);
     return status;
 }
 
+static iostatus_t view_devctl(device_object_t *device, io_request_t *ioreq)
+{
+    device_extension_t *extension = device->device_extension;
+    void *arg = (void *) ioreq->parame.devctl.arg;
+    ioreq->io_status.status = __view_ioctl(extension, ioreq->parame.devctl.code, arg);
+    io_complete_request(ioreq);
+    return ioreq->io_status.status;
+}
+
+static iostatus_t view_fastio(device_object_t *device, int cmd, void *arg)
+{
+    device_extension_t *extension = device->device_extension;
+    return __view_ioctl(extension, cmd, arg);
+}
+
+
 static iostatus_t view_driver_enter(driver_object_t *driver)
 {
-    iostatus_t status;
+    iostatus_t status = IO_SUCCESS;
     device_object_t *devobj;
     device_extension_t *extension;
     view_open_count = 0;
+    
+    // 初始化屏幕
+    if (view_screen_init() < 0) {
+        status = IO_FAILED;
+        return status;
+    }
+
     /* 创建视图设备 */
     int i;
     char devname[DEVICE_NAME_LEN] = {0, };
@@ -262,7 +478,6 @@ static iostatus_t view_driver_enter(driver_object_t *driver)
         /* 初始化一些其它内容 */
         status = io_create_device(driver, sizeof(device_extension_t), devname, DEVICE_TYPE_VIEW, &devobj);
         if (status != IO_SUCCESS) {
-            view_core_exit();
             errprint("view driver: create device failed!\n");
             return status;
         }
@@ -272,7 +487,6 @@ static iostatus_t view_driver_enter(driver_object_t *driver)
         extension->view = NULL;
         extension->flags = 0;
     }
-    
     return status;
 }
 
@@ -302,6 +516,10 @@ static iostatus_t view_driver_func(driver_object_t *driver)
     driver->dispatch_function[IOREQ_READ] = view_read;
     driver->dispatch_function[IOREQ_WRITE] = view_write;
     driver->dispatch_function[IOREQ_DEVCTL] = view_devctl;
+    driver->dispatch_function[IOREQ_FASTIO] = (void *) view_fastio;
+    driver->dispatch_function[IOREQ_FASTREAD] = (void *) view_fastread;
+    driver->dispatch_function[IOREQ_FASTWRITE] = (void *) view_fastwrite;
+    driver->dispatch_function[IOREQ_MMAP] = view_mmap;
     
     /* 初始化驱动名字 */
     string_new(&driver->name, DRV_NAME, DRIVER_NAME_LEN);

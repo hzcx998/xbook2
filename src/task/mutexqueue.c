@@ -144,8 +144,8 @@ int sys_mutex_queue_wait(int handle, void *addr, unsigned int wqflags, unsigned 
                 struct timespec curtm;
                 sys_clock_gettime(CLOCK_REALTIME, &curtm);
                 struct timespec newtm;
-                newtm.ts_sec = abstm.ts_sec - curtm.ts_sec;
-                newtm.ts_nsec = abstm.ts_nsec - curtm.ts_nsec;
+                newtm.tv_sec = abstm.tv_sec - curtm.tv_sec;
+                newtm.tv_nsec = abstm.tv_nsec - curtm.tv_nsec;
                 ticks = timespec_to_systicks(&newtm);
             }
             if (ticks <= 0) {

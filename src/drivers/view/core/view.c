@@ -3,19 +3,39 @@
 #include "drivers/view/misc.h"
 #include "drivers/view/render.h"
 #include "drivers/view/msg.h"
+#include "drivers/view/env.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #include <sys/ioctl.h>
 
-static LIST_HEAD(view_show_list_head);
-static LIST_HEAD(view_global_list_head);
-static uint16_t *view_id_map;
+LIST_HEAD(view_show_list_head);
+LIST_HEAD(view_global_list_head);
+uint16_t *view_id_map;
 static int view_top_z = -1;    
 static int view_next_id = 0;    
+int view_last_x, view_last_y; // 上一个关闭的视图的位置
 
-view_t *view_create(int x, int y, int width, int height)
+/* 视图链表管理的自旋锁 */
+DEFINE_SPIN_LOCK(view_list_spin_lock);
+
+/* 视图全局变量自旋锁 */
+DEFINE_SPIN_LOCK(view_global_lock);
+
+void view_max_size_repair(int *width, int *height)
+{
+    if (*width > VIEW_MAX_SIZE_WIDTH) {
+        noteprint("kernel view: width repair from %d to %d.\n", *width, VIEW_MAX_SIZE_WIDTH);
+        *width = VIEW_MAX_SIZE_WIDTH;
+    }
+    if (*height > VIEW_MAX_SIZE_HEIGHT) {
+        noteprint("kernel view: height repair from %d to %d.\n", *height, VIEW_MAX_SIZE_HEIGHT);
+        *height = VIEW_MAX_SIZE_HEIGHT;
+    }
+}
+
+view_t *view_create(int x, int y, int width, int height, int type)
 {
     view_t *view = mem_alloc(sizeof(view_t));
     if (view == NULL) {
@@ -37,34 +57,63 @@ view_t *view_create(int x, int y, int width, int height)
     }
     view->x = x;
     view->y = y;
+    spin_lock(&view_global_lock);
     view->id = view_next_id++;
+    spin_unlock(&view_global_lock);
     view->z = -1;
+    view_max_size_repair(&width, &height);
     view->width = width;
     view->height = height;
-    view->type = VIEW_TYPE_FIXED;
+    view->width_min = VIEW_RESIZE_SIZE_MIN;
+    view->height_min = VIEW_RESIZE_SIZE_MIN;
+
     view->attr = 0;
+    view_set_type(view, type);
     int i;
     for (i = 0; i < VIEW_DRAG_REGION_NR; i++) {
         view_region_reset(&view->drag_regions[i]);
     }
     view_region_init(&view->drag_regions[0], 0, 0, view->width, view->height);
-    view_region_init(&view->min_resize_region, 0, 0, VIEW_RESIZE_SIZE_MIN, VIEW_RESIZE_SIZE_MIN);
     view_region_init(&view->resize_region, VIEW_RESIZE_BORDER_SIZE,
         VIEW_RESIZE_BORDER_SIZE, view->width - VIEW_RESIZE_BORDER_SIZE,
         view->height - VIEW_RESIZE_BORDER_SIZE);
 
     list_init(&view->list);
+    spin_lock(&view_global_lock);
     list_add(&view->global_list, &view_global_list_head);
+    spin_unlock(&view_global_lock);
+    spinlock_init(&view->lock);
+
+    view_render_rectfill(view, 0, 0, 
+        view->width, view->height, VIEW_WHITE);
     return view;
 }
 
 view_t *view_find_by_id(int id)
 {
     view_t *view;
+    spin_lock(&view_global_lock);
     list_for_each_owner (view, &view_global_list_head, global_list) {
-        if (view->id == id)
+        if (view->id == id) {
+            spin_unlock(&view_global_lock);
             return view;
+        }
     }
+    spin_unlock(&view_global_lock);
+    return NULL;
+}
+
+view_t *view_find_by_z(int z)
+{
+    view_t *view;
+    spin_lock(&view_global_lock);
+    list_for_each_owner (view, &view_global_list_head, global_list) {
+        if (view->z == z) {
+            spin_unlock(&view_global_lock);
+            return view;
+        }
+    }
+    spin_unlock(&view_global_lock);
     return NULL;
 }
 
@@ -77,16 +126,26 @@ int view_destroy(view_t *view)
 {
     if (!view)
         return -1;
+    
+    // 记录上一个销毁的视图的位置
+    view_last_x = view->x;
+    view_last_y = view->y;
+    
     if (msgpool_destroy(view->msgpool) < 0) {
         return -1;
     }
+    
     if (view_section_destroy(view->section) < 0) {
         return -1;
     }
+    spin_lock(&view_list_spin_lock);
     if (list_find(&view->list, &view_show_list_head))
         list_del_init(&view->list);
-        
+    spin_unlock(&view_list_spin_lock);
+    
+    spin_lock(&view_global_lock);
     list_del_init(&view->global_list);
+    spin_unlock(&view_global_lock);
     free(view);
     return 0;
 }
@@ -160,60 +219,18 @@ void view_clear(view_t *view)
         view_section_clear(view->section);
 }
 
-static void view_refresh_map(int left, int top, int right, int buttom, int z0)
+int view_set_size_min(view_t *view, int width, int height)
 {
-    int view_left, view_top, view_right, view_buttom;
-    int screen_x, screen_y;
-    int view_x, view_y;
-
-    if (left < 0)
-        left = 0;
-	if (top < 0)
-        top = 0;
-	if (right > view_screen.width)
-        right = view_screen.width;
-	if (buttom > view_screen.height)
-        buttom = view_screen.height;
-    
-    view_t *view;
-    view_color_t *colors;
-
-    /* 刷新高度为[z0-top]区间的视图 */
-    list_for_each_owner (view, &view_show_list_head, list) {
-        if (view->z >= z0) {
-            view_left = left - view->x;
-            view_top = top - view->y;
-            view_right = right - view->x;
-            view_buttom = buttom - view->y;
-            if (view_left < 0)
-                view_left = 0;
-            if (view_top < 0)
-                view_top = 0;
-            if (view_right > view->width) 
-                view_right = view->width;
-            if (view_buttom > view->height)
-                view_buttom = view->height;
-            colors = (view_color_t *)view->section->addr;
-            for(view_y = view_top; view_y < view_buttom; view_y++){
-                screen_y = view->y + view_y;
-                if (screen_y < 0)
-                    continue;
-                if (screen_y >= view_screen.height)
-                    break;
-                for(view_x = view_left; view_x < view_right; view_x++){
-                    screen_x = view->x + view_x;
-                    if (screen_x < 0)
-                        continue;
-                    if (screen_x >= view_screen.width)
-                        break;
-                       /* 不是全透明的，就把视图标识写入到映射表中 */
-                    if ((colors[view_y * view->width + view_x] >> 24) & 0xff) {
-                        view_id_map[(screen_y * view_screen.width + screen_x)] = view->z;
-                    }
-                }
-            }
-        }
-    }
+    if (!view)
+        return -1;
+    view_max_size_repair(&width, &height);
+    view->width_min = width;
+    if (view->width_min < VIEW_RESIZE_SIZE_MIN)
+        view->width_min = VIEW_RESIZE_SIZE_MIN;
+    view->height_min = width;
+    if (view->height_min < VIEW_RESIZE_SIZE_MIN)
+        view->height_min = VIEW_RESIZE_SIZE_MIN;
+    return 0;
 }
 
 static void __view_adjust_by_z(view_t *view, int z)
@@ -221,12 +238,17 @@ static void __view_adjust_by_z(view_t *view, int z)
     view_t *tmp;
     view_t *old_view = NULL;
     int old_z = view->z;
+    
+    spin_lock(&view_global_lock);
     if (z > view_top_z) {
         z = view_top_z;
     }
+    
+    spin_lock(&view_list_spin_lock);
     /* 先从链表中移除 */
     list_del_init(&view->list);
     if (z == view_top_z) {
+        spin_unlock(&view_global_lock);
         /* 其它视图降低高度 */
         list_for_each_owner (tmp, &view_show_list_head, list) {
             if (tmp->z > view->z) {
@@ -235,10 +257,14 @@ static void __view_adjust_by_z(view_t *view, int z)
         }
         view->z = z;
         list_add_tail(&view->list, &view_show_list_head);
+        
+        spin_unlock(&view_list_spin_lock);
+        
         /* 刷新新视图[z, z] */
         view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
         view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
     } else {    /* 不是最高视图，那么就和其它视图交换 */
+        spin_unlock(&view_global_lock);
         if (z > view->z) { /* 如果新高度比原来的高度高 */
             /* 把位于旧视图高度和新视图高度之间（不包括旧视图，但包括新视图高度）的视图下降1层 */
             list_for_each_owner (tmp, &view_show_list_head, list) {
@@ -252,6 +278,9 @@ static void __view_adjust_by_z(view_t *view, int z)
             assert(old_view);
             view->z = z;
             list_add_after(&view->list, &old_view->list);
+            
+            spin_unlock(&view_list_spin_lock);
+        
             /* 刷新新视图[z, z] */
             view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
             view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
@@ -268,6 +297,9 @@ static void __view_adjust_by_z(view_t *view, int z)
             assert(old_view);  
             view->z = z;
             list_add_before(&view->list, &old_view->list);
+            
+            spin_unlock(&view_list_spin_lock);
+        
             /* 刷新新视图[z + 1, old z] */
             view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z + 1);
             view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z + 1, old_z);
@@ -278,6 +310,7 @@ static void __view_adjust_by_z(view_t *view, int z)
 static void __view_hiden_by_z(view_t *view, int z)
 {
     int old_z = view->z;
+    spin_lock(&view_list_spin_lock);
     list_del_init(&view->list);
     if (view_top_z > old_z) {  /* 旧视图必须在顶视图下面 */
         /* 把位于当前视图后面的视图的高度都向下降1 */
@@ -291,30 +324,36 @@ static void __view_hiden_by_z(view_t *view, int z)
     /* 由于隐藏了一个视图，那么，视图顶层的高度就需要减1 */
     view_top_z--;
     view->z = -1;  /* 隐藏视图后，高度变为-1 */
+    spin_unlock(&view_list_spin_lock);
     /* 刷新视图, [0, view->z - 1] */
     view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, 0);
     view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, 0, old_z - 1);
-    
 }
 
 static void __view_show_by_z(view_t *view, int z)
 {
     view_t *tmp;
     view_t *old_view = NULL;
+    
+    spin_lock(&view_global_lock);
     if (z > view_top_z) {
         view_top_z++;
         z = view_top_z;
     } else {
         view_top_z++;
     }
+    spin_lock(&view_list_spin_lock);
     /* 如果新高度就是最高的视图，就直接插入到视图队列末尾 */
     if (z == view_top_z) {
+        spin_unlock(&view_global_lock);
         view->z = z;
         list_add_tail(&view->list, &view_show_list_head);
+        spin_unlock(&view_list_spin_lock);
         /* 刷新新视图[z, z] */
         view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
         view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
     } else {
+        spin_unlock(&view_global_lock);
         /* 查找和当前视图一样高度的视图 */
         list_for_each_owner(tmp, &view_show_list_head, list) {
             if (tmp->z == z) {
@@ -333,6 +372,7 @@ static void __view_show_by_z(view_t *view, int z)
         view->z = z;
         /* 插入到旧视图前面 */
         list_add_before(&view->list, &old_view->list);
+        spin_unlock(&view_list_spin_lock);
         /* 刷新新视图[z, z] */
         view_refresh_map(view->x, view->y, view->x + view->width, view->y + view->height, z);
         view_refresh_by_z(view->x, view->y, view->x + view->width, view->y + view->height, z, z);
@@ -361,17 +401,27 @@ void view_set_z(view_t *view, int z)
 {
     if (view->z == z)
         return;
+    
+    unsigned long iflags;
+    spin_lock_irqsave(&view->lock, iflags);
+
+    spin_lock(&view_list_spin_lock);    
     if (list_find(&view->list, &view_show_list_head)) {
+        spin_unlock(&view_list_spin_lock);    
+    
         if (z >= 0) {
             __view_adjust_by_z(view, z);
         } else { /* 小于0就是要隐藏起来的视图 */
             __view_hiden_by_z(view, z);
         }
     } else {    /* 插入新视图 */
+        spin_unlock(&view_list_spin_lock);    
+    
         if (z >= 0) {
             __view_show_by_z(view, z);
         }
     }
+    spin_unlock_irqrestore(&view->lock, iflags);
 }
 
 int view_drag_rect_check(view_t *view, int x, int y)
@@ -421,6 +471,22 @@ int view_move_upper_top(view_t *view)
     return 0;
 }
 
+int view_move_under_view(view_t *view, view_t *target)
+{
+    if (!view)
+        return -1;
+    view_set_z(view, target->z - 1);
+    return 0;
+}
+
+int view_move_upper_view(view_t *view, view_t *target)
+{
+    if (!view)
+        return -1;
+    view_set_z(view, target->z + 1);
+    return 0;
+}
+
 int view_hide(view_t *view)
 {
     if (!view)
@@ -429,19 +495,32 @@ int view_hide(view_t *view)
     return 0;
 }
 
+int view_set_drag_region(view_t *view, view_region_t *region)
+{
+    if (!view)
+        return -1;
+    view_region_copy(&view->drag_regions[0], region);
+    return 0;
+}
+
 int view_show(view_t *view)
 {
     if (!view)
         return -1;
-    view_move_to_top(view);
-    return 0;
+    if (view->z < 0) {
+        return view_move_to_top(view);
+    }
+    return view_move_under_top(view);
 }
-
 
 int view_set_xy(view_t *view, int x, int y)
 {
     if (!view)
         return -1;
+        
+    unsigned long iflags;
+    spin_lock_irqsave(&view->lock, iflags);
+
     int old_x = view->x;
     int old_y = view->y;
     view->x = x;
@@ -455,100 +534,25 @@ int view_set_xy(view_t *view, int x, int y)
         view_refresh_map(x0, y0, x1, y1, 0);
         view_refresh_by_z(x0, y0, x1, y1, 0, view->z);
     }
+
+    spin_unlock_irqrestore(&view->lock, iflags);
     return 0;
 }
 
 view_t *view_get_top()
 {
+    spin_lock(&view_list_spin_lock);    
     view_t *view = list_last_owner_or_null(&view_show_list_head, view_t, list);
+    spin_unlock(&view_list_spin_lock);    
     return view;
 }
 
 view_t *view_get_bottom()
 {
+    spin_lock(&view_list_spin_lock);    
     view_t *view = list_first_owner_or_null(&view_show_list_head, view_t, list);
+    spin_unlock(&view_list_spin_lock);    
     return view;
-}
-
-void view_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1)
-{
-    int view_left, view_top, view_right, view_buttom;
-
-    if (left < 0)
-        left = 0;
-	if (top < 0)
-        top = 0;
-	if (right > view_screen.width)
-        right = view_screen.width;
-	if (buttom > view_screen.height)
-        buttom = view_screen.height;
-    
-    int vx, vy;
-    int sx, sy;
-    
-    view_color_t color;
-    view_color_t *buf;
-    view_t *view;
-    list_for_each_owner (view, &view_show_list_head, list) {
-        if (view->z >= z0 && view->z <= z1) {
-            view_left = left - view->x;
-            view_top = top - view->y;
-            view_right = right - view->x;
-            view_buttom = buttom - view->y;
-            if (view_left < 0)
-                view_left = 0;
-            if (view_top < 0)
-                view_top = 0;
-            if (view_right > view->width) 
-                view_right = view->width;
-            if (view_buttom > view->height)
-                view_buttom = view->height;
-            for (vy = view_top; vy < view_buttom; vy++) {
-                sy = view->y + vy;
-                for (vx = view_left; vx < view_right; vx++) {
-                    sx = view->x + vx;
-                    if (view_id_map[sy * view_screen.width + sx] == view->z) {
-                        buf = (view_color_t *)view->section->addr;
-                        color = buf[vy * view->width + vx];
-                        view_screen_write_pixel(sx, sy, color);
-                    }
-                }
-            }
-        }
-    }
-}
-
-void view_refresh(view_t *view, int left, int top, int right, int buttom)
-{
-    if (view->z >= 0) {
-        view_refresh_map(view->x + left, view->y + top, view->x + right,
-            view->y + buttom, view->z);
-        view_refresh_by_z(view->x + left, view->y + top, view->x + right,
-            view->y + buttom, view->z, view->z);
-    }
-}
-
-void view_refresh_rect(view_t *view, int x, int y, uint32_t width, uint32_t height)
-{
-    view_refresh(view, x, y, x + width, y + height);
-}
-
-/**
- * 刷新图层以及其下面的所有图层
- */
-void view_refresh_from_bottom(view_t *view, int left, int top, int right, int buttom)
-{
-    if (view->z >= 0) {
-        view_refresh_map(view->x + left, view->y + top, view->x + right,
-            view->y + buttom, 0);
-        view_refresh_by_z(view->x + left, view->y + top, view->x + right,
-            view->y + buttom, 0, view->z);
-    }
-}
-
-void view_refresh_rect_from_bottom(view_t *view, int x, int y, uint32_t width, uint32_t height)
-{
-    view_refresh_from_bottom(view, x, y, x + width, y + height);
 }
 
 /**
@@ -563,11 +567,16 @@ int view_resize(view_t *view, int x, int y, uint32_t width, uint32_t height)
     if (!view->section) {
         return -1;
     }
+    view_max_size_repair((int *) &width, (int *) &height);
     view_section_t *new_sction = view_section_create(width, height);
     if (!new_sction) {
         errprint("view resize create section failed!\n");
         return -1;
     }
+    
+    unsigned long iflags;
+    spin_lock_irqsave(&view->lock, iflags);
+    
     /* 先将原来位置里面的内容绘制成透明 */
     view_section_clear(view->section);
     /* 重新设置位置才能完整刷新图层 */
@@ -583,9 +592,28 @@ int view_resize(view_t *view, int x, int y, uint32_t width, uint32_t height)
     view_region_init(&view->resize_region, VIEW_RESIZE_BORDER_SIZE,
         VIEW_RESIZE_BORDER_SIZE, view->width - VIEW_RESIZE_BORDER_SIZE,
         view->height - VIEW_RESIZE_BORDER_SIZE);
+    
+    spin_unlock_irqrestore(&view->lock, iflags);
     return 0;
 }
 
+void *view_get_vram_start(view_t *view)
+{
+    if (!view)
+        return NULL;
+    if (!view->section)
+        return NULL;
+    return view->section->addr;
+}
+
+size_t view_get_vram_size(view_t *view)
+{
+    if (!view)
+        return 0;
+    if (!view->section)
+        return 0;
+    return view->section->size;
+}
 /**
  * button: 桌面
  * 一般窗口
@@ -601,6 +629,13 @@ int view_init()
         return -1;
     }
     memset(view_id_map, 0, id_map_size);
+
+    view_last_x = view_last_y = 0;
+    if (view_init_refresh() < 0) {
+        keprint("view init refresh failed!\n");
+        mem_free(view_id_map);
+        return -1;;
+    }
     return 0;
 }
 

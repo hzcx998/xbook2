@@ -15,6 +15,7 @@ extern "C" {
 typedef struct _tstate {
     pid_t ts_pid;          /* 进程id */
     pid_t ts_ppid;         /* 父进程id */
+    pid_t ts_pgid;         /* 进程组id */
     pid_t ts_tgid;         /* 线程组id */
     char ts_state;         /* 运行状态 */
     unsigned long ts_priority;  /* 优先级 */

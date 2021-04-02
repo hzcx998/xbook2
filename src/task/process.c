@@ -68,16 +68,25 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
                     prog_header.p_memsz - prog_header.p_filesz);    
             }
             prog_end = prog_header.p_vaddr + prog_header.p_memsz;
+            
             if (prog_header.p_flags == ELF32_PHDR_CODE) {
                 vmm->code_start = prog_header.p_vaddr;
-                vmm->code_end = prog_end;
+                vmm->code_end = PAGE_ALIGN(prog_end);
                 vmm->heap_start = vmm->code_end + PAGE_SIZE;
                 vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
                 vmm->heap_end = vmm->heap_start;
             } else if (prog_header.p_flags == ELF32_PHDR_DATA) {
                 vmm->data_start = prog_header.p_vaddr;
-                vmm->data_end = prog_end;
+                vmm->data_end = PAGE_ALIGN(prog_end);
                 vmm->heap_start = vmm->data_end + PAGE_SIZE;                
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
+            } else if (prog_header.p_flags == ELF32_PHDR_CODE_DATA) {
+                vmm->code_start = prog_header.p_vaddr;
+                vmm->code_end = PAGE_ALIGN(prog_end);
+                vmm->data_start = prog_header.p_vaddr;
+                vmm->data_end = PAGE_ALIGN(prog_end);
+                vmm->heap_start = vmm->code_end + PAGE_SIZE;
                 vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
                 vmm->heap_end = vmm->heap_start;
             }
@@ -217,6 +226,8 @@ void proc_exec_init(task_t *task)
     exception_manager_init(&task->exception_manager);
     task_do_cancel(task);
     sys_port_comm_unbind(-1);
+    
+    fpu_init(&task->fpu, 1); /* 需要初始化fpu */
 }
 
 int proc_destroy(task_t *task, int thread)
@@ -291,6 +302,7 @@ void proc_entry(void* arg)
 {
     const char *pathname = (const char *) arg;
     task_t *cur = task_current;
+    
     sys_execve(pathname, (const char **)cur->vmm->argv, (const char **)cur->vmm->envp);
     /* rease proc resource */
     proc_release(cur);
@@ -317,10 +329,14 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     if (flags & PROC_CREATE_INIT) {
         task->pid = USER_INIT_PROC_ID;
         task->tgid = task->pid;
+        task->pgid = 0; /* init是组长, gid=0 */
         parent = NULL;
     } else {
         task->parent_pid = parent->pid;
     }
+    if (parent)
+        task->pgid = parent->pgid;
+    
     /* 进程执行前必须初始化文件描述符，内存管理，参数缓冲区 */
     if (fs_fd_init(task) < 0) {
         mem_free(task);

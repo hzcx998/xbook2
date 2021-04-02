@@ -7,11 +7,6 @@ extern "C" {
 
 #include <sys/proc.h>
 
-enum {
-	EXIT_SUCCESS	= 0,
-	EXIT_FAILURE	= 1,
-};
-
 void abort(void);
 void exit(int status);
 
