@@ -63,6 +63,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     // set kernel stack as the top of task mem struct
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KERN_STACK_SIZE);
     task->flags = 0;
+    fpu_init(&task->fpu, 0);
     timer_init(&task->sleep_timer, 0, NULL, NULL);
     alarm_init(&task->alarm);
     exception_manager_init(&task->exception_manager);
