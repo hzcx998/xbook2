@@ -32,20 +32,20 @@ int sys_clock_gettime(clockid_t clockid, struct timespec *ts)
     switch (clockid)
     {
     case CLOCK_REALTIME:        /* 系统统当前时间，从1970年1.1日算起 */
-        tmp_ts.ts_sec = walltime_make_timestamp(&walltime);
-        tmp_ts.ts_nsec = ((systicks % HZ) * MS_PER_TICKS) * 1000000;
+        tmp_ts.tv_sec = walltime_make_timestamp(&walltime);
+        tmp_ts.tv_nsec = ((systicks % HZ) * MS_PER_TICKS) * 1000000;
         break;
     case CLOCK_MONOTONIC:       /*系统的启动时间，不能被设置*/
-        tmp_ts.ts_sec = (systicks / HZ);
-        tmp_ts.ts_nsec = ((systicks % HZ) * MS_PER_TICKS) * 1000000;
+        tmp_ts.tv_sec = (systicks / HZ);
+        tmp_ts.tv_nsec = ((systicks % HZ) * MS_PER_TICKS) * 1000000;
         break;
     case CLOCK_PROCESS_CPUTIME_ID:  /* 本进程运行时间*/
-        tmp_ts.ts_sec = task_current->elapsed_ticks / HZ;
-        tmp_ts.ts_nsec = ((task_current->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;
+        tmp_ts.tv_sec = task_current->elapsed_ticks / HZ;
+        tmp_ts.tv_nsec = ((task_current->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;
         break;
     case CLOCK_THREAD_CPUTIME_ID:   /*本线程运行时间*/
-        tmp_ts.ts_sec = task_current->elapsed_ticks / HZ;
-        tmp_ts.ts_nsec = ((task_current->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;
+        tmp_ts.tv_sec = task_current->elapsed_ticks / HZ;
+        tmp_ts.tv_nsec = ((task_current->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;
         break;
     default:
         return -1;
@@ -78,8 +78,8 @@ void systicks_to_timeval(unsigned long ticks, struct timeval *tv)
 
 unsigned long timespec_to_systicks(struct timespec *ts)
 {
-    unsigned long sec = ts->ts_sec;
-    unsigned long nsec = ts->ts_nsec;
+    unsigned long sec = ts->tv_sec;
+    unsigned long nsec = ts->tv_nsec;
     if (sec >= (MAX_SYSTICKS_VALUE / HZ))
         return MAX_SYSTICKS_VALUE;
     nsec /= 1000000000L / HZ;  /* 秒/HZ=1秒的ticks数 */
@@ -93,6 +93,30 @@ void systicks_to_timespec(unsigned long ticks, struct timespec *ts)
     nsec *= 1000000L;
     if (sec >= (MAX_SYSTICKS_VALUE / HZ))
         sec = MAX_SYSTICKS_VALUE;
-    ts->ts_sec = sec;
-    ts->ts_nsec = nsec;
+    ts->tv_sec = sec;
+    ts->tv_nsec = nsec;
+}
+
+clock_t sys_times(struct tms *buf)
+{
+    if (buf) {
+        task_t *cur = task_current;
+        keprint("systime:%d elapsed:%d\n", cur->syscall_ticks, cur->elapsed_ticks);
+
+        buf->tms_stime = cur->syscall_ticks;
+        buf->tms_utime = cur->elapsed_ticks;
+        /* 统计子进程的时间 */
+        clock_t cutime = 0, cstime = 0;
+        task_t *child;
+        list_for_each_owner (child, &task_global_list, list) {
+            if (child->parent_pid == cur->pid) {
+                cstime += child->syscall_ticks;
+                cutime += child->elapsed_ticks;
+            }
+        }
+        buf->tms_cstime = cstime;
+        buf->tms_cutime = cutime;
+        keprint("%d %d %d %d\n", buf->tms_stime, buf->tms_utime, buf->tms_cstime, buf->tms_cutime);
+    }
+    return sys_get_ticks();
 }

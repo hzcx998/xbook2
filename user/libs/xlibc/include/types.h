@@ -40,6 +40,8 @@ typedef long long   loff_t;
 
 typedef char   bool_t;
 
+typedef void *caddr_t;
+
 /* Types for `void *' pointers.  */
 #if __WORDSIZE == 64
 # ifndef __intptr_t_defined

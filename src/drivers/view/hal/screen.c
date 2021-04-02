@@ -51,7 +51,7 @@ int view_screen_map(view_screen_t *screen)
 #ifdef DEBUG_VIEW_SCREEN
     keprint("view screen: width %d, height %d, bpp %d\n", screen->width, screen->height, screen->bpp);
 #endif
-    unsigned int vram_size = video_info.bytes_per_scan_line * video_info.y_resolution;
+    unsigned int vram_size = video_info.x_resolution * video_info.y_resolution * screen->bpp / 8;
     if (!vram_size) {
         errprint("view screen: video ram size is 0!\n");
         return -1;
@@ -65,6 +65,10 @@ int view_screen_map(view_screen_t *screen)
         return -1;
     }
     screen->vram_start = vram;
+#ifdef DEBUG_VIEW_SCREEN
+    keprint("view screen: screen map addr %x\n", screen->vram_start);
+#endif
+    
     return 0;
 }
 

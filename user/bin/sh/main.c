@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <ctype.h>
 #include <sys/ioctl.h>
 #include <sys/exception.h>
@@ -21,45 +22,66 @@ int sh_stdout_backup;
 int sh_stderr_backup;
 
 char cmd_line[CMD_LINE_LEN] = {0};
-char sh_cwd_cache[MAX_PATH] = {'-'};
+char cwd_cache[MAX_PATH] = {0};
 char *cmd_argv[MAX_ARG_NR];
 
 /* 设置环境变量 */
 char *sh_environment[4] = {
     "/bin",
     "/sbin",
-    "/usr",
     NULL
 };
 
-
 int main(int argc, char *argv[])
 {
+    /* 尝试解析单个命令参数 */
+    char *cmdstr = NULL;
+    if (argc >= 3) {
+        if (!strcmp(argv[1], "-c")) {
+            cmdstr = argv[2];
+        }
+    }
     sh_stdin_backup = dup(0);
     sh_stdout_backup = dup(1);
     sh_stderr_backup = dup(2);
-    update_cwdcache();
-    int pid = getpid();
-    ioctl(0, TTYIO_HOLDER, &pid);
+    
+	update_cwdcache();
+    
     expcatch(EXP_CODE_USER, sh_exit_handler);
     expblock(EXP_CODE_TERM);
     expblock(EXP_CODE_INT);
+    
     // set environment value
     environ = sh_environment;
-
+    
+    if (cmdstr) {   // 有单条命令就执行单条命令
+        // printf("sh: exec: %s\n", cmdstr);
+        /* 解析成参数 */
+        argc = -1;
+        argc = cmd_parse(cmdstr, cmd_argv, ' ');
+        if(argc == -1){
+            printf("sh: num of arguments exceed %d\n",MAX_ARG_NR);
+            return -1;
+        }
+        /* 管道执行 */
+        if (execute_cmd(argc, cmd_argv)) {
+            printf("sh: execute cmd %s falied!\n", cmd_argv[0]);
+        }
+        return -1;
+    }
     print_logo();
+
     /* 启动自行服务 */
     #if 0
-    char *args[2] = {"xbrower", NULL};
-    pid = create_process(args, environ, 0);
+    if (!fork())
+        execl("/bin/uview", "/bin/uview", NULL);
     #endif
-    
     /* 备份标准输入 */
 	while(1){ 
         /* 显示提示符 */
 		print_prompt();
         
-		//memset(cmd_line, 0, CMD_LINE_LEN);
+		memset(cmd_line, 0, CMD_LINE_LEN);
 		/* 读取命令行 */
 		readline(cmd_line, CMD_LINE_LEN);
 		
@@ -85,16 +107,16 @@ int main(int argc, char *argv[])
 
 void update_cwdcache()
 {
-    memset(sh_cwd_cache, 0, MAX_PATH);
+    memset(cwd_cache, 0, MAX_PATH);
     char buf[32] = {0};
     memset(buf, 0, 32);
     accountname(buf, 32);
-    strcat(sh_cwd_cache, "[");
-    strcat(sh_cwd_cache, buf);
+    strcat(cwd_cache, "[");
+    strcat(cwd_cache, buf);
     getcwd(buf, 32);
-    strcat(sh_cwd_cache, " ");
-    strcat(sh_cwd_cache, buf);
-    strcat(sh_cwd_cache, "]");
+    strcat(cwd_cache, " ");
+    strcat(cwd_cache, buf);
+    strcat(cwd_cache, "]");
 }
 
 /**
@@ -103,7 +125,7 @@ void update_cwdcache()
  */
 void print_prompt()
 {
-	printf("%s ", sh_cwd_cache);
+	printf("%s ", cwd_cache);
 }
 
 /**
@@ -119,7 +141,9 @@ void readline(char *buf, uint32_t count)
     char *pos = buf;
     while (len < count)
     {
-        read(STDIN_FILENO, pos, 1);
+        if (read(STDIN_FILENO, pos, 1) < 0)
+            continue;
+        
         if (*pos == '\n') {
             *(pos) = '\0'; // 修改成0
             break;
@@ -195,11 +219,6 @@ int buildin_cmd_cd(int argc, char **argv)
 		printf("cd: only support 1 argument!\n");
 		return -1;
 	}
-    /*int i;
-    for (i = 0; i < argc; i++) {
-        printf("%s",argv[i]);
-    }*/
-
     /* 只有1个参数，是cd，那么不处理 */
     if (argc == 1) {
         return 0; 
@@ -274,25 +293,23 @@ int execute_cmd(int argc, char **argv)
     
         /* 创建一个进程 */
         pid = fork();
-
-        if (pid > 0) {  /* 父进程 */
-            ioctl(0, TTYIO_HOLDER, &pid);
+        if (pid == -1) {
+            printf("sh: do fork failed!\n");
+            return -1;
+        } else if (pid > 0) {  /* 父进程 */
             /* shell程序等待子进程退出 */
             pid = waitpid(pid, &status, 0);
             pid = getpid();
-            ioctl(0, TTYIO_HOLDER, &pid);
         } else {    /* 子进程 */
             pid = getpid();
-            ioctl(0, TTYIO_HOLDER, &pid);
             /* 子进程执行程序 */
             pid = execv((const char *)argv[0], (char *const *)argv);
             /* 如果执行出错就退出 */
             if(pid == -1){
                 printf("sh: bad command %s!\n", argv[0]);
                 pid = getppid();
-                ioctl(0, TTYIO_HOLDER, &pid);
             }
-            sh_exit(-1, 0);
+            exit(pid);
         }
         update_cwdcache();
     }

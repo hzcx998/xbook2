@@ -1,21 +1,15 @@
 #include <uview.h>
 #include <stdlib.h>
+#include <string.h>
 
 uview_bitmap_t *uview_bitmap_create(unsigned int width, unsigned int height)
 {
-    uview_bitmap_t *bitmap = malloc(sizeof(uview_bitmap_t));
+    uview_bitmap_t *bitmap = malloc(sizeof(uview_bitmap_t) + width * height * sizeof(uview_color_t));
     if (bitmap == NULL) {
         return NULL;
     }
-    bitmap->bits = malloc(width * height * sizeof(uview_color_t));
-    if (bitmap->bits == NULL) {
-        free(bitmap);
-        return NULL;
-    }
-    int i;
-    for (i = 0; i < width * height; i++) {
-        bitmap->bits[i] = 0;  // 清0
-    }
+    bitmap->bits = (uview_color_t *) (bitmap + 1);
+    memset(bitmap->bits, 0, width * height * sizeof(uview_color_t));
     bitmap->width = width;
     bitmap->height = height;
     return bitmap;
@@ -25,10 +19,13 @@ int uview_bitmap_destroy(uview_bitmap_t *bitmap)
 {
     if (!bitmap)
         return -1;
-    if (bitmap->bits)
-        free(bitmap->bits);
     free(bitmap);
     return 0;
+}
+
+void uview_bitmap_clear(uview_bitmap_t *bitmap)
+{
+    memset(bitmap->bits, 0, bitmap->width * bitmap->height * sizeof(uview_color_t));
 }
 
 void uview_bitmap_putpixel(uview_bitmap_t *bmp, int x, int y, uview_color_t color)
@@ -200,4 +197,24 @@ void uview_bitmap_rectfill(uview_bitmap_t *bmp, int x, int y, uint32_t width, ui
     if (!bmp)
         return;
     uview_bitmap_rectfill_ex(bmp, x, y, x + width - 1, y + height - 1, color);
+}
+
+void uview_bitmap_bitblt(uview_bitmap_t *dest, int dest_x, int dest_y,
+        uview_bitmap_t *src, int src_x, int src_y, uint32_t width, uint32_t height)
+{
+    if (!dest || !src)
+        return;
+    int w = min(width, src->width - src_x);
+    int h = min(height, src->height - src_y);
+    if (w <= 0 || h <= 0)
+        return;
+    uview_color_t color = 0;
+    int i, j;
+    for (j = 0; j < h; j++) {
+        for (i = 0; i < w; i++) {
+            uview_bitmap_getpixel(src, i + src_x, j + src_y, &color);
+            if (((color >> 24) & 0xff))
+                uview_bitmap_putpixel(dest, dest_x + i, dest_y + j, color);
+        }
+    }
 }

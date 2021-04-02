@@ -3,9 +3,9 @@
 %include "config.inc"
 
 ; 配置图形模式
-%define CONFIG_GRAPHIC
+;%define CONFIG_GRAPHIC
 ; 启动图形模式
-%define CONFIG_GRAPHIC_ENABLE
+;%define CONFIG_GRAPHIC_ENABLE
 
 org 0x90000
 [bits 16]
@@ -247,8 +247,10 @@ get_memory_info:
 %ifdef CONFIG_GRAPHIC
 
 ; 使用的分辨率
-;VBE_MODE	EQU	VMODE_800_600_16
+;VBE_MODE	EQU	VMODE_800_600_32
+;VBE_MODE	EQU	VMODE_1920_1080_16
 VBE_MODE	EQU	VMODE_1024_768_16
+;VBE_MODE	EQU	VMODE_800_600_32
 
 get_vbe_info:
     push ds

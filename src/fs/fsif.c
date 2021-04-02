@@ -17,6 +17,7 @@
 #include <xbook/account.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
+#include <fcntl.h>
 
 // #define DEBUG_FSIF
 
@@ -62,26 +63,6 @@ int sys_openfifo(const char *fifoname, int flags)
     return local_fd_install(handle, FILE_FD_FIFO);
 }
 
-int sys_opendev(const char *path, int flags)
-{
-    if (!path)
-        return -EINVAL; 
-    #ifdef FSIF_USER_CHECK
-    if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
-        return -EINVAL;
-    #endif
-    if (!devif.open) 
-        return -ENOSYS;
-    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_DEVICE)) {
-        return -EPERM;
-    }
-    int handle;
-    handle = devif.open((void *)path, flags);
-    if (handle < 0)
-        return -ENODEV;
-    return local_fd_install(handle, FILE_FD_DEVICE);
-}
-
 int sys_close(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
@@ -110,6 +91,42 @@ int sys_read(int fd, void *buffer, size_t nbytes)
     if (!ffd->fsal->read)
         return -ENOSYS;
     return ffd->fsal->read(ffd->handle, buffer, nbytes);
+}
+
+int sys_fastread(int fd, void *buffer, size_t nbytes)
+{
+    if (fd < 0 || !nbytes || !buffer)
+        return -EINVAL;
+    #ifdef FSIF_USER_CHECK
+    if (mem_copy_to_user(buffer, NULL, nbytes) < 0)
+        return -EINVAL;
+    #endif
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd)) {
+        errprint("[FS]: %s: fd %d err!\n", __func__, fd);
+        return -EINVAL;
+    }
+    if (!ffd->fsal->fastread)
+        return -ENOSYS;
+    return ffd->fsal->fastread(ffd->handle, buffer, nbytes);
+}
+
+int sys_fastwrite(int fd, void *buffer, size_t nbytes)
+{
+    if (fd < 0 || !nbytes || !buffer)
+        return -EINVAL;
+    #ifdef FSIF_USER_CHECK
+    if (mem_copy_to_user(buffer, NULL, nbytes) < 0)
+        return -EINVAL;
+    #endif
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd)) {
+        errprint("[FS]: %s: fd %d err!\n", __func__, fd);
+        return -EINVAL;
+    }
+    if (!ffd->fsal->fastwrite)
+        return -ENOSYS;
+    return ffd->fsal->fastwrite(ffd->handle, buffer, nbytes);
 }
 
 int sys_write(int fd, void *buffer, size_t nbytes)
@@ -141,14 +158,48 @@ int sys_ioctl(int fd, int cmd, void *arg)
     return ffd->fsal->ioctl(ffd->handle, cmd, (unsigned long )arg);
 }
 
+int sys_fastio(int fd, int cmd, void *arg)
+{
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd))
+        return -EINVAL;
+    if (!ffd->fsal->fastio)
+        return -ENOSYS;
+    return ffd->fsal->fastio(ffd->handle, cmd, arg);
+}
+
 int sys_fcntl(int fd, int cmd, long arg)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return -EINVAL;
-    if (!ffd->fsal->fcntl)
-        return -ENOSYS;
-    return ffd->fsal->fcntl(ffd->handle, cmd, (unsigned long )arg);   
+    int newfd = -1;
+    switch (cmd) {
+    case F_DUPFD: /* 复制一个基于arg（basefd）的最小的fd */
+    {
+        if (ffd->fsal->incref(ffd->handle) < 0)
+            return -EINVAL;
+        newfd = local_fd_install_based(ffd->handle, ffd->flags & FILE_FD_TYPE_MASK, arg);
+        return newfd;
+    }
+    case F_GETFD:
+        return (ffd->flags & FILE_FD_CLOEXEC) ? FD_CLOEXEC : FD_NCLOEXEC;
+    case F_SETFD:
+        if (arg & FD_CLOEXEC)
+            ffd->flags |= FILE_FD_CLOEXEC;
+        else
+            ffd->flags &= ~FILE_FD_CLOEXEC;
+        break;
+    case F_GETFL:
+        /* TODO: return file flags */
+        return 0;
+    case F_SETFL:
+        /* TODO: set file flags */
+        break;
+    default:
+        break;
+    }
+    return -1;
 }
 
 int sys_lseek(int fd, off_t offset, int whence)
@@ -161,14 +212,19 @@ int sys_lseek(int fd, off_t offset, int whence)
     return ffd->fsal->lseek(ffd->handle, offset, whence);
 }
 
-void *sys_mmap(int fd, size_t length, int flags)
+void *__sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
         return NULL;
     if (!ffd->fsal->mmap)
         return NULL;
-    return ffd->fsal->mmap(ffd->handle, length, flags);
+    return ffd->fsal->mmap(ffd->handle, addr, length, prot, flags, offset);
+}
+
+void *sys_mmap(mmap_args_t *args)
+{
+    return __sys_mmap(args->addr, args->length, args->prot, args->flags, args->fd, args->offset);
 }
 
 int sys_access(const char *path, int mode)
@@ -341,10 +397,7 @@ int sys_chdir(const char *path)
         return -ENOFILE;
     }
     sys_closedir(dir);
-    int len = strlen(path);
-    memset(cur->fileman->cwd, 0, MAX_PATH);
-    memcpy(cur->fileman->cwd, path, min(len, MAX_PATH));
-    return 0;
+    return task_set_cwd(cur, path);
 }
 
 int sys_getcwd(char *buf, int bufsz)
@@ -354,8 +407,20 @@ int sys_getcwd(char *buf, int bufsz)
     task_t *cur = task_current;
     if (!cur->fileman)
         return -EINVAL;
-    if (mem_copy_to_user(buf, cur->fileman->cwd, min(bufsz, MAX_PATH)) < 0)
+    if (mem_copy_to_user(buf, cur->fileman->cwd, min((bufsz == 0) ? MAX_PATH : bufsz,
+        MAX_PATH)) < 0)
         return -EINVAL;
+    return 0;
+}
+
+int kfile_getcwd(char *buf, int bufsz)
+{
+    if (!buf)
+        return -EINVAL;
+    task_t *cur = task_current;
+    if (!cur->fileman)
+        return -EINVAL;
+    memcpy(buf, cur->fileman->cwd, min((bufsz == 0) ? MAX_PATH : bufsz, MAX_PATH));
     return 0;
 }
 

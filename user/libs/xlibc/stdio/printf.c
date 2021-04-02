@@ -13,7 +13,7 @@ int printf(const char * fmt, ...)
 	int rv;
 
 	va_start(ap, fmt);
-	rv = vsnprintf(buf, SZ_4K, fmt, ap);
+	rv = vsnprintf(buf, SZ_1K, fmt, ap);
 	va_end(ap);
 
 	rv = (fputs(buf, stdout) < 0) ? 0 : rv;

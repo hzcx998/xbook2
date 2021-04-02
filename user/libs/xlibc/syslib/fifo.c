@@ -20,13 +20,10 @@ unsigned int __fifo_put(struct fifo_t * f, unsigned char * buf, unsigned int len
 	unsigned int l;
 
 	len = min(len, f->size - f->in + f->out);
-	//smp_mb();
 	l = min(len, f->size - (f->in & (f->size - 1)));
 	memcpy(f->buffer + (f->in & (f->size - 1)), buf, l);
 	memcpy(f->buffer, buf + l, len - l);
-	//smp_wmb();
 	f->in += len;
-
 	return len;
 }
 
@@ -35,11 +32,9 @@ unsigned int __fifo_get(struct fifo_t * f, unsigned char * buf, unsigned int len
 	unsigned int l;
 
 	len = min(len, f->in - f->out);
-	//smp_rmb();
 	l = min(len, f->size - (f->out & (f->size - 1)));
 	memcpy(buf, f->buffer + (f->out & (f->size - 1)), l);
 	memcpy(buf + l, f->buffer, len - l);
-	//smp_mb();
 	f->out += len;
 
 	return len;
@@ -81,6 +76,8 @@ void fifo_free(struct fifo_t * f)
 
 void fifo_reset(struct fifo_t * f)
 {
+    if (!f)
+        return;
 	spin_lock(&f->lock);
 	__fifo_reset(f);
 	spin_unlock(&f->lock);
@@ -89,7 +86,8 @@ void fifo_reset(struct fifo_t * f)
 unsigned int fifo_len(struct fifo_t * f)
 {
 	unsigned int ret;
-
+    if (!f)
+        return 0;
 	spin_lock(&f->lock);
 	ret = __fifo_len(f);
 	spin_unlock(&f->lock);
@@ -100,7 +98,8 @@ unsigned int fifo_len(struct fifo_t * f)
 unsigned int fifo_put(struct fifo_t * f, unsigned char * buf, unsigned int len)
 {
 	unsigned int ret;
-
+    if (!f || !buf)
+        return 0;
 	spin_lock(&f->lock);
 	ret = __fifo_put(f, buf, len);
 	spin_unlock(&f->lock);
@@ -111,7 +110,8 @@ unsigned int fifo_put(struct fifo_t * f, unsigned char * buf, unsigned int len)
 unsigned int fifo_get(struct fifo_t * f, unsigned char * buf, unsigned int len)
 {
 	unsigned int ret;
-
+    if (!f || !buf)
+        return 0;
 	spin_lock(&f->lock);
 	ret = __fifo_get(f, buf, len);
 	if(f->in == f->out)

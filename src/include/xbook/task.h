@@ -3,7 +3,9 @@
 
 #include <arch/page.h>
 #include <arch/cpu.h>
+#include <arch/fpu.h>
 #include <sys/proc.h>
+#include <sys/time.h>
 #include <types.h>
 #include "list.h"
 #include "vmm.h"
@@ -67,12 +69,15 @@ typedef struct {
     pid_t pid;                          /* process id */
     pid_t parent_pid;
     pid_t tgid;                         /* 线程组id：线程属于哪个进程，和pid一样，就说明是主线程，不然就是子线程 */
+    pid_t pgid;                         /* 进程组ID：用于终端控制 */
     unsigned long flags;                
     char priority;             /* 任务的动态优先级 */
     char static_priority;      /* 任务的静态优先级 */
     unsigned long ticks;                /* 运行的ticks，当前剩余的timeslice */
     unsigned long timeslice;            /* 时间片，可以动态调整 */
     unsigned long elapsed_ticks;        /* 任务执行总共占用的时间片数 */
+    unsigned long syscall_ticks;        /* 执行系统调用总共占用的时间片数 */
+    clock_t syscall_ticks_delta;  /* 执行单个系统调用占用的时间片数 */
     int exit_status;                    
     char name[MAX_TASK_NAMELEN];        
     struct vmm *vmm;                    
@@ -80,14 +85,16 @@ typedef struct {
     list_t global_list;                 /* 全局任务队列，用来查找所有存在的任务 */
     exception_manager_t exception_manager;         
     timer_t sleep_timer;               
+    fpu_t fpu;
     alarm_t alarm;                      
-    long errno;                         /* 错误码：用户多线程时用来标记每一个线程的错误码 */
+    long errcode;                       /* 错误码：用户多线程时用来标记每一个线程的错误码 */
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
     file_man_t *fileman;    
     exit_hook_t exit_hook;  /* 退出调用的钩子函数 */
     void *exit_hook_arg;
     lpc_port_table_t port_table;
     port_comm_t *port_comm;
+    struct tms times;
     unsigned int stack_magic;
 } task_t;
 
@@ -179,11 +186,17 @@ unsigned long task_sleep_by_ticks(clock_t ticks);
 int task_count_children(task_t *parent);
 int task_do_cancel(task_t *task);
 pid_t task_get_pid(task_t *task);
+int task_set_cwd(task_t *task, const char *path);
+
+int task_is_child(pid_t pid, pid_t child_pid);
 
 #define sys_sched_yeild     task_yeild
 pid_t sys_get_pid();
 pid_t sys_get_ppid();
 pid_t sys_get_tid();
+pid_t sys_get_pgid(pid_t pid);
+int sys_set_pgid(pid_t pid, pid_t pgid);
+
 int sys_getver(char *buf, int len);
 int sys_tstate(tstate_t *ts, unsigned int *idx);
 unsigned long sys_unid(int id);

@@ -18,6 +18,7 @@
 #include <xbook/bitops.h>
 #include <xbook/dma.h>
 #include <xbook/task.h>
+#include <xbook/virmem.h>
 #include <assert.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
@@ -429,11 +430,11 @@ pci_device_t *get_ahci_pci (void)
 	#endif
     //pci_device_dump(ahci);
     
-	hba_mem = (void *)(addr_t)ahci->bar[5].base_addr;
     pci_enable_bus_mastering(ahci);
 
     /* 映射IO物理内存地址到虚拟地址中，才能对设备映射到内存的地址进行操作 */
-    if (hal_memio_remap((addr_t)hba_mem, (addr_t)ahci->bar[5].base_addr, ahci->bar[5].length) < 0) {
+    hba_mem = memio_remap((addr_t)ahci->bar[5].base_addr, ahci->bar[5].length);
+    if (hba_mem == NULL) {
         errprint("[ahci] device memio_remap on %x length %x failed!\n", ahci->bar[5].base_addr, ahci->bar[5].length);
         return NULL;
     }
@@ -675,7 +676,7 @@ int ahci_device_identify_ahci(struct hba_memory *abar,
 	dma.p.alignment = 0x1000;
 	dma.flags = DMA_REGION_SPECIAL;
 	dma_alloc_buffer(&dma);
-	ahci_write_prdt(abar, port, dev, 0, 0, 512, (addr_t)dma.v);
+    ahci_write_prdt(abar, port, dev, 0, 0, 512, (addr_t)dma.v);
 	ahci_initialize_command_header(abar,
 			port, dev, 0, 0, 0, 1, fis_len);
 	ahci_initialize_fis_host_to_device(abar,
@@ -831,7 +832,8 @@ int ahci_initialize_device(struct hba_memory *abar, device_extension_t *dev)
 	for(i=0;i<HBA_COMMAND_HEADER_NUM;i++) {
 		dev->ch_dmas[i].p.size = 0x1000;
 		dev->ch_dmas[i].p.alignment = 0x1000;
-		dma_alloc_buffer(&dev->ch_dmas[i]);
+		dev->ch_dmas[i].flags = DMA_REGION_SPECIAL;
+        dma_alloc_buffer(&dev->ch_dmas[i]);
 		dev->ch[i] = (void *)dev->ch_dmas[i].v;
 		memset(h, 0, sizeof(*h));
 		h->command_table_base_l = low32(dev->ch_dmas[i].p.address);

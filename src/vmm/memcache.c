@@ -38,20 +38,19 @@ static cache_size_t cache_size[] = {
 	{512*1024, NULL},
 	{1024*1024, NULL},
 	{2*1024*1024, NULL},
-	{4*1024*1024, NULL},
 	#endif
 	{0, NULL},
 };
 
 #if PAGE_SIZE == 4096
 	#ifdef CONFIG_LARGE_ALLOCS 
-		#define MAX_MEM_CACHE_NR 18
+		#define MAX_MEM_CACHE_NR 17
 	#else
 		#define MAX_MEM_CACHE_NR 13
 	#endif
 #else
 	#ifdef CONFIG_LARGE_ALLOCS 
-		#define MAX_MEM_CACHE_NR 17
+		#define MAX_MEM_CACHE_NR 16
 	#else
 		#define MAX_MEM_CACHE_NR 12
 	#endif

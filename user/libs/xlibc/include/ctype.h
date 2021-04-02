@@ -18,6 +18,9 @@ int iscntrl(int ch);
 int isupper(int ch);
 int ispunct(int ch);
 int isprint( int ch );
+#define isascii(c) (((unsigned) c)<=0x7f)
+
+#define isblank(c) ((c) == ' ' || (c) == '\t')
 
 #ifdef __cplusplus
 }

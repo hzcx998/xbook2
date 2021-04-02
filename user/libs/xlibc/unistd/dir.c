@@ -131,6 +131,7 @@ void make_abs_path(const char *path, char *abspath)
         /* 不是进入根目录。如果是相对路径，就会和工作路径拼合，
         不是的话就是绝对路径。
         */
+        strcat(abspath, "/");   // 添加分割符，避免末尾没有分隔符多余的会在清洗阶段删除
         strcat(abspath, path);
 
         /* 没有'/'，那么就需要在这个后面添加一个'/' */
@@ -171,13 +172,26 @@ int chdir(const char *path)
     } else {
         p = path;
     }
-    
     return syscall1(int, SYS_CHDIR, p);
 }
 
-int getcwd(char *buf, int bufsz)
+char *getcwd(char *buf, int bufsz)
 {
-    return syscall2(int, SYS_GETCWD, buf, bufsz);
+    char *_buf = buf;
+    if (!_buf) {
+        _buf = malloc(MAX_PATH);
+        if (!_buf)
+            return NULL;
+        memset(_buf, 0, MAX_PATH);
+        bufsz = MAX_PATH;
+    }
+    if (syscall2(int, SYS_GETCWD, _buf, bufsz) < 0) {
+        if (!buf) {
+            free(_buf);
+            _buf = NULL;
+        }
+    }
+    return _buf;
 }
 
 static struct _dirdes *__alloc_dirdes()

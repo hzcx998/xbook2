@@ -9,6 +9,6 @@
 #define CONFIG_LARGE_ALLOCS
 
 /* auto select timezone */
-#define CONFIG_TIMEZONE_AUTO
+/* #define CONFIG_TIMEZONE_AUTO */
 
 #endif   /* _XBOOK_CONFIG_H */

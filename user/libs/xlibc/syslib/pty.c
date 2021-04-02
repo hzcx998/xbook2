@@ -7,13 +7,7 @@
 #ifndef _HAS_OPENPT
 int posix_openpt(int flags)
 {
-    char devname[32] = {0};
-    if (probedev("ptm", devname, 32) < 0)
-        return -1; 
-
-    int fd_master;
-    fd_master = opendev(devname, flags);
-    return fd_master;
+    return openclass("ptm", flags);
 }
 #endif
 
@@ -29,7 +23,7 @@ char *ptsname(int fd)
     }
 
     pts_name[0] = 0;
-    snprintf(pts_name, sizeof(pts_name), "pts%d", i_slave);
+    snprintf(pts_name, sizeof(pts_name), "/dev/pts%d", i_slave);
     return pts_name;
 }
 #endif
@@ -67,7 +61,7 @@ int openpty(int *amaster, int *aslave, char *name,
         goto err;  
     if ((slave = ptsname(mfd)) == NULL)  
         goto err;  
-    if ((sfd = opendev(slave, O_RDONLY | O_NOCTTY)) == -1)  
+    if ((sfd = open(slave, O_RDONLY | O_NOCTTY)) == -1)  
         goto err;  
     /*if (ioctl(sfd, I_PUSH, "ptem") == -1 ||  
         (termp != NULL && tcgetattr(sfd, termp) < 0))  
@@ -123,7 +117,7 @@ int ptym_open(char *pts_name, int namelen)
 int ptys_open(const char *name)
 {
     int fds;
-    if((fds = opendev(name, O_RDWR))<0)
+    if((fds = open(name, O_RDWR))<0)
     {
         return -1;
     }

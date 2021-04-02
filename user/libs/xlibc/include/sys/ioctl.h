@@ -35,21 +35,21 @@ extern "C" {
 #define DISKIO_GETOFF    DEVCTL_CODE('d', 4)
 
 /* tty */
-#define TTYIO_CLEAR      CONIO_CLEAR
-#define TTYIO_SCROLL     CONIO_SCROLL
-#define TTYIO_SETCOLOR   CONIO_SETCOLOR
-#define TTYIO_GETCOLOR   CONIO_GETCOLOR
-#define TTYIO_SETPOS     CONIO_SETPOS
-#define TTYIO_GETPOS     CONIO_GETPOS
-#define TTYIO_HOLDER     DEVCTL_CODE('t', 1)
-#define TTYIO_VISITOR    DEVCTL_CODE('t', 2)
-#define TTYIO_DETACH        DEVCTL_CODE('t', 3)
-#define TTYIO_COMBINE       DEVCTL_CODE('t', 4)
+#define TTYIO_CLEAR         CONIO_CLEAR
+#define TTYIO_SCROLL        CONIO_SCROLL
+#define TTYIO_SETCOLOR      CONIO_SETCOLOR
+#define TTYIO_GETCOLOR      CONIO_GETCOLOR
+#define TTYIO_SETPOS        CONIO_SETPOS
+#define TTYIO_GETPOS        CONIO_GETPOS
+#define TTYIO_SELECT        DEVCTL_CODE('t', 2)
 #define TIOCGPTN            DEVCTL_CODE('t', 5) /* get presudo tty number */
 #define TIOCSPTLCK          DEVCTL_CODE('t', 6) /* set presudo tty lock */
 #define TIOCSFLGS           DEVCTL_CODE('t', 7) /* set flags */
 #define TIOCGFLGS           DEVCTL_CODE('t', 8) /* get flags */
 #define TIOCGFG             DEVCTL_CODE('t', 9) /* get front group task */
+#define TIOCISTTY           DEVCTL_CODE('t', 10) /* check is tty */
+#define TIOCNAME            DEVCTL_CODE('t', 11) /* get tty name */
+#define TTYIO_RAW           7
 
 /* tty flags */
 #define TTYFLG_ECHO    0x01
@@ -78,23 +78,6 @@ typedef struct _video_info {
 #define SNDIO_PLAY          DEVCTL_CODE('s', 1) /* play */
 #define SNDIO_STOP          DEVCTL_CODE('s', 2) /* stop play */
 #define SNDIO_SETFREQ       DEVCTL_CODE('s', 3) /* set play freq */
-
-/* view */
-#define VIEWIO_SHOW         DEVCTL_CODE('v', 1)
-#define VIEWIO_HIDE         DEVCTL_CODE('v', 2)
-#define VIEWIO_SETPOS       DEVCTL_CODE('v', 3)
-#define VIEWIO_GETPOS       DEVCTL_CODE('v', 4)
-#define VIEWIO_WRBMP        DEVCTL_CODE('v', 5)
-#define VIEWIO_RDBMP        DEVCTL_CODE('v', 6)
-#define VIEWIO_SETFLGS      DEVCTL_CODE('v', 7)
-#define VIEWIO_GETFLGS      DEVCTL_CODE('v', 8)
-#define VIEWIO_SETTYPE      DEVCTL_CODE('v', 9)
-#define VIEWIO_GETTYPE      DEVCTL_CODE('v', 10)
-#define VIEWIO_REFRESH      DEVCTL_CODE('v', 11)
-#define VIEWIO_ADDATTR      DEVCTL_CODE('v', 12)
-#define VIEWIO_DELATTR      DEVCTL_CODE('v', 13)
-#define VIEWIO_RESIZE       DEVCTL_CODE('v', 14)
-#define VIEWIO_GETSCREENSZ  DEVCTL_CODE('v', 15)
 
 #ifdef __cplusplus
 }

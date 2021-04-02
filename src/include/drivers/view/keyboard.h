@@ -14,20 +14,13 @@
 #define VIEW_KMOD_NUM	     0x80
 #define VIEW_KMOD_CAPS	     0x100
 
-/* 图形键盘输入 */
-typedef struct {
-    unsigned char state;    /* 按钮状态 */
-    int code;               /* 键值 */
-    int modify;             /* 修饰按键 */
-} keyevent_t;
-
 typedef struct {
     int handle;
     int ledstate;                   /* 修饰按键 */
     int key_modify;                 /* 修饰按键 */
-    keyevent_t keyevent;            /* 按键事件 */ 
     int (*key_down)(int);
     int (*key_up)(int);    
+    int virtual_mouse;      /* 虚拟鼠标 */
 } view_keyboard_t;
 int view_keyboard_read(view_keyboard_t *keyboard);
 int view_keyboard_init();

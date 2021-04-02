@@ -701,6 +701,6 @@ int account_manager_init()
     if (account_login(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD) < 0)
         panic("account: login root failed!\n");
     
-    keprint(PRINT_INFO "account init: OK!\n");
+    keprint(PRINT_INFO "account init: done.\n");
     return 0;
 }

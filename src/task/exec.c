@@ -13,6 +13,8 @@
 #include <xbook/fsal.h>
 #include <xbook/fd.h>
 
+
+
 /**
  * exec使用新的镜像以及堆栈替换原有的内容。
  * 注意，加载代码和数据的过程中，不会释放掉已经映射的内容，
@@ -32,6 +34,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     interrupt_restore_state(flags);
     int fd = kfile_open(pathname, O_RDONLY);
     if (fd < 0) {
+        errprint("[exec]: %s: file %s not exist!\n", __func__, pathname);
         goto free_task_arg;
     }
     struct stat sbuf;
@@ -99,7 +102,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         goto free_loaded_image;
     }
     if (cur->vmm->argbuf) {
-        vmm_debuild_argbug(cur->vmm);
+        vmm_debuild_argbuf(cur->vmm);
     } else {
         if (tmp_arg)
             mem_free(tmp_arg);
@@ -108,9 +111,11 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 
     /* proc exec init */
     proc_exec_init(cur);
+    
     user_set_entry_point(frame, (unsigned long)elf_header.e_entry);
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
+
     kernel_switch_to_user(frame);
 free_loaded_image:
     sys_exit(-1);
@@ -120,7 +125,7 @@ free_tmp_arg:
 free_tmp_fd:
     kfile_close(fd);
 free_task_arg:
-    vmm_debuild_argbug(cur->vmm);
+    vmm_debuild_argbuf(cur->vmm);
     return -1;   
 }
 
@@ -147,6 +152,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
         }
     } else if ((*p == '.' && *(p+1) == '/') || (*p == '.' && *(p+1) == '.' && *(p+2) == '/')) {    /* 当前目录 */
         build_path(p, newpath);
+        //keprint("build path: %s -> %s\n", p, newpath);
         if (!kfile_access(newpath, F_OK)) {
             char *pname = strrchr(newpath, '/');
             if (pname)
@@ -170,17 +176,24 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
                 }
                 strcat(newpath, p);
                 char finalpath[MAX_PATH] = {0};
-                wash_path(newpath, finalpath);
+                /* 清洗路径时第一个字符必须是'/' */
+                wash_path(strchr(newpath, '/'), finalpath);
                 if (!kfile_access(finalpath, F_OK)) {
                     char *pname = strrchr(finalpath, '/');
                     if (pname)
                         pname++;
                     else 
                         pname =  finalpath;
-                    do_execute((const char* )finalpath, (char *)pname, argv, envp);
+                    if (do_execute((const char* )finalpath, (char *)pname, argv, envp) < 0)
+                        keprint(PRINT_ERR "%s: path %s not executable!\n", __func__, pathname);                
                 }
                 env++;
                 memset(newpath, 0, MAX_PATH);
+            }
+        } else {
+            if (do_execute((const char* )pathname, (char *)pathname, argv, envp) < 0) {
+                keprint(PRINT_ERR "%s: path %s not executable!", __func__, newpath);
+                return -1;
             }
         }
     }

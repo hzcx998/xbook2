@@ -79,6 +79,13 @@ static inline void atomic_clear_mask(atomic_t *atomic, int mask)
 
 #define atomic_xchg(v, new) (test_and_set(&((v)->value), new))
 
+
+#define atomic_compare_and_exchange_val_acq(mem, newval, oldval) \
+  __sync_val_compare_and_swap (mem, oldval, newval)
+#define atomic_compare_and_exchange_bool_acq(mem, newval, oldval) \
+  (! __sync_bool_compare_and_swap (mem, oldval, newval))
+
+
 #ifdef __cplusplus
 }
 #endif

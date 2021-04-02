@@ -2,6 +2,7 @@
 #include "drivers/view/view.h"
 #include "drivers/view/misc.h"
 #include <drivers/view/bitmap.h>
+#include <drivers/view/render.h>
 
 int view_render_putpixel(view_t *view, int x, int y, view_color_t color)
 {
@@ -224,17 +225,25 @@ void view_render_bitblt(view_t *view, int x, int y,
         return;
     if (!view->section)
         return;
+    if (width > bmp->width)
+        width = bmp->width;
+    if (height > bmp->height)
+        height = bmp->height;
     int w = min(width, bmp->width - bx);
     int h = min(height, bmp->height - by);
     if (w <= 0 || h <= 0)
         return;
     view_color_t color;
-    int i, j;
-    for (j = 0; j < h; j++) {
-        for (i = 0; i < w; i++) {
-            view_bitmap_getpixel(bmp, i + bx, j + by, &color);
-            if (((color >> 24) & 0xff))
-                view_render_putpixel(view, x + i, y + j, color);
+    int vy, by2;
+    int vx, bx2;
+    int vy2 = y + h;
+    int vx2 = x + w;
+    for (vy = y, by2 = by; vy < vy2; vy++, by2++) {
+        for (vx = x, bx2 = bx; vx < vx2; vx++, bx2++) {
+            color = view_bitmap_getpixel_fast(bmp, bx2, by2);
+            if (((color >> 24) & 0xff)) {
+                view_render_putpixel_fast(view, vx, vy, color);
+            }
         }
     }
 }

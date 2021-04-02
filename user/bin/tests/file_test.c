@@ -58,3 +58,16 @@ int file_test2(int argc, char *argv[])
     free(buf);
     printf("test end\n");
 }
+
+int file_test3(int argc, char *argv[])
+{
+    FILE *fp = NULL;
+    fp = fopen("/res/test2.txt", "wb");
+    if (!fp) {
+        printf("fopen failed\n");
+        return -1;
+    }
+    fwrite("hello", 5, 1, fp);
+    fclose(fp);
+    printf("test end\n");
+}

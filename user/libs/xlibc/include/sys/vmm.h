@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include <types.h>
 #include <stddef.h>
 
 /* 物理内存信息 */
@@ -16,10 +17,19 @@ typedef struct {
 
 int mstate(mstate_t *ms);
 
+typedef struct {
+    void *addr;
+    size_t length;
+    int prot;
+    int flags;
+    int fd;
+    off_t offset;
+} mmap_args_t;
+
 /* vmm */
 void *heap(void *heap);
-int munmap(void *addr, size_t length);
-void *mmap(int fd, size_t length, int flags);
+int xmunmap(void *addr, size_t length);
+void *xmmap(int fd, size_t length, int flags);
 
 #ifdef __cplusplus
 }

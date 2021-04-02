@@ -1660,7 +1660,7 @@ static iostatus_t rtl8139_devctl(device_object_t *device, io_request_t *ioreq)
     unsigned int ctlcode = ioreq->parame.devctl.code;
     unsigned long arg = ioreq->parame.devctl.arg;
     device_extension_t *extension = (device_extension_t *) device->device_extension;
-    iostatus_t status;
+    iostatus_t status = IO_SUCCESS;
     unsigned char *mac;
 
     switch (ctlcode)
@@ -1676,7 +1676,6 @@ static iostatus_t rtl8139_devctl(device_object_t *device, io_request_t *ioreq)
 #ifdef DEBUG_DRV
         keprint(PRINT_DEBUG "rtl8139_devctl: copy mac addr to addr %x\n", ioreq->parame.devctl.arg);
 #endif
-        status = IO_SUCCESS;
         break;
     case NETIO_SETFLGS:
         extension->flags = *((unsigned long *) arg);

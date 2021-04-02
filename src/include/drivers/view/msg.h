@@ -35,8 +35,11 @@ enum {
     VIEW_MSG_HIDE,
     VIEW_MSG_SHOW,
     VIEW_MSG_PAINT,
+    VIEW_MSG_SETICON,
     VIEW_MSG_NR,
 };
+
+#define VIEW_TARGET_NONE    -1
 
 typedef struct {
     uint32_t id;        /* 消息id */
@@ -77,7 +80,7 @@ static inline void view_msg_reset(view_msg_t *msg)
 #define is_view_msg_valid(msg) ((msg)->id > VIEW_MSG_NONE)
 
 /* 获取消息的数据 */
-#define view_msg_get_type(msg) ((msg)->id)
+#define view_msg_get_id(msg) ((msg)->id)
 
 #define view_msg_get_mouse_x(msg) ((msg)->data0)
 #define view_msg_get_mouse_y(msg) ((msg)->data1)
@@ -94,7 +97,6 @@ int view_global_msg_init();
 void view_global_msg_exit();
 int view_get_global_msg(view_msg_t *msg);
 int view_put_global_msg(view_msg_t *msg);
-
 
 
 int view_dispatch_keycode_msg(view_msg_t *msg);

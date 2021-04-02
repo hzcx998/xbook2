@@ -36,19 +36,22 @@
 #define TTYIO_GETCOLOR      CONIO_GETCOLOR
 #define TTYIO_SETPOS        CONIO_SETPOS
 #define TTYIO_GETPOS        CONIO_GETPOS
-#define TTYIO_HOLDER        DEVCTL_CODE('t', 1)
-#define TTYIO_VISITOR       DEVCTL_CODE('t', 2)
-#define TTYIO_DETACH        DEVCTL_CODE('t', 3)
-#define TTYIO_COMBINE       DEVCTL_CODE('t', 4)
+#define TTYIO_SELECT        DEVCTL_CODE('t', 2)
 #define TIOCGPTN            DEVCTL_CODE('t', 5) /* get presudo tty number */
 #define TIOCSPTLCK          DEVCTL_CODE('t', 6) /* set presudo tty lock */
 #define TIOCSFLGS           DEVCTL_CODE('t', 7) /* set flags */
 #define TIOCGFLGS           DEVCTL_CODE('t', 8) /* get flags */
 #define TIOCGFG             DEVCTL_CODE('t', 9) /* get front group task */
+#define TIOCISTTY           DEVCTL_CODE('t', 10) /* check is tty */
+#define TIOCNAME            DEVCTL_CODE('t', 11) /* get tty name */
+#define TIOCGPGRP           DEVCTL_CODE('t', 12)
+#define TIOCSPGRP           DEVCTL_CODE('t', 13)
 
+#define TTYIO_RAW           7
 
 /* tty flags */
 #define TTYFLG_ECHO    0x01
+#define TTYFLG_NOWAIT  0x02
 
 
 /* net */
@@ -95,5 +98,18 @@ typedef struct _video_info {
 #define VIEWIO_DELATTR      DEVCTL_CODE('v', 13)
 #define VIEWIO_RESIZE       DEVCTL_CODE('v', 14)
 #define VIEWIO_GETSCREENSZ  DEVCTL_CODE('v', 15)
+#define VIEWIO_GETLASTPOS   DEVCTL_CODE('v', 16)
+#define VIEWIO_GETMOUSEPOS  DEVCTL_CODE('v', 17)
+#define VIEWIO_SETSIZEMIN   DEVCTL_CODE('v', 18)
+#define VIEWIO_SETDRAGREGION  DEVCTL_CODE('v', 19)
+#define VIEWIO_SETMOUSESTATE  DEVCTL_CODE('v', 20)
+#define VIEWIO_SETMOUSESTATEINFO  DEVCTL_CODE('v', 21)
+#define VIEWIO_GETVID       DEVCTL_CODE('v', 22)
+#define VIEWIO_ADDTIMER     DEVCTL_CODE('v', 23)
+#define VIEWIO_DELTIMER     DEVCTL_CODE('v', 24)
+#define VIEWIO_RESTARTTIMER     DEVCTL_CODE('v', 25)
+#define VIEWIO_SETMONITOR   DEVCTL_CODE('v', 26)
+#define VIEWIO_SETWINMAXIMRECT   DEVCTL_CODE('v', 27)
+#define VIEWIO_GETWINMAXIMRECT   DEVCTL_CODE('v', 28)
 
 #endif   /* _SYS_IOCTL_H */

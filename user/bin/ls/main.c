@@ -10,14 +10,14 @@ static void __ls(char *pathname, int detail)
 {
 	DIR *dir = opendir(pathname);
 	if(dir == NULL){
-		printf("ls: opendir %s failed!\n", pathname);
+		printf("ls: pathname %s not exist or no permission to access it!\n", pathname);
         return;
 	}
 	rewinddir(dir);
 	
 	struct dirent *de;
 
-    char subpath[MAX_PATH];
+    char subpath[MAX_PATH] = {0};
 
     struct stat fstat;  
     char type;
@@ -44,8 +44,10 @@ static void __ls(char *pathname, int detail)
             strcat(subpath, de->d_name);
                 
             memset(&fstat, 0, sizeof(struct stat));
+
             /* 如果获取失败就获取下一个 */
             if (stat(subpath, &fstat)) {
+                printf("ls: get state %s error!\n", subpath);    
                 continue;
             }
             

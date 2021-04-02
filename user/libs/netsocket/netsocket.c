@@ -171,7 +171,7 @@ int net_recvfrom(int sock, void *buf, int len, unsigned int flags,
     lpc_parcel_write_int(parcel, sock); 
     lpc_parcel_write_sequence(parcel, buf, len); // 写入缓冲区，预留位置
     lpc_parcel_write_int(parcel, flags);
-    if (lpc_call(LPC_ID_NET, NETCALL_recv, parcel, parcel) < 0) {
+    if (lpc_call(LPC_ID_NET, NETCALL_recvfrom, parcel, parcel) < 0) {
         lpc_parcel_put(parcel);
         return -1;
     }

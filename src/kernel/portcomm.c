@@ -309,7 +309,7 @@ void port_comm_threada(void *arg)
     port_msg_t smsg;
     while (1)
     {
-        strcpy(smsg.data, "hello!\n");
+        strcpy((char *)smsg.data, "hello!\n");
         if (!sys_port_comm_request(0, &smsg))
             infoprint("A request: %d ok\n", smsg.header.id);
     }
@@ -325,7 +325,7 @@ void port_comm_threadb(void *arg)
     port_msg_t smsg;
     while (1)
     {
-        strcpy(smsg.data, "foo!\n");
+        strcpy((char *)smsg.data, "foo!\n");
         if (!sys_port_comm_request(0, &smsg))
             infoprint("B request: %d ok\n", smsg.header.id);
     }

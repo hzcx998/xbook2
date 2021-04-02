@@ -66,12 +66,13 @@ typedef struct {
 void exception_manager_init(exception_manager_t *exception_manager);
 void exception_manager_exit(exception_manager_t *exception_manager);
 int exception_send(pid_t pid, uint32_t code);
+int exception_send_group(pid_t pgid, uint32_t code);
 int exception_force(pid_t pid, uint32_t code);
 int exception_copy(exception_manager_t *dest, exception_manager_t *src);
 int exception_force_self(uint32_t code);
 int exception_raise(uint32_t code);
 bool exception_cause_exit(exception_manager_t *exception_manager);
-
+bool exception_cause_exit_when_wait(exception_manager_t *exception_manager);
 void exception_frame_build(uint32_t code, exception_handler_t handler, trap_frame_t *frame);
 int exception_return(trap_frame_t *frame);
 
@@ -82,6 +83,8 @@ int sys_expsend(pid_t pid, uint32_t code);
 int sys_expcatch(uint32_t code, exception_handler_t handler);
 int sys_expblock(uint32_t code, uint32_t state);
 int sys_excetion_return(unsigned int ebx, unsigned int ecx, unsigned int esi, unsigned int edi, trap_frame_t *frame);
+int sys_expmask(uint32_t *mask);
+void *sys_exphandler(uint32_t code);
 
 int exception_check_kernel(trap_frame_t *frame);
 

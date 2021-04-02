@@ -91,6 +91,7 @@ user/sbin/init/init
 user/sbin/init/initg
 user/sbin/desktop/desktop
 user/sbin/login/login
+user/sbin/netserv/netserv
 user/sbin/userctl/userctl
 user/sbin/service/service
 
@@ -102,23 +103,26 @@ user/sbin/netserv/
 
 # /bin
 user/bin/cat/cat
-user/bin/cpuinfo/cpuinfo
-user/bin/echo/echo
+user/bin/cal/cal
 user/bin/cp/cp
+user/bin/cpuinfo/cpuinfo
 user/bin/date/date
+user/bin/echo/echo
 user/bin/ls/ls
 user/bin/mem/mem
 user/bin/mkdir/mkdir
 user/bin/mv/mv
+user/bin/uname/uname
 user/bin/ps/ps
 user/bin/rename/rename
 user/bin/rm/rm
 user/bin/rmdir/rmdir
-user/bin/touch/touch
 user/bin/trig/trig
 user/bin/osver/osver
 user/bin/xbrower/xbrower
 user/bin/sh/sh
+user/bin/sys/sys
+
 
 
 # /bin
@@ -138,6 +142,8 @@ user/bin/microui/mui
 user/bin/socket_client/socket_client
 user/bin/socket_server/socket_server
 user/bin/tests/tests
+user/bin/touch/touch
+user/bin/bash/bash
 user/bin/vt100/vt100
 user/bin/win/win
 user/bin/cal/cal
@@ -145,5 +151,5 @@ user/bin/sound/sound
 user/bin/wavplayer/wavplayer
 user/bin/mp3player/mp3player
 user/bin/hello/hello
-user/bin/uname/
+user/bin/uview/uview
 user/bin/desktop/desktop

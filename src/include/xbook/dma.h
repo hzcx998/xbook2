@@ -19,5 +19,6 @@ struct dma_region {
 
 int dma_alloc_buffer(struct dma_region *);
 int dma_free_buffer(struct dma_region *);
+void dma_buffer_dump(struct dma_region *d);
 
 #endif   /* _XBOOK_VMM_DMA_H */

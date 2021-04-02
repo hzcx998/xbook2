@@ -8,7 +8,7 @@
 
 // #define MEMPOOL_DEBUG
 
-mem_range_t mem_ranges[MEM_RANGE_NR];
+static mem_range_t mem_ranges[MEM_RANGE_NR];
 
 void mem_node_init(mem_node_t *node, int ref, uint32_t size)
 {
@@ -41,6 +41,8 @@ void mem_section_setup(mem_section_t *mem_section, mem_node_t *node_base, size_t
 
 mem_range_t *mem_range_get_by_mem_node(mem_node_t *node)
 {
+    if (!node)
+        return NULL;
     int i;
     mem_range_t *mem_range;
     for (i = 0; i < MEM_RANGE_NR; i++) {
@@ -49,12 +51,15 @@ mem_range_t *mem_range_get_by_mem_node(mem_node_t *node)
             return mem_range;
         } 
     }
+    emeprint("mem_range_get_by_mem_node: node %x\n", node);
     panic("mem node not in range!");
     return NULL;
 }
 
 mem_range_t *mem_range_get_by_phy_addr(unsigned int addr)
 {
+    if (!addr)
+        return NULL;
     int i;
     mem_range_t *mem_range;
     for (i = 0; i < MEM_RANGE_NR; i++) {
@@ -63,6 +68,7 @@ mem_range_t *mem_range_get_by_phy_addr(unsigned int addr)
             return mem_range;
         } 
     }
+    emeprint("mem_range_get_by_phy_addr: addr %x\n", addr);
     panic("addr not in range!");
     return NULL;
 }
@@ -76,14 +82,15 @@ void mem_range_init(unsigned int idx, unsigned int start, size_t len)
     mem_range->end = start + len;
     mem_range->pages = len / PAGE_SIZE;
     mem_range->node_table = boot_mem_alloc(mem_range->pages * sizeof(mem_node_t));
+    if (mem_range->node_table == NULL) {
+        panic("mem range %d: start=%x len=%x node table alloc null!\n",
+            idx, start, len);  
+    }
     int i;
     for (i = 0; i < MEM_SECTION_MAX_NR; i++) {    
         mem_section_init(&mem_range->sections[i], powi(2, i));
     }
 
-    keprint(PRINT_INFO "mem range: start:%x end:%x pages:%d len:%dMB\n",
-        mem_range->start, mem_range->end, mem_range->pages, len / MB);
-    
     int section_off = MEM_SECTION_MAX_NR - 1;     
     size_t section_size = powi(2, section_off);
     mem_section_t *mem_section;
@@ -118,6 +125,8 @@ void mem_range_init(unsigned int idx, unsigned int start, size_t len)
 
 mem_node_t *phy_addr_to_mem_node(unsigned int addr)
 { 
+    if (!addr)
+        return NULL;
     mem_range_t *mem_range = mem_range_get_by_phy_addr(addr);
     if (!mem_range)
         return NULL;
@@ -129,6 +138,8 @@ mem_node_t *phy_addr_to_mem_node(unsigned int addr)
 
 unsigned int mem_node_to_phy_addr(mem_node_t *node)
 { 
+    if (!node)
+        return 0;
     mem_range_t *mem_range = mem_range_get_by_mem_node(node);
     if (!mem_range)
         return 0;
@@ -139,6 +150,8 @@ unsigned int mem_node_to_phy_addr(mem_node_t *node)
 
 int mem_range_split_section(mem_range_t *mem_range, mem_section_t *mem_section)
 {
+    if (!mem_range || !mem_section)
+        return 0;
     /* 已经有节有空闲的节点，成功返回！ */
     if (!list_empty(&mem_section->free_list_head))
         return 0;
@@ -179,6 +192,8 @@ int mem_range_split_section(mem_range_t *mem_range, mem_section_t *mem_section)
 
 unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
 {
+    if (!count)
+        return 0;
     if (count > MEM_SECTION_MAX_SIZE) {
         keprint(PRINT_NOTICE "%s: page count %d too big!\n", __func__, count);
         return 0;
@@ -219,7 +234,7 @@ unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
         }
     }
     mem_node_t *node = list_first_owner(&mem_section->free_list_head, mem_node_t, list);
-    list_del(&node->list);
+    list_del_init(&node->list);
     MEM_SECTION_DES_COUNT(mem_section);
 
     mem_node_init(node, 1, count);
@@ -230,6 +245,8 @@ unsigned long mem_node_alloc_pages(unsigned long count, unsigned long flags)
 
 int mem_node_free_pages(unsigned long addr)
 {
+    if (!addr)
+        return -1;
     mem_node_t *node = phy_addr_to_mem_node(addr);
     if (!node)
         return -1;
@@ -237,13 +254,13 @@ int mem_node_free_pages(unsigned long addr)
     // 放回节点所属的节中去
     mem_section_t *section = MEM_NODE_GET_SECTION(node);
     if (!section) {
-        keprint(PRINT_WARING "node no section!\n");
+        // keprint(PRINT_WARING "node %x addr %x no section!\n", node, addr);
         return -1;
     }
     unsigned long intr_flags;
     interrupt_save_and_disable(intr_flags);
     if (list_find(&node->list, &section->free_list_head)) {
-        keprint(PRINT_WARING "addr %x don't need free again!\n", addr);
+        // keprint(PRINT_WARING "addr %x don't need free again!\n", addr);
         interrupt_restore_state(intr_flags); 
         return -1;
     }
@@ -287,13 +304,21 @@ void mem_pool_test()
             break;
         mem_node_free_pages(addr);
     }
-    for (i = 0; i <= MEM_SECTION_MAX_NR; i++) {    
+    for (i = 0; i < MEM_SECTION_MAX_NR / 2; i++) {    
         addr = mem_node_alloc_pages(powi(2, i), MEM_NODE_TYPE_DMA);
         keprint("2 alloc addr: %x\n", addr);
         if (!addr)
             break;
-        //mem_node_free_pages(addr);
+        mem_node_free_pages(addr);
     }
+    for (i = 0; i < MEM_SECTION_MAX_NR; i++) {    
+        addr = mem_node_alloc_pages(powi(2, i), MEM_NODE_TYPE_USER);
+        keprint("2 alloc addr: %x\n", addr);
+        if (!addr)
+            break;
+        mem_node_free_pages(addr);
+    }
+    
     #endif
     spin("test");
 }

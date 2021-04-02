@@ -21,7 +21,7 @@ int sys_test(int argc, char *argv[])
 
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    printf("nsecond: %d\n", ts.ts_sec * 1000000 + ts.ts_nsec);
+    printf("nsecond: %d\n", ts.tv_sec * 1000000 + ts.tv_nsec);
 
     return 0;
 }

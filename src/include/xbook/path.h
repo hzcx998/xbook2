@@ -8,10 +8,10 @@
 #include <stdint.h>
 #include "fsal.h"
 
-#define ROOT_DISK_NAME  "disk1"
 #define ROOT_DIR_PATH  "/root"
 #define HOME_DIR_PATH  "/home"
 #define ACCOUNT_DIR_PATH  "/acct"
+#define DEV_DIR_PATH  "/dev"
 
 #define MT_REMKFS       0x01 /* 挂在前需要格式化磁盘 */
 #define MT_DELAYED      0x02 /* 延时挂载 */

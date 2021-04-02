@@ -35,6 +35,7 @@ enum {
     UVIEW_MSG_HIDE,
     UVIEW_MSG_SHOW,
     UVIEW_MSG_PAINT,
+    UVIEW_MSG_SETICON,
     UVIEW_MSG_NR,
 };
 
@@ -74,7 +75,10 @@ static inline void uview_msg_reset(uview_msg_t *msg)
 }
 
 #define is_uview_msg_valid(msg) ((msg)->id > UVIEW_MSG_NONE)
-#define uview_msg_get_type(msg) ((msg)->id)
+#define uview_msg_get_id(msg) ((msg)->id)
+#define uview_msg_get_target(msg) ((msg)->target)
+#define uview_msg_get_icontype(msg) ((msg)->data1)      // view's icon type
+#define uview_msg_get_type(msg) ((msg)->data0)          // view's type
 #define uview_msg_get_mouse_x(msg) ((msg)->data0)
 #define uview_msg_get_mouse_y(msg) ((msg)->data1)
 #define uview_msg_get_mouse_wheel(msg) ((int)(msg)->data2)
@@ -85,5 +89,10 @@ static inline void uview_msg_reset(uview_msg_t *msg)
 #define uview_msg_get_resize_y(msg) ((msg)->data1)
 #define uview_msg_get_resize_width(msg) ((msg)->data2)
 #define uview_msg_get_resize_height(msg) ((msg)->data3)
+
+#define uview_msg_get_timer_id(msg) ((msg)->data0)
+
+#define uview_msg_get_move_x(msg) ((msg)->data0)
+#define uview_msg_get_move_y(msg) ((msg)->data1)
 
 #endif  /* _LIB_UVIEW_MSG_H */
