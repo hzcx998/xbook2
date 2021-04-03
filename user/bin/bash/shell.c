@@ -1874,18 +1874,11 @@ get_current_user_info ()
 #endif
       if (entry)
 	{
-        #if 0
 	  current_user.user_name = savestring (entry->pw_name);
 	  current_user.shell = (entry->pw_shell && entry->pw_shell[0])
 				? savestring (entry->pw_shell)
 				: savestring ("/bin/sh");
 	  current_user.home_dir = savestring (entry->pw_dir);
-        #else
-        current_user.user_name = _("I have no name!");
-        current_user.user_name = savestring (current_user.user_name);
-        current_user.shell = savestring ("/bin/sh");
-        current_user.home_dir = savestring ("/");
-        #endif
     }
       else
 	{
