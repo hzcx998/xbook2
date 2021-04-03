@@ -1,5 +1,50 @@
 #include <pwd.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+#define __PWD_PATH	"/etc/passwd"
+
+static char *pwd_buffer = NULL;
+static char *pwd_ptr = NULL;
+static struct passwd __pwd;
+
+static int __pw_load()
+{
+	int pwdfd = -1;
+	if (pwd_buffer == NULL) {
+		pwdfd = open(__PWD_PATH, O_RDONLY);
+		if (pwdfd < 0)
+			return -1;
+		lseek(pwdfd, 0, SEEK_END);
+		long sz = tell(pwdfd);
+		if (sz <= 0) {
+			clsoe(pwdfd);
+			pwdfd = -1;
+			return -1;
+		}
+		lseek(pwdfd, 0, SEEK_END);
+
+		pwd_buffer = malloc(sz);
+		if (pwd_buffer == NULL) {
+			clsoe(pwdfd);
+			pwdfd = -1;
+			return -1;
+		}
+		if (read(pwdfd, pwd_buffer, sz) <= 0) {
+			free(pwd_buffer);
+			pwd_buffer = NULL;
+			clsoe(pwdfd);
+			pwdfd = -1;
+			return -1;
+		}
+		clsoe(pwdfd);
+		pwdfd = -1;
+		pwd_ptr = pwd_buffer;
+	}
+	return 0;
+}
+
 
 int getpw(uid_t uid, char *buf)
 {
@@ -9,6 +54,10 @@ int getpw(uid_t uid, char *buf)
 
 struct passwd *getpwent(void)
 {
+	if (__pw_load() < 0)
+		return NULL;
+	/* 读取并放到结构体中，返回结构体内容 */
+	
     return NULL;
 }
 
