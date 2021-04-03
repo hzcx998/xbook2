@@ -5,7 +5,7 @@
 #include <xbook/path.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <sconf.h>
 
 permission_database_t *permission_db;
 
@@ -140,6 +140,7 @@ void permission_database_foreach(void (*callback)(void *, void *) , void *arg)
 
 static void permission_data_to_buf(permission_data_t *data, char *buf)
 {
+    char sbuf[8] = {0};
     char s[2] = {0};
     if (data->attr & PERMISION_ATTR_DEVICE) {
         s[0] = '0';
@@ -150,34 +151,35 @@ static void permission_data_to_buf(permission_data_t *data, char *buf)
     } else{
         s[0] = '-';
     }
-    strcat(buf, s);
+    strcat(sbuf, s);
     if (data->attr & PERMISION_ATTR_READ) {
         s[0] = 'R';
     } else{
         s[0] = '-';
     }
-    strcat(buf, s);
+    strcat(sbuf, s);
     if (data->attr & PERMISION_ATTR_WRITE) {
         s[0] = 'W';
     } else{
         s[0] = '-';
     }
-    strcat(buf, s);
+    strcat(sbuf, s);
     if (data->attr & PERMISION_ATTR_EXEC) {
         s[0] = 'X';
     } else{
         s[0] = '-';
     }
-    strcat(buf, s);
+    strcat(sbuf, s);
     if (data->attr & PERMISION_ATTR_HOME) {
         s[0] = 'H';
     } else{
         s[0] = '-';
     }
-    strcat(buf, s);
-    strcat(buf, ",");
-    strcat(buf, data->str);
-    strcat(buf, "\n");
+    strcat(sbuf, s);
+
+    sconf_write(buf, sbuf);
+    sconf_write(buf, data->str);
+    sconf_writeline(buf);
 }
 
 int permission_database_sync()
@@ -197,7 +199,6 @@ int permission_database_sync()
     int i; for (i = 0; i < PERMISION_DATABASE_LEN; i++) {
         permission_data_t *data = &permission_db->datasets[i];
         if ((data->attr)) {
-            /* attr,str\n */
             char permission_buf[PERMISION_STR_LEN + 12] = {0};
             permission_data_to_buf(data, permission_buf);
             // dbgprint("permission buf:%s", permission_buf);
@@ -213,10 +214,14 @@ int permission_database_sync()
 int permission_auto_insert()
 {
     char *str;
-    str = "disk0"; permission_database_insert(PERMISION_ATTR_DEVICE | PERMISION_ATTR_RDWR, str);
-    str = "disk1"; permission_database_insert(PERMISION_ATTR_DEVICE | PERMISION_ATTR_RDWR, str);
-    str = ACCOUNT_DIR_PATH; permission_database_insert(PERMISION_ATTR_FILE | PERMISION_ATTR_RDWR, str);
-    str = "/sbin/init"; permission_database_insert(PERMISION_ATTR_FILE | PERMISION_ATTR_RDWR, str);
+    str = "disk0"; 
+    permission_database_insert(PERMISION_ATTR_DEVICE | PERMISION_ATTR_RDWR, str);
+    str = "disk1";
+    permission_database_insert(PERMISION_ATTR_DEVICE | PERMISION_ATTR_RDWR, str);
+    str = ACCOUNT_DIR_PATH;
+    permission_database_insert(PERMISION_ATTR_FILE | PERMISION_ATTR_RDWR, str);
+    str = "/sbin/init";
+    permission_database_insert(PERMISION_ATTR_FILE | PERMISION_ATTR_RDWR, str);
     /* 同步到数据库中去 */
     if (permission_database_sync() < 0) {
         return -1;
@@ -224,19 +229,20 @@ int permission_auto_insert()
     return 0;
 }
 
-int permission_scan_line(char *str)
+int permission_scan_line(char *line)
 {
-    // 权限,内容
-    char *next = strchr(str, ',');
-    if (!next)
-        return -1;
-    *next = '\0';
-    next++;
-    if (!next)
-        return -1;
+    //dbgprint("permission: line: %s\n", line);
     /* 解析权限 */
     uint32_t attr = 0;
-    char *p = str;
+    char *q = line;
+    char attr_buf[32] = {0};
+    q = sconf_read(q, attr_buf, 32);
+    if (!q) {
+        errprint("permission: get attr %s failed\n", attr_buf);
+        return -1;
+    }
+    sconf_trim(attr_buf);
+    char *p = attr_buf;
     if (*p == '0') {
         attr |= PERMISION_ATTR_DEVICE;
     } else if (*p == '1') {
@@ -260,14 +266,14 @@ int permission_scan_line(char *str)
     if (*p == 'H') {
         attr |= PERMISION_ATTR_HOME;
     }
-    /* 解析数据，去掉换行符号，windows时\r\n,linux是\n,mac是\r。 */
-    p = strchr(next, '\n');
-    if (p)
-        *p = '\0';
-    p = strchr(next, '\r');
-    if (p)
-        *p = '\0';
-    return (permission_database_insert(attr, next) >= 0) ? 0: -1;
+    char data_buf[32] = {0};
+    q = sconf_read(q, data_buf, 32);
+    if (!q) {
+        errprint("permission: get data %s failed\n", data_buf);
+        return -1;
+    }
+    sconf_trim(data_buf);
+    return (permission_database_insert(attr, data_buf) >= 0) ? 0: -1;
 }
 
 /* 扫描文件内容，并添加到权限库中 */
@@ -282,36 +288,30 @@ static int permission_scan_insert(char *filename)
         kfile_close(fd);
         return -1;
     }
-    char *buf = mem_alloc(fsize);
-    if (!buf) {
+    char *fbuf = mem_alloc(fsize);
+    if (!fbuf) {
         kfile_close(fd);
         return -1;
     }
-    memset(buf, 0, fsize);
+    memset(fbuf, 0, fsize);
     kfile_lseek(fd, 0, SEEK_SET);
-    if (kfile_read(fd, buf, fsize) != fsize) {
-        mem_free(buf);
+    if (kfile_read(fd, fbuf, fsize) != fsize) {
+        mem_free(fbuf);
         kfile_close(fd);
         return -1;
     }
     kfile_close(fd);
-    char *str = buf;
-    char *p = str;
-    char *next_line = p;
-    while (*p && next_line < buf + fsize) {
-        while (*p != '\n' && *p) {
-            p++;
-        }
-        next_line = p + 1;
-        *p = 0;
-        if (permission_scan_line(str) < 0) {
-            mem_free(buf);
-            return -1;
-        }
-        str = next_line;
-        p = str;
+    
+    char *p = fbuf;
+    while (1) {
+        char line[128] = {0};
+        p = sconf_readline(p, line, 128);
+        if (!p)
+            break;
+        if (permission_scan_line(line) < 0)
+            errprint("permission: insert database failed: %s\n", line);   
     }
-    mem_free(buf);
+    mem_free(fbuf);
     return 0;
 }
 

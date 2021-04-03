@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sconf.h>
 #include <xbook/path.h>
 #include <xbook/safety.h>
 #include <xbook/fs.h>
@@ -146,42 +147,41 @@ int account_password_check(const char *password)
     return 0;
 }
 
-int account_scan_line(char *str)
+int account_scan_line(char *line)
 {
-    // 权限,内容
-    char *next = strchr(str, ',');
-    if (!next)
-        return -1;
-    *next = '\0';
-    next++;
-    if (!next)
-        return -1;
+    //dbgprint("account: line: %s\n", line);
+    char *q = line;
     uint32_t attr = 0;
     /* 解析权限 */
-    char *p = str;
-    if (*p == 'S') {
+    char attr_buf[32] = {0};
+    q = sconf_read(q, attr_buf, 32);
+    if (!q) {
+        errprint("account: get attr %s failed\n", attr_buf);
+        return -1;
+    }
+    sconf_trim(attr_buf);
+    if (attr_buf[0] == 'S') {
         attr |= ACCOUNT_LEVEL_ROOT;
-    } else if (*p == 'U') {
+    } else if (attr_buf[0] == 'U') {
         attr |= ACCOUNT_LEVEL_ROOT;
     }
-    /* 分离账户和密码 */
-    str = next;
-    next = strchr(str, ',');
-    if (!next)
-        return -1;
-    *next = '\0';
-    next++;
-    if (!next)
-        return -1;
-    /* 解析数据，去掉换行符号，windows时\r\n,linux是\n,mac是\r。 */
-    p = strchr(next, '\n');
-    if (p)
-        *p = '\0';
-    p = strchr(next, '\r');
-    if (p)
-        *p = '\0';
     /* 解析账户名 */
-    return account_push(str, next, attr);
+    char name_buf[32] = {0};
+    q = sconf_read(q, name_buf, 32);
+    if (!q) {
+        errprint("account: get name: %s failed\n", name_buf);
+        return -1;
+    }
+    sconf_trim(name_buf);
+    /* 解析密码 */
+    char pwd_buf[32] = {0};
+    q = sconf_read(q, pwd_buf, 32);
+    if (!q) {
+        errprint("account: get password: %s failed\n", pwd_buf);
+        return -1;
+    }
+    sconf_trim(pwd_buf);
+    return account_push(name_buf, pwd_buf, attr);
 }
 
 static int account_load_from_file(char *filename)
@@ -195,36 +195,30 @@ static int account_load_from_file(char *filename)
         kfile_close(fd);
         return -1;
     }
-    char *buf = mem_alloc(fsize);
-    if (!buf) {
+    char *fbuf = mem_alloc(fsize);
+    if (!fbuf) {
         kfile_close(fd);
         return -1;
     }
-    memset(buf, 0, fsize);
+    memset(fbuf, 0, fsize);
     kfile_lseek(fd, 0, SEEK_SET);
-    if (kfile_read(fd, buf, fsize) != fsize) {
-        mem_free(buf);
+    if (kfile_read(fd, fbuf, fsize) != fsize) {
+        mem_free(fbuf);
         kfile_close(fd);
         return -1;
     }
     kfile_close(fd);
-    char *str = buf;
-    char *p = str;
-    char *next_line = p;
-    while (*p && next_line < buf + fsize) {
-        while (*p != '\n' && *p) {
-            p++;
-        }
-        next_line = p + 1;
-        *p = 0;
-        if (account_scan_line(str) < 0) {
-            mem_free(buf);
-            return -1;
-        }
-        str = next_line;
-        p = str;
+
+    char *p = fbuf;
+    while (1) {
+        char line[128] = {0};
+        p = sconf_readline(p, line, 128);
+        if (!p)
+            break;
+        if (account_scan_line(line) < 0)
+            errprint("account: push account failed: %s\n", line);
     }
-    mem_free(buf);
+    mem_free(fbuf);
     return 0;
 }
 
@@ -270,12 +264,10 @@ static void account_build_file_buf(account_t *account, char *buf)
 {
     int level = (account->flags & ACCOUNT_LEVEL_MASK);
     char *level_str = (level == ACCOUNT_LEVEL_ROOT) ? "S":"U";
-    strcat(buf, level_str);
-    strcat(buf, ",");
-    strcat(buf, account->name);
-    strcat(buf, ",");
-    strcat(buf, account->password);
-    strcat(buf, "\n");
+    sconf_write(buf, level_str);
+    sconf_write(buf, account->name);
+    sconf_write(buf, account->password);
+    sconf_writeline(buf);
 }
 
 int account_sync_data()
@@ -298,6 +290,7 @@ int account_sync_data()
             /* U/S,name,password\n */
             char account_buf[ACCOUNT_NAME_LEN + ACCOUNT_PASSWORD_LEN + 8] = {0};
             account_build_file_buf(account, account_buf);
+            
             // dbgprint("account buf:%s", account_buf);
             kfile_write(fd, account_buf, strlen(account_buf));
         }
@@ -337,7 +330,7 @@ int account_login(const char *name, char *password)
         return -1;
     }
     if (strcmp(account->password, password) != 0) {
-        errprint("password %s not match!\n", name);
+        errprint("password %s not match!\n", password);
         return -1;
     }
     /* 之前登陆过，但是没有退出登录，强制退出其权限  */
@@ -698,9 +691,11 @@ int account_manager_init()
         panic("account manager read config failed!\n");
 
     /* default login root */
+    
     if (account_login(ROOT_ACCOUNT_NAME, ROOT_ACCOUNT_PASSWORD) < 0)
         panic("account: login root failed!\n");
     
     keprint(PRINT_INFO "account init: done.\n");
+
     return 0;
 }
