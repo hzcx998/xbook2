@@ -194,11 +194,7 @@ QEMU_KVM := # no virutal
 QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 		-name "Xbook2 Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
-		-drive id=disk0,file=$(HDA_IMG),if=none \
-		-drive id=disk1,file=$(HDB_IMG),if=none \
-		-device ahci,id=ahci \
-		-device ide-drive,drive=disk0,bus=ahci.0 \
-		-device ide-drive,drive=disk1,bus=ahci.1 \
+		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
 		-rtc base=localtime \
 		-boot a \
 		-soundhw sb16 \
@@ -211,7 +207,11 @@ QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 
 # qemu启动
 qemu: all
+ifeq ($(HOSTOS),macos)
+	sudo $(QEMU) $(QEMU_ARGUMENT)
+else
 	$(QEMU) $(QEMU_ARGUMENT)
+endif
 
 # 调试配置：-S -gdb tcp::10001,ipv4
 qemudbg: all
