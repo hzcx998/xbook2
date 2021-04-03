@@ -807,6 +807,10 @@ main (argc, argv, env)
   if (pretty_print_mode)
     exit_shell (pretty_print_loop ());
 
+  #if defined(FIXED_PROMPT_VARIABLE)
+  bind_variable ("PS1", PROMPT_STRING_VARIABLE, 0);
+  #endif  /* FIXED_PROMPT_VARIABLE */
+
   /* Read commands until exit condition. */
   reader_loop ();
   exit_shell (last_command_exit_value);
