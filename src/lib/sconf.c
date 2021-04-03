@@ -5,6 +5,20 @@
 #include <stdlib.h>
 #include <sconf.h>
 
+#define SCONF_SEPARATOR_DEFAULT ','
+
+static char __sconf_separator = SCONF_SEPARATOR_DEFAULT;
+
+void sconf_set_separator(char separator)
+{
+    __sconf_separator = separator;
+}
+
+char sconf_get_separator(void)
+{
+    return __sconf_separator;
+}
+
 char *sconf_readline(char *buf, const char *line, int len)
 {
     if (!buf || !line || len <= 0)
@@ -49,7 +63,7 @@ char *sconf_read(char *line, const char *str, int len)
     char *q = (char *) str;
 
     while (*p) {
-        if (*p == SCONF_SEPARATOR) {
+        if (*p == __sconf_separator) {
             p++;
             break;
         }
@@ -79,7 +93,7 @@ int sconf_write(char *line, const char *str)
     if (!line || !str)
         return -1;
     strcat(line, str);
-    const char sbuf[2] = {SCONF_SEPARATOR, '\0'};
+    const char sbuf[2] = {__sconf_separator, '\0'};
     strcat(line, sbuf);
     return 0;
 }
