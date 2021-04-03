@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <sconf.h>
+#include "sconf.h"
 
 #define SCONF_SEPARATOR_DEFAULT ','
 

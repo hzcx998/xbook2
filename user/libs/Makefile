@@ -14,6 +14,7 @@ export AS LD
 
 MODULE		:= xlibc
 MODULE		+= xlibcpp
+MODULE		+= sconf
 MODULE		+= pthread
 MODULE		+= netsocket
 MODULE		+= uview
