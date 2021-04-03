@@ -47,3 +47,4 @@ MODULE      +=  uname
 MODULE      +=  sh
 MODULE      +=  wavplayer
 MODULE      +=  mp3player
+MODULE      +=  grep
