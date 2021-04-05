@@ -1240,6 +1240,10 @@
 
 /* End additions for lib/intl */
 
+/* use fixed prompt by xbook */
+#define FIXED_PROMPT_VARIABLE 1
+#define PROMPT_STRING_VARIABLE "[\\u@\\h \\W]\\$ "
+
 #include "config-bot.h"
 
 #endif /* _CONFIG_H_ */

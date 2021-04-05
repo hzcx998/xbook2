@@ -173,7 +173,7 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
         }
         // 等待是当前设备
         while (extension->public->current_device != extension->device_id) {
-            task_yeild();
+            task_yield();
         }
         if (extension->public->current_device == TTY_DEVICE_RAW) {
             while (len > 0) {

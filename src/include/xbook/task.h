@@ -152,7 +152,7 @@ void task_activate_when_sched(task_t *task);
 
 void task_block(task_state_t state);
 void task_unblock(task_t *task);
-void task_yeild();
+void task_yield();
 
 void task_set_timeslice(task_t *task, uint32_t timeslice);
 
@@ -190,7 +190,7 @@ int task_set_cwd(task_t *task, const char *path);
 
 int task_is_child(pid_t pid, pid_t child_pid);
 
-#define sys_sched_yeild     task_yeild
+#define sys_sched_yield     task_yield
 pid_t sys_get_pid();
 pid_t sys_get_ppid();
 pid_t sys_get_tid();

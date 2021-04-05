@@ -33,7 +33,7 @@ pid_t getpid();
 pid_t getppid();
 pid_t gettid();
 unsigned long sleep(unsigned long second);
-void sched_yeild();
+void sched_yield();
 int tstate(tstate_t *ts, int *idx);
 int getver(char *buf, int len);
 int create_process(char *const argv[], char *const envp[], unsigned int flags);

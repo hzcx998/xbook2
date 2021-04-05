@@ -165,20 +165,18 @@ endif
 QEMU_KVM := # no virutal
 
 QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
-		-name "Xbook2 Development Platform for x86" \
+		-name "XBOOK Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
 		-drive id=disk0,file=$(HDA_IMG),if=none \
 		-drive id=disk1,file=$(HDB_IMG),if=none \
 		-device ahci,id=ahci \
 		-device ide-drive,drive=disk0,bus=ahci.0 \
 		-device ide-drive,drive=disk1,bus=ahci.1 \
-		-rtc base=localtime \
 		-boot a \
 		-soundhw sb16 \
 		-serial stdio  \
-		-soundhw pcspk \
-		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no
-		
+		-soundhw pcspk 
+
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 #		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
 
@@ -187,6 +185,5 @@ qemu: all
 	$(QEMU) $(QEMU_ARGUMENT)
 
 # 调试配置：-S -gdb tcp::10001,ipv4
-qemudbg: all
+qemudbg:
 	$(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
-

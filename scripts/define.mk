@@ -59,7 +59,13 @@ endif
 
 export ECHO_RM ECHO_CC ECHO_CXX ECHO_AS ECHO_LD ECHO_AR ECHO_OUTPUT ECHO_HOSTCC
 
-CROSS_COMPILE	?=
+
+ifeq ($(shell uname),Darwin)
+	# MacOS 
+	CROSS_COMPILE	?= i386-elf-
+else
+	CROSS_COMPILE	?=
+endif
 
 # Make variables (CC, etc...)
 AS			:=	$(CROSS_COMPILE)gcc -x assembler-with-cpp

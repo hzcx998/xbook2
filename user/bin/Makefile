@@ -6,14 +6,22 @@ X_ASFLAGS	+= -f elf -I $(DIR_XLIBC)/indlude
 X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99 -O3
 X_INCDIRS	+= $(LIBS_DIR)/xlibc/include $(LIBS_DIR)/pthread/include $(LIBS_DIR)/netsocket/include \
 				$(LIBS_DIR)/uview/include \
+				$(LIBS_DIR)/sconf \
 
 X_LDFLAGS	+= -no-pie -m elf_i386 -e _start -Ttext 0x00001000
 X_LIBDIRS	+= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \
 				$(LIBS_DIR)/netsocket \
 				$(LIBS_DIR)/uview \
-				
-LD			:= ld -m elf_i386
+				$(LIBS_DIR)/sconf \
+
 AS			:=	nasm
+
+# MacOS
+ifeq ($(shell uname),Darwin)
+	LD			:=  i386-elf-ld -m elf_i386
+else
+	LD			:=  ld -m elf_i386
+endif
 
 export AS LD
 
@@ -41,3 +49,4 @@ MODULE      +=  uname
 MODULE      +=  sh
 MODULE      +=  wavplayer
 MODULE      +=  mp3player
+MODULE      +=  grep

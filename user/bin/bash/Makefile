@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibc.a
+X_LIBS		+= libxlibc.a libsconf.a
 
 X_INCDIRS	+= bash/ bash/include bash/lib
 
