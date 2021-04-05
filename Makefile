@@ -215,5 +215,8 @@ endif
 
 # 调试配置：-S -gdb tcp::10001,ipv4
 qemudbg: all
-	$(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
-
+ifeq ($(HOSTOS),macos)
+	sudo $(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
+else
+		$(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
+endif
