@@ -39,11 +39,7 @@ OBJDUMP		= objdump
 endif
 
 # virtual machine
-ifeq ($(HOSTOS),linux)
-QEMU         = /home/lee/Desktop/Computer_Systems/qemu/build/qemu-system-i386
-else 
 QEMU 	     = qemu-system-i386
-endif
 
 # images and rom
 IMAGE_DIR	= develop/image
