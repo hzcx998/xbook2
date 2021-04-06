@@ -114,6 +114,7 @@ enum syscall_num {
     SYS_GETHOSTNAME,
     SYS_GETPGID,
     SYS_SETPGID,
+    SYS_MKFIFO,
     SYSCALL_NR,
 };
 

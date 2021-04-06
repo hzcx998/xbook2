@@ -38,3 +38,4 @@
 * grub引导启动
 * 添加内存文件系统, ramfs
 * 添加openfifo系统调用，实现命名管道的添加。
+* 成功添加mkfifo，接下来就是open 文件路径转换为fifo路径
