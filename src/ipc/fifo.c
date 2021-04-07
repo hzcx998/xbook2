@@ -25,6 +25,7 @@ DEFINE_SEMAPHORE(fifo_mutex, 1);
 static int fsal_fifofs_mount(char *source, char *target, char *fstype, unsigned long flags);
 static int fsal_fifofs_unmount(char *path, unsigned long flags);
 static int fifoif_open(void *pathname, int flags);
+static int fifoif_unlink(const char *pathname);
 
 static fifo_t *fifo_find_by_name(char *name)
 {
@@ -82,6 +83,13 @@ int fifo_free(fifo_t *fifo)
     }
     memset(fifo->name, 0, FIFO_NAME_LEN);
     return 0;
+}
+
+static int fifo_is_opened(fifo_t *fifo)
+{
+    if (atomic_get(&fifo->readref) < 1 && atomic_get(&fifo->writeref) < 1)
+        return 0;
+    return 1;
 }
 
 /**
@@ -153,89 +161,6 @@ err:
 }
 
 /**
- * @flags: 获取标志
- *          IPC_CREAT: 如果管道不存在，则创建一个新的管道，否则就打开
- *          IPC_EXCL:  和CREAT一起使用，则要求创建一个新的管道，若已存在，就返回-1。
- *                    相当于在CREAT上面加了一个必须不存在的限定。
- *          IPC_READER: 读者进程
- *          IPC_WRITER: 写者进程
- * 只能有一个读者和一个写者
- * 读者注册时需要检测写者是否在同步等待自己，如果是，就唤醒写者。
- * @return: 成功返回管道id，失败返回-1
- */
-int fifo_get2(char *name, unsigned long flags)
-{
-    if (name == NULL)
-        return -1;
-    char craete_new = 0;
-    fifo_t *fifo;
-    int retval = -1;
-    int rw = -1;
-    semaphore_down(&fifo_mutex);
-    if (flags & IPC_CREAT) {
-        if (flags & IPC_READER) {
-            rw = 0;
-        } else if (flags & IPC_WRITER) {
-            rw = 1;
-        } else {
-            keprint(PRINT_NOTICE "get fifo %s without reader or writer!\n", name);
-        }
-        if (flags & IPC_EXCL) {
-            craete_new = 1;
-        }
-        fifo = fifo_find_by_name(name);
-        if (fifo) {
-            if (craete_new) {
-                goto err;
-            }
-            if (rw == 1) {
-                if (fifo->writer == NULL && !atomic_get(&fifo->writeref)) {
-                    fifo->writer = task_current;                  
-                }
-                atomic_inc(&fifo->writeref);
-                if (flags & IPC_NOWAIT) {
-                    fifo->flags |= (IPC_NOWAIT << 24);
-                }
-            } else if (rw == 0) {
-                if (fifo->reader == NULL && !atomic_get(&fifo->readref)) {
-                    fifo->reader = task_current;
-                    if (fifo->writer && fifo->writer->state == TASK_BLOCKED && fifo->flags & FIFO_IN_WRITE) {              
-                        task_unblock(fifo->writer);
-                    }
-                }
-                atomic_inc(&fifo->readref);
-                if (flags & IPC_NOWAIT) {
-                    fifo->flags |= (IPC_NOWAIT << 16);
-                }
-            }
-            retval = fifo->id;
-        } else {
-            fifo = fifo_alloc(name);
-            if (fifo == NULL) {
-                goto err;
-            }
-            if (rw == 1) {
-                fifo->writer = task_current;
-                atomic_set(&fifo->writeref, 1);
-                if (flags & IPC_NOWAIT) {
-                    fifo->flags |= (IPC_NOWAIT << 24);
-                }
-            } else if (rw == 0) {
-                fifo->reader = task_current;
-                atomic_set(&fifo->readref, 1);
-                if (flags & IPC_NOWAIT) {
-                    fifo->flags |= (IPC_NOWAIT << 16);
-                }
-            }
-            retval = fifo->id;
-        }
-    }
-err:
-    semaphore_up(&fifo_mutex);
-    return retval;
-}
-
-/**
  * 生成一个新的管道文件
  * 成功返回0
  * 如果文件已经存在就返回EEXIST，如果没有可用管道资源，则返回ENOMEN
@@ -244,10 +169,8 @@ int fifo_make(char *name, mode_t mode)
 {
     if (*name == '\0')
         return -EINVAL;
-    char craete_new = 0;
     fifo_t *fifo;
     int retval = -1;
-    int rw = -1;
     semaphore_down(&fifo_mutex);
     /* 如果文件已经存在则创建失败 */
     fifo = fifo_find_by_name(name);
@@ -259,6 +182,39 @@ int fifo_make(char *name, mode_t mode)
     fifo = fifo_alloc(name);
     if (fifo == NULL) {
         retval = -ENOMEM;
+        goto err;
+    }
+    retval = 0;
+err:
+    semaphore_up(&fifo_mutex);
+    return retval;
+}
+
+int fifo_remove(char *name)
+{
+    if (*name == '\0')
+        return -EINVAL;
+    fifo_t *fifo;
+    int retval = -1;
+    
+    if (semaphore_try_down(&fifo_mutex) < 0) {
+        retval = -EBUSY;
+        goto err;
+    }
+    /* 如果文件已经存在则创建失败 */
+    fifo = fifo_find_by_name(name);
+    if (!fifo) {
+        retval = -ENFILE;
+        goto err;
+    }
+
+    if (fifo_is_opened(fifo)) {
+        retval = -EPERM;    /* opened! */
+        goto err;
+    }
+
+    if (fifo_free(fifo) < 0) {
+        retval = -EBUSY;
         goto err;
     }
     retval = 0;
@@ -285,9 +241,6 @@ int fifo_put(int fifoid)
             if (atomic_get(&fifo->writeref) == 0) {
                 fifo->writer = NULL;
             }
-        }
-        if (fifo->reader == NULL && fifo->writer == NULL) {
-            fifo_free(fifo);
         }
         mutex_unlock(&fifo->mutex);
         semaphore_up(&fifo_mutex);        
@@ -687,7 +640,7 @@ fsal_t fifofs_fsal = {
     .closedir   = NULL,
     .readdir    = NULL,
     .mkdir      = NULL,
-    .unlink     = NULL,
+    .unlink     = fifoif_unlink,
     .rename     = NULL,
     .ftruncate  = NULL,
     .fsync      = NULL,
@@ -718,9 +671,10 @@ static int fsal_fifofs_mount(char *source, char *target, char *fstype, unsigned 
         errprint("mount fifofs type %s failed!\n", fstype);
         return -1;
     }
+    /*
     if (kfile_mkdir(FIFO_DIR_PATH, 0) < 0)
         warnprint("fsal create dir %s failed or dir existed!\n", FIFO_DIR_PATH);
-    
+    */
     if (fsal_path_insert(FIFOFS_PATH, target, &fifofs_fsal)) {
         dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, target);
         return -1;
@@ -734,8 +688,9 @@ static int fsal_fifofs_unmount(char *path, unsigned long flags)
         dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, path);
         return -1;
     }
+    /*
     if (kfile_rmdir(FIFO_DIR_PATH) < 0)
-        warnprint("fsal remove dir %s failed or dir existed!\n", FIFO_DIR_PATH);
+        warnprint("fsal remove dir %s failed or dir existed!\n", FIFO_DIR_PATH);*/
     return 0;
 }
 
@@ -763,6 +718,18 @@ int sys_mkfifo(const char *pathname, mode_t mode)
         return -EINVAL;
     }
     return fifo_make(p, mode);
+}
+
+static int fifoif_unlink(const char *pathname)
+{
+    if (!pathname)
+        return -EINVAL;
+    char *p = fifofs_path_translate((const char *) pathname, FIFOFS_PATH);
+    if (!p) {
+        errprint("fifoif_unlink: file path %s translate faield!\n", pathname);
+        return -EINVAL;
+    }
+    return fifo_remove(p);
 }
 
 static int fifoif_open(void *pathname, int flags)

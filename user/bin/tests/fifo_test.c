@@ -31,6 +31,9 @@ int fifo_test2(int argc, char *argv[])
         }
         printf("read over, close %d!\n", fifo_r);    
         close(fifo_r);
+
+        printf("parent unlink fifo %d\n", unlink("/pipe/test_fifo"));    
+
     } else {
         int fifo_w = open("/pipe/test_fifo", O_WRONLY);
         if (fifo_w < 0) {
@@ -49,5 +52,10 @@ int fifo_test2(int argc, char *argv[])
         close(fifo_w);
     }
 
+    if (mkfifo("/pipe/test_fifo", 0666) < 0) {
+        printf("open fifo failed!\n");
+        return -1;
+    }
+    printf("unlink fifo %d\n", unlink("/pipe/test_fifo"));    
     return 0;
 }
