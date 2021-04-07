@@ -190,12 +190,15 @@ QEMU_KVM := # no virutal
 QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
-		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
-		-rtc base=localtime \
+		-drive id=disk0,file=$(HDA_IMG),if=none \
+		-drive id=disk1,file=$(HDB_IMG),if=none \
+		-device ahci,id=ahci \
+		-device ide-drive,drive=disk0,bus=ahci.0 \
+		-device ide-drive,drive=disk1,bus=ahci.1 \
 		-boot a \
 		-soundhw sb16 \
 		-serial stdio  \
-		-soundhw pcspk \
+		-soundhw pcspk  \
 		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no
 		
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \

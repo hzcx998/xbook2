@@ -1238,4 +1238,4 @@ static __init void ahci_driver_entry(void)
     }
 }
 
-//driver_initcall(ahci_driver_entry);
+driver_initcall(ahci_driver_entry);
