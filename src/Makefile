@@ -9,14 +9,14 @@ endif
 ARCH		:= arch/x86
 
 X_ASFLAGS	+= -f elf -I $(ARCH)/include/
-X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99 -O3 -fno-strict-aliasing
+X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99  -fno-strict-aliasing
 X_INCDIRS	+= include/ $(ARCH)/include/ 
 X_LDFLAGS	+= -no-pie -e kernel_start -Ttext 0x80100000
 
 AS			:=	nasm
 
 ifeq ($(HOSTOS),macos)
-	LD			:=  i386-elf-ld -m elf_i386
+	LD			:=  x86_64-elf-ld -m elf_i386
 else
 	LD			:=  ld -m elf_i386
 endif
