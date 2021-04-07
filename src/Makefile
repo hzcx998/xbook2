@@ -15,7 +15,7 @@ X_LDFLAGS	+= -no-pie -e kernel_start -Ttext 0x80100000
 
 AS			:=	nasm
 
-ifeq ($(shell uname),Darwin)
+ifeq ($(HOSTOS),macos)
 	LD			:=  i386-elf-ld -m elf_i386
 else
 	LD			:=  ld -m elf_i386

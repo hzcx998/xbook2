@@ -17,7 +17,7 @@ X_LIBDIRS	+= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \
 AS			:=	nasm
 
 # MacOS
-ifeq ($(shell uname),Darwin)
+ifeq ($(HOSTOS),macos)
 	LD			:=  i386-elf-ld -m elf_i386
 else
 	LD			:=  ld -m elf_i386
