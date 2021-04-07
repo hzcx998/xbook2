@@ -127,6 +127,73 @@ int fifo_get(char *name, unsigned long flags)
             }
             retval = fifo->id;
         } else {
+            retval = -ENOFILE;
+            goto err;
+        }
+    }
+err:
+    semaphore_up(&fifo_mutex);
+    return retval;
+}
+
+/**
+ * @flags: 获取标志
+ *          IPC_CREAT: 如果管道不存在，则创建一个新的管道，否则就打开
+ *          IPC_EXCL:  和CREAT一起使用，则要求创建一个新的管道，若已存在，就返回-1。
+ *                    相当于在CREAT上面加了一个必须不存在的限定。
+ *          IPC_READER: 读者进程
+ *          IPC_WRITER: 写者进程
+ * 只能有一个读者和一个写者
+ * 读者注册时需要检测写者是否在同步等待自己，如果是，就唤醒写者。
+ * @return: 成功返回管道id，失败返回-1
+ */
+int fifo_get2(char *name, unsigned long flags)
+{
+    if (name == NULL)
+        return -1;
+    char craete_new = 0;
+    fifo_t *fifo;
+    int retval = -1;
+    int rw = -1;
+    semaphore_down(&fifo_mutex);
+    if (flags & IPC_CREAT) {
+        if (flags & IPC_READER) {
+            rw = 0;
+        } else if (flags & IPC_WRITER) {
+            rw = 1;
+        } else {
+            keprint(PRINT_NOTICE "get fifo %s without reader or writer!\n", name);
+        }
+        if (flags & IPC_EXCL) {
+            craete_new = 1;
+        }
+        fifo = fifo_find_by_name(name);
+        if (fifo) {
+            if (craete_new) {
+                goto err;
+            }
+            if (rw == 1) {
+                if (fifo->writer == NULL && !atomic_get(&fifo->writeref)) {
+                    fifo->writer = task_current;                  
+                }
+                atomic_inc(&fifo->writeref);
+                if (flags & IPC_NOWAIT) {
+                    fifo->flags |= (IPC_NOWAIT << 24);
+                }
+            } else if (rw == 0) {
+                if (fifo->reader == NULL && !atomic_get(&fifo->readref)) {
+                    fifo->reader = task_current;
+                    if (fifo->writer && fifo->writer->state == TASK_BLOCKED && fifo->flags & FIFO_IN_WRITE) {              
+                        task_unblock(fifo->writer);
+                    }
+                }
+                atomic_inc(&fifo->readref);
+                if (flags & IPC_NOWAIT) {
+                    fifo->flags |= (IPC_NOWAIT << 16);
+                }
+            }
+            retval = fifo->id;
+        } else {
             fifo = fifo_alloc(name);
             if (fifo == NULL) {
                 goto err;
@@ -147,6 +214,38 @@ int fifo_get(char *name, unsigned long flags)
             retval = fifo->id;
         }
     }
+err:
+    semaphore_up(&fifo_mutex);
+    return retval;
+}
+
+/**
+ * 生成一个新的管道文件
+ * 成功返回0
+ * 如果文件已经存在就返回EEXIST，如果没有可用管道资源，则返回ENOMEN
+ */
+int fifo_make(char *name, mode_t mode)
+{
+    if (*name == '\0')
+        return -EINVAL;
+    char craete_new = 0;
+    fifo_t *fifo;
+    int retval = -1;
+    int rw = -1;
+    semaphore_down(&fifo_mutex);
+    /* 如果文件已经存在则创建失败 */
+    fifo = fifo_find_by_name(name);
+    if (fifo) {
+        retval = -EEXIST;
+        goto err;
+    }
+
+    fifo = fifo_alloc(name);
+    if (fifo == NULL) {
+        retval = -ENOMEM;
+        goto err;
+    }
+    retval = 0; 
 err:
     semaphore_up(&fifo_mutex);
     return retval;
@@ -450,6 +549,22 @@ void fifo_init()
     }
 }
 
+int sys_mkfifo(const char *pathname, mode_t mode)
+{
+    if (!pathname)
+        return -EINVAL;
+    char *p = (char *) pathname;
+    /* 匹配管道路径名 */
+    int n = strlen(NAMEED_PIPE_PATH);
+    if (strncmp(p, NAMEED_PIPE_PATH, n) != 0) { // 路径不一致，则错误
+        return -EINVAL;
+    }
+    p += n;
+    if (strlen(p) < 1)
+        return -EINVAL;
+    return fifo_make(p, mode);
+}
+
 static int fifoif_open(void *name, int flags)
 {
     char *p = (char *) name;
@@ -510,6 +625,7 @@ static int fifoif_fcntl(int handle, int cmd, long arg)
 
 fsal_t fifoif = {
     .name       = "fifoif",
+    .list       = LIST_HEAD_INIT(fifoif.list),
     .subtable   = NULL,
     .mkfs       = NULL,
     .mount      = NULL,

@@ -18,6 +18,8 @@
 #define FIFO_IN_READ	0x01
 #define FIFO_IN_WRITE	0x02
 
+#define NAMEED_PIPE_PATH	"/pipe/"
+
 /* 管道结构 */
 typedef struct {
 	unsigned short id;					/* 管道id */
@@ -40,5 +42,7 @@ int fifo_ctl(int fifoid, unsigned int cmd, unsigned long arg);
 int fifo_incref(int fifoid);
 int fifo_decref(int fifoid);
 void fifo_init();
+int fifo_make(char *name, mode_t mode);
+int sys_mkfifo(const char *pathname, mode_t mode);
 
 #endif   /* _XBOOK_FIFO_H */

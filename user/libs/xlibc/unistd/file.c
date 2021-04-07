@@ -156,3 +156,8 @@ int openfifo(const char *fifoname, int flags)
 {
     return syscall2(int, SYS_OPENFIFO, fifoname, flags);
 }
+
+int mkfifo(const char *fifoname, mode_t mode)
+{
+    return syscall2(int, SYS_MKFIFO, fifoname, mode);
+}
