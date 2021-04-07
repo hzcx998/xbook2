@@ -19,7 +19,7 @@ X_LDFLAGS	:= -no-pie -e _start -Ttext 0x91000
 AS			:=	nasm
 
 ifeq ($(HOSTOS),macos)
-	LD			:=  x86_64-elf-ld -m elf_i386
+	LD			:=  i386-elf-ld -m elf_i386
 else
 	LD			:=  ld -m elf_i386
 endif
