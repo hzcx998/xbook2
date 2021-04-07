@@ -120,7 +120,6 @@ void syscall_init()
     syscalls[SYS_EXPCATCH] = sys_expcatch;
     syscalls[SYS_EXPBLOCK] = sys_expblock;
     syscalls[SYS_EXPRET] = sys_excetion_return;
-    syscalls[SYS_OPENFIFO] = sys_openfifo;
     syscalls[SYS_ACNTLOGIN] = sys_account_login;
     syscalls[SYS_ACNTREGISTER] = sys_account_register;
     syscalls[SYS_ACNTNAME] = sys_account_name;

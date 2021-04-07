@@ -22,6 +22,10 @@ typedef struct {
 fifo_t *fifo_table;
 DEFINE_SEMAPHORE(fifo_mutex, 1);
 
+static int fsal_fifofs_mount(char *source, char *target, char *fstype, unsigned long flags);
+static int fsal_fifofs_unmount(char *path, unsigned long flags);
+static int fifoif_open(void *pathname, int flags);
+
 static fifo_t *fifo_find_by_name(char *name)
 {
     fifo_t *fifo;
@@ -582,10 +586,6 @@ static int fifo_open(void *name, int flags)
     return handle;
 }
 
-static int fsal_fifofs_mount(char *source, char *target, char *fstype, unsigned long flags);
-static int fsal_fifofs_unmount(char *path, unsigned long flags);
-static int fifoif_open(void *pathname, int flags);
-
 static int fifoif_incref(int idx)
 {
     if (FSAL_BAD_FILE_IDX(idx))
@@ -712,7 +712,6 @@ fsal_t fifofs_fsal = {
     .fastio     = NULL,
 };
 
-
 static int fsal_fifofs_mount(char *source, char *target, char *fstype, unsigned long flags)
 {
     if (strcmp(fstype, "fifofs")) {
@@ -721,6 +720,7 @@ static int fsal_fifofs_mount(char *source, char *target, char *fstype, unsigned 
     }
     if (kfile_mkdir(FIFO_DIR_PATH, 0) < 0)
         warnprint("fsal create dir %s failed or dir existed!\n", FIFO_DIR_PATH);
+    
     if (fsal_path_insert(FIFOFS_PATH, target, &fifofs_fsal)) {
         dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, target);
         return -1;
@@ -739,11 +739,6 @@ static int fsal_fifofs_unmount(char *path, unsigned long flags)
     return 0;
 }
 
-/**
- * 将fifofs路径名字转换成管道名。
- * fifofs路径必须是FIFOFS_PATH/xxx
- * 因此需要返回xxx这个设备名
- */
 void *fifofs_path_translate(const char *pathname, const char *check_path)
 {
     if (!pathname)

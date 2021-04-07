@@ -44,17 +44,6 @@ int sys_open(const char *path, int flags)
     return local_fd_install(handle, FILE_FD_NORMAL);
 }
 
-int sys_openfifo(const char *fifoname, int flags)
-{
-    if (!fifoname)
-        return -EINVAL; 
-    #ifdef FSIF_USER_CHECK
-    if (mem_copy_from_user(NULL, (void *)fifoname, MAX_PATH) < 0)
-        return -EINVAL;
-    #endif
-    return 0;
-}
-
 int sys_close(int fd)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
