@@ -229,6 +229,7 @@ void view_render_bitblt(view_t *view, int x, int y,
         width = bmp->width;
     if (height > bmp->height)
         height = bmp->height;
+    /* 宽度剪裁 */
     int w = min(width, bmp->width - bx);
     int h = min(height, bmp->height - by);
     if (w <= 0 || h <= 0)
@@ -236,8 +237,9 @@ void view_render_bitblt(view_t *view, int x, int y,
     view_color_t color;
     int vy, by2;
     int vx, bx2;
-    int vy2 = y + h;
-    int vx2 = x + w;
+    /* 右下位置剪裁 */
+    int vy2 = min((y + h), view->height);
+    int vx2 = min((x + w), view->width);
     for (vy = y, by2 = by; vy < vy2; vy++, by2++) {
         for (vx = x, bx2 = bx; vx < vx2; vx++, bx2++) {
             color = view_bitmap_getpixel_fast(bmp, bx2, by2);

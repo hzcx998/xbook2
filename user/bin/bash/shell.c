@@ -807,6 +807,10 @@ main (argc, argv, env)
   if (pretty_print_mode)
     exit_shell (pretty_print_loop ());
 
+  #if defined(FIXED_PROMPT_VARIABLE)
+  bind_variable ("PS1", PROMPT_STRING_VARIABLE, 0);
+  #endif  /* FIXED_PROMPT_VARIABLE */
+
   /* Read commands until exit condition. */
   reader_loop ();
   exit_shell (last_command_exit_value);
@@ -1870,18 +1874,11 @@ get_current_user_info ()
 #endif
       if (entry)
 	{
-        #if 0
 	  current_user.user_name = savestring (entry->pw_name);
 	  current_user.shell = (entry->pw_shell && entry->pw_shell[0])
 				? savestring (entry->pw_shell)
 				: savestring ("/bin/sh");
 	  current_user.home_dir = savestring (entry->pw_dir);
-        #else
-        current_user.user_name = _("I have no name!");
-        current_user.user_name = savestring (current_user.user_name);
-        current_user.shell = savestring ("/bin/sh");
-        current_user.home_dir = savestring ("/");
-        #endif
     }
       else
 	{

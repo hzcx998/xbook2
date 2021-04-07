@@ -231,7 +231,7 @@ void task_unblock(task_t *task)
     interrupt_restore_state(flags);
 }
 
-void task_yeild()
+void task_yield()
 {
     unsigned long flags;
     interrupt_save_and_disable(flags);

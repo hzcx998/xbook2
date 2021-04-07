@@ -1,5 +1,5 @@
 X_ASFLAGS	:= -f elf -I xlibc/include
-X_INCDIRS	:= xlibc/include
+X_INCDIRS	:= xlibc/include sconf
 
 SRC			:= arch/x86/*.asm arch/x86/*.c arch/wordsize-32/*.c 
 SRC			+= ansi/*.c arpa/*.c charset/*.c crypto/*.c ctype/*.c

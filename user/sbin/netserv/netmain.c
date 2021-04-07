@@ -69,7 +69,7 @@ void network_init(void)
         ethernetif_input(&lwip_netif);
         //todo: add your own user code here
         //printf("get netpack\n");
-        sched_yeild();
+        sched_yield();
     }
 }
 

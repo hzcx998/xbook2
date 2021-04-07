@@ -15,10 +15,10 @@ X_LIBDIRS	+= $(LIBS_DIR)/xlibc \
 				$(LIBS_DIR)/pthread \
 				$(LIBS_DIR)/uview \
 
-ifeq ($(HOSTOS),macos)
-LD			:= x86_64-elf-ld -m elf_i386
+ifeq ($(shell uname),Darwin)
+	LD			:=  i386-elf-ld -m elf_i386
 else
-LD			:= ld -m elf_i386
+	LD			:=  ld -m elf_i386
 endif
 AS			:=	nasm
 

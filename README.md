@@ -67,8 +67,8 @@ PTHREAD线程库
 ## Linux环境搭建
 ```
 1.安装gcc, nasm: 
-    Ubuntu/Kali Linux: sudo apt-get install gcc nasm
-    Red hat/Fedora/Centos: sudo yum install gcc nasm
+    Ubuntu/Kali Linux: sudo apt-get install gcc nasm truncate
+    Red hat/Fedora/Centos: sudo yum install gcc nasm truncate
     
 2.安装qemu虚拟机：
     Ubuntu/Kali Linux: sudo apt-get install qemu-system-x86
@@ -76,7 +76,20 @@ PTHREAD线程库
     
 ```
 
+# Mac环境搭建
+
+```bash
+# 1.安装 i386-gcc
+> brew tap nativeos/i386-elf-toolchain
+> brew install i386-elf-binutils i386-elf-gcc
+# 2.安装 truncate nasm qemu 
+> brew install truncate nasm qemu
+> make build
+> make qemu
+```
+
 ## 编译时build后直接run即可（可加-jn参数多线程编译，n是线程数。）：
+
 ```bash
 > make build    # 构建环境
 > make run      # 编译并运行，默认使用qemu虚拟机运行

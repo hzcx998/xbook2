@@ -21,7 +21,7 @@
 
 // #define DEBUG_FSIF
 
-// #define FSIF_USER_CHECK
+#define FSIF_USER_CHECK
 
 int sys_open(const char *path, int flags)
 {

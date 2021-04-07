@@ -188,7 +188,7 @@ endif
 QEMU_KVM := # no virutal
 
 QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
-		-name "Xbook2 Development Platform for x86" \
+		-name "XBOOK Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
 		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
 		-rtc base=localtime \

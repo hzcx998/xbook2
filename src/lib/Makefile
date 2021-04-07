@@ -1,10 +1,1 @@
-SRC	+= vsprintf.c
-SRC	+= string.c
-SRC	+= bitmap.c
-SRC	+= fifobuf.c
-SRC	+= fifoio.c
-SRC	+= stdio.c
-SRC	+= abort.c
-SRC	+= inet.c
-SRC	+= rand.c
-SRC	+= msgpool.c
+SRC	+= *.c

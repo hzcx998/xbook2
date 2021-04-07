@@ -53,7 +53,7 @@ void syscall_init()
     syscalls[SYS_THREAD_TESTCANCEL] = sys_thread_testcancel;
     syscalls[SYS_THREAD_CANCELSTATE] = sys_thread_setcancelstate;
     syscalls[SYS_THREAD_CANCELTYPE] = sys_thread_setcanceltype;
-    syscalls[SYS_SCHED_YEILD] = sys_sched_yeild;
+    syscalls[SYS_SCHED_YIELD] = sys_sched_yield;
     syscalls[SYS_MUTEX_QUEUE_CREATE] = sys_mutex_queue_alloc;
     syscalls[SYS_MUTEX_QUEUE_DESTROY] = sys_mutex_queue_free;
     syscalls[SYS_MUTEX_QUEUE_WAIT] = sys_mutex_queue_wait;
