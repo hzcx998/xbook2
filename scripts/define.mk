@@ -58,21 +58,13 @@ ECHO_OUTPUT	:=\e[35mOUTPUT\e[0m
 endif
 
 export ECHO_RM ECHO_CC ECHO_CXX ECHO_AS ECHO_LD ECHO_AR ECHO_OUTPUT ECHO_HOSTCC
-
-CROSS_COMPILE	?=
+ifeq ($(HOSTOS),macos)
+	CROSS_COMPILE	?= i386-elf-
+else
+	CROSS_COMPILE	?=
+endif
 
 # Make variables (CC, etc...)
-ifeq ($(HOSTOS),macos)		
-AS			:=	$(CROSS_COMPILE)x86_64-elf-gcc -x assembler-with-cpp
-CC			:=	$(CROSS_COMPILE)x86_64-elf-gcc
-CPP			:=	$(CROSS_COMPILE)x86_64-elf-gcc -E
-CXX			:=	$(CROSS_COMPILE)x86_64-elf-g++
-LD			:=	$(CROSS_COMPILE)x86_64-elf-ld
-AR			:=	$(CROSS_COMPILE)x86_64-elf-ar
-OC			:=	$(CROSS_COMPILE)x86_64-elf-objcopy
-OD			:=	$(CROSS_COMPILE)x86_64-elf-objdump
-NM			:=	$(CROSS_COMPILE)x86_64-elf-nm
-else
 AS			:=	$(CROSS_COMPILE)gcc -x assembler-with-cpp
 CC			:=	$(CROSS_COMPILE)gcc
 CPP			:=	$(CROSS_COMPILE)gcc -E
@@ -82,7 +74,7 @@ AR			:=	$(CROSS_COMPILE)ar
 OC			:=	$(CROSS_COMPILE)objcopy
 OD			:=	$(CROSS_COMPILE)objdump
 NM			:=	$(CROSS_COMPILE)nm
-endif
+
 HOSTCC		:=	gcc
 
 export AS AR CC LD CPP CXX OC OD NM HOSTCC
