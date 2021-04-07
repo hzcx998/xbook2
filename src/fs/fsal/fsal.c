@@ -91,12 +91,21 @@ int fsal_init()
     
     /* 挂载设备目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
     if (fsif.mount("disk0", DEV_DIR_PATH, "devfs", 0) < 0) {
-        keprint("fsal : mount path %s failed!\n", ROOT_DIR_PATH);
+        keprint("fsal : mount path %s failed!\n", DEV_DIR_PATH);
         return -1;
     }
     
+    /* 挂载设备目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
+    if (fsif.mount("disk0", FIFO_DIR_PATH, "fifofs", 0) < 0) {
+        keprint("fsal : mount path %s failed!\n", FIFO_DIR_PATH);
+        return -1;
+    }
+    
+    #if 0
     char path[MAX_PATH] = {0};
     strcpy(path, "/root");
-    //fsal_list_dir(path);
+    fsal_list_dir(path);
+    #endif
+    
     return 0;
 }

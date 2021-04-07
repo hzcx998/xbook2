@@ -52,15 +52,7 @@ int sys_openfifo(const char *fifoname, int flags)
     if (mem_copy_from_user(NULL, (void *)fifoname, MAX_PATH) < 0)
         return -EINVAL;
     #endif
-    if (!fifoif.open)
-        return -ENOSYS;
-    if (!account_selfcheck_permission((char *)fifoname, PERMISION_ATTR_FIFO)) {
-        return -EPERM;
-    }
-    int handle = fifoif.open((void *) fifoname, flags);
-    if (handle < 0)
-        return handle;
-    return local_fd_install(handle, FILE_FD_FIFO);
+    return 0;
 }
 
 int sys_close(int fd)
