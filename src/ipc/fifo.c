@@ -25,7 +25,7 @@ DEFINE_SEMAPHORE(fifo_mutex, 1);
 static int fsal_fifofs_mount(char *source, char *target, char *fstype, unsigned long flags);
 static int fsal_fifofs_unmount(char *path, unsigned long flags);
 static int fifoif_open(void *pathname, int flags);
-static int fifoif_unlink(const char *pathname);
+static int fifoif_unlink(char *pathname);
 
 static fifo_t *fifo_find_by_name(char *name)
 {
@@ -720,7 +720,7 @@ int sys_mkfifo(const char *pathname, mode_t mode)
     return fifo_make(p, mode);
 }
 
-static int fifoif_unlink(const char *pathname)
+static int fifoif_unlink(char *pathname)
 {
     if (!pathname)
         return -EINVAL;
