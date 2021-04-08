@@ -75,7 +75,6 @@ user/libs/fixdep
 user/sbin/fixdep
 user/bin/fixdep
 src/fixdep
-user/serv/fixdep
 
 # linux tools 
 tools/fatfs/fatfs
@@ -96,8 +95,6 @@ user/sbin/userctl/userctl
 user/sbin/service/service
 
 # service
-user/serv/netserv/
-user/serv/testserv/testserv
 user/sbin/netserv/
 # user app
 
