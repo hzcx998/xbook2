@@ -8,7 +8,7 @@ int main(int argc, char **argv)
 {
     int vid1 = uview_open(100, 100, UVIEW_TYPE_FIXED);
     if (vid1 < 0) {
-        printf("open %d failed!\n", vid1);
+        fprintf(stderr,"open %d failed!\n", vid1);
         return -1;
     }
     
@@ -113,7 +113,7 @@ static void child()
 {
     int vid = uview_open(320, 240, UVIEW_TYPE_WINDOW);
     if (vid < 0) {
-        printf("open %d failed!\n", vid);
+        fprintf(stderr,"open %d failed!\n", vid);
         exit(-1);
     }
     uview_show(vid);
@@ -129,7 +129,7 @@ static void child()
     uview_msg_header(&xmsg, UVIEW_MSG_SETICON, vreadid);
     uview_msg_data(&xmsg, 0, 1, 0, 0);
     if (uview_send_msg(vid, &xmsg) < 0)
-        return -1;
+        return;
 
     uview_msg_t msg;
     bool loop = true;

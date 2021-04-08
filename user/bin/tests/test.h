@@ -64,4 +64,6 @@ static inline void sys_err(char *str)
     exit(-1);
 }
 
+int fifo_test2(int argc, char *argv[]);
+
 #endif // _TEST_H

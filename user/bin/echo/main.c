@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
             printf("version: %s\n", ECHO_VERSION);
             return 0;
         default:
-            printf("echo: unknown option!\n");
+            fprintf(stderr,"echo: unknown option!\n");
             return -1;
         }
         /* 指向下一个参数 */

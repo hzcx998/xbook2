@@ -76,9 +76,7 @@ int pipe(int fd[2]);
 /* supported by xbook kernel */
 int probedev(const char *name, char *buf, size_t buflen);
 int openclass(const char *cname, int flags);
-int openfifo(const char *fifoname, int flags);
-
-#define mkfifo openfifo
+int mkfifo(const char *fifoname, mode_t mode);
 
 /* id */
 int setuid(uid_t uid);

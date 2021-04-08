@@ -152,7 +152,7 @@ int probedev(const char *name, char *buf, size_t buflen)
     return syscall3(int, SYS_PROBEDEV, name, buf, buflen);
 }
 
-int openfifo(const char *fifoname, int flags)
+int mkfifo(const char *fifoname, mode_t mode)
 {
-    return syscall2(int, SYS_OPENFIFO, fifoname, flags);
+    return syscall2(int, SYS_MKFIFO, fifoname, mode);
 }

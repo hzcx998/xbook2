@@ -2,6 +2,7 @@
 #include <xbook/fsal.h>
 #include <xbook/fatfs.h>
 #include <xbook/driver.h>
+#include <xbook/fifo.h>
 #include <string.h>
 
 LIST_HEAD(fstype_list_head);
@@ -60,6 +61,8 @@ int fstype_init()
     fstype_register(&fatfs_fsal);
     /* 注册文件系统: devfs */
     fstype_register(&devfs_fsal);
+    /* 注册文件系统: fifofs */
+    fstype_register(&fifofs_fsal);
     
     return 0;
 }

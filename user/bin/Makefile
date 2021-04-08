@@ -30,6 +30,7 @@ MODULE      +=  bash
 MODULE      +=  uview
 MODULE      +=  echo
 MODULE      +=  cat
+MODULE      +=  cat2
 MODULE      +=  cal
 MODULE      +=  cpuinfo
 MODULE      +=  ls

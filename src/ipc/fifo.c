@@ -4,12 +4,28 @@
 #include <math.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/ipc.h>
+
 #include <xbook/semaphore.h>
 #include <xbook/schedule.h>
-#include <sys/ipc.h>
+#include <xbook/fsal.h>
+#include <xbook/path.h>
+#include <xbook/file.h>
+#include <xbook/dir.h>
+
+#define FIFOFS_PATH  "/fifofs"
+
+typedef struct {
+    int handle;
+} fifofs_file_extention_t;
 
 fifo_t *fifo_table;
 DEFINE_SEMAPHORE(fifo_mutex, 1);
+
+static int fsal_fifofs_mount(char *source, char *target, char *fstype, unsigned long flags);
+static int fsal_fifofs_unmount(char *path, unsigned long flags);
+static int fifoif_open(void *pathname, int flags);
+static int fifoif_unlink(char *pathname);
 
 static fifo_t *fifo_find_by_name(char *name)
 {
@@ -67,6 +83,13 @@ int fifo_free(fifo_t *fifo)
     }
     memset(fifo->name, 0, FIFO_NAME_LEN);
     return 0;
+}
+
+static int fifo_is_opened(fifo_t *fifo)
+{
+    if (atomic_get(&fifo->readref) < 1 && atomic_get(&fifo->writeref) < 1)
+        return 0;
+    return 1;
 }
 
 /**
@@ -127,26 +150,74 @@ int fifo_get(char *name, unsigned long flags)
             }
             retval = fifo->id;
         } else {
-            fifo = fifo_alloc(name);
-            if (fifo == NULL) {
-                goto err;
-            }
-            if (rw == 1) {
-                fifo->writer = task_current;
-                atomic_set(&fifo->writeref, 1);
-                if (flags & IPC_NOWAIT) {
-                    fifo->flags |= (IPC_NOWAIT << 24);
-                }
-            } else if (rw == 0) {
-                fifo->reader = task_current;
-                atomic_set(&fifo->readref, 1);
-                if (flags & IPC_NOWAIT) {
-                    fifo->flags |= (IPC_NOWAIT << 16);
-                }
-            }
-            retval = fifo->id;
+            errprint("fifo %s not found!\n", name);
+            retval = -ENOFILE;
+            goto err;
         }
     }
+err:
+    semaphore_up(&fifo_mutex);
+    return retval;
+}
+
+/**
+ * 生成一个新的管道文件
+ * 成功返回0
+ * 如果文件已经存在就返回EEXIST，如果没有可用管道资源，则返回ENOMEN
+ */
+int fifo_make(char *name, mode_t mode)
+{
+    if (*name == '\0')
+        return -EINVAL;
+    fifo_t *fifo;
+    int retval = -1;
+    semaphore_down(&fifo_mutex);
+    /* 如果文件已经存在则创建失败 */
+    fifo = fifo_find_by_name(name);
+    if (fifo) {
+        retval = -EEXIST;
+        goto err;
+    }
+
+    fifo = fifo_alloc(name);
+    if (fifo == NULL) {
+        retval = -ENOMEM;
+        goto err;
+    }
+    retval = 0;
+err:
+    semaphore_up(&fifo_mutex);
+    return retval;
+}
+
+int fifo_remove(char *name)
+{
+    if (*name == '\0')
+        return -EINVAL;
+    fifo_t *fifo;
+    int retval = -1;
+    
+    if (semaphore_try_down(&fifo_mutex) < 0) {
+        retval = -EBUSY;
+        goto err;
+    }
+    /* 如果文件已经存在则创建失败 */
+    fifo = fifo_find_by_name(name);
+    if (!fifo) {
+        retval = -ENFILE;
+        goto err;
+    }
+
+    if (fifo_is_opened(fifo)) {
+        retval = -EPERM;    /* opened! */
+        goto err;
+    }
+
+    if (fifo_free(fifo) < 0) {
+        retval = -EBUSY;
+        goto err;
+    }
+    retval = 0;
 err:
     semaphore_up(&fifo_mutex);
     return retval;
@@ -170,9 +241,6 @@ int fifo_put(int fifoid)
             if (atomic_get(&fifo->writeref) == 0) {
                 fifo->writer = NULL;
             }
-        }
-        if (fifo->reader == NULL && fifo->writer == NULL) {
-            fifo_free(fifo);
         }
         mutex_unlock(&fifo->mutex);
         semaphore_up(&fifo_mutex);        
@@ -450,7 +518,7 @@ void fifo_init()
     }
 }
 
-static int fifoif_open(void *name, int flags)
+static int fifo_open(void *name, int flags)
 {
     char *p = (char *) name;
     unsigned long new_flags = IPC_CREAT;
@@ -468,52 +536,101 @@ static int fifoif_open(void *name, int flags)
         new_flags |= IPC_NOWAIT;
     }
     int handle = fifo_get(p, new_flags);
-    if (handle < 0)
-        return -ENODEV;
     return handle;
 }
 
-static int fifoif_close(int handle)
+static int fifoif_incref(int idx)
 {
-    return fifo_put(handle);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    fifofs_file_extention_t *ext = (fifofs_file_extention_t *) fp->extension;
+    return fifo_incref(ext->handle);
 }
 
-static int fifoif_incref(int handle)
+static int fifoif_decref(int idx)
 {
-    return fifo_incref(handle);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    fifofs_file_extention_t *ext = (fifofs_file_extention_t *) fp->extension;
+    return fifo_decref(ext->handle);
 }
 
-static int fifoif_decref(int handle)
+static int fifoif_read(int idx, void *buf, size_t size)
 {
-    return fifo_decref(handle);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    fifofs_file_extention_t *ext = (fifofs_file_extention_t *) fp->extension;
+    return fifo_read(ext->handle, buf, size);
 }
 
-static int fifoif_read(int handle, void *buf, size_t size)
+static int fifoif_write(int idx, void *buf, size_t size)
 {
-    return fifo_read(handle, buf, size);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    fifofs_file_extention_t *ext = (fifofs_file_extention_t *) fp->extension;
+    return fifo_write(ext->handle, buf, size);
 }
 
-static int fifoif_write(int handle, void *buf, size_t size)
+static int fifoif_ioctl(int idx, int cmd, unsigned long arg)
 {
-    return fifo_write(handle, buf, size);
-}
-
-static int fifoif_ioctl(int handle, int cmd, unsigned long arg)
-{
-    return fifo_ctl(handle, cmd, arg);
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    fifofs_file_extention_t *ext = (fifofs_file_extention_t *) fp->extension;
+    return fifo_ctl(ext->handle, cmd, arg);
 }
 
 static int fifoif_fcntl(int handle, int cmd, long arg)
 {
-    return fifo_ctl(handle, cmd, arg);
+    if (FSAL_BAD_FILE_IDX(handle))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(handle);
+    if (FSAL_BAD_FILE(fp)) 
+        return -1;
+    fifofs_file_extention_t *ext = (fifofs_file_extention_t *) fp->extension;
+    return fifo_ctl(ext->handle, cmd, arg);
 }
 
-fsal_t fifoif = {
-    .name       = "fifoif",
+static int fifoif_close(int handle)
+{
+    if (FSAL_BAD_FILE_IDX(handle))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(handle);
+    if (FSAL_BAD_FILE(fp))
+        return -1;
+    fifofs_file_extention_t *ext = (fifofs_file_extention_t *) fp->extension;
+    int retval = fifo_put(ext->handle);
+    if (retval < 0)
+        warnprint("fifofs: close fd %d, handle %d failed!\n", handle, ext->handle);
+    if (fp->extension)
+        mem_free(fp->extension);
+    fp->extension = NULL;
+    if (fsal_file_free(fp) < 0)
+        return -1;
+    return 0;
+}
+
+fsal_t fifofs_fsal = {
+    .name       = "fifofs",
+    .list       = LIST_HEAD_INIT(fifofs_fsal.list),
     .subtable   = NULL,
     .mkfs       = NULL,
-    .mount      = NULL,
-    .unmount    = NULL,
+    .mount      = fsal_fifofs_mount,
+    .unmount    = fsal_fifofs_unmount,
     .open       = fifoif_open,
     .close      = fifoif_close,
     .read       = fifoif_read,
@@ -523,7 +640,7 @@ fsal_t fifoif = {
     .closedir   = NULL,
     .readdir    = NULL,
     .mkdir      = NULL,
-    .unlink     = NULL,
+    .unlink     = fifoif_unlink,
     .rename     = NULL,
     .ftruncate  = NULL,
     .fsync      = NULL,
@@ -547,3 +664,101 @@ fsal_t fifoif = {
     .decref     = fifoif_decref,
     .fastio     = NULL,
 };
+
+static int fsal_fifofs_mount(char *source, char *target, char *fstype, unsigned long flags)
+{
+    if (strcmp(fstype, "fifofs")) {
+        errprint("mount fifofs type %s failed!\n", fstype);
+        return -1;
+    }
+    /*
+    if (kfile_mkdir(FIFO_DIR_PATH, 0) < 0)
+        warnprint("fsal create dir %s failed or dir existed!\n", FIFO_DIR_PATH);
+    */
+    if (fsal_path_insert(FIFOFS_PATH, target, &fifofs_fsal)) {
+        dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, target);
+        return -1;
+    }
+    return 0;
+}
+
+static int fsal_fifofs_unmount(char *path, unsigned long flags)
+{
+    if (fsal_path_remove((void *) path)) {
+        dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, path);
+        return -1;
+    }
+    /*
+    if (kfile_rmdir(FIFO_DIR_PATH) < 0)
+        warnprint("fsal remove dir %s failed or dir existed!\n", FIFO_DIR_PATH);*/
+    return 0;
+}
+
+void *fifofs_path_translate(const char *pathname, const char *check_path)
+{
+    if (!pathname)
+        return NULL;
+    if (strncmp(pathname, (const char *) check_path, strlen(check_path)) != 0) {   /* 校验路径，不是设备文件系统就退出 */
+        return NULL;
+    }
+    char *p = (char *) pathname;
+    p += strlen(check_path);
+    while (*p && *p == '/')
+        p++;
+    return p;
+}
+
+int sys_mkfifo(const char *pathname, mode_t mode)
+{
+    if (!pathname)
+        return -EINVAL;
+    char *p = fifofs_path_translate((const char *) pathname, FIFO_DIR_PATH);
+    if (!p) {
+        errprint("sys_mkfifo: file path %s translate faield!\n", pathname);
+        return -EINVAL;
+    }
+    return fifo_make(p, mode);
+}
+
+static int fifoif_unlink(char *pathname)
+{
+    if (!pathname)
+        return -EINVAL;
+    char *p = fifofs_path_translate((const char *) pathname, FIFOFS_PATH);
+    if (!p) {
+        errprint("fifoif_unlink: file path %s translate faield!\n", pathname);
+        return -EINVAL;
+    }
+    return fifo_remove(p);
+}
+
+static int fifoif_open(void *pathname, int flags)
+{
+    char *p = fifofs_path_translate((const char *) pathname, FIFOFS_PATH);
+    if (!p) {
+        errprint("fifofs: path %s translate faield!\n", pathname);
+        return -EINVAL;
+    }
+    fsal_file_t *fp = fsal_file_alloc();
+    if (fp == NULL) {
+        errprint("fifofs: alloc file struct failed!\n");
+        return -ENOMEM;
+    }
+    fp->extension = mem_alloc(sizeof(fifofs_file_extention_t));
+    if (!fp->extension) {
+        errprint("fifofs: alloc file %s extension for open failed!\n", p);
+        fsal_file_free(fp);
+        return -ENOMEM;
+    }
+    fp->fsal = &fifofs_fsal;
+    int handle = fifo_open(p, flags);
+    if (handle < 0) {
+        errprint("fifofs: open fifo %s failed!\n", p);
+        mem_free(fp->extension);
+        fsal_file_free(fp);
+        return -ENOFILE;
+    }
+    fifofs_file_extention_t *ext = (fifofs_file_extention_t *) fp->extension;
+    ext->handle = handle;
+    return FSAL_FILE2IDX(fp);
+}
