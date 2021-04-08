@@ -1292,7 +1292,7 @@ static int ide_probe(device_extension_t *ext, int id)
     }
    
     /* 重置驱动器 */
-    rest_driver(ext);
+    //rest_driver(ext);
 
     /* 获取磁盘的磁盘信息 */
     select_disk(ext, 0, 0);
