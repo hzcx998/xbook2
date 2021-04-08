@@ -24,7 +24,7 @@
 * 移植bash，把缺少的函数补上，不做具体实现。
     {
     接口：unistd/id.c,tcgetattr, tcsetattr,pwd.c
-        umask, termios.c,mkfifo
+        umask, termios.c
     处理：SIGTSTP
     bug on bash: locale.c->loca_shiftstates
     修复：bash管道不能使用。不能执行shell脚本。
@@ -37,5 +37,3 @@
 * 完善sb16声卡驱动。
 * grub引导启动
 * 添加内存文件系统, ramfs
-* 添加openfifo系统调用，实现命名管道的添加。
-* 成功添加mkfifo，接下来就是open 文件路径转换为fifo路径

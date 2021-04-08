@@ -23,7 +23,7 @@
 
 /* 主机rom目录 */
 //#define ROM_DIR "D:/Developmemts/github/xbook2/tools/rom"
-#define ROM_DIR "../../develop/rom"
+#define ROM_DIR "../develop/rom"
 
 /* 磁盘是否为ROM */
 #define ROM_DIS 0

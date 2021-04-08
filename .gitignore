@@ -70,9 +70,9 @@ develop/rom/acct/
 develop/bochs/
 
 # linux fixdep
-user/libs/fixdep
-user/sbin/fixdep
-user/bin/fixdep
+libs/fixdep
+sbin/fixdep
+bin/fixdep
 src/fixdep
 
 # linux tools 
@@ -85,34 +85,36 @@ recycle
 !scripts/fixdep.exe
 
 # system bin
-user/sbin/init/init
-user/sbin/login/login
-user/sbin/netserv/netserv
+sbin/init/init
+sbin/login/login
+sbin/netserv/netserv
 
 # /bin
-user/bin/cat/cat
-user/bin/cal/cal
-user/bin/cp/cp
-user/bin/cpuinfo/cpuinfo
-user/bin/date/date
-user/bin/echo/echo
-user/bin/ls/ls
-user/bin/mem/mem
-user/bin/mkdir/mkdir
-user/bin/mv/mv
-user/bin/uname/uname
-user/bin/ps/ps
-user/bin/rename/rename
-user/bin/rm/rm
-user/bin/rmdir/rmdir
-user/bin/sh/sh
-user/bin/sys/sys
-user/bin/tests/tests
-user/bin/touch/touch
-user/bin/bash/bash
-user/bin/hello/hello
-user/bin/uview/uview
-user/bin/mp3player/mp3player
-user/bin/wavplayer/wavplayer
-user/bin/grep/grep
-user/bin/cat2/cat2
+bin/cat/cat
+bin/cal/cal
+bin/cp/cp
+bin/cpuinfo/cpuinfo
+bin/date/date
+bin/echo/echo
+bin/ls/ls
+bin/mem/mem
+bin/mkdir/mkdir
+bin/mv/mv
+bin/uname/uname
+bin/ps/ps
+bin/rename/rename
+bin/rm/rm
+bin/rmdir/rmdir
+bin/sh/sh
+bin/sys/sys
+bin/tests/tests
+bin/touch/touch
+bin/bash/bash
+bin/hello/hello
+bin/uview/uview
+bin/mp3player/mp3player
+bin/wavplayer/wavplayer
+bin/grep/grep
+bin/cat2/cat2
+
+# ====xbook2 kernel ignore end====
