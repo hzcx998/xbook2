@@ -87,6 +87,8 @@ kernel:
 
 clean:
 	@$(MAKE) -s -C $(KERNSRC) clean
+	find ./ -name ".*.o.cmd" | xargs $(RM) -rf  
+	find ./ -name ".*.o" | xargs $(RM) -rf  
 
 # 构建环境。镜像>工具>环境>rom
 build: 
