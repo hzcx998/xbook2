@@ -61,7 +61,7 @@ typedef struct {
 extern fsal_t fsif;
 extern fsal_t pipeif_rd;
 extern fsal_t pipeif_wr;
-extern fsal_t fifoif;
+// extern fsal_t fifoif;
 int fsal_init();
 
 #define INVALID_FD_TYPE(fd, type) (!((fd)->flags & type))

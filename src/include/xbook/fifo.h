@@ -4,6 +4,7 @@
 #include "mutexlock.h"
 #include "fifobuf.h"
 #include "task.h"
+#include "fsal.h"
 
 /* 管道名字长度 */
 #define FIFO_NAME_LEN      24
@@ -40,5 +41,9 @@ int fifo_ctl(int fifoid, unsigned int cmd, unsigned long arg);
 int fifo_incref(int fifoid);
 int fifo_decref(int fifoid);
 void fifo_init();
+int fifo_make(char *name, mode_t mode);
+int sys_mkfifo(const char *pathname, mode_t mode);
+/* 导出fifofs */
+extern fsal_t fifofs_fsal;
 
 #endif   /* _XBOOK_FIFO_H */

@@ -173,12 +173,9 @@ void filefd_set_fsal(file_fd_t *fd, unsigned int flags)
         break;    
     case FILE_FD_PIPE0:
         fd->fsal = &pipeif_rd;
-        break;    
+        break;
     case FILE_FD_PIPE1:
         fd->fsal = &pipeif_wr;
-        break;
-    case FILE_FD_FIFO:
-        fd->fsal = &fifoif;
         break;
     default:
         fd->fsal = NULL;

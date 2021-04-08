@@ -14,6 +14,7 @@
 #include <xbook/portcomm.h>
 #include <xbook/kernel.h>
 #include <xbook/schedule.h>
+#include <xbook/fifo.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <dirent.h>
@@ -119,7 +120,6 @@ void syscall_init()
     syscalls[SYS_EXPCATCH] = sys_expcatch;
     syscalls[SYS_EXPBLOCK] = sys_expblock;
     syscalls[SYS_EXPRET] = sys_excetion_return;
-    syscalls[SYS_OPENFIFO] = sys_openfifo;
     syscalls[SYS_ACNTLOGIN] = sys_account_login;
     syscalls[SYS_ACNTREGISTER] = sys_account_register;
     syscalls[SYS_ACNTNAME] = sys_account_name;
@@ -143,6 +143,7 @@ void syscall_init()
     syscalls[SYS_GETHOSTNAME] = sys_gethostname;
     syscalls[SYS_GETPGID] = sys_get_pgid;
     syscalls[SYS_SETPGID] = sys_set_pgid;
+    syscalls[SYS_MKFIFO] = sys_mkfifo;
 }
 
 int syscall_check(uint32_t callno)

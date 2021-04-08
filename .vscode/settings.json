@@ -179,6 +179,7 @@
         "file.h": "c",
         "istream": "c",
         "hardirq.h": "c",
-        "sconf.h": "c"
+        "sconf.h": "c",
+        "wait.h": "c"
     }
 }

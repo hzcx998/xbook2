@@ -60,12 +60,12 @@ int main(int argc, char *argv[])
         argc = -1;
         argc = cmd_parse(cmdstr, cmd_argv, ' ');
         if(argc == -1){
-            printf("sh: num of arguments exceed %d\n",MAX_ARG_NR);
+            fprintf(stderr,"sh: num of arguments exceed %d\n",MAX_ARG_NR);
             return -1;
         }
         /* 管道执行 */
         if (execute_cmd(argc, cmd_argv)) {
-            printf("sh: execute cmd %s falied!\n", cmd_argv[0]);
+            fprintf(stderr,"sh: execute cmd %s falied!\n", cmd_argv[0]);
         }
         return -1;
     }
@@ -94,12 +94,12 @@ int main(int argc, char *argv[])
         argc = -1;
         argc = cmd_parse(cmd_line, cmd_argv, ' ');
         if(argc == -1){
-            printf("sh: num of arguments exceed %d\n",MAX_ARG_NR);
+            fprintf(stderr,"sh: num of arguments exceed %d\n",MAX_ARG_NR);
             continue;
         }
         /* 管道执行 */
         if (execute_cmd(argc, cmd_argv)) {
-            printf("sh: execute cmd %s falied!\n", cmd_argv[0]);
+            fprintf(stderr,"sh: execute cmd %s falied!\n", cmd_argv[0]);
         }
     }
 	return 0;

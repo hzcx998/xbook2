@@ -91,7 +91,6 @@ enum syscall_num {
     SYS_EXPCATCH,
     SYS_EXPBLOCK,
     SYS_EXPRET,
-    SYS_OPENFIFO,
     SYS_ACNTLOGIN,
     SYS_ACNTREGISTER,
     SYS_ACNTNAME,
@@ -114,6 +113,7 @@ enum syscall_num {
     SYS_GETHOSTNAME,
     SYS_GETPGID,
     SYS_SETPGID,
+    SYS_MKFIFO,
     SYSCALL_NR,
 };
 

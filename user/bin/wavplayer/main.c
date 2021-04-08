@@ -64,12 +64,13 @@ static int sound_output(short *buf, int len)
     if (sound_fd != -1)
     {
         int t = len / (WAVE_SIZE * sizeof(short));
-        short (*s)[WAVE_SIZE] = buf;
-        for (int i = 0; i < t; i++)
+        short *s = buf;
+        int i;
+        for (i = 0; i < t; i++)
         {
             if (write(sound_fd, s[i], WAVE_SIZE * sizeof(short)) < WAVE_SIZE * sizeof(short))
             {
-                printf("wrote less than WAVE_SIZE\n");
+                fprintf(stderr,"wrote less than WAVE_SIZE\n");
                 return -1;
             }
         }
@@ -92,7 +93,7 @@ int read_wav_file(const char *filename)
 
     if (strncmp(file_header.riff_block.riff, "RIFF", 4))
     {
-        printf("invaild format\n");
+        fprintf(stderr,"invaild format\n");
         goto exit;
     }
 
