@@ -13,9 +13,9 @@
 #include <xbook/memalloc.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
-#include <xbook/semaphore.h>
+
 /* 配置开始 */
-//#define DEBUG_DRV
+// #define DEBUG_DRV
 
 /* 配置结束 */
 
@@ -120,8 +120,6 @@ struct ide_channel {
    	struct _device_extension *ext;	// 通道上面的设备
 	char who;		    /* 通道上主磁盘在活动还是从磁盘在活动 */
 	char what;		    /* 执行的是什么操作 */
-	bool expecting_intr;// 表示等待硬盘的中断
-	semaphore_t disk_done;  // 用于阻塞、唤醒驱动程序
 } channels[2];
 
 typedef struct _device_extension {
@@ -579,8 +577,6 @@ static void write_to_sector(device_extension_t *ext, void* buf, unsigned int cou
  */
 static void send_cmd(struct ide_channel* channel, unsigned char cmd)
 {
-	device_extension_t *ext = channel->ext;
-	channel->expecting_intr = true;
    	out8(ATA_REG_CMD(channel), cmd);
 }
 
@@ -645,11 +641,8 @@ static int ide_polling(struct ide_channel* channel, unsigned int advanced_check)
 	// -------------------------------------------------
 	/* time */
     i = 0x1000;
-    int ata_status = 0x88;
-    while ((ata_status & ATA_STATUS_BUSY) && (--i)){
-    // Wait for BSY to be zero.
-    ata_status = in8(ATA_REG_STATUS(channel));
-    }
+    while ((in8(ATA_REG_STATUS(channel)) & ATA_STATUS_BUSY) && (--i)); // Wait for BSY to be zero.
+	
     if (advanced_check) {
 		unsigned char state = in8(ATA_REG_STATUS(channel)); // Read Status Register.
 
@@ -1229,20 +1222,15 @@ iostatus_t ide_write(device_object_t *device, io_request_t *ioreq)
 
     return status;
 }
-#define semaphore_debug 1
+
 static int ide_handler(irqno_t irq, void *data)
 {
     struct ide_channel *channel = (struct ide_channel *)data;
-	device_extension_t *ext = channel->ext;
-	if (channel->expecting_intr){
-	channel->expecting_intr = false;
-		
-	int ata_status = in8(ATA_REG_STATUS(channel));
-#if semaphore_debug
-    	semaphore_up(&channel->disk_done);
-#endif
+	device_extension_t *ext = channel->ext + channel->who;
+
+    
 	/* 获取状态，做出错判断 */
-	if (ata_status & ATA_STATUS_ERR) {
+	if (in8(ATA_REG_STATUS(channel)) & ATA_STATUS_ERR) {
 		/* 尝试重置驱动 */
 		rest_driver(ext);
 	}
@@ -1253,8 +1241,6 @@ static int ide_handler(irqno_t irq, void *data)
 	} else if (channel->what == IDE_WRITE) {
 		ext->write_sectors++;
 	}
-        
-}
     return 0;
 }
 
@@ -1289,6 +1275,7 @@ static int ide_probe(device_extension_t *ext, int id)
 #ifdef DEBUG_DRV
     dump_ide_channel(channel);
 #endif
+
     channel->ext = ext;
 
     /* 填写设备信息 */
@@ -1297,22 +1284,21 @@ static int ide_probe(device_extension_t *ext, int id)
     ext->type = IDE_ATA;
 
     ext->info = mem_alloc(SECTOR_SIZE);
-#if semaphore_debug
-    semaphore_init(&channel->disk_done,0);
-#endif
     if (ext->info == NULL) {
         keprint(PRINT_ERR "mem_alloc for ide device %d info failed!\n", id);
         irq_unregister(channel->irqno, (void *)channel);
         
         return -1;
     }
-
+   
     /* 重置驱动器 */
-    //rest_driver(ext);
-	
+    rest_driver(ext);
+
     /* 获取磁盘的磁盘信息 */
     select_disk(ext, 0, 0);
+    
     int timeout = 1000; // 等待超时，如果没有IDE设备存在，就会超时
+
     //等待硬盘准备好
     while (!(in8(ATA_REG_STATUS(channel)) & ATA_STATUS_READY) && (--timeout) > 0);
     if (timeout <= 0) {
@@ -1320,10 +1306,9 @@ static int ide_probe(device_extension_t *ext, int id)
         irq_unregister(channel->irqno, (void *)channel);
         return -1;
     }
+
     send_cmd(channel, ATA_CMD_IDENTIFY);
-#if semaphore_debug
-    semaphore_down(&channel->disk_done);
-#endif
+    
     err = ide_polling(channel, 1);
     if (err) {
         ide_print_error(ext, err);
