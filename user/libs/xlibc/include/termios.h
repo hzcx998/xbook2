@@ -102,7 +102,7 @@ struct termio
 	unsigned short	c_cflag;   //控制模式标志
 	unsigned short	c_lflag;   //本地模式标志
 	unsigned char	c_line ;   //线路规程(速率) 
-};	//unsigned char	c_cc[NCC]; //控制字符数组
+};	unsigned char	c_cc[NCC]; //控制字符数组
  
  
 #define NCCS 17 //termios结构中控制字符数组的长度    
