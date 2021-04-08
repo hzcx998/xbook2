@@ -8,6 +8,7 @@
 #include <lwip/tcpip.h>
 #include <lwip/dhcp.h>
 #include <lwip/sockets.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <netserv.h>
 #include <pthread.h>

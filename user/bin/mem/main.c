@@ -7,7 +7,7 @@
 int main(int argc, char **argv)
 {
     if (argc > 1) {
-        fprintf(stderr,"free: no arguments support!\n");
+        printf("free: no arguments support!\n");
         return -1;
     }
     mstate_t ms;

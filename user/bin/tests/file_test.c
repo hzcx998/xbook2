@@ -57,7 +57,6 @@ int file_test2(int argc, char *argv[])
     }
     free(buf);
     printf("test end\n");
-    return 0;
 }
 
 int file_test3(int argc, char *argv[])
@@ -71,5 +70,4 @@ int file_test3(int argc, char *argv[])
     fwrite("hello", 5, 1, fp);
     fclose(fp);
     printf("test end\n");
-    return 0;
 }

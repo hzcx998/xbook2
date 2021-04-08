@@ -18,7 +18,7 @@ ifeq ($(OS),Windows_NT)
 
 else
 
-	ifeq ($(HOSTOS),linux)
+	ifeq ($(shell uname),Linux)
 		CC       	= gcc
 		INCS     = -I /usr/include -I /usr/local/include
 		LIBS     = -static-libgcc
@@ -26,7 +26,7 @@ else
 		BIN = ./fatfs
 	endif
 
-	ifeq ($(HOSTOS),macos)
+	ifeq ($(shell uname),Darwin)
 		CC       	= gcc
 		INCS     = -I /usr/include -I /usr/local/include
 		LIBS     = 

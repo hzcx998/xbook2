@@ -1,28 +1,13 @@
 # MIT License
 # Copyright (c) 2020 Jason Hu, Zhu Yu
-
-# System environment variable.
-ifeq ($(OS),Windows_NT)
-	HOSTOS		:= windows
-else
-	ifeq ($(shell uname),Darwin)
-		HOSTOS		:= macos
-	else
-		ifeq ($(shell uname),Linux)
-			HOSTOS		:= linux
-		else
-			HOSTOS		:= unix-like
-		endif
-	endif
-endif
-
 all:
+
 # tools
 MAKE		= make
 FATFS_DIR	= tools/fatfs
 
 # System environment variable.
-ifeq ($(HOSTOS),windows)
+ifeq ($(OS),Windows_NT)
 	FATFS_BIN		:= fatfs
 else
 	FATFS_BIN		:= $(FATFS_DIR)/fatfs
@@ -32,14 +17,10 @@ TRUNC		= truncate
 RM			= rm
 DD			= dd
 MKDIR		= mkdir
-ifeq ($(HOSTOS),macos)
-OBJDUMP		= x86_64-elf-objdump
-else 
 OBJDUMP		= objdump
-endif
 
 # virtual machine
-QEMU 	     = qemu-system-i386
+QEMU 		= qemu-system-i386
 
 # images and rom
 IMAGE_DIR	= develop/image
@@ -106,11 +87,7 @@ kernel:
 
 clean:
 	@$(MAKE) -s -C $(KERNSRC) clean
-	@$(MAKE) -s -C  $(FATFS_DIR) clean
-	$(RM) -rf $(FLOPPYA_IMG) $(HDA_IMG) $(HDB_IMG)
-	find ./ -name ".*.o.cmd" | xargs $(RM) -rf  
-	find ./ -name ".*.o" | xargs $(RM) -rf  
-	find ./ -name "fixdep" | xargs $(RM) -rf    #删除 fixdep
+
 # 构建环境。镜像>工具>环境>rom
 build: 
 	-$(MKDIR) $(IMAGE_DIR)
@@ -119,7 +96,7 @@ build:
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG) 
-ifeq ($(HOSTOS),windows)
+ifeq ($(OS),Windows_NT)
 else
 	$(MAKE) -s -C  $(FATFS_DIR)
 endif
@@ -131,7 +108,7 @@ endif
 # 清理环境。
 debuild: 
 	$(MAKE) -s -C  $(KERNSRC) clean
-ifeq ($(HOSTOS),windows)
+ifeq ($(OS),Windows_NT)
 else
 	$(MAKE) -s -C  $(FATFS_DIR) clean
 endif
@@ -180,7 +157,7 @@ dump:
 		-device ide-drive,drive=disk0,bus=ahci.0 \
 		-device ide-drive,drive=disk1,bus=ahci.1 \
                
-ifeq ($(HOSTOS),windows)
+ifeq ($(OS),Windows_NT)
 QEMU_KVM := -accel hax
 else
 QEMU_KVM := -enable-kvm
@@ -190,28 +167,23 @@ QEMU_KVM := # no virutal
 QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \
 		-fda $(FLOPPYA_IMG) \
-		-hda $(HDA_IMG) -hdb $(HDB_IMG) \
+		-drive id=disk0,file=$(HDA_IMG),if=none \
+		-drive id=disk1,file=$(HDB_IMG),if=none \
+		-device ahci,id=ahci \
+		-device ide-drive,drive=disk0,bus=ahci.0 \
+		-device ide-drive,drive=disk1,bus=ahci.1 \
 		-boot a \
 		-soundhw sb16 \
 		-serial stdio  \
-		-soundhw pcspk  \
-		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no
-		
+		-soundhw pcspk 
+
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 #		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
 
 # qemu启动
 qemu: all
-ifeq ($(HOSTOS),macos)
-	sudo $(QEMU) $(QEMU_ARGUMENT)
-else
 	$(QEMU) $(QEMU_ARGUMENT)
-endif
 
 # 调试配置：-S -gdb tcp::10001,ipv4
-qemudbg: all
-ifeq ($(HOSTOS),macos)
-	sudo $(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
-else
-		$(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
-endif
+qemudbg:
+	$(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)

@@ -18,7 +18,7 @@ X_INCDIRS	:=
 X_LDFLAGS	:= -no-pie -e _start -Ttext 0x91000
 AS			:=	nasm
 
-ifeq ($(HOSTOS),macos)
+ifeq ($(shell uname),Darwin)
 	LD			:=  i386-elf-ld -m elf_i386
 else
 	LD			:=  ld -m elf_i386

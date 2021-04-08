@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 
-errno_t __volatile__ __errno = 0;
+errno_t volatile __errno = 0;
 
 static char *__errno_string[] = {
     "ENULL", 
@@ -53,7 +53,7 @@ static char *__errno_string[] = {
 
 extern int *_errno(void)
 {
-    return (int *)&__errno;
+    return &__errno;
 }
 
 errno_t _set_errno(int value)

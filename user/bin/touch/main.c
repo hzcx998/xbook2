@@ -4,11 +4,11 @@
 int main(int argc, char *argv[])
 {
 	if(argc == 1){	//只有一个参数，自己的名字，退出
-		fprintf(stderr,"touch: please input filename!\n");
+		printf("touch: please input filename!\n");
 		return 0;
 	}
 	if(argc > 2){
-		fprintf(stderr,"touch: only support 2 argument!\n");
+		printf("touch: only support 2 argument!\n");
 		return -1;
 	}
 	
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
 	int fd = open(path, O_CREAT | O_RDWR);
 	if(fd == -1){
-		fprintf(stderr,"touch: fd %d error\n", fd);
+		printf("touch: fd %d error\n", fd);
 		return 0;
 	}
 

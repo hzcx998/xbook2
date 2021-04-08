@@ -7,22 +7,22 @@
 int main(int argc, char **argv)
 {
 	if(argc < 3){
-		fprintf(stderr,"cp: command syntax is incorrect.\n");	
+		printf("cp: command syntax is incorrect.\n");	
 		return -1;
 	}
 
 	if(!strcmp(argv[1], ".") || !strcmp(argv[1], "..")){
-		fprintf(stderr,"cp: src pathnamne can't be . or .. \n");	
+		printf("cp: src pathnamne can't be . or .. \n");	
 		return -1;
 	}
 	if(!strcmp(argv[2], ".") || !strcmp(argv[2], "..")){
-		fprintf(stderr,"cp: dst pathname can't be . or .. \n");	
+		printf("cp: dst pathname can't be . or .. \n");	
 		return -1;
 	}
 
     /* 如果2者相等则不能进行操作 */
     if (!strcmp(argv[1], argv[2])) {
-        fprintf(stderr,"cp: source file and dest file must be differern!\n");	
+        printf("cp: source file and dest file must be differern!\n");	
 		return -1;
     }
     /* 复制逻辑：
@@ -32,13 +32,13 @@ int main(int argc, char **argv)
      */
     int fdrd = open(argv[1], O_RDONLY);
     if (fdrd == -1) {
-        fprintf(stderr,"cp: open file %s failed!\n", argv[1]);
+        printf("cp: open file %s failed!\n", argv[1]);
         return -1;
     }
     /* 如果文件已经存在则截断 */
     int fdwr = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC);
     if (fdwr == -1) {
-        fprintf(stderr,"cp: open file %s failed!\n", argv[2]);
+        printf("cp: open file %s failed!\n", argv[2]);
         close(fdrd);
         return -1;
     }
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     struct stat fstat;
 
     if (stat(argv[1], &fstat) < 0) {
-        fprintf(stderr,"mv: get file %s state failed!\n", argv[1]);
+        printf("mv: get file %s state failed!\n", argv[1]);
         close(fdrd);
         close(fdwr);
         return -1;
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     /* 每次操作512字节 */
     char *buf = malloc(fstat.st_size);
     if (buf == NULL) {
-        fprintf(stderr,"cp: malloc for size %d failed!\n", fstat.st_size);
+        printf("cp: malloc for size %d failed!\n", fstat.st_size);
         goto err;
     }
 
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
     close(fdwr);
     return 0;
 failed:
-    fprintf(stderr,"cp: transmit data error!\n");
+    printf("cp: transmit data error!\n");
     free(buf);
 err:
     /* 复制结束 */

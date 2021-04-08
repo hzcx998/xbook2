@@ -58,7 +58,10 @@ ECHO_OUTPUT	:=\e[35mOUTPUT\e[0m
 endif
 
 export ECHO_RM ECHO_CC ECHO_CXX ECHO_AS ECHO_LD ECHO_AR ECHO_OUTPUT ECHO_HOSTCC
-ifeq ($(HOSTOS),macos)
+
+
+ifeq ($(shell uname),Darwin)
+	# MacOS 
 	CROSS_COMPILE	?= i386-elf-
 else
 	CROSS_COMPILE	?=

@@ -3,7 +3,7 @@ sinclude ../../scripts/env.mk
 LIBS_DIR	:= ../libs
 
 X_ASFLAGS	+= -f elf -I $(DIR_XLIBC)/indlude 
-X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99 
+X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99 -O3
 X_INCDIRS	+= $(LIBS_DIR)/xlibc/include $(LIBS_DIR)/pthread/include $(LIBS_DIR)/netsocket/include \
 				$(LIBS_DIR)/uview/include \
 				$(LIBS_DIR)/sconf \
@@ -17,7 +17,7 @@ X_LIBDIRS	+= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \
 AS			:=	nasm
 
 # MacOS
-ifeq ($(HOSTOS),macos)
+ifeq ($(shell uname),Darwin)
 	LD			:=  i386-elf-ld -m elf_i386
 else
 	LD			:=  ld -m elf_i386

@@ -13,7 +13,7 @@ PACKAGE = bash
 prefix = /usr/local
 aliaspath = $(prefix)/data/locale
 
-X_CFLAGS    := -fno-builtin -w -fno-PIE -m32 -fno-stack-protector -std=gnu99
+X_CFLAGS    := -fno-builtin -w -fno-PIE -m32 -fno-stack-protector -std=gnu99 -O3
 
 X_CFLAGS	+= -DPROGRAM='"$(Program)"' -DCONF_HOSTTYPE='"$(Machine)"'\
 			-DCONF_OSTYPE='"$(OS)"' -DCONF_MACHTYPE='"$(MACHTYPE)"' \

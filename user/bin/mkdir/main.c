@@ -6,14 +6,14 @@ int main(int argc, char *argv[])
 {
 	int ret = -1;
 	if(argc != 2){
-		fprintf(stderr,"mkdir: no argument support!\n");
+		printf("mkdir: no argument support!\n");
 	}else{
     
         if(mkdir(argv[1], 0) == 0){
             //printf("mkdir: create a dir %s success.\n", argv[1]);
             ret = 0;
         }else{
-            fprintf(stderr,"mkdir: create directory %s faild!\n", argv[1]);
+            printf("mkdir: create directory %s faild!\n", argv[1]);
         }
 	}
 	return ret;
