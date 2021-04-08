@@ -88,7 +88,7 @@ void display(int year, int month)
 int main(int argc, char *argv[])
 {
     if (argc < 1) {
-        printf("cal: too few args\n");
+        fprintf(stderr,"cal: too few args\n");
         return -1;
     }
     int year, month;
@@ -115,14 +115,14 @@ int main(int argc, char *argv[])
             case 'd':   /* date: -d year-mon */
                 /* 解析下一个参数：期待值是year-mon */
                 if (argc < 3) {
-                    printf("cal: -d format must be year-month! example: -d 2020-2 \n");
+                    fprintf(stderr,"cal: -d format must be year-month! example: -d 2020-2 \n");
                     return -1;
                 }
 
                 p = (char *)argv[2];
                 q = strchr(p, '-');
                 if (q == NULL) {
-                    printf("cal: -d format must be year-month! example: -d 2020-2 \n");
+                    fprintf(stderr,"cal: -d format must be year-month! example: -d 2020-2 \n");
                 }
                 *q++ = '\0';  /* 将'-'设置为0，当做字符串结尾 */
                 
@@ -130,11 +130,11 @@ int main(int argc, char *argv[])
                 if (isdigitstr(p)) {
                     year = atoi(p);
                     if (year < 0) {
-                        printf("cal: year must > 0!\n");
+                        fprintf(stderr,"cal: year must > 0!\n");
                         return -1;
                     }
                 } else {
-                    printf("cal: not a right year!\n");
+                    fprintf(stderr,"cal: not a right year!\n");
                     return -1;
                 }
 
@@ -142,11 +142,11 @@ int main(int argc, char *argv[])
                 if (isdigitstr(q)) {
                     month = atoi(q);
                     if (month < 1 || month > 12) {
-                        printf("cal: month must in [1-12]!\n");
+                        fprintf(stderr,"cal: month must in [1-12]!\n");
                         return -1;
                     }
                 } else {
-                    printf("cal: not a right month!\n");
+                    fprintf(stderr,"cal: not a right month!\n");
                     return -1;
                 }
 
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
                 
                 break;
             default:
-                printf("cal: no option after - !\n");
+                fprintf(stderr,"cal: no option after - !\n");
                 break;
             }
         } else {    /* 没有参数，可能是year */
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
             if (isdigitstr(p)) {
                 year = atoi(p);
                 if (year < 0) {
-                    printf("cal: year must > 0!\n");
+                    fprintf(stderr,"cal: year must > 0!\n");
                     return -1;
                 }
                 /* 输出这一年的每一个月 */
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
                     display(year, month);
                 }
             } else {
-                printf("cal: not a right year!\n");
+                fprintf(stderr,"cal: not a right year!\n");
                 return -1;
             }
         }
