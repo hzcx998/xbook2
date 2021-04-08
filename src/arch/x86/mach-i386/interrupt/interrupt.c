@@ -27,7 +27,6 @@ void interrupt_general_handler(unsigned int esp)
             break;
         case EP_DIVIDE:
         case EP_INVALID_OPCODE:
-            keprint("interrupt_general_handler-::%d-::%d:\n",EXP_CODE_ILL,frame->vec_no);
             exception_force_self(EXP_CODE_ILL);
             break;
         case EP_DEVICE_NOT_AVAILABLE:

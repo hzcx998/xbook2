@@ -61,7 +61,6 @@ redo:
 
 void softirq_handle_in_interrupt()
 {
-    //keprint("softirq_handle_in_interrupt-1:\n");
     unsigned long evens;
     unsigned long flags;
     interrupt_save_and_disable(flags);
