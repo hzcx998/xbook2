@@ -66,7 +66,6 @@ develop/local/
 
 develop/rom/bin/
 develop/rom/sbin/
-develop/rom/usr/
 develop/rom/acct/
 develop/bochs/
 
@@ -85,18 +84,10 @@ recycle
 # need commit to git
 !scripts/fixdep.exe
 
-# system app
+# system bin
 user/sbin/init/init
-user/sbin/init/initg
-user/sbin/desktop/desktop
 user/sbin/login/login
 user/sbin/netserv/netserv
-user/sbin/userctl/userctl
-user/sbin/service/service
-
-# service
-user/sbin/netserv/
-# user app
 
 # /bin
 user/bin/cat/cat
@@ -114,42 +105,14 @@ user/bin/ps/ps
 user/bin/rename/rename
 user/bin/rm/rm
 user/bin/rmdir/rmdir
-user/bin/trig/trig
-user/bin/osver/osver
-user/bin/xbrower/xbrower
 user/bin/sh/sh
 user/bin/sys/sys
-
-
-
-# /bin
-user/bin/bash/
-user/bin/bosh/bosh
-user/bin/c4/c4
-user/bin/cpptests/cpptests
-user/bin/freeterm/freeterm
-user/bin/gato/gato
-user/bin/hello/hello
-user/bin/infones/infones
-user/bin/invader/invader
-user/bin/lua/lua
-user/bin/lvgl/lv
-user/bin/lvgl2/lv2
-user/bin/microui/mui
-user/bin/socket_client/socket_client
-user/bin/socket_server/socket_server
 user/bin/tests/tests
 user/bin/touch/touch
 user/bin/bash/bash
-user/bin/vt100/vt100
-user/bin/win/win
-user/bin/cal/cal
-user/bin/sound/sound
-user/bin/wavplayer/wavplayer
-user/bin/mp3player/mp3player
 user/bin/hello/hello
 user/bin/uview/uview
-user/bin/desktop/desktop
-user/bin/uview/uview
+user/bin/mp3player/mp3player
+user/bin/wavplayer/wavplayer
 user/bin/grep/grep
 user/bin/cat2/cat2

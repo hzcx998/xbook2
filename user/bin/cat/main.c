@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
         return 0;
 	}
 	if(argc > 2){
-		printf("cat: only support 2 argument!\n");
+		fprintf(stderr,"cat: only support 2 argument!\n");
 		return -1;
 	}
 	
@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
 	int fd = open(path, O_RDONLY);
 	if(fd == -1){
-		printf("cat: file %s not exist!\n", path);
+		fprintf(stderr,"cat: file %s not exist!\n", path);
 		return -1;
 	}
 	
