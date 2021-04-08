@@ -129,7 +129,7 @@ static void child()
     uview_msg_header(&xmsg, UVIEW_MSG_SETICON, vreadid);
     uview_msg_data(&xmsg, 0, 1, 0, 0);
     if (uview_send_msg(vid, &xmsg) < 0)
-        return -1;
+        return;
 
     uview_msg_t msg;
     bool loop = true;
