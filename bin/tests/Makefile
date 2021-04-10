@@ -1,7 +1,5 @@
 X_LIBS		+= libxlibc.a libpthread.a libnetsocket.a
 
-X_CFLAGS    := -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99
-
 NAME		:= tests
 SRC			+= *.c
 

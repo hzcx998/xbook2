@@ -8,10 +8,10 @@ endif
 
 ARCH		:= arch/x86
 
-X_ASFLAGS	+= -f elf -I $(ARCH)/include/
-X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99 -O3 -fno-strict-aliasing
-X_INCDIRS	+= include/ $(ARCH)/include/ 
-X_LDFLAGS	+= -no-pie -e kernel_start -Ttext 0x80100000
+X_ASFLAGS	:= -f elf -I $(ARCH)/include/
+X_CFLAGS    := -march=i386 -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99 -O3 -fno-strict-aliasing 
+X_INCDIRS	:= include/ $(ARCH)/include/ 
+X_LDFLAGS	:= -no-pie -e kernel_start -Ttext 0x80100000
 
 AS			:=	nasm
 
@@ -23,7 +23,7 @@ endif
 
 export AS LD
 
-SRC			+= $(ARCH)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/
+SRC			:= $(ARCH)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/
 
 NAME		:= kernel.elf
 

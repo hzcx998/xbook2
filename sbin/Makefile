@@ -2,9 +2,9 @@ sinclude ../scripts/env.mk
 
 LIBS_DIR	:= ../libs
 
-X_ASFLAGS	+= -f elf -I $(DIR_XLIBC)/indlude 
-X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99
-X_INCDIRS	+= $(LIBS_DIR)/xlibc/include \
+X_ASFLAGS	:= -f elf -I $(DIR_XLIBC)/indlude 
+X_CFLAGS    := -march=i386 -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99
+X_INCDIRS	:= $(LIBS_DIR)/xlibc/include \
 				$(LIBS_DIR)/pthread/include \
 				$(LIBS_DIR)/netsocket/include \
 				$(LIBS_DIR)/uview/include \

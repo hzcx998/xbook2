@@ -13,7 +13,7 @@ $(obj)/loader.bin: $(src)/loader.asm
 	@$(AS)  -f bin -I $(obj)/ -o $@ $<
 
 X_ASFLAGS	:= -f elf -I $(obj)/
-X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector
+X_CFLAGS    := -march=i386 -fno-builtin -Wall -Wunused -fno-PIE -m32 -O3 -fno-stack-protector
 X_INCDIRS	:=
 X_LDFLAGS	:= -no-pie -e _start -Ttext 0x91000
 AS			:=	nasm

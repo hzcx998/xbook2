@@ -144,8 +144,10 @@ static int fsal_fatfs_unmount(char *path, unsigned long flags)
 static int fsal_fatfs_mkfs(char *source, char *fstype, unsigned long flags)
 {
     int solt = disk_info_find(source);
-    if (solt < 0)
+    if (solt < 0) {
+        errprint("fasl: mkfs: not found device %s!\n", source);
         return -1;
+    }
     int pdrv, i;
     for (i = 0; i < FF_VOLUMES; i++) {
         if (fatfs_drv_map[i] == solt) {
@@ -477,6 +479,7 @@ static int fsal_fatfs_state(char *path, void *buf)
     FILINFO finfo;
     fres = f_stat(path, &finfo);
     if (fres != FR_OK) {
+        keprint("state: path %s error with status %d\n", path, fres);
         return -1;
     }
     stat_t *stat = (stat_t *)buf;

@@ -13,9 +13,7 @@ PACKAGE = bash
 prefix = /usr/local
 aliaspath = $(prefix)/data/locale
 
-X_CFLAGS    := -fno-builtin -w -fno-PIE -m32 -fno-stack-protector -std=gnu99 -O3
-
-X_CFLAGS	+= -DPROGRAM='"$(Program)"' -DCONF_HOSTTYPE='"$(Machine)"'\
+X_CFLAGS	+= -w -DPROGRAM='"$(Program)"' -DCONF_HOSTTYPE='"$(Machine)"'\
 			-DCONF_OSTYPE='"$(OS)"' -DCONF_MACHTYPE='"$(MACHTYPE)"' \
 			-DCONF_VENDOR='"$(VENDOR)"' -DLOCALEDIR='"$(localedir)"' -DPACKAGE='"$(PACKAGE)"' \
 			-DHAVE_CONFIG_H -DLIBDIR=\"$(prefix)/libdata\" -DLOCALE_ALIAS_PATH=\"$(aliaspath)\" \

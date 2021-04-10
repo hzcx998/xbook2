@@ -68,7 +68,7 @@ static int sound_output(short *buf, int len)
         int i;
         for (i = 0; i < t; i++)
         {
-            if (write(sound_fd, s[i], WAVE_SIZE * sizeof(short)) < WAVE_SIZE * sizeof(short))
+            if (write(sound_fd, &s[i], WAVE_SIZE * sizeof(short)) < WAVE_SIZE * sizeof(short))
             {
                 fprintf(stderr,"wrote less than WAVE_SIZE\n");
                 return -1;
