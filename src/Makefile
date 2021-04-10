@@ -1,5 +1,5 @@
 sinclude ../scripts/env.mk
-sinclude ../env.mk
+sinclude ../scripts/localenv.mk
 
 ifeq ("$(origin G)", "command line")
 ifeq ($(G),on)

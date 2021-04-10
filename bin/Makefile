@@ -1,5 +1,5 @@
 sinclude ../scripts/env.mk
-sinclude ../env.mk
+sinclude ../scripts/localenv.mk
 
 LIBS_DIR	:= ../libs
 

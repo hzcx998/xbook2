@@ -1,6 +1,6 @@
 # MIT License
 # Copyright (c) 2020 Jason Hu, Zhu Yu
-sinclude ../env.mk
+sinclude ../scripts/localenv.mk
 
 X_PREPARE	+= $(obj)/boot.bin $(obj)/loader.bin
 X_CLEAN		:= $(obj)/boot.bin $(obj)/loader.bin $(obj)/setup.elf 

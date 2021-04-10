@@ -1,5 +1,5 @@
 sinclude ../scripts/env.mk
-sinclude ../env.mk
+sinclude ../scripts/localenv.mk
 
 X_ASFLAGS	:= $(ENV_AFLAGS)
 X_CFLAGS	:= $(ENV_CFLAGS)
