@@ -1,7 +1,7 @@
 sinclude ../scripts/env.mk
 sinclude ../env.mk
 
-X_ASFLAGS	:= $(ENV_AFLAGS) -I $(DIR_XLIBC)/indlude 
+X_ASFLAGS	:= $(ENV_AFLAGS)
 X_CFLAGS	:= $(ENV_CFLAGS)
 
 LD			:=  $(ENV_LD)

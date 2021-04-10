@@ -3,7 +3,7 @@ sinclude ../env.mk
 
 LIBS_DIR	:= ../libs
 
-X_ASFLAGS	:= $(ENV_AFLAGS) -I $(DIR_XLIBC)/indlude
+X_ASFLAGS	:= $(ENV_AFLAGS)
 X_CFLAGS	:= $(ENV_CFLAGS)
 
 X_INCDIRS	:= $(LIBS_DIR)/xlibc/include $(LIBS_DIR)/pthread/include $(LIBS_DIR)/netsocket/include \
