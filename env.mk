@@ -1,5 +1,5 @@
 # env var 
-ENV_CFLAGS	:= -march=i386 -fno-builtin -Wall -Wunused -fno-PIE -m32 -std=gnu99 -O3 -fno-stack-protector 
+ENV_CFLAGS	:= -march=i386 -fno-builtin -Wall -Wunused -fno-PIE -m32 -std=gnu99  -fno-stack-protector 
 ENV_AFLAGS	:= -f elf 
 ENV_LDFLAGS	:= -no-pie 
 
