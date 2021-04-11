@@ -88,7 +88,18 @@ int fsal_init()
         warnprint("fsal create dir %s failed or dir existed!\n", HOME_DIR_PATH);
     if (kfile_mkdir(ACCOUNT_DIR_PATH, 0) < 0)
         warnprint("fsal create dir %s failed or dir existed!\n", ACCOUNT_DIR_PATH);
-    
+
+    /* ramfs */
+    #if defined(RAMFS_DIR_PATH)
+    if (kfile_mkdir(RAMFS_DIR_PATH, 0) < 0)
+        warnprint("fsal create dir %s failed or dir existed!\n", RAMFS_DIR_PATH);
+    if (fsif.mkfs("ram0", "fat12", 0) < 0) {
+        keprint("fsal : mkfs on device %s failed!\n", "ram0");
+    }
+    if (fsif.mount("ram0", RAMFS_DIR_PATH, "fat12", 0) < 0) {
+        keprint("fsal : mount path %s failed!\n", RAMFS_DIR_PATH);
+    }
+    #endif  /* RAMFS_DIR_PATH */
     /* 挂载设备目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
     if (fsif.mount("disk0", DEV_DIR_PATH, "devfs", 0) < 0) {
         keprint("fsal : mount path %s failed!\n", DEV_DIR_PATH);

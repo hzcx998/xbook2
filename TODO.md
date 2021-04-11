@@ -13,9 +13,6 @@
 * 添加硬盘引导，支持FAT32文件系统引导
 * 用linux制作一个安装包，把镜像文件刻录到某个磁盘，如果磁盘不存在数据，则进行格式化文件系统。
 
-* 2020/10/26
-* 驱动管理：添加驱动程序高级部分处理，添加磁盘缓存功能。
-
 * 2020/11/3
 * 需添加：磁盘换页机制
 * 2020/12/31
@@ -24,7 +21,7 @@
 * 移植bash，把缺少的函数补上，不做具体实现。
     {
     接口：unistd/id.c,tcgetattr, tcsetattr,pwd.c
-        umask, termios.c,mkfifo
+        umask, termios.c
     处理：SIGTSTP
     bug on bash: locale.c->loca_shiftstates
     修复：bash管道不能使用。不能执行shell脚本。
@@ -36,6 +33,6 @@
 * 添加ac97声卡驱动，添加声音框架，通用声卡处理接口。处理原始文件。
 * 完善sb16声卡驱动。
 * grub引导启动
-* 添加内存文件系统, ramfs
-* 添加openfifo系统调用，实现命名管道的添加。
-* 成功添加mkfifo，接下来就是open 文件路径转换为fifo路径
+* 添加内存文件系统, ramfs {
+    state 不能获取正确的路径
+}

@@ -180,6 +180,7 @@
         "istream": "c",
         "hardirq.h": "c",
         "sconf.h": "c",
-        "wait.h": "c"
+        "wait.h": "c",
+        "lib.h": "c"
     }
 }

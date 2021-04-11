@@ -57,11 +57,10 @@ HDA_SZ		= 33554432 # 32 MB
 HDB_SZ		= 33554432
 
 # environment dir
-USER_DIR	= ./user
 
-LIBS_DIR	= $(USER_DIR)/libs
-SBIN_DIR	= $(USER_DIR)/sbin
-BIN_DIR		= $(USER_DIR)/bin
+LIBS_DIR	= libs
+SBIN_DIR	= sbin
+BIN_DIR		= bin
 
 #kernel disk
 LOADER_OFF 	= 2

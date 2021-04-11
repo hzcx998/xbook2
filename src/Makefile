@@ -1,4 +1,5 @@
 sinclude ../scripts/env.mk
+sinclude ../env.mk
 
 ifeq ("$(origin G)", "command line")
 ifeq ($(G),on)
@@ -8,22 +9,20 @@ endif
 
 ARCH		:= arch/x86
 
-X_ASFLAGS	+= -f elf -I $(ARCH)/include/
-X_CFLAGS    += -fno-builtin -Wall -Wunused -fno-PIE -m32 -fno-stack-protector -std=gnu99  -fno-strict-aliasing
-X_INCDIRS	+= include/ $(ARCH)/include/ 
-X_LDFLAGS	+= -no-pie -e kernel_start -Ttext 0x80100000
+X_ASFLAGS	:= $(ENV_AFLAGS) -I $(ARCH)/include/
+X_CFLAGS    := $(ENV_CFLAGS) -fno-strict-aliasing 
 
-AS			:=	nasm
+X_INCDIRS	:= include/ $(ARCH)/include/ 
 
-ifeq ($(HOSTOS),macos)
-	LD			:=  i386-elf-ld -m elf_i386
-else
-	LD			:=  ld -m elf_i386
-endif
+X_LDFLAGS	:=  $(ENV_LDFLAGS)
+
+AS			:=	$(ENV_AS)
+LD			:=  $(ENV_LD)
 
 export AS LD
+export ARCH
 
-SRC			+= $(ARCH)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/
+SRC			:= $(ARCH)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/
 
 NAME		:= kernel.elf
 

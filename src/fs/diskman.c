@@ -59,7 +59,7 @@ int disk_info_find(char *name)
     mutex_lock(&disk_manager_mutex);
     disk_info_t *disk;
     list_for_each_owner (disk, &disk_list_head, list) {
-        if (!strcmp(disk->virname, name)) {
+        if (!strcmp(disk->virname, name) || !strcmp(disk->devent.de_name, name)) {
             mutex_unlock(&disk_manager_mutex);
             return disk->solt;
         }
