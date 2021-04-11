@@ -1196,7 +1196,7 @@ iostatus_t ide_write(device_object_t *device, io_request_t *ioreq)
     sector_t sectors = DIV_ROUND_UP(ioreq->parame.write.length, SECTOR_SIZE);
     device_extension_t *ext = device->device_extension;
 
-#ifndef DEBUG_DRV
+#ifdef DEBUG_DRV
     keprint(PRINT_DEBUG "ide_write: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.write.offset);
 #endif    

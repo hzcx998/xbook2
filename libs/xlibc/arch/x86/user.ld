@@ -6,8 +6,11 @@ OUTPUT_ARCH(i386)
 ENTRY(_start) /* _start is at xlibc/arch/x86/start.asm */
 
 SECTIONS {
-    /* . = 0x00001000;  */
-    . = 0x80000000;
+    /* 
+    if use lower addr: . = 0x00001000;  
+    or not use high addr: . = 0x80000000;
+    */
+    . = 0x00001000;
     
     /* code segment */
     .text : {

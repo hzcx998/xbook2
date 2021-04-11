@@ -19,9 +19,6 @@ void vmm_init(vmm_t *vmm)
     vmm->argv = NULL;
     vmm->envp = NULL;
     vmm->argbuf = NULL;
-
-    infoprint("vmm: user base: %x, size: %x, top: %x, stack top:%x\n", 
-        USER_VMM_BASE_ADDR, USER_VMM_SIZE, USER_VMM_TOP_ADDR, USER_STACK_TOP);
 }
 
 void vmm_free(vmm_t *vmm)
