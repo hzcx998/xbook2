@@ -6,6 +6,7 @@
 #include "../fatfs/ff.h"
 #include <xbook/diskman.h>
 #include <xbook/memalloc.h>
+#include <xbook/walltime.h>
 #include <const.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -15,8 +16,13 @@
 
 // #define DEBUG_FATFS
 
+#define PDRV_TO_PATH(n) (n + '0')
+#define PATH_TO_PDRV(n) (n - '0')
+
 typedef struct {
-    FATFS *fsobj;        /* 挂载对象指针 */
+    FATFS *fsobj[FF_VOLUMES];       /* 挂载对象指针 */
+    uint16_t mount_time[FF_VOLUMES];  /* 挂载时的时间 */
+    uint16_t mount_date[FF_VOLUMES];  /* 挂载时的日期 */
 } fatfs_extention_t;
 
 typedef struct {
@@ -52,8 +58,8 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
     }
     /* 获取一个FATFS的物理磁盘驱动器 */
     pdrv = i;
-    /* 构建挂载路径 */
-    char path[3] = {pdrv + '0', ':', 0};
+    /* 构建挂载路径, [0-9]: */
+    char path[3] = {PDRV_TO_PATH(pdrv), ':', 0};
 
     int res = diskman.open(solt);
     if (res < 0) {
@@ -111,7 +117,10 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
         mem_free(fsobj);
         return -1;
     }
-    fatfs_extention.fsobj = fsobj;
+    fatfs_extention.fsobj[pdrv] = fsobj;
+    fatfs_extention.mount_time[pdrv] = WTM_WR_TIME(walltime.hour, walltime.minute, walltime.second);
+    fatfs_extention.mount_date[pdrv] = WTM_WR_DATE(walltime.year, walltime.month, walltime.day);
+
     if (fsal_path_insert((void *)p, target, &fatfs_fsal)) {
         dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, p);
         mem_free(fsobj);
@@ -136,8 +145,9 @@ static int fsal_fatfs_unmount(char *path, unsigned long flags)
         dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, p);
         return -1;
     }
-    mem_free(ext->fsobj);
-    ext->fsobj = NULL;
+    int pdrv = PATH_TO_PDRV(path[0]);
+    mem_free(ext->fsobj[pdrv]);
+    ext->fsobj[pdrv] = NULL;
     return 0;
 }
 
@@ -158,7 +168,7 @@ static int fsal_fatfs_mkfs(char *source, char *fstype, unsigned long flags)
         return -1;
     }
     pdrv = i;
-    char path[3] = {pdrv + '0', ':', 0};
+    char path[3] = {PDRV_TO_PATH(pdrv), ':', 0};
     FRESULT res;        /* API result code */
     BYTE work[FF_MAX_SS]; /* Work area (larger is better for processing time) */
     const TCHAR *p = (const TCHAR *) path;
@@ -182,7 +192,7 @@ static int fsal_fatfs_open(void *path, int flags)
 {
     fsal_file_t *fp = fsal_file_alloc();
     if (fp == NULL)
-        return -1;
+        return -ENOMEM;
     const TCHAR *p = (const TCHAR *) path;
     fp->extension = mem_alloc(sizeof(fatfs_file_extention_t));
     if (!fp->extension) {
@@ -217,7 +227,7 @@ static int fsal_fatfs_open(void *path, int flags)
         // errprint("fatfs: open file %s failed! errcode:%d, flags:%x\n", p, fres, flags);
         mem_free(fp->extension);
         fsal_file_free(fp);
-        return -1;
+        return -ENOFILE;
     }
     return FSAL_FILE2IDX(fp);
 }
@@ -473,14 +483,46 @@ static int fsal_fatfs_fsync(int idx)
     return 0;
 }
 
+static int is_root_dir(char *path)
+{
+    char *p = path;
+    int n = 0;
+    while (*p) {
+        switch (n) {
+        case 0:
+            if (*p >= '0' && *p <= '9')
+                n++;
+            break;
+        case 1:
+            if (*p == ':')
+                n++;
+            break;
+        default:
+            n = -1;
+            break;
+        }
+        p++;
+    }
+    return (n == 2);
+}
+
 static int fsal_fatfs_state(char *path, void *buf)
 {
     FRESULT fres;
     FILINFO finfo;
-    fres = f_stat(path, &finfo);
-    if (fres != FR_OK) {
-        keprint("state: path %s error with status %d\n", path, fres);
-        return -1;
+    /* 对根目录进行特殊处理 */
+    if (is_root_dir(path)) {
+        int pdrv = PATH_TO_PDRV(path[0]);
+        finfo.fsize = 0;
+        finfo.fdate = fatfs_extention.mount_date[pdrv];
+        finfo.ftime = fatfs_extention.mount_time[pdrv];
+        finfo.fattrib = (AM_RDO | AM_DIR);
+    } else {
+        fres = f_stat(path, &finfo);
+        if (fres != FR_OK) {
+            // keprint("state: path %s error with status %d\n", path, fres);
+            return -EINVAL;
+        }
     }
     stat_t *stat = (stat_t *)buf;
     mode_t mode = S_IREAD | S_IWRITE;

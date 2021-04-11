@@ -5,7 +5,7 @@ ENV_LDFLAGS	:= -no-pie
 
 ENV_USER_LD_SCRIPT	:= ../libs/xlibc/arch/x86/user.ld
 
-# MacOS specail
+# MacOS special
 ifeq ($(shell uname),Darwin)
 	ENV_LD		:=  i386-elf-ld -m elf_i386
 else
