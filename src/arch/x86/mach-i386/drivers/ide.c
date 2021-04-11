@@ -827,6 +827,7 @@ static void driver_soft_rest(struct ide_channel *channel)
 	 */
 	out8(ATA_REG_CTL(channel), ctrl | (1 << 2));
 
+	#if 0
 	/* 等待重置 */
 	int i;
 	/* 每次读取用100ns，读取50次，就花费5000ns，也就是5us */
@@ -836,6 +837,9 @@ static void driver_soft_rest(struct ide_channel *channel)
 		*/
 		in8(ATA_REG_ALT_STATUS(channel));
  	}
+	#else
+	mdelay(1);
+	#endif
 	
 	/* 重置完后，需要清除该位，还原状态就行 */
 	out8(ATA_REG_CTL(channel), ctrl);

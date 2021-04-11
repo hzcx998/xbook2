@@ -11,7 +11,7 @@ SECTIONS {
     if use lower addr: . = 0x00100000;  
     or not use high addr: . = 0x80100000;
     */
-    . = 0x00100000;
+    . = 0x80100000;
 
     /* code segment */
     .text : {

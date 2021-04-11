@@ -6,7 +6,7 @@
 /* #define CONFIG_64BIT */
 
 /* kernel low memory: 0-> high memory, 1-> low memory */
-#define CONFIG_KERN_LOWMEM  1
+#define CONFIG_KERN_LOWMEM  0
 
 /* config large alloc size in memcache */
 #define CONFIG_LARGE_ALLOCS
