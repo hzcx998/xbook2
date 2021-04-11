@@ -26,7 +26,7 @@
 #if CONFIG_KERN_LOWMEM == 1
 #define KERN_SPACE_TOP_ADDR                0x80000000
 #define USER_SPACE_START_ADDR              0x80000000
-#define USER_SPACE_SIZE                    (0xFFFFFFFF / 2 - KERN_BLACKHOLE_MEM_SIZE)
+#define USER_SPACE_SIZE                    (0x80000000 - KERN_BLACKHOLE_MEM_SIZE)
 #else
 #define KERN_SPACE_TOP_ADDR                0xFFFFFFFF 
 #define USER_SPACE_START_ADDR              0x00000000

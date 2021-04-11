@@ -2,7 +2,7 @@
 #define _BOOT_PAGE_H
 
 /* 把内核放到低地址 */
-#define KERN_LOWMEN 0
+#define KERN_LOWMEN 1
 
 /* 分页机制 */
 #define KERN_PAGE_DIR_PHY_ADDR 0x201000    /* 内核页目录表地址 */
