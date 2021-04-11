@@ -61,8 +61,10 @@ unsigned long mem_space_get_unmaped(vmm_t *vmm, unsigned len)
     unsigned long addr = vmm->map_start;
     mem_space_t *space = mem_space_find(vmm, addr);
     while (space != NULL) {
-        if (USER_VMM_SIZE - len < addr)
+        if (USER_VMM_SIZE - len < addr + USER_VMM_BASE_ADDR) {
+            errprint("mem_space_get_unmaped: len too big!\n");
             return -1;
+        }
         if (addr + len >= vmm->map_end)
             return -1;
         if (addr + len <= space->start)
@@ -86,13 +88,15 @@ int do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
         keprint(PRINT_ERR "do_mem_space_map: len is zero!\n");
         return -1;
     }
-    if (len > USER_VMM_SIZE || addr > USER_VMM_SIZE || addr > USER_VMM_SIZE - len) {
-        keprint(PRINT_ERR "do_mem_space_map: addr and len out of range!\n");
+    if (len > USER_VMM_SIZE || addr > USER_VMM_TOP_ADDR || addr > USER_VMM_TOP_ADDR - len || addr < USER_VMM_BASE_ADDR) {
+        keprint(PRINT_ERR "do_mem_space_map: addr %x and len %x out of range!\n", addr, len);
         return -1;
     }
     if (flags & MEM_SPACE_MAP_FIXED) {
-        if (addr & ~PAGE_MASK)
+        if (addr & ~PAGE_MASK) {
+            keprint(PRINT_ERR "do_mem_space_map: addr %x not page aligined!\n", addr);
             return -1;
+        }
         mem_space_t* p = mem_space_find(vmm, addr);
         if (p != NULL && addr + len > p->start) {
             keprint(PRINT_ERR "do_mem_space_map: this FIXED space had existed!\n");
@@ -121,6 +125,7 @@ int do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
     } else {
         page_map_addr_safe(addr, len, prot); 
     }
+    //keprint(PRINT_ERR "do_mem_space_map: addr %x.\n", addr);
     return addr;
 }
 
@@ -136,8 +141,8 @@ int do_mem_space_map_viraddr(vmm_t *vmm, unsigned long addr, unsigned long vaddr
         keprint(PRINT_ERR "do_mem_space_map: len is zero!\n");
         return -1;
     }
-    if (len > USER_VMM_SIZE || addr > USER_VMM_SIZE || addr > USER_VMM_SIZE - len) {
-        keprint(PRINT_ERR "do_mem_space_map: addr and len out of range!\n");
+    if (len > USER_VMM_SIZE || addr > USER_VMM_TOP_ADDR || addr > USER_VMM_TOP_ADDR - len || addr < USER_VMM_BASE_ADDR) {
+        keprint(PRINT_ERR "do_mem_space_map_viraddr: addr %x and len %x out of range!\n", addr, len);
         return -1;
     }
     if (flags & MEM_SPACE_MAP_FIXED) {
@@ -185,8 +190,8 @@ int do_mem_space_map_viraddr(vmm_t *vmm, unsigned long addr, unsigned long vaddr
 
 int do_mem_space_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
 {
-    if ((addr & ~PAGE_MASK) || addr > USER_VMM_SIZE || len > USER_VMM_SIZE-addr) {
-        keprint(PRINT_ERR "do_mem_space_unmap: addr and len error!\n");
+    if ((addr & ~PAGE_MASK) || addr > USER_VMM_TOP_ADDR || addr > USER_VMM_TOP_ADDR - len || addr < USER_VMM_BASE_ADDR) {
+        keprint(PRINT_ERR "do_mem_space_unmap: addr %x and len %x error!\n", addr, len);
         return -1;
     }
     len = PAGE_ALIGN(len);

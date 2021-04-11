@@ -847,7 +847,6 @@ static void driver_soft_rest(struct ide_channel *channel)
  */
 static void rest_driver(device_extension_t *ext)
 {
-
 	driver_soft_rest(ext->channel);
 }
 /**
@@ -1032,20 +1031,18 @@ static int ide_read_sector(device_extension_t *ext,
 	unsigned char error;
 	/* 检查设备是否正确 */
 	if (lba + count > ext->size && ext->type == IDE_ATA) {
-        keprint(PRINT_ERR "ide_read_sector: out of range!\n");
+        errprint(PRINT_ERR "ide_read_sector: out of range!\n");
 		return -1;
 	} else {
-
-		/* 进行磁盘访问 */
-
-		/*如果类型是ATA*/
-        error = ata_type_transfer(ext, IDE_READ, lba, count, buf);
-		/*如果类型是ATAPI*/
-		
-		/* 打印驱动错误信息 */
-		if(ide_print_error(ext, error)) {
-			keprint(PRINT_ERR "ide_read_sector: ide read error!\n");
-            return -1;
+		unsigned char *_buf = (unsigned char *)buf;
+		int i;
+		for (i = 0; i < count; i++) {
+			error = ata_type_transfer(ext, IDE_READ, lba + i, 1, _buf + i * SECTOR_SIZE);
+			/* 打印驱动错误信息 */
+			if(ide_print_error(ext, error)) {
+				keprint(PRINT_ERR "ide_read_sector: ide read error!\n");
+				return -1;
+			}
 		}
 	}
 	return 0;
@@ -1068,17 +1065,18 @@ static int ide_write_sector(
 ) {
 	unsigned char error;
 	if (lba + count > ext->size && ext->type == IDE_ATA) {
+		errprint(PRINT_ERR "ide_write_sector: out of range!\n");
 		return -1;
 	} else {
-		/* 进行磁盘访问，如果出错，就 */
-		
-		/*如果类型是ATA*/
-			error = ata_type_transfer(ext, IDE_WRITE, lba, count, buf);
-		/*如果类型是ATAPI*/
-
-		/* 打印驱动错误信息 */
-		if(ide_print_error(ext, error)) {
-			return -1;
+		unsigned char *_buf = (unsigned char *)buf;
+		int i;
+		for (i = 0; i < count; i++) {
+			error = ata_type_transfer(ext, IDE_WRITE, lba + i, 1, _buf + i * SECTOR_SIZE);
+			/* 打印驱动错误信息 */
+			if(ide_print_error(ext, error)) {
+				keprint(PRINT_ERR "ide_write_sector: ide write error!\n");
+				return -1;
+			}
 		}
 	}
 	return 0;
@@ -1198,7 +1196,7 @@ iostatus_t ide_write(device_object_t *device, io_request_t *ioreq)
     sector_t sectors = DIV_ROUND_UP(ioreq->parame.write.length, SECTOR_SIZE);
     device_extension_t *ext = device->device_extension;
 
-#ifdef DEBUG_DRV
+#ifndef DEBUG_DRV
     keprint(PRINT_DEBUG "ide_write: buf=%x sectors=%d off=%x\n", 
         ioreq->system_buffer, sectors, ioreq->parame.write.offset);
 #endif    

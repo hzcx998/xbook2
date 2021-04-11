@@ -7,7 +7,8 @@ ENTRY(kernel_start) /* kernel_start is at kernel/arch/x86/entry.asm */
 
 SECTIONS {
     /* Load the kernel at this address: "." means the current address */
-    . = 0x80100000;
+    /* . = 0x80100000; */
+    . = 0x00100000; /* low memory */
 
     /* code segment */
     .text : {

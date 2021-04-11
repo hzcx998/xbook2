@@ -90,7 +90,7 @@ void mem_range_init(unsigned int idx, unsigned int start, size_t len)
     for (i = 0; i < MEM_SECTION_MAX_NR; i++) {    
         mem_section_init(&mem_range->sections[i], powi(2, i));
     }
-
+    
     int section_off = MEM_SECTION_MAX_NR - 1;     
     size_t section_size = powi(2, section_off);
     mem_section_t *mem_section;

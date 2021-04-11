@@ -82,7 +82,7 @@ int fsal_init()
     if (fsal_disk_mount_init() < 0) {
         return -1;
     }
-
+    
     /* 创建核心目录 */
     if (kfile_mkdir(HOME_DIR_PATH, 0) < 0)
         warnprint("fsal create dir %s failed or dir existed!\n", HOME_DIR_PATH);

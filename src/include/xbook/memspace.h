@@ -19,7 +19,8 @@
 
 #define MAX_MEM_SPACE_HEAP_SIZE    (512 * MB)
 
-#define MEM_SPACE_MAP_ADDR_START  0x60000000
+#define MEM_SPACE_MAP_ADDR_START  (USER_SPACE_START_ADDR + 0x60000000)
+
 #define MAX_MEM_SPACE_MAP_SIZE    (256 * MB)
 
 typedef struct mem_space {

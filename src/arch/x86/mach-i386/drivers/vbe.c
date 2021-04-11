@@ -20,8 +20,8 @@
 #define MAP_VRAM_TO_KERN    0
 
 /* VBE信息的内存地址 */
-#define VBE_INFO_ADDR  0x80001100
-#define VBE_MODE_ADDR  0x80001300
+#define VBE_INFO_ADDR  (KERN_BASE_VIR_ADDR + 0x00001100)
+#define VBE_MODE_ADDR  (KERN_BASE_VIR_ADDR + 0x00001300)
 
 /* VBE信息块结构体 */
 struct vbe_info_block {

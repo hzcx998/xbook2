@@ -6,7 +6,7 @@
 #include <arch/interrupt.h>
 #include <arch/task.h>
 
-// #define DEBUG_SCHED
+#define DEBUG_SCHED 0
 
 scheduler_t scheduler;
 
@@ -92,6 +92,9 @@ void schedule()
     sched_unit_t *su = sched_get_cur_unit();
     task_t *next = get_next_task(su);
     task_t *cur = su->cur;
+    #if DEBUG_SCHED == 1
+    dbgprint("sched: switch from %d to %d\n", cur->pid, next->pid);
+    #endif
     sched_set_next_task(su, next);
     thread_switch_to_next(cur, next);
     interrupt_restore_state(flags);

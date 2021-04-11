@@ -3,12 +3,17 @@
 
 #include "interrupt.h"
 #include "mempool.h"
+#include <xbook/config.h>
 
 typedef unsigned int pde_t; /* page dir entry */
 typedef unsigned int pte_t; /* page table entry */
 
 /* 内核空间在映射后的虚拟基地址 */
+#if CONFIG_KERN_LOWMEM == 1
+#define KERN_BASE_VIR_ADDR      0X00000000
+#else
 #define KERN_BASE_VIR_ADDR      0X80000000
+#endif
 
 #define KERN_PAGE_DIR_PHY_ADDR       0X201000
 #define KERN_PAGE_DIR_VIR_ADDR       (KERN_BASE_VIR_ADDR + KERN_PAGE_DIR_PHY_ADDR)
@@ -36,7 +41,12 @@ typedef unsigned int pte_t; /* page table entry */
 #define PAGE_ALIGN(value) ((value + PAGE_LIMIT) & PAGE_MASK)
 
 #define PAGE_TABLE_ENTRY_NR 1024  
+
+#if CONFIG_KERN_LOWMEM == 1
+#define KERN_PAGE_DIR_ENTRY_OFF 0
+#else
 #define KERN_PAGE_DIR_ENTRY_OFF 512  
+#endif
 
 #define PAGE_DIR_ENTRY_IDX(addr)    ((addr & 0xffc00000) >> 22)
 #define PAGE_TABLE_ENTRY_IDX(addr)  ((addr & 0x003ff000) >> 12)

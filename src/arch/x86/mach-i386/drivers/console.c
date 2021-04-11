@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include <xbook/driver.h>
+#include <xbook/kernel.h>
 #include <arch/io.h>
 #include <arch/config.h>
 #include <arch/hw.h>
@@ -15,7 +16,7 @@
 
 // #define DEBUG_DRV
 
-#define DISPLAY_VRAM 0x800b8000
+#define DISPLAY_VRAM (KERN_BASE_VIR_ADDR + 0x000b8000)
 
 #define	CRTC_ADDR_REG	0x3D4	/* CRT Controller Registers - Addr Register */
 #define	CRTC_DATA_REG	0x3D5	/* CRT Controller Registers - Data Register */

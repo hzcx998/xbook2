@@ -23,12 +23,15 @@ void setup_paging()
 
     /* fill page dir table, low 8M (0~8M), high 8M(0x80000000~0x80800000) */
     pgdir[0] = (unsigned int) pgtbl | KERN_PG;
+    #if KERN_LOWMEN == 0
     pgdir[512] = (unsigned int) pgtbl | KERN_PG;
+    #endif
     pgtbl += 1024;
     pgdir[1] = (unsigned int) pgtbl | KERN_PG;
+    #if KERN_LOWMEN == 0
     pgdir[513] = (unsigned int) pgtbl | KERN_PG;
+    #endif
     pgdir[1023] = (unsigned int) pgdir |KERN_PG;    /* record pgdir self */
-
     /*  */
     enable_paging((unsigned int) pgdir);
     

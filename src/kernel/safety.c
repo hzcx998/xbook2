@@ -8,7 +8,7 @@ int safety_check_range(void *src, unsigned long nbytes)
 {
     unsigned long addr;
     addr = (unsigned long) src;
-    if (task_current->vmm && ((addr >= KERN_VADDR) || (addr + nbytes >= KERN_VADDR))) {
+    if (task_current->vmm && !((addr >= USER_VMM_BASE_ADDR) && (addr + nbytes < USER_VMM_TOP_ADDR))) {
         return -1;
     }
     return 0;

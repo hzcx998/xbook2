@@ -1,6 +1,8 @@
 #ifndef _X86_SEGMENT_H
 #define _X86_SEGMENT_H
 
+#include <xbook/kernel.h>
+
 /*
  * 段的相关信息会出现在这个文件中
  */
@@ -53,7 +55,7 @@
 #define KERNEL_TSS_SEL ((INDEX_TSS << 3) + (SA_TIG << 2) + SA_RPL0)
 
 /* GDT 的虚拟地址 */
-#define GDT_VADDR			0x80200000
+#define GDT_VADDR			(KERN_BASE_VIR_ADDR + 0x00200000)
 #define GDT_LIMIT		    0x000007ff
 
 #define GDT_OFF2PTR(gdt, off)    (gdt + off) 
