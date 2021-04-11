@@ -8,7 +8,7 @@ ENTRY(_start) /* _start is at xlibc/arch/x86/start.asm */
 SECTIONS {
     /* 
     if use lower addr: . = 0x00001000;  
-    or not use high addr: . = 0x80000000;
+    or not use high addr: . = 0x80001000;
     */
     . = 0x00001000;
     
