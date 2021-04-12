@@ -4,7 +4,7 @@
 ###############################################################
 
 # how much memory the emulated machine will have
-megs: 256
+megs: 512
 
 # filename of ROM images
 #romimage: file=$bxshare/BIOS-bochs-latest
@@ -36,10 +36,13 @@ mouse: enabled=0
 # in the DLX Linux example I'm enabling keyboard_mapping so that paste 
 # will work.  Cut&Paste is currently implemented on win32 and X windows only.
 
+#net
+e1000: enabled=1,ioaddr=0x300, irq=3, mac=8c:85:90:15:8e:cb, ethmod=slirp, ethdev=en0 #mac
+
 #dev=/dev/tty9   /dev/ptyp0 /dev/stdout
 #com1: enabled=1, mode=file, dev="develop/bochs/output.txt"
 #com1: enabled=1, mode=mouse
-com1:enabled=1, mode=term, dev=/dev/ttys008
+com1:enabled=1, mode=term, dev=/dev/ttys006
 #log:/dev/pts/1
 
 #keyboard: enabled=1, map=$bxshare/keymaps/x11-pc-us.map

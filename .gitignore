@@ -9,6 +9,9 @@
 *.elf
 *.disasm
 
+# cmd files
+*.o.cmd
+
 # Linker output
 *.ilk
 *.map
