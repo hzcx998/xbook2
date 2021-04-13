@@ -1,5 +1,7 @@
 X_LIBS		+= libxlibc.a libpthread.a libnetsocket.a
 
+X_CFLAGS	+= -O0
+
 NAME		:= tests
 SRC			+= *.c
 

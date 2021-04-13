@@ -87,7 +87,8 @@ char* strncpy(char* _dst, const char* _src, int n)
 }
 
 uint32_t strlen(const char* str) {
-  
+    if (!str)
+        return 0;
    const char* p = str;
    while(*p++);
    return (p - str - 1);

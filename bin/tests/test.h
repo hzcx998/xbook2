@@ -57,6 +57,7 @@ int tty_test(int argc, char *argv[]);
 
 int id_test(int argc, char *argv[]);
 int pty_test2(int argc, char *argv[]);
+int backtrace_test2(int argc, char* argv[]);
 
 static inline void sys_err(char *str)
 {
