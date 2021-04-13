@@ -827,6 +827,7 @@ static void driver_soft_rest(struct ide_channel *channel)
 	 */
 	out8(ATA_REG_CTL(channel), ctrl | (1 << 2));
 
+	#if 0
 	/* 等待重置 */
 	int i;
 	/* 每次读取用100ns，读取50次，就花费5000ns，也就是5us */
@@ -836,6 +837,9 @@ static void driver_soft_rest(struct ide_channel *channel)
 		*/
 		in8(ATA_REG_ALT_STATUS(channel));
  	}
+	#else
+	mdelay(1);
+	#endif
 	
 	/* 重置完后，需要清除该位，还原状态就行 */
 	out8(ATA_REG_CTL(channel), ctrl);
@@ -847,7 +851,6 @@ static void driver_soft_rest(struct ide_channel *channel)
  */
 static void rest_driver(device_extension_t *ext)
 {
-
 	driver_soft_rest(ext->channel);
 }
 /**
@@ -1032,20 +1035,18 @@ static int ide_read_sector(device_extension_t *ext,
 	unsigned char error;
 	/* 检查设备是否正确 */
 	if (lba + count > ext->size && ext->type == IDE_ATA) {
-        keprint(PRINT_ERR "ide_read_sector: out of range!\n");
+        errprint(PRINT_ERR "ide_read_sector: out of range!\n");
 		return -1;
 	} else {
-
-		/* 进行磁盘访问 */
-
-		/*如果类型是ATA*/
-        error = ata_type_transfer(ext, IDE_READ, lba, count, buf);
-		/*如果类型是ATAPI*/
-		
-		/* 打印驱动错误信息 */
-		if(ide_print_error(ext, error)) {
-			keprint(PRINT_ERR "ide_read_sector: ide read error!\n");
-            return -1;
+		unsigned char *_buf = (unsigned char *)buf;
+		int i;
+		for (i = 0; i < count; i++) {
+			error = ata_type_transfer(ext, IDE_READ, lba + i, 1, _buf + i * SECTOR_SIZE);
+			/* 打印驱动错误信息 */
+			if(ide_print_error(ext, error)) {
+				keprint(PRINT_ERR "ide_read_sector: ide read error!\n");
+				return -1;
+			}
 		}
 	}
 	return 0;
@@ -1068,17 +1069,18 @@ static int ide_write_sector(
 ) {
 	unsigned char error;
 	if (lba + count > ext->size && ext->type == IDE_ATA) {
+		errprint(PRINT_ERR "ide_write_sector: out of range!\n");
 		return -1;
 	} else {
-		/* 进行磁盘访问，如果出错，就 */
-		
-		/*如果类型是ATA*/
-			error = ata_type_transfer(ext, IDE_WRITE, lba, count, buf);
-		/*如果类型是ATAPI*/
-
-		/* 打印驱动错误信息 */
-		if(ide_print_error(ext, error)) {
-			return -1;
+		unsigned char *_buf = (unsigned char *)buf;
+		int i;
+		for (i = 0; i < count; i++) {
+			error = ata_type_transfer(ext, IDE_WRITE, lba + i, 1, _buf + i * SECTOR_SIZE);
+			/* 打印驱动错误信息 */
+			if(ide_print_error(ext, error)) {
+				keprint(PRINT_ERR "ide_write_sector: ide write error!\n");
+				return -1;
+			}
 		}
 	}
 	return 0;

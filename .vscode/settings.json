@@ -182,6 +182,6 @@
         "sconf.h": "c",
         "wait.h": "c",
         "lib.h": "c",
-        "execinfo.h": "c"
+        "bitmap.h": "c"
     }
 }

@@ -55,7 +55,7 @@ int physic_memory_init()
     
     /* 由于引导中只映射了0~8MB，所以这里从DMA开始 */
     kern_page_map_early(DMA_MEM_ADDR, NORMAL_MEM_ADDR + normal_size);
-    
+
     /* normal size前面是boot mem，后面是normal mem */
     boot_mem_init(KERN_BASE_VIR_ADDR + BOOT_MEM_ADDR, BOOT_MEM_SIZE);
     mem_range_init(MEM_RANGE_DMA, DMA_MEM_ADDR, DMA_MEM_SIZE);

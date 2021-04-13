@@ -167,6 +167,7 @@ static iostatus_t ramdisk_enter(driver_object_t *driver)
     } else {
         memset(extension->buffer, 0, extension->buflen);
     }
+    dbgprint("[ramdisk]: buffer addr: %x\n", extension->buffer);
     return status;
 }
 

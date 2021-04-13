@@ -15,6 +15,7 @@
 #include <math.h>
 #include <string.h>
 #include <xbook/bitmap.h>
+#include <xbook/vmm.h>
 
 static cache_size_t cache_size[] = {
 	#if PAGE_SIZE == 4096
@@ -389,5 +390,7 @@ int mem_shrink()
 int mem_caches_init()
 {
 	mem_caches_build();
+    infoprint("vmm: user base: %x, size: %x, top: %x, stack top:%x\n", 
+        USER_VMM_BASE_ADDR, USER_VMM_SIZE, USER_VMM_TOP_ADDR, USER_STACK_TOP);
 	return 0;
 }

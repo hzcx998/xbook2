@@ -82,7 +82,7 @@ int fsal_init()
     if (fsal_disk_mount_init() < 0) {
         return -1;
     }
-
+    
     /* 创建核心目录 */
     if (kfile_mkdir(HOME_DIR_PATH, 0) < 0)
         warnprint("fsal create dir %s failed or dir existed!\n", HOME_DIR_PATH);
@@ -93,10 +93,10 @@ int fsal_init()
     #if defined(RAMFS_DIR_PATH)
     if (kfile_mkdir(RAMFS_DIR_PATH, 0) < 0)
         warnprint("fsal create dir %s failed or dir existed!\n", RAMFS_DIR_PATH);
-    if (fsif.mkfs("ram0", "fat12", 0) < 0) {
+    if (fsif.mkfs("ram0", "fat16", 0) < 0) {
         keprint("fsal : mkfs on device %s failed!\n", "ram0");
     }
-    if (fsif.mount("ram0", RAMFS_DIR_PATH, "fat12", 0) < 0) {
+    if (fsif.mount("ram0", RAMFS_DIR_PATH, "fat16", 0) < 0) {
         keprint("fsal : mount path %s failed!\n", RAMFS_DIR_PATH);
     }
     #endif  /* RAMFS_DIR_PATH */

@@ -4,6 +4,7 @@
 #include <arch/io.h>
 #include <arch/debug.h>
 #include <arch/interrupt.h>
+#include <xbook/kernel.h>
 
 /*
 颜色生成方法
@@ -23,7 +24,7 @@ MAKE_COLOR(BLACK, RED) | BRIGHT | FLASH
 #define TEXT_BRIGHT  0x08    /* 0000 1000 */
 #define	MAKE_COLOR(x,y)	((x<<4) | y) /* MAKE_COLOR(Background,Foreground) */
 
-#define DISPLAY_VRAM 0x800b8000
+#define DISPLAY_VRAM (KERN_BASE_VIR_ADDR + 0xb8000)
 
 #define	CRTC_ADDR_REG	0x3D4	/* CRT Controller Registers - Addr Register */
 #define	CRTC_DATA_REG	0x3D5	/* CRT Controller Registers - Data Register */

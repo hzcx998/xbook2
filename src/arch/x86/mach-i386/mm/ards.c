@@ -1,9 +1,11 @@
 
 #include <xbook/debug.h>
 #include <arch/memory.h>
+#include <xbook/kernel.h>
+
 // ARDS信息地址，loader中读取通过BIOS读取信息放到该内存中
-#define ARDS_NR_ADDR    0x80001000
-#define ARDS_START_ADDR 0x80001004 
+#define ARDS_NR_ADDR    (KERN_BASE_VIR_ADDR + 0x000001000)
+#define ARDS_START_ADDR (KERN_BASE_VIR_ADDR + 0x00001004) 
 
 #define ARDS_MAX_NR 12 //最大有12个ards结构
 

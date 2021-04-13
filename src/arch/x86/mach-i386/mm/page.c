@@ -11,6 +11,7 @@
 #include <xbook/schedule.h>
 #include <xbook/memspace.h>
 #include <xbook/exception.h>
+#include <xbook/vmm.h>
 
 bool page_readable(unsigned long vaddr, unsigned long nbytes)
 {
@@ -353,10 +354,16 @@ unsigned long *kern_page_dir_copy_to()
     unsigned int *vaddr = (unsigned int *)kern_phy_addr2vir_addr(page);
     
     memset(vaddr, 0, PAGE_SIZE);
+    
+    #if CONFIG_KERN_LOWMEM == 1
+    memcpy((void *)((unsigned char *)vaddr), 
+        (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR), 
+        PAGE_SIZE / 2);
+    #else
     memcpy((void *)((unsigned char *)vaddr + PAGE_SIZE / 2), 
         (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR + PAGE_SIZE / 2), 
-        PAGE_SIZE / 2);
-
+        PAGE_SIZE / 2);    
+    #endif
     vaddr[PAGE_TABLE_ENTRY_NR - 1] = page | KERN_PAGE_ATTR;
     interrupt_restore_state(flags);
     return (unsigned long *)vaddr;
@@ -369,12 +376,15 @@ unsigned long *kern_page_dir_copy_to()
  */
 void kern_page_map_early(unsigned int start, unsigned int end)
 {
+    dbgprint("map early range: [%x,%x]\n", start, end);
 	unsigned int *pdt = (unsigned int *)KERN_PAGE_DIR_VIR_ADDR;
 	unsigned int pde_nr = (end - start) / (PAGE_TABLE_ENTRY_NR * PAGE_SIZE);
 	unsigned int pte_nr = (end-start)/PAGE_SIZE;
 
+    
 	pte_nr = pte_nr % PAGE_TABLE_ENTRY_NR;
-	
+	dbgprint("pde count: %d, pte count: %d\n", pde_nr, pte_nr);
+    
 	unsigned int *pte_addr = (unsigned int *) (KERN_PAGE_TABLE_PHY_ADDR + 
 			PAGE_SIZE * PAGE_TABLE_HAD_USED);
 
@@ -401,9 +411,12 @@ void kern_page_map_early(unsigned int start, unsigned int end)
 	那么，现在我们不能通过低端内存访问内核，所以，我们在loader
 	中初始化的0~8MB低端内存的映射要取消掉才行。
 	我们把用户内存空间的页目录项都清空 */ 	
-	for (i = 0; i < KERN_PAGE_DIR_ENTRY_OFF; i++) {
+	#if CONFIG_KERN_LOWMEM == 0
+    for (i = 0; i < KERN_PAGE_DIR_ENTRY_OFF; i++) {
 		pdt[i] = 0;
 	}
+    #endif
+
 }
 
 static int do_handle_no_page(unsigned long addr, unsigned long prot)
@@ -418,7 +431,7 @@ static int do_handle_no_page(unsigned long addr, unsigned long prot)
  */
 static int do_page_no_write(unsigned long addr)
 {
-	if (addr > USER_VMM_SIZE)
+	if (!(addr >= USER_VMM_BASE_ADDR && addr < USER_VMM_TOP_ADDR))
 		return -1;
 
 	pde_t *pde = vir_addr_to_dir_entry(addr);
@@ -491,17 +504,16 @@ int page_do_fault(trap_frame_t *frame)
     addr = cpu_cr2_read(); /* cr2 saved the fault addr */
 
     /* in kernel page fault */
-    if (!(frame->error_code & PAGE_ERR_USER) && addr >= KERN_BASE_VIR_ADDR) {
+    if (!(frame->error_code & PAGE_ERR_USER) && !(addr >= USER_VMM_BASE_ADDR && addr < USER_VMM_TOP_ADDR)) {
         
         keprint("task name=%s pid=%d\n", cur->name, cur->pid);
         keprint(PRINT_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
         keprint(PRINT_EMERG "page fault at %x.\n", addr);
         trap_frame_dump(frame);
-        
         panic("halt...");
     }
     /* 如果故障地址位于内核中， */
-    if (addr >= USER_VMM_SIZE) {
+    if (!(addr >= USER_VMM_BASE_ADDR && addr < USER_VMM_TOP_ADDR)) {
         /* TODO: 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
         keprint(PRINT_ERR "page fauilt: user pid=%d name=%s access unmaped vir_mem area.\n", cur->pid, cur->name);
         keprint(PRINT_EMERG "page fault at %x.\n", addr);

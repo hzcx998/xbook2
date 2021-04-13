@@ -18,6 +18,7 @@
 #include <stddef.h>
 #include <errno.h>
 
+#define DEBUG_PROCESS 0
 
 static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz,
     unsigned long mem_sz, unsigned long vaddr)
@@ -31,14 +32,15 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
     } else {
         occupy_pages = 1;
     }
-    int ret = (int)mem_space_mmap(vaddr_page, 0, occupy_pages * PAGE_SIZE, 
+    void *retaddr = mem_space_mmap(vaddr_page, 0, occupy_pages * PAGE_SIZE, 
             PROT_USER | PROT_WRITE, MEM_SPACE_MAP_FIXED);
-    if (ret < 0) {
+    if (retaddr == ((void *)-1)) {
         keprint(PRINT_ERR "proc_load_segment: mem_space_mmap failed!\n");
         return -1;
     }
     kfile_lseek(fd, offset, SEEK_SET);
     if (kfile_read(fd, (void *)vaddr, file_sz) != file_sz) {
+        keprint(PRINT_ERR "proc_load_segment: read file failed!\n");
         return -1;
     }
     return 0;
@@ -58,6 +60,10 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
             return -1;
         }
         if (prog_header.p_type == PT_LOAD) {
+            #if DEBUG_PROCESS == 1
+            keprint("elf segment: paddr:%x vaddr:%x file size:%x mem size: %x\n", 
+                prog_header.p_paddr, prog_header.p_vaddr, prog_header.p_filesz, prog_header.p_memsz);
+            #endif
             if (proc_load_segment(fd, prog_header.p_offset, 
                     prog_header.p_filesz, prog_header.p_memsz, prog_header.p_vaddr)) {
                 return -1;
@@ -344,7 +350,7 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     }
     /* 需要继承父进程的部分文件描述符 */
     fs_fd_copy_only(parent, task);
-
+    
     if (proc_vmm_init(task)) {
         fs_fd_exit(task);
         mem_free(task);
@@ -370,7 +376,7 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     } else {    /* 进入就绪队列执行 */
         sched_queue_add_tail(sched_get_cur_unit(), task);
     }
-    interrupt_restore_state(irqflags);    
+    interrupt_restore_state(irqflags);  
     return task;
 }
 

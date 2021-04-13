@@ -3,9 +3,10 @@
 
 #include <arch/page.h>
 
-#define USER_VMM_SIZE       KERN_BASE_VIR_ADDR
-#define USER_STACK_TOP      (USER_VMM_SIZE - PAGE_SIZE)
-#define VMM_UNMAPPED_BASE    (USER_VMM_SIZE / 2)
+#define USER_VMM_SIZE       USER_SPACE_SIZE
+#define USER_VMM_BASE_ADDR  USER_SPACE_START_ADDR
+#define USER_VMM_TOP_ADDR   (USER_VMM_BASE_ADDR + USER_VMM_SIZE)
+#define USER_STACK_TOP      (USER_VMM_TOP_ADDR - PAGE_SIZE)
 
 /* 进程空间虚拟内存管理 */
 typedef struct vmm {
