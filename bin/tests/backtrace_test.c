@@ -45,12 +45,14 @@ int backtrace_test(int argc, char* argv[])
 
 void segvhandle(int signo)
 {
+    printf("handled user\n");
     int i = 0;
     void *buffer[LEN] = {0};
     int n = backtrace(buffer, LEN);
     for (i = 0; i < n; i++) {
         fprintf(stdout, "%p -> ", buffer[i]);
     }
+    printf("handled user done\n");
 }
 
 int backtrace_test2(int argc, char* argv[])

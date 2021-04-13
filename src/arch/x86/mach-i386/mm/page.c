@@ -521,6 +521,16 @@ int page_do_fault(trap_frame_t *frame)
         do_vir_mem_fault(addr);
         return -1;
     }
+
+    /* 检测在故障区域 */
+    if (addr < PAGE_SIZE) {
+        keprint(PRINT_ERR "page fauilt: user pid=%d name=%s access no permission space.\n", cur->pid, cur->name);
+        keprint(PRINT_EMERG "page fault at %x.\n", addr);
+        trap_frame_dump(frame);
+        exception_force_self(EXP_CODE_SEGV);
+        return -1;
+    }
+
     /* 故障地址在用户空间 */
     mem_space_t *space = mem_space_find(cur->vmm, addr);
     if (space == NULL) {    
