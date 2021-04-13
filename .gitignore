@@ -116,5 +116,6 @@ bin/mp3player/mp3player
 bin/wavplayer/wavplayer
 bin/grep/grep
 bin/cat2/cat2
+bin/archfetch/archfetch
 
 # ====xbook2 kernel ignore end====
