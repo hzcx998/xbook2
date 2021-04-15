@@ -16,6 +16,9 @@ X_LIBDIRS	+= $(LIBS_DIR)/xlibc \
 				$(LIBS_DIR)/netsocket \
 				$(LIBS_DIR)/pthread \
 				$(LIBS_DIR)/uview \
+				$(LIBS_DIR)/xcrt \
+
+X_LIBS		:= libxcrt.a
 
 LD			:=  $(ENV_LD)
 AS			:=	$(ENV_AS)
