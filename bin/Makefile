@@ -47,3 +47,4 @@ MODULE      +=  sh
 MODULE      +=  wavplayer
 MODULE      +=  mp3player
 MODULE      +=  grep
+MODULE      +=  archfetch
