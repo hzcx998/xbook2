@@ -4013,7 +4013,11 @@ execute_null_command (redirects, pipe_in, pipe_out, async)
     {
       forcefork += rd->rflags & REDIR_VARASSIGN;
       /* Safety */
+      #if defined(BUFFERED_INPUT)
       forcefork += (rd->redirector.dest == 0 || fd_is_bash_input (rd->redirector.dest)) && (INPUT_REDIRECT (rd->instruction) || TRANSLATE_REDIRECT (rd->instruction) || rd->instruction == r_close_this);
+      #else
+      forcefork += (rd->redirector.dest == 0) && (INPUT_REDIRECT (rd->instruction) || TRANSLATE_REDIRECT (rd->instruction) || rd->instruction == r_close_this);
+      #endif
     }
 
   if (forcefork || pipe_in != NO_PIPE || pipe_out != NO_PIPE || async)
