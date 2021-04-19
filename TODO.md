@@ -20,12 +20,10 @@
 * 2021/2/22
 * 移植bash，把缺少的函数补上，不做具体实现。
     {
-    接口：unistd/id.c,tcgetattr, tcsetattr,pwd.c
+    接口：unistd/id.c,tcgetattr, tcsetattr
         umask, termios.c
     处理：SIGTSTP
-    bug on bash: locale.c->loca_shiftstates
-    修复：bash管道不能使用。不能执行shell脚本。
-    计划：补充空函数，完善后在尝试进行修复。
+    计划：补充空函数，完善后 在尝试进行修复。
     }
 * 2021/2/23
 * 移植coreutils
@@ -33,6 +31,4 @@
 * 添加ac97声卡驱动，添加声音框架，通用声卡处理接口。处理原始文件。
 * 完善sb16声卡驱动。
 * grub引导启动
-* 添加内存文件系统, ramfs {
-    state 不能获取正确的路径
-}
+* 完善mount函数，添加mount命令
