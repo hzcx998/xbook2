@@ -50,7 +50,7 @@ int fsal_disk_mount_init()
     int i;
     for (i = 0; i < 4; i++) {
         memset(name, 0, 32);
-        strcpy(name, "disk");
+        strcpy(name, "/dev/disk");
         char s[2] = {0, 0};
         s[0] = i + '0';
         strcat(name, s);
@@ -96,18 +96,18 @@ int fsal_init()
     if (fsif.mkfs("ram0", "fat16", 0) < 0) {
         keprint("fsal : mkfs on device %s failed!\n", "ram0");
     }
-    if (fsif.mount("ram0", RAMFS_DIR_PATH, "fat16", 0) < 0) {
+    if (fsif.mount("/dev/ram0", RAMFS_DIR_PATH, "fat16", 0) < 0) {
         keprint("fsal : mount path %s failed!\n", RAMFS_DIR_PATH);
     }
     #endif  /* RAMFS_DIR_PATH */
     /* 挂载设备目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
-    if (fsif.mount("disk0", DEV_DIR_PATH, "devfs", 0) < 0) {
+    if (fsif.mount("/dev/disk0", DEV_DIR_PATH, "devfs", 0) < 0) {
         keprint("fsal : mount path %s failed!\n", DEV_DIR_PATH);
         return -1;
     }
     
     /* 挂载设备目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
-    if (fsif.mount("disk0", FIFO_DIR_PATH, "fifofs", 0) < 0) {
+    if (fsif.mount("/dev/disk0", FIFO_DIR_PATH, "fifofs", 0) < 0) {
         keprint("fsal : mount path %s failed!\n", FIFO_DIR_PATH);
         return -1;
     }

@@ -41,7 +41,9 @@ int fatfs_drv_map[FF_VOLUMES] = {
 
 static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned long flags)
 {
-    int solt = disk_info_find(source);
+    //dbgprint("%s: %s: source %s target %s type %s.\n", FS_MODEL_NAME,__func__, source, target, fstype);
+
+    int solt = disk_info_find_with_path(source);
     if (solt < 0) {
         dbgprint("%s: %s: not find device %s.\n", FS_MODEL_NAME,__func__, source);
         return -1;
@@ -56,6 +58,7 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
     if (i >= FF_VOLUMES) {
         return -1;
     }
+
     /* 获取一个FATFS的物理磁盘驱动器 */
     pdrv = i;
     /* 构建挂载路径, [0-9]: */
@@ -80,8 +83,10 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
             remkfs = 1;
         }
     } else {
-        dbgprint("%s: %s: no fs on the disk %s.\n", FS_MODEL_NAME,__func__, source);
-        return -1;
+        if (!(flags & MT_REMKFS)) {
+            dbgprint("%s: %s: no fs on the disk %s.\n", FS_MODEL_NAME,__func__, source);
+            return -1;
+        }
     }
     const TCHAR *p;
     if (remkfs) { 
@@ -120,7 +125,7 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
     fatfs_extention.fsobj[pdrv] = fsobj;
     fatfs_extention.mount_time[pdrv] = WTM_WR_TIME(walltime.hour, walltime.minute, walltime.second);
     fatfs_extention.mount_date[pdrv] = WTM_WR_DATE(walltime.year, walltime.month, walltime.day);
-
+        
     if (fsal_path_insert((void *)p, target, &fatfs_fsal)) {
         dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, p);
         mem_free(fsobj);
@@ -131,6 +136,8 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
 
 static int fsal_fatfs_unmount(char *path, unsigned long flags)
 {
+    //dbgprint("%s: %s: path %s.\n", FS_MODEL_NAME,__func__, path);
+
     /* 在末尾填0，只保留磁盘符和分隔符 */
     path[2] = '\0';
     FRESULT res;
@@ -153,7 +160,7 @@ static int fsal_fatfs_unmount(char *path, unsigned long flags)
 
 static int fsal_fatfs_mkfs(char *source, char *fstype, unsigned long flags)
 {
-    int solt = disk_info_find(source);
+    int solt = disk_info_find_with_path(source);
     if (solt < 0) {
         errprint("fasl: mkfs: not found device %s!\n", source);
         return -1;

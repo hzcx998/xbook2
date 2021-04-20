@@ -117,5 +117,8 @@ bin/wavplayer/wavplayer
 bin/grep/grep
 bin/cat2/cat2
 bin/archfetch/archfetch
+bin/mount/mount
+bin/unmount/unmount
+bin/mkfs/mkfs
 
 # ====xbook2 kernel ignore end====

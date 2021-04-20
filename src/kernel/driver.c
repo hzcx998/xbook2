@@ -1075,6 +1075,9 @@ void *devfs_path_translate(const char *pathname)
     }
     char *p = (char *) pathname;
     p += strlen(DEVFS_PATH);
+    if (*p != '/') {
+        return NULL;
+    }
     while (*p && *p == '/')
         p++;
     return p;

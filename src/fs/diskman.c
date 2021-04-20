@@ -1,6 +1,7 @@
 #include <xbook/list.h>
 #include <xbook/diskman.h>
 #include <xbook/memalloc.h>
+#include <xbook/path.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -66,6 +67,37 @@ int disk_info_find(char *name)
     }
     mutex_unlock(&disk_manager_mutex);
     return -1;
+}
+
+/**
+ * 将devfs路径名字转换成设备名。
+ * devfs路径必须是DEVFS_PATH/xxx
+ * 因此需要返回xxx这个设备名
+ */
+static void *diskman_path_translate(const char *pathname)
+{
+    if (!pathname)
+        return NULL;
+    if (strncmp(pathname, (const char *) DEV_DIR_PATH, strlen(DEV_DIR_PATH)) != 0) {   /* 校验路径，不是设备文件系统就退出 */
+        return NULL;
+    }
+    char *p = (char *) pathname;
+    p += strlen(DEV_DIR_PATH);
+    if (*p != '/') {
+        return NULL;
+    }
+    while (*p && *p == '/')
+        p++;
+    return p;
+}
+
+int disk_info_find_with_path(char *pathname)
+{
+    /* 将路径转换为设备名 */
+    char *name = diskman_path_translate((const char *)pathname);
+    if (!name)
+        return -1;
+    return disk_info_find(name);
 }
 
 disk_info_t *disk_info_find_info(char *name)

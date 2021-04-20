@@ -51,3 +51,6 @@ MODULE      +=  wavplayer
 MODULE      +=  mp3player
 MODULE      +=  grep
 MODULE      +=  archfetch
+MODULE      +=  mount
+MODULE      +=  mkfs
+MODULE      +=  unmount
