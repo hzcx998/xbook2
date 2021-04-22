@@ -20,6 +20,12 @@
 #include <sys/dir.h>
 #include <sys/types.h>
 
+static inline void sys_err(char *str)
+{
+    printf("sys err: %s\n", str);
+    exit(-1);
+}
+
 int pipe_test(int argc, char *argv[]);
 int shm_test(int argc, char *argv[]);
 int trig_test(int argc, char *argv[]);
@@ -58,12 +64,7 @@ int tty_test(int argc, char *argv[]);
 int id_test(int argc, char *argv[]);
 int pty_test2(int argc, char *argv[]);
 int backtrace_test2(int argc, char* argv[]);
-
-static inline void sys_err(char *str)
-{
-    printf("sys err: %s\n", str);
-    exit(-1);
-}
+int loop_test(int argc, char *argv[]);
 
 int fifo_test2(int argc, char *argv[]);
 

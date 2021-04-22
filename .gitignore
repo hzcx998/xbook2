@@ -120,5 +120,6 @@ bin/archfetch/archfetch
 bin/mount/mount
 bin/unmount/unmount
 bin/mkfs/mkfs
+bin/losetup/losetup
 
 # ====xbook2 kernel ignore end====

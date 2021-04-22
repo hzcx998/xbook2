@@ -35,7 +35,7 @@ FS_DISK		= $(HDB_IMG)
 # image size
 FLOPPYA_SZ	= 1474560  # 1.44 MB
 HDA_SZ		= 33554432 # 32 MB
-HDB_SZ		= 33554432
+HDB_SZ		= 67108864 # 64 M
 
 # environment dir
 

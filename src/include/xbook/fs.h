@@ -69,5 +69,6 @@ int kfile_close(int fd);
 int kfile_mkdir(const char *path, mode_t mode);
 int kfile_rmdir(const char *path);
 int kfile_getcwd(char *buf, int bufsz);
+int kfile_ftell(int fd);
 
 #endif /* _XBOOK_FS_H */

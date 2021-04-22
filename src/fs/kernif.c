@@ -4,58 +4,40 @@
 #include <sys/ioctl.h>
 #include <xbook/fd.h>
 
+/* kfile 操作将会直接使用全局文件表，不会安装到用户的文件表中，因此可以长久存在 */
+
 int kfile_open(const char *path, int flags)
 {
     if (!path)
         return -EINVAL; 
-    int handle;
-    int fd = -1;
-    handle = fsif.open((void *)path, flags);
-    if (handle < 0)
-        return -1;
-    fd = local_fd_install(handle, FILE_FD_NORMAL);
-    return fd;
+    return fsif.open((void *)path, flags);
 }
 
 int kfile_close(int fd)
 {
-    file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -EINVAL;
-    if (!ffd->fsal->close)
+    if (!fsif.close)
         return -ENOSYS;
-    if (ffd->fsal->close(ffd->handle) < 0)
+    if (fsif.close(fd) < 0)
         return -1;
-    return local_fd_uninstall(fd);
+    return 0;
 }
 
 int kfile_read(int fd, void *buffer, size_t nbytes)
 {
-    if (fd < 0 || !nbytes || !buffer)
+    if (!nbytes || !buffer)
         return -1;
-    file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0) {
-        errprint("[FS]: %s: fd %d err!\n", __func__, fd);
-        return -1;
-    }
-    if (!ffd->fsal->read)
+    if (!fsif.read)
         return -ENOSYS;
-    return ffd->fsal->read(ffd->handle, buffer, nbytes);
+    return fsif.read(fd, buffer, nbytes);
 }
 
 int kfile_write(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0 || !nbytes || !buffer)
         return -EINVAL;
-    file_fd_t *ffd = fd_local_to_file(fd);
-    if (FILE_FD_IS_BAD(ffd)) {
-        errprint("[FS]: %s: fd %d err! handle=%d flags=%x\n", __func__, 
-            fd, ffd->handle, ffd->flags);
-        return -EINVAL;
-    }
-    if (!ffd->fsal->write)
+    if (!fsif.write)
         return -ENOSYS;
-    return ffd->fsal->write(ffd->handle, buffer, nbytes);
+    return fsif.write(fd, buffer, nbytes);
 }
 
 int kfile_stat(const char *path, struct stat *buf)
@@ -74,12 +56,16 @@ int kfile_access(const char *path, int mode)
 
 int kfile_lseek(int fd, off_t offset, int whence)
 {
-    file_fd_t *ffd = fd_local_to_file(fd);
-    if (ffd == NULL || ffd->handle < 0 || ffd->flags == 0)
-        return -EINVAL;
-    if (!ffd->fsal->lseek)
+    if (!fsif.lseek)
         return -ENOSYS;
-    return ffd->fsal->lseek(ffd->handle, offset, whence);
+    return fsif.lseek(fd, offset, whence);
+}
+
+int kfile_ftell(int fd)
+{
+    if (!fsif.ftell)
+        return -ENOSYS;
+    return fsif.ftell(fd);
 }
 
 int kfile_mkdir(const char *path, mode_t mode)

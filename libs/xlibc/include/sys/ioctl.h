@@ -33,6 +33,8 @@ extern "C" {
 #define DISKIO_CLEAR     DEVCTL_CODE('d', 2)
 #define DISKIO_SETOFF    DEVCTL_CODE('d', 3)
 #define DISKIO_GETOFF    DEVCTL_CODE('d', 4)
+#define DISKIO_SETUP        DEVCTL_CODE('d', 5)
+#define DISKIO_SETDOWN      DEVCTL_CODE('d', 6)
 
 /* tty */
 #define TTYIO_CLEAR         CONIO_CLEAR

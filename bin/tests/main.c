@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
     //id_test(argc, argv);
     //pty_test2(argc, argv);
     //fifo_test2(argc, argv);
-    backtrace_test2(argc, argv);
+    //backtrace_test2(argc, argv);
+    loop_test(argc, argv);
     
     printf("tests done!\n");
     return 0;

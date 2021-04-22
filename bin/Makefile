@@ -54,3 +54,4 @@ MODULE      +=  archfetch
 MODULE      +=  mount
 MODULE      +=  mkfs
 MODULE      +=  unmount
+MODULE      +=  losetup
