@@ -576,7 +576,6 @@ int fsalif_mount(
         keprint(PRINT_ERR "[%s] %s: source %s not found!\n", FS_MODEL_NAME, __func__, new_source);
         return -1;
     }
-    /* TODO: 挂载已经挂载过的设备，需要报错并返回！ */
     
     if (fsal_path_find((void *) new_target, 0) != NULL) {
         keprint(PRINT_ERR "[%s] %s: target %s had mounted!\n", FS_MODEL_NAME, __func__, new_target);
@@ -608,7 +607,7 @@ static int fsalif_unmount(char *path, unsigned long flags)
     
     char abs_source[MAX_PATH] = {0};
     build_path(path, abs_source);
-    /* TODO: 添加对设备路径的判断检测 */
+
     fsal_path_t *fpath = fsal_path_find(abs_source, 0);
     if (fpath == NULL) {
         keprint(PRINT_ERR "path %s not found!\n", abs_source);

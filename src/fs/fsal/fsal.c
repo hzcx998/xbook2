@@ -43,16 +43,16 @@ int fsal_list_dir(char* path)
     return dir;
 }
 
-int fsal_disk_mount_init()
+int fsal_disk_mount(char *pathname, int max_try)
 {
     /* 挂载根磁盘 */
     char name[32];
     int i;
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < max_try; i++) {
         memset(name, 0, 32);
-        strcpy(name, "/dev/disk");
+        strcpy(name, pathname);
         char s[2] = {0, 0};
-        s[0] = i + '0';
+        s[0] = i + 'a';
         strcat(name, s);
         if (fsif.mount(name, ROOT_DIR_PATH, "fat32", 0) < 0) {
             continue;
@@ -60,11 +60,20 @@ int fsal_disk_mount_init()
         keprint("fsal : mount device %s to path %s success.\n", name, ROOT_DIR_PATH);
         break;
     }
-    if (i >= 4) {
-        keprint("fsal : mount path %s failed!\n", ROOT_DIR_PATH);
+    if (i >= max_try) {
+        keprint("fsal : mount path %s to %s failed!\n", pathname, ROOT_DIR_PATH);
         return -1;
     }
     return 0;
+}
+
+int fsal_disk_mount_init()
+{
+    if (!fsal_disk_mount("/dev/hd", 4))
+        return 0;
+    if (!fsal_disk_mount("/dev/sd", 16))
+        return 0;
+    return -1;
 }
 
 int fsal_init()
@@ -101,13 +110,13 @@ int fsal_init()
     }
     #endif  /* RAMFS_DIR_PATH */
     /* 挂载设备目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
-    if (fsif.mount("/dev/disk0", DEV_DIR_PATH, "devfs", 0) < 0) {
+    if (fsif.mount("/dev/sda", DEV_DIR_PATH, "devfs", 0) < 0) {
         keprint("fsal : mount path %s failed!\n", DEV_DIR_PATH);
         return -1;
     }
     
     /* 挂载设备目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
-    if (fsif.mount("/dev/disk0", FIFO_DIR_PATH, "fifofs", 0) < 0) {
+    if (fsif.mount("/dev/sda", FIFO_DIR_PATH, "fifofs", 0) < 0) {
         keprint("fsal : mount path %s failed!\n", FIFO_DIR_PATH);
         return -1;
     }

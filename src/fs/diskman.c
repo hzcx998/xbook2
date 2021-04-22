@@ -60,7 +60,7 @@ int disk_info_find(char *name)
     mutex_lock(&disk_manager_mutex);
     disk_info_t *disk;
     list_for_each_owner (disk, &disk_list_head, list) {
-        if (!strcmp(disk->virname, name) || !strcmp(disk->devent.de_name, name)) {
+        if (!strcmp(disk->devent.de_name, name)) {
             mutex_unlock(&disk_manager_mutex);
             return disk->solt;
         }
@@ -83,9 +83,6 @@ static void *diskman_path_translate(const char *pathname)
     }
     char *p = (char *) pathname;
     p += strlen(DEV_DIR_PATH);
-    if (*p != '/') {
-        return NULL;
-    }
     while (*p && *p == '/')
         p++;
     return p;
@@ -98,20 +95,6 @@ int disk_info_find_with_path(char *pathname)
     if (!name)
         return -1;
     return disk_info_find(name);
-}
-
-disk_info_t *disk_info_find_info(char *name)
-{
-    mutex_lock(&disk_manager_mutex);
-    disk_info_t *disk;
-    list_for_each_owner (disk, &disk_list_head, list) {
-        if (!strcmp(disk->virname, name)) {
-            mutex_unlock(&disk_manager_mutex);
-            return disk;
-        }
-    }
-    mutex_unlock(&disk_manager_mutex);
-    return NULL;
 }
 
 static int disk_manager_open(int solt)

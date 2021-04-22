@@ -48,6 +48,11 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
         dbgprint("%s: %s: not find device %s.\n", FS_MODEL_NAME,__func__, source);
         return -1;
     }
+    /* 查看该设备是否已经映射过了 */
+    if (fsal_path_find_device(source)) {
+        errprint("device %s had mounted!\n", source);
+        return -1;
+    }
     /* 转换成fatfs的物理驱动器 */
     int pdrv, i;
     for (i = 0; i < FF_VOLUMES; i++) {
@@ -126,7 +131,7 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
     fatfs_extention.mount_time[pdrv] = WTM_WR_TIME(walltime.hour, walltime.minute, walltime.second);
     fatfs_extention.mount_date[pdrv] = WTM_WR_DATE(walltime.year, walltime.month, walltime.day);
         
-    if (fsal_path_insert((void *)p, target, &fatfs_fsal)) {
+    if (fsal_path_insert(source, (void *)p, target, &fatfs_fsal)) {
         dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, p);
         mem_free(fsobj);
         return -1;
@@ -137,6 +142,12 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
 static int fsal_fatfs_unmount(char *path, unsigned long flags)
 {
     //dbgprint("%s: %s: path %s.\n", FS_MODEL_NAME,__func__, path);
+
+    /* 检查路径是否为物理路径或者虚拟路径 */
+    if (fsal_path_find(path, 0) < 0 && fsal_path_find_device(path) < 0) {
+        errprint("unmount: path %s not mount!\n", path);
+        return -1;
+    }
 
     /* 在末尾填0，只保留磁盘符和分隔符 */
     path[2] = '\0';

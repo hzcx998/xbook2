@@ -22,7 +22,7 @@
 #define DRV_NAME "ide-disk"
 #define DRV_VERSION "0.1"
 
-#define DEV_NAME "ide"
+#define DEV_NAME "hd"
 
 /* IDE设备最多的磁盘数量 */
 #define MAX_IDE_DISK_NR			4
@@ -1271,7 +1271,9 @@ static int ide_probe(device_extension_t *ext, int id)
 
     if (diskno == 0) {  /* 通道上第一个磁盘的时候才注册中断 */
         /* 注册中断 */
-        irq_register(channel->irqno, ide_handler, IRQF_DISABLED, "harddisk", DEV_NAME, (void *) channel);
+        char irqname[32] = {0};
+        sprintf(irqname, "hd channel%d", channelno);
+        irq_register(channel->irqno, ide_handler, IRQF_DISABLED, "harddisk", irqname, (void *) channel);
     }
     
 #ifdef DEBUG_DRV
@@ -1368,7 +1370,7 @@ static iostatus_t ide_enter(driver_object_t *driver)
 	/* 有磁盘才初始化磁盘 */
 	if (disk_foud > 0) {    
         for (id = 0; id < disk_foud; id++) {
-            sprintf(devname, "%s%d", DEV_NAME, id);
+            sprintf(devname, "%s%c", DEV_NAME, 'a' + id);
             /* 初始化一些其它内容 */
             status = io_create_device(driver, sizeof(device_extension_t), devname, DEVICE_TYPE_DISK, &devobj);
 

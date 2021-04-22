@@ -30,19 +30,31 @@ typedef struct {
     fsal_t *fsal;                   /* 文件系统抽象 */
     char path[FASL_PATH_LEN];       /* 具体文件系统的文件路径名 */
     char alpath[FASL_PATH_LEN];     /* 抽象层路径 */
+    char devpath[FASL_PATH_LEN];    /* 设备路径 */
 } fsal_path_t;
+
+typedef enum {
+    FSAL_PATH_TYPE_PHYSIC = 0,   /* 物理路径 */
+    FSAL_PATH_TYPE_VIRTUAL,      /* 虚拟路径 */
+    FSAL_PATH_TYPE_DEVICE,       /* 设备路径 */
+    FSAL_PATH_TYPE_NR
+} fsal_path_type_t;
+
 
 extern fsal_path_t *fsal_path_table;
 
 #define FSAL_PATH_TABLE_SIZE   (sizeof(fsal_path_t) * FASL_PATH_NR)
 
 int fsal_path_init();
-int fsal_path_insert(void *path, char *alpath, fsal_t *fsal);
+int fsal_path_insert(char *devpath, void *path, char *alpath, fsal_t *fsal);
 int fsal_path_remove(void *path);
 void fsal_path_print();
 fsal_path_t *fsal_path_alloc();
 
-fsal_path_t *fsal_path_find(void *alpath, int inmaster);
+fsal_path_t *fsal_path_find_with_type(fsal_path_type_t ptype, void *path, int inmaster);
+#define fsal_path_find(alpath, inmaster)  fsal_path_find_with_type(FSAL_PATH_TYPE_VIRTUAL, (alpath), (inmaster))
+#define fsal_path_find_device(devpath)  fsal_path_find_with_type(FSAL_PATH_TYPE_DEVICE, (devpath), 0)
+
 int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path);
 int fsal_list_dir(char* path);
 

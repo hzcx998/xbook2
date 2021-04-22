@@ -20,9 +20,9 @@ int fsal_path_init()
     return 0;
 }
 
-int fsal_path_insert(void *path, char *alpath, fsal_t *fsal)
+int fsal_path_insert(char *devpath, void *path, char *alpath, fsal_t *fsal)
 {
-    if (path == NULL || alpath == NULL || fsal == NULL)
+    if (devpath == NULL || path == NULL || alpath == NULL || fsal == NULL)
         return -1;
     fsal_path_t *fpath = fsal_path_find(alpath, 0);
     if (fpath)
@@ -33,10 +33,21 @@ int fsal_path_insert(void *path, char *alpath, fsal_t *fsal)
     unsigned long irq_flags;
     spin_lock_irqsave(&fsal_path_table_lock, irq_flags);
     fpath->fsal = fsal;
+    
+    memset(fpath->path, 0, FASL_PATH_LEN);
     strcpy(fpath->path, path);
-    fpath->path[strlen(path)] = '\0';
+    fpath->path[FASL_PATH_LEN - 1] = '\0';
+    
+    memset(fpath->alpath, 0, FASL_PATH_LEN);
     strcpy(fpath->alpath, alpath);
-    fpath->alpath[strlen(alpath)] = '\0';
+    fpath->alpath[FASL_PATH_LEN - 1] = '\0';
+    
+    memset(fpath->devpath, 0, FASL_PATH_LEN);
+    /* 截取设备名 */
+    char *p = strrchr(devpath, '/');
+    strcpy(fpath->devpath, p != NULL ? (p + 1) : devpath);
+
+    fpath->devpath[FASL_PATH_LEN - 1] = '\0';
     if (fsal_master_path == NULL)
         fsal_master_path = fpath;
     spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
@@ -70,11 +81,24 @@ int fsal_path_remove(void *path)
     for (i = 0; i < FASL_PATH_NR; i++) {
         fpath = &fsal_path_table[i];
         if (fpath->fsal) {
+            /* 检测物理路径 */
             if (!strcmp(p, fpath->path)) {
                 fpath->fsal     = NULL;
                 memset(fpath->path, 0, FASL_PATH_LEN);
                 spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
                 return 0;
+            }
+            /* 尝试检测设备路径 */
+            char *q = strrchr(p, '/');
+            if (q) {
+                q++;
+                /* 比较设备名 */
+                if (!strcmp(q, fpath->devpath)) {
+                    fpath->fsal     = NULL;
+                    memset(fpath->path, 0, FASL_PATH_LEN);
+                    spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
+                    return 0;
+                }
             }
         }
     }
@@ -84,13 +108,16 @@ int fsal_path_remove(void *path)
 
 /**
  * 查找路径对应的路径结构
- * @alpath: 抽象层路径
+ * @ptype:  路径类型
+ * @path: 路径
  * @inmaster: 是否在主路径中去查找
  * @成功返回路径结构地址，失败返回NULL
  */
-fsal_path_t *fsal_path_find(void *alpath, int inmaster)
+fsal_path_t *fsal_path_find_with_type(fsal_path_type_t ptype, void *path, int inmaster)
 {
-    char *p = strchr(alpath, '/');
+    if (ptype < 0 || ptype >= FSAL_PATH_TYPE_NR)
+        return NULL;
+    char *p = strchr(path, '/');
     if (p == NULL) {
         return NULL;
     }
@@ -100,10 +127,13 @@ fsal_path_t *fsal_path_find(void *alpath, int inmaster)
     p++;
     p = strchr(p, '/');
     if (p) {
-        memcpy(name, alpath, p - (char *)alpath);
+        memcpy(name, path, p - (char *)path);
     } else {
-        strcpy(name, alpath);
+        strcpy(name, path);
     }
+    char *cmp_name = name;
+    char *cmp_path = NULL;
+            
     fsal_path_t *fpath;
     unsigned long irq_flags;
     spin_lock_irqsave(&fsal_path_table_lock, irq_flags);
@@ -111,7 +141,22 @@ fsal_path_t *fsal_path_find(void *alpath, int inmaster)
     for (i = 0; i < FASL_PATH_NR; i++) {
         fpath = &fsal_path_table[i];
         if (fpath->fsal) {
-            if (!strcmp(name, fpath->alpath)) {
+            switch (ptype) {
+            case FSAL_PATH_TYPE_PHYSIC:
+                cmp_path = fpath->path;
+                break;
+            case FSAL_PATH_TYPE_VIRTUAL:
+                cmp_path = fpath->alpath;
+                break;
+            case FSAL_PATH_TYPE_DEVICE:
+                cmp_path = fpath->devpath;
+                //cmp_name = path; /* 比较名是全路径 */
+                break;
+            default:
+                cmp_name = "unknown path!\n";
+                break;
+            }
+            if (!strcmp(cmp_name, cmp_path)) {
                 spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
                 return fpath;
             }

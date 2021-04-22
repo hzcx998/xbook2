@@ -31,7 +31,7 @@
 #define DRV_NAME "ahci-disk"
 #define DRV_VERSION "0.1"
 
-#define DEV_NAME "sata"
+#define DEV_NAME "sd"
 
 /* AHCI设备最多的磁盘数量 */
 #define MAX_AHCI_DISK_NR			4
@@ -860,7 +860,8 @@ iostatus_t ahci_create_device(driver_object_t *driver, device_extension_t *dev)
     device_object_t *devobj;
     char devname[DEVICE_NAME_LEN] = {0};
 
-    sprintf(devname, "%s%d", DEV_NAME, ahci_next_device++);
+    sprintf(devname, "%s%c", DEV_NAME, 'a' + ahci_next_device);
+    ahci_next_device++;
     /* 初始化一些其它内容 */
     status = io_create_device(driver, 0, devname, DEVICE_TYPE_DISK, &devobj);
     if (status != IO_SUCCESS) {

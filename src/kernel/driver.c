@@ -1075,9 +1075,6 @@ void *devfs_path_translate(const char *pathname)
     }
     char *p = (char *) pathname;
     p += strlen(DEVFS_PATH);
-    if (*p != '/') {
-        return NULL;
-    }
     while (*p && *p == '/')
         p++;
     return p;
@@ -1309,7 +1306,7 @@ static int fsal_devfs_mount(char *source, char *target, char *fstype, unsigned l
     }
     if (kfile_mkdir(DEV_DIR_PATH, 0) < 0)
         warnprint("fsal create dir %s failed or dir existed!\n", DEV_DIR_PATH);
-    if (fsal_path_insert(DEVFS_PATH, target, &devfs_fsal)) {
+    if (fsal_path_insert(source, DEVFS_PATH, target, &devfs_fsal)) {
         dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, target);
         return -1;
     }
@@ -1332,8 +1329,10 @@ static int fsal_devfs_unmount(char *path, unsigned long flags)
 static int fsal_devfs_opendir(char *path)
 {
     char *p = devfs_path_translate((const char *) path);
-    if (!p)
+    if (!p) {
+        errprint("devfs path %s translate failed!\n", path);
         return -1;
+    }
     /* devfs没有子目录，因此必须为0 */
     if (*p != '\0') {
         errprint("devfs: no sub dir %s\n", p);    
@@ -1420,8 +1419,10 @@ static int fsal_devfs_rewinddir(int idx)
 static int fsal_devfs_state(char *path, void *buf)
 {
     char *p = devfs_path_translate((const char *) path);
-    if (!p)
+    if (!p) {
+        errprint("devfs path %s translate failed!\n", path);
         return -1;
+    }
     stat_t *st = (stat_t *)buf;
     mode_t mode = 0;
 
