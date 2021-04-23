@@ -190,8 +190,33 @@ static int loop_setdown(device_object_t *device)
             device->name.text);
         return -1;
     }
+    kfile_close(extension->gfd);    /* 关闭文件 */
     loop_extension_init(extension);
+    dbgprint("loop: setdown=> device %s extension info ok!\n", 
+        device->name.text);
     return 0;
+}
+
+static iostatus_t loop_open(device_object_t *device, io_request_t *ioreq)
+{
+    iostatus_t status = IO_SUCCESS;
+    
+    noteprint("\n\n##loop device %s open!\n\n", device->name.text);
+
+    ioreq->io_status.status = status;
+    io_complete_request(ioreq);
+    return status;
+}
+
+static iostatus_t loop_close(device_object_t *device, io_request_t *ioreq)
+{
+    iostatus_t status = IO_SUCCESS;
+    
+    noteprint("\n\n##loop device %s close!\n\n", device->name.text);
+    
+    ioreq->io_status.status = status;
+    io_complete_request(ioreq);
+    return status;
 }
 
 static iostatus_t loop_devctl(device_object_t *device, io_request_t *ioreq)
@@ -303,6 +328,8 @@ iostatus_t loop_driver_func(driver_object_t *driver)
     driver->driver_enter = loop_enter;
     driver->driver_exit = loop_exit;
 
+    driver->dispatch_function[IOREQ_OPEN] = loop_open;
+    driver->dispatch_function[IOREQ_CLOSE] = loop_close;
     driver->dispatch_function[IOREQ_READ] = loop_read;
     driver->dispatch_function[IOREQ_WRITE] = loop_write;
     driver->dispatch_function[IOREQ_DEVCTL] = loop_devctl;

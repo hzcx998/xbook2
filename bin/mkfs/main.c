@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
         arg_fs = "auto";
     }
     if (mkfs(arg_device, arg_fs, mkfs_flags) < 0) {
-        fprintf(stderr, "mount: device=%s, file system=%s failed!\n", 
+        fprintf(stderr, "mkfs: device=%s, file system=%s failed!\n", 
             arg_device, arg_fs);
         return -1;
     }

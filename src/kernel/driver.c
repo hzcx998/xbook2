@@ -1061,6 +1061,19 @@ int input_even_get(input_even_buf_t *evbuf, input_event_t *even)
     return 0;
 }
 
+int block_device_setdown(char *devname)
+{
+    handle_t handle = device_open(devname, 0);
+    if (handle < 0) {
+        warnprint("block_device_setdown: open device %s failed!\n", devname);
+        return -1;
+    }
+    device_devctl(handle, DISKIO_SETDOWN, 0);
+    device_close(handle);
+    return 0;
+}
+
+
 /**
  * 将devfs路径名字转换成设备名。
  * devfs路径必须是DEVFS_PATH/xxx

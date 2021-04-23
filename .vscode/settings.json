@@ -185,6 +185,7 @@
         "bitmap.h": "c",
         "getopt.h": "c",
         "memalloc.h": "c",
-        "diskman.h": "c"
+        "diskman.h": "c",
+        "mount.h": "c"
     }
 }

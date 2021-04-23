@@ -294,4 +294,6 @@ void drivers_print_mini();
 /* 导出devfs */
 extern fsal_t devfs_fsal;
 
+int block_device_setdown(char *devname);
+
 #endif   /* _XBOOK_DRIVER_H */

@@ -86,6 +86,7 @@ int fsal_path_remove(void *path)
                 fpath->fsal     = NULL;
                 memset(fpath->path, 0, FASL_PATH_LEN);
                 spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
+                block_device_setdown(fpath->devpath);
                 return 0;
             }
             /* 尝试检测设备路径 */
@@ -97,6 +98,7 @@ int fsal_path_remove(void *path)
                     fpath->fsal     = NULL;
                     memset(fpath->path, 0, FASL_PATH_LEN);
                     spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
+                    block_device_setdown(fpath->devpath);
                     return 0;
                 }
             }
@@ -315,4 +317,13 @@ void build_path(const char *path, char *out_path)
     make_abs_path(path, abs_path);
     char *p = strchr(abs_path, '/');
     wash_path(p, out_path);
+}
+
+/* 根据路径转换成文件名 */
+char *path_get_filename(const char *path)
+{
+    char *p = strrchr(path, '/');
+    if (!p)
+        return (char *) path;
+    return (p + 1);
 }

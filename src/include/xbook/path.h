@@ -58,4 +58,6 @@ fsal_path_t *fsal_path_find_with_type(fsal_path_type_t ptype, void *path, int in
 int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path);
 int fsal_list_dir(char* path);
 
+char *path_get_filename(const char *path);
+
 #endif  /* _XBOOK_FSAL_PATH_H */

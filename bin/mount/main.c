@@ -4,6 +4,9 @@
 #include <string.h>
 #include <getopt.h>
 #include <sys/mount.h>
+#include <sys/ioctl.h>
+
+#define LOOPBACK_NAME   "loopback"
 
 /**
  * mount /dev/hda /mnt/c
@@ -77,11 +80,54 @@ int main(int argc, char *argv[])
     if (!arg_fs) {  /* 没有指定文件系统，就自动选择 */
         arg_fs = "auto";
     }
+    char loop_dev_path[32] = {0};
     if (arg_option) {
-        /* TODO: add loop device support! */
-        if (!strcmp(arg_option, "loop")) {
-            // use loop device
+        if (!strcmp(arg_option, "loop")) {  /* -o loop */
+            /* get a free loop device */
+            char devname[32] = {0};
+            if (probedev("loop", devname, 32) < 0) {
+                fprintf(stderr, "mount: no free loop device for %s!\n", arg_device);
+                return -1;
+            }
+            strcat(loop_dev_path, "/dev/");
+            strcat(loop_dev_path, devname);
+        } else if (!strncmp(arg_option, LOOPBACK_NAME, strlen(LOOPBACK_NAME))) {    /* -o loopback=xxx */
+            /* 查看是否有指定 */
+            char *config_device = arg_option + strlen(LOOPBACK_NAME);
+            if (*config_device == '=') {    /* order device */
+                config_device++;
+                strcat(loop_dev_path, config_device);
+            } else {
+                fprintf(stderr, "mount: invalid option arg %s!\n", arg_option);
+            }
+        } else {
+            fprintf(stderr, "mount: option arg %s not support!\n", arg_device);
+            return -1;
         }
+        
+        /* 将device镜像文件和一个环回设备关联 */
+        char *file_path = arg_device;   /* 设备参数就是文件参数 */
+        int fd = open(loop_dev_path, O_RDWR);
+        if (fd < 0) {
+            fprintf(stderr, "mount: device %s not exist or no permission to access.\n", loop_dev_path);
+            return -1;
+        }
+    
+        /* 检测文件是否存在 */
+        if (access(file_path, F_OK) < 0) {
+            fprintf(stderr, "mount: file %s not exist or no permission to access!\n", file_path);
+            close(fd);
+            return -1;
+        }
+
+        if (ioctl(fd, DISKIO_SETUP, file_path) < 0) {
+            fprintf(stderr, "mount: set device %s with file %s failed!\n", loop_dev_path, file_path);
+            close(fd);
+            return -1;
+        }
+        printf("mount: set device %s with file %s success.\n", loop_dev_path, file_path);
+        close(fd);
+        arg_device = loop_dev_path;  /* 指向环回设备，挂载环回设备 */
     }
 
     if (mount(arg_device, arg_dir, arg_fs, mount_flags) < 0) {
