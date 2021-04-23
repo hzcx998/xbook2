@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <xbook/fd.h>
+#include <xbook/dir.h>
 
 /* kfile 操作将会直接使用全局文件表，不会安装到用户的文件表中，因此可以长久存在 */
 

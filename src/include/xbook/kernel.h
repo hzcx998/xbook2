@@ -5,8 +5,6 @@
 #include <stddef.h>
 
 /* 系统信息 */
-#define KERNEL_NAME     "xbook2"
-#define KERNEL_VERSION  "0.1.7"
 #define KERNEL_NAME_LEN  32
 
 #define KERN_VADDR      KERN_BASE_VIR_ADDR
