@@ -186,6 +186,7 @@
         "getopt.h": "c",
         "memalloc.h": "c",
         "diskman.h": "c",
-        "mount.h": "c"
+        "mount.h": "c",
+        "account.h": "c"
     }
 }

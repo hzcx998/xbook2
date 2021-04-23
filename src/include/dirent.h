@@ -10,6 +10,8 @@
 #define DE_SYSTEM      0x04     /* system */
 #define DE_DIR         0x10     /* dir */
 #define DE_ARCHIVE     0x20     /* archive */
+#define DE_BLOCK        0x40     /* block */
+#define DE_CHAR         0x80     /* char */
 
 typedef int dir_t;
 

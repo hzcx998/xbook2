@@ -28,16 +28,20 @@ int main(int argc, char *argv[])
     char *arg_device = NULL;
     char *arg_fs = NULL;
     int mkfs_flags = 0;
+    int info_visiable = 0;
     
     opterr = 0;  //使getopt不行stderr输出错误信息
 
-    while( (result = getopt(argc, argv, "ht:")) != -1 ) {
+    while( (result = getopt(argc, argv, "hvt:")) != -1 ) {
         switch(result) {
         case 'h':
             print_usage();
             return 0;
         case 't':
             arg_fs = optarg;
+            break;
+        case 'v':
+            info_visiable = 1;
             break;
         case '?':
             if (optopt == 't') {    // no arg
@@ -55,7 +59,7 @@ int main(int argc, char *argv[])
     if (argv[optind]) {
         arg_device = argv[optind];
     }
-    // printf("mkfs: fs=%s, device=%s\n", arg_fs, arg_device);
+    //printf("mkfs: fs=%s, device=%s.\n", arg_fs, arg_device);
     if (arg_device == NULL) {
         fprintf(stderr, "mkfs: device error!\n");
         return -1;
@@ -64,10 +68,11 @@ int main(int argc, char *argv[])
         arg_fs = "auto";
     }
     if (mkfs(arg_device, arg_fs, mkfs_flags) < 0) {
-        fprintf(stderr, "mkfs: device=%s, file system=%s failed!\n", 
+        fprintf(stderr, "mkfs: device=%s file system=%s failed!\n", 
             arg_device, arg_fs);
         return -1;
     }
-    printf("mkfs: make file system %s on disk %s success!\n", arg_fs, arg_device);
+    if (info_visiable)
+        printf("mkfs: make file system %s on disk %s success!\n", arg_fs, arg_device);
     return 0;
 }

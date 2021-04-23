@@ -3,6 +3,10 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+
+int loop_device_setdown(char *dev_path);
 
 /**
  * unmount -t fat32 /dev/hda
@@ -29,16 +33,19 @@ int main(int argc, char *argv[])
     char *arg_pathname = NULL;
     char *arg_fs = NULL;
     int unmount_flags = 0;
-    
+    int info_visiable = 0;
     opterr = 0;  //使getopt不行stderr输出错误信息
 
-    while( (result = getopt(argc, argv, "ht:")) != -1 ) {
+    while( (result = getopt(argc, argv, "hvt:")) != -1 ) {
         switch(result) {
         case 'h':
             print_usage();
             return 0;
         case 't':
             arg_fs = optarg;
+            break;
+        case 'v':
+            info_visiable = 1;
             break;
         case '?':
             if (optopt == 't') {    // no arg
@@ -65,12 +72,39 @@ int main(int argc, char *argv[])
         arg_fs = "auto";
     }
     /* TODO: 检测文件系统类型是否匹配，不匹配就返回 */
-
+    struct stat stat_buf;
+    if (stat(arg_pathname, &stat_buf) < 0) {
+        fprintf(stderr, "unmount: get pathname %s state info failed!\n", 
+            arg_pathname);
+        return -1;
+    }
+    if (!(stat_buf.st_mode & (S_IFBLK | S_IFDIR))) {
+        fprintf(stderr, "unmount: pathname %s must be a dir or block device!\n", 
+            arg_pathname);
+        return -1;
+    }
     if (unmount(arg_pathname, unmount_flags) < 0) {
         fprintf(stderr, "unmount: pathname %s failed!\n", 
             arg_pathname);
         return -1;
     }
-    printf("unmount: unmount file system on path %s success!\n", arg_pathname);
+    if (stat_buf.st_mode & S_IFBLK) {   /* 块设备就需要setdown磁盘 */
+        if (loop_device_setdown(arg_pathname) < 0)
+            return -1;
+    }
+    if (info_visiable)
+        printf("unmount: unmount file system on path %s success!\n", arg_pathname);
+    return 0;
+}
+
+int loop_device_setdown(char *dev_path)
+{
+    int fd = open(dev_path, O_RDWR);
+    if (fd < 0) {
+        fprintf(stderr, "device %s not exist or no permission to access.\n", dev_path);
+        return -1;
+    }
+    ioctl(fd, DISKIO_SETDOWN, NULL);
+    close(fd);
     return 0;
 }

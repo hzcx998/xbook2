@@ -1061,19 +1061,6 @@ int input_even_get(input_even_buf_t *evbuf, input_event_t *even)
     return 0;
 }
 
-int block_device_setdown(char *devname)
-{
-    handle_t handle = device_open(devname, 0);
-    if (handle < 0) {
-        warnprint("block_device_setdown: open device %s failed!\n", devname);
-        return -1;
-    }
-    device_devctl(handle, DISKIO_SETDOWN, 0);
-    device_close(handle);
-    return 0;
-}
-
-
 /**
  * 将devfs路径名字转换成设备名。
  * devfs路径必须是DEVFS_PATH/xxx
@@ -1317,8 +1304,6 @@ static int fsal_devfs_mount(char *source, char *target, char *fstype, unsigned l
         errprint("mount devfs type %s failed!\n", fstype);
         return -1;
     }
-    if (kfile_mkdir(DEV_DIR_PATH, 0) < 0)
-        warnprint("fsal create dir %s failed or dir existed!\n", DEV_DIR_PATH);
     if (fsal_path_insert(source, DEVFS_PATH, target, &devfs_fsal)) {
         dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, target);
         return -1;
@@ -1334,8 +1319,6 @@ static int fsal_devfs_unmount(char *path, unsigned long flags)
         dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, path);
         return -1;
     }
-    if (kfile_rmdir(DEV_DIR_PATH) < 0)
-        warnprint("fsal remove dir %s failed or dir existed!\n", DEV_DIR_PATH);
     return 0;
 }
 
@@ -1408,6 +1391,16 @@ static int fsal_devfs_readdir(int idx, void *buf)
     dirent_t *dire = (dirent_t *)buf;
     /* TODO: set dire member */
     dire->d_attr = 0;
+
+    switch (devobj->type) {
+    case DEVICE_TYPE_DISK:
+    case DEVICE_TYPE_VIRTUAL_DISK:
+        dire->d_attr |= DE_BLOCK;
+        break;
+    default:
+        dire->d_attr |= DE_CHAR;
+        break;
+    }
     dire->d_size = 0;
     dire->d_time = devobj->mtime;
     dire->d_date = devobj->mdate;
@@ -1440,7 +1433,6 @@ static int fsal_devfs_state(char *path, void *buf)
     mode_t mode = 0;
 
     if (*p == '\0') {   // 访问的是devfs的根目录，既/dev目录或者/dev/
-        // noteprint("state: /dev or /dev/, return dir info.");
         mode = S_IREAD | S_IFDIR; 
         st->st_size = 0;
         st->st_atime = (devfs_create_date << 16) | devfs_create_time;
@@ -1452,7 +1444,17 @@ static int fsal_devfs_state(char *path, void *buf)
             errprint("devfs: state: device %s not found!\n", p);
             return -ESRCH;
         }
-        mode = S_IREAD | S_IWRITE | S_IFREG;
+        mode = S_IREAD | S_IWRITE;
+        /* 根据设备类型设置模式类型 */
+        switch (devobj->type) {
+        case DEVICE_TYPE_DISK:
+        case DEVICE_TYPE_VIRTUAL_DISK:
+            mode |= S_IFBLK;
+            break;
+        default:
+            mode |= S_IFCHR;
+            break;
+        }
         st->st_size = 0;
         st->st_atime = (devobj->mdate << 16) | devobj->mtime;
         st->st_ctime = st->st_mtime = st->st_atime;

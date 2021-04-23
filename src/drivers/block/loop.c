@@ -5,6 +5,7 @@
 #include <xbook/driver.h>
 #include <xbook/task.h>
 #include <xbook/virmem.h>
+#include <xbook/dir.h>
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>
@@ -148,10 +149,12 @@ static int loop_setup(device_object_t *device, char *pathname)
             device->name.text);
         return -1;
     }
+    char abs_path[MAX_PATH] = {0};
+    build_path(pathname, abs_path);
     /* 检测文件信息 */
-    int fd = kfile_open(pathname, O_RDWR);
+    int fd = kfile_open(abs_path, O_RDWR);
     if (fd < 0) {
-        errprint("loop: setup=> file %s not exist or no permission to access!\n", pathname);
+        errprint("loop: setup=> file %s not exist or no permission to access!\n", abs_path);
         return -1;
     }
     /* 获取文件大小 */
@@ -159,7 +162,7 @@ static int loop_setup(device_object_t *device, char *pathname)
     int filesz = kfile_ftell(fd);
     kfile_lseek(fd, 0, SEEK_SET);
     if (filesz < SECTOR_SIZE) {
-        errprint("loop: setup=> file %s size too small!\n", pathname);
+        errprint("loop: setup=> file %s size too small!\n", abs_path);
         kfile_close(fd);
         return -1;
     }
@@ -167,11 +170,11 @@ static int loop_setup(device_object_t *device, char *pathname)
     extension->gfd = fd;
     extension->sectors = filesz / SECTOR_SIZE;
     extension->flags |= LOOP_FLAG_UP;
-    strncpy(extension->image_file, pathname, LOOP_IMAGE_PATH_LEN);
+    strncpy(extension->image_file, abs_path, LOOP_IMAGE_PATH_LEN);
     extension->image_file[LOOP_IMAGE_PATH_LEN - 1] = '\0';
 
     #ifdef DEBUG_LOOP_DRV
-    infoprint("loop: setup=> gfd=%d, sectors=%d, image file=%s\n", 
+    infoprint("loop: setup=> gfd=%d, sectors=%d, [image file=%s]\n", 
         fd, extension->sectors, extension->image_file);
     #endif
     return 0;
@@ -192,17 +195,19 @@ static int loop_setdown(device_object_t *device)
     }
     kfile_close(extension->gfd);    /* 关闭文件 */
     loop_extension_init(extension);
+    #ifdef DEBUG_LOOP_DRV
     dbgprint("loop: setdown=> device %s extension info ok!\n", 
         device->name.text);
+    #endif
     return 0;
 }
 
 static iostatus_t loop_open(device_object_t *device, io_request_t *ioreq)
 {
     iostatus_t status = IO_SUCCESS;
-    
-    noteprint("\n\n##loop device %s open!\n\n", device->name.text);
-
+    #ifdef DEBUG_LOOP_DRV
+    noteprint("loop device %s open.\n", device->name.text);
+    #endif
     ioreq->io_status.status = status;
     io_complete_request(ioreq);
     return status;
@@ -211,9 +216,9 @@ static iostatus_t loop_open(device_object_t *device, io_request_t *ioreq)
 static iostatus_t loop_close(device_object_t *device, io_request_t *ioreq)
 {
     iostatus_t status = IO_SUCCESS;
-    
-    noteprint("\n\n##loop device %s close!\n\n", device->name.text);
-    
+    #ifdef DEBUG_LOOP_DRV
+    noteprint("loop device %s close.\n", device->name.text);
+    #endif
     ioreq->io_status.status = status;
     io_complete_request(ioreq);
     return status;

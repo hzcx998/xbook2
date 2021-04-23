@@ -18,6 +18,8 @@
 
 // #define DEBUG_FSAL
 
+// #define LIST_ALL_FILE
+
 int fsal_list_dir(char* path)
 {
     dirent_t de;
@@ -97,7 +99,9 @@ int fsal_init()
         warnprint("fsal create dir %s failed or dir existed!\n", HOME_DIR_PATH);
     if (kfile_mkdir(ACCOUNT_DIR_PATH, 0) < 0)
         warnprint("fsal create dir %s failed or dir existed!\n", ACCOUNT_DIR_PATH);
-
+    if (kfile_mkdir(DEV_DIR_PATH, 0) < 0)
+        warnprint("fsal create dir %s failed or dir existed!\n", DEV_DIR_PATH);
+    
     /* ramfs */
     #if defined(RAMFS_DIR_PATH)
     if (kfile_mkdir(RAMFS_DIR_PATH, 0) < 0)
@@ -115,13 +119,13 @@ int fsal_init()
         return -1;
     }
     
-    /* 挂载设备目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
+    /* 挂载FIFO目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
     if (fsif.mount("/dev/sda", FIFO_DIR_PATH, "fifofs", 0) < 0) {
         keprint("fsal : mount path %s failed!\n", FIFO_DIR_PATH);
         return -1;
     }
     
-    #if 0
+    #if defined(LIST_ALL_FILE)
     char path[MAX_PATH] = {0};
     strcpy(path, "/root");
     fsal_list_dir(path);

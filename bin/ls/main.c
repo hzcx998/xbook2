@@ -33,6 +33,10 @@ static void __ls(char *pathname, int detail)
             /* 列出详细信息 */
             if (de->d_attr & DE_DIR) {
                 type = 'd';
+            } else if (de->d_attr & DE_BLOCK) {
+                type = 'b';
+            } else if (de->d_attr & DE_CHAR) {
+                type = 'c';
             } else {
                 type = '-';
             }

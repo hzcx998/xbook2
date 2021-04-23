@@ -91,6 +91,15 @@ void __wash_path(char *old_path, char *new_path)
 	        sub_path = parse_path_afterward(sub_path, name);
         }
     }
+    // 处理末尾的换行字符
+    int len;
+    while ((len = strlen(new_path)) > 0) {
+        if (new_path[len - 1] == '\n' || new_path[len - 1] == '\r') {
+            new_path[len - 1] = '\0';   
+        } else {
+            break;
+        }
+    }
 }
 
 /**

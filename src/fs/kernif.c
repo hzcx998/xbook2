@@ -10,7 +10,9 @@ int kfile_open(const char *path, int flags)
 {
     if (!path)
         return -EINVAL; 
-    return fsif.open((void *)path, flags);
+    char abs_path[MAX_PATH] = {0};
+    build_path(path, abs_path);
+    return fsif.open((void *)abs_path, flags);
 }
 
 int kfile_close(int fd)
@@ -44,14 +46,18 @@ int kfile_stat(const char *path, struct stat *buf)
 {
     if (!path || !buf)
         return -1;
-    return fsif.state((char *) path, buf);
+    char abs_path[MAX_PATH] = {0};
+    build_path(path, abs_path);
+    return fsif.state((char *) abs_path, buf);
 }
 
 int kfile_access(const char *path, int mode)
 {
     if (!path)
         return -EINVAL;
-    return fsif.access(path, mode);
+    char abs_path[MAX_PATH] = {0};
+    build_path(path, abs_path);
+    return fsif.access(abs_path, mode);
 }
 
 int kfile_lseek(int fd, off_t offset, int whence)

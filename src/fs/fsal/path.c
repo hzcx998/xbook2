@@ -86,7 +86,6 @@ int fsal_path_remove(void *path)
                 fpath->fsal     = NULL;
                 memset(fpath->path, 0, FASL_PATH_LEN);
                 spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
-                block_device_setdown(fpath->devpath);
                 return 0;
             }
             /* 尝试检测设备路径 */
@@ -98,7 +97,6 @@ int fsal_path_remove(void *path)
                     fpath->fsal     = NULL;
                     memset(fpath->path, 0, FASL_PATH_LEN);
                     spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
-                    block_device_setdown(fpath->devpath);
                     return 0;
                 }
             }
@@ -269,6 +267,15 @@ void wash_path(char *old_path, char *new_path)
         memset(name, 0, MAX_PATH);
         if (sub_path) {
 	        sub_path = parse_path_afterward(sub_path, name);
+        }
+    }
+    // 处理末尾的换行字符
+    int len;
+    while ((len = strlen(new_path)) > 0) {
+        if (new_path[len - 1] == '\n' || new_path[len - 1] == '\r') {
+            new_path[len - 1] = '\0';   
+        } else {
+            break;
         }
     }
 }
