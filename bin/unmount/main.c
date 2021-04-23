@@ -6,8 +6,6 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
-int loop_device_setdown(char *dev_path);
-
 /**
  * unmount -t fat32 /dev/hda
  * unmount /dev/hda
@@ -88,23 +86,7 @@ int main(int argc, char *argv[])
             arg_pathname);
         return -1;
     }
-    if (stat_buf.st_mode & S_IFBLK) {   /* 块设备就需要setdown磁盘 */
-        if (loop_device_setdown(arg_pathname) < 0)
-            return -1;
-    }
     if (info_visiable)
         printf("unmount: unmount file system on path %s success!\n", arg_pathname);
-    return 0;
-}
-
-int loop_device_setdown(char *dev_path)
-{
-    int fd = open(dev_path, O_RDWR);
-    if (fd < 0) {
-        fprintf(stderr, "device %s not exist or no permission to access.\n", dev_path);
-        return -1;
-    }
-    ioctl(fd, DISKIO_SETDOWN, NULL);
-    close(fd);
     return 0;
 }

@@ -5,6 +5,8 @@
 #include <xbook/debug.h>
 #include <assert.h>
 #include <xbook/fs.h>
+#include <xbook/driver.h>
+#include <sys/ioctl.h>
 
 fsal_path_t *fsal_path_table;
 fsal_path_t *fsal_master_path;
@@ -71,6 +73,22 @@ fsal_path_t *fsal_path_alloc()
     return NULL;
 }
 
+/**
+ * 删除路径的时候，如果是块设备，就尝试setdown环回设备
+ */
+static int try_setdown_block_device(char *devname)
+{
+    handle_t handle = device_open(devname, 0);
+    if (handle < 0) {
+        warnprint("block_device_setdown: open device %s failed!\n", devname);
+        return -1;
+    }
+    /* 如果设备支持SETDOWN就执行该操作 */
+    device_devctl(handle, DISKIO_SETDOWN, 0);
+    device_close(handle);
+    return 0;
+}
+
 int fsal_path_remove(void *path)
 {
     char *p = (char *) path;
@@ -86,6 +104,7 @@ int fsal_path_remove(void *path)
                 fpath->fsal     = NULL;
                 memset(fpath->path, 0, FASL_PATH_LEN);
                 spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
+                try_setdown_block_device(fpath->devpath);
                 return 0;
             }
             /* 尝试检测设备路径 */
@@ -97,6 +116,7 @@ int fsal_path_remove(void *path)
                     fpath->fsal     = NULL;
                     memset(fpath->path, 0, FASL_PATH_LEN);
                     spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
+                    try_setdown_block_device(fpath->devpath);
                     return 0;
                 }
             }
