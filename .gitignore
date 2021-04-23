@@ -69,6 +69,8 @@ develop/rom/sbin/
 develop/rom/acct/
 develop/bochs/
 
+!develop/rom/tmp/d.img
+
 # linux fixdep
 libs/fixdep
 sbin/fixdep
