@@ -4,7 +4,7 @@
 #include <sys/ioctl.h>
 
 // #define _HAS_LOGIN
-#define _HAS_NETSERV
+// #define _HAS_NETSERV
 
 int main(int argc, char *argv[])
 {
