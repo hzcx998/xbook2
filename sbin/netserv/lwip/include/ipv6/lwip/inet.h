@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -29,35 +29,40 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIPOPTS_H__
-#define __LWIPOPTS_H__
+#ifndef __LWIP_INET_H__
+#define __LWIP_INET_H__
 
-#define NO_SYS                     0
-#define LWIP_SOCKET               (NO_SYS==0)
-#define LWIP_NETCONN              (NO_SYS==0)
+#include "lwip/opt.h"
+#include "lwip/pbuf.h"
+#include "lwip/ip_addr.h"
 
-#define MEM_ALIGNMENT           4
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* use os's timeval */
-#define LWIP_TIMEVAL_PRIVATE 0
+u16_t inet_chksum(void *data, u16_t len);
+u16_t inet_chksum_pbuf(struct pbuf *p);
+u16_t inet_chksum_pseudo(struct pbuf *p,
+       struct ip_addr *src, struct ip_addr *dest,
+       u8_t proto, u32_t proto_len);
 
-#define LWIP_DNS    1
+u32_t inet_addr(const char *cp);
+s8_t inet_aton(const char *cp, struct in_addr *addr);
 
-#define LWIP_DHCP    1
+#ifndef _MACHINE_ENDIAN_H_
+#ifndef _NETINET_IN_H
+#ifndef _LINUX_BYTEORDER_GENERIC_H
+u16_t htons(u16_t n);
+u16_t ntohs(u16_t n);
+u32_t htonl(u32_t n);
+u32_t ntohl(u32_t n);
+#endif /* _LINUX_BYTEORDER_GENERIC_H */
+#endif /* _NETINET_IN_H */
+#endif /* _MACHINE_ENDIAN_H_ */
 
-#define TCPIP_THREAD_PRIO 0    
+#ifdef __cplusplus
+}
+#endif
 
-/* 不打开lwip的socket, connect等宏 */
-#define LWIP_COMPAT_SOCKETS 0
+#endif /* __LWIP_INET_H__ */
 
-/* 使用系统的内存分配 */
-#define MEM_LIBC_MALLOC 1
-
-#define MEMP_NUM_NETCONN 10 //能够同时激活的超时连接数目(NO_SYS==0有效)
-
-#define MEMP_NUM_NETBUF 10
-#define MEMP_NUM_UDP_PCB 10
-
-#define LWIP_TCPIP_CORE_LOCKING 1
-
-#endif /* __LWIPOPTS_H__ */

@@ -28,11 +28,9 @@ static inline void sys_err(char *str)
 
 int pipe_test(int argc, char *argv[]);
 int shm_test(int argc, char *argv[]);
-int trig_test(int argc, char *argv[]);
 int xlibc_test(int argc,char *argv[]);
 int math_test(int argc, char *argv[]);
 
-int cjson_main(void);
 int pty_test(int argc, char *argv[]);
 int sleep_test(int argc, char *argv[]);
 int exp_test(int argc, char *argv[]);
@@ -48,7 +46,6 @@ int perm_test(int argc, char *argv[]);
 int socket_test(int argc, char *argv[]);
 int socket_test2(int argc, char *argv[]);
 int socket_test3(int argc, char *argv[]);
-int socket_test4(int argc, char *argv[]);
 
 int backtrace_test(int argc, char *argv[]);
 int video_test(int argc, char *argv[]);

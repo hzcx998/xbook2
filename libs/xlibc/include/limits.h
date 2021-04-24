@@ -90,6 +90,10 @@ extern "C" {
 #endif  /* _WIN64 */
 #endif  /* SIZE_MAX */
 
+#ifndef SSIZE_MAX
+#define SSIZE_MAX INT_MAX
+#endif  /* SIZE_MAX */
+
 #if __STDC_WANT_SECURE_LIB__
 #ifndef RSIZE_MAX
 #define RSIZE_MAX    (SIZE_MAX >> 1)

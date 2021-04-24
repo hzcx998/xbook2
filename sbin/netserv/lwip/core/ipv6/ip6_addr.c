@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -29,35 +29,44 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIPOPTS_H__
-#define __LWIPOPTS_H__
 
-#define NO_SYS                     0
-#define LWIP_SOCKET               (NO_SYS==0)
-#define LWIP_NETCONN              (NO_SYS==0)
+#include "lwip/opt.h"
+#include "lwip/ip_addr.h"
+#include "lwip/inet.h"
 
-#define MEM_ALIGNMENT           4
+u8_t
+ip_addr_netcmp(struct ip_addr *addr1, struct ip_addr *addr2,
+                struct ip_addr *mask)
+{
+  return((addr1->addr[0] & mask->addr[0]) == (addr2->addr[0] & mask->addr[0]) &&
+         (addr1->addr[1] & mask->addr[1]) == (addr2->addr[1] & mask->addr[1]) &&
+         (addr1->addr[2] & mask->addr[2]) == (addr2->addr[2] & mask->addr[2]) &&
+         (addr1->addr[3] & mask->addr[3]) == (addr2->addr[3] & mask->addr[3]));
+        
+}
 
-/* use os's timeval */
-#define LWIP_TIMEVAL_PRIVATE 0
+u8_t
+ip_addr_cmp(struct ip_addr *addr1, struct ip_addr *addr2)
+{
+  return(addr1->addr[0] == addr2->addr[0] &&
+         addr1->addr[1] == addr2->addr[1] &&
+         addr1->addr[2] == addr2->addr[2] &&
+         addr1->addr[3] == addr2->addr[3]);
+}
 
-#define LWIP_DNS    1
+void
+ip_addr_set(struct ip_addr *dest, struct ip_addr *src)
+{
+  SMEMCPY(dest, src, sizeof(struct ip_addr));
+  /*  dest->addr[0] = src->addr[0];
+  dest->addr[1] = src->addr[1];
+  dest->addr[2] = src->addr[2];
+  dest->addr[3] = src->addr[3];*/
+}
 
-#define LWIP_DHCP    1
-
-#define TCPIP_THREAD_PRIO 0    
-
-/* 不打开lwip的socket, connect等宏 */
-#define LWIP_COMPAT_SOCKETS 0
-
-/* 使用系统的内存分配 */
-#define MEM_LIBC_MALLOC 1
-
-#define MEMP_NUM_NETCONN 10 //能够同时激活的超时连接数目(NO_SYS==0有效)
-
-#define MEMP_NUM_NETBUF 10
-#define MEMP_NUM_UDP_PCB 10
-
-#define LWIP_TCPIP_CORE_LOCKING 1
-
-#endif /* __LWIPOPTS_H__ */
+u8_t
+ip_addr_isany(struct ip_addr *addr)
+{
+  if (addr == NULL) return 1;
+  return((addr->addr[0] | addr->addr[1] | addr->addr[2] | addr->addr[3]) == 0);
+}

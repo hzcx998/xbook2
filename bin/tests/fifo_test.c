@@ -3,7 +3,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 
-int fifo_test2(int argc, char *argv[])
+int fifo_test(int argc, char *argv[])
 {
     // unlink("test_fifo");
     if (mkfifo("/pipe/test_fifo", 0666) < 0) {

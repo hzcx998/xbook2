@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -29,35 +29,72 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIPOPTS_H__
-#define __LWIPOPTS_H__
+#ifndef __LWIP_ICMP_H__
+#define __LWIP_ICMP_H__
 
-#define NO_SYS                     0
-#define LWIP_SOCKET               (NO_SYS==0)
-#define LWIP_NETCONN              (NO_SYS==0)
+#include "lwip/opt.h"
 
-#define MEM_ALIGNMENT           4
+#if LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
 
-/* use os's timeval */
-#define LWIP_TIMEVAL_PRIVATE 0
+#include "lwip/pbuf.h"
+#include "lwip/netif.h"
 
-#define LWIP_DNS    1
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define LWIP_DHCP    1
+#define ICMP6_DUR  1
+#define ICMP6_TE   3
+#define ICMP6_ECHO 128    /* echo */
+#define ICMP6_ER   129      /* echo reply */
 
-#define TCPIP_THREAD_PRIO 0    
 
-/* 不打开lwip的socket, connect等宏 */
-#define LWIP_COMPAT_SOCKETS 0
+enum icmp_dur_type {
+  ICMP_DUR_NET = 0,    /* net unreachable */
+  ICMP_DUR_HOST = 1,   /* host unreachable */
+  ICMP_DUR_PROTO = 2,  /* protocol unreachable */
+  ICMP_DUR_PORT = 3,   /* port unreachable */
+  ICMP_DUR_FRAG = 4,   /* fragmentation needed and DF set */
+  ICMP_DUR_SR = 5      /* source route failed */
+};
 
-/* 使用系统的内存分配 */
-#define MEM_LIBC_MALLOC 1
+enum icmp_te_type {
+  ICMP_TE_TTL = 0,     /* time to live exceeded in transit */
+  ICMP_TE_FRAG = 1     /* fragment reassembly time exceeded */
+};
 
-#define MEMP_NUM_NETCONN 10 //能够同时激活的超时连接数目(NO_SYS==0有效)
+void icmp_input(struct pbuf *p, struct netif *inp);
 
-#define MEMP_NUM_NETBUF 10
-#define MEMP_NUM_UDP_PCB 10
+void icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t);
+void icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t);
 
-#define LWIP_TCPIP_CORE_LOCKING 1
+struct icmp_echo_hdr {
+  u8_t type;
+  u8_t icode;
+  u16_t chksum;
+  u16_t id;
+  u16_t seqno;
+};
 
-#endif /* __LWIPOPTS_H__ */
+struct icmp_dur_hdr {
+  u8_t type;
+  u8_t icode;
+  u16_t chksum;
+  u32_t unused;
+};
+
+struct icmp_te_hdr {
+  u8_t type;
+  u8_t icode;
+  u16_t chksum;
+  u32_t unused;
+};
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* LWIP_ICMP */
+
+#endif /* __LWIP_ICMP_H__ */
+

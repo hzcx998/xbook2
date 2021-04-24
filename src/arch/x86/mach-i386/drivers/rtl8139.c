@@ -669,8 +669,6 @@ int rtl8139_transmit(device_extension_t *ext, uint8_t *buf, uint32 len)
     /* 获取当前传输项 */
     entry = ext->current_tx;
     /* 改变传输项状态，开始数据传输 */
-    //enum InterruptStatus flags = InterruptDisable();
-    
     unsigned long flags;
     interrupt_save_and_disable(flags);
 
@@ -1645,7 +1643,7 @@ static iostatus_t rtl8139_write(device_object_t *device, io_request_t *ioreq)
         buf, ioreq->parame.write.length, ioreq->parame.write.offset);
 #endif
   
-    if (rtl8139_transmit(device->device_extension, buf, len))
+    if (rtl8139_transmit(device->device_extension, buf, len) < 0)
         len = -1;
 
     ioreq->io_status.status = IO_SUCCESS;

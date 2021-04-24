@@ -76,7 +76,8 @@ int socket_test2(int argc, char *argv[])
         printf("socket listen failed!\n");
         return -1;
     }
-
+    printf("listen %d done!\n", my_socke);
+    
     int client_sock;
     int count = 0;
     while (count < 3) {
@@ -103,43 +104,42 @@ int socket_test2(int argc, char *argv[])
 int socket_test3(int argc, char *argv[])
 {
     printf("socket3 test start!\n");
-        
-    /* udp连接 */
-    int fd = net_socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd < 0) {
-        printf("create socket failed!\n");
-        return -1;
-    }
-    printf("create socket %d\n", fd);
-
-    struct sockaddr_in serv_addr;
-    memset(&serv_addr, 0, sizeof(struct sockaddr_in));
-    serv_addr.sin_addr.s_addr = htonl(IPADDR_ANY);
-    serv_addr.sin_port = htons(8080);
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_len = sizeof(struct sockaddr_in);
-    net_bind(fd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr_in));
-    
-    memset(&serv_addr, 0, sizeof(struct sockaddr_in));
-    serv_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
-    serv_addr.sin_port = htons(8080);
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_len = sizeof(struct sockaddr_in);
-
-    struct sockaddr src;
-    socklen_t len;
     while (1) {
+        /* udp连接 */
+        int fd = net_socket(AF_INET, SOCK_DGRAM, 0);
+        if (fd < 0) {
+            printf("create socket failed!\n");
+            return -1;
+        }
+        printf("create socket %d\n", fd);
+
+        struct sockaddr_in serv_addr;
+        memset(&serv_addr, 0, sizeof(struct sockaddr_in));
+        serv_addr.sin_addr.s_addr = inet_addr("192.168.0.105");
+        serv_addr.sin_port = htons(8080);
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_len = sizeof(struct sockaddr_in);
+        net_bind(fd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr_in));
         
-        char buf[BUF_LEN] = "hello! Test!\n";
-        len = sizeof(struct sockaddr_in);
-        net_sendto(fd, buf, BUF_LEN, 0, (struct sockaddr *)&serv_addr, len);
+        memset(&serv_addr, 0, sizeof(struct sockaddr_in));
+        serv_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
+        serv_addr.sin_port = htons(8080);
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_len = sizeof(struct sockaddr_in);
+
+        struct sockaddr src;
+        socklen_t len = sizeof(struct sockaddr_in);
+        socklen_t srclen;
+        char *sndbuf = "hello! Test!\n";
+        
+        printf("sendto: %s\n", sndbuf);
+        net_sendto(fd, sndbuf, strlen(sndbuf), 0, (struct sockaddr *)&serv_addr, len);
         sleep(1);
-        printf("client: %s\n", buf);
-        memset(buf, 0, BUF_LEN);
-        net_recvfrom(fd, buf, BUF_LEN, 0, &src, &len);
-        printf("server: %s\n", buf);
-        break;
+        char buf[BUF_LEN] = {0};
+        net_recvfrom(fd, buf, BUF_LEN, 0, &src, &srclen);
+        printf("recvfrom: %s\n", buf);
+        
+        net_close(fd);
     }
-    net_close(fd);
-    return 0;
+
 }

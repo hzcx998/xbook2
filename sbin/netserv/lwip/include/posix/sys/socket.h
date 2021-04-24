@@ -1,7 +1,9 @@
+/**
+ * @file
+ * This file is a posix wrapper for lwip/sockets.h.
+ */
+
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
  * Redistribution and use in source and binary forms, with or without modification, 
  * are permitted provided that the following conditions are met:
  *
@@ -25,39 +27,7 @@
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
- * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIPOPTS_H__
-#define __LWIPOPTS_H__
 
-#define NO_SYS                     0
-#define LWIP_SOCKET               (NO_SYS==0)
-#define LWIP_NETCONN              (NO_SYS==0)
-
-#define MEM_ALIGNMENT           4
-
-/* use os's timeval */
-#define LWIP_TIMEVAL_PRIVATE 0
-
-#define LWIP_DNS    1
-
-#define LWIP_DHCP    1
-
-#define TCPIP_THREAD_PRIO 0    
-
-/* 不打开lwip的socket, connect等宏 */
-#define LWIP_COMPAT_SOCKETS 0
-
-/* 使用系统的内存分配 */
-#define MEM_LIBC_MALLOC 1
-
-#define MEMP_NUM_NETCONN 10 //能够同时激活的超时连接数目(NO_SYS==0有效)
-
-#define MEMP_NUM_NETBUF 10
-#define MEMP_NUM_UDP_PCB 10
-
-#define LWIP_TCPIP_CORE_LOCKING 1
-
-#endif /* __LWIPOPTS_H__ */
+#include "lwip/sockets.h"

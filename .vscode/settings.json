@@ -187,6 +187,10 @@
         "memalloc.h": "c",
         "diskman.h": "c",
         "mount.h": "c",
-        "account.h": "c"
+        "account.h": "c",
+        "ip_addr.h": "c",
+        "tcp.h": "c",
+        "sys.h": "c",
+        "ip.h": "c"
     }
 }

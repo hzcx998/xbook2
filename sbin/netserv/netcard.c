@@ -125,7 +125,7 @@ static int netcard_write(int solt, void *buffer, size_t size)
 {
     if (IS_BAD_SOLT(solt))
         return -1;
-    int len = write(SOLT_TO_HANDLE(solt), buffer, size) < 0;
+    int len = write(SOLT_TO_HANDLE(solt), buffer, size);
     if (len <= 0)
         return -1;
     return len;

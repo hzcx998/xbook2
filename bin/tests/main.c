@@ -1,40 +1,61 @@
 #include "test.h"
 
+typedef int (*main_t) (int , char **);
+typedef struct {
+    char *name;
+    main_t func;
+} testfunc_t;
+
+testfunc_t test_table[] = {
+    {"pipe", pipe_test},
+    {"shm", shm_test},
+    {"xlibc", xlibc_test},
+    {"math", math_test},
+    {"pyt", pty_test},
+    {"sleep", sleep_test},
+    {"exp", exp_test},
+    {"fifo", fifo_test},
+    {"sys", sys_test},
+    {"pthread", pthread_test},
+    {"file", file_test},
+    {"file2", file_test2},
+    {"perm", perm_test},
+    {"socket", socket_test},
+    {"socket2", socket_test2},
+    {"socket3", socket_test3},
+    {"backtrace", backtrace_test},
+    {"video", video_test},
+    {"signal", signal_test},
+    {"proc", proc_test},
+    {"port_comm", port_comm_test},
+    {"file", file_test3},
+    {"fcntl", fcntl_test},
+    {"tty", tty_test},
+    {"id", id_test},
+    {"pty2", pty_test2},
+    {"backtrace2", backtrace_test2},
+    {"loop", loop_test},
+};
+
 int main(int argc, char *argv[])
 {
-    //socket_test4(argc, argv);
-    //pipe_test(argc, argv);
-    //shm_test(argc, argv);
-	//trig_test(argc, argv);
-
-    //trig_test(argc, argv);
-    //math_test(argc, argv);
-    //http_test(argc, argv);
-    //xlibc_test(argc, argv);
-    //buddy_test(argc, argv);
-    //sleep_test(argc, argv);
-    // exp_test(argc, argv);
-    // fifo_test(argc, argv);
-    //sys_test(argc, argv);
-    //pthread_test(argc, argv);
-    // file_test(argc, argv);
-    // perm_test(argc, argv);
-    // socket_test(argc, argv);
-    // file_test2(argc, argv);
-    //backtrace_test(argc, argv);
-    //fcntl_test(argc, argv);
-    //signal_test(argc, argv);
-    // proc_test(argc, argv);
-    // port_comm_test(argc, argv);
-    //gui_test(argc, argv);
-    //file_test3(argc, argv);
-    // tty_test(argc, argv);
-    //id_test(argc, argv);
-    //pty_test2(argc, argv);
-    //fifo_test2(argc, argv);
-    //backtrace_test2(argc, argv);
-    loop_test(argc, argv);
+    printf("testing start...\n");
     
-    printf("tests done!\n");
-    return 0;
+    int retval = -1;
+    if (argc == 1) {
+        retval = test_table[0].func(argc, argv);  
+        printf("\ntest %s demo done.\n", test_table[0].name);
+    } else if (argc == 2) {
+        char *p = argv[1];
+        int i;
+        for (i = 0; i < ARRAY_SIZE(test_table); i++)
+            if (!strcmp(p, test_table[i].name)) {
+                retval = test_table[i].func(argc, argv);
+                printf("\ntest %s demo done.\n", test_table[i].name);
+                break;
+            }
+        if (i >= ARRAY_SIZE(test_table))
+            printf("test %s demo not found!\n", p);
+    }    
+    return retval;
 }
