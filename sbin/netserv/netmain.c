@@ -15,6 +15,8 @@
 #include <net.client.h>
 #include <stdlib.h>
 
+#include "socket_udp.h"
+
 /* lwip interface */
 extern err_t ethernetif_init(struct netif *netif);
 extern void ethernetif_input(struct netif *netif);
@@ -33,7 +35,7 @@ void lwip_init_task(void)
     tcpip_init(NULL, NULL);
 #endif
     IP4_ADDR(&ipaddr, 192,168,0,105);
-    IP4_ADDR(&gateway, 192,168,0,104);
+    IP4_ADDR(&gateway, 192,168,0,1);
     IP4_ADDR(&netmask, 255,255,0, 0);
 #if NO_SYS == 1
     netif_add(&lwip_netif, &ipaddr, &netmask, &gateway, NULL, ethernetif_init, ethernet_input);
@@ -61,6 +63,7 @@ void network_init(void)
     }
     lwip_init_task();
     httpserver_init();
+    socket_examples_init();
 
     pthread_t thread;
     pthread_create(&thread, NULL, netserv_thread, NULL);

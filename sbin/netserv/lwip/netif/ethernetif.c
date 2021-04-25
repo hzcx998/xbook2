@@ -129,6 +129,8 @@ low_level_init(struct netif *netif)
   /* Do whatever else is needed to initialize interface. */
 }
 
+/* 包缓冲区，存放多个包，然后一次性发送 */
+static unsigned char eth_send_buf[ETH_MTU];
 /**
  * This function should do the actual transmission of the packet. The packet is
  * contained in the pbuf that is passed to the function. This pbuf
@@ -144,7 +146,6 @@ low_level_init(struct netif *netif)
  *       to become availale since the stack doesn't retry to send a packet
  *       dropped because of memory failure (except for the TCP timers).
  */
-
 static err_t
 low_level_output(struct netif *netif, struct pbuf *p)
 {
@@ -155,21 +156,27 @@ low_level_output(struct netif *netif, struct pbuf *p)
 #if ETH_PAD_SIZE
   pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
 #endif
-
+  unsigned int templen = 0;
   for(q = p; q != NULL; q = q->next) {
     /* Send the data from the pbuf to the interface, one pbuf at a
        time. The size of the data in each pbuf is kept in the ->len
        variable. */
-    //send data from(q->payload, q->len);
-    //len = res_write(ethernetif->ethres, 0, q->payload, q->len);
-    len = drv_netcard.write(ethernetif->netsolt, q->payload, q->len);
+    memcpy(&eth_send_buf[templen], q->payload, q->len);
+    templen += q->len;
+    /* 有效性校验，防止数据溢出 */
+    if (templen > ETH_MTU || templen > p->tot_len) {
+        LWIP_PLATFORM_DIAG(("packet send: error, templen=%d, tolen=%d\n", 
+            templen, p->tot_len));
+        return ERR_BUF;
+    }
+  }
+  /* 拷贝完毕，进行数据发送 */
+  if (templen == p->tot_len) {
+    len = drv_netcard.write(ethernetif->netsolt, eth_send_buf, templen);
     if (len < 0) {
         retval = ERR_BUF;
     }
   }
-
-  //signal that packet should be sent();
-
 #if ETH_PAD_SIZE
   pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
@@ -179,6 +186,8 @@ low_level_output(struct netif *netif, struct pbuf *p)
   return retval;
 }
 
+/* 包缓冲区，存放一个包，然后解析成pbuf */
+static unsigned char eth_recv_buf[ETH_MTU];
 /**
  * Should allocate a pbuf and transfer the bytes of the incoming
  * packet from the interface into the pbuf.
@@ -192,21 +201,17 @@ low_level_input(struct netif *netif)
 {
   struct ethernetif *ethernetif = netif->state;
   struct pbuf *p, *q;
-  int len;
-
-  /* Obtain the size of the packet and put it into the "len"
-     variable. */
-  u8_t rxbuf[ETH_MTU];
-
-  len = drv_netcard.read(ethernetif->netsolt, rxbuf, ETH_MTU);
-  if (len < 0)
+  int recvlen;
+  unsigned int i = 0;
+  recvlen = drv_netcard.read(ethernetif->netsolt, eth_recv_buf, ETH_MTU);
+  if (recvlen < 0)
     return 0;
 #if ETH_PAD_SIZE
-  len += ETH_PAD_SIZE; /* allow room for Ethernet padding */
+  recvlen += ETH_PAD_SIZE; /* allow room for Ethernet padding */
 #endif
 
   /* We allocate a pbuf chain of pbufs from the pool. */
-  p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
+  p = pbuf_alloc(PBUF_RAW, recvlen, PBUF_RAM);
   
   if (p != NULL) {
 
@@ -216,8 +221,9 @@ low_level_input(struct netif *netif)
 
     /* We iterate over the pbuf chain until we have read the entire
      * packet into the pbuf. */
-    //for(q = p; q != NULL; q = q->next) {
-      /* Read enough bytes to fill this pbuf in the chain. The
+    q = p;
+    while (q != NULL) {
+        /* Read enough bytes to fill this pbuf in the chain. The
        * available data in the pbuf is given by the q->len
        * variable.
        * This does not necessarily have to be a memcpy, you can also preallocate
@@ -225,12 +231,12 @@ low_level_input(struct netif *netif)
        * actually received size. In this case, ensure the tot_len member of the
        * pbuf is the sum of the chained pbuf len members.
        */
-         q = p;
-      //read data into(q->payload, q->len);
-        memcpy((u8_t*)q->payload, (u8_t*)rxbuf, q->len);
-        q->next = NULL;
-    //}
-    //acknowledge that packet has been read();
+        memcpy((u8_t*)q->payload, &eth_recv_buf[i], q->len);
+        i += q->len;
+        q = q->next;
+        if (i >= recvlen)
+            break;
+    }
 
 #if ETH_PAD_SIZE
     pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
@@ -238,6 +244,8 @@ low_level_input(struct netif *netif)
 
     LINK_STATS_INC(link.recv);
   } else {
+    LWIP_PLATFORM_DIAG(("packet receive: pbuf alloc fail, len=%d\n", 
+        recvlen));
     //drop packet();
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);

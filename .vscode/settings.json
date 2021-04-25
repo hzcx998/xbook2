@@ -191,6 +191,7 @@
         "ip_addr.h": "c",
         "tcp.h": "c",
         "sys.h": "c",
-        "ip.h": "c"
+        "ip.h": "c",
+        "socket_udp.h": "c"
     }
 }

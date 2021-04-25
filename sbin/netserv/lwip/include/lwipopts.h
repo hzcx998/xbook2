@@ -55,9 +55,12 @@
 
 #define MEMP_NUM_NETCONN 10 //能够同时激活的超时连接数目(NO_SYS==0有效)
 
-#define MEMP_NUM_NETBUF 10
+#define MEMP_NUM_NETBUF                 (MEMP_NUM_NETCONN)
+
 #define MEMP_NUM_UDP_PCB 10
 
 #define LWIP_TCPIP_CORE_LOCKING 1
+
+#define LWIP_SO_RCVTIMEO 1
 
 #endif /* __LWIPOPTS_H__ */

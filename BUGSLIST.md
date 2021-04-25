@@ -1,9 +1,5 @@
 # bugs list for kernel 
 
-## <2020.7.2>
-```
-1. lwip sendto can work only 1 time. 解决方案：使用更新的lwip版本测试
-
 ```
 ## <2020.8.7>
 ```
