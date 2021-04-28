@@ -20,6 +20,7 @@ typedef enum {
     VIEW_MOUSE_DRESIZE2,          /* 对角线调整大小2(斜下) */
     VIEW_MOUSE_RESIZEALL,         /* 全方向调整 */
     VIEW_MOUSE_HAND,              /* 手 */
+    VIEW_MOUSE_INVISIBLE,         /* 不可见状态 */
     VIEW_MOUSE_STATE_NR,
 } view_mouse_state_t;
 
