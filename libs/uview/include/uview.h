@@ -25,6 +25,7 @@ enum uview_attr {
 
 #define UVIEW_BAD_ID(view)  ((view) < 0)
 
+int uview_open_tmp(void);
 int uview_open(int width, int height, int type);
 int uview_close(int vfd);
 int uview_set_pos(int vfd, int x, int y);
@@ -59,6 +60,8 @@ int uview_set_monitor(int vfd, int is_taskbar);
 
 int uview_set_win_maxim_rect(int vfd, int x, int y, int width, int height);
 int uview_get_win_maxim_rect(int vfd, int *x, int *y, int *width, int *height);
+
+int uview_keypad2ascii(int code);
 
 typedef struct {
     unsigned long timer_id;

@@ -113,5 +113,7 @@ typedef struct _video_info {
 #define VIEWIO_SETMONITOR   DEVCTL_CODE('v', 26)
 #define VIEWIO_SETWINMAXIMRECT   DEVCTL_CODE('v', 27)
 #define VIEWIO_GETWINMAXIMRECT   DEVCTL_CODE('v', 28)
+#define VIEWIO_GETMOUSESTATE        DEVCTL_CODE('v', 29)
+#define VIEWIO_GETMOUSESTATEINFO    DEVCTL_CODE('v', 30)
 
 #endif   /* _SYS_IOCTL_H */

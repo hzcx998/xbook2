@@ -8,6 +8,15 @@
 #include "uview_io.h"
 
 /**
+ * 打开一个临时视图
+ */
+int uview_open_tmp(void)
+{
+    int flags = ((UVIEW_TYPE_FIXED & 0x1f) << 26) | ((32 & 0x1fff) << 12) | (32 & 0x1fff);
+    return openclass("view", flags);
+}
+
+/**
  * 打开用户态视图
  */
 int uview_open(int width, int height, int type)

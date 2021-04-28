@@ -55,11 +55,14 @@ int view_mouse_exit();
 
 int view_mouse_poll();
 void view_mouse_set_state(view_mouse_state_t state);
+int view_mouse_get_state(view_mouse_state_t *state);
+
 int view_mouse_is_state(view_mouse_state_t state);
 void view_mouse_draw(view_mouse_state_t state);
 
 void view_mouse_move_view();
 int view_mouse_set_state_info(view_mouse_state_info_t *info);
 int view_mouse_set_state_info_ex(view_mouse_state_info_t *info);
+int view_mouse_get_state_info(view_mouse_state_info_t *info);
 
 #endif /* _XBOOK_DRIVERS_VIEW_MOUSE_H */

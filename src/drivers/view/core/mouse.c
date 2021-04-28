@@ -98,6 +98,14 @@ void view_mouse_set_state(view_mouse_state_t state)
     view_mouse_draw(state);
 }
 
+int view_mouse_get_state(view_mouse_state_t *state)
+{
+    if (!state)
+        return -1;
+    *state = view_mouse.state;
+    return 0;
+}
+
 int view_mouse_is_state(view_mouse_state_t state)
 {
     return view_mouse.state == state;
@@ -169,6 +177,24 @@ int view_mouse_set_state_info(view_mouse_state_info_t *info)
     view_bitmap_blit(info->bmp, NULL, _info->bmp, NULL);
     _info->off_x = info->off_x;
     _info->off_y = info->off_y;
+    return 0;
+}
+
+int view_mouse_get_state_info(view_mouse_state_info_t *info)
+{
+    view_mouse_state_t state = info->state;
+    if (state >= VIEW_MOUSE_STATE_NR)
+        return -1;
+    if (!info->bmp)
+        return -1;
+    view_mouse_state_info_t *_info = &view_mouse.state_table[state];
+    if (!_info->bmp) {
+        return -1;
+    }
+    // 复制位图数据
+    view_bitmap_blit(_info->bmp, NULL, info->bmp, NULL);
+    info->off_x = _info->off_x;
+    info->off_y = _info->off_y;
     return 0;
 }
 

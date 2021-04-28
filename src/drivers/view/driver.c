@@ -80,7 +80,10 @@ static iostatus_t view_close(device_object_t *device, io_request_t *ioreq)
         }
         view_env_send_to_monitor(extension->view, VIEW_MSG_CLOSE, 0);
         view_env_check_monitor_exit(extension->view);
-        view_env_reset_hover_and_activity();
+        if (z >= 0) {   /* 如果原来是显示状态才重置覆盖 */
+            view_env_reset_hover_and_activity();
+        }
+        
         extension->view = NULL;
     }
     extension->flags = 0;
@@ -430,6 +433,25 @@ static iostatus_t __view_ioctl(device_extension_t *extension, int cmd, void *arg
             status = IO_FAILED;
         } else {
             if (view_env_get_winmaxim_rect((view_rect_t *) arg) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case VIEWIO_GETMOUSESTATE:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            view_mouse_state_t state = 0;
+            if (view_mouse_get_state(&state) < 0)
+                status = IO_FAILED;
+            *(view_mouse_state_t *) arg = state;
+        }
+        break;
+    case VIEWIO_GETMOUSESTATEINFO:
+        if (view == NULL) {
+            status = IO_FAILED;
+        } else {
+            view_mouse_state_info_t *sinfo = (view_mouse_state_info_t *) arg;
+            if (view_mouse_get_state_info(sinfo) < 0)
                 status = IO_FAILED;
         }
         break;

@@ -123,8 +123,6 @@ void view_env_do_mouse_hover(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
             view_msg_data(&m, msg->data0 - mouse_hover_view->x, msg->data1 - mouse_hover_view->y, 0, 0);
             view_try_put_msg(mouse_hover_view, &m);
         }
-
-        /* 如果进入了不同的图层，那么，当为调整图层大小时，就需要取消调整行为 */
         if (view_mouse.state != VIEW_MOUSE_NORMAL) {
             view_mouse_set_state(VIEW_MOUSE_NORMAL);
             view_mouse.click_x = -1;
@@ -135,8 +133,8 @@ void view_env_do_mouse_hover(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
             }
             #endif /* CONFIG_SHADE_VIEW */
         }
+        mouse_hover_view = view;
     }
-    mouse_hover_view = view;
 }
 
 void view_env_do_drag(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
@@ -495,16 +493,17 @@ int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
             }
             return 0;
         } else {
-            // 由于不是在调整范围内，但是还处于调整状态，就换成普通状态
+            // 由于不是在调整范围内，但是还处于调整状态，就将鼠标点击点设置为默认状态
             if ((view_mouse.state == VIEW_MOUSE_HRESIZE || 
                 view_mouse.state == VIEW_MOUSE_VRESIZE || 
                 view_mouse.state == VIEW_MOUSE_DRESIZE1 ||
                 view_mouse.state == VIEW_MOUSE_DRESIZE2 ||
                 view_mouse.state == VIEW_MOUSE_RESIZEALL)) 
             {
-                view_mouse_set_state(VIEW_MOUSE_NORMAL);
-                view_mouse.click_x = -1;
-                view_mouse.click_y = -1;
+                if (view_mouse.click_x != -1 && view_mouse.click_y != -1) {
+                    view_mouse.click_x = -1;
+                    view_mouse.click_y = -1;
+                }
             }
         }
     }

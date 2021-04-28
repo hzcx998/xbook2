@@ -31,5 +31,12 @@ typedef struct {
 
 int uview_set_mouse_state(int vfd, uview_mouse_state_t state);
 int uview_set_mouse_state_info(int vfd, uview_mouse_state_info_t *info);
+int uview_get_mouse_state(int vfd, uview_mouse_state_t *state);
+int uview_get_mouse_state_info(int vfd, uview_mouse_state_info_t *info);
+
+int uview_set_mouse_state_noview(uview_mouse_state_t state);
+int uview_set_mouse_state_info_noview(uview_mouse_state_info_t *info);
+int uview_get_mouse_state_noview(uview_mouse_state_t *state);
+int uview_get_mouse_state_info_noview(uview_mouse_state_info_t *info);
 
 #endif /* _UVIEW_MOUSE_H */
