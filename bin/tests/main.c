@@ -7,6 +7,7 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"sockcall", test_sockcall},
     {"pipe", pipe_test},
     {"shm", shm_test},
     {"xlibc", xlibc_test},

@@ -278,8 +278,10 @@ struct _sockfd_set {
     fd_set *writefds;
     fd_set *errorfds;
 };
-/*
+
 int socket(int domain, int type, int protocol);
+
+/*
 int bind(int sock, struct sockaddr *my_addr, int addrlen);
 int connect(int sock, struct sockaddr *serv_addr, int addrlen);
 int listen(int sock, int backlog);

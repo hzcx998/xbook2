@@ -114,6 +114,7 @@ enum syscall_num {
     SYS_GETPGID,
     SYS_SETPGID,
     SYS_MKFIFO,
+    SYS_SOCKCALL,
     SYSCALL_NR,
 };
 

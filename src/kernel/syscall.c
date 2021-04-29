@@ -15,6 +15,7 @@
 #include <xbook/kernel.h>
 #include <xbook/schedule.h>
 #include <xbook/fifo.h>
+#include <xbook/sockcall.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <dirent.h>
@@ -144,6 +145,7 @@ void syscall_init()
     syscalls[SYS_GETPGID] = sys_get_pgid;
     syscalls[SYS_SETPGID] = sys_set_pgid;
     syscalls[SYS_MKFIFO] = sys_mkfifo;
+    syscalls[SYS_SOCKCALL] = sys_sockcall;
 }
 
 int syscall_check(uint32_t callno)
