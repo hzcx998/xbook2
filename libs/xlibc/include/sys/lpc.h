@@ -13,6 +13,9 @@ extern "C" {
 #define FIRST_CALL_CODE  (0x00000001)
 #define LAST_CALL_CODE   (0x000FFFFF)
 
+/* 使用malloc来分配消息 */
+#define LPC_MSG_USE_MALLOC  1   
+
 /* the args we support now */
 #define LPC_PARCEL_ARG_NR 8
 
@@ -72,6 +75,7 @@ int lpc_parcel_read_string(lpc_parcel_t parcel, char **str);
 int lpc_parcel_read_sequence(lpc_parcel_t parcel, void *buf, size_t *len);
 int lpc_parcel_read_sequence_buf(lpc_parcel_t parcel, void **buf, size_t *len);
 int lpc_echo(uint32_t port, lpc_handler_t func);
+int lpc_echo_group(uint32_t port, lpc_handler_t func);
 int lpc_call(uint32_t port, uint32_t code, lpc_parcel_t data, lpc_parcel_t reply);
 
 #ifdef __cplusplus

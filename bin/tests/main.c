@@ -8,6 +8,8 @@ typedef struct {
 
 testfunc_t test_table[] = {
     {"sockcall", test_sockcall},
+    {"port_comm2", port_comm_test2},
+    {"port_comm3", port_comm_test3},
     {"pipe", pipe_test},
     {"shm", shm_test},
     {"xlibc", xlibc_test},

@@ -64,7 +64,7 @@ typedef struct {
 typedef struct {
     unsigned char *kstack;              /* kernel stack, must be first member */
     task_state_t state;
-    spinlock_t lock;
+    spinlock_t lock;                    /* 操作task成员时需要进行上锁 */
     cpuid_t cpuid;
     pid_t pid;                          /* process id */
     pid_t parent_pid;

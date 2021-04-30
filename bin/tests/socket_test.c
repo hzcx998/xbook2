@@ -137,10 +137,14 @@ int socket_test3(int argc, char *argv[])
         net_recvfrom(fd, buf, BUF_LEN, 0, &src, &srclen);
         printf("recvfrom: %s\n", buf);
         
+        if (!strcmp(buf, "quit")) {
+            break;
+        }
+
         printf("sendto: %s\n", sndbuf);
         if (net_sendto(fd, sndbuf, strlen(sndbuf), 0, (struct sockaddr *)&src, srclen) < 0)
             fprintf(stderr, "sendto: error\n");
-            
     }
     net_close(fd);
 }
+

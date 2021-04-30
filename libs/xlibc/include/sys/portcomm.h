@@ -16,6 +16,13 @@ enum {
     PORT_COMM_LAST = 8
 };
 
+/* 端口绑定标志 */
+enum {
+    PORT_BIND_GROUP = 0x01,     /* 端口绑定时为组端口 */
+    PORT_BIND_ONCE  = 0x02,     /* 端口绑定时只绑定一次，多次绑定还是返回成功 */
+};
+
+
 typedef struct {
     uint32_t reserved0;
     uint32_t reserved1;
@@ -30,7 +37,7 @@ typedef struct {
     uint8_t data[PORT_MSG_SIZE];
 } port_msg_t;
 
-int bind_port(int port);
+int bind_port(int port, int flags);
 int unbind_port(int port);
 int reply_port(int port, port_msg_t *msg);
 int receive_port(int port, port_msg_t *msg);

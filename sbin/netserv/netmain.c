@@ -51,7 +51,7 @@ extern bool netserv_echo_main(uint32_t code, lpc_parcel_t data, lpc_parcel_t rep
 static void *netserv_thread(void *arg)
 {
     printf("netserv thread: start:%d\n", pthread_self());
-    lpc_echo(LPC_ID_NET, netserv_echo_main);
+    lpc_echo_group(LPC_ID_NET, netserv_echo_main);
     return NULL;
 }
 
@@ -80,4 +80,3 @@ void network_init(void)
         sched_yield();
     }
 }
-

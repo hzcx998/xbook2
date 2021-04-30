@@ -2,9 +2,9 @@
 #include <sys/portcomm.h>
 #include <string.h>
 
-int bind_port(int port)
+int bind_port(int port, int flags)
 {
-    return syscall1(int, SYS_BIND_PORT, port);
+    return syscall2(int, SYS_BIND_PORT, port, flags);
 }
 
 int unbind_port(int port)
