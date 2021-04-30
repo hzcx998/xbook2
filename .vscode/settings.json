@@ -194,6 +194,7 @@
         "ip.h": "c",
         "socket_udp.h": "c",
         "fifo.h": "c",
-        "sockcall.h": "c"
+        "sockcall.h": "c",
+        "msgpool.h": "c"
     }
 }

@@ -264,26 +264,34 @@ int lpc_parcel_read_sequence_buf(lpc_parcel_t parcel, void **buf, size_t *len)
     return 0;
 }
 
+/**
+ * 应答端口上面的请求
+ * 首先会绑定一个端口，如果失败则返回错误
+ * 然后就是分配端口的消息，分配失败则返回错误
+ * 接下来就是一个循环，首先会从端口上接收消息，收到消息后需要根据消息内容调用对应的函数，
+ * 执行完后，封装应答消息并进行消息应答。一直循环往复。
+ */
 int lpc_echo(uint32_t port, lpc_handler_t func)
 {
     static char this_init_done = 0;
+    /* TODO: 需要对pthread线程进行扩展支持处理 */
     static port_msg_t *msg_recv = NULL;
     static port_msg_t *msg_reply = NULL;
     if (!this_init_done) {
         if (bind_port(port) < 0) {
-            printf("bind port failed!\n");
+            fprintf(stderr, "lpc: bind port %d failed!\n", port);
             return -1;
         }
         msg_recv = NULL;
         msg_reply = NULL;
         msg_recv = malloc(sizeof(port_msg_t));
         if (msg_recv == NULL) {
-            printf("malloc for recv msg failed!\n");
+            fprintf(stderr, "lpc: malloc for recv msg failed!\n");
             return -1;
         }
         msg_reply = malloc(sizeof(port_msg_t));
         if (msg_reply == NULL) {
-            printf("malloc for reply msg failed!\n");
+            fprintf(stderr, "lpc: malloc for reply msg failed!\n");
             free(msg_recv);
             return -1;
         }
@@ -304,18 +312,23 @@ int lpc_echo(uint32_t port, lpc_handler_t func)
                         recv_parcel,
                         reply_parcel);
         if (!result) {
-            printf("do serv func failed!\n");
+            fprintf(stderr, "lpc: port %d do serv func failed!\n", port);
         }
         port_msg_copy_header(msg_recv, msg_reply);
         // 计算应答头大小
         msg_reply->header.size = sizeof(_lpc_parcel_t) + reply_parcel->header.size;
         msg_reply->header.size += sizeof(port_msg_header_t); 
         if (reply_port(port, msg_reply) < 0) {
-            printf("reply port failed!\n");
+            fprintf(stderr, "lpc: reply port %d failed!\n", port);
         }
     }
 }
 
+/**
+ * 往port发起一个调用
+ * 最开始先进行初始化，分配消息缓冲区，绑定一个自由端口。
+ * 填写消息后往端口发起一个请求，然后复制应答数据到结构体中。
+ */
 int lpc_call(uint32_t port, uint32_t code, lpc_parcel_t data, lpc_parcel_t reply)
 {
     static char this_init_done = 0;

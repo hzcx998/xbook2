@@ -337,6 +337,7 @@ static lpc_remote_handler_t net_remote_table[] = {
 
 bool netserv_echo_main(uint32_t code, lpc_parcel_t data, lpc_parcel_t reply)
 {
+    printf("netserv tid=%d do echo\n", pthread_self()); // 查看是哪个线程在处理
     if (code >= FIRST_CALL_CODE && code < NETCALL_LAST_CALL)
         return net_remote_table[code - 1](data, reply);
     return false;

@@ -88,6 +88,14 @@ port_comm_t *port_comm_alloci(uint32_t port)
     return port_comm;
 }
 
+/**
+ * port_comm_vertify - 验证端口并返回端口指针
+ * 
+ * 如果任务没有绑定端口，则返回错误
+ * 如果port为正，那么就查找端口的地址并判断是否为当前任务的端口，成功则返回端口地址。
+ * 不然则返回错误。
+ * 如果port为负，那么就看当前任务是否绑定了端口，如果是则返回端口地址，不然则返回错误
+ */ 
 int port_comm_vertify(int port, port_comm_t **out_port_comm, task_t *task)
 {
     if (!task->port_comm) {
@@ -101,7 +109,7 @@ int port_comm_vertify(int port, port_comm_t **out_port_comm, task_t *task)
             errprint("port unbind: port %d not bounded.\n", port);
             return -EPERM;
         }
-        if (port_comm != task->port_comm) {
+        if (port_comm != task->port_comm) { /* NOTE: 必须绑定同一个端口 */
             errprint("port unbind: port %d not bond on task %d.\n", port, task->pid);
             return -EPERM;                
         }
@@ -123,7 +131,9 @@ static void msgpool_get_callback(msgpool_t *pool, void *buf)
 }
 
 /**
- * 绑定时检测端口是否已经占用，并分配一个可用端口
+ * 如果端口已经绑定，则直接返回错误
+ * 当port为正的时候，查找端口地址，如果端口已经存在着返回错误，不然就分配一个新端口。
+ * 当port为负时，直接分配一个新端口。
  */
 static port_comm_t *__sys_port_comm_bind(int port, task_t *cur)
 {
@@ -133,6 +143,7 @@ static port_comm_t *__sys_port_comm_bind(int port, task_t *cur)
     }
     port_comm_t *port_comm;
     if (port >= 0) {
+        /* NOTE: 绑定端口时检测端口类型，如果是组端口，那么就可以返回该端口，组端口有引用计数机制 */
         port_comm = port_comm_find(port);
         if (port_comm) {
             errprint("port bind: port %d had used.\n", port);
@@ -150,6 +161,10 @@ static port_comm_t *__sys_port_comm_bind(int port, task_t *cur)
     return port_comm;
 }
 
+/**
+ * 绑定port指定的端口并创建消息池，如果消息池失败则返回错误
+ * 最后把端口绑定到任务上返回端口值
+ */
 int sys_port_comm_bind(int port)
 {
     task_t *cur = task_current;
@@ -171,12 +186,17 @@ int sys_port_comm_bind(int port)
     return 0;
 }
 
+/**
+ * 解除对端口port的绑定。
+ * 如果验证端口失败，则返回错误。成功则销毁消息池并释放端口
+ */
 int sys_port_comm_unbind(int port)
 {
     task_t *cur = task_current;
     port_comm_t *port_comm;
     if (port_comm_vertify(port, &port_comm, cur) < 0)
         return -EPERM;
+    /* NOTE: 进行引用计数递减，为0时才进行销毁 */
     unsigned long iflags;
     spin_lock_irqsave(&port_comm->lock, iflags);
     if (msgpool_destroy(port_comm->msgpool) < 0) {
@@ -190,6 +210,14 @@ int sys_port_comm_unbind(int port)
     return 0;
 }
 
+/**
+ * 向端口发送一个消息。
+ * 如果端口值错误就直接返回错误
+ * 首先验证端口，失败就返回错误
+ * 如果是发送给自己的就返回错误
+ * 生成一个消息id并发送到消息池。
+ * 接着就从自己的消息池里面等待消息，如果消息id错误，则返回错误
+ */
 int sys_port_comm_request(uint32_t port, port_msg_t *msg)
 {
     if (BAD_PORT_COMM(port)) {
@@ -241,6 +269,11 @@ int sys_port_comm_request(uint32_t port, port_msg_t *msg)
     return 0;
 }
 
+/**
+ * 从消息池接收一个消息。
+ * 首先验证自己的端口和消息池，错误或者无消息池则返回
+ * 接下来就是从自己的消息池里面获取一个消息，然后返回。
+ */
 int sys_port_comm_receive(int port, port_msg_t *msg)
 {
     task_t *cur = task_current;
@@ -266,6 +299,12 @@ int sys_port_comm_receive(int port, port_msg_t *msg)
     return 0;
 }
 
+/**
+ * 应答一个消息。
+ * 首先会验证自己的端口，失败则返回错误
+ * 接着从消息中获取要应答的端口，如果端口没有找到或者无消息池则返回错误。
+ * 最后把消息放入客户端的消息池。
+ */
 int sys_port_comm_reply(int port, port_msg_t *msg)
 {
     task_t *cur = task_current;

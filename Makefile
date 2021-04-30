@@ -175,10 +175,11 @@ QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 		-boot a \
 		-soundhw sb16 \
 		-serial stdio  \
+		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no \
 		-soundhw pcspk
 
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
-#		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no 
+#		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no \
 
 # qemu启动
 qemu: all

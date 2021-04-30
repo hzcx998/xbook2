@@ -50,6 +50,7 @@ extern bool netserv_echo_main(uint32_t code, lpc_parcel_t data, lpc_parcel_t rep
 
 static void *netserv_thread(void *arg)
 {
+    printf("netserv thread: start:%d\n", pthread_self());
     lpc_echo(LPC_ID_NET, netserv_echo_main);
     return NULL;
 }
@@ -63,10 +64,15 @@ void network_init(void)
     }
     lwip_init_task();
     httpserver_init();
-    socket_examples_init();
+    //socket_examples_init();
 
+    /* 多个线程来检测端口是否有请求，然后并对请求作出应答 */
     pthread_t thread;
     pthread_create(&thread, NULL, netserv_thread, NULL);
+    
+    pthread_t thread1;
+    pthread_create(&thread1, NULL, netserv_thread, NULL);
+    
     while(1) {
         ethernetif_input(&lwip_netif);
         //todo: add your own user code here
