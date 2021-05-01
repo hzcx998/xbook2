@@ -15,6 +15,15 @@
 
 #define BAD_PORT_COMM(port) ((port) >= PORT_COMM_NR)
 
+/* 知名端口号 */
+enum {
+    PORT_COMM_TEST = 0,
+    PORT_COMM_NET,
+    PORT_COMM_GRAPH,
+    PORT_COMM_LAST = 8
+};
+
+
 enum port_comm_flags {
     PORT_COMM_USING = 0X01,
     PORT_COMM_GROUP = 0X02, /* 端口可以和一组进程通信 */
@@ -65,5 +74,8 @@ int sys_port_comm_receive(int port, port_msg_t *msg);
 int sys_port_comm_reply(int port, port_msg_t *msg);
 
 void port_comm_init();
+
+void port_msg_reset(port_msg_t *msg);
+void port_msg_copy_header(port_msg_t *src, port_msg_t *dest);
 
 #endif /* _XBOOK_PORT_COMM_H */

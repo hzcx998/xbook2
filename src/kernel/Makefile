@@ -13,5 +13,4 @@ SRC	+= exception.c
 SRC	+= safety.c
 SRC	+= account.c
 SRC	+= permission.c
-SRC	+= portcomm.c
 SRC	+= config.c

@@ -42,27 +42,6 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
 #endif
 #endif
 
-#ifndef __cplusplus
-#define bool char      
-#define true 1
-#define false 0
-#endif
-
-#ifndef BOOLEAN
-#ifndef __cplusplus
-    #define BOOLEAN char     
-#else
-    #define BOOLEAN _Bool       //C语言下实现Bool
-#endif
-    #ifndef TRUE
-    #define TRUE    1 
-    #endif
-
-    #ifndef FALSE
-    #define FALSE    0 
-    #endif
-#endif
-
 #ifndef MAX_PATH
 #define MAX_PATH    256
 #endif
@@ -81,6 +60,7 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
 
 #define abs(a)    ((a) > 0 ? (a) : -(a))
 
+#include <stdbool.h>
 
 #endif  /*_XBOOK_STDDEF_H*/
 

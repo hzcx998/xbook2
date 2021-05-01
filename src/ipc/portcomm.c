@@ -167,21 +167,21 @@ static port_comm_t *__sys_port_comm_bind(int port, task_t *cur, int flags)
         /* NOTE: 绑定端口时检测端口类型，如果是组端口，那么就可以返回该端口，组端口有引用计数机制 */
         port_comm = port_comm_find(port);
         if (port_comm) {
-            dbgprint("port bind: port %d not first bind.\n", port);
+            //dbgprint("port bind: port %d not first bind.\n", port);
             if (flags & PORT_BIND_GROUP) {  /* 将端口绑定成组 */
                 if (atomic_get(&port_comm->reference) < 1) {
                     errprint("port bind: port %d reference error!\n", port);
                     return NULL;
                 }
                 atomic_inc(&port_comm->reference);
-                dbgprint("port bind: port=%d is group with reference=%d.\n",
-                    port, atomic_get(&port_comm->reference));
+                /*dbgprint("port bind: port=%d is group with reference=%d.\n",
+                    port, atomic_get(&port_comm->reference));*/
             } else {
                 errprint("port bind: port %d had used.\n", port);
                 return NULL;
             }
         } else {    /* 端口没有找到，重新分配该端口 */
-            dbgprint("port bind: port %d first bind.\n", port);
+            //dbgprint("port bind: port %d first bind.\n", port);
             port_comm = port_comm_realloc(port);
             atomic_inc(&port_comm->reference);  /* 分配一个端口成功 */
         }
@@ -254,8 +254,8 @@ int sys_port_comm_bind(int port, int flags)
         if (atomic_get(&port_comm->reference) > 1) {
             /* 当前任务绑定新的端口 */
             TASK_BIND_PORT_COMM(cur, port_comm);
-            dbgprint("port bind: bind port=%d group reference=%d success.\n",
-                port, atomic_get(&port_comm->reference));
+            /*dbgprint("port bind: bind port=%d group reference=%d success.\n",
+                port, atomic_get(&port_comm->reference));*/
             return 0;
         }
     }
@@ -276,7 +276,7 @@ int sys_port_comm_bind(int port, int flags)
     TASK_BIND_PORT_COMM(cur, port_comm);
     spin_unlock_irqrestore(&port_comm->lock, iflags);
 
-    dbgprint("port bind: bind port=%d task pid=%d success.\n", port, cur->pid);
+    //dbgprint("port bind: bind port=%d task pid=%d success.\n", port, cur->pid);
     return 0;
 }
 
@@ -297,13 +297,13 @@ int sys_port_comm_unbind(int port)
 
     atomic_dec(&port_comm->reference);
     if (atomic_get(&port_comm->reference) > 0) {    /* 端口还未释放完，就直接返回 */
-        dbgprint("port unbind: port %d not real unbind, reference=%d\n", 
-            port, atomic_get(&port_comm->reference));
+        /*dbgprint("port unbind: port %d not real unbind, reference=%d\n", 
+            port, atomic_get(&port_comm->reference));*/
         TASK_UNBIND_PORT_COMM(cur, port_comm);
         return 0;
     }
 
-    dbgprint("port unbind: unbind port=%d task pid=%d success.\n", port < 0 ? cur->port_comm->my_port:port, cur->pid);
+    //dbgprint("port unbind: unbind port=%d task pid=%d success.\n", port < 0 ? cur->port_comm->my_port:port, cur->pid);
 
     /* 引用计数为0，需要真正地解除端口绑定 */
     unsigned long iflags;
@@ -489,6 +489,16 @@ void port_comm_threadb(void *arg)
         if (!sys_port_comm_request(0, &smsg))
             infoprint("B request: %d ok\n", smsg.header.id);
     }
+}
+
+void port_msg_reset(port_msg_t *msg)
+{
+    memset(msg, 0, sizeof(port_msg_t));    
+}
+
+void port_msg_copy_header(port_msg_t *src, port_msg_t *dest)
+{
+    memcpy(&dest->header, &src->header, sizeof(port_msg_header_t));
 }
 
 void port_comm_init()
