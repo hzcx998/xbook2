@@ -25,6 +25,7 @@ enum net_client_code {
 
 
 int netif_close(int sock);
-
+int netif_incref(int sock);
+int netif_decref(int sock);
 
 #endif  /* _XBOOK_NET_H */

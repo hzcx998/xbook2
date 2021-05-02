@@ -20,4 +20,6 @@ fsal_t netif_fsal = {
     .close      = netif_close,
     .read       = netif_read,
     .write      = netif_write,
+    .incref     = netif_incref,
+    .decref     = netif_decref,
 };
