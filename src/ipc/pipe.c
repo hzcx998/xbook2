@@ -310,14 +310,14 @@ static int pipeif_write(int handle, void *buf, size_t size)
     return pipe_write(handle, buf, size);
 }
 
-static int pipeif_rd_ioctl(int handle, int cmd, unsigned long arg)
+static int pipeif_rd_ioctl(int handle, int cmd, void *arg)
 {
-    return pipe_ioctl(handle, cmd, arg, 0);
+    return pipe_ioctl(handle, cmd, (unsigned long) arg, 0);
 }
 
-static int pipeif_wr_ioctl(int handle, int cmd, unsigned long arg)
+static int pipeif_wr_ioctl(int handle, int cmd, void *arg)
 {
-    return pipe_ioctl(handle, cmd, arg, 1);
+    return pipe_ioctl(handle, cmd, (unsigned long) arg, 1);
 }
 
 static int pipeif_rd_fcntl(int handle, int cmd, long arg)

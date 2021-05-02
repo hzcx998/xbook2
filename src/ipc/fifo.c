@@ -583,7 +583,7 @@ static int fifoif_write(int idx, void *buf, size_t size)
     return fifo_write(ext->handle, buf, size);
 }
 
-static int fifoif_ioctl(int idx, int cmd, unsigned long arg)
+static int fifoif_ioctl(int idx, int cmd, void *arg)
 {
     if (FSAL_BAD_FILE_IDX(idx))
         return -1;
@@ -591,7 +591,7 @@ static int fifoif_ioctl(int idx, int cmd, unsigned long arg)
     if (FSAL_BAD_FILE(fp)) 
         return -1;
     fifofs_file_extention_t *ext = (fifofs_file_extention_t *) fp->extension;
-    return fifo_ctl(ext->handle, cmd, arg);
+    return fifo_ctl(ext->handle, cmd, (unsigned long) arg);
 }
 
 static int fifoif_fcntl(int handle, int cmd, long arg)

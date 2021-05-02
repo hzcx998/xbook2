@@ -2,16 +2,6 @@
 #include <xbook/fsal.h>
 #include <errno.h>
 
-int netif_read(int sock, void *buf, size_t bytes)
-{
-    return -ENOSYS;
-}
-
-int netif_write(int sock, void *buf, size_t bytes)
-{
-    return -ENOSYS;
-}
-
 /* 网络接口的抽象层 */
 fsal_t netif_fsal = {
     .name       = "netif",
@@ -20,6 +10,8 @@ fsal_t netif_fsal = {
     .close      = netif_close,
     .read       = netif_read,
     .write      = netif_write,
+    .ioctl      = netif_ioctl,
+    .fcntl      = netif_fcntl,
     .incref     = netif_incref,
     .decref     = netif_decref,
 };

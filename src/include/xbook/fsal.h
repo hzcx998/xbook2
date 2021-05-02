@@ -46,7 +46,7 @@ typedef struct {
     int (*rewinddir)(int );
     int (*rmdir)(char *);
     int (*chdir)(char *);
-    int (*ioctl)(int, int, unsigned long);
+    int (*ioctl)(int, int, void *);
     int (*fcntl)(int, int, long);
     int (*fstat)(int, void *);
     int (*access)(const char *, int);

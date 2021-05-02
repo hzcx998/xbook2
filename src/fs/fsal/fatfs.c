@@ -688,16 +688,16 @@ static int fsal_fatfs_chdir(char *path)
     return 0;
 }
 
-static int fsal_fatfs_ioctl(int fd, int cmd, unsigned long arg)
+static int fsal_fatfs_ioctl(int fd, int cmd, void *arg)
 {
     /* NOTICE: FATFS暂时不支持 */
-    return 0;
+    return -ENOSYS;
 }
 
 static int fsal_fatfs_fcntl(int fd, int cmd, long arg)
 {
     /* NOTICE: FATFS暂时不支持 */
-    return 0;
+    return -ENOSYS;
 }
 
 static int fsal_fatfs_access(const char *path, int mode)

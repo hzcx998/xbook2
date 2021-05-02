@@ -519,7 +519,7 @@ static int fsalif_chdir(char *path)
     return fsal->chdir(new_path);
 }
 
-static int fsalif_ioctl(int idx, int cmd, unsigned long arg)
+static int fsalif_ioctl(int idx, int cmd, void *arg)
 {
     if (FSAL_BAD_FILE_IDX(idx))
         return -1;

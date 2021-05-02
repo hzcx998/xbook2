@@ -20,6 +20,9 @@ enum net_client_code {
     NETCALL_getsockname,
     NETCALL_getsockopt,
     NETCALL_setsockopt,
+    NETCALL_read,
+    NETCALL_write,
+    NETCALL_fcntl,
     NETCALL_LAST_CALL,
 };
 

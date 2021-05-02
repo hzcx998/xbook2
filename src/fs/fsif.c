@@ -138,7 +138,7 @@ int sys_ioctl(int fd, int cmd, void *arg)
         return -EINVAL;
     if (!ffd->fsal->ioctl)
         return -ENOSYS;
-    return ffd->fsal->ioctl(ffd->handle, cmd, (unsigned long )arg);
+    return ffd->fsal->ioctl(ffd->handle, cmd, arg);
 }
 
 int sys_fastio(int fd, int cmd, void *arg)
@@ -175,10 +175,14 @@ int sys_fcntl(int fd, int cmd, long arg)
         break;
     case F_GETFL:
         /* TODO: return file flags */
-        return 0;
+        
+        break;
     case F_SETFL:
         /* TODO: set file flags */
-        break;
+        /* set flags real */
+        if (!ffd->fsal->fcntl)
+            return -ENOSYS;
+        return ffd->fsal->fcntl(ffd->handle, cmd, arg);
     default:
         break;
     }

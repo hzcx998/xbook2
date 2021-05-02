@@ -316,6 +316,67 @@ static bool remote_setsockopt(lpc_parcel_t data, lpc_parcel_t reply)
     return true;
 }
 
+static bool remote_write(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    int sock;
+    void *buf;
+    size_t len;
+    lpc_parcel_read_int(data, (uint32_t *)&sock);
+    if (sock < 0) {
+        lpc_parcel_write_int(reply, -1);
+        return false;    
+    }
+    lpc_parcel_read_sequence_buf(data, (void **)&buf, (size_t *)&len);
+    
+    int sndbytes = lwip_write(sock, (const void *)buf, len);
+    if (sndbytes < 0) {
+        lpc_parcel_write_int(reply, sndbytes);
+        return false;
+    }
+    lpc_parcel_write_int(reply, sndbytes);
+    return true;    
+}
+
+static bool remote_read(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    int sock;
+    void *buf;
+    size_t len;
+    lpc_parcel_read_int(data, (uint32_t *)&sock);
+    if (sock < 0) {
+        lpc_parcel_write_int(reply, -1);
+        return false;    
+    }
+    lpc_parcel_read_sequence_buf(data, (void **)&buf, (size_t *)&len);
+    int recvbytes = lwip_read(sock, buf, len);
+    if (recvbytes < 0) {
+        lpc_parcel_write_int(reply, recvbytes);
+        return false;
+    }
+    lpc_parcel_write_int(reply, recvbytes);
+    lpc_parcel_write_sequence(reply, buf, recvbytes);
+    return true;    
+}
+
+static bool remote_fcntl(lpc_parcel_t data, lpc_parcel_t reply)
+{
+    int sock; lpc_parcel_read_int(data, (uint32_t *)&sock);
+    if (sock < 0)
+        return false;
+    int cmd;
+    int val;
+    lpc_parcel_read_int(data, (uint32_t *)&cmd);
+    lpc_parcel_read_int(data, (uint32_t *)&val);
+    
+    int retval = lwip_fcntl(sock, cmd, val);
+    if (retval < 0) {
+        lpc_parcel_write_int(reply, retval);
+        return false;    
+    }
+    lpc_parcel_write_int(reply, retval);
+    return true;    
+}
+
 static lpc_remote_handler_t net_remote_table[] = {
     remote_socket,
     remote_bind,
@@ -333,6 +394,9 @@ static lpc_remote_handler_t net_remote_table[] = {
     remote_getsockname,
     remote_getsockopt,
     remote_setsockopt,
+    remote_read,
+    remote_write,
+    remote_fcntl,
 };
 
 bool netserv_echo_main(uint32_t code, lpc_parcel_t data, lpc_parcel_t reply)

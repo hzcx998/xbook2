@@ -20,6 +20,9 @@ enum net_client_code {
     NETCALL_getsockname,
     NETCALL_getsockopt,
     NETCALL_setsockopt,
+    NETCALL_read,
+    NETCALL_write,
+    NETCALL_fcntl,
     NETCALL_LAST_CALL,
 };
 
@@ -27,5 +30,9 @@ enum net_client_code {
 int netif_close(int sock);
 int netif_incref(int sock);
 int netif_decref(int sock);
+int netif_read(int sock, void *buffer, size_t nbytes);
+int netif_write(int sock, void *buffer, size_t nbytes);
+int netif_ioctl(int sock, int request, void *arg);
+int netif_fcntl(int sock, int cmd, long val);
 
 #endif  /* _XBOOK_NET_H */
