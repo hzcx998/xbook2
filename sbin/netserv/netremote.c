@@ -1,6 +1,6 @@
 
 #include <sys/lpc.h>
-#include <net.client.h>
+#include <netserv.h>
 #include <errno.h>
 #include <lwip/sockets.h>
 

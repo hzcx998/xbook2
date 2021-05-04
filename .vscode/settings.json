@@ -174,7 +174,6 @@
         "signal.h": "c",
         "exception.h": "c",
         "bootmem.h": "c",
-        "netsocket.h": "c",
         "fatfs.h": "c",
         "file.h": "c",
         "istream": "c",

@@ -1,7 +1,6 @@
 #include "test.h"
 
 #include <sys/socket.h>
-//#include <netsocket.h>
 
 #include <arpa/inet.h>
 
@@ -120,10 +119,12 @@ int socket_test3(int argc, char *argv[])
     serv_addr.sin_port = htons(8080);
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_len = sizeof(struct sockaddr_in);
+    printf("binding socket %d\n", fd);
     if (bind(fd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr_in)) < 0) {
         printf("bind socket %d failed!\n", fd);
         return -1;
     }
+    printf("binding socket %d done\n", fd);
     
     memset(&serv_addr, 0, sizeof(struct sockaddr_in));
     serv_addr.sin_addr.s_addr = inet_addr("192.168.0.104");

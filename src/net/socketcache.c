@@ -25,7 +25,7 @@ int socket_cache_destroy(socket_cache_t *socache)
     if (!socache) {
         return -1;
     }
-    if (atomic_get(&socache->reference) < 1) {
+    if (atomic_get(&socache->reference) < 0) {
         warnprint("socket cache: destroy reference %d error!" endl, atomic_get(&socache->reference));
     }
     unsigned long iflags;

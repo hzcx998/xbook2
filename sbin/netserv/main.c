@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <netserv.h>
 #include <sys/portcomm.h>
-#include <netsocket.h>
 #include <stdlib.h>
 #include <string.h>
 

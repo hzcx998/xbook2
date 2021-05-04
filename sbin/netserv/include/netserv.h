@@ -7,6 +7,30 @@
 #include <sys/list.h>
 #include <sys/udev.h>
 #include <types.h>
+#include <sys/lpc.h>
+
+enum net_client_code {
+    NETCALL_socket = FIRST_CALL_CODE,
+    NETCALL_bind,
+    NETCALL_connect,
+    NETCALL_listen,
+    NETCALL_accept,
+    NETCALL_send,
+    NETCALL_recv,
+    NETCALL_close,
+    NETCALL_sendto,
+    NETCALL_recvfrom,
+    NETCALL_ioctl,
+    NETCALL_shutdown,
+    NETCALL_getpeername,
+    NETCALL_getsockname,
+    NETCALL_getsockopt,
+    NETCALL_setsockopt,
+    NETCALL_read,
+    NETCALL_write,
+    NETCALL_fcntl,
+    NETCALL_LAST_CALL,
+};
 
 /* 磁盘驱动器 */
 typedef struct {

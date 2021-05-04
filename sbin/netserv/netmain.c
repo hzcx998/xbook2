@@ -12,7 +12,6 @@
 #include <netserv.h>
 #include <pthread.h>
 #include <sys/lpc.h>
-#include <net.client.h>
 #include <stdlib.h>
 
 #include "socket_udp.h"
