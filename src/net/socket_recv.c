@@ -5,6 +5,7 @@
 #include <xbook/socketcache.h>
 #include <xbook/net.h>
 #include <string.h>
+#include <xbook/fd.h>
 
 static int do_recv(int sock, void *buf, int len, int flags)
 {
@@ -29,10 +30,17 @@ static int do_recv(int sock, void *buf, int len, int flags)
     return retval;
 }
 
-int sys_socket_recv(int sock, void *buf, int len, int flags)
+int sys_socket_recv(int fd, void *buf, int len, int flags)
 {
-    if (sock < 0 || !buf || !len)
+    if (fd < 0 || !buf || !len)
         return -EINVAL;
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd)) {
+        errprint("%s: fd %d err!\n", __func__, fd);
+        return -EINVAL;
+    }
+    int sock = ffd->handle;
+    
     socket_cache_t *socache = socket_cache_find(sock);
     if (!socache) {
         errprint("%s: find socket cache for sock %d error!\n", __func__, sock);            

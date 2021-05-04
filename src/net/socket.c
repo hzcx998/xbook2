@@ -53,7 +53,7 @@ static int do_socket(int domain, int type, int protocol)
     return retval;
 }
 
-static int do_close(int sock)
+int do_socket_close(int sock)
 {
     lpc_parcel_t parcel = lpc_parcel_get();
     if (!parcel) {
@@ -74,33 +74,23 @@ int sys_socket(int domain, int type, int protocol)
 {
     /* TODO: 检测参数 */
 
-    fsal_file_t *fp = fsal_file_alloc();
-    if (fp == NULL) {
-        errprint("%s: alloc file struct failed!\n", __func__);
-        return -ENOMEM;
-    }
-
     dbgprint("call sys_socket: domain=%d type=%d protocol=%d\n", domain, type, protocol);
     int sock = do_socket(domain, type, protocol);
     dbgprint("do socket: get socket=%d\n", sock);
     if (sock < 0) {
         errprint("sys socket: get socket=%d error!\n", sock);
-        fsal_file_free(fp);
         return -ENOMEM;
     }
     socket_cache_t *socache = socket_cache_create(sock);
     if (!socache) {
         errprint("sys socket: create socket cache for sock %d error!\n", sock);        
-        fsal_file_free(fp);
-        do_close(sock);
+        do_socket_close(sock);
         return -ENOMEM;
     }
-
     int fd = local_fd_install(sock, FILE_FD_SOCKET);
     if (fd < 0) {
-        fsal_file_free(fp);
         socket_cache_destroy(socache);
-        do_close(sock);
+        do_socket_close(sock);
         return -ENOMEM;
     }
     return fd;
@@ -125,7 +115,7 @@ int netif_close(int sock)
             sock, atomic_get(&socache->reference));            
         return 0;
     }
-    int retval = do_close(sock);
+    int retval = do_socket_close(sock);
     if (retval < 0) {
         errprint("netif close: do close sock %d failed!\n", sock);
         return -1;

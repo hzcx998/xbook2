@@ -4,6 +4,7 @@
 #include <sys/lpc.h>
 #include <xbook/socketcache.h>
 #include <xbook/net.h>
+#include <xbook/fd.h>
 
 static int do_connect(int sock, struct sockaddr *serv_addr, int addrlen)
 {
@@ -23,10 +24,17 @@ static int do_connect(int sock, struct sockaddr *serv_addr, int addrlen)
     return retval;
 }
 
-int sys_socket_connect(int sock, struct sockaddr *serv_addr, int addrlen)
+int sys_socket_connect(int fd, struct sockaddr *serv_addr, int addrlen)
 {
-    if (sock < 0 || !serv_addr)
+    if (fd < 0 || !serv_addr)
         return -EINVAL;
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd)) {
+        errprint("%s: fd %d err!\n", __func__, fd);
+        return -EINVAL;
+    }
+    int sock = ffd->handle;
+    
     socket_cache_t *socache = socket_cache_find(sock);
     if (!socache) {
         errprint("%s: find socket cache for sock %d error!\n", __func__, sock);            

@@ -24,7 +24,8 @@ int socket_test(int argc, char *argv[])
     servaddr.sin_family = AF_INET; 
     servaddr.sin_port =htons(8080); 
     servaddr.sin_addr.s_addr = inet_addr("192.168.0.104");
-
+    printf("connecting...\n"); 
+    
     if( connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0)
     { 
         printf("connect error: %s(errno: %d)\n",strerror(errno),errno); 
