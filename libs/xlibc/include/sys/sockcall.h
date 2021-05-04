@@ -35,7 +35,77 @@ typedef union {
         int sock;
         struct sockaddr *my_addr;
         int addrlen;
-    } net_bind;
+    } bind;
+    struct {
+        int sock;
+        struct sockaddr *serv_addr;
+        int addrlen;
+    } connect;
+    struct {
+        int sock;
+        struct sockaddr *addr;
+        socklen_t *addrlen;
+    } accept;
+    struct {
+        int sock;
+        int backlog;
+    } listen;
+    struct {
+        int sock;
+        void *buf;
+        int len;
+        int flags;
+    } recv;
+    struct {
+        int sock;
+        void *buf;
+        int len;
+        unsigned int flags;
+        struct sockaddr *from;
+        socklen_t *fromlen;
+    } recvfrom;
+    struct {
+        int sock;
+        const void *buf;
+        int len;
+        int flags;
+    } send;
+    struct {
+        int sock;
+        const void *buf;
+        int len;
+        unsigned int flags;
+        const struct sockaddr *to;
+        socklen_t tolen;
+    } sendto;
+    struct {
+        int sock;
+        int how;
+    } shutdown;
+    struct {
+        int sock;
+        struct sockaddr *serv_addr;
+        socklen_t *addrlen;
+    } getpeername;
+    struct {
+        int sock;
+        struct sockaddr *my_addr;
+        socklen_t *addrlen;
+    } getsockname;
+    struct {
+        int sock;
+        int level;
+        int optname;
+        void *optval;
+        socklen_t *optlen;
+    } getsockopt;
+    struct {
+        int sock;
+        int level;
+        int optname;
+        const void *optval;
+        socklen_t optlen;
+    } setsockopt;
 } sock_param_t;
 
 int sockcall(int sockop, sock_param_t *param);

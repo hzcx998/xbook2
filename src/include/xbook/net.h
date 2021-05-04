@@ -2,6 +2,7 @@
 #define _XBOOK_NET_H
 
 #include <sys/lpc.h>
+#include <sys/socket.h>
 
 enum net_client_code {
     NETCALL_socket = FIRST_CALL_CODE,

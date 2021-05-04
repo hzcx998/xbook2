@@ -1,7 +1,7 @@
 #include "test.h"
 
-// #include <sys/socket.h>
-#include <netsocket.h>
+#include <sys/socket.h>
+//#include <netsocket.h>
 
 #include <arpa/inet.h>
 
@@ -12,7 +12,7 @@ int socket_test(int argc, char *argv[])
     char sendline[4096]; 
     struct sockaddr_in servaddr; 
     
-    if( (sockfd = net_socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    if( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     { 
         printf("create socket error: %s(errno: %d)\n", strerror(errno),errno);
         exit(0); 
@@ -25,25 +25,25 @@ int socket_test(int argc, char *argv[])
     servaddr.sin_port =htons(8080); 
     servaddr.sin_addr.s_addr = inet_addr("192.168.0.104");
 
-    if( net_connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0)
+    if( connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0)
     { 
         printf("connect error: %s(errno: %d)\n",strerror(errno),errno); 
         exit(0); 
     } 
     printf("send msg to server: \n"); 
     strcpy(sendline, "helllo!\n");
-    if( net_send(sockfd, sendline, strlen(sendline), 0) < 0) 
+    if( send(sockfd, sendline, strlen(sendline), 0) < 0) 
     { 
         printf("send msg error: %s(errno: %d)\n", strerror(errno), errno);
      exit(0); 
     } 
     memset(sendline, 0, 4096);
-    if (net_recv(sockfd, sendline, 256, 0) < 0) {
+    if (recv(sockfd, sendline, 256, 0) < 0) {
         printf("recv msg error: %s(errno: %d)\n", strerror(errno), errno);
         exit(0); 
     }
     printf("recv: %s\n", sendline);
-    net_close(sockfd); 
+    close(sockfd); 
     exit(0);
     return 0;
 }
@@ -53,7 +53,7 @@ int socket_test2(int argc, char *argv[])
     printf("socket2 test start!\n");
         
     int err;
-    int my_socke = net_socket(AF_INET, SOCK_STREAM, 0);
+    int my_socke = socket(AF_INET, SOCK_STREAM, 0);
     if (my_socke < 0) {
         printf("create socket failed!\n");
         return -1;
@@ -65,13 +65,13 @@ int socket_test2(int argc, char *argv[])
     myaddr.sin_port = htons(8080);
     myaddr.sin_family = AF_INET;
     
-    err = net_bind(my_socke, (struct sockaddr *) &myaddr, sizeof(struct sockaddr));
+    err = bind(my_socke, (struct sockaddr *) &myaddr, sizeof(struct sockaddr));
     if (err < 0) {
         printf("socket bind failed!\n");
         return -1;
     }
 
-    err = net_listen(my_socke, 5);
+    err = listen(my_socke, 5);
     if (err < 0) {
         printf("socket listen failed!\n");
         return -1;
@@ -81,18 +81,18 @@ int socket_test2(int argc, char *argv[])
     int client_sock;
     int count = 0;
     while (count < 3) {
-        client_sock = net_accept(my_socke, NULL, NULL);
+        client_sock = accept(my_socke, NULL, NULL);
         printf("accept %d done!\n", client_sock);
         if (client_sock >= 0) {
             char buf[512];
             memset(buf, 0, 512);
-            net_recv(client_sock, buf, 512, 0);
+            recv(client_sock, buf, 512, 0);
             printf("recv done %s!\n", buf);
             
-            net_send(client_sock, buf, strlen(buf), 0);
+            send(client_sock, buf, strlen(buf), 0);
             printf("send done!\n");
 
-            net_close(client_sock);
+            close(client_sock);
             count++;
         }
     }
@@ -105,7 +105,7 @@ int socket_test3(int argc, char *argv[])
 {
     printf("socket3 test start!\n");
     /* udp连接 */
-    int fd = net_socket(AF_INET, SOCK_DGRAM, 0);
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd < 0) {
         printf("create socket failed!\n");
         return -1;
@@ -119,7 +119,10 @@ int socket_test3(int argc, char *argv[])
     serv_addr.sin_port = htons(8080);
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_len = sizeof(struct sockaddr_in);
-    net_bind(fd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr_in));
+    if (bind(fd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr_in)) < 0) {
+        printf("bind socket %d failed!\n", fd);
+        return -1;
+    }
     
     memset(&serv_addr, 0, sizeof(struct sockaddr_in));
     serv_addr.sin_addr.s_addr = inet_addr("192.168.0.104");
@@ -134,7 +137,7 @@ int socket_test3(int argc, char *argv[])
     
     while (1) {
         char buf[BUF_LEN] = {0};
-        net_recvfrom(fd, buf, BUF_LEN, 0, &src, &srclen);
+        recvfrom(fd, buf, BUF_LEN, 0, &src, &srclen);
         printf("recvfrom: %s\n", buf);
         
         if (!strcmp(buf, "quit")) {
@@ -142,9 +145,9 @@ int socket_test3(int argc, char *argv[])
         }
 
         printf("sendto: %s\n", sndbuf);
-        if (net_sendto(fd, sndbuf, strlen(sndbuf), 0, (struct sockaddr *)&src, srclen) < 0)
+        if (sendto(fd, sndbuf, strlen(sndbuf), 0, (struct sockaddr *)&src, srclen) < 0)
             fprintf(stderr, "sendto: error\n");
     }
-    net_close(fd);
+    close(fd);
 }
 

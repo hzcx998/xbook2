@@ -280,26 +280,26 @@ struct _sockfd_set {
 };
 
 int socket(int domain, int type, int protocol);
+int bind(int sockfd, struct sockaddr *my_addr, int addrlen);
+int connect(int sockfd, struct sockaddr *serv_addr, int addrlen);
+int listen(int sockfd, int backlog);
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int send(int sockfd, const void *buf, int len, int flags);
+int recv(int sockfd, void *buf, int len, int flags);
+int sendto(int sockfd, const void *buf, int len, unsigned int flags,
+    const struct sockaddr *to, socklen_t tolen);
+int recvfrom(int sockfd, void *buf, int len, unsigned int flags,
+    struct sockaddr *from, socklen_t *fromlen);
+int shutdown(int sockfd, int how);
+int getpeername(int sockfd, struct sockaddr *serv_addr, socklen_t *addrlen);
+int getsockname(int sockfd, struct sockaddr *my_addr, socklen_t *addrlen);
+int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
+int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 
 /*
-int bind(int sock, struct sockaddr *my_addr, int addrlen);
-int connect(int sock, struct sockaddr *serv_addr, int addrlen);
-int listen(int sock, int backlog);
-int accept(int sock, struct sockaddr *addr, socklen_t *addrlen);
-int send(int sock, const void *buf, int len, int flags);
-int recv(int sock, void *buf, int len, int flags);
-int sendto(int sock, const void *buf, int len, unsigned int flags,
-    const struct sockaddr *to, socklen_t tolen);
-int recvfrom(int sock, void *buf, int len, unsigned int flags,
-    struct sockaddr *from, socklen_t *fromlen);
-int close(int sock);
-int ioctl(int sock, int request, void *arg);
-int shutdown(int sock, int how);
-int getpeername(int sock, struct sockaddr *serv_addr, socklen_t *addrlen);
-int getsockname(int sock, struct sockaddr *my_addr, socklen_t *addrlen);
-int getsockopt(int sock, int level, int optname, void *optval, socklen_t *optlen);
-int setsockopt(int sock, int level, int optname, const void *optval, socklen_t optlen);
+TODO: socketpir, sendmsg, recvmsg
 */
+
 #ifdef __cplusplus
 }
 #endif
