@@ -4,19 +4,15 @@
 
 #include <stdint.h>
 #include <types.h>
+#include <netinet/in.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-uint32_t htonl(uint32_t);
-uint16_t htons(uint16_t);
-uint32_t ntohl(uint32_t);
-uint16_t ntohs(uint16_t);
-
 /** For compatibility with BSD code */
 struct in_addr {
-  u32_t s_addr;
+  in_addr_t s_addr;
 };
 
 /** 255.255.255.255 */
@@ -73,6 +69,9 @@ struct in_addr {
 #define inet_aton(cp, addr)   ipaddr_aton(cp, (ip_addr_t*)addr)
 #define inet_ntoa(addr)       ipaddr_ntoa((ip_addr_t*)&(addr))
 #define inet_ntoa_r(addr, buf, buflen) ipaddr_ntoa_r((ip_addr_t*)&(addr), buf, buflen)
+
+int inet_pton(int family, const char *strptr, void *addrptr);
+const char *inet_ntop(int family, const void *addrptr, char *strptr, size_t len);
 
 #ifdef __cplusplus
 }

@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 #define MAXLINE 4096
 int socket_test(int argc, char *argv[])
@@ -133,7 +134,6 @@ int socket_test3(int argc, char *argv[])
     serv_addr.sin_len = sizeof(struct sockaddr_in);
     
     struct sockaddr src;
-    socklen_t len = sizeof(struct sockaddr_in);
     socklen_t srclen;
     char *sndbuf = "hello! Test!\n";
     
@@ -151,5 +151,37 @@ int socket_test3(int argc, char *argv[])
             fprintf(stderr, "sendto: error\n");
     }
     close(fd);
+    return 0;
 }
 
+int socket_test4(int argc, char *argv[])
+{
+    printf("socket4 test start!\n");
+    
+    /* 地址转换函数测试 */
+    printf("htonl: %x -> %x\n", 0x1234abef, htonl(0x1234abef));
+    printf("htons: %x -> %x\n", 0x1234, htons(0x1234));
+    printf("ntohl: %x -> %x\n", 0x1234abef, ntohl(0x1234abef));
+    printf("ntohs: %x -> %x\n", 0x1234, ntohs(0x1234));
+    
+    struct in_addr inp;
+    inp.s_addr = inet_addr("192.168.0.1");
+    printf("inet_addr: %s -> %x\n", "192.168.0.1", inp.s_addr);
+    printf("inet_ntoa: %x -> %s\n", inp.s_addr, inet_ntoa(inp));
+
+    inet_aton("127.0.0.1", &inp);
+    printf("inet_aton: %s -> %x\n", "127.0.0.1", inp.s_addr);
+    printf("inet_ntoa: %x -> %s\n", inp.s_addr, inet_ntoa(inp));
+
+    
+    const char *ip = "127.0.0.1";
+    struct sockaddr_in address;
+    address.sin_port = htons(8080);//little to big
+    inet_pton(AF_INET, ip, &address.sin_addr);
+    printf("inet_pton: %s -> %x\n", ip, address.sin_addr);
+
+    char dest[100] ;
+    inet_ntop(AF_INET, &address.sin_addr,dest,100);
+    printf("inet_ntop: %x -> %s\n", address.sin_addr, dest);
+    return 0;
+}

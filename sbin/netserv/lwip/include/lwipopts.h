@@ -63,4 +63,11 @@
 
 #define LWIP_SO_RCVTIMEO 1
 
+/* enable loopback */
+#define LWIP_NETIF_LOOPBACK 1
+
+#define LWIP_HAVE_LOOPIF 1
+
+#define LWIP_LOOPBACK_MAX_PBUFS 4
+
 #endif /* __LWIPOPTS_H__ */

@@ -26,6 +26,7 @@ testfunc_t test_table[] = {
     {"socket", socket_test},
     {"socket2", socket_test2},
     {"socket3", socket_test3},
+    {"socket4", socket_test4},
     {"backtrace", backtrace_test},
     {"video", video_test},
     {"signal", signal_test},
