@@ -1,3 +1,5 @@
+sinclude localenv.mk
+
 MKDIR		:=	mkdir -p
 RMDIR		:=	rmdir -p
 CP			:=	cp -af
@@ -5,6 +7,8 @@ RM			:=	rm -rf
 CD			:=	cd
 MV			:=	mv
 FIND		:=	find
+
+CROSS_COMPILE 	?=
 
 # System environment variable.
 ifeq ($(OS),Windows_NT)
@@ -58,14 +62,6 @@ ECHO_OUTPUT	:=\e[35mOUTPUT\e[0m
 endif
 
 export ECHO_RM ECHO_CC ECHO_CXX ECHO_AS ECHO_LD ECHO_AR ECHO_OUTPUT ECHO_HOSTCC
-
-
-ifeq ($(shell uname),Darwin)
-	# MacOS 
-	CROSS_COMPILE	?= i386-elf-
-else
-	CROSS_COMPILE	?=
-endif
 
 # Make variables (CC, etc...)
 AS			:=	$(CROSS_COMPILE)gcc -x assembler-with-cpp

@@ -1,6 +1,6 @@
 # MIT License
 # Copyright (c) 2020 Jason Hu, Zhu Yu
-all:
+sinclude scripts/localenv.mk
 
 # tools
 MAKE		= make
@@ -13,22 +13,44 @@ else
 	FATFS_BIN		:= $(FATFS_DIR)/fatfs
 endif
 
+# host tools
 TRUNC		= truncate
 RM			= rm
 DD			= dd
 MKDIR		= mkdir
-OBJDUMP		= objdump
+
+# arch tools
+OBJDUMP		= $(CROSS_COMPILE)objdump
 
 # virtual machine
-QEMU 		= qemu-system-i386
+QEMUPREFIX	:= qemu-system-
 
-# images and rom
+# rom
+ROM_DIR		= develop/rom
+
 IMAGE_DIR	= develop/image
+
+# environment dir
+
+LIBS_DIR	= libs
+SBIN_DIR	= sbin
+BIN_DIR		= bin
+
+# arch dir
+KERNSRC		= ./src
+ARCH		= $(KERNSRC)/arch/$(ENV_ARCH)
+
+ifeq ($(ENV_MACH), mach-i386) # x86-i386
+QEMU 		:= $(QEMUPREFIX)i386
+# kernel boot binary
+BOOT_BIN 	= $(ARCH)/$(ENV_MACH)/boot/boot.bin
+LOADER_BIN 	= $(ARCH)/$(ENV_MACH)/boot/loader.bin
+SETUP_BIN 	= $(ARCH)/$(ENV_MACH)/boot/setup.bin
+
+# images 
 FLOPPYA_IMG	= $(IMAGE_DIR)/a.img
 HDA_IMG		= $(IMAGE_DIR)/c.img
 HDB_IMG		= $(IMAGE_DIR)/d.img
-ROM_DIR		= develop/rom
-
 BOOT_DISK	= $(FLOPPYA_IMG)
 FS_DISK		= $(HDB_IMG)
 
@@ -37,13 +59,7 @@ FLOPPYA_SZ	= 1474560  # 1.44 MB
 HDA_SZ		= 33554432 # 32 MB
 HDB_SZ		= 134217728 # 128 M
 
-# environment dir
-
-LIBS_DIR	= libs
-SBIN_DIR	= sbin
-BIN_DIR		= bin
-
-#kernel disk
+#kernel disk offset
 LOADER_OFF 	= 2
 LOADER_CNTS = 8
 
@@ -52,16 +68,7 @@ SETUP_CNTS 	= 90
 
 KERNEL_OFF 	= 100
 KERNEL_CNTS	= 1024		# assume 512kb 
-
-# arch dir
-
-KERNSRC		= ./src
-ARCH		= $(KERNSRC)/arch/x86
-
-# kernel boot binary
-BOOT_BIN 	= $(ARCH)/boot/boot.bin
-LOADER_BIN 	= $(ARCH)/boot/loader.bin
-SETUP_BIN 	= $(ARCH)/boot/setup.bin
+endif # x86-i386
 
 # kernel file
 KERNEL_ELF 	= $(KERNSRC)/kernel.elf
@@ -70,11 +77,7 @@ KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 .PHONY: all kernel build debuild qemu qemudbg user user_clean dump
 
 # 默认所有动作，编译内核后，把引导、内核、init服务、文件服务和rom文件写入磁盘
-all : kernel 
-	$(DD) if=$(BOOT_BIN) of=$(BOOT_DISK) bs=512 count=1 conv=notrunc
-	$(DD) if=$(LOADER_BIN) of=$(BOOT_DISK) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
-	$(DD) if=$(SETUP_BIN) of=$(BOOT_DISK) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
-	$(DD) if=$(KERNEL_ELF) of=$(BOOT_DISK) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
+all : kernimg
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 
 # run启动虚拟机
@@ -87,14 +90,18 @@ kernel:
 clean:
 	@$(MAKE) -s -C $(KERNSRC) clean
 
+kernimg: kernel
+ifeq ($(ENV_MACH), mach-i386)
+	$(DD) if=$(BOOT_BIN) of=$(BOOT_DISK) bs=512 count=1 conv=notrunc
+	$(DD) if=$(LOADER_BIN) of=$(BOOT_DISK) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
+	$(DD) if=$(SETUP_BIN) of=$(BOOT_DISK) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
+	$(DD) if=$(KERNEL_ELF) of=$(BOOT_DISK) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
+endif
+
 # 构建环境。镜像>工具>环境>rom
-build: 
-	-$(MKDIR) $(IMAGE_DIR)
+build: buildimg
 	-$(MKDIR) $(ROM_DIR)/bin
-	-$(MKDIR) $(ROM_DIR)/sbin
-	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
-	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
-	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG) 
+	-$(MKDIR) $(ROM_DIR)/sbin 
 ifeq ($(OS),Windows_NT)
 else
 	$(MAKE) -s -C  $(FATFS_DIR)
@@ -103,6 +110,14 @@ endif
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
+
+buildimg:
+	-$(MKDIR) $(IMAGE_DIR)
+ifeq ($(ENV_MACH), mach-i386)
+	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
+	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
+	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG)
+endif
 
 # 清理环境。
 debuild: 
@@ -163,19 +178,22 @@ QEMU_KVM := -enable-kvm
 endif
 QEMU_KVM := # no virutal
 
-QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
-		-name "XBOOK Development Platform for x86" \
-		-fda $(FLOPPYA_IMG) \
-		-drive id=disk0,file=$(HDA_IMG),if=none \
-		-drive id=disk1,file=$(HDB_IMG),if=none \
-		-device ahci,id=ahci \
-		-device ide-drive,drive=disk0,bus=ahci.0 \
-		-device ide-drive,drive=disk1,bus=ahci.1 \
-		-rtc base=localtime \
-		-boot a \
-		-soundhw sb16 \
-		-serial stdio  \
-		-soundhw pcspk
+QEMU_ARGUMENT	:= 	-name "Xbook2 Development Platform for $(ENV_ARCH)-$(ENV_MACH)"
+QEMU_ARGUMENT	+= 	-m 512m $(QEMU_KVM)
+QEMU_ARGUMENT	+= 	-rtc base=localtime \
+					-serial stdio
+QEMU_ARGUMENT	+= 	-soundhw sb16 \
+					-soundhw pcspk
+# Disk config
+ifeq ($(ENV_MACH), mach-i386)
+QEMU_ARGUMENT	+= 	-fda $(FLOPPYA_IMG) \
+					-drive id=disk0,file=$(HDA_IMG),if=none \
+					-drive id=disk1,file=$(HDB_IMG),if=none \
+					-device ahci,id=ahci \
+					-device ide-drive,drive=disk0,bus=ahci.0 \
+					-device ide-drive,drive=disk1,bus=ahci.1 \
+					-boot a
+endif
 
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 #		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no \

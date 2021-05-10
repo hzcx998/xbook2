@@ -1169,7 +1169,7 @@ static int devif_write(int idx, void *buf, size_t size)
     return device_write(ext->handle, buf, size, DISKOFF_MAX);
 }
 
-static int devif_ioctl(int idx, int cmd, unsigned long arg)
+static int devif_ioctl(int idx, int cmd, void *arg)
 {
     if (FSAL_BAD_FILE_IDX(idx))
         return -1;
@@ -1177,7 +1177,7 @@ static int devif_ioctl(int idx, int cmd, unsigned long arg)
     if (FSAL_BAD_FILE(fp)) 
         return -1;
     devfs_file_extention_t *ext = (devfs_file_extention_t *) fp->extension;
-    return device_devctl(ext->handle, cmd, arg);
+    return device_devctl(ext->handle, cmd, (unsigned long) arg);
 }
 
 static int devif_lseek(int idx, off_t off, int whence)
