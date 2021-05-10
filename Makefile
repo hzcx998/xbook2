@@ -21,6 +21,7 @@ MKDIR		= mkdir
 
 # arch tools
 OBJDUMP		= $(CROSS_COMPILE)objdump
+GDB			= $(CROSS_COMPILE)gdb
 
 # virtual machine
 QEMUPREFIX	:= qemu-system-
@@ -40,38 +41,53 @@ BIN_DIR		= bin
 KERNSRC		= ./src
 ARCH		= $(KERNSRC)/arch/$(ENV_ARCH)
 
-ifeq ($(ENV_MACH), mach-i386) # x86-i386
-QEMU 		:= $(QEMUPREFIX)i386
-# kernel boot binary
-BOOT_BIN 	= $(ARCH)/$(ENV_MACH)/boot/boot.bin
-LOADER_BIN 	= $(ARCH)/$(ENV_MACH)/boot/loader.bin
-SETUP_BIN 	= $(ARCH)/$(ENV_MACH)/boot/setup.bin
+ifeq ($(ENV_ARCH),x86) # x86-i386
+ifeq ($(ENV_MACH),mach-i386) # x86-i386
+	QEMU 		:= $(QEMUPREFIX)i386
+	# kernel boot binary
+	BOOT_BIN 	= $(ARCH)/$(ENV_MACH)/boot/boot.bin
+	LOADER_BIN 	= $(ARCH)/$(ENV_MACH)/boot/loader.bin
+	SETUP_BIN 	= $(ARCH)/$(ENV_MACH)/boot/setup.bin
 
-# images 
-FLOPPYA_IMG	= $(IMAGE_DIR)/a.img
-HDA_IMG		= $(IMAGE_DIR)/c.img
-HDB_IMG		= $(IMAGE_DIR)/d.img
-BOOT_DISK	= $(FLOPPYA_IMG)
-FS_DISK		= $(HDB_IMG)
+	# images 
+	FLOPPYA_IMG	= $(IMAGE_DIR)/a.img
+	HDA_IMG		= $(IMAGE_DIR)/c.img
+	HDB_IMG		= $(IMAGE_DIR)/d.img
+	BOOT_DISK	= $(FLOPPYA_IMG)
+	FS_DISK		= $(HDB_IMG)
 
-# image size
-FLOPPYA_SZ	= 1474560  # 1.44 MB
-HDA_SZ		= 33554432 # 32 MB
-HDB_SZ		= 134217728 # 128 M
+	# image size
+	FLOPPYA_SZ	= 1474560  # 1.44 MB
+	HDA_SZ		= 33554432 # 32 MB
+	HDB_SZ		= 134217728 # 128 M
 
-#kernel disk offset
-LOADER_OFF 	= 2
-LOADER_CNTS = 8
+	#kernel disk offset
+	LOADER_OFF 	= 2
+	LOADER_CNTS = 8
 
-SETUP_OFF 	= 10
-SETUP_CNTS 	= 90
+	SETUP_OFF 	= 10
+	SETUP_CNTS 	= 90
 
-KERNEL_OFF 	= 100
-KERNEL_CNTS	= 1024		# assume 512kb 
-endif # x86-i386
+	KERNEL_OFF 	= 100
+	KERNEL_CNTS	= 1024		# assume 512kb 
+else
+
+endif # ($(ENV_MACH),mach-i386)
+else ifeq ($(ENV_ARCH),riscv64) # riscv64
+ifeq ($(ENV_MACH),mach-qemu) # riscv64 qemu
+	QEMU 		:= $(QEMUPREFIX)riscv64
+	RUSTSBI 	= $(ARCH)/$(ENV_MACH)/boot/SBI/sbi-qemu
+
+	HDA_SZ		= 134217728 # 128 M
+
+	HDA_IMG		= $(IMAGE_DIR)/c.img
+	FS_DISK		= $(HDA_IMG)
+endif # ($(ENV_MACH),mach-qemu)
+endif # ($(ENV_ARCH),riscv64)
 
 # kernel file
 KERNEL_ELF 	= $(KERNSRC)/kernel.elf
+KERNEL_BIN 	= $(KERNSRC)/kernel
 
 # 参数
 .PHONY: all kernel build debuild qemu qemudbg user user_clean dump
@@ -91,12 +107,18 @@ clean:
 	@$(MAKE) -s -C $(KERNSRC) clean
 
 kernimg: kernel
-ifeq ($(ENV_MACH), mach-i386)
+ifeq ($(ENV_ARCH),x86)
+ifeq ($(ENV_MACH),mach-i386)
 	$(DD) if=$(BOOT_BIN) of=$(BOOT_DISK) bs=512 count=1 conv=notrunc
 	$(DD) if=$(LOADER_BIN) of=$(BOOT_DISK) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
 	$(DD) if=$(SETUP_BIN) of=$(BOOT_DISK) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
 	$(DD) if=$(KERNEL_ELF) of=$(BOOT_DISK) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
-endif
+endif # ($(ENV_MACH),mach-i386)
+else ifeq ($(ENV_ARCH),riscv64)
+ifeq ($(ENV_MACH),mach-qemu)
+# 将rustsbi和内核写入内核镜像
+endif # ($(ENV_MACH),mach-qemu)
+endif # ($(ENV_ARCH),riscv64)
 
 # 构建环境。镜像>工具>环境>rom
 build: buildimg
@@ -105,19 +127,29 @@ build: buildimg
 ifeq ($(OS),Windows_NT)
 else
 	$(MAKE) -s -C  $(FATFS_DIR)
-endif
+endif # ($(OS),Windows_NT)s
+ifeq ($(ENV_ARCH),x86)
+ifeq ($(ENV_MACH),mach-i386)
 	$(MAKE) -s -C  $(LIBS_DIR)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
+endif # ($(ENV_MACH),mach-i386)
+endif # ($(ENV_ARCH),x86)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 
 buildimg:
 	-$(MKDIR) $(IMAGE_DIR)
-ifeq ($(ENV_MACH), mach-i386)
+ifeq ($(ENV_ARCH),x86)
+ifeq ($(ENV_MACH),mach-i386)
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG)
-endif
+endif # ($(ENV_MACH),mach-i386)
+else ifeq ($(ENV_ARCH),riscv64)
+ifeq ($(ENV_MACH),mach-qemu)
+	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG) # fs disk
+endif # ($(ENV_MACH),mach-qemu)
+endif # ($(ENV_ARCH),x86)
 
 # 清理环境。
 debuild: 
@@ -125,7 +157,7 @@ debuild:
 ifeq ($(OS),Windows_NT)
 else
 	$(MAKE) -s -C  $(FATFS_DIR) clean
-endif
+endif # ($(OS),Windows_NT)
 	$(MAKE) -s -C  $(LIBS_DIR) clean
 	$(MAKE) -s -C  $(SBIN_DIR) clean
 	$(MAKE) -s -C  $(BIN_DIR) clean
@@ -145,8 +177,13 @@ user_clean:
 	$(MAKE) -s -C  $(BIN_DIR) clean
 
 dump:
+ifeq ($(ENV_ARCH),x86)
+ifeq ($(ENV_MACH),mach-i386)
 	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > $(KERNSRC)/kern.dump
-
+endif # ($(ENV_MACH),mach-i386)
+else ifeq ($(ENV_ARCH),riscv64)
+	$(OBJDUMP) -D $(KERNEL_ELF) > $(KERNSRC)/kern.dump
+endif # ($(ENV_ARCH),x86)
 #-hda $(HDA_IMG) -hdb $(HDB_IMG)
 # 网卡配置: 
 #	-net nic,vlan=0,model=rtl8139,macaddr=12:34:56:78:9a:be
@@ -179,13 +216,10 @@ endif
 QEMU_KVM := # no virutal
 
 QEMU_ARGUMENT	:= 	-name "Xbook2 Development Platform for $(ENV_ARCH)-$(ENV_MACH)"
-QEMU_ARGUMENT	+= 	-m 512m $(QEMU_KVM)
-QEMU_ARGUMENT	+= 	-rtc base=localtime \
-					-serial stdio
-QEMU_ARGUMENT	+= 	-soundhw sb16 \
-					-soundhw pcspk
+QEMU_ARGUMENT	+= 	$(QEMU_KVM)
 # Disk config
-ifeq ($(ENV_MACH), mach-i386)
+ifeq ($(ENV_ARCH),x86)
+QEMU_ARGUMENT	+= 	-m 512m 
 QEMU_ARGUMENT	+= 	-fda $(FLOPPYA_IMG) \
 					-drive id=disk0,file=$(HDA_IMG),if=none \
 					-drive id=disk1,file=$(HDB_IMG),if=none \
@@ -193,7 +227,24 @@ QEMU_ARGUMENT	+= 	-fda $(FLOPPYA_IMG) \
 					-device ide-drive,drive=disk0,bus=ahci.0 \
 					-device ide-drive,drive=disk1,bus=ahci.1 \
 					-boot a
-endif
+QEMU_ARGUMENT	+= 	-rtc base=localtime \
+					-serial stdio
+QEMU_ARGUMENT	+= 	-soundhw sb16 \
+					-soundhw pcspk
+else ifeq ($(ENV_ARCH),riscv64)
+# cpus
+ifndef CPUS
+CPUS := 2
+endif # CPUS
+QEMU_ARGUMENT	+= 	-m 8M
+QEMU_ARGUMENT	+= 	-machine virt
+QEMU_ARGUMENT	+= 	-kernel $(KERNEL_ELF)
+QEMU_ARGUMENT	+= 	-nographic
+QEMU_ARGUMENT	+= 	-bios $(RUSTSBI)
+QEMU_ARGUMENT	+= 	-smp $(CPUS)
+QEMU_ARGUMENT 	+= 	-drive file=$(FS_DISK),if=none,format=raw,id=x0 
+QEMU_ARGUMENT 	+= 	-device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
+endif # ($(ENV_ARCH),x86)
 
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 #		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no \
@@ -202,6 +253,11 @@ endif
 qemu: all
 	$(QEMU) $(QEMU_ARGUMENT)
 
+
 # 调试配置：-S -gdb tcp::10001,ipv4
 qemudbg:
 	$(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
+
+# 连接gdb server: target remote localhost:10001
+gdb:
+	$(GDB)

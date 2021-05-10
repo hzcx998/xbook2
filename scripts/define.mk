@@ -1,4 +1,4 @@
-sinclude localenv.mk
+include $(XBUILD_DIR)/localenv.mk
 
 MKDIR		:=	mkdir -p
 RMDIR		:=	rmdir -p

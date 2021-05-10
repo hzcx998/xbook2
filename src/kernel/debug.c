@@ -1,13 +1,10 @@
 #include <xbook/debug.h>
 #include <stdarg.h>
 #include <string.h>
-#include <xbook/spinlock.h>
-#include <xbook/config.h>
+// #include <xbook/spinlock.h>
+#include <arch/debug.h>
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
-#include <arch/debug.h>
-#include <arch/hw.h>
-#include <arch/memory.h>
 #include <stdio.h>
 
 /*
@@ -50,8 +47,9 @@ int keprint_level = DEFAULT_LOG_LEVEL;
 
 int print_gui_console = 0;
 
+#if PRINT_LOCK == 1
 DEFINE_SPIN_LOCK_UNLOCKED(print_spin_lock);
-
+#endif 
 void panic(const char *fmt, ...)
 {
 	char buf[256];
@@ -99,7 +97,9 @@ void debug_putstr(char *str, int count)
 
 int keprint(const char *fmt, ...)
 {
+    #if PRINT_LOCK == 1
     spin_lock(&print_spin_lock);
+    #endif
     int i;
 	char buf[256] = {0,};
 	va_list arg = (va_list)((char*)(&fmt) + 4); /*4是参数fmt所占堆栈中的大小*/
@@ -127,7 +127,9 @@ int keprint(const char *fmt, ...)
             debug_putstr(DEBUG_NONE_COLOR, 4);    
         }
     }
+    #if PRINT_LOCK == 1
 	spin_unlock(&print_spin_lock);
+    #endif
     return i;
 }
 

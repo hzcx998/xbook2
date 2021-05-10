@@ -64,8 +64,8 @@ interrupt_enable:
 	sti
 	ret
 	
-global cpu_do_nohing
-cpu_do_nohing:
+global cpu_do_nothing
+cpu_do_nothing:
 	nop
 	ret
 

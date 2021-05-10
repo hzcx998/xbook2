@@ -1,6 +1,9 @@
 #ifndef _XBOOK_DEBUG_H
 #define _XBOOK_DEBUG_H
 
+/* has lock for print?  */
+#define PRINT_LOCK      0
+
 #define PRINT_EMERG      "<0>"      /* system is unuseable */
 #define PRINT_ERR        "<1>"      /* error condition */
 #define PRINT_WARING     "<2>"      /* waring condition */

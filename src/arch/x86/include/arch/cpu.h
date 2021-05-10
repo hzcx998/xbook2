@@ -10,7 +10,7 @@ void cpu_get_attached_list(cpuid_t *cpu_list, unsigned int *count);
 void cpu_init();
 
 void cpu_do_sleep();
-void cpu_do_nohing(void);
+void cpu_do_nothing(void);
 void cpu_do_udelay(int usec);
 static inline void cpu_do_pause(void)
 {
@@ -27,7 +27,7 @@ static inline void cpu_do_cpuid(unsigned int mop,unsigned int sop,unsigned int *
 }
 
 #define cpu_sleep       cpu_do_sleep
-#define cpu_idle        cpu_do_nohing
+#define cpu_idle        cpu_do_nothing
 #define cpu_pause       cpu_do_pause
 #define udelay          cpu_do_udelay
 
