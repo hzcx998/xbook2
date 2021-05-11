@@ -77,8 +77,7 @@ PTHREAD线程库
     
 2.安装qemu虚拟机：
     Ubuntu/Kali Linux: sudo apt-get install qemu-system-x86
-    Red hat/Fedora/Centos: sudo yum install qemu-system-x86
-    
+    Red hat/Fedora/Centos: sudo yum install qemu-system-x86    
 ```
 
 ## Mac环境搭建
@@ -92,6 +91,9 @@ PTHREAD线程库
 > make build
 > make qemu
 ```
+
+## 温馨提示！
+如果遇到工具链编译链接时出错，可以尝试到[FAQS.md](FAQS.md)文件中寻找解决方案。
 
 ## 编译时build后直接run即可（可加-jn参数多线程编译，n是线程数。）：
 
