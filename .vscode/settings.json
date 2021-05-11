@@ -196,6 +196,7 @@
         "sockcall.h": "c",
         "msgpool.h": "c",
         "stdarg.h": "c",
-        "sbi.h": "c"
+        "sbi.h": "c",
+        "k210_qemu_phymem.h": "c"
     }
 }
