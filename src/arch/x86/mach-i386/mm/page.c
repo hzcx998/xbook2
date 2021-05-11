@@ -361,15 +361,9 @@ unsigned long *kern_page_dir_copy_to()
         (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR), 
         PAGE_SIZE / 2);
     #else
-    #if 0
     memcpy((void *)((unsigned char *)vaddr + PAGE_SIZE / 2), 
         (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR + PAGE_SIZE / 2), 
         PAGE_SIZE / 2);    
-    #else
-    memcpy((void *)((unsigned char *)vaddr), 
-        (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR), 
-        PAGE_SIZE);    
-    #endif
     #endif
 
     // 初始内核页，0-8M
