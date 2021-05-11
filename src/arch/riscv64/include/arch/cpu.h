@@ -5,6 +5,8 @@
 
 #define CPU_NR_MAX  2
 
+void cpu_do_nothing();
+
 #define cpu_idle        cpu_do_nothing
 
 #endif  /* _RISCV64_CPU_H */
