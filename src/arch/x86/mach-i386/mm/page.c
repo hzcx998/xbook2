@@ -352,6 +352,7 @@ unsigned long *kern_page_dir_copy_to()
     interrupt_save_and_disable(flags);
     unsigned long page = page_alloc_normal(1);
     unsigned int *vaddr = (unsigned int *)kern_phy_addr2vir_addr(page);
+    unsigned int *kern_page_vaddr = (unsigned int *)KERN_PAGE_DIR_VIR_ADDR;
     
     memset(vaddr, 0, PAGE_SIZE);
     
@@ -360,10 +361,21 @@ unsigned long *kern_page_dir_copy_to()
         (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR), 
         PAGE_SIZE / 2);
     #else
+    #if 0
     memcpy((void *)((unsigned char *)vaddr + PAGE_SIZE / 2), 
         (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR + PAGE_SIZE / 2), 
         PAGE_SIZE / 2);    
+    #else
+    memcpy((void *)((unsigned char *)vaddr), 
+        (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR), 
+        PAGE_SIZE);    
     #endif
+    #endif
+
+    // 初始内核页，0-8M
+    vaddr[0] = kern_page_vaddr[0];
+    
+    // 页的最后一项是页自己的物理地址
     vaddr[PAGE_TABLE_ENTRY_NR - 1] = page | KERN_PAGE_ATTR;
     interrupt_restore_state(flags);
     return (unsigned long *)vaddr;
@@ -406,17 +418,6 @@ void kern_page_map_early(unsigned int start, unsigned int end)
 			start += PAGE_SIZE;
 		}
 	}
-
-	/* 在开启分页模式之后，我们的内核就运行在高端内存，
-	那么，现在我们不能通过低端内存访问内核，所以，我们在loader
-	中初始化的0~8MB低端内存的映射要取消掉才行。
-	我们把用户内存空间的页目录项都清空 */ 	
-	#if CONFIG_KERN_LOWMEM == 0
-    for (i = 0; i < KERN_PAGE_DIR_ENTRY_OFF; i++) {
-		pdt[i] = 0;
-	}
-    #endif
-
 }
 
 static int do_handle_no_page(unsigned long addr, unsigned long prot)
@@ -479,7 +480,7 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
         }
 		return 0;
 	} else {
-		keprint(PRINT_DEBUG "page: %s: no write protection\n", __func__);
+		keprint(PRINT_DEBUG "page: %s: addr %x no write protection\n", addr, __func__);
 	}
     keprint(PRINT_EMERG "page: %s: page protection!", __func__);
     exception_force_self(EXP_CODE_SEGV);
@@ -565,4 +566,39 @@ int page_do_fault(trap_frame_t *frame)
     }
     do_handle_no_page(addr, space->page_prot);
     return 0;
+}
+
+/* 设置分页模式 */
+void setup_paging()
+{
+    unsigned int *pgdir = (unsigned int *) KERN_PAGE_DIR_PHY_ADDR;
+    unsigned int *pgtbl = (unsigned int *) KERN_PAGE_TABLE_PHY_ADDR;
+    
+    /* clear page dir table */
+    memset(pgdir, 0, PAGE_SIZE);
+
+    unsigned int phy_addr = 0;
+    /* fill page table, 8MB memory */
+    int i;
+    for (i = 0; i < 1024 * 2; i++) {
+        pgtbl[i] = phy_addr | KERN_PAGE_ATTR;
+        phy_addr += PAGE_SIZE;
+    }
+
+    /* fill page dir table, low 8M (0~8M), high 8M(0x80000000~0x80800000) */
+    pgdir[0] = (unsigned int) pgtbl | KERN_PAGE_ATTR;
+    #if KERN_LOWMEN == 0
+    pgdir[512] = (unsigned int) pgtbl | KERN_PAGE_ATTR;
+    #endif
+    pgtbl += 1024;
+    pgdir[1] = (unsigned int) pgtbl | KERN_PAGE_ATTR;
+    #if KERN_LOWMEN == 0
+    pgdir[513] = (unsigned int) pgtbl | KERN_PAGE_ATTR;
+    #endif
+    pgdir[1023] = (unsigned int) pgdir |KERN_PAGE_ATTR;    /* record pgdir self */
+    /* 打开分页模式 */
+    cpu_cr3_write((unsigned int) pgdir);
+    cpu_cr0_write(cpu_cr0_read() | REG_CR0_PG);
+    /* 0-8M物理内存是内核可以直接访问的地址，即使开启分页模式后，内核也可能会访问该地址的数据，
+    不过不用担心，用户不能访问，因为页权限的问题所致 */
 }

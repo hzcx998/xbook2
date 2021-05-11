@@ -91,12 +91,16 @@ void setup_kernel()
     }
 
     entry_point_t entry_point = (entry_point_t)elf_header.e_entry;
+#ifdef DEBUG_SETUP      
+    print_str("kernel entry: \n");
+    print_hex((unsigned int) entry_point);
+#endif
     entry_point();    /* 跳转到入口执行 */
 }
 
 void setup_entry()
 {   
-    setup_paging();
+
     setup_kernel();
     print_str("error: kernel shold never be here!\n");
 }

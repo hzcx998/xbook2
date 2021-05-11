@@ -10,6 +10,9 @@ void gdt_register_get(unsigned int gdtr);
 void idt_register_get(unsigned int idtr);
 void eflags_restore_from(unsigned int eflags);
 
+/* cr0的最高位是分页模式位，1则启动，0则关闭 */
+#define REG_CR0_PG  (1 << 31)
+
 unsigned int cpu_cr0_read(void );
 unsigned int cpu_cr2_read(void );
 unsigned int cpu_cr3_read(void );
