@@ -1,0 +1,9 @@
+lang=nl
+bootlang="lang=nl_BE"
+def_bootlang="nl_BE"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="be"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Brussels"
+fi

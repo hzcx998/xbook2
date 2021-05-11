@@ -1,0 +1,9 @@
+lang=ru
+bootlang="lang=ru_RU"
+def_bootlang="ru_RU"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="ru"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Moscow"
+fi

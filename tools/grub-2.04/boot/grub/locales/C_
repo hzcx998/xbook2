@@ -1,0 +1,9 @@
+lang=C
+bootlang="lang=C_"
+def_bootlang="C_"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="us"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Etc/UTC"
+fi

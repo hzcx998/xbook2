@@ -1,0 +1,9 @@
+lang=hu
+bootlang="lang=hu_HU"
+def_bootlang="hu_HU"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="hu"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Budapest"
+fi

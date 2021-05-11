@@ -1,0 +1,9 @@
+lang=bs
+bootlang="lang=bs_BA"
+def_bootlang="bs_BA"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="ba"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Sarajevo"
+fi

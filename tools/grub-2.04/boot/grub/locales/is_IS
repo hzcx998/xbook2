@@ -1,0 +1,9 @@
+lang=is
+bootlang="lang=is_IS"
+def_bootlang="is_IS"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="is"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Atlantic/Reykjavik"
+fi

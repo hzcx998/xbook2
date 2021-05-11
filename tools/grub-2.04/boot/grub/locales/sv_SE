@@ -1,0 +1,9 @@
+lang=sv
+bootlang="lang=sv_SE"
+def_bootlang="sv_SE"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="se"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Stockholm"
+fi

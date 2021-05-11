@@ -1,0 +1,9 @@
+lang=it
+bootlang="lang=it_CH"
+def_bootlang="it_CH"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="it"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Zurich"
+fi

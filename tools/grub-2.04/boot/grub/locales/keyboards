@@ -1,0 +1,6 @@
+for kk in us ba be bg br by ca ch cz de dk es et fi fr gb gr hr hu ie il is it jp kr latam no pl pt ro ru se si sk tr ua; do
+      menuentry "keytable=${kk}" "${kk}" {def_keyboard="${2}"
+keyboard="keytable=${2}"
+menu_reload
+}
+    done

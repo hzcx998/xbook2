@@ -1,0 +1,9 @@
+lang=cs
+bootlang="lang=cs_CZ"
+def_bootlang="cs_CZ"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="cz"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Prague"
+fi

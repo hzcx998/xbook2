@@ -1,0 +1,9 @@
+lang=en
+bootlang="lang=en_NZ"
+def_bootlang="en_NZ"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="us"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Pacific/Auckland"
+fi

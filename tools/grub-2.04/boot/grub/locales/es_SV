@@ -1,0 +1,9 @@
+lang=es
+bootlang="lang=es_SV"
+def_bootlang="es_SV"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="latam"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="America/El_Salvador"
+fi

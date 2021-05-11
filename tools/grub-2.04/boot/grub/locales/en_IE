@@ -1,0 +1,9 @@
+lang=en
+bootlang="lang=en_IE"
+def_bootlang="en_IE"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="ie"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Dublin"
+fi

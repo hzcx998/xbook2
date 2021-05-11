@@ -1,3 +1,7 @@
+ifneq ($(BOOT_MODE),$(BOOT_GRUB2_MODE))
+	X_CFLAGS += -D$(BOOT_GRUB2_MODE)
+endif
+
 SRC	+= entry.asm
 SRC	+= arch.c
 SRC	+= debug.c

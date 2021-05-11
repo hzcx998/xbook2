@@ -1,0 +1,9 @@
+lang=he
+bootlang="lang=he_IL"
+def_bootlang="he_IL"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="il"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Asia/Jerusalem"
+fi

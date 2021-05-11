@@ -1,0 +1,9 @@
+lang=en
+bootlang="lang=en_AU"
+def_bootlang="en_AU"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="us"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Australia/Sydney"
+fi

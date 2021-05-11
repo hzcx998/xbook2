@@ -1,0 +1,9 @@
+lang=tr
+bootlang="lang=tr_TR"
+def_bootlang="tr_TR"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="tr"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Istanbul"
+fi

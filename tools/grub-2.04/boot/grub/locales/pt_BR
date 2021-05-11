@@ -1,0 +1,9 @@
+lang=pt
+bootlang="lang=pt_BR"
+def_bootlang="pt_BR"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="br"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="America/Sao_Paulo"
+fi

@@ -1,0 +1,9 @@
+lang=en
+bootlang="lang=en_NG"
+def_bootlang="en_NG"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="us"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Africa/Lagos"
+fi

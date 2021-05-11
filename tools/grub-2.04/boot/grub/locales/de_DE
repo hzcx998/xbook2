@@ -1,0 +1,9 @@
+lang=de
+bootlang="lang=de_DE"
+def_bootlang="de_DE"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="de"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Berlin"
+fi

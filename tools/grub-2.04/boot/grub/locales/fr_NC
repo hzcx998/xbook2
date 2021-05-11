@@ -1,0 +1,9 @@
+lang=fr
+bootlang="lang=fr_NC"
+def_bootlang="fr_NC"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="fr"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Pacific/Noumea"
+fi

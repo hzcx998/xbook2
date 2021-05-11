@@ -3,12 +3,12 @@
 
 OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
 OUTPUT_ARCH(i386)
-ENTRY(kernel_start) /* kernel_start is at kernel/arch/x86/entry.asm */
+ENTRY(start) /* start is at boot/xxx/xxx.S */
 
 SECTIONS {
     /* Load the kernel at this address: "." means the current address */
-    /* 
-    if use lower addr: . = 0x00100000;  
+    /*
+    if use lower addr: . = 0x00100000;
     or not use high addr: . = 0x80100000;
     */
     . = 0x00100000;
@@ -36,7 +36,7 @@ SECTIONS {
 		KEEP(*(.exitcall_1.text))
 		PROVIDE(__exitcall_end = .);
 	}
-    
+
     /* data segment */
     .data : {
         . = ALIGN(4);   /* 4 bytes align */

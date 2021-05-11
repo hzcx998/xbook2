@@ -1,0 +1,9 @@
+lang=ja
+bootlang="lang=ja_JP"
+def_bootlang="ja_JP"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="jp"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Asia/Tokyo"
+fi

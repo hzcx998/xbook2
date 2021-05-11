@@ -1,0 +1,9 @@
+lang=nb
+bootlang="lang=nb_NO"
+def_bootlang="nb_NO"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="no"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Oslo"
+fi

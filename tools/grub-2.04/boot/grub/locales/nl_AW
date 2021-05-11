@@ -1,0 +1,9 @@
+lang=nl
+bootlang="lang=nl_AW"
+def_bootlang="nl_AW"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="us"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="America/Aruba"
+fi

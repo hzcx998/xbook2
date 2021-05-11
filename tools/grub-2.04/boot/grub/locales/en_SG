@@ -1,0 +1,9 @@
+lang=en
+bootlang="lang=en_SG"
+def_bootlang="en_SG"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="us"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Asia/Singapore"
+fi

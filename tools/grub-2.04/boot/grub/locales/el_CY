@@ -1,0 +1,9 @@
+lang=el
+bootlang="lang=el_CY"
+def_bootlang="el_CY"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="gr"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Athens"
+fi

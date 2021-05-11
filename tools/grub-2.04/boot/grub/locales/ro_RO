@@ -1,0 +1,9 @@
+lang=ro
+bootlang="lang=ro_RO"
+def_bootlang="ro_RO"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="ro"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Bucharest"
+fi

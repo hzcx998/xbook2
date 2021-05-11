@@ -4,7 +4,7 @@ quiet_cmd_cc_o_c = $(ECHO_CC) $(@:.o=)
 cmd_cc_o_c = $(CC) $(X_CFLAGS) -MD -MF $(@D)/.$(@F).d $(X_CPPFLAGS) -c $< -o $@
 
 quiet_cmd_as_o_S = $(ECHO_AS) $(@:.o=)
-cmd_as_o_S = $(AS) $(X_ASFLAGS) -MD -MF $(@D)/.$(@F).d $(X_CPPFLAGS) -c $< -o $@
+cmd_as_o_S = $(CC) $(X_CFLAGS) -MD -MF $(@D)/.$(@F).d $(X_CPPFLAGS) -c $< -o $@
 
 quiet_cmd_as_o_asm = $(ECHO_AS) $(@:.o=)
 cmd_as_o_asm = $(AS) $(X_ASFLAGS) -o $@  $<

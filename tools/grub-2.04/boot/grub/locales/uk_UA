@@ -1,0 +1,9 @@
+lang=uk
+bootlang="lang=uk_UA"
+def_bootlang="uk_UA"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="ua"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Kiev"
+fi

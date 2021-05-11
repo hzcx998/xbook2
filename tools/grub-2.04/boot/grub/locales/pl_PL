@@ -1,0 +1,9 @@
+lang=pl
+bootlang="lang=pl_PL"
+def_bootlang="pl_PL"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="pl"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Warsaw"
+fi

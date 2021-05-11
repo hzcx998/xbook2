@@ -1,0 +1,9 @@
+lang=et
+bootlang="lang=et_EE"
+def_bootlang="et_EE"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="et"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Tallinn"
+fi

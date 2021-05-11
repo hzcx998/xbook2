@@ -57,7 +57,7 @@ void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
 	pte_t *pte = vir_addr_to_table_entry(vaddr);
 
 	if (*pde & PAGE_ATTR_PRESENT) {
-        assert(!(*pte & PAGE_ATTR_PRESENT)); 
+        assert(!(*pte & PAGE_ATTR_PRESENT));
         if (!(*pte & PAGE_ATTR_PRESENT)) {
             *pte = (paddr | prot | PAGE_ATTR_PRESENT);
         } else {
@@ -71,7 +71,7 @@ void page_link_addr(unsigned long va, unsigned long pa, unsigned long prot)
         }
         *pde = (page_table | prot | PAGE_ATTR_PRESENT);
         memset((void *)((unsigned long)pte & PAGE_MASK), 0, PAGE_SIZE);
-        
+
         assert(!(*pte & PAGE_ATTR_PRESENT));
         *pte = (paddr | prot | PAGE_ATTR_PRESENT);
     }
@@ -89,7 +89,7 @@ void page_link_addr_unsafe(unsigned long va, unsigned long pa, unsigned long pro
 	pte_t *pte = vir_addr_to_table_entry(vaddr);
 
     if (*pde & PAGE_ATTR_PRESENT) {
-    
+
         if ((*pte & PAGE_ATTR_PRESENT)) {
             page_free(*pte & PAGE_MASK);
             *pte = 0;
@@ -105,7 +105,7 @@ void page_link_addr_unsafe(unsigned long va, unsigned long pa, unsigned long pro
         if (!page_table) {
             panic("%s: kernel no page left!\n", __func__);
         }
-        
+
         *pde = (page_table | prot | PAGE_ATTR_PRESENT);
         memset((void *)((unsigned long)pte & PAGE_MASK), 0, PAGE_SIZE);
 
@@ -125,7 +125,7 @@ void page_unlink_addr(unsigned long vaddr)
 	pte_t *pte = vir_addr_to_table_entry(vaddr);
 	if (*pte & PAGE_ATTR_PRESENT) {
 		*pte &= ~PAGE_ATTR_PRESENT;
-        tlb_flush_one(vaddr);    
+        tlb_flush_one(vaddr);
     } else {
         //warnprint("page_unlink_addr: addr %x phy addr not present!\n", vaddr);
     }
@@ -141,18 +141,18 @@ int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
     start &= PAGE_MASK;
     unsigned long end = start + len;
     len = PAGE_ALIGN(len);
-    unsigned int attr = 0;    
+    unsigned int attr = 0;
     if (prot & PROT_USER)
         attr |= PAGE_ATTR_USER;
     else
         attr |= PAGE_ATTR_SYSTEM;
-    
+
     if (prot & PROT_WRITE)
         attr |= PAGE_ATTR_WRITE;
     else
         attr |= PAGE_ATTR_READ;
 
-    while (start < end) { 
+    while (start < end) {
         unsigned long page_addr = page_alloc_user(1);
         if (!page_addr) {
             keprint(PRINT_ERR "%s: alloc user page failed!\n", __func__);
@@ -178,12 +178,12 @@ int page_map_addr_fixed(unsigned long start, unsigned long addr, unsigned long l
     len = PAGE_ALIGN(len);
 
     unsigned long attr = 0;
-    
+
     if (prot & PROT_USER)
         attr |= PAGE_ATTR_USER;
     else
         attr |= PAGE_ATTR_SYSTEM;
-    
+
     if (prot & PROT_WRITE)
         attr |= PAGE_ATTR_WRITE;
     else
@@ -248,12 +248,12 @@ int page_map_addr_safe(unsigned long start, unsigned long len, unsigned long pro
     unsigned long page_idx = 0;
     unsigned long page_addr;
     unsigned long attr = 0;
-    
+
     if (prot & PROT_USER)
         attr |= PAGE_ATTR_USER;
     else
         attr |= PAGE_ATTR_SYSTEM;
-    
+
     if (prot & PROT_WRITE)
         attr |= PAGE_ATTR_WRITE;
     else
@@ -270,7 +270,7 @@ int page_map_addr_safe(unsigned long start, unsigned long len, unsigned long pro
                 interrupt_restore_state(flags);
                 return -1;
             }
-            
+
             page_link_addr(vaddr, page_addr, attr);
         }
         vaddr += PAGE_SIZE;
@@ -318,15 +318,15 @@ int page_unmap_addr_safe(unsigned long start, unsigned long len, char fixed)
                     if (!fixed)
                         page_free(paddr);
                     *pte &= ~PAGE_ATTR_PRESENT;
-                    tlb_flush_one(vaddr);    
+                    tlb_flush_one(vaddr);
                 }
-                
+
                 vaddr += PAGE_SIZE;
                 pages--;
                 if (!pages) {
                     if (is_page_table_empty((pte_t *)((unsigned long)pte & PAGE_MASK))) {
-                        page_free(*pde & PAGE_MASK);      
-                        *pde &= ~PAGE_ATTR_PRESENT;      
+                        page_free(*pde & PAGE_MASK);
+                        *pde &= ~PAGE_ATTR_PRESENT;
                     }
                     goto end_unmap;
                 }
@@ -353,22 +353,22 @@ unsigned long *kern_page_dir_copy_to()
     unsigned long page = page_alloc_normal(1);
     unsigned int *vaddr = (unsigned int *)kern_phy_addr2vir_addr(page);
     unsigned int *kern_page_vaddr = (unsigned int *)KERN_PAGE_DIR_VIR_ADDR;
-    
+
     memset(vaddr, 0, PAGE_SIZE);
-    
+
     #if CONFIG_KERN_LOWMEM == 1
-    memcpy((void *)((unsigned char *)vaddr), 
-        (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR), 
+    memcpy((void *)((unsigned char *)vaddr),
+        (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR),
         PAGE_SIZE / 2);
     #else
-    memcpy((void *)((unsigned char *)vaddr + PAGE_SIZE / 2), 
-        (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR + PAGE_SIZE / 2), 
-        PAGE_SIZE / 2);    
+    memcpy((void *)((unsigned char *)vaddr + PAGE_SIZE / 2),
+        (void *)((unsigned char *)KERN_PAGE_DIR_VIR_ADDR + PAGE_SIZE / 2),
+        PAGE_SIZE / 2);
     #endif
 
     // 初始内核页，0-8M
     vaddr[0] = kern_page_vaddr[0];
-    
+
     // 页的最后一项是页自己的物理地址
     vaddr[PAGE_TABLE_ENTRY_NR - 1] = page | KERN_PAGE_ATTR;
     interrupt_restore_state(flags);
@@ -387,18 +387,18 @@ void kern_page_map_early(unsigned int start, unsigned int end)
 	unsigned int pde_nr = (end - start) / (PAGE_TABLE_ENTRY_NR * PAGE_SIZE);
 	unsigned int pte_nr = (end-start)/PAGE_SIZE;
 
-    
+
 	pte_nr = pte_nr % PAGE_TABLE_ENTRY_NR;
 	dbgprint("pde count: %d, pte count: %d\n", pde_nr, pte_nr);
-    
-	unsigned int *pte_addr = (unsigned int *) (KERN_PAGE_TABLE_PHY_ADDR + 
+
+	unsigned int *pte_addr = (unsigned int *) (KERN_PAGE_TABLE_PHY_ADDR +
 			PAGE_SIZE * PAGE_TABLE_HAD_USED);
 
     uint32_t pde_off = KERN_PAGE_DIR_ENTRY_OFF + PAGE_TABLE_HAD_USED;
 
 	int i, j;
 	for (i = 0; i < pde_nr; i++) {
-		pdt[pde_off + i] = (unsigned int)pte_addr | KERN_PAGE_ATTR;	
+		pdt[pde_off + i] = (unsigned int)pte_addr | KERN_PAGE_ATTR;
 		for (j = 0; j < PAGE_TABLE_ENTRY_NR; j++) {
 			pte_addr[j] = start | KERN_PAGE_ATTR;
 			start += PAGE_SIZE;
@@ -431,7 +431,7 @@ static int do_page_no_write(unsigned long addr)
 
 	pde_t *pde = vir_addr_to_dir_entry(addr);
 	pte_t *pte = vir_addr_to_table_entry(addr);
-	
+
 	if (!(*pde & PAGE_ATTR_PRESENT))
 		return -1;
 	if (!(*pte & PAGE_ATTR_PRESENT))
@@ -461,7 +461,7 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
 		keprint(PRINT_DEBUG "page: %s: addr %x have write protection.\n", __func__);
 		int ret = do_page_no_write(addr);
 		if (ret) {
-            keprint(PRINT_EMERG "page: %s: page not writable!", __func__);    
+            keprint(PRINT_EMERG "page: %s: page not writable!", __func__);
             exception_force_self(EXP_CODE_SEGV);
             return -1;
         }
@@ -470,7 +470,7 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
 		if (do_handle_no_page(addr, space->page_prot)) {
             keprint(PRINT_EMERG "page: %s: hand no page failed!", __func__);
             exception_force_self(EXP_CODE_SEGV);
-			return -1; 
+			return -1;
         }
 		return 0;
 	} else {
@@ -483,12 +483,12 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
 
 /**
  * page_do_fault - 处理页故障
- * 
- * 错误码的内容 
+ *
+ * 错误码的内容
  * bit 0: 0 no page found, 1 protection fault
  * bit 1: 0 read, 1 write
  * bit 2: 0 kernel, 1 user
- * 
+ *
  * 如果是来自内核的页故障，就会打印信息并停机。
  * 如果是来自用户的页故障，就会根据地址来做处理。
  */
@@ -500,7 +500,7 @@ int page_do_fault(trap_frame_t *frame)
 
     /* in kernel page fault */
     if (!(frame->error_code & PAGE_ERR_USER) && !(addr >= USER_VMM_BASE_ADDR && addr < USER_VMM_TOP_ADDR)) {
-        
+
         keprint("task name=%s pid=%d\n", cur->name, cur->pid);
         keprint(PRINT_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
         keprint(PRINT_EMERG "page fault at %x.\n", addr);
@@ -528,7 +528,7 @@ int page_do_fault(trap_frame_t *frame)
 
     /* 故障地址在用户空间 */
     mem_space_t *space = mem_space_find(cur->vmm, addr);
-    if (space == NULL) {    
+    if (space == NULL) {
         keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user access user unknown space.\n", cur->pid, cur->name);
         keprint(PRINT_EMERG "page fault at %x.\n", addr);
         trap_frame_dump(frame);
@@ -547,7 +547,7 @@ int page_do_fault(trap_frame_t *frame)
                 keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user task stack out of range!\n", cur->pid, cur->name);
                 trap_frame_dump(frame);
                 exception_force_self(EXP_CODE_SEGV);
-                return -1;  
+                return -1;
             }
         }
     }
@@ -567,7 +567,7 @@ void setup_paging()
 {
     unsigned int *pgdir = (unsigned int *) KERN_PAGE_DIR_PHY_ADDR;
     unsigned int *pgtbl = (unsigned int *) KERN_PAGE_TABLE_PHY_ADDR;
-    
+
     /* clear page dir table */
     memset(pgdir, 0, PAGE_SIZE);
 

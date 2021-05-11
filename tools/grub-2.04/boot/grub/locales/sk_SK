@@ -1,0 +1,9 @@
+lang=sk
+bootlang="lang=sk_SK"
+def_bootlang="sk_SK"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="sk"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Bratislava"
+fi

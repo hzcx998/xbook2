@@ -1,0 +1,9 @@
+lang=zh
+bootlang="lang=zh_CN"
+def_bootlang="zh_CN"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="us"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Asia/Shanghai"
+fi

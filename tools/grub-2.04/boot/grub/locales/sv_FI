@@ -1,0 +1,9 @@
+lang=sv
+bootlang="lang=sv_FI"
+def_bootlang="sv_FI"
+if [ -z "${keyboard}" ]; then
+  def_keyboard="se"
+fi
+if [ -z "${timezone}" ]; then
+  def_timezone="Europe/Helsinki"
+fi
