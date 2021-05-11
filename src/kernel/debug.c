@@ -1,7 +1,7 @@
 #include <xbook/debug.h>
 #include <stdarg.h>
 #include <string.h>
-// #include <xbook/spinlock.h>
+#include <xbook/spinlock.h>
 #include <arch/debug.h>
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
@@ -102,8 +102,11 @@ int keprint(const char *fmt, ...)
     #endif
     int i;
 	char buf[256] = {0,};
-	va_list arg = (va_list)((char*)(&fmt) + 4); /*4是参数fmt所占堆栈中的大小*/
-	i = vsprintf(buf, fmt, arg);
+	//va_list arg = (va_list)((char*)(&fmt) + sizeof(size_t)); /*sizeof(long)是参数fmt所占堆栈中的大小*/
+	va_list args;
+    va_start(args, fmt);
+    i = vsprintf(buf, fmt, args);
+    va_end(args);
     int count = i;
     char *p = buf;
     int level = -1;
@@ -161,4 +164,90 @@ void log_dump_buffer(void *buffer, unsigned long len, char factor)
         }
         keprint("\n");
     }    
+}
+
+static char digits[] = "0123456789abcdef";
+
+static void
+printint(int xx, int base, int sign)
+{
+  char buf[16];
+  int i;
+  uint32 x;
+
+  if(sign && (sign = xx < 0))
+    x = -xx;
+  else
+    x = xx;
+
+  i = 0;
+  do {
+    buf[i++] = digits[x % base];
+  } while((x /= base) != 0);
+
+  if(sign)
+    buf[i++] = '-';
+
+  while(--i >= 0)
+    debug_putchar(buf[i]);
+}
+
+
+static void
+printptr(uint64 x)
+{
+  int i;
+  debug_putchar('0');
+  debug_putchar('x');
+  for (i = 0; i < (sizeof(uint64) * 2); i++, x <<= 4)
+    debug_putchar(digits[x >> (sizeof(uint64) * 8 - 4)]);
+}
+
+// Print to the console. only understands %d, %x, %p, %s.
+void
+printf2(char *fmt, ...)
+{
+  va_list ap;
+  int i, c;
+  int locking;
+  char *s;
+
+  if (fmt == 0)
+    panic("null fmt");
+
+  va_start(ap, fmt);
+  for(i = 0; (c = fmt[i] & 0xff) != 0; i++){
+    if(c != '%'){
+      debug_putchar(c);
+      continue;
+    }
+    c = fmt[++i] & 0xff;
+    if(c == 0)
+      break;
+    switch(c){
+    case 'd':
+      printint(va_arg(ap, int), 10, 1);
+      break;
+    case 'x':
+      printint(va_arg(ap, int), 16, 1);
+      break;
+    case 'p':
+      printptr(va_arg(ap, uint64));
+      break;
+    case 's':
+      if((s = va_arg(ap, char*)) == 0)
+        s = "(null)";
+      for(; *s; s++)
+        debug_putchar(*s);
+      break;
+    case '%':
+      debug_putchar('%');
+      break;
+    default:
+      // Print unknown % sequence to draw attention.
+      debug_putchar('%');
+      debug_putchar(c);
+      break;
+    }
+  }
 }

@@ -6,9 +6,9 @@
 extern kernel_main
 extern arch_init
 
-global kernel_start
+global _start
 ;这个标签是整个内核的入口，从loader跳转到这儿
-kernel_start:
+_start:
 	mov byte [TEXT_START_ADDR+160*4+0], 'K'
 	mov byte [TEXT_START_ADDR+160*4+1], 0X07
 	mov byte [TEXT_START_ADDR+160*4+2], 'E'

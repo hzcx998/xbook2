@@ -2,7 +2,7 @@
 #define _XBOOK_DEBUG_H
 
 /* has lock for print?  */
-#define PRINT_LOCK      0
+#define PRINT_LOCK      1
 
 #define PRINT_EMERG      "<0>"      /* system is unuseable */
 #define PRINT_ERR        "<1>"      /* error condition */
@@ -42,5 +42,8 @@ void panic(const char *fmt, ...);
 
 void log_dump_value(unsigned long val);
 void log_dump_buffer(void *buffer, unsigned long len, char factor);
+
+void
+printf2(char *fmt, ...);
 
 #endif   /*_XBOOK_DEBUG_H*/

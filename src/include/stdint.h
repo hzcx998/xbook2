@@ -30,6 +30,6 @@ typedef signed char     s8;
 
 typedef long ptrdiff_t;
 typedef long intptr_t;
-typedef long uintptr_t;
+typedef unsigned long uintptr_t;
 
 #endif  /*_XBOOK_STDINT_H*/

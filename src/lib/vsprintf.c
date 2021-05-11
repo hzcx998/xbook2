@@ -24,9 +24,9 @@ __asm__("divq %%rcx":"=a" (n),"=d" (__res):"0" (n),"1" (0),"c" (base)); \
 __res; })
 */
 
-static unsigned long do_div(unsigned long *num, char base) 
+static int do_div(unsigned long *num, char base) 
 {
-    unsigned long ret = *num % base;
+    int ret = *num % base;
     *num = *num / base;
     return ret;
 }
@@ -621,12 +621,16 @@ int vsnprintf(char * buf, int buflen, const char *fmt, va_list args)
 
 int sprintf(char *buf, const char *fmt, ...)
 {
-	va_list arg = (va_list)((char*)(&fmt) + 4);        /* 4 是参数 fmt 所占堆栈中的大小 */
+	va_list arg;
+	va_start(arg, fmt);
+	//va_list arg = (va_list)((char*)(&fmt) + 4);        /* 4 是参数 fmt 所占堆栈中的大小 */
 	return vsprintf(buf, fmt, arg);
 }
 
 int snprintf(char *buf, int buflen, const char *fmt, ...)
 {
-	va_list arg = (va_list)((char*)(&fmt) + 4);        /* 4 是参数 fmt 所占堆栈中的大小 */
+	va_list arg;
+	va_start(arg, fmt);
+	//va_list arg = (va_list)((char*)(&fmt) + 4);        /* 4 是参数 fmt 所占堆栈中的大小 */
 	return vsnprintf(buf, buflen, fmt, arg);
 }
