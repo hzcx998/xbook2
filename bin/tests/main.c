@@ -39,6 +39,7 @@ testfunc_t test_table[] = {
     {"pty2", pty_test2},
     {"backtrace2", backtrace_test2},
     {"loop", loop_test},
+    {"sound", sound_test},
 };
 
 int main(int argc, char *argv[])

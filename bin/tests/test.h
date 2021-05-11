@@ -68,5 +68,6 @@ int test_sockcall(int argc, char *argv[]);
 int port_comm_test2(int argc, char *argv[]);
 int port_comm_test3(int argc, char *argv[]);
 int socket_test4(int argc, char *argv[]);
+int sound_test(int argc, char *argv[]);
 
 #endif // _TEST_H
