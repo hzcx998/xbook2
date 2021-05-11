@@ -43,7 +43,4 @@ void panic(const char *fmt, ...);
 void log_dump_value(unsigned long val);
 void log_dump_buffer(void *buffer, unsigned long len, char factor);
 
-void
-printf2(char *fmt, ...);
-
 #endif   /*_XBOOK_DEBUG_H*/

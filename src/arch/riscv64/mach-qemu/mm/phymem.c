@@ -6,10 +6,10 @@
 #include <string.h>
 #include <assert.h>
 
-extern unsigned int kernel_end; // first address after kernel.
-extern unsigned int kernel_start; // first address after kernel.
+extern char kernel_end[]; // first address after kernel.
+extern char kernel_start[]; // first address after kernel.
 
-static volatile unsigned int total_pmem_size;
+static volatile unsigned long total_pmem_size;
 
 unsigned long mem_get_total_page_nr()
 {
@@ -26,8 +26,10 @@ unsigned long mem_get_total_page_nr()
 int physic_memory_init()
 {
     total_pmem_size = PHYSIC_MEM_SIZE;
-    printf2("total size:%d %d MB\n", 1, 2);
-    keprint("total size:%d %d MB\n", 1, 2);
+    u64_t kern_size = (u64_t) (kernel_end - kernel_start);
+    keprint("memory total size:0x%x Bytes %d MB\n", total_pmem_size, total_pmem_size / MB);
+    keprint("kernel image: [0x%p, 0x%p]\n", kernel_start, kernel_end);
+    keprint("kernel size: 0x%x Bytes %d MB\n", kern_size, kern_size / MB);
     
     return 0;
 }
