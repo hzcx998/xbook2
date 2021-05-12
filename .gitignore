@@ -77,8 +77,14 @@ sbin/fixdep
 bin/fixdep
 src/fixdep
 
-# linux tools 
+# linux tools
 tools/fatfs/fatfs
+
+# grub2 modules, img
+!tools/grub-2.04/boot/grub/i386-efi/*.mod
+!tools/grub-2.04/boot/grub/i386-efi/*.img
+!tools/grub-2.04/boot/grub/i386-pc/*.mod
+!tools/grub-2.04/boot/grub/i386-pc/*.img
 
 # dir
 recycle
