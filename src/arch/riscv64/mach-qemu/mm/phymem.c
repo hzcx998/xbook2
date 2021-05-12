@@ -1,5 +1,7 @@
 #include <k210_qemu_phymem.h>
 #include <arch/page.h>
+#include <arch/bootmem.h>
+#include <arch/mempool.h>
 //#include <arch/memory.h>
 #include <xbook/debug.h>
 #include <math.h>
@@ -21,9 +23,20 @@ int physic_memory_init()
     total_pmem_size = PHYSIC_MEM_SIZE;
     u64_t kern_size = (u64_t) (kernel_end - kernel_start);
     u64_t free_size = total_pmem_size - kern_size - RUSTSBI_MEM_SIZE;
-    keprint("memory total size:0x%x Bytes %d MB\n", total_pmem_size, total_pmem_size / MB);
-    keprint("kernel image: [0x%p, 0x%p]\n", kernel_start, kernel_end);
-    keprint("kernel size: 0x%x Bytes %d MB\n", kern_size, kern_size / MB);
-    keprint("free size: 0x%x Bytes %d MB\n", free_size, free_size / MB);
+    keprint("memory total size:%#x Bytes %d MB\n", total_pmem_size, total_pmem_size / MB);
+    keprint("kernel image: [%#p, %#p]\n", kernel_start, kernel_end);
+    keprint("kernel size: %#x Bytes %d MB\n", kern_size, kern_size / MB);
+    keprint("free size: %#x Bytes %d MB\n", free_size, free_size / MB);
+    
+    u64_t boot_mem_start = KERN_MEM_ADDR + kern_size;
+    u64_t boot_mem_sz = BOOT_MEM_SIZE;
+    
+    boot_mem_init(boot_mem_start, boot_mem_sz);
+    /* 只初始化normal范围内存 */
+    mem_range_init(MEM_RANGE_NORMAL, boot_mem_start + boot_mem_sz, free_size - boot_mem_sz);
+
+    boot_mem_overview();
+
+    // mem_pool_test();
     return 0;
 }

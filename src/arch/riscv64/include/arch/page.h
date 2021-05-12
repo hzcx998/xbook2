@@ -2,11 +2,12 @@
 #define _RISCV64_PAGE_H
 
 #include <xbook/config.h>
+#include "mempool.h"
 #include <stdint.h>
 
-typedef uint64 pde_t; /* page dir entry */
-typedef uint64 pte_t; /* page table entry */
-typedef uint64 *pgdir_t; // 512 PTEs
+typedef uint64_t pde_t; /* page dir entry */
+typedef uint64_t pte_t; /* page table entry */
+typedef uint64_t *pgdir_t; // 512 PTEs
 
 /* 内核空间在映射后的虚拟基地址 */
 #define KERN_BASE_VIR_ADDR      0X80000000
@@ -71,12 +72,12 @@ typedef uint64 *pgdir_t; // 512 PTEs
 #define PROT_KERN        0x8       /* page in kernel */
 #define PROT_USER        0x10      /* page in user */
 #define PROT_REMAP       0x20      /* page remap */
-/*
+
+/* only have MEM_NODE_TYPE_NORMAL */
 #define page_alloc_normal(count)            mem_node_alloc_pages(count, MEM_NODE_TYPE_NORMAL)
-#define page_alloc_user(count)              mem_node_alloc_pages(count, MEM_NODE_TYPE_USER)
-#define page_alloc_dma(count)               mem_node_alloc_pages(count, MEM_NODE_TYPE_DMA)
+#define page_alloc_user(count)              mem_node_alloc_pages(count, MEM_NODE_TYPE_NORMAL)
+#define page_alloc_dma(count)               mem_node_alloc_pages(count, MEM_NODE_TYPE_NORMAL)
 #define page_free(addr)                     mem_node_free_pages(addr)
-*/
 
 unsigned long *kern_page_dir_copy_to();
 #define kern_page_copy_storge               kern_page_dir_copy_to
