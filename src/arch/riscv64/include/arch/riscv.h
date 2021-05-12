@@ -189,7 +189,13 @@ w_mtvec(uint64 x)
 // use riscv's sv39 page table scheme.
 #define SATP_SV39 (8L << 60)
 
+/* bits: 0-43 */
+#define SATP_SV39_PPN_MASK (0XFFFFFFFFFFF)
+
 #define MAKE_SATP(pagetable) (SATP_SV39 | (((uint64)pagetable) >> 12))
+
+/* 从SATP中解析出页表地址 */
+#define SATP_PGTBL(satp) (((satp) & SATP_SV39_PPN_MASK) << 12)
 
 // supervisor address translation and protection;
 // holds the address of the page table.

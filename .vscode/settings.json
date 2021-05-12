@@ -198,6 +198,7 @@
         "stdarg.h": "c",
         "sbi.h": "c",
         "k210_qemu_phymem.h": "c",
-        "mutexlock.h": "c"
+        "mutexlock.h": "c",
+        "mempool.h": "c"
     }
 }

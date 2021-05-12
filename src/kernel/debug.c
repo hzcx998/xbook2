@@ -53,10 +53,12 @@ DEFINE_SPIN_LOCK_UNLOCKED(print_spin_lock);
 void panic(const char *fmt, ...)
 {
 	char buf[256];
-	/* 4 is the size of fmt in the stack */
-	va_list arg = (va_list)((char*)&fmt + 4);
-	vsprintf(buf, fmt, arg);
-	emeprint("\npanic: %s", buf);
+	va_list arg;
+    va_start(arg, fmt);
+    vsprintf(buf, fmt, arg);
+	va_end(arg);
+    
+    emeprint("\npanic: %s", buf);
     /*
     char *bbuf[BACKTRACE_LEN];
     

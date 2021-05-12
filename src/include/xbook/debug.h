@@ -37,6 +37,16 @@ int keprint(const char *fmt, ...);
 
 #define endl "\n"
 
+/* with new line */
+#define keprintln(fmt, ...) keprint(print_fmt(fmt) endl, ##__VA_ARGS__)
+#define emeprintln(fmt, ...) emeprint(print_fmt(fmt) endl, ##__VA_ARGS__)
+#define errprintln(fmt, ...) errprint(print_fmt(fmt) endl, ##__VA_ARGS__)
+#define warnprintln(fmt, ...) warnprint(print_fmt(fmt) endl, ##__VA_ARGS__)
+#define noteprintln(fmt, ...) noteprint(print_fmt(fmt) endl, ##__VA_ARGS__)
+#define infoprintln(fmt, ...) infoprint(print_fmt(fmt) endl, ##__VA_ARGS__)
+#define dbgprintln(fmt, ...) dbgprint(print_fmt(fmt) endl, ##__VA_ARGS__)
+#define logprintln(fmt, ...) logprint(print_fmt(fmt) endl, ##__VA_ARGS__)
+
 void spin(char * func_name);
 void panic(const char *fmt, ...);
 
