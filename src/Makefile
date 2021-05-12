@@ -30,6 +30,7 @@ MODULE		+= $(ARCH)/boot
 
 ifeq ($(BOOT_MODE),$(BOOT_LEGACY_MODE))
 	KERNEL_LD_FILE = kernel-myboot.ld
+	MODULE +=/myboot
 else
 	KERNEL_LD_FILE = kernel.ld
 endif

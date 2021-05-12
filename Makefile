@@ -189,9 +189,9 @@ QEMU_KVM := # no virutal
 
 QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \
-		-fda $(FLOPPYA_IMG) \
-		-drive id=disk0,file=$(HDA_IMG),if=none \
-		-drive id=disk1,file=$(HDB_IMG),if=none \
+		-drive file=$(FLOPPYA_IMG),format=raw,index=0,if=floppy \
+		-drive id=disk0,file=$(HDA_IMG),format=raw,if=none \
+		-drive id=disk1,file=$(HDB_IMG),format=raw,if=none \
 		-device ahci,id=ahci \
 		-device ide-hd,drive=disk0,bus=ahci.0 \
 		-device ide-hd,drive=disk1,bus=ahci.1 \

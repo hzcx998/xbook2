@@ -22,22 +22,20 @@ unsigned long grub2_read_memory_bytes = 0;
 
 int setup_entry(unsigned long magic, unsigned long addr)
 {
-    if (grub2_read_memory_bytes) {
-        // whether a multiboot
-        if (magic != MULTIBOOT2_BOOTLOADER_MAGIC || addr & 7) return -1;
-        struct multiboot_tag *tag;
+    // whether a multiboot
+    if (magic != MULTIBOOT2_BOOTLOADER_MAGIC || addr & 7) return -1;
+    struct multiboot_tag *tag;
 
-        for (tag = (struct multiboot_tag*)(addr + 8);
-             tag->type != MULTIBOOT_TAG_TYPE_END;
-             tag = (struct multiboot_tag*)((multiboot_uint8_t *)tag + ((tag->size + 7) & ~7)))
-        {
-            if (tag->type == MULTIBOOT_TAG_TYPE_BASIC_MEMINFO) {
-                grub2_read_memory_bytes =
-                    ((((struct multiboot_tag_basic_meminfo *)tag)->mem_upper
-                        -((struct multiboot_tag_basic_meminfo *)tag)->mem_lower) << 10)
-                    + 0x100000;
-                break;
-            }
+    for (tag = (struct multiboot_tag*)(addr + 8);
+         tag->type != MULTIBOOT_TAG_TYPE_END;
+         tag = (struct multiboot_tag*)((multiboot_uint8_t *)tag + ((tag->size + 7) & ~7)))
+    {
+        if (tag->type == MULTIBOOT_TAG_TYPE_BASIC_MEMINFO) {
+            grub2_read_memory_bytes =
+                ((((struct multiboot_tag_basic_meminfo *)tag)->mem_upper
+                    -((struct multiboot_tag_basic_meminfo *)tag)->mem_lower) << 10)
+                + 0x100000;
+            break;
         }
     }
 
