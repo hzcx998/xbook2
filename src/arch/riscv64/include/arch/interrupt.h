@@ -13,4 +13,7 @@ void interrupt_enable(void);
     do {                                    \
     } while (0)
 
+void
+trapinithart(void);
+
 #endif  /* _RISCV64_INTERRUPT_H */

@@ -1,5 +1,6 @@
 #include <arch/debug.h>
 #include <arch/page.h>
+#include <arch/time.h>
 #include <xbook/debug.h>
 #include <k210_qemu_phymem.h>
 
@@ -9,6 +10,8 @@ int arch_init()
     infoprint("welcome to xbook2!\n");
     physic_memory_init();
     page_init();
+    timerinit();
+    trapinithart();
     return 0;
 }
 
