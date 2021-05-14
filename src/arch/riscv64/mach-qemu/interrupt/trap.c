@@ -25,9 +25,16 @@ trapinithart(void)
 static int devintr(void) {
 	uint64_t scause = r_scause();
 
+	#ifdef QEMU 
 	// handle external interrupt 
 	if ((0x8000000000000000L & scause) && 9 == (scause & 0xff)) 
-	{
+	#else 
+	// on k210, supervisor software interrupt is used 
+	// in alternative to supervisor external interrupt, 
+	// which is not available on k210. 
+	if (0x8000000000000001L == scause && 9 == r_stval()) 
+	#endif 
+  {
 		keprintln("external interrupt");
 		return 1;
 	}

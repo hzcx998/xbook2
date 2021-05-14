@@ -23,7 +23,7 @@ typedef unsigned long* pgdir_t; // 512 PTEs
 #define KERN_PAGE_ATTR  (PAGE_ATTR_PRESENT | PAGE_ATTR_WRITE | PAGE_ATTR_SYSTEM)
 
 #define PAGE_SHIFT  12
-#define PAGE_SIZE   (1U << PAGE_SHIFT)  
+#define PAGE_SIZE   4096
 #define PAGE_LIMIT  (PAGE_SIZE-1)
 #define PAGE_MASK   (~PAGE_LIMIT)  
 #define PAGE_ALIGN(value) (((value) + PAGE_LIMIT) & PAGE_MASK)
@@ -122,5 +122,8 @@ vmunmap(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free);
 
 pte_t *
 walk(pgdir_t pgdir, uint64_t va, int alloc);
+
+void vmprint(pgdir_t pgdir, int level);
+
 
 #endif  /* _RISCV64_PAGE_H */

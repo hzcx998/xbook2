@@ -7,6 +7,9 @@
 
 void cpu_do_nothing();
 
+
 #define cpu_idle        cpu_do_nothing
+
+cpuid_t cpu_get_my_id();
 
 #endif  /* _RISCV64_CPU_H */

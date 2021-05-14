@@ -1,6 +1,7 @@
 #include <arch/debug.h>
 #include <arch/page.h>
 #include <arch/time.h>
+#include <arch/plic.h>
 #include <xbook/debug.h>
 #include <k210_qemu_phymem.h>
 
@@ -12,6 +13,8 @@ int arch_init()
     page_init();
     timerinit();
     trapinithart();
+    plicinit();
+    plicinithart();
     return 0;
 }
 

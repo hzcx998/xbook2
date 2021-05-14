@@ -33,11 +33,23 @@ void page_init()
 
     /* 对内存地址进行虚拟地址映射 */
     // uart registers
-    //kvmmap(UART_V, UART, PAGE_SIZE, PTE_R | PTE_W);
+    kvmmap(UART_V, UART, PAGE_SIZE, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+  
+    // CLINT
+    kvmmap(CLINT_V, CLINT, 0x10000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+    keprintln("CLINT_V=%lx", CLINT_V);
+
+    // PLIC
+    keprintln("PLIC_V=%lx", PLIC_V);
+    keprintln("VIRT_OFFSET=%lx", VIRT_OFFSET);
     
+    
+    kvmmap(PLIC_V, PLIC, 0x4000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+    kvmmap(PLIC_V + 0x200000, PLIC + 0x200000, 0x4000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+
     /* 内核映射后，内核可以通过虚拟地址访问物理地址 */
     // map rustsbi
-    // kvmmap(RUSTSBI_BASE, RUSTSBI_BASE, KERNBASE - RUSTSBI_BASE, PTE_R | PTE_X);
+    //kvmmap(RUSTSBI_BASE, RUSTSBI_BASE, KERNBASE - RUSTSBI_BASE, PTE_R | PTE_X);
     // map kernel text executable and read-only.
     kvmmap(KERN_MEM_ADDR, KERN_MEM_ADDR, (uint64_t)etext - KERN_MEM_ADDR, PAGE_ATTR_READ | PAGE_ATTR_EXEC);
     // map kernel data and the physical RAM we'll make use of.
@@ -52,6 +64,9 @@ void page_init()
     dbgprint("page_writable: va=%x %d\n", KERN_MEM_ADDR, page_writable(KERN_MEM_ADDR, PAGE_SIZE));
     dbgprint("page_writable: va=%x %d\n", etext, page_writable((uint64_t)etext, PAGE_SIZE));
 
+    vmprint(kernel_pgdir, 1);
+
+    dbgprint("addr_vir2phy: va=%x pa=%x\n", PLIC_V, addr_vir2phy(PLIC_V));
 }
 
 // Return the address of the PTE in page table pgdir
@@ -94,7 +109,7 @@ walk(pgdir_t pgdir, uint64_t va, int alloc)
 void
 kvmmap(uint64_t va, uint64_t pa, uint64_t sz, int perm)
 {
-    dbgprint("kvmmap: va=%#x pa=%#x size=%#x perm=%#x\n", va, pa, sz, perm);
+    dbgprint("kvmmap: va=%#lx pa=%#lx size=%#x perm=%#x\n", va, pa, sz, perm);
     if(mappages(kernel_pgdir, va, sz, pa, perm) != 0)
         panic("kvmmap");
 }
@@ -109,14 +124,16 @@ mappages(pgdir_t pgdir, uint64_t va, uint64_t size, uint64_t pa, int perm)
   uint64_t a, last;
   pte_t *pte;
 
+  dbgprint("mappages: start=%lx end=%lx\n", va, va + size);
+  
   a = PAGE_ROUNDDOWN(va);
   last = PAGE_ROUNDDOWN(va + size - 1);
-  dbgprint("mappages: start=%x end=%x\n", a, last);
+  dbgprint("mappages: start=%lx end=%lx\n", a, last);
   for(;;){
     if((pte = walk(pgdir, a, 1)) == NULL)
       return -1;
     if(*pte & PAGE_ATTR_PRESENT)
-      panic("remap: va=%x pa=%x\n", a, pa);
+      panic("remap: va=%lx pa=%lx\n", a, pa);
     *pte = PA2PTE(pa) | perm | PAGE_ATTR_PRESENT;
     
     if(a == last)
@@ -435,3 +452,35 @@ unsigned long *kern_page_dir_copy_to()
 }
 
 // TODO: add page_do_fault
+
+/**
+ * 打印页目录表中的页表映射关系
+ * @pgdir: 要打印的页目录表
+ * @level: 最高打印的等级：[0,1,2]
+ */
+void vmprint(pgdir_t pgdir, int level)
+{
+  const int capacity = 512;
+  dbgprint("page table %p\n", pgdir);
+  pte_t *pte;
+  for (pte = (pte_t *) pgdir; pte < pgdir + capacity; pte++) {
+    if (*pte & PAGE_ATTR_PRESENT && level >= 0)
+    {
+      pgdir_t pt2 = (pgdir_t) PTE2PA(*pte); 
+      dbgprint("..%d: pte %p pa %p\n", pte - pgdir, *pte, pt2);
+      pte_t *pte2;
+      for (pte2 = (pte_t *) pt2; pte2 < pt2 + capacity; pte2++) {
+        if (*pte2 & PAGE_ATTR_PRESENT && level >= 1)
+        {
+          pgdir_t pt3 = (pgdir_t) PTE2PA(*pte2);
+          dbgprint(".. ..%d: pte %p pa %p\n", pte2 - pt2, *pte2, pt3);
+          pte_t *pte3;
+          for (pte3 = (pte_t *) pt3; pte3 < pt3 + capacity; pte3++)
+            if (*pte3 & PAGE_ATTR_PRESENT && level >= 2)
+              dbgprint(".. .. ..%d: pte %p pa %p\n", pte3 - pt3, *pte3, PTE2PA(*pte3));
+        }
+      }
+    }
+  }
+  return;
+}
