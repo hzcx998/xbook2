@@ -189,7 +189,6 @@ QEMU_KVM := # no virutal
 
 QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \
-		-drive file=$(FLOPPYA_IMG),format=raw,index=0,if=floppy \
 		-drive id=disk0,file=$(HDA_IMG),format=raw,if=none \
 		-drive id=disk1,file=$(HDB_IMG),format=raw,if=none \
 		-device ahci,id=ahci \
@@ -200,6 +199,10 @@ QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 		-soundhw sb16 \
 		-serial stdio \
 		-soundhw pcspk
+
+ifeq ($(BOOT_MODE),$(BOOT_LEGACY_MODE))
+QEMU_ARGUMENT += -drive file=$(FLOPPYA_IMG),format=raw,index=0,if=floppy
+endif
 
 #		-fda $(FLOPPYA_IMG) -hda $(HDA_IMG) -hdb $(HDB_IMG) -boot a \
 #		-net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no \
