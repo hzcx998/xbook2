@@ -186,6 +186,8 @@ QEMU_KVM := -enable-kvm
 endif
 QEMU_KVM := # no virutal
 
+# HDB_IMG :=fat:rw:./develop/rom
+
 QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \
 		-drive id=disk0,file=$(HDA_IMG),format=raw,if=none \

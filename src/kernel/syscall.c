@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <dirent.h>
+#include <arch/misc.h>
 
 syscall_t syscalls[SYSCALL_NR];
 
@@ -27,7 +28,7 @@ typedef unsigned long (*syscall_func_t)(
     unsigned long,
     unsigned long,
     unsigned long,
-    void *); 
+    void *);
 
 void syscall_default()
 {
@@ -70,8 +71,8 @@ void syscall_init()
     syscalls[SYS_UNID] = sys_unid;
     syscalls[SYS_TSTATE] = sys_tstate;
     syscalls[SYS_GETVER] = sys_getver;
-    syscalls[SYS_MSTATE] = sys_mstate;    
-    syscalls[SYS_USLEEP] = sys_usleep;    
+    syscalls[SYS_MSTATE] = sys_mstate;
+    syscalls[SYS_USLEEP] = sys_usleep;
     syscalls[SYS_OPEN] = sys_open;
     syscalls[SYS_CLOSE] = sys_close;
     syscalls[SYS_READ] = sys_read;
@@ -146,6 +147,8 @@ void syscall_init()
     syscalls[SYS_SETPGID] = sys_set_pgid;
     syscalls[SYS_MKFIFO] = sys_mkfifo;
     syscalls[SYS_SOCKCALL] = sys_sockcall;
+    syscalls[SYS_REBOOT] = sys_reboot;
+    syscalls[SYS_SHUTDOWN] = sys_shutdown;
 }
 
 int syscall_check(uint32_t callno)

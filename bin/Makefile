@@ -54,3 +54,5 @@ MODULE      +=  mount
 MODULE      +=  mkfs
 MODULE      +=  unmount
 MODULE      +=  losetup
+MODULE      +=  reboot
+MODULE      +=  poweroff

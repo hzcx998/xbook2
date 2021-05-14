@@ -29,7 +29,7 @@ enum syscall_num {
     SYS_HEAP,
     SYS_MUNMAP,
     SYS_VMM_RESERVED = 40,              /* 预留10个接口给内存管理 */
-    SYS_SCANDEV, 
+    SYS_SCANDEV,
     SYS_RES_RESERVED = 50,              /* 预留10个接口给资源管理 */
     SYS_ALARM,
     SYS_WALLTIME,
@@ -115,6 +115,8 @@ enum syscall_num {
     SYS_SETPGID,
     SYS_MKFIFO,
     SYS_SOCKCALL,
+    SYS_REBOOT,
+    SYS_SHUTDOWN,
     SYSCALL_NR,
 };
 

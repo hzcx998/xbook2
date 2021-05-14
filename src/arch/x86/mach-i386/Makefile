@@ -12,3 +12,4 @@ SRC	+= mm/*.c
 SRC	+= task/*.c task/*.asm
 SRC	+= bus/*.c
 SRC	+= drivers/
+SRC	+= misc/*.c

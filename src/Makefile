@@ -26,13 +26,12 @@ SRC			:= $(ARCH)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/ net/
 
 NAME		:= kernel.elf
 
-MODULE		+= $(ARCH)/boot
-
 ifeq ($(BOOT_MODE),$(BOOT_LEGACY_MODE))
 	KERNEL_LD_FILE = kernel-myboot.ld
-	MODULE +=/myboot
+	MODULE += $(ARCH)/boot/myboot
 else
 	KERNEL_LD_FILE = kernel.ld
+	MODULE += $(ARCH)/boot
 endif
 
 define CUSTOM_TARGET_CMD

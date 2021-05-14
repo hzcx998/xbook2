@@ -30,7 +30,7 @@ enum syscall_num {
     SYS_HEAP,
     SYS_MUNMAP,
     SYS_VMM_RESERVED = 40,              /* 预留10个接口给内存管理 */
-    SYS_SCANDEV, 
+    SYS_SCANDEV,
     SYS_RES_RESERVED = 50,              /* 预留10个接口给资源管理 */
     SYS_ALARM,
     SYS_WALLTIME,
@@ -116,13 +116,15 @@ enum syscall_num {
     SYS_SETPGID,
     SYS_MKFIFO,
     SYS_SOCKCALL,
+    SYS_REBOOT,
+    SYS_SHUTDOWN,
     SYSCALL_NR,
 };
 
 extern syscall_t syscalls[];
 
 /* 属于检测点的系统调用有：
-SYS_WAITPID，SYS_SLEEP，SYS_THREAD_JOIN，SYS_GETRES, SYS_PUTRES, SYS_READRES, 
+SYS_WAITPID，SYS_SLEEP，SYS_THREAD_JOIN，SYS_GETRES, SYS_PUTRES, SYS_READRES,
 SYS_WRITERES */
 
 void syscall_init();
