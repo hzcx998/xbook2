@@ -92,7 +92,6 @@ ifeq ($(BOOT_MODE),$(BOOT_LEGACY_MODE))
 	$(DD) if=$(LOADER_BIN) of=$(BOOT_DISK) bs=512 seek=$(LOADER_OFF) count=$(LOADER_CNTS) conv=notrunc
 	$(DD) if=$(SETUP_BIN) of=$(BOOT_DISK) bs=512 seek=$(SETUP_OFF) count=$(SETUP_CNTS) conv=notrunc
 	$(DD) if=$(KERNEL_ELF) of=$(BOOT_DISK) bs=512 seek=$(KERNEL_OFF) count=$(KERNEL_CNTS) conv=notrunc
-	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 else
 ifeq ($(BOOT_MODE),$(BOOT_GRUB2_MODE))
 	@$(MAKE) -s -C $(GRUB_DIR) KERNEL=$(subst $(KERNSRC)/,,$(KERNEL_ELF)) OS_NAME=$(OS_NAME)
