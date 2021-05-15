@@ -2,8 +2,17 @@
 #include <arch/acpi.h>
 #include <xbook/debug.h>
 
+void sys_shutdown(void) {
+    // Send 'Exit' signal in OS
+
+    // Check if Halt OK
+
+    // Halt
+    halt();
+}
+
 void __attribute__((noreturn)) halt(void) {
-    keprint(PRINT_INFO "halt.\n");
+    keprint(PRINT_INFO "Halt.\n");
     __asm__ __volatile__ ("cli");
 
     // ACPI shutdown

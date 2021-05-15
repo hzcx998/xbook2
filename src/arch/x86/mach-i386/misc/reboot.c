@@ -1,8 +1,17 @@
 #include <arch/misc.h>
 #include <xbook/debug.h>
 
+void sys_reboot(void) {
+    // Send 'Exit' signal in OS
+
+    // Check if Reboot OK
+
+    // Reboot
+    reboot();
+}
+
 void __attribute__((noreturn)) reboot(void) {
-    keprint(PRINT_INFO "reboot.\n");
+    keprint(PRINT_INFO "Reboot.\n");
 
     __asm__ __volatile__ ("cli");
 
