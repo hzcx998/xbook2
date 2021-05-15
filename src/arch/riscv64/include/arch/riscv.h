@@ -3,6 +3,14 @@
 
 #include <stdint.h>
 
+#define RISCV_XLEN    64  /* 64位长度 */
+
+#define SCAUSE_INTERRUPT    (1UL << (RISCV_XLEN - 1))
+
+#define SCAUSE_S_SOFTWARE_INTR  1
+#define SCAUSE_S_TIMER_INTR     5
+#define SCAUSE_S_EXTERNAL_INTR  9
+
 // which hart (core) is this?
 static inline uint64
 r_mhartid()
@@ -340,5 +348,6 @@ sfence_vma()
   // asm volatile("sfence.vma zero, zero");
   asm volatile("sfence.vma");
 }
+
 
 #endif

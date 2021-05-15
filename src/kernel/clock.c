@@ -34,7 +34,7 @@ static void sched_softirq_handler(softirq_action_t *action)
 	}
 }
 
-static int clock_handler(irqno_t irq, void *data)
+int clock_handler(irqno_t irq, void *data)
 {
 	systicks++;
     timer_ticks++;
@@ -70,10 +70,8 @@ void mdelay(time_t msec)
 void clock_init()
 {
     timer_ticks = systicks = 0;
-    clock_hardware_init();
-	softirq_build(TIMER_SOFTIRQ, timer_softirq_handler);
+    softirq_build(TIMER_SOFTIRQ, timer_softirq_handler);
 	softirq_build(SCHED_SOFTIRQ, sched_softirq_handler);
-	if (irq_register(IRQ0_CLOCK, clock_handler, IRQF_DISABLED, "clockirq", "kclock", NULL))
-        keprint("register failed!\n");
+	clock_hardware_init();
     keprint(PRINT_INFO "[clock] init done\n");
 }

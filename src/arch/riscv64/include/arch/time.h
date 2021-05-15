@@ -1,11 +1,11 @@
 #ifndef _RSICV64_TIME_H
 #define _RSICV64_TIME_H
 
-#define HZ                (100 * 10)
+#define HZ                (100)
 
-void timerinit();
+void timer_interrupt_init();
 
-#define clock_hardware_init timerinit
+#define clock_hardware_init timer_interrupt_init
 /*
 #define time_get_hour       cmos_get_hour_hex
 #define time_get_minute     cmos_get_min_hex

@@ -2,6 +2,7 @@
 #define _XBOOK_HARDIRQ_H
 
 #include <arch/interrupt.h>
+#include <arch/atomic.h>
 #include <types.h>
 
 #define IRQF_DISABLED       0x01

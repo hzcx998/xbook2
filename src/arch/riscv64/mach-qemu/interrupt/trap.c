@@ -3,71 +3,38 @@
 #include <xbook/debug.h>
 #include <arch/interrupt.h>
 
-// in kernelvec.S, calls kerneltrap().
-extern void kernelvec();
+// in kernel_trap_entry.S, calls do_kernel_trap().
+extern void kernel_trap_entry();
 
 // set up to take exceptions and traps while in the kernel.
-void
-trapinithart(void)
+void trap_init(void)
 {
-  w_stvec((uint64_t)kernelvec);
-  w_sstatus(r_sstatus() | SSTATUS_SIE);
-  // enable supervisor-mode timer interrupts.
-  w_sie(r_sie() | SIE_SEIE | SIE_SSIE | SIE_STIE);
-  set_next_timeout();
+    // register interrupt handler
+    w_stvec((uint64_t)kernel_trap_entry);
 }
 
-// Check if it's an external/software interrupt, 
-// and handle it. 
-// returns  2 if timer interrupt, 
-//          1 if other device, 
-//          0 if not recognized. 
-static int devintr(void) {
-	uint64_t scause = r_scause();
-
-	#ifdef QEMU 
-	// handle external interrupt 
-	if ((0x8000000000000000L & scause) && 9 == (scause & 0xff)) 
-	#else 
-	// on k210, supervisor software interrupt is used 
-	// in alternative to supervisor external interrupt, 
-	// which is not available on k210. 
-	if (0x8000000000000001L == scause && 9 == r_stval()) 
-	#endif 
-  {
-		keprintln("external interrupt");
-		return 1;
-	}
-	else if (0x8000000000000005L == scause) {
-		timer_tick();
-		return 2;
-	}
-	else { return 0;}
-}
-
-// interrupts and exceptions from kernel code go here via kernelvec,
+// interrupts and exceptions from kernel code go here via kernel_trap_entry,
 // on whatever the current kernel stack is.
-void 
-kerneltrap() {
-  int which_dev = 0;
-  uint64_t sepc = r_sepc();
-  uint64_t sstatus = r_sstatus();
-  uint64_t scause = r_scause();
-  
-  if((sstatus & SSTATUS_SPP) == 0)
-    panic("kerneltrap: not from supervisor mode");
-  if(intr_get() != 0)
-    panic("kerneltrap: interrupts enabled");
+void do_kernel_trap(trap_frame_t *frame)
+{
+    dbgprintln("trap frame addr:%p", frame);
+    //trap_frame_dump(frame);
 
-  if((which_dev = devintr()) == 0){
-    keprint("\nscause %p\n", scause);
-    keprint("sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
-    panic("kerneltrap");
-  }
-  keprint("which_dev: %d\n", which_dev);
+    int which_dev = 0;
+    uint64_t sepc = r_sepc();
+    uint64_t sstatus = r_sstatus();
+    // uint64_t scause = r_scause();
   
-  // the yield() may have caused some traps to occur,
-  // so restore trap registers for use by kernelvec.S's sepc instruction.
-  w_sepc(sepc);
-  w_sstatus(sstatus);
+    if((sstatus & SSTATUS_SPP) == 0)
+        panic("do_kernel_trap: not from supervisor mode");
+    if(interrupt_enabled() != 0)
+        panic("do_kernel_trap: interrupts enabled");
+
+    /* 对中断函数进行派发 */
+    interrupt_dispatch(frame);
+
+    // the yield() may have caused some traps to occur,
+    // so restore trap registers for use by kernel_trap_entry.S's sepc instruction.
+    w_sepc(sepc);
+    w_sstatus(sstatus);
 }

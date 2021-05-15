@@ -1,59 +1,115 @@
 #include <arch/memory.h>
 #include <arch/plic.h>
 #include <arch/cpu.h>
+#include <arch/interrupt.h>
+#include <xbook/debug.h>
 #include <k210_qemu_phymem.h>
 
 //
 // the riscv Platform Level Interrupt Controller (PLIC).
 //
-
-void plicinit(void) {
-  /* 设置某个中断的优先级 */
-	write32(PLIC_V + DISK_IRQ * sizeof(uint32), 1);
-	write32(PLIC_V + UART_IRQ * sizeof(uint32), 1);
+void plic_init(void)
+{
+    #ifdef QEMU
+    int hart = cpu_get_my_id();
+    /* set this hart's S-mode priority threshold to 0. 
+    0意味着不会在S模式产生中断 
+    每个hart的第0个优先级置0 */
+    write32(PLIC_SPRIORITY(hart), 0);
+    #endif
 }
 
-void
-plicinithart(void)
+void plic_enable_irq(irqno_t irqno)
 {
-  int hart = cpu_get_my_id();
-  /* 打开PLIC上的中断使能 */
-  #ifdef QEMU
-  // set uart's enable bit for this hart's S-mode. 
-  *(uint32*)PLIC_SENABLE(hart)= (1 << UART_IRQ) | (1 << DISK_IRQ);
-  // set this hart's S-mode priority threshold to 0.
-  *(uint32*)PLIC_SPRIORITY(hart) = 0;
-  #else
-  uint32 *hart_m_enable = (uint32*)PLIC_MENABLE(hart);
-  *(hart_m_enable) = read32(hart_m_enable) | (1 << DISK_IRQ);
-  uint32 *hart0_m_int_enable_hi = hart_m_enable + 1;
-  *(hart0_m_int_enable_hi) = read32(hart0_m_int_enable_hi) | (1 << (UART_IRQ % 32));
-  #endif
+    if (irqno < 0 || irqno >= IRQ_MAX_NR)
+        panic("[IRQ] plic enable bad irq %d!", irqno);
+    int hart = cpu_get_my_id();
+
+    /* 打开PLIC上的S模式中断使能 */
+
+    /* ENABLE是每位一个中断源 */
+    uint32_t *enable_addr;
+    #ifdef QEMU
+    enable_addr = (uint32_t *)PLIC_SENABLE(hart);
+    #else
+    enable_addr = (uint32_t *)PLIC_MENABLE(hart);
+    #endif  /* QEMU */
+
+    enable_addr += irqno / 32;  // 指向(irqno / 32)个4字节地址
+    uint8_t irqno_off = irqno % 32;
+    // set uart's enable bit for this hart's S-mode. 
+    write32(enable_addr, read32(enable_addr) | (1 << irqno_off)); 
+
+    /* 设置中断对应的优先级，优先级是每个4字节一个中断源 */
+    uint32_t *priority_addr = (uint32_t *) PLIC_PRIORITY;
+    priority_addr += irqno;
+    write32(priority_addr, 1);  // 设置优先级为1
+}
+
+void plic_disable_irq(irqno_t irqno)
+{
+    if (irqno < 0 || irqno >= IRQ_MAX_NR)
+        panic("[IRQ] plic enable bad irq %d!", irqno);
+    int hart = cpu_get_my_id();
+    
+    /* 打开PLIC上的S模式中断使能 */
+    uint32_t *enable_addr;
+    #ifdef QEMU
+    enable_addr = (uint32_t *)PLIC_SENABLE(hart);
+    #else
+    enable_addr = (uint32_t *)PLIC_MENABLE(hart);
+    #endif  /* QEMU */
+
+    enable_addr += irqno / 32;  // 指向(irqno / 32)个4字节地址
+    uint8_t irqno_off = irqno % 32;
+    // set uart's enable bit for this hart's S-mode. 
+    write32(enable_addr, read32(enable_addr) & ~(1 << irqno_off)); 
+
+    /* 设置中断对应的优先级，优先级是每个4字节一个中断源 */
+    uint32_t *priority_addr = (uint32_t *) PLIC_PRIORITY;
+    priority_addr += irqno;
+    write32(priority_addr, 0);  // 设置优先级为0
 }
 
 // ask the PLIC what interrupt we should serve.
-int
-plic_claim(void)
+int plic_claim(void)
 {
   int hart = cpu_get_my_id();
   int irq;
   #ifndef QEMU
-  irq = *(uint32*)PLIC_MCLAIM(hart);
+  irq = *(uint32_t*)PLIC_MCLAIM(hart);
   #else
-  irq = *(uint32*)PLIC_SCLAIM(hart);
+  irq = *(uint32_t*)PLIC_SCLAIM(hart);
   #endif
   return irq;
 }
 
 // tell the PLIC we've served this IRQ.
-void
-plic_complete(int irq)
+void plic_complete(int irq)
 {
   int hart = cpu_get_my_id();
   #ifndef QEMU
-  *(uint32*)PLIC_MCLAIM(hart) = irq;
+  *(uint32_t*)PLIC_MCLAIM(hart) = irq;
   #else
-  *(uint32*)PLIC_SCLAIM(hart) = irq;
+  *(uint32_t*)PLIC_SCLAIM(hart) = irq;
   #endif
 }
 
+int interrupt_do_irq(trap_frame_t *frame)
+{
+    irqno_t irq = plic_claim();
+    if (irq < 0 || irq >= IRQ_MAX_NR) {
+        errprintln("[irq] bad irq number %d!\n", irq);
+        return -1;
+    }
+    if (!irq)   // irq=0 => no irq
+        return -1;
+    #if 0
+	if (!irq_handle(irq, frame)) {
+		return -1;
+	}
+    #else
+    dbgprintln("[IRQ] irq_handle %d", irq);
+    #endif
+	return 0;
+}

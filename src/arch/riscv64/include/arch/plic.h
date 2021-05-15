@@ -77,6 +77,8 @@
  *
  */
 
+#include <xbook/hardirq.h>
+
 #ifdef QEMU     // QEMU 
 #define UART_IRQ    10 
 #define DISK_IRQ    1
@@ -85,10 +87,11 @@
 #define DISK_IRQ    27
 #endif 
 
-void plicinit(void);
+void plic_init(void);
 
-// enable PLIC for each hart 
-void plicinithart(void);
+void plic_enable_irq(irqno_t irqno);
+
+void plic_disable_irq(irqno_t irqno);
 
 // ask PLIC what interrupt we should serve 
 int plic_claim(void);

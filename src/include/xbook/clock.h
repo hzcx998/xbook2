@@ -30,4 +30,8 @@ clock_t sys_get_ticks();
 clock_t clock_delay_by_ticks(clock_t ticks);
 void mdelay(time_t msec);
 
+/* 全局函数 */
+int clock_handler(irqno_t irq, void *data);
+
+
 #endif  /* _XBOOK_CLOCK_H */

@@ -36,14 +36,15 @@
 #define PLIC                    0x0c000000L
 #define PLIC_V                  (PLIC + VIRT_OFFSET)
 
-#define PLIC_PRIORITY           (PLIC_V + 0x0)
-#define PLIC_PENDING            (PLIC_V + 0x1000)
-#define PLIC_MENABLE(hart)      (PLIC_V + 0x2000 + (hart) * 0x100)
-#define PLIC_SENABLE(hart)      (PLIC_V + 0x2080 + (hart) * 0x100)
-#define PLIC_MPRIORITY(hart)    (PLIC_V + 0x200000 + (hart) * 0x2000)
-#define PLIC_SPRIORITY(hart)    (PLIC_V + 0x201000 + (hart) * 0x2000)
-#define PLIC_MCLAIM(hart)       (PLIC_V + 0x200004 + (hart) * 0x2000)
-#define PLIC_SCLAIM(hart)       (PLIC_V + 0x201004 + (hart) * 0x2000)
+/* 除了PLIC_PENDING和PLIC_MENABLE、PLIC_SENABLE的单位是以位为单位外，其他的都是以字节为一个单位 */
+#define PLIC_PRIORITY           (PLIC_V + 0x0)      // 以4字节为单位
+#define PLIC_PENDING            (PLIC_V + 0x1000)   // 以位为单位
+#define PLIC_MENABLE(hart)      (PLIC_V + 0x2000 + (hart) * 0x100)      // machine interrupt enable，以位为单位
+#define PLIC_SENABLE(hart)      (PLIC_V + 0x2080 + (hart) * 0x100)      // supervisor interrupt enable，以位为单位
+#define PLIC_MPRIORITY(hart)    (PLIC_V + 0x200000 + (hart) * 0x2000)   // 优先级值，以4字节为单位
+#define PLIC_SPRIORITY(hart)    (PLIC_V + 0x201000 + (hart) * 0x2000)   // 以4字节为单位
+#define PLIC_MCLAIM(hart)       (PLIC_V + 0x200004 + (hart) * 0x2000)   // 以4字节为单位
+#define PLIC_SCLAIM(hart)       (PLIC_V + 0x201004 + (hart) * 0x2000)   // 以4字节为单位
 
 
 int physic_memory_init();

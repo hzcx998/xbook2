@@ -1,7 +1,11 @@
 #include <arch/io.h>
 #include <arch/cmos.h>
 #include <arch/time.h>
+#include <stddef.h>
 #include <xbook/debug.h>
+#include <xbook/clock.h>
+#include <arch/interrupt.h>
+#include <xbook/hardirq.h>
 
 /* PIT （Programmable Interval Timer）8253/8254 可编程中断计时器 */
 
@@ -126,4 +130,7 @@ void pit_clock_init()
             PIT_MODE_COUNTER_0 | PIT_MODE_BINARY);
 	ioport_out8(PIT_COUNTER0, (unsigned char) (COUNTER0_VALUE & 0xff));
 	ioport_out8(PIT_COUNTER0, (unsigned char) (COUNTER0_VALUE >> 8) & 0xff);   
+    /* 注册时钟中断 */
+    if (irq_register(IRQ0_CLOCK, clock_handler, IRQF_DISABLED, "clockirq", "kclock", NULL))
+        keprint("register failed!\n");
 }
