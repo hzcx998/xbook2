@@ -4,6 +4,7 @@
 #include <xbook/task.h>
 #include <xbook/clock.h>
 #include <xbook/safety.h>
+#include <xbook/debug.h>
 #include <errno.h>
 #include <string.h>
 #include <arch/interrupt.h>
@@ -142,43 +143,18 @@ void timer_update_ticks()
     if (timer_ticks < minim_timeout_val) { // no timer timeout
         interrupt_restore_state(flags);
         return;
-    }
+    }        
     list_for_each_owner_safe (timer, next, &timer_list_head, list) {
         if (timer->timeout > timer_ticks) {
             break;
         }
         timer_do_action(timer); // time out
     }
-    minim_timeout_val = timer->timeout;
+    /* 在执行action过程中，可能会添加新的定时器，并且比现在超时的定时器的值更小，
+    于是只有超时的值大于minim值时才更新minim */
+    if (minim_timeout_val > timer->timeout)
+        minim_timeout_val = timer->timeout;
     interrupt_restore_state(flags);
-}
-
-long sys_usleep(struct timeval *inv, struct timeval *outv)
-{
-    if (!inv)
-        return -EINVAL;
-    struct timeval tv;
-    unsigned long ticks;
-    if (mem_copy_from_user(&tv, inv, sizeof(struct timeval)) < 0)
-        return -EFAULT;
-    if (tv.tv_usec >= 1000000 || tv.tv_sec < 0 || tv.tv_usec < 0)
-        return -EINVAL;
-    /* 如果小于2毫秒就用延时的方式 */
-    if (tv.tv_usec < 2000L && tv.tv_sec == 0) {
-        udelay(tv.tv_usec);
-        return 0;
-    }
-    ticks = timeval_to_systicks(&tv);
-    ticks = task_sleep_by_ticks(ticks);
-    if (ticks > 0) {
-        if (outv) {
-            systicks_to_timeval(ticks, &tv);
-            if (mem_copy_to_user(outv, &tv, sizeof(struct timeval)) < 0)
-                return -EFAULT;
-        }
-        return -EINTR;
-    }
-    return 0;
 }
 
 int timers_init()

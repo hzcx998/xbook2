@@ -2,6 +2,7 @@
 #define _XBOOK_VMM_H
 
 #include <arch/page.h>
+#include <arch/phymem.h>
 
 #define USER_VMM_SIZE       USER_SPACE_SIZE
 #define USER_VMM_BASE_ADDR  USER_SPACE_START_ADDR

@@ -24,6 +24,7 @@ typedef struct softirq_action {
 
 void softirq_build(unsigned long softirq, void (*action)(softirq_action_t *));
 void softirq_active(unsigned long softirq);
+void softirq_handle_in_interrupt();
 void softirq_init();
 
 #define TASK_ASSIST_SCHED       0

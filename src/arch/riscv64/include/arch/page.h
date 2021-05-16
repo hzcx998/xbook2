@@ -46,29 +46,6 @@ typedef unsigned long* pgdir_t; // 512 PTEs
 #define PXSHIFT(level)  (PAGE_SHIFT+(9*(level)))
 #define PX(level, va) ((((uint64) (va)) >> PXSHIFT(level)) & PXMASK)
 
-// one beyond the highest possible virtual address.
-// MAXVA is actually one bit less than the max allowed by
-// Sv39, to avoid having to sign-extend virtual addresses
-// that have the high bit set.
-#define MAX_VIR_ADDR (1L << (9 + 9 + 9 + 12 - 1))
-
-#define VIRT_OFFSET             0x3F00000000L
-
-// map the trampoline page to the highest address,
-// in both user and kernel space.
-#define TRAMPOLINE              (MAX_VIR_ADDR - PAGE_SIZE)
-
-// User memory layout.
-// Address zero first:
-//   text
-//   original data and bss
-//   fixed-size stack
-//   expandable heap
-//   ...
-//   TRAPFRAME (p->trapframe, used by the trampoline)
-//   TRAMPOLINE (the same page as in the kernel)
-#define TRAPFRAME               (TRAMPOLINE - PAGE_SIZE)
-
 
 /* 获取页目录表地址 */
 #define GET_CUR_PGDIR() ((pgdir_t)SATP_PGTBL(r_satp()))

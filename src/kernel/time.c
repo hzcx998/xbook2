@@ -39,6 +39,7 @@ int sys_clock_gettime(clockid_t clockid, struct timespec *ts)
         tmp_ts.tv_sec = (systicks / HZ);
         tmp_ts.tv_nsec = ((systicks % HZ) * MS_PER_TICKS) * 1000000;
         break;
+    #if !defined(CLOCK_NO_TASK)
     case CLOCK_PROCESS_CPUTIME_ID:  /* 本进程运行时间*/
         tmp_ts.tv_sec = task_current->elapsed_ticks / HZ;
         tmp_ts.tv_nsec = ((task_current->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;
@@ -47,6 +48,7 @@ int sys_clock_gettime(clockid_t clockid, struct timespec *ts)
         tmp_ts.tv_sec = task_current->elapsed_ticks / HZ;
         tmp_ts.tv_nsec = ((task_current->elapsed_ticks % HZ) * MS_PER_TICKS) * 1000000;
         break;
+    #endif
     default:
         return -1;
     }
@@ -96,7 +98,7 @@ void systicks_to_timespec(unsigned long ticks, struct timespec *ts)
     ts->tv_sec = sec;
     ts->tv_nsec = nsec;
 }
-
+#if !defined(CONFIG_NO_SYS_TIMES)
 clock_t sys_times(struct tms *buf)
 {
     if (buf) {
@@ -120,3 +122,4 @@ clock_t sys_times(struct tms *buf)
     }
     return sys_get_ticks();
 }
+#endif

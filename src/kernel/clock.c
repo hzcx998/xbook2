@@ -3,12 +3,15 @@
 #include <math.h>
 #include <xbook/softirq.h>
 #include <xbook/debug.h>
-#include <xbook/softirq.h>
+#if !defined(CLOCK_NO_SHCED)
 #include <xbook/task.h>
 #include <xbook/schedule.h>
+#endif
 #include <xbook/timer.h>
 #include <xbook/hardirq.h>
 #include <xbook/walltime.h>
+#include <xbook/debug.h>
+#include <arch/cpu.h>
 
 volatile clock_t systicks;
 volatile clock_t timer_ticks;
@@ -19,11 +22,14 @@ static void timer_softirq_handler(softirq_action_t *action)
         walltime_update_second();
     }
     timer_update_ticks();
+    #if !defined(CLOCK_NO_SHCED)
     alarm_update_ticks();
+    #endif
 }
 
 static void sched_softirq_handler(softirq_action_t *action)
 {
+    #if !defined(CLOCK_NO_SHCED)
     task_t *current = task_current;
     assert(current->stack_magic == TASK_STACK_MAGIC);
     current->elapsed_ticks++;
@@ -32,6 +38,7 @@ static void sched_softirq_handler(softirq_action_t *action)
 	} else {
 		current->ticks--;
 	}
+    #endif
 }
 
 int clock_handler(irqno_t irq, void *data)
@@ -51,8 +58,12 @@ clock_t sys_get_ticks()
 clock_t clock_delay_by_ticks(clock_t ticks)
 {
     clock_t start = systicks;
+    #if !defined(CLOCK_NO_SHCED)
     while (systicks - start < ticks)
         task_yield();
+    #else
+    while (systicks - start < ticks);
+    #endif
     return ticks;
 }
 

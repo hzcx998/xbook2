@@ -3,6 +3,7 @@
 
 #include "task.h"
 #include "elf32.h"
+#include <sys/time.h>
 
 #define PROC_CREATE_INIT    0X80000000      /* 只用于INIT进程 */
 #define PROC_CREATE_STOP    0X01            /* 创建后停止，不执行 */
@@ -33,6 +34,7 @@ pid_t sys_waitpid(pid_t pid, int *status, int options);
 int sys_execve(const char *pathname, const char *argv[], const char *envp[]);
 void sys_exit(int status);
 unsigned long sys_sleep(unsigned long second);
+long sys_usleep(struct timeval *inv, struct timeval *outv)
 int sys_create_process(char **argv, char **envp, uint32_t flags);
 int sys_resume_process(pid_t pid);
 

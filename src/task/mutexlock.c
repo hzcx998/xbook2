@@ -7,10 +7,12 @@ void mutex_lock(mutexlock_t *mutex)
         if (!spin_try_lock(&mutex->wait_lock)) {
             return;
         }
+        #if !defined(MUTEX_LOCK_TINY)
         mutex->waiters++;
         list_add_tail(&task_current->list, &mutex->wait_list);
         TASK_ENTER_WAITLIST(task_current);
         task_block(TASK_BLOCKED);
+        #endif
     };
 }
 
@@ -19,6 +21,7 @@ void mutex_unlock(mutexlock_t *mutex)
     unsigned long flags;
     interrupt_save_and_disable(flags);
     spin_unlock(&mutex->wait_lock);
+    #if !defined(MUTEX_LOCK_TINY)
     if (mutex->waiters < 1) {
         interrupt_restore_state(flags);
         return;
@@ -30,5 +33,6 @@ void mutex_unlock(mutexlock_t *mutex)
         mutex->waiters--;
         task_wakeup(task);
     }
+    #endif
     interrupt_restore_state(flags);
 }

@@ -50,7 +50,6 @@ int timer_alive(timer_t *timer);
 timer_t *timer_find(unsigned long id);
 
 void timer_update_ticks();
-long sys_usleep(struct timeval *inv, struct timeval *outv);
 
 int timers_init();
 

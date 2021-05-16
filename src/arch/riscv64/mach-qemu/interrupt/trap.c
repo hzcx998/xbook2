@@ -17,10 +17,9 @@ void trap_init(void)
 // on whatever the current kernel stack is.
 void do_kernel_trap(trap_frame_t *frame)
 {
-    dbgprintln("trap frame addr:%p", frame);
+    //dbgprintln("trap frame addr:%p", frame);
     //trap_frame_dump(frame);
 
-    int which_dev = 0;
     uint64_t sepc = r_sepc();
     uint64_t sstatus = r_sstatus();
     // uint64_t scause = r_scause();

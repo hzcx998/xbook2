@@ -199,6 +199,10 @@
         "sbi.h": "c",
         "k210_qemu_phymem.h": "c",
         "mutexlock.h": "c",
-        "mempool.h": "c"
+        "mempool.h": "c",
+        "plic.h": "c",
+        "riscv.h": "c",
+        "memio.h": "c",
+        "tests.h": "c"
     }
 }

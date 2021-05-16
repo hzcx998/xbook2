@@ -2,6 +2,8 @@
 #include <xbook/timer.h>
 #include <xbook/clock.h>
 #include <xbook/schedule.h>
+#include <sys/time.h>
+#include <errno.h>
 
 static void task_sleep_timeout_handler(timer_t *timer_self, void *arg)
 {
@@ -41,4 +43,32 @@ unsigned long sys_sleep(unsigned long second)
     clock_t ticks = second * HZ;
     second = task_sleep_by_ticks(ticks) / HZ;
     return second;
+}
+
+long sys_usleep(struct timeval *inv, struct timeval *outv)
+{
+    if (!inv)
+        return -EINVAL;
+    struct timeval tv;
+    unsigned long ticks;
+    if (mem_copy_from_user(&tv, inv, sizeof(struct timeval)) < 0)
+        return -EFAULT;
+    if (tv.tv_usec >= 1000000 || tv.tv_sec < 0 || tv.tv_usec < 0)
+        return -EINVAL;
+    /* 如果小于2毫秒就用延时的方式 */
+    if (tv.tv_usec < 2000L && tv.tv_sec == 0) {
+        udelay(tv.tv_usec);
+        return 0;
+    }
+    ticks = timeval_to_systicks(&tv);
+    ticks = task_sleep_by_ticks(ticks);
+    if (ticks > 0) {
+        if (outv) {
+            systicks_to_timeval(ticks, &tv);
+            if (mem_copy_to_user(outv, &tv, sizeof(struct timeval)) < 0)
+                return -EFAULT;
+        }
+        return -EINTR;
+    }
+    return 0;
 }

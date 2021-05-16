@@ -3,6 +3,7 @@
 #include <xbook/spinlock.h>
 #include <arch/sbi.h>
 #include <arch/riscv.h>
+#include <arch/time.h>
 #include <xbook/debug.h>
 
 /* 值越小，间隔就越小，产生中断的速度就越快。
@@ -27,7 +28,7 @@ void timer_interrupt_set_next_timeout()
 }
 
 /* 临时定时器中断处理函数，内核有对应的实现，使用内核定时器中断时，需要将本函数删除 */
-void clock_handler2(irqno_t irqno, void *data)
+void clock_handler2(int irqno, void *data)
 {
     keprintln("ticks: %d", ticks);
     ticks++;

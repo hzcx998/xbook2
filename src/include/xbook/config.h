@@ -14,4 +14,7 @@
 /* auto select timezone */
 /* #define CONFIG_TIMEZONE_AUTO */
 
+/* 裁剪配置 */
+#define CONFIG_NO_SYS_TIMES
+
 #endif   /* _XBOOK_CONFIG_H */

@@ -2,6 +2,7 @@
 #include <arch/riscv.h>
 #include <xbook/debug.h>
 #include <xbook/clock.h>
+#include <xbook/softirq.h>
 #include <stddef.h>
 
 extern int interrupt_do_irq(trap_frame_t *frame);
@@ -122,13 +123,16 @@ void interrupt_dispatch(trap_frame_t *frame)
     {
         keprintln("external interrupt");
         interrupt_do_irq(frame);
+        softirq_handle_in_interrupt();
     } else if ((SCAUSE_INTERRUPT | SCAUSE_S_TIMER_INTR) == scause) {
-        keprintln("timer interrupt");
+        //keprintln("timer interrupt");
         /* 直接调用内核的时钟处理 */
-        // clock_handler(-1, NULL);
-        clock_handler2(-1, NULL);
+        clock_handler(-1, NULL);
+        //clock_handler2(-1, NULL);
         /* 处理完后需要设置下一个超时的时钟时间，才能再次产生中断 */
         timer_interrupt_set_next_timeout();
+        /* 调用软中断 */
+        softirq_handle_in_interrupt();
     } else if (SCAUSE_INTERRUPT & scause) {
         errprintln("unsupported other external interrupt!");
         errprintln("\nscause %p\n", scause);

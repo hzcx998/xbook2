@@ -2,11 +2,14 @@
 #define _SYS_TIME_H
 
 #include <types.h>
+#include <xbook/config.h>
 
 #define CLOCK_REALTIME            1 /*系统统当前时间，从1970年1.1日算起*/
 #define CLOCK_MONOTONIC           2 /*系统的启动时间，不能被设置*/
 #define CLOCK_PROCESS_CPUTIME_ID  3 /* 本进程运行时间*/
 #define CLOCK_THREAD_CPUTIME_ID   4 /*本线程运行时间*/
+
+#define CLOCK_NO_TASK
 
 struct timeval {
     long tv_sec;         /* seconds */
@@ -39,7 +42,8 @@ unsigned long timeval_to_systicks(struct timeval *tv);
 void systicks_to_timeval(unsigned long ticks, struct timeval *tv);
 unsigned long timespec_to_systicks(struct timespec *ts);
 void systicks_to_timespec(unsigned long ticks, struct timespec *ts);
+#if !defined(CONFIG_NO_SYS_TIMES)
 clock_t sys_times(struct tms *buf);
-
+#endif
 
 #endif  /* _SYS_TIME_H */

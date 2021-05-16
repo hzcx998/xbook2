@@ -1,6 +1,7 @@
 #include <xbook/safety.h>
 #include <xbook/kernel.h>
 #include <xbook/schedule.h>
+#include <xbook/vmm.h>
 #include <arch/page.h>
 #include <string.h>
 
@@ -8,9 +9,15 @@ int safety_check_range(void *src, unsigned long nbytes)
 {
     unsigned long addr;
     addr = (unsigned long) src;
+    #if defined(SAFETY_TINY)
+    if (!((addr >= USER_VMM_BASE_ADDR) && (addr + nbytes < USER_VMM_TOP_ADDR))) {
+        return -1;
+    }
+    #else
     if (task_current->vmm && !((addr >= USER_VMM_BASE_ADDR) && (addr + nbytes < USER_VMM_TOP_ADDR))) {
         return -1;
     }
+    #endif
     return 0;
 }
 

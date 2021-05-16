@@ -24,7 +24,13 @@ export AS LD
 ifeq ($(ENV_MACH), mach-i386)
 SRC			:= $(ARCH_DIR)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/ net/
 else
-SRC			:= $(ARCH_DIR)/ kernel/debug.c lib/string.c lib/vsprintf.c
+SRC			:= $(ARCH_DIR)/ kernel/debug.c lib/string.c lib/vsprintf.c lib/bitmap.c
+SRC			+= init/main2.c 
+SRC			+= vmm/dma.c vmm/memcache.c vmm/virmem.c 
+SRC			+= kernel/hardirq.c kernel/softirq.c kernel/walltime.c kernel/safety.c 
+SRC			+= kernel/clock.c kernel/timer.c kernel/time.c
+SRC			+= kernel/tests.c
+SRC			+= task/mutexlock.c
 endif
 
 NAME		:= kernel.elf

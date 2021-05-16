@@ -5,6 +5,9 @@
 #include <types.h>
 #include <arch/time.h>
 
+/* 时钟不进行调度 */
+#define CLOCK_NO_SHCED
+
 /* 1 ticks 对应的毫秒数 */
 #define MS_PER_TICKS (1000 / HZ)
 

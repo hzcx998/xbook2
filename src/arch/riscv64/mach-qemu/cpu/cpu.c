@@ -14,3 +14,19 @@ cpuid_t cpu_get_my_id()
     int id = r_tp();
     return id;
 }
+
+cpuid_t cpu_attached_list[CPU_NR_MAX];
+
+void cpu_get_attached_list(cpuid_t *cpu_list, unsigned int *count)
+{
+    cpu_list[0] = cpu_get_my_id();
+    *count = 1;
+}
+
+void cpu_init()
+{
+    int i;
+    for (i = 0; i < CPU_NR_MAX; i++) {
+        cpu_attached_list[i] = i;
+    }
+}

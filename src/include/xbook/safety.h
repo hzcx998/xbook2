@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define SAFETY_TINY
+
 /* 权限：资源（设备，ipc）访问、路径访问、 */
 
 int safety_check_range(void *src, unsigned long nbytes);

@@ -4,6 +4,9 @@
 #include "spinlock.h"
 #include <xbook/list.h>
 
+/* 简单版本的互斥锁 */
+#define MUTEX_LOCK_TINY
+
 typedef struct mutex_lock {
     spinlock_t wait_lock;
     list_t wait_list;

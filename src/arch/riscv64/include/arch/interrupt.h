@@ -7,6 +7,8 @@
 #define IRQ_MAX_NR          80
 #define MAX_INTERRUPT_NR    (IRQ_OFFSET + IRQ_MAX_NR)    /* 最大支持的中断数量 */
 
+#define NR_IRQS     IRQ_MAX_NR
+
 typedef struct {
     /*   0 */ uint64_t kernel_satp;   // kernel page table
     /*   8 */ uint64_t kernel_sp;     // top of process's kernel stack

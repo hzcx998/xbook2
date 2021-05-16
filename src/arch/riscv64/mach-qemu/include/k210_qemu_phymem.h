@@ -19,6 +19,30 @@
 /* 虚拟地址偏移 */
 #define VIRT_OFFSET             0x3F00000000L
 
+
+// one beyond the highest possible virtual address.
+// MAXVA is actually one bit less than the max allowed by
+// Sv39, to avoid having to sign-extend virtual addresses
+// that have the high bit set.
+#define MAX_VIR_ADDR (1L << (9 + 9 + 9 + 12 - 1))
+
+#define VIRT_OFFSET             0x3F00000000L
+
+// map the trampoline page to the highest address,
+// in both user and kernel space.
+#define TRAMPOLINE              (MAX_VIR_ADDR - PAGE_SIZE)
+
+// User memory layout.
+// Address zero first:
+//   text
+//   original data and bss
+//   fixed-size stack
+//   expandable heap
+//   ...
+//   TRAPFRAME (p->trapframe, used by the trampoline)
+//   TRAMPOLINE (the same page as in the kernel)
+#define TRAPFRAME               (TRAMPOLINE - PAGE_SIZE)
+
 #ifdef QEMU
 // qemu puts UART registers here in physical memory.
 #define UART                    0x10000000L
