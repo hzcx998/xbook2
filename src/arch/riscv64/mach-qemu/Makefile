@@ -5,3 +5,4 @@ SRC	+= hardware/
 SRC	+= cpu/
 SRC	+= interrupt/
 SRC	+= mm/
+SRC	+= task/
