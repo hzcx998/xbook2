@@ -10,7 +10,7 @@ void sys_reboot(void) {
     reboot();
 }
 
-void __attribute__((noreturn)) reboot(void) {
+void __attribute__ ((noreturn)) reboot(void) {
     keprint(PRINT_INFO "Reboot.\n");
 
     __asm__ __volatile__ ("cli");

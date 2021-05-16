@@ -11,7 +11,7 @@ void sys_shutdown(void) {
     halt();
 }
 
-void __attribute__((noreturn)) halt(void) {
+void __attribute__ ((noreturn)) halt(void) {
     keprint(PRINT_INFO "Halt.\n");
     __asm__ __volatile__ ("cli");
 
