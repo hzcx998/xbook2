@@ -1,6 +1,7 @@
     .section .text.entry
     .extern arch_init
     .extern kernel_main
+    .global boot_stack
     .globl _start
 _start:
     add t0, a0, 1

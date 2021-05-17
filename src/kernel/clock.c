@@ -6,6 +6,8 @@
 #if !defined(CLOCK_NO_SHCED)
 #include <xbook/task.h>
 #include <xbook/schedule.h>
+#else
+#include <arch/schedule.h>
 #endif
 #include <xbook/timer.h>
 #include <xbook/hardirq.h>
@@ -31,6 +33,15 @@ static void sched_softirq_handler(softirq_action_t *action)
 {
     #if !defined(CLOCK_NO_SHCED)
     task_t *current = task_current;
+    assert(current->stack_magic == TASK_STACK_MAGIC);
+    current->elapsed_ticks++;
+	if (current->ticks <= 0) {
+		schedule();
+	} else {
+		current->ticks--;
+	}
+    #else
+    proc_t *current = task_current;
     assert(current->stack_magic == TASK_STACK_MAGIC);
     current->elapsed_ticks++;
 	if (current->ticks <= 0) {

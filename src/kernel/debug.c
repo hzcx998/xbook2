@@ -100,7 +100,8 @@ void debug_putstr(char *str, int count)
 int keprint(const char *fmt, ...)
 {
     #if PRINT_LOCK == 1
-    spin_lock(&print_spin_lock);
+    unsigned long iflags;
+    spin_lock_irqsave(&print_spin_lock, iflags);
     #endif
     int i;
 	char buf[256] = {0,};
@@ -133,7 +134,7 @@ int keprint(const char *fmt, ...)
         }
     }
     #if PRINT_LOCK == 1
-	spin_unlock(&print_spin_lock);
+	spin_unlock_irqrestore(&print_spin_lock, iflags);
     #endif
     return i;
 }
