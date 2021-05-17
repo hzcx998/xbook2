@@ -8,6 +8,9 @@
 #include <xbook/timer.h>
 #include <xbook/tests.h>
 
+// 临时测试
+#include <arch/proc.h>
+
 int kernel_main(void)
 {
     keprint(PRINT_INFO "welcome to xbook kernel.\n");
@@ -16,6 +19,7 @@ int kernel_main(void)
     irq_description_init();
     softirq_init();
     
+    procinit();
     walltime_init();
     clock_init();
     timers_init();

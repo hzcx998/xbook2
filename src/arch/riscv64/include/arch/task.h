@@ -8,16 +8,22 @@
 
 /* TODO: 修改为RISCV的结构 */
 typedef struct {
-    uint32_t ebp;
-    uint32_t ebx;
-    uint32_t edi;
-    uint32_t esi;
+    uint64_t ra;        // PC
+    uint64_t sp;        // SP
 
-    /* 首次运行指向kthread_func_t，其它时候指向switch_to的返回地址 */
-    void (*eip) (task_func_t *func, void *arg);
-    uint32_t unused;
-    task_func_t *function;
-    void *arg;
+    // callee-saved
+    uint64_t s0;
+    uint64_t s1;
+    uint64_t s2;
+    uint64_t s3;
+    uint64_t s4;
+    uint64_t s5;
+    uint64_t s6;
+    uint64_t s7;
+    uint64_t s8;
+    uint64_t s9;
+    uint64_t s10;
+    uint64_t s11;
 } thread_stack_t;
 
 void thread_switch_to_next(void *prev, void *next);
