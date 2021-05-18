@@ -817,7 +817,7 @@ void *device_mmap(handle_t handle, size_t length, int flags)
                 switch (devobj->type) {
                 case DEVICE_TYPE_VIEW:
                     {
-                        uint32_t vaddr = (uint32_t)kern_phy_addr2vir_addr(ioreq->io_status.infomation);
+                        unsigned long vaddr = (unsigned long)kern_phy_addr2vir_addr(ioreq->io_status.infomation);
                         /* 如果是虚拟设备，映射地址在内核中，就要映射虚拟地址（有可能不连续） */
                         mapaddr = mem_space_mmap_viraddr(0, vaddr, length, 
                             PROT_USER | PROT_WRITE, MEM_SPACE_MAP_SHARED | MEM_SPACE_MAP_REMAP);
@@ -1378,7 +1378,7 @@ static int fsal_devfs_readdir(int idx, void *buf)
     devfs_dir_extention_t *ext = (devfs_dir_extention_t *) pdir->extension;
     if (sys_scandev(ext->curptr, DEVICE_TYPE_ANY, &ext->devent) < 0)
         return -EPERM;
-    if (ext->devent.de_name == '\0') 
+    if (ext->devent.de_name[0] == '\0') 
         return -1;
     /* 打开获取设备信息 */
     device_object_t *devobj = io_search_device_by_name(ext->devent.de_name);

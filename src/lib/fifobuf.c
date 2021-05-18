@@ -1,5 +1,6 @@
 #include <xbook/fifobuf.h>
 #include <xbook/memalloc.h>
+#include <arch/memory.h>
 #include <math.h>
 #include <assert.h>
 #include <string.h>

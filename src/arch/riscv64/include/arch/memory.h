@@ -26,4 +26,9 @@
         (*(volatile uint64_t *)(addr)) = (value); \
     }
 
+#define mb()        __sync_synchronize()
+#define barrier()   __sync_synchronize()
+#define wmb()       __sync_synchronize()
+#define rmb()       __sync_synchronize()
+
 #endif   /* _RISCV64_MEMORY_H */

@@ -7,12 +7,12 @@
 #include <xbook/walltime.h>
 #include <xbook/timer.h>
 #include <xbook/tests.h>
-// #include <arch/proc.h>
 #include <xbook/task.h>
 #include <xbook/schedule.h>
-
-// 临时测试
-// #include <arch/proc.h>
+#include <xbook/driver.h>
+#include <xbook/fifo.h>
+#include <xbook/initcall.h>
+#include <xbook/fs.h>
 
 int kernel_main(void)
 {
@@ -28,8 +28,12 @@ int kernel_main(void)
     walltime_init();
     clock_init();
     timers_init();
+    fifo_init();
     interrupt_enable();
-
+    driver_framewrok_init();
+    initcalls_exec();
+    drivers_print();
+    file_system_init();
     kernel_test_init();
 
     //task_start_other();

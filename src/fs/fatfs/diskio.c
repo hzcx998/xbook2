@@ -36,9 +36,10 @@ DSTATUS disk_status (
 	BYTE pdrv		/* Physical drive nmuber to identify the drive */
 )
 {
-    if (pdrv >= FF_VOLUMES)
+    DSTATUS stat = 0;
+    if (pdrv >= FF_VOLUMES) {
         return STA_NOINIT;
-	DSTATUS stat = 0;
+    }
     return stat;
 }
 
@@ -51,8 +52,9 @@ DSTATUS disk_initialize (
 )
 {
 	DSTATUS stat = 0;
-    if (pdrv >= FF_VOLUMES)
+    if (pdrv >= FF_VOLUMES) {
         return STA_NOINIT;
+    }
     if (diskman.open(fatfs_drv_map[pdrv]) < 0) {
         stat = STA_NODISK;
         keprint(PRINT_ERR "%s: open disk solt %d failed!\n", __func__, fatfs_drv_map[pdrv]);
@@ -71,8 +73,9 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-    if (pdrv >= FF_VOLUMES)
+    if (pdrv >= FF_VOLUMES) {
         return RES_PARERR;
+    }
 
 	DRESULT res = RES_OK;
     if (diskman.read(fatfs_drv_map[pdrv], sector, (void *) buff, count * FF_MIN_SS) < 0) {
@@ -96,8 +99,9 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
-	if (pdrv >= FF_VOLUMES)
+	if (pdrv >= FF_VOLUMES) {
         return RES_PARERR;
+    }
 
 	DRESULT res = RES_OK;
     if (diskman.write(fatfs_drv_map[pdrv], sector, (void *) buff, count * FF_MIN_SS) < 0) {
@@ -119,8 +123,9 @@ DRESULT disk_ioctl (
 	void *buff		/* Buffer to send/receive control data */
 )
 {
-    if (pdrv >= FF_VOLUMES)
+    if (pdrv >= FF_VOLUMES) {
         return RES_PARERR;
+    }
 	
 	DRESULT res;
     switch(cmd)

@@ -5,7 +5,6 @@
 #include <xbook/driver.h>
 #include <xbook/task.h>
 #include <xbook/virmem.h>
-#include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>
 #include <stdio.h>

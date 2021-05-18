@@ -75,12 +75,12 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->exit_hook = NULL;
     task->exit_hook_arg = NULL;
     task->stack_magic = TASK_STACK_MAGIC;
+    task->fileman = NULL;
+    exception_manager_init(&task->exception_manager);
     #ifndef TASK_TINY
     timer_init(&task->sleep_timer, 0, NULL, NULL);
     alarm_init(&task->alarm);
-    exception_manager_init(&task->exception_manager);
     task->pthread = NULL;
-    task->fileman = NULL;
     task->port_comm = NULL;
     #endif
 }

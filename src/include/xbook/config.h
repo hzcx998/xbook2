@@ -17,4 +17,7 @@
 /* 裁剪配置 */
 #define CONFIG_NO_SYS_TIMES
 
+
+// #define CONFIG_NETWORK
+
 #endif   /* _XBOOK_CONFIG_H */

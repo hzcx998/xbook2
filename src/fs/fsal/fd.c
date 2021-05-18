@@ -178,7 +178,11 @@ void filefd_set_fsal(file_fd_t *fd, unsigned int flags)
         fd->fsal = &pipeif_wr;
         break;
     case FILE_FD_SOCKET:
+        #ifdef CONFIG_NETWORK
         fd->fsal = &netif_fsal;
+        #else
+        panic("no configure network!");
+        #endif
         break;
     default:
         fd->fsal = NULL;

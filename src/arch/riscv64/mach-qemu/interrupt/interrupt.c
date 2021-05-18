@@ -3,6 +3,7 @@
 #include <xbook/debug.h>
 #include <xbook/clock.h>
 #include <xbook/softirq.h>
+#include <xbook/exception.h>
 #include <stddef.h>
 
 extern int interrupt_do_irq(trap_frame_t *frame);
@@ -149,4 +150,15 @@ void interrupt_dispatch(trap_frame_t *frame)
         else
             panic("[interrupt] %d handler null", exception);
     }
+}
+
+void exception_frame_build(uint32_t code, exception_handler_t handler, trap_frame_t *frame)
+{
+    noteprint("exception_frame_build: empty function!");
+}
+
+int exception_return(trap_frame_t *frame)
+{
+    noteprint("exception_frame_build: empty function!");
+    return -1;
 }

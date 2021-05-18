@@ -15,12 +15,12 @@
 #include "vmm.h"
 #include "timer.h"
 #include "spinlock.h"
+#include "fsal.h"
+#include "exception.h"
 #ifndef TASK_TINY
 #include "alarm.h"
 #include "pthread.h"
-#include "fs.h"
 #include "msgpool.h"
-#include "exception.h"
 #include "portcomm.h"
 #endif
 
@@ -95,12 +95,12 @@ typedef struct {
     list_t global_list;                 /* 全局任务队列，用来查找所有存在的任务 */
     fpu_t fpu;
     long errcode;                       /* 错误码：用户多线程时用来标记每一个线程的错误码 */
-    #ifndef TASK_TINY
+    file_man_t *fileman;    
     exception_manager_t exception_manager;         
+    #ifndef TASK_TINY
     timer_t sleep_timer;               
     alarm_t alarm;                      
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
-    file_man_t *fileman;    
     lpc_port_table_t port_table;
     port_comm_t *port_comm;
     #endif

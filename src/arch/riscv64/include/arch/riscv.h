@@ -349,5 +349,11 @@ sfence_vma()
   asm volatile("sfence.vma");
 }
 
+static inline void
+fence_i()
+{
+  asm volatile("fence.i");
+}
+
 
 #endif

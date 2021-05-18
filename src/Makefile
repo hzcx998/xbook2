@@ -24,15 +24,34 @@ export AS LD
 ifeq ($(ENV_MACH), mach-i386)
 SRC			:= $(ARCH_DIR)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/ net/
 else
-SRC			:= $(ARCH_DIR)/ kernel/debug.c lib/string.c lib/vsprintf.c lib/bitmap.c
+SRC			:= $(ARCH_DIR)/ kernel/debug.c lib/string.c lib/vsprintf.c lib/bitmap.c lib/string_obj.c
 SRC			+= init/main2.c 
-SRC			+= vmm/dma.c vmm/memcache.c vmm/virmem.c vmm/vmm.c vmm/memspace.c 
+SRC			+= vmm/dma.c vmm/memcache.c vmm/virmem.c vmm/vmm.c vmm/memspace.c vmm/mdl.c 
 SRC			+= kernel/hardirq.c kernel/softirq.c kernel/walltime.c kernel/safety.c 
 SRC			+= kernel/clock.c kernel/timer.c kernel/time.c
 SRC			+= kernel/tests.c
 SRC			+= task/mutexlock.c
 SRC			+= task/task.c task/process.c
 SRC			+= task/schedule.c
+SRC			+= kernel/driver.c
+SRC			+= task/waitqueue.c
+SRC			+= fs/
+SRC			+= kernel/account.c kernel/permission.c
+SRC			+= lib/sconf.c
+SRC			+= lib/ctype.c
+SRC			+= ipc/pipe.c
+SRC			+= kernel/exception.c
+SRC			+= kernel/exit.c
+SRC			+= lib/fifobuf.c
+SRC			+= lib/fifoio.c
+SRC			+= task/semaphore.c
+SRC			+= task/exit.c
+SRC			+= ipc/fifo.c
+SRC			+= kernel/initcall.c
+SRC			+= drivers/char/null.c drivers/char/zero.c
+SRC			+= drivers/block/loop.c
+SRC			+= drivers/tty/tty.c drivers/tty/ptty.c
+
 endif
 
 NAME		:= kernel.elf
