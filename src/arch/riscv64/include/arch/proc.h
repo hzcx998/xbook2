@@ -51,6 +51,10 @@ typedef struct {
     struct context context;      // swtch() here to run process
     char name[MAX_TASK_NAMELEN];
     fpu_t fpu;
+
+    /* NOTE: 进程相关的结构 */
+    pgdir_t page_storage;
+
     unsigned int stack_magic;
 } proc_t;
 
@@ -59,5 +63,10 @@ void proc_yield();
 void task_start_other();
 
 void thread_switch_to_next(struct context *old, struct context *new);
+
+void proc_activate_when_sched(proc_t *task);
+
+int proc_pgdir_init(proc_t *proc);
+
 
 #endif  /* __RISCV64_PROC_H */

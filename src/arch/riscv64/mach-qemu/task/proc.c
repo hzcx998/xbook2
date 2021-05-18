@@ -5,6 +5,7 @@
 #include <xbook/debug.h>
 #include <xbook/list.h>
 #include <arch/schedule.h>
+#include <arch/vmm.h>
 #include <assert.h>
 #include <string.h>
 #include <xbook/memcache.h>
@@ -39,6 +40,19 @@ int thread_i = 0;
 void thread_a(void *arg)
 {
     keprint("thread a running. %s\n", (char *)arg);
+
+    /* 进行内存映射 */
+    page_map_addr(0x1000, PAGE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC);
+
+    // vmprint(GET_CUR_PGDIR(), 2);
+
+    dbgprintln("vir=%p phy=%p\n", 0x1000, addr_vir2phy(0x1000));
+
+    /* 尝试访问不存在的虚拟地址 */
+    uint64_t *p = (uint64_t *) 0x1000;
+    *p = 0x12345678ABCDEF;
+    dbgprintln("DATA=%lx\n", *p);
+
     while (1)
     {
         #ifdef THREAD_YIELD_ENABLE
@@ -120,12 +134,23 @@ void proc_init(proc_t *proc, char *name, uint8_t prio_level)
     proc->kstack = (unsigned char *)(((unsigned long )proc) + TASK_KERN_STACK_SIZE);
     proc->flags = 0;
     proc->stack_magic = TASK_STACK_MAGIC;
+    proc->page_storage = NULL;
 }
 
 void proc_add_to_global_list(proc_t *proc)
 {
     assert(!list_find(&proc->global_list, &task_global_list));
     list_add_tail(&proc->global_list, &task_global_list);
+}
+
+int proc_pgdir_init(proc_t *proc)
+{
+    proc->page_storage = kern_page_copy_storge();
+    if (proc->page_storage == NULL) {
+        errprintln("proc_pgdir_init: copy page_storege failed!");
+        return -1;
+    }
+    return 0;
 }
 
 // Look in the process table for an UNUSED proc.
@@ -213,12 +238,37 @@ void procinit(void)
     if (!p)
         infoprint("create testA bad.\n");
 
+    proc_pgdir_init(p);
+
     p = kthread_create("testB", TASK_PRIORITY_HIGH, thread_b, "hello, B!");
     if (!p)
         infoprint("create testB bad.\n");
 
+    proc_pgdir_init(p);
+
     p = kthread_create("testC", TASK_PRIORITY_HIGH, thread_b, "hello, C!");
     if (!p)
         infoprint("create testC bad.\n");
+    //proc_pgdir_init(p);
 
+}
+
+void proc_activate_when_sched(proc_t *task)
+{
+    assert(task != NULL);
+    spin_lock(&task->lock);
+    task->state = TASK_RUNNING;
+    spin_unlock(&task->lock);
+    #if 0
+    vmm_active(task->vmm);
+    #else
+    /* 修改当前页表 */
+    if (task->page_storage == NULL) {   /* 没有自己的页表，是内核页表 */
+        keprintln("[pgdir] thread %s active kernel pgdir", task->name);
+        vmm_active_kernel();
+    } else {
+        keprintln("[pgdir] thread %s active user pgdir %p", task->name, task->page_storage);
+        vmm_active_user(kern_vir_addr2phy_addr(task->page_storage));
+    }
+    #endif
 }

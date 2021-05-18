@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdint.h>
+#include <math.h>
 #include <k210_qemu_phymem.h>
 
 /* 内核页目录表 */
@@ -297,12 +298,14 @@ int page_map_addr_fixed(unsigned long start, unsigned long addr,
     
     if (prot & PROT_USER)
         attr |= PAGE_ATTR_USER;
-    else
+    
+    if (prot & PROT_KERN)
         attr |= PAGE_ATTR_SYSTEM;
     
     if (prot & PROT_WRITE)
         attr |= PAGE_ATTR_WRITE;
-    else
+    
+    if (prot & PROT_READ)
         attr |= PAGE_ATTR_READ;
 
     if (prot & PROT_EXEC)
@@ -339,27 +342,33 @@ int page_unmap_addr_safe(unsigned long start, unsigned long len, char fixed)
 
 int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
 {
+    dbgprintln("[page] page_map_addr: start=%p len=%lx prot=%x\n", start, len, prot);
     unsigned long flags;
     interrupt_save_and_disable(flags);
     unsigned long vaddr = (unsigned long )start & PAGE_MASK;
     len = PAGE_ALIGN(len);
-    unsigned long pages = PAGE_ROUNDUP(len);
+    unsigned long pages = DIV_ROUND_UP(len, PAGE_SIZE);
     unsigned long page_idx = 0;
-    unsigned long page_addr;
+    unsigned long page_addr = 0;
     unsigned long attr = 0;
     
     if (prot & PROT_USER)
         attr |= PAGE_ATTR_USER;
-    else
+    
+    if (prot & PROT_KERN)
         attr |= PAGE_ATTR_SYSTEM;
     
     if (prot & PROT_WRITE)
         attr |= PAGE_ATTR_WRITE;
-    else
-        attr |= PAGE_ATTR_WRITE;
+    
+    if (prot & PROT_READ)
+        attr |= PAGE_ATTR_READ;
 
     if (prot & PROT_EXEC)
         attr |= PAGE_ATTR_EXEC;
+
+    dbgprintln("[page] page_map_addr: vaddr=%p pages=%d\n", vaddr, pages);
+    
 
     pgdir_t pgdir = GET_CUR_PGDIR();
     int retval = -1;
@@ -370,6 +379,7 @@ int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
             interrupt_restore_state(flags);
             return -1;
         }
+        dbgprintln("[page] page_map_addr: vaddr=%p paddr=%p\n", vaddr, page_addr);
         retval = mappages(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
         if (retval < 0) {
             vmunmap(pgdir, start & PAGE_MASK, pages, 1);
@@ -392,20 +402,22 @@ int page_map_addr_safe(unsigned long start, unsigned long len, unsigned long pro
     interrupt_save_and_disable(flags);
     unsigned long vaddr = (unsigned long )start & PAGE_MASK;
     len = PAGE_ALIGN(len);
-    unsigned long pages = PAGE_ROUNDUP(len);
+    unsigned long pages = DIV_ROUND_UP(len, PAGE_SIZE);
     unsigned long page_idx = 0;
     unsigned long page_addr;
     unsigned long attr = 0;
     
     if (prot & PROT_USER)
         attr |= PAGE_ATTR_USER;
-    else
+    
+    if (prot & PROT_KERN)
         attr |= PAGE_ATTR_SYSTEM;
     
     if (prot & PROT_WRITE)
         attr |= PAGE_ATTR_WRITE;
-    else
-        attr |= PAGE_ATTR_WRITE;
+    
+    if (prot & PROT_READ)
+        attr |= PAGE_ATTR_READ;
 
     if (prot & PROT_EXEC)
         attr |= PAGE_ATTR_EXEC;

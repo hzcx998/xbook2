@@ -144,13 +144,18 @@ int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
     unsigned int attr = 0;    
     if (prot & PROT_USER)
         attr |= PAGE_ATTR_USER;
-    else
+    
+    if (prot & PROT_KERN)
         attr |= PAGE_ATTR_SYSTEM;
     
     if (prot & PROT_WRITE)
         attr |= PAGE_ATTR_WRITE;
-    else
+    
+    if (prot & PROT_READ)
         attr |= PAGE_ATTR_READ;
+
+    if (prot & PROT_EXEC)
+        attr |= PAGE_ATTR_EXEC;
 
     while (start < end) { 
         unsigned long page_addr = page_alloc_user(1);
@@ -181,13 +186,18 @@ int page_map_addr_fixed(unsigned long start, unsigned long addr, unsigned long l
     
     if (prot & PROT_USER)
         attr |= PAGE_ATTR_USER;
-    else
+    
+    if (prot & PROT_KERN)
         attr |= PAGE_ATTR_SYSTEM;
     
     if (prot & PROT_WRITE)
         attr |= PAGE_ATTR_WRITE;
-    else
+    
+    if (prot & PROT_READ)
         attr |= PAGE_ATTR_READ;
+
+    if (prot & PROT_EXEC)
+        attr |= PAGE_ATTR_EXEC;
 
 	unsigned long pages = addr;
     unsigned long end = first + len;
@@ -251,13 +261,18 @@ int page_map_addr_safe(unsigned long start, unsigned long len, unsigned long pro
     
     if (prot & PROT_USER)
         attr |= PAGE_ATTR_USER;
-    else
+    
+    if (prot & PROT_KERN)
         attr |= PAGE_ATTR_SYSTEM;
     
     if (prot & PROT_WRITE)
         attr |= PAGE_ATTR_WRITE;
-    else
-        attr |= PAGE_ATTR_WRITE;
+    
+    if (prot & PROT_READ)
+        attr |= PAGE_ATTR_READ;
+
+    if (prot & PROT_EXEC)
+        attr |= PAGE_ATTR_EXEC;
 
     while (page_idx < pages) {
         pde_t *pde = vir_addr_to_dir_entry(vaddr);

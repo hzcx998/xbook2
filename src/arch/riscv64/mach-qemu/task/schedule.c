@@ -80,7 +80,7 @@ static void sched_set_next_task(sched_unit_t *su, proc_t *next)
 {
     fpu_save(&su->cur->fpu);
     su->cur = next;
-    // task_activate_when_sched(su->cur);
+    proc_activate_when_sched(su->cur);
     fpu_restore(&next->fpu);
 }
 
