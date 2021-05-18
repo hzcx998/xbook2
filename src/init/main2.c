@@ -7,11 +7,12 @@
 #include <xbook/walltime.h>
 #include <xbook/timer.h>
 #include <xbook/tests.h>
-#include <arch/proc.h>
-#include <arch/schedule.h>
+// #include <arch/proc.h>
+#include <xbook/task.h>
+#include <xbook/schedule.h>
 
 // 临时测试
-#include <arch/proc.h>
+// #include <arch/proc.h>
 
 int kernel_main(void)
 {
@@ -22,7 +23,8 @@ int kernel_main(void)
     softirq_init();
     
     schedule_init();
-    procinit();
+    // procinit();
+    tasks_init();
     walltime_init();
     clock_init();
     timers_init();
@@ -30,7 +32,9 @@ int kernel_main(void)
 
     kernel_test_init();
 
-    task_start_other();
+    //task_start_other();
+    task_start_user();
+    
     /*
     clock_init();
     timers_init();

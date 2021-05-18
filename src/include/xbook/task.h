@@ -1,23 +1,28 @@
 #ifndef _XBOOK_TASK_H
 #define _XBOOK_TASK_H
 
+/* 精简版本的多任务 */
+#define TASK_TINY
+
 #include <arch/page.h>
 #include <arch/cpu.h>
 #include <arch/fpu.h>
+#include <arch/task.h>
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <types.h>
 #include "list.h"
 #include "vmm.h"
 #include "timer.h"
+#include "spinlock.h"
+#ifndef TASK_TINY
 #include "alarm.h"
 #include "pthread.h"
 #include "fs.h"
 #include "msgpool.h"
-#include "spinlock.h"
 #include "exception.h"
 #include "portcomm.h"
-
+#endif
 
 typedef enum {
     TASK_READY = 0,         /* 进程处于就绪状态 */
@@ -53,6 +58,7 @@ enum thread_flags {
     THREAD_FLAG_KERNEL              = (1 << 7),     /* 内核中的线程 */
 };
 
+#ifndef TASK_TINY
 /* 本地通信端口表 */
 #define LPC_PORT_NR 8
 typedef struct {
@@ -60,6 +66,7 @@ typedef struct {
 } lpc_port_table_t;
 
 #define LPC_PORT_BAD(port)  ((port) < 0 || (port) >= LPC_PORT_NR)
+#endif
 
 typedef struct {
     unsigned char *kstack;              /* kernel stack, must be first member */
@@ -79,27 +86,33 @@ typedef struct {
     unsigned long syscall_ticks;        /* 执行系统调用总共占用的时间片数 */
     clock_t syscall_ticks_delta;  /* 执行单个系统调用占用的时间片数 */
     int exit_status;                    
+    task_func_t *kthread_entry;
+    void *kthread_arg;       // 线程执行时传入参数
+    task_context_t context;             /* 任务的上下文 */
     char name[MAX_TASK_NAMELEN];        
     struct vmm *vmm;                    
     list_t list;                        /* 处于所在队列的链表，就绪队列，阻塞队列等 */
     list_t global_list;                 /* 全局任务队列，用来查找所有存在的任务 */
+    fpu_t fpu;
+    long errcode;                       /* 错误码：用户多线程时用来标记每一个线程的错误码 */
+    #ifndef TASK_TINY
     exception_manager_t exception_manager;         
     timer_t sleep_timer;               
-    fpu_t fpu;
     alarm_t alarm;                      
-    long errcode;                       /* 错误码：用户多线程时用来标记每一个线程的错误码 */
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
     file_man_t *fileman;    
-    exit_hook_t exit_hook;  /* 退出调用的钩子函数 */
-    void *exit_hook_arg;
     lpc_port_table_t port_table;
     port_comm_t *port_comm;
+    #endif
+    exit_hook_t exit_hook;  /* 退出调用的钩子函数 */
+    void *exit_hook_arg;
     struct tms times;
     unsigned int stack_magic;
 } task_t;
 
 extern list_t task_global_list;
 extern volatile int task_init_done;
+extern char *kernel_stack_buttom;
 
 #define TASK_GET_TRAP_FRAME(task) \
         ((trap_frame_t *) (((unsigned char *) (task) + \
@@ -111,6 +124,7 @@ extern volatile int task_init_done;
 #define TASK_IS_KERNEL_THREAD(task) \
         ((task)->flags & THREAD_FLAG_KERNEL)
 
+#ifndef TASK_TINY
 /* 判断是用户态进程或者是用户态单线程 */
 #define TASK_IS_SINGAL_THREAD(task) \
         ((((task)->pthread && \
@@ -124,6 +138,18 @@ extern volatile int task_init_done;
             pthread_exit((void *) THREAD_FLAG_CANCELED); \
         } \
     } while (0)
+
+#else
+#define TASK_IS_SINGAL_THREAD(task) \
+        1
+
+#define TASK_CHECK_THREAD_CANCELATION_POTINT(task) \
+    do { \
+        if (!((task)->flags & THREAD_FLAG_CANCEL_DISABLE) && \
+            (task)->flags & THREAD_FLAG_CANCELED) { \
+        } \
+    } while (0)
+#endif
 
 #define TASK_WAS_STOPPED(task) ((task)->state == TASK_STOPPED)
 
@@ -208,6 +234,10 @@ static inline void task_exit_hook(task_t *task)
         task->exit_hook = NULL;
     }
 }
+
+
+void task_stack_build(task_t *task, task_func_t *function, void *arg);
+int task_stack_build_when_forking(task_t *child);
 
 
 #endif   /* _XBOOK_TASK_H */

@@ -47,7 +47,7 @@ typedef struct {
 void mem_space_dump(vmm_t *vmm);
 void mem_space_insert(vmm_t *vmm, mem_space_t *space);
 int do_mem_space_unmap(vmm_t *vmm, unsigned long addr, unsigned long len);
-int do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr, 
+void *do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr, 
     unsigned long len, unsigned long prot, unsigned long flags);
 void *mem_space_mmap(uint32_t addr, uint32_t paddr, uint32_t len, uint32_t prot,
     uint32_t flags);

@@ -4,6 +4,8 @@
 #include <arch/page.h>
 #include <arch/phymem.h>
 
+#define VMM_NO_SHM
+
 #define USER_VMM_SIZE       USER_SPACE_SIZE
 #define USER_VMM_BASE_ADDR  USER_SPACE_START_ADDR
 #define USER_VMM_TOP_ADDR   (USER_VMM_BASE_ADDR + USER_VMM_SIZE)

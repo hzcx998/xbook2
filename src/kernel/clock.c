@@ -7,7 +7,8 @@
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 #else
-#include <arch/schedule.h>
+#include <xbook/task.h>
+#include <xbook/schedule.h>
 #endif
 #include <xbook/timer.h>
 #include <xbook/hardirq.h>
@@ -41,7 +42,7 @@ static void sched_softirq_handler(softirq_action_t *action)
 		current->ticks--;
 	}
     #else
-    proc_t *current = task_current;
+    task_t *current = task_current;
     assert(current->stack_magic == TASK_STACK_MAGIC);
     current->elapsed_ticks++;
 	if (current->ticks <= 0) {

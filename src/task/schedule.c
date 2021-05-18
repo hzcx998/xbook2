@@ -81,7 +81,7 @@ static void sched_set_next_task(sched_unit_t *su, task_t *next)
 {
     fpu_save(&su->cur->fpu);
     su->cur = next;
-    //task_activate_when_sched(su->cur);
+    task_activate_when_sched(su->cur);
     fpu_restore(&next->fpu);
 }
 
@@ -96,7 +96,12 @@ void schedule()
     dbgprint("sched: switch from %d to %d\n", cur->pid, next->pid);
     #endif
     sched_set_next_task(su, next);
+    
+    #if 0
     thread_switch_to_next(cur, next);
+    #else
+    thread_switch_to_next(&cur->context, &next->context);
+    #endif
     interrupt_restore_state(flags);
 }
 

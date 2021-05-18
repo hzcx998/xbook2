@@ -11,25 +11,32 @@
 #include <xbook/schedule.h>
 #include <xbook/spinlock.h>
 #include <xbook/mutexlock.h>
+#include <xbook/clock.h>
+#include <xbook/vmm.h>
+#include <xbook/safety.h>
+#include <math.h>
+#include <errno.h>
+
+#ifndef TASK_TINY
 #include <xbook/semaphore.h>
 #include <xbook/synclock.h>
 #include <xbook/fifobuf.h>
 #include <xbook/fifoio.h>
 #include <xbook/rwlock.h>
-#include <xbook/vmm.h>
 #include <xbook/mutexqueue.h>
 #include <xbook/process.h>
 #include <xbook/exception.h>
-#include <xbook/safety.h>
 #include <xbook/kernel.h>
 #include <xbook/fd.h>
-#include <math.h>
-#include <errno.h>
+#endif
 
 static pid_t task_next_pid;
 LIST_HEAD(task_global_list);
 /* task init done flags, for early interrupt. */
 volatile int task_init_done = 0;
+
+/* 内核栈底部地址 */
+char *kernel_stack_buttom;
 
 pid_t task_take_pid()
 {
@@ -64,16 +71,18 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KERN_STACK_SIZE);
     task->flags = 0;
     fpu_init(&task->fpu, 0);
+    task->errcode = 0;
+    task->exit_hook = NULL;
+    task->exit_hook_arg = NULL;
+    task->stack_magic = TASK_STACK_MAGIC;
+    #ifndef TASK_TINY
     timer_init(&task->sleep_timer, 0, NULL, NULL);
     alarm_init(&task->alarm);
     exception_manager_init(&task->exception_manager);
-    task->errcode = 0;
     task->pthread = NULL;
     task->fileman = NULL;
-    task->exit_hook = NULL;
-    task->exit_hook_arg = NULL;
     task->port_comm = NULL;
-    task->stack_magic = TASK_STACK_MAGIC;
+    #endif
 }
 
 void task_free(task_t *task)
@@ -141,10 +150,12 @@ task_t *kern_thread_start(char *name, uint8_t prio_level, task_func_t *func, voi
         return NULL;
     task_init(task, name, prio_level);
     task->flags |= THREAD_FLAG_KERNEL;
+    #ifndef TASK_TINY
     if (fs_fd_init(task) < 0) {
         mem_free(task);
         return NULL;
     }
+    #endif
     task_stack_build(task, func, arg);
     unsigned long flags;
     interrupt_save_and_disable(flags);
@@ -254,7 +265,9 @@ int task_count_children(task_t *parent)
 
 int task_do_cancel(task_t *task)
 {
+    #ifndef TASK_TINY
     timer_cancel(&task->sleep_timer);
+    #endif
     return 0;
 }
 
@@ -264,12 +277,16 @@ int task_do_cancel(task_t *task)
  */
 static void task_init_boot_idle(sched_unit_t *su)
 {
-    su->idle = (task_t *) KERNEL_STATCK_BOTTOM;
+    // su->idle = (task_t *) KERNEL_STATCK_BOTTOM;
+    su->idle = (task_t *) kernel_stack_buttom;
+    
     task_init(su->idle, "idle0", TASK_PRIO_LEVEL_REALTIME);
     /* 需要在后面操作文件，因此需要初始化文件描述符表 */
+    #ifndef TASK_TINY
     if (fs_fd_init(su->idle) < 0) { 
         panic("init kmain fs fd failed!\n");
     }
+    #endif
     su->idle->state = TASK_RUNNING;
     task_add_to_global_list(su->idle);
     
@@ -392,9 +409,11 @@ int task_set_cwd(task_t *task, const char *path)
 {
     if (!task || !path)
         return -EINVAL;
+    #ifndef TASK_TINY
     int len = strlen(path);
     memset(task->fileman->cwd, 0, MAX_PATH);
     memcpy(task->fileman->cwd, path, min(len, MAX_PATH));
+    #endif
     return 0;
 }
 
@@ -444,10 +463,11 @@ static char *init_argv[2] = {INIT_SBIN_PATH, 0};
 void task_start_user()
 {
     keprint(PRINT_DEBUG "[task]: start user process.\n");
+    #ifndef TASK_TINY
     task_t *proc = process_create(init_argv, NULL, PROC_CREATE_INIT);
     if (proc == NULL)
         panic("kernel start process failed! please check initsrv!\n");
-    
+    #endif
     sched_unit_t *su = sched_get_cur_unit();
 	unsigned long flags;
     interrupt_save_and_disable(flags);

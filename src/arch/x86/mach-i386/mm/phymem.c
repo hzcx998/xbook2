@@ -4,6 +4,7 @@
 #include <arch/bootmem.h>
 #include <arch/memory.h>
 #include <xbook/debug.h>
+#include <xbook/task.h>
 #include <math.h>
 #include <string.h>
 #include <assert.h>
@@ -62,6 +63,7 @@ int physic_memory_init()
     mem_range_init(MEM_RANGE_NORMAL, BOOT_MEM_ADDR + BOOT_MEM_SIZE, normal_size - BOOT_MEM_SIZE);
     mem_range_init(MEM_RANGE_USER, NORMAL_MEM_ADDR + normal_size, user_size - KERN_BLACKHOLE_MEM_SIZE);
 
+    kernel_stack_buttom = (char *)KERNEL_STATCK_BOTTOM;
     // mem_pool_test();
     
     // spin("memcheck");

@@ -7,22 +7,25 @@
 #include <xbook/memspace.h>
 #include <xbook/vmm.h>
 #include <string.h>
-#include <xbook/pthread.h>
 #include <xbook/schedule.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
-#include <sys/pthread.h>
 #include <xbook/safety.h>
 #include <xbook/fd.h>
 #include <unistd.h>
 #include <stddef.h>
 #include <errno.h>
+#ifndef TASK_TINY
+#include <xbook/pthread.h>
+#include <sys/pthread.h>
+#endif
 
 #define DEBUG_PROCESS 0
 
 static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz,
     unsigned long mem_sz, unsigned long vaddr)
 {
+    #ifndef TASK_TINY
     unsigned long vaddr_page = vaddr & PAGE_MASK;
     unsigned long size_in_first_page = PAGE_SIZE - (vaddr & PAGE_LIMIT);
     unsigned long occupy_pages = 0;
@@ -43,11 +46,13 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
         keprint(PRINT_ERR "proc_load_segment: read file failed!\n");
         return -1;
     }
+    #endif
     return 0;
 }
 
 int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
 {
+    #ifndef TASK_TINY
     struct Elf32_Phdr prog_header;
     Elf32_Off prog_header_off = elf_header->e_phoff;
     Elf32_Half prog_header_size = elf_header->e_phentsize;
@@ -70,7 +75,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
             }
             /* 如果内存大小比文件大小大，就要清0 */
             if (prog_header.p_memsz > prog_header.p_filesz) {
-                memset((void *)(prog_header.p_vaddr + prog_header.p_filesz), 0,
+                memset((void *)(unsigned long)(prog_header.p_vaddr + prog_header.p_filesz), 0,
                     prog_header.p_memsz - prog_header.p_filesz);    
             }
             prog_end = prog_header.p_vaddr + prog_header.p_memsz;
@@ -105,6 +110,7 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
         prog_header_off += prog_header_size;
         grog_idx++;
     }
+    #endif
     return 0;
 }
 
@@ -196,42 +202,50 @@ int proc_vmm_exit_when_forking(task_t *child, task_t *parent)
 
 int proc_pthread_init(task_t *task)
 {
+    #ifndef TASK_TINY
     task->pthread = mem_alloc(sizeof(pthread_desc_t));
     if (task->pthread == NULL)
         return -1;
     pthread_desc_init(task->pthread);
+    #endif
     return 0;
 }
 
 int proc_pthread_exit(task_t *task)
 {
+    #ifndef TASK_TINY
     if (!task->pthread)
         return -1; 
     pthread_desc_exit(task->pthread);
     task->pthread = NULL;
+    #endif
     return 0;
 }
 
 int proc_release(task_t *task)
 {
     proc_vmm_exit(task);
+    #ifndef TASK_TINY
     fs_fd_exit(task);
     proc_pthread_exit(task);
     exception_manager_exit(&task->exception_manager);
-    task_do_cancel(task);
     sys_port_comm_unbind(-1);
+    #endif
+    task_do_cancel(task);
     return 0;
 }
 
 void proc_exec_init(task_t *task)
 {
     proc_map_space_init(task);
+    #ifndef TASK_TINY
     pthread_desc_init(task->pthread);
     fs_fd_reinit(task);
     exception_manager_exit(&task->exception_manager);
     exception_manager_init(&task->exception_manager);
-    task_do_cancel(task);
     sys_port_comm_unbind(-1);
+    #endif
+    task_do_cancel(task);
     
     fpu_init(&task->fpu, 1); /* 需要初始化fpu */
 }
@@ -250,9 +264,11 @@ int proc_destroy(task_t *task, int thread)
 
 void proc_trap_frame_init(task_t *task)
 {
+    #ifndef TASK_TINY
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)task + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
     user_frame_init(frame);
+    #endif
 }
 
 int proc_deal_zombie_child(task_t *parent)
@@ -299,17 +315,20 @@ void proc_close_other_threads(task_t *thread)
             }
         }
     }
+    #ifndef TASK_TINY
     if (thread->pthread) {
         atomic_set(&thread->pthread->thread_count, 0);
     }
+    #endif
 }
 
 void proc_entry(void* arg)
 {
     const char *pathname = (const char *) arg;
     task_t *cur = task_current;
-    
+    #ifndef TASK_TINY
     sys_execve(pathname, (const char **)cur->vmm->argv, (const char **)cur->vmm->envp);
+    #endif
     /* rease proc resource */
     proc_release(cur);
     /* thread exit. */
@@ -342,7 +361,7 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     }
     if (parent)
         task->pgid = parent->pgid;
-    
+    #ifndef TASK_TINY
     /* 进程执行前必须初始化文件描述符，内存管理，参数缓冲区 */
     if (fs_fd_init(task) < 0) {
         mem_free(task);
@@ -350,16 +369,20 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     }
     /* 需要继承父进程的部分文件描述符 */
     fs_fd_copy_only(parent, task);
-    
+    #endif
     if (proc_vmm_init(task)) {
+        #ifndef TASK_TINY
         fs_fd_exit(task);
+        #endif
         mem_free(task);
         return NULL;
     }
     if (vmm_build_argbug(task->vmm, argv, envp) < 0) {
         keprint(PRINT_ERR "process_create: pathname %s build arg buf failed !\n", argv[0]);
         proc_vmm_exit(task);
+        #ifndef TASK_TINY
         fs_fd_exit(task);
+        #endif
         mem_free(task);
         return NULL;
     }

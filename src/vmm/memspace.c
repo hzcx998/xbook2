@@ -76,37 +76,37 @@ unsigned long mem_space_get_unmaped(vmm_t *vmm, unsigned len)
     return addr;
 }
 
-int do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr, 
+void *do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr, 
     unsigned long len, unsigned long prot, unsigned long flags)
 {
     if (vmm == NULL || !prot) {
         keprint(PRINT_ERR "do_mem_space_map: failed!\n");
-        return -1;
+        return (void *)-1;
     }
     len = PAGE_ALIGN(len);
     if (!len) {
         keprint(PRINT_ERR "do_mem_space_map: len is zero!\n");
-        return -1;
+        return (void *)-1;
     }
     if (len > USER_VMM_SIZE || addr > USER_VMM_TOP_ADDR || addr > USER_VMM_TOP_ADDR - len || addr < USER_VMM_BASE_ADDR) {
         keprint(PRINT_ERR "do_mem_space_map: addr %x and len %x out of range!\n", addr, len);
-        return -1;
+        return (void *)-1;
     }
     if (flags & MEM_SPACE_MAP_FIXED) {
         if (addr & ~PAGE_MASK) {
             keprint(PRINT_ERR "do_mem_space_map: addr %x not page aligined!\n", addr);
-            return -1;
+            return (void *)-1;
         }
         mem_space_t* p = mem_space_find(vmm, addr);
         if (p != NULL && addr + len > p->start) {
             keprint(PRINT_ERR "do_mem_space_map: this FIXED space had existed!\n");
-            return -1;
+            return (void *)-1;
         }
     } else {
         addr = mem_space_get_unmaped(vmm, len);
         if (addr == -1) {
             keprint(PRINT_ERR "do_mem_space_map: GetUnmappedMEM_SPACEpace failed!\n");
-            return -1;
+            return (void *)-1;
         }
     }
     if (flags & MEM_SPACE_MAP_REMAP) {
@@ -115,7 +115,7 @@ int do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
     mem_space_t *space = mem_space_alloc();
     if (!space) {
         keprint(PRINT_ERR "do_mem_space_map: mem_alloc for space failed!\n");
-        return -1;    
+        return (void *)-1;    
     }
     mem_space_init(space, addr, addr + len, prot, flags);
     mem_space_insert(vmm, space);
@@ -126,38 +126,38 @@ int do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
         page_map_addr_safe(addr, len, prot); 
     }
     //keprint(PRINT_ERR "do_mem_space_map: addr %x.\n", addr);
-    return addr;
+    return (void *) addr;
 }
 
-int do_mem_space_map_viraddr(vmm_t *vmm, unsigned long addr, unsigned long vaddr, 
+void *do_mem_space_map_viraddr(vmm_t *vmm, unsigned long addr, unsigned long vaddr, 
     unsigned long len, unsigned long prot, unsigned long flags)
 {
     if (vmm == NULL || !prot) {
         keprint(PRINT_ERR "do_mem_space_map: failed!\n");
-        return -1;
+        return (void *)-1;
     }
     len = PAGE_ALIGN(len);
     if (!len) {
         keprint(PRINT_ERR "do_mem_space_map: len is zero!\n");
-        return -1;
+        return (void *)-1;
     }
     if (len > USER_VMM_SIZE || addr > USER_VMM_TOP_ADDR || addr > USER_VMM_TOP_ADDR - len || addr < USER_VMM_BASE_ADDR) {
         keprint(PRINT_ERR "do_mem_space_map_viraddr: addr %x and len %x out of range!\n", addr, len);
-        return -1;
+        return (void *)-1;
     }
     if (flags & MEM_SPACE_MAP_FIXED) {
         if (addr & ~PAGE_MASK)
-            return -1;
+            return (void *)-1;
         mem_space_t* p = mem_space_find(vmm, addr);
         if (p != NULL && addr + len > p->start) {
             keprint(PRINT_ERR "do_mem_space_map: this FIXED space had existed!\n");
-            return -1;
+            return (void *)-1;
         }
     } else {
         addr = mem_space_get_unmaped(vmm, len);
         if (addr == -1) {
             keprint(PRINT_ERR "do_mem_space_map: GetUnmappedMEM_SPACEpace failed!\n");
-            return -1;
+            return (void *)-1;
         }
     }
     if (flags & MEM_SPACE_MAP_REMAP) {
@@ -166,7 +166,7 @@ int do_mem_space_map_viraddr(vmm_t *vmm, unsigned long addr, unsigned long vaddr
     mem_space_t *space = mem_space_alloc();
     if (!space) {
         keprint(PRINT_ERR "do_mem_space_map: mem_alloc for space failed!\n");
-        return -1;    
+        return (void *)-1;    
     }
     mem_space_init(space, addr, addr + len, prot, flags);
     mem_space_insert(vmm, space);
@@ -185,7 +185,7 @@ int do_mem_space_map_viraddr(vmm_t *vmm, unsigned long addr, unsigned long vaddr
     } else {
         page_map_addr_safe(addr, len, prot); 
     }
-    return addr;
+    return (void *)addr;
 }
 
 int do_mem_space_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)

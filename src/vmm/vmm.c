@@ -69,22 +69,30 @@ void vmm_active(vmm_t *vmm)
 
 int vmm_dec_share_mem(mem_space_t *mem_space)
 {
+    #ifndef VMM_NO_SHM
     addr_t phyaddr = addr_vir2phy(mem_space->start);  
     share_mem_t *shm = share_mem_find_by_addr(phyaddr);
     if (shm == NULL) { 
         return 0;
     }
     return share_mem_dec(shm->id);
+    #else
+    return -1;
+    #endif
 }
 
 int vmm_inc_share_mem(mem_space_t *mem_space)
 {
+    #ifndef VMM_NO_SHM
     addr_t phyaddr = addr_vir2phy(mem_space->start);  
     share_mem_t *shm = share_mem_find_by_addr(phyaddr);
     if (shm == NULL) { 
         return 0;
     }
     return share_mem_inc(shm->id);
+    #else
+    return -1;
+    #endif
 }
 
 int vmm_copy_mem_space(vmm_t *child_vmm, vmm_t *parent_vmm)
