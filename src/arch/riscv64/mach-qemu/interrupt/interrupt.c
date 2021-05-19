@@ -1,5 +1,6 @@
 #include <arch/interrupt.h>
 #include <arch/riscv.h>
+#include <arch/page.h>
 #include <xbook/debug.h>
 #include <xbook/clock.h>
 #include <xbook/softirq.h>
@@ -141,6 +142,7 @@ void interrupt_dispatch(trap_frame_t *frame)
         panic("interrupt_dispatch");
     } else {
         /* 内核异常处理: cause 异常值是 [0-15] */
+        vmprint(GET_CUR_PGDIR(), 1);
         keprint("\nscause %p\n", scause);
         keprint("sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
         int exception = scause & 0xff;

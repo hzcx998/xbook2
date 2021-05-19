@@ -273,7 +273,7 @@ static iostatus_t virtio_disk_read(device_object_t *device, io_request_t *ioreq)
     }
     unsigned long length = ioreq->parame.read.length;
     size_t sectors = DIV_ROUND_UP(length, PAGE_SIZE);
-    char *data = (char *)ioreq->user_buffer;
+    char *data = (char *)ioreq->system_buffer;
     /* 判断越界 */
     if (off + sectors  >= extension->sectors) {
 		status = IO_FAILED;
@@ -316,7 +316,7 @@ static iostatus_t virtio_disk_write(device_object_t *device, io_request_t *ioreq
     }
     unsigned long length = ioreq->parame.write.length;
     size_t sectors = DIV_ROUND_UP(length, PAGE_SIZE);
-    char *data = (char *)ioreq->user_buffer;
+    char *data = (char *)ioreq->system_buffer;
     /* 判断越界 */
     if (off + sectors  >= extension->sectors) {
 #ifdef DEBUG_DRV
@@ -534,7 +534,7 @@ static iostatus_t virtio_disk_enter(driver_object_t *driver)
         return status;
     }
     /* neighter io mode */
-    devobj->flags = 0;
+    devobj->flags = DO_BUFFERED_IO;
     extension = (device_extension_t *)devobj->device_extension;
     extension->device_object = devobj;
     extension->sectors = VIRTIO_DISK_SECTORS;

@@ -20,12 +20,12 @@
 #include <sys/pthread.h>
 #endif
 
-#define DEBUG_PROCESS 0
+#define DEBUG_PROCESS 1
 
 static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz,
     unsigned long mem_sz, unsigned long vaddr)
 {
-    #ifndef TASK_TINY
+    #ifdef TASK_TINY
     unsigned long vaddr_page = vaddr & PAGE_MASK;
     unsigned long size_in_first_page = PAGE_SIZE - (vaddr & PAGE_LIMIT);
     unsigned long occupy_pages = 0;
@@ -35,13 +35,19 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
     } else {
         occupy_pages = 1;
     }
+    dbgprintln("[proc] memmap vaddr=%p pages=%d", vaddr_page, occupy_pages);
     void *retaddr = mem_space_mmap(vaddr_page, 0, occupy_pages * PAGE_SIZE, 
-            PROT_USER | PROT_WRITE, MEM_SPACE_MAP_FIXED);
+            PROT_EXEC | PROT_WRITE | PROT_READ, MEM_SPACE_MAP_FIXED);
     if (retaddr == ((void *)-1)) {
         keprint(PRINT_ERR "proc_load_segment: mem_space_mmap failed!\n");
         return -1;
     }
     kfile_lseek(fd, offset, SEEK_SET);
+    
+    /* read file */
+    memset(vaddr_page, 0, occupy_pages * PAGE_SIZE);
+    keprintln("read file");
+
     if (kfile_read(fd, (void *)vaddr, file_sz) != file_sz) {
         keprint(PRINT_ERR "proc_load_segment: read file failed!\n");
         return -1;
@@ -116,11 +122,11 @@ int proc_load_image32(vmm_t *vmm, Elf32_Ehdr *elf_header, int fd)
 
 int proc_load_image64(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
 {
-    #ifndef TASK_TINY
-    Elf32_Phdr prog_header;
-    Elf32_Off prog_header_off = elf_header->e_phoff;
-    Elf32_Half prog_header_size = elf_header->e_phentsize;
-    Elf32_Off prog_end;
+    #ifdef TASK_TINY
+    Elf64_Phdr prog_header;
+    Elf64_Off prog_header_off = elf_header->e_phoff;
+    Elf64_Half prog_header_size = elf_header->e_phentsize;
+    Elf64_Off prog_end;
     unsigned long grog_idx = 0;
     while (grog_idx < elf_header->e_phnum) {
         memset(&prog_header, 0, prog_header_size);
@@ -130,7 +136,7 @@ int proc_load_image64(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
         }
         if (prog_header.p_type == PT_LOAD) {
             #if DEBUG_PROCESS == 1
-            keprint("elf segment: paddr:%x vaddr:%x file size:%x mem size: %x\n", 
+            keprint("elf segment: paddr:%lx vaddr:%lx file size:%lx mem size: %lx\n", 
                 prog_header.p_paddr, prog_header.p_vaddr, prog_header.p_filesz, prog_header.p_memsz);
             #endif
             if (proc_load_segment(fd, prog_header.p_offset, 

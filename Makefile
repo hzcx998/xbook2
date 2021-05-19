@@ -136,7 +136,12 @@ ifeq ($(ENV_MACH),mach-i386)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
 endif # ($(ENV_MACH),mach-i386)
-endif # ($(ENV_ARCH),x86)
+else ifeq ($(ENV_ARCH),riscv64)
+ifeq ($(ENV_MACH),mach-qemu)
+	$(MAKE) -s -C  $(LIBS_DIR)
+	$(MAKE) -s -C  $(SBIN_DIR)
+endif # ($(ENV_MACH),mach-qemu)
+endif # ($(ENV_ARCH),riscv64)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 
 buildimg:

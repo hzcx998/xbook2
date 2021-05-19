@@ -20,7 +20,7 @@ typedef unsigned long* pgdir_t; // 512 PTEs
 #define	PAGE_ATTR_USER  	    (1L << 4)   // 1 -> user can access
 #define	PAGE_ATTR_SYSTEM  	    (0)
 
-#define KERN_PAGE_ATTR  (PAGE_ATTR_PRESENT | PAGE_ATTR_WRITE | PAGE_ATTR_SYSTEM)
+#define KERN_PAGE_ATTR  (PAGE_ATTR_PRESENT | PAGE_ATTR_WRITE | PAGE_ATTR_WRITE | PAGE_ATTR_SYSTEM)
 
 #define PAGE_SHIFT  12
 #define PAGE_SIZE   4096

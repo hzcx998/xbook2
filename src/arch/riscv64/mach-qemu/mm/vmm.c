@@ -5,7 +5,7 @@
 
 extern pgdir_t kernel_pgdir;
 
-// #define DEBUG_ARCH_VMM
+#define DEBUG_ARCH_VMM
 
 void vmm_active_kernel()
 {

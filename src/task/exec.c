@@ -81,9 +81,6 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         keprint(PRINT_ERR "sys_exec_file: it is not a elf 64 format file!\n", name);
         goto free_tmp_fd;
     }
-
-    
-
     #endif
     
     char **new_envp = NULL;
@@ -114,7 +111,10 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         goto free_tmp_arg;
     }
     #else
-
+    if (proc_load_image64(cur->vmm, &elf_header, fd) < 0) {
+        keprint(PRINT_ERR "sys_exec_file: load_image failed!\n");
+        goto free_tmp_arg;
+    }
     #endif
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
@@ -136,6 +136,11 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     user_set_entry_point(frame, (unsigned long)elf_header.e_entry);
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
+    
+    while (1)
+    {
+        /* code */
+    }
     
     kernel_switch_to_user(frame);
 free_loaded_image:
