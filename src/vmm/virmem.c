@@ -5,6 +5,7 @@
 #include <xbook/bitmap.h>
 #include <xbook/memcache.h>
 #include <xbook/mutexlock.h>
+#include <xbook/debug.h>
 #include <string.h>
 
 static bitmap_t vir_addr_bitmap;
@@ -228,4 +229,5 @@ void vir_mem_init()
 	vir_addr_base = VIR_MEM_BASE;
 	list_init(&using_vir_mem_list);
 	list_init(&free_vir_mem_list);
+    infoprint("virtual memory base: %p\n", vir_addr_base);
 }

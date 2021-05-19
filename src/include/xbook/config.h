@@ -9,7 +9,9 @@
 #define CONFIG_KERN_LOWMEM  0
 
 /* config large alloc size in memcache */
-#define CONFIG_LARGE_ALLOCS
+// #define CONFIG_LARGE_ALLOCS
+#define CONFIG_SMALL_ALLOCS
+
 
 /* auto select timezone */
 /* #define CONFIG_TIMEZONE_AUTO */

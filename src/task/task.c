@@ -145,6 +145,7 @@ int task_is_child(pid_t pid, pid_t child_pid)
  */
 task_t *kern_thread_start(char *name, uint8_t prio_level, task_func_t *func, void *arg)
 {
+    
     task_t *task = (task_t *) mem_alloc(TASK_KERN_STACK_SIZE);
     if (!task)
         return NULL;
@@ -478,12 +479,24 @@ void task_start_user()
     kern_do_idle(NULL);
 }
 
+void kthread_deamon(void *arg)
+{
+    keprintln("deamon thread start...");
+    while (1) {
+        cpu_idle();
+        schedule();
+    }
+}
+
 void tasks_init()
 {
     task_next_pid = 0;
     sched_unit_t *su = sched_get_cur_unit();
     task_init_boot_idle(su);
     task_take_pid(); /* 跳过pid1，预留给INIT进程 */
+    
     task_init_done = 1;
+    kern_thread_start("kdeamon", TASK_PRIORITY_LOW, kthread_deamon, NULL);
     keprint(PRINT_INFO "[ok] tasks init.");
+
 }

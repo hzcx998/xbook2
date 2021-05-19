@@ -31,10 +31,10 @@ static cache_size_t cache_size[] = {
 	{8*1024, NULL},
 	{16*1024, NULL},
 	{32*1024, NULL},
+    #ifdef CONFIG_LARGE_ALLOCS
 	{64*1024, NULL},
 	{128*1024, NULL},	
-	/* 配置大内存的分配 */
-	#ifdef CONFIG_LARGE_ALLOCS
+    /* 配置大内存的分配 */
 	{256*1024, NULL},
 	{512*1024, NULL},
 	{1024*1024, NULL},
@@ -47,13 +47,13 @@ static cache_size_t cache_size[] = {
 	#ifdef CONFIG_LARGE_ALLOCS 
 		#define MAX_MEM_CACHE_NR 17
 	#else
-		#define MAX_MEM_CACHE_NR 13
-	#endif
+        #define MAX_MEM_CACHE_NR 11
+  	#endif
 #else
 	#ifdef CONFIG_LARGE_ALLOCS 
 		#define MAX_MEM_CACHE_NR 16
 	#else
-		#define MAX_MEM_CACHE_NR 12
+        #define MAX_MEM_CACHE_NR 10
 	#endif
 #endif
 
@@ -89,9 +89,14 @@ int mem_cache_init(mem_cache_t *cache, char *name, size_t size, flags_t flags)
 		unsigned int group_size = ALIGN_WITH(SIZEOF_MEM_GROUP, 8);
 		unsigned int left_size = PAGE_SIZE - group_size - 16;
 		cache->object_count = left_size / size;;
-	} else if (size <= 128 * 1024) {
-		cache->object_count = (1 * MB) / size;
-	} else if (size <= 4 * 1024 * 1024) {
+	#ifdef CONFIG_SMALL_ALLOCS
+    } else if (size <= 32 * 1024) {
+        cache->object_count = (64 * KB) / size;
+    #else
+    } else if (size <= 128 * 1024) {
+        cache->object_count = (1 * MB) / size;
+    #endif
+    } else if (size <= 4 * 1024 * 1024) {
 		cache->object_count = (4 * MB) / size;
 	} else {
         /* 超过最大范围，则每一个缓存4个对象 */
@@ -251,6 +256,7 @@ void *mem_alloc(size_t size)
 	if (size > MAX_MEM_CACHE_SIZE) {
         if (size > MAX_MEM_OBJECT_SIZE)
             return NULL;
+        noteprint("[mem alloc] first feat!\n");
         /* 使用首适配分配法 */
         large_mem_object_t *obj = mem_alloc(sizeof(large_mem_object_t));
         if (obj == NULL)

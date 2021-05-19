@@ -49,6 +49,18 @@ int sys_mstate(mstate_t *ms)
     return 0;
 }
 
+void memory_overview()
+{
+    unsigned long total = mem_get_total_page_nr() * PAGE_SIZE;
+    unsigned long free = mem_get_free_page_nr() * PAGE_SIZE;
+    long used = total - free;
+    infoprint("[memory] ==== overview start ====\n");
+    infoprint("[memory] total size: %d pages, %lx bytes\n", total, total * PAGE_SIZE);
+    infoprint("[memory] free size: %d pages, %lx bytes\n", free, free * PAGE_SIZE);
+    infoprint("[memory] used size: %d pages, %lx bytes\n", used, used * PAGE_SIZE);
+    infoprint("[memory] ==== overview end ====\n");
+}
+
 void vmm_dump(vmm_t *vmm)
 {
     keprint(PRINT_DEBUG "code: start=%x, end=%x\n", vmm->code_start, vmm->code_end);

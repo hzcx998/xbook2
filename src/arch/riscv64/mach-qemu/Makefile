@@ -6,3 +6,4 @@ SRC	+= cpu/
 SRC	+= interrupt/
 SRC	+= mm/
 SRC	+= task/
+SRC	+= drivers/

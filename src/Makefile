@@ -48,9 +48,9 @@ SRC			+= task/semaphore.c
 SRC			+= task/exit.c
 SRC			+= ipc/fifo.c
 SRC			+= kernel/initcall.c
-SRC			+= drivers/char/null.c drivers/char/zero.c
-SRC			+= drivers/block/loop.c
-SRC			+= drivers/tty/tty.c drivers/tty/ptty.c
+#SRC			+= drivers/char/null.c drivers/char/zero.c
+#SRC			+= drivers/block/loop.c
+#SRC			+= drivers/tty/tty.c drivers/tty/ptty.c
 
 endif
 

@@ -44,7 +44,6 @@ void page_init()
     keprintln("PLIC_V=%lx", PLIC_V);
     keprintln("VIRT_OFFSET=%lx", VIRT_OFFSET);
     
-    
     kvmmap(PLIC_V, PLIC, 0x4000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
     kvmmap(PLIC_V + 0x200000, PLIC + 0x200000, 0x4000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
 

@@ -48,4 +48,6 @@ void vmm_debuild_argbuf(vmm_t *vmm);
 
 int sys_mstate(mstate_t *ms);
 
+void memory_overview();
+
 #endif  /* _XBOOK_VMM_H */

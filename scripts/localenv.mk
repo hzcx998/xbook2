@@ -49,8 +49,8 @@ else ifeq ($(ENV_ARCH), riscv64)
 	CFLAGS 		+= -ffreestanding -fno-common
 	CFLAGS 		+= -mno-relax
 	CFLAGS		+= -std=gnu99
-	ifeq ($(PLATFORM), mach-qemu)
-	CFLAGS += -D QEMU
+	ifeq ($(ENV_MACH), mach-qemu)
+	CFLAGS 		+= -D QEMU
 	endif
 endif 
 

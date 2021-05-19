@@ -104,12 +104,8 @@ int interrupt_do_irq(trap_frame_t *frame)
     }
     if (!irq)   // irq=0 => no irq
         return -1;
-    #if 0
-	if (!irq_handle(irq, frame)) {
+    if (!irq_handle(irq, frame)) {
 		return -1;
 	}
-    #else
-    dbgprintln("[IRQ] irq_handle %d", irq);
-    #endif
-	return 0;
+    return 0;
 }

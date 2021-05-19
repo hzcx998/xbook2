@@ -122,7 +122,7 @@ void interrupt_dispatch(trap_frame_t *frame)
 	if ((SCAUSE_INTERRUPT | SCAUSE_S_SOFTWARE_INTR) == scause && SCAUSE_S_EXTERNAL_INTR == r_stval()) 
 	#endif 
     {
-        keprintln("external interrupt");
+        // keprintln("external interrupt");
         interrupt_do_irq(frame);
         softirq_handle_in_interrupt();
     } else if ((SCAUSE_INTERRUPT | SCAUSE_S_TIMER_INTR) == scause) {

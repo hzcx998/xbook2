@@ -9,6 +9,6 @@
 
 #define DYNAMIC_MAP_MEM_SIZE               (128 * MB)
 #define DYNAMIC_MAP_MEM_END                KERN_SPACE_TOP_ADDR
-#define DYNAMIC_MAP_MEM_ADDR               (KERN_SPACE_TOP_ADDR - DYNAMIC_MAP_MEM_SIZE + 1)
+#define DYNAMIC_MAP_MEM_ADDR               (KERN_SPACE_TOP_ADDR - DYNAMIC_MAP_MEM_SIZE)
 
 #endif  /* __RISCV64_PHYMEM_H */

@@ -15,10 +15,8 @@ int arch_init()
     page_init();
     cpu_init();
     interrupt_expection_init();
-    //timer_interrupt_init(); // 初始化内核中的clock后，需要将本行删除
     trap_init();
     plic_init();
-    // interrupt_enable(); // NOTE: 本行需要在初始化多任务后删除
     
     return 0;
 }

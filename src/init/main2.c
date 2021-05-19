@@ -17,13 +17,13 @@
 int kernel_main(void)
 {
     keprint(PRINT_INFO "welcome to xbook kernel.\n");
+    memory_overview();
     mem_caches_init();
     vir_mem_init();
     irq_description_init();
     softirq_init();
-    
+
     schedule_init();
-    // procinit();
     tasks_init();
     walltime_init();
     clock_init();
@@ -35,8 +35,7 @@ int kernel_main(void)
     drivers_print();
     file_system_init();
     kernel_test_init();
-
-    //task_start_other();
+    memory_overview();
     task_start_user();
     
     /*
