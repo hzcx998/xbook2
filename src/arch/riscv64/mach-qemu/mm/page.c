@@ -124,11 +124,11 @@ mappages(pgdir_t pgdir, uint64_t va, uint64_t size, uint64_t pa, int perm)
   uint64_t a, last;
   pte_t *pte;
 
-  dbgprint("mappages: start=%lx end=%lx\n", va, va + size);
+  dbgprint("mappages: [start=%lx end=%lx)\n", va, va + size);
   
   a = PAGE_ROUNDDOWN(va);
   last = PAGE_ROUNDDOWN(va + size - 1);
-  dbgprint("mappages: start=%lx end=%lx\n", a, last);
+  dbgprint("mappages: [start=%lx end=%lx]\n", a, last);
   for(;;){
     if((pte = walk(pgdir, a, 1)) == NULL)
       return -1;

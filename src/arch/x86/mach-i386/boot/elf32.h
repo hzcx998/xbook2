@@ -47,14 +47,14 @@ enum segment_type {
    PT_PHDR             // 程序头表
 };
 
-#define ELF32_PF_X        (1 << 0) /* Segment is executable */
-#define ELF32_PF_W        (1 << 1) /* Segment is writable */
-#define ELF32_PF_R        (1 << 2) /* Segment is readable */
-#define ELF32_PF_MASKOS   0x0ff00000 /* OS-specific */
-#define ELF32_PF_MASKPROC 0xf0000000 /* Processor-specific */
+#define PF_X        (1 << 0) /* Segment is executable */
+#define PF_W        (1 << 1) /* Segment is writable */
+#define PF_R        (1 << 2) /* Segment is readable */
+#define PF_MASKOS   0x0ff00000 /* OS-specific */
+#define PF_MASKPROC 0xf0000000 /* Processor-specific */
 
-#define ELF32_PHDR_CODE (ELF32_PF_X | ELF32_PF_R) /* 代码段 */
+#define PHDR_CODE (PF_X | PF_R) /* 代码段 */
 
-#define ELF32_PHDR_DATA (ELF32_PF_W | ELF32_PF_R) /* 数据段 */
+#define PHDR_DATA (PF_W | PF_R) /* 数据段 */
 
 #endif   /* _BOOT_ELF32_H */

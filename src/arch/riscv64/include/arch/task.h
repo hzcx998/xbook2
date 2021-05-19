@@ -51,7 +51,7 @@ void thread_kstack_dump(thread_stack_t *kstack);
 void kernel_switch_to_user(trap_frame_t *frame);
 void kernel_frame_init(trap_frame_t *frame);
 
-#define user_set_entry_point(frame, entry) (frame)->eip = entry
+#define user_set_entry_point(frame, entry) (frame)->epc = (entry)
 void user_frame_init(trap_frame_t *frame);
 void user_thread_frame_build(trap_frame_t *frame, void *arg, void *func,
     void *thread_entry, void *stack_top);

@@ -90,6 +90,7 @@ recycle
 sbin/init/init
 sbin/login/login
 sbin/netserv/netserv
+sbin/utest/init
 
 # /bin
 bin/cat/cat

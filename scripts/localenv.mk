@@ -37,6 +37,8 @@ ifeq ($(ENV_ARCH), x86)
 	CFLAGS		+= -O3
 	CFLAGS		+= -std=gnu99
 	CFLAGS		+= -fno-PIE
+	CFLAGS		+= -DCONFIG_32BIT
+	CFLAGS		+= -D__X86__
 else ifeq ($(ENV_ARCH), riscv64)
 	ENV_LD		:=  $(CROSS_COMPILE)ld 
 	ENV_USER_LD_SCRIPT	:= -T ../libs/xlibc/arch/riscv64/user.ld
@@ -52,6 +54,8 @@ else ifeq ($(ENV_ARCH), riscv64)
 	ifeq ($(ENV_MACH), mach-qemu)
 	CFLAGS 		+= -D QEMU
 	endif
+	CFLAGS		+= -DCONFIG_64BIT
+	CFLAGS		+= -D__RISCV64__
 endif 
 
 ENV_AFLAGS	+= $(MCFLAGS)

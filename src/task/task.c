@@ -16,8 +16,6 @@
 #include <xbook/safety.h>
 #include <math.h>
 #include <errno.h>
-
-#ifndef TASK_TINY
 #include <xbook/semaphore.h>
 #include <xbook/synclock.h>
 #include <xbook/fifobuf.h>
@@ -28,6 +26,8 @@
 #include <xbook/exception.h>
 #include <xbook/kernel.h>
 #include <xbook/fd.h>
+
+#ifndef TASK_TINY
 #endif
 
 static pid_t task_next_pid;
@@ -464,10 +464,10 @@ static char *init_argv[2] = {INIT_SBIN_PATH, 0};
 void task_start_user()
 {
     keprint(PRINT_DEBUG "[task]: start user process.\n");
-    #ifndef TASK_TINY
     task_t *proc = process_create(init_argv, NULL, PROC_CREATE_INIT);
     if (proc == NULL)
         panic("kernel start process failed! please check initsrv!\n");
+    #ifndef TASK_TINY
     #endif
     sched_unit_t *su = sched_get_cur_unit();
 	unsigned long flags;
@@ -501,8 +501,7 @@ void tasks_init()
     sched_unit_t *su = sched_get_cur_unit();
     task_init_boot_idle(su);
     task_take_pid(); /* 跳过pid1，预留给INIT进程 */
-    
-    task_init_done = 1;
     kern_thread_start("kdeamon", TASK_PRIORITY_LOW, kthread_deamon, NULL);
+    task_init_done = 1;
     keprint(PRINT_INFO "[ok] tasks init.");
 }

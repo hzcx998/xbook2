@@ -38,6 +38,8 @@ SRC			+= task/exit.c
 SRC			+= task/waitqueue.c
 SRC			+= task/sleep.c
 SRC			+= task/wait.c
+SRC			+= task/exec.c
+
 SRC			+= kernel/driver.c
 SRC			+= fs/
 SRC			+= kernel/account.c kernel/permission.c

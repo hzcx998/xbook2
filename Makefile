@@ -89,6 +89,8 @@ endif # ($(ENV_ARCH),riscv64)
 KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 KERNEL_BIN 	= $(KERNSRC)/kernel
 
+DUMP_FILE	?= $(KERNEL_ELF)
+
 # 参数
 .PHONY: all kernel build debuild qemu qemudbg user user_clean dump
 
@@ -167,9 +169,19 @@ endif # ($(OS),Windows_NT)
 	-$(RM) -r $(IMAGE_DIR)
 	
 user: 
+ifeq ($(ENV_ARCH),x86)
+ifeq ($(ENV_MACH),mach-i386)
 	$(MAKE) -s -C  $(LIBS_DIR) && \
 	$(MAKE) -s -C  $(SBIN_DIR) && \
 	$(MAKE) -s -C  $(BIN_DIR)
+endif # ($(ENV_MACH),mach-i386)
+else ifeq ($(ENV_ARCH),riscv64)
+ifeq ($(ENV_MACH),mach-qemu)
+	$(MAKE) -s -C  $(LIBS_DIR) && \
+	$(MAKE) -s -C  $(SBIN_DIR)
+endif # ($(ENV_MACH),mach-qemu)
+endif # ($(ENV_ARCH),x86)
+
 
 user_clean: 
 	$(MAKE) -s -C  $(LIBS_DIR) clean && \
@@ -179,10 +191,10 @@ user_clean:
 dump:
 ifeq ($(ENV_ARCH),x86)
 ifeq ($(ENV_MACH),mach-i386)
-	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > $(KERNSRC)/kern.dump
+	$(OBJDUMP) -M intel -D $(DUMP_FILE) > $(DUMP_FILE).dump
 endif # ($(ENV_MACH),mach-i386)
 else ifeq ($(ENV_ARCH),riscv64)
-	$(OBJDUMP) -D $(KERNEL_ELF) > $(KERNSRC)/kern.dump
+	$(OBJDUMP) -D $(DUMP_FILE) > $(DUMP_FILE).dump
 endif # ($(ENV_ARCH),x86)
 #-hda $(HDA_IMG) -hdb $(HDB_IMG)
 # 网卡配置: 

@@ -43,7 +43,7 @@ int vmm_unmap_the_mapping_space(vmm_t *vmm);
 void vmm_dump(vmm_t *vmm);
 int vmm_copy_mem_space(vmm_t *child_vmm, vmm_t *parent_vmm);
 void vmm_active(vmm_t *vmm);
-int vmm_build_argbug(vmm_t *vmm, char **argv, char **envp);
+int vmm_build_argbuf(vmm_t *vmm, char **argv, char **envp);
 void vmm_debuild_argbuf(vmm_t *vmm);
 
 int sys_mstate(mstate_t *ms);

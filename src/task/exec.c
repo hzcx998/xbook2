@@ -3,7 +3,7 @@
 #include <xbook/pthread.h>
 #include <xbook/memspace.h>
 #include <xbook/debug.h>
-#include <xbook/elf32.h>
+#include <xbook/elf.h>
 #include <xbook/schedule.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
@@ -12,8 +12,8 @@
 #include <xbook/dir.h>
 #include <xbook/fsal.h>
 #include <xbook/fd.h>
-
-
+#include <xbook/fs.h>
+#include <xbook/process.h>
 
 /**
  * exec使用新的镜像以及堆栈替换原有的内容。
@@ -47,10 +47,10 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         goto free_tmp_fd;
     }
     #ifdef CONFIG_32BIT     /* 32位 elf 头解析 */
-    struct Elf32_Ehdr elf_header;
-    memset(&elf_header, 0, sizeof(struct Elf32_Ehdr));
+    Elf32_Ehdr elf_header;
+    memset(&elf_header, 0, sizeof(Elf32_Ehdr));
     kfile_lseek(fd, 0, SEEK_SET);
-    if (kfile_read(fd, &elf_header, sizeof(struct Elf32_Ehdr)) != sizeof(struct Elf32_Ehdr)) {
+    if (kfile_read(fd, &elf_header, sizeof(Elf32_Ehdr)) != sizeof(Elf32_Ehdr)) {
         keprint(PRINT_ERR "sys_exec_file: read elf header failed!\n");
         goto free_tmp_fd;
     }
@@ -59,14 +59,31 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         elf_header.e_machine != 3 || \
         elf_header.e_version != 1 || \
         elf_header.e_phnum > 1024 || \
-        elf_header.e_phentsize != sizeof(struct Elf32_Phdr)) {
+        elf_header.e_phentsize != sizeof(Elf32_Phdr)) {
         keprint(PRINT_DEBUG "sys_exec_file: ident=%s type=%d machine=%d version=%d phnum=%d\n",
             elf_header.e_ident, elf_header.e_type, elf_header.e_machine,
             elf_header.e_version, elf_header.e_phnum, elf_header.e_phentsize);
-        keprint(PRINT_ERR "sys_exec_file: it is not a elf format file!\n", name);
+        keprint(PRINT_ERR "sys_exec_file: it is not a elf 32 format file!\n", name);
         goto free_tmp_fd;
     }
     #else   /* CONFIG_64BIT 64位 elf 头解析 */
+    Elf64_Ehdr elf_header;
+    memset(&elf_header, 0, sizeof(Elf64_Ehdr));
+    kfile_lseek(fd, 0, SEEK_SET);
+    if (kfile_read(fd, &elf_header, sizeof(Elf64_Ehdr)) != sizeof(Elf64_Ehdr)) {
+        keprint(PRINT_ERR "sys_exec_file: read elf header failed!\n");
+        goto free_tmp_fd;
+    }
+    if (elf_header.magic != ELF_MAGIC) {
+        keprint(PRINT_DEBUG "sys_exec_file: ident=%s type=%d machine=%d version=%d phnum=%d\n",
+            elf_header.e_ident, elf_header.e_type, elf_header.e_machine,
+            elf_header.e_version, elf_header.e_phnum, elf_header.e_phentsize);
+        keprint(PRINT_ERR "sys_exec_file: it is not a elf 64 format file!\n", name);
+        goto free_tmp_fd;
+    }
+
+    
+
     #endif
     
     char **new_envp = NULL;
@@ -91,10 +108,14 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     strcpy(tmp_name, name);
     vmm_unmap_the_mapping_space(cur->vmm);
     vmm_release_space(cur->vmm);
-    if (proc_load_image(cur->vmm, &elf_header, fd) < 0) {
+    #ifdef CONFIG_32BIT     /* 32位 elf 头解析 */
+    if (proc_load_image32(cur->vmm, &elf_header, fd) < 0) {
         keprint(PRINT_ERR "sys_exec_file: load_image failed!\n");
         goto free_tmp_arg;
     }
+    #else
+
+    #endif
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
     proc_trap_frame_init(cur);

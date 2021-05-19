@@ -2,8 +2,10 @@
 #define _XBOOK_CONFIG_H
 
 /* config address width */
+/*
 #define CONFIG_32BIT
-/* #define CONFIG_64BIT */
+#define CONFIG_64BIT
+*/
 
 /* kernel low memory: 0-> high memory, 1-> low memory */
 #define CONFIG_KERN_LOWMEM  0

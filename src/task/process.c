@@ -1,7 +1,7 @@
 #include <xbook/process.h>
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
-#include <xbook/elf32.h>
+#include <xbook/elf.h>
 #include <string.h>
 #include <math.h>
 #include <xbook/memspace.h>
@@ -50,10 +50,10 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
     return 0;
 }
 
-int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
+int proc_load_image32(vmm_t *vmm, Elf32_Ehdr *elf_header, int fd)
 {
     #ifndef TASK_TINY
-    struct Elf32_Phdr prog_header;
+    Elf32_Phdr prog_header;
     Elf32_Off prog_header_off = elf_header->e_phoff;
     Elf32_Half prog_header_size = elf_header->e_phentsize;
     Elf32_Off prog_end;
@@ -80,19 +80,83 @@ int proc_load_image(vmm_t *vmm, struct Elf32_Ehdr *elf_header, int fd)
             }
             prog_end = prog_header.p_vaddr + prog_header.p_memsz;
             
-            if (prog_header.p_flags == ELF32_PHDR_CODE) {
+            if (prog_header.p_flags == PHDR_CODE) {
                 vmm->code_start = prog_header.p_vaddr;
                 vmm->code_end = PAGE_ALIGN(prog_end);
                 vmm->heap_start = vmm->code_end + PAGE_SIZE;
                 vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
                 vmm->heap_end = vmm->heap_start;
-            } else if (prog_header.p_flags == ELF32_PHDR_DATA) {
+            } else if (prog_header.p_flags == PHDR_DATA) {
                 vmm->data_start = prog_header.p_vaddr;
                 vmm->data_end = PAGE_ALIGN(prog_end);
                 vmm->heap_start = vmm->data_end + PAGE_SIZE;                
                 vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
                 vmm->heap_end = vmm->heap_start;
-            } else if (prog_header.p_flags == ELF32_PHDR_CODE_DATA) {
+            } else if (prog_header.p_flags == PHDR_CODE_DATA) {
+                vmm->code_start = prog_header.p_vaddr;
+                vmm->code_end = PAGE_ALIGN(prog_end);
+                vmm->data_start = prog_header.p_vaddr;
+                vmm->data_end = PAGE_ALIGN(prog_end);
+                vmm->heap_start = vmm->code_end + PAGE_SIZE;
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
+            }
+            if (!vmm->heap_start && !vmm->heap_end) {
+                vmm->heap_start = prog_end + PAGE_SIZE;
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
+            }
+        }
+        prog_header_off += prog_header_size;
+        grog_idx++;
+    }
+    #endif
+    return 0;
+}
+
+int proc_load_image64(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
+{
+    #ifndef TASK_TINY
+    Elf32_Phdr prog_header;
+    Elf32_Off prog_header_off = elf_header->e_phoff;
+    Elf32_Half prog_header_size = elf_header->e_phentsize;
+    Elf32_Off prog_end;
+    unsigned long grog_idx = 0;
+    while (grog_idx < elf_header->e_phnum) {
+        memset(&prog_header, 0, prog_header_size);
+        kfile_lseek(fd, prog_header_off, SEEK_SET);
+        if (kfile_read(fd, (void *)&prog_header, prog_header_size) != prog_header_size) {
+            return -1;
+        }
+        if (prog_header.p_type == PT_LOAD) {
+            #if DEBUG_PROCESS == 1
+            keprint("elf segment: paddr:%x vaddr:%x file size:%x mem size: %x\n", 
+                prog_header.p_paddr, prog_header.p_vaddr, prog_header.p_filesz, prog_header.p_memsz);
+            #endif
+            if (proc_load_segment(fd, prog_header.p_offset, 
+                    prog_header.p_filesz, prog_header.p_memsz, prog_header.p_vaddr)) {
+                return -1;
+            }
+            /* 如果内存大小比文件大小大，就要清0 */
+            if (prog_header.p_memsz > prog_header.p_filesz) {
+                memset((void *)(unsigned long)(prog_header.p_vaddr + prog_header.p_filesz), 0,
+                    prog_header.p_memsz - prog_header.p_filesz);    
+            }
+            prog_end = prog_header.p_vaddr + prog_header.p_memsz;
+            
+            if (prog_header.p_flags == PHDR_CODE) {
+                vmm->code_start = prog_header.p_vaddr;
+                vmm->code_end = PAGE_ALIGN(prog_end);
+                vmm->heap_start = vmm->code_end + PAGE_SIZE;
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
+            } else if (prog_header.p_flags == PHDR_DATA) {
+                vmm->data_start = prog_header.p_vaddr;
+                vmm->data_end = PAGE_ALIGN(prog_end);
+                vmm->heap_start = vmm->data_end + PAGE_SIZE;                
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
+            } else if (prog_header.p_flags == PHDR_CODE_DATA) {
                 vmm->code_start = prog_header.p_vaddr;
                 vmm->code_end = PAGE_ALIGN(prog_end);
                 vmm->data_start = prog_header.p_vaddr;
@@ -225,10 +289,10 @@ int proc_pthread_exit(task_t *task)
 int proc_release(task_t *task)
 {
     proc_vmm_exit(task);
-    #ifndef TASK_TINY
     fs_fd_exit(task);
-    proc_pthread_exit(task);
     exception_manager_exit(&task->exception_manager);
+    #ifndef TASK_TINY
+    proc_pthread_exit(task);
     sys_port_comm_unbind(-1);
     #endif
     task_do_cancel(task);
@@ -238,11 +302,11 @@ int proc_release(task_t *task)
 void proc_exec_init(task_t *task)
 {
     proc_map_space_init(task);
-    #ifndef TASK_TINY
-    pthread_desc_init(task->pthread);
     fs_fd_reinit(task);
     exception_manager_exit(&task->exception_manager);
     exception_manager_init(&task->exception_manager);
+    #ifndef TASK_TINY
+    pthread_desc_init(task->pthread);
     sys_port_comm_unbind(-1);
     #endif
     task_do_cancel(task);
@@ -326,8 +390,10 @@ void proc_entry(void* arg)
 {
     const char *pathname = (const char *) arg;
     task_t *cur = task_current;
-    #ifndef TASK_TINY
+    
     sys_execve(pathname, (const char **)cur->vmm->argv, (const char **)cur->vmm->envp);
+    
+    #ifndef TASK_TINY
     #endif
     /* rease proc resource */
     proc_release(cur);
@@ -361,7 +427,6 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     }
     if (parent)
         task->pgid = parent->pgid;
-    #ifndef TASK_TINY
     /* 进程执行前必须初始化文件描述符，内存管理，参数缓冲区 */
     if (fs_fd_init(task) < 0) {
         mem_free(task);
@@ -369,19 +434,21 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     }
     /* 需要继承父进程的部分文件描述符 */
     fs_fd_copy_only(parent, task);
+    
+    #ifndef TASK_TINY
     #endif
     if (proc_vmm_init(task)) {
-        #ifndef TASK_TINY
         fs_fd_exit(task);
+        #ifndef TASK_TINY
         #endif
         mem_free(task);
         return NULL;
     }
-    if (vmm_build_argbug(task->vmm, argv, envp) < 0) {
+    if (vmm_build_argbuf(task->vmm, argv, envp) < 0) {
         keprint(PRINT_ERR "process_create: pathname %s build arg buf failed !\n", argv[0]);
         proc_vmm_exit(task);
-        #ifndef TASK_TINY
         fs_fd_exit(task);
+        #ifndef TASK_TINY
         #endif
         mem_free(task);
         return NULL;

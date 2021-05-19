@@ -239,7 +239,7 @@ int vmm_exit_when_fork_failed(vmm_t *child_vmm, vmm_t *parent_vmm)
     return 0;
 }
 
-int vmm_build_argbug(vmm_t *vmm, char **argv, char **envp)
+int vmm_build_argbuf(vmm_t *vmm, char **argv, char **envp)
 {
     char *tmp_arg = mem_alloc(PAGE_SIZE);
     if (!tmp_arg) {
