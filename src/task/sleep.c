@@ -2,6 +2,7 @@
 #include <xbook/timer.h>
 #include <xbook/clock.h>
 #include <xbook/schedule.h>
+#include <xbook/safety.h>
 #include <sys/time.h>
 #include <errno.h>
 

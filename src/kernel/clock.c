@@ -25,8 +25,8 @@ static void timer_softirq_handler(softirq_action_t *action)
         walltime_update_second();
     }
     timer_update_ticks();
-    #if !defined(CLOCK_NO_SHCED)
     alarm_update_ticks();
+    #if !defined(CLOCK_NO_SHCED)
     #endif
 }
 

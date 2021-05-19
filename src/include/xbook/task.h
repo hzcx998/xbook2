@@ -17,8 +17,8 @@
 #include "spinlock.h"
 #include "fsal.h"
 #include "exception.h"
-#ifndef TASK_TINY
 #include "alarm.h"
+#ifndef TASK_TINY
 #include "pthread.h"
 #include "msgpool.h"
 #include "portcomm.h"
@@ -97,9 +97,9 @@ typedef struct {
     long errcode;                       /* 错误码：用户多线程时用来标记每一个线程的错误码 */
     file_man_t *fileman;    
     exception_manager_t exception_manager;         
-    #ifndef TASK_TINY
     timer_t sleep_timer;               
     alarm_t alarm;                      
+    #ifndef TASK_TINY
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
     lpc_port_table_t port_table;
     port_comm_t *port_comm;

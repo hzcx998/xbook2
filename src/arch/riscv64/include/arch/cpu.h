@@ -6,6 +6,7 @@
 #define CPU_NR_MAX  1
 
 void cpu_do_nothing();
+void cpu_do_udelay(int usec);
 
 #define cpu_idle        cpu_do_nothing
 
@@ -19,5 +20,6 @@ static inline void cpu_do_pause(void)
 }
 
 #define cpu_pause       cpu_do_pause
+#define udelay          cpu_do_udelay
 
 #endif  /* _RISCV64_CPU_H */
