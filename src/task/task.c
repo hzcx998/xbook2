@@ -479,6 +479,13 @@ void task_start_user()
     kern_do_idle(NULL);
 }
 
+/**
+ * kdeamon线程是一个守护线程，和idle具有相同的优先级，
+ * 当idle在进行初始化过程中需要调度出来，sleep或者yield时，
+ * 就需要有其它线程来被调度，此时deamon的作用就出来了。
+ * 如果没有kdeamon，那么内核可能只有一个线程，进行调度出去时，
+ * 就会产生严重的错误！
+ */
 void kthread_deamon(void *arg)
 {
     keprintln("deamon thread start...");

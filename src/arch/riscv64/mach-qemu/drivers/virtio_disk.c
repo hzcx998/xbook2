@@ -245,8 +245,7 @@ static void virtio_disk_rw(device_extension_t *extension,
     while(extension->info[idx[0]].disk == 1) {
         // sleep(b, &extension->vdisk_lock);
         spin_unlock_irqrestore(&extension->vdisk_lock, iflags);
-        //task_yield();
-        mdelay(10);
+        task_yield();
         spin_lock_irqsave(&extension->vdisk_lock, iflags);
 
         // unlock & sleep & lock
