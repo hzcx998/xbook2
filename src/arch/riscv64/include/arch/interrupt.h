@@ -81,4 +81,8 @@ static inline int interrupt_enabled()
     return (x & SSTATUS_SIE) != 0;
 }
 
+// arch local 
+void usertrap(void);
+void usertrapret(void);
+
 #endif  /* _RISCV64_INTERRUPT_H */

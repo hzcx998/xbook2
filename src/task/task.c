@@ -67,6 +67,8 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->pgid = -1;
     task->parent_pid = -1;
     task->exit_status = 0;
+    task->trapframe = mem_alloc(PAGE_SIZE);
+    assert(task->trapframe != NULL);
     // set kernel stack as the top of task mem struct
     task->kstack = (unsigned char *)(((unsigned long )task) + TASK_KERN_STACK_SIZE);
     task->flags = 0;

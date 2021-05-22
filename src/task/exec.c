@@ -116,8 +116,13 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         goto free_tmp_arg;
     }
     #endif
+    #ifdef TASK_TRAPFRAME_ON_KSTACK
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)cur + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
+    #else
+    trap_frame_t *frame = cur->trapframe;
+    assert(frame != NULL);
+    #endif
     proc_trap_frame_init(cur);
     if(process_frame_init(cur, frame, new_argv, new_envp) < 0){
         goto free_loaded_image;
@@ -137,10 +142,6 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
     
-    while (1)
-    {
-        /* code */
-    }
     
     kernel_switch_to_user(frame);
 free_loaded_image:

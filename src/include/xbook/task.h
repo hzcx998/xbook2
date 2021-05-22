@@ -8,6 +8,7 @@
 #include <arch/cpu.h>
 #include <arch/fpu.h>
 #include <arch/task.h>
+#include <arch/interrupt.h>
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <types.h>
@@ -23,6 +24,8 @@
 #include "msgpool.h"
 #include "portcomm.h"
 #endif
+
+// #define TASK_TRAPFRAME_ON_KSTACK
 
 typedef enum {
     TASK_READY = 0,         /* 进程处于就绪状态 */
@@ -89,6 +92,7 @@ typedef struct {
     task_func_t *kthread_entry;
     void *kthread_arg;       // 线程执行时传入参数
     task_context_t context;             /* 任务的上下文 */
+    trap_frame_t *trapframe;
     char name[MAX_TASK_NAMELEN];        
     struct vmm *vmm;                    
     list_t list;                        /* 处于所在队列的链表，就绪队列，阻塞队列等 */

@@ -12,6 +12,7 @@
 #include <arch/task.h>
 #include <xbook/safety.h>
 #include <xbook/fd.h>
+#include <xbook/fs.h>
 #include <unistd.h>
 #include <stddef.h>
 #include <errno.h>
@@ -45,7 +46,7 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
     kfile_lseek(fd, offset, SEEK_SET);
     
     /* read file */
-    memset(vaddr_page, 0, occupy_pages * PAGE_SIZE);
+    memset((void *)vaddr_page, 0, occupy_pages * PAGE_SIZE);
     keprintln("read file");
 
     if (kfile_read(fd, (void *)vaddr, file_sz) != file_sz) {
@@ -334,11 +335,16 @@ int proc_destroy(task_t *task, int thread)
 
 void proc_trap_frame_init(task_t *task)
 {
-    #ifndef TASK_TINY
+    // #ifndef TASK_TINY
+    #ifdef TASK_TRAPFRAME_ON_KSTACK
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)task + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
-    user_frame_init(frame);
+    #else
+    trap_frame_t *frame = task->trapframe;
+    assert(frame != NULL);
     #endif
+    user_frame_init(frame);
+    // #endif
 }
 
 int proc_deal_zombie_child(task_t *parent)
