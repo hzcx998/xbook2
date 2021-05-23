@@ -168,3 +168,54 @@ int page_map_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len, u
 final:
     return 0;
 }
+
+
+// Copy from kernel to user.
+// Copy len bytes from src to virtual address dstva in a given page table.
+// Return 0 on success, -1 on error.
+int
+copyout(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len)
+{
+  uint64_t n, va0, pa0;
+
+  while(len > 0){
+    va0 = PAGE_ROUNDDOWN(dstva);
+    pa0 = walkaddr(pgdir, va0);
+    if(pa0 == NULL)
+      return -1;
+    n = PAGE_SIZE - (dstva - va0);
+    if(n > len)
+      n = len;
+    memmove((void *)(pa0 + (dstva - va0)), src, n);
+
+    len -= n;
+    src += n;
+    dstva = va0 + PAGE_SIZE;
+  }
+  return 0;
+}
+
+// Copy from user to kernel.
+// Copy len bytes to dst from virtual address srcva in a given page table.
+// Return 0 on success, -1 on error.
+int
+copyin(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len)
+{
+  uint64_t n, va0, pa0;
+
+  while(len > 0){
+    va0 = PAGE_ROUNDDOWN(srcva);
+    pa0 = walkaddr(pgdir, va0);
+    if(pa0 == NULL)
+      return -1;
+    n = PAGE_SIZE - (srcva - va0);
+    if(n > len)
+      n = len;
+    memmove(dst, (void *)(pa0 + (srcva - va0)), n);
+
+    len -= n;
+    dst += n;
+    srcva = va0 + PAGE_SIZE;
+  }
+  return 0;
+}

@@ -15,15 +15,11 @@ char* interrupt_names[MAX_INTERRUPT_NR];
 void interrupt_disable(void)
 {
     w_sstatus(r_sstatus() & ~SSTATUS_SIE);
-    // disable supervisor-mode timer interrupts.
-    w_sie(r_sie() & ~(SIE_SEIE | SIE_SSIE | SIE_STIE));
 }
 
 void interrupt_enable(void)
 {
     w_sstatus(r_sstatus() | SSTATUS_SIE);
-    // enable supervisor-mode timer interrupts.
-    w_sie(r_sie() | SIE_SEIE | SIE_SSIE | SIE_STIE);
 }
 
 static void interrupt_general_handler(trap_frame_t *frame) 

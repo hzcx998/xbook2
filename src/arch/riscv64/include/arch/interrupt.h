@@ -64,15 +64,13 @@ void trap_init(void);
 // flags: 0-15: SSTATUS_SIE, 16-31: (SIE_SEIE | SIE_SSIE | SIE_STIE)
 #define interrupt_save_and_disable(flags)                  \
     do {                                    \
-        flags = (r_sstatus() & SSTATUS_SIE) & 0xffff; \
-        flags |= (r_sie() & (SIE_SEIE | SIE_SSIE | SIE_STIE)) << 16; \
+        flags = (r_sstatus() & SSTATUS_SIE); \
         interrupt_disable();    \
     } while (0)
 
 #define interrupt_restore_state(flags)               \
     do {                                    \
-        w_sstatus(r_sstatus() | (flags & 0xffff)); \
-        w_sie(r_sie() | ((flags >> 16) & 0xffff)); \
+        w_sstatus(r_sstatus() | flags); \
     } while (0)
 
 static inline int interrupt_enabled()

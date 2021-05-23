@@ -5,6 +5,7 @@
 #include <k210_qemu_phymem.h>
 #include <arch/interrupt.h>
 #include <arch/riscv.h>
+#include <arch/page.h>
 
 extern char trampoline[], uservec[], userret[];
 
@@ -56,6 +57,8 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
         mem_space_unmmap(vmm->stack_start, vmm->stack_end - vmm->stack_start);
         return -1;
     }
+    #else
+    arg_bottom = vmm->stack_end;
     #endif
     /* 传参数 */
     #if 0
@@ -76,14 +79,19 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
         mem_space_unmmap2(vmm, vmm->stack_start, vmm->stack_end - vmm->stack_start);
         return -1;
     }
-    if (page_map_addr_fixed2(vmm->page_storage, TRAPFRAME, kern_vir_addr2phy_addr(task->trapframe), PAGE_SIZE , PROT_EXEC | PROT_READ) < 0) {
+
+    char buf[32] = {0};
+    copyout(vmm->page_storage, TRAMPOLINE, buf, 32);
+    keprint("trapframe=%lx\n", task->trapframe);
+    if (page_map_addr_fixed2(vmm->page_storage, TRAPFRAME, kern_vir_addr2phy_addr(task->trapframe), PAGE_SIZE , PROT_READ | PROT_WRITE) < 0) {
         page_unmap_addr_safe2(vmm->page_storage, TRAMPOLINE, PAGE_SIZE, 1);
         mem_space_unmmap2(vmm, vmm->stack_start, vmm->stack_end - vmm->stack_start);
         return -1;
     }
-    #endif
+    copyout(vmm->page_storage, TRAPFRAME, buf, 32);
 
-    keprint("build arg done");
+    #endif
+    keprint("TRAMPOLINE=%lx TRAPFRAME=%lx\n", TRAMPOLINE, TRAPFRAME);
 
     return 0;
 }

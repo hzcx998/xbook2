@@ -17,6 +17,9 @@ void trap_init(void)
 {
     // register interrupt handler
     w_stvec((uint64_t)kernel_trap_entry);
+    
+    // enable supervisor-mode timer interrupts.
+    w_sie(r_sie() | SIE_SEIE | SIE_SSIE | SIE_STIE);
 }
 
 // interrupts and exceptions from kernel code go here via kernel_trap_entry,
@@ -25,6 +28,8 @@ void do_kernel_trap(trap_frame_t *frame)
 {
     //dbgprintln("trap frame addr:%p", frame);
     //trap_frame_dump(frame);
+
+    keprint("run in kerntrap\n");
 
     uint64_t sepc = r_sepc();
     uint64_t sstatus = r_sstatus();
@@ -51,7 +56,7 @@ void do_kernel_trap(trap_frame_t *frame)
 void
 usertrap(void)
 {
-  // printf("run in usertrap\n");
+  keprint("run in usertrap\n");
 
   if((r_sstatus() & SSTATUS_SPP) != 0)
     panic("usertrap: not from user mode");
@@ -95,9 +100,9 @@ usertrapret(void)
   // we're about to switch the destination of traps from
   // kerneltrap() to usertrap(), so turn off interrupts until
   // we're back in user space, where usertrap() is correct.
-  interrupt_disable();
+  //interrupt_disable();
   //interrupt_enable();
-  
+  keprint("intr enable %d\n", interrupt_enabled());
   // send syscalls, interrupts, and exceptions to trampoline.S
   w_stvec(TRAMPOLINE + (uservec - trampoline));
 
