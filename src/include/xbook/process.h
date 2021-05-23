@@ -17,6 +17,8 @@ int proc_build_arg(unsigned long arg_top, unsigned long *arg_bottom, char *argv[
 void proc_map_space_init(task_t *task);
 int proc_load_image32(vmm_t *vmm, Elf32_Ehdr *elf_header, int fd);
 int proc_load_image64(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd);
+int proc_load_image64_ext(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd);
+
 void proc_trap_frame_init(task_t *task);
 int proc_release(task_t *task);
 int proc_pthread_init(task_t *task);
@@ -38,6 +40,6 @@ unsigned long sys_sleep(unsigned long second);
 long sys_usleep(struct timeval *inv, struct timeval *outv);
 int sys_create_process(char **argv, char **envp, uint32_t flags);
 int sys_resume_process(pid_t pid);
-int process_frame_init(task_t *task, trap_frame_t *frame, char **argv, char **envp);
+int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp);
 
 #endif /* _XBOOK_PROCESS_H */

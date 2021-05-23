@@ -46,7 +46,7 @@ else ifeq ($(ENV_ARCH), riscv64)
 	MCFLAGS		:= -march=rv64imafdc -mabi=lp64d -mcmodel=medany
 	ENV_AFLAGS	+= -ffunction-sections -fdata-sections -ffreestanding -std=gnu99 
 	CFLAGS		+= -fno-omit-frame-pointer
-	CFLAGS		+= -O
+	CFLAGS		+= -O0 -g -ggdb
 	CFLAGS 		+= -MD
 	CFLAGS 		+= -ffreestanding -fno-common
 	CFLAGS 		+= -mno-relax

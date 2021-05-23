@@ -26,7 +26,7 @@ SRC			:= $(ARCH_DIR)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/ net/
 else
 SRC			:= $(ARCH_DIR)/ kernel/debug.c lib/string.c lib/vsprintf.c lib/bitmap.c lib/string_obj.c
 SRC			+= init/main2.c 
-SRC			+= vmm/dma.c vmm/memcache.c vmm/virmem.c vmm/vmm.c vmm/memspace.c vmm/mdl.c 
+SRC			+= vmm/dma.c vmm/memcache.c vmm/virmem.c vmm/vmm.c vmm/memspace.c vmm/mdl.c vmm/memspace2.c 
 SRC			+= kernel/hardirq.c kernel/softirq.c kernel/walltime.c kernel/safety.c 
 SRC			+= kernel/clock.c kernel/timer.c kernel/time.c kernel/alarm.c
 SRC			+= kernel/tests.c

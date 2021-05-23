@@ -277,4 +277,4 @@ qemudbg:
 
 # 连接gdb server: target remote localhost:10001
 gdb:
-	$(GDB)
+	$(GDB) $(KERNEL_ELF)

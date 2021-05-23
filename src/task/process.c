@@ -10,6 +10,7 @@
 #include <xbook/schedule.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
+#include <arch/page.h>
 #include <xbook/safety.h>
 #include <xbook/fd.h>
 #include <xbook/fs.h>
@@ -53,6 +54,84 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
         keprint(PRINT_ERR "proc_load_segment: read file failed!\n");
         return -1;
     }
+    #endif
+    return 0;
+}
+
+// Load a program segment into pagetable at virtual address va.
+// va must be page-aligned
+// and the pages from va to va+sz must already be mapped.
+// Returns 0 on success, -1 on failure.
+static int
+loadseg(void *pgdir, uint64_t va, int fd, unsigned long offset, size_t sz)
+{
+  uint32_t i, n;
+  uint64_t *pa;
+  if((va % PAGE_SIZE) != 0)
+    panic("loadseg: va must be page aligned");
+
+  for(i = 0; i < sz; i += PAGE_SIZE){
+    pa = walkaddr((pgdir_t)pgdir, va + i);
+    if(pa == NULL)
+      panic("loadseg: address should exist");
+    if(sz - i < PAGE_SIZE)
+      n = sz - i;
+    else
+      n = PAGE_SIZE;
+    
+    #if 0
+    if(eread(ep, 0, (uint64)pa, offset+i, n) != n)
+      return -1;
+    #else
+    kfile_lseek(fd, offset+i, SEEK_SET);
+    if (kfile_read(fd, (void *)pa, n) != n) {
+        keprint(PRINT_ERR "loadseg: read file failed!\n");
+        return -1;
+    }
+    #endif
+  }
+
+  return 0;
+}
+
+
+static int proc_load_segment_ext(vmm_t *vmm, int fd, unsigned long offset, unsigned long file_sz,
+    unsigned long mem_sz, unsigned long vaddr)
+{
+    #ifdef TASK_TINY
+    unsigned long vaddr_page = vaddr & PAGE_MASK;
+    unsigned long size_in_first_page = PAGE_SIZE - (vaddr & PAGE_LIMIT);
+    unsigned long occupy_pages = 0;
+    if (mem_sz > size_in_first_page) {
+        unsigned long left_size = mem_sz - size_in_first_page;
+        occupy_pages = DIV_ROUND_UP(left_size, PAGE_SIZE) + 1;
+    } else {
+        occupy_pages = 1;
+    }
+    dbgprintln("[proc] memmap vaddr=%p pages=%d", vaddr_page, occupy_pages);
+    void *retaddr = mem_space_mmap2(vmm, vaddr_page, 0, occupy_pages * PAGE_SIZE, 
+            PROT_USER | PROT_EXEC | PROT_WRITE | PROT_READ, MEM_SPACE_MAP_FIXED);
+    if (retaddr == ((void *)-1)) {
+        keprint(PRINT_ERR "proc_load_segment: mem_space_mmap failed!\n");
+        return -1;
+    }
+    
+    /* read file */
+    // memset((void *)vaddr_page, 0, occupy_pages * PAGE_SIZE);
+    keprintln("read file");
+
+    #if 0
+    kfile_lseek(fd, offset, SEEK_SET);
+    if (kfile_read(fd, (void *)vaddr, file_sz) != file_sz) {
+        keprint(PRINT_ERR "proc_load_segment: read file failed!\n");
+        return -1;
+    }
+    #else
+    if (loadseg(vmm->page_storage, vaddr, fd, offset, file_sz) < 0) {
+        keprint(PRINT_ERR "proc_load_segment: read file failed!\n");
+        return -1;
+    }
+    #endif
     #endif
     return 0;
 }
@@ -184,6 +263,72 @@ int proc_load_image64(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
     #endif
     return 0;
 }
+
+
+int proc_load_image64_ext(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
+{
+    #ifdef TASK_TINY
+    Elf64_Phdr prog_header;
+    Elf64_Off prog_header_off = elf_header->e_phoff;
+    Elf64_Half prog_header_size = elf_header->e_phentsize;
+    Elf64_Off prog_end;
+    unsigned long grog_idx = 0;
+    while (grog_idx < elf_header->e_phnum) {
+        memset(&prog_header, 0, prog_header_size);
+        kfile_lseek(fd, prog_header_off, SEEK_SET);
+        if (kfile_read(fd, (void *)&prog_header, prog_header_size) != prog_header_size) {
+            return -1;
+        }
+        if (prog_header.p_type == PT_LOAD) {
+            #if DEBUG_PROCESS == 1
+            keprint("elf segment: paddr:%lx vaddr:%lx file size:%lx mem size: %lx\n", 
+                prog_header.p_paddr, prog_header.p_vaddr, prog_header.p_filesz, prog_header.p_memsz);
+            #endif
+            if (proc_load_segment_ext(vmm, fd, prog_header.p_offset, 
+                    prog_header.p_filesz, prog_header.p_memsz, prog_header.p_vaddr)) {
+                return -1;
+            }
+            /* 如果内存大小比文件大小大，就要清0 */
+            if (prog_header.p_memsz > prog_header.p_filesz) {
+                memset((void *)(unsigned long)(prog_header.p_vaddr + prog_header.p_filesz), 0,
+                    prog_header.p_memsz - prog_header.p_filesz);    
+            }
+            prog_end = prog_header.p_vaddr + prog_header.p_memsz;
+            
+            if (prog_header.p_flags == PHDR_CODE) {
+                vmm->code_start = prog_header.p_vaddr;
+                vmm->code_end = PAGE_ALIGN(prog_end);
+                vmm->heap_start = vmm->code_end + PAGE_SIZE;
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
+            } else if (prog_header.p_flags == PHDR_DATA) {
+                vmm->data_start = prog_header.p_vaddr;
+                vmm->data_end = PAGE_ALIGN(prog_end);
+                vmm->heap_start = vmm->data_end + PAGE_SIZE;                
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
+            } else if (prog_header.p_flags == PHDR_CODE_DATA) {
+                vmm->code_start = prog_header.p_vaddr;
+                vmm->code_end = PAGE_ALIGN(prog_end);
+                vmm->data_start = prog_header.p_vaddr;
+                vmm->data_end = PAGE_ALIGN(prog_end);
+                vmm->heap_start = vmm->code_end + PAGE_SIZE;
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
+            }
+            if (!vmm->heap_start && !vmm->heap_end) {
+                vmm->heap_start = prog_end + PAGE_SIZE;
+                vmm->heap_start = PAGE_ALIGN(vmm->heap_start);
+                vmm->heap_end = vmm->heap_start;
+            }
+        }
+        prog_header_off += prog_header_size;
+        grog_idx++;
+    }
+    #endif
+    return 0;
+}
+
 
 int proc_build_arg(unsigned long arg_top, unsigned long *arg_bottom, char *argv[], char **dest_argv[])
 {

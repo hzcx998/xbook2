@@ -204,6 +204,7 @@
         "riscv.h": "c",
         "memio.h": "c",
         "tests.h": "c",
-        "elf32.h": "c"
+        "elf32.h": "c",
+        "elf.h": "c"
     }
 }

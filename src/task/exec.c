@@ -83,13 +83,18 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     }
     #endif
     
+    vmm_t *old_vmm = cur->vmm;
+    vmm_t *new_vmm = mem_alloc(sizeof(vmm_t));
+    assert(new_vmm != NULL);
+    vmm_init(new_vmm);
+
     char **new_envp = NULL;
     char **new_argv = NULL;
     char *tmp_arg = NULL;
     /* 如果任务中带有参数，就不用重新构建新参数 */
-    if (cur->vmm->argbuf) {
-        new_envp = cur->vmm->envp;
-        new_argv = cur->vmm->argv;
+    if (old_vmm->argbuf) {
+        new_envp = old_vmm->envp;
+        new_argv = old_vmm->argv;
     } else {
         tmp_arg = mem_alloc(PAGE_SIZE);
         if (tmp_arg == NULL) {
@@ -103,15 +108,15 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 
     char tmp_name[MAX_TASK_NAMELEN] = {0};
     strcpy(tmp_name, name);
-    vmm_unmap_the_mapping_space(cur->vmm);
-    vmm_release_space(cur->vmm);
+    vmm_unmap_the_mapping_space(old_vmm);
+    vmm_release_space(old_vmm);
     #ifdef CONFIG_32BIT     /* 32位 elf 头解析 */
     if (proc_load_image32(cur->vmm, &elf_header, fd) < 0) {
         keprint(PRINT_ERR "sys_exec_file: load_image failed!\n");
         goto free_tmp_arg;
     }
     #else
-    if (proc_load_image64(cur->vmm, &elf_header, fd) < 0) {
+    if (proc_load_image64_ext(new_vmm, &elf_header, fd) < 0) {
         keprint(PRINT_ERR "sys_exec_file: load_image failed!\n");
         goto free_tmp_arg;
     }
@@ -124,15 +129,17 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     assert(frame != NULL);
     #endif
     proc_trap_frame_init(cur);
-    if(process_frame_init(cur, frame, new_argv, new_envp) < 0){
+    if(process_frame_init(cur, new_vmm, frame, new_argv, new_envp) < 0){
         goto free_loaded_image;
     }
-    if (cur->vmm->argbuf) {
-        vmm_debuild_argbuf(cur->vmm);
+    if (old_vmm->argbuf) {
+        vmm_debuild_argbuf(old_vmm);
     } else {
         if (tmp_arg)
             mem_free(tmp_arg);
     }
+    vmm_free(old_vmm);
+    cur->vmm = new_vmm;
     kfile_close(fd);
 
     /* proc exec init */
@@ -141,7 +148,6 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     user_set_entry_point(frame, (unsigned long)elf_header.e_entry);
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
-    
     
     kernel_switch_to_user(frame);
 free_loaded_image:

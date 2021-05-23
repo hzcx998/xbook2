@@ -102,5 +102,14 @@ walk(pgdir_t pgdir, uint64_t va, int alloc);
 
 void vmprint(pgdir_t pgdir, int level);
 
+uint64_t *
+walkaddr(pgdir_t pgdir, uint64_t va);
+/* 可以指定对某个页目录表进行操作 */
+int page_map_addr_fixed2(pgdir_t pgdir, unsigned long start, unsigned long addr, 
+    unsigned long len, unsigned long prot);
+int page_unmap_addr2(pgdir_t pgdir, unsigned long vaddr, unsigned long len);
+int page_unmap_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len, char fixed);
+int page_map_addr2(pgdir_t pgdir, unsigned long start, unsigned long len, unsigned long prot);
+int page_map_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len, unsigned long prot);
 
 #endif  /* _RISCV64_PAGE_H */

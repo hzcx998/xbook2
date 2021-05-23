@@ -33,31 +33,30 @@ void task_stack_build(task_t *task, task_func_t *function, void *arg)
     keprint("task=%s sp=%p\n", task->name, task->context.sp);
 }
 
-int process_frame_init(task_t *task, trap_frame_t *frame, char **argv, char **envp)
+int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp)
 {
-    vmm_t *vmm = task->vmm;
-
     vmm->stack_end = USER_STACK_TOP;
     vmm->stack_start = vmm->stack_end - MEM_SPACE_STACK_SIZE_DEFAULT;
 
-    if (mem_space_mmap(vmm->stack_start, 0, vmm->stack_end - vmm->stack_start , PROT_WRITE | PROT_READ,
+    if (mem_space_mmap2(vmm, vmm->stack_start, 0, vmm->stack_end - vmm->stack_start , PROT_USER | PROT_WRITE | PROT_READ,
         MEM_SPACE_MAP_FIXED | MEM_SPACE_MAP_STACK) == ((void *)-1)) {
         return -1;
     }
-    memset((void *) vmm->stack_start, 0, vmm->stack_end - vmm->stack_start);
+    // memset((void *) vmm->stack_start, 0, vmm->stack_end - vmm->stack_start);
     
     int argc = 0;
     char **new_envp = NULL;
     unsigned long arg_bottom = 0;
-    argc = proc_build_arg(vmm->stack_end, &arg_bottom, envp, &new_envp);
-    
     char **new_argv = NULL;
+    #if 0
+    argc = proc_build_arg(vmm->stack_end, &arg_bottom, envp, &new_envp);
     argc = proc_build_arg(arg_bottom, &arg_bottom, argv, &new_argv);
-
+    
     if (!arg_bottom) {
         mem_space_unmmap(vmm->stack_start, vmm->stack_end - vmm->stack_start);
         return -1;
     }
+    #endif
     /* 传参数 */
     #if 0
     frame->ecx = argc;
@@ -73,16 +72,18 @@ int process_frame_init(task_t *task, trap_frame_t *frame, char **argv, char **en
     frame->sp = (uint64_t) arg_bottom;
     
     /* 映射trapline和trapframe到一个固定的虚拟地址 */
-    if (page_map_addr_fixed(TRAMPOLINE, kern_vir_addr2phy_addr(trampoline), PAGE_SIZE , PROT_EXEC | PROT_READ) < 0) {
-        mem_space_unmmap(vmm->stack_start, vmm->stack_end - vmm->stack_start);
+    if (page_map_addr_fixed2(vmm->page_storage, TRAMPOLINE, kern_vir_addr2phy_addr(trampoline), PAGE_SIZE , PROT_EXEC | PROT_READ) < 0) {
+        mem_space_unmmap2(vmm, vmm->stack_start, vmm->stack_end - vmm->stack_start);
         return -1;
     }
-    if (page_map_addr_fixed(TRAPFRAME, kern_vir_addr2phy_addr(task->trapframe), PAGE_SIZE , PROT_EXEC | PROT_READ) < 0) {
-        page_unmap_addr_safe(TRAMPOLINE, PAGE_SIZE, 1);
-        mem_space_unmmap(vmm->stack_start, vmm->stack_end - vmm->stack_start);
+    if (page_map_addr_fixed2(vmm->page_storage, TRAPFRAME, kern_vir_addr2phy_addr(task->trapframe), PAGE_SIZE , PROT_EXEC | PROT_READ) < 0) {
+        page_unmap_addr_safe2(vmm->page_storage, TRAMPOLINE, PAGE_SIZE, 1);
+        mem_space_unmmap2(vmm, vmm->stack_start, vmm->stack_end - vmm->stack_start);
         return -1;
     }
     #endif
+
+    keprint("build arg done");
 
     return 0;
 }

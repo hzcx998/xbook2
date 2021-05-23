@@ -114,4 +114,9 @@ static inline mem_space_t *mem_space_find_intersection(vmm_t *vmm,
     return space;
 }
 
+void *mem_space_mmap2(vmm_t *vmm, uint32_t addr, uint32_t paddr, uint32_t len, uint32_t prot, uint32_t flags);
+void *mem_space_mmap_viraddr2(vmm_t *vmm, uint32_t addr, uint32_t vaddr, uint32_t len, uint32_t prot, uint32_t flags);
+int mem_space_unmmap2(vmm_t *vmm, uint32_t addr, uint32_t len);
+
+
 #endif /* _XBOOK_MEMSPACE_H */

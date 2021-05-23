@@ -1,0 +1,170 @@
+#include <arch/page.h>
+#include <arch/mempool.h>
+#include <xbook/debug.h>
+#include <arch/riscv.h>
+#include <assert.h>
+#include <string.h>
+#include <stdint.h>
+#include <math.h>
+#include <k210_qemu_phymem.h>
+
+int page_map_addr_fixed2(pgdir_t pgdir, unsigned long start, unsigned long addr, 
+    unsigned long len, unsigned long prot)
+{
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
+    unsigned long first = start & PAGE_MASK;
+    len = PAGE_ALIGN(len);
+
+    unsigned long attr = 0;
+    
+    if (prot & PROT_USER)
+        attr |= PAGE_ATTR_USER;
+    
+    if (prot & PROT_KERN)
+        attr |= PAGE_ATTR_SYSTEM;
+    
+    if (prot & PROT_WRITE)
+        attr |= PAGE_ATTR_WRITE;
+    
+    if (prot & PROT_READ)
+        attr |= PAGE_ATTR_READ;
+
+    if (prot & PROT_EXEC)
+        attr |= PAGE_ATTR_EXEC;
+
+    int retval = mappages(pgdir, first, len, addr & PAGE_MASK, attr);
+    interrupt_restore_state(flags);
+	return retval;
+}
+
+int page_unmap_addr2(pgdir_t pgdir, unsigned long vaddr, unsigned long len)
+{
+    if (!len)
+		return -1;
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
+	len = PAGE_ALIGN(len);
+    vmunmap(pgdir, vaddr & PAGE_MASK, len / PAGE_SIZE, 1);
+    interrupt_restore_state(flags);
+	return 0;
+}
+
+int page_unmap_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len, char fixed)
+{
+    if (!len)
+		return -1;
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
+	len = PAGE_ALIGN(len);
+    vmunmap(pgdir, start & PAGE_MASK, len / PAGE_SIZE, !fixed);   /* 不是固定才释放 */
+    interrupt_restore_state(flags);
+	return 0;
+}
+
+int page_map_addr2(pgdir_t pgdir, unsigned long start, unsigned long len, unsigned long prot)
+{
+    dbgprintln("[page] page_map_addr: start=%p len=%lx prot=%x\n", start, len, prot);
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
+    unsigned long vaddr = (unsigned long )start & PAGE_MASK;
+    len = PAGE_ALIGN(len);
+    unsigned long pages = DIV_ROUND_UP(len, PAGE_SIZE);
+    unsigned long page_idx = 0;
+    unsigned long page_addr = 0;
+    unsigned long attr = 0;
+    
+    if (prot & PROT_USER)
+        attr |= PAGE_ATTR_USER;
+    
+    if (prot & PROT_KERN)
+        attr |= PAGE_ATTR_SYSTEM;
+    
+    if (prot & PROT_WRITE)
+        attr |= PAGE_ATTR_WRITE;
+    
+    if (prot & PROT_READ)
+        attr |= PAGE_ATTR_READ;
+
+    if (prot & PROT_EXEC)
+        attr |= PAGE_ATTR_EXEC;
+
+    dbgprintln("[page] page_map_addr: vaddr=%p pages=%d\n", vaddr, pages);
+    
+    int retval = -1;
+    while (page_idx < pages) {
+        page_addr = page_alloc_user(1);
+        if (!page_addr) {
+            keprint("error: user_map_vaddr -> map pages failed!\n");
+            interrupt_restore_state(flags);
+            return -1;
+        }
+        dbgprintln("[page] page_map_addr: vaddr=%p paddr=%p\n", vaddr, page_addr);
+        retval = mappages(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
+        if (retval < 0) {
+            vmunmap(pgdir, start & PAGE_MASK, pages, 1);
+            goto final;
+        }
+        vaddr += PAGE_SIZE;
+        page_idx++;
+    }
+    interrupt_restore_state(flags);
+final:
+    return 0;
+}
+
+/**
+ * 映射一片内存区域，如果虚拟地址对应的物理地址不存在才为其分配物理地址，已经存在就默认使用原来的物理页。
+ */
+int page_map_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len, unsigned long prot)
+{
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
+    unsigned long vaddr = (unsigned long )start & PAGE_MASK;
+    len = PAGE_ALIGN(len);
+    unsigned long pages = DIV_ROUND_UP(len, PAGE_SIZE);
+    unsigned long page_idx = 0;
+    unsigned long page_addr;
+    unsigned long attr = 0;
+    
+    if (prot & PROT_USER)
+        attr |= PAGE_ATTR_USER;
+    
+    if (prot & PROT_KERN)
+        attr |= PAGE_ATTR_SYSTEM;
+    
+    if (prot & PROT_WRITE)
+        attr |= PAGE_ATTR_WRITE;
+    
+    if (prot & PROT_READ)
+        attr |= PAGE_ATTR_READ;
+
+    if (prot & PROT_EXEC)
+        attr |= PAGE_ATTR_EXEC;
+
+    int retval = -1;
+    pte_t *pte;
+    while (page_idx < pages) {
+        pte = walk(pgdir, vaddr, 0);
+        if (pte && (*pte & PAGE_ATTR_PRESENT)) {    /* 地址已经存在了 */
+            errprintln("page_map_addr_safe: addr %#x had maped!\n", vaddr);
+        } else {
+            page_addr = page_alloc_user(1);
+            if (!page_addr) {
+                keprint("error: user_map_vaddr -> map pages failed!\n");
+                interrupt_restore_state(flags);
+                return -1;
+            }
+            retval = mappages(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
+            if (retval < 0) {
+                vmunmap(pgdir, start & PAGE_MASK, pages, 1);
+                goto final;
+            }
+        }
+        vaddr += PAGE_SIZE;
+        page_idx++;
+    }
+    interrupt_restore_state(flags);
+final:
+    return 0;
+}
