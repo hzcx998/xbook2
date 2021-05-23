@@ -16,3 +16,6 @@ spinning in assertion failure()
 1. FATFS锁会导致同时打开的文件数量限制，需要修复该BUG，目前已经关闭了文件锁。
 ## <2021.4.24>
 1. unmount环回设备时不能正常close loop设备，因为fatfs文件模块没有对设备进行close操作的支持。
+
+## <2021.5.24>
+1. 系统调用时，内核不能获取用户参数的问题。用copyin/out解决。

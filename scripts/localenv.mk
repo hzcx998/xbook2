@@ -1,4 +1,5 @@
 # env var 
+# $(warning $(xxx))
 
 #CROSS_COMPILE 	?= 
 #PLATFORM		?=
@@ -32,7 +33,7 @@ ifeq ($(ENV_ARCH), x86)
 	ENV_USER_LD_SCRIPT	:= -T ../libs/xlibc/arch/x86/user.ld
 	ENV_AS		:= nasm
 	ENV_LDFLAGS	:= -no-pie
-	ENV_AFLAGS	+= -f elf 
+	ENV_AFLAGS	:= -f elf 
 	CFLAGS		:= -march=i386 -m32 
 	CFLAGS		+= -O3
 	CFLAGS		+= -std=gnu99
@@ -44,7 +45,7 @@ else ifeq ($(ENV_ARCH), riscv64)
 	ENV_USER_LD_SCRIPT	:= -T ../libs/xlibc/arch/riscv64/user.ld
 	ENV_AS		:= $(CROSS_COMPILE)gcc -x assembler-with-cpp
 	MCFLAGS		:= -march=rv64imafdc -mabi=lp64d -mcmodel=medany
-	ENV_AFLAGS	+= -ffunction-sections -fdata-sections -ffreestanding -std=gnu99 
+	ENV_AFLAGS	:= -ffunction-sections -fdata-sections -ffreestanding -std=gnu99 
 	CFLAGS		+= -fno-omit-frame-pointer
 	CFLAGS		+= -O0 -g -ggdb
 	CFLAGS 		+= -MD

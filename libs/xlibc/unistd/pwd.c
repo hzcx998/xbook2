@@ -2,11 +2,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sconf.h>
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <errno.h>
+
+// #define _HAVE_SCONF_lIB
+
+#ifdef _HAVE_SCONF_lIB
+#include <sconf.h>
+#endif
 
 #define __PWD_PATH	"/etc/passwd"
 
@@ -86,6 +91,7 @@ static void __pw_line(char *line)
 {
     if (!line)
         return;
+    #ifdef _HAVE_SCONF_lIB
     char old_separator = sconf_get_separator();
     sconf_set_separator(__PWD_SEPARATOR);
     char buf[__PWD_BUF_LEN] = {0};
@@ -120,6 +126,7 @@ static void __pw_line(char *line)
 
     /* restore old separator */
     sconf_set_separator(old_separator);
+    #endif
 }
 
 int getpw(uid_t uid, char *buf)
@@ -139,11 +146,14 @@ int getpw(uid_t uid, char *buf)
 
 struct passwd *getpwent(void)
 {
-    if (!pwd_ptr)
+    if (!pwd_ptr) {
         return NULL;
+    }
 	/* 读取并放到结构体中，返回结构体内容 */
 	char pw_line[256] = {0};
+    #ifdef _HAVE_SCONF_lIB
     pwd_ptr = sconf_readline(pwd_ptr, pw_line, 256);
+    #endif
     if (pwd_ptr == NULL)
         return NULL;
     __pw_line(pw_line);

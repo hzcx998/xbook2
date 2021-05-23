@@ -9,14 +9,20 @@
 #include <sys/syscall.h>
 #include <sys/stat.h>
 
+// #define _HAVE_BUILD_PATH
+
 int open(const char *path, int flags, ...)
 {
     /* arg3:... unused */
     if (path == NULL)
         return -1;
+    #ifdef _HAVE_BUILD_PATH
     char full_path[MAX_PATH] = {0};
     build_path(path, full_path);
     const char *p = (const char *) full_path;
+    #else
+    const char *p = (const char *) path;
+    #endif
     int retval = syscall2(int, SYS_OPEN, p, flags);
     if (retval < 0) {
         _set_errno(-retval);
@@ -77,9 +83,13 @@ int access(const char *filenpath, int mode)
 {
     if (filenpath == NULL)
         return -1;
+    #ifdef _HAVE_BUILD_PATH
     char full_path[MAX_PATH] = {0};
     build_path(filenpath, full_path);
     const char *p = (const char *) full_path;
+    #else
+    const char *p = (const char *) filenpath;
+    #endif
     return syscall2(int, SYS_ACCESS, p, mode);
 }
 
@@ -87,9 +97,13 @@ int unlink(const char *path)
 {
     if (path == NULL)
         return -1;
+    #ifdef _HAVE_BUILD_PATH
     char full_path[MAX_PATH] = {0};
     build_path(path, full_path);
     const char *p = (const char *) full_path;
+    #else
+    const char *p = (const char *) path;
+    #endif
     return syscall1(int, SYS_UNLINK, p);
 }
 

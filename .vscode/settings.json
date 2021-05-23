@@ -205,6 +205,7 @@
         "memio.h": "c",
         "tests.h": "c",
         "elf32.h": "c",
-        "elf.h": "c"
+        "elf.h": "c",
+        "mutexqueue.h": "c"
     }
 }

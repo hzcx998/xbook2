@@ -290,8 +290,11 @@ int proc_load_image64_ext(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
             }
             /* 如果内存大小比文件大小大，就要清0 */
             if (prog_header.p_memsz > prog_header.p_filesz) {
+                #ifndef TASK_TINY
+                /* TODO: 在vmm页表中清0 */
                 memset((void *)(unsigned long)(prog_header.p_vaddr + prog_header.p_filesz), 0,
-                    prog_header.p_memsz - prog_header.p_filesz);    
+                    prog_header.p_memsz - prog_header.p_filesz);
+                #endif
             }
             prog_end = prog_header.p_vaddr + prog_header.p_memsz;
             

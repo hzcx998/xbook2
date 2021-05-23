@@ -118,6 +118,7 @@ enum syscall_num {
     SYSCALL_NR,
 };
 
+#if defined(__X86__)
 extern unsigned long __syscall0(unsigned long num);
 extern unsigned long __syscall1(unsigned long num, unsigned long arg0);
 extern unsigned long __syscall2(unsigned long num, unsigned long arg0,
@@ -126,6 +127,16 @@ extern unsigned long __syscall3(unsigned long num, unsigned long arg0,
         unsigned long arg1, unsigned long arg2);
 extern unsigned long __syscall4(unsigned long num, unsigned long arg0,
         unsigned long arg1, unsigned long arg2, unsigned long arg3);
+#elif defined(__RISCV64__)
+extern unsigned long __syscalln(unsigned long num, unsigned long arg0,
+        unsigned long arg1, unsigned long arg2, unsigned long arg3);
+#define __syscall0(num) __syscalln((num), 0, 0, 0, 0)
+#define __syscall1(num, arg0) __syscalln((num), (arg0), 0, 0, 0)
+#define __syscall2(num, arg0, arg1) __syscalln((num), (arg0), (arg1), 0, 0)
+#define __syscall3(num, arg0, arg1, arg2) __syscalln((num), (arg0), (arg1), (arg2), 0)
+#define __syscall4(num, arg0, arg1, arg2, arg3) __syscalln((num), (arg0), (arg1), (arg2), (arg3))
+#endif
+
 
 /* 进行宏定义 */
 #define syscall0(type, num) \

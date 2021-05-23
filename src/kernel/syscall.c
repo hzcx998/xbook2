@@ -41,11 +41,14 @@ void syscall_init()
         syscalls[i] = syscall_default;
     }
     syscalls[SYS_EXIT] = sys_exit;
+    #if 0
     syscalls[SYS_FORK] = sys_fork;
+    #endif
     syscalls[SYS_WAITPID] = sys_waitpid;
     syscalls[SYS_GETPID] = sys_get_pid;
     syscalls[SYS_GETPPID] = sys_get_ppid;
     syscalls[SYS_SLEEP] = sys_sleep;
+    #if 0
     syscalls[SYS_THREAD_CREATE] = sys_thread_create;
     syscalls[SYS_THREAD_EXIT] = sys_thread_exit;
     syscalls[SYS_THREAD_JOIN] = sys_thread_join;
@@ -55,11 +58,14 @@ void syscall_init()
     syscalls[SYS_THREAD_TESTCANCEL] = sys_thread_testcancel;
     syscalls[SYS_THREAD_CANCELSTATE] = sys_thread_setcancelstate;
     syscalls[SYS_THREAD_CANCELTYPE] = sys_thread_setcanceltype;
+    #endif
     syscalls[SYS_SCHED_YIELD] = sys_sched_yield;
+    #if 0
     syscalls[SYS_MUTEX_QUEUE_CREATE] = sys_mutex_queue_alloc;
     syscalls[SYS_MUTEX_QUEUE_DESTROY] = sys_mutex_queue_free;
     syscalls[SYS_MUTEX_QUEUE_WAIT] = sys_mutex_queue_wait;
     syscalls[SYS_MUTEX_QUEUE_WAKE] = sys_mutex_queue_wake;
+    #endif
     syscalls[SYS_HEAP] = sys_mem_space_expend_heap;
     syscalls[SYS_MUNMAP] = sys_munmap;
     syscalls[SYS_ALARM] = sys_alarm;
@@ -104,6 +110,7 @@ void syscall_init()
     syscalls[SYS_DUP] = sys_dup;
     syscalls[SYS_DUP2] = sys_dup2;
     syscalls[SYS_PIPE] = sys_pipe;
+    #if 0
     syscalls[SYS_SHMGET] = sys_shmem_get;
     syscalls[SYS_SHMPUT] = sys_shmem_put;
     syscalls[SYS_SHMMAP] = sys_shmem_map;
@@ -116,6 +123,7 @@ void syscall_init()
     syscalls[SYS_MSGPUT] = sys_msgque_put;
     syscalls[SYS_MSGSEND] = sys_msgque_send;
     syscalls[SYS_MSGRECV] = sys_msgque_recv;
+    #endif
     syscalls[SYS_PROBEDEV] = sys_probedev;
     syscalls[SYS_EXPSEND] = sys_expsend;
     syscalls[SYS_EXPCATCH] = sys_expcatch;
@@ -128,11 +136,13 @@ void syscall_init()
     syscalls[SYS_MMAP] = sys_mmap;
     syscalls[SYS_CREATPROCESS] = sys_create_process;
     syscalls[SYS_RESUMEPROCESS] = sys_resume_process;
+    #if 0
     syscalls[SYS_BIND_PORT] = sys_port_comm_bind;
     syscalls[SYS_UNBIND_PORT] = sys_port_comm_unbind;
     syscalls[SYS_RECEIVE_PORT] = sys_port_comm_receive;
     syscalls[SYS_REPLY_PORT] = sys_port_comm_reply;
     syscalls[SYS_REQUEST_PORT] = sys_port_comm_request;
+    #endif
     syscalls[SYS_SCANDEV] = sys_scandev;
     syscalls[SYS_FASTIO] = sys_fastio;
     syscalls[SYS_FASTREAD] = sys_fastread;
@@ -140,12 +150,16 @@ void syscall_init()
     syscalls[SYS_EXPMASK] = sys_expmask;
     syscalls[SYS_EXPHANDLER] = sys_exphandler;
     syscalls[SYS_SYSCONF] = sys_sysconf;
+    #if 0
     syscalls[SYS_TIMES] = sys_times;
+    #endif
     syscalls[SYS_GETHOSTNAME] = sys_gethostname;
     syscalls[SYS_GETPGID] = sys_get_pgid;
     syscalls[SYS_SETPGID] = sys_set_pgid;
     syscalls[SYS_MKFIFO] = sys_mkfifo;
+    #if 0
     syscalls[SYS_SOCKCALL] = sys_sockcall;
+    #endif
 }
 
 int syscall_check(uint32_t callno)
@@ -164,9 +178,30 @@ unsigned long syscall_dispatch(trap_frame_t *frame)
     /* 开始统计时间 */
     cur->syscall_ticks_delta = sys_get_ticks();
     // TODO: call different func in different arch
+    unsigned long retval;
+    #if 0
     syscall_func_t func = (syscall_func_t)syscalls[frame->eax];
-    unsigned long retval = func(frame->ebx, frame->ecx, frame->esi,
+    retval = func(frame->ebx, frame->ecx, frame->esi,
                             frame->edi, frame);
+    #else
+    /* 
+    a0: syscall number
+    a1: arg1
+    a2: arg2
+    a3: arg3
+    a4: arg4
+    a0-a1: retval
+    */
+    dbgprintln("[syscall] callnum: %ld", frame->a0);
+    dbgprintln("[syscall] arg1: %lx", frame->a1);
+    dbgprintln("[syscall] arg2: %lx", frame->a2);
+    dbgprintln("[syscall] arg3: %lx", frame->a3);
+    dbgprintln("[syscall] arg4: %lx", frame->a4);
+    syscall_func_t func = (syscall_func_t)syscalls[frame->a0];
+    retval = func(frame->a1, frame->a2, frame->a3,
+                            frame->a4, frame);
+    frame->a0 = retval;
+    #endif
     /* 结束统计时间 */
     cur->syscall_ticks_delta = sys_get_ticks() - cur->syscall_ticks_delta;
     cur->syscall_ticks += cur->syscall_ticks_delta;

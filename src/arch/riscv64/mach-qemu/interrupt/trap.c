@@ -4,6 +4,7 @@
 #include <arch/interrupt.h>
 #include <arch/riscv.h>
 #include <xbook/schedule.h>
+#include <xbook/syscall.h>
 
 // in kernel_trap_entry.S, calls do_kernel_trap().
 extern void kernel_trap_entry();
@@ -29,7 +30,7 @@ void do_kernel_trap(trap_frame_t *frame)
     //dbgprintln("trap frame addr:%p", frame);
     //trap_frame_dump(frame);
 
-    keprint("run in kerntrap\n");
+    //keprint("run in kerntrap\n");
 
     uint64_t sepc = r_sepc();
     uint64_t sstatus = r_sstatus();
@@ -71,6 +72,7 @@ usertrap(void)
   p->trapframe->epc = r_sepc();
   
   if(r_scause() == 8){
+    dbgprintln("syscall intr!");
     // system call
     // sepc points to the ecall instruction,
     // but we want to return to the next instruction.
@@ -80,10 +82,11 @@ usertrap(void)
     interrupt_enable();
     // TODO: call syscall
     // syscall();
+    syscall_dispatch(p->trapframe);
   } 
   else {
-    // interrupt_dispatch(frame);
-    panic("## not syscall trap!!");
+    interrupt_dispatch(p->trapframe);
+    // panic("## not syscall trap!!");
   }
 
   usertrapret();
@@ -100,7 +103,7 @@ usertrapret(void)
   // we're about to switch the destination of traps from
   // kerneltrap() to usertrap(), so turn off interrupts until
   // we're back in user space, where usertrap() is correct.
-  //interrupt_disable();
+  interrupt_disable();
   //interrupt_enable();
   keprint("intr enable %d\n", interrupt_enabled());
   // send syscalls, interrupts, and exceptions to trampoline.S
@@ -131,7 +134,7 @@ usertrapret(void)
     uint64_t satp = 0;
     if (p->vmm) {
         satp = MAKE_SATP((unsigned long)p->vmm->page_storage);
-        keprintln("usertrapret: have vmm %lx", satp);
+        //keprintln("usertrapret: have vmm %lx", satp);
     } else {
         panic("usertrapret: no vmm");
     }

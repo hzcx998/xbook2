@@ -10,8 +10,8 @@ LD			:=  $(ENV_LD)
 AS			:= $(ENV_AS)
 export AS LD
 
-#MODULE		:= xlibc
-MODULE		+= xcrt
+MODULE		:= xcrt
+MODULE		+= xlibc
 #MODULE		+= xlibcpp
 #MODULE		+= sconf
 #MODULE		+= pthread

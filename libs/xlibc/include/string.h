@@ -41,6 +41,7 @@ int strcoll(const char *str1, const char *str2);
 char * strdup(const char * s);
 int strcasecmp(const char * s1, const char * s2);
 
+#if defined(__X86__)
 /*
  * fls - find last (most-significant) bit set
  * Note fls(0) = 0, fls(1) = 1, fls(0x80000000) = 32.
@@ -49,7 +50,36 @@ static inline __attribute__((always_inline)) int fls(int x)
 {
 	return x ? sizeof(x) * 8 - __builtin_clz(x) : 0;
 }
+#else 
+static inline __attribute__((always_inline)) int fls(int x)
+{
+    int r = 32;
 
+    if (!x)
+        return 0;
+    if (!(x & 0xffff0000u)) {
+        x <<= 16;
+        r -= 16;
+    }
+    if (!(x & 0xff000000u)) {
+        x <<= 8;
+        r -= 8;
+    }
+    if (!(x & 0xf0000000u)) {
+        x <<= 4;
+        r -= 4;
+    }
+    if (!(x & 0xc0000000u)) {
+        x <<= 2;
+        r -= 2;
+    }
+    if (!(x & 0x80000000u)) {
+        x <<= 1;
+        r -= 1;
+    }
+    return r;
+}
+#endif
 
 #ifdef __cplusplus
 }

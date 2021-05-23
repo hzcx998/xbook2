@@ -243,5 +243,6 @@ static inline void task_exit_hook(task_t *task)
 void task_stack_build(task_t *task, task_func_t *function, void *arg);
 int task_stack_build_when_forking(task_t *child);
 
+unsigned long syscall_dispatch(trap_frame_t *frame);
 
 #endif   /* _XBOOK_TASK_H */

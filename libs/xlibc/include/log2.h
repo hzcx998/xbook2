@@ -7,6 +7,7 @@ extern "C" {
 
 #include <types.h>
 #include <string.h>
+#include <math.h>
 
 static inline __attribute__((always_inline)) int fls64(u64_t x)
 {

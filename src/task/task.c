@@ -205,7 +205,7 @@ void task_activate_when_sched(task_t *task)
     spin_lock(&task->lock);
     task->state = TASK_RUNNING;
     spin_unlock(&task->lock);
-    dbgprint("[task] name=%s pid=%d active vmm\n", task->name, task->pid);
+    //dbgprint("[task] name=%s pid=%d active vmm\n", task->name, task->pid);
     vmm_active(task->vmm);
 }
 
