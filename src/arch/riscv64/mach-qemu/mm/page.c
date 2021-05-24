@@ -164,7 +164,7 @@ vmunmap(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free)
 
   for(a = va; a < va + npages*PAGE_SIZE; a += PAGE_SIZE){
     if((pte = walk(pgdir, a, 0)) == 0)
-      panic("vmunmap: walk");
+      panic("vmunmap: walk %p", a);
     if((*pte & PAGE_ATTR_PRESENT) == 0)
       panic("vmunmap: not mapped");
     if(PTE_FLAGS(*pte) == PAGE_ATTR_PRESENT)

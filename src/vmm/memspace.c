@@ -272,7 +272,7 @@ static unsigned long do_mem_space_expend_heap(vmm_t *vmm, unsigned long addr, un
     space = mem_space_alloc();
     if (space == NULL)
         return -1;
-    mem_space_init(space, addr, addr + len, PROT_USER | PROT_WRITE | PROT_EXEC, flags);
+    mem_space_init(space, addr, addr + len, PROT_USER | PROT_READ | PROT_WRITE | PROT_EXEC, flags);
     mem_space_insert(vmm, space);
 the_end:
     return addr;

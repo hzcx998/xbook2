@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdlib.h>
+#include <sys/wait.h>
 
 void t()
 {
@@ -46,13 +48,30 @@ int main()
     int tty2 = dup(tty1);
     //printf("[INIT]: start.\n");
     char *str = "[INIT]: start.\n";
-    // write(tty1, str, strlen(str));
+    write(tty1, str, strlen(str));
+    
+    /*====内存测试===*/
+    char *ma = malloc(32);
+    char *mb = malloc(128);
+    char *mc = malloc(4096);
+    
+
     // printf("hello, world!\n");
     pid_t pid = fork();
     if (pid > 0) {
         write(tty1, "I am parent\n", 12);
+        int state;
+        waitpid(pid, &state, 0);
+        write(tty1, "Wait done\n", 9);
+        while (1)
+        {
+            /* code */
+        }
     } else {
-        write(tty1, "I am child\n", 11);    
+        write(tty1, "I am child\n", 11);
+        sleep(3);
+        write(tty1, "sleep done\n", 11);
+        _exit(0);
     }
     pid = fork();
     if (pid > 0) {

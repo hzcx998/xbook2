@@ -3,7 +3,7 @@
 
 #include <k210_rtc.h>
 
-#define HZ                (100)
+#define HZ                (20)
 
 void timer_interrupt_set_next_timeout();
 void clock_handler2(int irqno, void *data);

@@ -18,3 +18,4 @@ spinning in assertion failure()
 1. unmount环回设备时不能正常close loop设备，因为fatfs文件模块没有对设备进行close操作的支持。
 ## <2021.5.25>
 1. 当进行多次fork的时候，会出BUG
+2. 当提高时钟切换频率时，fork时会出现BUG
