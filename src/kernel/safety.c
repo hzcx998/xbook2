@@ -27,8 +27,10 @@ int mem_copy_from_user(void *dest, void *src, unsigned long nbytes)
         return -1;
     if (!page_readable((unsigned long) src, nbytes))
         return -1;
-    if (dest && src)
-        memcpy(dest, src, nbytes);
+    if (dest && src) {
+        if (do_copy_from_user(dest, src, nbytes) < 0)
+            return -1;
+    }
     return 0;
 }
 
@@ -38,7 +40,9 @@ int mem_copy_to_user(void *dest, void *src, unsigned long nbytes)
         return -1;
     if (!page_writable((unsigned long) dest, nbytes))
         return -1;  
-    if (dest && src)
-        memcpy(dest, src, nbytes);
+    if (dest && src) {
+        if (do_copy_to_user(dest, src, nbytes) < 0)
+            return -1;
+    }
     return 0;
 }

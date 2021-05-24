@@ -13,6 +13,7 @@
 #include <xbook/fifo.h>
 #include <xbook/initcall.h>
 #include <xbook/fs.h>
+#include <xbook/syscall.h>
 
 int kernel_main(void)
 {
@@ -25,6 +26,7 @@ int kernel_main(void)
 
     schedule_init();
     tasks_init();
+    syscall_init();
     walltime_init();
     clock_init();
     timers_init();

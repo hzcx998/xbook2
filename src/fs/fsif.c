@@ -29,17 +29,18 @@ int sys_open(const char *path, int flags)
     if (!path)
         return -EINVAL; 
     #ifdef FSIF_USER_CHECK
-    if (mem_copy_from_user(NULL, (void *)path, MAX_PATH) < 0)
+    char _path[MAX_PATH] = {0};
+    if (mem_copy_from_user(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
     #endif
     if (!fsif.open)
         return -ENOSYS;
+    char abs_path[MAX_PATH] = {0};
+    build_path(_path, abs_path);
     
-    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE)) {
+    if (!account_selfcheck_permission((char *)abs_path, PERMISION_ATTR_FILE)) {
         return -EPERM;
     }
-    char abs_path[MAX_PATH] = {0};
-    build_path(path, abs_path);
     int handle = fsif.open((void *)abs_path, flags);
     if (handle < 0)
         return -ENOFILE;

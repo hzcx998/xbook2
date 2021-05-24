@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <math.h>
 #include <k210_qemu_phymem.h>
+#include <xbook/task.h>
+#include <xbook/schedule.h>
 
 int page_map_addr_fixed2(pgdir_t pgdir, unsigned long start, unsigned long addr, 
     unsigned long len, unsigned long prot)
@@ -218,4 +220,28 @@ copyin(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len)
     srcva = va0 + PAGE_SIZE;
   }
   return 0;
+}
+
+int do_copy_from_user(void *dest, void *src, unsigned long nbytes)
+{
+    task_t *cur = task_current;
+    if (dest && src) {
+        if (copyin(cur->vmm->page_storage, dest, src, nbytes) < 0) {
+            errprintln("[page] do_copy_from_user: dest=%p src=%p nbytes=%d failed!", dest, src, nbytes);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int do_copy_to_user(void *dest, void *src, unsigned long nbytes)
+{
+    task_t *cur = task_current;
+    if (dest && src) {
+        if (copyout(cur->vmm->page_storage, dest, src, nbytes) < 0) {
+            errprintln("[page] do_copy_to_user: dest=%p src=%p nbytes=%d failed!", dest, src, nbytes);
+            return -1;
+        }
+    }
+    return 0;
 }

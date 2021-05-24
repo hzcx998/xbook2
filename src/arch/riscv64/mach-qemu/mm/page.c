@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <math.h>
 #include <k210_qemu_phymem.h>
+#include <xbook/task.h>
+#include <xbook/schedule.h>
 
 /* 内核页目录表 */
 pgdir_t kernel_pgdir;
@@ -60,9 +62,9 @@ void page_init()
 
     uint64_t pa = addr_vir2phy(KERN_MEM_ADDR);
     dbgprint("addr_vir2phy: va=%x pa=%x\n", KERN_MEM_ADDR, pa);
-    dbgprint("page_readable: va=%x %d\n", KERN_MEM_ADDR, page_readable(KERN_MEM_ADDR, PAGE_SIZE));
-    dbgprint("page_writable: va=%x %d\n", KERN_MEM_ADDR, page_writable(KERN_MEM_ADDR, PAGE_SIZE));
-    dbgprint("page_writable: va=%x %d\n", etext, page_writable((uint64_t)etext, PAGE_SIZE));
+    //dbgprint("page_readable: va=%x %d\n", KERN_MEM_ADDR, page_readable(KERN_MEM_ADDR, PAGE_SIZE));
+    //dbgprint("page_writable: va=%x %d\n", KERN_MEM_ADDR, page_writable(KERN_MEM_ADDR, PAGE_SIZE));
+    //dbgprint("page_writable: va=%x %d\n", etext, page_writable((uint64_t)etext, PAGE_SIZE));
 
     vmprint(kernel_pgdir, 1);
 
@@ -257,7 +259,8 @@ bool page_readable(unsigned long vaddr, unsigned long nbytes)
 {
     unsigned long addr = vaddr & PAGE_MASK;
     unsigned long count = PAGE_ALIGN(nbytes);
-    pgdir_t pgdir = GET_CUR_PGDIR();
+    task_t *cur = task_current;
+    pgdir_t pgdir = cur->vmm->page_storage;
     while (count > 0) {
         pte_t *pte = walk(pgdir, vaddr, 0);
         if (!(*pte & PAGE_ATTR_PRESENT) || !(*pte & PAGE_ATTR_READ)) {
@@ -273,7 +276,8 @@ bool page_writable(unsigned long vaddr, unsigned long nbytes)
 {
     unsigned long addr = vaddr & PAGE_MASK;
     unsigned long count = PAGE_ALIGN(nbytes);
-    pgdir_t pgdir = GET_CUR_PGDIR();
+    task_t *cur = task_current;
+    pgdir_t pgdir = cur->vmm->page_storage;
     while (count > 0) {
         pte_t *pte = walk(pgdir, vaddr, 0);
         if (!(*pte & PAGE_ATTR_PRESENT) || !(*pte & PAGE_ATTR_WRITE)) {

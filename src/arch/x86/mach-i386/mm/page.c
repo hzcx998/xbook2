@@ -581,3 +581,17 @@ int page_do_fault(trap_frame_t *frame)
     do_handle_no_page(addr, space->page_prot);
     return 0;
 }
+
+int do_copy_from_user(void *dest, void *src, unsigned long nbytes)
+{
+    if (dest && src)
+        memcpy(dest, src, nbytes);
+    return 0;
+}
+
+int do_copy_to_user(void *dest, void *src, unsigned long nbytes)
+{
+    if (dest && src)
+        memcpy(dest, src, nbytes);
+    return 0;
+}
