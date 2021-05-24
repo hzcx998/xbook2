@@ -18,12 +18,13 @@
 #define DEV_NAME "tty"
 
 /* 键盘设备名 */
-#define KBD_DEVICE_NAME "kbd"
+//#define KBD_DEVICE_NAME "kbd"
+#define KBD_DEVICE_NAME "con0"
 /* 控制台设备名 */
 #define CON_DEVICE_NAME "con"
 
 /* 一个8个tty设备数 */
-#define TTY_DEVICE_NR       8
+#define TTY_DEVICE_NR       1
 
 #define TTY_DEVICE_RAW      7
 

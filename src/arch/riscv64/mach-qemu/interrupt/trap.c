@@ -57,7 +57,7 @@ void do_kernel_trap(trap_frame_t *frame)
 void
 usertrap(void)
 {
-  keprint("run in usertrap\n");
+  //keprint("run in usertrap\n");
 
   if((r_sstatus() & SSTATUS_SPP) != 0)
     panic("usertrap: not from user mode");
@@ -105,7 +105,7 @@ usertrapret(void)
   // we're back in user space, where usertrap() is correct.
   interrupt_disable();
   //interrupt_enable();
-  keprint("intr enable %d\n", interrupt_enabled());
+  //keprint("intr enable %d\n", interrupt_enabled());
   // send syscalls, interrupts, and exceptions to trampoline.S
   w_stvec(TRAMPOLINE + (uservec - trampoline));
 

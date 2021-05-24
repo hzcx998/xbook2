@@ -90,6 +90,7 @@ KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 KERNEL_BIN 	= $(KERNSRC)/kernel
 
 DUMP_FILE	?= $(KERNEL_ELF)
+DUMP_FLAG	?= 
 
 # 参数
 .PHONY: all kernel build debuild qemu qemudbg user user_clean dump
@@ -196,10 +197,10 @@ user_clean:
 dump:
 ifeq ($(ENV_ARCH),x86)
 ifeq ($(ENV_MACH),mach-i386)
-	$(OBJDUMP) -M intel -D $(DUMP_FILE) > $(DUMP_FILE).dump
+	$(OBJDUMP) -M intel -D $(DUMP_FLAG) $(DUMP_FILE) > $(DUMP_FILE).dump
 endif # ($(ENV_MACH),mach-i386)
 else ifeq ($(ENV_ARCH),riscv64)
-	$(OBJDUMP) -D $(DUMP_FILE) > $(DUMP_FILE).dump
+	$(OBJDUMP) -D $(DUMP_FLAG) $(DUMP_FILE) > $(DUMP_FILE).dump
 endif # ($(ENV_ARCH),x86)
 #-hda $(HDA_IMG) -hdb $(HDB_IMG)
 # 网卡配置: 

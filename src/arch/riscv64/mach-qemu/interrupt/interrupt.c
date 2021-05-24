@@ -30,11 +30,13 @@ static void interrupt_general_handler(trap_frame_t *frame)
     if (scause & SCAUSE_INTERRUPT) {
         dbgprintln("[interrupt] external interrupt %d occur!", scause);
     } else {    /* 来自异常 */
-        if((r_sstatus() & SSTATUS_SPP) != 0) {  // from kernel
-            dbgprintln("[exception] exception %d from kernel!", scause & 0xff);
+        int expcode = scause & 0xff;
+        keprint("[exception] name: %s \n", interrupt_names[expcode]);
+        if((scause & SSTATUS_SPP) != 0) {  // from kernel
+            dbgprintln("[exception] exception %d from kernel!", expcode);
             panic("exception in kernel :(");
         } else {    // from user
-            dbgprintln("[exception] exception %d from user!", scause & 0xff);
+            dbgprintln("[exception] exception %d from user!", expcode);
         }
     }
 }
@@ -46,6 +48,20 @@ void interrupt_expection_init(void)
       	interrupt_handlers[i] = interrupt_general_handler;		    
       	interrupt_names[i] = "unknown";    
    	}
+    interrupt_names[0] = "Instruction address misaligned";
+    interrupt_names[1] = "Instruction address fault";
+    interrupt_names[2] = "Illegal instruction";
+    interrupt_names[3] = "Breakpoint";
+    interrupt_names[4] = "Load address misaligned";
+    interrupt_names[5] = "Load address fault";
+    interrupt_names[6] = "Store address misaligned";
+    interrupt_names[7] = "Store address fault";
+    interrupt_names[8] = "Environment call from U-mode";
+    interrupt_names[9] = "Environment call from S-mode";
+    interrupt_names[11] = "Environment call from M-mode";
+    interrupt_names[12] = "Instruction page fault";
+    interrupt_names[13] = "Load page fault";
+    interrupt_names[15] = "Store page fault";
 }
 
 int irq_register_handler(int irq, interrupt_handler_t function) 

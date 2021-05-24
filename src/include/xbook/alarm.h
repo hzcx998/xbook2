@@ -3,7 +3,7 @@
 
 /* 闹钟结构 */
 typedef struct alarm_struct {
-    char flags;              /* 有效标志 */
+    int flags;              /* 有效标志 */
     unsigned long ticks;    /* ticks计数 */
     unsigned long second;   /* 秒数 */
 } alarm_t;

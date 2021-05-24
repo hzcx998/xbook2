@@ -23,14 +23,20 @@ void alarm_update_ticks()
     unsigned long flags;
     interrupt_save_and_disable(flags);
     list_for_each_owner (task, &task_global_list, global_list) {
-        if (task->alarm.flags) {
-            task->alarm.ticks--;
-            if (!task->alarm.ticks) {
-                task->alarm.second--;
-                task->alarm.ticks = HZ;
-                if (!task->alarm.second) {
-                    exception_send(task->pid, EXP_CODE_ALRM);
-                    task->alarm.flags = 0;
+        if (task->state != TASK_STOPPED && task->state != TASK_HANGING && task->state != TASK_ZOMBIE) {
+            if (task->alarm.flags > 0) {
+                task->alarm.ticks--;
+                if (!task->alarm.ticks) {
+                    task->alarm.second--;
+                    task->alarm.ticks = HZ;
+                    if (!task->alarm.second) {
+                        #if 0
+                        exception_send(task->pid, EXP_CODE_ALRM);
+                        #else
+                        keprintln("[alarm] exception send");
+                        #endif
+                        task->alarm.flags = 0;
+                    }
                 }
             }
         }

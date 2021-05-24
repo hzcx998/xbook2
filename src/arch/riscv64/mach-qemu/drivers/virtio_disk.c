@@ -503,10 +503,10 @@ static int virtio_disk_init(device_extension_t *extension)
     extension->used = (struct virtq_used *) (extension->pages + PAGE_SIZE);
 
     // all NUM descriptors start out unused.
-    for(int i = 0; i < NUM; i++)
+    int i;
+    for(i = 0; i < NUM; i++)
         extension->free[i] = 1;
 
-    #if 1
     // Register interrupt
     if (irq_register(VIRTIO0_IRQ, virtio_disk_intr, IRQF_DISABLED,
         "virtio0", DEV_NAME, extension) < 0) 
@@ -515,7 +515,6 @@ static int virtio_disk_init(device_extension_t *extension)
         page_free((unsigned long)extension->pages);
         return -1; 
     }
-    #endif
     dbgprintln(DRV_PREFIX"disk init done.");
     return 0;
 }

@@ -178,7 +178,7 @@ final:
 int
 copyout(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len)
 {
-  uint64_t n, va0, pa0;
+  uint64_t n, va0, *pa0;
 
   while(len > 0){
     va0 = PAGE_ROUNDDOWN(dstva);
@@ -188,7 +188,7 @@ copyout(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len)
     n = PAGE_SIZE - (dstva - va0);
     if(n > len)
       n = len;
-    memmove((void *)(pa0 + (dstva - va0)), src, n);
+    memmove((void *)((uint64_t)pa0 + (dstva - va0)), src, n);
 
     len -= n;
     src += n;
@@ -203,7 +203,7 @@ copyout(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len)
 int
 copyin(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len)
 {
-  uint64_t n, va0, pa0;
+  uint64_t n, va0, *pa0;
 
   while(len > 0){
     va0 = PAGE_ROUNDDOWN(srcva);
@@ -213,7 +213,7 @@ copyin(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len)
     n = PAGE_SIZE - (srcva - va0);
     if(n > len)
       n = len;
-    memmove(dst, (void *)(pa0 + (srcva - va0)), n);
+    memmove(dst, (void *)((uint64_t)pa0 + (srcva - va0)), n);
 
     len -= n;
     dst += n;
@@ -226,7 +226,7 @@ int do_copy_from_user(void *dest, void *src, unsigned long nbytes)
 {
     task_t *cur = task_current;
     if (dest && src) {
-        if (copyin(cur->vmm->page_storage, dest, src, nbytes) < 0) {
+        if (copyin(cur->vmm->page_storage, dest, (uint64_t)src, nbytes) < 0) {
             errprintln("[page] do_copy_from_user: dest=%p src=%p nbytes=%d failed!", dest, src, nbytes);
             return -1;
         }
@@ -238,7 +238,7 @@ int do_copy_to_user(void *dest, void *src, unsigned long nbytes)
 {
     task_t *cur = task_current;
     if (dest && src) {
-        if (copyout(cur->vmm->page_storage, dest, src, nbytes) < 0) {
+        if (copyout(cur->vmm->page_storage, (uint64_t)dest, src, nbytes) < 0) {
             errprintln("[page] do_copy_to_user: dest=%p src=%p nbytes=%d failed!", dest, src, nbytes);
             return -1;
         }
