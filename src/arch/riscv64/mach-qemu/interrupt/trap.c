@@ -11,8 +11,6 @@ extern void kernel_trap_entry();
 
 extern char trampoline[], uservec[], userret[];
 
-void usertrapret(void);
-
 // set up to take exceptions and traps while in the kernel.
 void trap_init(void)
 {
@@ -72,7 +70,7 @@ usertrap(void)
   p->trapframe->epc = r_sepc();
   
   if(r_scause() == 8){
-    dbgprintln("syscall intr!");
+    //dbgprintln("[trap] syscall intr in task %d", p->pid);
     // system call
     // sepc points to the ecall instruction,
     // but we want to return to the next instruction.
@@ -143,5 +141,14 @@ usertrapret(void)
   // switches to the user page table, restores user registers,
   // and switches to user mode with sret.
   uint64_t fn = TRAMPOLINE + (userret - trampoline);
-  ((void (*)(uint64_t,uint64_t))fn)(TRAPFRAME, satp);
+  ((void (*)(trap_frame_t *,uint64_t))fn)(p->trapframe, satp);
+}
+
+void forkret()
+{
+  
+  task_t *cur = task_current;
+  keprintln("[fork] task %s pid=%d ppid=%d return to user", cur->name, cur->pid, cur->parent_pid);
+  //trap_frame_dump(cur->trapframe);
+  usertrapret();
 }

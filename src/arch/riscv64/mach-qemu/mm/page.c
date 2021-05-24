@@ -14,6 +14,7 @@
 pgdir_t kernel_pgdir;
 
 extern char etext[];  // kernel.ld sets this to end of kernel code.
+extern char trampoline[];
 
 // Switch h/w page table register to the kernel's page table,
 // and enable paging.
@@ -56,6 +57,9 @@ void page_init()
     kvmmap(KERN_MEM_ADDR, KERN_MEM_ADDR, (uint64_t)etext - KERN_MEM_ADDR, PAGE_ATTR_READ | PAGE_ATTR_EXEC);
     // map kernel data and the physical RAM we'll make use of.
     kvmmap((uint64_t)etext, (uint64_t)etext, PHYSIC_MEM_TOP - (uint64_t)etext, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+
+    // 映射trampoline代码到内核高端地址，被每个进程共享
+    kvmmap(TRAMPOLINE, (uint64_t)trampoline, PAGE_SIZE, PAGE_ATTR_READ | PAGE_ATTR_EXEC);
 
     /* 打开分页 */
     page_enable();
@@ -126,11 +130,11 @@ mappages(pgdir_t pgdir, uint64_t va, uint64_t size, uint64_t pa, int perm)
   uint64_t a, last;
   pte_t *pte;
 
-  dbgprint("mappages: [start=%lx end=%lx)\n", va, va + size);
+  //dbgprint("mappages: [start=%lx end=%lx) perm=%x\n", va, va + size, perm);
   
   a = PAGE_ROUNDDOWN(va);
   last = PAGE_ROUNDDOWN(va + size - 1);
-  dbgprint("mappages: [start=%lx end=%lx]\n", a, last);
+  //dbgprint("mappages: [start=%lx end=%lx]\n", a, last);
   for(;;){
     if((pte = walk(pgdir, a, 1)) == NULL)
       return -1;
@@ -458,7 +462,7 @@ unsigned long *kern_page_dir_copy_to()
     unsigned long flags;
     interrupt_save_and_disable(flags);
     unsigned long page = page_alloc_normal(1);
-    unsigned int *vaddr = (unsigned int *)kern_phy_addr2vir_addr(page);
+    unsigned long *vaddr = (unsigned long *)kern_phy_addr2vir_addr(page);
     
     memset(vaddr, 0, PAGE_SIZE);
     memcpy((void *)vaddr, (void *)kernel_pgdir, PAGE_SIZE);

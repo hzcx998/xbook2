@@ -31,8 +31,8 @@ void user_frame_init(trap_frame_t *frame);
 void user_thread_frame_build(trap_frame_t *frame, void *arg, void *func,
     void *thread_entry, void *stack_top);
 
-void task_stack_build(task_t *task, task_func_t *function, void *arg);
-int task_stack_build_when_forking(task_t *child);
+// void task_stack_build(task_t *task, task_func_t *function, void *arg);
+// int task_stack_build_when_forking(task_t *child);
 
 int process_frame_init(task_t *task, trap_frame_t *frame, char **argv, char **envp);
 

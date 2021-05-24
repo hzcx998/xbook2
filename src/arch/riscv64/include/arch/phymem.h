@@ -3,7 +3,7 @@
 
 #include <k210_qemu_phymem.h>
 
-#define KERN_SPACE_TOP_ADDR                MAX_VIR_ADDR 
+#define KERN_SPACE_TOP_ADDR                VIRT_OFFSET
 #define USER_SPACE_START_ADDR              0x00000000
 #define USER_SPACE_SIZE                    0x80000000
 

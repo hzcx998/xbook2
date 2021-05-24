@@ -43,7 +43,6 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
         MEM_SPACE_MAP_FIXED | MEM_SPACE_MAP_STACK) == ((void *)-1)) {
         return -1;
     }
-    // memset((void *) vmm->stack_start, 0, vmm->stack_end - vmm->stack_start);
     
     int argc = 0;
     char **new_envp = NULL;
@@ -73,26 +72,7 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
     frame->a1 = (uint64_t) new_argv;
     frame->a2 = (uint64_t) new_envp;
     frame->sp = (uint64_t) arg_bottom;
-    
-    /* 映射trapline和trapframe到一个固定的虚拟地址 */
-    if (page_map_addr_fixed2(vmm->page_storage, TRAMPOLINE, kern_vir_addr2phy_addr(trampoline), PAGE_SIZE , PROT_EXEC | PROT_READ) < 0) {
-        mem_space_unmmap2(vmm, vmm->stack_start, vmm->stack_end - vmm->stack_start);
-        return -1;
-    }
-
-    char buf[32] = {0};
-    copyout(vmm->page_storage, TRAMPOLINE, buf, 32);
-    keprint("trapframe=%lx\n", task->trapframe);
-    if (page_map_addr_fixed2(vmm->page_storage, TRAPFRAME, kern_vir_addr2phy_addr(task->trapframe), PAGE_SIZE , PROT_READ | PROT_WRITE) < 0) {
-        page_unmap_addr_safe2(vmm->page_storage, TRAMPOLINE, PAGE_SIZE, 1);
-        mem_space_unmmap2(vmm, vmm->stack_start, vmm->stack_end - vmm->stack_start);
-        return -1;
-    }
-    copyout(vmm->page_storage, TRAPFRAME, buf, 32);
-
     #endif
-    keprint("TRAMPOLINE=%lx TRAPFRAME=%lx\n", TRAMPOLINE, TRAPFRAME);
-
     return 0;
 }
 
@@ -105,4 +85,15 @@ void kernel_switch_to_user(trap_frame_t *frame)
 void user_frame_init(trap_frame_t *frame)
 {
     memset(frame, 0, sizeof(trap_frame_t));
+}
+extern pgdir_t kernel_pgdir;
+int task_stack_build_when_forking(task_t *child)
+{
+    trap_frame_t *frame = child->trapframe;
+    /* 设置a0为0，就相当于设置了子任务的返回值为0 */
+    frame->a0 = 0;
+    memset(&child->context, 0, sizeof(child->context));
+    child->context.ra = (uint64_t)forkret;      // 子进程第一次获得执行权时会跳转到该处
+    child->context.sp = (uint64_t)(child->kstack + PAGE_SIZE); 
+    return 0;
 }

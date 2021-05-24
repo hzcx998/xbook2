@@ -82,5 +82,6 @@ static inline int interrupt_enabled()
 // arch local 
 void usertrap(void);
 void usertrapret(void);
+void forkret();
 
 #endif  /* _RISCV64_INTERRUPT_H */

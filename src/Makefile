@@ -39,6 +39,7 @@ SRC			+= task/waitqueue.c
 SRC			+= task/sleep.c
 SRC			+= task/wait.c
 SRC			+= task/exec.c
+SRC			+= task/fork.c
 
 SRC			+= kernel/driver.c
 SRC			+= fs/

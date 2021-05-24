@@ -22,6 +22,15 @@ static pid_t task_fork_pid()
 static int copy_struct_and_kstack(task_t *child, task_t *parent)
 {
     memcpy(child, parent, TASK_KERN_STACK_SIZE);
+    #ifndef TASK_TRAPFRAME_ON_KSTACK
+    child->trapframe = mem_alloc(PAGE_SIZE);
+    if (child->trapframe == NULL) {
+        errprintln("[fork] copy_struct_and_kstack: malloc trapframe failed!");
+        return -1;
+    }
+    *(child->trapframe) = *(parent->trapframe); /* copy trapframe */
+    #endif
+
     child->pid = task_fork_pid();
     child->tgid = child->pid;
     child->state = TASK_READY;
@@ -29,8 +38,14 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     child->pgid = parent->pgid;     /* 和父进程在同一个组 */
     list_init(&child->list);
     list_init(&child->global_list);
+    #ifndef TASK_TRAPFRAME_ON_KSTACK
     child->kstack = (unsigned char *)((unsigned char *)child + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
+    #else
+    child->kstack = (unsigned char *)((unsigned char *)child + TASK_KERN_STACK_SIZE);
+    #endif
+    #ifndef TASK_TINY 
     child->port_comm = NULL;
+    #endif
     return 0;
 }
 
@@ -76,11 +91,13 @@ static int copy_file(task_t *child, task_t *parent)
 
 static int copy_pthread_desc(task_t *child, task_t *parent)
 {
+    #ifndef TASK_TINY 
     if (parent->pthread != NULL) { 
         /* 由于复制后，只有一个线程，所以这里就直接初始化一个新的，而不是复制 */
         if (proc_pthread_init(child))
             return -1;
     }
+    #endif
     return 0;
 }
 
@@ -119,6 +136,7 @@ rollback_failed:
 int sys_fork()
 {
     task_t *parent = task_current;
+    dbgprintln("[fork] task %s pid=%d forking...", parent->name, parent->pid);
     unsigned long flags;
     interrupt_save_and_disable(flags);
     task_t *child = mem_alloc(TASK_KERN_STACK_SIZE);
@@ -136,5 +154,8 @@ int sys_fork()
     task_add_to_global_list(child);
     sched_queue_add_tail(sched_get_cur_unit(), child);
     interrupt_restore_state(flags);
+    // trap_frame_dump(parent->trapframe);
+    dbgprintln("[fork] parent %s pid=%d forked child %s pid=%d", parent->name, parent->pid, child->name, child->pid);
+    
     return child->pid;  /* 父进程返回子进程pid */
 }

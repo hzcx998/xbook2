@@ -46,8 +46,20 @@ int main()
     int tty2 = dup(tty1);
     //printf("[INIT]: start.\n");
     char *str = "[INIT]: start.\n";
-    write(tty1, str, strlen(str));
-    
+    // write(tty1, str, strlen(str));
+    // printf("hello, world!\n");
+    pid_t pid = fork();
+    if (pid > 0) {
+        write(tty1, "I am parent\n", 12);
+    } else {
+        write(tty1, "I am child\n", 11);    
+    }
+    pid = fork();
+    if (pid > 0) {
+        write(tty1, "I am parent\n", 12);    
+    } else {
+        write(tty1, "I am child\n", 11);    
+    }
     #endif
     while (1)
     {

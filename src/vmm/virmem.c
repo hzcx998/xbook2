@@ -71,7 +71,7 @@ static void *vir_mem_do_alloc(size_t size)
 	unsigned long flags;
     interrupt_save_and_disable(flags);
 	list_add_tail(&area->list, &using_vir_mem_list);
-	if (page_map_addr(start, size, PROT_KERN | PROT_WRITE)) {
+	if (page_map_addr(start, size, PROT_KERN | PROT_WRITE | PROT_READ)) {
 		vir_addr_free(start, size);
 		mem_free(area);
 		interrupt_restore_state(flags);

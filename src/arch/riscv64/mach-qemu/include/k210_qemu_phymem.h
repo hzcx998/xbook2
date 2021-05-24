@@ -16,17 +16,14 @@
 #define PHYSIC_MEM_SIZE                 0x600000    // 6MB
 #define PHYSIC_MEM_TOP                  (RUSTSBI_MEM_ADDR + PHYSIC_MEM_SIZE)
 
-/* 虚拟地址偏移 */
+/* 内核虚拟地址偏移，内核的所有 */
 #define VIRT_OFFSET             0x3F00000000L
-
 
 // one beyond the highest possible virtual address.
 // MAXVA is actually one bit less than the max allowed by
 // Sv39, to avoid having to sign-extend virtual addresses
 // that have the high bit set.
 #define MAX_VIR_ADDR (1L << (9 + 9 + 9 + 12 - 1))
-
-#define VIRT_OFFSET             0x3F00000000L
 
 // map the trampoline page to the highest address,
 // in both user and kernel space.

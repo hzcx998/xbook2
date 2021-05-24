@@ -5,6 +5,7 @@
 #include <xbook/clock.h>
 #include <xbook/softirq.h>
 #include <xbook/exception.h>
+#include <xbook/schedule.h>
 #include <stddef.h>
 
 extern int interrupt_do_irq(trap_frame_t *frame);
@@ -31,12 +32,18 @@ static void interrupt_general_handler(trap_frame_t *frame)
         dbgprintln("[interrupt] external interrupt %d occur!", scause);
     } else {    /* 来自异常 */
         int expcode = scause & 0xff;
+        if (task_init_done) {
+            task_t *cur = task_current;
+            keprint("[exception] task name:%s, pid:%d\n", cur->name, cur->pid);
+        }
         keprint("[exception] name: %s \n", interrupt_names[expcode]);
+        trap_frame_dump(frame);
         if((scause & SSTATUS_SPP) != 0) {  // from kernel
             dbgprintln("[exception] exception %d from kernel!", expcode);
             panic("exception in kernel :(");
         } else {    // from user
             dbgprintln("[exception] exception %d from user!", expcode);
+            panic("exception in user :(");
         }
     }
 }

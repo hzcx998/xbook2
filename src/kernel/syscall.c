@@ -41,9 +41,7 @@ void syscall_init()
         syscalls[i] = syscall_default;
     }
     syscalls[SYS_EXIT] = sys_exit;
-    #if 0
     syscalls[SYS_FORK] = sys_fork;
-    #endif
     syscalls[SYS_WAITPID] = sys_waitpid;
     syscalls[SYS_GETPID] = sys_get_pid;
     syscalls[SYS_GETPPID] = sys_get_ppid;
@@ -192,13 +190,15 @@ unsigned long syscall_dispatch(trap_frame_t *frame)
     a4: arg4
     a0-a1: retval
     */
+    #if 0
     dbgprintln("[syscall] callnum: %ld", frame->a0);
     dbgprintln("[syscall] arg1: %lx", frame->a1);
     dbgprintln("[syscall] arg2: %lx", frame->a2);
     dbgprintln("[syscall] arg3: %lx", frame->a3);
     dbgprintln("[syscall] arg4: %lx", frame->a4);
+    #endif
     syscall_func_t func = (syscall_func_t)syscalls[frame->a0];
-    dbgprintln("[syscall] syscall: %p", func);
+    //dbgprintln("[syscall] syscall: %p", func);
     retval = func(frame->a1, frame->a2, frame->a3,
                             frame->a4, frame);
     frame->a0 = retval;
