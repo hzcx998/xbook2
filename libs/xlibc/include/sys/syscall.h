@@ -128,6 +128,7 @@ extern unsigned long __syscall3(unsigned long num, unsigned long arg0,
 extern unsigned long __syscall4(unsigned long num, unsigned long arg0,
         unsigned long arg1, unsigned long arg2, unsigned long arg3);
 #elif defined(__RISCV64__)
+#if 0
 extern unsigned long __syscalln(unsigned long num, unsigned long arg0,
         unsigned long arg1, unsigned long arg2, unsigned long arg3);
 #define __syscall0(num) __syscalln((num), 0, 0, 0, 0)
@@ -135,6 +136,79 @@ extern unsigned long __syscalln(unsigned long num, unsigned long arg0,
 #define __syscall2(num, arg0, arg1) __syscalln((num), (arg0), (arg1), 0, 0)
 #define __syscall3(num, arg0, arg1, arg2) __syscalln((num), (arg0), (arg1), (arg2), 0)
 #define __syscall4(num, arg0, arg1, arg2, arg3) __syscalln((num), (arg0), (arg1), (arg2), (arg3))
+#else
+#define __asm_syscall(...)             \
+    __asm__ __volatile__("ecall\n\t"   \
+                         : "=r"(a0)    \
+                         : __VA_ARGS__ \
+                         : "memory");  \
+    return a0;
+
+static inline long __syscall0(long n)
+{
+    register long a7 __asm__("a7") = n;
+    register long a0 __asm__("a0");
+    __asm_syscall("r"(a7))
+}
+
+static inline long __syscall1(long n, long a)
+{
+    register long a7 __asm__("a7") = n;
+    register long a0 __asm__("a0") = a;
+    __asm_syscall("r"(a7), "0"(a0))
+}
+
+static inline long __syscall2(long n, long a, long b)
+{
+    register long a7 __asm__("a7") = n;
+    register long a0 __asm__("a0") = a;
+    register long a1 __asm__("a1") = b;
+    __asm_syscall("r"(a7), "0"(a0), "r"(a1))
+}
+
+static inline long __syscall3(long n, long a, long b, long c)
+{
+    register long a7 __asm__("a7") = n;
+    register long a0 __asm__("a0") = a;
+    register long a1 __asm__("a1") = b;
+    register long a2 __asm__("a2") = c;
+    __asm_syscall("r"(a7), "0"(a0), "r"(a1), "r"(a2))
+}
+
+static inline long __syscall4(long n, long a, long b, long c, long d)
+{
+    register long a7 __asm__("a7") = n;
+    register long a0 __asm__("a0") = a;
+    register long a1 __asm__("a1") = b;
+    register long a2 __asm__("a2") = c;
+    register long a3 __asm__("a3") = d;
+    __asm_syscall("r"(a7), "0"(a0), "r"(a1), "r"(a2), "r"(a3))
+}
+
+static inline long __syscall5(long n, long a, long b, long c, long d, long e)
+{
+    register long a7 __asm__("a7") = n;
+    register long a0 __asm__("a0") = a;
+    register long a1 __asm__("a1") = b;
+    register long a2 __asm__("a2") = c;
+    register long a3 __asm__("a3") = d;
+    register long a4 __asm__("a4") = e;
+    __asm_syscall("r"(a7), "0"(a0), "r"(a1), "r"(a2), "r"(a3), "r"(a4))
+}
+
+static inline long __syscall6(long n, long a, long b, long c, long d, long e, long f)
+{
+    register long a7 __asm__("a7") = n;
+    register long a0 __asm__("a0") = a;
+    register long a1 __asm__("a1") = b;
+    register long a2 __asm__("a2") = c;
+    register long a3 __asm__("a3") = d;
+    register long a4 __asm__("a4") = e;
+    register long a5 __asm__("a5") = f;
+    __asm_syscall("r"(a7), "0"(a0), "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a5))
+}
+#endif
+
 #endif
 
 
@@ -143,18 +217,18 @@ extern unsigned long __syscalln(unsigned long num, unsigned long arg0,
         (type) __syscall0((unsigned long ) num)
 
 #define syscall1(type, num, arg0) \
-        (type) __syscall1((unsigned long ) num, (unsigned long ) arg0)
+        (type) __syscall1((unsigned long ) (num), (unsigned long ) arg0)
 
 #define syscall2(type, num, arg0, arg1) \
-        (type) __syscall2((unsigned long ) num, (unsigned long ) arg0,\
+        (type) __syscall2((unsigned long ) (num), (unsigned long ) arg0,\
         (unsigned long ) arg1)
 
 #define syscall3(type, num, arg0, arg1, arg2) \
-        (type) __syscall3((unsigned long ) num, (unsigned long ) arg0,\
+        (type) __syscall3((unsigned long ) (num), (unsigned long ) arg0,\
         (unsigned long ) arg1, (unsigned long ) arg2)
 
 #define syscall4(type, num, arg0, arg1, arg2, arg3) \
-        (type) __syscall4((unsigned long ) num, (unsigned long ) arg0,\
+        (type) __syscall4((unsigned long ) (num), (unsigned long ) arg0,\
         (unsigned long ) arg1, (unsigned long ) arg2, (unsigned long ) arg3)
 
 #ifdef __cplusplus

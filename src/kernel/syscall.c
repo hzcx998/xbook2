@@ -193,10 +193,10 @@ unsigned long syscall_dispatch(trap_frame_t *frame)
     dbgprintln("[syscall] arg3: %lx", frame->a3);
     dbgprintln("[syscall] arg4: %lx", frame->a4);
     #endif
-    syscall_func_t func = (syscall_func_t)syscalls[frame->a0];
+    syscall_func_t func = (syscall_func_t)syscalls[frame->a7];
     //dbgprintln("[syscall] syscall: %p", func);
-    retval = func(frame->a1, frame->a2, frame->a3,
-                            frame->a4, frame);
+    retval = func(frame->a0, frame->a1, frame->a2,
+                            frame->a3, frame);
     frame->a0 = retval;
     #endif
     /* 结束统计时间 */
