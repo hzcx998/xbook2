@@ -25,25 +25,28 @@ void interrupt_enable(void)
 
 static void interrupt_general_handler(trap_frame_t *frame) 
 {
-	dbgprintln("[interrupt] into general handler!");
+	//dbgprintln("[interrupt] into general handler!");
     uint64_t scause = r_scause();   // 获取中断产生的原因
     /* 来自设备、定时器中断 */
     if (scause & SCAUSE_INTERRUPT) {
         dbgprintln("[interrupt] external interrupt %d occur!", scause);
     } else {    /* 来自异常 */
         int expcode = scause & 0xff;
-        if (task_init_done) {
-            task_t *cur = task_current;
-            keprint("[exception] task name:%s, pid:%d\n", cur->name, cur->pid);
-        }
-        keprint("[exception] name: %s \n", interrupt_names[expcode]);
         /* 处理页故障 */
         if (expcode == EP_INSTRUCTION_PAGE_FAULT || 
             expcode == EP_LOAD_PAGE_FAULT || 
             expcode == EP_STORE_PAGE_FAULT) {
             page_do_fault(frame, (scause & SSTATUS_SPP) == 0, expcode);
             return;
-        }    
+        }
+        /* 其它异常 */
+        if (task_init_done) {
+            task_t *cur = task_current;
+            keprint("[exception] task name:%s, pid:%d\n", cur->name, cur->pid);
+        }
+        keprint("[exception] scause %p\n", scause);
+        keprint("[exception] sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
+        keprint("[exception] name: %s \n", interrupt_names[expcode]);
         trap_frame_dump(frame);
         if((scause & SSTATUS_SPP) != 0) {  // from kernel
             dbgprintln("[exception] exception %d from kernel!", expcode);
@@ -168,15 +171,15 @@ void interrupt_dispatch(trap_frame_t *frame)
         panic("interrupt_dispatch");
     } else {
         /* 内核异常处理: cause 异常值是 [0-15] */
-        vmprint(GET_CUR_PGDIR(), 1);
-        keprint("\nscause %p\n", scause);
-        keprint("sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
         int exception = scause & 0xff;
         interrupt_handler_t handler = interrupt_handlers[exception];
-        if (handler)
+        if (handler) {
             handler(frame);
-        else
-            panic("[interrupt] %d handler null", exception);
+        } else {
+            keprint("\nscause %p\n", scause);
+            keprint("sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
+            panic("[interrupt] %d handler null", exception);        
+        }
     }
 }
 
