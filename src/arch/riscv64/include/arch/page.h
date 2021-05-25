@@ -98,6 +98,7 @@ kvmmap(uint64_t va, uint64_t pa, uint64_t sz, int perm);
 
 void
 vmunmap(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free);
+void vmunmap2(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free);
 
 pte_t *
 walk(pgdir_t pgdir, uint64_t va, int alloc);

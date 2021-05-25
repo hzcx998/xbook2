@@ -37,6 +37,13 @@ static void interrupt_general_handler(trap_frame_t *frame)
             keprint("[exception] task name:%s, pid:%d\n", cur->name, cur->pid);
         }
         keprint("[exception] name: %s \n", interrupt_names[expcode]);
+        /* 处理页故障 */
+        if (expcode == EP_INSTRUCTION_PAGE_FAULT || 
+            expcode == EP_LOAD_PAGE_FAULT || 
+            expcode == EP_STORE_PAGE_FAULT) {
+            page_do_fault(frame, (scause & SSTATUS_SPP) == 0, expcode);
+            return;
+        }    
         trap_frame_dump(frame);
         if((scause & SSTATUS_SPP) != 0) {  // from kernel
             dbgprintln("[exception] exception %d from kernel!", expcode);

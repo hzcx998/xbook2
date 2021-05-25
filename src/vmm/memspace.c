@@ -3,7 +3,7 @@
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
 
-// #define DEBUG_MEM_SPACE
+#define DEBUG_MEM_SPACE
 
 void mem_space_dump(vmm_t *vmm)
 {
@@ -233,19 +233,19 @@ int do_mem_space_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
     return 0;
 }
 
-void *mem_space_mmap(uint32_t addr, uint32_t paddr, uint32_t len, uint32_t prot, uint32_t flags)
+void *mem_space_mmap(unsigned long addr, unsigned long paddr, unsigned long len, uint32_t prot, uint32_t flags)
 {
     task_t *current = task_current;
     return (void *)do_mem_space_map(current->vmm, addr, paddr, len, prot, flags);
 }
 
-void *mem_space_mmap_viraddr(uint32_t addr, uint32_t vaddr, uint32_t len, uint32_t prot, uint32_t flags)
+void *mem_space_mmap_viraddr(unsigned long addr, unsigned long vaddr, unsigned long len, uint32_t prot, uint32_t flags)
 {
     task_t *current = task_current;
     return (void *)do_mem_space_map_viraddr(current->vmm, addr, vaddr, len, prot, flags);
 }
 
-int mem_space_unmmap(uint32_t addr, uint32_t len)
+int mem_space_unmmap(unsigned long addr, unsigned long len)
 {
     task_t *current = task_current;
     return do_mem_space_unmap(current->vmm, addr, len);
@@ -258,7 +258,7 @@ static unsigned long do_mem_space_expend_heap(vmm_t *vmm, unsigned long addr, un
         return addr;
     mem_space_t *space;
     unsigned long flags, ret;
-    ret = do_mem_space_unmap(vmm, addr, len);
+    ret = do_mem_space_unmap2(vmm, addr, len);
     if (ret == -1)
         return ret;
     flags = MEM_SPACE_MAP_HEAP;
@@ -298,7 +298,7 @@ unsigned long sys_mem_space_expend_heap(unsigned long heap)
     }
     
     if (heap <= vmm->heap_end && heap >= vmm->heap_start) {
-        if (!do_mem_space_unmap(vmm, new_heap, old_heap - new_heap))
+        if (!do_mem_space_unmap2(vmm, new_heap, old_heap - new_heap))
             goto set_heap;
         keprint(PRINT_ERR "sys_mem_space_expend_heap: do_mem_space_unmap failed!\n");
         goto the_end;

@@ -174,7 +174,11 @@ int vmm_unmap_space(vmm_t *vmm)
     while (space != NULL) {
         /* 堆栈和代码数据的映射和解除映射有所不同，需要单独处理 */
         if ((space->flags & MEM_SPACE_MAP_STACK) || (space->flags & MEM_SPACE_MAP_HEAP)) {
-            page_unmap_addr2(vmm->page_storage, space->start, space->end - space->start);
+            #if 1
+            page_unmap_addr_safe2(vmm->page_storage, space->start, space->end - space->start, 0);
+            #else
+            //  page_unmap_addr2(vmm->page_storage, space->start, space->end - space->start);
+            #endif
         } else {
             // keprintln("[vmm] vmm_unmap_space: start=%p end=%p flags=%x", space->start, space->end, space->flags);
             page_unmap_addr_safe2(vmm->page_storage, space->start, space->end - space->start, space->flags & MEM_SPACE_MAP_SHARED);

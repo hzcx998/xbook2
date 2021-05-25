@@ -75,6 +75,7 @@ bool exception_cause_exit(exception_manager_t *exception_manager);
 bool exception_cause_exit_when_wait(exception_manager_t *exception_manager);
 void exception_frame_build(uint32_t code, exception_handler_t handler, trap_frame_t *frame);
 int exception_return(trap_frame_t *frame);
+void exception_check(trap_frame_t *frame);
 
 void exception_enable_block(exception_manager_t *exception_manager, uint32_t code);
 void exception_disable_block(exception_manager_t *exception_manager, uint32_t code);

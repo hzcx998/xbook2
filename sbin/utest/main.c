@@ -14,6 +14,15 @@ void t()
     }
 }
 
+/* 栈溢出测试 */
+int fib(int n)
+{
+    char buf[4096] = {0};
+    if (n < 2)
+        return 1;
+    return fib(n - 1) + fib(n - 2);
+}
+
 int main()
 {
     #if 0
@@ -51,11 +60,31 @@ int main()
     write(tty1, str, strlen(str));
     
     /*====内存测试===*/
-    char *ma = malloc(32);
-    char *mb = malloc(128);
-    char *mc = malloc(4096);
-    
+    brk(NULL);
+    char *mbuf = sbrk(1024);
+    memset(mbuf, 0, 1024);
 
+    char *v = (char *) 0x00001000;
+    *v = 0x10;
+
+    printf("hello, world!\n");
+    int n = fib(10);
+    printf("fib:%d\n", n);
+    
+    char *mbuf0 = malloc(32);
+    char *mbuf1 = malloc(512);
+    char *mbuf2 = malloc(4096*2);
+    printf("malloc:%p %p %p\n", mbuf0, mbuf1, mbuf2);
+    free(mbuf0);
+    free(mbuf1);
+    free(mbuf2);
+    printf("test done!\n");
+    
+    while (1)
+    {
+        /* code */
+    }
+    
     // printf("hello, world!\n");
     pid_t pid = fork();
     if (pid > 0) {

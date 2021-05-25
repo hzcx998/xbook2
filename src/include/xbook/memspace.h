@@ -49,14 +49,14 @@ void mem_space_insert(vmm_t *vmm, mem_space_t *space);
 int do_mem_space_unmap(vmm_t *vmm, unsigned long addr, unsigned long len);
 void *do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr, 
     unsigned long len, unsigned long prot, unsigned long flags);
-void *mem_space_mmap(uint32_t addr, uint32_t paddr, uint32_t len, uint32_t prot,
+void *mem_space_mmap(unsigned long addr, unsigned long paddr, unsigned long len, uint32_t prot,
     uint32_t flags);
-int mem_space_unmmap(uint32_t addr, uint32_t len);
+int mem_space_unmmap(unsigned long addr, unsigned long len);
 unsigned long sys_mem_space_expend_heap(unsigned long heap);
 unsigned long mem_space_get_unmaped(vmm_t *vmm, unsigned len);
 
-void *mem_space_mmap_viraddr(uint32_t addr, uint32_t vaddr,
-        uint32_t len, uint32_t prot, uint32_t flags);
+void *mem_space_mmap_viraddr(unsigned long addr, unsigned long vaddr,
+        unsigned long len, uint32_t prot, uint32_t flags);
 
 #define sys_munmap  mem_space_unmmap
 
@@ -114,9 +114,10 @@ static inline mem_space_t *mem_space_find_intersection(vmm_t *vmm,
     return space;
 }
 
-void *mem_space_mmap2(vmm_t *vmm, uint32_t addr, uint32_t paddr, uint32_t len, uint32_t prot, uint32_t flags);
-void *mem_space_mmap_viraddr2(vmm_t *vmm, uint32_t addr, uint32_t vaddr, uint32_t len, uint32_t prot, uint32_t flags);
-int mem_space_unmmap2(vmm_t *vmm, uint32_t addr, uint32_t len);
+void *mem_space_mmap2(vmm_t *vmm, unsigned long addr, unsigned long paddr, unsigned long len, uint32_t prot, uint32_t flags);
+void *mem_space_mmap_viraddr2(vmm_t *vmm, unsigned long addr, unsigned long vaddr, unsigned long len, uint32_t prot, uint32_t flags);
+int mem_space_unmmap2(vmm_t *vmm, unsigned long addr, unsigned long len);
+int do_mem_space_unmap2(vmm_t *vmm, unsigned long addr, unsigned long len);
 
 
 #endif /* _XBOOK_MEMSPACE_H */

@@ -41,8 +41,10 @@ static int do_copy_normal_page(addr_t vaddr, void *buf, vmm_t *child, vmm_t *par
 
     if((pte = walk((pgdir_t)parent->page_storage, vaddr, 0)) == NULL)
         panic("do_copy_normal_page: pte should exist");
-    if((*pte & PAGE_ATTR_PRESENT) == 0)
-        panic("do_copy_normal_page: page not present");
+    if((*pte & PAGE_ATTR_PRESENT) == 0) {   /* 不存在，则不复制页，可能是没被访问的堆栈 */
+        warnprintln("[fork] do_copy_normal_page: page not present");
+        return 0;
+    }
 
     /* get old page addr and perm */
     paddr = PTE2PA(*pte);
@@ -102,9 +104,11 @@ void vmm_active_kernel()
     #ifdef DEBUG_ARCH_VMM
     keprintln("[vmm] vmm_active_kernel");
     #endif
+    #if 0
     /* 如果时同一个页表就不改变，这样减少对页表的刷新，提高效率 */
     if (r_satp() == MAKE_SATP(kernel_pgdir))
         return;
+    #endif
     /* 激活内核页表 */
     w_satp(MAKE_SATP(kernel_pgdir));
     sfence_vma();
@@ -115,8 +119,10 @@ void vmm_active_user(unsigned long page)
     #ifdef DEBUG_ARCH_VMM
     keprintln("[vmm] vmm_active_user");
     #endif
-    if (r_satp() == MAKE_SATP(kernel_pgdir))
+    #if 0
+    if (r_satp() == MAKE_SATP(page))
         return;
+    #endif
     /* 激活用户页表 */
     w_satp(MAKE_SATP(page));
     sfence_vma();

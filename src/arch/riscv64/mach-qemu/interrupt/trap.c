@@ -5,6 +5,7 @@
 #include <arch/riscv.h>
 #include <xbook/schedule.h>
 #include <xbook/syscall.h>
+#include <xbook/exception.h>
 
 // in kernel_trap_entry.S, calls do_kernel_trap().
 extern void kernel_trap_entry();
@@ -42,6 +43,8 @@ void do_kernel_trap(trap_frame_t *frame)
     /* 对中断函数进行派发 */
     interrupt_dispatch(frame);
 
+    exception_check(frame);
+
     // the yield() may have caused some traps to occur,
     // so restore trap registers for use by kernel_trap_entry.S's sepc instruction.
     w_sepc(sepc);
@@ -57,37 +60,33 @@ usertrap(void)
 {
   //keprint("run in usertrap\n");
 
-  if((r_sstatus() & SSTATUS_SPP) != 0)
-    panic("usertrap: not from user mode");
+    if((r_sstatus() & SSTATUS_SPP) != 0)
+        panic("usertrap: not from user mode");
 
-  // send interrupts and exceptions to kerneltrap(),
-  // since we're now in the kernel.
-  w_stvec((uint64_t)kernel_trap_entry);
+    // send interrupts and exceptions to kerneltrap(),
+    // since we're now in the kernel.
+    w_stvec((uint64_t)kernel_trap_entry);
 
-  task_t *p = task_current;
-  
-  // save user program counter.
-  p->trapframe->epc = r_sepc();
-  
-  if(r_scause() == 8){
-    //dbgprintln("[trap] syscall intr in task %d", p->pid);
-    // system call
-    // sepc points to the ecall instruction,
-    // but we want to return to the next instruction.
-    p->trapframe->epc += 4;
-    // an interrupt will change sstatus &c registers,
-    // so don't enable until done with those registers.
-    interrupt_enable();
-    // TODO: call syscall
-    // syscall();
-    syscall_dispatch(p->trapframe);
-  } 
-  else {
-    interrupt_dispatch(p->trapframe);
-    // panic("## not syscall trap!!");
-  }
-
-  usertrapret();
+    task_t *cur = task_current;
+    
+    // save user program counter.
+    cur->trapframe->epc = r_sepc();
+    
+    if(r_scause() == 8){
+        //dbgprintln("[trap] syscall intr in task %d", cur->pid);
+        // system call
+        // sepc points to the ecall instruction,
+        // but we want to return to the next instruction.
+        cur->trapframe->epc += 4;
+        // an interrupt will change sstatus &c registers,
+        // so don't enable until done with those registers.
+        interrupt_enable();
+        syscall_dispatch(cur->trapframe);
+    } else {
+        interrupt_dispatch(cur->trapframe);
+    }
+    exception_check(cur->trapframe);
+    usertrapret();
 }
 
 //
@@ -96,7 +95,7 @@ usertrap(void)
 void
 usertrapret(void)
 {
-  task_t *p = task_current;
+  task_t *cur = task_current;
 
   // we're about to switch the destination of traps from
   // kerneltrap() to usertrap(), so turn off interrupts until
@@ -109,10 +108,10 @@ usertrapret(void)
 
   // set up trapframe values that uservec will need when
   // the process next re-enters the kernel.
-  p->trapframe->kernel_satp = r_satp();         // kernel page table
-  p->trapframe->kernel_sp = (uint64_t)(p->kstack + PAGE_SIZE); // process's kernel stack
-  p->trapframe->kernel_trap = (uint64_t)usertrap;
-  p->trapframe->kernel_hartid = r_tp();         // hartid for cpuid()
+  cur->trapframe->kernel_satp = r_satp();         // kernel page table
+  cur->trapframe->kernel_sp = (uint64_t)(cur->kstack + PAGE_SIZE); // process's kernel stack
+  cur->trapframe->kernel_trap = (uint64_t)usertrap;
+  cur->trapframe->kernel_hartid = r_tp();         // hartid for cpuid()
 
   // set up the registers that trampoline.S's sret will use
   // to get to user space.
@@ -124,14 +123,14 @@ usertrapret(void)
   w_sstatus(x);
 
   // set S Exception Program Counter to the saved user pc.
-  w_sepc(p->trapframe->epc);
+  w_sepc(cur->trapframe->epc);
 
   // tell trampoline.S the user page table to switch to.
-  // printf("[usertrapret]p->pagetable: %p\n", p->pagetable);
-  // uint64_t satp = MAKE_SATP(p->pagetable);
+  // printf("[usertrapret]cur->pagetable: %p\n", cur->pagetable);
+  // uint64_t satp = MAKE_SATP(cur->pagetable);
     uint64_t satp = 0;
-    if (p->vmm) {
-        satp = MAKE_SATP((unsigned long)p->vmm->page_storage);
+    if (cur->vmm) {
+        satp = MAKE_SATP((unsigned long)cur->vmm->page_storage);
         //keprintln("usertrapret: have vmm %lx", satp);
     } else {
         panic("usertrapret: no vmm");
@@ -141,7 +140,7 @@ usertrapret(void)
   // switches to the user page table, restores user registers,
   // and switches to user mode with sret.
   uint64_t fn = TRAMPOLINE + (userret - trampoline);
-  ((void (*)(trap_frame_t *,uint64_t))fn)(p->trapframe, satp);
+  ((void (*)(trap_frame_t *,uint64_t))fn)(cur->trapframe, satp);
 }
 
 void forkret()

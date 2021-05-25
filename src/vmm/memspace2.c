@@ -162,17 +162,17 @@ int do_mem_space_unmap2(vmm_t *vmm, unsigned long addr, unsigned long len)
     return 0;
 }
 
-void *mem_space_mmap2(vmm_t *vmm, uint32_t addr, uint32_t paddr, uint32_t len, uint32_t prot, uint32_t flags)
+void *mem_space_mmap2(vmm_t *vmm, unsigned long addr, unsigned long paddr, unsigned long len, uint32_t prot, uint32_t flags)
 {
     return (void *)do_mem_space_map2(vmm, addr, paddr, len, prot, flags);
 }
 
-void *mem_space_mmap_viraddr2(vmm_t *vmm, uint32_t addr, uint32_t vaddr, uint32_t len, uint32_t prot, uint32_t flags)
+void *mem_space_mmap_viraddr2(vmm_t *vmm, unsigned long addr, unsigned long vaddr, unsigned long len, uint32_t prot, uint32_t flags)
 {
     return (void *)do_mem_space_map_viraddr2(vmm, addr, vaddr, len, prot, flags);
 }
 
-int mem_space_unmmap2(vmm_t *vmm, uint32_t addr, uint32_t len)
+int mem_space_unmmap2(vmm_t *vmm, unsigned long addr, unsigned long len)
 {
     return do_mem_space_unmap2(vmm, addr, len);
 }

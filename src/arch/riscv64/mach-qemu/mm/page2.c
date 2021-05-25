@@ -47,7 +47,7 @@ int page_unmap_addr2(pgdir_t pgdir, unsigned long vaddr, unsigned long len)
     unsigned long flags;
     interrupt_save_and_disable(flags);
 	len = PAGE_ALIGN(len);
-    vmunmap(pgdir, vaddr & PAGE_MASK, len / PAGE_SIZE, 1);
+    vmunmap2(pgdir, vaddr & PAGE_MASK, len / PAGE_SIZE, 1);
     interrupt_restore_state(flags);
 	return 0;
 }
@@ -59,7 +59,7 @@ int page_unmap_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len,
     unsigned long flags;
     interrupt_save_and_disable(flags);
 	len = PAGE_ALIGN(len);
-    vmunmap(pgdir, start & PAGE_MASK, len / PAGE_SIZE, !fixed);   /* 不是固定才释放 */
+    vmunmap2(pgdir, start & PAGE_MASK, len / PAGE_SIZE, !fixed);   /* 不是固定才释放 */
     interrupt_restore_state(flags);
 	return 0;
 }

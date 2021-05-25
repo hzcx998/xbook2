@@ -1,6 +1,7 @@
 #include <arch/page.h>
 #include <arch/mempool.h>
 #include <xbook/debug.h>
+#include <xbook/memspace.h>
 #include <arch/riscv.h>
 #include <assert.h>
 #include <string.h>
@@ -177,6 +178,33 @@ vmunmap(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free)
   }
 }
 
+// munmap if existed
+// Remove npages of mappings starting from va. va must be
+// page-aligned. The mappings must exist.
+// Optionally free the physical memory.
+void
+vmunmap2(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free)
+{
+  uint64_t a;
+  pte_t *pte;
+
+  if((va % PAGE_SIZE) != 0)
+    panic("vmunmap: not aligned");
+
+  for(a = va; a < va + npages*PAGE_SIZE; a += PAGE_SIZE){
+    if((pte = walk(pgdir, a, 0)) == 0)
+      panic("vmunmap: walk %p", a);
+    if((*pte & PAGE_ATTR_PRESENT) == 0) /* note here, if not present, just continue */
+      continue;
+    if(PTE_FLAGS(*pte) == PAGE_ATTR_PRESENT)
+      panic("vmunmap: not a leaf");
+    if(do_free){
+      uint64_t pa = PTE2PA(*pte);
+      page_free(pa);
+    }
+    *pte = 0;
+  }
+}
 
 // Look up a virtual address, return the physical address,
 // or 0 if not mapped.
@@ -502,4 +530,154 @@ void vmprint(pgdir_t pgdir, int level)
     }
   }
   return;
+}
+
+static int do_handle_no_page(pgdir_t pgdir, unsigned long addr, unsigned long prot)
+{
+    /* 映射一个物理页 */
+	return page_map_addr2(pgdir, addr, PAGE_SIZE, prot);
+}
+
+static void do_expand_stack(mem_space_t *space, unsigned long addr)
+{
+    addr &= PAGE_MASK;
+	space->start = addr;
+}
+
+/**
+ * do_page_no_write - 让pte有写属性
+ * @addr: 要设置的虚拟地址
+ */
+static int do_page_no_write(pgdir_t pgdir, unsigned long addr)
+{
+	if (!(addr >= USER_VMM_BASE_ADDR && addr < USER_VMM_TOP_ADDR))
+		return -1;
+
+	uint64_t *pte = walkaddr(pgdir, addr);
+	
+	if (pte == NULL)
+		return -1;
+	if (!(*pte & PAGE_ATTR_PRESENT))
+		return -1;
+	*pte |= PAGE_ATTR_WRITE;
+	return 0;
+}
+
+static int do_protection_fault(pgdir_t pgdir, mem_space_t *space, unsigned long addr, int write)
+{
+	/* 没有写标志，说明该段内存不支持内存写入，就直接返回吧 */
+	if (write) {
+		keprint(PRINT_DEBUG "page: %s: addr %x have write protection.\n", __func__, addr);
+		int ret = do_page_no_write(pgdir, addr);
+		if (ret) {
+            keprint(PRINT_EMERG "page: %s: page not writable!", __func__);    
+            exception_force_self(EXP_CODE_SEGV);
+            return -1;
+        }
+
+		/* 虽然写入的写标志，但是还是会出现缺页故障，在此则处理一下缺页 */
+		if (do_handle_no_page(pgdir, addr, space->page_prot)) {
+            keprint(PRINT_EMERG "page: %s: hand no page failed!", __func__);
+            exception_force_self(EXP_CODE_SEGV);
+			return -1; 
+        }
+		return 0;
+	} else {
+		keprint(PRINT_DEBUG "page: %s: no write protection\n", __func__);
+	}
+    keprint(PRINT_EMERG "page: %s: page protection!", __func__);
+    exception_force_self(EXP_CODE_SEGV);
+    return -1;
+}
+
+static inline void do_vir_mem_fault(unsigned long addr)
+{
+    keprint("do_vir_mem_fault\n");
+    keprint(PRINT_EMERG "page fault at %p.\n", addr);
+    /* TODO: 如果是在vir_mem区域中，就进行页复制，不是的话，就发出段信号。 */
+    exception_force_self(EXP_CODE_SEGV);
+}
+
+/**
+ * page_do_fault - 处理页故障
+ * 
+ * 错误码的内容 
+ * bit 0: 0 no page found, 1 protection fault
+ * bit 1: 0 read, 1 write
+ * bit 2: 0 kernel, 1 user
+ * 
+ * 如果是来自内核的页故障，就会打印信息并停机。
+ * 如果是来自用户的页故障，就会根据地址来做处理。
+ */
+int page_do_fault(trap_frame_t *frame, int is_user, int expcode)
+{
+    keprintln("[page] page_do_fault: exception %d from %s", expcode, is_user == 1 ? "user" : "kernel");
+    task_t *cur = task_current;
+    unsigned long addr = 0x00;
+    addr = r_stval(); /* stval saved the fault addr */
+
+    /* in kernel page fault */
+    if (!(is_user) && !(addr >= USER_VMM_BASE_ADDR && addr < USER_VMM_TOP_ADDR)) {
+        keprint("task name=%s pid=%d\n", cur->name, cur->pid);
+        keprint(PRINT_EMERG "a memory problem had occured in kernel, please check your code! :(\n");
+        keprint(PRINT_EMERG "page fault at %p.\n", addr);
+        trap_frame_dump(frame);
+        panic("halt...");
+    }
+    /* 如果故障地址位于内核中， */
+    if (!(addr >= USER_VMM_BASE_ADDR && addr < USER_VMM_TOP_ADDR)) {
+        /* TODO: 故障源是用户，说明用户需要访问非连续内存区域，于是复制一份给用户即可 */
+        keprint(PRINT_ERR "page fauilt: user pid=%d name=%s access unmaped vir_mem area.\n", cur->pid, cur->name);
+        keprint(PRINT_EMERG "page fault at %p.\n", addr);
+        trap_frame_dump(frame);
+        do_vir_mem_fault(addr);
+        return -1;
+    }
+
+    /* 检测在故障区域或者没有访问权限 */
+    if (addr < PAGE_SIZE) {
+        keprint(PRINT_ERR "page fauilt: user pid=%d name=%s access no permission space.\n", cur->pid, cur->name);
+        keprint(PRINT_EMERG "page fault at %p.\n", addr);
+        trap_frame_dump(frame);
+        exception_force_self(EXP_CODE_SEGV);
+        return -1;
+    }
+
+    /* 故障地址在用户空间 */
+    mem_space_t *space = mem_space_find(cur->vmm, addr);
+    if (space == NULL) {    
+        keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user access user unknown space.\n", cur->pid, cur->name);
+        keprint(PRINT_EMERG "page fault at %p.\n", addr);
+        trap_frame_dump(frame);
+        exception_force_self(EXP_CODE_SEGV);
+        return -1;
+    }
+    if (space->start > addr) { /* 故障地址在空间前，说明是栈向下拓展，那么尝试拓展栈。 */
+        if (is_user) {
+            /* 可拓展栈：有栈标志，在可拓展限定内， */
+            if ((space->flags & MEM_SPACE_MAP_STACK) &&
+                ((space->end - space->start) < MAX_MEM_SPACE_STACK_SIZE) &&
+                (addr + 32 >= frame->sp)) {
+                dbgprintln("[page] do_expand_stack addr %p", addr);
+                do_expand_stack(space, addr);
+            } else {
+                errprint("page addr %x\n", addr);
+                keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user task stack out of range!\n", cur->pid, cur->name);
+                trap_frame_dump(frame);
+                exception_force_self(EXP_CODE_SEGV);
+                return -1;  
+            }
+        }
+    }
+    /* 故障地址在空间里面，情况如下：
+    1.读写保护故障（R/W）
+    2.缺少物理页和虚拟地址的映射。（堆的向上拓展或者栈的向下拓展）
+     */
+
+    /* FIXME: EP_INSTRUCTION_PAGE_FAULT触发行为还不太确定，do_protection_fault执行还需要进一步完善 */
+    if ((expcode == EP_INSTRUCTION_PAGE_FAULT)) {
+        return do_protection_fault(cur->vmm->page_storage, space, addr, 1);
+    }
+    keprintln("[page] page_do_fault: handle no page %p", addr);
+    return do_handle_no_page(cur->vmm->page_storage, addr, space->page_prot);
 }

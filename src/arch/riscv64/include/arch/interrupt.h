@@ -9,6 +9,25 @@
 
 #define NR_IRQS     IRQ_MAX_NR
 
+enum {
+    EP_INSTRUCTION_ADDRESS_MISALIGNED = 0,
+    EP_INSTRUCTION_ACCESS_FAULT,
+    EP_ILLEGAL_INSTRUCTION,
+    EP_BREAKPOINT,
+    EP_LOAD_ADDRESS_MISALIGNED,
+    EP_LOAD_ACCESS_FAULT,
+    EP_STORE_ADDRESS_MISALIGNED,
+    EP_STORE_ACCESS_FAULT,
+    EP_ENVIRONMENT_CALL_U_MODE,
+    EP_ENVIRONMENT_CALL_S_MODE,
+    EP_RESERVED10,
+    EP_ENVIRONMENT_CALL_M_MODE,
+    EP_INSTRUCTION_PAGE_FAULT,          /* page attr */
+    EP_LOAD_PAGE_FAULT,                 /* read data */
+    EP_RESERVED14,
+    EP_STORE_PAGE_FAULT,                /* write data */
+};
+
 typedef struct {
     /*   0 */ uint64_t kernel_satp;   // kernel page table
     /*   8 */ uint64_t kernel_sp;     // top of process's kernel stack
@@ -83,5 +102,7 @@ static inline int interrupt_enabled()
 void usertrap(void);
 void usertrapret(void);
 void forkret();
+
+int page_do_fault(trap_frame_t *frame, int is_user, int expcode);
 
 #endif  /* _RISCV64_INTERRUPT_H */
