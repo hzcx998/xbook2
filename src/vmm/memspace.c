@@ -3,7 +3,7 @@
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
 
-#define DEBUG_MEM_SPACE
+// #define DEBUG_MEM_SPACE
 
 void mem_space_dump(vmm_t *vmm)
 {

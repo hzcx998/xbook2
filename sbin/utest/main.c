@@ -36,7 +36,7 @@ int main()
     #endif
     #if 1
     /* 打开tty，用来进行基础地输入输出 */
-    int tty0 = open("/dev/tty0", O_RDONLY);
+    int tty0 = open("/dev/con0", O_RDONLY);
     if (tty0 < 0) {
         while (1)
         {
@@ -45,7 +45,8 @@ int main()
         
         return -1;
     }
-    int tty1 = open("/dev/tty0", O_WRONLY);
+    
+    int tty1 = open("/dev/con0", O_WRONLY);
     if (tty1 < 0) {
         while (1)
         {
@@ -55,10 +56,49 @@ int main()
         return -1;
     }
     int tty2 = dup(tty1);
+    
     //printf("[INIT]: start.\n");
     char *str = "[INIT]: start.\n";
     write(tty1, str, strlen(str));
     
+    /* exec测试 */
+    char *argv[3] = {"/sbin/test1","arg1", 0};
+    char *env[3] = {"env0", "env1",0};
+    // execve("/sbin/init", argv, env);    
+    #if 0
+    pid_t child = create_process(argv, env, 0);
+    printf("create %d\n", child);
+    waitpid(child, NULL, 0);
+    printf("Wait done\n");
+        
+    while (1)
+    {
+        /* code */
+    }
+    
+    #endif
+    #if 0
+    pid_t pid1 = fork();
+    if (pid1 > 0) {
+        write(tty1, "I am parent\n", 12);
+        int state;
+        waitpid(pid1, &state, 0);
+        write(tty1, "Wait done\n", 9);
+        while (1)
+        {
+            /* code */
+        }
+    } else {
+        write(tty1, "I am child\n", 11);
+        execve("/sbin/test1", argv, env);    
+        _exit(0);
+    }
+    
+    while (1)
+    {
+        /* code */
+    }
+    #endif
     /*====内存测试===*/
     brk(NULL);
     char *mbuf = sbrk(1024);

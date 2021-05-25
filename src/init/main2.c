@@ -14,6 +14,7 @@
 #include <xbook/initcall.h>
 #include <xbook/fs.h>
 #include <xbook/syscall.h>
+#include <xbook/account.h>
 
 int kernel_main(void)
 {
@@ -36,21 +37,9 @@ int kernel_main(void)
     initcalls_exec();
     drivers_print();
     file_system_init();
+    account_manager_init();
     kernel_test_init();
     memory_overview();
     task_start_user();
-    
-    /*
-    clock_init();
-    timers_init();
-    interrupt_enable();
-    
-    driver_framewrok_init();
-    initcalls_exec();
-    
-    file_system_init();*/
-    while (1) {
-        /* code */
-    }
     return 0;    
 }

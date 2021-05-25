@@ -377,7 +377,7 @@ int page_unmap_addr_safe(unsigned long start, unsigned long len, char fixed)
 
 int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
 {
-    dbgprintln("[page] page_map_addr: start=%p len=%lx prot=%x\n", start, len, prot);
+    //dbgprintln("[page] page_map_addr: start=%p len=%lx prot=%x\n", start, len, prot);
     unsigned long flags;
     interrupt_save_and_disable(flags);
     unsigned long vaddr = (unsigned long )start & PAGE_MASK;
@@ -402,7 +402,7 @@ int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
     if (prot & PROT_EXEC)
         attr |= PAGE_ATTR_EXEC;
 
-    dbgprintln("[page] page_map_addr: vaddr=%p pages=%d\n", vaddr, pages);
+    //dbgprintln("[page] page_map_addr: vaddr=%p pages=%d\n", vaddr, pages);
     
 
     pgdir_t pgdir = GET_CUR_PGDIR();
@@ -414,7 +414,7 @@ int page_map_addr(unsigned long start, unsigned long len, unsigned long prot)
             interrupt_restore_state(flags);
             return -1;
         }
-        dbgprintln("[page] page_map_addr: vaddr=%p paddr=%p\n", vaddr, page_addr);
+        //dbgprintln("[page] page_map_addr: vaddr=%p paddr=%p\n", vaddr, page_addr);
         retval = mappages(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
         if (retval < 0) {
             vmunmap(pgdir, start & PAGE_MASK, pages, 1);
@@ -611,7 +611,7 @@ static inline void do_vir_mem_fault(unsigned long addr)
  */
 int page_do_fault(trap_frame_t *frame, int is_user, int expcode)
 {
-    keprintln("[page] page_do_fault: exception %d from %s", expcode, is_user == 1 ? "user" : "kernel");
+    //keprintln("[page] page_do_fault: exception %d from %s", expcode, is_user == 1 ? "user" : "kernel");
     task_t *cur = task_current;
     unsigned long addr = 0x00;
     addr = r_stval(); /* stval saved the fault addr */
@@ -658,7 +658,7 @@ int page_do_fault(trap_frame_t *frame, int is_user, int expcode)
             if ((space->flags & MEM_SPACE_MAP_STACK) &&
                 ((space->end - space->start) < MAX_MEM_SPACE_STACK_SIZE) &&
                 (addr + 32 >= frame->sp)) {
-                dbgprintln("[page] do_expand_stack addr %p", addr);
+                //dbgprintln("[page] do_expand_stack addr %p", addr);
                 do_expand_stack(space, addr);
             } else {
                 errprint("page addr %x\n", addr);
@@ -678,6 +678,6 @@ int page_do_fault(trap_frame_t *frame, int is_user, int expcode)
     if ((expcode == EP_INSTRUCTION_PAGE_FAULT)) {
         return do_protection_fault(cur->vmm->page_storage, space, addr, 1);
     }
-    keprintln("[page] page_do_fault: handle no page %p", addr);
+    //keprintln("[page] page_do_fault: handle no page %p", addr);
     return do_handle_no_page(cur->vmm->page_storage, addr, space->page_prot);
 }

@@ -478,8 +478,6 @@ WWW Favorites	E0, 66		E0, E6
 
 *=====================================================================================*/
 
-#define KBD_NOBLOCK  0x01
-
 typedef struct _device_extension {
     device_object_t *device_object; /* 设备对象 */
     char irq;           /* irq号 */

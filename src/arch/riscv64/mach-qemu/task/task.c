@@ -31,7 +31,7 @@ void task_stack_build(task_t *task, task_func_t *function, void *arg)
     task->context.sp = (uint64_t)(task->kstack + PAGE_SIZE); 
     task->kthread_entry = function;
     task->kthread_arg = arg;
-    keprint("task=%s sp=%p\n", task->name, task->context.sp);
+    // keprint("task=%s sp=%p\n", task->name, task->context.sp);
 }
 
 int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp)
@@ -78,7 +78,8 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
 
 void kernel_switch_to_user(trap_frame_t *frame)
 {
-    noteprintln("kernel_switch_to_user: is empty function");
+    // noteprintln("kernel_switch_to_user: is empty function");
+    task_activate_when_sched(task_current);  // 激活页表
     usertrapret();
 }
 

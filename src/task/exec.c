@@ -14,6 +14,8 @@
 #include <xbook/fd.h>
 #include <xbook/fs.h>
 #include <xbook/process.h>
+#include <xbook/safety.h>
+#include <errno.h>
 
 /**
  * exec使用新的镜像以及堆栈替换原有的内容。
@@ -28,10 +30,12 @@
 static int do_execute(const char *pathname, char *name, const char *argv[], const char *envp[])
 {
     task_t *cur = task_current;
+    //errprint("[exec]: %s: path %s\n", __func__, pathname);
+    /*
     unsigned long flags;
-    interrupt_save_and_disable(flags);
+    interrupt_save_and_disable(flags);*/
     proc_close_other_threads(cur);
-    interrupt_restore_state(flags);
+    //interrupt_restore_state(flags);
     int fd = kfile_open(pathname, O_RDONLY);
     if (fd < 0) {
         errprint("[exec]: %s: file %s not exist!\n", __func__, pathname);
@@ -92,10 +96,11 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     char **new_argv = NULL;
     char *tmp_arg = NULL;
     /* 如果任务中带有参数，就不用重新构建新参数 */
-    if (old_vmm->argbuf) {
+    if (old_vmm->argbuf) {  /* 来自create_process */
         new_envp = old_vmm->envp;
         new_argv = old_vmm->argv;
-    } else {
+        /* 不需要释放进程参数，因为在create_process中已经进行了释放 */
+    } else {    /* 来自proc_execute */
         tmp_arg = mem_alloc(PAGE_SIZE);
         if (tmp_arg == NULL) {
             keprint(PRINT_ERR "sys_exec_file: task %s malloc for tmp arg failed!\n", name);
@@ -104,6 +109,10 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         unsigned long arg_bottom;
         proc_build_arg((unsigned long) tmp_arg + PAGE_SIZE, &arg_bottom, (char **) envp, &new_envp);
         proc_build_arg(arg_bottom, NULL, (char **) argv, &new_argv); 
+
+        /* 完成参数构建后需要释放进程参数，因为proc_exec执行前，在内核中复制了用户参数 */
+        proc_free_arg((char **)argv);
+        proc_free_arg((char **)envp);
     }
 
     char tmp_name[MAX_TASK_NAMELEN] = {0};
@@ -148,10 +157,6 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
     
-    
-    vmm_dump(new_vmm);
-    trap_frame_dump(frame);
-
     kernel_switch_to_user(frame);
 free_loaded_image:
     sys_exit(-1);
@@ -165,7 +170,7 @@ free_task_arg:
     return -1;   
 }
 
-int sys_execve(const char *pathname, const char *argv[], const char *envp[])
+int proc_execve(const char *pathname, const char *argv[], const char *envp[])
 {
     if (pathname == NULL)
         return -1;
@@ -235,4 +240,28 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
     }
     keprint(PRINT_ERR "%s: path %s not exist or not executable!\n", __func__, pathname);
     return -1;
+}
+
+int sys_execve(const char *pathname, const char *argv[], const char *envp[])
+{
+    if (!pathname)
+        return -EINVAL;
+    /* 从用户态复制参数到内核 */
+    char path[32] = {0};
+    if (mem_copy_from_user_str(path, (void *)pathname, MAX_PATH) < 0) {
+        return -EINVAL;
+    }
+    char *_argv[MAX_TASK_STACK_ARG_NR], *_envp[MAX_TASK_STACK_ARG_NR];
+    memset(_argv, 0, sizeof(_argv));
+    memset(_envp, 0, sizeof(_envp));
+    if (proc_copy_arg_from_user((char **)_argv, (char **)argv) < 0) {
+        errprintln("[exec] proc_copy_arg_from_user for argv failed!");
+        return -ENOMEM;
+    }
+    if (proc_copy_arg_from_user((char **)_envp, (char **)envp) < 0) {
+        errprintln("[exec] proc_copy_arg_from_user for envp failed!");
+        proc_free_arg(_argv);
+        return -ENOMEM;
+    }
+    return proc_execve((const char *)path, (const char **)_argv, (const char **)_envp);
 }

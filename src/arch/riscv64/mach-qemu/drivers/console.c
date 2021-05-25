@@ -5,6 +5,7 @@
 #include <xbook/kernel.h>
 #include <xbook/safety.h>
 #include <xbook/hardirq.h>
+#include <xbook/fifoio.h>
 #include <arch/config.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
@@ -27,28 +28,26 @@
 /* 1个控制台 */
 #define MAX_CONSOLE_NR	    1
 
+#define DEV_FIFO_BUF_LEN     64
 
 typedef struct _device_extension {
     string_t device_name;           /* 设备名字 */
     device_object_t *device_object; /* 设备对象 */
+    fifo_io_t fifoio;
+    uint32_t flags;
 } device_extension_t;
 
 iostatus_t console_read(device_object_t *device, io_request_t *ioreq)
 {
     unsigned long len = ioreq->parame.read.length;
-    
+    device_extension_t *ext = device->device_extension;
     uint8_t *buf = (uint8_t *)ioreq->user_buffer; 
-
-    /* 读取后，会做成按键事件的形式，从缓冲区读取 */
-
-
-
 #ifdef DEBUG_DRV  
     buf = (uint8_t *)ioreq->user_buffer; 
     keprint(PRINT_DEBUG "console_read: %s\n", buf);
 #endif
-    ioreq->io_status.status = IO_SUCCESS;
-    ioreq->io_status.infomation = len;
+    ioreq->io_status.status = IO_FAILED;
+    ioreq->io_status.infomation = 0;
     
     /* 调用完成请求 */
     io_complete_request(ioreq);
@@ -108,6 +107,7 @@ static int console_intr(irqno_t irqno, void *data)
     keprintln("console intr!");
     int c = sbi_console_getchar();
     if (-1 != c) {
+        // fifo_io_put(&extension->fifoio, c);
         sbi_console_putchar(c);
         // consoleintr(c);
         // keprintln("console intr: %d", c);
@@ -139,6 +139,15 @@ static iostatus_t console_enter(driver_object_t *driver)
     devext = (device_extension_t *)devobj->device_extension;
     string_new(&devext->device_name, devname, DEVICE_NAME_LEN);
     devext->device_object = devobj;
+    unsigned char *buf = mem_alloc(DEV_FIFO_BUF_LEN);
+    if (buf == NULL) {
+        status = IO_FAILED;
+        keprint(PRINT_ERR "console_enter: alloc buf failed!\n");
+        io_delete_device(devobj);
+        return status;
+    }
+    fifo_io_init(&devext->fifoio, buf, DEV_FIFO_BUF_LEN);
+    devext->flags = 0;
 #ifdef DEBUG_DRV
     keprint(PRINT_DEBUG "console_enter: device extension: device name=%s object=%x\n",
         devext->device_name.text, devext->device_object);
@@ -147,6 +156,7 @@ static iostatus_t console_enter(driver_object_t *driver)
     /* 注册中断 */
     if (irq_register(UART_IRQ, console_intr, 0, "uart irq", DEV_NAME, devext)) {
         keprint(PRINT_ERR "console_enter: register irq %d failed!\n", UART_IRQ);
+        mem_free(buf);
         io_delete_device(devobj);
         return IO_FAILED;
     }

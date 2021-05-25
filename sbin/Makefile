@@ -40,4 +40,5 @@ MODULE      +=  login
 MODULE      +=  netserv
 else ifeq ($(ENV_ARCH), riscv64)
 MODULE      +=  utest
+MODULE      +=  test1
 endif 

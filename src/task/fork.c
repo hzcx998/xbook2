@@ -136,9 +136,7 @@ rollback_failed:
 int sys_fork()
 {
     task_t *parent = task_current;
-    dbgprintln("[fork] task %s pid=%d forking...", parent->name, parent->pid);
-    unsigned long flags;
-    interrupt_save_and_disable(flags);
+    //dbgprintln("[fork] task %s pid=%d forking... %d", parent->name, parent->pid, interrupt_enabled());
     task_t *child = mem_alloc(TASK_KERN_STACK_SIZE);
     if (child == NULL) {
         keprint(PRINT_ERR "sys_fork: mem_alloc for child task failed!\n");
@@ -148,14 +146,13 @@ int sys_fork()
     if (copy_task(child, parent)) {
         keprint(PRINT_ERR "sys_fork: copy task failed!\n");
         mem_free(child);
-        interrupt_restore_state(flags);
         return -1;
     }
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
     task_add_to_global_list(child);
     sched_queue_add_tail(sched_get_cur_unit(), child);
     interrupt_restore_state(flags);
-    // trap_frame_dump(parent->trapframe);
-    dbgprintln("[fork] parent %s pid=%d forked child %s pid=%d", parent->name, parent->pid, child->name, child->pid);
-    
+    //dbgprintln("[fork] parent %s pid=%d forked child %s pid=%d", parent->name, parent->pid, child->name, child->pid);
     return child->pid;  /* 父进程返回子进程pid */
 }

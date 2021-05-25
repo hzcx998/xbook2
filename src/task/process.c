@@ -22,7 +22,7 @@
 #include <sys/pthread.h>
 #endif
 
-#define DEBUG_PROCESS 1
+#define DEBUG_PROCESS 0
 
 static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz,
     unsigned long mem_sz, unsigned long vaddr)
@@ -37,7 +37,7 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
     } else {
         occupy_pages = 1;
     }
-    dbgprintln("[proc] memmap vaddr=%p pages=%d", vaddr_page, occupy_pages);
+    // dbgprintln("[proc] memmap vaddr=%p pages=%d", vaddr_page, occupy_pages);
     void *retaddr = mem_space_mmap(vaddr_page, 0, occupy_pages * PAGE_SIZE, 
             PROT_EXEC | PROT_WRITE | PROT_READ, MEM_SPACE_MAP_FIXED);
     if (retaddr == ((void *)-1)) {
@@ -48,7 +48,6 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
     
     /* read file */
     memset((void *)vaddr_page, 0, occupy_pages * PAGE_SIZE);
-    keprintln("read file");
 
     if (kfile_read(fd, (void *)vaddr, file_sz) != file_sz) {
         keprint(PRINT_ERR "proc_load_segment: read file failed!\n");
@@ -79,16 +78,11 @@ loadseg(void *pgdir, uint64_t va, int fd, unsigned long offset, size_t sz)
     else
       n = PAGE_SIZE;
     
-    #if 0
-    if(eread(ep, 0, (uint64)pa, offset+i, n) != n)
-      return -1;
-    #else
     kfile_lseek(fd, offset+i, SEEK_SET);
     if (kfile_read(fd, (void *)pa, n) != n) {
         keprint(PRINT_ERR "loadseg: read file failed!\n");
         return -1;
     }
-    #endif
   }
 
   return 0;
@@ -98,7 +92,6 @@ loadseg(void *pgdir, uint64_t va, int fd, unsigned long offset, size_t sz)
 static int proc_load_segment_ext(vmm_t *vmm, int fd, unsigned long offset, unsigned long file_sz,
     unsigned long mem_sz, unsigned long vaddr)
 {
-    #ifdef TASK_TINY
     unsigned long vaddr_page = vaddr & PAGE_MASK;
     unsigned long size_in_first_page = PAGE_SIZE - (vaddr & PAGE_LIMIT);
     unsigned long occupy_pages = 0;
@@ -108,7 +101,7 @@ static int proc_load_segment_ext(vmm_t *vmm, int fd, unsigned long offset, unsig
     } else {
         occupy_pages = 1;
     }
-    dbgprintln("[proc] memmap vaddr=%p pages=%d", vaddr_page, occupy_pages);
+    // dbgprintln("[proc] memmap vaddr=%p pages=%d", vaddr_page, occupy_pages);
     void *retaddr = mem_space_mmap2(vmm, vaddr_page, 0, occupy_pages * PAGE_SIZE, 
             PROT_USER | PROT_EXEC | PROT_WRITE | PROT_READ, MEM_SPACE_MAP_FIXED);
     if (retaddr == ((void *)-1)) {
@@ -116,23 +109,10 @@ static int proc_load_segment_ext(vmm_t *vmm, int fd, unsigned long offset, unsig
         return -1;
     }
     
-    /* read file */
-    // memset((void *)vaddr_page, 0, occupy_pages * PAGE_SIZE);
-    keprintln("read file");
-
-    #if 0
-    kfile_lseek(fd, offset, SEEK_SET);
-    if (kfile_read(fd, (void *)vaddr, file_sz) != file_sz) {
-        keprint(PRINT_ERR "proc_load_segment: read file failed!\n");
-        return -1;
-    }
-    #else
     if (loadseg(vmm->page_storage, vaddr, fd, offset, file_sz) < 0) {
         keprint(PRINT_ERR "proc_load_segment: read file failed!\n");
         return -1;
     }
-    #endif
-    #endif
     return 0;
 }
 
@@ -551,7 +531,7 @@ void proc_entry(void* arg)
     const char *pathname = (const char *) arg;
     task_t *cur = task_current;
     
-    sys_execve(pathname, (const char **)cur->vmm->argv, (const char **)cur->vmm->envp);
+    proc_execve(pathname, (const char **)cur->vmm->argv, (const char **)cur->vmm->envp);
     
     #ifndef TASK_TINY
     #endif
@@ -577,6 +557,7 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
         return NULL;
     task_t *parent = task_current;
     task_init(task, argv[0], TASK_PRIO_LEVEL_NORMAL);
+
     if (flags & PROC_CREATE_INIT) {
         task->pid = USER_INIT_PROC_ID;
         task->tgid = task->pid;
@@ -595,8 +576,6 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     /* 需要继承父进程的部分文件描述符 */
     fs_fd_copy_only(parent, task);
     
-    #ifndef TASK_TINY
-    #endif
     if (proc_vmm_init(task)) {
         fs_fd_exit(task);
         #ifndef TASK_TINY
@@ -604,6 +583,7 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
         mem_free(task);
         return NULL;
     }
+
     if (vmm_build_argbuf(task->vmm, argv, envp) < 0) {
         keprint(PRINT_ERR "process_create: pathname %s build arg buf failed !\n", argv[0]);
         proc_vmm_exit(task);
@@ -616,6 +596,12 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     /* argbuf[0-255] is path name */
     task_stack_build(task, proc_entry, task->vmm->argbuf);
     memcpy(task->vmm->argbuf, argv[0], min(MAX_PATH, strlen(argv[0])));
+
+    /* 不是init就释放参数，这些参数来自sys_process_create */
+    if (!(flags & PROC_CREATE_INIT)) {
+        proc_free_arg((char **)argv);
+        proc_free_arg((char **)envp);
+    }
 
     unsigned long irqflags;
     interrupt_save_and_disable(irqflags);
@@ -634,13 +620,25 @@ int sys_create_process(char **argv, char **envp, uint32_t flags)
 {
     if (!argv)
         return -EINVAL;
-    if (!argv[0])   // argv[0] -> pathname
-        return -EINVAL;
-    if (mem_copy_from_user(NULL, argv[0], MAX_PATH) < 0)
-        return -EFAULT;
-    task_t *task = process_create(argv, envp, flags & ~PROC_CREATE_INIT);
-    if (task == NULL)
+    /* 从用户态复制参数到内核 */
+    char *_argv[MAX_TASK_STACK_ARG_NR], *_envp[MAX_TASK_STACK_ARG_NR];
+    memset(_argv, 0, sizeof(_argv));
+    memset(_envp, 0, sizeof(_envp));
+    if (proc_copy_arg_from_user((char **)_argv, (char **)argv) < 0) {
+        errprintln("[proc] proc_copy_arg_from_user for argv failed!");
+        return -ENOMEM;
+    }
+    if (proc_copy_arg_from_user((char **)_envp, (char **)envp) < 0) {
+        errprintln("[proc] proc_copy_arg_from_user for envp failed!");
+        proc_free_arg(_argv);
+        return -ENOMEM;
+    }
+    keprintln("create process");
+    task_t *task = process_create(_argv, _envp, flags & ~PROC_CREATE_INIT);
+    if (task == NULL) {
+        errprintln("[proc] create process failed!");
         return -EPERM;
+    }
     return task->pid;
 }
 
@@ -661,4 +659,73 @@ int sys_resume_process(pid_t pid)
     }
     task_wakeup(child);   
     return 0;
+}
+
+
+void proc_free_arg(char *arg[])
+{
+    if (!arg)
+        return;
+    int i;
+    for (i = 0; i < MAX_TASK_STACK_ARG_NR; i++) {
+        if (arg[i]) {
+            mem_free(arg[i]);
+        }
+    }
+}
+
+void proc_dump_arg(char *arg[])
+{
+    if (!arg)
+        return;
+    int i;
+    for (i = 0; i < MAX_TASK_STACK_ARG_NR; i++) {
+        if (arg[i]) {
+            dbgprintln("[proc] arg[%d]=%s", i, arg[i]);
+        } else {
+            break;
+        }
+    }
+}
+
+/**
+ * 从用户复制参数，内核才能访问
+ * 每一个参数都通过内存分配了地址，使用完后需要释放
+ */
+int proc_copy_arg_from_user(char *dst[], char *src[])
+{
+    if (!dst || !src)
+        return -1;
+    uint64_t uargv = (uint64_t ) src;
+    uint64_t *uarg;
+    
+    int i = 0;
+    /* 获取argv */
+    if (src) {
+        while (1) {
+            if (i >= MAX_TASK_STACK_ARG_NR) {
+                goto err;
+            }
+            if (mem_copy_from_user((void *)&uarg, (void *)(uargv + sizeof(uint64_t)*i), sizeof(uarg)) < 0) {
+                goto err;
+            }
+            // 没有参数了
+            if(uarg == NULL){
+                dst[i] = 0;
+                break;
+            }
+            dst[i] = mem_alloc(PAGE_SIZE);
+            if(dst[i] == NULL)
+                goto err;
+            if(mem_copy_from_user_str((char *)dst[i], (char *)uarg, PAGE_SIZE) < 0)
+                goto err;
+            i++;
+        }
+    } else {
+        dst[0] = 0;
+    }
+    return i;
+err:
+    proc_free_arg(dst);
+    return -1;
 }

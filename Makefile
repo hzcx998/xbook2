@@ -254,7 +254,7 @@ else ifeq ($(ENV_ARCH),riscv64)
 ifndef CPUS
 CPUS := 2
 endif # CPUS
-QEMU_ARGUMENT	+= 	-m 8M
+QEMU_ARGUMENT	+= 	-m 6M
 QEMU_ARGUMENT	+= 	-machine virt
 QEMU_ARGUMENT	+= 	-kernel $(KERNEL_ELF)
 QEMU_ARGUMENT	+= 	-nographic

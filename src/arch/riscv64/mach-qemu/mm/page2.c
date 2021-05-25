@@ -66,7 +66,7 @@ int page_unmap_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len,
 
 int page_map_addr2(pgdir_t pgdir, unsigned long start, unsigned long len, unsigned long prot)
 {
-    dbgprintln("[page] page_map_addr: start=%p len=%lx prot=%x\n", start, len, prot);
+    //dbgprintln("[page] page_map_addr: start=%p len=%lx prot=%x\n", start, len, prot);
     unsigned long flags;
     interrupt_save_and_disable(flags);
     unsigned long vaddr = (unsigned long )start & PAGE_MASK;
@@ -91,7 +91,7 @@ int page_map_addr2(pgdir_t pgdir, unsigned long start, unsigned long len, unsign
     if (prot & PROT_EXEC)
         attr |= PAGE_ATTR_EXEC;
 
-    dbgprintln("[page] page_map_addr: vaddr=%p pages=%d\n", vaddr, pages);
+    //dbgprintln("[page] page_map_addr: vaddr=%p pages=%d\n", vaddr, pages);
     
     int retval = -1;
     while (page_idx < pages) {
@@ -101,7 +101,7 @@ int page_map_addr2(pgdir_t pgdir, unsigned long start, unsigned long len, unsign
             interrupt_restore_state(flags);
             return -1;
         }
-        dbgprintln("[page] page_map_addr: vaddr=%p paddr=%p\n", vaddr, page_addr);
+        //dbgprintln("[page] page_map_addr: vaddr=%p paddr=%p\n", vaddr, page_addr);
         retval = mappages(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
         if (retval < 0) {
             vmunmap(pgdir, start & PAGE_MASK, pages, 1);
@@ -222,6 +222,46 @@ copyin(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len)
   return 0;
 }
 
+
+// Copy a null-terminated string from user to kernel.
+// Copy bytes to dst from virtual address srcva in a given page table,
+// until a '\0', or maxn.
+// Return 0 on success, -1 on error.
+int copyinstr(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t maxn)
+{
+    uint64_t n, va0, pa0;
+    int got_null = 0;
+    while(got_null == 0 && maxn > 0){
+        va0 = PAGE_ROUNDDOWN(srcva);
+        pa0 = (uint64_t)walkaddr(pgdir, va0);
+        if(pa0 == 0)
+            return -1;
+        n = PAGE_SIZE - (srcva - va0);
+        if(n > maxn)
+            n = maxn;
+        char *p = (char *) (pa0 + (srcva - va0));
+        while(n > 0){
+        if(*p == '\0'){
+            *dst = '\0';
+            got_null = 1;
+            break;
+        } else {
+            *dst = *p;
+        }
+        --n;
+        --maxn;
+        p++;
+        dst++;
+        }
+        srcva = va0 + PAGE_SIZE;
+    }
+    if(got_null){
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
 int do_copy_from_user(void *dest, void *src, unsigned long nbytes)
 {
     task_t *cur = task_current;
@@ -232,6 +272,16 @@ int do_copy_from_user(void *dest, void *src, unsigned long nbytes)
         }
     }
     return 0;
+}
+
+int do_copy_from_user_str(char *dest, char *src, unsigned long maxn)
+{
+    task_t *cur = task_current;
+    if (copyinstr(cur->vmm->page_storage, dest, (uint64_t)src, maxn) < 0) {
+        errprintln("[page] do_copy_from_user: dest=%p src=%p nbytes=%d failed!", dest, src, maxn);
+        return -1;
+    }
+    return strlen(dest);
 }
 
 int do_copy_to_user(void *dest, void *src, unsigned long nbytes)

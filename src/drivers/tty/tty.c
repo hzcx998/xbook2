@@ -403,6 +403,8 @@ void tty_thread(void *arg)
             default:
                 break;
             }
+        } else {
+            task_yield();
         }
     }
 }

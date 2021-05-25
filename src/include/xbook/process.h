@@ -35,11 +35,16 @@ void proc_close_other_threads(task_t *thread);
 int sys_fork();
 pid_t sys_waitpid(pid_t pid, int *status, int options);
 int sys_execve(const char *pathname, const char *argv[], const char *envp[]);
+int proc_execve(const char *pathname, const char *argv[], const char *envp[]);
 void sys_exit(int status);
 unsigned long sys_sleep(unsigned long second);
 long sys_usleep(struct timeval *inv, struct timeval *outv);
 int sys_create_process(char **argv, char **envp, uint32_t flags);
 int sys_resume_process(pid_t pid);
 int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp);
+
+void proc_free_arg(char *arg[]);
+void proc_dump_arg(char *arg[]);
+int proc_copy_arg_from_user(char *dst[], char *src[]);
 
 #endif /* _XBOOK_PROCESS_H */

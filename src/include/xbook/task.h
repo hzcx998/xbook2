@@ -40,7 +40,7 @@ typedef enum {
 #define MAX_TASK_NAMELEN 32
 #define TASK_STACK_MAGIC 0X19980325
 #define MAX_TASK_STACK_ARG_NR 16
-#define TASK_KERN_STACK_SIZE    8192
+#define TASK_KERN_STACK_SIZE    (8192 * 3)
 
 #define USER_INIT_PROC_ID       1
 
