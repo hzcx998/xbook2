@@ -145,9 +145,10 @@ usertrapret(void)
 
 void forkret()
 {
-  
+  #if 0
   task_t *cur = task_current;
   keprintln("[fork] task %s pid=%d ppid=%d return to user", cur->name, cur->pid, cur->parent_pid);
-  //trap_frame_dump(cur->trapframe);
+  trap_frame_dump(cur->trapframe);
+  #endif
   usertrapret();
 }

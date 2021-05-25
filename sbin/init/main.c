@@ -9,7 +9,6 @@
 #define CONSOLE_DEV "/dev/con0"
 
 
-
 int main(int argc, char *argv[])
 {
     /* 打开tty，用来进行基础地输入输出 */

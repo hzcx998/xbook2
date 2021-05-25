@@ -6,9 +6,12 @@
 #include <xbook/safety.h>
 #include <xbook/hardirq.h>
 #include <xbook/fifoio.h>
+#include <xbook/exception.h>
 #include <arch/config.h>
+#include <arch/memory.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include <arch/sbi.h>
 
@@ -23,6 +26,9 @@
 #define UART_IRQ    33
 #endif 
 
+#define BACKSPACE 0x100
+#define C(x)  ((x)-'@')  // Control-x
+
 // #define DEBUG_DRV
 
 /* 1个控制台 */
@@ -31,28 +37,99 @@
 #define DEV_FIFO_BUF_LEN     64
 
 typedef struct _device_extension {
-    string_t device_name;           /* 设备名字 */
     device_object_t *device_object; /* 设备对象 */
     fifo_io_t fifoio;
     uint32_t flags;
+    
+    // input
+#define INPUT_BUF 128
+    char buf[INPUT_BUF];
+    uint32_t r;  // Read index
+    uint32_t w;  // Write index
+    uint32_t e;  // Edit index
 } device_extension_t;
+
+static void console_putc(int c) {
+    if(c == BACKSPACE){
+        // if the user typed backspace, overwrite with a space.
+        sbi_console_putchar('\b');
+        sbi_console_putchar(' ');
+        sbi_console_putchar('\b');
+    } else {
+        sbi_console_putchar(c);
+    }
+}
+
+//
+// user read()s from the console go here.
+// copy (up to) a whole input line to dst.
+// user_dist indicates whether dst is a user
+// or kernel address.
+//
+static int console_do_read(device_extension_t *extension, char *dst, int n)
+{
+    uint64_t target;
+    int c;
+
+    task_t *cur =task_current;
+    target = n;
+    while(n > 0){
+        // wait until interrupt handler has put some
+        // input into extension->buffer.
+        mb();
+        while(extension->r == extension->w){
+            /* 等待有可用数据 */
+            if (exception_cause_exit_when_wait(&cur->exception_manager)) {
+                return -EINTR;
+            }
+            task_yield();
+        }
+        /* 读取一个数据 */
+        c = extension->buf[extension->r++ % INPUT_BUF];
+
+        if(c == C('D')){  // end-of-file
+            if(n < target){
+                // Save ^D for next time, to make sure
+                // caller gets a 0-byte result.
+                extension->r--;
+            }
+            break;
+        }
+
+        // copy the input byte to the user-space buffer.
+        *dst = c;
+        dst++;
+        --n;
+        if(c == '\n'){
+            // a whole line has arrived, return to
+            // the user-level read().
+            break;
+        }
+    }
+    return target - n;
+}
 
 iostatus_t console_read(device_object_t *device, io_request_t *ioreq)
 {
     unsigned long len = ioreq->parame.read.length;
     device_extension_t *ext = device->device_extension;
-    uint8_t *buf = (uint8_t *)ioreq->user_buffer; 
-#ifdef DEBUG_DRV  
-    buf = (uint8_t *)ioreq->user_buffer; 
+    char *buf = (char *)ioreq->user_buffer; 
+#ifdef DEBUG_DRV
     keprint(PRINT_DEBUG "console_read: %s\n", buf);
 #endif
-    ioreq->io_status.status = IO_FAILED;
-    ioreq->io_status.infomation = 0;
-    
+    iostatus_t status = IO_SUCCESS;
+    int rd = console_do_read(ext, buf, len);
+    if (rd < 0) {
+        status = IO_FAILED;
+    }
+#ifdef DEBUG_DRV
+    dbgprintln("console: read line: %s\n", buf);
+#endif    
+    ioreq->io_status.status = status;
+    ioreq->io_status.infomation = rd;
     /* 调用完成请求 */
     io_complete_request(ioreq);
-
-    return IO_SUCCESS;
+    return status;
 }
 
 iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
@@ -79,8 +156,7 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
 iostatus_t console_devctl(device_object_t *device, io_request_t *ioreq)
 {
     unsigned int ctlcode = ioreq->parame.devctl.code;
-    unsigned long arg = ioreq->parame.devctl.arg;
-    
+    //unsigned long arg = ioreq->parame.devctl.arg;
     iostatus_t status = IO_SUCCESS;
     int infomation = 0;
     switch (ctlcode) {
@@ -101,13 +177,48 @@ iostatus_t console_devctl(device_object_t *device, io_request_t *ioreq)
 static int console_intr(irqno_t irqno, void *data)
 {
     device_extension_t *extension = (device_extension_t *) data; 
-    keprintln("console intr!");
+    //keprintln("console intr!");
     int c = sbi_console_getchar();
     if (-1 != c) {
-        // fifo_io_put(&extension->fifoio, c);
-        sbi_console_putchar(c);
-        // consoleintr(c);
-        // keprintln("console intr: %d", c);
+        switch(c){
+        case C('P'):  // Print process list.
+            tasks_print();
+            break;
+        case C('U'):  // Kill line.
+            while(extension->e != extension->w && 
+                extension->buf[(extension->e-1) % INPUT_BUF] != '\n') {
+                extension->e--;
+                console_putc(BACKSPACE);
+            }
+            break;
+        case C('H'): // Backspace
+        case '\x7f':
+            if(extension->e != extension->w){
+                extension->e--;
+                console_putc(BACKSPACE);
+            }
+            break;
+        default:
+            if(c != 0 && extension->e-extension->r < INPUT_BUF){
+                #ifndef QEMU
+                if (c == '\r') break;     // on k210, "enter" will input \n and \r
+                #else
+                c = (c == '\r') ? '\n' : c;
+                #endif
+                // echo back to the user.
+                console_putc(c);
+                // store for consumption by console_do_read().
+                extension->buf[extension->e++ % INPUT_BUF] = c;
+                if(c == '\n' || c == C('D') || extension->e == extension->r+INPUT_BUF){
+                    // wake up console_do_read() if a whole line (or end-of-file)
+                    // has arrived.
+                    mb();
+                    extension->w = extension->e;
+                }
+            }
+            break;
+        }
+
     }
     return IRQ_HANDLED;   
 }
@@ -134,7 +245,6 @@ static iostatus_t console_enter(driver_object_t *driver)
     devobj->flags = 0;
 
     devext = (device_extension_t *)devobj->device_extension;
-    string_new(&devext->device_name, devname, DEVICE_NAME_LEN);
     devext->device_object = devobj;
     unsigned char *buf = mem_alloc(DEV_FIFO_BUF_LEN);
     if (buf == NULL) {
@@ -143,6 +253,8 @@ static iostatus_t console_enter(driver_object_t *driver)
         io_delete_device(devobj);
         return status;
     }
+    devext->e = devext->w = devext->r = 0;
+  
     fifo_io_init(&devext->fifoio, buf, DEV_FIFO_BUF_LEN);
     devext->flags = 0;
 #ifdef DEBUG_DRV

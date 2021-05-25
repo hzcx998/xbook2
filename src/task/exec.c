@@ -36,6 +36,8 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     interrupt_save_and_disable(flags);*/
     proc_close_other_threads(cur);
     //interrupt_restore_state(flags);
+    vmm_t *old_vmm = cur->vmm;
+
     int fd = kfile_open(pathname, O_RDONLY);
     if (fd < 0) {
         errprint("[exec]: %s: file %s not exist!\n", __func__, pathname);
@@ -87,7 +89,6 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     }
     #endif
     
-    vmm_t *old_vmm = cur->vmm;
     vmm_t *new_vmm = mem_alloc(sizeof(vmm_t));
     assert(new_vmm != NULL);
     vmm_init(new_vmm);
@@ -113,6 +114,8 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         /* 完成参数构建后需要释放进程参数，因为proc_exec执行前，在内核中复制了用户参数 */
         proc_free_arg((char **)argv);
         proc_free_arg((char **)envp);
+        argv = NULL;
+        envp = NULL;
     }
 
     char tmp_name[MAX_TASK_NAMELEN] = {0};
@@ -161,12 +164,23 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 free_loaded_image:
     sys_exit(-1);
 free_tmp_arg:
-    if (tmp_arg)
+    if (tmp_arg) {
         mem_free(tmp_arg);
+        tmp_arg = NULL;
+    }
 free_tmp_fd:
     kfile_close(fd);
 free_task_arg:
-    vmm_debuild_argbuf(cur->vmm);
+    if (old_vmm->argbuf) {
+        vmm_debuild_argbuf(cur->vmm);
+    } else {
+        if (argv) {
+            proc_free_arg((char **)argv);
+        }
+        if (envp) {
+            proc_free_arg((char **)envp);
+        }
+    }
     return -1;   
 }
 

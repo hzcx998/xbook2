@@ -42,7 +42,7 @@ static int do_copy_normal_page(addr_t vaddr, void *buf, vmm_t *child, vmm_t *par
     if((pte = walk((pgdir_t)parent->page_storage, vaddr, 0)) == NULL)
         panic("do_copy_normal_page: pte should exist");
     if((*pte & PAGE_ATTR_PRESENT) == 0) {   /* 不存在，则不复制页，可能是没被访问的堆栈 */
-        warnprintln("[fork] do_copy_normal_page: page not present");
+        // warnprintln("[fork] do_copy_normal_page: page not present");
         return 0;
     }
 
