@@ -65,10 +65,7 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
     keprint(PRINT_DEBUG "console_write: %s\n", buf);
 #endif
     while (i > 0) {
-        char ch;
-        if (mem_copy_from_user(&ch, buf, 1) < 0)
-            break;
-        sbi_console_putchar(ch);
+        sbi_console_putchar(*buf);
         i--;
         buf++;
     }

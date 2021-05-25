@@ -24,6 +24,10 @@
 
 #define FSIF_USER_CHECK
 
+#define FSIF_RW_CHUNK_SIZE  (PAGE_SIZE * 2)
+#define FSIF_RW_BUF_SIZE    512
+
+
 int sys_open(const char *path, int flags)
 {
     if (!path)
@@ -59,6 +63,37 @@ int sys_close(int fd)
     return local_fd_uninstall(fd);
 }
 
+static int read_large(file_fd_t *ffd, void *buffer, size_t nbytes)
+{
+    char *_mbuf = mem_alloc(FSIF_RW_CHUNK_SIZE);
+    if (_mbuf == NULL) {
+        return -ENOMEM;
+    }
+    int total = 0;
+    char *p = (char *)buffer;
+    size_t chunk = nbytes % FSIF_RW_CHUNK_SIZE;
+    while (nbytes > 0) {
+        int rd = ffd->fsal->read(ffd->handle, _mbuf, chunk);
+        if (rd < 0) {
+            errprintln("[fs] sys_read: handle %d do read failed!", ffd->handle);
+            total = -EIO;
+            break;
+        }
+        if (mem_copy_to_user(p, _mbuf, chunk) < 0) {
+            errprintln("[fs] sys_read: copy buf %p to user failed!", buffer);
+            total = -EINVAL;
+            break;
+        }
+        // dbgprintln("[fs] sys_write: chunk %d wr %d\n", chunk, wr);
+        p += chunk;
+        total += rd;
+        nbytes -= chunk;
+        chunk = FSIF_RW_CHUNK_SIZE;
+    }
+    mem_free(_mbuf);
+    return total;
+}
+
 int sys_read(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0 || !nbytes || !buffer)
@@ -69,12 +104,25 @@ int sys_read(int fd, void *buffer, size_t nbytes)
     #endif
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd)) {
-        errprint("[FS]: %s: fd %d err!\n", __func__, fd);
+        errprint("[fs] sys_read: fd %d err!\n", fd);
         return -EINVAL;
     }
     if (!ffd->fsal->read)
         return -ENOSYS;
-    return ffd->fsal->read(ffd->handle, buffer, nbytes);
+    // dbgprint("[fs] read fd %d, bytes %d\n", fd, nbytes);
+    if (nbytes > FSIF_RW_BUF_SIZE) {
+        return read_large(ffd, buffer, nbytes);
+    } else {
+        char _buf[FSIF_RW_BUF_SIZE] = {0};
+        int rd = ffd->fsal->read(ffd->handle, _buf, nbytes);
+        if (rd > 0) {
+            if (mem_copy_to_user(buffer, _buf, rd) < 0) {
+                errprintln("[fs] sys_read: copy buf %p to user failed!", buffer);
+                return -EINVAL;
+            }
+        }
+        return rd;
+    }
 }
 
 int sys_fastread(int fd, void *buffer, size_t nbytes)
@@ -113,14 +161,41 @@ int sys_fastwrite(int fd, void *buffer, size_t nbytes)
     return ffd->fsal->fastwrite(ffd->handle, buffer, nbytes);
 }
 
+static int write_large(file_fd_t *ffd, void *buffer, size_t nbytes)
+{
+    char *_mbuf = mem_alloc(FSIF_RW_CHUNK_SIZE);
+    if (_mbuf == NULL) {
+        return -ENOMEM;
+    }
+    int total = 0;
+    char *p = (char *)buffer;
+    size_t chunk = nbytes % FSIF_RW_CHUNK_SIZE;
+    while (nbytes > 0) {
+        if (mem_copy_from_user(_mbuf, p, chunk) < 0) {
+            errprintln("[fs] sys_write: copy buf %p from user failed!", buffer);
+            total = -EINVAL;
+            break;
+        }
+        int wr = ffd->fsal->write(ffd->handle, _mbuf, chunk);
+        if (wr < 0) {
+            errprintln("[fs] sys_write: handle %d do write failed!", ffd->handle);
+            total = -EIO;
+            break;
+        }
+        // dbgprintln("[fs] sys_write: chunk %d wr %d\n", chunk, wr);
+        p += chunk;
+        total += wr;
+        nbytes -= chunk;
+        chunk = FSIF_RW_CHUNK_SIZE;
+    }
+    mem_free(_mbuf);
+    return total;
+}
+
 int sys_write(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0 || !nbytes || !buffer)
         return -EINVAL;
-    #ifdef FSIF_USER_CHECK
-    if (mem_copy_from_user(NULL, buffer, nbytes) < 0)
-        return -EINVAL;
-    #endif
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd)) {
         errprint("[FS]: %s: fd %d err! handle=%d flags=%x\n", __func__, 
@@ -129,7 +204,18 @@ int sys_write(int fd, void *buffer, size_t nbytes)
     }
     if (!ffd->fsal->write)
         return -ENOSYS;
-    return ffd->fsal->write(ffd->handle, buffer, nbytes);
+    // dbgprint("[fs] sys_write fd %d, bytes %d\n", fd, nbytes);
+    if (nbytes > FSIF_RW_BUF_SIZE) {
+        return write_large(ffd, buffer, nbytes);
+    } else {
+        char _buf[FSIF_RW_BUF_SIZE] = {0};
+        if (mem_copy_from_user(_buf, buffer, nbytes) < 0) {
+            errprintln("[fs] sys_write: copy buf %p from user failed!", buffer);
+            return -EINVAL;
+        }
+        //keprintln("buf: %s", _buf);
+        return ffd->fsal->write(ffd->handle, _buf, nbytes);
+    }
 }
 
 int sys_ioctl(int fd, int cmd, void *arg)

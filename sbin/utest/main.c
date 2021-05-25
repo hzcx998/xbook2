@@ -24,15 +24,89 @@ int fib(int n)
     return fib(n - 1) + fib(n - 2);
 }
 
-file_test()
+static inline void sys_err(char *str)
 {
-    
+    printf("sys err: %s\n", str);
+    exit(-1);
+}
 
-
-
+int file_test1()
+{
+    int fd = open("tmp.txt", O_CREAT | O_RDWR);
+    if (fd < 0)
+        sys_err("open file failed!");
+    printf("open file %d ok\n", fd);
+    pid_t pid = fork();
+    if (pid < 0)
+        sys_err("fork failed!");
+    if (pid > 0) {
+        char *str1 = "hello, parent!\n";
+        int i = 0;
+        while (i < 10) {
+            i++;
+            printf("%d ready write %s\n", getpid(), str1);
+            if (write(fd, str1, strlen(str1)) > 0)
+                printf("parent wirte:%s\n", str1);
+        }
+        close(fd);
+        printf("parent write done\n");
+    } else {
+        char *str2 = "hello, child!\n";
+        int j = 0;
+        while (j < 10) {
+            j++;
+            printf("%d ready write %s\n", getpid(), str2);
+            if (write(fd, str2, strlen(str2)) > 0)
+                printf("child wirte:%s\n", str2);
+        }
+        close(fd);
+        printf("child write done\n");
+        _exit(0);
+    }
     while (1);
 }
 
+int file_test2()
+{
+    char *buf = malloc(64*1024);
+    if (buf == NULL) {
+        printf("malloc for test failed!\n");
+        return -1;
+    }
+    memset(buf, 0, 64*1024);
+    while (1)
+    {
+        int fd = open("/bin/sh", O_RDONLY);
+        if (fd < 0) {
+            printf("open file failed!\n");
+            break;
+        }
+        while (1)
+        {
+            int rd = read(fd, buf, 64*1024);
+            printf("read %d.\n", rd);
+            if (rd <= 0)
+                break;
+        }
+        close(fd);
+        printf("read done.\n");
+        break;
+    }
+    free(buf);
+    printf("test end\n");
+    return 0;
+}
+
+int file_test3()
+{
+    int fd = open("tmp.txt", O_CREAT | O_RDWR);
+    if (fd < 0)
+        sys_err("open file failed!");
+    char *buf = (char *) 0x1000;
+    int wr = write(fd, buf, 4096*5);
+    printf("write: %d\n", wr);
+    close(fd);
+}
 
 int main()
 {
@@ -73,10 +147,15 @@ int main()
     write(tty1, str, strlen(str));
     
 
-    file_test();
+    //file_test1();
+    file_test2();
+    //file_test3();
 
-
-
+    while (1)
+    {
+        /* code */
+    }
+    
 
 
     /* exec测试 */
