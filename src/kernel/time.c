@@ -104,9 +104,9 @@ clock_t sys_times(struct tms *buf)
     if (buf) {
         task_t *cur = task_current;
         keprint("systime:%d elapsed:%d\n", cur->syscall_ticks, cur->elapsed_ticks);
-
-        buf->tms_stime = cur->syscall_ticks;
-        buf->tms_utime = cur->elapsed_ticks;
+        struct tms _buf;
+        _buf.tms_stime = cur->syscall_ticks;
+        _buf.tms_utime = cur->elapsed_ticks;
         /* 统计子进程的时间 */
         clock_t cutime = 0, cstime = 0;
         task_t *child;
@@ -116,9 +116,11 @@ clock_t sys_times(struct tms *buf)
                 cutime += child->elapsed_ticks;
             }
         }
-        buf->tms_cstime = cstime;
-        buf->tms_cutime = cutime;
-        keprint("%d %d %d %d\n", buf->tms_stime, buf->tms_utime, buf->tms_cstime, buf->tms_cutime);
+        _buf.tms_cstime = cstime;
+        _buf.tms_cutime = cutime;
+        keprint("%d %d %d %d\n", _buf.tms_stime, _buf.tms_utime, _buf.tms_cstime, _buf.tms_cutime);
+
+        mem_copy_to_user(buf, &_buf, sizeof(struct tms));
     }
     return sys_get_ticks();
 }

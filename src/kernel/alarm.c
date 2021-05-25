@@ -30,7 +30,7 @@ void alarm_update_ticks()
                     task->alarm.second--;
                     task->alarm.ticks = HZ;
                     if (!task->alarm.second) {
-                        #if 0
+                        #if 1
                         exception_send(task->pid, EXP_CODE_ALRM);
                         #else
                         keprintln("[alarm] exception send");

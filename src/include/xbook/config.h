@@ -19,7 +19,7 @@
 /* #define CONFIG_TIMEZONE_AUTO */
 
 /* 裁剪配置 */
-#define CONFIG_NO_SYS_TIMES
+// #define CONFIG_NO_SYS_TIMES
 
 
 // #define CONFIG_NETWORK

@@ -5,7 +5,11 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <signal.h>
 #include <sys/wait.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#include <sys/walltime.h>
 
 void t()
 {
@@ -193,6 +197,80 @@ int pipe_test()
     return 0;
 }
 
+int sched_test()
+{
+    while (1)
+    {
+        printf("hello, ");
+        sched_yield();
+        printf("world!\n");
+    }
+}
+
+int can_set_alarm = 0;
+
+int alarm_test()
+{
+    int i = 1;
+    can_set_alarm = 1;
+    //signal(SIGALRM, );
+    while (i <= 5)
+    {
+        if (can_set_alarm) {
+            alarm(i);
+            printf("set %ds.\n", i);
+            can_set_alarm = 0;
+        }
+    }
+}
+
+int time_test()
+{
+    walltime_t wt;
+    walltime(&wt);
+    printf("time: %d/%d/%d %d:%d:%d\n", 
+        wt.year, wt.month, wt.day, wt.hour, wt.minute, wt.second);
+    clock_t ticks = getticks();
+    printf("ticks: %d\n", ticks);
+    
+    struct timeval tv;
+    struct timezone tz;
+    gettimeofday(&tv, &tz);
+    printf("gettimeofday: tv sec=%ld, usec=%ld, tz dsttime=%ld, minuteswest=%ld\n",
+        tv.tv_sec, tv.tv_usec, tz.tz_dsttime, tz.tz_minuteswest);
+    
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    printf("clock_gettime: CLOCK_MONOTONIC: ts sec=%ld nsec=%ld\n",
+        ts.tv_sec, ts.tv_nsec);
+    clock_gettime(CLOCK_REALTIME, &ts);
+    printf("clock_gettime: CLOCK_REALTIME: ts sec=%ld nsec=%ld\n",
+        ts.tv_sec, ts.tv_nsec);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
+    printf("clock_gettime: CLOCK_PROCESS_CPUTIME_ID: ts sec=%ld nsec=%ld\n",
+        ts.tv_sec, ts.tv_nsec);
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
+    printf("clock_gettime: CLOCK_THREAD_CPUTIME_ID: ts sec=%ld nsec=%ld\n",
+        ts.tv_sec, ts.tv_nsec);
+    
+    printf("usleep: 100 ms\n");
+    usleep(100 * 1000);
+    printf("usleep: 1000 ms\n");
+    usleep(1000 * 1000);
+    printf("usleep: 3 s\n");
+    usleep(1000 * 1000 * 3);
+    
+    struct tms tms;
+    times(&tms);
+    printf("times: cstime=%lx cutime=%lx stime=%lx utime=%lx\n", 
+        tms.tms_cstime, tms.tms_cutime, tms.tms_stime, tms.tms_utime);
+
+    char hostname[64];
+    gethostname(hostname, 64);
+    printf("gethostname: hostname %s\n", hostname);
+    
+}
+
 int main()
 {
     #if 0
@@ -236,7 +314,10 @@ int main()
     //file_test2();
     //file_test3();
     //file_test4();
-    pipe_test();
+    //pipe_test();
+    //sched_test();
+    //alarm_test();
+    time_test();
     while (1)
     {
         /* code */

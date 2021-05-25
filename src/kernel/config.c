@@ -2,6 +2,7 @@
 #include <xbook/task.h>
 #include <xbook/clock.h>
 #include <xbook/driver.h>
+#include <xbook/safety.h>
 #include <errno.h>
 #include <stddef.h>
 
@@ -48,6 +49,5 @@ int sys_gethostname(char *name, size_t len)
 {
     if (!name || !len)
         return -EINVAL;
-    strncpy(name, KERNEL_NAME, min(len, KERNEL_NAME_LEN));
-    return 0;
+    return mem_copy_to_user(name, KERNEL_NAME, min(len, KERNEL_NAME_LEN));
 }

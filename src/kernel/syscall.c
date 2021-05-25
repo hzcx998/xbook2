@@ -108,7 +108,6 @@ void syscall_init()
     syscalls[SYS_DUP] = sys_dup;
     syscalls[SYS_DUP2] = sys_dup2;
     syscalls[SYS_PIPE] = sys_pipe;
-    #if 0
     syscalls[SYS_SHMGET] = sys_shmem_get;
     syscalls[SYS_SHMPUT] = sys_shmem_put;
     syscalls[SYS_SHMMAP] = sys_shmem_map;
@@ -121,7 +120,6 @@ void syscall_init()
     syscalls[SYS_MSGPUT] = sys_msgque_put;
     syscalls[SYS_MSGSEND] = sys_msgque_send;
     syscalls[SYS_MSGRECV] = sys_msgque_recv;
-    #endif
     syscalls[SYS_PROBEDEV] = sys_probedev;
     syscalls[SYS_EXPSEND] = sys_expsend;
     syscalls[SYS_EXPCATCH] = sys_expcatch;
@@ -148,9 +146,7 @@ void syscall_init()
     syscalls[SYS_EXPMASK] = sys_expmask;
     syscalls[SYS_EXPHANDLER] = sys_exphandler;
     syscalls[SYS_SYSCONF] = sys_sysconf;
-    #if 0
     syscalls[SYS_TIMES] = sys_times;
-    #endif
     syscalls[SYS_GETHOSTNAME] = sys_gethostname;
     syscalls[SYS_GETPGID] = sys_get_pgid;
     syscalls[SYS_SETPGID] = sys_set_pgid;

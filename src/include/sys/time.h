@@ -9,7 +9,7 @@
 #define CLOCK_PROCESS_CPUTIME_ID  3 /* 本进程运行时间*/
 #define CLOCK_THREAD_CPUTIME_ID   4 /*本线程运行时间*/
 
-#define CLOCK_NO_TASK
+// #define CLOCK_NO_TASK
 
 struct timeval {
     long tv_sec;         /* seconds */

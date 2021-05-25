@@ -33,20 +33,6 @@ int thread_i = 0;
 void thread_a(void *arg)
 {
     keprint("thread running. %s\n", (char *)arg);
-    
-    #if 0   /* 只有进程才能这么测试 */
-    /* 进行内存映射 */
-    page_map_addr(0x1000, PAGE_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC);
-
-    // vmprint(GET_CUR_PGDIR(), 2);
-
-    dbgprintln("vir=%p phy=%p\n", 0x1000, addr_vir2phy(0x1000));
-
-    /* 尝试访问不存在的虚拟地址 */
-    uint64_t *p = (uint64_t *) 0x1000;
-    *p = 0x12345678ABCDEF;
-    dbgprintln("DATA=%lx\n", *p);
-    #endif
     task_t *cur = task_current;
     while (1)
     {
