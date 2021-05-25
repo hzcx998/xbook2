@@ -694,7 +694,7 @@ void proc_dump_arg(char *arg[])
  */
 int proc_copy_arg_from_user(char *dst[], char *src[])
 {
-    if (!dst || !src)
+    if (!dst)
         return -1;
     uint64_t uargv = (uint64_t ) src;
     uint64_t *uarg;

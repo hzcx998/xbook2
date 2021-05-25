@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 
 void t()
@@ -22,6 +23,16 @@ int fib(int n)
         return 1;
     return fib(n - 1) + fib(n - 2);
 }
+
+file_test()
+{
+    
+
+
+
+    while (1);
+}
+
 
 int main()
 {
@@ -61,6 +72,13 @@ int main()
     char *str = "[INIT]: start.\n";
     write(tty1, str, strlen(str));
     
+
+    file_test();
+
+
+
+
+
     /* exec测试 */
     char *argv[3] = {"/sbin/test1","arg1", 0};
     char *env[3] = {"env0", "env1",0};
@@ -119,36 +137,29 @@ int main()
     free(mbuf1);
     free(mbuf2);
     printf("test done!\n");
-    
-    while (1)
-    {
-        /* code */
-    }
-    
+
     // printf("hello, world!\n");
     pid_t pid = fork();
     if (pid > 0) {
-        write(tty1, "I am parent\n", 12);
+        printf("I am parent, pid=%d child=%d\n", getpid(), pid);
         int state;
         waitpid(pid, &state, 0);
         write(tty1, "Wait done\n", 9);
-        while (1)
-        {
-            /* code */
-        }
     } else {
-        write(tty1, "I am child\n", 11);
+        printf("I am child, pid=%d parent=%d\n", getpid(), getppid());
         sleep(3);
-        write(tty1, "sleep done\n", 11);
-        _exit(0);
+        printf("sleep done\n");
     }
     pid = fork();
     if (pid > 0) {
-        write(tty1, "I am parent\n", 12);    
+        printf("I am parent, pid=%d child=%d\n", getpid(), pid);
+        int state;
+        waitpid(pid, &state, 0);
     } else {
-        write(tty1, "I am child\n", 11);    
+        printf("I am child, pid=%d parent=%d\n", getpid(), getppid());
     }
     #endif
+    _exit(0);
     while (1)
     {
         /* code */

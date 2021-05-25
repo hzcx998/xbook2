@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <xbook/fd.h>
 #include <xbook/dir.h>
+#include <xbook/schedule.h>
 
 /* kfile 操作将会直接使用全局文件表，不会安装到用户的文件表中，因此可以长久存在 */
 
@@ -87,4 +88,15 @@ int kfile_rmdir(const char *path)
     if (!path)
         return -EINVAL;
     return fsif.rmdir((char *) path);
+}
+
+int kfile_getcwd(char *buf, int bufsz)
+{
+    if (!buf)
+        return -EINVAL;
+    task_t *cur = task_current;
+    if (!cur->fileman)
+        return -EINVAL;
+    memcpy(buf, cur->fileman->cwd, min((bufsz == 0) ? MAX_PATH : bufsz, MAX_PATH));
+    return 0;
 }
