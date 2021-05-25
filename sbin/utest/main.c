@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <assert.h>
 #include <sys/wait.h>
 
 void t()
@@ -108,6 +109,90 @@ int file_test3()
     close(fd);
 }
 
+int file_test4()
+{
+    FILE *fp = NULL;
+    fp = fopen("/test2.txt", "wb");
+    if (!fp) {
+        printf("fopen failed\n");
+        return -1;
+    }
+    fwrite("hello", 5, 1, fp);
+    fclose(fp);
+
+
+    printf("test dir\n");
+
+    rmdir("/testdir/abc/def");
+    rmdir("/testdir/abc");
+    rmdir("/testdir/qwq");
+    rmdir("/testdir2");
+    rmdir("/testdir");
+    
+    assert(!mkdir("/testdir", 0666));
+    assert(!mkdir("/testdir2", 0666));
+    assert(!mkdir("/testdir/abc", 0666));
+    assert(!mkdir("/testdir/abc/def", 0666));
+    assert(mkdir("/testdir/def/efg", 0666));
+    
+    char buf[32] = {0};
+    getcwd(buf, 32);
+    printf("cwd: %s\n", buf);
+    printf("chdir: %d\n", chdir("/testdir"));
+    getcwd(buf, 32);
+    printf("cwd: %s\n", buf);
+    assert(!mkdir("qwq", 0666));
+    printf("chdir: %d\n", chdir("qwq"));
+    getcwd(buf, 32);
+    printf("cwd: %s\n", buf);
+    printf("chdir: %d\n", chdir(".."));
+    getcwd(buf, 32);
+    printf("cwd: %s\n", buf);
+    printf("chdir: %d\n", chdir("/"));
+    getcwd(buf, 32);
+    printf("cwd: %s\n", buf);
+    
+    printf("test end\n");
+    return 0;
+}
+
+
+int pipe_test()
+{
+    printf("----pipe test----\n");
+    int fd[2];
+    int ret = pipe(fd);
+    if (ret < 0) {
+        printf("create pipe failed!\n");
+        return -1;
+    }
+    int pid = fork();
+    if (pid == -1)
+        return -1; 
+    /* 父进程读取子进程传递的数据 */
+
+    if (pid > 0) {
+        
+        printf("I am parent %d, my child %d.\n", getpid(), pid);
+        close(fd[1]);
+        /* 读取数据 */
+        char buf[32];
+        memset(buf, 0, 32);
+        read(fd[0], buf, 32);
+        printf("parent read: %s\n", buf);
+
+        close(fd[0]);
+    } else {
+        
+        printf("I am child %d, my parent %d.\n", getpid(), getppid());
+        close(fd[0]);
+        write(fd[1], "hello, pipe!\n", strlen("hello, pipe!\n"));
+        printf("child write done!\n");
+        close(fd[1]);
+    }
+    return 0;
+}
+
 int main()
 {
     #if 0
@@ -148,9 +233,10 @@ int main()
     
 
     //file_test1();
-    file_test2();
+    //file_test2();
     //file_test3();
-
+    //file_test4();
+    pipe_test();
     while (1)
     {
         /* code */

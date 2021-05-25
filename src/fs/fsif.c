@@ -498,7 +498,7 @@ int sys_chdir(const char *path)
     task_t *cur = task_current;
     if (!cur->fileman)
         return -EINVAL;
-    dir_t dir = sys_opendir(_path);
+    dir_t dir = fsif.opendir(_path);
     if (dir < 0) {
         return -ENOFILE;
     }

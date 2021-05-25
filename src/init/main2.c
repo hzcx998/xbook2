@@ -24,7 +24,6 @@ int kernel_main(void)
     vir_mem_init();
     irq_description_init();
     softirq_init();
-
     schedule_init();
     tasks_init();
     syscall_init();
@@ -32,6 +31,9 @@ int kernel_main(void)
     clock_init();
     timers_init();
     fifo_init();
+    share_mem_init();
+    msg_queue_init();
+    sem_init();
     interrupt_enable();
     driver_framewrok_init();
     initcalls_exec();

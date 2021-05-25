@@ -182,7 +182,6 @@ int proc_load_image32(vmm_t *vmm, Elf32_Ehdr *elf_header, int fd)
 
 int proc_load_image64(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
 {
-    #ifdef TASK_TINY
     Elf64_Phdr prog_header;
     Elf64_Off prog_header_off = elf_header->e_phoff;
     Elf64_Half prog_header_size = elf_header->e_phentsize;
@@ -240,14 +239,12 @@ int proc_load_image64(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
         prog_header_off += prog_header_size;
         grog_idx++;
     }
-    #endif
     return 0;
 }
 
 
 int proc_load_image64_ext(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
 {
-    #ifdef TASK_TINY
     Elf64_Phdr prog_header;
     Elf64_Off prog_header_off = elf_header->e_phoff;
     Elf64_Half prog_header_size = elf_header->e_phentsize;
@@ -308,7 +305,6 @@ int proc_load_image64_ext(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
         prog_header_off += prog_header_size;
         grog_idx++;
     }
-    #endif
     return 0;
 }
 
@@ -463,7 +459,6 @@ int proc_destroy(task_t *task, int thread)
 
 void proc_trap_frame_init(task_t *task)
 {
-    // #ifndef TASK_TINY
     #ifdef TASK_TRAPFRAME_ON_KSTACK
     trap_frame_t *frame = (trap_frame_t *)\
         ((unsigned long)task + TASK_KERN_STACK_SIZE - sizeof(trap_frame_t));
@@ -472,7 +467,6 @@ void proc_trap_frame_init(task_t *task)
     assert(frame != NULL);
     #endif
     user_frame_init(frame);
-    // #endif
 }
 
 int proc_deal_zombie_child(task_t *parent)
@@ -533,8 +527,6 @@ void proc_entry(void* arg)
     
     proc_execve(pathname, (const char **)cur->vmm->argv, (const char **)cur->vmm->envp);
     
-    #ifndef TASK_TINY
-    #endif
     /* rease proc resource */
     proc_release(cur);
     /* thread exit. */
@@ -578,8 +570,6 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     
     if (proc_vmm_init(task)) {
         fs_fd_exit(task);
-        #ifndef TASK_TINY
-        #endif
         mem_free(task);
         return NULL;
     }
@@ -588,8 +578,6 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
         keprint(PRINT_ERR "process_create: pathname %s build arg buf failed !\n", argv[0]);
         proc_vmm_exit(task);
         fs_fd_exit(task);
-        #ifndef TASK_TINY
-        #endif
         mem_free(task);
         return NULL;
     }
