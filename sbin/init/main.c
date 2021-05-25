@@ -23,10 +23,17 @@ int main(int argc, char *argv[])
     }
     int tty2 = dup(tty1);
 
+    int i;
+    for (i = 0; i < argc; i++) {
+        if (argv[i]) {
+            printf("[init] argv[%d]=%s\n", i, argv[i]);
+        }
+    }
+
     /* 创建一个子进程 */
     int pid = fork();
     if (pid < 0) {
-        printf("[INIT]: fork process error! stop service.\n");
+        printf("[init] fork process error! stop service.\n");
         close(tty2);
         close(tty1);
         close(tty0);
@@ -67,3 +74,4 @@ int main(int argc, char *argv[])
     #endif
     return 0;
 }
+

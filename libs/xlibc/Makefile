@@ -3,6 +3,7 @@ X_ASFLAGS	:= -I xlibc/include
 X_INCDIRS	:= xlibc/include
 
 SRC			:= arch/riscv64/*.S
+SRC			:= arch/riscv64/*.c
 SRC			+= syslib/
 SRC			+= unistd/
 SRC			+= stdio/
@@ -13,6 +14,7 @@ SRC			+= ctype/
 SRC			+= malloc/
 SRC			+= environ/
 SRC			+= math/
+SRC			+= time/
 
 
 

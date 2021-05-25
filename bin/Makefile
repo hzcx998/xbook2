@@ -66,4 +66,27 @@ MODULE      +=  unmount
 MODULE      +=  losetup
 else ifeq ($(ENV_ARCH), riscv64)
 MODULE      +=  sh
+MODULE      +=  echo
+MODULE      +=  cat
+MODULE      +=  cat2
+MODULE      +=  cal
+MODULE      +=  cpuinfo
+MODULE      +=  ls
+MODULE      +=  cp
+MODULE      +=  rm
+MODULE      +=  ps
+MODULE      +=  mem
+MODULE      +=  date
+MODULE      +=  mv
+MODULE      +=  rename
+MODULE      +=  mkdir
+MODULE      +=  rmdir
+MODULE      +=  touch
+#MODULE      +=  tests
+MODULE      +=  hello
+MODULE      +=  uname
+MODULE      +=  archfetch
+MODULE      +=  mount
+MODULE      +=  mkfs
+MODULE      +=  unmount
 endif 

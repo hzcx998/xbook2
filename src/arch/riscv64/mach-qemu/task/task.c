@@ -34,6 +34,46 @@ void task_stack_build(task_t *task, task_func_t *function, void *arg)
     // keprint("task=%s sp=%p\n", task->name, task->context.sp);
 }
 
+/**
+ * 将参数构建到栈中
+ */
+static int build_arg_stack(vmm_t *vmm, unsigned long stackbase, unsigned long *_sp, char **argv)
+{
+    unsigned long sp = *_sp;
+    uint64_t argc;
+    uint64_t ustack[MAX_TASK_STACK_ARG_NR + 1];
+    // Push argument strings, prepare rest of stack in ustack.
+    for(argc = 0; argv[argc]; argc++) {
+        if(argc >= MAX_TASK_STACK_ARG_NR)
+            return -1;
+        sp -= strlen(argv[argc]) + 1;
+        sp -= sp % 16; // riscv sp must be 16-byte aligned
+        if(sp < stackbase)
+            return -1;
+        if(copyout(vmm->page_storage, sp, argv[argc], strlen(argv[argc]) + 1) < 0)
+            return -1;
+        ustack[argc] = sp;
+    }
+    ustack[argc] = 0;
+
+    // push the array of argv[] pointers.
+    sp -= (argc+1) * sizeof(uint64_t);
+    sp -= sp % 16;
+    if(sp < stackbase)
+        return -1;
+    if(copyout(vmm->page_storage, sp, (char *)ustack, (argc+1)*sizeof(uint64_t)) < 0)
+        return -1;
+    
+    // save argc
+    sp -= sizeof(uint64_t);
+    if(copyout(vmm->page_storage, sp, (char *)&argc, sizeof(uint64_t)) < 0)
+        return -1;
+    // save sp as new value
+    *_sp = sp;
+    return 0;
+} 
+
+
 int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp)
 {
     vmm->stack_end = USER_STACK_TOP;
@@ -43,36 +83,25 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
         MEM_SPACE_MAP_FIXED | MEM_SPACE_MAP_STACK) == ((void *)-1)) {
         return -1;
     }
-    
-    int argc = 0;
-    char **new_envp = NULL;
+    /**
+     * 参数布局：
+     * --------*
+     * env arg *
+     * --------*
+     * arg     *
+     * --------*
+     * argc    * <- sp
+     * --------*
+     */
     unsigned long arg_bottom = 0;
-    char **new_argv = NULL;
-    #if 0
-    argc = proc_build_arg(vmm->stack_end, &arg_bottom, envp, &new_envp);
-    argc = proc_build_arg(arg_bottom, &arg_bottom, argv, &new_argv);
-    
-    if (!arg_bottom) {
-        mem_space_unmmap(vmm->stack_start, vmm->stack_end - vmm->stack_start);
+    arg_bottom = vmm->stack_end;
+    if (build_arg_stack(vmm, vmm->stack_end - PAGE_SIZE, &arg_bottom, argv) < 0) {
+        mem_space_unmmap2(vmm, vmm->stack_start, vmm->stack_end - vmm->stack_start);
         return -1;
     }
-    #else
-    arg_bottom = vmm->stack_end;
-    #endif
-    /* 传参数 */
-    #if 0
-    frame->ecx = argc;
-    frame->ebx = (unsigned int) new_argv;
-    frame->edx = (unsigned int) new_envp;
-
-    frame->esp = (unsigned long) arg_bottom;
-    frame->ebp = frame->esp;
-    #else
-    frame->a0 = argc;
-    frame->a1 = (uint64_t) new_argv;
-    frame->a2 = (uint64_t) new_envp;
-    frame->sp = (uint64_t) arg_bottom;
-    #endif
+    /* sp保存参数信息，通过sp就可以找到所有参数了 */
+    frame->sp = arg_bottom;
+    // noteprintln("process_frame_init: sp=%p", arg_bottom);
     return 0;
 }
 
