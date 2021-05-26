@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibc.a libuview.a
+X_LIBS		+= libuview.a
 
 NAME		:= uview
 SRC			+= main.c

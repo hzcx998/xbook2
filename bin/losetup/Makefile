@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibc.a
+
 
 NAME		:= losetup
 SRC			+= main.c

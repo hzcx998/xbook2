@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibc.a
+
 
 NAME		:= echo
 SRC			+= main.c

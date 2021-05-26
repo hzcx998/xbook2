@@ -8,7 +8,6 @@
 //#define CONSOLE_DEV "/dev/tty0"
 #define CONSOLE_DEV "/dev/con0"
 
-
 int main(int argc, char *argv[])
 {
     /* 打开tty，用来进行基础地输入输出 */
@@ -22,8 +21,6 @@ int main(int argc, char *argv[])
         return -1;
     }
     int tty2 = dup(tty1);
-
-    write(1, "[init] started!\n", 16);
 
     int i;
     for (i = 0; i < argc; i++) {

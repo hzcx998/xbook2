@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibc.a
+
 X_INCDIRS	+= mp3player/helix/pub
 
 X_CFLAGS	+= -w

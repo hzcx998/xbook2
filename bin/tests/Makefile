@@ -1,4 +1,4 @@
-X_LIBS		+= libxlibc.a libpthread.a
+X_LIBS		+= libpthread.a
 
 X_CFLAGS	+= -O0
 

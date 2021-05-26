@@ -64,26 +64,28 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
 static int
 loadseg(void *pgdir, uint64_t va, int fd, unsigned long offset, size_t sz)
 {
-  uint32_t i, n;
-  uint64_t *pa;
-  if((va % PAGE_SIZE) != 0)
-    panic("loadseg: va must be page aligned");
+    uint32_t i, n;
+    uint64_t *pa;
 
-  for(i = 0; i < sz; i += PAGE_SIZE){
-    pa = walkaddr((pgdir_t)pgdir, va + i);
-    if(pa == NULL)
-      panic("loadseg: address should exist");
-    if(sz - i < PAGE_SIZE)
-      n = sz - i;
-    else
-      n = PAGE_SIZE;
-    
-    kfile_lseek(fd, offset+i, SEEK_SET);
-    if (kfile_read(fd, (void *)pa, n) != n) {
-        keprint(PRINT_ERR "loadseg: read file failed!\n");
-        return -1;
+    uint64_t _va = va & PAGE_MASK;
+    if((_va % PAGE_SIZE) != 0)
+        panic("loadseg: va %p must be page aligned", _va);
+
+    for(i = 0; i < sz; i += PAGE_SIZE){
+        pa = walkaddr((pgdir_t)pgdir, _va + i);
+        if(pa == NULL)
+        panic("loadseg: address should exist");
+        if(sz - i < PAGE_SIZE)
+            n = sz - i;
+        else
+            n = PAGE_SIZE;
+        
+        kfile_lseek(fd, offset+i, SEEK_SET);
+        if (kfile_read(fd, (void *)pa, n) != n) {
+            keprint(PRINT_ERR "loadseg: read file failed!\n");
+            return -1;
+        }
     }
-  }
 
   return 0;
 }
