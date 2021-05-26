@@ -19,10 +19,12 @@ X_LIBDIRS	:= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \
 				
 else ifeq ($(ENV_ARCH), riscv64)
 X_LDFLAGS	:= $(ENV_LDFLAGS) $(ENV_USER_LD_SCRIPT)
-X_INCDIRS	:= 	$(LIBS_DIR)/xlibc/include
+X_INCDIRS	:= 	$(LIBS_DIR)/xlibc/include \
+				$(LIBS_DIR)/sconf
 
 X_LIBDIRS	+= 	$(LIBS_DIR)/xcrt \
-				$(LIBS_DIR)/xlibc
+				$(LIBS_DIR)/xlibc \
+				$(LIBS_DIR)/sconf
 endif 
 
 X_LIBS		:= libxcrt.a

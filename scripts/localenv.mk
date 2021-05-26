@@ -4,7 +4,7 @@
 #CROSS_COMPILE 	?= 
 #PLATFORM		?=
 CROSS_COMPILE 	?= riscv-none-embed-
-PLATFORM		?= riscv64-qemu
+PLATFORM		?= riscv64-k210
 
 #
 # Get platform information about ARCH and MACH from PLATFORM variable.

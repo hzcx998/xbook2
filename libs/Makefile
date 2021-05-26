@@ -12,7 +12,7 @@ export AS LD
 
 MODULE		:= xcrt
 MODULE		+= xlibc
+MODULE		+= sconf
 #MODULE		+= xlibcpp
-#MODULE		+= sconf
 #MODULE		+= pthread
 #MODULE		+= uview

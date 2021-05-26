@@ -21,6 +21,7 @@ MKDIR		= mkdir
 
 # arch tools
 OBJDUMP		= $(CROSS_COMPILE)objdump
+OBJCOPY		= $(CROSS_COMPILE)objcopy
 GDB			= $(CROSS_COMPILE)gdb
 
 # virtual machine
@@ -82,15 +83,39 @@ ifeq ($(ENV_MACH),mach-qemu) # riscv64 qemu
 
 	HDA_IMG		= $(IMAGE_DIR)/c.img
 	FS_DISK		= $(HDA_IMG)
+else ifeq ($(ENV_MACH),mach-k210) # riscv64 k210
+	RUSTSBI 	= $(ARCH)/$(ENV_MACH)/boot/SBI/sbi-k210
+
+	HDA_SZ		= 134217728 # 128 M
+
+	HDA_IMG		= $(IMAGE_DIR)/c.img
+	FS_DISK		= $(HDA_IMG)
+
+	K210_BIN 	= $(KERNSRC)/k210.bin
+	K210_ASM 	= $(KERNSRC)/k210.asm.dump
+	K210_SERIALPORT := /dev/ttyUSB0
+
+	SD			?= 
+
+# 管理员执行
+ifeq ($(OS),Windows_NT)
+	SUDO		:= 
+else
+	SUDO		:= sudo
+endif
+
 endif # ($(ENV_MACH),mach-qemu)
 endif # ($(ENV_ARCH),riscv64)
 
 # kernel file
 KERNEL_ELF 	= $(KERNSRC)/kernel.elf
-KERNEL_BIN 	= $(KERNSRC)/kernel
+KERNEL_BIN 	= $(KERNSRC)/kernel.bin
 
 DUMP_FILE	?= $(KERNEL_ELF)
 DUMP_FLAG	?= 
+
+$(warning $(ENV_MACH))
+$(warning $(ENV_ARCH))
 
 # 参数
 .PHONY: all kernel build debuild qemu qemudbg user user_clean dump
@@ -99,8 +124,38 @@ DUMP_FLAG	?=
 all : kernimg
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 
+ifeq ($(ENV_ARCH),x86) # x86-i386
 # run启动虚拟机
 run: qemu
+else ifeq ($(ENV_ARCH),riscv64) # riscv64
+ifeq ($(ENV_MACH),mach-qemu) # riscv64 qemu
+# run启动虚拟机
+run: qemu
+else ifeq ($(ENV_MACH),mach-k210) # riscv64 k210
+# 写入串口启动
+run: all
+	$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $(KERNEL_BIN)
+	$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(K210_BIN)
+	$(DD) if=$(KERNEL_BIN) of=$(K210_BIN) bs=128k seek=1
+	$(OBJDUMP) -D -b binary -m riscv $(K210_BIN) > $(K210_ASM)
+	@echo "K210 run..."
+ifeq ($(OS),Windows_NT)
+#@python3 ./tools/kflash.py -p $(K210_SERIALPORT) -b 1500000 -t $(K210_BIN)
+else
+	@$(SUDO) chmod 777 $(K210_SERIALPORT)
+	@python3 ./tools/kflash.py -p $(K210_SERIALPORT) -b 1500000 -t $(K210_BIN)
+endif
+
+# Write sdcard
+sdcard: build
+	@if [ "$(SD)" != "" ]; then \
+		echo "flashing into sd card..."; \
+		$(SUDO) $(DD) if=fs.img of=$(SD); \
+	else \
+		echo "sd card not detected!"; fi
+
+endif
+endif
 
 # 先写rom，在编译内核
 kernel:
@@ -120,6 +175,9 @@ endif # ($(ENV_MACH),mach-i386)
 else ifeq ($(ENV_ARCH),riscv64)
 ifeq ($(ENV_MACH),mach-qemu)
 # 将rustsbi和内核写入内核镜像
+
+else ifeq ($(ENV_MACH),mach-k210)
+
 endif # ($(ENV_MACH),mach-qemu)
 endif # ($(ENV_ARCH),riscv64)
 
@@ -132,32 +190,24 @@ else
 	$(MAKE) -s -C  $(FATFS_DIR)
 endif # ($(OS),Windows_NT)s
 ifeq ($(ENV_ARCH),x86)
-ifeq ($(ENV_MACH),mach-i386)
 	$(MAKE) -s -C  $(LIBS_DIR)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
-endif # ($(ENV_MACH),mach-i386)
 else ifeq ($(ENV_ARCH),riscv64)
-ifeq ($(ENV_MACH),mach-qemu)
 	$(MAKE) -s -C  $(LIBS_DIR)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
-endif # ($(ENV_MACH),mach-qemu)
 endif # ($(ENV_ARCH),riscv64)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 
 buildimg:
 	-$(MKDIR) $(IMAGE_DIR)
 ifeq ($(ENV_ARCH),x86)
-ifeq ($(ENV_MACH),mach-i386)
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG)
-endif # ($(ENV_MACH),mach-i386)
 else ifeq ($(ENV_ARCH),riscv64)
-ifeq ($(ENV_MACH),mach-qemu)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG) # fs disk
-endif # ($(ENV_MACH),mach-qemu)
 endif # ($(ENV_ARCH),x86)
 
 # 清理环境。
@@ -177,19 +227,14 @@ endif # ($(OS),Windows_NT)
 	
 user: 
 ifeq ($(ENV_ARCH),x86)
-ifeq ($(ENV_MACH),mach-i386)
 	$(MAKE) -s -C  $(LIBS_DIR) && \
 	$(MAKE) -s -C  $(SBIN_DIR) && \
 	$(MAKE) -s -C  $(BIN_DIR)
-endif # ($(ENV_MACH),mach-i386)
 else ifeq ($(ENV_ARCH),riscv64)
-ifeq ($(ENV_MACH),mach-qemu)
 	$(MAKE) -s -C  $(LIBS_DIR) && \
 	$(MAKE) -s -C  $(SBIN_DIR) && \
 	$(MAKE) -s -C  $(BIN_DIR)
-endif # ($(ENV_MACH),mach-qemu)
 endif # ($(ENV_ARCH),x86)
-
 
 user_clean: 
 	$(MAKE) -s -C  $(LIBS_DIR) clean && \

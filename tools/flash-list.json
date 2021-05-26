@@ -1,0 +1,15 @@
+{
+  "version": "0.1.0",
+  "files": [
+    {
+      "address": 0,
+      "bin": "sbi.bin",
+      "sha256Prefix": true
+    },
+    {
+      "address": 2097152,
+      "bin": "k210.bin",
+      "sha256Prefix": true 
+    }
+  ]
+}

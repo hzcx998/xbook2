@@ -12,8 +12,14 @@ ARCH_DIR		:= arch/$(ENV_ARCH)
 X_ASFLAGS	:= $(ENV_AFLAGS) -I $(ARCH_DIR)/include/
 X_CFLAGS    := $(ENV_CFLAGS)
 
-X_INCDIRS	:= include/ $(ARCH_DIR)/include/ $(ARCH_DIR)/$(ENV_MACH)/include
+#X_INCDIRS	:= include/ $(ARCH_DIR)/include/ $(ARCH_DIR)/$(ENV_MACH)/include
 
+ifeq ($(ENV_MACH), mach-i386)
+X_INCDIRS	:= include/ $(ARCH_DIR)/include/ $(ARCH_DIR)/$(ENV_MACH)/include
+else
+# 进行特殊化处理
+X_INCDIRS	:= include/ $(ARCH_DIR)/include/ $(ARCH_DIR)/mach-qemu/include
+endif
 X_LDFLAGS	:=  $(ENV_LDFLAGS)
 
 AS			:=	$(ENV_AS)
