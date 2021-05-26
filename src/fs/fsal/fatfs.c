@@ -31,6 +31,7 @@ typedef struct {
 
 typedef struct {
     FIL file;
+    char *dir_path;     /* 目录路径：只有被当做目录打开时才有效，默认为NULL */
 } fatfs_file_extention_t;
 
 fatfs_extention_t fatfs_extention;
@@ -229,6 +230,7 @@ static int fsal_fatfs_open(void *path, int flags)
     fsal_file_t *fp = fsal_file_alloc();
     if (fp == NULL)
         return -ENOMEM;
+    // errprint("fatfs: open path %s flags %d\n", path, flags);
     const TCHAR *p = (const TCHAR *) path;
     fp->extension = mem_alloc(sizeof(fatfs_file_extention_t));
     if (!fp->extension) {
@@ -236,6 +238,8 @@ static int fsal_fatfs_open(void *path, int flags)
         fsal_file_free(fp);
         return -ENOMEM;
     }
+    fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
+    extension->dir_path = NULL;     /* 普通文件时为NULL，为目录时才有效 */
 
     fp->fsal = &fatfs_fsal;
 
@@ -257,13 +261,42 @@ static int fsal_fatfs_open(void *path, int flags)
         mode |= FA_OPEN_ALWAYS;
     }
 
-    FRESULT fres;
-    fres = f_open((FIL *)fp->extension, p, mode);
-    if (fres != FR_OK) {
-        // errprint("fatfs: open file %s failed! errcode:%d, flags:%x\n", p, fres, flags);
-        mem_free(fp->extension);
-        fsal_file_free(fp);
-        return -ENOFILE;
+    /* 如果要打开一个目录，那么就检测目录是否存在，然后返回指向这个目录的文件就行了 */
+    if (flags & O_DIRECTORY) {
+        /* 检测目录是否存在 */
+        FRESULT res;
+        DIR dir;
+        res = f_opendir(&dir, p); /* Open the directory */
+        if (res != FR_OK) {
+            errprintln("[fs] fatfs open: dir %s not exist", p);
+            mem_free(fp->extension);
+            fsal_file_free(fp);
+            return -ENOFILE;
+        }
+        res = f_closedir(&dir);
+        if (res != FR_OK) {
+            errprintln("[fs] fatfs open: close dir %s error", p);
+            mem_free(fp->extension);
+            fsal_file_free(fp);
+            return -EPERM;
+        }
+        extension->dir_path = mem_alloc(MAX_PATH);
+        if (extension->dir_path == NULL) {
+            errprintln("[fs] fatfs open: memory alloc for dir path %s error", p);
+            mem_free(fp->extension);
+            fsal_file_free(fp);
+            return -ENOMEM;
+        }
+        strncpy(extension->dir_path, p, MAX_PATH);   /* save path */
+    } else {
+        FRESULT fres;
+        fres = f_open((FIL *)&extension->file, p, mode);
+        if (fres != FR_OK) {
+            // errprint("fatfs: open file %s failed! errcode:%d, flags:%x\n", p, fres, flags);
+            mem_free(fp->extension);
+            fsal_file_free(fp);
+            return -ENOFILE;
+        }
     }
     return FSAL_FILE2IDX(fp);
 }
@@ -275,11 +308,17 @@ static int fsal_fatfs_close(int idx)
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     if (FSAL_BAD_FILE(fp))
         return -1;
-    FRESULT fres;
-    fres = f_close((FIL *)fp->extension);
-    if (fres != FR_OK) {    
-        errprint("[fatfs]: close file failed!\n");
-        return -1;
+    fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
+    if (extension->dir_path != NULL) {  /* Is director */
+        mem_free(extension->dir_path);
+        dbgprintln("[fs] fatfs close: path %s", extension->dir_path);
+    } else {
+        FRESULT fres;
+        fres = f_close((FIL *)fp->extension);
+        if (fres != FR_OK) {    
+            errprint("[fatfs]: close file failed!\n");
+            return -1;
+        }
     }
     if (fp->extension)
         mem_free(fp->extension);
@@ -287,6 +326,17 @@ static int fsal_fatfs_close(int idx)
     if (fsal_file_free(fp) < 0)
         return -1;
     return 0;
+}
+
+static char *fsal_fatfs_dirfd_path(int idx)
+{
+    if (FSAL_BAD_FILE_IDX(idx))
+        return NULL;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))
+        return NULL;
+    fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
+    return extension->dir_path;
 }
 
 /**
@@ -778,5 +828,6 @@ fsal_t fatfs_fsal = {
     .fcntl      =fsal_fatfs_fcntl,
     .fstat      =fsal_fatfs_fstat,
     .access     =fsal_fatfs_access,
+    .dirfd_path =fsal_fatfs_dirfd_path,
     .extention  = (void *)&fatfs_extention,
 };

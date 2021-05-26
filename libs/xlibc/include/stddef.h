@@ -110,6 +110,9 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #endif
 
+/* file at */
+#define AT_FDCWD -100
+
 #ifdef __cplusplus
 }
 #endif

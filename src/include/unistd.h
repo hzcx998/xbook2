@@ -3,6 +3,7 @@
 
 #include <types.h>
 #include <stddef.h>
+#include <xbook/config.h>
 
 /* 高4位是属性位 */
 #define S_IFSOCK 0x90    //scoket
@@ -45,6 +46,10 @@
 #define O_BINARY    0x200   // 二进制模式打开
 #define O_NONBLOCK  0x400   // 无阻塞
 #define O_EXCL      0x1000  // 打开时文件一定要不存在才行
+
+#ifdef CONFIG_NEWSYS
+#define O_DIRECTORY 0x0200000
+#endif
 
 #ifndef SEEK_SET
 /* file seek */

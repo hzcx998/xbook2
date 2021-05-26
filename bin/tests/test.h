@@ -10,7 +10,7 @@
 #include <utime.h>
 #include <assert.h>
 #include <errno.h>
-#include <semaphore.h>
+//#include <semaphore.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
 #include <sys/vmm.h>
@@ -68,5 +68,6 @@ int test_sockcall(int argc, char *argv[]);
 int port_comm_test2(int argc, char *argv[]);
 int port_comm_test3(int argc, char *argv[]);
 int socket_test4(int argc, char *argv[]);
+int openat_test(int argc, char *argv[]);
 
 #endif // _TEST_H

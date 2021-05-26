@@ -35,6 +35,7 @@ int brk(void *addr);
 void *sbrk(int increment);
 
 int open(const char *path, int flags, ...);
+int openat(int dirfd, const char *pathname, int flags, mode_t mode);
 int close(int fd);
 int read(int fd, void *buffer, size_t nbytes);
 int write(int fd, const void *buffer, size_t nbytes);

@@ -1,4 +1,5 @@
 #include "test.h"
+#if 0
 #include <pthread.h>
 
 int count = 0; 
@@ -44,3 +45,4 @@ int pthread_test(int argc, char *argv[])
     printf("thread exit with %x!\n", status);
     return 0;
 }
+#endif

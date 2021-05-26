@@ -55,6 +55,8 @@ int sys_mkfs(char *source,         /* 需要创建FS的设备 */
 int sys_probedev(const char *name, char *buf, size_t buflen);
 int sys_openfifo(const char *fifoname, int flags);
 
+int sys_openat(int dirfd, const char *pathname, int flags, mode_t mode);
+
 int fsif_incref(int fd);
 int fsif_decref(int fd);
 

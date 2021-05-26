@@ -33,6 +33,11 @@ int open(const char *path, int flags, ...)
     return retval;
 }
 
+int openat(int dirfd, const char *pathname, int flags, mode_t mode)
+{
+    return syscall4(int, SYS_OPENAT, dirfd, pathname, flags, mode);
+}
+
 int close(int fd)
 {
     if (fd < 0)

@@ -62,5 +62,7 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
 
 #include <stdbool.h>
 
+#define AT_FDCWD -100
+
 #endif  /*_XBOOK_STDDEF_H*/
 

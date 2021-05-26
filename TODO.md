@@ -62,3 +62,12 @@
 * 添加sdcard驱动[ok]
 * 修复不能启动用户程序的bug。（库程序导致)
 * 使用比赛标准库，编译init以及sh。
+* 需要实现的系统调用如下：
+[
+    当在主机实现所有系统调用后，需要进行适配，**参数数值**以及**系统调用**号的修改
+    [ok] int open(const char *path, int flags)
+    [ok] int openat(int dirfd,const char *path, int flags)
+    [ok] int close(int fd)
+    [ok] ssize_t read(int fd, void *buf, size_t len)
+    [ok] ssize_t write(int fd, const void *buf, size_t len)
+]

@@ -82,6 +82,21 @@ static int fsalif_close(int idx)
     return fsal->close(idx);
 }
 
+static char *fsalif_dirfd_path(int idx)
+{
+    if (FSAL_BAD_FILE_IDX(idx))
+        return NULL;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))
+        return NULL;
+    fsal_t *fsal = fp->fsal;
+    if (fsal == NULL)
+        return NULL;
+    if (!fsal->dirfd_path)
+        return NULL;
+    return fsal->dirfd_path(idx);
+}
+
 static int fsalif_ftruncate(int idx, off_t offset)
 {
     if (FSAL_BAD_FILE_IDX(idx))
@@ -721,4 +736,5 @@ fsal_t fsif = {
     .fastwrite  = fsalif_fastwrite,
     .fastio     = fsalif_fastio,
     .mmap       = fsalif_mmap,
+    .dirfd_path = fsalif_dirfd_path,
 };

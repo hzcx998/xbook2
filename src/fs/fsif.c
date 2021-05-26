@@ -27,22 +27,12 @@
 #define FSIF_RW_CHUNK_SIZE  (PAGE_SIZE * 2)
 #define FSIF_RW_BUF_SIZE    512
 
-
-int sys_open(const char *path, int flags)
+static int do_open(char *path, int flags)
 {
-    if (!path)
-        return -EINVAL; 
-    #ifdef FSIF_USER_CHECK
-    char _path[MAX_PATH] = {0};
-    if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0) {
-        return -EINVAL;
-    }
-    #endif
     if (!fsif.open)
         return -ENOSYS;
     char abs_path[MAX_PATH] = {0};
-    build_path(_path, abs_path);
-    
+    build_path(path, abs_path);
     if (!account_selfcheck_permission((char *)abs_path, PERMISION_ATTR_FILE)) {
         return -EPERM;
     }
@@ -50,6 +40,73 @@ int sys_open(const char *path, int flags)
     if (handle < 0)
         return -ENOFILE;
     return local_fd_install(handle, FILE_FD_NORMAL);
+}
+
+int sys_open(const char *path, int flags)
+{
+    if (!path)
+        return -EINVAL; 
+    char _path[MAX_PATH] = {0};
+    if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0) {
+        return -EINVAL;
+    }
+    return do_open(_path, flags);
+}
+
+static char *fsif_dirfd_path(int fd)
+{
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd))
+        return NULL;
+    if (!ffd->fsal->dirfd_path)
+        return NULL;
+    return ffd->fsal->dirfd_path(ffd->handle);
+}
+
+/**
+ * 打开一个文件
+ * 如果pathname是绝对路径，那么dirfd被忽略，功能和open一样。
+ * 如果pathname是想对路径，那么就看dirfd是什么，如果是AT_FDCWD，
+ * 那么就会把pathname和cwd进行合并，得出最终的路径。不然，就会把
+ * dirfd对应的路径和pathname进行合并，得出最后的路径。
+ */
+int sys_openat(int dirfd, const char *pathname, int flags, mode_t mode)
+{
+    if (!pathname)
+        return -EINVAL;
+    char _path[MAX_PATH] = {0};
+    if (mem_copy_from_user_str(_path, (void *)pathname, MAX_PATH) < 0) {
+        return -EINVAL;
+    }
+    // dbgprintln("[fs] sys_openat: dirfd %d, pathname %s, flags %d", dirfd, _path, flags);
+    if (_path[0] == '/' && _path[1] == '\0') {
+        dbgprintln("[fs] sys_openat: can't open root dir '/' directly");
+        return -EINVAL;
+    }
+    if (_path[0] == '/' && _path[1] != '\0') {
+        return do_open(_path, flags);
+    }
+    if (dirfd == AT_FDCWD) {    /* 在进程的cwd目录后面 */
+        return do_open(_path, flags);
+    }
+    char *dirpath = fsif_dirfd_path(dirfd);
+    if (dirpath == NULL) {
+        dbgprintln("[fs] sys_openat: dirfd %d not a director", dirfd);
+        return -ENFILE; /* fd没有对应目录 */
+    }
+    char oldcwd[MAX_PATH] = {0};    /* save old cwd as dirpath */
+    if (kfile_getcwd(oldcwd, MAX_PATH) < 0) {
+        dbgprintln("[fs] sys_openat: get cwd error");
+        return -EPERM;
+    }
+    task_t *cur = task_current;
+    task_set_cwd(cur, dirpath); /* set cwd as dirpath */
+    int newfd = do_open(_path, flags); /* do open file */
+    if (newfd < 0) {
+        dbgprintln("[fs] sys_openat: open file %s error", _path);
+    }
+    task_set_cwd(cur, oldcwd); /* restore cwd as old cwd */
+    return newfd;
 }
 
 int sys_close(int fd)

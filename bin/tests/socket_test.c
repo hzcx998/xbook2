@@ -1,5 +1,5 @@
 #include "test.h"
-
+#if 0
 #include <sys/socket.h>
 
 #include <arpa/inet.h>
@@ -185,3 +185,4 @@ int socket_test4(int argc, char *argv[])
     printf("inet_ntop: %x -> %s\n", address.sin_addr, dest);
     return 0;
 }
+#endif

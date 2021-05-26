@@ -414,6 +414,11 @@ int task_set_cwd(task_t *task, const char *path)
     return 0;
 }
 
+char *task_get_cwd()
+{
+    return task_current->fileman->cwd;
+}
+
 int sys_getver(char *buf, int len)
 {
     if (!buf || !len)

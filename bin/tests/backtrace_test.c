@@ -1,5 +1,6 @@
 #include "test.h"
-#include <stdio.h>
+
+#if 0
 #include <execinfo.h>
 #include <signal.h>
 
@@ -61,3 +62,4 @@ int backtrace_test2(int argc, char* argv[])
     test3();
     return 0;
 }
+#endif

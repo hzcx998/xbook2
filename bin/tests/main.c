@@ -7,6 +7,7 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"openat", openat_test},
     {"sockcall", test_sockcall},
     {"port_comm2", port_comm_test2},
     {"port_comm3", port_comm_test3},
@@ -19,15 +20,17 @@ testfunc_t test_table[] = {
     {"exp", exp_test},
     {"fifo", fifo_test},
     {"sys", sys_test},
-    {"pthread", pthread_test},
+    //{"pthread", pthread_test},
     {"file", file_test},
     {"file2", file_test2},
     {"perm", perm_test},
-    {"socket", socket_test},
+    /*{"socket", socket_test},
     {"socket2", socket_test2},
     {"socket3", socket_test3},
     {"socket4", socket_test4},
     {"backtrace", backtrace_test},
+    {"backtrace2", backtrace_test2},
+    */
     {"video", video_test},
     {"signal", signal_test},
     {"proc", proc_test},
@@ -37,7 +40,6 @@ testfunc_t test_table[] = {
     {"tty", tty_test},
     {"id", id_test},
     {"pty2", pty_test2},
-    {"backtrace2", backtrace_test2},
     {"loop", loop_test},
 };
 
