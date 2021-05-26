@@ -38,9 +38,6 @@
 
 typedef struct _device_extension {
     device_object_t *device_object; /* 设备对象 */
-    fifo_io_t fifoio;
-    uint32_t flags;
-    
     // input
 #define INPUT_BUF 128
     char buf[INPUT_BUF];
@@ -229,7 +226,6 @@ static iostatus_t console_enter(driver_object_t *driver)
     
     device_object_t *devobj;
     device_extension_t *devext;
-
     int id = 0;
     char devname[DEVICE_NAME_LEN] = {0};
 
@@ -246,29 +242,18 @@ static iostatus_t console_enter(driver_object_t *driver)
 
     devext = (device_extension_t *)devobj->device_extension;
     devext->device_object = devobj;
-    unsigned char *buf = mem_alloc(DEV_FIFO_BUF_LEN);
-    if (buf == NULL) {
-        status = IO_FAILED;
-        keprint(PRINT_ERR "console_enter: alloc buf failed!\n");
-        io_delete_device(devobj);
-        return status;
-    }
     devext->e = devext->w = devext->r = 0;
-  
-    fifo_io_init(&devext->fifoio, buf, DEV_FIFO_BUF_LEN);
-    devext->flags = 0;
 #ifdef DEBUG_DRV
     keprint(PRINT_DEBUG "console_enter: device extension: device name=%s object=%x\n",
         devext->device_name.text, devext->device_object);
 #endif
-
     /* 注册中断 */
-    if (irq_register(UART_IRQ, console_intr, 0, "uart irq", DEV_NAME, devext)) {
+    if (irq_register(UART_IRQ, console_intr, 0, "uart irq", DEV_NAME, devext) < 0) {
         keprint(PRINT_ERR "console_enter: register irq %d failed!\n", UART_IRQ);
-        mem_free(buf);
         io_delete_device(devobj);
         return IO_FAILED;
     }
+    dbgprintln("[console] init done");
     return IO_SUCCESS;
 }
 

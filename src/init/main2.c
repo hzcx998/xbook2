@@ -15,6 +15,9 @@
 #include <xbook/fs.h>
 #include <xbook/syscall.h>
 #include <xbook/account.h>
+#include <xbook/sharemem.h>
+#include <xbook/msgqueue.h>
+#include <xbook/sem.h>
 
 int kernel_main(void)
 {

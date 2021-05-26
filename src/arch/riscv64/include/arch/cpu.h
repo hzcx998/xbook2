@@ -22,4 +22,8 @@ static inline void cpu_do_pause(void)
 #define cpu_pause       cpu_do_pause
 #define udelay          cpu_do_udelay
 
+static inline void hartid_init(unsigned long hartid) {
+  asm volatile("mv tp, %0" : : "r" (hartid & 0x1));
+}
+
 #endif  /* _RISCV64_CPU_H */

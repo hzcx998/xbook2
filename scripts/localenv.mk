@@ -3,7 +3,8 @@
 
 #CROSS_COMPILE 	?= 
 #PLATFORM		?=
-CROSS_COMPILE 	?= riscv-none-embed-
+#CROSS_COMPILE 	?= riscv-none-embed-
+CROSS_COMPILE 	?= riscv64-linux-gnu-
 PLATFORM		?= riscv64-k210
 
 #

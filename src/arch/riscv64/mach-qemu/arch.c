@@ -7,8 +7,9 @@
 #include <xbook/debug.h>
 #include <k210_qemu_phymem.h>
 
-int arch_init()
+int arch_init(unsigned long hartid, unsigned long dtb_pa)
 {	
+    hartid_init(hartid);
     arch_debug_init();
     infoprint("welcome to xbook2!\n");
     physic_memory_init();

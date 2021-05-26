@@ -79,14 +79,6 @@
 
 #include <xbook/hardirq.h>
 
-#ifdef QEMU     // QEMU 
-#define UART_IRQ    10 
-#define DISK_IRQ    1
-#else           // k210 
-#define UART_IRQ    33
-#define DISK_IRQ    27
-#endif 
-
 void plic_init(void);
 
 void plic_enable_irq(irqno_t irqno);

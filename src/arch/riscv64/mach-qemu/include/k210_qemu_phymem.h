@@ -15,7 +15,11 @@
 #define KERN_MEM_ADDR                   (RUSTSBI_MEM_ADDR + RUSTSBI_MEM_SIZE)
 
 /* boot mem的大小可以根据内存使用情况进行调整，获取最优大小。 */
+#ifndef QEMU
+#define BOOT_MEM_SIZE                   0x20000     // 128KB
+#else
 #define BOOT_MEM_SIZE                   0x10000     // 64KB
+#endif
 
 /* 物理内存最高地址 */
 #define PHYSIC_MEM_SIZE                 0x600000    // 6MB
