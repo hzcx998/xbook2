@@ -3,9 +3,9 @@
 
 #CROSS_COMPILE 	?= 
 #PLATFORM		?=
-#CROSS_COMPILE 	?= riscv-none-embed-
-CROSS_COMPILE 	?= riscv64-linux-gnu-
-PLATFORM		?= riscv64-k210
+CROSS_COMPILE 	?= riscv-none-embed-
+#CROSS_COMPILE 	?= riscv64-linux-gnu-
+PLATFORM		?= riscv64-qemu
 
 #
 # Get platform information about ARCH and MACH from PLATFORM variable.
@@ -29,7 +29,7 @@ ifeq ($(ENV_ARCH), x86)
 	ifeq ($(shell uname),Darwin) # MacOS 
 		CROSS_COMPILE	:= i386-elf-
 	endif
-	
+	ENV_LIBC	:= xlibc
 	ENV_LD		:=  $(CROSS_COMPILE)ld -m elf_i386
 	ENV_USER_LD_SCRIPT	:= -T ../libs/xlibc/arch/x86/user.ld
 	ENV_AS		:= nasm
@@ -42,8 +42,10 @@ ifeq ($(ENV_ARCH), x86)
 	CFLAGS		+= -DCONFIG_32BIT
 	CFLAGS		+= -D__X86__
 else ifeq ($(ENV_ARCH), riscv64)
+#ENV_LIBC	:= xlibc
+	ENV_LIBC	:= tinylibc
+
 	ENV_LD		:=  $(CROSS_COMPILE)ld 
-	ENV_USER_LD_SCRIPT	:= -T ../libs/xlibc/arch/riscv64/user.ld
 	ENV_AS		:= $(CROSS_COMPILE)gcc -x assembler-with-cpp
 	MCFLAGS		:= -march=rv64imafdc -mabi=lp64d -mcmodel=medany
 	ENV_AFLAGS	:= -ffunction-sections -fdata-sections -ffreestanding -std=gnu99 
@@ -58,6 +60,14 @@ else ifeq ($(ENV_ARCH), riscv64)
 	endif
 	CFLAGS		+= -DCONFIG_64BIT
 	CFLAGS		+= -D__RISCV64__
+ifeq ($(ENV_LIBC), xlibc)
+	ENV_USER_LD_SCRIPT	:= -T ../libs/xlibc/arch/riscv64/user.ld
+	CFLAGS		+= -D__XLIBC__
+else ifeq ($(ENV_LIBC), tinylibc)
+	ENV_USER_LD_SCRIPT	:= -T ../libs/tiny/arch/riscv/user.ld
+	CFLAGS		+= -D__TINYLIBC__
+endif
+
 endif 
 
 ENV_AFLAGS	+= $(MCFLAGS)

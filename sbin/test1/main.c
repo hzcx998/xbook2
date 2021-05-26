@@ -1,10 +1,3 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/wait.h>
-
 int fib(int n)
 {
     if (n < 2)
@@ -12,11 +5,9 @@ int fib(int n)
     return fib(n - 1) + fib(n - 2);
 }
 
-int main()
+int main(int argc, char *argv)
 {
-    printf("hello, I am test1!");
-    int n = fib(10);
-    printf("fib:%d\n", n);
-    _exit(0);
+    fib(10);
+    while (1);
     return 0;
 }

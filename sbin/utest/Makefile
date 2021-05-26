@@ -1,5 +1,3 @@
-X_LIBS		+= libxlibc.a
-
 NAME		:= init
 SRC			+= main.c 
 

@@ -10,9 +10,13 @@ LD			:=  $(ENV_LD)
 AS			:= $(ENV_AS)
 export AS LD
 
+ifeq ($(ENV_LIBC),xlibc)
 MODULE		:= xcrt
 MODULE		+= xlibc
 MODULE		+= sconf
 #MODULE		+= xlibcpp
 #MODULE		+= pthread
 #MODULE		+= uview
+else ifeq ($(ENV_LIBC),tinylibc)
+MODULE		:= tinylibc
+endif

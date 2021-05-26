@@ -1,5 +1,3 @@
-X_LIBS		+= libxlibc.a
-
 NAME		:= login
 SRC			+= main.c
 

@@ -19,15 +19,27 @@ X_LIBDIRS	:= $(LIBS_DIR)/xlibc $(LIBS_DIR)/pthread \
 				
 else ifeq ($(ENV_ARCH), riscv64)
 X_LDFLAGS	:= $(ENV_LDFLAGS) $(ENV_USER_LD_SCRIPT)
-X_INCDIRS	:= 	$(LIBS_DIR)/xlibc/include \
-				$(LIBS_DIR)/sconf
 
-X_LIBDIRS	+= 	$(LIBS_DIR)/xcrt \
-				$(LIBS_DIR)/xlibc \
-				$(LIBS_DIR)/sconf
+# libc select
+ifeq ($(ENV_LIBC),xlibc)
+X_INCDIRS	:= 	$(LIBS_DIR)/xlibc/include
+X_LIBDIRS	:= 	$(LIBS_DIR)/xcrt \
+				$(LIBS_DIR)/xlibc
+else ifeq ($(ENV_LIBC),tinylibc)
+X_INCDIRS	:= 	$(LIBS_DIR)/tinylibc/include
+X_LIBDIRS	:= 	$(LIBS_DIR)/tinylibc
+endif
+
+X_INCDIRS	+=	$(LIBS_DIR)/sconf
+X_LIBDIRS += $(LIBS_DIR)/sconf
+
 endif 
 
-X_LIBS		:= libxcrt.a
+ifeq ($(ENV_LIBC),xlibc)
+X_LIBS		:= libxcrt.a libxlibc.a
+else ifeq ($(ENV_LIBC),tinylibc)
+X_LIBS		:= libtinylibc.a
+endif
 
 AS			:=	$(ENV_AS)
 LD			:=  $(ENV_LD)
@@ -67,6 +79,8 @@ MODULE      +=  mkfs
 MODULE      +=  unmount
 MODULE      +=  losetup
 else ifeq ($(ENV_ARCH), riscv64)
+
+ifeq ($(ENV_LIBC),xlibc)
 MODULE      +=  sh
 MODULE      +=  echo
 MODULE      +=  cat
@@ -91,4 +105,7 @@ MODULE      +=  archfetch
 MODULE      +=  mount
 MODULE      +=  mkfs
 MODULE      +=  unmount
+else ifeq ($(ENV_LIBC),tinylibc)
+
+endif
 endif 

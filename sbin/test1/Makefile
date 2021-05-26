@@ -1,6 +1,4 @@
-X_LIBS		+= libxlibc.a
-
-NAME		:= test1
+NAME		:= init
 SRC			+= main.c 
 
 define CUSTOM_TARGET_CMD

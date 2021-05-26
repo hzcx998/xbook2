@@ -92,6 +92,7 @@ sbin/login/login
 sbin/netserv/netserv
 sbin/utest/init
 sbin/test1/test1
+sbin/test1/init
 
 # /bin
 bin/cat/cat
