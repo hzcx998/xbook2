@@ -27,7 +27,7 @@ enum syscall_num {
     SYS_MUTEX_QUEUE_WAIT,
     SYS_MUTEX_QUEUE_WAKE,
     SYS_PROC_RESERVED = 30,             /* 预留30个接口给进程管理 */
-    SYS_HEAP,
+    SYS_BRK,
     SYS_MUNMAP,
     SYS_VMM_RESERVED = 40,              /* 预留10个接口给内存管理 */
     SYS_SCANDEV, 

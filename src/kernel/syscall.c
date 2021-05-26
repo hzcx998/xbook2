@@ -64,7 +64,7 @@ void syscall_init()
     syscalls[SYS_MUTEX_QUEUE_WAIT] = sys_mutex_queue_wait;
     syscalls[SYS_MUTEX_QUEUE_WAKE] = sys_mutex_queue_wake;
     #endif
-    syscalls[SYS_HEAP] = sys_mem_space_expend_heap;
+    syscalls[SYS_BRK] = sys_brk;
     syscalls[SYS_MUNMAP] = sys_munmap;
     syscalls[SYS_ALARM] = sys_alarm;
     syscalls[SYS_WALLTIME] = sys_get_walltime;

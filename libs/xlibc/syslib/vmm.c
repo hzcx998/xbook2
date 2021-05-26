@@ -2,20 +2,20 @@
 #include <sys/vmm.h>
 
 /**
- * heap() - memory heap operate
+ * brk() - memory addr operate
  * 
- * @heap: heap value
+ * @addr: addr value
  * 
- * if heap = 0, return current heap value.
- * if heap > old heap, expand heap up.
- * if heap < old heap, shrink heap down.
- * if heap = old heap, do nothing.
+ * if addr = 0, return current addr value.
+ * if addr > old addr, expand addr up.
+ * if addr < old addr, shrink addr down.
+ * if addr = old addr, do nothing.
  * 
- * @return: always return newest heap value
+ * @return: always return newest addr value
  */
-void *heap(void *heap)
+int brk(void *addr)
 {
-    return syscall1(void *, SYS_HEAP, heap);
+    return syscall1(int, SYS_BRK, addr);
 }
 
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)

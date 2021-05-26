@@ -278,7 +278,7 @@ the_end:
     return addr;
 }
 
-unsigned long sys_mem_space_expend_heap(unsigned long heap)
+unsigned long sys_brk(unsigned long heap)
 {
     unsigned long ret;
     unsigned long old_heap, new_heap;
@@ -300,7 +300,7 @@ unsigned long sys_mem_space_expend_heap(unsigned long heap)
     if (heap <= vmm->heap_end && heap >= vmm->heap_start) {
         if (!do_mem_space_unmap2(vmm, new_heap, old_heap - new_heap))
             goto set_heap;
-        keprint(PRINT_ERR "sys_mem_space_expend_heap: do_mem_space_unmap failed!\n");
+        keprint(PRINT_ERR "sys_brk: do_mem_space_unmap failed!\n");
         goto the_end;
     }
     
@@ -321,13 +321,13 @@ unsigned long sys_mem_space_expend_heap(unsigned long heap)
         goto the_end;
     }
     if (do_mem_space_expend_heap(vmm, old_heap, new_heap - old_heap) != old_heap) {
-        keprint(PRINT_ERR "sys_mem_space_expend_heap: do_heap failed! addr %x len %x\n",
+        keprint(PRINT_ERR "sys_brk: do_heap failed! addr %x len %x\n",
             old_heap, new_heap - old_heap);
         goto the_end;
     }
 set_heap:
 #ifdef DEBUG_MEM_SPACE   
-    keprint(PRINT_DEBUG "sys_mem_space_expend_heap: set new heap %x old is %x\n",
+    keprint(PRINT_DEBUG "sys_brk: set new heap %x old is %x\n",
         heap, vmm->heap_end);
 #endif
     vmm->heap_end = heap;

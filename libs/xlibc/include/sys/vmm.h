@@ -27,7 +27,6 @@ typedef struct {
 } mmap_args_t;
 
 /* vmm */
-void *heap(void *heap);
 int xmunmap(void *addr, size_t length);
 void *xmmap(int fd, size_t length, int flags);
 

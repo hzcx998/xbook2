@@ -9,17 +9,17 @@
 static void *__curbrk = NULL;
 
 /**
- * brk - 设置断点值
+ * __brk - 设置断点值
  * @addr: 设置的地址
  * 
  * 成功返回0，失败返回-1
  */
-int brk(void *addr)
+int __brk(void *addr)
 {
   	void *newbrk;
 
 	/* 保存新的brk值 */
-	__curbrk = newbrk = (void *) heap(addr);
+	__curbrk = newbrk = (void *) brk(addr);
 	
     //printf("__brk: %x\n", __curbrk);
 	/* 检测执行后的结果 */
@@ -31,7 +31,7 @@ int brk(void *addr)
 }
 
 /**
- * __sbrk - 让断点移动位置
+ * sbrk - 让断点移动位置
  * @increment: 移动的距离，可正可负
  * 
  * 返回移动前的brk指针位置
@@ -48,7 +48,7 @@ void *sbrk(int increment)
   	
 	/* If have not Initialized */
 	if (__curbrk == NULL)
-    	if (brk (0) < 0)      /* Initialize the break.  */
+    	if (__brk (0) < 0)      /* Initialize the break.  */
       		return (void *) -1;
 	
 	/* If no increment, return current brk. */
@@ -62,7 +62,7 @@ void *sbrk(int increment)
   	if ((increment > 0 ?
     	((uint32_t) oldbrk + (uint32_t) increment < (uint32_t) oldbrk) :
        	((int32_t)oldbrk < -((int32_t)increment))) ||
-      	brk ((void *)((int32_t)oldbrk + (int32_t)increment)) < 0)
+      	__brk ((void *)((int32_t)oldbrk + (int32_t)increment)) < 0)
     	return (void *) -1;
 	
 	// printf("__sbrk: %x\n", oldbrk);

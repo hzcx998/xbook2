@@ -52,7 +52,7 @@ void *do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
 void *mem_space_mmap(unsigned long addr, unsigned long paddr, unsigned long len, uint32_t prot,
     uint32_t flags);
 int mem_space_unmmap(unsigned long addr, unsigned long len);
-unsigned long sys_mem_space_expend_heap(unsigned long heap);
+unsigned long sys_brk(unsigned long heap);
 unsigned long mem_space_get_unmaped(vmm_t *vmm, unsigned len);
 
 void *mem_space_mmap_viraddr(unsigned long addr, unsigned long vaddr,

@@ -7,6 +7,7 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"brk", brk_test},
     {"openat", openat_test},
     {"sockcall", test_sockcall},
     {"port_comm2", port_comm_test2},
@@ -42,6 +43,7 @@ testfunc_t test_table[] = {
     {"pty2", pty_test2},
     {"loop", loop_test},
 };
+
 
 int main(int argc, char *argv[])
 {

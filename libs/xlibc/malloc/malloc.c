@@ -43,6 +43,7 @@ static void assert_failed()
 }
 #endif
 
+extern int __brk(void *addr);
 
 /*
  * A short explanation of the data structure and algorithms.
@@ -50,7 +51,7 @@ static void assert_failed()
  * contains the number of bytes requested, but preceeded by
  * an extra pointer to the next the slot in memory.
  * '_bottom' and '_top' point to the first/last slot.
- * More memory is asked for using brk() and appended to top.
+ * More memory is asked for using __brk() and appended to top.
  * The list of free slots is maintained to keep malloc() fast.
  * '_empty' points the the first free slot. Free slots are
  * linked together by a pointer at the start of the
@@ -67,7 +68,7 @@ static int grow(size_t len)
   errno = ENOMEM;
   if ((char *) _top + len < (char *) _top
       || (p = (char *)Align((ptrint)_top + len, BRKSIZE)) < (char *) _top 
-      || brk(p) != 0)
+      || __brk(p) != 0)
 	return(0);
   NextSlot((char *)_top) = p;
   NextSlot(p) = 0;

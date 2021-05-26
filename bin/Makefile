@@ -30,8 +30,8 @@ X_INCDIRS	:= 	$(LIBS_DIR)/tinylibc/include
 X_LIBDIRS	:= 	$(LIBS_DIR)/tinylibc
 endif
 
-X_INCDIRS	+=	$(LIBS_DIR)/sconf
-X_LIBDIRS += $(LIBS_DIR)/sconf
+#X_INCDIRS	+=	$(LIBS_DIR)/sconf
+#X_LIBDIRS 	+= $(LIBS_DIR)/sconf
 
 endif 
 
