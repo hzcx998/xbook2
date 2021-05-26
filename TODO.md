@@ -60,7 +60,7 @@
 * 优化内存分配与释放，查找内存漏洞。
 * 尝试移植到k210板子上面。
 * 添加sdcard驱动[ok]
-* 修复不能启动用户程序的bug。（库程序导致)
+* 修复不能启动用户程序的bug。(库程序导致)
 * 使用比赛标准库，编译init以及sh。
 * 需要实现的系统调用如下：
 [
@@ -70,4 +70,9 @@
     [ok] int close(int fd)
     [ok] ssize_t read(int fd, void *buf, size_t len)
     [ok] ssize_t write(int fd, const void *buf, size_t len)
+    [ok] int brk(void *addr)
+    [ok] int chdir(const char *path)
+    [no] pid_t clone(int (*fn)(void *arg), void *arg, void *stack,
+                    size_t stack_size, unsigned long flags)
+    [ok] pid_t fork(void)
 ]

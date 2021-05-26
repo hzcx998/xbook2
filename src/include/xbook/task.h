@@ -246,4 +246,11 @@ int task_stack_build_when_forking(task_t *child);
 
 unsigned long syscall_dispatch(trap_frame_t *frame);
 
+long sys_clone(unsigned long clone_flags,  
+        unsigned long stack_start,  
+        void *regs,  
+        unsigned long stack_size,  
+        int *parent_tidptr,  
+        int *child_tidptr);
+
 #endif   /* _XBOOK_TASK_H */

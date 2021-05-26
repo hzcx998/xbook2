@@ -156,3 +156,14 @@ int sys_fork()
     //dbgprintln("[fork] parent %s pid=%d forked child %s pid=%d", parent->name, parent->pid, child->name, child->pid);
     return child->pid;  /* 父进程返回子进程pid */
 }
+
+long sys_clone(unsigned long clone_flags,  
+        unsigned long stack_start,  
+        void *regs,  
+        unsigned long stack_size,  
+        int *parent_tidptr,  
+        int *child_tidptr)
+{
+    noteprintln("[task] sys_fork not realize!");
+    return -1;
+}

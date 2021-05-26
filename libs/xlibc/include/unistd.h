@@ -100,6 +100,10 @@ int tcsetpgrp( int filedes, pid_t pgrpid );
 
 int gethostname(char *name, size_t len);
 
+pid_t clone(int (*fn)(void *arg), void *arg, void *stack, 
+            size_t stack_size, unsigned long flags);
+
+
 enum {
     _SC_ARG_MAX = 0,
     _SC_CHILD_MAX,

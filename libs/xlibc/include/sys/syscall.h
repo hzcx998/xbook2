@@ -116,6 +116,7 @@ enum syscall_num {
     SYS_MKFIFO,
     SYS_SOCKCALL,
     SYS_OPENAT,
+    SYS_CLONE,
     SYSCALL_NR,
 };
 
@@ -231,6 +232,16 @@ static inline long __syscall6(long n, long a, long b, long c, long d, long e, lo
 #define syscall4(type, num, arg0, arg1, arg2, arg3) \
         (type) __syscall4((unsigned long ) (num), (unsigned long ) arg0,\
         (unsigned long ) arg1, (unsigned long ) arg2, (unsigned long ) arg3)
+
+#define syscall5(type, num, arg0, arg1, arg2, arg3, arg4) \
+        (type) __syscall5((unsigned long ) (num), (unsigned long ) arg0,\
+        (unsigned long ) arg1, (unsigned long ) arg2, (unsigned long ) arg3,\
+        (unsigned long ) arg4)
+
+#define syscall6(type, num, arg0, arg1, arg2, arg3, arg4, arg5) \
+        (type) __syscall6((unsigned long ) (num), (unsigned long ) arg0,\
+        (unsigned long ) arg1, (unsigned long ) arg2, (unsigned long ) arg3,\
+        (unsigned long ) arg4, (unsigned long ) arg5)
 
 #ifdef __cplusplus
 }

@@ -10,6 +10,7 @@
 #include <utime.h>
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 //#include <semaphore.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
@@ -70,5 +71,9 @@ int port_comm_test3(int argc, char *argv[]);
 int socket_test4(int argc, char *argv[]);
 int openat_test(int argc, char *argv[]);
 int brk_test(int argc, char* argv[]);
+int chdir_test(int argc, char* argv[]);
+int clone_test(int argc, char* argv[]);
+int fork_test(int argc, char* argv[]);
+int close_test(int argc, char* argv[]);
 
 #endif // _TEST_H

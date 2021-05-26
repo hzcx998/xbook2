@@ -155,6 +155,7 @@ void syscall_init()
     syscalls[SYS_SOCKCALL] = sys_sockcall;
     #endif
     syscalls[SYS_OPENAT] = sys_openat;
+    syscalls[SYS_CLONE] = sys_clone;
 }
 
 int syscall_check(uint32_t callno)

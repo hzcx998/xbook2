@@ -117,6 +117,7 @@ enum syscall_num {
     SYS_MKFIFO,
     SYS_SOCKCALL,
     SYS_OPENAT,
+    SYS_CLONE,
     SYSCALL_NR,
 };
 
