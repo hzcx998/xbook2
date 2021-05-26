@@ -27,7 +27,7 @@ uint8_t sched_calc_base_priority(uint32_t level)
 uint8_t sched_calc_new_priority(task_t *task, char adjustment)
 {
     char priority = task->priority;
-    assert((priority < TASK_PRIORITY_REALTIME));
+    assert((priority <= TASK_PRIORITY_REALTIME));
     if ((priority < TASK_PRIORITY_REALTIME)) {
         priority = priority + adjustment;
         if (priority >= TASK_PRIORITY_REALTIME)

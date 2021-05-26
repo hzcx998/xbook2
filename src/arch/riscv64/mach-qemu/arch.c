@@ -5,7 +5,9 @@
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
 #include <xbook/debug.h>
-#include <k210_qemu_phymem.h>
+#include <k210_phymem.h>
+#include <fpioa.h>
+#include <dmac.h>
 
 int arch_init(unsigned long hartid, unsigned long dtb_pa)
 {	
@@ -19,6 +21,11 @@ int arch_init(unsigned long hartid, unsigned long dtb_pa)
     trap_init();
     plic_init();
     
+    #ifndef QEMU
+    fpioa_pin_init();
+    dmac_init();
+    #endif 
+
     return 0;
 }
 

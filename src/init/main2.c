@@ -42,7 +42,7 @@ int kernel_main(void)
     initcalls_exec();
     drivers_print();
     file_system_init();
-    account_manager_init();
+    // account_manager_init();
     kernel_test_init();
     memory_overview();
     task_start_user();

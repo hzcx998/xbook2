@@ -1,7 +1,7 @@
 #ifndef __RISCV64_PHYMEM_H
 #define __RISCV64_PHYMEM_H
 
-#include <k210_qemu_phymem.h>
+#include <k210_phymem.h>
 
 #define KERN_SPACE_TOP_ADDR                VIRT_OFFSET
 #define USER_SPACE_START_ADDR              0x00000000

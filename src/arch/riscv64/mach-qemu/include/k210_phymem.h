@@ -77,6 +77,30 @@
 #define PLIC_SCLAIM(hart)       (PLIC_V + 0x201004 + (hart) * 0x2000)   // 以4字节为单位
 
 
+#ifndef QEMU
+#define GPIOHS                  0x38001000
+#define DMAC                    0x50000000
+#define GPIO                    0x50200000
+#define SPI_SLAVE               0x50240000
+#define FPIOA                   0x502B0000
+#define SPI0                    0x52000000
+#define SPI1                    0x53000000
+#define SPI2                    0x54000000
+#define SYSCTL                  0x50440000
+
+#define GPIOHS_V                (0x38001000 + VIRT_OFFSET)
+#define DMAC_V                  (0x50000000 + VIRT_OFFSET)
+#define GPIO_V                  (0x50200000 + VIRT_OFFSET)
+#define SPI_SLAVE_V             (0x50240000 + VIRT_OFFSET)
+#define FPIOA_V                 (0x502B0000 + VIRT_OFFSET)
+#define SPI0_V                  (0x52000000 + VIRT_OFFSET)
+#define SPI1_V                  (0x53000000 + VIRT_OFFSET)
+#define SPI2_V                  (0x54000000 + VIRT_OFFSET)
+#define SYSCTL_V                (0x50440000 + VIRT_OFFSET)
+
+#endif
+
+
 int physic_memory_init();
 
 unsigned long mem_get_free_page_nr();

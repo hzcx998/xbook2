@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <math.h>
-#include <k210_qemu_phymem.h>
+#include <k210_phymem.h>
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 

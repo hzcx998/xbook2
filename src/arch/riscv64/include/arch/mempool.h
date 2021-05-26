@@ -1,7 +1,7 @@
 #ifndef _RISCV64_MEMPOOL_H
 #define _RISCV64_MEMPOOL_H
 
-#include <k210_qemu_phymem.h>
+#include <k210_phymem.h>
 #include <xbook/list.h>
 #include <xbook/memcache.h>
 #include <const.h>

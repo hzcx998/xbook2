@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <math.h>
-#include <k210_qemu_phymem.h>
+#include <k210_phymem.h>
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 
@@ -51,9 +51,33 @@ void page_init()
     kvmmap(PLIC_V, PLIC, 0x4000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
     kvmmap(PLIC_V + 0x200000, PLIC + 0x200000, 0x4000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
 
+
+    #ifndef QEMU
+    // GPIOHS
+    kvmmap(GPIOHS_V, GPIOHS, 0x1000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+    // DMAC
+    kvmmap(DMAC_V, DMAC, 0x1000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+    // GPIO
+    // kvmmap(GPIO_V, GPIO, 0x1000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+    // SPI_SLAVE
+    kvmmap(SPI_SLAVE_V, SPI_SLAVE, 0x1000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+
+    // FPIOA
+    kvmmap(FPIOA_V, FPIOA, 0x1000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+    // SPI0
+    kvmmap(SPI0_V, SPI0, 0x1000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+    // SPI1
+    kvmmap(SPI1_V, SPI1, 0x1000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+    // SPI2
+    kvmmap(SPI2_V, SPI2, 0x1000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+    // SYSCTL
+    kvmmap(SYSCTL_V, SYSCTL, 0x1000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
+    #endif
+
+
     /* 内核映射后，内核可以通过虚拟地址访问物理地址 */
     // map rustsbi
-    //kvmmap(RUSTSBI_BASE, RUSTSBI_BASE, KERNBASE - RUSTSBI_BASE, PTE_R | PTE_X);
+    //kvmmap(RUSTSBI_BASE, RUSTSBI_BASE, KERNBASE - RUSTSBI_BASE, PAGE_ATTR_READ | PTE_X);
     // map kernel text executable and read-only.
     kvmmap(KERN_MEM_ADDR, KERN_MEM_ADDR, (uint64_t)etext - KERN_MEM_ADDR, PAGE_ATTR_READ | PAGE_ATTR_EXEC);
     // map kernel data and the physical RAM we'll make use of.

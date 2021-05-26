@@ -8,7 +8,6 @@ extern exitcall_t __exitcall_end[];
 
 void initcalls_exec(void)
 {
-	dbgprintln("do init call start");
 	initcall_t * func =  &(*__initcall_start);
 	for (;func < &(*__initcall_end); func++)
 		(*func)();

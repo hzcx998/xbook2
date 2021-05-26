@@ -39,6 +39,24 @@ int fatfs_drv_map[FF_VOLUMES] = {
     0,1,2,3,4,5,6,7,8,9
 };
 
+static int disk_has_fs(unsigned char *buf)
+{
+    int i;
+    #if 0
+    for (i = 0; i < SECTOR_SIZE; i ++) {
+        if (0 == i % 16) {
+            dbgprint("\n");
+        }
+        dbgprint("%x ", buf[i]);
+    }
+    dbgprint("\n");
+    #endif
+    for (i = 0; i < SECTOR_SIZE; i++)
+        if (buf[i])
+            return 1;
+    return 0;
+}
+
 static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned long flags)
 {
     //dbgprint("%s: %s: source %s target %s type %s.\n", FS_MODEL_NAME,__func__, source, target, fstype);
@@ -74,14 +92,14 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
         dbgprint("%s: %s: not find device %s.\n", FS_MODEL_NAME,__func__, source);
         return -1;
     }
-    unsigned char buf[512];
+    unsigned char buf[SECTOR_SIZE];
     if (diskman.read(solt, 0, buf, SECTOR_SIZE) < 0) {
         diskman.close(solt);
         return -1;
     }
     diskman.close(solt);
     char remkfs = 1;
-    if (buf[510] == 0x55 && buf[511] == 0xaa) {
+    if (disk_has_fs(buf)) {
         remkfs = 0;
         /* 强制要求格式化磁盘 */
         if (flags & MT_REMKFS) {

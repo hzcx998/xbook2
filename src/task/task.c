@@ -35,6 +35,8 @@ volatile int task_init_done = 0;
 /* 内核栈底部地址 */
 char *kernel_stack_buttom;
 
+task_t *kdeamon_task;
+
 pid_t task_take_pid()
 {
     return task_next_pid++;
@@ -493,7 +495,8 @@ void tasks_init()
     sched_unit_t *su = sched_get_cur_unit();
     task_init_boot_idle(su);
     task_take_pid(); /* 跳过pid1，预留给INIT进程 */
-    kern_thread_start("kdeamon", TASK_PRIORITY_LOW, kthread_deamon, NULL);
+    kdeamon_task = kern_thread_start("kdeamon", TASK_PRIO_LEVEL_LOW, kthread_deamon, NULL);
+    assert(kdeamon_task != NULL);
     task_init_done = 1;
     keprint(PRINT_INFO "[ok] tasks init.");
 }

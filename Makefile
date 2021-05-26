@@ -150,7 +150,7 @@ endif
 sdcard: build
 	@if [ "$(SD)" != "" ]; then \
 		echo "flashing into sd card..."; \
-		$(SUDO) $(DD) if=fs.img of=$(SD); \
+		$(SUDO) $(DD) if=$(FS_DISK) of=$(SD); \
 	else \
 		echo "sd card not detected!"; fi
 

@@ -2,7 +2,7 @@
 #include <xbook/schedule.h>
 #include <xbook/process.h>
 #include <xbook/memspace.h>
-#include <k210_qemu_phymem.h>
+#include <k210_phymem.h>
 #include <arch/interrupt.h>
 #include <arch/riscv.h>
 #include <arch/page.h>
