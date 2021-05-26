@@ -438,7 +438,7 @@ static int virtio_disk_init(device_extension_t *extension)
         errprintln(DRV_PREFIX"io memory addr %p remap to kernel failed!", VIRTIO0);
         return -1;
     }
-    dbgprintln(DRV_PREFIX"memory io addr %p\n", extension->memio_addr);
+    //dbgprintln(DRV_PREFIX"memory io addr %p\n", extension->memio_addr);
     /* 检测磁盘是否存在 */
     if(*R(extension, VIRTIO_MMIO_MAGIC_VALUE) != 0x74726976 ||
         *R(extension, VIRTIO_MMIO_VERSION) != 1 ||

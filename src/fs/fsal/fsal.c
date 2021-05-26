@@ -18,7 +18,7 @@
 
 // #define DEBUG_FSAL
 
-#define LIST_ALL_FILE
+// #define LIST_ALL_FILE
 
 int fsal_list_dir(char* path)
 {
@@ -59,11 +59,11 @@ int fsal_disk_mount(char *pathname, int max_try)
         if (fsif.mount(name, ROOT_DIR_PATH, "fat32", 0) < 0) {
             continue;
         }
-        keprint("fsal : mount device %s to path %s success.\n", name, ROOT_DIR_PATH);
+        infoprint("fsal : mount device %s to path %s success.\n", name, ROOT_DIR_PATH);
         break;
     }
     if (i >= max_try) {
-        keprint("fsal : mount path %s to %s failed!\n", pathname, ROOT_DIR_PATH);
+        warnprint("fsal : mount path %s to %s failed!\n", pathname, ROOT_DIR_PATH);
         return -1;
     }
     return 0;

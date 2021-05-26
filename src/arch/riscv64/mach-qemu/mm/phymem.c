@@ -27,10 +27,10 @@ int physic_memory_init()
     total_pmem_size = PHYSIC_MEM_SIZE;
     u64_t kern_size = (u64_t) (kernel_end - kernel_start);
     u64_t free_size = total_pmem_size - kern_size - RUSTSBI_MEM_SIZE;
-    keprint("memory total size:%#x Bytes %d MB\n", total_pmem_size, total_pmem_size / MB);
-    keprint("kernel image: [%#p, %#p]\n", kernel_start, kernel_end);
-    keprint("kernel size: %#x Bytes %d MB\n", kern_size, kern_size / MB);
-    keprint("free size: %#x Bytes %d MB\n", free_size, free_size / MB);
+    infoprint("memory total size:%#x Bytes %d MB\n", total_pmem_size, total_pmem_size / MB);
+    infoprint("kernel image: [%#p, %#p]\n", kernel_start, kernel_end);
+    infoprint("kernel size: %#x Bytes %d MB\n", kern_size, kern_size / MB);
+    infoprint("free size: %#x Bytes %d MB\n", free_size, free_size / MB);
     
     u64_t boot_mem_start = KERN_MEM_ADDR + kern_size;
     u64_t boot_mem_sz = BOOT_MEM_SIZE;

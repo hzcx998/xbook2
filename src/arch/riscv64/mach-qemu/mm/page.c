@@ -23,7 +23,6 @@ void page_enable()
 {
     w_satp(MAKE_SATP(kernel_pgdir));
     sfence_vma();
-    infoprint("page enable done.\n");
 }
 /*
 初始化内核页表，启动分页机制
@@ -42,12 +41,8 @@ void page_init()
   
     // CLINT
     kvmmap(CLINT_V, CLINT, 0x10000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
-    keprintln("CLINT_V=%lx", CLINT_V);
 
     // PLIC
-    keprintln("PLIC_V=%lx", PLIC_V);
-    keprintln("VIRT_OFFSET=%lx", VIRT_OFFSET);
-    
     kvmmap(PLIC_V, PLIC, 0x4000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
     kvmmap(PLIC_V + 0x200000, PLIC + 0x200000, 0x4000, PAGE_ATTR_READ | PAGE_ATTR_WRITE);
 
@@ -89,15 +84,15 @@ void page_init()
     /* 打开分页 */
     page_enable();
 
-    uint64_t pa = addr_vir2phy(KERN_MEM_ADDR);
-    dbgprint("addr_vir2phy: va=%x pa=%x\n", KERN_MEM_ADDR, pa);
+    //uint64_t pa = addr_vir2phy(KERN_MEM_ADDR);
+    //dbgprint("addr_vir2phy: va=%x pa=%x\n", KERN_MEM_ADDR, pa);
     //dbgprint("page_readable: va=%x %d\n", KERN_MEM_ADDR, page_readable(KERN_MEM_ADDR, PAGE_SIZE));
     //dbgprint("page_writable: va=%x %d\n", KERN_MEM_ADDR, page_writable(KERN_MEM_ADDR, PAGE_SIZE));
     //dbgprint("page_writable: va=%x %d\n", etext, page_writable((uint64_t)etext, PAGE_SIZE));
 
-    vmprint(kernel_pgdir, 1);
+    //vmprint(kernel_pgdir, 1);
 
-    dbgprint("addr_vir2phy: va=%x pa=%x\n", PLIC_V, addr_vir2phy(PLIC_V));
+    //dbgprint("addr_vir2phy: va=%x pa=%x\n", PLIC_V, addr_vir2phy(PLIC_V));
 }
 
 // Return the address of the PTE in page table pgdir
@@ -140,7 +135,7 @@ walk(pgdir_t pgdir, uint64_t va, int alloc)
 void
 kvmmap(uint64_t va, uint64_t pa, uint64_t sz, int perm)
 {
-    dbgprint("kvmmap: va=%#lx pa=%#lx size=%#x perm=%#x\n", va, pa, sz, perm);
+    //dbgprint("kvmmap: va=%#lx pa=%#lx size=%#x perm=%#x\n", va, pa, sz, perm);
     if(mappages(kernel_pgdir, va, sz, pa, perm) != 0)
         panic("kvmmap");
 }
