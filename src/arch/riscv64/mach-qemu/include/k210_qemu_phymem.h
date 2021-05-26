@@ -5,7 +5,12 @@
 
 // 0MB~2MB是SBI的内存分布
 #define RUSTSBI_MEM_ADDR                0x80000000
+#ifndef QEMU
+#define RUSTSBI_MEM_SIZE                0x20000    
+#else
 #define RUSTSBI_MEM_SIZE                0x200000    // 2MB
+#endif
+
 // 内核的内存地址
 #define KERN_MEM_ADDR                   (RUSTSBI_MEM_ADDR + RUSTSBI_MEM_SIZE)
 
