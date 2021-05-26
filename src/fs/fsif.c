@@ -34,8 +34,9 @@ int sys_open(const char *path, int flags)
         return -EINVAL; 
     #ifdef FSIF_USER_CHECK
     char _path[MAX_PATH] = {0};
-    if (mem_copy_from_user(_path, (void *)path, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0) {
         return -EINVAL;
+    }
     #endif
     if (!fsif.open)
         return -ENOSYS;
@@ -306,7 +307,7 @@ int sys_access(const char *path, int mode)
     if (!path)
         return -EINVAL;
     char _path[MAX_PATH] = {0};
-    if (mem_copy_from_user(_path, (void *)path, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
     if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
         return -EPERM;
@@ -321,7 +322,7 @@ int sys_unlink(const char *path)
     if (!path)
         return -EINVAL;
     char _path[MAX_PATH] = {0};
-    if (mem_copy_from_user(_path, (void *)path, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
     if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
         return -EPERM;
@@ -376,7 +377,7 @@ int sys_stat(const char *path, struct stat *buf)
     if (!path || !buf)
         return -EINVAL;
     char _path[MAX_PATH] = {0};
-    if (mem_copy_from_user(_path, (void *)path, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
     if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
         return -EPERM;
@@ -415,7 +416,7 @@ int sys_chmod(const char *path, mode_t mode)
     if (!path)
         return -EINVAL;
     char _path[MAX_PATH] = {0};
-    if (mem_copy_from_user(_path, (void *)path, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
     if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
         return -EPERM;
@@ -440,7 +441,7 @@ int sys_mkdir(const char *path, mode_t mode)
     if (!path)
         return -EINVAL;
     char _path[MAX_PATH] = {0};
-    if (mem_copy_from_user(_path, (void *)path, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
     if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
         return -EPERM;
@@ -455,7 +456,7 @@ int sys_rmdir(const char *path)
     if (!path)
         return -EINVAL;
     char _path[MAX_PATH] = {0};
-    if (mem_copy_from_user(_path, (void *)path, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
     if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
         return -EPERM;
@@ -470,10 +471,10 @@ int sys_rename(const char *source, const char *target)
     if (!source || !target)
         return -EINVAL;
     char _source[MAX_PATH] = {0};
-    if (mem_copy_from_user(_source, (void *)source, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_source, (void *)source, MAX_PATH) < 0)
         return -EINVAL;
     char _target[MAX_PATH] = {0};
-    if (mem_copy_from_user(_target, (void *) target, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_target, (void *) target, MAX_PATH) < 0)
         return -EINVAL;
     if (!account_selfcheck_permission((char *)_source, PERMISION_ATTR_FILE)) {
         return -EPERM;
@@ -493,7 +494,7 @@ int sys_chdir(const char *path)
     if (!path)
         return -EINVAL;
     char _path[MAX_PATH] = {0};
-    if (mem_copy_from_user(_path, (void *) path, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_path, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
     task_t *cur = task_current;
     if (!cur->fileman)
@@ -524,7 +525,7 @@ dir_t sys_opendir(const char *path)
     if (!path)
         return -EINVAL;
     char _path[MAX_PATH] = {0};
-    if (mem_copy_from_user(_path, (void *) path, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_path, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
     if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
         return -EPERM;
@@ -668,13 +669,13 @@ int sys_mount(
     if (!source || !target || !fstype)
         return -EINVAL;
     char _source[MAX_PATH] = {0};
-    if (mem_copy_from_user(_source, (void *)source, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_source, (void *)source, MAX_PATH) < 0)
         return -EINVAL;
     char _target[MAX_PATH] = {0};
-    if (mem_copy_from_user(_target, target, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_target, target, MAX_PATH) < 0)
         return -EINVAL;
     char _fstype[32] = {0};
-    if (mem_copy_from_user(_fstype, fstype, 32) < 0)
+    if (mem_copy_from_user_str(_fstype, fstype, 32) < 0)
         return -EINVAL;
     
     if (!account_selfcheck_permission((char *)_source, PERMISION_ATTR_DEVICE)) {
@@ -695,7 +696,7 @@ int sys_unmount(char *path, unsigned long flags)
     if (!path)
         return -EINVAL;
     char _path[MAX_PATH] = {0};
-    if (mem_copy_from_user(_path, path, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_path, path, MAX_PATH) < 0)
         return -EINVAL;
     if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
         return -EPERM;
@@ -712,10 +713,10 @@ int sys_mkfs(char *source,         /* 需要创建FS的设备 */
     if (!source || !fstype)
         return -EINVAL;
     char _source[MAX_PATH] = {0};
-    if (mem_copy_from_user(_source, source, MAX_PATH) < 0)
+    if (mem_copy_from_user_str(_source, source, MAX_PATH) < 0)
         return -EINVAL;
     char _fstype[32] = {0};
-    if (mem_copy_from_user(_fstype, fstype, 32) < 0)
+    if (mem_copy_from_user_str(_fstype, fstype, 32) < 0)
         return -EINVAL;
     if (!account_selfcheck_permission((char *)source, PERMISION_ATTR_DEVICE)) {
         return -EPERM;

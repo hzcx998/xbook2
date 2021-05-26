@@ -9,12 +9,20 @@ int safety_check_range(void *src, unsigned long nbytes)
 {
     unsigned long addr;
     addr = (unsigned long) src;
+
+    unsigned long end;
+    #if defined(SAFETY_STRICT)
+    end = addr + nbytes;
+    #else
+    end = addr;
+    #endif
+
     #if defined(SAFETY_TINY)
-    if (!((addr >= USER_VMM_BASE_ADDR) && (addr + nbytes < USER_VMM_TOP_ADDR))) {
+    if (!((addr >= USER_VMM_BASE_ADDR) && (end < USER_VMM_TOP_ADDR))) {
         return -1;
     }
     #else
-    if (task_current->vmm && !((addr >= USER_VMM_BASE_ADDR) && (addr + nbytes < USER_VMM_TOP_ADDR))) {
+    if (task_current->vmm && !((addr >= USER_VMM_BASE_ADDR) && (end < USER_VMM_TOP_ADDR))) {
         return -1;
     }
     #endif

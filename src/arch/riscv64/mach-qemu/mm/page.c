@@ -192,8 +192,10 @@ vmunmap2(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free)
     panic("vmunmap: not aligned");
 
   for(a = va; a < va + npages*PAGE_SIZE; a += PAGE_SIZE){
-    if((pte = walk(pgdir, a, 0)) == 0)
-      panic("vmunmap: walk %p", a);
+    if((pte = walk(pgdir, a, 0)) == 0) {
+        // errprintln("vmunmap: walk %p", a);
+        continue;
+    }
     if((*pte & PAGE_ATTR_PRESENT) == 0) /* note here, if not present, just continue */
       continue;
     if(PTE_FLAGS(*pte) == PAGE_ATTR_PRESENT)
@@ -272,19 +274,21 @@ unsigned long addr_vir2phy(unsigned long vaddr)
 void
 freewalk(pgdir_t pgdir)
 {
-  // there are 2^9 = 512 PTEs in a page table.
-  for(int i = 0; i < PAGE_TABLE_ENTRY_NR; i++){
-    pte_t pte = pgdir[i];
-    if((pte & PAGE_ATTR_PRESENT) && (pte & (PAGE_ATTR_READ|PAGE_ATTR_WRITE|PAGE_ATTR_EXEC)) == 0){
-      // this PTE points to a lower-level page table.
-      uint64_t child = PTE2PA(pte);
-      freewalk((pgdir_t)child);
-      pgdir[i] = 0;
-    } else if(pte & PAGE_ATTR_PRESENT){
-      panic("freewalk: leaf");
+    //vmprint(pgdir, 1);
+    // there are 2^9 = 512 PTEs in a page table.
+    for(int i = 0; i < PAGE_TABLE_ENTRY_NR; i++){
+        pte_t pte = pgdir[i];
+        if((pte & PAGE_ATTR_PRESENT) && (pte & (PAGE_ATTR_READ|PAGE_ATTR_WRITE|PAGE_ATTR_EXEC)) == 0){
+            // this PTE points to a lower-level page table.
+            uint64_t child = PTE2PA(pte);
+            freewalk((pgdir_t)child);
+            pgdir[i] = 0;
+        } else if(pte & PAGE_ATTR_PRESENT){
+            errprintln("freewalk: pgdir[%d]->%x", i, pte);
+            panic("freewalk: leaf");
+        }
     }
-  }
-  page_free((unsigned long)pgdir);
+    page_free((unsigned long)pgdir);
 }
 
 bool page_readable(unsigned long vaddr, unsigned long nbytes)

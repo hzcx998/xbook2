@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-#define SAFETY_TINY
+// #define SAFETY_TINY
+// #define SAFETY_STRICT
 
 /* 不同平台需要实现对应的函数 */
 int do_copy_from_user(void *dest, void *src, unsigned long nbytes);

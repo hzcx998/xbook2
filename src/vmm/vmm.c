@@ -197,7 +197,7 @@ int vmm_unmap_the_mapping_space(vmm_t *vmm)
     while (space != NULL) {
         if (space->start >= vmm->map_start &&
             space->end <= vmm->map_end) {
-            page_unmap_addr_safe(space->start, space->end - space->start, space->flags & MEM_SPACE_MAP_SHARED);
+            page_unmap_addr_safe2(vmm->page_storage, space->start, space->end - space->start, space->flags & MEM_SPACE_MAP_SHARED);
         }
         space = space->next;
     }

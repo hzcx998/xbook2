@@ -30,12 +30,6 @@
 static int do_execute(const char *pathname, char *name, const char *argv[], const char *envp[])
 {
     task_t *cur = task_current;
-    //errprint("[exec]: %s: path %s\n", __func__, pathname);
-    /*
-    unsigned long flags;
-    interrupt_save_and_disable(flags);*/
-    proc_close_other_threads(cur);
-    //interrupt_restore_state(flags);
     vmm_t *old_vmm = cur->vmm;
 
     int fd = kfile_open(pathname, O_RDONLY);
@@ -120,8 +114,13 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 
     char tmp_name[MAX_TASK_NAMELEN] = {0};
     strcpy(tmp_name, name);
-    vmm_unmap_the_mapping_space(old_vmm);
-    vmm_release_space(old_vmm);
+
+    /* 关闭进程的子线程 */
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
+    proc_close_other_threads(cur);
+    interrupt_restore_state(flags);
+    
     #ifdef CONFIG_32BIT     /* 32位 elf 头解析 */
     if (proc_load_image32(cur->vmm, &elf_header, fd) < 0) {
         keprint(PRINT_ERR "sys_exec_file: load_image failed!\n");
@@ -150,6 +149,8 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         if (tmp_arg)
             mem_free(tmp_arg);
     }
+    /* 释放原有进程的内存 */
+    vmm_exit(old_vmm);
     vmm_free(old_vmm);
     cur->vmm = new_vmm;
     kfile_close(fd);
@@ -159,7 +160,6 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     user_set_entry_point(frame, (unsigned long)elf_header.e_entry);
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
-    
     kernel_switch_to_user(frame);
 free_loaded_image:
     sys_exit(-1);

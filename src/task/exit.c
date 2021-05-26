@@ -28,9 +28,9 @@ static void adopt_children_to_init(task_t *parent)
  */
 void sys_exit(int status)
 {
+    task_t *cur = task_current;
     unsigned long flags;
     interrupt_save_and_disable(flags);
-    task_t *cur = task_current;
     cur->exit_status = status;
     task_exit_hook(cur);
     proc_close_other_threads(cur);
