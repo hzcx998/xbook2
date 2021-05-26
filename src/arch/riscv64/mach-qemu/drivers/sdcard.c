@@ -1,4 +1,4 @@
-
+#ifndef QEMU
 #include <xbook/debug.h>
 #include <arch/memory.h>
 #include <string.h>
@@ -272,3 +272,4 @@ static __init void sdcard_driver_entry(void)
 }
 
 driver_initcall(sdcard_driver_entry);
+#endif

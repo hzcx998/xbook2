@@ -23,6 +23,8 @@ int main(int argc, char *argv[])
     }
     int tty2 = dup(tty1);
 
+    write(1, "[init] started!\n", 16);
+
     int i;
     for (i = 0; i < argc; i++) {
         if (argv[i]) {

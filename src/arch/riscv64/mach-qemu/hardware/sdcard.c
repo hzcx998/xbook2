@@ -1,3 +1,5 @@
+#ifndef QEMU
+
 #include <xbook/debug.h>
 #include <types.h>
 #include <stddef.h>
@@ -494,3 +496,4 @@ void test_sdcard(void) {
 	keprint("sdcard test done");
 	while (1) ;
 }
+#endif
