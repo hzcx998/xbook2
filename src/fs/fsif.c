@@ -757,7 +757,7 @@ int sys_unmount(char *path, unsigned long flags)
     }
     char abs_path[MAX_PATH] = {0};
     build_path(_path, abs_path);
-    return fsif.unmount(abs_path, flags);
+    return fsif.unmount(abs_path, abs_path, flags);
 }
 
 int sys_mkfs(char *source,         /* 需要创建FS的设备 */

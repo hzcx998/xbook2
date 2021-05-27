@@ -48,6 +48,7 @@ extern fsal_path_t *fsal_path_table;
 int fsal_path_init();
 int fsal_path_insert(char *devpath, void *path, char *alpath, fsal_t *fsal);
 int fsal_path_remove(void *path);
+int fsal_path_remove_alpath(void *alpath);
 void fsal_path_print();
 fsal_path_t *fsal_path_alloc();
 

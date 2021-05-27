@@ -127,6 +127,32 @@ int fsal_path_remove(void *path)
 }
 
 /**
+ * 根据抽象路径进行删除
+ */
+int fsal_path_remove_alpath(void *alpath)
+{
+    char *p = (char *) alpath;
+    fsal_path_t *fpath;
+    unsigned long irq_flags;
+    spin_lock_irqsave(&fsal_path_table_lock, irq_flags);
+    int i;
+    for (i = 0; i < FASL_PATH_NR; i++) {
+        fpath = &fsal_path_table[i];
+        if (fpath->fsal) {
+            /* 检测物理路径 */
+            if (!strcmp(p, fpath->alpath)) {
+                fpath->fsal     = NULL;
+                memset(fpath->path, 0, FASL_PATH_LEN);
+                spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
+                try_setdown_block_device(fpath->devpath);
+                return 0;
+            }
+        }
+    }
+    spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
+    return -1;
+}
+/**
  * 查找路径对应的路径结构
  * @ptype:  路径类型
  * @path: 路径

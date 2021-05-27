@@ -1313,7 +1313,7 @@ static int fsal_devfs_mount(char *source, char *target, char *fstype, unsigned l
     return 0;
 }
 
-static int fsal_devfs_unmount(char *path, unsigned long flags)
+static int fsal_devfs_unmount(char *origin_path, char *path, unsigned long flags)
 {
     if (fsal_path_remove((void *) path)) {
         dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, path);

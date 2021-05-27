@@ -91,8 +91,8 @@
     [ok] int munmap(void *start, size_t len)
     [ok] int pipe(int fd[2])
     [ok] int times(void *mytimes)
-    [bad] int mount(const char *special, const char *dir, const char *fstype, unsigned long flags, const void *data)
-    [bad] int umount(const char *special)
+    [ok] int mount(const char *special, const char *dir, const char *fstype, unsigned long flags, const void *data)
+    [ok] int umount(const char *special)
     [ok] int uname(struct utsname *buf)
     [ok] int sched_yield(void);
     [ok] int waitpid(int pid, int *code, int options)
@@ -118,5 +118,4 @@
         page fault at 644260E2853EE677.
         可能是a0传值导致的问题
     )
-    [bug] mount/umount执行完后，貌似根文件系统也被卸载了，检查一下mount/umount代码问题。
 ```

@@ -18,7 +18,7 @@ typedef struct {
     char **subtable;                /* 子系统表 */
     int (*mkfs)(char *, char *, unsigned long );
     int (*mount)(char *, char *, char *, unsigned long );
-    int (*unmount)(char *, unsigned long );
+    int (*unmount)(char *, char *, unsigned long );
     int (*open)(void *, int );
     int (*close)(int );
     int (*read)(int , void *, size_t );

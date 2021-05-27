@@ -101,7 +101,7 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
     }
     /* sp保存参数信息，通过sp就可以找到所有参数了 */
     frame->sp = arg_bottom;
-    // noteprintln("process_frame_init: sp=%p", arg_bottom);
+    noteprintln("process_frame_init: sp=%p", frame->sp);
     return 0;
 }
 

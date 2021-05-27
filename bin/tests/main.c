@@ -9,12 +9,12 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"mount", mount_test},
     {"yiled", yield_test},
     {"waitpid", waitpid_test},
     {"wait", wait_test},
     {"unlink", unlink_test},
     {"uname", uname_test},
-    {"mount", mount_test},
     {"times", times_test},
     {"sleep2", sleep_test2},
     {"pipe2", pipe_test2},

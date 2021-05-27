@@ -22,6 +22,7 @@
 
 typedef struct {
     FATFS *fsobj[FF_VOLUMES];       /* 挂载对象指针 */
+    int reference[FF_VOLUMES];      /* 引用计数 */
     uint16_t mount_time[FF_VOLUMES];  /* 挂载时的时间 */
     uint16_t mount_date[FF_VOLUMES];  /* 挂载时的日期 */
 } fatfs_extention_t;
@@ -62,10 +63,20 @@ static int disk_has_fs(unsigned char *buf)
     return 0;
 }
 
+/**
+ * 1. 检测设备是否存在
+ * 2. 查看设备是否已经映射过了
+ * 3. 根据设备转换成设备号
+ * 4. 打开设备文件
+ * 5. 读取超级块，并检查是否有文件系统
+ * 6. 如果需要格式化就进行格式化
+ * 7. 执行挂载操作
+ * 8. 记录挂载信息
+ * 9. 将路径插入抽象路径中
+ */
 static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned long flags)
 {
     //dbgprint("%s: %s: source %s target %s type %s.\n", FS_MODEL_NAME,__func__, source, target, fstype);
-
     int solt = disk_info_find_with_path(source);
     if (solt < 0) {
         dbgprint("%s: %s: not find device %s.\n", FS_MODEL_NAME,__func__, source);
@@ -134,61 +145,84 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
             return -1;
         }
     }
-
-    FATFS *fsobj;           /* Filesystem object */
-    fsobj = mem_alloc(sizeof(FATFS));
-    if (fsobj == NULL) 
-        return -1;
-    memset(fsobj, 0, sizeof(FATFS));
-    FRESULT fr;
+    FATFS *fsobj = NULL;           /* Filesystem object */
     p = (const TCHAR *) path;
 
-    BYTE delayed = !(flags & MT_DELAYED);  /* 延时挂载 */
-    fr = f_mount(fsobj, p, delayed);
-    if (fr != FR_OK) {
-        dbgprint("%s: %s: mount on path %s failed, code %d!\n", FS_MODEL_NAME,__func__, p, fr);
-        mem_free(fsobj);
-        return -1;
+    /* 如果引用为0，才进行真正的挂载 */
+    if (fatfs_extention.reference[pdrv] == 0) {
+        fsobj = mem_alloc(sizeof(FATFS));
+        if (fsobj == NULL) 
+            return -1;
+        memset(fsobj, 0, sizeof(FATFS));
+        FRESULT fr;
+        BYTE delayed = !(flags & MT_DELAYED);  /* 延时挂载 */
+        fr = f_mount(fsobj, p, delayed);
+        if (fr != FR_OK) {
+            dbgprint("%s: %s: mount on path %s failed, code %d!\n", FS_MODEL_NAME,__func__, p, fr);
+            mem_free(fsobj);
+            return -1;
+        }
+        fatfs_extention.fsobj[pdrv] = fsobj;
+        fatfs_extention.mount_time[pdrv] = WTM_WR_TIME(walltime.hour, walltime.minute, walltime.second);
+        fatfs_extention.mount_date[pdrv] = WTM_WR_DATE(walltime.year, walltime.month, walltime.day);
     }
-    fatfs_extention.fsobj[pdrv] = fsobj;
-    fatfs_extention.mount_time[pdrv] = WTM_WR_TIME(walltime.hour, walltime.minute, walltime.second);
-    fatfs_extention.mount_date[pdrv] = WTM_WR_DATE(walltime.year, walltime.month, walltime.day);
-        
+    fatfs_extention.reference[pdrv]++;
     if (fsal_path_insert(source, (void *)p, target, &fatfs_fsal)) {
-        dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, p);
-        mem_free(fsobj);
+        //dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, p);
+        if (fsobj)
+            mem_free(fsobj);
         return -1;
     }
     return 0;
 }
 
-static int fsal_fatfs_unmount(char *path, unsigned long flags)
+/**
+ * 1. 查看路径或者设备是否为挂载点
+ * 2. 执行卸载操作
+ * 3. 删除抽象层路径
+ * 4. 释放其他信息
+ */
+static int fsal_fatfs_unmount(char *origin_path, char *path, unsigned long flags)
 {
-    //dbgprint("%s: %s: path %s.\n", FS_MODEL_NAME,__func__, path);
-
+    // dbgprint("%s: %s: path %s\n", FS_MODEL_NAME,__func__, path);
     /* 检查路径是否为物理路径或者虚拟路径 */
     if (fsal_path_find(path, 0) < 0 && fsal_path_find_device(path) < 0) {
-        errprint("unmount: path %s not mount!\n", path);
+        errprint("fsal_fatfs_unmount: path %s not mount!\n", path);
         return -1;
     }
-
-    /* 在末尾填0，只保留磁盘符和分隔符 */
-    path[2] = '\0';
-    FRESULT res;
-    const TCHAR *p = (const TCHAR *) path;
     fatfs_extention_t *ext = &fatfs_extention;
-    res = f_unmount(p);
-    if (res != FR_OK) {
-        dbgprint("%s: %s: unmount on path %s failed, code %d.\n", FS_MODEL_NAME,__func__, p, res);
-        return -1;
-    }
-    if (fsal_path_remove((void *) p)) {
-        dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, p);
-        return -1;
-    }
     int pdrv = PATH_TO_PDRV(path[0]);
-    mem_free(ext->fsobj[pdrv]);
-    ext->fsobj[pdrv] = NULL;
+    fatfs_extention.reference[pdrv]--;
+    if (fatfs_extention.reference[pdrv] < 0) {
+        fatfs_extention.reference[pdrv] = 0;
+        errprint("fsal_fatfs_unmount: pdrv %d reference lower\n", pdrv);
+        return -1;
+    }
+    if (fatfs_extention.reference[pdrv] == 0) {
+        FRESULT res;        
+        /* 在末尾填0，只保留磁盘符和分隔符 */
+        path[2] = '\0';
+        const TCHAR *p = (const TCHAR *) path;
+        res = f_unmount(p);
+        if (res != FR_OK) {
+            dbgprint("%s: %s: unmount on path %s failed, code %d.\n", FS_MODEL_NAME,__func__, p, res);
+            return -1;
+        }
+        mem_free(ext->fsobj[pdrv]);
+        ext->fsobj[pdrv] = NULL;
+        if (fsal_path_remove((void *) p)) {
+            dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, p);
+            return -1;
+        }
+    } else {
+        /* 删除抽象路径 */
+        char *p = origin_path;
+        if (fsal_path_remove_alpath((void *) p)) {
+            dbgprint("%s: %s: remove al path %s failed!\n", FS_MODEL_NAME,__func__, p);
+            return -1;
+        }
+    }
+    
     return 0;
 }
 
@@ -1067,3 +1101,9 @@ fsal_t fatfs_fsal = {
     .getdents   = fsal_fatfs_getdents,
     .extention  = (void *)&fatfs_extention,
 };
+
+int fatfs_init()
+{
+    memset(&fatfs_extention, 0, sizeof(fatfs_extention));
+    return 0;
+}

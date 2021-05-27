@@ -54,11 +54,14 @@ fsal_t *fstype_find(char *name)
     return NULL;
 }
 
+extern int fatfs_init();
 int fstype_init()
 {
     list_init(&fstype_list_head);
     /* 注册文件系统: FATFS */
     fstype_register(&fatfs_fsal);
+    fatfs_init();
+    
     /* 注册文件系统: devfs */
     fstype_register(&devfs_fsal);
     /* 注册文件系统: fifofs */
