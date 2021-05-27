@@ -78,10 +78,39 @@
     [ok] int dup(int fd)
     [ok] int dup2(int old, int new)
     [no] int execve(const char *pathname, char *const argv[], char *const envp[])
-    [bug] 执行->execve->printf->__stdio_write: page fauilt: user pid=7 name=test_echo access unmaped vir_mem area.
     [ok] void exit(int code)
     [ok] pid_t fork(void)
     [ok] int fstat(int fd, struct kstat *st)
     [ok] char *getcwd(char *buf, size_t size)
     [ok] int getdents(int fd, struct linux_dirent64 *dirp64, unsigned long len)
+    [ok] pid_t getpid(void)
+    [ok] pid_t getppid(void)
+    [ok] int sys_get_time(TimeVal *ts, int tz)
+    [ok] int mkdir(const char *path, mode_t mode)
+    [ok] void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+    [ok] int munmap(void *start, size_t len)
+    [ok] int pipe(int fd[2])
+    [ok] int times(void *mytimes)
+
 ``` 
+
+```
+    [bug] 执行->execve->printf->__stdio_write: page fauilt: user pid=7 name=test_echo access unmaped vir_mem area.
+    [bug] 程序执行导致page fauilt: user pid=6 name=tests access unmaped vir_mem area.
+    (
+        page fault at 644260E2853EE677.
+        [dump]: trap_frame_dump
+        a0: 644260E2853EE667    a1: 000000007FFFEB18    a2: 0000000000000011    a3: 000000007FFFEF40
+        a4: 000000007FFFEB2A    a5: 644260E2853EE667    a6: 0000000000000000    a7: 0000000000000000
+        t0: 0000000000000000    t1: 0000000000000000    t2: 0000000000000000    t3: 0000000000000000
+        t4: 0000000000000000    t5: 0000000000000000    t6: 0000000000000000    s0: 000000007FFFEAE8
+        s1: 0000000000000000    s2: 0000000000000000    s3: 0000000000000000    s4: 0000000000000000
+        s5: 0000000000000000    s6: 0000000000000000    s7: 0000000000000000    s8: 0000000000000000
+        s9: 0000000000000000    s10: 0000000000000000   s11: 0000000000000000   ra: 000000000000B4BC
+        sp: 000000007FFFEA88    gp: 0000000000000000    tp: 0000000000000000    epc: 000000000000E3F8
+        do_vir_mem_fault
+        page fault at 644260E2853EE677.
+        可能是a0传值导致的问题
+    )
+        
+```

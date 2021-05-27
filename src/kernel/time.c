@@ -103,7 +103,7 @@ clock_t sys_times(struct tms *buf)
 {
     if (buf) {
         task_t *cur = task_current;
-        keprint("systime:%d elapsed:%d\n", cur->syscall_ticks, cur->elapsed_ticks);
+        // keprint("systime:%d elapsed:%d\n", cur->syscall_ticks, cur->elapsed_ticks);
         struct tms _buf;
         _buf.tms_stime = cur->syscall_ticks;
         _buf.tms_utime = cur->elapsed_ticks;
@@ -118,7 +118,7 @@ clock_t sys_times(struct tms *buf)
         }
         _buf.tms_cstime = cstime;
         _buf.tms_cutime = cutime;
-        keprint("%d %d %d %d\n", _buf.tms_stime, _buf.tms_utime, _buf.tms_cstime, _buf.tms_cutime);
+        // keprint("%d %d %d %d\n", _buf.tms_stime, _buf.tms_utime, _buf.tms_cstime, _buf.tms_cutime);
 
         mem_copy_to_user(buf, &_buf, sizeof(struct tms));
     }

@@ -1,7 +1,5 @@
 #include "test.h"
 
-#define O_CREATE O_CREAT
-
 int close_test(int argc, char* argv[])
 {
     int fd = open("test_close.txt", O_CREATE | O_RDWR);

@@ -7,6 +7,15 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"times", times_test},
+    {"sleep2", sleep_test2},
+    {"pipe2", pipe_test2},
+    {"munmap", munmap_test},
+    {"mmap", mmap_test},
+    {"mkdir", mkdir_test},
+    {"gettimeofday", gettimeofday_test},
+    {"getppid", getppid_test},
+    {"getpid", getpid_test},
     {"getdents2", getdents_test2},
     {"getdents", getdents_test},
     {"getcwd", getcwd_test},

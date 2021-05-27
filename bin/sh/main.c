@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     /* 启动自行服务 */
     #if 0
     if (!fork())
-        execl("/bin/uview", "/bin/uview", NULL);
+        execl("/bin/tests", "/bin/tests", NULL);
     #endif
     /* 备份标准输入 */
 	while(1){ 

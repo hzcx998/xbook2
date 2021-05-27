@@ -7,6 +7,7 @@
 #include <xbook/diskman.h>
 #include <xbook/memalloc.h>
 #include <xbook/walltime.h>
+#include <xbook/memspace.h>
 #include <const.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -656,8 +657,16 @@ static int fsal_fatfs_fstat(int idx, void *buf)
     
     fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
     char *path = extension->path;
+
     FRESULT fres;
     FILINFO finfo;
+
+    /* sync file before fstat */
+    fres = f_sync(&extension->file);
+    if (fres != FR_OK) {
+        warnprintln("[fs] fatfs fstat: sync file before fstat failed!");
+    }
+
     /* 对根目录进行特殊处理 */
     int pdrv = PATH_TO_PDRV(path[0]);   /* 获取设备 */
     if (is_root_dir(path)) {
@@ -908,6 +917,106 @@ static int fsal_fatfs_getdents(int idx, void *dirp, unsigned long len)
     return rdbytes;
 }
 
+#define MMAP_BUF_SIZE   512
+#define MMAP_CHUNK_SIZE   4096
+
+static int do_mmap_read_file_large(FIL *fil, void *buffer, size_t nbytes, off_t offset)
+{
+    UINT br;
+    FRESULT fres;
+    fres = f_lseek(fil, offset);
+    if (fres != F_OK) {
+        errprintln("[fs] fatfs mmap: lseek file failed");
+        return -1;
+    }
+    char *_mbuf = mem_alloc(MMAP_CHUNK_SIZE);
+    if (_mbuf == NULL) {
+        return -ENOMEM;
+    }
+    int total = 0;
+    char *p = (char *)buffer;
+    size_t chunk = nbytes % MMAP_CHUNK_SIZE;
+    while (nbytes > 0) {
+        fres = f_read(fil, _mbuf, chunk, &br);
+        if (fres != F_OK || chunk != br) {
+            errprintln("[fs] fatfs mmap: read file failed");
+            total = -EIO;
+            break;
+        }
+        if (mem_copy_to_user(p, _mbuf, chunk) < 0) {
+            errprintln("[fs] sys_read: copy buf %p to user failed!", p);
+            total = -EINVAL;
+            break;
+        }
+        p += chunk;
+        total += br;
+        nbytes -= chunk;
+        chunk = MMAP_CHUNK_SIZE;
+    }
+    mem_free(_mbuf);
+    return total;
+}
+
+static int do_mmap_read_file(FIL *fil, void *addr, size_t length, off_t offset)
+{
+    if (length > MMAP_BUF_SIZE) {
+        return do_mmap_read_file_large(fil, addr, length, offset);
+    } else {
+        char _buf[MMAP_BUF_SIZE] = {0};
+        UINT br;
+        FRESULT fres;
+        fres = f_lseek(fil, offset);
+        if (fres != F_OK) {
+            errprintln("[fs] fatfs mmap: lseek file failed");
+            return -1;
+        }
+        fres = f_read(fil, _buf, length, &br);
+        if (fres != F_OK) {
+            errprintln("[fs] fatfs mmap: read file failed");
+            return -1;
+        }
+        if (mem_copy_to_user(addr, _buf, br) < 0) {
+            errprintln("[fs] sys_read: copy buf %p to user failed!", addr);
+            return -EINVAL;
+        }
+    }
+    return 0;
+}
+
+// #define DEBUG_MMAP  
+
+static void *fsal_fatfs_mmap(int idx, void *addr, size_t length, int prot, int flags, off_t offset)
+{
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))
+        return (void *)-1;
+    fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
+    if (!extension)
+        return (void *)-1;
+    #ifdef DEBUG_MMAP
+    dbgprintln("[fs] fatfs mmap: file idx=%d addr=%p len=%lx prot=%x flags=%x offset=%lx\n", 
+        idx, addr, length, prot, flags, offset);
+    #endif
+    /* 清除共享映射标志，内存不是共享内存。 */
+    flags &= ~MAP_SHARED;
+    prot |= PROT_USER;      /* 需要加上USER标志 */
+    /* 进行内存映射 */
+    unsigned long maddr = mem_space_mmap(addr, 0, length, prot, flags);
+    if (maddr == NULL) {
+        errprintln("[fs] fatfs mmap: memspace map addr=%p length=%lx failed!");
+        return (void *)-1;
+    }
+    #ifdef DEBUG_MMAP
+    dbgprintln("[fs] fatfs mmap: mapped addr=%p", maddr);
+    #endif
+    /* 加载文件到内存中 */
+    if (do_mmap_read_file(&extension->file, maddr, length, offset) < 0) {
+        mem_space_unmmap(maddr, length);
+        return (void *)-1;
+    }
+    return maddr;
+}
+
 /* fatfs 支持的文件系统类型 */
 static char *fatfs_sub_table[] = {
     "fat12",
@@ -953,6 +1062,7 @@ fsal_t fatfs_fsal = {
     .fcntl      =fsal_fatfs_fcntl,
     .fstat      =fsal_fatfs_fstat,
     .access     =fsal_fatfs_access,
+    .mmap       =fsal_fatfs_mmap,
     .dirfd_path =fsal_fatfs_dirfd_path,
     .getdents   = fsal_fatfs_getdents,
     .extention  = (void *)&fatfs_extention,

@@ -41,6 +41,7 @@ extern "C" {
 #define O_WRONLY    0x02
 #define O_RDWR      0x04
 #define O_CREAT     0x08
+#define O_CREATE    O_CREAT
 #define O_TRUNC     0x10
 #define O_APPEND    0x20
 #define O_EXEC      0x80
@@ -50,6 +51,8 @@ extern "C" {
 #define O_NOCTTY    0x800   // 不设置为控制tty
 #define O_EXCL      0x1000  // 打开时文件一定要不存在才行
 #define O_DIRECTORY 0x0200000
+
+
 
 int fcntl(int fd, int cmd, ...);
 

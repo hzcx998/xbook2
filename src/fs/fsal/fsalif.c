@@ -685,13 +685,13 @@ static int fsalif_access(const char *path, int mode)
 static void *fsalif_mmap(int idx, void *addr, size_t length, int prot, int flags, off_t offset)
 {
     if (FSAL_BAD_FILE_IDX(idx))
-        return (void *) -EINVAL;
+        return (void *) -1;
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     fsal_t *fsal = fp->fsal;
     if (fsal == NULL)
         return (void *) -1;
     if (!fsal->mmap)
-        return (void *) -ENOSYS;
+        return (void *) -1;
     return fsal->mmap(idx, addr, length, prot, flags, offset);
 }
 

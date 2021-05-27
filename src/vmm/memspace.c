@@ -207,10 +207,13 @@ int do_mem_space_unmap(vmm_t *vmm, unsigned long addr, unsigned long len)
     }
     
     if (addr < space->start || addr + len > space->end) {
-        // 不在范围内，需要进行控件拓展
+        // 不在范围内，需要进行空间拓展
         // noteprint("unmap: addr out of range: addr%x -> [%x-%x]\n", addr, space->start, space->end);
         return 0;
     }
+
+    /* TODO: 检测是否为映射了文件，如果是，则需要同步文件回磁盘:munmap_file */
+
     page_unmap_addr_safe(addr, len, space->flags & MEM_SPACE_MAP_SHARED);
 
     mem_space_t* space_new = mem_space_alloc();
@@ -334,4 +337,9 @@ set_heap:
 the_end:
     ret = vmm->heap_end;
     return ret;
+}
+
+int sys_munmap(unsigned long addr, unsigned long len)
+{
+    return mem_space_unmmap(addr, len);
 }

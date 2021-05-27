@@ -340,15 +340,19 @@ void *__sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t o
 {
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
-        return NULL;
+        return (void *)-1;
     if (!ffd->fsal->mmap)
-        return NULL;
+        return (void *)-1;
     return ffd->fsal->mmap(ffd->handle, addr, length, prot, flags, offset);
 }
 
 void *sys_mmap(mmap_args_t *args)
 {
-    return __sys_mmap(args->addr, args->length, args->prot, args->flags, args->fd, args->offset);
+    mmap_args_t _args;
+    if (mem_copy_from_user(&_args, args, sizeof(mmap_args_t)) < 0)
+        return (void *)-1;
+    return __sys_mmap(_args.addr, _args.length, _args.prot, _args.flags,
+            _args.fd, _args.offset);
 }
 
 int sys_access(const char *path, int mode)

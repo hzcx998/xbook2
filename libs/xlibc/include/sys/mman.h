@@ -7,10 +7,18 @@ extern "C" {
 
 #include <types.h>
 
+#define MAP_FILE 0
 #define MAP_FIXED       0x10       /* 映射固定位置 */
+#define MAP_REMAP       0x100      /* 强制重写映射 */
+#define MAP_FAILED ((void *) -1)
+
+#if 1
 #define MAP_PRIVATE     0x00       /* 映射成私有，NOTE: 内核未实现该功能 */
 #define MAP_SHARED      0x80       /* 映射成共享内存 */
-#define MAP_REMAP       0x100      /* 强制重写映射 */
+#else   /* oscomp */
+#define MAP_SHARED 0x01
+#define MAP_PRIVATE 0X02
+#endif
 
 /* protect flags */
 #define PROT_NONE        0x0       /* page can not be accessed */

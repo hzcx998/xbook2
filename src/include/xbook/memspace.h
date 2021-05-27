@@ -8,11 +8,19 @@
 #include <types.h>
 #include <arch/page.h>
 
+/* 内存映射类型 */
 #define MEM_SPACE_MAP_FIXED       0x10       /* 映射固定位置 */
 #define MEM_SPACE_MAP_STACK       0x20       /* 映射成栈，会动态变化 */
 #define MEM_SPACE_MAP_HEAP        0x40       /* 映射成堆，会动态变化 */
 #define MEM_SPACE_MAP_SHARED      0x80       /* 映射成共享内存 */
 #define MEM_SPACE_MAP_REMAP       0x100      /* 强制重写映射 */
+
+/* 映射标志 */
+#define MAP_FILE        0
+#define MAP_FIXED       0x10       /* 映射固定位置 */
+#define MAP_REMAP       0x100      /* 强制重写映射 */
+#define MAP_PRIVATE     0x00
+#define MAP_SHARED      0x80
 
 #define MAX_MEM_SPACE_STACK_SIZE  (16 * MB)
 #define MEM_SPACE_STACK_SIZE_DEFAULT  (PAGE_SIZE * 4)
@@ -57,9 +65,7 @@ unsigned long mem_space_get_unmaped(vmm_t *vmm, unsigned len);
 
 void *mem_space_mmap_viraddr(unsigned long addr, unsigned long vaddr,
         unsigned long len, uint32_t prot, uint32_t flags);
-
-#define sys_munmap  mem_space_unmmap
-
+int sys_munmap(unsigned long addr, unsigned long len);
 static inline void mem_space_init(mem_space_t *space, unsigned long start,
     unsigned long end, unsigned long page_prot, unsigned long flags)
 {

@@ -29,6 +29,15 @@ static inline void sys_err(char *str)
     printf("sys err: %s\n", str);
     exit(-1);
 }
+int times_test(int argc, char *argv[]);
+int sleep_test2(int argc, char *argv[]);
+int pipe_test2(int argc, char *argv[]);
+int munmap_test(int argc, char* argv[]);
+int mmap_test(int argc, char* argv[]);
+int mkdir_test(int argc, char* argv[]);
+int gettimeofday_test(int argc, char* argv[]);
+int getppid_test(int argc, char* argv[]);
+int getpid_test(int argc, char* argv[]);
 int getdents_test2(int argc, char* argv[]);
 int getdents_test(int argc, char* argv[]);
 int getcwd_test(int argc, char* argv[]);
