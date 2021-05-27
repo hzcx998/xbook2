@@ -82,4 +82,6 @@
     [ok] void exit(int code)
     [ok] pid_t fork(void)
     [ok] int fstat(int fd, struct kstat *st)
-```
+    [ok] char *getcwd(char *buf, size_t size)
+    [ok] int getdents(int fd, struct linux_dirent64 *dirp64, unsigned long len)
+``` 

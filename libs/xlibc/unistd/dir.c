@@ -323,3 +323,8 @@ int _rename(const char *source, const char *target)
 
     return syscall2(int, SYS_RENAME, src, dest);
 }
+
+int getdents(int fd, struct linux_dirent64 *dirp64, unsigned long len){
+    //return syscall(SYS_getdents64, fd, dirp64, len);
+    return syscall3(int, SYS_GETDENTS64, fd, dirp64, len);
+}

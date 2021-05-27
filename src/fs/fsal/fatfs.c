@@ -30,9 +30,11 @@ typedef struct {
 } fatfs_dir_extention_t;
 
 typedef struct {
-    FIL file;
-    char path[MAX_PATH];
-    char *dir_path;     /* 目录路径：只有被当做目录打开时才有效，默认为NULL */
+    FIL file;               /* 用于保存文件信息 */
+    DIR dir;                /* 用于保存目录信息 */
+    char path[MAX_PATH];    /* 保存文件路径 */
+    char *dir_path;         /* 目录路径：只有被当做目录打开时才有效，默认为NULL */
+    char *tmpdire;          /* 进行getdents操作时，会产生目录读取断层问题，才用临时缓冲区解决该问题 */
 } fatfs_file_extention_t;
 
 fatfs_extention_t fatfs_extention;
@@ -226,12 +228,26 @@ static int fsal_fatfs_mkfs(char *source, char *fstype, unsigned long flags)
     return 0;
 }
 
+/**
+ * 检测是否为一个目录，是则返回0，不是则返回错误码
+ */
+static int fatfs_is_director(char *path, DIR *dir)
+{
+    FRESULT res;
+    res = f_opendir(dir, path); /* Open the directory */
+    if (res != FR_OK) {
+        errprintln("[fs] fatfs: dir %s not exist", path);
+        return -ENFILE;
+    }
+    return 0;
+}
+
 static int fsal_fatfs_open(void *path, int flags)
 {
     fsal_file_t *fp = fsal_file_alloc();
     if (fp == NULL)
         return -ENOMEM;
-    // errprint("fatfs: open path %s flags %d\n", path, flags);
+    //dbgprint("fatfs: open path %s flags %d\n", path, flags);
     const TCHAR *p = (const TCHAR *) path;
     fp->extension = mem_alloc(sizeof(fatfs_file_extention_t));
     if (!fp->extension) {
@@ -241,11 +257,11 @@ static int fsal_fatfs_open(void *path, int flags)
     }
     fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
     extension->dir_path = NULL;     /* 普通文件时为NULL，为目录时才有效 */
+    extension->tmpdire = NULL;      /* 默认没有临时目录 */
     memset(extension->path, 0, MAX_PATH);
     strcpy(extension->path, path);
-
     fp->fsal = &fatfs_fsal;
-
+    
     BYTE mode = 0;  /* 文件打开模式 */
     if (flags & O_RDONLY) {
         mode |= FA_READ;
@@ -263,35 +279,28 @@ static int fsal_fatfs_open(void *path, int flags)
     } else if (flags & O_CREAT) {
         mode |= FA_OPEN_ALWAYS;
     }
-
-    /* 如果要打开一个目录，那么就检测目录是否存在，然后返回指向这个目录的文件就行了 */
+    
     if (flags & O_DIRECTORY) {
-        /* 检测目录是否存在 */
-        FRESULT res;
-        DIR dir;
-        res = f_opendir(&dir, p); /* Open the directory */
-        if (res != FR_OK) {
-            errprintln("[fs] fatfs open: dir %s not exist", p);
+        int err = fatfs_is_director(path, &extension->dir);
+        if (err < 0) {  /* 打开目录失败 */
             mem_free(fp->extension);
             fsal_file_free(fp);
-            return -ENOFILE;
+            return err;
         }
-        res = f_closedir(&dir);
-        if (res != FR_OK) {
-            errprintln("[fs] fatfs open: close dir %s error", p);
-            mem_free(fp->extension);
-            fsal_file_free(fp);
-            return -EPERM;
-        }
-        extension->dir_path = extension->path;
+        extension->dir_path = extension->path;  /* open as director */
     } else {
         FRESULT fres;
         fres = f_open((FIL *)&extension->file, p, mode);
         if (fres != FR_OK) {
-            // errprint("fatfs: open file %s failed! errcode:%d, flags:%x\n", p, fres, flags);
-            mem_free(fp->extension);
-            fsal_file_free(fp);
-            return -ENOFILE;
+            /* 当作为文件打开失败时，就尝试作为目录打开 */
+            int err = fatfs_is_director(path, &extension->dir);
+            if (err < 0) {  /* 打开目录失败 */
+                mem_free(fp->extension);
+                fsal_file_free(fp);
+                return -ENOFILE;
+            } else {
+                extension->dir_path = extension->path;  /* open as director */
+            }
         }
     }
     return FSAL_FILE2IDX(fp);
@@ -307,10 +316,14 @@ static int fsal_fatfs_close(int idx)
     fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
     if (extension->dir_path != NULL) {  /* Is director */
         extension->dir_path = NULL;
-        dbgprintln("[fs] fatfs close: path %s", extension->dir_path);
+        f_closedir(&extension->dir); /* close dir */
+        if (extension->tmpdire) {   /* free tmpdire */
+            mem_free(extension->tmpdire);
+            extension->tmpdire = NULL;
+        }
     } else {
         FRESULT fres;
-        fres = f_close((FIL *)fp->extension);
+        fres = f_close((FIL *)&extension->file);
         if (fres != FR_OK) {    
             errprint("[fatfs]: close file failed!\n");
             return -1;
@@ -332,7 +345,15 @@ static char *fsal_fatfs_dirfd_path(int idx)
     if (FSAL_BAD_FILE(fp))
         return NULL;
     fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
-    return extension->dir_path;
+    /* 过滤掉fatfs的磁盘符号 */
+    char *path = strchr(extension->dir_path, ':');
+    if (path == NULL)
+        return extension->dir_path;
+    path++;
+    if (path[0] == '\0') {
+        path[0] = '/';
+    }
+    return path;
 }
 
 /**
@@ -461,23 +482,16 @@ static int fsal_fatfs_closedir(int idx)
     return 0;
 }
 
-static int fsal_fatfs_readdir(int idx, void *buf)
+static int do_readdir(DIR *dirp, dirent_t *dire)
 {
-    if (FSAL_IS_BAD_DIR(idx))
-        return -1;
-    fsal_dir_t *pdir = FSAL_I2D(idx);
-    if (!pdir->flags)   
-        return -1;
-    
     FRESULT fres;
     FILINFO finfo;
-    fres = f_readdir((DIR *)pdir->extension, &finfo);
+    fres = f_readdir(dirp, &finfo);
     if (fres != FR_OK) {
-        return -1;
+        return -fres;
     }
     if (finfo.fname[0] == '\0') 
-        return -1;
-    dirent_t *dire = (dirent_t *)buf;
+        return -EPERM;
     dire->d_attr = 0;
     if (finfo.fattrib & AM_RDO)
         dire->d_attr |= DE_RDONLY;
@@ -495,6 +509,17 @@ static int fsal_fatfs_readdir(int idx, void *buf)
     memcpy(dire->d_name, finfo.fname, DIR_NAME_LEN);
     dire->d_name[DIR_NAME_LEN - 1] = '\0';
     return 0;
+}
+
+static int fsal_fatfs_readdir(int idx, void *buf)
+{
+    if (FSAL_IS_BAD_DIR(idx))
+        return -1;
+    fsal_dir_t *pdir = FSAL_I2D(idx);
+    if (!pdir->flags)   
+        return -1;
+    fatfs_dir_extention_t *dirext = pdir->extension;
+    return do_readdir(&dirext->dir, (dirent_t *)buf);
 }
 
 static int fsal_fatfs_mkdir(char *path, mode_t mode)
@@ -810,6 +835,79 @@ static int fsal_fatfs_access(const char *path, int mode)
     return -1;
 }
 
+/**
+ * 读取目录项
+ * 当返回值小<0时，表示获取出错
+ * 当返回值=0时，表示目录读取结束
+ * 当返回值>0时，表示目录读取到的数据数量
+ */
+static int fsal_fatfs_getdents(int idx, void *dirp, unsigned long len)
+{
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -EINVAL;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    if (FSAL_BAD_FILE(fp))
+        return -EINVAL;
+    fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
+    if (!extension)
+        return -EPERM;
+    if (extension->dir_path == NULL)    /* not a dir */
+        return -EPERM;
+    /* 目录断层问题：
+    当剩下的缓冲区长度不够存放一个目录项的内容时，就会出现该问题。
+    解决该问题的方法是：在内核中开辟一个空间，来保存读取到的目录项tmpdire。
+    然后直接返回不包括当前目录项的大小total。当下次进行读取时，就先读取并释放掉
+    临时的目录项tmpdire，再进行目录的读取。
+    */
+    struct dirent dirent;
+    int rdbytes = 0;    /* 读取到的字节数 */
+    long n = len;
+    unsigned char *buf = (unsigned char *)dirp;
+    struct linux_dirent64 *dest;
+
+    while (n > 0) {
+        if (extension->tmpdire != NULL) {   /* copy from tmpdire and free tmpdire */
+            memcpy(&dirent, extension->tmpdire, sizeof(struct dirent));
+            mem_free(extension->tmpdire);
+            extension->tmpdire = NULL;
+        } else {
+            int err = do_readdir(&extension->dir, &dirent);
+            if (err < 0) {  /* read error or no dir left */
+                break;
+            }
+        }
+        int reclen = sizeof(struct linux_dirent64) + strlen(dirent.d_name) + 1;
+        reclen = (reclen + 4) & (~(4 - 1)); /* 4 bytes align */
+        if (n < reclen) {   /* need store in tmpdire, alloc tmpdire and copy */
+            extension->tmpdire = mem_alloc(sizeof(struct dirent));
+            if (extension->tmpdire) {
+                memcpy(extension->tmpdire, &dirent, sizeof(struct dirent));
+            }
+            break;
+        }
+        dest = (struct linux_dirent64 *)buf;
+        /* copy data */
+        strcpy(dest->d_name, dirent.d_name);
+        if (dirent.d_attr & DE_DIR) {
+            dest->d_type = DT_DIR;
+        } else if (dirent.d_attr & DE_CHAR) {
+            dest->d_type = DT_CHR;
+        } else if (dirent.d_attr & DE_BLOCK) {
+            dest->d_type = DT_BLK;
+        } else {
+            dest->d_type = DT_REG;
+        }
+        dest->d_reclen = reclen;
+        dest->d_ino = 0;
+        dest->d_off = extension->dir.dptr;
+        
+        buf += dest->d_reclen;
+        rdbytes += dest->d_reclen;
+        n -= dest->d_reclen;
+    }
+    return rdbytes;
+}
+
 /* fatfs 支持的文件系统类型 */
 static char *fatfs_sub_table[] = {
     "fat12",
@@ -856,5 +954,6 @@ fsal_t fatfs_fsal = {
     .fstat      =fsal_fatfs_fstat,
     .access     =fsal_fatfs_access,
     .dirfd_path =fsal_fatfs_dirfd_path,
+    .getdents   = fsal_fatfs_getdents,
     .extention  = (void *)&fatfs_extention,
 };

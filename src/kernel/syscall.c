@@ -156,6 +156,7 @@ void syscall_init()
     #endif
     syscalls[SYS_OPENAT] = sys_openat;
     syscalls[SYS_CLONE] = sys_clone;
+    syscalls[SYS_GETDENTS64] = sys_getdents;
 }
 
 int syscall_check(uint32_t callno)

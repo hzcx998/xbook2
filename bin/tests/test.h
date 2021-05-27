@@ -29,7 +29,9 @@ static inline void sys_err(char *str)
     printf("sys err: %s\n", str);
     exit(-1);
 }
-
+int getdents_test2(int argc, char* argv[]);
+int getdents_test(int argc, char* argv[]);
+int getcwd_test(int argc, char* argv[]);
 int fstat_test(int argc, char* argv[]);
 int exit_test(int argc, char* argv[]);
 int execve_test(int argc, char* argv[]);

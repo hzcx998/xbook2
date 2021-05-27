@@ -117,8 +117,9 @@ int sys_close(int fd)
         return -EINVAL;
     if (!ffd->fsal->close)
         return -ENOSYS;
-    if (ffd->fsal->close(ffd->handle) < 0)
+    if (ffd->fsal->close(ffd->handle) < 0) {
         return -1;
+    }
     return local_fd_uninstall(fd);
 }
 
@@ -139,7 +140,7 @@ static int read_large(file_fd_t *ffd, void *buffer, size_t nbytes)
             break;
         }
         if (mem_copy_to_user(p, _mbuf, chunk) < 0) {
-            errprintln("[fs] sys_read: copy buf %p to user failed!", buffer);
+            errprintln("[fs] sys_read: copy buf %p to user failed!", p);
             total = -EINVAL;
             break;
         }
@@ -157,10 +158,6 @@ int sys_read(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0 || !nbytes || !buffer)
         return -EINVAL;
-    #ifdef FSIF_USER_CHECK
-    if (mem_copy_to_user(buffer, NULL, nbytes) < 0)
-        return -EINVAL;
-    #endif
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd)) {
         errprint("[fs] sys_read: fd %d err!\n", fd);
@@ -188,10 +185,6 @@ int sys_fastread(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0 || !nbytes || !buffer)
         return -EINVAL;
-    #ifdef FSIF_USER_CHECK
-    if (mem_copy_to_user(buffer, NULL, nbytes) < 0)
-        return -EINVAL;
-    #endif
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd)) {
         errprint("[FS]: %s: fd %d err!\n", __func__, fd);
@@ -206,10 +199,6 @@ int sys_fastwrite(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0 || !nbytes || !buffer)
         return -EINVAL;
-    #ifdef FSIF_USER_CHECK
-    if (mem_copy_to_user(buffer, NULL, nbytes) < 0)
-        return -EINVAL;
-    #endif
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd)) {
         errprint("[FS]: %s: fd %d err!\n", __func__, fd);
@@ -231,7 +220,7 @@ static int write_large(file_fd_t *ffd, void *buffer, size_t nbytes)
     size_t chunk = nbytes % FSIF_RW_CHUNK_SIZE;
     while (nbytes > 0) {
         if (mem_copy_from_user(_mbuf, p, chunk) < 0) {
-            errprintln("[fs] sys_write: copy buf %p from user failed!", buffer);
+            errprintln("[fs] sys_write: copy buf %p from user failed!", p);
             total = -EINVAL;
             break;
         }
@@ -799,4 +788,122 @@ int sys_probedev(const char *name, char *buf, size_t buflen)
     if (mem_copy_to_user(buf, _buf, buflen) < 0)
         return -EINVAL;
     return err;
+}
+
+
+static int getdents_large(file_fd_t *ffd, void *dirp, size_t nbytes)
+{
+    char *_mbuf = mem_alloc(FSIF_RW_CHUNK_SIZE);
+    if (_mbuf == NULL) {
+        return -ENOMEM;
+    }
+    int total = 0;
+    char *p = (char *)dirp;
+    size_t chunk = nbytes % FSIF_RW_CHUNK_SIZE;
+    while (nbytes > 0) {
+        int rd = ffd->fsal->getdents(ffd->handle, _mbuf, chunk);
+        if (rd < 0) {
+            errprintln("[fs] getdents_large: handle %d do read failed!", ffd->handle);
+            total = -EIO;
+            break;
+        }
+        if (rd == 0) {  /* read done, no left */
+            break;
+        }
+        if (mem_copy_to_user(p, _mbuf, chunk) < 0) {
+            errprintln("[fs] getdents_large: copy buf %p to user failed!", p);
+            total = -EINVAL;
+            break;
+        }
+        p += chunk;
+        total += rd;
+        nbytes -= chunk;
+        chunk = FSIF_RW_CHUNK_SIZE;
+    }
+    mem_free(_mbuf);
+    return total;
+}
+
+int sys_getdents(int fd, void *dirp, unsigned long len)
+{
+    if (fd < 0 || !dirp || !len)
+        return -EINVAL;
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd)) {
+        errprint("[fs] sys_getdents: dirfd %d err!\n", fd);
+        return -EINVAL;
+    }
+    /* 使用底层实现 */
+    if (!ffd->fsal->getdents)
+        return -ENOSYS;
+    
+    if (len > FSIF_RW_BUF_SIZE) {
+        return getdents_large(ffd, dirp, len);
+    } else {
+        char _buf[FSIF_RW_BUF_SIZE] = {0};
+        int rd = ffd->fsal->getdents(ffd->handle, _buf, len);
+        if (rd > 0) {
+            if (mem_copy_to_user(dirp, _buf, rd) < 0) {
+                errprintln("[fs] sys_getdents: copy buf %p to user failed!", dirp);
+                return -EINVAL;
+            }
+        }
+        return rd;
+    }
+
+    char *dirpath = fsif_dirfd_path(fd);
+    if (dirpath == NULL) {
+        dbgprintln("[fs] sys_getdents: dirfd %d not a director", fd);
+        return -ENFILE; /* fd没有对应目录 */
+    }
+    /* 读取目录内容，然后放到dirp64结构体中 */
+    dbgprintln("[fs] sys_getdents: dirpath %s", dirpath);
+    int dir = fsif.opendir(dirpath);
+    if (dir < 0) {
+        dbgprintln("[fs] sys_getdents: open dir %s error", dirpath);
+        return dir;
+    }
+    struct dirent dirent;
+    int rdbytes = 0;    /* 读取到的字节数 */
+    long n = len;
+
+    char _buf[FSIF_RW_BUF_SIZE] = {0};
+    unsigned char *buf = (unsigned char *)_buf;
+    struct linux_dirent64 *dest;
+    while (n > 0) {
+        int err = fsif.readdir(dir, &dirent);
+        if (err < 0) {
+            break;
+        }
+        dest = (struct linux_dirent64 *)buf;
+        /* copy data */
+        strcpy(dest->d_name, dirent.d_name);
+        if (dirent.d_attr & DE_DIR) {
+            dest->d_type = DT_DIR;
+        } else if (dirent.d_attr & DE_CHAR) {
+            dest->d_type = DT_CHR;
+        } else if (dirent.d_attr & DE_BLOCK) {
+            dest->d_type = DT_BLK;
+        } else {
+            dest->d_type = DT_REG;
+        }
+        dest->d_reclen = sizeof(struct linux_dirent64);
+        dest->d_reclen += strlen(dest->d_name) + 1;
+        /* 4 bytes align */
+        dest->d_reclen = (dest->d_reclen + 4) & (~(4 - 1));
+
+        dest->d_ino = 0;
+
+        buf += dest->d_reclen;
+        rdbytes += dest->d_reclen;
+        
+        dest->d_off = rdbytes;
+    }
+    fsif.closedir(dir);
+    if (rdbytes > 0) {
+        if (mem_copy_to_user(dirp, _buf, rdbytes) < 0)
+            return -ENOBUFS;
+    }
+
+    return rdbytes;
 }

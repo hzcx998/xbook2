@@ -117,6 +117,7 @@ enum syscall_num {
     SYS_SOCKCALL,
     SYS_OPENAT,
     SYS_CLONE,
+    SYS_GETDENTS64,
     SYSCALL_NR,
 };
 

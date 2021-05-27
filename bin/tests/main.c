@@ -7,6 +7,9 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"getdents2", getdents_test2},
+    {"getdents", getdents_test},
+    {"getcwd", getcwd_test},
     {"fstat", fstat_test},
     {"exit", exit_test},
     {"execve", execve_test},

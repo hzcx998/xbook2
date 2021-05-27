@@ -42,7 +42,7 @@ int openat_test(int argc, char *argv[])
     assert(!close(dirfd));
     assert(!close(fd));
 
-    dirfd = open("/sbin/", O_DIRECTORY);
+    dirfd = open("/sbin/", 0);
     if (dirfd < 0) {
         printf("open O_DIRECTORY path error\n");
         return -1;

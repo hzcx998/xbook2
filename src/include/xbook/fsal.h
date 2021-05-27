@@ -55,6 +55,7 @@ typedef struct {
     void *(*mmap)(int , void *, size_t, int, int, off_t);
     int (*fastio)(int, int, void *);
     char *(*dirfd_path)(int);
+    int (*getdents)(int, void *, unsigned long);
     void *extention;
 } fsal_t;
 

@@ -314,7 +314,6 @@ static int fsalif_rename(char *old_path, char *new_path)
     return fsal->rename(old_path2, new_path2);
 }
 
-
 static int fsalif_state(char *path, void *buf)
 {
     if (path == NULL)
@@ -696,6 +695,19 @@ static void *fsalif_mmap(int idx, void *addr, size_t length, int prot, int flags
     return fsal->mmap(idx, addr, length, prot, flags, offset);
 }
 
+static int fsalif_getdents(int idx, void *dirp, unsigned long len)
+{
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -1;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    fsal_t *fsal = fp->fsal;
+    if (fsal == NULL)
+        return -1;
+    if (!fsal->getdents)
+        return -ENOSYS;
+    return fsal->getdents(idx, dirp, len);
+}
+
 /* 文件的抽象层接口 */
 fsal_t fsif = {
     .name       = "fsif",
@@ -739,4 +751,5 @@ fsal_t fsif = {
     .fastio     = fsalif_fastio,
     .mmap       = fsalif_mmap,
     .dirfd_path = fsalif_dirfd_path,
+    .getdents   = fsalif_getdents,
 };
