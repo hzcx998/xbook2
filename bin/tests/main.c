@@ -9,6 +9,7 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"execve", execve_test},
     {"mount", mount_test},
     {"yiled", yield_test},
     {"waitpid", waitpid_test},
@@ -29,7 +30,6 @@ testfunc_t test_table[] = {
     {"getcwd", getcwd_test},
     {"fstat", fstat_test},
     {"exit", exit_test},
-    {"execve", execve_test},
     {"dup2", dup2_test},
     {"dup", dup_test},
     {"close", close_test},

@@ -11,6 +11,9 @@
 #define USER_VMM_TOP_ADDR   (USER_VMM_BASE_ADDR + USER_VMM_SIZE)
 #define USER_STACK_TOP      (USER_VMM_TOP_ADDR - PAGE_SIZE)
 
+#define VMM_NO_STACK    0x01
+#define VMM_NO_HEAP     0x02
+
 /* 进程空间虚拟内存管理 */
 typedef struct vmm {
     void *page_storage;                     /* 虚拟内存管理的结构 */                   
@@ -38,7 +41,7 @@ void vmm_free(vmm_t *vmm);
 int vmm_exit_when_fork_failed(vmm_t *vmm, vmm_t *parent_vmm);
 void vmm_free_storage(vmm_t *vmm);
 int vmm_release_space(vmm_t *vmm);
-int vmm_unmap_space(vmm_t *vmm);
+int vmm_unmap_space(vmm_t *vmm, int flags);
 int vmm_unmap_the_mapping_space(vmm_t *vmm);
 void vmm_dump(vmm_t *vmm);
 int vmm_copy_mem_space(vmm_t *child_vmm, vmm_t *parent_vmm);

@@ -166,24 +166,24 @@ int vmm_release_space(vmm_t *vmm)
 /**
  * BUG: 当执行内存取消映射时，就会产生内存bug。
  */
-int vmm_unmap_space(vmm_t *vmm)
+int vmm_unmap_space(vmm_t *vmm, int flags)
 {
     if (vmm == NULL)
         return -1;
     mem_space_t *space = (mem_space_t *)vmm->mem_space_head;
-    while (space != NULL) {
-        /* 堆栈和代码数据的映射和解除映射有所不同，需要单独处理 */
-        if ((space->flags & MEM_SPACE_MAP_STACK) || (space->flags & MEM_SPACE_MAP_HEAP)) {
-            #if 1
-            page_unmap_addr_safe2(vmm->page_storage, space->start, space->end - space->start, 0);
-            #else
-            //  page_unmap_addr2(vmm->page_storage, space->start, space->end - space->start);
-            #endif
-        } else {
-            // keprintln("[vmm] vmm_unmap_space: start=%p end=%p flags=%x", space->start, space->end, space->flags);
-            page_unmap_addr_safe2(vmm->page_storage, space->start, space->end - space->start, space->flags & MEM_SPACE_MAP_SHARED);
+    for (; space != NULL; space = space->next) {
+        if (flags & VMM_NO_STACK) {
+            if (space->flags & MEM_SPACE_MAP_STACK) {
+                continue;   /* 不处理栈 */
+            }
         }
-        space = space->next;
+        if (flags & VMM_NO_HEAP) {
+            if (space->flags & MEM_SPACE_MAP_HEAP) {
+                continue;   /* 不处理堆 */
+            }
+        }
+        // keprintln("[vmm] vmm_unmap_space: start=%p end=%p flags=%x", space->start, space->end, space->flags);
+        page_unmap_addr_safe2(vmm->page_storage, space->start, space->end - space->start, space->flags & MEM_SPACE_MAP_SHARED);
     }
     return 0;
 }
@@ -213,7 +213,7 @@ int vmm_exit(vmm_t *vmm)
         return -1;
     }
     
-    if (vmm_unmap_space(vmm)) {
+    if (vmm_unmap_space(vmm, 0)) {
         keprint(PRINT_WARING "vmm: exit when unmap space failed!\n");
     }
     
@@ -233,7 +233,7 @@ int vmm_exit_when_fork_failed(vmm_t *child_vmm, vmm_t *parent_vmm)
         return -1;
     }
     vmm_active(child_vmm); // active child vmm for unmap space
-    if (vmm_unmap_space(child_vmm)) {
+    if (vmm_unmap_space(child_vmm, 0)) {
         keprint(PRINT_WARING "vmm: exit when unmap space failed!\n");
     }
     vmm_active(parent_vmm); // active back to parent vmm 

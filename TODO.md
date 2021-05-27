@@ -77,7 +77,7 @@
     [ok] int close(int fd)
     [ok] int dup(int fd)
     [ok] int dup2(int old, int new)
-    [bad] int execve(const char *pathname, char *const argv[], char *const envp[])
+    [ok] int execve(const char *pathname, char *const argv[], char *const envp[])
     [ok] void exit(int code)
     [ok] pid_t fork(void)
     [ok] int fstat(int fd, struct kstat *st)
@@ -99,23 +99,3 @@
     [ok] int wait(int *code)
     [ok] int unlink(char *path)
 ``` 
-
-```
-    [bug] 执行->execve->printf->__stdio_write: page fauilt: user pid=7 name=test_echo access unmaped vir_mem area.
-    [bug] 程序执行导致page fauilt: user pid=6 name=tests access unmaped vir_mem area.
-    (
-        page fault at 644260E2853EE677.
-        [dump]: trap_frame_dump
-        a0: 644260E2853EE667    a1: 000000007FFFEB18    a2: 0000000000000011    a3: 000000007FFFEF40
-        a4: 000000007FFFEB2A    a5: 644260E2853EE667    a6: 0000000000000000    a7: 0000000000000000
-        t0: 0000000000000000    t1: 0000000000000000    t2: 0000000000000000    t3: 0000000000000000
-        t4: 0000000000000000    t5: 0000000000000000    t6: 0000000000000000    s0: 000000007FFFEAE8
-        s1: 0000000000000000    s2: 0000000000000000    s3: 0000000000000000    s4: 0000000000000000
-        s5: 0000000000000000    s6: 0000000000000000    s7: 0000000000000000    s8: 0000000000000000
-        s9: 0000000000000000    s10: 0000000000000000   s11: 0000000000000000   ra: 000000000000B4BC
-        sp: 000000007FFFEA88    gp: 0000000000000000    tp: 0000000000000000    epc: 000000000000E3F8
-        do_vir_mem_fault
-        page fault at 644260E2853EE677.
-        可能是a0传值导致的问题
-    )
-```

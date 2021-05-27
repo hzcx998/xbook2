@@ -150,7 +150,8 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
             mem_free(tmp_arg);
     }
     /* 释放原有进程的内存 */
-    vmm_exit(old_vmm);
+    vmm_unmap_space(old_vmm, VMM_NO_STACK | VMM_NO_HEAP);
+    vmm_release_space(old_vmm);
     vmm_free(old_vmm);
     cur->vmm = new_vmm;
     kfile_close(fd);
