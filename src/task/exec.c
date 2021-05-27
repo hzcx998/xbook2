@@ -261,7 +261,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
     if (!pathname)
         return -EINVAL;
     /* 从用户态复制参数到内核 */
-    char path[32] = {0};
+    char path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(path, (void *)pathname, MAX_PATH) < 0) {
         return -EINVAL;
     }

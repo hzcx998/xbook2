@@ -140,7 +140,7 @@ long tell(int fd)
     return syscall1(int, SYS_TELL, fd);
 }
 
-int fstat(int fd, struct stat *buf)
+int fstat(int fd, struct kstat *buf)
 {
     if (fd < 0)
         return -1;

@@ -18,6 +18,7 @@
 #include <xbook/dir.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 
 // #define DEBUG_FSIF
@@ -305,6 +306,8 @@ int sys_fcntl(int fd, int cmd, long arg)
     switch (cmd) {
     case F_DUPFD: /* 复制一个基于arg（basefd）的最小的fd */
     {
+        if (!ffd->fsal->incref)
+            return -ENOSYS;
         if (ffd->fsal->incref(ffd->handle) < 0)
             return -EINVAL;
         newfd = local_fd_install_based(ffd->handle, ffd->flags & FILE_FD_TYPE_MASK, arg);
@@ -450,7 +453,7 @@ int sys_stat(const char *path, struct stat *buf)
     return err;
 }
 
-int sys_fstat(int fd, struct stat *buf)
+int sys_fstat(int fd, struct kstat *buf)
 { 
     if (!buf)
         return -EINVAL;
@@ -459,10 +462,10 @@ int sys_fstat(int fd, struct stat *buf)
         return -EINVAL;
     if (!ffd->fsal->fstat)
         return -ENOSYS;
-    struct stat _buf;
+    struct kstat _buf;
     int err = ffd->fsal->fstat(ffd->handle, &_buf);
     if (err >= 0) {
-        if (mem_copy_to_user(buf, &_buf, sizeof(struct stat)) < 0)
+        if (mem_copy_to_user(buf, &_buf, sizeof(struct kstat)) < 0)
             return -EINVAL;
     }
     return err;
@@ -684,8 +687,9 @@ int sys_dup2(int oldfd, int newfd)
     if (!ffd->fsal->incref)
         return -ENOSYS;
     if (ffd->fsal->incref(ffd->handle) < 0)
-        return -EINVAL;    
-    newfd = local_fd_install(ffd->handle, ffd->flags & FILE_FD_TYPE_MASK);
+        return -EINVAL; 
+    /* 从newfd开始查找安装位置，并把oldfd安装进去 */   
+    newfd = local_fd_install_based(ffd->handle, ffd->flags & FILE_FD_TYPE_MASK, newfd);
     return newfd;
 }
 

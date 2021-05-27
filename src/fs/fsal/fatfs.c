@@ -31,6 +31,7 @@ typedef struct {
 
 typedef struct {
     FIL file;
+    char path[MAX_PATH];
     char *dir_path;     /* 目录路径：只有被当做目录打开时才有效，默认为NULL */
 } fatfs_file_extention_t;
 
@@ -240,6 +241,8 @@ static int fsal_fatfs_open(void *path, int flags)
     }
     fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
     extension->dir_path = NULL;     /* 普通文件时为NULL，为目录时才有效 */
+    memset(extension->path, 0, MAX_PATH);
+    strcpy(extension->path, path);
 
     fp->fsal = &fatfs_fsal;
 
@@ -280,14 +283,7 @@ static int fsal_fatfs_open(void *path, int flags)
             fsal_file_free(fp);
             return -EPERM;
         }
-        extension->dir_path = mem_alloc(MAX_PATH);
-        if (extension->dir_path == NULL) {
-            errprintln("[fs] fatfs open: memory alloc for dir path %s error", p);
-            mem_free(fp->extension);
-            fsal_file_free(fp);
-            return -ENOMEM;
-        }
-        strncpy(extension->dir_path, p, MAX_PATH);   /* save path */
+        extension->dir_path = extension->path;
     } else {
         FRESULT fres;
         fres = f_open((FIL *)&extension->file, p, mode);
@@ -310,7 +306,7 @@ static int fsal_fatfs_close(int idx)
         return -1;
     fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
     if (extension->dir_path != NULL) {  /* Is director */
-        mem_free(extension->dir_path);
+        extension->dir_path = NULL;
         dbgprintln("[fs] fatfs close: path %s", extension->dir_path);
     } else {
         FRESULT fres;
@@ -628,13 +624,44 @@ static int fsal_fatfs_state(char *path, void *buf)
 static int fsal_fatfs_fstat(int idx, void *buf)
 {
     if (FSAL_BAD_FILE_IDX(idx))
-        return -1;
+        return -EINVAL;
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     if (FSAL_BAD_FILE(fp))   
-        return -1;
+        return -EINVAL;
     
-    /* NOTICE: FATFS暂时不支持 */
-    return -ENOSYS;
+    fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
+    char *path = extension->path;
+    FRESULT fres;
+    FILINFO finfo;
+    /* 对根目录进行特殊处理 */
+    int pdrv = PATH_TO_PDRV(path[0]);   /* 获取设备 */
+    if (is_root_dir(path)) {
+        finfo.fsize = 0;
+        finfo.fdate = fatfs_extention.mount_date[pdrv];
+        finfo.ftime = fatfs_extention.mount_time[pdrv];
+        finfo.fattrib = (AM_RDO | AM_DIR);
+    } else {
+        fres = f_stat(path, &finfo);
+        if (fres != FR_OK) {
+            return -EINVAL;
+        }
+    }
+    struct kstat *stat = (struct kstat *)buf;
+    mode_t mode = S_IREAD | S_IWRITE;
+    if (finfo.fattrib & AM_RDO)
+        mode &= ~S_IWRITE;
+    if (finfo.fattrib & AM_DIR)
+        mode |= S_IFDIR;
+    else
+        mode |= S_IFREG;
+    stat->st_dev = pdrv;
+    stat->st_ino = 0;
+    stat->st_mode = mode;
+    stat->st_size = finfo.fsize;
+    stat->st_nlink = 0;
+    stat->st_atime_sec = (finfo.fdate << 16) | finfo.ftime;
+    stat->st_ctime_sec = stat->st_mtime_sec = stat->st_atime_sec;
+    return 0;
 }
 
 static int fsal_fatfs_chmod(char *path, mode_t mode)

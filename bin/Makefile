@@ -105,6 +105,7 @@ MODULE      +=  archfetch
 MODULE      +=  mount
 MODULE      +=  mkfs
 MODULE      +=  unmount
+MODULE      +=  test_echo
 else ifeq ($(ENV_LIBC),tinylibc)
 
 endif

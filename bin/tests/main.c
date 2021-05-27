@@ -7,6 +7,11 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"fstat", fstat_test},
+    {"exit", exit_test},
+    {"execve", execve_test},
+    {"dup2", dup2_test},
+    {"dup", dup_test},
     {"close", close_test},
     {"fork", fork_test},
     {"clone", clone_test},

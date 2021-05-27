@@ -62,17 +62,24 @@
 * 添加sdcard驱动[ok]
 * 修复不能启动用户程序的bug。(库程序导致)
 * 使用比赛标准库，编译init以及sh。
-* 需要实现的系统调用如下：
-[
-    当在主机实现所有系统调用后，需要进行适配，**参数数值**以及**系统调用**号的修改
+* 需要实现的系统调用如下：  
+当在主机实现所有系统调用后，需要进行适配，**参数数值**以及**系统调用**号的修改
+```
     [ok] int open(const char *path, int flags)
     [ok] int openat(int dirfd,const char *path, int flags)
-    [ok] int close(int fd)
+    
     [ok] ssize_t read(int fd, void *buf, size_t len)
     [ok] ssize_t write(int fd, const void *buf, size_t len)
     [ok] int brk(void *addr)
     [ok] int chdir(const char *path)
     [no] pid_t clone(int (*fn)(void *arg), void *arg, void *stack,
                     size_t stack_size, unsigned long flags)
+    [ok] int close(int fd)
+    [ok] int dup(int fd)
+    [ok] int dup2(int old, int new)
+    [no] int execve(const char *pathname, char *const argv[], char *const envp[])
+    [bug] 执行->execve->printf->__stdio_write: page fauilt: user pid=7 name=test_echo access unmaped vir_mem area.
+    [ok] void exit(int code)
     [ok] pid_t fork(void)
-]
+    [ok] int fstat(int fd, struct kstat *st)
+```

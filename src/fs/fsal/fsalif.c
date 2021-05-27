@@ -341,12 +341,13 @@ static int fsalif_state(char *path, void *buf)
 
 static int fsalif_fstat(int idx, void *buf)
 {
-    if (FSAL_IS_BAD_DIR(idx))
-        return -1;
-    fsal_dir_t *pdir = FSAL_I2D(idx);
-    fsal_t *fsal = pdir->fsal;
-    if (fsal == NULL)
-        return -1;
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -EINVAL;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    fsal_t *fsal = fp->fsal;
+    if (fsal == NULL) {
+        return -EINVAL;
+    }
     if (!fsal->fstat)
         return -ENOSYS;
     return fsal->fstat(idx, buf);
@@ -376,12 +377,13 @@ static int fsalif_chmod(char *path, mode_t mode)
 
 static int fsalif_fchmod(int idx, mode_t mode)
 {
-    if (FSAL_IS_BAD_DIR(idx))
-        return -1;
-    fsal_dir_t *pdir = FSAL_I2D(idx);
-    fsal_t *fsal = pdir->fsal;
-    if (fsal == NULL)
-        return -1;
+    if (FSAL_BAD_FILE_IDX(idx))
+        return -EINVAL;
+    fsal_file_t *fp = FSAL_IDX2FILE(idx);
+    fsal_t *fsal = fp->fsal;
+    if (fsal == NULL) {
+        return -EINVAL;
+    }
     if (!fsal->fchmod)
         return -ENOSYS;
     return fsal->fchmod(idx, mode);

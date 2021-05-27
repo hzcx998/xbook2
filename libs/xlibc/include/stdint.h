@@ -13,7 +13,7 @@ typedef unsigned short  uint16_t;
 typedef signed short    int16_t;
 typedef unsigned char   uint8_t;
 typedef signed char     int8_t;
-#if 0
+#if 1
 typedef unsigned long long  uint64;
 typedef signed long long int64;
 typedef unsigned int    uint32;

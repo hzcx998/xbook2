@@ -21,12 +21,20 @@
 #include <sys/dir.h>
 #include <sys/types.h>
 
+#define TEST_START(x) puts("========== START ");puts(x);puts(" ==========\n");
+#define TEST_END(x) puts("========== END ");puts(x);puts(" ==========\n");
+
 static inline void sys_err(char *str)
 {
     printf("sys err: %s\n", str);
     exit(-1);
 }
 
+int fstat_test(int argc, char* argv[]);
+int exit_test(int argc, char* argv[]);
+int execve_test(int argc, char* argv[]);
+int dup2_test(int argc, char* argv[]);
+int dup_test(int argc, char* argv[]);
 int pipe_test(int argc, char *argv[]);
 int shm_test(int argc, char *argv[]);
 int xlibc_test(int argc,char *argv[]);
