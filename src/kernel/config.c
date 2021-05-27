@@ -3,6 +3,7 @@
 #include <xbook/clock.h>
 #include <xbook/driver.h>
 #include <xbook/safety.h>
+#include <sys/uname.h>
 #include <errno.h>
 #include <stddef.h>
 
@@ -50,4 +51,22 @@ int sys_gethostname(char *name, size_t len)
     if (!name || !len)
         return -EINVAL;
     return mem_copy_to_user(name, KERNEL_NAME, min(len, KERNEL_NAME_LEN));
+}
+
+int sys_uname(struct utsname *buf)
+{
+    struct utsname names;
+    #if defined(__X86__)
+    strcpy(names.machine, "x86");
+    #elif defined(__RISCV64__)
+    strcpy(names.machine, "riscv64");
+    #else
+    strcpy(names.machine, "unknown");
+    #endif
+    strcpy(names.nodename, "localhost");
+    strcpy(names.domainname, "localhost");
+    strcpy(names.version, KERNEL_VERSION);
+    strcpy(names.release, KERNEL_VERSION);
+    strcpy(names.sysname, KERNEL_NAME);
+    return mem_copy_to_user(buf, &names, sizeof(struct utsname));
 }

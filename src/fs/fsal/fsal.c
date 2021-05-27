@@ -56,7 +56,7 @@ int fsal_disk_mount(char *pathname, int max_try)
         char s[2] = {0, 0};
         s[0] = i + 'a';
         strcat(name, s);
-        if (fsif.mount(name, ROOT_DIR_PATH, "fat32", 0) < 0) {
+        if (fsif.mount(name, ROOT_DIR_PATH, "vfat", 0) < 0) {
             continue;
         }
         infoprint("fsal : mount device %s to path %s success.\n", name, ROOT_DIR_PATH);

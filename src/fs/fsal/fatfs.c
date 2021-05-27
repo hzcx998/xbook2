@@ -123,7 +123,7 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
         MKFS_PARM parm = {FM_ANY, 0, 0, 0, 0};
         if (!strcmp(fstype, "fat12") || !strcmp(fstype, "fat16")) {
             parm.fmt = FM_FAT;
-        } else if (!strcmp(fstype, "fat32")) {
+        } else if (!strcmp(fstype, "vfat")) {
             parm.fmt = FM_FAT32;
         } else if (!strcmp(fstype, "exfat")) {
             parm.fmt = FM_EXFAT;
@@ -216,7 +216,7 @@ static int fsal_fatfs_mkfs(char *source, char *fstype, unsigned long flags)
     MKFS_PARM parm = {FM_ANY, 0, 0, 0, 0};
     if (!strcmp(fstype, "fat12") || !strcmp(fstype, "fat16")) {
         parm.fmt = FM_FAT;
-    } else if (!strcmp(fstype, "fat32")) {
+    } else if (!strcmp(fstype, "vfat")) {
         parm.fmt = FM_FAT32;
     } else if (!strcmp(fstype, "exfat")) {
         parm.fmt = FM_EXFAT;
@@ -237,7 +237,7 @@ static int fatfs_is_director(char *path, DIR *dir)
     FRESULT res;
     res = f_opendir(dir, path); /* Open the directory */
     if (res != FR_OK) {
-        errprintln("[fs] fatfs: dir %s not exist", path);
+        // errprintln("[fs] fatfs: dir %s not exist", path);
         return -ENFILE;
     }
     return 0;
@@ -1021,7 +1021,7 @@ static void *fsal_fatfs_mmap(int idx, void *addr, size_t length, int prot, int f
 static char *fatfs_sub_table[] = {
     "fat12",
     "fat16",
-    "fat32",
+    "vfat",
     "exfat",
     NULL           /* 最后一个成员必须是NULL */
 };

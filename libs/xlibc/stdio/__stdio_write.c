@@ -37,6 +37,9 @@ ssize_t __stdio_write(FILE * f, const unsigned char * buf, size_t size)
 	size_t bufsz;
 	int i, ret;
 
+    if (!f)
+        return EINVAL;
+
 	if (!f->write)
 		return EINVAL;
 

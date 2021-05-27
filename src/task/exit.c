@@ -31,6 +31,8 @@ void sys_exit(int status)
     task_t *cur = task_current;
     unsigned long flags;
     interrupt_save_and_disable(flags);
+    if (status >= 0) 
+        status = (status << 8);
     cur->exit_status = status;
     task_exit_hook(cur);
     proc_close_other_threads(cur);

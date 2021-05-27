@@ -6,6 +6,8 @@
 #include <xbook/spinlock.h>
 #include <xbook/mutexlock.h>
 
+// #define CONFIG_ACCOUNT_CHECK
+
 /* 最大允许的账户数量 */
 #define ACCOUNT_NR  8
 

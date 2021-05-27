@@ -16,6 +16,7 @@
 #include <xbook/schedule.h>
 #include <xbook/fifo.h>
 #include <xbook/sockcall.h>
+#include <sys/uname.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <dirent.h>
@@ -157,6 +158,7 @@ void syscall_init()
     syscalls[SYS_OPENAT] = sys_openat;
     syscalls[SYS_CLONE] = sys_clone;
     syscalls[SYS_GETDENTS64] = sys_getdents;
+    syscalls[SYS_UNAME] = sys_uname;
 }
 
 int syscall_check(uint32_t callno)

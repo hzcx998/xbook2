@@ -118,6 +118,7 @@ enum syscall_num {
     SYS_OPENAT,
     SYS_CLONE,
     SYS_GETDENTS64,
+    SYS_UNAME,
     SYSCALL_NR,
 };
 

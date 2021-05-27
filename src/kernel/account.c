@@ -614,9 +614,13 @@ int account_check_permission(account_t *account, char *str, uint32_t attr)
 
 int account_selfcheck_permission(char *str, uint32_t attr)
 {
+    #ifdef CONFIG_ACCOUNT_CHECK
     if (!account_current)
         return -1;
     return account_check_permission(account_current, str, attr);
+    #else
+    return 0;
+    #endif
 }
 
 int sys_account_login(const char *name, char *password)

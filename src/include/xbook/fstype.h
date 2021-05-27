@@ -3,7 +3,7 @@
 
 #include <xbook/fsal.h>
 
-#define FSAL_FSTYPE_DEFAULT "fat32"
+#define FSAL_FSTYPE_DEFAULT "vfat"
 
 int fstype_register(fsal_t *fsal);
 int fstype_unregister(fsal_t *fsal);

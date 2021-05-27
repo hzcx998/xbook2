@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
         arg_device = loop_dev_path;  /* 指向环回设备，挂载环回设备 */
     }
 
-    if (mount(arg_device, arg_dir, arg_fs, mount_flags) < 0) {
+    if (mount(arg_device, arg_dir, arg_fs, mount_flags, NULL) < 0) {
         fprintf(stderr, "mount: device=%s, dir=%s, file system=%s failed!\n", 
             arg_device, arg_dir, arg_fs);
         loop_device_setdown(loop_dev_path);

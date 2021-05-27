@@ -29,6 +29,13 @@ static inline void sys_err(char *str)
     printf("sys err: %s\n", str);
     exit(-1);
 }
+
+int yield_test(int argc, char* argv[]);
+int waitpid_test(int argc, char* argv[]);
+int wait_test(int argc, char* argv[]);
+int unlink_test(int argc, char* argv[]);
+int uname_test(int argc, char* argv[]);
+int mount_test(int argc, char* argv[]);
 int times_test(int argc, char *argv[]);
 int sleep_test2(int argc, char *argv[]);
 int pipe_test2(int argc, char *argv[]);

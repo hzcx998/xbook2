@@ -34,7 +34,7 @@ static int do_open(char *path, int flags)
         return -ENOSYS;
     char abs_path[MAX_PATH] = {0};
     build_path(path, abs_path);
-    if (!account_selfcheck_permission((char *)abs_path, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)abs_path, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     int handle = fsif.open((void *)abs_path, flags);
@@ -362,7 +362,7 @@ int sys_access(const char *path, int mode)
     char _path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
-    if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     char abs_path[MAX_PATH] = {0};
@@ -377,7 +377,7 @@ int sys_unlink(const char *path)
     char _path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
-    if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     char abs_path[MAX_PATH] = {0};
@@ -432,7 +432,7 @@ int sys_stat(const char *path, struct stat *buf)
     char _path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
-    if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     char abs_path[MAX_PATH] = {0};
@@ -471,7 +471,7 @@ int sys_chmod(const char *path, mode_t mode)
     char _path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
-    if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     char abs_path[MAX_PATH] = {0};
@@ -496,7 +496,7 @@ int sys_mkdir(const char *path, mode_t mode)
     char _path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
-    if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     char abs_path[MAX_PATH] = {0};
@@ -511,7 +511,7 @@ int sys_rmdir(const char *path)
     char _path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
-    if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     char abs_path[MAX_PATH] = {0};
@@ -529,10 +529,10 @@ int sys_rename(const char *source, const char *target)
     char _target[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_target, (void *) target, MAX_PATH) < 0)
         return -EINVAL;
-    if (!account_selfcheck_permission((char *)_source, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_source, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
-    if (!account_selfcheck_permission((char *)_target, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_target, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     char abs_source[MAX_PATH] = {0};
@@ -580,7 +580,7 @@ dir_t sys_opendir(const char *path)
     char _path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_path, (void *) path, MAX_PATH) < 0)
         return -EINVAL;
-    if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     char abs_path[MAX_PATH] = {0};
@@ -732,10 +732,10 @@ int sys_mount(
     if (mem_copy_from_user_str(_fstype, fstype, 32) < 0)
         return -EINVAL;
     
-    if (!account_selfcheck_permission((char *)_source, PERMISION_ATTR_DEVICE)) {
+    if (account_selfcheck_permission((char *)_source, PERMISION_ATTR_DEVICE) < 0) {
         return -EPERM;
     }
-    if (!account_selfcheck_permission((char *)_target, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_target, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     char abs_source[MAX_PATH] = {0};
@@ -752,7 +752,7 @@ int sys_unmount(char *path, unsigned long flags)
     char _path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_path, path, MAX_PATH) < 0)
         return -EINVAL;
-    if (!account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     char abs_path[MAX_PATH] = {0};
@@ -772,7 +772,7 @@ int sys_mkfs(char *source,         /* 需要创建FS的设备 */
     char _fstype[32] = {0};
     if (mem_copy_from_user_str(_fstype, fstype, 32) < 0)
         return -EINVAL;
-    if (!account_selfcheck_permission((char *)source, PERMISION_ATTR_DEVICE)) {
+    if (account_selfcheck_permission((char *)source, PERMISION_ATTR_DEVICE) < 0) {
         return -EPERM;
     }
     char abs_source[MAX_PATH] = {0};

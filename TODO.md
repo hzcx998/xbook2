@@ -72,12 +72,12 @@
     [ok] ssize_t write(int fd, const void *buf, size_t len)
     [ok] int brk(void *addr)
     [ok] int chdir(const char *path)
-    [no] pid_t clone(int (*fn)(void *arg), void *arg, void *stack,
+    [bad] pid_t clone(int (*fn)(void *arg), void *arg, void *stack,
                     size_t stack_size, unsigned long flags)
     [ok] int close(int fd)
     [ok] int dup(int fd)
     [ok] int dup2(int old, int new)
-    [no] int execve(const char *pathname, char *const argv[], char *const envp[])
+    [bad] int execve(const char *pathname, char *const argv[], char *const envp[])
     [ok] void exit(int code)
     [ok] pid_t fork(void)
     [ok] int fstat(int fd, struct kstat *st)
@@ -91,7 +91,13 @@
     [ok] int munmap(void *start, size_t len)
     [ok] int pipe(int fd[2])
     [ok] int times(void *mytimes)
-
+    [bad] int mount(const char *special, const char *dir, const char *fstype, unsigned long flags, const void *data)
+    [bad] int umount(const char *special)
+    [ok] int uname(struct utsname *buf)
+    [ok] int sched_yield(void);
+    [ok] int waitpid(int pid, int *code, int options)
+    [ok] int wait(int *code)
+    [ok] int unlink(char *path)
 ``` 
 
 ```
@@ -112,5 +118,5 @@
         page fault at 644260E2853EE677.
         可能是a0传值导致的问题
     )
-        
+    [bug] mount/umount执行完后，貌似根文件系统也被卸载了，检查一下mount/umount代码问题。
 ```

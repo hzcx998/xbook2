@@ -9,10 +9,13 @@ int mount(
     const char *source,
     const char *target,
     const char *fstype,
-    unsigned long flags
+    unsigned long flags,
+    void *data
 );
 
 int unmount(const char *source, unsigned long flags);
+
+#define umount(source) unmount((source), 0)
 
 int mkfs(
     const char *source,

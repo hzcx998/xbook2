@@ -9,11 +9,12 @@ int mount(
     const char *source,
     const char *target,
     const char *fstype,
-    unsigned long flags
+    unsigned long flags,
+    void *data
 ) {
     if (source == NULL || target == NULL || fstype == NULL)
         return -1;
-    return syscall4(int, SYS_MOUNT, source, target, fstype, flags);
+    return syscall5(int, SYS_MOUNT, source, target, fstype, flags, data);
 }
 
 int unmount(const char *source, unsigned long flags)
