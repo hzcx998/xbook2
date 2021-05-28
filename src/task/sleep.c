@@ -73,3 +73,31 @@ long sys_usleep(struct timeval *inv, struct timeval *outv)
     }
     return 0;
 }
+
+int sys_nanosleep(struct timespec *req, struct timespec *rem)
+{
+    if (!req)
+        return -EINVAL;
+    struct timespec ts;
+    unsigned long ticks;
+    if (mem_copy_from_user(&ts, req, sizeof(struct timespec)) < 0)
+        return -EFAULT;
+    if (ts.tv_nsec >= 1000000000 || ts.tv_sec < 0 || ts.tv_nsec < 0)
+        return -EINVAL;
+    /* 如果小于2毫秒就用延时的方式 */
+    if (ts.tv_nsec < (2000L * 1000) && ts.tv_sec == 0) {
+        udelay(ts.tv_nsec);
+        return 0;
+    }
+    ticks = timespec_to_systicks(&ts);
+    ticks = task_sleep_by_ticks(ticks);
+    if (ticks > 0) {
+        if (rem) {
+            systicks_to_timespec(ticks, &ts);
+            if (mem_copy_to_user(rem, &ts, sizeof(struct timespec)) < 0)
+                return -EFAULT;
+        }
+        return -EINTR;
+    }
+    return 0;
+}

@@ -56,6 +56,7 @@ int sys_gethostname(char *name, size_t len)
 int sys_uname(struct utsname *buf)
 {
     struct utsname names;
+    memset(&names, 0, sizeof(struct utsname));
     #if defined(__X86__)
     strcpy(names.machine, "x86");
     #elif defined(__RISCV64__)
@@ -68,5 +69,10 @@ int sys_uname(struct utsname *buf)
     strcpy(names.version, KERNEL_VERSION);
     strcpy(names.release, KERNEL_VERSION);
     strcpy(names.sysname, KERNEL_NAME);
-    return mem_copy_to_user(buf, &names, sizeof(struct utsname));
+    if (mem_copy_to_user(buf, &names, sizeof(names)) < 0)
+        return -EPERM;
+    
+    infoprintln("Uname: %s %s %s %s %s %s\n", 
+		names.sysname, names.nodename, names.release, names.version, names.machine, names.domainname);
+    return 0;
 }

@@ -53,13 +53,6 @@ void syscall_init()
         syscalls[i] = syscall_default;
     }
 
-    /*
-    need add: 
-    SYS_nanosleep
-    SYS_linkat
-    SYS_unlinkat
-    SYS_mkdirat
-    */
     #if defined(CONFIG_NEWSYSCALL)
     syscalls[SYS_openat] = sys_openat;
     syscalls[SYS_open] = sys_open;
@@ -76,17 +69,17 @@ void syscall_init()
     syscalls[SYS_execve] = sys_execve;
     syscalls[SYS_times] = sys_times;
     syscalls[SYS_gettimeofday] = sys_gettimeofday;
-    //syscalls[SYS_nanosleep] = ;
+    syscalls[SYS_nanosleep] = sys_nanosleep;
     syscalls[SYS_mmap] = sys_mmap;
     syscalls[SYS_munmap] = sys_munmap;
     syscalls[SYS_fstat] = sys_fstat;
     // syscalls[SYS_linkat] = ;
-    // syscalls[SYS_unlinkat] = ;
+    syscalls[SYS_unlinkat] = sys_unlinkat;
     syscalls[SYS_uname] = sys_uname;
     syscalls[SYS_brk] = sys_brk;
     syscalls[SYS_getcwd] = sys_getcwd;
     syscalls[SYS_chdir] = sys_chdir;
-    // syscalls[SYS_mkdirat] = ;
+    syscalls[SYS_mkdirat] = sys_mkdirat;
     syscalls[SYS_getdents64] = sys_getdents;
     syscalls[SYS_pipe2] = sys_pipe;
     syscalls[SYS_dup] = sys_dup;
@@ -249,8 +242,8 @@ unsigned long syscall_dispatch(trap_frame_t *frame)
     a0-a1: retval
     */
     syscall_func_t func = (syscall_func_t)syscalls[frame->a7];
-    //dbgprintln("[syscall] num %d syscall: %p", frame->a7, func);
-    
+    //dbgprintln("[syscall] syscall number %d", frame->a7);
+
     #if defined(CONFIG_NEWSYSCALL)
     retval = func(frame->a0, frame->a1, frame->a2,
                             frame->a3, frame->a4, frame->a5, frame);

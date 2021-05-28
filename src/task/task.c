@@ -180,7 +180,6 @@ void kern_thread_exit(int status)
     cur->exit_status = status;
     task_do_cancel(cur);
     task_exit_hook(cur);
-    cur->parent_pid = KEDEAMON_PID;
     task_t *parent = task_find_by_pid(cur->parent_pid); 
     if (parent) {
         if (parent->state == TASK_WAITING) {
@@ -485,14 +484,18 @@ static void do_one_test(char *argv[])
     }
 }
 
-#define TEST_PROGRAM_PATH   "/riscv64"
+#define TEST_PROGRAM_PATH   ""
 
 #define TEST_MACHINE_PREFIX "[test machine] "
 
 // #define TEST_MACHINE_LOAD_FILE
 
-#define TEST_MACHINE_SINGLE_TEST
-#define TEST_MACHINE_SINGLE_TEST_NAME   TEST_PROGRAM_PATH"/brk"
+//#define TEST_MACHINE_SINGLE_TEST
+#if 0
+#define TEST_MACHINE_SINGLE_TEST_NAME   TEST_PROGRAM_PATH"uname"
+#else
+#define TEST_MACHINE_SINGLE_TEST_NAME   "/bin/utests"
+#endif
 
 #include <dirent.h>
 
@@ -509,18 +512,24 @@ static void test_machine_load_files()
             if (fsif.readdir(dir, &de) < 0)
                 break;
             if (de.d_attr & DE_DIR) {
-                keprint(TEST_MACHINE_PREFIX"dir %s/%s\n", TEST_PROGRAM_PATH, de.d_name);
+                dbgprintln(TEST_MACHINE_PREFIX"dir %s/%s\n", TEST_PROGRAM_PATH, de.d_name);
             } else {
                 char path[128] = {0};
                 strcpy(path, TEST_PROGRAM_PATH);
                 strcat(path, "/");
                 strcat(path, de.d_name);
-                keprint(TEST_MACHINE_PREFIX"file: %s", path);
+                dbgprintln(TEST_MACHINE_PREFIX"file: %s", path);
                 char *test_argv[MAX_TASK_STACK_ARG_NR] = {0,};
                 memset(test_argv, 0, sizeof(test_argv));
                 /* 如果需要传入特殊参数，需要在此进行特殊处理 */
                 test_argv[0] = path;
-                test_argv[1] = 0;
+                if (!strcmp(de.d_name, "mount") || !strcmp(de.d_name, "umount")) {
+                    test_argv[1] = "/dev/sda";
+                    test_argv[2] = "/mnt";
+                    test_argv[3] = 0;
+                } else {
+                    test_argv[1] = 0;
+                }
                 do_one_test(test_argv);
             }
         }
@@ -552,6 +561,7 @@ static char *bin_name_talbe[] = {
     "open",
     "pipe",
     "read",
+    "sleep",
     "times",
     "umount",
     "uname",
@@ -580,7 +590,13 @@ static void test_machine_load_names()
         memset(test_argv, 0, sizeof(test_argv));
         /* 如果需要传入特殊参数，需要在此进行特殊处理 */
         test_argv[0] = path;
-        test_argv[1] = 0;
+        if (!strcmp(name, "mount") || !strcmp(name, "umount")) {
+            test_argv[1] = "/dev/sda";
+            test_argv[2] = "/mnt";
+            test_argv[3] = 0;
+        } else {
+            test_argv[1] = 0;
+        }
         do_one_test(test_argv);
         i++;
         name = bin_name_talbe[i];

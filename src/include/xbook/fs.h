@@ -20,16 +20,24 @@ int sys_ioctl(int fd, int cmd, void *arg);
 int sys_fcntl(int fd, int cmd, long arg);
 int sys_lseek(int fd, off_t offset, int whence);
 int sys_access(const char *path, int mode);
-int sys_unlink(const char *path);
+int __sys_unlink(const char *path, int flags);
+int sys_unlink(const char *path, int flags);
+int sys_unlinkat(int dirfd, const char *pathname, int flags);
 int sys_ftruncate(int fd, off_t offset);
 int sys_fsync(int fd);
 int sys_chmod(const char *path, mode_t mode);
 int sys_fchmod(int fd, mode_t mode);
+int __sys_mkdir(const char *path, mode_t mode);
 int sys_mkdir(const char *path, mode_t mode);
+int sys_mkdirat(int dirfd, const char *pathname, mode_t mode);
 int sys_rmdir(const char *path);
 int sys_rename(const char *source, const char *target);
 int sys_chdir(const char *path);
+#if defined(CONFIG_NEWSYSCALL)
+char *sys_getcwd(char *buf, int bufsz);
+#else
 int sys_getcwd(char *buf, int bufsz);
+#endif
 long sys_tell(int fd);
 int sys_dup(int oldfd);
 int sys_dup2(int oldfd, int newfd);

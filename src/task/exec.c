@@ -246,11 +246,11 @@ int proc_execve(const char *pathname, const char *argv[], const char *envp[])
                 env++;
                 memset(newpath, 0, MAX_PATH);
             }
-        } else {
-            if (do_execute((const char* )pathname, (char *)pathname, argv, envp) < 0) {
-                keprint(PRINT_ERR "%s: path %s not executable!", __func__, newpath);
-                return -1;
-            }
+        }
+        build_path(p, newpath);
+        if (do_execute((const char* )newpath, (char *)newpath, argv, envp) < 0) {
+            keprint(PRINT_ERR "%s: path %s not executable!", __func__, newpath);
+            return -1;
         }
     }
     keprint(PRINT_ERR "%s: path %s not exist or not executable!\n", __func__, pathname);

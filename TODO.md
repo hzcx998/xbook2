@@ -100,4 +100,17 @@
     [ok] int unlink(char *path)
 ``` 
 * 根据赛题要求移植系统调用对应的接口。
-* 将init函数放到内核中 [ok]
+tinylibc测试未通过：
+```
+    [not pass] clone: clone未实现
+    [not pass] exit: clone未实现
+    [not pass] fork: clone未实现
+    [not pass] pipe: clone未实现
+    [not pass] wait: clone未实现
+    [not pass] waitpid: clone未实现
+    [not pass] yield: clone未实现
+    [not pass] pipe: clone未实现
+    [not pass] getdents: dirp参数在内核中为NULL，但是自己编译的版本却可以，感觉时编译器的问题。
+    [not pass] uname: 打印时为（null）
+```
+ 

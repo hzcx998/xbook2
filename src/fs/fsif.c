@@ -385,19 +385,75 @@ int sys_access(const char *path, int mode)
     return fsif.access(abs_path, mode);
 }
 
-int sys_unlink(const char *path)
+int __sys_unlink(const char *path, int flags)
+{
+    if (!path)
+        return -EINVAL;
+    if (account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE) < 0) {
+        return -EPERM;
+    }
+    char abs_path[MAX_PATH] = {0};
+    build_path(path, abs_path);
+    dbgprintln("unlink: %s", abs_path);
+    return fsif.unlink((char *) abs_path);
+}
+
+int sys_unlink(const char *path, int flags)
 {
     if (!path)
         return -EINVAL;
     char _path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
-    if (account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE) < 0) {
+    return __sys_unlink(_path, flags);
+}
+
+
+/**
+ * 删除一个文件
+ * 如果pathname是绝对路径，那么dirfd被忽略，功能和unlink一样。
+ * 如果pathname是想对路径，那么就看dirfd是什么，如果是AT_FDCWD，
+ * 那么就会把pathname和cwd进行合并，得出最终的路径。不然，就会把
+ * dirfd对应的路径和pathname进行合并，得出最后的路径。
+ */
+int sys_unlinkat(int dirfd, const char *pathname, int flags)
+{
+    if (!pathname)
+        return -EINVAL;
+    
+    char _path[MAX_PATH] = {0};
+    if (mem_copy_from_user_str(_path, (void *)pathname, MAX_PATH) < 0) {
+        return -EINVAL;
+    }
+    // dbgprintln("[fs] sys_ulinkat: dirfd %d, pathname %s, flags %x", dirfd, _path, flags);
+    if (_path[0] == '/' && _path[1] == '\0') {
+        dbgprintln("[fs] sys_ulinkat: can't make root dir '/' directly");
+        return -EINVAL;
+    }
+    if (_path[0] == '/' && _path[1] != '\0') {
+        return __sys_unlink(_path, flags);
+    }
+    if (dirfd == AT_FDCWD) {    /* 在进程的cwd目录后面 */
+        return __sys_unlink(_path, flags);
+    }
+    char *dirpath = fsif_dirfd_path(dirfd);
+    if (dirpath == NULL) {
+        dbgprintln("[fs] sys_ulinkat: dirfd %d not a director", dirfd);
+        return -ENFILE; /* fd没有对应目录 */
+    }
+    char oldcwd[MAX_PATH] = {0};    /* save old cwd as dirpath */
+    if (kfile_getcwd(oldcwd, MAX_PATH) < 0) {
+        dbgprintln("[fs] sys_ulinkat: get cwd error");
         return -EPERM;
     }
-    char abs_path[MAX_PATH] = {0};
-    build_path(_path, abs_path);
-    return fsif.unlink((char *) abs_path);
+    task_t *cur = task_current;
+    task_set_cwd(cur, dirpath); /* set cwd as dirpath */
+    int newfd = __sys_unlink(_path, flags); /* do open file */
+    if (newfd < 0) {
+        dbgprintln("[fs] sys_ulinkat: open file %s error", _path);
+    }
+    task_set_cwd(cur, oldcwd); /* restore cwd as old cwd */
+    return newfd;
 }
 
 int sys_ftruncate(int fd, off_t offset)
@@ -504,6 +560,18 @@ int sys_fchmod(int fd, mode_t mode)
     return ffd->fsal->fchmod(ffd->handle, mode);
 }
 
+int __sys_mkdir(const char *path, mode_t mode)
+{
+    if (!path)
+        return -EINVAL;
+    if (account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE) < 0) {
+        return -EPERM;
+    }
+    char abs_path[MAX_PATH] = {0};
+    build_path(path, abs_path);
+    return fsif.mkdir((char *) abs_path, mode);
+}
+
 int sys_mkdir(const char *path, mode_t mode)
 {
     if (!path)
@@ -511,12 +579,53 @@ int sys_mkdir(const char *path, mode_t mode)
     char _path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0)
         return -EINVAL;
-    if (account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE) < 0) {
+    return __sys_mkdir(_path, mode);
+}
+
+/**
+ * 创建一个目录
+ * 如果pathname是绝对路径，那么dirfd被忽略，功能和mkdir一样。
+ * 如果pathname是想对路径，那么就看dirfd是什么，如果是AT_FDCWD，
+ * 那么就会把pathname和cwd进行合并，得出最终的路径。不然，就会把
+ * dirfd对应的路径和pathname进行合并，得出最后的路径。
+ */
+int sys_mkdirat(int dirfd, const char *pathname, mode_t mode)
+{
+    if (!pathname)
+        return -EINVAL;
+    char _path[MAX_PATH] = {0};
+    if (mem_copy_from_user_str(_path, (void *)pathname, MAX_PATH) < 0) {
+        return -EINVAL;
+    }
+    //dbgprintln("[fs] sys_mkdirat: dirfd %d, pathname %s, mode %x", dirfd, _path, mode);
+    if (_path[0] == '/' && _path[1] == '\0') {
+        dbgprintln("[fs] sys_mkdirat: can't make root dir '/' directly");
+        return -EINVAL;
+    }
+    if (_path[0] == '/' && _path[1] != '\0') {
+        return __sys_mkdir(_path, mode);
+    }
+    if (dirfd == AT_FDCWD) {    /* 在进程的cwd目录后面 */
+        return __sys_mkdir(_path, mode);
+    }
+    char *dirpath = fsif_dirfd_path(dirfd);
+    if (dirpath == NULL) {
+        dbgprintln("[fs] sys_mkdirat: dirfd %d not a director", dirfd);
+        return -ENFILE; /* fd没有对应目录 */
+    }
+    char oldcwd[MAX_PATH] = {0};    /* save old cwd as dirpath */
+    if (kfile_getcwd(oldcwd, MAX_PATH) < 0) {
+        dbgprintln("[fs] sys_mkdirat: get cwd error");
         return -EPERM;
     }
-    char abs_path[MAX_PATH] = {0};
-    build_path(_path, abs_path);
-    return fsif.mkdir((char *) abs_path, mode);
+    task_t *cur = task_current;
+    task_set_cwd(cur, dirpath); /* set cwd as dirpath */
+    int newfd = __sys_mkdir(_path, mode); /* do open file */
+    if (newfd < 0) {
+        dbgprintln("[fs] sys_mkdirat: open file %s error", _path);
+    }
+    task_set_cwd(cur, oldcwd); /* restore cwd as old cwd */
+    return newfd;
 }
 
 int sys_rmdir(const char *path)
@@ -567,14 +676,30 @@ int sys_chdir(const char *path)
     task_t *cur = task_current;
     if (!cur->fileman)
         return -EINVAL;
-    dir_t dir = fsif.opendir(_path);
+    char abs_source[MAX_PATH] = {0};
+    build_path(_path, abs_source);
+    // dbgprintln("[fs] %s: dir _path=%s abs=%s", __func__, _path, abs_source);
+    dir_t dir = fsif.opendir(abs_source);
     if (dir < 0) {
         return -ENOFILE;
     }
     sys_closedir(dir);
-    return task_set_cwd(cur, _path);
+    return task_set_cwd(cur, abs_source);
 }
-
+#if defined(CONFIG_NEWSYSCALL)
+char *sys_getcwd(char *buf, int bufsz)
+{
+    if (!buf)
+        return NULL;
+    task_t *cur = task_current;
+    if (!cur->fileman)
+        return NULL;
+    if (mem_copy_to_user(buf, cur->fileman->cwd, min((bufsz == 0) ? MAX_PATH : bufsz,
+        MAX_PATH)) < 0)
+        return NULL;
+    return buf;
+}
+#else
 int sys_getcwd(char *buf, int bufsz)
 {
     if (!buf)
@@ -587,6 +712,7 @@ int sys_getcwd(char *buf, int bufsz)
         return -EINVAL;
     return 0;
 }
+#endif
 
 dir_t sys_opendir(const char *path)
 {
@@ -845,8 +971,10 @@ static int getdents_large(file_fd_t *ffd, void *dirp, size_t nbytes)
 
 int sys_getdents(int fd, void *dirp, unsigned long len)
 {
-    if (fd < 0 || !dirp || !len)
+    if (fd < 0 || !dirp || !len) {
+        errprint("[fs] sys_getdents: invalid args: dirfd %d dirp=%p len=%d\n", fd, dirp, len);
         return -EINVAL;
+    }
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd)) {
         errprint("[fs] sys_getdents: dirfd %d err!\n", fd);
