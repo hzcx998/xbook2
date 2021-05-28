@@ -461,23 +461,98 @@ void kern_do_idle(void *arg)
     }
 }
 
+
+
 /* 在内核中打开标准输入输出 */
 #define STDIO_INKERN    
 #define STDIO_DEVICE    "/dev/con0"
 
+#ifdef CONFIG_TEST_MACHINE
+
+static void do_one_test(char *argv[])
+{
+    /* 启动应用程序 */
+    task_t *proc = process_create(argv, NULL, PROC_CREATE_INKERN);
+    if (proc == NULL)
+        panic("kernel start process failed! please check initsrv!\n");
+    dbgprintln("create process %d ok", proc->pid);
+    /* 等待子进程结束 */
+    int status = 0;
+    int _pid;
+    _pid = kewaitpid(-1, &status, 0);    /* wait any child exit */
+    if (_pid > 0) {
+        infoprint("test_machine: process[%d] exit with status %d.\n", _pid, status);
+    }
+}
+
+#define TEST_PROGRAM_PATH   "/bin"
+
+#define TEST_MACHINE_PREFIX "[test machine] "
+
+#include <dirent.h>
+/* 测试机线程 */
+void test_machine_thread(void *arg)
+{
+    dbgprintln(TEST_MACHINE_PREFIX"start...");
+    /* 打开标准输入输出 */
+    int fd = __sys_open(STDIO_DEVICE, 0);
+    if (fd < 0)
+        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
+    dbgprintln(TEST_MACHINE_PREFIX"start user: stdin fd %d", fd);
+    fd = __sys_open(STDIO_DEVICE, 0);
+    if (fd < 0)
+        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
+    dbgprintln(TEST_MACHINE_PREFIX"start user: stdout fd %d", fd);
+    fd = __sys_open(STDIO_DEVICE, 0);
+    if (fd < 0)
+        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
+    dbgprintln(TEST_MACHINE_PREFIX"start user: stderr fd %d", fd);
+    
+    dirent_t de;
+    int dir = fsif.opendir(TEST_PROGRAM_PATH);
+    if (dir >= 0) {
+        while (1) {
+            if (fsif.readdir(dir, &de) < 0)
+                break;
+            if (de.d_attr & DE_DIR) {
+                keprint(TEST_MACHINE_PREFIX"dir %s/%s\n", TEST_PROGRAM_PATH, de.d_name);
+            } else {
+                char path[128] = {0};
+                strcpy(path, TEST_PROGRAM_PATH);
+                strcat(path, "/");
+                strcat(path, de.d_name);
+                keprint(TEST_MACHINE_PREFIX"file: %s", path);
+                char *test_argv[MAX_TASK_STACK_ARG_NR] = {0,};
+                memset(test_argv, 0, sizeof(test_argv));
+                /* 如果需要传入特殊参数，需要在此进行特殊处理 */
+                test_argv[0] = path;
+                test_argv[1] = 0;
+                do_one_test(test_argv);
+            }
+        }
+        fsif.closedir(dir);
+    }
+    dbgprintln(TEST_MACHINE_PREFIX"tests done.");
+    while (1) {
+        cpu_idle();
+        schedule();
+    }
+}
+#else
 #if defined(CONFIG_NEWSYSCALL)
 #define USER_PROCESS_PATH  "/bin/test_echo"
 #else
 #define USER_PROCESS_PATH  "/sbin/init"
 #endif
 static char *init_argv[2] = {USER_PROCESS_PATH, 0};
-
+#endif
 /**
  * 在初始化的最后调用，当前任务演变成"idle"任务，等待随时调动
  */
 void task_start_user()
 {
     keprint(PRINT_DEBUG "[task]: start user process.\n");
+    #ifndef CONFIG_TEST_MACHINE
     #ifdef STDIO_INKERN    
     int fd = __sys_open(STDIO_DEVICE, 0);
     if (fd < 0)
@@ -498,6 +573,11 @@ void task_start_user()
     /*keprintln("fisrt process pid=%d ppid=%d pgid=%d tgid=%d", 
         proc->pid, proc->parent_pid, proc->pgid, proc->tgid);
     */
+    #else
+    /* 启动测试机线程 */
+    task_t *test_thread = kern_thread_start("test_machine", TASK_PRIO_LEVEL_LOW, test_machine_thread, NULL);
+    assert(test_thread != NULL);
+    #endif
     sched_unit_t *su = sched_get_cur_unit();
 	unsigned long flags;
     interrupt_save_and_disable(flags);

@@ -27,4 +27,6 @@
 /* 配置新的系统调用接口，将会覆盖原有的系统调用 */
 #define CONFIG_NEWSYSCALL
 
+/* 配置测试机，在内核中进行程序测试 */
+#define CONFIG_TEST_MACHINE
 #endif   /* _XBOOK_CONFIG_H */
