@@ -485,29 +485,23 @@ static void do_one_test(char *argv[])
     }
 }
 
-#define TEST_PROGRAM_PATH   "/bin"
+#define TEST_PROGRAM_PATH   "/riscv64"
 
 #define TEST_MACHINE_PREFIX "[test machine] "
 
+// #define TEST_MACHINE_LOAD_FILE
+
+#define TEST_MACHINE_SINGLE_TEST
+#define TEST_MACHINE_SINGLE_TEST_NAME   TEST_PROGRAM_PATH"/brk"
+
 #include <dirent.h>
-/* 测试机线程 */
-void test_machine_thread(void *arg)
+
+#ifdef TEST_MACHINE_LOAD_FILE
+/**
+ * 加载文件式执行
+*/
+static void test_machine_load_files()
 {
-    dbgprintln(TEST_MACHINE_PREFIX"start...");
-    /* 打开标准输入输出 */
-    int fd = __sys_open(STDIO_DEVICE, 0);
-    if (fd < 0)
-        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
-    dbgprintln(TEST_MACHINE_PREFIX"start user: stdin fd %d", fd);
-    fd = __sys_open(STDIO_DEVICE, 0);
-    if (fd < 0)
-        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
-    dbgprintln(TEST_MACHINE_PREFIX"start user: stdout fd %d", fd);
-    fd = __sys_open(STDIO_DEVICE, 0);
-    if (fd < 0)
-        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
-    dbgprintln(TEST_MACHINE_PREFIX"start user: stderr fd %d", fd);
-    
     dirent_t de;
     int dir = fsif.opendir(TEST_PROGRAM_PATH);
     if (dir >= 0) {
@@ -532,6 +526,96 @@ void test_machine_thread(void *arg)
         }
         fsif.closedir(dir);
     }
+}
+#else
+static char *bin_name_talbe[] = {
+    "brk",
+    "chdir",
+    "clone",
+    "close",
+    "dup2",
+    "dup",
+    "execve",
+    "exit",
+    "fork",
+    "fstat",
+    "getcwd",
+    "getdents",
+    "getpid",
+    "getppid",
+    "gettimeofday",
+    "mkdir_",
+    "mmap",
+    "mount",
+    "munmap",
+    "openat",
+    "open",
+    "pipe",
+    "read",
+    "times",
+    "umount",
+    "uname",
+    "unlink",
+    "wait",
+    "waitpid",
+    "write",
+    "yield",
+    NULL
+};
+
+/**
+ * 通过加载名字方式执行
+ */
+static void test_machine_load_names()
+{
+    int i = 0;
+    char *name = bin_name_talbe[i];
+    while (name != NULL) {
+        char path[128] = {0};
+        strcpy(path, TEST_PROGRAM_PATH);
+        strcat(path, "/");
+        strcat(path, name);
+        keprint(TEST_MACHINE_PREFIX"file: %s", path);
+        char *test_argv[MAX_TASK_STACK_ARG_NR] = {0,};
+        memset(test_argv, 0, sizeof(test_argv));
+        /* 如果需要传入特殊参数，需要在此进行特殊处理 */
+        test_argv[0] = path;
+        test_argv[1] = 0;
+        do_one_test(test_argv);
+        i++;
+        name = bin_name_talbe[i];
+    }
+}
+#endif
+/* 测试机线程 */
+void test_machine_thread(void *arg)
+{
+    dbgprintln(TEST_MACHINE_PREFIX"start...");
+    /* 打开标准输入输出 */
+    int fd = __sys_open(STDIO_DEVICE, 0);
+    if (fd < 0)
+        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
+    dbgprintln(TEST_MACHINE_PREFIX"start user: stdin fd %d", fd);
+    fd = __sys_open(STDIO_DEVICE, 0);
+    if (fd < 0)
+        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
+    dbgprintln(TEST_MACHINE_PREFIX"start user: stdout fd %d", fd);
+    fd = __sys_open(STDIO_DEVICE, 0);
+    if (fd < 0)
+        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
+    dbgprintln(TEST_MACHINE_PREFIX"start user: stderr fd %d", fd);
+    
+    #ifdef TEST_MACHINE_SINGLE_TEST
+    char *test_argv[MAX_TASK_STACK_ARG_NR] = {0,};
+    test_argv[0] = TEST_MACHINE_SINGLE_TEST_NAME;
+    do_one_test(test_argv);
+    #else
+    #ifdef TEST_MACHINE_LOAD_FILE
+    test_machine_load_files();
+    #else
+    test_machine_load_names();
+    #endif
+    #endif
     dbgprintln(TEST_MACHINE_PREFIX"tests done.");
     while (1) {
         cpu_idle();
