@@ -617,10 +617,10 @@ static int do_protection_fault(pgdir_t pgdir, mem_space_t *space, unsigned long 
     keprint("[exception] scause %p\n", r_scause());
     keprint("[exception] sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
     #endif
-    if (!do_page_no_exec(pgdir, addr) < 0) {
+    if (!do_page_no_exec(pgdir, addr)) {
         return 0;
     }
-    if (!do_page_no_rdwr(pgdir, addr) < 0) {
+    if (!do_page_no_rdwr(pgdir, addr)) {
         return 0;
     }
     keprint(PRINT_EMERG "page: %s: addr %p unable to access", __func__, addr);

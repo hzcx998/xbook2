@@ -91,7 +91,11 @@ else ifeq ($(ENV_MACH),mach-k210) # riscv64 k210
 	HDA_IMG		= $(IMAGE_DIR)/c.img
 	FS_DISK		= $(HDA_IMG)
 
+ifeq ($(ENV_REMOTE_TEST),yes)
+	K210_BIN 	= ./k210.bin
+else
 	K210_BIN 	= $(KERNSRC)/k210.bin
+endif
 	K210_ASM 	= $(KERNSRC)/k210.asm.dump
 	K210_SERIALPORT := /dev/ttyUSB0
 
@@ -118,11 +122,18 @@ $(warning $(ENV_MACH))
 $(warning $(ENV_ARCH))
 
 # 参数
-.PHONY: all kernel build debuild qemu qemudbg user user_clean dump
+.PHONY: all kernel build debuild qemu qemudbg user user_clean dump k210bin
 
-# 默认所有动作，编译内核后，把引导、内核、init服务、文件服务和rom文件写入磁盘
+# remote test for k210
+ifeq ($(ENV_REMOTE_TEST),yes)
+all: kernimg
+	$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $(KERNEL_BIN)
+	$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(K210_BIN)
+	$(DD) if=$(KERNEL_BIN) of=$(K210_BIN) bs=128k seek=1
+else
 all : kernimg
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
+endif
 
 ifeq ($(ENV_ARCH),x86) # x86-i386
 # run启动虚拟机
@@ -157,12 +168,14 @@ sdcard: build
 endif
 endif
 
-# 先写rom，在编译内核
 kernel:
 	@$(MAKE) -s -C  $(KERNSRC)
 
 clean:
 	@$(MAKE) -s -C $(KERNSRC) clean
+ifeq ($(ENV_REMOTE_TEST),yes)
+	-$(RM) $(K210_BIN)
+endif
 
 kernimg: kernel
 ifeq ($(ENV_ARCH),x86)

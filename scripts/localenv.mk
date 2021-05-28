@@ -1,11 +1,22 @@
 # env var 
 # $(warning $(xxx))
 
+# 是否为远程测试，yes or no,根据要求，如果是远程测试的话，就需要通过make all生成内核，以及
+# 在当前目录下面生成k210.bin可执行文件即可。因此就不需要构建用户态的内容以及写入磁盘和运行内核的工作。
+ENV_REMOTE_TEST	:=no
+
 #CROSS_COMPILE 	?= 
 #PLATFORM		?=
 CROSS_COMPILE 	?= riscv-none-embed-
 #CROSS_COMPILE 	?= riscv64-linux-gnu-
+#CROSS_COMPILE 	?= riscv64-unknown-elf-
 PLATFORM		?= riscv64-qemu
+
+# 如果是远程测试，就需要强制使用对应的编译环境以及开发平台 
+ifeq ($(ENV_REMOTE_TEST),yes)
+CROSS_COMPILE	:= riscv64-unknown-elf-
+PLATFORM		:= riscv64-k210
+endif
 
 #
 # Get platform information about ARCH and MACH from PLATFORM variable.

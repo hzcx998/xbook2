@@ -174,7 +174,7 @@ static iostatus_t sdcard_devctl(device_object_t *device, io_request_t *ioreq)
 
 static int sdcard_intr(irqno_t irqno, void *data)
 {
-    device_extension_t *extension = (device_extension_t *) data; 
+    //device_extension_t *extension = (device_extension_t *) data; 
     
     #ifdef DEBUG_DRV
     dbgprintln(DRV_PREFIX"sdcard_intr: interrupt occur!");
