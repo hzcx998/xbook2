@@ -69,10 +69,11 @@ int sys_uname(struct utsname *buf)
     strcpy(names.version, KERNEL_VERSION);
     strcpy(names.release, KERNEL_VERSION);
     strcpy(names.sysname, KERNEL_NAME);
-    if (mem_copy_to_user(buf, &names, sizeof(names)) < 0)
+    if (mem_copy_to_user(buf, &names, sizeof(names)) < 0) {
         return -EPERM;
-    
+    }
+    /*
     infoprintln("Uname: %s %s %s %s %s %s\n", 
-		names.sysname, names.nodename, names.release, names.version, names.machine, names.domainname);
+		names.sysname, names.nodename, names.release, names.version, names.machine, names.domainname); */
     return 0;
 }

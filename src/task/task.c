@@ -468,30 +468,34 @@ void kern_do_idle(void *arg)
 
 #ifdef CONFIG_TEST_MACHINE
 
+// #define TEST_MACHINE_DEBUG
+#define TEST_PROGRAM_PATH   ""
+#define TEST_MACHINE_PREFIX "[test machine] "
+
 static void do_one_test(char *argv[])
 {
     /* 启动应用程序 */
     task_t *proc = process_create(argv, NULL, PROC_CREATE_INKERN);
     if (proc == NULL)
-        panic("kernel start process failed! please check initsrv!\n");
-    dbgprintln("create process %d ok", proc->pid);
+        panic(TEST_MACHINE_PREFIX"kernel start process failed! please check initsrv!\n");
+    #ifdef TEST_MACHINE_DEBUG
+    dbgprintln(TEST_MACHINE_PREFIX"create process %d ok", proc->pid);
+    #endif
     /* 等待子进程结束 */
     int status = 0;
     int _pid;
     _pid = kewaitpid(-1, &status, 0);    /* wait any child exit */
     if (_pid > 0) {
-        infoprint("test_machine: process[%d] exit with status %d.\n", _pid, status);
+        #ifdef TEST_MACHINE_DEBUG
+        infoprint(TEST_MACHINE_PREFIX"process[%d] exit with status %d.\n", _pid, status);
+        #endif
     }
 }
 
-#define TEST_PROGRAM_PATH   ""
-
-#define TEST_MACHINE_PREFIX "[test machine] "
-
 // #define TEST_MACHINE_LOAD_FILE
 
-//#define TEST_MACHINE_SINGLE_TEST
-#if 0
+// #define TEST_MACHINE_SINGLE_TEST
+#if 1
 #define TEST_MACHINE_SINGLE_TEST_NAME   TEST_PROGRAM_PATH"uname"
 #else
 #define TEST_MACHINE_SINGLE_TEST_NAME   "/bin/utests"
@@ -512,13 +516,17 @@ static void test_machine_load_files()
             if (fsif.readdir(dir, &de) < 0)
                 break;
             if (de.d_attr & DE_DIR) {
+                #ifdef TEST_MACHINE_DEBUG
                 dbgprintln(TEST_MACHINE_PREFIX"dir %s/%s\n", TEST_PROGRAM_PATH, de.d_name);
+                #endif
             } else {
                 char path[128] = {0};
                 strcpy(path, TEST_PROGRAM_PATH);
                 strcat(path, "/");
                 strcat(path, de.d_name);
+                #ifdef TEST_MACHINE_DEBUG
                 dbgprintln(TEST_MACHINE_PREFIX"file: %s", path);
+                #endif
                 char *test_argv[MAX_TASK_STACK_ARG_NR] = {0,};
                 memset(test_argv, 0, sizeof(test_argv));
                 /* 如果需要传入特殊参数，需要在此进行特殊处理 */
@@ -585,7 +593,9 @@ static void test_machine_load_names()
         strcpy(path, TEST_PROGRAM_PATH);
         strcat(path, "/");
         strcat(path, name);
+        #ifdef TEST_MACHINE_DEBUG
         keprint(TEST_MACHINE_PREFIX"file: %s", path);
+        #endif
         char *test_argv[MAX_TASK_STACK_ARG_NR] = {0,};
         memset(test_argv, 0, sizeof(test_argv));
         /* 如果需要传入特殊参数，需要在此进行特殊处理 */
@@ -611,16 +621,22 @@ void test_machine_thread(void *arg)
     int fd = __sys_open(STDIO_DEVICE, 0);
     if (fd < 0)
         panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
+    #ifdef TEST_MACHINE_DEBUG
     dbgprintln(TEST_MACHINE_PREFIX"start user: stdin fd %d", fd);
+    #endif
     fd = __sys_open(STDIO_DEVICE, 0);
     if (fd < 0)
         panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
+    #ifdef TEST_MACHINE_DEBUG
     dbgprintln(TEST_MACHINE_PREFIX"start user: stdout fd %d", fd);
+    #endif
     fd = __sys_open(STDIO_DEVICE, 0);
     if (fd < 0)
         panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
-    dbgprintln(TEST_MACHINE_PREFIX"start user: stderr fd %d", fd);
     
+    #ifdef TEST_MACHINE_DEBUG
+    dbgprintln(TEST_MACHINE_PREFIX"start user: stderr fd %d", fd);
+    #endif
     #ifdef TEST_MACHINE_SINGLE_TEST
     char *test_argv[MAX_TASK_STACK_ARG_NR] = {0,};
     test_argv[0] = TEST_MACHINE_SINGLE_TEST_NAME;
@@ -632,7 +648,10 @@ void test_machine_thread(void *arg)
     test_machine_load_names();
     #endif
     #endif
-    dbgprintln(TEST_MACHINE_PREFIX"tests done.");
+    #ifdef TEST_MACHINE_DEBUG
+    dbgprintln(TEST_MACHINE_PREFIX"test all programs done.");
+    #endif
+    memory_overview();
     while (1) {
         cpu_idle();
         schedule();

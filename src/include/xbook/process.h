@@ -33,6 +33,11 @@ void proc_close_one_thread(task_t *thread);
 void proc_close_other_threads(task_t *thread);
 
 int sys_fork();
+long sys_clone(unsigned long clone_flags,  
+    unsigned long stack_top,
+    int *parent_tidptr,
+    int *tls,
+    int *child_tidptr);
 pid_t sys_waitpid(pid_t pid, int *status, int options);
 pid_t kewaitpid(pid_t pid, int *status, int options);
 int sys_execve(const char *pathname, const char *argv[], const char *envp[]);
@@ -48,5 +53,7 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
 void proc_free_arg(char *arg[]);
 void proc_dump_arg(char *arg[]);
 int proc_copy_arg_from_user(char *dst[], char *src[]);
+
+void proc_set_stack_pointer(task_t *task, unsigned long sp);
 
 #endif /* _XBOOK_PROCESS_H */

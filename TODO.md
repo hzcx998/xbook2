@@ -55,62 +55,9 @@
 * 其它相关测试
 * 添加控制台输入控制，这样就可以有按键输入了。[ok]
 * exec对参数的支持。libc库对参数的支持。[ok]
-* riscv64中没有实现对envp的传入。
+* [note] riscv64中没有实现对envp的传入。
 * 添加cpu驱动 [ok]
 * 优化内存分配与释放，查找内存漏洞。
 * 尝试移植到k210板子上面。
 * 添加sdcard驱动[ok]
-* 修复不能启动用户程序的bug。(库程序导致)
-* 使用比赛标准库，编译init以及sh。
-* 需要实现的系统调用如下：  
-当在主机实现所有系统调用后，需要进行适配，**参数数值**以及**系统调用**号的修改
-```
-    [ok] int open(const char *path, int flags)
-    [ok] int openat(int dirfd,const char *path, int flags)
-    
-    [ok] ssize_t read(int fd, void *buf, size_t len)
-    [ok] ssize_t write(int fd, const void *buf, size_t len)
-    [ok] int brk(void *addr)
-    [ok] int chdir(const char *path)
-    [bad] pid_t clone(int (*fn)(void *arg), void *arg, void *stack,
-                    size_t stack_size, unsigned long flags)
-    [ok] int close(int fd)
-    [ok] int dup(int fd)
-    [ok] int dup2(int old, int new)
-    [ok] int execve(const char *pathname, char *const argv[], char *const envp[])
-    [ok] void exit(int code)
-    [ok] pid_t fork(void)
-    [ok] int fstat(int fd, struct kstat *st)
-    [ok] char *getcwd(char *buf, size_t size)
-    [ok] int getdents(int fd, struct linux_dirent64 *dirp64, unsigned long len)
-    [ok] pid_t getpid(void)
-    [ok] pid_t getppid(void)
-    [ok] int sys_get_time(TimeVal *ts, int tz)
-    [ok] int mkdir(const char *path, mode_t mode)
-    [ok] void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
-    [ok] int munmap(void *start, size_t len)
-    [ok] int pipe(int fd[2])
-    [ok] int times(void *mytimes)
-    [ok] int mount(const char *special, const char *dir, const char *fstype, unsigned long flags, const void *data)
-    [ok] int umount(const char *special)
-    [ok] int uname(struct utsname *buf)
-    [ok] int sched_yield(void);
-    [ok] int waitpid(int pid, int *code, int options)
-    [ok] int wait(int *code)
-    [ok] int unlink(char *path)
-``` 
-* 根据赛题要求移植系统调用对应的接口。
-tinylibc测试未通过：
-```
-    [not pass] clone: clone未实现
-    [not pass] exit: clone未实现
-    [not pass] fork: clone未实现
-    [not pass] pipe: clone未实现
-    [not pass] wait: clone未实现
-    [not pass] waitpid: clone未实现
-    [not pass] yield: clone未实现
-    [not pass] pipe: clone未实现
-    [not pass] getdents: dirp参数在内核中为NULL，但是自己编译的版本却可以，感觉时编译器的问题。
-    [not pass] uname: 打印时为（null）
-```
- 
+* 完成所有比赛要求的系统调用测试

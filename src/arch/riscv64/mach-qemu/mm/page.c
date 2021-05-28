@@ -568,10 +568,10 @@ static void do_expand_stack(mem_space_t *space, unsigned long addr)
 }
 
 /**
- * do_page_no_write - 让pte有写属性
+ * do_page_no_rdwr - 让pte有读写属性
  * @addr: 要设置的虚拟地址
  */
-static int do_page_no_write(pgdir_t pgdir, unsigned long addr)
+static int do_page_no_rdwr(pgdir_t pgdir, unsigned long addr)
 {
 	if (!(addr >= USER_VMM_BASE_ADDR && addr < USER_VMM_TOP_ADDR))
 		return -1;
@@ -582,33 +582,48 @@ static int do_page_no_write(pgdir_t pgdir, unsigned long addr)
 		return -1;
 	if (!(*pte & PAGE_ATTR_PRESENT))
 		return -1;
-	*pte |= PAGE_ATTR_WRITE;
+	*pte |= PAGE_ATTR_WRITE | PAGE_ATTR_READ;
 	return 0;
 }
 
-static int do_protection_fault(pgdir_t pgdir, mem_space_t *space, unsigned long addr, int write)
+/**
+ * do_page_no_exec - 让pte有可执行属性
+ * @addr: 要设置的虚拟地址
+ */
+static int do_page_no_exec(pgdir_t pgdir, unsigned long addr)
 {
-	/* 没有写标志，说明该段内存不支持内存写入，就直接返回吧 */
-	if (write) {
-		keprint(PRINT_DEBUG "page: %s: addr %x have write protection.\n", __func__, addr);
-		int ret = do_page_no_write(pgdir, addr);
-		if (ret) {
-            keprint(PRINT_EMERG "page: %s: page not writable!", __func__);    
-            exception_force_self(EXP_CODE_SEGV);
-            return -1;
-        }
+	if (!(addr >= USER_VMM_BASE_ADDR && addr < USER_VMM_TOP_ADDR)) {
+        return -1;
+    }
 
-		/* 虽然写入的写标志，但是还是会出现缺页故障，在此则处理一下缺页 */
-		if (do_handle_no_page(pgdir, addr, space->page_prot)) {
-            keprint(PRINT_EMERG "page: %s: hand no page failed!", __func__);
-            exception_force_self(EXP_CODE_SEGV);
-			return -1; 
-        }
-		return 0;
-	} else {
-		keprint(PRINT_DEBUG "page: %s: no write protection\n", __func__);
-	}
-    keprint(PRINT_EMERG "page: %s: page protection!", __func__);
+	uint64_t *pte = walkaddr(pgdir, addr);
+	if (pte == NULL) {
+		return -1;        
+    }
+	if (!(*pte & PAGE_ATTR_PRESENT)) {
+		return -1;
+    }
+	*pte |= PAGE_ATTR_EXEC;
+	return 0;
+}
+
+/**
+ * 地址没有缺少属性导致页故障。
+ * 比如缺少PAGE_ATTR_USER, PAGE_ATTR_WRITE, PAGE_ATTR_READ, PAGE_ATTR_EXEC等。
+ */
+static int do_protection_fault(pgdir_t pgdir, mem_space_t *space, unsigned long addr)
+{
+    #if 0
+    keprint("[exception] scause %p\n", r_scause());
+    keprint("[exception] sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
+    #endif
+    if (!do_page_no_exec(pgdir, addr) < 0) {
+        return 0;
+    }
+    if (!do_page_no_rdwr(pgdir, addr) < 0) {
+        return 0;
+    }
+    keprint(PRINT_EMERG "page: %s: addr %p unable to access", __func__, addr);
     exception_force_self(EXP_CODE_SEGV);
     return -1;
 }
@@ -658,6 +673,7 @@ int page_do_fault(trap_frame_t *frame, int is_user, int expcode)
     }
 
     /* 检测在故障区域或者没有访问权限 */
+    #if 1
     if (addr < PAGE_SIZE) {
         keprint(PRINT_ERR "page fauilt: user pid=%d name=%s access no permission space.\n", cur->pid, cur->name);
         keprint(PRINT_EMERG "page fault at %p.\n", addr);
@@ -665,6 +681,7 @@ int page_do_fault(trap_frame_t *frame, int is_user, int expcode)
         exception_force_self(EXP_CODE_SEGV);
         return -1;
     }
+    #endif
 
     /* 故障地址在用户空间 */
     mem_space_t *space = mem_space_find(cur->vmm, addr);
@@ -699,7 +716,7 @@ int page_do_fault(trap_frame_t *frame, int is_user, int expcode)
 
     /* FIXME: EP_INSTRUCTION_PAGE_FAULT触发行为还不太确定，do_protection_fault执行还需要进一步完善 */
     if ((expcode == EP_INSTRUCTION_PAGE_FAULT)) {
-        return do_protection_fault(cur->vmm->page_storage, space, addr, 1);
+        return do_protection_fault(cur->vmm->page_storage, space, addr);
     }
     //keprintln("[page] page_do_fault: handle no page %p", addr);
     return do_handle_no_page(cur->vmm->page_storage, addr, space->page_prot);

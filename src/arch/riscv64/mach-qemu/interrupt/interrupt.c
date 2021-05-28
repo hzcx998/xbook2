@@ -36,7 +36,8 @@ static void interrupt_general_handler(trap_frame_t *frame)
         if (expcode == EP_INSTRUCTION_PAGE_FAULT || 
             expcode == EP_LOAD_PAGE_FAULT || 
             expcode == EP_STORE_PAGE_FAULT) {
-            page_do_fault(frame, (scause & SSTATUS_SPP) == 0, expcode);
+            if (page_do_fault(frame, (scause & SSTATUS_SPP) == 0, expcode) < 0);
+                trap_frame_dump(frame);
             return;
         }
         /* 其它异常 */

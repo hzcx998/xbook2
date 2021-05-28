@@ -12,7 +12,7 @@
 #define HOME_DIR_PATH  "/home"
 #define ACCOUNT_DIR_PATH  "/acct"
 #define DEV_DIR_PATH  "/dev"
-#define FIFO_DIR_PATH  "/pipe"
+#define FIFO_DIR_PATH  "/__fifo__"
 
 /* #define RAMFS_DIR_PATH "/ramfs" */
 

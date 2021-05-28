@@ -10,6 +10,7 @@
 #include <string.h>
 
 // #define DEBUG_FORK
+// #define DEBUG_CLONE
 
 static pid_t task_fork_pid()
 {
@@ -157,13 +158,58 @@ int sys_fork()
     return child->pid;  /* 父进程返回子进程pid */
 }
 
-long sys_clone(unsigned long clone_flags,  
-        unsigned long stack_start,  
-        void *regs,  
-        unsigned long stack_size,  
-        int *parent_tidptr,  
-        int *child_tidptr)
+/**
+ * 潦草版本的clone，没有涉及到标志，只涉及到了stack指针修改
+ */
+static int do_clone(unsigned long clone_flags,  
+    unsigned long stack_top,
+    int *parent_tidptr,
+    int *tls,
+    int *child_tidptr)
 {
-    noteprintln("[task] sys_fork not realize!");
-    return -1;
+    task_t *parent = task_current;
+    //dbgprintln("[fork] task %s pid=%d forking... %d", parent->name, parent->pid, interrupt_enabled());
+    task_t *child = mem_alloc(TASK_KERN_STACK_SIZE);
+    if (child == NULL) {
+        keprint(PRINT_ERR "sys_fork: mem_alloc for child task failed!\n");
+        return -1;
+    }
+    assert(parent->vmm != NULL);
+    if (copy_task(child, parent)) {
+        keprint(PRINT_ERR "sys_fork: copy task failed!\n");
+        mem_free(child);
+        return -1;
+    }
+    /* 设置栈位置 */
+    proc_set_stack_pointer(child, stack_top);
+    
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
+    task_add_to_global_list(child);
+    sched_queue_add_tail(sched_get_cur_unit(), child);
+    interrupt_restore_state(flags);
+    //dbgprintln("[fork] parent %s pid=%d forked child %s pid=%d", parent->name, parent->pid, child->name, child->pid);
+    return child->pid;  /* 父进程返回子进程pid */
+}
+
+/**
+ * 生成一个子进程，根据标志选择共享哪些资源，也就是说子进程不创建独立的资源。
+ * 如果stack_top为0，则表示不会去执行用户态的函数，那么就相当于fork。
+ * 不然，就需要在fork后修改栈指针为该值，这样才能在返回用户态后去调用指定的函数。
+ */
+long sys_clone(unsigned long clone_flags,  
+    unsigned long stack_top,
+    int *parent_tidptr,
+    int *tls,
+    int *child_tidptr)
+{
+    #ifdef DEBUG_CLONE
+    dbgprintln("[task] %s: flags=%x stack=%p ptid=%p tls=%p ctid=%p", __func__,
+        clone_flags, stack_top, parent_tidptr, tls, child_tidptr);
+    #endif
+    if (!stack_top) {    /* 没有栈，就相当于fork */
+        return sys_fork();  /* simple do fork now */
+    }
+    /* 执行克隆，并设置用户sp为stack_top，这样才能在返回用户态后执行自定义函数 */
+    return do_clone(clone_flags, stack_top, parent_tidptr, tls, child_tidptr);
 }

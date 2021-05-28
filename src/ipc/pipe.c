@@ -10,7 +10,7 @@
 LIST_HEAD(pipe_list_head);
 
 static kobjid_t pipe_next_id = 0;
- 
+
 pipe_t *create_pipe()
 {
     pipe_t *pipe = mem_alloc(sizeof(pipe_t));

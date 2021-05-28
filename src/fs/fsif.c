@@ -971,10 +971,17 @@ static int getdents_large(file_fd_t *ffd, void *dirp, size_t nbytes)
 
 int sys_getdents(int fd, void *dirp, unsigned long len)
 {
+    #if defined(__X86__)
     if (fd < 0 || !dirp || !len) {
         errprint("[fs] sys_getdents: invalid args: dirfd %d dirp=%p len=%d\n", fd, dirp, len);
         return -EINVAL;
     }
+    #elif defined(__RISCV64__)
+    if (fd < 0 || !len) {   /* dirp可能被编译器编译到0地址，在这里不做检测 */
+        errprint("[fs] sys_getdents: invalid args: dirfd %d dirp=%p len=%d\n", fd, dirp, len);
+        return -EINVAL;
+    }
+    #endif
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd)) {
         errprint("[fs] sys_getdents: dirfd %d err!\n", fd);

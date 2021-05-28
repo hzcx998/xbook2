@@ -127,3 +127,8 @@ int task_stack_build_when_forking(task_t *child)
     child->context.sp = (uint64_t)(child->kstack + PAGE_SIZE); 
     return 0;
 }
+
+void proc_set_stack_pointer(task_t *task, unsigned long sp)
+{
+    task->trapframe->sp = sp;
+}
