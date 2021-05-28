@@ -967,20 +967,99 @@ static int getdents_large(file_fd_t *ffd, void *dirp, size_t nbytes)
     mem_free(_mbuf);
     return total;
 }
+#if defined(CONFIG_NEWSYSCALL)
+int sys_getdents(int fd, void *dirp, unsigned long len)
+{
+    if (fd < 0 || !dirp || !len) {
+        //errprint("[fs] sys_getdents: invalid args: dirfd %d dirp=%p len=%d\n", fd, dirp, len);
+        return -EPERM;
+    }
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd)) {
+        errprint("[fs] sys_getdents: dirfd %d err!\n", fd);
+        return -EPERM;
+    }
+    /* 使用底层实现 */
+    if (!ffd->fsal->getdents)
+        return -EPERM;
+    
+    if (len > FSIF_RW_BUF_SIZE) {
+        return getdents_large(ffd, dirp, len);
+    } else {
+        char _buf[FSIF_RW_BUF_SIZE] = {0};
+        int rd = ffd->fsal->getdents(ffd->handle, _buf, len);
+        if (rd > 0) {
+            if (mem_copy_to_user(dirp, _buf, rd) < 0) {
+                errprintln("[fs] sys_getdents: copy buf %p to user failed!", dirp);
+                return -EPERM;
+            }
+        }
+        return rd;
+    }
+
+    char *dirpath = fsif_dirfd_path(fd);
+    if (dirpath == NULL) {
+        dbgprintln("[fs] sys_getdents: dirfd %d not a director", fd);
+        return -EPERM; /* fd没有对应目录 */
+    }
+    /* 读取目录内容，然后放到dirp64结构体中 */
+    dbgprintln("[fs] sys_getdents: dirpath %s", dirpath);
+    int dir = fsif.opendir(dirpath);
+    if (dir < 0) {
+        dbgprintln("[fs] sys_getdents: open dir %s error", dirpath);
+        return dir;
+    }
+    struct dirent dirent;
+    int rdbytes = 0;    /* 读取到的字节数 */
+    long n = len;
+
+    char _buf[FSIF_RW_BUF_SIZE] = {0};
+    unsigned char *buf = (unsigned char *)_buf;
+    struct linux_dirent64 *dest;
+    while (n > 0) {
+        int err = fsif.readdir(dir, &dirent);
+        if (err < 0) {
+            break;
+        }
+        dest = (struct linux_dirent64 *)buf;
+        /* copy data */
+        strcpy(dest->d_name, dirent.d_name);
+        if (dirent.d_attr & DE_DIR) {
+            dest->d_type = DT_DIR;
+        } else if (dirent.d_attr & DE_CHAR) {
+            dest->d_type = DT_CHR;
+        } else if (dirent.d_attr & DE_BLOCK) {
+            dest->d_type = DT_BLK;
+        } else {
+            dest->d_type = DT_REG;
+        }
+        dest->d_reclen = sizeof(struct linux_dirent64);
+        dest->d_reclen += strlen(dest->d_name) + 1;
+        /* 4 bytes align */
+        dest->d_reclen = (dest->d_reclen + 4) & (~(4 - 1));
+
+        dest->d_ino = 0;
+
+        buf += dest->d_reclen;
+        rdbytes += dest->d_reclen;
+        
+        dest->d_off = rdbytes;
+    }
+    fsif.closedir(dir);
+    if (rdbytes > 0) {
+        if (mem_copy_to_user(dirp, _buf, rdbytes) < 0)
+            return -EPERM;
+    }
+    return rdbytes;
+}
+#else
 
 int sys_getdents(int fd, void *dirp, unsigned long len)
 {
-    #if defined(__X86__)
     if (fd < 0 || !dirp || !len) {
         errprint("[fs] sys_getdents: invalid args: dirfd %d dirp=%p len=%d\n", fd, dirp, len);
         return -EINVAL;
     }
-    #elif defined(__RISCV64__)
-    if (fd < 0 || !len) {   /* dirp可能被编译器编译到0地址，在这里不做检测 */
-        errprint("[fs] sys_getdents: invalid args: dirfd %d dirp=%p len=%d\n", fd, dirp, len);
-        return -EINVAL;
-    }
-    #endif
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd)) {
         errprint("[fs] sys_getdents: dirfd %d err!\n", fd);
@@ -1060,3 +1139,4 @@ int sys_getdents(int fd, void *dirp, unsigned long len)
 
     return rdbytes;
 }
+#endif
