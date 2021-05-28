@@ -99,3 +99,5 @@
     [ok] int wait(int *code)
     [ok] int unlink(char *path)
 ``` 
+* 根据赛题要求移植系统调用对应的接口。
+* 将init函数放到内核中 [ok]

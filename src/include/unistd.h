@@ -35,6 +35,23 @@
 #define M_IEXEC  (1 << 0)     //文件可执行权限
 
 /* file open 文件打开 */
+#if defined(CONFIG_NEWSYSCALL)
+#define O_RDONLY 0x000
+#define O_WRONLY 0x001
+#define O_RDWR 0x002 // 可读可写
+//#define O_CREATE 0x200
+#define O_CREATE 0x40
+#define O_DIRECTORY 0x0200000
+
+// xbook need
+#define O_CREAT     O_CREATE
+#define O_TRUNC     0x10
+#define O_BINARY    0x200   // 二进制模式打开
+#define O_NONBLOCK  0x400   // 无阻塞
+#define O_EXCL      0x1000  // 打开时文件一定要不存在才行
+#define O_APPEND    0x20
+
+#else
 #define O_RDONLY    0x01
 #define O_WRONLY    0x02
 #define O_RDWR      0x04
@@ -47,7 +64,6 @@
 #define O_NONBLOCK  0x400   // 无阻塞
 #define O_EXCL      0x1000  // 打开时文件一定要不存在才行
 
-#ifdef CONFIG_NEWSYS
 #define O_DIRECTORY 0x0200000
 #endif
 

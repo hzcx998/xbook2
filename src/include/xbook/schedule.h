@@ -107,5 +107,8 @@ static inline void sched_queue_add_head(sched_unit_t *su, task_t *task)
 void sched_print_queue(sched_unit_t *su);
 
 #define task_current    sched_get_cur_unit()->cur
+#define idle_current    sched_get_cur_unit()->idle
+
+#define KEDEAMON_PID    idle_current->pid
 
 #endif   /* _XBOOK_SCHEDULE_H */

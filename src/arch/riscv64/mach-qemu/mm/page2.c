@@ -9,6 +9,7 @@
 #include <k210_phymem.h>
 #include <xbook/task.h>
 #include <xbook/schedule.h>
+#include <xbook/memspace.h>
 
 int page_map_addr_fixed2(pgdir_t pgdir, unsigned long start, unsigned long addr, 
     unsigned long len, unsigned long prot)

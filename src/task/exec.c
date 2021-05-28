@@ -149,7 +149,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         if (tmp_arg)
             mem_free(tmp_arg);
     }
-    /* 释放原有进程的内存 */
+    /* FIXME: 释放堆栈会导致exec出错，需要修复这个问题 */
     vmm_unmap_space(old_vmm, VMM_NO_STACK | VMM_NO_HEAP);
     vmm_release_space(old_vmm);
     vmm_free(old_vmm);

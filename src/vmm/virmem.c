@@ -4,6 +4,7 @@
 #include <xbook/debug.h>
 #include <xbook/bitmap.h>
 #include <xbook/memcache.h>
+#include <xbook/memspace.h>
 #include <xbook/mutexlock.h>
 #include <xbook/debug.h>
 #include <string.h>

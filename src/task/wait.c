@@ -120,3 +120,50 @@ pid_t sys_waitpid(pid_t pid, int *status, int options)
     }
     return -1;
 }
+
+pid_t kewaitpid(pid_t pid, int *status, int options)
+{
+    int wait_status = 0;
+    task_t *parent = task_current;
+    TASK_CHECK_THREAD_CANCELATION_POTINT(parent);
+    pid_t child_pid;
+    unsigned long flags;
+    while (1) {
+        interrupt_save_and_disable(flags);
+        if (pid == -1) { 
+            if ((child_pid = wait_any_hangging_child(parent, &wait_status)) >= 0) {
+                interrupt_restore_state(flags);
+                if (status)
+                    *status = wait_status;
+                return child_pid;
+            }
+        } else {
+            if ((child_pid = wait_one_hangging_child(parent, pid, &wait_status)) >= 0) {
+                interrupt_restore_state(flags);
+                if (status)
+                    *status = wait_status;
+                return child_pid;
+            }
+        }
+        if ((child_pid = proc_deal_zombie_child(parent)) > 0) {
+            if (pid == -1 || child_pid == pid) {
+                interrupt_restore_state(flags);
+                return child_pid;
+            }
+        }
+        if (!task_count_children(parent)) {
+            interrupt_restore_state(flags);
+            return -1;
+        }
+        if (options & WNOHANG) {
+            interrupt_restore_state(flags);
+            return 0;
+        }
+        interrupt_restore_state(flags);
+        task_block(TASK_WAITING);
+        if (exception_cause_exit_when_wait(&parent->exception_manager)) {
+            return -EINTR;
+        }
+    }
+    return -1;
+}

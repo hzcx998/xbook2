@@ -11,7 +11,7 @@ static void adopt_children_to_init(task_t *parent)
     task_t *child;
     list_for_each_owner (child, &task_global_list, global_list) {
         if (child->parent_pid == parent->pid) {
-            child->parent_pid = USER_INIT_PROC_ID;
+            child->parent_pid = KEDEAMON_PID;
         }
     }
 }
@@ -50,7 +50,7 @@ void sys_exit(int status)
             task_block(TASK_ZOMBIE);
         }
     } else {
-        interrupt_restore_state(flags);
+        interrupt_restore_state(flags);            
         task_block(TASK_ZOMBIE); 
     }
 }

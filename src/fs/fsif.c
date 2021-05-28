@@ -28,7 +28,10 @@
 #define FSIF_RW_CHUNK_SIZE  (PAGE_SIZE * 2)
 #define FSIF_RW_BUF_SIZE    512
 
-static int do_open(char *path, int flags)
+/**
+ * 不从用户态复制路径，可以在内核中使用
+ */
+int __sys_open(char *path, int flags)
 {
     if (!fsif.open)
         return -ENOSYS;
@@ -51,7 +54,7 @@ int sys_open(const char *path, int flags)
     if (mem_copy_from_user_str(_path, (void *)path, MAX_PATH) < 0) {
         return -EINVAL;
     }
-    return do_open(_path, flags);
+    return __sys_open(_path, flags);
 }
 
 static char *fsif_dirfd_path(int fd)
@@ -85,10 +88,10 @@ int sys_openat(int dirfd, const char *pathname, int flags, mode_t mode)
         return -EINVAL;
     }
     if (_path[0] == '/' && _path[1] != '\0') {
-        return do_open(_path, flags);
+        return __sys_open(_path, flags);
     }
     if (dirfd == AT_FDCWD) {    /* 在进程的cwd目录后面 */
-        return do_open(_path, flags);
+        return __sys_open(_path, flags);
     }
     char *dirpath = fsif_dirfd_path(dirfd);
     if (dirpath == NULL) {
@@ -102,7 +105,7 @@ int sys_openat(int dirfd, const char *pathname, int flags, mode_t mode)
     }
     task_t *cur = task_current;
     task_set_cwd(cur, dirpath); /* set cwd as dirpath */
-    int newfd = do_open(_path, flags); /* do open file */
+    int newfd = __sys_open(_path, flags); /* do open file */
     if (newfd < 0) {
         dbgprintln("[fs] sys_openat: open file %s error", _path);
     }
@@ -336,6 +339,17 @@ int sys_lseek(int fd, off_t offset, int whence)
     return ffd->fsal->lseek(ffd->handle, offset, whence);
 }
 
+#if defined(CONFIG_NEWSYSCALL)
+void *sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+{
+    file_fd_t *ffd = fd_local_to_file(fd);
+    if (FILE_FD_IS_BAD(ffd))
+        return (void *)-1;
+    if (!ffd->fsal->mmap)
+        return (void *)-1;
+    return ffd->fsal->mmap(ffd->handle, addr, length, prot, flags, offset);
+}
+#else
 void *__sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
     file_fd_t *ffd = fd_local_to_file(fd);
@@ -354,6 +368,7 @@ void *sys_mmap(mmap_args_t *args)
     return __sys_mmap(_args.addr, _args.length, _args.prot, _args.flags,
             _args.fd, _args.offset);
 }
+#endif
 
 int sys_access(const char *path, int mode)
 {

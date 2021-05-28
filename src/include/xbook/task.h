@@ -42,8 +42,6 @@ typedef enum {
 #define MAX_TASK_STACK_ARG_NR 16
 #define TASK_KERN_STACK_SIZE    (8192 * 3)
 
-#define USER_INIT_PROC_ID       1
-
 #define TASK_TIMESLICE_MIN  1
 #define TASK_TIMESLICE_MAX  100
 #define TASK_TIMESLICE_BASE  1

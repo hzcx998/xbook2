@@ -5,8 +5,8 @@
 #include "elf.h"
 #include <sys/time.h>
 
-#define PROC_CREATE_INIT    0X80000000      /* 只用于INIT进程 */
-#define PROC_CREATE_STOP    0X01            /* 创建后停止，不执行 */
+#define PROC_CREATE_INKERN      0X80000000     /* 内核创建的进程 */
+#define PROC_CREATE_STOP        0X01            /* 创建后停止，不执行 */
 
 task_t *process_create(char **argv, char **envp, uint32_t flags);
 int proc_destroy(task_t *task, int thread);
@@ -34,6 +34,7 @@ void proc_close_other_threads(task_t *thread);
 
 int sys_fork();
 pid_t sys_waitpid(pid_t pid, int *status, int options);
+pid_t kewaitpid(pid_t pid, int *status, int options);
 int sys_execve(const char *pathname, const char *argv[], const char *envp[]);
 int proc_execve(const char *pathname, const char *argv[], const char *envp[]);
 void sys_exit(int status);

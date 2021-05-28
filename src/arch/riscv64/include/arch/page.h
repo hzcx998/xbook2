@@ -52,15 +52,6 @@ typedef unsigned long* pgdir_t; // 512 PTEs
 /* 获取页目录表地址 */
 #define GET_CUR_PGDIR() ((pgdir_t)SATP_PGTBL(r_satp()))
 
-/* protect flags */
-#define PROT_NONE        0x0       /* page can not be accessed */
-#define PROT_READ        0x1       /* page can be read */
-#define PROT_WRITE       0x2       /* page can be written */
-#define PROT_EXEC        0x4       /* page can be executed */
-#define PROT_KERN        0x8       /* page in kernel */
-#define PROT_USER        0x10      /* page in user */
-#define PROT_REMAP       0x20      /* page remap */
-
 /* only have MEM_NODE_TYPE_NORMAL */
 #define page_alloc_normal(count)            mem_node_alloc_pages(count, MEM_NODE_TYPE_NORMAL)
 #define page_alloc_user(count)              mem_node_alloc_pages(count, MEM_NODE_TYPE_NORMAL)

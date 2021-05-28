@@ -23,12 +23,23 @@
 
 syscall_t syscalls[SYSCALL_NR];
 
+#if defined(CONFIG_NEWSYSCALL)
+typedef unsigned long (*syscall_func_t)(
+    unsigned long,
+    unsigned long,
+    unsigned long,
+    unsigned long,
+    unsigned long,
+    unsigned long,
+    void *); 
+#else
 typedef unsigned long (*syscall_func_t)(
     unsigned long,
     unsigned long,
     unsigned long,
     unsigned long,
     void *); 
+#endif
 
 void syscall_default()
 {
@@ -41,6 +52,48 @@ void syscall_init()
     int i; for (i = 0; i < SYSCALL_NR; i++) {
         syscalls[i] = syscall_default;
     }
+
+    /*
+    need add: 
+    SYS_nanosleep
+    SYS_linkat
+    SYS_unlinkat
+    SYS_mkdirat
+    */
+    #if defined(CONFIG_NEWSYSCALL)
+    syscalls[SYS_openat] = sys_openat;
+    syscalls[SYS_open] = sys_open;
+    syscalls[SYS_close] = sys_close;
+    syscalls[SYS_read] = sys_read;
+    syscalls[SYS_write] = sys_write;
+    syscalls[SYS_ioctl] = sys_ioctl;
+    syscalls[SYS_getpid] = sys_get_pid;
+    syscalls[SYS_getppid] = sys_get_ppid;
+    syscalls[SYS_sched_yield] = sys_sched_yield;
+    syscalls[SYS_clone] = sys_clone;
+    syscalls[SYS_exit] = sys_exit;
+    syscalls[SYS_wait4] = sys_waitpid;
+    syscalls[SYS_execve] = sys_execve;
+    syscalls[SYS_times] = sys_times;
+    syscalls[SYS_gettimeofday] = sys_gettimeofday;
+    //syscalls[SYS_nanosleep] = ;
+    syscalls[SYS_mmap] = sys_mmap;
+    syscalls[SYS_munmap] = sys_munmap;
+    syscalls[SYS_fstat] = sys_fstat;
+    // syscalls[SYS_linkat] = ;
+    // syscalls[SYS_unlinkat] = ;
+    syscalls[SYS_uname] = sys_uname;
+    syscalls[SYS_brk] = sys_brk;
+    syscalls[SYS_getcwd] = sys_getcwd;
+    syscalls[SYS_chdir] = sys_chdir;
+    // syscalls[SYS_mkdirat] = ;
+    syscalls[SYS_getdents64] = sys_getdents;
+    syscalls[SYS_pipe2] = sys_pipe;
+    syscalls[SYS_dup] = sys_dup;
+    syscalls[SYS_dup3] = sys_dup2;
+    syscalls[SYS_mount] = sys_mount;
+    syscalls[SYS_umount2] = sys_unmount;
+    #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;
     syscalls[SYS_WAITPID] = sys_waitpid;
@@ -159,6 +212,7 @@ void syscall_init()
     syscalls[SYS_CLONE] = sys_clone;
     syscalls[SYS_GETDENTS64] = sys_getdents;
     syscalls[SYS_UNAME] = sys_uname;
+    #endif 
 }
 
 int syscall_check(uint32_t callno)
@@ -178,30 +232,32 @@ unsigned long syscall_dispatch(trap_frame_t *frame)
     cur->syscall_ticks_delta = sys_get_ticks();
     // TODO: call different func in different arch
     unsigned long retval;
-    #if 0
+    #if defined(__X86__)
     syscall_func_t func = (syscall_func_t)syscalls[frame->eax];
     retval = func(frame->ebx, frame->ecx, frame->esi,
                             frame->edi, frame);
-    #else
+    #endif
+    #if defined(__RISCV64__)
     /* 
-    a0: syscall number
+    a7: syscall number
+    a0: arg0
     a1: arg1
-    a2: arg2
+    a2: arg1
     a3: arg3
     a4: arg4
+    a5: arg5
     a0-a1: retval
     */
-    #if 0
-    dbgprintln("[syscall] callnum: %ld", frame->a0);
-    dbgprintln("[syscall] arg1: %lx", frame->a1);
-    dbgprintln("[syscall] arg2: %lx", frame->a2);
-    dbgprintln("[syscall] arg3: %lx", frame->a3);
-    dbgprintln("[syscall] arg4: %lx", frame->a4);
-    #endif
     syscall_func_t func = (syscall_func_t)syscalls[frame->a7];
-    //dbgprintln("[syscall] syscall: %p", func);
+    //dbgprintln("[syscall] num %d syscall: %p", frame->a7, func);
+    
+    #if defined(CONFIG_NEWSYSCALL)
+    retval = func(frame->a0, frame->a1, frame->a2,
+                            frame->a3, frame->a4, frame->a5, frame);
+    #else
     retval = func(frame->a0, frame->a1, frame->a2,
                             frame->a3, frame);
+    #endif
     frame->a0 = retval;
     #endif
     /* 结束统计时间 */

@@ -11,6 +11,7 @@
 
 int file_system_init();
 
+int __sys_open(char *path, int flags);
 int sys_open(const char *path, int flags);
 int sys_close(int fd);
 int sys_read(int fd, void *buffer, size_t nbytes);
@@ -34,7 +35,11 @@ int sys_dup(int oldfd);
 int sys_dup2(int oldfd, int newfd);
 int sys_pipe(int fd[2]);
 long sys_fsize(int fd);
+#if defined(CONFIG_NEWSYSCALL)
+void *sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
+#else
 void *sys_mmap(mmap_args_t *args);
+#endif
 int sys_fastio(int fd, int cmd, void *arg);
 int sys_fastread(int fd, void *buffer, size_t nbytes);
 int sys_fastwrite(int fd, void *buffer, size_t nbytes);

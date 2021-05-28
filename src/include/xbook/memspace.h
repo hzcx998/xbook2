@@ -16,11 +16,46 @@
 #define MEM_SPACE_MAP_REMAP       0x100      /* 强制重写映射 */
 
 /* 映射标志 */
+#if defined(CONFIG_NEWSYSCALL)
+// for mmap
+#define PROT_NONE 0
+#define PROT_READ 1
+#define PROT_WRITE 2
+#define PROT_EXEC 4
+#define PROT_GROWSDOWN 0X01000000
+#define PROT_GROWSUP 0X02000000
+
+// xbook need
+#define PROT_KERN        0x8       /* page in kernel */
+#define PROT_USER        0x10      /* page in user */
+#define PROT_REMAP       0x20      /* page remap */
+
+#define MAP_FILE 0
+#define MAP_SHARED 0x01
+#define MAP_PRIVATE 0X02
+#define MAP_FAILED ((void *) -1)
+
+// xbook need
+#define MAP_FIXED       0x10       /* 映射固定位置 */
+#define MAP_REMAP       0x100      /* 强制重写映射 */
+
+#else
 #define MAP_FILE        0
 #define MAP_FIXED       0x10       /* 映射固定位置 */
 #define MAP_REMAP       0x100      /* 强制重写映射 */
 #define MAP_PRIVATE     0x00
 #define MAP_SHARED      0x80
+
+/* protect flags */
+#define PROT_NONE        0x0       /* page can not be accessed */
+#define PROT_READ        0x1       /* page can be read */
+#define PROT_WRITE       0x2       /* page can be written */
+#define PROT_EXEC        0x4       /* page can be executed */
+#define PROT_KERN        0x8       /* page in kernel */
+#define PROT_USER        0x10      /* page in user */
+#define PROT_REMAP       0x20      /* page remap */
+#endif
+
 
 #define MAX_MEM_SPACE_STACK_SIZE  (16 * MB)
 #define MEM_SPACE_STACK_SIZE_DEFAULT  (PAGE_SIZE * 4)

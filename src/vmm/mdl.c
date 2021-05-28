@@ -2,6 +2,7 @@
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
 #include <xbook/virmem.h>
+#include <xbook/memspace.h>
 #include <xbook/schedule.h>
 
 

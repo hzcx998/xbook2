@@ -552,14 +552,7 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     task_t *parent = task_current;
     task_init(task, argv[0], TASK_PRIO_LEVEL_NORMAL);
 
-    if (flags & PROC_CREATE_INIT) {
-        task->pid = USER_INIT_PROC_ID;
-        task->tgid = task->pid;
-        task->pgid = 0; /* init是组长, gid=0 */
-        parent = NULL;
-    } else {
-        task->parent_pid = parent->pid;
-    }
+    task->parent_pid = parent->pid;
     if (parent)
         task->pgid = parent->pgid;
     /* 进程执行前必须初始化文件描述符，内存管理，参数缓冲区 */
@@ -588,7 +581,7 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     memcpy(task->vmm->argbuf, argv[0], min(MAX_PATH, strlen(argv[0])));
 
     /* 不是init就释放参数，这些参数来自sys_process_create */
-    if (!(flags & PROC_CREATE_INIT)) {
+    if (!(flags & PROC_CREATE_INKERN)) {
         proc_free_arg((char **)argv);
         proc_free_arg((char **)envp);
     }
@@ -624,7 +617,7 @@ int sys_create_process(char **argv, char **envp, uint32_t flags)
         return -ENOMEM;
     }
     keprintln("create process");
-    task_t *task = process_create(_argv, _envp, flags & ~PROC_CREATE_INIT);
+    task_t *task = process_create(_argv, _envp, flags & ~PROC_CREATE_INKERN);
     if (task == NULL) {
         errprintln("[proc] create process failed!");
         return -EPERM;

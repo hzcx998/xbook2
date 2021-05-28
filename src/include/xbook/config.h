@@ -25,6 +25,6 @@
 // #define CONFIG_NETWORK
 
 /* 配置新的系统调用接口，将会覆盖原有的系统调用 */
-#define CONFIG_NEWSYS
+#define CONFIG_NEWSYSCALL
 
 #endif   /* _XBOOK_CONFIG_H */

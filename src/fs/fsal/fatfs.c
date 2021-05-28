@@ -8,6 +8,7 @@
 #include <xbook/memalloc.h>
 #include <xbook/walltime.h>
 #include <xbook/memspace.h>
+#include <xbook/safety.h>
 #include <const.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -296,8 +297,10 @@ static int fsal_fatfs_open(void *path, int flags)
     memset(extension->path, 0, MAX_PATH);
     strcpy(extension->path, path);
     fp->fsal = &fatfs_fsal;
-    
     BYTE mode = 0;  /* 文件打开模式 */
+    #if defined(CONFIG_NEWSYSCALL)
+    mode = FA_READ;
+    #endif
     if (flags & O_RDONLY) {
         mode |= FA_READ;
     } else if (flags & O_WRONLY) {
@@ -1035,7 +1038,7 @@ static void *fsal_fatfs_mmap(int idx, void *addr, size_t length, int prot, int f
     flags &= ~MAP_SHARED;
     prot |= PROT_USER;      /* 需要加上USER标志 */
     /* 进行内存映射 */
-    unsigned long maddr = mem_space_mmap(addr, 0, length, prot, flags);
+    void *maddr = (void *)mem_space_mmap((unsigned long)addr, 0, length, prot, flags);
     if (maddr == NULL) {
         errprintln("[fs] fatfs mmap: memspace map addr=%p length=%lx failed!");
         return (void *)-1;
@@ -1045,7 +1048,7 @@ static void *fsal_fatfs_mmap(int idx, void *addr, size_t length, int prot, int f
     #endif
     /* 加载文件到内存中 */
     if (do_mmap_read_file(&extension->file, maddr, length, offset) < 0) {
-        mem_space_unmmap(maddr, length);
+        mem_space_unmmap((unsigned long)maddr, length);
         return (void *)-1;
     }
     return maddr;

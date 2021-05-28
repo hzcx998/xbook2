@@ -133,7 +133,7 @@ void pthread_exit(void *status)
                 }
             }
         }
-        cur->parent_pid = USER_INIT_PROC_ID;
+        cur->parent_pid = KEDEAMON_PID;
     }
     task_t *parent = task_find_by_pid(cur->parent_pid); 
     if (parent) {
