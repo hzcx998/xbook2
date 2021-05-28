@@ -1,0 +1,225 @@
+CC task/task.c
+[KERNEL] kernel.elf
+fatfs develop/image/c.img develop/rom 0
+fatfs: write rom files success.
+qemu-system-riscv64 -name "Xbook2 Development Platform for riscv64-mach-qemu"  -m 6M -machine virt -kernel ./src/kernel.elf -nographic -bios ./src/arch/riscv64/mach-qemu/boot/SBI/sbi-qemu -smp 2 -drive file=develop/image/c.img,if=none,format=raw,id=x0  -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
+[rustsbi] RustSBI version 0.1.1
+.______       __    __      _______.___________.  _______..______   __
+|   _  \     |  |  |  |    /       |           | /       ||   _  \ |  |
+|  |_)  |    |  |  |  |   |   (----`---|  |----`|   (----`|  |_)  ||  |
+|      /     |  |  |  |    \   \       |  |      \   \    |   _  < |  |
+|  |\  \----.|  `--'  |.----)   |      |  |  .----)   |   |  |_)  ||  |
+| _| `._____| \______/ |_______/       |__|  |_______/    |______/ |__|
+
+[rustsbi] Platform: QEMU (Version 0.1.0)
+[rustsbi] misa: RV64ACDFIMSU
+[rustsbi] mideleg: 0x222
+[rustsbi] medeleg: 0xb1ab
+[rustsbi-dtb] Hart count: cluster0 with 2 cores
+[rustsbi] Kernel entry: 0x80200000
+[0;32mwelcome to xbook2!
+[0m[0;32mmemory total size:0x600000 Bytes 6 MB
+[0m[0;32mkernel image: [0X00000080200000, 0X00000080253000]
+[0m[0;32mkernel size: 0x53000 Bytes 0 MB
+[0m[0;32mfree size: 0x3ad000 Bytes 3 MB
+[0m[0;32m[boot memory] ==== overview start ====
+[0m[0;32m[boot memory] memory range: [0x80253000, 0x80263000]
+[0m[0;32m[boot memory] current pos: 0x80260000
+[0m[0;32m[boot memory] total size: 0x10000
+[0m[0;32m[boot memory] used size: 0xd000
+[0m[0;32m[boot memory] free size: 0x3000
+[0m[0;32m[boot memory] ==== overview end ====
+[0m[0;37mkernel pgdir: 0X000000805FF000
+[0m[0;32mwelcome to xbook kernel.
+[0m[0;32m[memory] ==== overview start ====
+[0m[0;32m[memory] total size: 6291456 pages, 600000000 bytes
+[0m[0;32m[memory] free size: 3743744 pages, 392000000 bytes
+[0m[0;32m[memory] used size: 2547712 pages, 26e000000 bytes
+[0m[0;32m[memory] ==== overview end ====
+[0m[0;32mvmm: user base: 0, size: 80000000, top: 80000000, stack top:7ffff000
+[0m[0;32mvirtual memory base: 0000003EF8000000
+[0m[0;32m[ok] tasks init.[0m[0;32mtime:12:24:36 date:2021/5/16
+[0m[0;32mweek day:0 Sunday year day:136
+[0m[0;32m[clock] init done
+[0m[0;37m[virtio disk] disk init done.
+[0m[0;32mCPU info:
+[0m[0;32mvendor: RISCV64 brand: K210 RISC-V Dual Core 64bit, with FPU
+[0m[0;37m[console] init done
+[0m[0;32mdo init call done.
+[0m[0;32mio system info-> drivers
+[0m[0;32mdriver: name=virtio-disk
+[0m[0;32m        device: name=sda
+[0m[0;32m        device: count=1
+[0m[0;32mdriver: name=processer
+[0m[0;32m        device: name=cpu0
+[0m[0;32m        device: count=1
+[0m[0;32mdriver: name=uart-console
+[0m[0;32m        device: name=con0
+[0m[0;32m        device: count=1
+[0m[0;32mfs: init start.
+[0m[0;32m[diskman]: probe device:sda -> vir:disk0 type:17
+[0m[0;31m[fsal] fsalif_mount: source /dev/hda not found!
+[0m[0;31m[fsal] fsalif_mount: source /dev/hdb not found!
+[0m[0;31m[fsal] fsalif_mount: source /dev/hdc not found!
+[0m[0;31m[fsal] fsalif_mount: source /dev/hdd not found!
+[0m[0;33mfsal : mount path /dev/hd to /root failed!
+[0m[0;32mfsal : mount device /dev/sda to path /root success.
+[0m[0;32mfs: init done.
+[0m[0;32m[memory] ==== overview start ====
+[0m[0;32m[memory] total size: 6291456 pages, 600000000 bytes
+[0m[0;32m[memory] free size: 3354624 pages, 333000000 bytes
+[0m[0;32m[memory] used size: 2936832 pages, 2cd000000 bytes
+[0m[0;32m[memory] ==== overview end ====
+[0m[0;37m[task]: start user process.
+[0m[0;37m[test machine] start...
+[0m========== START test_brk ==========
+Before alloc,heap pos: 16384
+After alloc,heap pos: 16448
+Alloc again,heap pos: 16512
+========== END test_brk ==========
+========== START test_chdir ==========
+chdir ret: 0
+  current working dir : /test_chdir
+========== END test_chdir ==========
+========== START test_clone ==========
+  Child says successfully!
+clone process successfully.
+pid:6
+========== END test_clone ==========
+========== START test_close ==========
+  close 3 success.
+========== END test_close ==========
+========== START test_dup2 ==========
+  from fd 100
+========== END test_dup2 ==========
+========== START test_dup ==========
+  new fd is 3.
+========== END test_dup ==========
+========== START test_execve ==========
+  I am test_echo.
+execve success.
+========== END main ==========
+========== START test_exit ==========
+exit OK.
+========== END test_exit ==========
+========== START test_fork ==========
+  child process.
+  parent process. wstatus:0
+========== END test_fork ==========
+========== START test_fstat ==========
+fstat ret: 0
+fstat: dev: 0, inode: 0, mode: 22, nlink: 0, size: 52, atime: 1310785536, mtime: 1310785536, ctime: 1310785536
+========== END test_fstat ==========
+========== START test_getcwd ==========
+getcwd: / successfully!
+========== END test_getcwd ==========
+========== START test_getdents ==========
+open fd:3
+getdents fd:492
+getdents success.
+
+
+========== END test_getdents ==========
+========== START test_getpid ==========
+getpid success.
+pid = 18
+========== END test_getpid ==========
+========== START test_getppid ==========
+  getppid success. ppid : 2
+========== END test_getppid ==========
+========== START test_gettimeofday ==========
+gettimeofday success.
+start:24580750, end:24580800
+interval: 50
+========== END test_gettimeofday ==========
+========== START test_mkdir ==========
+mkdir ret: 0
+  mkdir success.
+========== END test_mkdir ==========
+========== START test_mmap ==========
+file len: 27
+mmap content:   Hello, mmap successfully!
+========== END test_mmap ==========
+========== START test_mount ==========
+Mounting dev:/dev/sda to /mnt
+mount return: 0
+mount successfully
+umount return: 0
+========== END test_mount ==========
+========== START test_munmap ==========
+file len: 27
+munmap return: 0
+munmap successfully!
+========== END test_munmap ==========
+========== START test_openat ==========
+open dir fd: 3
+openat fd: 4
+openat success.
+========== END test_openat ==========
+========== START test_open ==========
+Hi, this is a text file.
+syscalls testing success!
+
+========== END test_open ==========
+========== START test_pipe ==========
+cpid: 28
+cpid: 0
+  Write to pipe successfully.
+
+========== END test_pipe ==========
+========== START test_read ==========
+Hi, this is a text file.
+syscalls testing success!
+
+========== END test_read ==========
+========== START test_sleep ==========
+sleep success.
+========== END test_sleep ==========
+========== START test_times ==========
+mytimes success
+{tms_utime:1179403647, tms_stime:0, tms_cutime:15925251, tms_cstime:4096}
+========== END test_times ==========
+========== START test_umount ==========
+Mounting dev:/dev/sda to /mnt
+mount return: 0
+umount success.
+return: 0
+========== END test_umount ==========
+========== START test_uname ==========
+Uname: (null)     
+========== END test_uname ==========
+========== START test_unlink ==========
+unlink success!
+========== END test_unlink ==========
+========== START test_wait ==========
+This is child process
+wait child success.
+wstatus: 0
+========== END test_wait ==========
+========== START test_waitpid ==========
+This is child process
+waitpid successfully.
+wstatus: 3
+========== END test_waitpid ==========
+========== START test_write ==========
+Hello operating system contest.
+========== END test_write ==========
+========== START test_yield ==========
+  I am child process: 41. iteration 0.
+  I am child process: 42. iteration 1.
+  I am child process: 43. iteration 2.
+  I am child process: 41. iteration 0.
+  I am child process: 42. iteration 1.
+  I am child process: 43. iteration 2.
+  I am child process: 41. iteration 0.
+  I am child process: 42. iteration 1.
+  I am child process: 43. iteration 2.
+  I am child process: 41. iteration 0.
+  I am child process: 42. iteration 1.
+  I am child process: 43. iteration 2.
+  I am child process: 41. iteration 0.
+  I am child process: 42. iteration 1.
+  I am child process: 43. iteration 2.
+========== END test_yield ==========
+QEMU: Terminated
+

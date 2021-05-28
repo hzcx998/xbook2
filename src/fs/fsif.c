@@ -394,7 +394,6 @@ int __sys_unlink(const char *path, int flags)
     }
     char abs_path[MAX_PATH] = {0};
     build_path(path, abs_path);
-    dbgprintln("unlink: %s", abs_path);
     return fsif.unlink((char *) abs_path);
 }
 

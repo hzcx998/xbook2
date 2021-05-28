@@ -651,7 +651,6 @@ void test_machine_thread(void *arg)
     #ifdef TEST_MACHINE_DEBUG
     dbgprintln(TEST_MACHINE_PREFIX"test all programs done.");
     #endif
-    memory_overview();
     while (1) {
         cpu_idle();
         schedule();
