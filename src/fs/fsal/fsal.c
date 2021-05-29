@@ -18,7 +18,7 @@
 
 // #define DEBUG_FSAL
 
-// #define LIST_ALL_FILE
+#define LIST_ALL_FILE
 
 int fsal_list_dir(char* path)
 {

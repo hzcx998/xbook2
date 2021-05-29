@@ -24,7 +24,8 @@
 #define DRV_PREFIX  "[sdcard] "
 
 /* assume 128MB */
-#define SDCARD_SECTORS     (262144)
+//#define SDCARD_SECTORS     (262144)
+#define SDCARD_SECTORS     (6114)   /* 3M */
 
 #define SDCARD_IRQ 27
 

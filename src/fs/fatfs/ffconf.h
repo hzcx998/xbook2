@@ -293,6 +293,9 @@
 /  SemaphoreHandle_t and etc. A header file for O/S definitions needs to be
 /  included somewhere in the scope of ff.h. */
 
-
+#define FF_FAT32_ONLY   1
+/*
+Only support fat32 fs: 1 enabled, 0 disabled
+*/
 
 /*--- End of configuration options ---*/

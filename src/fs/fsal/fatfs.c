@@ -163,6 +163,16 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
             mem_free(fsobj);
             return -1;
         }
+        #ifndef DEBUG_FATFS
+        char *fatfmt[] = {
+            "unknown",
+            "fat12",
+            "fat16",
+            "fat32",
+            "exfat",
+        };
+        dbgprintln("[fs] fatfs mount: fstype %d: %s", fsobj->fs_type, fatfmt[fsobj->fs_type]);
+        #endif
         fatfs_extention.fsobj[pdrv] = fsobj;
         fatfs_extention.mount_time[pdrv] = WTM_WR_TIME(walltime.hour, walltime.minute, walltime.second);
         fatfs_extention.mount_date[pdrv] = WTM_WR_DATE(walltime.year, walltime.month, walltime.day);

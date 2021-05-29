@@ -3524,10 +3524,11 @@ static FRESULT mount_volume (	/* FR_OK(0): successful, !=0: an error occurred */
 		if (nclst == 0) return FR_NO_FILESYSTEM;		/* (Invalid volume size) */
 		fmt = 0;
 		if (nclst <= MAX_FAT32) fmt = FS_FAT32;
+#if !FF_FAT32_ONLY
 		if (nclst <= MAX_FAT16) fmt = FS_FAT16;
 		if (nclst <= MAX_FAT12) fmt = FS_FAT12;
+#endif
 		if (fmt == 0) return FR_NO_FILESYSTEM;
-
 		/* Boundaries and Limits */
 		fs->n_fatent = nclst + 2;						/* Number of FAT entries */
 		fs->volbase = bsect;							/* Volume start sector */

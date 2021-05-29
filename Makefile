@@ -18,6 +18,7 @@ TRUNC		= truncate
 RM			= rm
 DD			= dd
 MKDIR		= mkdir
+CP			= cp
 
 # arch tools
 OBJDUMP		= $(CROSS_COMPILE)objdump
@@ -41,6 +42,17 @@ BIN_DIR		= bin
 # arch dir
 KERNSRC		= ./src
 ARCH		= $(KERNSRC)/arch/$(ENV_ARCH)
+
+# use fatfs tools for making image
+USE_FATFS	:= no
+MOUNT_DIR	:= /mnt
+
+# 管理员执行
+ifeq ($(OS),Windows_NT)
+	SUDO		:= 
+else
+	SUDO		:= sudo
+endif
 
 ifeq ($(ENV_ARCH),x86) # x86-i386
 ifeq ($(ENV_MACH),mach-i386) # x86-i386
@@ -71,10 +83,13 @@ ifeq ($(ENV_MACH),mach-i386) # x86-i386
 
 	KERNEL_OFF 	= 100
 	KERNEL_CNTS	= 1024		# assume 512kb 
+
 else
 
 endif # ($(ENV_MACH),mach-i386)
 else ifeq ($(ENV_ARCH),riscv64) # riscv64
+	USE_FATFS	:= no
+	SD			?= /dev/sdb
 ifeq ($(ENV_MACH),mach-qemu) # riscv64 qemu
 	QEMU 		:= $(QEMUPREFIX)riscv64
 	RUSTSBI 	= $(ARCH)/$(ENV_MACH)/boot/SBI/sbi-qemu
@@ -98,15 +113,6 @@ else
 endif
 	K210_ASM 	= $(KERNSRC)/k210.asm.dump
 	K210_SERIALPORT := /dev/ttyUSB0
-
-	SD			?= 
-
-# 管理员执行
-ifeq ($(OS),Windows_NT)
-	SUDO		:= 
-else
-	SUDO		:= sudo
-endif
 
 endif # ($(ENV_MACH),mach-qemu)
 endif # ($(ENV_ARCH),riscv64)
@@ -132,7 +138,14 @@ all: kernimg
 	$(DD) if=$(KERNEL_BIN) of=$(K210_BIN) bs=128k seek=1
 else
 all : kernimg
+ifeq ($(USE_FATFS),yes)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
+else
+	-@$(SUDO) umount $(MOUNT_DIR)
+	@$(SUDO) mount $(FS_DISK) $(MOUNT_DIR)
+	@$(SUDO) $(CP) -r $(ROM_DIR)/* $(MOUNT_DIR)
+	@$(SUDO) umount $(MOUNT_DIR)
+endif
 endif
 
 ifeq ($(ENV_ARCH),x86) # x86-i386
@@ -156,14 +169,6 @@ else
 	@$(SUDO) chmod 777 $(K210_SERIALPORT)
 	@python3 ./tools/kflash.py -p $(K210_SERIALPORT) -b 1500000 -t $(K210_BIN)
 endif
-
-# Write sdcard
-sdcard: build
-	@if [ "$(SD)" != "" ]; then \
-		echo "flashing into sd card..."; \
-		$(SUDO) $(DD) if=$(FS_DISK) of=$(SD); \
-	else \
-		echo "sd card not detected!"; fi
 
 endif
 endif
@@ -211,7 +216,14 @@ else ifeq ($(ENV_ARCH),riscv64)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
 endif # ($(ENV_ARCH),riscv64)
+ifeq ($(USE_FATFS),yes)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
+else
+	-@$(SUDO) umount $(MOUNT_DIR)
+	@$(SUDO) mount $(FS_DISK) $(MOUNT_DIR)
+	@$(SUDO) $(CP) -r $(ROM_DIR)/* $(MOUNT_DIR)
+	@$(SUDO) umount $(MOUNT_DIR)
+endif
 
 buildimg:
 	-$(MKDIR) $(IMAGE_DIR)
@@ -220,7 +232,13 @@ ifeq ($(ENV_ARCH),x86)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG)
 else ifeq ($(ENV_ARCH),riscv64)
+ifeq ($(USE_FATFS),yes)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG) # fs disk
+else
+	# 构建文件系统命令
+	$(DD) if=/dev/zero of=$(HDA_IMG) bs=512 count=6144
+	mkfs.vfat -F 32 $(HDA_IMG)
+endif # USE_FATFS
 endif # ($(ENV_ARCH),x86)
 
 # 清理环境。
@@ -253,6 +271,17 @@ user_clean:
 	$(MAKE) -s -C  $(LIBS_DIR) clean && \
 	$(MAKE) -s -C  $(SBIN_DIR) clean && \
 	$(MAKE) -s -C  $(BIN_DIR) clean
+
+
+# Write sdcard
+# 1. copy data to disk
+# 2. copy fs.img to disk
+sdcard: build
+	@if [ "$(SD)" != "" ]; then \
+		echo "flashing into sd card..."; \
+		$(SUDO) $(DD) if=$(FS_DISK) of=$(SD); \
+	else \
+		echo "sd card not detected!"; fi
 
 dump:
 ifeq ($(ENV_ARCH),x86)

@@ -99,9 +99,9 @@ int main(int argc, char *argv[])
 #ifdef DEBUG_FATFS_MAIN           
         printf("fatfs: make a new fs on the disk.\n");
 #endif
-        //MKFS_PARM opt = {FM_FAT32, 0, 0, 0, 0};
+        MKFS_PARM opt = {FM_FAT32, 0, 0, 0, 0};
         /* Format the default drive with default parameters */
-        res = f_mkfs("", 0, work, sizeof work);
+        res = f_mkfs("", &opt, work, sizeof work);
         if (res) {
             printf("fatfs: f_mkfs error with %d\n", res);
             retval = -1;
