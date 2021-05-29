@@ -71,10 +71,15 @@ int fsal_disk_mount(char *pathname, int max_try)
 
 int fsal_disk_mount_init()
 {
+    #if 0
     if (!fsal_disk_mount("/dev/hd", 4))
         return 0;
     if (!fsal_disk_mount("/dev/sd", 16))
         return 0;
+    #else
+    if (!fsal_disk_mount("/dev/vd", 16))
+        return 0;
+    #endif
     return -1;
 }
 

@@ -57,7 +57,8 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->static_priority = sched_calc_base_priority(prio_level);
     task->priority = task->static_priority;
     //task->timeslice = TASK_TIMESLICE_BASE + (task->priority / 10);
-    task->timeslice = TASK_TIMESLICE_BASE + 1;
+    //task->timeslice = TASK_TIMESLICE_BASE + 1;
+    task->timeslice = TASK_TIMESLICE_BASE;
     task->ticks = task->timeslice;
     task->elapsed_ticks = 0;
     task->syscall_ticks = task->syscall_ticks_delta = 0;
@@ -600,6 +601,7 @@ static void test_machine_load_names()
         memset(test_argv, 0, sizeof(test_argv));
         /* 如果需要传入特殊参数，需要在此进行特殊处理 */
         test_argv[0] = path;
+        #if 0
         if (!strcmp(name, "mount") || !strcmp(name, "umount")) {
             test_argv[1] = "/dev/sda";
             test_argv[2] = "/mnt";
@@ -607,6 +609,9 @@ static void test_machine_load_names()
         } else {
             test_argv[1] = 0;
         }
+        #else
+        test_argv[1] = 0;
+        #endif
         do_one_test(test_argv);
         i++;
         name = bin_name_talbe[i];
@@ -695,6 +700,8 @@ void task_start_user()
     /* 启动测试机线程 */
     task_t *test_thread = kern_thread_start("test_machine", TASK_PRIO_LEVEL_LOW, test_machine_thread, NULL);
     assert(test_thread != NULL);
+    if (test_thread == NULL)
+        panic("start test machine failed!");
     #endif
     sched_unit_t *su = sched_get_cur_unit();
 	unsigned long flags;
@@ -717,8 +724,12 @@ void kthread_deamon(void *arg)
 {
     // infoprint("deamon thread start...");
     while (1) {
+        #if 0
         cpu_idle();
         schedule();
+        #else
+        task_yield();
+        #endif
     }
 }
 

@@ -583,6 +583,7 @@ static int fsal_fatfs_mkdir(char *path, mode_t mode)
 static int fsal_fatfs_unlink(char *path)
 {
     FRESULT res;
+    //dbgprintln("[fs] fatfs: unlink %s", path);
     res = f_unlink(path);
     if (res != FR_OK) {
         return -1;
@@ -704,16 +705,18 @@ static int fsal_fatfs_fstat(int idx, void *buf)
     
     fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
     char *path = extension->path;
-
+    if (!path || !path[0])
+        return -1;
     FRESULT fres;
     FILINFO finfo;
-
+    //dbgprintln("[fs] fatfs fstat: sync before write");    
     /* sync file before fstat */
     fres = f_sync(&extension->file);
     if (fres != FR_OK) {
         warnprintln("[fs] fatfs fstat: sync file before fstat failed!");
     }
-
+    //dbgprintln("[fs] fatfs fstat: sync before write done");    
+    
     /* 对根目录进行特殊处理 */
     int pdrv = PATH_TO_PDRV(path[0]);   /* 获取设备 */
     if (is_root_dir(path)) {
@@ -722,11 +725,14 @@ static int fsal_fatfs_fstat(int idx, void *buf)
         finfo.ftime = fatfs_extention.mount_time[pdrv];
         finfo.fattrib = (AM_RDO | AM_DIR);
     } else {
+        //dbgprintln("[fs] fatfs fstat: get stat");    
+    
         fres = f_stat(path, &finfo);
         if (fres != FR_OK) {
             return -EINVAL;
         }
     }
+    // dbgprintln("[fs] fatfs fstat: write info and return");    
     struct kstat *stat = (struct kstat *)buf;
     mode_t mode = S_IREAD | S_IWRITE;
     if (finfo.fattrib & AM_RDO)
@@ -739,7 +745,7 @@ static int fsal_fatfs_fstat(int idx, void *buf)
     stat->st_ino = 0;
     stat->st_mode = mode;
     stat->st_size = finfo.fsize;
-    stat->st_nlink = 0;
+    stat->st_nlink = 1;         // 1 link for this file
     stat->st_atime_sec = (finfo.fdate << 16) | finfo.ftime;
     stat->st_ctime_sec = stat->st_mtime_sec = stat->st_atime_sec;
     return 0;
@@ -933,7 +939,7 @@ static int fsal_fatfs_getdents(int idx, void *dirp, unsigned long len)
             }
         }
         int reclen = sizeof(struct linux_dirent64) + strlen(dirent.d_name) + 1;
-        reclen = (reclen + 4) & (~(4 - 1)); /* 4 bytes align */
+        reclen = (reclen + 8) & (~(8 - 1)); /* 8 bytes align */
         if (n < reclen) {   /* need store in tmpdire, alloc tmpdire and copy */
             extension->tmpdire = mem_alloc(sizeof(struct dirent));
             if (extension->tmpdire) {
@@ -982,8 +988,9 @@ static int do_mmap_read_file_large(FIL *fil, void *buffer, size_t nbytes, off_t 
     }
     int total = 0;
     char *p = (char *)buffer;
-    size_t chunk = nbytes % MMAP_CHUNK_SIZE;
-    while (nbytes > 0) {
+    int size = nbytes;
+    size_t chunk = size % MMAP_CHUNK_SIZE;
+    while (size > 0) {
         fres = f_read(fil, _mbuf, chunk, &br);
         if (fres != F_OK || chunk != br) {
             errprintln("[fs] fatfs mmap: read file failed");
@@ -997,12 +1004,14 @@ static int do_mmap_read_file_large(FIL *fil, void *buffer, size_t nbytes, off_t 
         }
         p += chunk;
         total += br;
-        nbytes -= chunk;
+        size -= chunk;
         chunk = MMAP_CHUNK_SIZE;
     }
     mem_free(_mbuf);
     return total;
 }
+
+// #define DEBUG_MMAP  
 
 static int do_mmap_read_file(FIL *fil, void *addr, size_t length, off_t offset)
 {
@@ -1010,18 +1019,27 @@ static int do_mmap_read_file(FIL *fil, void *addr, size_t length, off_t offset)
         return do_mmap_read_file_large(fil, addr, length, offset);
     } else {
         char _buf[MMAP_BUF_SIZE] = {0};
-        UINT br;
+        UINT br = 0;
         FRESULT fres;
         fres = f_lseek(fil, offset);
         if (fres != F_OK) {
             errprintln("[fs] fatfs mmap: lseek file failed");
             return -1;
         }
+        #ifdef DEBUG_MMAP
+        dbgprintln("[fs] fatfs mmap: read file to buf %p, length=%d", addr, length);
+        #endif
         fres = f_read(fil, _buf, length, &br);
         if (fres != F_OK) {
             errprintln("[fs] fatfs mmap: read file failed");
             return -1;
         }
+        if (length != br) {
+            warnprintln("[fs] fatfs mmap: read file length %d different with %d", br, length);
+        }
+        #ifdef DEBUG_MMAP
+        dbgprintln("[fs] fatfs mmap: copy to user buf=%p", addr);
+        #endif
         if (mem_copy_to_user(addr, _buf, br) < 0) {
             errprintln("[fs] sys_read: copy buf %p to user failed!", addr);
             return -EINVAL;
@@ -1029,8 +1047,6 @@ static int do_mmap_read_file(FIL *fil, void *addr, size_t length, off_t offset)
     }
     return 0;
 }
-
-// #define DEBUG_MMAP  
 
 static void *fsal_fatfs_mmap(int idx, void *addr, size_t length, int prot, int flags, off_t offset)
 {
@@ -1050,7 +1066,7 @@ static void *fsal_fatfs_mmap(int idx, void *addr, size_t length, int prot, int f
     /* 进行内存映射 */
     void *maddr = (void *)mem_space_mmap((unsigned long)addr, 0, length, prot, flags);
     if (maddr == NULL) {
-        errprintln("[fs] fatfs mmap: memspace map addr=%p length=%lx failed!");
+        errprintln("[fs] fatfs mmap: memspace map addr=%p length=%lx failed!", addr, length);
         return (void *)-1;
     }
     #ifdef DEBUG_MMAP

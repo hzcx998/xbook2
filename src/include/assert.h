@@ -2,7 +2,7 @@
 #define _XBOOK_ASEERT_H
 
 //断言
-#define CONFIG_ASSERT 1
+#define CONFIG_ASSERT 0
 
 #if CONFIG_ASSERT == 1
 void assertion_failure(char *exp, char *file, char *baseFile, int line);

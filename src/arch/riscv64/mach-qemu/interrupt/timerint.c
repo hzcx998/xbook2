@@ -13,7 +13,7 @@
 390000000 / 800: 1s产生20次
 390000000 / 4000：1s产生100次
  */
-#define TIMER_INTR_INTERVAL     (390000000 / 800) // timer interrupt interval
+#define TIMER_INTR_INTERVAL     (390000000 / 4000) // timer interrupt interval
 
 uint64_t ticks;
 

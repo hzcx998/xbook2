@@ -144,7 +144,6 @@ int fsal_path_remove_alpath(void *alpath)
                 fpath->fsal     = NULL;
                 memset(fpath->path, 0, FASL_PATH_LEN);
                 spin_unlock_irqrestore(&fsal_path_table_lock, irq_flags);
-                try_setdown_block_device(fpath->devpath);
                 return 0;
             }
         }

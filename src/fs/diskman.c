@@ -35,7 +35,7 @@ int disk_manager_probe_device(device_type_t type)
         atomic_set(&disk->ref, 0);
         /* 设置虚拟磁盘名字 */
         mutex_lock(&disk_manager_mutex);
-        sprintf(disk->virname, "disk%d", next_disk_solt);
+        sprintf(disk->virname, "vd%c", 'a' + next_disk_solt);
         disk->solt = next_disk_solt++;
         list_add_tail(&disk->list, &disk_list_head);
         mutex_unlock(&disk_manager_mutex);
@@ -60,7 +60,7 @@ int disk_info_find(char *name)
     mutex_lock(&disk_manager_mutex);
     disk_info_t *disk;
     list_for_each_owner (disk, &disk_list_head, list) {
-        if (!strcmp(disk->devent.de_name, name)) {
+        if (!strcmp(disk->devent.de_name, name) || !strncmp(disk->virname, name, 3)) {
             mutex_unlock(&disk_manager_mutex);
             return disk->solt;
         }

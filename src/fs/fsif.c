@@ -15,6 +15,7 @@
 #include <xbook/pipe.h>
 #include <xbook/safety.h>
 #include <xbook/account.h>
+#include <xbook/memspace.h>
 #include <xbook/dir.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
@@ -342,11 +343,15 @@ int sys_lseek(int fd, off_t offset, int whence)
 #if defined(CONFIG_NEWSYSCALL)
 void *sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
+    if (!length) {
+        errprintln("[fs] sys_mmap: length zero!");
+        return MAP_FAILED;
+    }
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
-        return (void *)-1;
+        return MAP_FAILED;
     if (!ffd->fsal->mmap)
-        return (void *)-1;
+        return MAP_FAILED;
     return ffd->fsal->mmap(ffd->handle, addr, length, prot, flags, offset);
 }
 #else
@@ -394,6 +399,7 @@ int __sys_unlink(const char *path, int flags)
     }
     char abs_path[MAX_PATH] = {0};
     build_path(path, abs_path);
+    // dbgprintln("[fs] unlink path %s", path);
     return fsif.unlink((char *) abs_path);
 }
 

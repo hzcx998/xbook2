@@ -58,6 +58,9 @@ uint8_t sched_calc_new_priority(task_t *task, char adjustment);
 
 static inline sched_unit_t *sched_get_cur_unit()
 {
+    if (CPU_NR_MAX == 1) {
+        return &scheduler.sched_unit_table[0];
+    }
     sched_unit_t *su = NULL;
     cpuid_t cpuid = cpu_get_my_id();
     int i;

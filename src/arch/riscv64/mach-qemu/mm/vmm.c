@@ -104,7 +104,7 @@ void vmm_active_kernel()
     #ifdef DEBUG_ARCH_VMM
     keprintln("[vmm] vmm_active_kernel");
     #endif
-    #if 0
+    #if 1
     /* 如果时同一个页表就不改变，这样减少对页表的刷新，提高效率 */
     if (r_satp() == MAKE_SATP(kernel_pgdir))
         return;
@@ -119,7 +119,7 @@ void vmm_active_user(unsigned long page)
     #ifdef DEBUG_ARCH_VMM
     keprintln("[vmm] vmm_active_user");
     #endif
-    #if 0
+    #if 1
     if (r_satp() == MAKE_SATP(page))
         return;
     #endif
