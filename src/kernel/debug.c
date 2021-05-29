@@ -125,12 +125,16 @@ int keprint(const char *fmt, ...)
     }
     if (show) {
         if (level >= 0) {
+            #if PRINT_COLOR == 1
             char *q = keprint_msg[level];
             debug_putstr(q, strlen(q));
+            #endif
         }
         debug_putstr(p, count);
         if (level >= 0) {
+            #if PRINT_COLOR == 1
             debug_putstr(DEBUG_NONE_COLOR, 4);    
+            #endif
         }
     }
     #if PRINT_LOCK == 1

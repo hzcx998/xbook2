@@ -4,6 +4,8 @@
 /* has lock for print?  */
 #define PRINT_LOCK      1
 
+#define PRINT_COLOR      0
+
 #define PRINT_EMERG      "<0>"      /* system is unuseable */
 #define PRINT_ERR        "<1>"      /* error condition */
 #define PRINT_WARING     "<2>"      /* waring condition */

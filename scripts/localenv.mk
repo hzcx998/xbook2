@@ -7,9 +7,9 @@ ENV_REMOTE_TEST	:=yes
 
 #CROSS_COMPILE 	?= 
 #PLATFORM		?=
-#CROSS_COMPILE 	?= riscv-none-embed-
+CROSS_COMPILE 	?= riscv-none-embed-
 #CROSS_COMPILE 	?= riscv64-linux-gnu-
-CROSS_COMPILE 	?= riscv64-unknown-elf-
+#CROSS_COMPILE 	?= riscv64-unknown-elf-
 PLATFORM		?= riscv64-qemu
 
 # 如果是远程测试，就需要强制使用对应的编译环境以及开发平台 

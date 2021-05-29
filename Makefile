@@ -43,15 +43,16 @@ BIN_DIR		= bin
 KERNSRC		= ./src
 ARCH		= $(KERNSRC)/arch/$(ENV_ARCH)
 
-# use fatfs tools for making image
-USE_FATFS	:= no
 MOUNT_DIR	:= /mnt
 
 # 管理员执行
 ifeq ($(OS),Windows_NT)
 	SUDO		:= 
+	USE_FATFS	:= yes
 else
 	SUDO		:= sudo
+# use fatfs tools for making image
+	USE_FATFS	:= no
 endif
 
 ifeq ($(ENV_ARCH),x86) # x86-i386
@@ -88,7 +89,6 @@ else
 
 endif # ($(ENV_MACH),mach-i386)
 else ifeq ($(ENV_ARCH),riscv64) # riscv64
-	USE_FATFS	:= no
 	SD			?= /dev/sdb
 ifeq ($(ENV_MACH),mach-qemu) # riscv64 qemu
 	QEMU 		:= $(QEMUPREFIX)riscv64
