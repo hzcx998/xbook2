@@ -201,8 +201,10 @@ endif # ($(ENV_ARCH),riscv64)
 
 # 构建环境。镜像>工具>环境>rom
 build: buildimg
+ifeq ($(ENV_REMOTE_TEST),no)
 	-$(MKDIR) $(ROM_DIR)/bin
-	-$(MKDIR) $(ROM_DIR)/sbin 
+	-$(MKDIR) $(ROM_DIR)/sbin
+endif
 ifeq ($(OS),Windows_NT)
 else
 	$(MAKE) -s -C  $(FATFS_DIR)
@@ -212,14 +214,15 @@ ifeq ($(ENV_ARCH),x86)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
 else ifeq ($(ENV_ARCH),riscv64)
+ifeq ($(ENV_REMOTE_TEST),no)
 	$(MAKE) -s -C  $(LIBS_DIR)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
+endif
 endif # ($(ENV_ARCH),riscv64)
 ifeq ($(USE_FATFS),yes)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
 else
-	-@$(SUDO) umount $(MOUNT_DIR)
 	@$(SUDO) mount $(FS_DISK) $(MOUNT_DIR)
 	@$(SUDO) $(CP) -r $(ROM_DIR)/* $(MOUNT_DIR)
 	@$(SUDO) umount $(MOUNT_DIR)

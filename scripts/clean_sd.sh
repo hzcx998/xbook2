@@ -1,3 +1,3 @@
 sudo mount /dev/sdb /mnt
-ls /mnt -l
+sudo rm -r /mnt/*
 umount /mnt
