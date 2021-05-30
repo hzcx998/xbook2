@@ -90,7 +90,7 @@ static int copy_file(task_t *child, task_t *parent)
 
 static int copy_pthread_desc(task_t *child, task_t *parent)
 {
-    #ifndef TASK_TINY 
+    #ifdef CONFIG_PTHREAD 
     if (parent->pthread != NULL) { 
         /* 由于复制后，只有一个线程，所以这里就直接初始化一个新的，而不是复制 */
         if (proc_pthread_init(child))

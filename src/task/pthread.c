@@ -1,3 +1,5 @@
+#include <xbook/config.h>
+#ifdef CONFIG_PTHREAD
 #include <xbook/schedule.h>
 #include <xbook/process.h>
 #include <xbook/pthread.h>
@@ -321,3 +323,4 @@ int sys_thread_setcanceltype(int type, int *oldtype)
     }
     return 0;
 }
+#endif

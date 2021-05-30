@@ -56,7 +56,6 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     spinlock_init(&task->lock);
     task->static_priority = sched_calc_base_priority(prio_level);
     task->priority = task->static_priority;
-    //task->timeslice = TASK_TIMESLICE_BASE + (task->priority / 10);
     //task->timeslice = TASK_TIMESLICE_BASE + 1;
     task->timeslice = TASK_TIMESLICE_BASE;
     task->ticks = task->timeslice;
@@ -82,7 +81,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     exception_manager_init(&task->exception_manager);
     timer_init(&task->sleep_timer, 0, NULL, NULL);
     alarm_init(&task->alarm);
-    #ifndef TASK_TINY
+    #ifdef CONFIG_PTHREAD
     task->pthread = NULL;
     #endif
     task->port_comm = NULL;
@@ -739,5 +738,5 @@ void tasks_init()
     kdeamon_task = kern_thread_start("kdeamon", TASK_PRIO_LEVEL_LOW, kthread_deamon, NULL);
     assert(kdeamon_task != NULL);
     task_init_done = 1;
-    keprint(PRINT_INFO "[ok] tasks init.");
+    keprint(PRINT_INFO "[task] init done");
 }

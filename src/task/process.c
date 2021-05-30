@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <errno.h>
-#ifndef TASK_TINY
+#ifdef CONFIG_PTHREAD
 #include <xbook/pthread.h>
 #include <sys/pthread.h>
 #endif
@@ -118,7 +118,6 @@ static int proc_load_segment_ext(vmm_t *vmm, int fd, unsigned long offset, unsig
 
 int proc_load_image32(vmm_t *vmm, Elf32_Ehdr *elf_header, int fd)
 {
-    #ifndef TASK_TINY
     Elf32_Phdr prog_header;
     Elf32_Off prog_header_off = elf_header->e_phoff;
     Elf32_Half prog_header_size = elf_header->e_phentsize;
@@ -176,7 +175,6 @@ int proc_load_image32(vmm_t *vmm, Elf32_Ehdr *elf_header, int fd)
         prog_header_off += prog_header_size;
         grog_idx++;
     }
-    #endif
     return 0;
 }
 
@@ -267,8 +265,8 @@ int proc_load_image64_ext(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
             }
             /* 如果内存大小比文件大小大，就要清0 */
             if (prog_header.p_memsz > prog_header.p_filesz) {
-                #ifndef TASK_TINY
-                /* TODO: 在vmm页表中清0 */
+                /* TODO: 将bss段置0 */
+                #if 0
                 memset((void *)(unsigned long)(prog_header.p_vaddr + prog_header.p_filesz), 0,
                     prog_header.p_memsz - prog_header.p_filesz);
                 #endif
@@ -397,7 +395,7 @@ int proc_vmm_exit_when_forking(task_t *child, task_t *parent)
 
 int proc_pthread_init(task_t *task)
 {
-    #ifndef TASK_TINY
+    #ifdef CONFIG_PTHREAD
     task->pthread = mem_alloc(sizeof(pthread_desc_t));
     if (task->pthread == NULL)
         return -1;
@@ -408,7 +406,7 @@ int proc_pthread_init(task_t *task)
 
 int proc_pthread_exit(task_t *task)
 {
-    #ifndef TASK_TINY
+    #ifdef CONFIG_PTHREAD
     if (!task->pthread)
         return -1; 
     pthread_desc_exit(task->pthread);
@@ -422,7 +420,7 @@ int proc_release(task_t *task)
     proc_vmm_exit(task);
     fs_fd_exit(task);
     exception_manager_exit(&task->exception_manager);
-    #ifndef TASK_TINY
+    #ifdef CONFIG_PTHREAD
     proc_pthread_exit(task);
     #endif
     sys_port_comm_unbind(-1);
@@ -436,7 +434,7 @@ void proc_exec_init(task_t *task)
     fs_fd_reinit(task);
     exception_manager_exit(&task->exception_manager);
     exception_manager_init(&task->exception_manager);
-    #ifndef TASK_TINY
+    #ifdef CONFIG_PTHREAD
     pthread_desc_init(task->pthread);
     #endif
     sys_port_comm_unbind(-1);
@@ -513,7 +511,7 @@ void proc_close_other_threads(task_t *thread)
             }
         }
     }
-    #ifndef TASK_TINY
+    #ifdef CONFIG_PTHREAD
     if (thread->pthread) {
         atomic_set(&thread->pthread->thread_count, 0);
     }

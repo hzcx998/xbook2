@@ -14,7 +14,6 @@
 // #define CONFIG_LARGE_ALLOCS
 #define CONFIG_SMALL_ALLOCS
 
-
 /* auto select timezone */
 /* #define CONFIG_TIMEZONE_AUTO */
 
@@ -32,5 +31,8 @@
 
 /* 配置内核账户管理机制 */
 // #define CONFIG_ACCOUNT
+
+/* 配置对pthread接口的支持 */
+// #define CONFIG_PTHREAD
 
 #endif   /* _XBOOK_CONFIG_H */

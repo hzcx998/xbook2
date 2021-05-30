@@ -1,9 +1,6 @@
 #ifndef _XBOOK_TASK_H
 #define _XBOOK_TASK_H
 
-/* 精简版本的多任务 */
-#define TASK_TINY
-
 #include <arch/page.h>
 #include <arch/cpu.h>
 #include <arch/fpu.h>
@@ -21,7 +18,7 @@
 #include "alarm.h"
 #include "portcomm.h"
 #include "msgpool.h"
-#ifndef TASK_TINY
+#ifdef CONFIG_PTHREAD
 #include "pthread.h"
 #endif
 
@@ -101,7 +98,7 @@ typedef struct {
     alarm_t alarm;
     port_comm_t *port_comm;   
     lpc_port_table_t port_table;  
-    #ifndef TASK_TINY
+    #ifdef CONFIG_PTHREAD
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
     #endif
     exit_hook_t exit_hook;  /* 退出调用的钩子函数 */
@@ -124,7 +121,7 @@ extern char *kernel_stack_buttom;
 #define TASK_IS_KERNEL_THREAD(task) \
         ((task)->flags & THREAD_FLAG_KERNEL)
 
-#ifndef TASK_TINY
+#ifdef CONFIG_PTHREAD
 /* 判断是用户态进程或者是用户态单线程 */
 #define TASK_IS_SINGAL_THREAD(task) \
         ((((task)->pthread && \
