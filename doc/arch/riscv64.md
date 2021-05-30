@@ -28,6 +28,8 @@ sudo yum install qemu-system-misc
 
 ## 编译时build后直接run即可（可加-jn参数多线程编译，n是线程数。）：
 
+！注意：如果要在虚拟机上面跑，则需要将sripts/localenv.mk中的ENV_REMOTE_TEST设置为no，默认是为socomp远程测试机做配置的，只能编译出在k210测试机上面跑的程序。
+
 ```bash
 make build    # 构建环境
 make run      # 编译并运行，默认使用qemu虚拟机运行
@@ -57,6 +59,7 @@ CROSS_COMPILE=riscv64-unknown-elf- PLATFORM=riscv64-k210
 riscv64-k210 # 在k210开发板上跑测试程序
 riscv64-qemu # 在qemu虚拟机上跑测试程序
 ```
+
 
 ## 编译时可用的命令：
 ```bash
