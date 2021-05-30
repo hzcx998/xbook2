@@ -5,12 +5,15 @@ RM			= rm
 ifeq ($(OS),Windows_NT)
 	# !!! if you wanto complie this tools in windows, you need use gcc for windows
 	# and config your own path. Below is my path.
-	CC       = 	D:/Softwares/Mingw/bin/gcc.exe 		# need mingw gcc for windows
+
+	TOOL_CHAIN = F:/Develop/mingw64
+	
+	CC       = 	$(TOOL_CHAIN)/bin/gcc.exe 		# need mingw gcc for windows
 	# need mingw include and libs
-	INCS     = 	-I"D:/Softwares/Mingw/include" \
+	INCS     = 	-I$(TOOL_CHAIN)/include \
 				-DWIN32
 
-	LIBS 	= 	-L"D:/Softwares/Mingw/lib" \
+	LIBS 	= 	-L$(TOOL_CHAIN)/lib \
 				-static-libgcc
 	
 	# out file

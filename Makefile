@@ -234,10 +234,11 @@ ifeq ($(ENV_ARCH),x86)
 else ifeq ($(ENV_ARCH),riscv64)
 ifeq ($(USE_FATFS),yes)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG) # fs disk
+	mkfs.vfat -F 32 $(FS_DISK)
 else
-	# 构建文件系统命令
+	# 构建3M磁盘
 	$(DD) if=/dev/zero of=$(HDA_IMG) bs=512 count=6144
-	mkfs.vfat -F 32 $(HDA_IMG)
+	mkfs.vfat -F 32 $(FS_DISK)
 endif # USE_FATFS
 endif # ($(ENV_ARCH),x86)
 

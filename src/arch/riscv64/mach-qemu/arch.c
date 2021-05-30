@@ -28,15 +28,3 @@ int arch_init(unsigned long hartid, unsigned long dtb_pa)
 
     return 0;
 }
-
-#if 0
-int kernel_main()
-{	
-    infoprint("kernel_main start.\n");
-    while (1)
-    {
-        /* code */
-    }
-    return 0;
-}
-#endif

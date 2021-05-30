@@ -534,7 +534,7 @@ static iostatus_t virtio_disk_enter(driver_object_t *driver)
         keprint(PRINT_ERR "virtio_disk_enter: create device failed!\n");
         return status;
     }
-    /* neighter io mode */
+    /* buffered io mode */
     devobj->flags = DO_BUFFERED_IO;
     extension = (device_extension_t *)devobj->device_extension;
     extension->device_object = devobj;

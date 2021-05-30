@@ -25,7 +25,6 @@ void interrupt_enable(void)
 
 static void interrupt_general_handler(trap_frame_t *frame) 
 {
-	//dbgprintln("[interrupt] into general handler!");
     uint64_t scause = r_scause();   // 获取中断产生的原因
     /* 来自设备、定时器中断 */
     if (scause & SCAUSE_INTERRUPT) {
@@ -152,14 +151,11 @@ void interrupt_dispatch(trap_frame_t *frame)
 	if ((SCAUSE_INTERRUPT | SCAUSE_S_SOFTWARE_INTR) == scause && SCAUSE_S_EXTERNAL_INTR == r_stval()) 
 	#endif 
     {
-        // keprintln("external interrupt");
         interrupt_do_irq(frame);
         softirq_handle_in_interrupt();
     } else if ((SCAUSE_INTERRUPT | SCAUSE_S_TIMER_INTR) == scause) {
-        //keprintln("timer interrupt");
         /* 直接调用内核的时钟处理 */
         clock_handler(-1, NULL);
-        //clock_handler2(-1, NULL);
         /* 处理完后需要设置下一个超时的时钟时间，才能再次产生中断 */
         timer_interrupt_set_next_timeout();
         /* 调用软中断 */

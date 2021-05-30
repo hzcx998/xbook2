@@ -39,7 +39,11 @@ static void cpu_driver_print(device_extension_t *extension)
 static void cpu_driver_initialize(device_extension_t *extension)
 {
 	strcpy(extension->vendor, "RISCV64");
+#ifdef QEMU
+    strcpy(extension->brand, "QEMU RISC-V Core 64bit");
+#else
     strcpy(extension->brand, "K210 RISC-V Dual Core 64bit, with FPU");
+#endif
 }
 
 static iostatus_t cpu_driver_read(device_object_t *device, io_request_t *ioreq)

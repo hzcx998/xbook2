@@ -36,7 +36,7 @@ int page_map_addr_fixed2(pgdir_t pgdir, unsigned long start, unsigned long addr,
     if (prot & PROT_EXEC)
         attr |= PAGE_ATTR_EXEC;
 
-    int retval = mappages(pgdir, first, len, addr & PAGE_MASK, attr);
+    int retval = do_map_pages(pgdir, first, len, addr & PAGE_MASK, attr);
     interrupt_restore_state(flags);
 	return retval;
 }
@@ -48,7 +48,7 @@ int page_unmap_addr2(pgdir_t pgdir, unsigned long vaddr, unsigned long len)
     unsigned long flags;
     interrupt_save_and_disable(flags);
 	len = PAGE_ALIGN(len);
-    vmunmap2(pgdir, vaddr & PAGE_MASK, len / PAGE_SIZE, 1);
+    do_unmap_pages2(pgdir, vaddr & PAGE_MASK, len / PAGE_SIZE, 1);
     interrupt_restore_state(flags);
 	return 0;
 }
@@ -60,7 +60,7 @@ int page_unmap_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len,
     unsigned long flags;
     interrupt_save_and_disable(flags);
 	len = PAGE_ALIGN(len);
-    vmunmap2(pgdir, start & PAGE_MASK, len / PAGE_SIZE, !fixed);   /* 不是固定才释放 */
+    do_unmap_pages2(pgdir, start & PAGE_MASK, len / PAGE_SIZE, !fixed);   /* 不是固定才释放 */
     interrupt_restore_state(flags);
 	return 0;
 }
@@ -103,9 +103,9 @@ int page_map_addr2(pgdir_t pgdir, unsigned long start, unsigned long len, unsign
             return -1;
         }
         //dbgprintln("[page] page_map_addr: vaddr=%p paddr=%p\n", vaddr, page_addr);
-        retval = mappages(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
+        retval = do_map_pages(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
         if (retval < 0) {
-            vmunmap(pgdir, start & PAGE_MASK, pages, 1);
+            do_unmap_pages(pgdir, start & PAGE_MASK, pages, 1);
             goto final;
         }
         vaddr += PAGE_SIZE;
@@ -148,7 +148,7 @@ int page_map_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len, u
     int retval = -1;
     pte_t *pte;
     while (page_idx < pages) {
-        pte = walk(pgdir, vaddr, 0);
+        pte = page_walk(pgdir, vaddr, 0);
         if (pte && (*pte & PAGE_ATTR_PRESENT)) {    /* 地址已经存在了 */
             errprintln("page_map_addr_safe: addr %#x had maped!\n", vaddr);
         } else {
@@ -158,9 +158,9 @@ int page_map_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len, u
                 interrupt_restore_state(flags);
                 return -1;
             }
-            retval = mappages(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
+            retval = do_map_pages(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
             if (retval < 0) {
-                vmunmap(pgdir, start & PAGE_MASK, pages, 1);
+                do_unmap_pages(pgdir, start & PAGE_MASK, pages, 1);
                 goto final;
             }
         }
@@ -183,7 +183,7 @@ copyout(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len)
 
   while(len > 0){
     va0 = PAGE_ROUNDDOWN(dstva);
-    pa0 = walkaddr(pgdir, va0);
+    pa0 = user_walk_addr(pgdir, va0);
     if(pa0 == NULL)
       return -1;
     n = PAGE_SIZE - (dstva - va0);
@@ -208,7 +208,7 @@ copyin(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len)
 
   while(len > 0){
     va0 = PAGE_ROUNDDOWN(srcva);
-    pa0 = walkaddr(pgdir, va0);
+    pa0 = user_walk_addr(pgdir, va0);
     if(pa0 == NULL)
       return -1;
     n = PAGE_SIZE - (srcva - va0);
@@ -234,7 +234,7 @@ int copyinstr(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t maxn)
     int got_null = 0;
     while(got_null == 0 && maxn > 0){
         va0 = PAGE_ROUNDDOWN(srcva);
-        pa0 = (uint64_t)walkaddr(pgdir, va0);
+        pa0 = (uint64_t)user_walk_addr(pgdir, va0);
         if(pa0 == 0)
             return -1;
         n = PAGE_SIZE - (srcva - va0);

@@ -13,7 +13,7 @@ static int do_copy_share_page(addr_t vaddr, vmm_t *child, vmm_t *parent)
 {
     uint64_t paddr;
     pte_t *pte;
-    if((pte = walk((pgdir_t)parent->page_storage, vaddr, 0)) == NULL)
+    if((pte = page_walk((pgdir_t)parent->page_storage, vaddr, 0)) == NULL)
         panic("do_copy_normal_page: pte should exist");
     if((*pte & PAGE_ATTR_PRESENT) == 0)
         panic("do_copy_normal_page: page not present");
@@ -23,7 +23,7 @@ static int do_copy_share_page(addr_t vaddr, vmm_t *child, vmm_t *parent)
     int perm = PTE_FLAGS(*pte) & PAGE_ATTR_MASK;
 
     dbgprint("[vmm]: copy share page at vaddr %x phy addr %x\n", vaddr, paddr);   
-    mappages(child->page_storage, vaddr, PAGE_SIZE, paddr, perm);
+    do_map_pages(child->page_storage, vaddr, PAGE_SIZE, paddr, perm);
     return 0;
 }
 
@@ -39,7 +39,7 @@ static int do_copy_normal_page(addr_t vaddr, void *buf, vmm_t *child, vmm_t *par
     uint64_t mem;
     pte_t *pte;
 
-    if((pte = walk((pgdir_t)parent->page_storage, vaddr, 0)) == NULL)
+    if((pte = page_walk((pgdir_t)parent->page_storage, vaddr, 0)) == NULL)
         panic("do_copy_normal_page: pte should exist");
     if((*pte & PAGE_ATTR_PRESENT) == 0) {   /* 不存在，则不复制页，可能是没被访问的堆栈 */
         // warnprintln("[fork] do_copy_normal_page: page not present");
@@ -57,7 +57,7 @@ static int do_copy_normal_page(addr_t vaddr, void *buf, vmm_t *child, vmm_t *par
         return -1;
     }
     /* map page buf in child */
-    if (mappages(child->page_storage, vaddr, PAGE_SIZE, mem, perm) < 0) {
+    if (do_map_pages(child->page_storage, vaddr, PAGE_SIZE, mem, perm) < 0) {
         errprint(PRINT_ERR "vmm_copy_mapping: map page for vaddr %p failed!\n", vaddr);
         return -1;
     }

@@ -1,6 +1,4 @@
 #include <xbook/debug.h>
-#include <string.h>
-
 #include <xbook/driver.h>
 #include <xbook/kernel.h>
 #include <xbook/safety.h>
@@ -12,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 #include <arch/sbi.h>
 

@@ -7,11 +7,11 @@
  */
 int hal_memio_remap(unsigned long paddr, unsigned long vaddr, size_t size)
 {
-    return mappages(GET_CUR_PGDIR(), vaddr, size, paddr, PAGE_ATTR_READ | PAGE_ATTR_WRITE | PAGE_ATTR_SYSTEM);
+    return do_map_pages(GET_CUR_PGDIR(), vaddr, size, paddr, PAGE_ATTR_READ | PAGE_ATTR_WRITE | PAGE_ATTR_SYSTEM);
 }
 
 int hal_memio_unmap(unsigned long addr, size_t size)
 {
-    vmunmap(GET_CUR_PGDIR(), addr, size / PAGE_SIZE, 0);
+    do_unmap_pages(GET_CUR_PGDIR(), addr, size / PAGE_SIZE, 0);
     return 0;
 }

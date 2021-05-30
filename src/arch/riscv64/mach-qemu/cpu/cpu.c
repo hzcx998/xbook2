@@ -3,7 +3,7 @@
 
 void cpu_do_nothing()
 {
-
+    // do nothing
 }
 
 // Must be called with interrupts disabled,

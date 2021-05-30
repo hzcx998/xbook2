@@ -2,7 +2,7 @@
     .extern arch_init
     .extern kernel_main
     .global boot_stack
-    .globl _start
+    .global _start
 _start:
     add t0, a0, 1
     slli t0, t0, 14

@@ -82,22 +82,16 @@ unsigned long *kern_page_dir_copy_to();
 void page_init();
 void page_enable();
 
-int
-mappages(pgdir_t pgdir, uint64_t va, uint64_t size, uint64_t pa, int perm);
-void
-kvmmap(uint64_t va, uint64_t pa, uint64_t sz, int perm);
+int do_map_pages(pgdir_t pgdir, uint64_t va, uint64_t size, uint64_t pa, int perm);
+void do_unmap_pages(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free);
+void kern_mmap_early(uint64_t va, uint64_t pa, uint64_t sz, int perm);
 
-void
-vmunmap(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free);
-void vmunmap2(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free);
+void do_unmap_pages2(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free);
 
-pte_t *
-walk(pgdir_t pgdir, uint64_t va, int alloc);
+pte_t *page_walk(pgdir_t pgdir, uint64_t va, int alloc);
+void pgdir_dump(pgdir_t pgdir, int level);
 
-void vmprint(pgdir_t pgdir, int level);
-
-uint64_t *
-walkaddr(pgdir_t pgdir, uint64_t va);
+uint64_t *user_walk_addr(pgdir_t pgdir, uint64_t va);
 /* 可以指定对某个页目录表进行操作 */
 int page_map_addr_fixed2(pgdir_t pgdir, unsigned long start, unsigned long addr, 
     unsigned long len, unsigned long prot);
@@ -106,9 +100,7 @@ int page_unmap_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len,
 int page_map_addr2(pgdir_t pgdir, unsigned long start, unsigned long len, unsigned long prot);
 int page_map_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len, unsigned long prot);
 
-int
-copyout(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len);
-int
-copyin(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len);
+int copyout(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len);
+int copyin(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len);
 
 #endif  /* _RISCV64_PAGE_H */

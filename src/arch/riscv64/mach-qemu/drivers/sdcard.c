@@ -23,9 +23,12 @@
 #define DEV_NAME "sda"
 #define DRV_PREFIX  "[sdcard] "
 
-/* assume 128MB */
-//#define SDCARD_SECTORS     (262144)
+/* 更好的做法是从设备获取扇区数 */
+#ifdef QEMU
+#define SDCARD_SECTORS     (262144) /* assume 128MB */
+#else
 #define SDCARD_SECTORS     (6114)   /* 3M */
+#endif
 
 #define SDCARD_IRQ 27
 
@@ -35,10 +38,7 @@ typedef struct _device_extension {
     device_object_t *device_object; /* 设备对象 */
     unsigned long sectors;          /* 磁盘扇区数 */
     unsigned long rwoffset;         // 读写偏移位置
-    uint8_t *memio_addr;            /* 磁盘内存映射地址 */
-
 } device_extension_t;
-
 
 static void sdcard_rw(device_extension_t *extension, 
         unsigned long lba, void *data, int write)
@@ -215,7 +215,7 @@ static iostatus_t sdcard_enter(driver_object_t *driver)
         keprint(PRINT_ERR "sdcard_enter: create device failed!\n");
         return status;
     }
-    /* neighter io mode */
+    /* buffered io mode */
     devobj->flags = DO_BUFFERED_IO;
     extension = (device_extension_t *)devobj->device_extension;
     extension->device_object = devobj;

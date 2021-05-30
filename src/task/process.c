@@ -72,7 +72,7 @@ loadseg(void *pgdir, uint64_t va, int fd, unsigned long offset, size_t sz)
         panic("loadseg: va %p must be page aligned", _va);
 
     for(i = 0; i < sz; i += PAGE_SIZE){
-        pa = walkaddr((pgdir_t)pgdir, _va + i);
+        pa = user_walk_addr((pgdir_t)pgdir, _va + i);
         if(pa == NULL)
         panic("loadseg: address should exist");
         if(sz - i < PAGE_SIZE)

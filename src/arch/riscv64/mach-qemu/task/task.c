@@ -14,12 +14,8 @@ static void kernel_thread_entry()
     task_t *cur = task_current;
     interrupt_enable();  /* 在启动前需要打开中断，避免启动后不能产生时钟中断调度 */
     cur->kthread_entry(cur->kthread_arg);
-    // 如何函数返回了，那么就需要调用线程退出
-    #if 1
-    panic("kthread return!");
-    #else
+    // 如果函数返回了，那么就需要调用线程退出
     kern_thread_exit(0);
-    #endif
 }
 
 void task_stack_build(task_t *task, task_func_t *function, void *arg)
@@ -31,7 +27,6 @@ void task_stack_build(task_t *task, task_func_t *function, void *arg)
     task->context.sp = (uint64_t)(task->kstack + PAGE_SIZE); 
     task->kthread_entry = function;
     task->kthread_arg = arg;
-    // keprint("task=%s sp=%p\n", task->name, task->context.sp);
 }
 
 /**
@@ -55,7 +50,6 @@ static int build_arg_stack(vmm_t *vmm, unsigned long stackbase, unsigned long *_
         ustack[argc] = sp;
     }
     ustack[argc] = 0;
-
     // push the array of argv[] pointers.
     sp -= (argc+1) * sizeof(uint64_t);
     sp -= sp % 16;
@@ -101,13 +95,11 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
     }
     /* sp保存参数信息，通过sp就可以找到所有参数了 */
     frame->sp = arg_bottom;
-    // noteprintln("process_frame_init: sp=%p", frame->sp);
     return 0;
 }
 
 void kernel_switch_to_user(trap_frame_t *frame)
 {
-    // noteprintln("kernel_switch_to_user: is empty function");
     task_activate_when_sched(task_current);  // 激活页表
     usertrapret();
 }
@@ -116,6 +108,7 @@ void user_frame_init(trap_frame_t *frame)
 {
     memset(frame, 0, sizeof(trap_frame_t));
 }
+
 extern pgdir_t kernel_pgdir;
 int task_stack_build_when_forking(task_t *child)
 {

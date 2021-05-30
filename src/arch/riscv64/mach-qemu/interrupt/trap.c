@@ -7,6 +7,8 @@
 #include <xbook/syscall.h>
 #include <xbook/exception.h>
 
+// #define DEBUG_TRAP
+
 // in kernel_trap_entry.S, calls do_kernel_trap().
 extern void kernel_trap_entry();
 
@@ -26,15 +28,12 @@ void trap_init(void)
 // on whatever the current kernel stack is.
 void do_kernel_trap(trap_frame_t *frame)
 {
-    //dbgprintln("trap frame addr:%p", frame);
-    //trap_frame_dump(frame);
-
-    //keprint("run in kerntrap\n");
-
+#ifdef DEBUG_TRAP
+    dbgprintln("trap frame addr:%p", frame);
+#endif
     uint64_t sepc = r_sepc();
     uint64_t sstatus = r_sstatus();
-    // uint64_t scause = r_scause();
-  
+
     if((sstatus & SSTATUS_SPP) == 0)
         panic("do_kernel_trap: not from supervisor mode");
     if(interrupt_enabled() != 0)
@@ -45,8 +44,8 @@ void do_kernel_trap(trap_frame_t *frame)
 
     exception_check(frame);
 
-    // the yield() may have caused some traps to occur,
-    // so restore trap registers for use by kernel_trap_entry.S's sepc instruction.
+    // the interrupt may have caused some traps to occur,
+    // so restore trap registers for use by kerneltraps.S's sepc instruction.
     w_sepc(sepc);
     w_sstatus(sstatus);
 }
@@ -55,11 +54,8 @@ void do_kernel_trap(trap_frame_t *frame)
 // handle an interrupt, exception, or system call from user space.
 // called from trampoline.S
 //
-void
-usertrap(void)
+void usertrap(void)
 {
-    //keprint("run in usertrap\n");
-
     if((r_sstatus() & SSTATUS_SPP) != 0)
         panic("usertrap: not from user mode");
 
@@ -73,7 +69,6 @@ usertrap(void)
     cur->trapframe->epc = r_sepc();
     
     if(r_scause() == 8){
-        //dbgprintln("[trap] syscall intr in task %d", cur->pid);
         // system call
         // sepc points to the ecall instruction,
         // but we want to return to the next instruction.
@@ -92,60 +87,54 @@ usertrap(void)
 //
 // return to user space
 //
-void
-usertrapret(void)
+void usertrapret(void)
 {
-  task_t *cur = task_current;
+    task_t *cur = task_current;
 
-  // we're about to switch the destination of traps from
-  // kerneltrap() to usertrap(), so turn off interrupts until
-  // we're back in user space, where usertrap() is correct.
-  interrupt_disable();
-  //interrupt_enable();
-  //keprint("intr enable %d\n", interrupt_enabled());
-  // send syscalls, interrupts, and exceptions to trampoline.S
-  w_stvec(TRAMPOLINE + (uservec - trampoline));
+    // we're about to switch the destination of traps from
+    // kerneltrap() to usertrap(), so turn off interrupts until
+    // we're back in user space, where usertrap() is correct.
+    interrupt_disable();
+    // send syscalls, interrupts, and exceptions to trampoline.S
+    w_stvec(TRAMPOLINE + (uservec - trampoline));
 
-  // set up trapframe values that uservec will need when
-  // the process next re-enters the kernel.
-  cur->trapframe->kernel_satp = r_satp();         // kernel page table
-  cur->trapframe->kernel_sp = (uint64_t)(cur->kstack + PAGE_SIZE); // process's kernel stack
-  cur->trapframe->kernel_trap = (uint64_t)usertrap;
-  cur->trapframe->kernel_hartid = r_tp();         // hartid for cpuid()
+    // set up trapframe values that uservec will need when
+    // the process next re-enters the kernel.
+    cur->trapframe->kernel_satp = r_satp();         // kernel page table
+    cur->trapframe->kernel_sp = (uint64_t)(cur->kstack + PAGE_SIZE); // process's kernel stack
+    cur->trapframe->kernel_trap = (uint64_t)usertrap;
+    cur->trapframe->kernel_hartid = r_tp();         // hartid for cpuid()
 
-  // set up the registers that trampoline.S's sret will use
-  // to get to user space.
+    // set up the registers that trampoline.S's sret will use
+    // to get to user space.
 
-  // set S Previous Privilege mode to User.
-  unsigned long x = r_sstatus();
-  x &= ~SSTATUS_SPP; // clear SPP to 0 for user mode
-  x |= SSTATUS_SPIE; // enable interrupts in user mode
-  w_sstatus(x);
+    // set S Previous Privilege mode to User.
+    unsigned long x = r_sstatus();
+    x &= ~SSTATUS_SPP; // clear SPP to 0 for user mode
+    x |= SSTATUS_SPIE; // enable interrupts in user mode
+    w_sstatus(x);
 
-  // set S Exception Program Counter to the saved user pc.
-  w_sepc(cur->trapframe->epc);
+    // set S Exception Program Counter to the saved user pc.
+    w_sepc(cur->trapframe->epc);
 
-  // tell trampoline.S the user page table to switch to.
-  // printf("[usertrapret]cur->pagetable: %p\n", cur->pagetable);
-  // uint64_t satp = MAKE_SATP(cur->pagetable);
+    // tell trampoline.S the user page table to switch to.
     uint64_t satp = 0;
     if (cur->vmm) {
         satp = MAKE_SATP((unsigned long)cur->vmm->page_storage);
-        //keprintln("usertrapret: have vmm %lx", satp);
     } else {
         panic("usertrapret: no vmm");
     }
 
-  // jump to trampoline.S at the top of memory, which 
-  // switches to the user page table, restores user registers,
-  // and switches to user mode with sret.
-  uint64_t fn = TRAMPOLINE + (userret - trampoline);
-  ((void (*)(trap_frame_t *,uint64_t))fn)(cur->trapframe, satp);
+    // jump to trampoline.S at the top of memory, which 
+    // switches to the user page table, restores user registers,
+    // and switches to user mode with sret.
+    uint64_t fn = TRAMPOLINE + (userret - trampoline);
+    ((void (*)(trap_frame_t *,uint64_t))fn)(cur->trapframe, satp);
 }
 
 void forkret()
 {
-  #if 0
+  #ifdef DEBUG_TRAP
   task_t *cur = task_current;
   keprintln("[fork] task %s pid=%d ppid=%d return to user", cur->name, cur->pid, cur->parent_pid);
   trap_frame_dump(cur->trapframe);
