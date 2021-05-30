@@ -1,3 +1,5 @@
+#include <xbook/config.h>
+#ifdef CONFIG_ACCOUNT
 #include <xbook/account.h>
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
@@ -347,3 +349,4 @@ int permission_database_load()
     }
     return 0;
 }
+#endif

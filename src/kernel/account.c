@@ -1,4 +1,6 @@
+#include <xbook/config.h>
 #include <xbook/account.h>
+#ifdef CONFIG_ACCOUNT
 #include <xbook/memcache.h>
 #include <xbook/debug.h>
 #include <string.h>
@@ -612,17 +614,6 @@ int account_check_permission(account_t *account, char *str, uint32_t attr)
     return -1;
 }
 
-int account_selfcheck_permission(char *str, uint32_t attr)
-{
-    #ifdef CONFIG_ACCOUNT_CHECK
-    if (!account_current)
-        return -1;
-    return account_check_permission(account_current, str, attr);
-    #else
-    return 0;
-    #endif
-}
-
 int sys_account_login(const char *name, char *password)
 {
     if (!name)
@@ -702,4 +693,16 @@ int account_manager_init()
     keprint(PRINT_INFO "account init: done.\n");
 
     return 0;
+}
+#endif
+
+int account_selfcheck_permission(char *str, uint32_t attr)
+{
+    #ifdef CONFIG_ACCOUNT
+    if (!account_current)
+        return -1;
+    return account_check_permission(account_current, str, attr);
+    #else
+    return 0;
+    #endif
 }

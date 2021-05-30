@@ -509,4 +509,5 @@ void port_comm_init()
     kern_thread_start("port_comm", 0, port_comm_threadb, NULL);
     kern_thread_start("port_comm", 0, port_comm_threadb, NULL);
     #endif
+    memset(port_comm_table, 0, sizeof(port_comm_table));
 }

@@ -29,4 +29,8 @@
 
 /* 配置测试机，在内核中进行程序测试 */
 #define CONFIG_TEST_MACHINE
+
+/* 配置内核账户管理机制 */
+// #define CONFIG_ACCOUNT
+
 #endif   /* _XBOOK_CONFIG_H */

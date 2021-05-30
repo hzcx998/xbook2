@@ -44,9 +44,7 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     #else
     child->kstack = (unsigned char *)((unsigned char *)child + TASK_KERN_STACK_SIZE);
     #endif
-    #ifndef TASK_TINY 
     child->port_comm = NULL;
-    #endif
     return 0;
 }
 

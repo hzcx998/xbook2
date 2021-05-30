@@ -14,3 +14,4 @@ SRC	+= safety.c
 SRC	+= account.c
 SRC	+= permission.c
 SRC	+= config.c
+SRC	+= tests.c

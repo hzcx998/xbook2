@@ -84,8 +84,8 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     alarm_init(&task->alarm);
     #ifndef TASK_TINY
     task->pthread = NULL;
-    task->port_comm = NULL;
     #endif
+    task->port_comm = NULL;
 }
 
 void task_free(task_t *task)
@@ -267,9 +267,7 @@ int task_count_children(task_t *parent)
 
 int task_do_cancel(task_t *task)
 {
-    #ifndef TASK_TINY
     timer_cancel(&task->sleep_timer);
-    #endif
     return 0;
 }
 

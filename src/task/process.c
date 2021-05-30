@@ -27,7 +27,6 @@
 static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz,
     unsigned long mem_sz, unsigned long vaddr)
 {
-    #ifdef TASK_TINY
     unsigned long vaddr_page = vaddr & PAGE_MASK;
     unsigned long size_in_first_page = PAGE_SIZE - (vaddr & PAGE_LIMIT);
     unsigned long occupy_pages = 0;
@@ -53,7 +52,6 @@ static int proc_load_segment(int fd, unsigned long offset, unsigned long file_sz
         keprint(PRINT_ERR "proc_load_segment: read file failed!\n");
         return -1;
     }
-    #endif
     return 0;
 }
 
@@ -426,8 +424,8 @@ int proc_release(task_t *task)
     exception_manager_exit(&task->exception_manager);
     #ifndef TASK_TINY
     proc_pthread_exit(task);
-    sys_port_comm_unbind(-1);
     #endif
+    sys_port_comm_unbind(-1);
     task_do_cancel(task);
     return 0;
 }
@@ -440,8 +438,8 @@ void proc_exec_init(task_t *task)
     exception_manager_init(&task->exception_manager);
     #ifndef TASK_TINY
     pthread_desc_init(task->pthread);
-    sys_port_comm_unbind(-1);
     #endif
+    sys_port_comm_unbind(-1);
     task_do_cancel(task);
     
     fpu_init(&task->fpu, 1); /* 需要初始化fpu */

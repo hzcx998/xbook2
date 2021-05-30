@@ -19,10 +19,10 @@
 #include "fsal.h"
 #include "exception.h"
 #include "alarm.h"
+#include "portcomm.h"
+#include "msgpool.h"
 #ifndef TASK_TINY
 #include "pthread.h"
-#include "msgpool.h"
-#include "portcomm.h"
 #endif
 
 // #define TASK_TRAPFRAME_ON_KSTACK
@@ -59,7 +59,6 @@ enum thread_flags {
     THREAD_FLAG_KERNEL              = (1 << 7),     /* 内核中的线程 */
 };
 
-#ifndef TASK_TINY
 /* 本地通信端口表 */
 #define LPC_PORT_NR 8
 typedef struct {
@@ -67,7 +66,6 @@ typedef struct {
 } lpc_port_table_t;
 
 #define LPC_PORT_BAD(port)  ((port) < 0 || (port) >= LPC_PORT_NR)
-#endif
 
 typedef struct {
     unsigned char *kstack;              /* kernel stack, must be first member */
@@ -100,11 +98,11 @@ typedef struct {
     file_man_t *fileman;    
     exception_manager_t exception_manager;         
     timer_t sleep_timer;               
-    alarm_t alarm;                      
+    alarm_t alarm;
+    port_comm_t *port_comm;   
+    lpc_port_table_t port_table;  
     #ifndef TASK_TINY
     pthread_desc_t *pthread;            /* 用户线程管理，多个线程共同占有，只有一个主线程的时候为NULL */
-    lpc_port_table_t port_table;
-    port_comm_t *port_comm;
     #endif
     exit_hook_t exit_hook;  /* 退出调用的钩子函数 */
     void *exit_hook_arg;

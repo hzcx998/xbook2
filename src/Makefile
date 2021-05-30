@@ -30,12 +30,13 @@ export AS LD
 ifeq ($(ENV_MACH), mach-i386)
 SRC			:= $(ARCH_DIR)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/ net/
 else
-SRC			:= $(ARCH_DIR)/ kernel/debug.c lib/string.c lib/vsprintf.c lib/bitmap.c lib/string_obj.c
-SRC			+= init/main2.c 
+
+SRC			:= $(ARCH_DIR)/ lib/string.c lib/vsprintf.c lib/bitmap.c lib/string_obj.c
+SRC			+= init/
 SRC			+= vmm/dma.c vmm/memcache.c vmm/virmem.c vmm/vmm.c vmm/memspace.c vmm/mdl.c vmm/memspace2.c 
-SRC			+= kernel/hardirq.c kernel/softirq.c kernel/walltime.c kernel/safety.c 
-SRC			+= kernel/clock.c kernel/timer.c kernel/time.c kernel/alarm.c
-SRC			+= kernel/tests.c
+#SRC			+= kernel/hardirq.c kernel/softirq.c kernel/walltime.c kernel/safety.c 
+#SRC			+= kernel/clock.c kernel/timer.c kernel/time.c kernel/alarm.c
+#SRC			+= kernel/tests.c
 SRC			+= task/mutexlock.c
 SRC			+= task/task.c task/process.c
 SRC			+= task/schedule.c
@@ -47,20 +48,22 @@ SRC			+= task/wait.c
 SRC			+= task/exec.c
 SRC			+= task/fork.c
 
-SRC			+= kernel/driver.c
+#SRC			+= kernel/driver.c
 SRC			+= fs/
-SRC			+= kernel/account.c kernel/permission.c
+#SRC			+= kernel/account.c kernel/permission.c
 SRC			+= lib/sconf.c
 SRC			+= lib/ctype.c
 SRC			+= ipc/pipe.c
-SRC			+= kernel/exception.c
-SRC			+= kernel/exit.c
+#SRC			+= kernel/exception.c
+#SRC			+= kernel/exit.c
 SRC			+= lib/fifobuf.c
-SRC			+= lib/fifoio.c
-SRC			+= ipc/fifo.c ipc/sem.c ipc/sharemem.c ipc/msgqueue.c   
-SRC			+= kernel/initcall.c
-SRC			+= kernel/syscall.c
-SRC			+= kernel/config.c
+SRC			+= lib/fifoio.c lib/msgpool.c
+SRC			+= ipc/fifo.c ipc/sem.c ipc/sharemem.c ipc/msgqueue.c ipc/portcomm.c   
+#SRC			+= kernel/initcall.c
+#SRC			+= kernel/syscall.c
+#SRC			+= kernel/config.c
+
+SRC			+= kernel/
 #SRC			+= drivers/tty/tty.c
 
 #SRC			+= drivers/char/null.c drivers/char/zero.c
