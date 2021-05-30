@@ -3,7 +3,7 @@
 
 # 是否为远程测试，yes or no,根据要求，如果是远程测试的话，就需要通过make all生成内核，以及
 # 在当前目录下面生成k210.bin可执行文件即可。因此就不需要构建用户态的内容以及写入磁盘和运行内核的工作。
-ENV_REMOTE_TEST	:=yes
+ENV_REMOTE_TEST	:=no
 
 # 默认的CROSS_COMPILE和PLATFORM
 #CROSS_COMPILE 	?= 
@@ -55,8 +55,8 @@ ifeq ($(ENV_ARCH), x86)
 	CFLAGS		+= -D__X86__
 	CFLAGS		+= -D__XLIBC__
 else ifeq ($(ENV_ARCH), riscv64)
-#ENV_LIBC	:= xlibc
-	ENV_LIBC	:= tinylibc
+	ENV_LIBC	:= xlibc
+#ENV_LIBC	:= tinylibc
 
 	ENV_LD		:=  $(CROSS_COMPILE)ld 
 	ENV_AS		:= $(CROSS_COMPILE)gcc -x assembler-with-cpp

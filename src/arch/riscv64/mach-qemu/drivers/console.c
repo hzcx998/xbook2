@@ -244,7 +244,7 @@ static iostatus_t console_enter(driver_object_t *driver)
     devext = (device_extension_t *)devobj->device_extension;
     devext->device_object = devobj;
     devext->e = devext->w = devext->r = 0;
-    devext->flags = 0;  // no TTYFLG_ECHO
+    devext->flags = TTYFLG_ECHO;
 #ifdef DEBUG_DRV
     keprint(PRINT_DEBUG "console_enter: device extension: device name=%s object=%x\n",
         devext->device_name.text, devext->device_object);

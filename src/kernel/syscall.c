@@ -93,7 +93,7 @@ void syscall_init()
     syscalls[SYS_GETPID] = sys_get_pid;
     syscalls[SYS_GETPPID] = sys_get_ppid;
     syscalls[SYS_SLEEP] = sys_sleep;
-    #if 0
+    #ifdef CONFIG_PTHREAD
     syscalls[SYS_THREAD_CREATE] = sys_thread_create;
     syscalls[SYS_THREAD_EXIT] = sys_thread_exit;
     syscalls[SYS_THREAD_JOIN] = sys_thread_join;
@@ -105,7 +105,7 @@ void syscall_init()
     syscalls[SYS_THREAD_CANCELTYPE] = sys_thread_setcanceltype;
     #endif
     syscalls[SYS_SCHED_YIELD] = sys_sched_yield;
-    #if 0
+    #ifdef CONFIG_PTHREAD
     syscalls[SYS_MUTEX_QUEUE_CREATE] = sys_mutex_queue_alloc;
     syscalls[SYS_MUTEX_QUEUE_DESTROY] = sys_mutex_queue_free;
     syscalls[SYS_MUTEX_QUEUE_WAIT] = sys_mutex_queue_wait;
@@ -172,20 +172,20 @@ void syscall_init()
     syscalls[SYS_EXPCATCH] = sys_expcatch;
     syscalls[SYS_EXPBLOCK] = sys_expblock;
     syscalls[SYS_EXPRET] = sys_excetion_return;
+    #ifdef CONFIG_ACCOUNT
     syscalls[SYS_ACNTLOGIN] = sys_account_login;
     syscalls[SYS_ACNTREGISTER] = sys_account_register;
     syscalls[SYS_ACNTNAME] = sys_account_name;
     syscalls[SYS_ACNTVERIFY] = sys_account_verify;
+    #endif
     syscalls[SYS_MMAP] = sys_mmap;
     syscalls[SYS_CREATPROCESS] = sys_create_process;
     syscalls[SYS_RESUMEPROCESS] = sys_resume_process;
-    #if 0
     syscalls[SYS_BIND_PORT] = sys_port_comm_bind;
     syscalls[SYS_UNBIND_PORT] = sys_port_comm_unbind;
     syscalls[SYS_RECEIVE_PORT] = sys_port_comm_receive;
     syscalls[SYS_REPLY_PORT] = sys_port_comm_reply;
     syscalls[SYS_REQUEST_PORT] = sys_port_comm_request;
-    #endif
     syscalls[SYS_SCANDEV] = sys_scandev;
     syscalls[SYS_FASTIO] = sys_fastio;
     syscalls[SYS_FASTREAD] = sys_fastread;
