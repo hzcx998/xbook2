@@ -3,13 +3,34 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stddef.h>
+#ifndef __TINYLIBC__ 
 #include <ctype.h>
 #include <sys/ioctl.h>
 #include <sys/exception.h>
 #include <sys/sys.h>
 #include <sys/proc.h>
+#endif
 
 #include "sh.h"
+
+/* 宏定义 */
+#ifndef MAX_PATH
+#define MAX_PATH 260
+#endif
+
+#ifndef STDIN_FILENO
+#define STDIN_FILENO 0
+#endif
+#ifndef STDOUT_FILENO
+#define STDOUT_FILENO 1
+#endif
+#ifndef STDERR_FILENO
+#define STDERR_FILENO 2
+#endif
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array)	( sizeof(array) / sizeof((array)[0]) )
+#endif
 
 #define CMDLINE_LEN 128
 
@@ -47,25 +68,37 @@ int main(int argc, char *argv[])
     
 	update_cwdcache();
     
+    #ifdef _HAS_EXECPTION
     expcatch(EXP_CODE_USER, sh_exit_handler);
     expblock(EXP_CODE_TERM);
     expblock(EXP_CODE_INT);
-    
+    #endif
+
+    #ifdef _HAS_ENVIRON
     // set environment value
     environ = sh_environment;
-    
+    #endif
+
     if (cmdstr) {   // 有单条命令就执行单条命令
         // printf("sh: exec: %s\n", cmdstr);
         /* 解析成参数 */
         argc = -1;
         argc = cmd_parse(cmdstr, cmd_argv, ' ');
         if(argc == -1){
+            #ifdef _HAS_FPRINTF
             fprintf(stderr,"sh: num of arguments exceed %d\n",MAX_ARG_NR);
+            #else
+            printf("sh: num of arguments exceed %d\n",MAX_ARG_NR);
+            #endif
             return -1;
         }
         /* 管道执行 */
         if (execute_cmd(argc, cmd_argv)) {
+            #ifdef _HAS_FPRINTF
             fprintf(stderr,"sh: execute cmd %s falied!\n", cmd_argv[0]);
+            #else
+            printf("sh: execute cmd %s falied!\n", cmd_argv[0]);
+            #endif
         }
         return -1;
     }
@@ -89,34 +122,67 @@ int main(int argc, char *argv[])
 		if(cmd_line[0] == 0){
 			continue;
 		}
-
         /* 解析成参数 */
         argc = -1;
         argc = cmd_parse(cmd_line, cmd_argv, ' ');
         if(argc == -1){
+            #ifdef _HAS_FPRINTF
             fprintf(stderr,"sh: num of arguments exceed %d\n",MAX_ARG_NR);
+            #else
+            printf("sh: num of arguments exceed %d\n",MAX_ARG_NR);
+            #endif
             continue;
         }
         /* 管道执行 */
         if (execute_cmd(argc, cmd_argv)) {
+            #ifdef _HAS_FPRINTF
             fprintf(stderr,"sh: execute cmd %s falied!\n", cmd_argv[0]);
+            #else
+            printf("sh: execute cmd %s falied!\n", cmd_argv[0]);
+            #endif
         }
     }
 	return 0;
 }
+
+#ifndef _HAS_STRCAT
+char* sh_strcat(char* strDest , const char* strSrc)
+{
+    char* address = strDest;
+    while(*strDest)
+    {
+        strDest++;
+    }
+    while((*strDest++=*strSrc++));
+    return (char* )address;
+}
+#endif
 
 void update_cwdcache()
 {
     memset(cwd_cache, 0, MAX_PATH);
     char buf[32] = {0};
     memset(buf, 0, 32);
+    #ifdef _HAS_ACCOUNTNAME
     accountname(buf, 32);
+    #else
+    strncpy(buf, "sh", 2);
+    #endif
+    #ifdef _HAS_STRCAT
     strcat(cwd_cache, "[");
     strcat(cwd_cache, buf);
     getcwd(buf, 32);
     strcat(cwd_cache, " ");
     strcat(cwd_cache, buf);
     strcat(cwd_cache, "]");
+    #else
+    sh_strcat(cwd_cache, "[");
+    sh_strcat(cwd_cache, buf);
+    getcwd(buf, 32);
+    sh_strcat(cwd_cache, " ");
+    sh_strcat(cwd_cache, buf);
+    sh_strcat(cwd_cache, "]");
+    #endif
 }
 
 /**
@@ -135,7 +201,7 @@ void print_prompt()
  * 
  * 输入回车结束输入
  */
-void readline(char *buf, uint32_t count)
+void readline(char *buf, size_t count)
 {
     int len = 0;
     char *pos = buf;
@@ -172,9 +238,11 @@ void sh_exit(int ret, int relation)
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
     if (relation) {
+        #ifdef _HAS_EXECPTION
         pid_t ppid = getppid();
         if (ppid > 0) /* 关闭父进程 */
             expsend(EXP_CODE_USER, ppid);
+        #endif
     }
     exit(ret);
 }
@@ -185,11 +253,12 @@ static int buildin_cmd_exit(int argc, char **argv)
     sh_exit(0, 1);
     return 0;
 }
-
-void sh_exit_handler(uint32_t code)
+#ifdef _HAS_EXECPTION
+void sh_exit_handler(unsigned int code)
 {
     sh_exit(code, 0);
 }
+#endif
 
 int buildin_cmd_cls(int argc, char **argv)
 {
@@ -198,8 +267,10 @@ int buildin_cmd_cls(int argc, char **argv)
 		printf("cls: no argument support!\n");
 		return -1;
 	}
+    #ifdef _HAS_IOCTL
     // 发出控制字符串
     ioctl(STDIN_FILENO, TTYIO_CLEAR, NULL);
+    #endif
     return 0;
 }
 
@@ -302,8 +373,13 @@ int execute_cmd(int argc, char **argv)
             pid = getpid();
         } else {    /* 子进程 */
             pid = getpid();
+
             /* 子进程执行程序 */
-            pid = execv((const char *)argv[0], (char *const *)argv);
+            #ifdef _HAS_ENVIRON
+            pid = execve((const char *)argv[0], (char *const *)argv, environ);
+            #else
+            pid = execve((const char *)argv[0], (char *const *)argv, NULL);
+            #endif
             /* 如果执行出错就退出 */
             if(pid == -1){
                 printf("sh: bad command %s!\n", argv[0]);

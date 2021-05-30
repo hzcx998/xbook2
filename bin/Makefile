@@ -107,5 +107,6 @@ MODULE      +=  mkfs
 MODULE      +=  unmount
 MODULE      +=  test_echo
 else ifeq ($(ENV_LIBC),tinylibc)
+MODULE      +=  sh
 endif
 endif 

@@ -4,14 +4,12 @@
 
 // #define _HAS_LOGIN
 // #define _HAS_NETSERV
-// #define _HAS_CONSOLE
+#define _HAS_CONSOLE
 //#define CONSOLE_DEV "/dev/tty0"
 #define CONSOLE_DEV "/dev/con0"
 
-
 int main(int argc, char *argv[])
 {
-    #ifdef _HAS_CONSOLE
     /* 打开tty，用来进行基础地输入输出 */
     int tty0 = open(CONSOLE_DEV, O_RDONLY);
     if (tty0 < 0) {
@@ -23,18 +21,22 @@ int main(int argc, char *argv[])
         return -1;
     }
     int tty2 = dup(tty1);
-    #endif
+    if (tty2 != 2) {
+        close(tty0);
+        close(tty1);
+        return -1;
+    }
     int i;
     for (i = 0; i < argc; i++) {
         if (argv[i]) {
-            printf("[init] argv[%d]=%s\n", i, argv[i]);
+            printf("initd: argv %d=%s\n", i, argv[i]);
         }
     }
     
     /* 创建一个子进程 */
     int pid = fork();
     if (pid < 0) {
-        printf("[init] fork process error! stop service.\n");
+        printf("initd: fork process error! stop service.\n");
         return -1;
     }
     if (pid > 0) {
@@ -44,14 +46,14 @@ int main(int argc, char *argv[])
             int _pid;
             _pid = waitpid(-1, &status, 0);    /* wait any child exit */
             if (_pid > 1) {
-                printf("initd: process[%d] exit with status %d.\n", _pid, status);
+                printf("initd: process %d exit with status %d.\n", _pid, status);
             }
         }
     }
     #ifdef _HAS_NETSERV
     pid = fork();
     if (pid < 0) {
-        printf("[INIT]: fork process error! stop service.\n");
+        printf("initd: fork process error! stop service.\n");
         return -1;
     } else if (pid == 0) { /* 子进程执行服务 */
         exit(execve("/sbin/netserv", NULL, NULL));
@@ -69,7 +71,6 @@ int main(int argc, char *argv[])
     exit(execv("/sbin/login", _argv));
     #else
 
-    
     exit(execve("/bin/sh", NULL, NULL));
     #endif
     return 0;

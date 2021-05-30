@@ -20,14 +20,13 @@
 /* 裁剪配置 */
 // #define CONFIG_NO_SYS_TIMES
 
-
 // #define CONFIG_NETWORK
 
 /* 配置新的系统调用接口，将会覆盖原有的系统调用 */
 #define CONFIG_NEWSYSCALL
 
 /* 配置测试机，在内核中进行程序测试 */
-#define CONFIG_TEST_MACHINE
+// #define CONFIG_TEST_MACHINE
 
 /* 配置内核账户管理机制 */
 // #define CONFIG_ACCOUNT

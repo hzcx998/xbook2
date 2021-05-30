@@ -43,6 +43,7 @@ typedef struct _device_extension {
     uint32_t r;  // Read index
     uint32_t w;  // Write index
     uint32_t e;  // Edit index
+    int flags;
 } device_extension_t;
 
 static void console_putc(int c) {
@@ -202,7 +203,8 @@ static int console_intr(irqno_t irqno, void *data)
                 c = (c == '\r') ? '\n' : c;
                 #endif
                 // echo back to the user.
-                console_putc(c);
+                if (extension->flags & TTYFLG_ECHO)
+                    console_putc(c);
                 // store for consumption by console_do_read().
                 extension->buf[extension->e++ % INPUT_BUF] = c;
                 if(c == '\n' || c == C('D') || extension->e == extension->r+INPUT_BUF){
@@ -242,6 +244,7 @@ static iostatus_t console_enter(driver_object_t *driver)
     devext = (device_extension_t *)devobj->device_extension;
     devext->device_object = devobj;
     devext->e = devext->w = devext->r = 0;
+    devext->flags = 0;  // no TTYFLG_ECHO
 #ifdef DEBUG_DRV
     keprint(PRINT_DEBUG "console_enter: device extension: device name=%s object=%x\n",
         devext->device_name.text, devext->device_object);

@@ -87,7 +87,7 @@ ENV_AFLAGS	+= $(MCFLAGS)
 ENV_CFLAGS	:=$(MCFLAGS)
 ENV_CFLAGS	+= $(CFLAGS)
 ENV_CFLAGS	+= -Wall -Wunused 
-ENV_CFLAGS	+= -fno-builtin -fno-stack-protector -fno-strict-aliasing -nostdlib
+ENV_CFLAGS	+= -fno-builtin -fno-stack-protector -fno-strict-aliasing -nostdlib -nostdinc
 
 # kernel name & version
 ENV_CFLAGS	+= -DKERNEL_NAME=\"xbook2\" -DKERNEL_VERSION=\"0.1.9\"
