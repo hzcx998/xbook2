@@ -119,6 +119,14 @@
 #define SYSCTL_V                (0x50440000 + VIRT_OFFSET)
 #endif
 
+#define KERN_SPACE_TOP_ADDR                VIRT_OFFSET
+#define USER_SPACE_START_ADDR              0x00000000
+#define USER_SPACE_SIZE                    0x80000000
+
+#define DYNAMIC_MAP_MEM_SIZE               (128 * MB)
+#define DYNAMIC_MAP_MEM_END                KERN_SPACE_TOP_ADDR
+#define DYNAMIC_MAP_MEM_ADDR               (KERN_SPACE_TOP_ADDR - DYNAMIC_MAP_MEM_SIZE)
+
 
 int physic_memory_init();
 

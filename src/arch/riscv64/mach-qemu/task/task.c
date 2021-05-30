@@ -2,7 +2,7 @@
 #include <xbook/schedule.h>
 #include <xbook/process.h>
 #include <xbook/memspace.h>
-#include <k210_phymem.h>
+#include <arch/phymem.h>
 #include <arch/interrupt.h>
 #include <arch/riscv.h>
 #include <arch/page.h>
@@ -45,7 +45,7 @@ static int build_arg_stack(vmm_t *vmm, unsigned long stackbase, unsigned long *_
         sp -= sp % 16; // riscv sp must be 16-byte aligned
         if(sp < stackbase)
             return -1;
-        if(copyout(vmm->page_storage, sp, argv[argc], strlen(argv[argc]) + 1) < 0)
+        if(page_copy_out(vmm->page_storage, sp, argv[argc], strlen(argv[argc]) + 1) < 0)
             return -1;
         ustack[argc] = sp;
     }
@@ -55,12 +55,12 @@ static int build_arg_stack(vmm_t *vmm, unsigned long stackbase, unsigned long *_
     sp -= sp % 16;
     if(sp < stackbase)
         return -1;
-    if(copyout(vmm->page_storage, sp, (char *)ustack, (argc+1)*sizeof(uint64_t)) < 0)
+    if(page_copy_out(vmm->page_storage, sp, (char *)ustack, (argc+1)*sizeof(uint64_t)) < 0)
         return -1;
     
     // save argc
     sp -= sizeof(uint64_t);
-    if(copyout(vmm->page_storage, sp, (char *)&argc, sizeof(uint64_t)) < 0)
+    if(page_copy_out(vmm->page_storage, sp, (char *)&argc, sizeof(uint64_t)) < 0)
         return -1;
     // save sp as new value
     *_sp = sp;

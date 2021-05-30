@@ -1,5 +1,5 @@
 #include <arch/time.h>
-#include <k210_rtc.h>
+#include <arch/rtc.h>
 
 /* dummy */
 

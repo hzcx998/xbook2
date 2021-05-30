@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <math.h>
-#include <k210_phymem.h>
+#include <arch/phymem.h>
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 #include <xbook/memspace.h>
@@ -177,7 +177,7 @@ final:
 // Copy len bytes from src to virtual address dstva in a given page table.
 // Return 0 on success, -1 on error.
 int
-copyout(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len)
+page_copy_out(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len)
 {
   uint64_t n, va0, *pa0;
 
@@ -202,7 +202,7 @@ copyout(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len)
 // Copy len bytes to dst from virtual address srcva in a given page table.
 // Return 0 on success, -1 on error.
 int
-copyin(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len)
+page_copy_in(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len)
 {
   uint64_t n, va0, *pa0;
 
@@ -267,7 +267,7 @@ int do_copy_from_user(void *dest, void *src, unsigned long nbytes)
 {
     task_t *cur = task_current;
     if (dest && src) {
-        if (copyin(cur->vmm->page_storage, dest, (uint64_t)src, nbytes) < 0) {
+        if (page_copy_in(cur->vmm->page_storage, dest, (uint64_t)src, nbytes) < 0) {
             errprintln("[page] do_copy_from_user: dest=%p src=%p nbytes=%d failed!", dest, src, nbytes);
             return -1;
         }
@@ -289,7 +289,7 @@ int do_copy_to_user(void *dest, void *src, unsigned long nbytes)
 {
     task_t *cur = task_current;
     if (dest && src) {
-        if (copyout(cur->vmm->page_storage, (uint64_t)dest, src, nbytes) < 0) {
+        if (page_copy_out(cur->vmm->page_storage, (uint64_t)dest, src, nbytes) < 0) {
             errprintln("[page] do_copy_to_user: dest=%p src=%p nbytes=%d failed!", dest, src, nbytes);
             return -1;
         }

@@ -1,4 +1,4 @@
-#include <k210_phymem.h>
+#include <arch/phymem.h>
 #include <arch/page.h>
 #include <arch/bootmem.h>
 #include <arch/mempool.h>

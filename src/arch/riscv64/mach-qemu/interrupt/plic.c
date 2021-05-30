@@ -4,7 +4,7 @@
 #include <arch/interrupt.h>
 #include <arch/sbi.h>
 #include <xbook/debug.h>
-#include <k210_phymem.h>
+#include <arch/phymem.h>
 
 //
 // the riscv Platform Level Interrupt Controller (PLIC).

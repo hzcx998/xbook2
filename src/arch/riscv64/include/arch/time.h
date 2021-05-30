@@ -1,7 +1,7 @@
 #ifndef _RSICV64_TIME_H
 #define _RSICV64_TIME_H
 
-#include <k210_rtc.h>
+#include <arch/rtc.h>
 
 #define HZ                (100)
 

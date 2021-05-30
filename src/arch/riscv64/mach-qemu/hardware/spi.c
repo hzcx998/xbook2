@@ -3,11 +3,11 @@
 #include <types.h>
 #include <arch/memory.h>
 #include <arch/riscv.h>
-#include <utils.h>
-#include <dmac.h>
-#include <spi.h>
-#include <sysctl.h>
-#include <k210_phymem.h>
+#include <driver/utils.h>
+#include <driver/dmac.h>
+#include <driver/spi.h>
+#include <driver/sysctl.h>
+#include <arch/phymem.h>
 #include <arch/page.h>
 #include <string.h>
 

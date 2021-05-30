@@ -14,14 +14,14 @@
  */
 
 #include <types.h>
-#include <dmac.h>
-#include <fpioa.h>
+#include <driver/dmac.h>
+#include <driver/fpioa.h>
 #include <arch/plic.h>
 #include <arch/memory.h>
-#include <sysctl.h>
-#include <utils.h>
+#include <driver/sysctl.h>
+#include <driver/utils.h>
 #include <xbook/debug.h>
-#include <k210_phymem.h>
+#include <arch/phymem.h>
 #include <xbook/schedule.h>
 #include <xbook/waitqueue.h>
 

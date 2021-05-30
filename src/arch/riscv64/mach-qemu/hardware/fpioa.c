@@ -1,10 +1,10 @@
 // FPIOA Implementation
 
 #include <arch/memory.h>
-#include <fpioa.h>
+#include <driver/fpioa.h>
 #include <arch/riscv.h>
-#include <sysctl.h>
-#include <k210_phymem.h>
+#include <driver/sysctl.h>
+#include <arch/phymem.h>
 
 /* Copyright 2018 Canaan Inc.
  *

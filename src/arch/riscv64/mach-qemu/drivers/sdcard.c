@@ -14,8 +14,8 @@
 #include <math.h>
 
 // sdcard
-#include <sdcard.h>
-#include <dmac.h>
+#include <driver/sdcard.h>
+#include <driver/dmac.h>
 
 #define DRV_NAME "sdcard"
 #define DRV_VERSION "0.1"

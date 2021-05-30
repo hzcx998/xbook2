@@ -1,10 +1,10 @@
 // GPIOHS Protocol Implementation
 
 #include <arch/memory.h>
-#include <gpiohs.h>
-#include <fpioa.h>
-#include <utils.h>
-#include <k210_phymem.h>
+#include <driver/gpiohs.h>
+#include <driver/fpioa.h>
+#include <driver/utils.h>
+#include <arch/phymem.h>
 
 #define GPIOHS_MAX_PINNO 32
 

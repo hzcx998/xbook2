@@ -349,6 +349,8 @@ sfence_vma()
   asm volatile("sfence.vma");
 }
 
+#define tlb_flush() sfence_vma()
+
 static inline void
 fence_i()
 {

@@ -100,7 +100,7 @@ int page_unmap_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len,
 int page_map_addr2(pgdir_t pgdir, unsigned long start, unsigned long len, unsigned long prot);
 int page_map_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len, unsigned long prot);
 
-int copyout(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len);
-int copyin(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len);
+int page_copy_out(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len);
+int page_copy_in(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len);
 
 #endif  /* _RISCV64_PAGE_H */

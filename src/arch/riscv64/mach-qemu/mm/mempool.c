@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <math.h>
 #include <stdint.h>
-#include <k210_phymem.h>
+#include <arch/phymem.h>
 
 // #define MEMPOOL_DEBUG
 

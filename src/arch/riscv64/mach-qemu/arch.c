@@ -5,9 +5,9 @@
 #include <arch/interrupt.h>
 #include <arch/cpu.h>
 #include <xbook/debug.h>
-#include <k210_phymem.h>
-#include <fpioa.h>
-#include <dmac.h>
+#include <arch/phymem.h>
+#include <driver/fpioa.h>
+#include <driver/dmac.h>
 
 int arch_init(unsigned long hartid, unsigned long dtb_pa)
 {	

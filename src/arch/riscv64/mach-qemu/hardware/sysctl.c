@@ -14,8 +14,8 @@
  */
 
 #include <arch/memory.h>
-#include <sysctl.h>
-#include <k210_phymem.h>
+#include <driver/sysctl.h>
+#include <arch/phymem.h>
 
 #define SYSCTRL_CLOCK_FREQ_IN0 (26000000UL)
 

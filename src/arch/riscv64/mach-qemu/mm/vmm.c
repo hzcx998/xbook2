@@ -111,7 +111,7 @@ void vmm_active_kernel()
     #endif
     /* 激活内核页表 */
     w_satp(MAKE_SATP(kernel_pgdir));
-    sfence_vma();
+    tlb_flush();
 }
 
 void vmm_active_user(unsigned long page)
@@ -125,5 +125,5 @@ void vmm_active_user(unsigned long page)
     #endif
     /* 激活用户页表 */
     w_satp(MAKE_SATP(page));
-    sfence_vma();
+    tlb_flush();
 }

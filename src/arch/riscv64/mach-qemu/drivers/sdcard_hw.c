@@ -4,12 +4,12 @@
 #include <types.h>
 #include <stddef.h>
 #include <arch/riscv.h>
-#include <gpiohs.h>
+#include <driver/gpiohs.h>
 #include <xbook/mutexlock.h>
 
-#include <dmac.h>
-#include <spi.h>
-#include <sdcard.h>
+#include <driver/dmac.h>
+#include <driver/spi.h>
+#include <driver/sdcard.h>
 #include <const.h>
 
 void SD_CS_HIGH(void) {

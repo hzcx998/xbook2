@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <math.h>
-#include <k210_phymem.h>
+#include <arch/phymem.h>
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 
@@ -22,7 +22,7 @@ extern char trampoline[];
 void page_enable()
 {
     w_satp(MAKE_SATP(kernel_pgdir));
-    sfence_vma();
+    tlb_flush();
 }
 
 /*
