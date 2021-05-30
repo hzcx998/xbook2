@@ -106,11 +106,11 @@ void vmm_active_kernel()
     #endif
     #if 1
     /* 如果时同一个页表就不改变，这样减少对页表的刷新，提高效率 */
-    if (r_satp() == MAKE_SATP(kernel_pgdir))
+    if (satp_read() == MAKE_SATP(kernel_pgdir))
         return;
     #endif
     /* 激活内核页表 */
-    w_satp(MAKE_SATP(kernel_pgdir));
+    satp_write(MAKE_SATP(kernel_pgdir));
     tlb_flush();
 }
 
@@ -120,10 +120,10 @@ void vmm_active_user(unsigned long page)
     keprintln("[vmm] vmm_active_user");
     #endif
     #if 1
-    if (r_satp() == MAKE_SATP(page))
+    if (satp_read() == MAKE_SATP(page))
         return;
     #endif
     /* 激活用户页表 */
-    w_satp(MAKE_SATP(page));
+    satp_write(MAKE_SATP(page));
     tlb_flush();
 }

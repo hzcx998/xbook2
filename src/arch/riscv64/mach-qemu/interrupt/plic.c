@@ -97,7 +97,7 @@ void plic_complete(int irq)
     #endif
 
     #ifndef QEMU 
-    w_sip(r_sip() & ~2);    // clear pending bit
+    sip_write(sip_read() & ~2);    // clear pending bit
     sbi_set_mie();
     #endif
 }

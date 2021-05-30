@@ -15,17 +15,17 @@ char* interrupt_names[MAX_INTERRUPT_NR];
 
 void interrupt_disable(void)
 {
-    w_sstatus(r_sstatus() & ~SSTATUS_SIE);
+    sstatus_write(sstatus_read() & ~SSTATUS_SIE);
 }
 
 void interrupt_enable(void)
 {
-    w_sstatus(r_sstatus() | SSTATUS_SIE);
+    sstatus_write(sstatus_read() | SSTATUS_SIE);
 }
 
 static void interrupt_general_handler(trap_frame_t *frame) 
 {
-    uint64_t scause = r_scause();   // 获取中断产生的原因
+    uint64_t scause = scause_read();   // 获取中断产生的原因
     /* 来自设备、定时器中断 */
     if (scause & SCAUSE_INTERRUPT) {
         dbgprintln("[interrupt] external interrupt %d occur!", scause);
@@ -44,7 +44,7 @@ static void interrupt_general_handler(trap_frame_t *frame)
             keprint("[exception] task name:%s, pid:%d\n", cur->name, cur->pid);
         }
         keprint("[exception] scause %p\n", scause);
-        keprint("[exception] sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
+        keprint("[exception] sepc=%p stval=%p hart=%d\n", sepc_read(), stval_read(), tp_reg_read());
         keprint("[exception] name: %s \n", interrupt_names[expcode]);
         trap_frame_dump(frame);
         if((scause & SSTATUS_SPP) != 0) {  // from kernel
@@ -139,7 +139,7 @@ void trap_frame_dump(trap_frame_t *frame)
 // and handle it. 
 void interrupt_dispatch(trap_frame_t *frame) 
 {
-	uint64_t scause = r_scause();   // 获取中断产生的原因
+	uint64_t scause = scause_read();   // 获取中断产生的原因
 
 	#ifdef QEMU 
 	// handle external interrupt 
@@ -148,7 +148,7 @@ void interrupt_dispatch(trap_frame_t *frame)
 	// on k210, supervisor software interrupt is used 
 	// in alternative to supervisor external interrupt, 
 	// which is not available on k210. 
-	if ((SCAUSE_INTERRUPT | SCAUSE_S_SOFTWARE_INTR) == scause && SCAUSE_S_EXTERNAL_INTR == r_stval()) 
+	if ((SCAUSE_INTERRUPT | SCAUSE_S_SOFTWARE_INTR) == scause && SCAUSE_S_EXTERNAL_INTR == stval_read()) 
 	#endif 
     {
         interrupt_do_irq(frame);
@@ -163,7 +163,7 @@ void interrupt_dispatch(trap_frame_t *frame)
     } else if (SCAUSE_INTERRUPT & scause) {
         errprintln("unsupported other external interrupt!");
         errprintln("\nscause %p\n", scause);
-        errprintln("sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
+        errprintln("sepc=%p stval=%p hart=%d\n", sepc_read(), stval_read(), tp_reg_read());
         panic("interrupt_dispatch");
     } else {
         /* 内核异常处理: cause 异常值是 [0-15] */
@@ -173,7 +173,7 @@ void interrupt_dispatch(trap_frame_t *frame)
             handler(frame);
         } else {
             keprint("\nscause %p\n", scause);
-            keprint("sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
+            keprint("sepc=%p stval=%p hart=%d\n", sepc_read(), stval_read(), tp_reg_read());
             panic("[interrupt] %d handler null", exception);        
         }
     }

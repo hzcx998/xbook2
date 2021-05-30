@@ -24,5 +24,5 @@ void timer_interrupt_init() {
 
 void timer_interrupt_set_next_timeout()
 {
-    sbi_set_timer(r_time() + TIMER_INTR_INTERVAL);
+    sbi_set_timer(time_reg_read() + TIMER_INTR_INTERVAL);
 }

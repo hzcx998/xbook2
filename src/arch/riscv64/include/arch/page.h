@@ -50,7 +50,7 @@ typedef unsigned long* pgdir_t; // 512 PTEs
 
 
 /* 获取页目录表地址 */
-#define GET_CUR_PGDIR() ((pgdir_t)SATP_PGTBL(r_satp()))
+#define GET_CUR_PGDIR() ((pgdir_t)SATP_PGTBL(satp_read()))
 
 /* only have MEM_NODE_TYPE_NORMAL */
 #define page_alloc_normal(count)            mem_node_alloc_pages(count, MEM_NODE_TYPE_NORMAL)

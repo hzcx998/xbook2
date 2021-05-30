@@ -21,7 +21,7 @@ extern char trampoline[];
 // and enable paging.
 void page_enable()
 {
-    w_satp(MAKE_SATP(kernel_pgdir));
+    satp_write(MAKE_SATP(kernel_pgdir));
     tlb_flush();
 }
 
@@ -581,8 +581,8 @@ static int do_page_no_exec(pgdir_t pgdir, unsigned long addr)
 static int do_protection_fault(pgdir_t pgdir, mem_space_t *space, unsigned long addr)
 {
     #if DEBUG_PAGE_FAULT == 1
-    keprint("[exception] scause %p\n", r_scause());
-    keprint("[exception] sepc=%p stval=%p hart=%d\n", r_sepc(), r_stval(), r_tp());
+    keprint("[exception] scause %p\n", scause_read());
+    keprint("[exception] sepc=%p stval=%p hart=%d\n", sepc_read(), stval_read(), tp_reg_read());
     #endif
     if (!do_page_no_exec(pgdir, addr)) {
         return 0;
@@ -619,7 +619,7 @@ int page_do_fault(trap_frame_t *frame, int is_user, int expcode)
     //keprintln("[page] page_do_fault: exception %d from %s", expcode, is_user == 1 ? "user" : "kernel");
     task_t *cur = task_current;
     unsigned long addr = 0x00;
-    addr = r_stval(); /* stval saved the fault addr */
+    addr = stval_read(); /* stval saved the fault addr */
 
     /* in kernel page fault */
     if (!(is_user) && !(addr >= USER_VMM_BASE_ADDR && addr < USER_VMM_TOP_ADDR)) {

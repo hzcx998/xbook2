@@ -83,18 +83,18 @@ void trap_init(void);
 // flags: 0-15: SSTATUS_SIE, 16-31: (SIE_SEIE | SIE_SSIE | SIE_STIE)
 #define interrupt_save_and_disable(flags)                  \
     do {                                    \
-        flags = (r_sstatus() & SSTATUS_SIE); \
+        flags = (sstatus_read() & SSTATUS_SIE); \
         interrupt_disable();    \
     } while (0)
 
 #define interrupt_restore_state(flags)               \
     do {                                    \
-        w_sstatus(r_sstatus() | flags); \
+        sstatus_write(sstatus_read() | flags); \
     } while (0)
 
 static inline int interrupt_enabled()
 {
-    uint64_t x = r_sstatus();
+    uint64_t x = sstatus_read();
     return (x & SSTATUS_SIE) != 0;
 }
 

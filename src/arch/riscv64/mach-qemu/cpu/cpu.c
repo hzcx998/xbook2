@@ -11,7 +11,7 @@ void cpu_do_nothing()
 // to a different CPU.
 cpuid_t cpu_get_my_id()
 {
-    int id = r_tp();
+    int id = tp_reg_read();
     return id;
 }
 
