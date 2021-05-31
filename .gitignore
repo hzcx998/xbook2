@@ -85,8 +85,7 @@ tools/fatfs/fatfs
 !tools/grub-2.04/boot/grub/i386-efi/*.img
 !tools/grub-2.04/boot/grub/i386-pc/*.mod
 !tools/grub-2.04/boot/grub/i386-pc/*.img
-tools/grub-2.04/boot/grub/kernels.cfg
-tools/grub-2.04/boot/efi/bootia.efi
+tools/grub-2.04/efi/boot/bootia32.efi
 
 # dir
 recycle

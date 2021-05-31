@@ -1,16 +1,17 @@
 sinclude ../scripts/env.mk
 sinclude ../scripts/localenv.mk
 
-ifeq ("$(origin G)", "command line")
-ifeq ($(G),on)
-X_CFLAGS	+= -O0 -g -ggdb
-endif
-endif
-
 ARCH		:= arch/x86
 
 X_ASFLAGS	:= $(ENV_AFLAGS) -I $(ARCH)/include/
 X_CFLAGS    := $(ENV_CFLAGS) -fno-strict-aliasing
+
+ifeq ("$(origin G)", "command line")
+ifeq ($(G),on)
+X_CFLAGS	+= -O0 -g -ggdb
+X_ASFLAGS	+= -DGDB
+endif
+endif
 
 X_INCDIRS	:= include/ $(ARCH)/include/
 

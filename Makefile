@@ -21,6 +21,7 @@ RM			= rm
 DD			= dd
 MKDIR		= mkdir
 OBJDUMP		= objdump
+GDB			= gdb
 
 # virtual machine
 QEMU 		= qemu-system-i386
@@ -222,6 +223,22 @@ endif
 endif
 endif
 
+QEMU_GDB_OPT	:= -S -gdb tcp::10001,ipv4
+
 # 调试配置：-S -gdb tcp::10001,ipv4
 qemudbg:
-	$(QEMU) -S -gdb tcp::10001,ipv4 $(QEMU_ARGUMENT)
+ifeq ($(BOOT_MODE),$(BOOT_LEGACY_MODE))
+	$(QEMU) $(QEMU_GDB_OPT) $(QEMU_ARGUMENT)
+else
+ifeq ($(BOOT_MODE),$(BOOT_GRUB2_MODE))
+ifeq ($(EFI_BOOT_MODE),n)
+	$(QEMU) $(QEMU_GDB_OPT) $(QEMU_ARGUMENT) -cdrom $(KERNSRC)/$(OS_NAME).iso
+else
+	$(QEMU) $(QEMU_GDB_OPT) $(QEMU_ARGUMENT) -bios $(BIOS_FW_DIR)/IA32_OVMF.fd -cdrom $(KERNSRC)/$(OS_NAME).iso
+endif
+endif
+endif
+
+# 连接gdb server: target remote localhost:10001
+gdb:
+	$(GDB) $(KERNEL_ELF)
