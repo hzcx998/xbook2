@@ -108,5 +108,9 @@ MODULE      +=  unmount
 MODULE      +=  test_echo
 else ifeq ($(ENV_LIBC),tinylibc)
 MODULE      +=  sh
+MODULE      +=  echo
+MODULE      +=  uname
+MODULE      +=  cat
+MODULE      +=  ls
 endif
 endif 

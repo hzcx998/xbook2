@@ -2,6 +2,8 @@
 
 #define ECHO_VERSION "0.1"
 
+// #define _HAS_FPRINTF
+
 int main(int argc, char *argv[])
 {
     /* 选项解析 */
@@ -44,7 +46,11 @@ int main(int argc, char *argv[])
             printf("version: %s\n", ECHO_VERSION);
             return 0;
         default:
+            #ifdef _HAS_FPRINTF
             fprintf(stderr,"echo: unknown option!\n");
+            #else
+            printf("echo: unknown option!\n");
+            #endif
             return -1;
         }
         /* 指向下一个参数 */

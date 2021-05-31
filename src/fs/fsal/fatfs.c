@@ -709,14 +709,12 @@ static int fsal_fatfs_fstat(int idx, void *buf)
         return -1;
     FRESULT fres;
     FILINFO finfo;
-    //dbgprintln("[fs] fatfs fstat: sync before write");    
-    /* sync file before fstat */
-    fres = f_sync(&extension->file);
-    if (fres != FR_OK) {
-        warnprintln("[fs] fatfs fstat: sync file before fstat failed!");
+    /* sync file before fstat, not dir */
+    if (extension->dir_path == NULL) {
+        f_sync(&extension->file);
+        //dbgprintln("[fstat] sync file %s failed", extension->path);
     }
-    //dbgprintln("[fs] fatfs fstat: sync before write done");    
-    
+        
     /* 对根目录进行特殊处理 */
     int pdrv = PATH_TO_PDRV(path[0]);   /* 获取设备 */
     if (is_root_dir(path)) {

@@ -84,10 +84,11 @@ int sys_openat(int dirfd, const char *pathname, int flags, mode_t mode)
         return -EINVAL;
     }
     // dbgprintln("[fs] sys_openat: dirfd %d, pathname %s, flags %d", dirfd, _path, flags);
-    if (_path[0] == '/' && _path[1] == '\0') {
+    /*if (_path[0] == '/' && _path[1] == '\0') {
         dbgprintln("[fs] sys_openat: can't open root dir '/' directly");
         return -EINVAL;
     }
+    */
     if (_path[0] == '/' && _path[1] != '\0') {
         return __sys_open(_path, flags);
     }

@@ -8,9 +8,9 @@ ENV_REMOTE_TEST	:=no
 # 默认的CROSS_COMPILE和PLATFORM
 #CROSS_COMPILE 	?= 
 #PLATFORM		?=
-#CROSS_COMPILE 	?= riscv-none-embed-
+CROSS_COMPILE 	?= riscv-none-embed-
 #CROSS_COMPILE 	?= riscv64-linux-gnu-
-CROSS_COMPILE 	?= riscv64-unknown-elf-
+#CROSS_COMPILE 	?= riscv64-unknown-elf-
 PLATFORM		?= riscv64-qemu
 
 # 如果是远程测试，就需要强制使用对应的编译环境以及开发平台 
@@ -55,8 +55,8 @@ ifeq ($(ENV_ARCH), x86)
 	CFLAGS		+= -D__X86__
 	CFLAGS		+= -D__XLIBC__
 else ifeq ($(ENV_ARCH), riscv64)
-	ENV_LIBC	:= xlibc
-#ENV_LIBC	:= tinylibc
+#ENV_LIBC	:= xlibc
+ENV_LIBC	:= tinylibc
 
 	ENV_LD		:=  $(CROSS_COMPILE)ld 
 	ENV_AS		:= $(CROSS_COMPILE)gcc -x assembler-with-cpp

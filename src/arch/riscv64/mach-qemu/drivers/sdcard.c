@@ -27,7 +27,11 @@
 #ifdef QEMU
 #define SDCARD_SECTORS     (262144) /* assume 128MB */
 #else
+#ifdef CONFIG_TEST_MACHINE
 #define SDCARD_SECTORS     (6114)   /* 3M */
+#else
+#define SDCARD_SECTORS     (262144)   /* 128M */
+#endif
 #endif
 
 #define SDCARD_IRQ 27
