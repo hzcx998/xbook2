@@ -23,6 +23,8 @@ EFI_BOOT      = $(BOOT_DIR)/efi.img
 all: efi iso
 
 efi:
+	rm -rf ./efi/boot
+	mkdir -p ./efi/boot
 	grub-mkimage \
 		-d $(GRUB_DIR)/i386-efi \
 		-c $(EFI_CONF) \
