@@ -1,6 +1,3 @@
-
-# 外国人能搞，我们中国人就不能搞？--钱学森
-
 # xbook2操作系统内核
 xbook2操作系统内核是一个基于intel x86平台的32位处理器的系统内核，可运行在qemu，bochs，virtual box，vmware等虚拟机中。也可以在物理机上面运行（需要有系统支持的驱动才行）
 
@@ -62,7 +59,15 @@ PTHREAD线程库
 
 ## Windows环境搭建
 
-1.下载我提取的工具包：[BuildTools](https://gitee.com/hzc1998/bookos-web-db/blob/master/tools/BuildTools.zip), 下载后配置解压目录环境变量到系统环境变量Path里面。（注意，如果你的电脑上已经有mingw或者cygwin环境，请把这个工具包的环境变量放到靠前的位置，不然不会执行工具包里面的程序）
+1.下载我提取的工具包：[BuildTools](https://gitee.com/hzc1998/bookos-web-db/blob/master/tools/BuildTools.zip), 下载后配置解压目录环境变量到系统环境变量Path里面。（注意，如果你的电脑上已经有mingw或者cygwin环境，请把这个工具包的环境变量放到靠前的位置，不然不会执行工具包里面的程序）。
+除此之外，由于支持了grub，所以需要单独的配置grub的工具环境，也是在BuildTools里面的。所以需要配置环境变量的目录如下：
+```
+BuildTools
+BuildTools/genisoimage
+BuildTools/grub-2.04
+BuildTools/mkfs
+BuildTools/mtool
+```
 
 2.下载qemu最新版：[Qemu](https://www.qemu.org/) 下载后安装，配置安装目录环境变量到系统环境变量Path里面，或者下载我提取的版本：[Qemu-i386](https://gitee.com/hzc1998/bookos-web-db/blob/master/tools/Qemu-i386.rar)，下载后配置解压目录环境变量到系统环境变量Path里面。
 
@@ -78,6 +83,10 @@ PTHREAD线程库
 2.安装qemu虚拟机：
     Ubuntu/Kali Linux: sudo apt-get install qemu-system-x86
     Red hat/Fedora/Centos: sudo yum install qemu-system-x86    
+
+3.安装grub引导相关工具：
+    Ubuntu/Kali Linux: sudo apt-get install grub
+    Red hat/Fedora/Centos: sudo yum install grub
 ```
 
 ## Mac环境搭建
@@ -88,8 +97,8 @@ PTHREAD线程库
 > brew install i386-elf-binutils i386-elf-gcc
 # 2.安装 truncate nasm qemu 
 > brew install truncate nasm qemu
-> make build
-> make qemu
+# 3.安装 grub 
+> brew install grub
 ```
 
 ## 温馨提示！
