@@ -2,6 +2,8 @@
 #define _XBOOK_SOCKCALL_H
 
 #include <types.h>
+
+#ifdef CONFIG_NET
 #include <sys/socket.h>
 
 #define SOCKOP_socket  1
@@ -106,5 +108,6 @@ typedef union {
 } sock_param_t;
 
 int sys_sockcall(int sockop, sock_param_t *param);
+#endif
 
 #endif  /* _XBOOK_SOCKCALL_H */

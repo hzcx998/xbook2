@@ -85,7 +85,7 @@ int socket_test2(int argc, char *argv[])
         client_sock = accept(my_socke, NULL, NULL);
         printf("accept %d done!\n", client_sock);
         if (client_sock >= 0) {
-            char buf[512];
+            char buf[512] = {0};
             memset(buf, 0, 512);
             recv(client_sock, buf, 512, 0);
             printf("recv done %s!\n", buf);
@@ -141,6 +141,7 @@ int socket_test3(int argc, char *argv[])
         char buf[BUF_LEN] = {0};
         recvfrom(fd, buf, BUF_LEN, 0, &src, &srclen);
         printf("recvfrom: %s\n", buf);
+        printf("recvfrom: srclen %d\n", srclen);
         
         if (!strcmp(buf, "quit")) {
             break;

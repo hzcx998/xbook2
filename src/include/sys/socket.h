@@ -3,12 +3,8 @@
 
 #include <types.h>
 
-struct sockaddr {
-  u8_t sa_len;
-  u8_t sa_family;
-  char sa_data[14];
-};
-
+#ifdef CONFIG_NET
+#include <lwip/sockets.h>
 int sys_socket(int domain, int type, int protocol);
 int sys_socket_bind(int fd, struct sockaddr *my_addr, int addrlen);
 int sys_socket_accept(int fd, struct sockaddr *addr, socklen_t *addrlen);
@@ -27,6 +23,7 @@ int sys_socket_getpeername(int fd, struct sockaddr *serv_addr, socklen_t *addrle
 int sys_socket_getsockname(int fd, struct sockaddr *my_addr, socklen_t *addrlen);
 int sys_socket_getsockopt(int fd, int level, int optname, void *optval, socklen_t *optlen);
 int sys_socket_setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen);
+#endif
 
 #endif   /* _SYS_SOCKET_H */
 

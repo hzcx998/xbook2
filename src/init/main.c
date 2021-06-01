@@ -19,6 +19,9 @@
 #include <xbook/mutexqueue.h>
 #include <xbook/account.h>
 #include <xbook/portcomm.h>
+#ifdef CONFIG_NET
+#include <xbook/net.h>
+#endif
 
 int kernel_main(void)
 {
@@ -42,6 +45,9 @@ int kernel_main(void)
     driver_framewrok_init();
     initcalls_exec();
     file_system_init();
+    #ifdef CONFIG_NET
+    network_init();
+    #endif
     account_manager_init();
     port_comm_init();
     //spin("test");

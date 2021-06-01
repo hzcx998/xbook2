@@ -12,6 +12,12 @@
 
 #define LOCAL_FILE_OPEN_NR  128
 
+/* 当需要从用户态复制数据时，需要一个临时缓冲区，这指明了缓冲区的大小 */
+#define FSIF_RW_BUF_SIZE    512
+
+/* 当需要从用户态复制数据时，需要将数据分词多个块进行读写 */
+#define FSIF_RW_CHUNK_SIZE  8192
+
 typedef struct {
     list_t list;                    /* 系统抽象的链表 */
     char *name;                     /* 文件系统抽象层名字 */
@@ -61,7 +67,9 @@ typedef struct {
 extern fsal_t fsif;
 extern fsal_t pipeif_rd;
 extern fsal_t pipeif_wr;
+#ifdef CONFIG_NET
 extern fsal_t netif_fsal;
+#endif
 
 int fsal_init();
 

@@ -83,6 +83,14 @@ export BOOT_MODE ?= $(BOOT_GRUB2_MODE)
 # is efi mode? (y/n)
 EFI_BOOT_MODE ?= n
 
+# has net module? (y/n)
+KERN_MODULE_NET	?= n
+export KERN_MODULE_NET
+
+
+DUMP_FILE	?= $(KERNEL_ELF)
+DUMP_FLAGS	?= 
+
 # 参数
 .PHONY: all kernel build debuild qemu qemudbg user user_clean dump
 
@@ -154,7 +162,7 @@ user_clean:
 	$(MAKE) -s -C $(BIN_DIR) clean
 
 dump:
-	$(OBJDUMP) -M intel -D $(KERNEL_ELF) > $(KERNSRC)/kern.dump
+	$(OBJDUMP) $(DUMP_FLAGS) -M intel -D $(DUMP_FILE) > $(DUMP_FILE).dump
 
 #-hda $(HDA_IMG) -hdb $(HDB_IMG)
 # 网卡配置:
@@ -189,7 +197,7 @@ QEMU_KVM := # no virutal
 
 # HDB_IMG :=fat:rw:./develop/rom
 
-QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
+QEMU_ARGUMENT := -m 512m $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \
 		-drive id=disk0,file=$(HDA_IMG),format=raw,if=none \
 		-drive id=disk1,file=$(HDB_IMG),format=raw,if=none \
@@ -201,6 +209,10 @@ QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 		-soundhw sb16 \
 		-serial stdio \
 		-soundhw pcspk
+
+ifeq ($(KERN_MODULE_NET),y)
+QEMU_ARGUMENT += -net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no
+endif
 
 ifeq ($(BOOT_MODE),$(BOOT_LEGACY_MODE))
 QEMU_ARGUMENT += -drive file=$(FLOPPYA_IMG),format=raw,index=0,if=floppy

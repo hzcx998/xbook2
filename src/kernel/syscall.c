@@ -146,7 +146,9 @@ void syscall_init()
     syscalls[SYS_GETPGID] = sys_get_pgid;
     syscalls[SYS_SETPGID] = sys_set_pgid;
     syscalls[SYS_MKFIFO] = sys_mkfifo;
+    #ifdef CONFIG_NET
     syscalls[SYS_SOCKCALL] = sys_sockcall;
+    #endif
     syscalls[SYS_REBOOT] = sys_reboot;
     syscalls[SYS_SHUTDOWN] = sys_shutdown;
 }
