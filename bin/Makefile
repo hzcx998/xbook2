@@ -56,3 +56,5 @@ MODULE      +=  unmount
 MODULE      +=  losetup
 MODULE      +=  reboot
 MODULE      +=  poweroff
+MODULE      +=  httpd
+

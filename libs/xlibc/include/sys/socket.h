@@ -13,6 +13,14 @@ extern "C" {
 
 typedef uint32_t socklen_t;
 
+/*
+ * Basic system type definitions, taken from the BSD file sys/types.h.
+ */
+typedef unsigned char   u_char;
+typedef unsigned short  u_short;
+typedef unsigned int    u_int;
+typedef unsigned long   u_long;
+
 /* members are in network byte order */
 struct sockaddr_in {
   u8_t sin_len;

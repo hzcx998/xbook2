@@ -5,6 +5,47 @@
 #include <stdint.h>
 #include <types.h>
 
+/*
+ * st_mode flags
+ */
+#define         S_IFMT  0170000 /* type of file ，文件类型掩码*/
+#define         S_IFREG 0100000 /* regular 普通文件*/
+#define         S_IFBLK 0060000 /* block special 块设备文件*/
+#define         S_IFDIR 0040000 /* directory 目录文件*/
+#define         S_IFCHR 0020000 /* character special 字符设备文件*/
+#define         S_IFIFO 0010000 /* fifo */
+#define         S_IFNAM 0050000 /* special named file */
+#if !defined(_M_XOUT)
+#define         S_IFLNK 0120000 /* symbolic link 链接文件*/
+#endif /* !defined(_M_XOUT) */
+#define         S_ISREG(m)      (((m) & S_IFMT) == S_IFREG)
+#define         S_ISBLK(m)      (((m) & S_IFMT) == S_IFBLK)
+#define         S_ISDIR(m)      (((m) & S_IFMT) == S_IFDIR)
+#define         S_ISCHR(m)      (((m) & S_IFMT) == S_IFCHR)
+#define         S_ISFIFO(m)     (((m) & S_IFMT) == S_IFIFO)
+#define         S_ISNAM(m)      (((m) & S_IFMT) == S_IFNAM)
+#if !defined(_M_XOUT)
+#define         S_ISLNK(m)      (((m) & S_IFMT) == S_IFLNK)
+#endif /* !defined(_M_XOUT) */
+
+#define         S_IREAD 00400     //文件所有者具可读取权限
+#define         S_IWRITE 00200    //文件所有者具可写入权限
+#define         S_IEXEC 00100     //文件所有者具可执行权限
+
+/* 文件模式 */
+#define M_IREAD  (1 << 2)     //文件可读取权限
+#define M_IWRITE (1 << 1)    //文件可写入权限
+#define M_IEXEC  (1 << 0)     //文件可执行权限
+
+/* FIXME: supported __S_ISUID and __S_ISGID  in kernel. */
+#define	__S_ISUID	04000	/* Set user ID on execution.  */
+#define	__S_ISGID	02000	/* Set group ID on execution.  */
+#define	__S_ISVTX	01000	/* 文件的sticky 位  */
+
+#define	S_ISUID __S_ISUID	/* Set user ID on execution.  */
+#define	S_ISGID	__S_ISGID	/* Set group ID on execution.  */
+#define	S_ISVTX	__S_ISVTX	/* 文件的sticky 位  */
+
 typedef struct stat {
     mode_t     st_mode;       //文件访问权限
     ino_t      st_ino;       //索引节点号

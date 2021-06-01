@@ -1,0 +1,18 @@
+.view > .pure-table > thead > tr > th {
+    background-color: rgba(240, 128, 128, 0.3);
+    padding: 5px 10px 5px 10px;
+    border-radius: 5px;
+
+    cursor: pointer;
+}
+.view > .pure-table > tbody td {
+    background-color: rgba(240, 128, 128, 0.1);
+    padding: 5px 10px 5px 10px;
+    border-radius: 5px;
+
+    cursor: pointer;
+    transition: background-color .15s linear;
+}
+.view > .pure-table > tbody td:hover {
+    background-color: rgba(240, 128, 128, 0.3);
+}

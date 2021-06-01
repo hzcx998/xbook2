@@ -8,35 +8,51 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 #include <types.h>
+/*
+ * st_mode flags
+ */
+#define         S_IFMT  0170000 /* type of file ，文件类型掩码*/
+#define         S_IFREG 0100000 /* regular 普通文件*/
+#define         S_IFBLK 0060000 /* block special 块设备文件*/
+#define         S_IFDIR 0040000 /* directory 目录文件*/
+#define         S_IFCHR 0020000 /* character special 字符设备文件*/
+#define         S_IFIFO 0010000 /* fifo */
+#define         S_IFNAM 0050000 /* special named file */
+#if !defined(_M_XOUT)
+#define         S_IFLNK 0120000 /* symbolic link 链接文件*/
+#endif /* !defined(_M_XOUT) */
+#define         S_ISREG(m)      (((m) & S_IFMT) == S_IFREG)
+#define         S_ISBLK(m)      (((m) & S_IFMT) == S_IFBLK)
+#define         S_ISDIR(m)      (((m) & S_IFMT) == S_IFDIR)
+#define         S_ISCHR(m)      (((m) & S_IFMT) == S_IFCHR)
+#define         S_ISFIFO(m)     (((m) & S_IFMT) == S_IFIFO)
+#define         S_ISNAM(m)      (((m) & S_IFMT) == S_IFNAM)
+#if !defined(_M_XOUT)
+#define         S_ISLNK(m)      (((m) & S_IFMT) == S_IFLNK)
+#endif /* !defined(_M_XOUT) */
 
-/* 高4位是属性位 */
-#define S_IFSOCK 0x90    //scoket
-#define S_IFLNK 0x50     //符号连接
-#define S_IFIFO 0x30     //先进先出
-#define S_IFBLK 0x80     //区块装置
-#define S_IFCHR 0x40     //字符装置
-#define S_IFDIR 0x20     //目录
-#define S_IFREG 0x10     //一般文件
-
-#define S_IREAD 0x04     //文件所有者具可读取权限
-#define S_IWRITE 0x02    //文件所有者具可写入权限
-#define S_IEXEC 0x01     //文件所有者具可执行权限
-
-//上述的文件类型在POSIX中定义了检查这些类型的宏定义：
-#define S_ISDIR(m)			((m) & S_IFDIR )    //是否为目录
-#define S_ISCHR(m)			((m) & S_IFCHR )    //是否为字符设备
-#define S_ISBLK(m)			((m) & S_IFBLK )    //是否为块设备
-#define S_ISREG(m)			((m) & S_IFREG )    //是否为一般文件
-#define S_ISLNK(m)			((m) & S_IFLNK )    //判断是否为符号连接
-#define S_ISFIFO(m)			((m) & S_IFIFO )    //先进先出
-#define S_ISSOCK(m)			((m) & S_IFSOCK )   //是否为socket
+#define         S_IREAD 00400     //文件所有者具可读取权限
+#define         S_IWRITE 00200    //文件所有者具可写入权限
+#define         S_IEXEC 00100     //文件所有者具可执行权限
 
 /* FIXME: supported __S_ISUID and __S_ISGID  in kernel. */
 #define	__S_ISUID	04000	/* Set user ID on execution.  */
 #define	__S_ISGID	02000	/* Set group ID on execution.  */
+#define	__S_ISVTX	01000	/* 文件的sticky 位  */
 
 #define	S_ISUID __S_ISUID	/* Set user ID on execution.  */
 #define	S_ISGID	__S_ISGID	/* Set group ID on execution.  */
+#define	S_ISVTX	__S_ISVTX	/* 文件的sticky 位  */
+
+#define	S_IRUSR (S_IREAD)  /*文件所有者具可读取权限*/
+#define	S_IWUSR (S_IWRITE) /*文件所有者具可写入权限*/
+#define	S_IXUSR (S_IEXEC)  /*文件所有者具可执行权限*/
+#define	S_IRGRP 00040 /*用户组具可读取权限*/
+#define	S_IWGRP 00020 /*用户组具可写入权限*/
+#define	S_IXGRP 00010 /*用户组具可执行权限*/
+#define	S_IROTH 00004 /*其他用户具可读取权限*/
+#define	S_IWOTH 00002 /*其他用户具可写入权限*/
+#define	S_IXOTH 00001 /*其他用户具可执行权限*/
 
 typedef struct stat {
     mode_t     st_mode;       //文件访问权限

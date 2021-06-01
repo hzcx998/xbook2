@@ -55,5 +55,5 @@ static inline __attribute__((always_inline)) int fls(int x)
 }
 #endif
 
-#endif  /*_LIB_STDINT_H*/
+#endif  /* _LIB_STDINT_H */
 

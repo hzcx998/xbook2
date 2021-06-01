@@ -1,0 +1,180 @@
+:root {
+    /* Header 宽度 */
+    --header-width: 800px;
+    /* Header 高度 */
+    --header-height: 50px;
+    /* Header 左边距 */
+    --header-left: calc((100vw - 800px) / 2);
+    /* Header 字体尺寸 */
+    --header-font-size: 30px;
+    /* Footer 宽度 */
+    --footer-width: 800px;
+    /* Footer 高度 */
+    --footer-height: 50px;
+    /* Footer 左边距 */
+    --footer-left: calc((100vw - 800px) / 2);
+    /* Footer 字体尺寸 */
+    --footer-font-size: 30px;
+    /* 导航宽度 */
+    --menu-width: 800px;
+    /* 导航高度 */
+    --menu-height: 44px;
+    /* 导航左边距 */
+    --menu-left: calc((100vw - 800px) / 2);
+    /* 导航左右内边距 */
+    --menu-padding: 5px;
+    /* 导航按钮左右内边距 */
+    --menu-button-padding: 5px;
+    /* 导航按钮高度 */
+    --menu-button-height: 30px;
+    /* 导航按钮上边距 */
+    --menu-button-top: 7px;
+    /* View 高度 */
+    --view-width: 800px;
+    /* view左边距 */
+    --view-left: calc((100vw - 800px) / 2);
+    /* view内边距 */
+    --view-padding: 20px;
+    /* 行文字高度 */
+    --custom-line-box-height: 30px;
+    /* 全局圆角半径 */
+    --radius: 5px;
+    /* 默认顶部边距 */
+    --normal-margin-top: 5px;
+    /* 主色调 */
+    --main-color: #3e3e3e;
+    /* 附加颜色 */
+    --addtion-color: rgba(255, 255, 255, 0.1);
+    /* 全局字体颜色 */
+    --font-color: #ffffff;
+    /* 高亮单词左右内边距 */
+    --light-word-padding: 3px;
+    /* 高亮单词左右外边距 */
+    --light-word-margin: 3px;
+    /* 高亮单词附加颜色 */
+    --light-word-addtion-color: rgba(255, 255, 255, 0.2);
+}
+
+* {
+    /*user-select: none;*/
+    box-sizing: border-box;
+}
+
+.header {
+    width: var(--header-width);
+    height: var(--header-height);
+    background-color: var(--main-color);
+    color: var(--font-color);
+    line-height: var(--header-height);
+    font-size: var(--header-font-size);
+    border-radius: var(--radius);
+    margin: var(--normal-margin-top) 0px 0px var(--header-left);
+    text-align: center;
+}
+
+.menu {
+    padding: 0px var(--menu-padding) 0px var(--menu-padding);
+    width: var(--menu-width);
+    height: var(--menu-height);
+    margin: var(--normal-margin-top) 0px 0px var(--menu-left);
+    border-radius: var(--radius);
+    color: var(--font-color);
+    list-style: none;
+    background-color: var(--main-color);
+    font-size: 12px;
+}
+
+.menu>li {
+    float: left;
+    padding: 0px var(--menu-button-padding) 0px var(--menu-button-padding);
+    transition: all .2s linear;
+    cursor: pointer;
+    margin-top: var(--menu-button-top);
+    line-height: var(--menu-button-height);
+    border-radius: var(--radius);
+}
+
+.menu>li:hover {
+    background-color: var(--addtion-color);
+}
+
+.view {
+    width: var(--view-width);
+    padding: var(--view-padding);
+    background-color: var(--main-color);
+    margin: var(--normal-margin-top) 0px 0px var(--view-left);
+    color: var(--font-color);
+    border-radius: var(--radius);
+}
+
+.line {
+    padding: 5px;
+}
+
+.light-word {
+    height: 20px;
+    line-height: 20px;
+    padding: 0px var(--light-word-padding) 0px var(--light-word-padding);
+    margin: 5px var(--light-word-margin) 0px var(--light-word-margin);
+    display: inline-block;
+    list-style: none;
+    background-color: var(--addtion-color);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all .2s linear;
+    cursor: pointer;
+}
+
+.light-word:hover {
+    background-color: var(--light-word-addtion-color);
+}
+
+.image-show {
+    width: 100%;
+    cursor: pointer;
+}
+
+.footer {
+    width: var(--footer-width);
+    height: var(--footer-height);
+    background-color: var(--main-color);
+    color: var(--font-color);
+    line-height: var(--footer-height);
+    border-radius: var(--radius);
+    margin: var(--normal-margin-top) 0px 0px var(--footer-left);
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+#zh-index {
+    display: block;
+}
+
+#zh-downloads {
+    display: none;
+}
+
+#zh-documents {
+    display: none;
+}
+
+#zh-news {
+    display: none;
+}
+
+#zh-development {
+    display: none;
+}
+
+#zh-summer {
+    display: none;
+}
+
+#zh-english {
+    display: none;
+}
+
+.link {
+    color: darksalmon;
+    cursor: pointer;
+}

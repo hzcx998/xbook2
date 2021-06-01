@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="./css/normalize.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/summer.css">
+    <link rel="icon" type="image/jpg" sizes="48x48" href="./img/icon/icon.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Book OS</title>
+</head>
+
+<body>
+    <div class="header" id="header">Book OS</div>
+
+    <ul class="menu" id="menu">
+        <li id="index">主页</li>
+        <li id="downloads">下载</li>
+        <li id="documents">文档</li>
+        <li id="development">开发</li>
+        <li id="summer" style="color:dodgerblue;">开源之夏</li>
+    </ul>
+
+    <div class="view" id="zh-index">
+        <div class="line">
+            什么是<span class="light-word" style="color:yellow;">Book OS</span>?<span class="light-word" style="color: greenyellow;">
+             “书是人类进步的阶梯”</span> ——高尔基。 因此它叫做<span class="light-word">Book OS</span>。
+        </div>
+        <div class="line"><span class="light-word" style="margin-left: 0px;" >Book OS</span>是一个基于x86平台的32位操作系统，其基于<span class="light-word" style="color:yellow;">xbook2</span>内核进行开发。</div>
+        <div class="line"><span class="light-word">xbook2</span>内核特性：</div>
+        <div class="line">> i386处理器平台</div>
+        <div class="line">> ELF格式内核和程序</div>
+        <div class="line">> 内存管理: 分页内存管理，物理内存管理，虚拟内存管理，进程地址空间管理</div>
+        <div class="line">> 多任务: 多进程和内核线程，用户多线程（pthread）</div>
+        <div class="line">> IO驱动框架: 设备对象框架，高级中断机制，软中断机制</div>
+        <div class="line">> 内核: 时间管理，定时器管理，异步异常管理</div>
+        <div class="line">> 文件系统: FSAL文件系统抽象层（类VFS），FATFS文件系统</div>
+        <div class="line">> 进程间通信: 消息队列，共享内存，信号量，pipe管道，fifo命名管道</div>
+        <div class="line">> 通用驱动: ramdisk，null，zero，tty，ptty，view</div>
+        <div class="line">> PC驱动: ahci磁盘，console控制台，e1000网卡，ide磁盘，ps2keyboard键盘，ps2mouse鼠标，rtl8139网卡，sb16声卡，serial串口，vbe视频</div>
+        <div class="line"></div>
+        <div class="line"><span class="light-word">Book OS</span>系统功能：</div>
+        <div class="line">
+            > 库：xlibc标准C库，pthread，netsocket，SDL2，SDL2_image，SDL2_ttf，cario，cjson，dotfont，freetype，gato，jpeg，libwebp，pixman，uview，xtk，zlib等
+        </div>
+        <div class="line">
+            > 命令行程序：bash，cal，cat，cp，cpuinfo，date，echo，ls，lua，mem，mkdir，osver，ps，rename，rm，rmdir，sh等
+        </div>
+        <div class="line">
+            > 图像界面程序：infones游戏模拟器，invader游戏，lite文本编辑器
+        </div>
+    </div>
+
+    <div class="view" id="zh-downloads">
+        <div class="line" style="color: yellow">很抱歉，暂无可下载镜像版本！请转到开发页面，到开源仓库下载源码构建！</div>
+    </div>
+
+    <div class="view" id="zh-documents">
+        <div class="line"><span class="link" onclick="window.location.href='https://gitee.com/hzc1998/BookOS/blob/master/README.md'">BookOS开发文档</span></div>
+        <div class="line"><span class="link" onclick="window.location.href='https://gitee.com/hzc1998/xbook2/blob/master/README.md'">xbook2内核开发文档</span></div>
+    </div>
+
+    <div class="view" id="zh-development">
+        <div class="line">
+            BookOS仓库：<span class="link" onclick="window.location.href='https://gitee.com/hzc1998/BookOS'">(gitee)</span> or 
+            <span class="link" onclick="window.location.href='https://github.com/hzcx998/BookOS'">(github)</span>
+        </div>
+        <div class="line">
+            xbook2仓库：<span class="link" onclick="window.location.href='https://gitee.com/hzc1998/xbook2'">(gitee)</span> or 
+            <span class="link" onclick="window.location.href='https://github.com/hzcx998/xbook2'">(github)</span>
+        </div>
+
+        <div class="line">
+            Windows 平台工具链：
+            <span class="link" onclick="window.location.href='https://gitee.com/hzc1998/bookos-web-db/blob/master/tools/BuildTools.zip'">BuildTools</span>
+        </div>
+        <div class="line">
+            Windows Qemu for i386模拟器:
+            <span class="link" onclick="window.location.href='https://gitee.com/hzc1998/bookos-web-db/blob/master/tools/Qemu-i386.rar'">Qemu</span>
+        </div>
+        <div class="line">
+            Windows Tap 虚拟网卡:
+            <span class="link" onclick="window.location.href='https://gitee.com/hzc1998/bookos-web-db/blob/master/tools/tap-windows-9.9.2_3.rar'">Tap Windows</span>
+        </div>
+    </div>
+    <div class="view" id="zh-summer">
+        <div class="line">
+            <span class="link" onclick="window.location.href='https://summer.iscas.ac.cn/'">开源软件供应链点亮计划 - 暑期2021</span>
+        </div>
+        <div class="line">
+            简介：开源软件供应链点亮计划鼓励大家关注开源软件和开源社区，致力于培养和发掘更多优秀的开发者。
+            活动将在暑期进行，我们将与开源社区紧密合作，提供一对一的导师指导，邀请技术大牛开展线上免费讲座。
+            我们鼓励研究人员、开源爱好者、在校师生参与开源软件的开发与维护，促进开源软件的发展和优秀开源软件社区建设，
+            增加开源项目的活跃度，推进开源生态的发展。
+        </div>
+        <div class="line">
+            开发者可以在<span class="light-word" style="color:dodgerblue;">开源之夏</span>上面参与<span class="light-word" style="color:yellow;">Book OS</span>发布的项目，可以通过
+            <span class="link" onclick="window.location.href='https://summer.iscas.ac.cn/#/org/orgdetail/bookos'">【传送门】</span>
+            报名参加
+        </div>
+        <!--项目列表-->
+        <table id="summer_table" class="pure-table">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">索引</th>
+                    <th style="width: 70px;">项目名</th>
+                    <th style="width: 70px;">难度</th>
+                    <th>内容</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!--项目1-->
+                <tr class="pure-table pure-table-bordered">
+                    <td class="tab_center">1</td>
+                    <td>Pthread 多线程的优化与完善</td>
+                    <td class="tab_center">中</td>
+                    <td>
+                        <table id="summer_table" class="pure-table">
+                            <tbody>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">导师</td>
+                                    <td>
+                                        项目社区导师：吴松杰<br><br>
+                                        导师联系方式：2991707448@qq.com
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">描述</td>
+                                    <td>
+                                        在xbook2中的pthread仅实现了最基础的线程管理功能，仍有许多功能尚未实现，
+                                        需要优化原有实现并且完善它，让它和标准的pthread功能一样，
+                                        最终支持SDL2_Thread的pthread子模块。
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>产出要求</td>
+                                    <td>
+                                        * 标准的pthread库<br><br>
+                                        * 支持SDL_Thread的pthread接口
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>基础要求</td>
+                                    <td>
+                                        * C语言基础<br><br>
+                                        * pthread编程经验
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>参考资料</td>
+                                    <td>
+                                        <span class="link" onclick="window.location.href='http://www.yolinux.com/TUTORIALS/LinuxTutorialPosixThreads.html'">
+                                            * POSIX thread (pthread) libraries
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>项目直达</td>
+                                    <td>
+                                        <span class="link" onclick="window.location.href='https://summer.iscas.ac.cn/#/org/prodetail/210420173'">
+                                            项目编号：210420173
+                                        </span>
+                                    </td>
+                                </tr>
+                            <tbody>    
+                        </table>
+                    </td>
+                </tr>
+                <!--项目2-->
+                <tr class="pure-table pure-table-bordered">
+                    <td class="tab_center">2</td>
+                    <td>Qemu virtio驱动的支持，虚拟化走起!</td>
+                    <td class="tab_center">高</td>
+                    <td>
+                        <table id="summer_table" class="pure-table">
+                            <tbody>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">导师</td>
+                                    <td>
+                                        项目社区导师：朱宇<br><br>
+                                        导师联系方式：yu.zhu8@foxmail.com
+
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">描述</td>
+                                    <td>
+                                        熟悉virtio specification和xbook 驱动框架， 
+                                        并编写可用的qemu virtio 驱动，包括但不限于
+                                        gpu, block, mouse, keyboard。
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>产出要求</td>
+                                    <td>
+                                        * 实现Qemu Virtio驱动
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>基础要求</td>
+                                    <td>
+                                        * C语言基础<br><br>
+                                        * 驱动开发经验<br><br>
+                                        * Qemu使用经验
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>参考资料</td>
+                                    <td>
+                                        <span class="link" onclick="window.location.href='http://www.linux-kvm.org/page/Virtio'">
+                                            * Qemu KVM virtio
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>项目直达</td>
+                                    <td>
+                                        <span class="link" onclick="window.location.href='https://summer.iscas.ac.cn/#/org/prodetail/210420172'">
+                                            项目编号：210420172
+                                        </span>
+                                    </td>
+                                </tr>
+                            <tbody>    
+                        </table>
+                    </td>
+                </tr>
+                <!--项目3-->
+                <tr class="pure-table pure-table-bordered">
+                    <td class="tab_center">3</td>
+                    <td>从声卡驱动到DSP编程接口的实现</td>
+                    <td class="tab_center">中</td>
+                    <td>
+                        <table id="summer_table" class="pure-table">
+                            <tbody>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">导师</td>
+                                    <td>
+                                        项目社区导师：胡自成<br><br>
+                                        导师联系方式：2323168280@qq.com
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">描述</td>
+                                    <td>
+                                        在x86平台从零实现一个ac97声卡驱动，
+                                        熟悉并使用xbook2内核的驱动框架，
+                                        了解声卡的数据传输以及编程接口。
+                                        并在此驱动基础之上封装一套dsp编程接口作为音频驱动框架，
+                                        并掌握简单的音频编程流程。
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>产出要求</td>
+                                    <td>
+                                        * 实现AC97声卡驱动<br><br>
+                                        * 实现DSP驱动框架接口<br><br>
+                                        * 使用DSP接口编程<br><br>
+                                        * 支持SDL2_Audio的DSP接口
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>基础要求</td>
+                                    <td>
+                                        * C语言基础<br><br>
+                                        * 驱动开发经验<br><br>
+                                        * 音频编程经验
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>参考资料</td>
+                                    <td>
+                                        <span class="link" onclick="window.location.href='https://blog.csdn.net/avatar1912/article/details/44275863'">
+                                            * linux 下DSP音频处理
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>项目直达</td>
+                                    <td>
+                                        <span class="link" onclick="window.location.href='https://summer.iscas.ac.cn/#/org/prodetail/210420171'">
+                                            项目编号：210420171
+                                        </span>
+                                    </td>
+                                </tr>
+                            <tbody>    
+                        </table>
+                    </td>
+                </tr>
+                <!--项目4-->
+                <tr class="pure-table pure-table-bordered">
+                    <td class="tab_center">4</td>
+                    <td>Bookos内存管理防止碎片化机制</td>
+                    <td class="tab_center">中</td>
+                    <td>
+                        <table id="summer_table" class="pure-table">
+                            <tbody>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">导师</td>
+                                    <td>
+                                        项目社区导师：李石亮<br><br>
+                                        导师联系方式：25755975@qq.com
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">描述</td>
+                                    <td>
+                                        内存防止碎片化，保证有一定连续性的物理内存。
+                                        设置内存的分区域使用，有效的加强的内存缓存的命中率，
+                                        这些都是和内存防止碎片化有着紧密的关系。也是内核讨论里面最近这些年新增的性能。
+                                        同样也是希望能够把这个功能实现出来，
+                                        让同学们能够亲自体会一个简单的操作系统向一个优化的操作系统的过渡。
+                                        其中最大的困难就是内存和其他模块紧密相连，
+                                        对其余部分的代码不了解是最大的困难，
+                                        而不是内核内存管理的本身的算法。
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>产出要求</td>
+                                    <td>
+                                        * 实现一个内存的分区域的管理<br><br>
+                                        * 在分配机制上实现区域化<br><br>
+                                        * 在内存的回收和保留的部分实现区域化管理
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>基础要求</td>
+                                    <td>
+                                        * 对bookos有一定的了解<br><br>
+                                        * 愿意花时间投入到这个项目<br><br>
+                                        * 对linux内存管理部分有一定的理解<br><br>
+                                        * 有雄心壮志有承担中国操作系统的理想
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>参考资料</td>
+                                    <td>
+                                        * 待补充
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>项目直达</td>
+                                    <td>
+                                        <span class="link" onclick="window.location.href='https://summer.iscas.ac.cn/#/org/prodetail/210420156'">
+                                            项目编号：210420156
+                                        </span>
+                                    </td>
+                                </tr>
+                            <tbody>    
+                        </table>
+                    </td>
+                </tr>
+                <!--项目5-->
+                <tr class="pure-table pure-table-bordered">
+                    <td class="tab_center">5</td>
+                    <td>Bookos内存管理页面回收机制</td>
+                    <td class="tab_center">高</td>
+                    <td>
+                        <table id="summer_table" class="pure-table">
+                            <tbody>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">导师</td>
+                                    <td>
+                                        项目社区导师：李石亮<br><br>
+                                        导师联系方式：25755975@qq.com
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">描述</td>
+                                    <td>
+                                        内存的页面回收机制，一直是linux的开源社区内存管理的核心位置，
+                                        这个部分性能的优化对大型的服务器是非常有价值的。
+                                        特别是锁的机制细化，对性能的提升甚至能到30%。 
+                                        在bookos的基础上，把简单的内存管理系统，增加页面的回收机制，
+                                        同时也增加缓存的系统实现。根据学生的能力和基础，
+                                        尽可能的实现一个相对复杂的页面缓存和回收机制。 
+                                        现在的书上有代码可实现的操作系统模型在内存管理部分都不是非常的复杂。
+                                        而对linux内核内存管理部分的书籍，即使代码讲的再详细，
+                                        因为linux内核与内存管理相应的api又太多，我们又很难的去修改内核。
+                                        所以我们设计这个项目，让学生通过在我们熟悉和了解的bookos上实现内存管理的回收机制，
+                                        来提升学生对操作系统的理解能力。
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>产出要求</td>
+                                    <td>
+                                        * 完成一个简单的内存的缓存的机制<br><br>
+                                        * 在这个机制上设置内存的页面回收机制<br><br>
+                                        * 增加对应的自动回收内存的内核线程，能定期的唤醒<br><br>
+                                        * 保证这个功能的可执行。
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>基础要求</td>
+                                    <td>
+                                        * 实现过操作系统，能调bug<br><br>
+                                        * 对linux内核的内存部分要熟悉<br><br>
+                                        * 能够熬，能够面对调好几天都很难解决的bug<br><br>
+                                        * 勤奋
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>参考资料</td>
+                                    <td>
+                                        * 待补充
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>项目直达</td>
+                                    <td>
+                                        <span class="link" onclick="window.location.href='https://summer.iscas.ac.cn/#/org/prodetail/210420155'">
+                                            项目编号：210420155
+                                        </span>
+                                    </td>
+                                </tr>
+                            <tbody>    
+                        </table>
+                    </td>
+                </tr>
+                <!--项目6-->
+                <tr class="pure-table pure-table-bordered">
+                    <td class="tab_center">6</td>
+                    <td>Bookos内存管理页面交换模块</td>
+                    <td class="tab_center">中</td>
+                    <td>
+                        <table id="summer_table" class="pure-table">
+                            <tbody>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">导师</td>
+                                    <td>
+                                        项目社区导师：李石亮<br><br>
+                                        导师联系方式：25755975@qq.com
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td style="width: 70px;">描述</td>
+                                    <td>
+                                        在bookos的基础上，把简单的内存管理系统，增加页面交换到硬盘的模块，
+                                        主要是仿照linux内核内存管理的部分来实现。根据学生的能力和基础，
+                                        尽可能的实现一个相对复杂的交换系统。 
+                                        现在的书上有代码可实现的操作系统模型在内存管理部分都不是非常的复杂。
+                                        而对linux内核内存管理部分的书籍，即使代码讲的再详细，因为linux内核与内存管理相应的api又太多，
+                                        我们又很难的去修改内核。所以我们设计这个项目，让学生通过在我们熟悉和了解的bookos上实现交换模块，
+                                        来提升学生对操作系统的理解能力。
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>产出要求</td>
+                                    <td>
+                                        * 在bookos上基本实现一个交换模块，完成基本的交换功能。<br><br>
+                                        * 在完成交换功能以后，把这个交换功能和内存的页面回收机制结合再一起，方便页面的换出和回收。<br><br>
+                                        * 在前两个基础上要统一接口。<br><br>
+                                        * 对性能做测试，保证性能。
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>基础要求</td>
+                                    <td>
+                                        * 对bookos操作系统有了解<br><br>
+                                        * 对操作系统有了解<br><br>
+                                        * 最好自己实现过操作系统<br><br>
+                                        * 能吃苦肯花时间学习<br><br>
+                                        * 即使前面的基础都没有，但是应用代码量大，技术基础好，喜欢内核也是可以的。
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>参考资料</td>
+                                    <td>
+                                        * 待补充
+                                    </td>
+                                </tr>
+                                <tr class="pure-table pure-table-bordered">
+                                    <td>项目直达</td>
+                                    <td>
+                                        <span class="link" onclick="window.location.href='https://summer.iscas.ac.cn/#/org/prodetail/210420153'">
+                                            项目编号：210420153
+                                        </span>
+                                    </td>
+                                </tr>
+                            <tbody>    
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="footer" id="footer">版权归 (C) 2018-2021 Book OS 开发者所有</div>
+    <script src="./js/mtool.js"></script>
+    <script>
+        document.addEventListener('gesturestart', function(event) {
+            event.preventDefault()
+        })
+
+        $('#index').onclick = function() {
+            $('#zh-index').css('display', 'block');
+            $('#zh-downloads').css('display', 'none');
+            $('#zh-documents').css('display', 'none');
+            $('#zh-development').css('display', 'none');
+            $('#zh-summer').css('display', 'none');
+        }
+        $('#downloads').onclick = function() {
+            $('#zh-index').css('display', 'none');
+            $('#zh-downloads').css('display', 'block');
+            $('#zh-documents').css('display', 'none');
+            $('#zh-development').css('display', 'none');
+            $('#zh-summer').css('display', 'none');
+        }
+        $('#documents').onclick = function() {
+            $('#zh-index').css('display', 'none');
+            $('#zh-downloads').css('display', 'none');
+            $('#zh-documents').css('display', 'block');
+            $('#zh-development').css('display', 'none');
+            $('#zh-summer').css('display', 'none');
+        }
+        $('#development').onclick = function() {
+            $('#zh-index').css('display', 'none');
+            $('#zh-downloads').css('display', 'none');
+            $('#zh-documents').css('display', 'none');
+            $('#zh-development').css('display', 'block');
+            $('#zh-summer').css('display', 'none');
+        }
+        $('#summer').onclick = function() {
+            $('#zh-index').css('display', 'none');
+            $('#zh-downloads').css('display', 'none');
+            $('#zh-documents').css('display', 'none');
+            $('#zh-development').css('display', 'none');
+            $('#zh-summer').css('display', 'block');
+        }
+        var en = new Environment();
+        if (en.isAndroid || en.isIOS) {
+            // alert("is phone");
+            $('#header').css('margin-left', '5px');
+            $('#header').css('width', 'calc(100vw - 10px)');
+            $('#menu').css('font-size', '10px');
+            $('#menu').css('margin-left', '5px');
+            $('#menu').css('width', 'calc(100vw - 10px)');
+            $('#zh-index').css('margin-left', '5px');
+            $('#zh-index').css('width', 'calc(100vw - 10px)');
+            $('#zh-downloads').css('margin-left', '5px');
+            $('#zh-downloads').css('width', 'calc(100vw - 10px)');
+            $('#zh-documents').css('margin-left', '5px');
+            $('#zh-documents').css('width', 'calc(100vw - 10px)');
+            $('#zh-development').css('margin-left', '5px');
+            $('#zh-development').css('width', 'calc(100vw - 10px)');
+            $('#zh-summer').css('margin-left', '5px');
+            $('#zh-summer').css('width', 'calc(100vw - 10px)');
+            $('#footer').css('margin-left', '5px');
+            $('#footer').css('width', 'calc(100vw - 10px)');
+            $('.view > .pure-table > thead th').forEach(element => {
+                element.style.padding = '0px';
+            });
+            $('.view > .pure-table > tbody td').forEach(element => {
+                element.style.padding = '0px';
+            });
+        }
+    </script>
+</body>
+
+</html>
+

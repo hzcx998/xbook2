@@ -71,4 +71,6 @@ rt prio！
 #define LWIP_NETIF_LOOPBACK_MULTITHREADING 1
 #define LWIP_HAVE_LOOPIF 1
 
+#define SO_REUSE 1
+
 #endif /* __LWIPOPTS_H__ */
