@@ -199,6 +199,7 @@
         "fd.h": "c",
         "socketcache.h": "c",
         "select.h": "c",
-        "netif.h": "c"
+        "netif.h": "c",
+        "in.h": "c"
     }
 }

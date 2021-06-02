@@ -97,8 +97,10 @@ int sys_socket_sendto(int fd, const void *buf, int len, unsigned int flags,
     }
 
     /* 对发送地址进行检测 */
-    if (!__addr.sa_len || __addr.sa_family == AF_UNSPEC)
+    if (__addr.sa_family == AF_UNSPEC) {
+        errprint("%s: dest addr on sock %d error!\n", __func__, sock);            
         return -EINVAL;
+    }
     #ifdef DEBUG_NETIF
     dbgprint("%s: to: %d-%d len:%d\n", __func__, __addr.sa_len, __addr.sa_family, tolen);
     #endif

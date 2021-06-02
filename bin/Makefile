@@ -57,4 +57,4 @@ MODULE      +=  losetup
 MODULE      +=  reboot
 MODULE      +=  poweroff
 MODULE      +=  httpd
-
+MODULE      +=  ping

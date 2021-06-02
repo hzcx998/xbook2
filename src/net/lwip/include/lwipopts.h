@@ -72,5 +72,6 @@ rt prio！
 #define LWIP_HAVE_LOOPIF 1
 
 #define SO_REUSE 1
+#define LWIP_SO_RCVBUF 1
 
 #endif /* __LWIPOPTS_H__ */
