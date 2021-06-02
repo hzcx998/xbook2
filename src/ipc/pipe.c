@@ -368,6 +368,7 @@ fsal_t pipeif_rd = {
     .incref     = pipeif_rd_incref,
     .decref     = pipeif_rd_decref,
     .fastio     = NULL,
+    .select     = NULL,
 };
 
 fsal_t pipeif_wr = {
@@ -408,4 +409,5 @@ fsal_t pipeif_wr = {
     .incref     = pipeif_wr_incref,
     .decref     = pipeif_wr_decref,
     .fastio     = NULL,
+    .select     = NULL,
 };

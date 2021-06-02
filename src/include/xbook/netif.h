@@ -2,6 +2,7 @@
 #define _XBOOK_NETIF_H
 
 #ifdef CONFIG_NET
+#include <stddef.h>
 
 #define DEBUG_NETIF
 int netif_close(int sock);

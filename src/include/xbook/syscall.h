@@ -118,6 +118,7 @@ enum syscall_num {
     SYS_SOCKCALL,
     SYS_REBOOT,
     SYS_SHUTDOWN,
+    SYS_SELECT,
     SYSCALL_NR,
 };
 

@@ -197,6 +197,8 @@
         "msgpool.h": "c",
         "sockets.h": "c",
         "fd.h": "c",
-        "socketcache.h": "c"
+        "socketcache.h": "c",
+        "select.h": "c",
+        "netif.h": "c"
     }
 }

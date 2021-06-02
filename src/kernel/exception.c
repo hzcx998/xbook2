@@ -424,7 +424,8 @@ int sys_expblock(uint32_t code, uint32_t state)
     return 0;
 }
 
-int sys_excetion_return(unsigned int ebx, unsigned int ecx, unsigned int esi, unsigned int edi, trap_frame_t *frame)
+int sys_excetion_return(unsigned int ebx, unsigned int ecx, unsigned int edx, 
+    unsigned int esi, unsigned int edi, trap_frame_t *frame)
 {
     fpu_restore(&task_current->fpu);
     return exception_return(frame);

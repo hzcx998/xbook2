@@ -28,6 +28,7 @@ typedef unsigned long (*syscall_func_t)(
     unsigned long,
     unsigned long,
     unsigned long,
+    unsigned long,
     void *);
 
 void syscall_default()
@@ -151,6 +152,8 @@ void syscall_init()
     #endif
     syscalls[SYS_REBOOT] = sys_reboot;
     syscalls[SYS_SHUTDOWN] = sys_shutdown;
+    syscalls[SYS_SELECT] = sys_select;
+    
 }
 
 int syscall_check(uint32_t callno)
@@ -170,7 +173,10 @@ unsigned long syscall_dispatch(trap_frame_t *frame)
     cur->syscall_ticks_delta = sys_get_ticks();
     // TODO: call different func in different arch
     syscall_func_t func = (syscall_func_t)syscalls[frame->eax];
-    unsigned long retval = func(frame->ebx, frame->ecx, frame->esi,
+    if (func == syscall_default) {
+        errprint("syscall nomber: %d\n", frame->eax);
+    }
+    unsigned long retval = func(frame->ebx, frame->ecx, frame->edx, frame->esi,
                             frame->edi, frame);
     /* 结束统计时间 */
     cur->syscall_ticks_delta = sys_get_ticks() - cur->syscall_ticks_delta;

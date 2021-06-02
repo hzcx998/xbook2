@@ -84,7 +84,7 @@ export BOOT_MODE ?= $(BOOT_GRUB2_MODE)
 EFI_BOOT_MODE ?= n
 
 # has net module? (y/n)
-KERN_MODULE_NET	?= n
+KERN_MODULE_NET	?= y
 export KERN_MODULE_NET
 
 

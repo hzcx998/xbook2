@@ -679,6 +679,14 @@ static void *fsalif_mmap(int idx, void *addr, size_t length, int prot, int flags
     return fsal->mmap(idx, addr, length, prot, flags, offset);
 }
 
+static int fsalif_select(int maxfdp, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+    struct timeval *timeout)
+{
+    /* TODO: add fsalif select */
+    dbgprint("normal file select not support\n");
+    return -ENOSYS;
+}
+
 /* 文件的抽象层接口 */
 fsal_t fsif = {
     .name       = "fsif",
@@ -721,4 +729,5 @@ fsal_t fsif = {
     .fastwrite  = fsalif_fastwrite,
     .fastio     = fsalif_fastio,
     .mmap       = fsalif_mmap,
+    .select     = fsalif_select,
 };

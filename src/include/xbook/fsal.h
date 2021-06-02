@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <xbook/list.h>
 #include <xbook/spinlock.h>
+#include <sys/select.h>
+#include <sys/time.h>
 
 #define FS_MODEL_NAME  "fsal"
 
@@ -17,6 +19,8 @@
 
 /* 当需要从用户态复制数据时，需要将数据分词多个块进行读写 */
 #define FSIF_RW_CHUNK_SIZE  8192
+
+typedef int (*select_t)(int , fd_set *, fd_set *, fd_set *, struct timeval *);
 
 typedef struct {
     list_t list;                    /* 系统抽象的链表 */
@@ -60,6 +64,7 @@ typedef struct {
     int (*decref)(int);
     void *(*mmap)(int , void *, size_t, int, int, off_t);
     int (*fastio)(int, int, void *);
+    select_t select;
     void *extention;
 } fsal_t;
 

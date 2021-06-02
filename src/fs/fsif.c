@@ -18,6 +18,8 @@
 #include <xbook/dir.h>
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/select.h>
 #include <fcntl.h>
 
 // #define DEBUG_FSIF
@@ -628,4 +630,342 @@ int sys_probedev(const char *name, char *buf, size_t buflen)
     if (mem_copy_to_user(buf, NULL, buflen) < 0)
         return -EINVAL;
     return device_probe_unused(name, buf, buflen);
+}
+
+static int do_select_check_fds(int maxfdp, fd_set *readfds, fd_set *writefds, fd_set *exceptfds)
+{
+    /* 检测fd有效性 */
+    int i;
+    file_fd_t *ffd;
+    for (i = 0; i < maxfdp; i++) {
+        if (readfds) {
+            if (FD_ISSET(i, readfds)) {
+                ffd = fd_local_to_file(i);
+                if (FILE_FD_IS_BAD(ffd)) {
+                    errprint("[fs] %s: fd %d err! handle=%d flags=%x\n", __func__, 
+                        i, ffd->handle, ffd->flags);
+                    return -1;
+                }
+            }
+        }
+        if (writefds) {
+            if (FD_ISSET(i, writefds)) {
+                ffd = fd_local_to_file(i);
+                if (FILE_FD_IS_BAD(ffd)) {
+                    errprint("[fs] %s: fd %d err! handle=%d flags=%x\n", __func__, 
+                        i, ffd->handle, ffd->flags);
+                    return -1;
+                }
+            }
+        }
+        if (exceptfds) {
+            if (FD_ISSET(i, exceptfds)) {
+                ffd = fd_local_to_file(i);
+                if (FILE_FD_IS_BAD(ffd)) {
+                    errprint("[fs] %s: fd %d err! handle=%d flags=%x\n", __func__, 
+                        i, ffd->handle, ffd->flags);
+                    return -1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+void fd_set_or(fd_set *dst, fd_set *src, int maxfdp)
+{
+    int i;
+    for (i = 0; i < maxfdp; i+=8) {
+        dst->fd_bits[i / 8] |= src->fd_bits[i / 8];
+    }
+}
+
+int fd_set_empty(fd_set *set, int maxfdp)
+{
+    int i;
+    for (i = 0; i < maxfdp; i++) {
+        if (FD_ISSET(i, set)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+void fd_set_dump(fd_set *set, int maxfdp)
+{
+    dbgprint("====FD SET DUMP====");
+    int i;
+    for (i = 0; i < maxfdp; i++) {
+        if (FD_ISSET(i, set)) {
+            dbgprint("1");
+        } else {
+            dbgprint("0");
+        }
+    }
+    dbgprint("\n");
+}
+
+static int do_select(int maxfdp, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+    struct timeval *timeout)
+{
+    if (do_select_check_fds(maxfdp, readfds, writefds, exceptfds) < 0) {
+        return -EBADF;
+    }
+    #ifdef DEBUG_SELECT
+    fd_set_dump(readfds, maxfdp);
+    fd_set_dump(writefds, maxfdp);
+    fd_set_dump(exceptfds, maxfdp);
+    #endif
+#ifdef CONFIG_NET
+    #define SELECT_FDS_NR   4
+#else
+    #define SELECT_FDS_NR   3
+#endif
+    /* 0: normal, 1:pipe0, 2:pipe1, netif:3 */
+    fd_set readfds_tab[SELECT_FDS_NR], writefds_tab[SELECT_FDS_NR], exceptfds_tab[SELECT_FDS_NR];
+    int i;
+    for (i = 0; i < SELECT_FDS_NR; i++) {
+        FD_ZERO(&readfds_tab[i]);
+        FD_ZERO(&writefds_tab[i]);
+        FD_ZERO(&exceptfds_tab[i]);
+    }
+    int j;
+    file_fd_t *ffd;
+    for (j = 0; j < SELECT_FDS_NR; j++) {
+        for (i = 0; i < maxfdp; i++) {
+            if (readfds) {
+                if (FD_ISSET(i, readfds)) {
+                    ffd = fd_local_to_file(i);
+                    switch (ffd->flags & FILE_FD_TYPE_MASK) {
+                    case FILE_FD_NORMAL:
+                        if (j != 0) 
+                            break;
+                        #ifdef DEBUG_SELECT
+                        dbgprint("fd read set normal select %d: fd %d\n", j, i);
+                        #endif
+                        FD_SET(i, &readfds_tab[j]);
+                        break;    
+                    case FILE_FD_PIPE0:
+                        if (j != 1) 
+                            break;
+                        FD_SET(i, &readfds_tab[j]);
+                        break;
+                    case FILE_FD_PIPE1:
+                        if (j != 2) 
+                            break;
+                        FD_SET(i, &readfds_tab[j]);
+                        break;
+                    #ifdef CONFIG_NET
+                    case FILE_FD_SOCKET:
+                        if (j != 3) 
+                            break;
+                        #ifdef DEBUG_SELECT
+                        dbgprint("fd read set net select %d: fd %d\n", j, i);
+                        #endif
+                        FD_SET(i, &readfds_tab[j]);
+                        break;
+                    #endif
+                    default:
+                        errprint("%s: unknown read fd %d file type\n", __func__, i);
+                        return -EBADF;
+                    }
+                }
+            }
+            if (writefds) {
+                if (FD_ISSET(i, writefds)) {
+                    ffd = fd_local_to_file(i);
+                    switch (ffd->flags & FILE_FD_TYPE_MASK) {
+                    case FILE_FD_NORMAL:
+                        if (j != 0) 
+                            break;
+                        #ifdef DEBUG_SELECT
+                        dbgprint("fd write set normal select %d: fd %d\n", j, i);
+                        #endif
+                        FD_SET(i, &writefds_tab[j]);
+                        break;    
+                    case FILE_FD_PIPE0:
+                        if (j != 1) 
+                            break;
+                        FD_SET(i, &writefds_tab[j]);
+                        break;
+                    case FILE_FD_PIPE1:
+                        if (j != 2) 
+                            break;
+                        FD_SET(i, &writefds_tab[j]);
+                        break;
+                    #ifdef CONFIG_NET
+                    case FILE_FD_SOCKET:
+                        if (j != 3) 
+                            break;
+                        #ifdef DEBUG_SELECT
+                        dbgprint("fd write set normal select %d: fd %d\n", j, i);
+                        #endif
+                        FD_SET(i, &writefds_tab[j]);
+                        break;
+                    #endif
+                    default:
+                        errprint("%s: unknown write fd %d file type\n", __func__, i);
+                        return -EBADF;
+                    }
+                }
+            }
+            if (exceptfds) {
+                if (FD_ISSET(i, exceptfds)) {
+                    ffd = fd_local_to_file(i);
+                    switch (ffd->flags & FILE_FD_TYPE_MASK) {
+                    case FILE_FD_NORMAL:
+                        if (j != 0) 
+                            break;
+                        #ifdef DEBUG_SELECT
+                        dbgprint("fd except set normal select %d: fd %d\n", j, i);
+                        #endif
+                        FD_SET(i, &exceptfds_tab[j]);
+                        break;    
+                    case FILE_FD_PIPE0:
+                        if (j != 1) 
+                            break;
+                        FD_SET(i, &exceptfds_tab[j]);
+                        break;
+                    case FILE_FD_PIPE1:
+                        if (j != 2) 
+                            break;
+                        FD_SET(i, &exceptfds_tab[j]);
+                        break;
+                    #ifdef CONFIG_NET
+                    case FILE_FD_SOCKET:
+                        if (j != 3) 
+                            break;
+                        #ifdef DEBUG_SELECT
+                        dbgprint("fd except set normal select %d: fd %d\n", j, i);
+                        #endif
+                        FD_SET(i, &exceptfds_tab[j]);
+                        break;
+                    #endif
+                    default:
+                        errprint("%s: unknown except fd %d file type\n", __func__, i);
+                        return -EBADF;
+                    }
+                }
+            }
+        }
+    }
+
+    /* zero old set */
+    if (readfds)
+        FD_ZERO(readfds);
+    if (writefds)
+        FD_ZERO(writefds);
+    if (exceptfds)
+        FD_ZERO(exceptfds);
+
+    select_t selects[SELECT_FDS_NR] = {
+        fsif.select,
+        pipeif_rd.select,
+        pipeif_wr.select,
+        #ifdef CONFIG_NET
+        netif_fsal.select
+        #endif
+    };
+    
+    int total = 0;
+    for (i = 0; i < SELECT_FDS_NR; i++) {
+        #ifdef DEBUG_SELECT
+        dbgprint("select %d/%d\n", i, SELECT_FDS_NR);         
+        #endif
+        if (selects[i] != NULL) {   /* 抽象层接口支持select才判断 */
+            /* 没有要查看的集，则continue */
+            if (fd_set_empty(&readfds_tab[i], maxfdp) && 
+                fd_set_empty(&writefds_tab[i], maxfdp) &&
+                fd_set_empty(&exceptfds_tab[i], maxfdp))
+                continue;
+            #ifdef DEBUG_SELECT
+            fd_set_dump(&readfds_tab[i], maxfdp);
+            fd_set_dump(&writefds_tab[i], maxfdp);
+            fd_set_dump(&exceptfds_tab[i], maxfdp);
+            #endif
+            int ret = selects[i](maxfdp, &readfds_tab[i], &writefds_tab[i], &exceptfds_tab[i], timeout);    
+            if (ret < 0) {
+                return ret;
+            }
+            /* write back */
+            if (readfds) {
+                fd_set_or(readfds, &readfds_tab[i], maxfdp);
+                #ifdef DEBUG_SELECT
+                dbgprint("after select %d/%d readfds\n", i, SELECT_FDS_NR);        
+                fd_set_dump(readfds, maxfdp);
+                #endif
+            }
+            if (writefds) {
+                fd_set_or(writefds, &writefds_tab[i], maxfdp);
+                #ifdef DEBUG_SELECT
+                dbgprint("after select %d/%d writefds\n", i, SELECT_FDS_NR);        
+                fd_set_dump(writefds, maxfdp);
+                #endif
+            }
+            if (exceptfds) {
+                fd_set_or(exceptfds, &exceptfds_tab[i], maxfdp);
+                #ifdef DEBUG_SELECT
+                dbgprint("after select %d/%d exceptfds\n", i, SELECT_FDS_NR);        
+                fd_set_dump(exceptfds, maxfdp);
+                #endif
+            }
+            total += ret;
+        }
+    }
+    return total;
+}
+
+int sys_select(int maxfdp, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+    struct timeval *timeout)
+{
+    #ifdef DEBUG_SELECT
+    dbgprint("maxfdp: %d, readfds:%p, writefds:%p, execptfds:%p, timeout:%p\n",
+        maxfdp, readfds, writefds, exceptfds, timeout);
+    #endif
+    if (maxfdp < 0 || maxfdp > LOCAL_FILE_OPEN_NR)
+        return -EINVAL;
+    fd_set __readfds, __writefds, __exceptfds;
+    struct timeval __timeout;
+    if (readfds) {
+        if (mem_copy_from_user(&__readfds, readfds, sizeof(fd_set)) < 0) {
+            return -EINVAL;
+        }
+    }
+    if (writefds) {
+        if (mem_copy_from_user(&__writefds, writefds, sizeof(fd_set)) < 0) {
+            return -EINVAL;
+        }
+    }
+    if (exceptfds) {
+        if (mem_copy_from_user(&__exceptfds, exceptfds, sizeof(fd_set)) < 0) {
+            return -EINVAL;
+        }
+    }
+    if (timeout) {
+        if (mem_copy_from_user(&__timeout, timeout, sizeof(struct timeval)) < 0) {
+            return -EINVAL;
+        }
+    }
+    int ret = do_select(maxfdp,
+        readfds == NULL ? NULL: &__readfds,
+        writefds == NULL ? NULL: &__writefds,
+        exceptfds == NULL ? NULL: &__exceptfds, 
+        timeout == NULL ? NULL: &__timeout);
+    /* 回写返回值 */
+    if (readfds) {
+        if (mem_copy_to_user(readfds, &__readfds, sizeof(fd_set)) < 0) {
+            return -EINVAL;
+        }
+    }
+    if (writefds) {
+        if (mem_copy_from_user(writefds, &__writefds, sizeof(fd_set)) < 0) {
+            return -EINVAL;
+        }
+    }
+    if (exceptfds) {
+        if (mem_copy_from_user(exceptfds, &__exceptfds, sizeof(fd_set)) < 0) {
+            return -EINVAL;
+        }
+    }
+    return ret;
 }

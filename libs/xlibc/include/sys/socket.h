@@ -255,6 +255,7 @@ typedef struct ip_mreq {
   #define SHUT_RDWR 2
 #endif
 
+#if 0
 /* FD_SET used for lwip_select */
 #ifndef FD_SET
   #undef  FD_SETSIZE
@@ -270,6 +271,7 @@ typedef struct ip_mreq {
         } fd_set;
 
 #endif /* FD_SET */
+#endif
 
 /* 套接字参数传递 */
 struct _sockarg {
@@ -281,11 +283,13 @@ struct _sockarg {
     socklen_t *fromlen;               /* 来源套接字结构长度 */
 };
 
+#if 0
 struct _sockfd_set {
     fd_set *readfds;
     fd_set *writefds;
     fd_set *errorfds;
 };
+#endif
 
 int socket(int domain, int type, int protocol);
 int bind(int sockfd, struct sockaddr *my_addr, int addrlen);

@@ -74,11 +74,13 @@ syscall_handler:
    	push gs
    	pushad			    ; PUSHAD指令压入32位寄存器，其入栈顺序是:
 				    	; EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI 
-    mov dx, ss
-	mov ds, dx
-	mov es, dx
-    mov fs, dx
-	mov gs, dx
+    push eax
+    mov ax, ss
+	mov ds, ax
+	mov es, ax
+    mov fs, ax
+	mov gs, ax
+    pop eax
     
    	push 0x40			; 此位置压入0x40也是为了保持统一的栈格式
     

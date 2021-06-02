@@ -416,5 +416,5 @@ int netif_fcntl(int sock, int cmd, long val)
     if (retval < 0) {
         errprint("netif fcntl: do fcntl sock %d request %d failed!\n", sock, cmd);
     }
-    return retval;   
+    return retval;
 }

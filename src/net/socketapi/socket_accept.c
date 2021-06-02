@@ -6,12 +6,11 @@
 #include <xbook/net.h>
 #include <xbook/fd.h>
 #include <xbook/safety.h>
+#include <xbook/netif.h>
 
 #ifndef CONFIG_NETREMOTE
 #include <lwip/sockets.h>
 #endif
-
-extern int do_socket_close(int sock);
 
 static int do_accept(int sock, struct sockaddr *addr, socklen_t *addrlen)
 {

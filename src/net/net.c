@@ -90,4 +90,5 @@ fsal_t netif_fsal = {
     .fcntl      = netif_fcntl,
     .incref     = netif_incref,
     .decref     = netif_decref,
+    .select     = netif_select,
 };
