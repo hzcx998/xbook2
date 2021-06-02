@@ -9,3 +9,4 @@
     gatway: 192.168.0.1
 6. 在xbook2的makefile的QEMU的配置中添加网卡配置。
 7. 启动虚拟机即可自动连接tap0虚拟网卡。虚拟机通过tap0网卡和主机通信。
+8. 注意，需要关闭windows的防火墙，xbook2才能ping通tap0网卡的ip地址。
