@@ -279,7 +279,7 @@ static void *icmp_send(void *argv)
 			gettimeofday(&packet->tv_begin,NULL);
 		}
 		icmp_pack((struct icmp *)send_buff,packet_send,&tv, 64);
-        printf("send pack.\n");
+        // printf("send pack.\n");
 		/*
         printf("rawsock:%d, dest:%x, family:%d, port:%d\n", 
             rawsock, dest.sin_addr.s_addr, dest.sin_family, dest.sin_port);*/
@@ -317,6 +317,7 @@ static void *icmp_recv(void *argv)
 				break;
 			case 0:
 				//超时
+                // printf("time out\n");
 				break;
 			default :
 				{

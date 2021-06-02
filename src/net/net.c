@@ -32,9 +32,17 @@ void lwip_init_task(void)
 #else
     tcpip_init(NULL, NULL);
 #endif
+
+#if LWIP_DHCP == 1
+    IP4_ADDR(&ipaddr, 0,0,0,0);
+    IP4_ADDR(&gateway, 0,0,0,0);
+    IP4_ADDR(&netmask, 0,0,0,0);
+#else
     IP4_ADDR(&ipaddr, 192,168,0,105);
     IP4_ADDR(&gateway, 192,168,0,1);
     IP4_ADDR(&netmask, 255,255,0, 0);
+#endif
+
 #if NO_SYS == 1
     netif_add(&lwip_netif, &ipaddr, &netmask, &gateway, NULL, ethernetif_init, ethernet_input);
 #else    
@@ -42,8 +50,11 @@ void lwip_init_task(void)
 #endif    
     netif_set_default(&lwip_netif);
     netif_set_up(&lwip_netif);
-}
 
+#if LWIP_DHCP == 1
+    dhcp_start(&lwip_netif);
+#endif
+}
 
 extern void httpserver_init();
 /**
@@ -56,12 +67,21 @@ void netin_kthread(void *arg)
     infoprint("[net] starting...\n");
     lwip_init_task();
     httpserver_init();
+#if LWIP_DHCP == 1
+    int dhcp_started = 0;
+#endif
     while(1) {
         /* 检测输入，如果没有收到数据就会阻塞。 */
         ethernetif_input(&lwip_netif);
 		//todo: add your own user code here
         task_yield();
-	}
+#if LWIP_DHCP == 1
+        if (lwip_netif.dhcp->state == DHCP_BOUND && !dhcp_started) {
+            infoprint("[net] dhcp init done\n");
+            dhcp_started = 1;
+        }
+#endif
+    }
 }
 
 void network_init(void)

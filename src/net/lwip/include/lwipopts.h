@@ -46,10 +46,10 @@
 
 #define LWIP_DNS    1
 
-#define LWIP_DHCP    1
+#define LWIP_DHCP    0
 
 #define LWIP_ARP 1
-#define DHCP_DOES_ARP_CHECK 1
+#define DHCP_DOES_ARP_CHECK 0
 
 #include <xbook/schedule.h>
 /* tcpip core thread prio is usr  prio in xbook kernel
