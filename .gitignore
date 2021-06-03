@@ -134,4 +134,6 @@ bin/poweroff/poweroff
 bin/reboot/reboot
 bin/httpd/httpd
 bin/ping/ping
+bin/telnet/telnet
+
 # ====xbook2 kernel ignore end====
