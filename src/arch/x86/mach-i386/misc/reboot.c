@@ -2,9 +2,9 @@
 #include <xbook/debug.h>
 
 void sys_reboot(void) {
-    // Send 'Exit' signal in OS
+    // TODO: Send 'Exit' signal in OS
 
-    // Check if Reboot OK
+    // TODO: Check if Reboot OK
 
     // Reboot
     reboot();

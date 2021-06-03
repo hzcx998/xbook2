@@ -209,6 +209,8 @@ QEMU_ARGUMENT = -m 512m $(QEMU_KVM) \
 		-device sb16 \
 		-device AC97 \
 		-device intel-hda -device hda-duplex
+# 		-usbdevice mouse \
+# 		-usbdevice keyboard
 
 ifeq ($(BOOT_MODE),$(BOOT_LEGACY_MODE))
 QEMU_ARGUMENT += -drive file=$(FLOPPYA_IMG),format=raw,index=0,if=floppy
