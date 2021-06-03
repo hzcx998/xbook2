@@ -126,7 +126,7 @@ int acpi_enable(void) {
             }
 
             if (i < 300) {
-                keprint(PRINT_WARING "Enabled ACPI.\n");
+                keprint(PRINT_INFO "Enabled ACPI.\n");
                 return 0;
             } else {
                 keprint(PRINT_WARING "Couldn't enable ACPI.\n");
@@ -226,10 +226,10 @@ int acpi_init(void) {
 
                             return 0;
                         } else {
-                            keprint(PRINT_INFO "\\_S5 parse error.\n");
+                            keprint(PRINT_WARING "\\_S5 parse error.\n");
                         }
                     } else {
-                        keprint(PRINT_INFO "\\_S5 not present.\n");
+                        keprint(PRINT_WARING "\\_S5 not present.\n");
                     }
                 } else {
                     keprint(PRINT_WARING "DSDT invalid.\n");
