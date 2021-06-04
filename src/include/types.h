@@ -39,4 +39,6 @@ typedef long long   loff_t;
 typedef long int irqno_t;
 typedef void task_func_t(void *);
 
+typedef void *caddr_t;
+
 #endif  /* _XBOOK_TYPES_H */

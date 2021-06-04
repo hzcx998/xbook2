@@ -29,6 +29,8 @@ typedef struct dirent {
 
 typedef long ssize_t;
 
+typedef void * caddr_t;  
+
 #ifdef __cplusplus
 }
 #endif

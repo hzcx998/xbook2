@@ -8,6 +8,7 @@
 #include <xbook/socketcache.h>
 #include <xbook/file.h>
 #include <xbook/safety.h>
+#include <sys/ioctl.h>
 
 #ifndef CONFIG_NETREMOTE
 #include <lwip/sockets.h>
@@ -320,57 +321,6 @@ int netif_write(int sock, void *buffer, size_t nbytes)
         //keprintln("buf: %s", _buf);
         return do_write(sock, _buf, nbytes);
     }
-}
-
-static int do_ioctl(int sock, int request, void *arg)
-{
-    #ifdef CONFIG_NETREMOTE
-    lpc_parcel_t parcel = lpc_parcel_get();
-    if (!parcel) {
-        return -1;
-    }
-    lpc_parcel_write_int(parcel, sock);
-    lpc_parcel_write_int(parcel, request);
-    lpc_parcel_write_sequence(parcel, arg, sizeof(void *));
-    if (lpc_call(LPC_ID_NET, NETCALL_ioctl, parcel, parcel) < 0) {
-        lpc_parcel_put(parcel);
-        return -1;
-    }
-    int retval = -1;
-    lpc_parcel_read_int(parcel, (uint32_t *)&retval);
-    lpc_parcel_read_sequence(parcel, arg, NULL);
-    lpc_parcel_put(parcel);
-    return retval;
-    #else
-    return lwip_ioctl(sock, request, arg);
-    #endif
-}
-
-int netif_ioctl(int sock, int request, void *arg)
-{
-    /* arg 可以为NULL */
-    if (sock < 0)
-        return -EINVAL;
-    socket_cache_t *socache = socket_cache_find(sock);
-    if (!socache) {
-        errprint("netif ioctl: find socket cache for sock %d error!\n", sock);            
-        return -ESRCH;
-    }
-    if (atomic_get(&socache->reference) <= 0) {
-        noteprint("netif ioctl: socket %d reference %d error!\n",
-            sock, atomic_get(&socache->reference));            
-        return -EPERM;
-    }
-    char __arg[32];
-    if (mem_copy_from_user(__arg, (void *)arg, 32) < 0) {
-        errprint("%s: copy arg from sock %d error!\n", __func__, sock);            
-        return -EINVAL;
-    }
-    int retval = do_ioctl(sock, request, __arg);
-    if (retval < 0) {
-        errprint("%s: do ioctl sock %d request %d failed!\n", __func__, sock, request);
-    }
-    return retval;   
 }
 
 static int do_fcntl(int sock, int cmd, int val)

@@ -62,6 +62,32 @@
 #define NETIO_SETFLGS       DEVCTL_CODE('n', 3)
 #define NETIO_GETFLGS       DEVCTL_CODE('n', 4)
 
+/* sockets */
+#define SIOCGIFCONF         DEVCTL_CODE('s', 1)
+#define SIOCSIFADDR         DEVCTL_CODE('s', 2)
+#define SIOCGIFADDR         DEVCTL_CODE('s', 3)
+#define SIOCSIFFLAGS        DEVCTL_CODE('s', 4)
+#define SIOCGIFFLAGS        DEVCTL_CODE('s', 5)
+#define SIOCSIFBRDADDR      DEVCTL_CODE('s', 6)
+#define SIOCGIFBRDADDR      DEVCTL_CODE('s', 7)
+#define SIOCGIFNETMASK      DEVCTL_CODE('s', 8)
+#define SIOCSIFNETMASK      DEVCTL_CODE('s', 9)
+#define SIOCGIFMTU          DEVCTL_CODE('s', 10)
+#define SIOCSIFMTU          DEVCTL_CODE('s', 11)
+#define SIOCSIFNAME         DEVCTL_CODE('s', 12)
+#define SIOCGIFNAME         DEVCTL_CODE('s', 13)
+#define SIOCSIFHWADDR       DEVCTL_CODE('s', 14)
+#define SIOCGIFHWADDR       DEVCTL_CODE('s', 15)
+#define SIOCSIFHWBROADCAST  DEVCTL_CODE('s', 16)
+#define SIOCGIFHWBROADCAST  DEVCTL_CODE('s', 17)
+#define SIOCGPGRP           DEVCTL_CODE('s', 18)
+#define SIOCSPGRP           DEVCTL_CODE('s', 19)
+#define SIOCSARP            DEVCTL_CODE('s', 20)
+#define SIOCGARP            DEVCTL_CODE('s', 21)
+#define SIOCDARP            DEVCTL_CODE('s', 22)
+#define SIOCADDRT           DEVCTL_CODE('s', 23)
+#define SIOCDELRT           DEVCTL_CODE('s', 24)
+
 /* video */
 typedef struct _video_info {
     char bits_per_pixel;                  /* 每个像素的位数 */

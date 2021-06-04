@@ -200,6 +200,8 @@
         "socketcache.h": "c",
         "select.h": "c",
         "netif.h": "c",
-        "in.h": "c"
+        "in.h": "c",
+        "if.h": "c",
+        "sockioif.h": "c"
     }
 }

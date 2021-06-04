@@ -4,6 +4,7 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <net/if.h>
 
 #define MAXLINE 4096
 int socket_test(int argc, char *argv[])
@@ -184,5 +185,42 @@ int socket_test4(int argc, char *argv[])
     char dest[100] ;
     inet_ntop(AF_INET, &address.sin_addr,dest,100);
     printf("inet_ntop: %x -> %s\n", address.sin_addr, dest);
+    return 0;
+}
+
+
+int socket_ifconfig0(int argc, char *argv[])
+{
+    int sfd, if_count, i;
+    struct ifconf ifc;
+    struct ifreq ifr[10];
+    char ipaddr[INET_ADDRSTRLEN] = {'\0'};
+
+    memset(&ifc, 0, sizeof(struct ifconf));
+
+    sfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    ifc.ifc_len = 10 * sizeof(struct ifreq);
+    ifc.ifc_buf = (char *)ifr;
+
+    /* SIOCGIFCONF is IP specific. see netdevice(7) */
+    ioctl(sfd, SIOCGIFCONF, (char *)&ifc);
+
+    if_count = ifc.ifc_len / (sizeof(struct ifreq));
+    for (i = 0; i < if_count; i++) {
+        printf("Interface %s : ", ifr[i].ifr_name);    
+        inet_ntop(AF_INET, 
+        &(((struct sockaddr_in *)&(ifr[i].ifr_addr))->sin_addr),
+        ipaddr, INET_ADDRSTRLEN);
+        printf("%s\n", ipaddr);
+    }
+    close(sfd);
+    exit(EXIT_SUCCESS);
+    return 0;
+}
+
+int socket_ifconfig(int argc, char *argv[])
+{
+    socket_ifconfig0(argc, argv);
     return 0;
 }
