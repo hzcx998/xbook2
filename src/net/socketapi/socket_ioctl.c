@@ -7,6 +7,8 @@
 #include <xbook/safety.h>
 #include <xbook/sockioif.h>
 #include <xbook/netif.h>
+#include <xbook/if_ether.h>
+#include <xbook/if_arp.h>
 #include <sys/ioctl.h>
 
 #ifndef CONFIG_NETREMOTE
@@ -54,6 +56,55 @@ static int do_ifconf(int sock, void *arg)
     return 0;
 }
 
+static int do_get_ifaddr(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    
+    struct sockaddr_in *sockaddr = (struct sockaddr_in *)&ifreq.ifr_addr;
+    if (sockaddr->sin_family == AF_INET) {   /* ipv4 */
+        net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+        if (!netif) {
+            return -ENODEV;
+        }
+        memcpy(&sockaddr->sin_addr, &netif->ip_addr, sizeof(netif->ip_addr));
+        if (mem_copy_to_user(pifreq, &ifreq, sizeof(struct ifreq)) < 0)
+            return -EINVAL;
+    } else {    /* ipv6 or others not support */
+        return -ENOSYS;
+    }
+    return 0;
+}
+
+static int do_get_ifhwaddr(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    
+    struct sockaddr *sockaddr = (struct sockaddr *)&ifreq.ifr_hwaddr;
+    net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+    if (!netif) {
+        return -ENODEV;
+    }
+
+    if (netif->flags & IFF_LOOPBACK) {
+        sockaddr->sa_family = ARPHRD_LOOPBACK;
+    } else {
+        sockaddr->sa_family = ARPHRD_ETHER;
+        memcpy(sockaddr->sa_data, netif->hwaddr, ETH_ALEN);
+    }
+    if (mem_copy_to_user(pifreq, &ifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    return 0;
+}
 
 static int do_ioctl(int sock, int request, void *arg)
 {
@@ -87,6 +138,10 @@ static int do_ioctl(int sock, int request, void *arg)
         return -ENOSYS;
     case SIOCGIFCONF:
         return do_ifconf(sock, arg);
+    case SIOCGIFADDR:
+        return do_get_ifaddr(arg);
+    case SIOCGIFHWADDR:
+        return do_get_ifhwaddr(arg);
     default:    /* 默认状态，发送给lwip进行处理 */
         {
             char __arg[32];

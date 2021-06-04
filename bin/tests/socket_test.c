@@ -5,6 +5,8 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <net/if.h>
+#include <net/if_arp.h>
+#include <net/if_ether.h>
 
 #define MAXLINE 4096
 int socket_test(int argc, char *argv[])
@@ -219,8 +221,117 @@ int socket_ifconfig0(int argc, char *argv[])
     return 0;
 }
 
+
+static char *get_ipaddr(const char *dev)
+{
+    int sfd, saved_errno, ret;
+    struct ifreq ifr;
+    char *ipaddr;
+
+    ipaddr = (char *)malloc(INET_ADDRSTRLEN);
+    memset(&ifr, 0, sizeof(ifr));
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+
+    sfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    errno = saved_errno;
+    ret = ioctl(sfd, SIOCGIFADDR, &ifr);
+    if (ret == -1) {
+        if (errno == 19) {
+            fprintf(stderr, "Interface %s : No such device.\n", dev);
+            exit(EXIT_FAILURE);
+        }
+        if (errno == 99) {
+            fprintf(stderr, "Interface %s : No IPv4 address assigned.\n", dev);
+            exit(EXIT_FAILURE);
+        }
+    }
+    saved_errno = errno;
+
+    inet_ntop(AF_INET, &(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), ipaddr, INET_ADDRSTRLEN);
+    
+    close(sfd);
+    return ipaddr;
+}
+
+int socket_ifconfig1(int argc, char *argv[])
+{
+    #if 0
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s [network interface name]\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    #endif
+
+    char ifname[IFNAMSIZ] = {'\0'};
+    strncpy(ifname, "lo", IFNAMSIZ-1);
+
+    char *ip = get_ipaddr(ifname);
+
+    printf("Interface %s : %s\n", ifname, ip);
+    return 0;
+}
+
+static unsigned char *get_if_mac(const char *dev)
+{
+    int sfd, ret, saved_errno, i;
+    unsigned char *mac_addr;
+    struct ifreq ifr;
+
+    mac_addr = (unsigned char *)malloc(ETH_ALEN);
+
+    sfd = socket(AF_INET, SOCK_DGRAM, 0);
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+
+    saved_errno = errno;
+    ret = ioctl(sfd, SIOCGIFHWADDR, &ifr);
+    if (ret == -1 && errno == 19) {
+        fprintf(stderr, "Interface %s : No such device.\n", dev);
+        exit(EXIT_FAILURE);
+    }
+    errno = saved_errno;
+
+    if (ifr.ifr_addr.sa_family == ARPHRD_LOOPBACK) {
+        printf("Interface %s : A Loopback device.\n", dev);
+        printf("MAC address is always 00:00:00:00:00:00\n");
+        exit(EXIT_SUCCESS);
+    }
+
+    if (ifr.ifr_addr.sa_family != ARPHRD_ETHER) {
+        fprintf(stderr, "Interface %s : Not an Ethernet device.\n", dev);
+        exit(EXIT_FAILURE);
+    }
+
+    memcpy(mac_addr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
+
+    return (unsigned char *)mac_addr;
+}
+
+int socket_ifconfig2(int argc, char *argv[])
+{
+    /*
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s [network interface name]\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }*/
+
+    char ifname[IFNAMSIZ] = {'\0'};
+    strncpy(ifname, "en0", IFNAMSIZ-1);
+
+    unsigned char *mac = get_if_mac(ifname);
+    
+    printf("Interface %s : %.2x:%.2x:%.2x:%.2x:%.2x:%.2x\n",
+    ifname, *mac, *(mac+1), *(mac+2), *(mac+3), *(mac+4), *(mac+5));
+
+    return 0;
+}
+
 int socket_ifconfig(int argc, char *argv[])
 {
-    socket_ifconfig0(argc, argv);
+    //socket_ifconfig0(argc, argv);
+    //socket_ifconfig1(argc, argv);
+    socket_ifconfig2(argc, argv);
     return 0;
 }

@@ -202,6 +202,8 @@
         "netif.h": "c",
         "in.h": "c",
         "if.h": "c",
-        "sockioif.h": "c"
+        "sockioif.h": "c",
+        "if_arp.h": "c",
+        "if_ether.h": "c"
     }
 }
