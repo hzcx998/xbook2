@@ -80,6 +80,28 @@ static int do_get_ifaddr(void *arg)
     return 0;
 }
 
+static int do_set_ifaddr(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    
+    struct sockaddr_in *sockaddr = (struct sockaddr_in *)&ifreq.ifr_addr;
+    if (sockaddr->sin_family == AF_INET) {   /* ipv4 */
+        net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+        if (!netif) {
+            return -ENODEV;
+        }
+        net_interface_set_ip_addr(netif, (ip_addr_t *)&sockaddr->sin_addr);
+    } else {    /* ipv6 or others not support */
+        return -ENOSYS;
+    }
+    return 0;
+}
+
 static int do_get_ifhwaddr(void *arg)
 {
     if (!arg)
@@ -103,6 +125,173 @@ static int do_get_ifhwaddr(void *arg)
     }
     if (mem_copy_to_user(pifreq, &ifreq, sizeof(struct ifreq)) < 0)
         return -EINVAL;
+    return 0;
+}
+
+static int do_set_ifhwaddr(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    
+    struct sockaddr *sockaddr = (struct sockaddr *)&ifreq.ifr_hwaddr;
+    net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+    if (!netif) {
+        return -ENODEV;
+    }
+
+    if (netif->flags & IFF_LOOPBACK) {
+        errprint("%s: can not set mac addr for loopback device.\n");
+        return -EPERM;
+    }
+    net_interface_set_hwaddr(netif, sockaddr->sa_data);
+    return 0;
+}
+
+static int do_get_ifflags(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+    if (!netif) {
+        return -ENODEV;
+    }
+    ifreq.ifr_flags = netif->flags;
+    if (mem_copy_to_user(pifreq, &ifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    return 0;
+}
+
+static int do_set_ifflags(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+    if (!netif) {
+        return -ENODEV;
+    }
+    net_interface_set_flags(netif, ifreq.ifr_flags);
+    return 0;
+}
+
+static int do_set_ifname(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+    if (!netif) {
+        return -ENODEV;
+    }
+    memset(netif->name, 0, IFNAMSIZ);
+    strcpy(netif->name, ifreq.ifr_newname);
+    return 0;
+}
+
+
+static int do_get_ifbrdaddr(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    
+    struct sockaddr_in *sockaddr = (struct sockaddr_in *)&ifreq.ifr_broadaddr;
+    if (sockaddr->sin_family == AF_INET) {   /* ipv4 */
+        net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+        if (!netif) {
+            return -ENODEV;
+        }
+        memcpy(&sockaddr->sin_addr, &netif->broad_addr, sizeof(netif->broad_addr));
+        if (mem_copy_to_user(pifreq, &ifreq, sizeof(struct ifreq)) < 0)
+            return -EINVAL;
+    } else {    /* ipv6 or others not support */
+        return -ENOSYS;
+    }
+    return 0;
+}
+
+static int do_set_ifbrdaddr(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    
+    struct sockaddr_in *sockaddr = (struct sockaddr_in *)&ifreq.ifr_broadaddr;
+    if (sockaddr->sin_family == AF_INET) {   /* ipv4 */
+        net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+        if (!netif) {
+            return -ENODEV;
+        }
+        net_interface_set_broad_addr(netif, (ip_addr_t *)&sockaddr->sin_addr);
+    } else {    /* ipv6 or others not support */
+        return -ENOSYS;
+    }
+    return 0;
+}
+
+static int do_get_ifnetmask(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    
+    struct sockaddr_in *sockaddr = (struct sockaddr_in *)&ifreq.ifr_netmask;
+    if (sockaddr->sin_family == AF_INET) {   /* ipv4 */
+        net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+        if (!netif) {
+            return -ENODEV;
+        }
+        memcpy(&sockaddr->sin_addr, &netif->netmask, sizeof(netif->netmask));
+        if (mem_copy_to_user(pifreq, &ifreq, sizeof(struct ifreq)) < 0)
+            return -EINVAL;
+    } else {    /* ipv6 or others not support */
+        return -ENOSYS;
+    }
+    return 0;
+}
+
+static int do_set_ifnetmask(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    
+    struct sockaddr_in *sockaddr = (struct sockaddr_in *)&ifreq.ifr_netmask;
+    if (sockaddr->sin_family == AF_INET) {   /* ipv4 */
+        net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+        if (!netif) {
+            return -ENODEV;
+        }
+        net_interface_set_netmask(netif, (ip_addr_t *)&sockaddr->sin_addr);
+    } else {    /* ipv6 or others not support */
+        return -ENOSYS;
+    }
     return 0;
 }
 
@@ -140,8 +329,26 @@ static int do_ioctl(int sock, int request, void *arg)
         return do_ifconf(sock, arg);
     case SIOCGIFADDR:
         return do_get_ifaddr(arg);
+    case SIOCSIFADDR:
+        return do_set_ifaddr(arg);
     case SIOCGIFHWADDR:
         return do_get_ifhwaddr(arg);
+    case SIOCSIFHWADDR:
+        return do_set_ifhwaddr(arg);
+    case SIOCGIFFLAGS:
+        return do_get_ifflags(arg);
+    case SIOCSIFFLAGS:
+        return do_set_ifflags(arg);
+    case SIOCSIFNAME:
+        return do_set_ifname(arg);
+    case SIOCGIFBRDADDR:
+        return do_get_ifbrdaddr(arg);
+    case SIOCSIFBRDADDR:
+        return do_set_ifbrdaddr(arg);
+    case SIOCGIFNETMASK:
+        return do_get_ifnetmask(arg);
+    case SIOCSIFNETMASK:
+        return do_set_ifnetmask(arg);
     default:    /* 默认状态，发送给lwip进行处理 */
         {
             char __arg[32];

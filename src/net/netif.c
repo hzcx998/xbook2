@@ -97,6 +97,114 @@ net_interface_t *net_interface_first()
     return list_first_owner_or_null(&netif_list_head, net_interface_t, list);
 }
 
+void net_interface_set_up(net_interface_t *netif)
+{
+    if (netif->extension) {
+    #if defined(NETIF_TYPE_LWIP)
+        netif_set_up((struct netif *)netif->extension);
+    #endif
+    }
+}
+
+void net_interface_set_down(net_interface_t *netif)
+{
+    if (netif->extension) {
+    #if defined(NETIF_TYPE_LWIP)
+        netif_set_down((struct netif *)netif->extension);
+    #endif
+    }
+}
+
+void net_interface_set_ip_addr(net_interface_t *netif, ip_addr_t *addr)
+{
+    /* copy ip to kernel */
+    memcpy(&netif->ip_addr, &addr, sizeof(netif->ip_addr));
+    if (netif->extension) {
+    #if defined(NETIF_TYPE_LWIP)
+        net_interface_set_down(netif);
+        struct netif *real_netif = (struct netif *)netif->extension;
+        memcpy(&real_netif->ip_addr, addr, sizeof(addr));
+        net_interface_set_up(netif);
+    #endif
+    }
+}
+
+void net_interface_set_broad_addr(net_interface_t *netif, ip_addr_t *addr)
+{
+    /* copy ip to kernel */
+    memcpy(&netif->broad_addr, &addr, sizeof(netif->broad_addr));
+    if (netif->extension) {
+    #if defined(NETIF_TYPE_LWIP)
+        /* FIXME: copy broad addr */
+    #endif
+    }
+}
+
+void net_interface_set_netmask(net_interface_t *netif, ip_addr_t *addr)
+{
+    /* copy ip to kernel */
+    memcpy(&netif->netmask, &addr, sizeof(netif->netmask));
+    if (netif->extension) {
+    #if defined(NETIF_TYPE_LWIP)
+        net_interface_set_down(netif);
+        struct netif *real_netif = (struct netif *)netif->extension;
+        memcpy(&real_netif->netmask, addr, sizeof(addr));
+        net_interface_set_up(netif);
+    #endif
+    }
+}
+
+void net_interface_set_flags(net_interface_t *netif, int flags)
+{
+    netif->flags = flags;
+    if (netif->extension) {
+    #if defined(NETIF_TYPE_LWIP)
+        struct netif *real_netif = (struct netif *)netif->extension;
+        
+        if (netif->flags & IFF_UP)
+            net_interface_set_up(netif);
+        else
+            net_interface_set_down(netif);
+
+        if (netif->flags & IFF_BROADCAST)
+            real_netif->flags |= NETIF_FLAG_BROADCAST;
+        else
+            real_netif->flags &= ~NETIF_FLAG_BROADCAST;
+
+        if (netif->flags & IFF_POINTOPOINT)
+            real_netif->flags |= NETIF_FLAG_POINTTOPOINT;
+        else
+            real_netif->flags &= ~NETIF_FLAG_POINTTOPOINT;
+
+        if (netif->flags & IFF_NOARP)
+            real_netif->flags &= ~NETIF_FLAG_ETHARP;
+        else
+            real_netif->flags |= NETIF_FLAG_ETHARP;
+
+        if (netif->flags & IFF_NOARP)
+            real_netif->flags &= ~NETIF_FLAG_ETHARP;
+        else
+            real_netif->flags |= NETIF_FLAG_ETHARP;
+        
+        if (netif->flags & IFF_RUNNING)
+            real_netif->flags |= NETIF_FLAG_LINK_UP;
+        else
+            real_netif->flags &= ~NETIF_FLAG_LINK_UP;
+
+    #endif
+    }
+}
+
+void net_interface_set_hwaddr(net_interface_t *netif, char *hwaddr)
+{
+    memcpy(netif->hwaddr, hwaddr, netif->hwaddr_len);
+    if (netif->extension) {
+    #if defined(NETIF_TYPE_LWIP)
+        /* FIXME: set mac addr in netcard */
+    #endif
+    }
+}
+
 void net_interface_dump()
 {
     net_interface_t *netif;
@@ -178,7 +286,7 @@ int network_interface_init()
     spinlock_init(&netif_spin_lock);
 
     /* 创建第一个网络接口 */
-    net_interface_t *netif = net_interface_create();
+    net_interface_t *netif = net_interface_create(&lwip_netif);
     assert(netif != NULL);
     /* 根据lwip_netif的flags进行设置 */
     netif->flags = 0;
@@ -190,7 +298,9 @@ int network_interface_init()
         netif->flags |= IFF_POINTOPOINT;
     if (!(lwip_netif.flags & NETIF_FLAG_ETHARP))
         netif->flags |= IFF_NOARP;
-    netif->flags |= IFF_RUNNING;
+    if (lwip_netif.flags & NETIF_FLAG_LINK_UP)
+        netif->flags |= IFF_RUNNING;
+
     netif->ip_addr = lwip_netif.ip_addr;
     ipaddr_aton("255.255.255.255", &netif->broad_addr);
     netif->netmask = lwip_netif.netmask;
@@ -202,7 +312,7 @@ int network_interface_init()
     net_interface_add(netif);
 
     /* 创建loop网络接口 */
-    net_interface_t *loopif = net_interface_create();
+    net_interface_t *loopif = net_interface_create(NULL);
     assert(loopif != NULL);
     loopif->flags = IFF_RUNNING | IFF_UP | IFF_LOOPBACK;
     ipaddr_aton("127.0.0.1", &loopif->ip_addr);

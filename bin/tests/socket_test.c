@@ -328,10 +328,282 @@ int socket_ifconfig2(int argc, char *argv[])
     return 0;
 }
 
+
+static short get_if_flags(int, char *);
+
+int socket_ifconfig3(int argc, char *argv[])
+{
+    /*if (argc != 2) {
+        fprintf(stderr, "Usage: %s [network interface name]\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }*/
+
+    int sfd;
+    short flags;
+    char ifname[IFNAMSIZ] = {'\0'};
+    strncpy(ifname, "en0", IFNAMSIZ-1);
+
+    sfd = socket(AF_INET, SOCK_DGRAM, 0);
+    flags = get_if_flags(sfd, ifname);
+
+    printf("Interface %s : ", ifname);
+    if (flags &IFF_UP)
+        printf("UP ");
+
+    if (flags &IFF_RUNNING)
+        printf("RUNNING ");
+
+    if (flags &IFF_LOOPBACK)
+        printf("LOOPBACK ");
+
+    if (flags &IFF_BROADCAST)
+        printf("BROADCAST ");
+
+    if (flags &IFF_MULTICAST)
+        printf("MULTICAST ");
+
+    if (flags &IFF_PROMISC)
+        printf("PROMISC");
+
+#ifndef IFF_LOWER_UP
+#define IFF_LOWER_UP 0x10000
+    if (flags &IFF_LOWER_UP)
+        printf("LOWER_UP");
+#endif
+
+    printf("\n");
+
+    close(sfd);
+    exit(EXIT_SUCCESS);
+}
+
+static short get_if_flags(int s, char *dev)
+{
+    int saved_errno, ret;
+    short if_flags;
+    struct ifreq ifr;
+
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+
+    saved_errno = errno;
+    ret = ioctl(s, SIOCGIFFLAGS, &ifr);
+    if (ret == -1 &&errno == 19) {
+        fprintf(stderr, "Interface %s : No such device.\n", dev);
+        exit(EXIT_FAILURE);
+    }
+    errno = saved_errno;
+    if_flags = ifr.ifr_flags;
+
+    return if_flags;
+}
+
+
+static void set_ipaddr(const char *, const char *);
+
+int socket_ifconfig4(int argc, char *argv[])
+{
+
+    /*if (argc != 3) {
+        fprintf(stderr, "Usage: %s [network interface name] [ip address]\n",
+        argv[0]);
+        exit(EXIT_FAILURE);
+    }*/
+    argv[1] = "en0";
+    argv[2] = "192.168.0.106";
+
+    char ifname[IFNAMSIZ] = {'\0'};
+    strncpy(ifname, argv[1], IFNAMSIZ-1);
+    char ipaddr[INET_ADDRSTRLEN] = {'\0'};
+    strncpy(ipaddr, argv[2], INET_ADDRSTRLEN);
+
+    set_ipaddr(ifname, ipaddr);
+
+    printf("Interface %s : ip address is set to %s\n", ifname, ipaddr);
+    
+    return 0;
+}
+
+static void set_ipaddr(const char *dev, const char *ip)
+{
+    int sfd, saved_errno, ret;
+    struct ifreq ifr;
+    struct sockaddr_in sin;
+
+    sfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    inet_pton(AF_INET, ip, &(sin.sin_addr));
+
+    memcpy(&ifr.ifr_addr, &sin, sizeof(struct sockaddr));
+
+    errno = saved_errno;
+    ret = ioctl(sfd, SIOCSIFADDR, &ifr);
+    if (ret == -1) {
+        if (errno == 19) {
+            fprintf(stderr, "Interface %s : No such device.\n", dev);
+            exit(EXIT_FAILURE);
+        }
+        if (errno == 99) {
+            fprintf(stderr, "Interface %s : No IPv4 address assigned.\n", dev);
+            exit(EXIT_FAILURE);
+        }
+    }
+    saved_errno = errno;
+
+    close(sfd);
+}
+
+static void set_if_flags(int, struct ifreq*);
+
+int socket_ifconfig5(int argc, char *argv[])
+{
+/*
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s [network interface name]\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }*/
+    argv[1] = "en0";
+
+    int sfd;
+    short flags;
+    struct ifreq ifr;
+
+    char ifname[IFNAMSIZ] = {'\0'};
+    strncpy(ifname, argv[1], IFNAMSIZ-1);
+
+    sfd = socket(AF_INET, SOCK_DGRAM, 0);
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+    flags = get_if_flags(sfd, &ifr);
+
+    ifr.ifr_flags = flags;
+
+    /* set IFF_UP if cleared */
+    if ((flags & IFF_UP)) {
+        ifr.ifr_flags &= ~IFF_UP;
+        set_if_flags(sfd, &ifr);
+        printf("Interface %s : UP unset.\n", ifname);
+    }
+
+    flags = ifr.ifr_flags;
+
+    /* clear IFF_PROMISC if set */
+    if (flags & IFF_PROMISC) {
+        ifr.ifr_flags &= ~IFF_PROMISC;
+        set_if_flags(sfd, &ifr);
+        printf("Interface %s : PROMISC cleared.\n", ifname);
+    }
+
+    close(sfd);
+
+    exit(EXIT_SUCCESS);
+}
+
+static void set_if_flags(int s, struct ifreq *ifr)
+{
+    int ret, saved_errno;
+    saved_errno = errno;
+    ret = ioctl(s, SIOCSIFFLAGS, ifr);
+    if (ret == -1) {
+        fprintf(stderr, "Interface %s : %s\n", ifr->ifr_name, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    errno = saved_errno;
+}
+
+
+static void change_ifname(char *, char *);
+static void shutdown_if_up(char *);
+
+int socket_ifconfig6(int argc, char *argv[])
+{
+    /*if (argc != 3) {
+        fprintf(stderr, "%s [old ifname] [new ifname]\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }*/
+    argv[1] = "en0";
+    argv[2] = "ena";
+    
+    char old_ifname[IFNAMSIZ] = {'\0'};
+    strncpy(old_ifname, argv[1], IFNAMSIZ);
+
+    char new_ifname[IFNAMSIZ] = {'\0'};
+    strncpy(new_ifname, argv[2], IFNAMSIZ);
+
+    change_ifname(old_ifname, new_ifname);
+    printf("Interface name %s has been changed to %s\n", old_ifname, new_ifname);
+
+    return 0;
+}
+
+void change_ifname(char *old_dev, char *new_dev)
+{
+    int sfd, ret, saved_errno;
+    struct ifreq ifr;
+
+    shutdown_if_up(old_dev);
+
+    sfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, old_dev, IFNAMSIZ);
+    strncpy(ifr.ifr_newname, new_dev, IFNAMSIZ);
+
+    saved_errno = errno;
+    ret = ioctl(sfd, SIOCSIFNAME, &ifr);
+    if (ret == -1) {
+        fprintf(stderr, "Interface %s : %s\n", new_dev, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    errno = saved_errno;
+}
+
+static void shutdown_if_up(char *dev)
+{
+    int sfd, ret, saved_errno;
+    short flags;
+    struct ifreq ifr;
+
+    sfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+
+    saved_errno = errno;
+    ret = ioctl(sfd, SIOCGIFFLAGS, &ifr);
+    if (ret == -1) {
+        fprintf(stderr, "Interface %s : %s\n", dev, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    errno = saved_errno;
+
+    flags = ifr.ifr_flags;
+    if (flags & IFF_UP) {
+        ifr.ifr_flags &= ~IFF_UP;
+        saved_errno = errno;
+        ret = ioctl(sfd, SIOCSIFFLAGS, &ifr);
+        if (ret == -1) {
+            fprintf(stderr, "Interface %s : %s\n",dev, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+        errno = saved_errno;
+    }
+}
+
 int socket_ifconfig(int argc, char *argv[])
 {
     //socket_ifconfig0(argc, argv);
     //socket_ifconfig1(argc, argv);
-    socket_ifconfig2(argc, argv);
+    //socket_ifconfig2(argc, argv);
+    //socket_ifconfig3(argc, argv);
+    //socket_ifconfig4(argc, argv);
+    //socket_ifconfig5(argc, argv);
+    socket_ifconfig6(argc, argv);
+
     return 0;
 }
