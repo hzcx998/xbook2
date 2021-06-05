@@ -295,6 +295,42 @@ static int do_set_ifnetmask(void *arg)
     return 0;
 }
 
+static int do_get_ifmtu(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    
+    net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+    if (!netif) {
+        return -ENODEV;
+    }
+    ifreq.ifr_mtu = netif->mtu;
+    if (mem_copy_to_user(pifreq, &ifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    return 0;
+}
+
+static int do_set_ifmtu(void *arg)
+{
+    if (!arg)
+        return -EINVAL;
+    struct ifreq *pifreq = (struct ifreq *)arg;
+    struct ifreq ifreq;
+    if (mem_copy_from_user(&ifreq, pifreq, sizeof(struct ifreq)) < 0)
+        return -EINVAL;
+    
+    net_interface_t *netif = net_interface_find(ifreq.ifr_name);
+    if (!netif) {
+        return -ENODEV;
+    }
+    net_interface_set_mtu(netif, ifreq.ifr_mtu);
+    return 0;
+}
+
 static int do_ioctl(int sock, int request, void *arg)
 {
     #ifdef CONFIG_NETREMOTE
@@ -349,6 +385,10 @@ static int do_ioctl(int sock, int request, void *arg)
         return do_get_ifnetmask(arg);
     case SIOCSIFNETMASK:
         return do_set_ifnetmask(arg);
+    case SIOCGIFMTU:
+        return do_get_ifmtu(arg);
+    case SIOCSIFMTU:
+        return do_set_ifmtu(arg);
     default:    /* 默认状态，发送给lwip进行处理 */
         {
             char __arg[32];

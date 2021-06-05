@@ -20,7 +20,7 @@ int netif_fcntl(int sock, int cmd, long val);
 int do_socket_close(int sock);
 #endif
 
-#define DEFAULT_NETIF_NAME  "en0"
+#define DEFAULT_NETIF_NAME  "eth0"
 #define LOOP_NETIF_NAME     "lo"
 #define LOOP_MTU            65536
 
@@ -76,5 +76,6 @@ void net_interface_set_hwaddr(net_interface_t *netif, char *hwaddr);
 void net_interface_set_flags(net_interface_t *netif, int flags);
 void net_interface_set_broad_addr(net_interface_t *netif, ip_addr_t *addr);
 void net_interface_set_netmask(net_interface_t *netif, ip_addr_t *addr);
+void net_interface_set_mtu(net_interface_t *netif, int mtu);
 
 #endif  /* _XBOOK_NETIF_H */

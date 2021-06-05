@@ -154,6 +154,20 @@ void net_interface_set_netmask(net_interface_t *netif, ip_addr_t *addr)
     }
 }
 
+void net_interface_set_mtu(net_interface_t *netif, int mtu)
+{
+    /* copy ip to kernel */
+    netif->mtu = mtu;
+    if (netif->extension) {
+    #if defined(NETIF_TYPE_LWIP)
+        net_interface_set_down(netif);
+        struct netif *real_netif = (struct netif *)netif->extension;
+        real_netif->mtu = mtu;
+        net_interface_set_up(netif);
+    #endif
+    }
+}
+
 void net_interface_set_flags(net_interface_t *netif, int flags)
 {
     netif->flags = flags;
