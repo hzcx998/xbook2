@@ -18,7 +18,6 @@ int netif_write(int sock, void *buffer, size_t nbytes);
 int netif_ioctl(int sock, int request, void *arg);
 int netif_fcntl(int sock, int cmd, long val);
 int do_socket_close(int sock);
-#endif
 
 #define DEFAULT_NETIF_NAME  "eth0"
 #define LOOP_NETIF_NAME     "lo"
@@ -77,5 +76,6 @@ void net_interface_set_flags(net_interface_t *netif, int flags);
 void net_interface_set_broad_addr(net_interface_t *netif, ip_addr_t *addr);
 void net_interface_set_netmask(net_interface_t *netif, ip_addr_t *addr);
 void net_interface_set_mtu(net_interface_t *netif, int mtu);
+#endif
 
 #endif  /* _XBOOK_NETIF_H */
