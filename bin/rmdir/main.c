@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 {
 	int ret = -1;
 	if(argc != 2){
-		fprintf(stderr,"mkdir: no argument support!\n");
+		fprintf(stderr,"rmdir: no argument support!\n");
 	}else{
         if(rmdir(argv[1]) == 0){
             //printf("rmdir: remove %s success.\n", argv[1]);
