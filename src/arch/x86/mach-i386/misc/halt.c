@@ -4,19 +4,19 @@
 #include <xbook/debug.h>
 
 static void acpi_poweroff() {
-    // SCI_EN is set to 1 if acpi shutdown is possible
+    // SCI_EN is set to 1 if acpi poweroff is possible
     if (SCI_EN == 0) return;
 
     acpi_enable();
 
-    // Send the shutdown command
+    // Send the poweroff command
     out16((unsigned int)PM1a_CNT, SLP_TYPa | SLP_EN);
     if (PM1b_CNT != 0) {
         out16((unsigned int) PM1b_CNT, SLP_TYPb | SLP_EN );
     }
 
-    // It may display because the shutdown is not timely
-    keprint(PRINT_WARING "ACPI shutdown fail.\n");
+    // It may display because the poweroff is not timely
+    keprint(PRINT_WARING "ACPI poweroff maybe fail.\n");
 }
 
 void sys_shutdown(void) {
@@ -29,8 +29,9 @@ void sys_shutdown(void) {
 }
 
 void __attribute__ ((noreturn)) halt(void) {
-    keprint(PRINT_INFO "Halt.\n");
     __asm__ __volatile__ ("cli");
+
+    keprint(PRINT_INFO "Halt.\n");
 
     // ACPI poweroff
     acpi_poweroff();

@@ -11,9 +11,9 @@ void sys_reboot(void) {
 }
 
 void __attribute__ ((noreturn)) reboot(void) {
-    keprint(PRINT_INFO "Reboot.\n");
-
     __asm__ __volatile__ ("cli");
+
+    keprint(PRINT_INFO "Reboot.\n");
 
     __asm__ __volatile__ (
         "movb $0x64, %%al;\n"
