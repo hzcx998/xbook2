@@ -62,8 +62,8 @@ jobs:
     # ✏️ If the Autobuild fails above, remove it and uncomment the following three lines
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
-    - name: Install nasm, gcc
-      run: sudo apt-get install nasm gcc
+    - name: Install nasm, gcc, grub, mtools, genisoimage
+      run: sudo apt-get install nasm gcc grub mtools genisoimage
     - run: |
         make build
         make all
