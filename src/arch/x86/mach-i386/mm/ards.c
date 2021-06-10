@@ -18,8 +18,9 @@ struct ards_struct {
 };
 
 #ifdef GRUB2
+// from: arch/x86/boot/multiboot2/setup.c
 extern unsigned long grub2_read_memory_bytes;
-#endif
+#endif /* GRUB2 */
 
 unsigned int phy_mem_get_size_from_hardware()
 {
@@ -44,7 +45,7 @@ unsigned int phy_mem_get_size_from_hardware()
 		keprint(PRINT_DEBUG "phymem: ards: base %8x length %8x type:%d\n",ards->base_low, ards->length_low, ards->type);
 		ards++;
 	}
-#endif
-    keprint(PRINT_INFO "phymem: memory size total:%x byte, %d MB\n", totalSize, totalSize / (1024*1024));
+#endif /* GRUB2 */
+	keprint(PRINT_INFO "phymem: memory size total:%x byte, %d MB\n", totalSize, totalSize / (1024*1024));
 	return totalSize;
 }

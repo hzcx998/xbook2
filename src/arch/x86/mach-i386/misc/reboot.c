@@ -2,18 +2,18 @@
 #include <xbook/debug.h>
 
 void sys_reboot(void) {
-    // Send 'Exit' signal in OS
+    // TODO: Send 'Exit' signal in OS
 
-    // Check if Reboot OK
+    // TODO: Check if Reboot OK
 
     // Reboot
     reboot();
 }
 
 void __attribute__ ((noreturn)) reboot(void) {
-    keprint(PRINT_INFO "Reboot.\n");
-
     __asm__ __volatile__ ("cli");
+
+    keprint(PRINT_INFO "Reboot.\n");
 
     __asm__ __volatile__ (
         "movb $0x64, %%al;\n"

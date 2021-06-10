@@ -1,1 +1,9 @@
-SRC	+= *.c
+SRC	+= audio/
+SRC	+= disk/
+SRC	+= input/
+SRC	+= misc/
+SRC	+= network/
+SRC	+= output/
+SRC	+= uart/
+SRC	+= usb/
+SRC	+= video/

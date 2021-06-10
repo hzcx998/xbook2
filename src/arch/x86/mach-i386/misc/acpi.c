@@ -10,10 +10,6 @@
 #include <xbook/debug.h>
 #include <xbook/process.h>
 
-typedef unsigned char byte;
-typedef unsigned short word;
-typedef unsigned int dword;
-
 dword *SMI_CMD;
 byte ACPI_ENABLE;
 byte ACPI_DISABLE;
@@ -24,30 +20,6 @@ word SLP_TYPb;
 word SLP_EN;
 word SCI_EN;
 byte PM1_CNT_LEN;
-
-struct RSDPtr {
-    byte Signature[8];
-    byte CheckSum;
-    byte OemID[6];
-    byte Revision;
-    dword *RsdtAddress;
-};
-
-struct FACP {
-    byte Signature[4];
-    dword Length;
-    byte unneded1[40 - 8];
-    dword *DSDT;
-    byte unneded2[48 - 44];
-    dword *SMI_CMD;
-    byte ACPI_ENABLE;
-    byte ACPI_DISABLE;
-    byte unneded3[64 - 54];
-    dword *PM1a_CNT_BLK;
-    dword *PM1b_CNT_BLK;
-    byte unneded4[89 - 72];
-    byte PM1_CNT_LEN;
-};
 
 // check if the given address has a valid header
 unsigned int *acpi_check_RSDPtr(unsigned int *ptr) {
@@ -154,7 +126,7 @@ int acpi_enable(void) {
             }
 
             if (i < 300) {
-                keprint(PRINT_WARING "Enabled ACPI.\n");
+                keprint(PRINT_INFO "Enabled ACPI.\n");
                 return 0;
             } else {
                 keprint(PRINT_WARING "Couldn't enable ACPI.\n");
@@ -254,10 +226,10 @@ int acpi_init(void) {
 
                             return 0;
                         } else {
-                            keprint(PRINT_INFO "\\_S5 parse error.\n");
+                            keprint(PRINT_WARING "\\_S5 parse error.\n");
                         }
                     } else {
-                        keprint(PRINT_INFO "\\_S5 not present.\n");
+                        keprint(PRINT_WARING "\\_S5 not present.\n");
                     }
                 } else {
                     keprint(PRINT_WARING "DSDT invalid.\n");
@@ -270,20 +242,5 @@ int acpi_init(void) {
         keprint(PRINT_WARING "No ACPI.\n");
     }
 
-   return -1;
-}
-
-void acpi_shutdown() {
-    // SCI_EN is set to 1 if acpi shutdown is possible
-    if (SCI_EN == 0) return;
-
-    acpi_enable();
-
-    // Send the shutdown command
-    out16((unsigned int)PM1a_CNT, SLP_TYPa | SLP_EN);
-    if (PM1b_CNT != 0) {
-        out16((unsigned int) PM1b_CNT, SLP_TYPb | SLP_EN );
-    }
-
-    keprint(PRINT_WARING "ACPI shutdown fail.\n");
+    return -1;
 }

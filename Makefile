@@ -82,6 +82,8 @@ export BOOT_MODE ?= $(BOOT_GRUB2_MODE)
 
 # is efi mode? (y/n)
 EFI_BOOT_MODE ?= n
+# is qemu fat fs? (y/n)
+QEMU_FAT_FS ?= n
 
 # has net module? (y/n)
 KERN_MODULE_NET	?= n
@@ -106,7 +108,9 @@ ifeq ($(BOOT_MODE),$(BOOT_GRUB2_MODE))
 	@$(MAKE) -s -C $(GRUB_DIR) KERNEL=$(subst $(KERNSRC)/,,$(KERNEL_ELF)) OS_NAME=$(OS_NAME)
 endif
 endif
+ifeq ($(QEMU_FAT_FS),n)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
+endif
 
 # run启动虚拟机
 run: qemu
@@ -176,8 +180,9 @@ dump:
 #	example: -net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no
 
 # 音频配置：
-#	a.使用蜂鸣器：-soundhw pcspk
-#	b.使用声霸卡：-soundhw sb16
+#	a.使用AC97卡： -device AC97
+#	b.使用声霸卡： -device sb16
+#	c.使用HDA卡： -device intel-hda -device hda-duplex
 # 控制台串口调试： -serial stdio
 
 # 磁盘配置：
@@ -195,7 +200,9 @@ QEMU_KVM := -enable-kvm
 endif
 QEMU_KVM := # no virutal
 
-# HDB_IMG :=fat:rw:./develop/rom
+ifeq ($(QEMU_FAT_FS),y)
+	HDB_IMG :=fat:rw:./develop/rom
+endif
 
 QEMU_ARGUMENT := -m 512m $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \
@@ -206,9 +213,12 @@ QEMU_ARGUMENT := -m 512m $(QEMU_KVM) \
 		-device ide-hd,drive=disk1,bus=ahci.1 \
 		-rtc base=localtime \
 		-boot a \
-		-soundhw sb16 \
 		-serial stdio \
-		-soundhw pcspk
+		-device sb16 \
+		-device AC97 \
+		-device intel-hda -device hda-duplex
+# 		-usbdevice mouse \
+# 		-usbdevice keyboard
 
 ifeq ($(KERN_MODULE_NET),y)
 QEMU_ARGUMENT += -net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no

@@ -1,25 +1,40 @@
 #include <arch/misc.h>
 #include <arch/acpi.h>
+#include <arch/io.h>
 #include <xbook/debug.h>
 
-void sys_shutdown(void) {
-    // Send 'Exit' signal in OS
+static void acpi_poweroff() {
+    // SCI_EN is set to 1 if acpi poweroff is possible
+    if (SCI_EN == 0) return;
 
-    // Check if Halt OK
+    acpi_enable();
+
+    // Send the poweroff command
+    out16((unsigned int)PM1a_CNT, SLP_TYPa | SLP_EN);
+    if (PM1b_CNT != 0) {
+        out16((unsigned int) PM1b_CNT, SLP_TYPb | SLP_EN );
+    }
+
+    // It may display because the poweroff is not timely
+    keprint(PRINT_WARING "ACPI poweroff maybe fail.\n");
+}
+
+void sys_shutdown(void) {
+    // TODO: Send 'Exit' signal in OS
+
+    // TODO: Check if Halt OK
 
     // Halt
     halt();
 }
 
 void __attribute__ ((noreturn)) halt(void) {
-    keprint(PRINT_INFO "Halt.\n");
     __asm__ __volatile__ ("cli");
 
-    // ACPI shutdown
-    if (!acpi_init()) {
-        keprint(PRINT_WARING "ACPI init fail.\n");
-    }
-    acpi_shutdown();
+    keprint(PRINT_INFO "Halt.\n");
+
+    // ACPI poweroff
+    acpi_poweroff();
 
     /*
      *  Summary: https://wiki.osdev.org/Shutdown

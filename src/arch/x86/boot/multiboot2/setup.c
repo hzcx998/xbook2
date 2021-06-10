@@ -15,9 +15,16 @@
  *  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <drivers/vbe.h>
+#include <string.h>
+
 #include "multiboot2.h"
 
-// if not use bios, it will be used
+static void init_memory(struct multiboot_tag *tag);
+static void init_vbe(struct multiboot_tag *tag);
+static void init_framebuffer(struct multiboot_tag *tag);
+
+// global data
 unsigned long grub2_read_memory_bytes = 0;
 
 int setup_entry(unsigned long magic, unsigned long addr)
@@ -30,14 +37,52 @@ int setup_entry(unsigned long magic, unsigned long addr)
          tag->type != MULTIBOOT_TAG_TYPE_END;
          tag = (struct multiboot_tag*)((multiboot_uint8_t *)tag + ((tag->size + 7) & ~7)))
     {
-        if (tag->type == MULTIBOOT_TAG_TYPE_BASIC_MEMINFO) {
-            grub2_read_memory_bytes =
-                ((((struct multiboot_tag_basic_meminfo *)tag)->mem_upper
-                    -((struct multiboot_tag_basic_meminfo *)tag)->mem_lower) << 10)
-                + 0x100000;
-            break;
+        switch (tag->type) {
+        case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
+            init_memory(tag);
+        break;
+        case MULTIBOOT_TAG_TYPE_VBE:
+            init_vbe(tag);
+        break;
+        case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
+            init_framebuffer(tag);
+        break;
         }
     }
 
     return 0;
+}
+
+static void init_memory(struct multiboot_tag *tag) {
+    unsigned long mem_upper = ((struct multiboot_tag_basic_meminfo *)tag)->mem_upper;
+    unsigned long mem_lower = ((struct multiboot_tag_basic_meminfo *)tag)->mem_lower;
+    // 0x100000 = 1MB
+    grub2_read_memory_bytes = ((mem_upper - mem_lower) << 10) + 0x100000;
+}
+
+static void init_vbe(struct multiboot_tag *tag)
+{
+    struct multiboot_tag_vbe *vbe_tag = (struct multiboot_tag_vbe *)tag;
+
+    struct vbe_info_block *vbe_info = (struct vbe_info_block *)VBE_BASE_INFO_ADDR;
+    struct vbe_mode_info_block *mode_info = (struct vbe_mode_info_block *)VBE_BASE_MODE_ADDR;
+
+    memcpy(vbe_info, &(vbe_tag->vbe_control_info), sizeof(struct vbe_info_block));
+    memcpy(mode_info, &(vbe_tag->vbe_mode_info), sizeof(struct vbe_mode_info_block));
+}
+
+static void init_framebuffer(struct multiboot_tag *tag)
+{
+    struct multiboot_tag_framebuffer *framebuffer_tag = (struct multiboot_tag_framebuffer *)tag;
+
+    struct vbe_mode_info_block *mode_info = (struct vbe_mode_info_block *)VBE_BASE_MODE_ADDR;
+
+    mode_info->xResolution = framebuffer_tag->common.framebuffer_width;
+    mode_info->yResolution = framebuffer_tag->common.framebuffer_height;
+    mode_info->bitsPerPixel = framebuffer_tag->common.framebuffer_bpp;
+    mode_info->phyBasePtr = framebuffer_tag->common.framebuffer_addr;
+
+    // TODO: get mode attributes value
+    // mode_info->modeAttributes = ;
+    mode_info->bytesPerScanLine = framebuffer_tag->common.framebuffer_pitch;
 }

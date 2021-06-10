@@ -21,6 +21,19 @@
 # the size of stack is 16KB
 #define STACK_SIZE 0x4000
 
+# 启动图形模式
+// #define CONFIG_GRAPHIC_ENABLE
+
+#ifndef FRAMEBUFFER_WIDTH
+#define FRAMEBUFFER_WIDTH 1024
+#endif /* FRAMEBUFFER_WIDTH */
+#ifndef FRAMEBUFFER_HEIGHT
+#define FRAMEBUFFER_HEIGHT 768
+#endif /* FRAMEBUFFER_HEIGHT */
+#ifndef FRAMEBUFFER_BPP
+#define FRAMEBUFFER_BPP 16
+#endif /* FRAMEBUFFER_BPP */
+
 .code32
 
 .extern setup_entry, kernel_start
@@ -33,17 +46,29 @@ start:
 _start:
     jmp multiboot_entry
 
-    .align 8
-
+.align 8
 multiboot_header:
-    .long  MULTIBOOT2_HEADER_MAGIC                  # magic number (multiboot 2)
-    .long  MULTIBOOT_ARCHITECTURE_I386              # architecture 0 (protected mode i386)
-    .long  multiboot_header_end - multiboot_header  # header length
+    .long MULTIBOOT2_HEADER_MAGIC                  # magic number (multiboot 2)
+    .long MULTIBOOT_ARCHITECTURE_I386              # architecture 0 (protected mode i386)
+    .long multiboot_header_end - multiboot_header  # header length
     # checksum
-    .long  -(MULTIBOOT2_HEADER_MAGIC + MULTIBOOT_ARCHITECTURE_I386 + (multiboot_header_end - multiboot_header))
+    .long -(MULTIBOOT2_HEADER_MAGIC + MULTIBOOT_ARCHITECTURE_I386 + (multiboot_header_end - multiboot_header))
     # insert optional multiboot tags here
 
+#ifdef CONFIG_GRAPHIC_ENABLE
+    .align 8
+    tag_framebuffer:
+        .short MULTIBOOT_HEADER_TAG_FRAMEBUFFER
+        .short MULTIBOOT_HEADER_TAG_OPTIONAL
+        .long  tag_framebuffer_end - tag_framebuffer
+        .long  FRAMEBUFFER_WIDTH    # screen width
+        .long  FRAMEBUFFER_HEIGHT   # screen height
+        .long  FRAMEBUFFER_BPP      # bit per pixel
+    tag_framebuffer_end:
+#endif /* CONFIG_GRAPHIC_ENABLE */
+
     # required end tag
+    .align 8
     .short MULTIBOOT_HEADER_TAG_END # type
     .short 0                        # flags
     .long  8                        # size
