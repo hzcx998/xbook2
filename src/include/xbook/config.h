@@ -1,7 +1,7 @@
 #ifndef _XBOOK_CONFIG_H
 #define _XBOOK_CONFIG_H
 
-/* config address width */
+/* 配置处理器位宽 */
 #define CONFIG_32BIT
 /* #define CONFIG_64BIT */
 

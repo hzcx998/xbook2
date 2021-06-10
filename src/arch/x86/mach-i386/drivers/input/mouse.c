@@ -486,7 +486,7 @@ static iostatus_t mouse_enter(driver_object_t *driver)
 
 #if USE_THREAD == 1    
     /* 启动一个内核线程来处理数据 */
-    kern_thread_start("mouse", TASK_PRIO_LEVEL_REALTIME, mouse_thread, devext);
+    task_create("mouse", TASK_PRIO_LEVEL_REALTIME, mouse_thread, devext);
 #endif
     return status;
 }

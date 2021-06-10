@@ -53,7 +53,7 @@ static void kernel_thread_entry(task_func_t *function, void *arg)
     interrupt_enable();  /* 在启动前需要打开中断，避免启动后不能产生时钟中断调度 */
     function(arg);
     // 如何函数返回了，那么就需要调用线程退出
-    kern_thread_exit(0);
+    task_exit(0);
 }
 
 void task_stack_build(task_t *task, task_func_t *function, void *arg)
