@@ -78,7 +78,7 @@ LOADER_BIN	= $(ARCH)/boot/myboot/loader.bin
 SETUP_BIN	= $(ARCH)/boot/myboot/setup.bin
 
 # set default boot mode
-export BOOT_MODE ?= $(BOOT_LEGACY_MODE)
+export BOOT_MODE ?= $(BOOT_GRUB2_MODE)
 
 # is efi mode? (y/n)
 EFI_BOOT_MODE ?= n
