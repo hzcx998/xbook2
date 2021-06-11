@@ -137,7 +137,9 @@ endif
 	$(MAKE) -s -C $(LIBS_DIR)
 	$(MAKE) -s -C $(SBIN_DIR)
 	$(MAKE) -s -C $(BIN_DIR)
+ifeq ($(QEMU_FAT_FS),n)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
+endif
 
 # 清理环境。
 debuild:
