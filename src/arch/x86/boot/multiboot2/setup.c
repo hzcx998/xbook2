@@ -20,6 +20,7 @@
 
 #include "multiboot2.h"
 
+static void init_module(struct multiboot_tag *tag);
 static void init_memory(struct multiboot_tag *tag);
 static void init_vbe(struct multiboot_tag *tag);
 static void init_framebuffer(struct multiboot_tag *tag);
@@ -38,6 +39,9 @@ int setup_entry(unsigned long magic, unsigned long addr)
          tag = (struct multiboot_tag*)((multiboot_uint8_t *)tag + ((tag->size + 7) & ~7)))
     {
         switch (tag->type) {
+        case MULTIBOOT_TAG_TYPE_MODULE:
+            init_module(tag);
+        break;
         case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
             init_memory(tag);
         break;
@@ -52,6 +56,16 @@ int setup_entry(unsigned long magic, unsigned long addr)
 
     return 0;
 }
+
+#define cmdline_is(cmd) (!strcmp(((struct multiboot_tag_module *)tag)->cmdline, cmd))
+
+static void init_module(struct multiboot_tag *tag) {
+    if (cmdline_is("initrd")) {
+
+    }
+}
+
+#undef cmdline_is
 
 static void init_memory(struct multiboot_tag *tag) {
     unsigned long mem_upper = ((struct multiboot_tag_basic_meminfo *)tag)->mem_upper;
