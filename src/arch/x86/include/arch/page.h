@@ -15,10 +15,10 @@ typedef unsigned int pte_t; /* page table entry */
 #define KERN_BASE_VIR_ADDR      0X80000000
 #endif
 
-#define KERN_PAGE_DIR_PHY_ADDR       0X201000
+#define KERN_PAGE_DIR_PHY_ADDR       0X3F2000
 #define KERN_PAGE_DIR_VIR_ADDR       (KERN_BASE_VIR_ADDR + KERN_PAGE_DIR_PHY_ADDR)
 
-#define KERN_PAGE_TABLE_PHY_ADDR     0X202000
+#define KERN_PAGE_TABLE_PHY_ADDR     0X3F3000
 #define KERN_PAGE_TABLE_VIR_ADDR     (KERN_BASE_VIR_ADDR + KERN_PAGE_TABLE_PHY_ADDR)
 
 /* 在引导阶段就已经使用过的页表数，映射内核空间时就不再对最开始的页表进行映射 */

@@ -1,7 +1,7 @@
 #ifndef _X86_GATE_H
 #define _X86_GATE_H
 
-#define IDT_VADDR		(KERN_BASE_VIR_ADDR + 0x00200800)  /* IDT 的虚拟地址 */
+#define IDT_VADDR		(KERN_BASE_VIR_ADDR + 0x003F0800)  /* IDT 的虚拟地址 */
 #define IDT_LIMIT		0x000007ff
 
 #define MAX_IDT_NR (IDT_LIMIT/8)      
