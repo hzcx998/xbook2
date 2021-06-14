@@ -113,10 +113,12 @@ static void cpio_extract_from_memory(void *archive, const char* dir) {
 
 int fsal_disk_mount_init()
 {
+#ifndef CONFIG_LIVECD
     if (!fsal_disk_mount("/dev/hd", 4))
         return 0;
     if (!fsal_disk_mount("/dev/sd", 16))
         return 0;
+#endif /* CONFIG_LIVECD */
 #ifdef GRUB2
     if (fsif.mount("/dev/ram0", ROOT_DIR_PATH, "fat32", MT_REMKFS) > -1) {
         int i;
@@ -181,14 +183,14 @@ int fsal_init()
         keprint("fsal : mount path %s failed!\n", RAMFS_DIR_PATH);
     }
     #endif  /* RAMFS_DIR_PATH */
-    /* 挂载设备目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
-    if (fsif.mount("/dev/sda", DEV_DIR_PATH, "devfs", 0) < 0) {
+    /* 挂载设备目录，不会真正挂载到磁盘上，是挂载到内存中的 */
+    if (fsif.mount("/dev/ram0", DEV_DIR_PATH, "devfs", 0) < 0) {
         keprint("fsal : mount path %s failed!\n", DEV_DIR_PATH);
         return -1;
     }
     
-    /* 挂载FIFO目录，不会真正挂载到disk0磁盘上，是挂载到内存中的 */
-    if (fsif.mount("/dev/sda", FIFO_DIR_PATH, "fifofs", 0) < 0) {
+    /* 挂载FIFO目录，不会真正挂载到磁盘上，是挂载到内存中的 */
+    if (fsif.mount("/dev/ram0", FIFO_DIR_PATH, "fifofs", 0) < 0) {
         keprint("fsal : mount path %s failed!\n", FIFO_DIR_PATH);
         return -1;
     }
