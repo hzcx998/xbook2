@@ -15,6 +15,7 @@
  *  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <arch/module.h>
 #include <drivers/vbe.h>
 #include <string.h>
 
@@ -33,6 +34,8 @@ int setup_entry(unsigned long magic, unsigned long addr)
     // whether a multiboot
     if (magic != MULTIBOOT2_BOOTLOADER_MAGIC || addr & 7) return -1;
     struct multiboot_tag *tag;
+
+    module_info_init();
 
     for (tag = (struct multiboot_tag*)(addr + 8);
          tag->type != MULTIBOOT_TAG_TYPE_END;
@@ -60,9 +63,25 @@ int setup_entry(unsigned long magic, unsigned long addr)
 #define cmdline_is(cmd) (!strcmp(((struct multiboot_tag_module *)tag)->cmdline, cmd))
 
 static void init_module(struct multiboot_tag *tag) {
-    if (cmdline_is("initrd")) {
+    struct modules_info_block *modules_info = (struct modules_info_block *)MODULE_INFO_ADDR;
+    int index = modules_info->modules_num;
 
+    if (index >= MAX_MODULES_NUM || modules_info->modules_size >= MAX_MODULES_SIZE) {
+        return;
     }
+
+    modules_info->modules[index].size = ((struct multiboot_tag_module *)tag)->size;
+    modules_info->modules[index].start = ((struct multiboot_tag_module *)tag)->mod_start;
+    modules_info->modules[index].end = ((struct multiboot_tag_module *)tag)->mod_end;
+
+    if (cmdline_is("initrd")) {
+        modules_info->modules[index].type = MODULE_INITRD;
+    } else {
+        modules_info->modules[index].type = MODULE_UNKNOWN;
+    }
+
+    modules_info->modules_size += modules_info->modules[index].size;
+    ++modules_info->modules_num;
 }
 
 #undef cmdline_is

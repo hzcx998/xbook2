@@ -15,8 +15,8 @@
 
 #define DEV_NAME "ram0"
 
-/* 20MB */
-#define RAMDISK_SECTORS     (20480 * 2)
+/* 40MB */
+#define RAMDISK_SECTORS     (20480 * 4)
 
 // #define DEBUG_DRV
 
