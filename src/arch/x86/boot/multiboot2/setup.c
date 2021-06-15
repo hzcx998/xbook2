@@ -66,7 +66,8 @@ static void init_module(struct multiboot_tag *tag) {
     struct modules_info_block *modules_info = (struct modules_info_block *)MODULE_INFO_ADDR;
     int index = modules_info->modules_num;
 
-    if (index >= MAX_MODULES_NUM || modules_info->modules_size >= MAX_MODULES_SIZE) {
+    if (index >= MAX_MODULES_NUM
+        || modules_info->modules_size + ((struct multiboot_tag_module *)tag)->size > MAX_MODULES_SIZE) {
         return;
     }
 

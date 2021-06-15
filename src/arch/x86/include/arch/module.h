@@ -30,6 +30,7 @@ static inline void module_info_init()
 {
    struct modules_info_block *modules_info = (struct modules_info_block *)MODULE_INFO_ADDR;
    modules_info->modules_num = 0;
+   modules_info->modules_size = 0;
 }
 
 #endif /* _X86_MODULE_H */
