@@ -74,12 +74,7 @@ int fsal_disk_mount(char *pathname, int max_try)
     }
     return 0;
 }
-
 #ifdef GRUB2
-static inline void stricpy(char* dst, int i, char* src) {
-    while ((dst[i] = *src++)) i++;
-}
-
 static void cpio_extract_from_memory(void *archive, const char* dir) {
     int i;
     struct cpio_info info;
@@ -96,7 +91,7 @@ static void cpio_extract_from_memory(void *archive, const char* dir) {
     for (i = 0; i < info.file_count; ++i) {
         file_buf = cpio_get_entry(archive, i, (const char**)&filename, &file_sz);
         strcpy(path, dir);
-        stricpy(path, dir_len, filename);
+        strcpy(path + dir_len, filename);
         // Default directory instead of file
         if (file_sz == 0) {
             kfile_mkdir(path, 0);

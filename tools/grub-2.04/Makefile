@@ -64,8 +64,7 @@ iso:
 	mkdir -p $(ISO_DIR)/$(OS_NAME)
 	cp $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/$(BOOT_DIR)/$(KERNEL)
 	cd $(BUILD_DIR)/../develop/rom/ && \
-		sed 's/\r//g' ../$(INITRD_CONF) && \
-		cat ../$(INITRD_CONF) | cpio -o -H newc > $(INITRD_PATH)/$(INITRD_IMG)
+  	sed 's/\r//g' ../$(INITRD_CONF) | cpio -o -H newc > $(INITRD_PATH)/$(INITRD_IMG)
 	$(MKISOFS) \
 		-graft-points \
 		-input-charset utf8 \
