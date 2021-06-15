@@ -19,7 +19,7 @@
 #endif
 
 /* 驱动状态：0~15位是内核使用，16~23位自定义 */
-#define IO_SUCCESS             0            /* 成功 */
+#define IO_SUCCESS             0           /* 成功 */
 #define IO_FAILED              (1 << 0)    /* 失败 */        
 #define IO_PENDING             (1 << 1)    /* 未决 */
 #define IO_NOWAIT              (1 << 2)    /* 不需要等待 */
@@ -83,9 +83,10 @@ enum _io_request_flags {
 };
 
 enum _device_object_flags {
+    DO_NEITHER_IO               = 0,            /* 非缓冲区IO和非直接内存IO */
     DO_BUFFERED_IO              = (1 << 0),     /* 缓冲区IO */
     DO_DIRECT_IO                = (1 << 1),     /* 直接内存IO */
-    DO_DISPENSE                 = (1 << 2),     /* 分发位 */
+    DO_DISPENSE                 = (1 << 2),     /* 分发位，保留 */
 };
 
 typedef struct _driver_extension 
@@ -208,15 +209,15 @@ typedef struct _driver_object
 void driver_framewrok_init();
 
 iostatus_t io_create_device(
-    driver_object_t *driver,
-    unsigned long device_extension_size,
-    char *device_name,
-    device_type_t type,
-    device_object_t **device
+    driver_object_t *driver,                /* 驱动指针 */
+    unsigned long device_extension_size,    /* 设备扩展大小 */
+    char *device_name,                      /* 设备名字 */
+    device_type_t type,                     /* 设备类型 */
+    device_object_t **device                /* 创建完成后的设备指针 */
 );
 
 void io_delete_device(
-    device_object_t *device
+    device_object_t *device                 /* 要设备的对象 */
 );
 
 io_request_t *io_build_sync_request(
