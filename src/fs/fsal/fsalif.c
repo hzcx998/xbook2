@@ -597,25 +597,29 @@ int fsalif_mount(
     return 0;
 }
 
-static int fsalif_unmount(char *path, unsigned long flags)
+/**
+ * origin_path: 原始路径，从用户传递进来的路径
+ * path: 转换后的路径，会物理路径
+ */
+static int fsalif_unmount(char *origin_path, char *path, unsigned long flags)
 {
-    if (path == NULL)
+    if (origin_path == NULL)
         return -1;
     
-    fsal_path_t *fpath = fsal_path_find(path, 0);
+    fsal_path_t *fpath = fsal_path_find(origin_path, 0);
     if (fpath == NULL) {
-        keprint(PRINT_ERR "path %s not found!\n", path);
+        keprint(PRINT_ERR "path %s not found!\n", origin_path);
         return -1;
     }
     fsal_t *fsal = fpath->fsal;
     if (fsal == NULL) {
-        keprint(PRINT_ERR "path %s fsal error!\n", path);
+        keprint(PRINT_ERR "path %s fsal error!\n", origin_path);
         return -1;
     }
     char new_path[MAX_PATH] = {0};
-    if (fsal_path_switch(fpath, new_path, path) < 0)
+    if (fsal_path_switch(fpath, new_path, origin_path) < 0)
         return -1;
-    return fsal->unmount(new_path, flags);
+    return fsal->unmount(origin_path, new_path, flags);
 }
 
 int fsalif_mkfs(

@@ -23,7 +23,7 @@ fifo_t *fifo_table;
 DEFINE_SEMAPHORE(fifo_mutex, 1);
 
 static int fsal_fifofs_mount(char *source, char *target, char *fstype, unsigned long flags);
-static int fsal_fifofs_unmount(char *path, unsigned long flags);
+static int fsal_fifofs_unmount(char *origin_path, char *path, unsigned long flags);
 static int fifoif_open(void *pathname, int flags);
 static int fifoif_unlink(char *pathname);
 
@@ -678,7 +678,7 @@ static int fsal_fifofs_mount(char *source, char *target, char *fstype, unsigned 
     return 0;
 }
 
-static int fsal_fifofs_unmount(char *path, unsigned long flags)
+static int fsal_fifofs_unmount(char *origin_path, char *path, unsigned long flags)
 {
     if (fsal_path_remove((void *) path)) {
         dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, path);

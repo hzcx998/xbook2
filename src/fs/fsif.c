@@ -593,14 +593,15 @@ int sys_unmount(char *path, unsigned long flags)
 {
     if (!path)
         return -EINVAL;
-    if (mem_copy_from_user(NULL, path, MAX_PATH) < 0)
+    char _path[MAX_PATH] = {0};
+    if (mem_copy_from_user_str(_path, path, MAX_PATH) < 0)
         return -EINVAL;
-    if (!account_selfcheck_permission((char *)path, PERMISION_ATTR_FILE)) {
+    if (account_selfcheck_permission((char *)_path, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
     char abs_path[MAX_PATH] = {0};
-    build_path(path, abs_path);
-    return fsif.unmount(abs_path, flags);
+    build_path(_path, abs_path);
+    return fsif.unmount(abs_path, abs_path, flags);
 }
 
 int sys_mkfs(char *source,         /* 需要创建FS的设备 */

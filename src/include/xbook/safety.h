@@ -8,5 +8,5 @@
 int safety_check_range(void *src, unsigned long nbytes);
 int mem_copy_from_user(void *dest, void *src, unsigned long nbytes);
 int mem_copy_to_user(void *dest, void *src, unsigned long nbytes);
-
+int mem_copy_from_user_str(char *dest, char *src, unsigned long maxn);
 #endif /* _XBOOK_SAFETY_H */
