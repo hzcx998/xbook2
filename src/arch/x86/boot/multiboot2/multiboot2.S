@@ -97,21 +97,21 @@ multiboot_entry:
     cmpl $-1, %eax
     je setup_fail
 
-    # print "Multiboot End!" in paging
-    movl $0x2f752f4d, 0x000b8000
-    movl $0x2f742f6c, 0x000b8004
-    movl $0x2f622f69, 0x000b8008
-    movl $0x2f6f2f6f, 0x000b800c
-    movl $0x2f202f74, 0x000b8010
-    movl $0x2f6e2f45, 0x000b8014
-    movl $0x2f212f64, 0x000b8018
+    # print "Multiboot End!" in protected mode
+    movl $0x2f752f4d, 0xb8000
+    movl $0x2f742f6c, 0xb8004
+    movl $0x2f622f69, 0xb8008
+    movl $0x2f6f2f6f, 0xb800c
+    movl $0x2f202f74, 0xb8010
+    movl $0x2f6e2f45, 0xb8014
+    movl $0x2f212f64, 0xb8018
 
     # jump to kernel_start
     movl $kernel_start, %eax
     jmp *%eax
 
 setup_fail:
-    # print "Error!" in not paging
+    # print "Error!" in protected mode
     movl $0xcf72cf45, 0xb8000
     movl $0xcf6fcf72, 0xb8004
     movl $0xcf21cf72, 0xb8008
