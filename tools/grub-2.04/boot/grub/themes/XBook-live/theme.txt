@@ -3,9 +3,10 @@
 
 # Global Property
 title-text: ""
+title-font: "DejaVu Regular 32"
 desktop-image: "background.jpg"
 desktop-color: "#000000"
-terminal-font: "Terminus Regular 14"
+terminal-font: "Terminus Regular 18"
 terminal-box: "terminal_box_*.png"
 terminal-left: "0"
 terminal-top: "0"
@@ -19,8 +20,9 @@ terminal-border: "0"
   top = 30%
   width = 45%
   height = 60%
-  item_font = "Unifont Regular 16"
+  item_font = "Terminus Regular 18"
   item_color = "#cccccc"
+  selected_item_font = "Terminus Regular 18"
   selected_item_color = "#ffffff"
   icon_width = 32
   icon_height = 32
@@ -40,5 +42,5 @@ terminal-border: "0"
   id = "__timeout__"
   text = "Booting in %d seconds"
   color = "#cccccc"
-  font = "Unifont Regular 16"
+  font = "Terminus Regular 16"
 }
