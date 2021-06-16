@@ -48,7 +48,11 @@ FATFS文件系统
 PTHREAD线程库
 ```
 
-开发环境准备（Windows/Linux）：  
+# 开发文档
+[xbook2内核开发文档](https://www.book-os.org/doc/xbook2/index.html)
+
+
+# 开发环境准备（Windows/Linux）：  
 ```
 整体思路：
 1. 用git从仓库克隆源码或者直接下载源码。
