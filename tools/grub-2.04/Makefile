@@ -15,8 +15,11 @@ MENU_CONF     = $(GRUB_DIR)/kernels.cfg
 EFI_CONF      = ./compile.cfg
 EFI_FILE      = ./efi/boot/bootia32.efi
 ISO_FILE_NAME = $(BUILD_DIR)/$(OS_ISO_NAME)
-ISO_TEMP_DIR  = ./iso
-EFI_BOOT      = $(BOOT_DIR)/efi.img
+ISO_DIR       = ./iso
+EFI_BOOT      = efi.img
+INITRD_PATH   = $(shell pwd)/$(ISO_DIR)/$(BOOT_DIR)
+INITRD_IMG    = initrd.img
+INITRD_CONF   = initrd.cfg
 
 .PHONY: efi iso
 
@@ -46,19 +49,22 @@ efi:
 		loadbios appleldr crc efi_gop efi_uga lsefi lsefimmap lsefisystab
 
 iso:
-	dd if=/dev/zero of=$(EFI_BOOT) bs=512 count=8192
-	mkfs.msdos -F 12 $(EFI_BOOT)
-	mmd -i $(EFI_BOOT) ::efi
-	mmd -i $(EFI_BOOT) ::efi/boot
-	mcopy -i $(EFI_BOOT) $(EFI_FILE) ::$(EFI_FILE)
-	echo "multiboot2 /$(OS_NAME)/$(KERNEL)" > $(MENU_CONF)
+	rm -f -r $(ISO_DIR)
+	mkdir -p $(ISO_DIR)
+	dd if=/dev/zero of=$(ISO_DIR)/$(EFI_BOOT) bs=512 count=8192
+	mkfs.msdos -F 12 $(ISO_DIR)/$(EFI_BOOT)
+	mmd -i $(ISO_DIR)/$(EFI_BOOT) ::efi
+	mmd -i $(ISO_DIR)/$(EFI_BOOT) ::efi/boot
+	mcopy -i $(ISO_DIR)/$(EFI_BOOT) $(EFI_FILE) ::$(EFI_FILE)
+	echo "multiboot2 /$(BOOT_DIR)/$(KERNEL)" > $(MENU_CONF)
+	echo "module2 /$(BOOT_DIR)/$(INITRD_IMG) 'initrd'" >> $(MENU_CONF)
 	echo "boot" >> $(MENU_CONF)
-	rm -f -r $(ISO_TEMP_DIR)
-	mkdir -p $(ISO_TEMP_DIR)
-	cp -r ./efi $(ISO_TEMP_DIR)/efi
-	cp -r ./boot $(ISO_TEMP_DIR)/boot
-	mkdir -p $(ISO_TEMP_DIR)/$(OS_NAME)
-	cp $(BUILD_DIR)/$(KERNEL) $(ISO_TEMP_DIR)/$(OS_NAME)/$(KERNEL)
+	cp -r ./efi $(ISO_DIR)/efi
+	cp -r ./boot $(ISO_DIR)/boot
+	mkdir -p $(ISO_DIR)/$(OS_NAME)
+	cp $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/$(BOOT_DIR)/$(KERNEL)
+	cd $(BUILD_DIR)/../develop/rom/ && \
+  	sed 's/\r//g' ../$(INITRD_CONF) | cpio -o -H newc > $(INITRD_PATH)/$(INITRD_IMG)
 	$(MKISOFS) \
 		-graft-points \
 		-input-charset utf8 \
@@ -71,9 +77,8 @@ iso:
 		-boot-info-table -b $(GRUB_ELTORITO) \
 		-eltorito-alt-boot -b $(EFI_BOOT) \
 		-no-emul-boot \
-		-o $(ISO_FILE_NAME) $(ISO_TEMP_DIR)
-	rm -f -r $(ISO_TEMP_DIR)
-	rm -f $(EFI_BOOT)
+		-o $(ISO_FILE_NAME) $(ISO_DIR)
+	rm -f -r $(ISO_DIR)
 
 clean:
 	rm -f $(ISO_FILE_NAME)

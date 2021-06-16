@@ -66,7 +66,7 @@ BuildTools
 BuildTools/genisoimage
 BuildTools/grub-2.04
 BuildTools/mkfs
-BuildTools/mtool
+BuildTools/mtools
 ```
 
 2.下载qemu最新版：[Qemu](https://www.qemu.org/) 下载后安装，配置安装目录环境变量到系统环境变量Path里面，或者下载我提取的版本：[Qemu-i386](https://gitee.com/hzc1998/bookos-web-db/blob/master/tools/Qemu-i386.rar)，下载后配置解压目录环境变量到系统环境变量Path里面。
@@ -85,8 +85,8 @@ BuildTools/mtool
     Red hat/Fedora/Centos: sudo yum install qemu-system-x86    
 
 3.安装grub引导相关工具：
-    Ubuntu/Kali Linux: sudo apt-get install grub
-    Red hat/Fedora/Centos: sudo yum install grub
+    Ubuntu/Kali Linux: sudo apt-get install grub mtools genisoimage
+    Red hat/Fedora/Centos: sudo yum install grub mtools genisoimage
 ```
 
 ## Mac环境搭建

@@ -32,7 +32,7 @@ void network_init(void)
     }
     
     /* 打开一个线程来读取网络数据包 */
-    task_t * netin = kern_thread_start("netin", TASK_PRIO_LEVEL_NORMAL, netin_kthread, NULL);
+    task_t * netin = task_create("netin", TASK_PRIO_LEVEL_NORMAL, netin_kthread, NULL);
     if (netin == NULL) {
         errprint("[net] start kthread netin failed!\n");
     }

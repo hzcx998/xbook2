@@ -427,7 +427,7 @@ iostatus_t tty_open(device_object_t *device, io_request_t *ioreq)
         }
     }
     if (extension->public->counts == 0) {
-        kern_thread_start("tty", TASK_PRIO_LEVEL_NORMAL, tty_thread, extension->public);
+        task_create("tty", TASK_PRIO_LEVEL_NORMAL, tty_thread, extension->public);
         extension->public->counts++;
     }
     

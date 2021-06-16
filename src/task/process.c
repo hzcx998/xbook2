@@ -313,7 +313,7 @@ void proc_entry(void* arg)
     /* rease proc resource */
     proc_release(cur);
     /* thread exit. */
-    kern_thread_exit(-1);
+    task_exit(-1);
     panic("proc: start INIT process %s failed!\n", pathname);
 }
 

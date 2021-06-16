@@ -52,7 +52,7 @@ int view_core_init()
         view_keyboard_exit();
         return -1;
     }
-    view_thread = kern_thread_start("driver-view", TASK_PRIO_LEVEL_NORMAL, view_thread_entry, NULL);
+    view_thread = task_create("driver-view", TASK_PRIO_LEVEL_NORMAL, view_thread_entry, NULL);
     if (!view_thread) {
         view_env_exit();
         view_global_msg_exit();
@@ -127,5 +127,5 @@ void view_core_loop()
         }
     }
     view_thread_exit = 0;
-    kern_thread_exit(0);
+    task_exit(0);
 }

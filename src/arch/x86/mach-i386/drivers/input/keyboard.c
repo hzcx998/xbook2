@@ -1127,7 +1127,7 @@ static iostatus_t keyboard_enter(driver_object_t *driver)
 	irq_register(devext->irq, keyboard_handler, IRQF_DISABLED, "IRQ1", DRV_NAME, (void *) devext);
     
     /* 启动一个内核线程来处理数据 */
-    kern_thread_start("kbd", TASK_PRIO_LEVEL_REALTIME, kbd_thread, devext);
+    task_create("kbd", TASK_PRIO_LEVEL_REALTIME, kbd_thread, devext);
 
     return status;
 }

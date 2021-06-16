@@ -143,8 +143,8 @@ void task_init(task_t *task, char *name, uint8_t prio_level);
 void task_free(task_t *task);
 void task_dump(task_t *task);
 
-task_t *kern_thread_start(char *name, uint8_t prio_level, task_func_t *func, void *arg);
-void kern_thread_exit(int status);
+task_t *task_create(char *name, uint8_t prio_level, task_func_t *func, void *arg);
+void task_exit(int status);
 
 task_t *task_find_by_pid(pid_t pid);
 void task_add_to_global_list(task_t *task);

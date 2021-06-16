@@ -504,9 +504,9 @@ void port_msg_copy_header(port_msg_t *src, port_msg_t *dest)
 void port_comm_init()
 {
     #if 0
-    kern_thread_start("port_comm", 0, port_comm_thread, NULL);
-    kern_thread_start("port_comm", 0, port_comm_threada, NULL);
-    kern_thread_start("port_comm", 0, port_comm_threadb, NULL);
-    kern_thread_start("port_comm", 0, port_comm_threadb, NULL);
+    task_create("port_comm", 0, port_comm_thread, NULL);
+    task_create("port_comm", 0, port_comm_threada, NULL);
+    task_create("port_comm", 0, port_comm_threadb, NULL);
+    task_create("port_comm", 0, port_comm_threadb, NULL);
     #endif
 }

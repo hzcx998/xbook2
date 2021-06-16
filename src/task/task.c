@@ -126,7 +126,7 @@ int task_is_child(pid_t pid, pid_t child_pid)
 }
 
 /**
- * kern_thread_start - 启动一个内核线程
+ * task_create - 启动一个内核线程
  * @name: 线程的名字
  * @prio_level: 线程优先级
  * @func: 线程入口
@@ -134,7 +134,7 @@ int task_is_child(pid_t pid, pid_t child_pid)
  * 
  * @return: 成功返回任务的指针，失败返回NULL
  */
-task_t *kern_thread_start(char *name, uint8_t prio_level, task_func_t *func, void *arg)
+task_t *task_create(char *name, uint8_t prio_level, task_func_t *func, void *arg)
 {
     task_t *task = (task_t *) mem_alloc(TASK_KERN_STACK_SIZE);
     if (!task)
@@ -155,7 +155,7 @@ task_t *kern_thread_start(char *name, uint8_t prio_level, task_func_t *func, voi
     return task;
 }
 
-void kern_thread_exit(int status)
+void task_exit(int status)
 {
     unsigned long flags;
     interrupt_save_and_disable(flags);

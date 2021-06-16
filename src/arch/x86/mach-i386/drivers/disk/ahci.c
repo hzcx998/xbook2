@@ -1115,10 +1115,10 @@ iostatus_t ahci_write(device_object_t *device, io_request_t *ioreq)
         ioreq->system_buffer, sectors, ioreq->parame.write.offset);
 #endif    
     unsigned long off;    
-    if (ioreq->parame.read.offset == DISKOFF_MAX) {
+    if (ioreq->parame.write.offset == DISKOFF_MAX) {
         off = ext->rwoffset;
     } else {
-        off = ioreq->parame.read.offset;
+        off = ioreq->parame.write.offset;
     }
     len = ahci_write_sector(device->device_extension, off,
         ioreq->system_buffer, sectors);

@@ -89,6 +89,9 @@ QEMU_FAT_FS ?= n
 KERN_MODULE_NET	?= n
 export KERN_MODULE_NET
 
+# is livecd mode? (y/n)
+KERN_LIVECD_MODE ?= n
+export KERN_LIVECD_MODE
 
 DUMP_FILE	?= $(KERNEL_ELF)
 DUMP_FLAGS	?= 
@@ -137,7 +140,9 @@ endif
 	$(MAKE) -s -C $(LIBS_DIR)
 	$(MAKE) -s -C $(SBIN_DIR)
 	$(MAKE) -s -C $(BIN_DIR)
+ifeq ($(QEMU_FAT_FS),n)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
+endif
 
 # 清理环境。
 debuild:
@@ -206,11 +211,6 @@ endif
 
 QEMU_ARGUMENT := -m 512m $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \
-		-drive id=disk0,file=$(HDA_IMG),format=raw,if=none \
-		-drive id=disk1,file=$(HDB_IMG),format=raw,if=none \
-		-device ahci,id=ahci \
-		-device ide-hd,drive=disk0,bus=ahci.0 \
-		-device ide-hd,drive=disk1,bus=ahci.1 \
 		-rtc base=localtime \
 		-boot a \
 		-serial stdio \
@@ -219,6 +219,14 @@ QEMU_ARGUMENT := -m 512m $(QEMU_KVM) \
 		-device intel-hda -device hda-duplex
 # 		-usbdevice mouse \
 # 		-usbdevice keyboard
+
+ifeq ($(KERN_LIVECD_MODE),n)
+QEMU_ARGUMENT += -drive id=disk0,file=$(HDA_IMG),format=raw,if=none \
+		-drive id=disk1,file=$(HDB_IMG),format=raw,if=none \
+		-device ahci,id=ahci \
+		-device ide-hd,drive=disk0,bus=ahci.0 \
+		-device ide-hd,drive=disk1,bus=ahci.1
+endif
 
 ifeq ($(KERN_MODULE_NET),y)
 QEMU_ARGUMENT += -net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no

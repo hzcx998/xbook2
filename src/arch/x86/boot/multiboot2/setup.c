@@ -15,11 +15,13 @@
  *  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <arch/module.h>
 #include <drivers/vbe.h>
 #include <string.h>
 
 #include "multiboot2.h"
 
+static void init_module(struct multiboot_tag *tag);
 static void init_memory(struct multiboot_tag *tag);
 static void init_vbe(struct multiboot_tag *tag);
 static void init_framebuffer(struct multiboot_tag *tag);
@@ -33,11 +35,16 @@ int setup_entry(unsigned long magic, unsigned long addr)
     if (magic != MULTIBOOT2_BOOTLOADER_MAGIC || addr & 7) return -1;
     struct multiboot_tag *tag;
 
+    module_info_init();
+
     for (tag = (struct multiboot_tag*)(addr + 8);
          tag->type != MULTIBOOT_TAG_TYPE_END;
          tag = (struct multiboot_tag*)((multiboot_uint8_t *)tag + ((tag->size + 7) & ~7)))
     {
         switch (tag->type) {
+        case MULTIBOOT_TAG_TYPE_MODULE:
+            init_module(tag);
+        break;
         case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
             init_memory(tag);
         break;
@@ -52,6 +59,33 @@ int setup_entry(unsigned long magic, unsigned long addr)
 
     return 0;
 }
+
+#define cmdline_is(cmd) (!strcmp(((struct multiboot_tag_module *)tag)->cmdline, cmd))
+
+static void init_module(struct multiboot_tag *tag) {
+    struct modules_info_block *modules_info = (struct modules_info_block *)MODULE_INFO_ADDR;
+    int index = modules_info->modules_num;
+
+    if (index >= MAX_MODULES_NUM
+        || modules_info->modules_size + ((struct multiboot_tag_module *)tag)->size > MAX_MODULES_SIZE) {
+        return;
+    }
+
+    modules_info->modules[index].size = ((struct multiboot_tag_module *)tag)->size;
+    modules_info->modules[index].start = ((struct multiboot_tag_module *)tag)->mod_start;
+    modules_info->modules[index].end = ((struct multiboot_tag_module *)tag)->mod_end;
+
+    if (cmdline_is("initrd")) {
+        modules_info->modules[index].type = MODULE_INITRD;
+    } else {
+        modules_info->modules[index].type = MODULE_UNKNOWN;
+    }
+
+    modules_info->modules_size += modules_info->modules[index].size;
+    ++modules_info->modules_num;
+}
+
+#undef cmdline_is
 
 static void init_memory(struct multiboot_tag *tag) {
     unsigned long mem_upper = ((struct multiboot_tag_basic_meminfo *)tag)->mem_upper;

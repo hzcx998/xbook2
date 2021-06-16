@@ -389,7 +389,7 @@ void kern_page_map_early(unsigned int start, unsigned int end)
 
 
 	pte_nr = pte_nr % PAGE_TABLE_ENTRY_NR;
-	dbgprint("pde count: %d, pte count: %d\n", pde_nr, pte_nr);
+	dbgprint("map early: pde count: %d, pte count: %d\n", pde_nr, pte_nr);
 
 	unsigned int *pte_addr = (unsigned int *) (KERN_PAGE_TABLE_PHY_ADDR +
 			PAGE_SIZE * PAGE_TABLE_HAD_USED);
@@ -412,6 +412,7 @@ void kern_page_map_early(unsigned int start, unsigned int end)
 			start += PAGE_SIZE;
 		}
 	}
+    dbgprint("map early: pde end: %x, phy end: %x\n", pte_addr, start);
 }
 
 static int do_handle_no_page(unsigned long addr, unsigned long prot)
@@ -572,14 +573,14 @@ void setup_paging()
     memset(pgdir, 0, PAGE_SIZE);
 
     unsigned int phy_addr = 0;
-    /* fill page table, 8MB memory */
+    /* fill page table, 12MB memory */
     int i;
-    for (i = 0; i < 1024 * 2; i++) {
+    for (i = 0; i < 1024 * 3; i++) {
         pgtbl[i] = phy_addr | KERN_PAGE_ATTR;
         phy_addr += PAGE_SIZE;
     }
 
-    /* fill page dir table, low 8M (0~8M), high 8M(0x80000000~0x80800000) */
+    /* fill page dir table, low 12M (0~12M), high 12M(0x80000000~0x80c00000) */
     pgdir[0] = (unsigned int) pgtbl | KERN_PAGE_ATTR;
     #if KERN_LOWMEN == 0
     pgdir[512] = (unsigned int) pgtbl | KERN_PAGE_ATTR;
@@ -588,6 +589,11 @@ void setup_paging()
     pgdir[1] = (unsigned int) pgtbl | KERN_PAGE_ATTR;
     #if KERN_LOWMEN == 0
     pgdir[513] = (unsigned int) pgtbl | KERN_PAGE_ATTR;
+    #endif
+    pgtbl += 1024;
+    pgdir[2] = (unsigned int) pgtbl | KERN_PAGE_ATTR;
+    #if KERN_LOWMEN == 0
+    pgdir[514] = (unsigned int) pgtbl | KERN_PAGE_ATTR;
     #endif
     pgdir[1023] = (unsigned int) pgdir |KERN_PAGE_ATTR;    /* record pgdir self */
     /* 打开分页模式 */
