@@ -1,4 +1,5 @@
 #include "test.h"
+#include <sys/stat.h>
 
 int file_test(int argc, char *argv[])
 {
@@ -71,5 +72,25 @@ int file_test3(int argc, char *argv[])
     fwrite("hello", 5, 1, fp);
     fclose(fp);
     printf("test end\n");
+    return 0;
+}
+
+int file_test4(int argc, char *argv[])
+{
+    int fd = open("/bin/tests", O_RDWR);
+    if (fd < 0) {
+        printf("open fd error\n");
+        return 1;
+    }
+    struct stat st;
+    if (fstat(fd, &st) < 0) {
+        printf("fstat failed!\n");
+        return EXIT_FAILURE;
+    }
+    
+    printf("mode %x, ino %d, dev %d, rdev %d\n", st.st_mode, st.st_ino, st.st_dev, st.st_rdev);
+    printf("nlink %d, uid %d, gid %d, size %d\n", st.st_nlink, st.st_uid, st.st_gid, st.st_size);
+    printf("atime %x, mtime %x, ctime %x\n", st.st_atime, st.st_mtime, st.st_ctime);
+    close(fd);
     return 0;
 }

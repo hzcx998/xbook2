@@ -7,6 +7,8 @@
 #include <xbook/diskman.h>
 #include <xbook/memalloc.h>
 #include <xbook/walltime.h>
+#include <xbook/memspace.h>
+#include <xbook/safety.h>
 #include <const.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -21,6 +23,7 @@
 
 typedef struct {
     FATFS *fsobj[FF_VOLUMES];       /* 挂载对象指针 */
+    int reference[FF_VOLUMES];      /* 引用计数 */
     uint16_t mount_time[FF_VOLUMES];  /* 挂载时的时间 */
     uint16_t mount_date[FF_VOLUMES];  /* 挂载时的日期 */
 } fatfs_extention_t;
@@ -30,7 +33,11 @@ typedef struct {
 } fatfs_dir_extention_t;
 
 typedef struct {
-    FIL file;
+    FIL file;               /* 用于保存文件信息 */
+    DIR dir;                /* 用于保存目录信息 */
+    char path[MAX_PATH];    /* 保存文件路径 */
+    char *dir_path;         /* 目录路径：只有被当做目录打开时才有效，默认为NULL */
+    char *tmpdire;          /* 进行getdents操作时，会产生目录读取断层问题，才用临时缓冲区解决该问题 */
 } fatfs_file_extention_t;
 
 fatfs_extention_t fatfs_extention;
@@ -39,10 +46,38 @@ int fatfs_drv_map[FF_VOLUMES] = {
     0,1,2,3,4,5,6,7,8,9
 };
 
+static int disk_has_fs(unsigned char *buf)
+{
+    int i;
+    #if 0
+    for (i = 0; i < SECTOR_SIZE; i ++) {
+        if (0 == i % 16) {
+            dbgprint("\n");
+        }
+        dbgprint("%x ", buf[i]);
+    }
+    dbgprint("\n");
+    #endif
+    for (i = 0; i < SECTOR_SIZE; i++)
+        if (buf[i])
+            return 1;
+    return 0;
+}
+
+/**
+ * 1. 检测设备是否存在
+ * 2. 查看设备是否已经映射过了
+ * 3. 根据设备转换成设备号
+ * 4. 打开设备文件
+ * 5. 读取超级块，并检查是否有文件系统
+ * 6. 如果需要格式化就进行格式化
+ * 7. 执行挂载操作
+ * 8. 记录挂载信息
+ * 9. 将路径插入抽象路径中
+ */
 static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned long flags)
 {
     //dbgprint("%s: %s: source %s target %s type %s.\n", FS_MODEL_NAME,__func__, source, target, fstype);
-
     int solt = disk_info_find_with_path(source);
     if (solt < 0) {
         dbgprint("%s: %s: not find device %s.\n", FS_MODEL_NAME,__func__, source);
@@ -74,14 +109,14 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
         dbgprint("%s: %s: not find device %s.\n", FS_MODEL_NAME,__func__, source);
         return -1;
     }
-    unsigned char buf[512];
+    unsigned char buf[SECTOR_SIZE];
     if (diskman.read(solt, 0, buf, SECTOR_SIZE) < 0) {
         diskman.close(solt);
         return -1;
     }
     diskman.close(solt);
     char remkfs = 1;
-    if (buf[510] == 0x55 && buf[511] == 0xaa) {
+    if (disk_has_fs(buf)) {
         remkfs = 0;
         /* 强制要求格式化磁盘 */
         if (flags & MT_REMKFS) {
@@ -111,61 +146,94 @@ static int fsal_fatfs_mount(char *source, char *target, char *fstype, unsigned l
             return -1;
         }
     }
-
-    FATFS *fsobj;           /* Filesystem object */
-    fsobj = mem_alloc(sizeof(FATFS));
-    if (fsobj == NULL) 
-        return -1;
-    memset(fsobj, 0, sizeof(FATFS));
-    FRESULT fr;
+    FATFS *fsobj = NULL;           /* Filesystem object */
     p = (const TCHAR *) path;
 
-    BYTE delayed = !(flags & MT_DELAYED);  /* 延时挂载 */
-    fr = f_mount(fsobj, p, delayed);
-    if (fr != FR_OK) {
-        dbgprint("%s: %s: mount on path %s failed, code %d!\n", FS_MODEL_NAME,__func__, p, fr);
-        mem_free(fsobj);
-        return -1;
+    /* 如果引用为0，才进行真正的挂载 */
+    if (fatfs_extention.reference[pdrv] == 0) {
+        fsobj = mem_alloc(sizeof(FATFS));
+        if (fsobj == NULL) 
+            return -1;
+        memset(fsobj, 0, sizeof(FATFS));
+        FRESULT fr;
+        BYTE delayed = !(flags & MT_DELAYED);  /* 延时挂载 */
+        fr = f_mount(fsobj, p, delayed);
+        if (fr != FR_OK) {
+            dbgprint("%s: %s: mount on path %s failed, code %d!\n", FS_MODEL_NAME,__func__, p, fr);
+            mem_free(fsobj);
+            return -1;
+        }
+        #ifndef DEBUG_FATFS
+        char *fatfmt[] = {
+            "unknown",
+            "fat12",
+            "fat16",
+            "fat32",
+            "exfat",
+        };
+        dbgprint("[fs] fatfs mount: fstype %d: %s\n", fsobj->fs_type, fatfmt[fsobj->fs_type]);
+        #endif
+        fatfs_extention.fsobj[pdrv] = fsobj;
+        fatfs_extention.mount_time[pdrv] = WTM_WR_TIME(walltime.hour, walltime.minute, walltime.second);
+        fatfs_extention.mount_date[pdrv] = WTM_WR_DATE(walltime.year, walltime.month, walltime.day);
     }
-    fatfs_extention.fsobj[pdrv] = fsobj;
-    fatfs_extention.mount_time[pdrv] = WTM_WR_TIME(walltime.hour, walltime.minute, walltime.second);
-    fatfs_extention.mount_date[pdrv] = WTM_WR_DATE(walltime.year, walltime.month, walltime.day);
-        
+    fatfs_extention.reference[pdrv]++;
     if (fsal_path_insert(source, (void *)p, target, &fatfs_fsal)) {
-        dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, p);
-        mem_free(fsobj);
+        //dbgprint("%s: %s: insert path %s failed!\n", FS_MODEL_NAME,__func__, p);
+        if (fsobj)
+            mem_free(fsobj);
         return -1;
     }
     return 0;
 }
 
-static int fsal_fatfs_unmount(char *path, unsigned long flags)
+/**
+ * 1. 查看路径或者设备是否为挂载点
+ * 2. 执行卸载操作
+ * 3. 删除抽象层路径
+ * 4. 释放其他信息
+ */
+static int fsal_fatfs_unmount(char *origin_path, char *path, unsigned long flags)
 {
-    //dbgprint("%s: %s: path %s.\n", FS_MODEL_NAME,__func__, path);
-
+    // dbgprint("%s: %s: path %s\n", FS_MODEL_NAME,__func__, path);
     /* 检查路径是否为物理路径或者虚拟路径 */
     if (fsal_path_find(path, 0) < 0 && fsal_path_find_device(path) < 0) {
-        errprint("unmount: path %s not mount!\n", path);
+        errprint("fsal_fatfs_unmount: path %s not mount!\n", path);
         return -1;
     }
-
-    /* 在末尾填0，只保留磁盘符和分隔符 */
-    path[2] = '\0';
-    FRESULT res;
-    const TCHAR *p = (const TCHAR *) path;
     fatfs_extention_t *ext = &fatfs_extention;
-    res = f_unmount(p);
-    if (res != FR_OK) {
-        dbgprint("%s: %s: unmount on path %s failed, code %d.\n", FS_MODEL_NAME,__func__, p, res);
-        return -1;
-    }
-    if (fsal_path_remove((void *) p)) {
-        dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, p);
-        return -1;
-    }
     int pdrv = PATH_TO_PDRV(path[0]);
-    mem_free(ext->fsobj[pdrv]);
-    ext->fsobj[pdrv] = NULL;
+    fatfs_extention.reference[pdrv]--;
+    if (fatfs_extention.reference[pdrv] < 0) {
+        fatfs_extention.reference[pdrv] = 0;
+        errprint("fsal_fatfs_unmount: pdrv %d reference lower\n", pdrv);
+        return -1;
+    }
+    if (fatfs_extention.reference[pdrv] == 0) {
+        FRESULT res;        
+        /* 在末尾填0，只保留磁盘符和分隔符 */
+        path[2] = '\0';
+        const TCHAR *p = (const TCHAR *) path;
+        res = f_unmount(p);
+        if (res != FR_OK) {
+            dbgprint("%s: %s: unmount on path %s failed, code %d.\n", FS_MODEL_NAME,__func__, p, res);
+            return -1;
+        }
+        mem_free(ext->fsobj[pdrv]);
+        ext->fsobj[pdrv] = NULL;
+        if (fsal_path_remove((void *) p)) {
+            dbgprint("%s: %s: remove path %s failed!\n", FS_MODEL_NAME,__func__, p);
+            return -1;
+        }
+    } else {
+        /* 删除抽象路径 */
+        char *p = origin_path;
+        if (fsal_path_remove_alpath((void *) p)) {
+            dbgprint("%s: %s: remove al path %s failed!\n", FS_MODEL_NAME,__func__, p);
+            return -1;
+        }
+    }
+    
     return 0;
 }
 
@@ -206,11 +274,26 @@ static int fsal_fatfs_mkfs(char *source, char *fstype, unsigned long flags)
     return 0;
 }
 
+/**
+ * 检测是否为一个目录，是则返回0，不是则返回错误码
+ */
+static int fatfs_is_director(char *path, DIR *dir)
+{
+    FRESULT res;
+    res = f_opendir(dir, path); /* Open the directory */
+    if (res != FR_OK) {
+        // errprintln("[fs] fatfs: dir %s not exist", path);
+        return -ENFILE;
+    }
+    return 0;
+}
+
 static int fsal_fatfs_open(void *path, int flags)
 {
     fsal_file_t *fp = fsal_file_alloc();
     if (fp == NULL)
         return -ENOMEM;
+    //dbgprint("fatfs: open path %s flags %d\n", path, flags);
     const TCHAR *p = (const TCHAR *) path;
     fp->extension = mem_alloc(sizeof(fatfs_file_extention_t));
     if (!fp->extension) {
@@ -218,10 +301,16 @@ static int fsal_fatfs_open(void *path, int flags)
         fsal_file_free(fp);
         return -ENOMEM;
     }
-
+    fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
+    extension->dir_path = NULL;     /* 普通文件时为NULL，为目录时才有效 */
+    extension->tmpdire = NULL;      /* 默认没有临时目录 */
+    memset(extension->path, 0, MAX_PATH);
+    strcpy(extension->path, path);
     fp->fsal = &fatfs_fsal;
-
     BYTE mode = 0;  /* 文件打开模式 */
+    #if defined(CONFIG_NEWSYSCALL)
+    mode = FA_READ;
+    #endif
     if (flags & O_RDONLY) {
         mode |= FA_READ;
     } else if (flags & O_WRONLY) {
@@ -238,14 +327,29 @@ static int fsal_fatfs_open(void *path, int flags)
     } else if (flags & O_CREAT) {
         mode |= FA_OPEN_ALWAYS;
     }
-
-    FRESULT fres;
-    fres = f_open((FIL *)fp->extension, p, mode);
-    if (fres != FR_OK) {
-        // errprint("fatfs: open file %s failed! errcode:%d, flags:%x\n", p, fres, flags);
-        mem_free(fp->extension);
-        fsal_file_free(fp);
-        return -ENOFILE;
+    
+    if (flags & O_DIRECTORY) {
+        int err = fatfs_is_director(path, &extension->dir);
+        if (err < 0) {  /* 打开目录失败 */
+            mem_free(fp->extension);
+            fsal_file_free(fp);
+            return err;
+        }
+        extension->dir_path = extension->path;  /* open as director */
+    } else {
+        FRESULT fres;
+        fres = f_open((FIL *)&extension->file, p, mode);
+        if (fres != FR_OK) {
+            /* 当作为文件打开失败时，就尝试作为目录打开 */
+            int err = fatfs_is_director(path, &extension->dir);
+            if (err < 0) {  /* 打开目录失败 */
+                mem_free(fp->extension);
+                fsal_file_free(fp);
+                return -ENOFILE;
+            } else {
+                extension->dir_path = extension->path;  /* open as director */
+            }
+        }
     }
     return FSAL_FILE2IDX(fp);
 }
@@ -257,11 +361,21 @@ static int fsal_fatfs_close(int idx)
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     if (FSAL_BAD_FILE(fp))
         return -1;
-    FRESULT fres;
-    fres = f_close((FIL *)fp->extension);
-    if (fres != FR_OK) {    
-        errprint("[fatfs]: close file failed!\n");
-        return -1;
+    fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
+    if (extension->dir_path != NULL) {  /* Is director */
+        extension->dir_path = NULL;
+        f_closedir(&extension->dir); /* close dir */
+        if (extension->tmpdire) {   /* free tmpdire */
+            mem_free(extension->tmpdire);
+            extension->tmpdire = NULL;
+        }
+    } else {
+        FRESULT fres;
+        fres = f_close((FIL *)&extension->file);
+        if (fres != FR_OK) {    
+            errprint("[fatfs]: close file failed!\n");
+            return -1;
+        }
     }
     if (fp->extension)
         mem_free(fp->extension);
@@ -397,23 +511,16 @@ static int fsal_fatfs_closedir(int idx)
     return 0;
 }
 
-static int fsal_fatfs_readdir(int idx, void *buf)
+static int do_readdir(DIR *dirp, dirent_t *dire)
 {
-    if (FSAL_IS_BAD_DIR(idx))
-        return -1;
-    fsal_dir_t *pdir = FSAL_I2D(idx);
-    if (!pdir->flags)   
-        return -1;
-    
     FRESULT fres;
     FILINFO finfo;
-    fres = f_readdir((DIR *)pdir->extension, &finfo);
+    fres = f_readdir(dirp, &finfo);
     if (fres != FR_OK) {
-        return -1;
+        return -fres;
     }
     if (finfo.fname[0] == '\0') 
-        return -1;
-    dirent_t *dire = (dirent_t *)buf;
+        return -EPERM;
     dire->d_attr = 0;
     if (finfo.fattrib & AM_RDO)
         dire->d_attr |= DE_RDONLY;
@@ -433,6 +540,17 @@ static int fsal_fatfs_readdir(int idx, void *buf)
     return 0;
 }
 
+static int fsal_fatfs_readdir(int idx, void *buf)
+{
+    if (FSAL_IS_BAD_DIR(idx))
+        return -1;
+    fsal_dir_t *pdir = FSAL_I2D(idx);
+    if (!pdir->flags)   
+        return -1;
+    fatfs_dir_extention_t *dirext = pdir->extension;
+    return do_readdir(&dirext->dir, (dirent_t *)buf);
+}
+
 static int fsal_fatfs_mkdir(char *path, mode_t mode)
 {
     FRESULT res;
@@ -446,6 +564,7 @@ static int fsal_fatfs_mkdir(char *path, mode_t mode)
 static int fsal_fatfs_unlink(char *path)
 {
     FRESULT res;
+    //dbgprintln("[fs] fatfs: unlink %s", path);
     res = f_unlink(path);
     if (res != FR_OK) {
         return -1;
@@ -560,13 +679,55 @@ static int fsal_fatfs_state(char *path, void *buf)
 static int fsal_fatfs_fstat(int idx, void *buf)
 {
     if (FSAL_BAD_FILE_IDX(idx))
-        return -1;
+        return -EINVAL;
     fsal_file_t *fp = FSAL_IDX2FILE(idx);
     if (FSAL_BAD_FILE(fp))   
-        return -1;
+        return -EINVAL;
     
-    /* NOTICE: FATFS暂时不支持 */
-    return -ENOSYS;
+    fatfs_file_extention_t *extension = (fatfs_file_extention_t *) fp->extension;
+    char *path = extension->path;
+    if (!path || !path[0])
+        return -1;
+    FRESULT fres;
+    FILINFO finfo;
+    /* sync file before fstat, not dir */
+    if (extension->dir_path == NULL) {
+        f_sync(&extension->file);
+        //dbgprintln("[fstat] sync file %s failed", extension->path);
+    }
+        
+    /* 对根目录进行特殊处理 */
+    int pdrv = PATH_TO_PDRV(path[0]);   /* 获取设备 */
+    if (is_root_dir(path)) {
+        finfo.fsize = 0;
+        finfo.fdate = fatfs_extention.mount_date[pdrv];
+        finfo.ftime = fatfs_extention.mount_time[pdrv];
+        finfo.fattrib = (AM_RDO | AM_DIR);
+    } else {
+        //dbgprintln("[fs] fatfs fstat: get stat");    
+    
+        fres = f_stat(path, &finfo);
+        if (fres != FR_OK) {
+            return -EINVAL;
+        }
+    }
+    // dbgprintln("[fs] fatfs fstat: write info and return");    
+    struct stat *stat = (struct stat *)buf;
+    mode_t mode = S_IREAD | S_IWRITE;
+    if (finfo.fattrib & AM_RDO)
+        mode &= ~S_IWRITE;
+    if (finfo.fattrib & AM_DIR)
+        mode |= S_IFDIR;
+    else
+        mode |= S_IFREG;
+    stat->st_dev = pdrv;
+    stat->st_ino = 0;
+    stat->st_mode = mode;
+    stat->st_size = finfo.fsize;
+    stat->st_nlink = 1;         // 1 link for this file
+    stat->st_atime = (finfo.fdate << 16) | finfo.ftime;
+    stat->st_ctime = stat->st_mtime = stat->st_atime;
+    return 0;
 }
 
 static int fsal_fatfs_chmod(char *path, mode_t mode)
@@ -762,3 +923,9 @@ fsal_t fatfs_fsal = {
     .access     =fsal_fatfs_access,
     .extention  = (void *)&fatfs_extention,
 };
+
+int fatfs_init()
+{
+    memset(&fatfs_extention, 0, sizeof(fatfs_extention));
+    return 0;
+}

@@ -59,5 +59,6 @@ int fsal_path_switch(fsal_path_t *fpath, char *new_path, char *old_path);
 int fsal_list_dir(char* path);
 
 char *path_get_filename(const char *path);
+int fsal_path_remove_alpath(void *alpath);
 
 #endif  /* _XBOOK_FSAL_PATH_H */

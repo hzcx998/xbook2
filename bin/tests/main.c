@@ -7,6 +7,7 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"file4", file_test4},
     {"socket5", socket_ifconfig},
     {"chargen", chargen_test},
     {"select", select_test},
