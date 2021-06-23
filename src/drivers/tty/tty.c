@@ -209,7 +209,11 @@ iostatus_t tty_read(device_object_t *device, io_request_t *ioreq)
             
             } else {    /* 不是前台任务就触发任务的硬件触发器 */
                 noteprint("pid %d not process group %d ! send TTIN exception.\n", task_current->pid, extension->pgrp);
+                #ifdef CONFIG_SIGNAL
+                force_signal_self(SIGTTIN);
+                #else            
                 exception_force_self(EXP_CODE_TTIN);
+                #endif
             }
         }
         

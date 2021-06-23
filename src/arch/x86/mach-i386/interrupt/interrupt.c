@@ -27,39 +27,75 @@ void interrupt_general_handler(unsigned int esp)
             break;
         case EP_DIVIDE:
         case EP_INVALID_OPCODE:
+            #ifdef CONFIG_SIGNAL
+            force_signal_self(SIGILL);
+            #else
             exception_force_self(EXP_CODE_ILL);
+            #endif
             break;
         case EP_DEVICE_NOT_AVAILABLE:
+            #ifdef CONFIG_SIGNAL
+            force_signal_self(SIGIO);
+            #else
             exception_force_self(EXP_CODE_DEVICE);
+            #endif
             break;
         case EP_COPROCESSOR_SEGMENT_OVERRUN:
         case EP_X87_FLOAT_POINT:
         case EP_SIMD_FLOAT_POINT:
+            #ifdef CONFIG_SIGNAL
+            force_signal_self(SIGFPE);
+            #else
             exception_force_self(EXP_CODE_FPE);
+            #endif
             break;
         case EP_OVERFLOW:
         case EP_BOUND_RANGE:
         case EP_INVALID_TSS:
         case EP_ALIGNMENT_CHECK:
+            #ifdef CONFIG_SIGNAL
+            force_signal_self(SIGBUS);
+            #else
             exception_force_self(EXP_CODE_BUS);
+            #endif
             break;
         case EP_SEGMENT_NOT_PRESENT:
         case EP_GENERAL_PROTECTION:
+            #ifdef CONFIG_SIGNAL
+            force_signal_self(SIGSEGV);
+            #else
             exception_force_self(EXP_CODE_SEGV);
+            #endif
             break;
         case EP_STACK_FAULT:
+            #ifdef CONFIG_SIGNAL
+            force_signal_self(SIGSTKFLT);
+            #else
             exception_force_self(EXP_CODE_STKFLT);
+            #endif
             break;
         case EP_MACHINE_CHECK:
         case EP_INTERRUPT:
+            #ifdef CONFIG_SIGNAL
+            force_signal_self(SIGINT);
+            #else
             exception_force_self(EXP_CODE_INT);
+            #endif
             break;
         case EP_DOUBLE_FAULT:
+            #ifdef CONFIG_SIGNAL
+            force_signal_self(SIGKILL);
+            #else
             exception_force_self(EXP_CODE_FINALHIT);
+            #endif
             break;
         case EP_DEBUG:
         case EP_BREAKPOINT:
+            #ifdef CONFIG_SIGNAL
+            force_signal_self(SIGTRAP);
+            #else
             exception_force_self(EXP_CODE_TRAP);
+            #endif
             break;
         default:
             break;

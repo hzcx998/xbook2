@@ -36,4 +36,7 @@
 /* 配置对pthread接口的支持 */
 // #define CONFIG_PTHREAD
 
+/* 配置信号机制 */
+#define CONFIG_SIGNAL
+
 #endif   /* _XBOOK_CONFIG_H */

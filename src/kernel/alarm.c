@@ -2,6 +2,7 @@
 #include <xbook/schedule.h>
 #include <xbook/clock.h>
 #include <xbook/debug.h>
+#include <xbook/signal.h>
 
 unsigned long sys_alarm(unsigned long second)
 {
@@ -19,6 +20,9 @@ unsigned long sys_alarm(unsigned long second)
 
 void alarm_update_ticks()
 {
+#ifdef CONFIG_SIGNAL
+    task_t *cur = task_current;
+#endif
     task_t *task;
     unsigned long flags;
     interrupt_save_and_disable(flags);
@@ -30,11 +34,11 @@ void alarm_update_ticks()
                     task->alarm.second--;
                     task->alarm.ticks = HZ;
                     if (!task->alarm.second) {
-                        #if 1
+#ifdef CONFIG_SIGNAL
+                        do_send_signal(task->pid, SIGALRM, cur->pid);
+#else
                         exception_send(task->pid, EXP_CODE_ALRM);
-                        #else
-                        keprintln("[alarm] exception send");
-                        #endif
+#endif
                         task->alarm.flags = 0;
                     }
                 }

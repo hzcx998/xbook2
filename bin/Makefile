@@ -112,5 +112,6 @@ MODULE      +=  echo
 MODULE      +=  uname
 MODULE      +=  cat
 MODULE      +=  ls
+MODULE      +=  oscomp
 endif
 endif 

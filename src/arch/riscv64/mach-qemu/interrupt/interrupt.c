@@ -47,12 +47,37 @@ static void interrupt_general_handler(trap_frame_t *frame)
         keprint("[exception] sepc=%p stval=%p hart=%d\n", sepc_read(), stval_read(), tp_reg_read());
         keprint("[exception] name: %s \n", interrupt_names[expcode]);
         trap_frame_dump(frame);
+
         if((scause & SSTATUS_SPP) != 0) {  // from kernel
             dbgprintln("[exception] exception %d from kernel!", expcode);
             panic("exception in kernel :(");
         } else {    // from user
             dbgprintln("[exception] exception %d from user!", expcode);
-            panic("exception in user :(");
+            //panic("exception in user :(");
+        }
+        switch (expcode) {
+        case EP_INSTRUCTION_ADDRESS_MISALIGNED:
+        case EP_INSTRUCTION_ACCESS_FAULT:
+        case EP_LOAD_ADDRESS_MISALIGNED:
+        case EP_LOAD_ACCESS_FAULT:
+        case EP_STORE_ADDRESS_MISALIGNED:
+        case EP_STORE_ACCESS_FAULT:
+            force_signal_self(SIGBUS);
+            break;
+        case EP_ILLEGAL_INSTRUCTION:
+            force_signal_self(SIGILL);
+            break;
+        case EP_BREAKPOINT:
+            force_signal_self(SIGTRAP);
+            break;
+        case EP_ENVIRONMENT_CALL_U_MODE:
+        case EP_ENVIRONMENT_CALL_S_MODE:
+        case EP_ENVIRONMENT_CALL_M_MODE:
+            force_signal_self(SIGKILL);
+            break;
+        default:
+            force_signal_self(SIGKILL);
+            break;
         }
     }
 }

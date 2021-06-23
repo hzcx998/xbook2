@@ -11,6 +11,7 @@
 
 // in kernel_trap_entry.S, calls do_kernel_trap().
 extern void kernel_trap_entry();
+extern int do_signal(trap_frame_t *frame);
 
 extern char trampoline[], uservec[], userret[];
 
@@ -43,6 +44,7 @@ void do_kernel_trap(trap_frame_t *frame)
     interrupt_dispatch(frame);
 
     exception_check(frame);
+    do_signal(frame);
 
     // the interrupt may have caused some traps to occur,
     // so restore trap registers for use by kerneltraps.S's sepc instruction.
@@ -81,6 +83,7 @@ void usertrap(void)
         interrupt_dispatch(cur->trapframe);
     }
     exception_check(cur->trapframe);
+    do_signal(cur->trapframe);
     usertrapret();
 }
 

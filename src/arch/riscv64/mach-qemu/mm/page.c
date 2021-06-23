@@ -10,6 +10,7 @@
 #include <arch/phymem.h>
 #include <xbook/task.h>
 #include <xbook/schedule.h>
+#include <xbook/signal.h>
 
 /* 内核页目录表 */
 pgdir_t kernel_pgdir;
@@ -591,7 +592,11 @@ static int do_protection_fault(pgdir_t pgdir, mem_space_t *space, unsigned long 
         return 0;
     }
     keprint(PRINT_EMERG "page: %s: addr %p unable to access", __func__, addr);
+#ifdef CONFIG_SIGNAL
+    force_signal_self(SIGSEGV);
+#else
     exception_force_self(EXP_CODE_SEGV);
+#endif
     return -1;
 }
 
@@ -600,7 +605,11 @@ static inline void do_vir_mem_fault(unsigned long addr)
     keprint("do_vir_mem_fault\n");
     keprint(PRINT_EMERG "page fault at %p.\n", addr);
     /* TODO: 如果是在vir_mem区域中，就进行页复制，不是的话，就发出段信号。 */
+#ifdef CONFIG_SIGNAL
+    force_signal_self(SIGSEGV);
+#else    
     exception_force_self(EXP_CODE_SEGV);
+#endif
 }
 
 /**
@@ -645,7 +654,11 @@ int page_do_fault(trap_frame_t *frame, int is_user, int expcode)
         keprint(PRINT_ERR "page fauilt: user pid=%d name=%s access no permission space.\n", cur->pid, cur->name);
         keprint(PRINT_EMERG "page fault at %p.\n", addr);
         trap_frame_dump(frame);
+        #ifdef CONFIG_SIGNAL
+        force_signal_self(SIGSEGV);
+        #else
         exception_force_self(EXP_CODE_SEGV);
+        #endif
         return -1;
     }
     #endif
@@ -656,7 +669,11 @@ int page_do_fault(trap_frame_t *frame, int is_user, int expcode)
         keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user access user unknown space.\n", cur->pid, cur->name);
         keprint(PRINT_EMERG "page fault at %p.\n", addr);
         trap_frame_dump(frame);
+        #ifdef CONFIG_SIGNAL
+        force_signal_self(SIGSEGV);
+        #else
         exception_force_self(EXP_CODE_SEGV);
+        #endif
         return -1;
     }
     if (space->start > addr) { /* 故障地址在空间前，说明是栈向下拓展，那么尝试拓展栈。 */
@@ -670,7 +687,11 @@ int page_do_fault(trap_frame_t *frame, int is_user, int expcode)
                 errprint("page addr %x\n", addr);
                 keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user task stack out of range!\n", cur->pid, cur->name);
                 trap_frame_dump(frame);
+                #ifdef CONFIG_SIGNAL
+                force_signal_self(SIGSEGV);
+                #else
                 exception_force_self(EXP_CODE_SEGV);
+                #endif
                 return -1;  
             }
         }

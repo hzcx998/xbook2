@@ -15,3 +15,4 @@ SRC	+= account.c
 SRC	+= permission.c
 SRC	+= config.c
 SRC	+= tests.c
+SRC	+= signal.c

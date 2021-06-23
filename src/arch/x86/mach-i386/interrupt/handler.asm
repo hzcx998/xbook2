@@ -5,6 +5,7 @@ extern interrupt_do_irq
 extern softirq_handle_in_interrupt
 extern syscalls
 extern exception_check
+extern do_signal
 extern syscall_check
 extern syscall_dispatch
 
@@ -99,6 +100,7 @@ syscall_handler:
 .check_exception:
     push esp
     call exception_check
+    call do_signal
     add esp, 4
     cli
     jmp interrupt_exit

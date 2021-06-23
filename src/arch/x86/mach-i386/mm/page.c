@@ -465,7 +465,11 @@ static inline void do_vir_mem_fault(unsigned long addr)
     keprint("do_vir_mem_fault\n");
     keprint(PRINT_EMERG "page fault at %x.\n", addr);
     /* TODO: 如果是在vir_mem区域中，就进行页复制，不是的话，就发出段信号。 */
+    #ifdef CONFIG_SIGNAL
+    force_signal_self(SIGSEGV);
+    #else
     exception_force_self(EXP_CODE_SEGV);
+    #endif
 }
 
 static void do_expand_stack(mem_space_t *space, unsigned long addr)
@@ -482,14 +486,22 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
 		int ret = do_page_no_write(addr);
 		if (ret) {
             keprint(PRINT_EMERG "page: %s: page not writable!", __func__);    
+            #ifdef CONFIG_SIGNAL
+            force_signal_self(SIGSEGV);
+            #else
             exception_force_self(EXP_CODE_SEGV);
+            #endif
             return -1;
         }
 
 		/* 虽然写入的写标志，但是还是会出现缺页故障，在此则处理一下缺页 */
 		if (do_handle_no_page(addr, space->page_prot)) {
-            keprint(PRINT_EMERG "page: %s: hand no page failed!", __func__);
+            keprint(PRINT_EMERG "page: %s: hand no page failed!", __func__);    
+            #ifdef CONFIG_SIGNAL
+            force_signal_self(SIGSEGV);
+            #else
             exception_force_self(EXP_CODE_SEGV);
+            #endif
 			return -1; 
         }
 		return 0;
@@ -497,7 +509,11 @@ static int do_protection_fault(mem_space_t *space, unsigned long addr, int write
 		keprint(PRINT_DEBUG "page: %s: no write protection\n", __func__);
 	}
     keprint(PRINT_EMERG "page: %s: page protection!", __func__);
+    #ifdef CONFIG_SIGNAL
+    force_signal_self(SIGSEGV);
+    #else
     exception_force_self(EXP_CODE_SEGV);
+    #endif
     return -1;
 }
 
@@ -542,7 +558,11 @@ int page_do_fault(trap_frame_t *frame)
         keprint(PRINT_ERR "page fauilt: user pid=%d name=%s access no permission space.\n", cur->pid, cur->name);
         keprint(PRINT_EMERG "page fault at %x.\n", addr);
         trap_frame_dump(frame);
+        #ifdef CONFIG_SIGNAL
+        force_signal_self(SIGSEGV);
+        #else
         exception_force_self(EXP_CODE_SEGV);
+        #endif
         return -1;
     }
 
@@ -552,7 +572,11 @@ int page_do_fault(trap_frame_t *frame)
         keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user access user unknown space.\n", cur->pid, cur->name);
         keprint(PRINT_EMERG "page fault at %x.\n", addr);
         trap_frame_dump(frame);
+        #ifdef CONFIG_SIGNAL
+        force_signal_self(SIGSEGV);
+        #else    
         exception_force_self(EXP_CODE_SEGV);
+        #endif
         return -1;
     }
     if (space->start > addr) { /* 故障地址在空间前，说明是栈向下拓展，那么尝试拓展栈。 */
@@ -566,7 +590,11 @@ int page_do_fault(trap_frame_t *frame)
                 errprint("page addr %x\n", addr);
                 keprint(PRINT_ERR "page fauilt: user pid=%d name=%s user task stack out of range!\n", cur->pid, cur->name);
                 trap_frame_dump(frame);
+                #ifdef CONFIG_SIGNAL
+                force_signal_self(SIGSEGV);
+                #else            
                 exception_force_self(EXP_CODE_SEGV);
+                #endif
                 return -1;  
             }
         }

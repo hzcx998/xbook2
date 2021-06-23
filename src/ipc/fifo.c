@@ -294,7 +294,11 @@ int fifo_write(int fifoid, void *buffer, size_t size)
                 return -1;
             }
             if (!fifo->reader || atomic_get(&fifo->readref) <= 0) {
+                #ifdef CONFIG_SIGNAL
+                force_signal_self(SIGPIPE);
+                #else            
                 exception_force_self(EXP_CODE_PIPE);
+                #endif
                 mutex_unlock(&fifo->mutex);
                 return -1; 
             }

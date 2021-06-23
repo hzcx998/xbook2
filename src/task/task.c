@@ -48,6 +48,8 @@ void task_rollback_pid()
     --task_next_pid;
 }
 
+extern void signal_init(task_t *task);
+
 void task_init(task_t *task, char *name, uint8_t prio_level)
 {
     memset(task, 0, sizeof(task_t));
@@ -81,6 +83,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     exception_manager_init(&task->exception_manager);
     timer_init(&task->sleep_timer, 0, NULL, NULL);
     alarm_init(&task->alarm);
+    signal_init(task);
     #ifdef CONFIG_PTHREAD
     task->pthread = NULL;
     #endif

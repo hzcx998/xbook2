@@ -43,6 +43,7 @@ exception_entry%1:
     
     push esp
     call exception_check
+    call do_signal
     add esp, 4
     
     jmp interrupt_exit
@@ -74,6 +75,7 @@ irq_entry%1:
 
     push esp
     call exception_check
+    call do_signal
     add esp, 4
     jmp interrupt_exit
 

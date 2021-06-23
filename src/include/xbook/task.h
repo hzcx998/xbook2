@@ -18,6 +18,7 @@
 #include "alarm.h"
 #include "portcomm.h"
 #include "msgpool.h"
+#include "signal.h"
 #ifdef CONFIG_PTHREAD
 #include "pthread.h"
 #endif
@@ -104,6 +105,16 @@ typedef struct {
     exit_hook_t exit_hook;  /* 退出调用的钩子函数 */
     void *exit_hook_arg;
     struct tms times;
+
+    /* 信号相关 */
+    uint8_t signal_left;     /* 有信号未处理 */
+    uint8_t signal_catched;     /* 有一个信号被捕捉，并处理了 */
+    
+    signal_t signals;        /* 进程对应的信号 */
+    sigset_t signal_blocked;  /* 信号阻塞 */
+    sigset_t signal_pending;     /* 信号未决 */
+    spinlock_t signal_mask_lock;  /* 信号屏蔽锁 */
+
     unsigned int stack_magic;
 } task_t;
 
@@ -159,6 +170,8 @@ extern char *kernel_stack_buttom;
 #define TASK_IN_WAITLIST(task) ((task)->flags & THREAD_FLAG_WAITLIST)
 
 #define TASK_NEED_STATE(__task, __state) while ((__task)->state != __state)
+
+#define foreach_task(task) list_for_each_owner((task), &task_global_list, global_list)
 
 void tasks_init();
 
