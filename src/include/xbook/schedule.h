@@ -7,6 +7,7 @@
 #include <assert.h>
 #include "debug.h"
 #include "schedule.h"
+#include "cpu.h"
 
 enum sched_priority_level {
     TASK_PRIO_LEVEL_UNKNOWN = 0,
@@ -113,5 +114,8 @@ void sched_print_queue(sched_unit_t *su);
 #define idle_current    sched_get_cur_unit()->idle
 
 #define KEDEAMON_PID    idle_current->pid
+
+int sys_sched_setaffinity(pid_t tid, size_t size, const cpu_set_t *set);
+int sys_sched_getaffinity(pid_t tid, size_t size, cpu_set_t *set);
 
 #endif   /* _XBOOK_SCHEDULE_H */

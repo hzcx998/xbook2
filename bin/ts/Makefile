@@ -2,7 +2,7 @@
 
 X_CFLAGS	+= -O0
 
-NAME		:= oscomp
+NAME		:= ts
 SRC			+= *.c
 
 define CUSTOM_TARGET_CMD

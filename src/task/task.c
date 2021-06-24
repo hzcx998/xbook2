@@ -88,6 +88,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->pthread = NULL;
     #endif
     task->port_comm = NULL;
+    task->cpuid = cpu_get_my_id();
 }
 
 void task_free(task_t *task)

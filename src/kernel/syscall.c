@@ -93,6 +93,9 @@ void syscall_init()
     syscalls[SYS_alarm] = sys_alarm;
     syscalls[SYS_setitimer] = sys_setitimer;
     syscalls[SYS_getitimer] = sys_getitimer;
+    syscalls[SYS_sched_setaffinity] = sys_sched_setaffinity;
+    syscalls[SYS_sched_getaffinity] = sys_sched_getaffinity;
+    
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

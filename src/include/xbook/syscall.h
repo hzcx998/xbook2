@@ -73,7 +73,11 @@ typedef void * syscall_t;
 
 /* add by my self */
 #define SYS_getppid 173
+#define SYS_sched_setaffinity 122
+#define SYS_sched_getaffinity 123
 #define SYS_sched_yield 124
+#define SYS_sched_get_priority_max 125
+#define SYS_sched_get_priority_min 126
 #define SYS_umount2 39
 #define SYS_mount 40
 #define SYS_dup3 24

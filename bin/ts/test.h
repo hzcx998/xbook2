@@ -9,5 +9,6 @@
 #include <signal.h>
 
 int oscamp_signal(int argc, char *argv[]);
+int test_sched(int argc, char *argv[]);
 
 #endif // _TEST_H

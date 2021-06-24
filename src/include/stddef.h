@@ -9,6 +9,8 @@ typedef unsigned long dma_addr_t;
 
 typedef int wchar_t;
 
+typedef int cpuid_t;
+
 /*
  *这里是define类型的
  */

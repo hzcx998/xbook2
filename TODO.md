@@ -43,9 +43,18 @@
 * 2021/4/29
 * 把内核文件进行压缩，然后再引导中解压，最后跳转进去执行。
 * 优化内核代码，并编写开发文档。
+
 # 2021/6/23
-* 添加内核对signal系统的支持。
+## busybox系统调用完成情况
 ```
-1. 添加用户态信号量的捕捉。[ok]
-2. 添加信号和其他模块的交互。
+[ok] __NR_setitimer 103
+[no] __NR_clock_settime 112
+[no] __NR_clock_gettime 112
+[no] __NR_syslog 116                # syslog依赖于socket套接字，UNIX本地套接字
+[ok] __NR_sched_setaffinity 122
+[ok] __NR_sched_getaffinity 123
+[ok] __NR_sched_yield 124
+[no] __NR_sched_get_priority_max 125
+[no] __NR_sched_get_priority_min 126
+...
 ```

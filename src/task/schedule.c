@@ -1,10 +1,12 @@
 #include <xbook/schedule.h>
 #include <xbook/task.h>
 #include <xbook/clock.h>
-#include <assert.h>
 #include <xbook/debug.h>
+#include <xbook/safety.h>
 #include <arch/interrupt.h>
 #include <arch/task.h>
+#include <assert.h>
+#include <errno.h>
 
 #define DEBUG_SCHED 0
 
@@ -160,4 +162,60 @@ void schedule_init()
     for (i = 0; i < scheduler.cpunr; i++) {
         init_sched_unit(&scheduler.sched_unit_table[i], cpu_list[i], 0);
     }
+}
+
+int sys_sched_setaffinity(pid_t tid, size_t size, const cpu_set_t *set)
+{
+    if (!set)
+        return -EFAULT;
+    if (size < sizeof(cpu_set_t))
+        return -EINVAL;
+    task_t *task;
+    if (!tid)
+        task = task_current;
+    else
+        task = task_find_by_pid(tid);
+    if (!task)
+        return -ESRCH;
+    cpu_set_t kset;
+    if (mem_copy_from_user(&kset, (void *)set, sizeof(cpu_set_t)) < 0)
+        return -EFAULT;
+    /* set tid to cpuset */
+    int i;
+    for (i = 0; i < CPU_NR_MAX; i++) {
+        if (CPU_ISSET(i, &kset)) {
+            task->cpuid = i;
+            break; // break out
+        }
+    }
+    if (i >= CPU_NR_MAX) {
+        return -EINVAL;
+    }
+    return 0;
+}
+
+int sys_sched_getaffinity(pid_t tid, size_t size, cpu_set_t *set)
+{
+    if (!set)
+        return -EFAULT;
+    if (size < sizeof(cpu_set_t))
+        return -EINVAL;
+    task_t *task;
+    if (!tid)
+        task = task_current;
+    else
+        task = task_find_by_pid(tid);
+    if (!task)
+        return -ESRCH;
+    cpu_set_t kset;
+    CPU_ZERO(&kset);
+    if (task->cpuid < 0 || task->cpuid >= CPU_NR_MAX) {
+        return -EINVAL;
+    }
+    /* set cpuid to sets */
+    CPU_SET(task->cpuid, &kset);
+    
+    if (mem_copy_to_user(set, &kset, sizeof(cpu_set_t)) < 0)
+        return -EFAULT;
+    return 0;
 }

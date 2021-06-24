@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <unistd.h>
+#include <sched.h>
 
 #include "syscall.h"
 
@@ -235,4 +236,14 @@ int setitimer(int which, const struct itimerval *restrict new_value,
     struct itimerval *restrict old_value)
 {
     return syscall(SYS_setitimer, which, new_value, old_value);
+}
+
+int sched_setaffinity(pid_t tid, size_t size, const cpu_set_t *set)
+{
+    return syscall(SYS_sched_setaffinity, tid, size, set);
+}
+
+int sched_getaffinity(pid_t tid, size_t size, cpu_set_t *set)
+{
+    return syscall(SYS_sched_getaffinity, tid, size, set);
 }
