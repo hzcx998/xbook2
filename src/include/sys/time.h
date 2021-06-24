@@ -36,6 +36,11 @@ struct tms {
     clock_t tms_cstime; //已终止子进程的系统CPU时间
 };
 
+struct itimerval {
+    struct timeval it_interval; /* next value */
+    struct timeval it_value;    /* current value */
+};
+
 int sys_gettimeofday(struct timeval *tv, struct timezone *tz);
 int sys_clock_gettime(clockid_t clockid, struct timespec *ts);
 unsigned long timeval_to_systicks(struct timeval *tv);

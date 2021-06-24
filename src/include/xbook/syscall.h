@@ -92,6 +92,9 @@ typedef void * syscall_t;
 #define SYS_rt_sigreturn 139
 #define SYS_alarm 27
 
+#define SYS_getitimer 102
+#define SYS_setitimer 103
+
 #define SYSCALL_NR 1100
 #else
 enum syscall_num {

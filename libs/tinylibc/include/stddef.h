@@ -42,6 +42,8 @@ typedef intptr_t ssize_t;
 
 typedef int pid_t;
 
+typedef unsigned long time_t;
+
 #define NULL ((void *)0)
 
 #define SIGCHLD   17

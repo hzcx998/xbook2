@@ -225,3 +225,14 @@ unsigned int alarm(unsigned int seconds)
 {
     return syscall(SYS_alarm, seconds);
 }
+
+int getitimer(int which, struct itimerval *curr_value)
+{
+    return syscall(SYS_getitimer, which, curr_value);
+}
+
+int setitimer(int which, const struct itimerval *restrict new_value,
+    struct itimerval *restrict old_value)
+{
+    return syscall(SYS_setitimer, which, new_value, old_value);
+}

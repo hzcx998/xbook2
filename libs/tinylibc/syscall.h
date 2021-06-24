@@ -121,4 +121,7 @@ typedef long syscall_arg_t;
 #define SYS_rt_sigreturn 139
 #define SYS_alarm 27
 
+#define SYS_getitimer 102
+#define SYS_setitimer 103
+
 #endif

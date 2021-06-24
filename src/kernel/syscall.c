@@ -91,7 +91,8 @@ void syscall_init()
     syscalls[SYS_rt_sigprocmask] = sys_rt_sigprocmask;
     syscalls[SYS_rt_sigreturn] = sys_rt_sigreturn;
     syscalls[SYS_alarm] = sys_alarm;
-    
+    syscalls[SYS_setitimer] = sys_setitimer;
+    syscalls[SYS_getitimer] = sys_getitimer;
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

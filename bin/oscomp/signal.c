@@ -1,5 +1,7 @@
 #include "test.h"
 
+#include <sys/time.h>
+
 static void mem_signal()
 {
     char *q = (char *)0x1001;
@@ -39,9 +41,42 @@ static void user_signal()
     }
 }
 
+static void alarm_handler(int signo)
+{
+    printf("alarm handler\n");
+    
+}
+
+
+static void itimer_signal()
+{
+    struct sigaction act, oact;
+    act.sa_flags = SA_RESTORER;
+    act.sa_handler = alarm_handler;
+    sigfillset(&act.sa_mask);
+    act.sa_restorer = __restore_rt;
+    int err = rt_sigaction(SIGALRM, &act, &oact, sizeof(struct sigaction));
+    printf("err: %d\n", err);
+
+    struct itimerval new_itimer, old_itimer;
+    new_itimer.it_value.tv_sec = 2;
+    new_itimer.it_value.tv_usec = 1000 * 50;
+    new_itimer.it_interval.tv_sec = 1;
+    new_itimer.it_interval.tv_usec = 1000 * 50;
+    setitimer(ITIMER_REAL, &new_itimer, NULL);
+    
+    setitimer(ITIMER_REAL, &new_itimer, &old_itimer);
+    printf("old timer: %d %d %d %d\n",
+        old_itimer.it_value.tv_sec, old_itimer.it_value.tv_usec,
+        old_itimer.it_interval.tv_sec, old_itimer.it_interval.tv_usec);
+        
+    while (1);
+}
+
 int oscamp_signal(int argc, char *argv[])
 {
     // mem_signal();
-    user_signal();
+    // user_signal();
+    itimer_signal();
     return 0;
 }
