@@ -118,4 +118,7 @@ typedef long syscall_arg_t;
 #define SYS_execve 221
 #define SYS_wait4 260
 
+#define SYS_rt_sigreturn 139
+#define SYS_alarm 27
+
 #endif

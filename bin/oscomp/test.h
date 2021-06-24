@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-int oscamp_signal(int argc, char *argv);
+#include <signal.h>
+
+int oscamp_signal(int argc, char *argv[]);
 
 #endif // _TEST_H

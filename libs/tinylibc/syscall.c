@@ -213,11 +213,15 @@ int dup2(int old, int new){
 
 int mount(const char *special, const char *dir, const char *fstype, unsigned long flags, const void *data)
 {
-        return syscall(SYS_mount, special, dir, fstype, flags, data);
+    return syscall(SYS_mount, special, dir, fstype, flags, data);
 }
 
 int umount(const char *special)
 {
-        return syscall(SYS_umount2, special, 0);
+    return syscall(SYS_umount2, special, 0);
 }
 
+unsigned int alarm(unsigned int seconds)
+{
+    return syscall(SYS_alarm, seconds);
+}

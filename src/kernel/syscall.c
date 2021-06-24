@@ -16,6 +16,7 @@
 #include <xbook/schedule.h>
 #include <xbook/fifo.h>
 #include <xbook/sockcall.h>
+#include <xbook/signal.h>
 #include <sys/uname.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -86,6 +87,11 @@ void syscall_init()
     syscalls[SYS_dup3] = sys_dup2;
     syscalls[SYS_mount] = sys_mount;
     syscalls[SYS_umount2] = sys_unmount;
+    syscalls[SYS_rt_sigaction] = sys_rt_sigaction;
+    syscalls[SYS_rt_sigprocmask] = sys_rt_sigprocmask;
+    syscalls[SYS_rt_sigreturn] = sys_rt_sigreturn;
+    syscalls[SYS_alarm] = sys_alarm;
+    
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

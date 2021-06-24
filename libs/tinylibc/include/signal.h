@@ -1,11 +1,8 @@
-#ifndef _XBOOK_SIGNAL_H
-#define _XBOOK_SIGNAL_H
+#ifndef __SIGNAL_H__
+#define __SIGNAL_H__
 
 #include <stddef.h>
-#include <types.h>
 #include <string.h>
-#include <arch/atomic.h>
-#include <xbook/spinlock.h>
 
 /* signal number */
 #define SIGHUP     1
@@ -58,7 +55,6 @@ typedef struct {
 	unsigned long sig[_NSIG_WORDS];
 } sigset_t;
 
-
 #define SIG_ERR  ((void (*)(int))-1)
 #define SIG_DFL  ((void (*)(int)) 0)
 #define SIG_IGN  ((void (*)(int)) 1)
@@ -75,9 +71,6 @@ typedef struct {
 #define SA_NOMASK SA_NODEFER
 #define SA_ONESHOT SA_RESETHAND
 
-#define IS_BAD_SIGNAL(signo) \
-    (signo < 1 || signo >= _NSIG)
-    
 /* sigprocmask的how参数值 */
 #define SIG_BLOCK   1 //在阻塞信号集中加上给定的信号集
 #define SIG_UNBLOCK 2 //从阻塞信号集中删除指定的信号集
@@ -91,31 +84,13 @@ struct sigaction {
 	sigset_t	sa_mask;	/* mask last for extensibility */
 };
 
-/* 信号结构 */
-typedef struct {
-    atomic_t count;                     
-    struct sigaction action[_NSIG];      /* 信号行为 */
-    pid_t sender[_NSIG];                    /* 信号发送者 */
-    spinlock_t signal_lock;                          /* 信号自旋锁 */
-} signal_t;
-
-typedef struct {
-    trap_frame_t trap_frame;        /* 保存原来的栈框 */
-    sigset_t old_mask;              /* 旧的阻塞mask */
-} signal_frame_t;
-
-int do_send_signal(pid_t pid, int signal, pid_t sender);
-int force_signal(int signo, pid_t pid);
-int force_signal_self(int signo);
-
-/* 系统调用接口 */
-int sys_rt_sigaction(int sig,
+int rt_sigaction(int sig,
         const struct sigaction *act,
 		struct sigaction *oact,
-		size_t sigsetsize);
-int sys_rt_sigprocmask(int how, sigset_t *nset,
+		size_t sigactsize);
+int rt_sigprocmask(int how, sigset_t *nset,
 		sigset_t *oset, size_t sigsetsize);
-int sys_rt_sigreturn();
+int rt_sigreturn();
 
 static inline void sigaddset(sigset_t *set, int _sig)
 {
@@ -200,4 +175,4 @@ static inline void sigandset(sigset_t *dstset, sigset_t *srcset)
 
 #define sigmask(sig)	(1UL << ((sig) - 1))
 
-#endif   /* _XBOOK_SIGNAL_H */
+#endif // __SIGNAL_H__

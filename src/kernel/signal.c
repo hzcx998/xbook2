@@ -5,6 +5,7 @@
 #include <xbook/syscall.h>
 #include <xbook/schedule.h>
 #include <xbook/process.h>
+#include <xbook/safety.h>
 #include <arch/interrupt.h>
 #include <string.h>
 
@@ -15,6 +16,8 @@ static void set_signal_action(signal_t *signal, int signo, struct sigaction *sa)
     /* 信号从1开始，所以要-1 */
     signal->action[signo - 1].sa_flags = sa->sa_flags;
     signal->action[signo - 1].sa_handler = sa->sa_handler;
+    sigcopyset(&signal->action[signo - 1].sa_mask, &sa->sa_mask);
+    signal->action[signo - 1].sa_restorer = sa->sa_restorer;
 }
 
 static void get_signal_action(signal_t *signal, int signo, struct sigaction *sa)
@@ -22,6 +25,8 @@ static void get_signal_action(signal_t *signal, int signo, struct sigaction *sa)
     /* 信号从1开始，所以要-1 */
     sa->sa_flags = signal->action[signo - 1].sa_flags;
     sa->sa_handler = signal->action[signo - 1].sa_handler;
+    sigcopyset(&sa->sa_mask, &signal->action[signo - 1].sa_mask);
+    sa->sa_restorer = signal->action[signo - 1].sa_restorer;
 }
 
 /**
@@ -200,79 +205,40 @@ static int deliver_signal(int signo, pid_t sender, task_t *task)
 
     return 0;
 }
-#if 0
-static void BuildSignalFrame(int signo, struct sigaction *sa, trap_frame_t *frame)
+
+static void build_signal_frame(int signo, struct sigaction *sa, trap_frame_t *frame)
 {
-    /* 获取信号栈框，在用户的esp栈下面 */
-    SignalFrame_t *signalFrame = (SignalFrame_t *)((frame->esp - sizeof(SignalFrame_t)) & -8UL);
+    /* 获取信号栈框，在用户的sp栈下面 */
+    signal_frame_t *signal_frame = (signal_frame_t *)((frame->sp - sizeof(signal_frame_t)) & -8UL);
+    task_t *cur = task_current; 
+    #ifdef _DEBUG_SIGNAL
+    dbgprint("trap frame %x, signal frame top %x,  base %x\n", 
+    frame, frame->sp, signal_frame);
+    #endif
+    int err = 0;
+    err |= mem_copy_to_user(&signal_frame->trap_frame, frame, sizeof(trap_frame_t));    /* 保存栈帧 */
+    err |= mem_copy_to_user(&signal_frame->old_mask, &cur->signal_blocked, sizeof(sigset_t));    /* 保存信号屏蔽 */
+    if (err < 0) 
+        return;
 
-    /*dbgprint("trap frame %x, signal frame esp %x, %x\n", 
-    frame->esp, frame->esp - sizeof(SignalFrame_t), (frame->esp - sizeof(SignalFrame_t)) & -8UL);
-    */
-    /* 传递给handler的参数 */
-    signalFrame->signo = signo;
+    if (!(sa->sa_flags & SA_RESTORER) || !sa->sa_restorer) {
+        errprint("[signal] no SA_RESTORER when build signal frame\n flags %x, restore %x\n", sa->sa_flags, sa->sa_restorer);
+        return;
+    }
 
-    /* 把中断栈保存到信号栈中 */
-    memcpy(&signalFrame->trapFrame, frame, sizeof(trap_frame_t));
+    /* 修改阻塞标志 */
+    sigcopyset(&cur->signal_blocked, &sa->sa_mask);
+
+    if (sa->sa_flags & SA_NODEFER) {    /* 当前信号不会在执行期间阻塞 */
+        sigdelset(&cur->signal_blocked, signo);
+    }
 
     /* 设置返回地址 */
-    signalFrame->retAddr = signalFrame->retCode;
-
-    /* 构建返回代码，系统调用封装
-    模拟系统调用来实现从用户态返回到内核态
-    mov eax, SYS_SIGRET
-    int 0x80
-     */
-    signalFrame->retCode[0] = 0xb8; /* 给eax赋值的机器码 */
-    *(int *)(signalFrame->retCode + 1) = SYS_SIGRET;    /* 把系统调用号填进去 */
-    *(short *)(signalFrame->retCode + 5) = 0x80cd;      /* int对应的指令是0xcd，系统调用中断号是0x80 */
-    
-    /* 设置中断栈的eip成为用户设定的处理函数 */
-    frame->eip = (uint32_t)sa->sa_handler;
-
-    /* 设置运行时的栈 */
-    frame->esp = (uint32_t)signalFrame;
-
-    /* 设置成用户态的段寄存器 */
-    frame->ds = frame->es = frame->fs = frame->gs = USER_DATA_SEL;
-    frame->ss = USER_STACK_SEL;
-    frame->cs = USER_CODE_SEL;
-
+    frame->ra = (unsigned long)sa->sa_restorer;
+    frame->epc = (unsigned long)sa->sa_handler;
+	frame->sp = (unsigned long)signal_frame;
+	frame->a0 = signo;                     /* a0: signal number */
 }
-
-/**
- * SysSignalReturn - 执行完用户信号后返回
- * @frame: 栈
- * 
- */
-int SysSignalReturn(uint32_t ebx, uint32_t ecx, uint32_t esi, uint32_t edi, trap_frame_t *frame)
-{
-    //dbgprint("in sig return.\n");
-
-    //dbgprint("arg is %x %x %x %x %x\n", ebx, ecx, esi, edi, frame);
-
-    //dbgprint("usr esp - 4:%x esp:%x\n", *(uint32_t *)(frame->esp - 4), *(uint32_t *)frame->esp);
-    
-    /* 原本signalFrame是在用户栈esp-SignalFrameSize这个位置，但是由于调用了用户处理程序后，
-    函数会把返回地址弹出，也就是esp+4，所以，需要通过esp-4才能获取到signalFrame */
-    SignalFrame_t *signalFrame = (SignalFrame_t *)(frame->esp - 4);
-
-    /*清除阻塞 */
-
-    /* 还原之前的中断栈 */
-    memcpy(frame, &signalFrame->trapFrame, sizeof(trap_frame_t));
-    
-    //dbgprint("in sig return ret val %d.\n", frame->eax);
-
-    /* 信号已经被捕捉处理了 */
-
-    task_current->signalCatched = 1;
-
-    /* 会修改eax的值，返回eax的值 */
-    return frame->eax;
-}
-
-#endif
 
 /**
  * handle_signal - 处理信号
@@ -285,22 +251,24 @@ int SysSignalReturn(uint32_t ebx, uint32_t ecx, uint32_t esi, uint32_t edi, trap
  */
 static int handle_signal(trap_frame_t *frame, int signo)
 {
+    unsigned long iflags;
+    interrupt_save_and_disable(iflags);
     /* 获取信号行为 */
     struct sigaction *sa = &task_current->signals.action[signo - 1];
 
     /* 处理自定义函数 */
-    //dbgprint("handle user function!\n");
-    
+    #ifdef _DEBUG_SIGNAL
+    dbgprint("handle user function!\n");
+    #endif
+
     /* 构建信号栈框，返回时就可以处理用户自定义函数 */
-    // BuildSignalFrame(signo, sa, frame);
+    build_signal_frame(signo, sa, frame);
     
     /* 执行完信号后需要把信号行为设置为默认的行为 */
     if (sa->sa_flags & SA_ONESHOT) {
         sa->sa_handler = SIG_DFL;
     }
-    
-    //dbgprint("will return into user!\n");
-
+    interrupt_restore_state(iflags);
     return 0;
 }
 
@@ -663,14 +631,14 @@ int sys_signal(int signal, sighandler_t sa_handler)
 
 
 /**
- * sys_signal_action - 设定信号的处理行为
+ * do_signal_action - 设定信号的处理行为
  * @signal: 信号
  * @act: 处理行为
  * @oldact: 旧的处理行为
  * 
  * 成功返回0，失败返回-1
  */
-int sys_signal_action(int signal, struct sigaction *act, struct sigaction *oldact)
+int do_signal_action(int signal, struct sigaction *act, struct sigaction *oldact)
 {
     /* 检测是否符合范围，并且不能是SIGKILL和SIGSTOP，这两个信号不允许设置响应 */
     if (signal < 1 || signal >= _NSIG ||
@@ -691,13 +659,16 @@ int sys_signal_action(int signal, struct sigaction *act, struct sigaction *oldac
         /* 复制数据 */
         oldact->sa_flags = sa.sa_flags;
         oldact->sa_handler = sa.sa_handler;
+        sigcopyset(&oldact->sa_mask, &sa.sa_mask);
+        oldact->sa_restorer = sa.sa_restorer;
         //dbgprint("old act sa_handler %x\n", oldact->sa_handler);
-
     }
 
     if (act) {
         sa.sa_flags = act->sa_flags;
         sa.sa_handler = act->sa_handler;
+        sigcopyset(&sa.sa_mask, &act->sa_mask);
+        sa.sa_restorer = act->sa_restorer;
 
         //dbgprint("new act sa_handler %x\n", act->sa_handler);
         /* 设置信号行为 */
@@ -725,7 +696,7 @@ int sys_signal_action(int signal, struct sigaction *act, struct sigaction *oldac
 }
 
 /**
- * sys_signal_process_mask - 设置进程的信号阻塞集
+ * do_signal_process_mask - 设置进程的信号阻塞集
  * @how: 怎么设置阻塞
  * @set: 阻塞集
  * @oldset: 旧阻塞集
@@ -734,7 +705,7 @@ int sys_signal_action(int signal, struct sigaction *act, struct sigaction *oldac
  * 
  * return: 成功返回0，失败返回-1
  */
-int sys_signal_process_mask(int how, sigset_t *set, sigset_t *oldset)
+int do_signal_process_mask(int how, sigset_t *set, sigset_t *oldset)
 {
     task_t *cur = task_current;
 
@@ -784,21 +755,73 @@ int sys_signal_process_mask(int how, sigset_t *set, sigset_t *oldset)
 int sys_rt_sigaction(int sig,
         const struct sigaction *act,
 		struct sigaction *oact,
-		size_t sigsetsize)
+		size_t sigactsize)
 {
-
-    return -EPERM;
+    if (sigactsize != sizeof(struct sigaction))
+        return -EINVAL;
+    struct sigaction _act, _oact;
+    int err;
+    if (act)
+        err = mem_copy_from_user(&_act, (void *)act, sizeof(struct sigaction));
+    
+    if (err < 0)
+        return err;
+    
+    err = do_signal_action(sig, act != NULL ? &_act: NULL, oact != NULL ? &_oact: NULL);
+    if (err < 0)
+        return err;
+    if (oact)
+        err = mem_copy_to_user(oact, &_oact, sizeof(struct sigaction));
+    return err;
 }        
 
 int sys_rt_sigprocmask(int how, sigset_t *nset,
 		sigset_t *oset, size_t sigsetsize)
 {
-    return -EPERM;
+    if (sigsetsize != sizeof(sigset_t))
+        return -EINVAL;
+    sigset_t _nset, _oset;
+    int err;
+    if (nset)
+        err = mem_copy_from_user(&_nset, nset, sizeof(sigset_t));
+    if (err < 0)
+        return err;
+    err = do_signal_process_mask(how, nset != NULL ? &_nset: NULL, oset != NULL ? &_oset: NULL);
+    if (err < 0)
+        return err;
+    if (oset)
+        err = mem_copy_to_user(oset, &_oset, sizeof(sigset_t));
+    return err;
+}
+
+int do_rt_sigreturn()
+{
+    #ifdef _DEBUG_SIGNAL
+    dbgprint("[signal] return from user\n");
+    #endif
+    trap_frame_t *frame = task_current->trapframe;
+    signal_frame_t *signal_frame = (signal_frame_t *)(frame->sp);
+    task_t *cur = task_current;
+    #ifdef _DEBUG_SIGNAL
+    dbgprint("[signal] frame %p signal frame %p\n", frame, signal_frame);
+    #endif
+    
+    /* restore mask */
+    if (mem_copy_from_user(&cur->signal_blocked, &signal_frame->old_mask, sizeof(sigset_t)) < 0)
+        goto bad_return;
+    /* restore frame */
+    if (mem_copy_from_user(frame, &signal_frame->trap_frame, sizeof(trap_frame_t)) < 0)
+        goto bad_return;
+    return frame->a0;
+bad_return:
+    force_signal_self(SIGSEGV);
+    errprint("[signal] signal return from user failed!");
+    return 0;
 }
 
 int sys_rt_sigreturn()
 {
-    return -EPERM;
+    return do_rt_sigreturn();
 }
 
 void signal_init(task_t *task)
@@ -811,6 +834,8 @@ void signal_init(task_t *task)
     for (i = 0; i < _NSIG; i++) {
         task->signals.action[i].sa_handler = SIG_DFL;
         task->signals.action[i].sa_flags = 0;
+        sigemptyset(&task->signals.action[i].sa_mask);
+        task->signals.action[i].sa_restorer = NULL;
         task->signals.sender[i] = -1;
     }
     atomic_set(&task->signals.count, 0);
