@@ -11,6 +11,7 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"kill", test_kill},
     {"sched", test_sched},
     {"time", test_time},
     {"signal", oscamp_signal},

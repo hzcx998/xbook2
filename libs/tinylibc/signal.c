@@ -1,5 +1,5 @@
 #include <signal.h>
-#include "syscall.h"
+#include <sys/syscall.h>
 
 int rt_sigaction(int sig,
         const struct sigaction *act,

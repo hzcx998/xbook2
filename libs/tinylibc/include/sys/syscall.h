@@ -1,8 +1,8 @@
 #ifndef __SYSCALL_H__
 #define __SYSCALL_H__
 
-#include "syscall_arch.h"
-#include "syscall_ids.h"
+#include "../../arch/riscv/syscall_arch.h"
+#include "../../arch/riscv/syscall_ids.h"
 
 #ifndef __scc
 #define __scc(X) ((long)(X))
@@ -38,6 +38,7 @@ typedef long syscall_arg_t;
 #define SYS_exit_group 94
 #define SYS_getpid 172
 #define SYS_kill 129
+#define SYS_tkill 130
 #define SYS_read 63
 #define SYS_write 64
 #define SYS_openat 56

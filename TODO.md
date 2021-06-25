@@ -49,15 +49,21 @@
 ```
 [ok] __NR_setitimer 103
 [ok] __NR_clock_settime 112
-[ok] __NR_clock_gettime 112
+[ok] __NR_clock_gettime 113
 [no] __NR_syslog 116                # syslog依赖于socket套接字，UNIX本地套接字
 [ok] __NR_sched_setaffinity 122
 [ok] __NR_sched_getaffinity 123
 [ok] __NR_sched_yield 124
 [ok] __NR_sched_get_priority_max 125
 [ok] __NR_sched_get_priority_min 126
-[no] __NR_kill 129
-[no] __NR_tkill 130
+[ok] __NR_kill 129
+[ok] __NR_tkill 130
+[ok] __NR_rt_sigaction 134
+[ok] __NR_rt_sigprocmask 135
+[ok] __NR_rt_sigreturn 139
+[no] __NR_removexattr 14
+[no]  __NR_setpriority 140
+[no]  __NR_getpriority 141
 
 ...
 ```

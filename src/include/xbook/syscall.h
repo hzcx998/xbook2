@@ -11,6 +11,7 @@ typedef void * syscall_t;
 #define SYS_exit_group 94
 #define SYS_getpid 172
 #define SYS_kill 129
+#define SYS_tkill 130
 #define SYS_read 63
 #define SYS_write 64
 #define SYS_openat 56

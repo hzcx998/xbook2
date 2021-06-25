@@ -4,7 +4,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "syscall.h"
+#include <sys/syscall.h>
 
 int open(const char *path, int flags)
 {

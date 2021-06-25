@@ -419,13 +419,13 @@ int do_send_signal(pid_t pid, int signal, pid_t sender)
     #endif
     /* 对参数进行检测 */
     if (IS_BAD_SIGNAL(signal)) {
-        return -1;
+        return -EINVAL;
     }
     task_t *task = task_find_by_pid(pid);
     
     /* 没找到要发送的进程，返回失败 */
     if (task == NULL) {
-        return -1;
+        return -ESRCH;
     }
     int ret = 0;
 
@@ -480,7 +480,7 @@ static int do_send_signal_group(pid_t gpid, int signal, pid_t sender)
             /* 发送给相同的组标的进程 */
             if (task->pgid == gpid) {
                 int err = do_send_signal(task->pid, signal, task_current->pid);
-                if (err == -1)      /* 如果有错误的，就记录成错误 */
+                if (err < 0)      /* 如果有错误的，就记录成错误 */
                     retval = err;
             }
         }
@@ -501,7 +501,7 @@ int force_signal(int signo, pid_t pid)
     task_t *task = task_find_by_pid(pid);
     /* 没找到要发送的进程，返回失败 */
     if (task == NULL) {
-        return -1;
+        return ESRCH;
     }
 
     /* 信号上锁并关闭中断 */
@@ -558,7 +558,7 @@ static int send_branch(pid_t pid, int signal, pid_t sender)
             if (task->pid > 0 && task != cur) {
                 err = do_send_signal(task->pid, signal, cur->pid);
                 count++;
-                if (err == -1)      /* 如果有错误的，就记录成错误 */
+                if (err < 0)      /* 如果有错误的，就记录成错误 */
                     retval = err;
             }
         }
@@ -574,10 +574,19 @@ static int send_branch(pid_t pid, int signal, pid_t sender)
  * @pid: 接收信号进程
  * @signal: 信号值
  * 
+ * 发送时，会根据pid的值判定是发送给单个任务还是一组任务
  */
 int sys_kill(pid_t pid, int signal)
 {
     return send_branch(pid, signal, task_current->pid);
+}
+
+/**
+ * 只把信号发送到tid对应的任务。
+ */
+int sys_tkill(pid_t tid, int signal)
+{
+    return do_send_signal(tid, signal, task_current->pid);
 }
 
 /**
@@ -591,7 +600,7 @@ int sys_signal(int signal, sighandler_t sa_handler)
     /* 检测是否符合范围，并且不能是SIGKILL和SIGSTOP，这两个信号不允许设置响应 */
     if (signal < 1 || signal >= _NSIG ||
         (sa_handler && (signal == SIGKILL || signal == SIGSTOP))) {
-        return -1;
+        return -EINVAL;
     }
 
     /* 设定信号处理函数 */

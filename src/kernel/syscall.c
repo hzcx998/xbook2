@@ -99,6 +99,9 @@ void syscall_init()
     syscalls[SYS_clock_settime] = sys_clock_settime;
     syscalls[SYS_sched_get_priority_max] = sys_sched_get_priority_max;
     syscalls[SYS_sched_get_priority_min] = sys_sched_get_priority_min;
+    syscalls[SYS_kill] = sys_kill;
+    syscalls[SYS_tkill] = sys_tkill;
+
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

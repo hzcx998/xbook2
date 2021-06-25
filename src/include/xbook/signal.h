@@ -116,6 +116,9 @@ int sys_rt_sigaction(int sig,
 int sys_rt_sigprocmask(int how, sigset_t *nset,
 		sigset_t *oset, size_t sigsetsize);
 int sys_rt_sigreturn();
+int sys_kill(pid_t pid, int signal);
+int sys_tkill(pid_t tid, int signal);
+
 
 static inline void sigaddset(sigset_t *set, int _sig)
 {
