@@ -4,10 +4,10 @@
 #include <types.h>
 #include <xbook/config.h>
 
-#define CLOCK_REALTIME            1 /*系统统当前时间，从1970年1.1日算起*/
-#define CLOCK_MONOTONIC           2 /*系统的启动时间，不能被设置*/
-#define CLOCK_PROCESS_CPUTIME_ID  3 /* 本进程运行时间*/
-#define CLOCK_THREAD_CPUTIME_ID   4 /*本线程运行时间*/
+#define CLOCK_REALTIME            0 /*系统统当前时间，从1970年1.1日算起*/
+#define CLOCK_MONOTONIC           1 /*系统的启动时间，不能被设置*/
+#define CLOCK_PROCESS_CPUTIME_ID  2 /* 本进程运行时间*/
+#define CLOCK_THREAD_CPUTIME_ID   3 /*本线程运行时间*/
 
 // #define CLOCK_NO_TASK
 
@@ -21,13 +21,10 @@ struct timezone {
     int tz_dsttime; //type of DST correction 
 };
 
-#ifndef _TIMESPEC
-#define _TIMESPEC
 struct timespec {
     time_t tv_sec; // seconds
     long tv_nsec; // and nanoseconds
 };
-#endif
 
 struct tms {
     clock_t tms_utime; //用户CPU时间
@@ -43,6 +40,8 @@ struct itimerval {
 
 int sys_gettimeofday(struct timeval *tv, struct timezone *tz);
 int sys_clock_gettime(clockid_t clockid, struct timespec *ts);
+int sys_clock_settime(clockid_t clockid, const struct timespec *ts);
+
 unsigned long timeval_to_systicks(struct timeval *tv);
 void systicks_to_timeval(unsigned long ticks, struct timeval *tv);
 unsigned long timespec_to_systicks(struct timespec *ts);

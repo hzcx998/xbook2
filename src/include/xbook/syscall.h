@@ -53,6 +53,7 @@ typedef void * syscall_t;
 #define SYS_getrlimit 163
 #define SYS_setrlimit 164
 #define SYS_getrusage 165
+#define SYS_clock_settime 112
 #define SYS_clock_gettime 113
 #define SYS_set_tid_address 96
 #define SYS_set_robust_list 99
@@ -98,6 +99,7 @@ typedef void * syscall_t;
 
 #define SYS_getitimer 102
 #define SYS_setitimer 103
+
 
 #define SYSCALL_NR 1100
 #else

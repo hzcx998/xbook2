@@ -48,8 +48,8 @@
 ## busybox系统调用完成情况
 ```
 [ok] __NR_setitimer 103
-[no] __NR_clock_settime 112
-[no] __NR_clock_gettime 112
+[ok] __NR_clock_settime 112
+[ok] __NR_clock_gettime 112
 [no] __NR_syslog 116                # syslog依赖于socket套接字，UNIX本地套接字
 [ok] __NR_sched_setaffinity 122
 [ok] __NR_sched_getaffinity 123

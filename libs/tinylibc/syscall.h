@@ -80,6 +80,7 @@ typedef long syscall_arg_t;
 #define SYS_getrlimit 163
 #define SYS_setrlimit 164
 #define SYS_getrusage 165
+#define SYS_clock_settime 112
 #define SYS_clock_gettime 113
 #define SYS_set_tid_address 96
 #define SYS_set_robust_list 99

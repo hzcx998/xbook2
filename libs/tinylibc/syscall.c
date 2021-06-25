@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <sched.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "syscall.h"
 
@@ -246,4 +248,14 @@ int sched_setaffinity(pid_t tid, size_t size, const cpu_set_t *set)
 int sched_getaffinity(pid_t tid, size_t size, cpu_set_t *set)
 {
     return syscall(SYS_sched_getaffinity, tid, size, set);
+}
+
+int clock_gettime(clockid_t clockid, struct timespec *tp)
+{
+    return syscall(SYS_clock_gettime, clockid, tp);
+}
+
+int clock_settime(clockid_t clockid, const struct timespec *tp)
+{
+    return syscall(SYS_clock_settime, clockid, tp);
 }

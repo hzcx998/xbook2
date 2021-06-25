@@ -15,7 +15,7 @@ int walltime_is_leap_year(int year)
     return 1;
 }
 
-static int walltime_get_week_day(int year, int month, int day)
+int walltime_get_week_day(int year, int month, int day)
 {
     int c, y, week;
     if (month == 1 || month == 2) {
@@ -40,7 +40,7 @@ static int walltime_get_month_day()
     }
 }
 
-static int walltime_get_year_days()
+int walltime_get_year_days()
 {
     int i;
     int sum = 0;
@@ -136,6 +136,62 @@ long walltime_make_timestamp(walltime_t *wt)
 	res += MINUTE*wt->minute;
 	res += wt->second;
 	return res;
+}
+
+#define START_YEAR (1970)
+#define SECOND_DAY    (86400)    //60*60*24
+#define SECOND_HOUR    (3600)    //60*60
+#define SECOND_MIN    (60)    //60
+
+static int month_day2[2][13] = {
+    {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 },
+    {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 }
+};
+
+//获取一年的天数
+static int get_days_for_year(int year)
+{
+    return (walltime_is_leap_year(year) ? 366 : 365);
+}
+
+//根据秒数计算日期
+void walltime_get_date(int second, int *year, int *month, int *day)
+{
+    int days = second / SECOND_DAY;
+    int cur_year = START_YEAR;
+    int left_days = days;
+
+    //calc year
+    int days_cur_year = get_days_for_year(cur_year);
+    while (left_days >= days_cur_year)
+    {
+        left_days -= days_cur_year;
+        cur_year++;
+        days_cur_year = get_days_for_year(cur_year);
+    }
+    *year = cur_year;
+
+    //calc month and day
+    int is_leep_year = walltime_is_leap_year(cur_year);
+    int i;
+    for (i = 1; i < 13; i++)
+    {
+        if (left_days < month_day2[is_leep_year][i])
+        {
+            *month = i;
+            *day = left_days - month_day2[is_leep_year][i-1] + 1;
+            break;
+        }
+    }
+}
+
+//计算时间
+void walltime_get_time(int seconds, int *hour, int *minute, int *second)
+{
+    int left_seconds = seconds % SECOND_DAY;
+    *hour = left_seconds / SECOND_HOUR;
+    *minute = (left_seconds % SECOND_HOUR) / SECOND_MIN;
+    *second = left_seconds % SECOND_MIN;
 }
 
 void walltime_printf()

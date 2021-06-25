@@ -8,10 +8,10 @@ extern "C" {
 #include "walltime.h"
 #include <types.h>
 
-#define CLOCK_REALTIME            1 /*系统统当前时间，从1970年1.1日算起*/
-#define CLOCK_MONOTONIC           2 /*系统的启动时间，不能被设置*/
-#define CLOCK_PROCESS_CPUTIME_ID  3 /* 本进程运行时间*/
-#define CLOCK_THREAD_CPUTIME_ID   4 /*本线程运行时间*/
+#define CLOCK_REALTIME            0 /*系统统当前时间，从1970年1.1日算起*/
+#define CLOCK_MONOTONIC           1 /*系统的启动时间，不能被设置*/
+#define CLOCK_PROCESS_CPUTIME_ID  2 /* 本进程运行时间*/
+#define CLOCK_THREAD_CPUTIME_ID   3 /*本线程运行时间*/
 
 #define CLOCKS_PER_SEC  (100 * 5)   /* 1秒的时钟数 */
 #define HZ_PER_CLOCKS   (CLOCKS_PER_SEC / 100)   /* 每个时钟的HZ数 */

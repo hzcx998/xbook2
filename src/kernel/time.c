@@ -4,6 +4,7 @@
 #include <xbook/clock.h>
 #include <xbook/schedule.h>
 #include <xbook/safety.h>
+#include <errno.h>
 
 int sys_gettimeofday(struct timeval *tv, struct timezone *tz)
 {
@@ -28,6 +29,7 @@ int sys_clock_gettime(clockid_t clockid, struct timespec *ts)
 {
     if (!ts)
         return -1; 
+    walltime_printf();
     struct timespec tmp_ts;
     switch (clockid)
     {
@@ -53,6 +55,53 @@ int sys_clock_gettime(clockid_t clockid, struct timespec *ts)
         return -1;
     }
     return mem_copy_to_user(ts, &tmp_ts, sizeof(struct timespec));
+}
+
+int do_clock_settime(clockid_t clockid, struct timespec *ts)
+{
+    if (!ts)
+        return -EFAULT;
+    switch (clockid) {
+    case CLOCK_REALTIME:        /* 系统统当前时间，从1970年1.1日算起 */
+        {
+            //walltime_printf();
+            /* 计算秒值 */
+            time_t sec = ts->tv_sec + ts->tv_nsec / (1000000 * 1000);
+            int year, month, day;
+            int hour, minute, second;
+            /* FIXME: 时间转换算法有问题 */
+            walltime_get_time(sec, &hour, &minute, &second);
+            walltime_get_date(sec, &year, &month, &day);
+            /* set to walltime */
+            walltime.year = year;
+            walltime.month = month;
+            walltime.day = day;
+            walltime.hour = hour;
+            walltime.minute = minute;
+            walltime.second = second;
+            walltime.week_day = walltime_get_week_day(year, month, day);
+            walltime.year_day = walltime_get_year_days();
+        }
+        //tmp_ts.tv_sec = walltime_make_timestamp(&walltime);
+        //tmp_ts.tv_nsec = ((systicks % HZ) * MS_PER_TICKS) * 1000000;
+        break;
+    case CLOCK_MONOTONIC:       /* 修改系统的启动时间 */
+        systicks = MSEC_TO_TICKS(ts->tv_sec * 1000 + ts->tv_nsec / 1000000); 
+        break;
+    default:
+        return -EINVAL;
+    }
+    return 0;
+}
+
+int sys_clock_settime(clockid_t clockid, const struct timespec *ts)
+{
+    if (!ts)
+        return -EFAULT;
+    struct timespec tmp_ts;
+    if (mem_copy_from_user(&tmp_ts, (struct timespec *)ts, sizeof(struct timespec)) < 0)
+        return -EFAULT;
+    return do_clock_settime(clockid, &tmp_ts);
 }
 
 #define MAX_SYSTICKS_VALUE  ((~0UL >> 1) -1)
