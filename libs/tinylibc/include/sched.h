@@ -44,7 +44,19 @@ static __inline void __CPU_##func##_S(size_t __size, cpu_set_t *__dest, \
 #define CPU_ZERO(set) CPU_ZERO_S(sizeof(cpu_set_t),set)
 #define CPU_EQUAL(s1,s2) CPU_EQUAL_S(sizeof(cpu_set_t),s1,s2)
 
+#define SCHED_OTHER 0
+#define SCHED_NORMAL SCHED_OTHER
+#define SCHED_FIFO 1
+#define SCHED_RR 2
+#define SCHED_BATCH 3
+#define SCHED_IDLE 5
+#define SCHED_DEADLINE 6
+#define SCHED_RESET_ON_FORK 0x40000000
+
 int sched_setaffinity(pid_t tid, size_t size, const cpu_set_t *set);
 int sched_getaffinity(pid_t tid, size_t size, cpu_set_t *set);
+
+int sched_get_priority_max(int policy);
+int sched_get_priority_min(int policy);
 
 #endif // __SCHED_H__

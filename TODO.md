@@ -54,7 +54,10 @@
 [ok] __NR_sched_setaffinity 122
 [ok] __NR_sched_getaffinity 123
 [ok] __NR_sched_yield 124
-[no] __NR_sched_get_priority_max 125
-[no] __NR_sched_get_priority_min 126
+[ok] __NR_sched_get_priority_max 125
+[ok] __NR_sched_get_priority_min 126
+[no] __NR_kill 129
+[no] __NR_tkill 130
+
 ...
 ```

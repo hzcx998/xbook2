@@ -207,6 +207,9 @@
         "elf32.h": "c",
         "elf.h": "c",
         "mutexqueue.h": "c",
-        "fd.h": "c"
+        "fd.h": "c",
+        "memory": "c",
+        "tuple": "c",
+        "sched.h": "c"
     }
 }

@@ -259,3 +259,13 @@ int clock_settime(clockid_t clockid, const struct timespec *tp)
 {
     return syscall(SYS_clock_settime, clockid, tp);
 }
+
+int sched_get_priority_max(int policy)
+{
+    return syscall(SYS_sched_get_priority_max, policy);
+}
+
+int sched_get_priority_min(int policy)
+{
+    return syscall(SYS_sched_get_priority_min, policy);
+}

@@ -219,3 +219,36 @@ int sys_sched_getaffinity(pid_t tid, size_t size, cpu_set_t *set)
         return -EFAULT;
     return 0;
 }
+
+int sys_sched_get_priority_max(int policy)
+{
+    int ret = -EINVAL;
+    switch (policy) {
+    case SCHED_FIFO:
+    case SCHED_RR:
+        ret = MAX_USER_RT_PRIO-1;
+        break;
+    case SCHED_NORMAL:
+    case SCHED_BATCH:
+    case SCHED_IDLE:
+        ret = 0;
+        break;
+    }
+    return ret;
+}
+
+int sys_sched_get_priority_min(int policy)
+{
+    int ret = -EINVAL;
+    switch (policy) {
+    case SCHED_FIFO:
+    case SCHED_RR:
+        ret = 1;
+        break;
+    case SCHED_NORMAL:
+    case SCHED_BATCH:
+    case SCHED_IDLE:
+        ret = 0;
+    }
+    return ret;
+}

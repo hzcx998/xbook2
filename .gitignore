@@ -127,5 +127,6 @@ bin/unmount/unmount
 bin/mkfs/mkfs
 bin/losetup/losetup
 bin/test_echo/test_echo
+bin/ts/ts
 
 # ====xbook2 kernel ignore end====

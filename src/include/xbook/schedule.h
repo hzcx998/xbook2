@@ -24,6 +24,18 @@ enum sched_priority_level {
 #define TASK_PRIORITY_MAX       TASK_PRIORITY_REALTIME
 #define TASK_PRIORITY_MAX_NR    (TASK_PRIORITY_MAX + 1)
 
+/* below unused in xbook2 kernel, only for linux api */
+#define MAX_USER_RT_PRIO    100
+#define MAX_RT_PRIO         MAX_USER_RT_PRIO      
+#define SCHED_OTHER 0
+#define SCHED_NORMAL SCHED_OTHER
+#define SCHED_FIFO 1
+#define SCHED_RR 2
+#define SCHED_BATCH 3
+#define SCHED_IDLE 5
+#define SCHED_DEADLINE 6
+#define SCHED_RESET_ON_FORK 0x40000000
+
 typedef struct {
     spinlock_t lock;
     list_t list;
@@ -117,5 +129,8 @@ void sched_print_queue(sched_unit_t *su);
 
 int sys_sched_setaffinity(pid_t tid, size_t size, const cpu_set_t *set);
 int sys_sched_getaffinity(pid_t tid, size_t size, cpu_set_t *set);
+
+int sys_sched_get_priority_max(int policy);
+int sys_sched_get_priority_min(int policy);
 
 #endif   /* _XBOOK_SCHEDULE_H */

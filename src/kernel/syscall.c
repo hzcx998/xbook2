@@ -97,6 +97,8 @@ void syscall_init()
     syscalls[SYS_sched_getaffinity] = sys_sched_getaffinity;
     syscalls[SYS_clock_gettime] = sys_clock_gettime;
     syscalls[SYS_clock_settime] = sys_clock_settime;
+    syscalls[SYS_sched_get_priority_max] = sys_sched_get_priority_max;
+    syscalls[SYS_sched_get_priority_min] = sys_sched_get_priority_min;
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;
