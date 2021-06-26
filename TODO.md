@@ -61,9 +61,21 @@
 [ok] __NR_rt_sigaction 134
 [ok] __NR_rt_sigprocmask 135
 [ok] __NR_rt_sigreturn 139
-[no] __NR_removexattr 14
-[no]  __NR_setpriority 140
-[no]  __NR_getpriority 141
+[ok] SYS_setxattr 5
+[ok] SYS_lsetxattr 6
+[ok] SYS_fsetxattr 7
+[ok] SYS_getxattr 8
+[ok] SYS_lgetxattr 9
+[ok] SYS_fgetxattr 10
+[ok] SYS_listxattr 11
+[ok] SYS_llistxattr 12
+[ok] SYS_flistxattr 13
+[ok] SYS_removexattr 14
+[ok] SYS_lremovexattr 15
+[ok] SYS_fremovexattr 16
+
+[no] __NR_setpriority 140
+[no] __NR_getpriority 141
 
 ...
 ```
