@@ -101,7 +101,18 @@ void syscall_init()
     syscalls[SYS_sched_get_priority_min] = sys_sched_get_priority_min;
     syscalls[SYS_kill] = sys_kill;
     syscalls[SYS_tkill] = sys_tkill;
-
+    syscalls[SYS_removexattr] = sys_removexattr;
+    syscalls[SYS_lremovexattr] = sys_lremovexattr;
+    syscalls[SYS_fremovexattr] = sys_fremovexattr;
+    syscalls[SYS_setxattr] = sys_setxattr;
+    syscalls[SYS_lsetxattr] = sys_lsetxattr;
+    syscalls[SYS_fsetxattr] = sys_fsetxattr;
+    syscalls[SYS_getxattr] = sys_getxattr;
+    syscalls[SYS_lgetxattr] = sys_lgetxattr;
+    syscalls[SYS_fgetxattr] = sys_fgetxattr;
+    syscalls[SYS_listxattr] = sys_listxattr;
+    syscalls[SYS_llistxattr] = sys_llistxattr;
+    syscalls[SYS_flistxattr] = sys_flistxattr;
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

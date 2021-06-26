@@ -11,9 +11,14 @@
 #include <time.h>
 #include <sys/syscall.h>
 
+#define $(func) #func
+
 int oscamp_signal(int argc, char *argv[]);
 int test_sched(int argc, char *argv[]);
 int test_time(int argc, char *argv[]);
 int test_kill(int argc, char *argv[]);
+int test_xattr(int argc, char *argv[]);
+
+
 
 #endif // _TEST_H

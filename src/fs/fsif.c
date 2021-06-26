@@ -1147,3 +1147,63 @@ int sys_getdents(int fd, void *dirp, unsigned long len)
     return rdbytes;
 }
 #endif
+
+int sys_removexattr(const char *path, const char *name)
+{
+    return -ENOSYS;
+}
+
+int sys_lremovexattr(const char *path, const char *name)
+{
+    return -ENOSYS;
+}
+
+int sys_fremovexattr(int fd, const char *name)
+{
+    return -ENOSYS;
+}
+
+int sys_setxattr(const char *path, const char *name, const void *value, size_t size, int flags)
+{
+    return -ENOSYS;
+}
+
+int sys_lsetxattr(const char *path, const char *name, const void *value, size_t size, int flags)
+{
+    return -ENOSYS;
+}
+
+int sys_fsetxattr(int filedes, const char *name, const void *value, size_t size, int flags)
+{
+    return -ENOSYS;
+}
+
+ssize_t sys_getxattr(const char *path, const char *name, void *value, size_t size)
+{
+	return -ENOSYS;
+}
+
+ssize_t sys_lgetxattr(const char *path, const char *name, void *value, size_t size)
+{
+	return -ENOSYS;
+}
+
+ssize_t sys_fgetxattr(int filedes, const char *name, void *value, size_t size)
+{
+	return -ENOSYS;
+}
+
+ssize_t sys_listxattr(const char *path, char *list, size_t size)
+{
+	return -ENOSYS;
+}
+
+ssize_t sys_llistxattr(const char *path, char *list, size_t size)
+{
+	return -ENOSYS;
+}
+
+ssize_t sys_flistxattr(int filedes, char *list, size_t size)
+{
+	return -ENOSYS;
+}

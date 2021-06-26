@@ -101,6 +101,19 @@ typedef void * syscall_t;
 #define SYS_getitimer 102
 #define SYS_setitimer 103
 
+#define SYS_setxattr 5
+#define SYS_lsetxattr 6
+#define SYS_fsetxattr 7
+#define SYS_getxattr 8
+#define SYS_lgetxattr 9
+#define SYS_fgetxattr 10
+#define SYS_listxattr 11
+#define SYS_llistxattr 12
+#define SYS_flistxattr 13
+#define SYS_removexattr 14
+#define SYS_lremovexattr 15
+#define SYS_fremovexattr 16
+
 #define SYSCALL_NR 1100
 #else
 enum syscall_num {

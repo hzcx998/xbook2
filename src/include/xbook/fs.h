@@ -73,6 +73,19 @@ int sys_openat(int dirfd, const char *pathname, int flags, mode_t mode);
 int fsif_incref(int fd);
 int fsif_decref(int fd);
 
+int sys_removexattr(const char *path, const char *name);
+int sys_lremovexattr(const char *path, const char *name);
+int sys_fremovexattr(int fd, const char *name);
+int sys_setxattr(const char *path, const char *name, const void *value, size_t size, int flags);
+int sys_lsetxattr(const char *path, const char *name, const void *value, size_t size, int flags);
+int sys_fsetxattr(int filedes, const char *name, const void *value, size_t size, int flags);
+ssize_t sys_getxattr(const char *path, const char *name, void *value, size_t size);
+ssize_t sys_lgetxattr(const char *path, const char *name, void *value, size_t size);
+ssize_t sys_fgetxattr(int filedes, const char *name, void *value, size_t size);
+ssize_t sys_listxattr(const char *path, char *list, size_t size);
+ssize_t sys_llistxattr(const char *path, char *list, size_t size);
+ssize_t sys_flistxattr(int filedes, char *list, size_t size);
+
 // special for kernel
 int kfile_open(const char *path, int flags);
 int kfile_read(int fd, void *buffer, size_t nbytes);
