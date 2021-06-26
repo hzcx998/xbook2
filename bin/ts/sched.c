@@ -1,6 +1,6 @@
 #include "test.h"
 
-#include <sched.h>
+#include <sys/resource.h>
 
 int test_sched(int argc, char *argv[])
 {
@@ -45,6 +45,9 @@ int test_sched(int argc, char *argv[])
     printf("sched_get_priority_min: SCHED_OTHER %d\n", sched_get_priority_min(SCHED_OTHER));
     printf("sched_get_priority_min: SCHED_IDLE %d\n", sched_get_priority_min(SCHED_IDLE));
     printf("sched_get_priority_min: SCHED_DEADLINE %d\n", sched_get_priority_min(SCHED_DEADLINE));
+
+    printf("%s: %d\n", $(getpriority), getpriority(0, 0));
+    printf("%s: %d\n", $(setpriority), setpriority(0, 0, 0));
 
     return 0;
 }

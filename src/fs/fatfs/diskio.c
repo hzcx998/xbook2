@@ -11,7 +11,6 @@
 #include "diskio.h"		/* Declarations of disk functions */
 
 /* xbook res */
-#include <sys/res.h>
 #include <sys/ioctl.h>
 #include <xbook/diskman.h>
 #include <xbook/debug.h>

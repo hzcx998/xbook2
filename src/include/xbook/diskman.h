@@ -2,7 +2,6 @@
 #define _XBOOK_DISKMAN_H
 
 #include <arch/atomic.h>
-#include <sys/res.h>
 #include "driver.h"
 
 /* 磁盘驱动器 */

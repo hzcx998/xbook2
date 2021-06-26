@@ -7,16 +7,49 @@
 #include "mutexlock.h"
 #include "waitqueue.h"
 #include <arch/atomic.h>
-#include <sys/res.h>
 #include <sys/input.h>
 #include "initcall.h"
 #include "fsal.h"
 
 #define DRIVER_NAME_LEN 32
 
-#ifndef DEVICE_NAME_LEN
 #define DEVICE_NAME_LEN 32
-#endif
+
+/* 设备项 */
+typedef struct __devent {
+    short de_type;      /* device type */
+    char de_name[DEVICE_NAME_LEN];   /* device name */
+} devent_t;
+
+typedef enum _device_type {
+    DEVICE_TYPE_ANY,                    /* 任意设备 */
+    DEVICE_TYPE_BEEP,                   /* 蜂鸣器设备 */
+    DEVICE_TYPE_DISK,                   /* 磁盘设备 */
+    DEVICE_TYPE_KEYBOARD,               /* 键盘设备 */
+    DEVICE_TYPE_MOUSE,                  /* 鼠标设备 */
+    DEVICE_TYPE_NULL,                   /* 空设备 */
+    DEVICE_TYPE_PORT,                   /* 端口设备 */
+    DEVICE_TYPE_SERIAL_PORT,            /* 串口设备 */
+    DEVICE_TYPE_PARALLEL_PORT,           /* 并口设备 */
+    DEVICE_TYPE_PHYSIC_NETCARD,          /* 物理网卡设备 */
+    DEVICE_TYPE_PRINTER,                 /* 打印机设备 */
+    DEVICE_TYPE_SCANNER,                 /* 扫描仪设备 */
+    DEVICE_TYPE_SCREEN,                  /* 屏幕设备 */
+    DEVICE_TYPE_SOUND,                   /* 声音设备 */
+    DEVICE_TYPE_STREAM,                  /* 流设备 */
+    DEVICE_TYPE_UNKNOWN,                 /* 未知设备 */
+    DEVICE_TYPE_VIDEO,                   /* 视频设备 */
+    DEVICE_TYPE_VIRTUAL_DISK,            /* 虚拟磁盘设备 */
+    DEVICE_TYPE_VIRTUAL_CHAR,            /* 虚拟字符设备 */
+    DEVICE_TYPE_WAVE_IN,                 /* 声音输入设备 */
+    DEVICE_TYPE_WAVE_OUT,                /* 声音输出设备 */
+    DEVICE_TYPE_8042_PORT,               /* 8042端口设备 */
+    DEVICE_TYPE_NETWORK,                 /* 网络设备 */
+    DEVICE_TYPE_BUS_EXTERNDER,           /* BUS总线扩展设备 */
+    DEVICE_TYPE_ACPI,                    /* ACPI设备 */
+    DEVICE_TYPE_VIEW,                   /* 视图设备 */
+    MAX_DEVICE_TYPE_NR
+} device_type_t;
 
 /* 驱动状态：0~15位是内核使用，16~23位自定义 */
 #define IO_SUCCESS             0            /* 成功 */

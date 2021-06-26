@@ -120,7 +120,6 @@ typedef long syscall_arg_t;
 #define SYS_mailread 0
 #define SYS_mailwrite 0
 #define SYS_spawn 0
-#define SYS_setpriority 0
 #define SYS_execve 221
 #define SYS_wait4 260
 
@@ -142,5 +141,8 @@ typedef long syscall_arg_t;
 #define SYS_removexattr 14
 #define SYS_lremovexattr 15
 #define SYS_fremovexattr 16
+
+#define SYS_setpriority 140
+#define SYS_getpriority 141
 
 #endif

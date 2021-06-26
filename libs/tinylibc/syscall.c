@@ -329,3 +329,13 @@ ssize_t flistxattr(int filedes, char *list, size_t size)
 {
 	return syscall(SYS_flistxattr, filedes, list, size);
 }
+
+int getpriority(int which, id_t who)
+{
+	return syscall(SYS_getpriority, which, who);
+}
+
+int setpriority(int which, id_t who, int prio)
+{
+	return syscall(SYS_setpriority, which, who, prio);
+}

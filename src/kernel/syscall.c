@@ -20,6 +20,7 @@
 #include <sys/uname.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <dirent.h>
 
 syscall_t syscalls[SYSCALL_NR];
@@ -113,6 +114,9 @@ void syscall_init()
     syscalls[SYS_listxattr] = sys_listxattr;
     syscalls[SYS_llistxattr] = sys_llistxattr;
     syscalls[SYS_flistxattr] = sys_flistxattr;
+    syscalls[SYS_setpriority] = sys_setpriority;
+    syscalls[SYS_getpriority] = sys_getpriority;
+    
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

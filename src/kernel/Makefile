@@ -16,3 +16,4 @@ SRC	+= permission.c
 SRC	+= config.c
 SRC	+= tests.c
 SRC	+= signal.c
+SRC	+= resource.c
