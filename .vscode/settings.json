@@ -210,6 +210,8 @@
         "fd.h": "c",
         "memory": "c",
         "tuple": "c",
-        "sched.h": "c"
+        "sched.h": "c",
+        "power.h": "c",
+        "reboot.h": "c"
     }
 }

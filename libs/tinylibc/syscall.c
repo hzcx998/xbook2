@@ -3,6 +3,7 @@
 #include <sched.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/reboot.h>
 
 #include <sys/syscall.h>
 
@@ -338,4 +339,9 @@ int getpriority(int which, id_t who)
 int setpriority(int which, id_t who, int prio)
 {
 	return syscall(SYS_setpriority, which, who, prio);
+}
+
+int reboot(int type)
+{
+	return syscall(SYS_reboot, 0xfee1dead, 672274793, type);
 }

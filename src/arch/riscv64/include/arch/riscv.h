@@ -298,5 +298,9 @@ static inline void fence_i()
     asm volatile("fence.i");
 }
 
+static inline void wait_for_interrupt(void)
+{
+	__asm__ __volatile__ ("wfi");
+}
 
 #endif

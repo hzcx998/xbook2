@@ -18,6 +18,7 @@ int test_sched(int argc, char *argv[]);
 int test_time(int argc, char *argv[]);
 int test_kill(int argc, char *argv[]);
 int test_xattr(int argc, char *argv[]);
+int test_reboot(int argc, char *argv[]);
 
 
 

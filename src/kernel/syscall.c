@@ -16,7 +16,7 @@
 #include <xbook/schedule.h>
 #include <xbook/fifo.h>
 #include <xbook/sockcall.h>
-#include <xbook/signal.h>
+#include <xbook/power.h>
 #include <sys/uname.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -116,7 +116,8 @@ void syscall_init()
     syscalls[SYS_flistxattr] = sys_flistxattr;
     syscalls[SYS_setpriority] = sys_setpriority;
     syscalls[SYS_getpriority] = sys_getpriority;
-    
+    syscalls[SYS_reboot] = sys_reboot;
+
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

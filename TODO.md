@@ -73,9 +73,9 @@
 [ok] SYS_removexattr 14
 [ok] SYS_lremovexattr 15
 [ok] SYS_fremovexattr 16
-
-[no] __NR_setpriority 140
-[no] __NR_getpriority 141
+[ok] __NR_setpriority 140
+[ok] __NR_getpriority 141
+[no] __NR_reboot 142
 
 ...
 ```

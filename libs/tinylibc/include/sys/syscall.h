@@ -144,5 +144,6 @@ typedef long syscall_arg_t;
 
 #define SYS_setpriority 140
 #define SYS_getpriority 141
+#define SYS_reboot 142
 
 #endif

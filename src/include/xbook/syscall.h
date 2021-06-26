@@ -115,6 +115,8 @@ typedef void * syscall_t;
 
 #define SYS_setpriority 140
 #define SYS_getpriority 141
+#define SYS_reboot 142
+
 
 #define SYSCALL_NR 1100
 #else
