@@ -89,6 +89,17 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     #endif
     task->port_comm = NULL;
     task->cpuid = cpu_get_my_id();
+    task->uid = ROOT_UID;
+    task->euid = task->uid;
+    task->suid = task->uid;
+    task->gid = task->uid;
+    task->egid = task->gid;
+    task->sgid = task->gid;
+    int i;
+    for (i = 0; i < NGROUPS_MAX; i++) {
+        task->groups[i] = -1;   // -1 表示没有附加组
+    }
+    task->groups[0] = task->gid;    /* 至少有一个组ID */
 }
 
 void task_free(task_t *task)

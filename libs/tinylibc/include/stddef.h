@@ -45,7 +45,8 @@ typedef int pid_t;
 typedef unsigned long time_t;
 typedef int clockid_t;
 typedef int id_t;
-
+typedef int uid_t;
+typedef int gid_t;
 
 #define NULL ((void *)0)
 

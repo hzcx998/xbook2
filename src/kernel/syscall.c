@@ -17,6 +17,7 @@
 #include <xbook/fifo.h>
 #include <xbook/sockcall.h>
 #include <xbook/power.h>
+#include <xbook/uid.h>
 #include <sys/uname.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -117,7 +118,20 @@ void syscall_init()
     syscalls[SYS_setpriority] = sys_setpriority;
     syscalls[SYS_getpriority] = sys_getpriority;
     syscalls[SYS_reboot] = sys_reboot;
+    syscalls[SYS_getuid] = sys_getuid;
+    syscalls[SYS_geteuid] = sys_geteuid;
+    syscalls[SYS_getgid] = sys_getgid;
+    syscalls[SYS_getegid] = sys_getegid;
+    syscalls[SYS_setuid] = sys_setuid;
+    syscalls[SYS_setgid] = sys_setgid;
+    syscalls[SYS_setgroups] = sys_setgroups;
+    syscalls[SYS_getgroups] = sys_getgroups;
 
+    syscalls[SYS_setresuid] = sys_setresuid;
+    syscalls[SYS_getresuid] = sys_getresuid;
+    syscalls[SYS_setresgid] = sys_setresgid;
+    syscalls[SYS_getresgid] = sys_getresgid;
+    
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

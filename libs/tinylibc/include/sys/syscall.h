@@ -146,4 +146,15 @@ typedef long syscall_arg_t;
 #define SYS_getpriority 141
 #define SYS_reboot 142
 
+#define SYS_setgid 144
+#define SYS_setuid 146
+
+#define SYS_getgroups 158
+#define SYS_setgroups 159
+
+#define SYS_setresuid 147
+#define SYS_getresuid 148
+#define SYS_setresgid 149
+#define SYS_getresgid 150
+
 #endif

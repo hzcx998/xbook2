@@ -212,6 +212,9 @@
         "tuple": "c",
         "sched.h": "c",
         "power.h": "c",
-        "reboot.h": "c"
+        "reboot.h": "c",
+        "id.h": "c",
+        "uid.h": "c",
+        "iterator": "c"
     }
 }

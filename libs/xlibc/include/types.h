@@ -15,8 +15,6 @@ typedef unsigned long dev_t;
 typedef unsigned long blksize_t;
 typedef unsigned long blkcnt_t;
 typedef long clock_t;
-typedef unsigned long size_t;
-typedef long ssize_t;
 typedef long time_t;
 typedef int clockid_t;
 typedef unsigned long unid_t;

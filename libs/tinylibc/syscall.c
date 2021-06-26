@@ -345,3 +345,73 @@ int reboot(int type)
 {
 	return syscall(SYS_reboot, 0xfee1dead, 672274793, type);
 }
+
+uid_t getuid(void)
+{
+	return syscall(SYS_getuid);
+}
+
+uid_t geteuid(void)
+{
+	return syscall(SYS_geteuid);
+}
+
+gid_t getgid(void)
+{
+	return syscall(SYS_getgid);
+}
+
+gid_t getegid(void)
+{
+	return syscall(SYS_getegid);
+}
+
+int setuid(uid_t uid)
+{
+	return syscall(SYS_setuid, uid);
+}
+
+int setgid(gid_t gid)
+{
+	return syscall(SYS_setgid, gid);
+}
+
+int seteuid(uid_t euid)
+{
+	return syscall(SYS_setresuid, -1, euid, -1);
+}
+
+int setegid(gid_t egid)
+{
+	return syscall(SYS_setresgid, -1, egid, -1);
+}
+
+int getgroups(int count, gid_t list[])
+{
+	return syscall(SYS_getgroups, count, list);
+}
+
+int setgroups(size_t count, const gid_t list[])
+{
+	return syscall(SYS_setgroups, count, list);
+}
+
+int setresuid(uid_t ruid, uid_t euid, uid_t suid)
+{
+	return syscall(SYS_setresuid, ruid, euid, suid);
+}
+
+int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid)
+{
+	return syscall(SYS_getresuid, ruid, euid, suid);
+}
+
+int setresgid(uid_t rgid, uid_t egid, uid_t sgid)
+{
+	return syscall(SYS_setresgid, rgid, egid, sgid);
+}
+
+int getresgid(uid_t *rgid, uid_t *egid, uid_t *sgid)
+{
+	return syscall(SYS_getresgid, rgid, egid, sgid);
+}

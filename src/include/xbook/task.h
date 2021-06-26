@@ -19,6 +19,7 @@
 #include "portcomm.h"
 #include "msgpool.h"
 #include "signal.h"
+#include "uid.h"
 #ifdef CONFIG_PTHREAD
 #include "pthread.h"
 #endif
@@ -70,10 +71,17 @@ typedef struct {
     task_state_t state;
     spinlock_t lock;                    /* 操作task成员时需要进行上锁 */
     cpuid_t cpuid;
-    pid_t pid;                          /* process id */
-    pid_t parent_pid;
-    pid_t tgid;                         /* 线程组id：线程属于哪个进程，和pid一样，就说明是主线程，不然就是子线程 */
-    pid_t pgid;                         /* 进程组ID：用于终端控制 */
+    pid_t pid;                          /* 进程自己的ID（process id） */
+    pid_t parent_pid;                   /* 父进程的PID */
+    pid_t tgid;                         /* 线程组ID：线程属于哪个进程，和pid一样，就说明是主线程，不然就是子线程（thread group id） */
+    pid_t pgid;                         /* 进程组ID：一组进程拥有同样的进程组ID （process group id）*/
+    uid_t uid;                          /* 用户ID：表明是在哪个用户上执行这个任务 （user id）*/
+    gid_t gid;                          /* 用户组ID：表明用户属于哪个用户组 */
+    uid_t euid;                         /* 有效的用户ID：和uid一样*/
+    gid_t egid;                         /* 有效的用户组ID：和gid一样 */
+    uid_t suid;                         /* 保存的用户ID：用户ID的备份 */
+    gid_t sgid;                         /* 保存的用户组ID：用户组ID的备份 */
+    gid_t groups[NGROUPS_MAX];          /* 附加用户组ID，也就是当前用户在哪些组里面 */
     unsigned long flags;                
     char priority;             /* 任务的动态优先级 */
     char static_priority;      /* 任务的静态优先级 */

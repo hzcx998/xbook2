@@ -18,3 +18,4 @@ SRC	+= tests.c
 SRC	+= signal.c
 SRC	+= resource.c
 SRC	+= power.c
+SRC	+= uid.c

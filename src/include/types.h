@@ -21,8 +21,8 @@ typedef unsigned long addr_t;
 
 typedef unsigned long ino_t;
 typedef unsigned long nlink_t;
-typedef unsigned int uid_t;
-typedef unsigned int gid_t;
+typedef int uid_t;
+typedef int gid_t;
 typedef unsigned long useconds_t;
 typedef long kobjid_t; /* kernel object id */
 

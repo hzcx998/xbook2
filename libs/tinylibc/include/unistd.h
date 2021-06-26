@@ -52,4 +52,20 @@ int dup2(int, int);
 
 unsigned int alarm(unsigned int seconds);
 
+uid_t getuid(void);
+uid_t geteuid(void);
+gid_t getgid(void);
+gid_t getegid(void);
+int setuid(uid_t uid);
+int seteuid(uid_t euid);
+int setgid(gid_t gid);
+int setegid(gid_t egid);
+int getgroups(int count, gid_t list[]);
+int setgroups(size_t count, const gid_t list[]);
+
+int setresuid(uid_t ruid, uid_t euid, uid_t suid);
+int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid);
+int setresgid(uid_t rgid, uid_t egid, uid_t sgid);
+int getresgid(uid_t *rgid, uid_t *egid, uid_t *sgid);
+
 #endif // __UNISTD_H__

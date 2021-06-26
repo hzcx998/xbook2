@@ -3,6 +3,7 @@
 #include <xbook/clock.h>
 #include <xbook/driver.h>
 #include <xbook/safety.h>
+#include <xbook/uid.h>
 #include <sys/uname.h>
 #include <errno.h>
 #include <stddef.h>
@@ -19,7 +20,7 @@ long sys_sysconf(int name)
     case _SC_LOGIN_NAME_MAX:
         return 32;
     case _SC_NGROUPS_MAX:
-        return 32;
+        return NGROUPS_MAX;
     case _SC_CLK_TCK:
         return HZ;
     case _SC_OPEN_MAX:

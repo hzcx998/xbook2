@@ -1,15 +1,13 @@
 #ifndef _XLIBC_STDDEF_H
 #define _XLIBC_STDDEF_H
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef _SIZE_T
-#define	_SIZE_T
 typedef unsigned long size_t;
-#endif /* _SIZE_T */
+typedef long ssize_t;
+
 typedef unsigned long dma_addr_t;
 
 #ifndef __cplusplus
