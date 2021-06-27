@@ -140,6 +140,8 @@ void syscall_init()
     syscalls[SYS_setsid] = sys_setsid;
     syscalls[SYS_getsid] = sys_getsid;
     
+    syscalls[SYS_times] = sys_times;
+    
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

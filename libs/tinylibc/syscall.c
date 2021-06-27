@@ -3,8 +3,8 @@
 #include <sched.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/times.h>
 #include <sys/reboot.h>
-
 #include <sys/syscall.h>
 
 int open(const char *path, int flags)
@@ -80,9 +80,9 @@ int execve(const char *name, char *const argv[], char *const argp[])
     return syscall(SYS_execve, name, argv, argp);
 }
 
-int times(void *mytimes)
+clock_t times(struct tms *buf)
 {
-	return syscall(SYS_times, mytimes);
+	return syscall(SYS_times, buf);
 }
 
 int64 get_time()

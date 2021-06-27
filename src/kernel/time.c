@@ -147,7 +147,6 @@ void systicks_to_timespec(unsigned long ticks, struct timespec *ts)
     ts->tv_sec = sec;
     ts->tv_nsec = nsec;
 }
-#if !defined(CONFIG_NO_SYS_TIMES)
 clock_t sys_times(struct tms *buf)
 {
     if (buf) {
@@ -173,4 +172,3 @@ clock_t sys_times(struct tms *buf)
     }
     return sys_get_ticks();
 }
-#endif

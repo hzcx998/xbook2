@@ -95,6 +95,7 @@
 [ok] __NR_getppid 173
 [ok] __NR_gettid 178
 [ok] __NR_set_tid_address 96
+[ok] __NR_times 153
 
 ...
 ```

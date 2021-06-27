@@ -47,6 +47,7 @@ typedef int clockid_t;
 typedef int id_t;
 typedef int uid_t;
 typedef int gid_t;
+typedef long clock_t;
 
 #define NULL ((void *)0)
 
