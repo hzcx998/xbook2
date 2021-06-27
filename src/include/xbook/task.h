@@ -82,6 +82,7 @@ typedef struct {
     uid_t suid;                         /* 保存的用户ID：用户ID的备份 */
     gid_t sgid;                         /* 保存的用户组ID：用户组ID的备份 */
     gid_t groups[NGROUPS_MAX];          /* 附加用户组ID，也就是当前用户在哪些组里面 */
+    pid_t sid;                          /* 会话ID，多个进程组组成一个会话。（SessionID） */
     unsigned long flags;                
     char priority;             /* 任务的动态优先级 */
     char static_priority;      /* 任务的静态优先级 */
@@ -241,6 +242,9 @@ pid_t sys_get_ppid();
 pid_t sys_get_tid();
 pid_t sys_get_pgid(pid_t pid);
 int sys_set_pgid(pid_t pid, pid_t pgid);
+pid_t sys_set_tid_address(int *tidptr);
+pid_t sys_getsid(pid_t pid);
+pid_t sys_setsid();
 
 int sys_getver(char *buf, int len);
 int sys_tstate(tstate_t *ts, unsigned int *idx);

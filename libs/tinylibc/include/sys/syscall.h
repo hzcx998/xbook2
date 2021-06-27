@@ -157,4 +157,13 @@ typedef long syscall_arg_t;
 #define SYS_setresgid 149
 #define SYS_getresgid 150
 
+#define SYS_setpgid 154
+#define SYS_getpgid 155
+#define SYS_gettid 178
+
+#define SYS_set_tid_address 96
+
+#define SYS_getsid 156
+#define SYS_setsid 157
+
 #endif

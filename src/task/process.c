@@ -549,8 +549,9 @@ task_t *process_create(char **argv, char **envp, uint32_t flags)
     task_init(task, argv[0], TASK_PRIO_LEVEL_NORMAL);
 
     task->parent_pid = parent->pid;
-    if (parent)
-        task->pgid = parent->pgid;
+    task->pgid = parent->pgid;
+    task->sid = parent->sid;
+    
     /* 进程执行前必须初始化文件描述符，内存管理，参数缓冲区 */
     if (fs_fd_init(task) < 0) {
         mem_free(task);

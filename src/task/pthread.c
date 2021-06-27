@@ -63,6 +63,7 @@ task_t *pthread_start(task_func_t *func, void *arg,
     task->parent_pid = parent->pid;
     task->pthread = parent->pthread;
     task->pgid = parent->pgid;
+    task->sid = parent->sid;
     task->vmm = parent->vmm;
     task->fileman = parent->fileman;
     exception_manager_init(&task->exception_manager);

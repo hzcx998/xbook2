@@ -132,6 +132,14 @@ void syscall_init()
     syscalls[SYS_setresgid] = sys_setresgid;
     syscalls[SYS_getresgid] = sys_getresgid;
     
+    syscalls[SYS_setpgid] = sys_set_pgid;
+    syscalls[SYS_getpgid] = sys_get_pgid;
+    syscalls[SYS_gettid] = sys_get_tid;
+    syscalls[SYS_set_tid_address] = sys_set_tid_address;
+
+    syscalls[SYS_setsid] = sys_setsid;
+    syscalls[SYS_getsid] = sys_getsid;
+    
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

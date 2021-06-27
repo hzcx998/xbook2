@@ -37,6 +37,7 @@ static int copy_struct_and_kstack(task_t *child, task_t *parent)
     child->state = TASK_READY;
     child->parent_pid = parent->pid;
     child->pgid = parent->pgid;     /* 和父进程在同一个组 */
+    child->sid = parent->sid;     /* 和父进程在同一个会话 */
     list_init(&child->list);
     list_init(&child->global_list);
     #ifndef TASK_TRAPFRAME_ON_KSTACK

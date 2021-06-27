@@ -1,21 +1,5 @@
 #include "test.h"
 
-uid_t getuid(void);
-uid_t geteuid(void);
-gid_t getgid(void);
-gid_t getegid(void);
-int setuid(uid_t uid);
-int seteuid(uid_t euid);
-int setgid(gid_t gid);
-int setegid(gid_t egid);
-int getgroups(int count, gid_t list[]);
-int setgroups(size_t count, const gid_t list[]);
-
-int setresuid(uid_t ruid, uid_t euid, uid_t suid);
-int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid);
-int setresgid(uid_t rgid, uid_t egid, uid_t sgid);
-int getresgid(uid_t *rgid, uid_t *egid, uid_t *sgid);
-
 int test_uid(int argc, char *argv[])
 {
     printf("%s: %d\n", $(getuid), getuid());
@@ -31,7 +15,7 @@ int test_uid(int argc, char *argv[])
     printf("%s: %d\n", $(seteuid), seteuid(10));
     printf("%s: %d\n", $(setgid), setgid(20));
     printf("%s: %d\n", $(setegid), setegid(20));
-    
+
     printf("%s: %d\n", $(getuid), getuid());
     printf("%s: %d\n", $(geteuid), geteuid());
     printf("%s: %d\n", $(getgid), getgid());

@@ -11,6 +11,7 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"pid", test_pid},
     {"uid", test_uid},
     {"reboot", test_reboot},
     {"xattr", test_xattr},

@@ -79,22 +79,22 @@
 # 完成所有和id相关的系统调用
 [ok] __NR_setgid 144
 [ok] __NR_setuid 146
-[no] __NR_setpgid 154
-[no] __NR_getpgid 155
-[no] __NR_getsid 156
-[no] __NR_setsid 157
 [ok] __NR_getgroups 158
 [ok] __NR_setgroups 159
 [ok] __NR_getresuid 148
 [ok] __NR_getresgid 150
-[no] __NR_getpid 172
-[no] __NR_getppid 173
 [ok] __NR_getuid 174
 [ok] __NR_geteuid 175
-[no] __NR_getgid 176
-[no] __NR_getegid 177
-[no] __NR_gettid 178
-[no] __NR_set_tid_address 96
+[ok] __NR_getgid 176
+[ok] __NR_getegid 177
+[ok] __NR_setpgid 154
+[ok] __NR_getpgid 155
+[ok] __NR_getsid 156
+[ok] __NR_setsid 157
+[ok] __NR_getpid 172
+[ok] __NR_getppid 173
+[ok] __NR_gettid 178
+[ok] __NR_set_tid_address 96
 
 ...
 ```

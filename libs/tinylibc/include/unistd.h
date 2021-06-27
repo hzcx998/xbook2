@@ -68,4 +68,11 @@ int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid);
 int setresgid(uid_t rgid, uid_t egid, uid_t sgid);
 int getresgid(uid_t *rgid, uid_t *egid, uid_t *sgid);
 
+int setpgid(pid_t pid, pid_t pgid);
+pid_t getpgid(pid_t pid);
+pid_t getpgrp(void);
+pid_t gettid(void);
+pid_t setsid(void);
+pid_t getsid(pid_t pid);
+
 #endif // __UNISTD_H__

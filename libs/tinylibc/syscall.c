@@ -415,3 +415,33 @@ int getresgid(uid_t *rgid, uid_t *egid, uid_t *sgid)
 {
 	return syscall(SYS_getresgid, rgid, egid, sgid);
 }
+
+int setpgid(pid_t pid, pid_t pgid)
+{
+	return syscall(SYS_setpgid, pid, pgid);
+}
+
+pid_t getpgid(pid_t pid)
+{
+	return syscall(SYS_getpgid, pid);
+}
+
+pid_t getpgrp(void)
+{
+	return syscall(SYS_getpgid, 0);
+}
+
+pid_t gettid(void)
+{
+	return syscall(SYS_gettid);
+}
+
+pid_t setsid(void)
+{
+	return syscall(SYS_setsid);
+}
+
+pid_t getsid(pid_t pid)
+{
+	return syscall(SYS_getsid, pid);
+}

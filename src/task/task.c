@@ -67,6 +67,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     task->pid = task_take_pid();
     task->tgid = task->pid; /* 默认都是主线程，需要的时候修改 */
     task->pgid = -1;
+    task->sid = -1;
     task->parent_pid = -1;
     task->exit_status = 0;
     task->trapframe = mem_alloc(PAGE_SIZE);
@@ -371,6 +372,52 @@ pid_t sys_get_pgid(pid_t pid)
             return -ESRCH;
     }
     return task->pgid;
+}
+
+/**
+ * 设置tid指针地址
+ * 总是返回ThreadID
+ */
+pid_t sys_set_tid_address(int *tidptr)
+{
+    /* FIXME: 设置tid指针 */
+    return sys_get_tid();
+}
+
+/**
+ * 获取sessionID
+ * 如果pid为0，则返回当前任务的sid，不然则返回pid指定任务的sid
+ */
+pid_t sys_getsid(pid_t pid)
+{
+    task_t *task;
+    task_t *cur = task_current;
+    if (!pid)
+        task = cur;
+    else {
+        task = task_find_by_pid(pid);
+        if (!task)  /* 没找到对应的进程 */
+            return -ESRCH;
+    }
+    if (task->sid != cur->sid)  /* 要获取的进程和当前调用者进程不是在同一个会话，则不允许访问 */
+        return -EPERM;
+    return task->sid;
+}
+
+/**
+ * 设置会话id
+ * 如果当前进程是会话ID的领导者（pid==pgid），则不允许设置。
+ */
+pid_t sys_setsid()
+{
+    task_t *cur = task_current;
+    /* 当前进程是会话ID的领导者 */
+    if (cur->pid == cur->pgid) {
+        return -EPERM;
+    }
+    cur->pgid = cur->pid;
+    cur->sid = cur->pgid;
+    return cur->sid;
 }
 
 void tasks_print()
@@ -708,6 +755,9 @@ void task_start_user()
     /*keprintln("fisrt process pid=%d ppid=%d pgid=%d tgid=%d", 
         proc->pid, proc->parent_pid, proc->pgid, proc->tgid);
     */
+    /* 设置进程组和会话ID */
+    proc->pgid = proc->pid;
+    proc->sid = proc->pgid;
     #else
     /* 启动测试机线程 */
     task_t *test_thread = kern_thread_start("test_machine", TASK_PRIO_LEVEL_LOW, test_machine_thread, NULL);
