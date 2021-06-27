@@ -37,7 +37,6 @@ int sys_linkat(int olddirfd, char *oldpath, int newdirfd, char *newpath, unsigne
 int sys_unlinkat(int dirfd, char *path, unsigned int flags);
 int link(char *old_path, char *new_path);
 int unlink(char *path);
-int uname(void *buf);
 int time(unsigned long *tloc);
 int brk(void *);
 

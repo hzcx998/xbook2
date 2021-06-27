@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/reboot.h>
+#include <sys/utsname.h>
 #include <sys/syscall.h>
 
 int open(const char *path, int flags)
@@ -176,7 +177,7 @@ int unlink(char *path)
     return sys_unlinkat(AT_FDCWD, path, 0);
 }
 
-int uname(void *buf)
+int uname(struct utsname *buf)
 {
     return syscall(SYS_uname, buf);
 }

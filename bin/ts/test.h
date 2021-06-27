@@ -21,5 +21,6 @@ int test_xattr(int argc, char *argv[]);
 int test_reboot(int argc, char *argv[]);
 int test_uid(int argc, char *argv[]);
 int test_pid(int argc, char *argv[]);
+int test_misc(int argc, char *argv[]);
 
 #endif // _TEST_H

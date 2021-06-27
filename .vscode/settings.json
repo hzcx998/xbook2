@@ -215,6 +215,7 @@
         "reboot.h": "c",
         "id.h": "c",
         "uid.h": "c",
-        "iterator": "c"
+        "iterator": "c",
+        "utsname.h": "c"
     }
 }
