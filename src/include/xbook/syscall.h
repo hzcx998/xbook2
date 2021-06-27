@@ -136,7 +136,8 @@ typedef void * syscall_t;
 
 #define SYS_getsid 156
 #define SYS_setsid 157
-#define SYS_times 153
+
+#define SYS_sethostname 161
 
 #define SYSCALL_NR 1100
 #else

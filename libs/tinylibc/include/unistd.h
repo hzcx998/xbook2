@@ -73,4 +73,7 @@ pid_t gettid(void);
 pid_t setsid(void);
 pid_t getsid(pid_t pid);
 
+int sethostname(const char *name, size_t len);
+int gethostname(char *name, size_t len);
+
 #endif // __UNISTD_H__

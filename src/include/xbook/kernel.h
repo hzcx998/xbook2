@@ -29,6 +29,5 @@ enum {
 };
 
 long sys_sysconf(int name);
-int sys_gethostname(char *name, size_t len);
 
 #endif   /* _XBOOK_KERNEL_H */

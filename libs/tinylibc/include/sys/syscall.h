@@ -166,4 +166,6 @@ typedef long syscall_arg_t;
 #define SYS_getsid 156
 #define SYS_setsid 157
 
+#define SYS_sethostname 161
+
 #endif

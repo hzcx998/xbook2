@@ -4,6 +4,9 @@
 #include <sys/lpc.h>
 #include <sys/socket.h>
 
+#define HOSTNAME_MAX_LEN 65
+#define HOSTNAME_DEFAULT "xbook"
+
 enum net_client_code {
     NETCALL_socket = FIRST_CALL_CODE,
     NETCALL_bind,
@@ -36,5 +39,9 @@ int netif_write(int sock, void *buffer, size_t nbytes);
 int netif_ioctl(int sock, int request, void *arg);
 int netif_fcntl(int sock, int cmd, long val);
 int do_socket_close(int sock);
+
+int sys_sethostname(const char *name, size_t len);
+int sys_gethostname(char *name, size_t len);
+void net_init();
 
 #endif  /* _XBOOK_NET_H */

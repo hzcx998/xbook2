@@ -47,13 +47,7 @@ long sys_sysconf(int name)
     return -1;
 }
 
-int sys_gethostname(char *name, size_t len)
-{
-    if (!name || !len)
-        return -EINVAL;
-    return mem_copy_to_user(name, KERNEL_NAME, min(len, KERNEL_NAME_LEN));
-}
-
+extern char __hostname[];
 int sys_uname(struct utsname *buf)
 {
     struct utsname names;
@@ -65,7 +59,7 @@ int sys_uname(struct utsname *buf)
     #else
     strcpy(names.machine, "unknown");
     #endif
-    strcpy(names.nodename, "localhost");
+    strcpy(names.nodename, __hostname);
     strcpy(names.domainname, "localhost");
     strcpy(names.version, KERNEL_VERSION);
     strcpy(names.release, KERNEL_VERSION);

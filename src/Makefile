@@ -27,9 +27,9 @@ LD			:=  $(ENV_LD)
 
 export AS LD
 
-SRC			:= $(ARCH_DIR)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/
+SRC			:= $(ARCH_DIR)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ net/
 ifeq ($(ENV_MACH), mach-i386)
-SRC			+= drivers/ net/
+SRC			+= drivers/
 endif
 
 NAME		:= kernel.elf

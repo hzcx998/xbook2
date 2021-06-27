@@ -20,6 +20,7 @@
 #include <xbook/sem.h>
 #include <xbook/tests.h>
 #include <xbook/portcomm.h>
+#include <xbook/net.h>
 #ifdef CONFIG_ACCOUNT 
 #include <xbook/account.h>
 #endif
@@ -50,6 +51,7 @@ int kernel_main(void)
     #ifdef CONFIG_ACCOUNT 
     account_manager_init();
     #endif
+    net_init();
     port_comm_init();
     kernel_test_init();
     memory_overview();

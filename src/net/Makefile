@@ -1,2 +1,1 @@
-SRC	+= socket.c
-SRC	+= *.c
+SRC	+= net.c

@@ -18,6 +18,7 @@
 #include <xbook/sockcall.h>
 #include <xbook/power.h>
 #include <xbook/uid.h>
+#include <xbook/net.h>
 #include <sys/uname.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -141,7 +142,8 @@ void syscall_init()
     syscalls[SYS_getsid] = sys_getsid;
     
     syscalls[SYS_times] = sys_times;
-    
+    syscalls[SYS_sethostname] = sys_sethostname;
+
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;
