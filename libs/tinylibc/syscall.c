@@ -462,3 +462,18 @@ int gethostname(char *name, size_t len)
 	if (i && i==len) name[i-1] = 0;
 	return 0;
 }
+
+int getrlimit(int resource, struct rlimit *rlim)
+{
+    return syscall(SYS_getrlimit, resource, rlim);
+}
+int setrlimit(int resource, const struct rlimit *rlim)
+{
+    return syscall(SYS_setrlimit, resource, rlim);
+}
+
+int prlimit(pid_t pid, int resource, const struct rlimit *new_limit,
+    struct rlimit *old_limit)
+{
+    return syscall(SYS_prlimit64, pid, resource, new_limit, old_limit);
+}

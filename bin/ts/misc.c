@@ -1,5 +1,6 @@
 #include "test.h"
 #include <sys/utsname.h>
+#include <sys/resource.h>
 
 int test_misc(int argc, char *argv[])
 {
@@ -16,5 +17,18 @@ int test_misc(int argc, char *argv[])
     printf("%s: %d\n", $(gethostname), gethostname(hostname, 64));
     printf("hostname: %s\n", hostname);
 
+    struct rlimit rlim, orlim;
+    printf("%s: %d\n", $(getrlimit), getrlimit(RLIMIT_CPU, &rlim));
+    printf("%s: %d\n", $(setrlimit), setrlimit(RLIMIT_CPU, &rlim));
+    printf("%s: %d\n", $(getrlimit), getrlimit(-1, &rlim));
+    printf("%s: %d\n", $(setrlimit), setrlimit(50, &rlim));
+    printf("%s: %d\n", $(getrlimit), getrlimit(RLIMIT_CPU, NULL));
+    printf("%s: %d\n", $(setrlimit), setrlimit(RLIMIT_CPU, NULL));
+    
+    printf("%s: %d\n", $(prlimit), prlimit(0, RLIMIT_CPU, NULL, NULL));
+    printf("%s: %d\n", $(prlimit), prlimit(0, RLIMIT_CPU, &rlim, &orlim));
+    printf("%s: %d\n", $(prlimit), prlimit(4, RLIMIT_CPU, &rlim, &orlim));
+    printf("%s: %d\n", $(prlimit), prlimit(-1, RLIMIT_CPU, &rlim, &orlim));
+    
     return 0;
 }

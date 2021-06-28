@@ -144,6 +144,9 @@ void syscall_init()
     syscalls[SYS_times] = sys_times;
     syscalls[SYS_sethostname] = sys_sethostname;
 
+    syscalls[SYS_getrlimit] = sys_getrlimit;
+    syscalls[SYS_setrlimit] = sys_setrlimit;
+    syscalls[SYS_prlimit64] = sys_prlimit;
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

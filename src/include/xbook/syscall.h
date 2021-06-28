@@ -139,6 +139,10 @@ typedef void * syscall_t;
 
 #define SYS_sethostname 161
 
+#define SYS_getrlimit 163
+#define SYS_setrlimit 164
+#define SYS_prlimit64 261
+
 #define SYSCALL_NR 1100
 #else
 enum syscall_num {
