@@ -498,6 +498,8 @@ static int do_send_signal_group(pid_t gpid, int signal, pid_t sender)
  */
 int force_signal(int signo, pid_t pid)
 {
+    if (IS_BAD_SIGNAL(signo))
+        return -EINVAL;
     task_t *task = task_find_by_pid(pid);
     /* 没找到要发送的进程，返回失败 */
     if (task == NULL) {

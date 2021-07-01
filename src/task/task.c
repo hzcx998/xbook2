@@ -103,6 +103,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
     }
     task->groups[0] = task->gid;    /* 至少有一个组ID */
     task->umask = UMASK_DEFAULT;
+    task->parent_death_signal = SIGNONE; /* 默认发送SIGNONE信号，不执行任何操作 */
 }
 
 void task_free(task_t *task)

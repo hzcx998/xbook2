@@ -149,6 +149,7 @@ void syscall_init()
     syscalls[SYS_prlimit64] = sys_prlimit;
 
     syscalls[SYS_umask] = sys_umask;
+    syscalls[SYS_prctl] = sys_prctl;
 
     #else
     syscalls[SYS_EXIT] = sys_exit;

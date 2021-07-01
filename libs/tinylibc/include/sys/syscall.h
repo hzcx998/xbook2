@@ -173,5 +173,6 @@ typedef long syscall_arg_t;
 #define SYS_prlimit64 261
 
 #define SYS_umask 166
+#define SYS_prctl 167
 
 #endif

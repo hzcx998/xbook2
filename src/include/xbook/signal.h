@@ -8,6 +8,7 @@
 #include <xbook/spinlock.h>
 
 /* signal number */
+#define SIGNONE    0
 #define SIGHUP     1
 #define SIGINT     2
 #define SIGQUIT    3

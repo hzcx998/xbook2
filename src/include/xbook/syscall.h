@@ -144,6 +144,7 @@ typedef void * syscall_t;
 #define SYS_prlimit64 261
 
 #define SYS_umask 166
+#define SYS_prctl 167
 
 #define SYSCALL_NR 1100
 #else

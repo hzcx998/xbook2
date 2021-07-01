@@ -6,6 +6,19 @@
 #include <xbook/pthread.h>
 #include <xbook/fd.h>
 
+/**
+ * 父进程退出时需要给子进程发送信号
+ */
+static void signal_children(task_t *parent)
+{
+    task_t *child;
+    list_for_each_owner (child, &task_global_list, global_list) {
+        if (child->parent_pid == parent->pid) {
+            force_signal(child->parent_death_signal, child->pid);
+        }
+    }
+}
+
 static void adopt_children_to_init(task_t *parent)
 {
     task_t *child;
@@ -37,6 +50,7 @@ void sys_exit(int status)
     task_exit_hook(cur);
     proc_close_other_threads(cur);
     proc_deal_zombie_child(cur);
+    signal_children(cur);
     adopt_children_to_init(cur);
     proc_release(cur);
     task_t *parent = task_find_by_pid(cur->parent_pid); 

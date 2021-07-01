@@ -103,9 +103,9 @@
 [ok] __NR_setrlimit 164
 [ok] __NR_prlimit64 261
 [ok] __NR_umask 166
-[no] __NR_prctl 167
-[no] __NR_gettimeofday 169
-[no] __NR_getcwd 17
+[ok] __NR_prctl 167             : 使用到的参数：PR_SET_NO_NEW_PRIVS，PR_SET_PDEATHSIG
+[ok] __NR_gettimeofday 169
+[ok] __NR_getcwd 17
 [no] __NR_adjtimex 171
 ...
 ```

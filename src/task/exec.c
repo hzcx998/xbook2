@@ -31,7 +31,6 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
 {
     task_t *cur = task_current;
     vmm_t *old_vmm = cur->vmm;
-
     int fd = kfile_open(pathname, O_RDONLY);
     if (fd < 0) {
         errprint("[exec]: %s: file %s not exist!\n", __func__, pathname);
@@ -261,6 +260,9 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
 {
     if (!pathname)
         return -EINVAL;
+    if (task_current->flags & TASK_FLAG_NO_NEW_PRIVS) {  /* 不允许执行execve */
+        return -EPERM;
+    }
     /* 从用户态复制参数到内核 */
     char path[MAX_PATH] = {0};
     if (mem_copy_from_user_str(path, (void *)pathname, MAX_PATH) < 0) {
@@ -269,14 +271,18 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
     char *_argv[MAX_TASK_STACK_ARG_NR], *_envp[MAX_TASK_STACK_ARG_NR];
     memset(_argv, 0, sizeof(_argv));
     memset(_envp, 0, sizeof(_envp));
-    if (proc_copy_arg_from_user((char **)_argv, (char **)argv) < 0) {
-        errprintln("[exec] proc_copy_arg_from_user for argv failed!");
-        return -ENOMEM;
+    if (argv) {
+        if (proc_copy_arg_from_user((char **)_argv, (char **)argv) < 0) {
+            errprintln("[exec] proc_copy_arg_from_user for argv failed!");
+            return -ENOMEM;
+        }
     }
-    if (proc_copy_arg_from_user((char **)_envp, (char **)envp) < 0) {
-        errprintln("[exec] proc_copy_arg_from_user for envp failed!");
-        proc_free_arg(_argv);
-        return -ENOMEM;
+    if (envp) {
+        if (proc_copy_arg_from_user((char **)_envp, (char **)envp) < 0) {
+            errprintln("[exec] proc_copy_arg_from_user for envp failed!");
+            proc_free_arg(_argv);
+            return -ENOMEM;
+        }
     }
     return proc_execve((const char *)path, (const char **)_argv, (const char **)_envp);
 }

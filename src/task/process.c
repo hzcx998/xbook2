@@ -21,6 +21,7 @@
 #include <xbook/pthread.h>
 #include <sys/pthread.h>
 #endif
+#include <sys/prctl.h>
 
 #define DEBUG_PROCESS 0
 
@@ -708,4 +709,38 @@ int proc_copy_arg_from_user(char *dst[], char *src[])
 err:
     proc_free_arg(dst);
     return -1;
+}
+
+int sys_prctl(int option, unsigned long arg2, unsigned long arg3,
+    unsigned long arg4, unsigned long arg5)
+{
+    task_t *cur = task_current;
+    switch (option) {
+    case PR_SET_NO_NEW_PRIVS:   /* 如果设置为，表示没有权限执行一些操作，例如execve */
+        if (arg2 == 1) {
+            cur->flags |= TASK_FLAG_NO_NEW_PRIVS;
+        } else {
+            cur->flags &= ~TASK_FLAG_NO_NEW_PRIVS;
+        }
+        break;
+    case PR_GET_NO_NEW_PRIVS:   /* 如果设置为，表示没有权限执行一些操作，例如execve */
+        return (cur->flags & TASK_FLAG_NO_NEW_PRIVS) ? 1 : 0;
+    case PR_SET_PDEATHSIG:  /* 父进程死亡后给子进程发送arg2对应的信号 */
+        if (IS_BAD_SIGNAL(arg2))
+            return -EINVAL;
+        cur->parent_death_signal = arg2;
+        break;
+    case PR_GET_PDEATHSIG:
+        if (arg2) {
+            if (mem_copy_to_user((unsigned long *)arg2, &cur->parent_death_signal, sizeof(unsigned long)) < 0)
+                return -EINVAL;
+        }
+        return cur->parent_death_signal;
+    case PR_GET_DUMPABLE:
+    case PR_GET_KEEPCAPS:
+        return -ENOSYS;
+    default:
+        return -EINVAL;
+    }
+    return 0;
 }

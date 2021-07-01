@@ -47,7 +47,7 @@ typedef enum {
 
 typedef void (*exit_hook_t)(void *);
 
-enum thread_flags {
+enum task_flags {
     THREAD_FLAG_DETACH              = (1 << 0),     /* 线程分离标志，表示自己释放资源 */
     THREAD_FLAG_JOINED              = (1 << 1),     /* 线程被其它线程等待中 */
     THREAD_FLAG_JOINING             = (1 << 2),     /* 线程正在等待其它线程 */
@@ -56,6 +56,7 @@ enum thread_flags {
     THREAD_FLAG_CANCELED            = (1 << 5),     /* 线程已经标记上取消点 */
     THREAD_FLAG_WAITLIST            = (1 << 6),     /* 在等待链表中 */
     THREAD_FLAG_KERNEL              = (1 << 7),     /* 内核中的线程 */
+    TASK_FLAG_NO_NEW_PRIVS          = (1 << 8),     /* 进程没有部分操作权限，为了安全考虑，例如调用execve操作 */
 };
 
 /* 本地通信端口表 */
@@ -125,6 +126,7 @@ typedef struct {
     spinlock_t signal_mask_lock;  /* 信号屏蔽锁 */
 
     mode_t umask;       /* umask for open/mkdir and etc. */
+    int parent_death_signal;    /* 父进程死亡后，给子进程发送信号 */
     unsigned int stack_magic;
 } task_t;
 

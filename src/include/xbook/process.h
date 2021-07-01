@@ -56,4 +56,7 @@ int proc_copy_arg_from_user(char *dst[], char *src[]);
 
 void proc_set_stack_pointer(task_t *task, unsigned long sp);
 
+int sys_prctl(int option, unsigned long arg2, unsigned long arg3,
+    unsigned long arg4, unsigned long arg5);
+
 #endif /* _XBOOK_PROCESS_H */
