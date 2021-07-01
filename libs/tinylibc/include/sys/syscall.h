@@ -172,4 +172,6 @@ typedef long syscall_arg_t;
 #define SYS_setrlimit 164
 #define SYS_prlimit64 261
 
+#define SYS_umask 166
+
 #endif

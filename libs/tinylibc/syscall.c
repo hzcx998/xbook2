@@ -477,3 +477,8 @@ int prlimit(pid_t pid, int resource, const struct rlimit *new_limit,
 {
     return syscall(SYS_prlimit64, pid, resource, new_limit, old_limit);
 }
+
+mode_t umask(mode_t mask)
+{
+    return syscall(SYS_umask, mask);
+}

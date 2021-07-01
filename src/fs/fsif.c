@@ -41,6 +41,7 @@ int __sys_open(char *path, int flags)
     if (account_selfcheck_permission((char *)abs_path, PERMISION_ATTR_FILE) < 0) {
         return -EPERM;
     }
+    /* TODO: add mode arg for open */
     int handle = fsif.open((void *)abs_path, flags);
     if (handle < 0)
         return -ENOFILE;
@@ -1206,4 +1207,12 @@ ssize_t sys_llistxattr(const char *path, char *list, size_t size)
 ssize_t sys_flistxattr(int filedes, char *list, size_t size)
 {
 	return -ENOSYS;
+}
+
+mode_t sys_umask(mode_t mask)
+{
+    task_t *cur = task_current;
+    mode_t old = cur->umask;
+    cur->umask = mask & 0777;
+    return old;
 }

@@ -16,6 +16,9 @@
 #define FSAL_FILE_OPEN_NR       128
 #define FSAL_FILE_FLAG_USED      0X01 
 
+
+#define UMASK_DEFAULT   022
+
 typedef struct {
     /* 引用计数 */
     atomic_t reference;

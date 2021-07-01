@@ -124,6 +124,7 @@ typedef struct {
     sigset_t signal_pending;     /* 信号未决 */
     spinlock_t signal_mask_lock;  /* 信号屏蔽锁 */
 
+    mode_t umask;       /* umask for open/mkdir and etc. */
     unsigned int stack_magic;
 } task_t;
 

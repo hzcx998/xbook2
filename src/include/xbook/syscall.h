@@ -143,6 +143,8 @@ typedef void * syscall_t;
 #define SYS_setrlimit 164
 #define SYS_prlimit64 261
 
+#define SYS_umask 166
+
 #define SYSCALL_NR 1100
 #else
 enum syscall_num {

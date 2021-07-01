@@ -147,6 +147,9 @@ void syscall_init()
     syscalls[SYS_getrlimit] = sys_getrlimit;
     syscalls[SYS_setrlimit] = sys_setrlimit;
     syscalls[SYS_prlimit64] = sys_prlimit;
+
+    syscalls[SYS_umask] = sys_umask;
+
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

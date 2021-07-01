@@ -99,10 +99,10 @@
 [ok] __NR_uname 160
 [ok] __NR_sethostname 161
 
-[no] __NR_getrlimit 163
-[no] __NR_setrlimit 164
-[no] __NR_prlimit64 261
-[no] __NR_umask 166
+[ok] __NR_getrlimit 163
+[ok] __NR_setrlimit 164
+[ok] __NR_prlimit64 261
+[ok] __NR_umask 166
 [no] __NR_prctl 167
 [no] __NR_gettimeofday 169
 [no] __NR_getcwd 17

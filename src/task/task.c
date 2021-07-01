@@ -27,6 +27,7 @@
 #include <xbook/kernel.h>
 #include <xbook/fd.h>
 #include <xbook/fs.h>
+#include <xbook/file.h>
 
 static pid_t task_next_pid;
 LIST_HEAD(task_global_list);
@@ -101,6 +102,7 @@ void task_init(task_t *task, char *name, uint8_t prio_level)
         task->groups[i] = -1;   // -1 表示没有附加组
     }
     task->groups[0] = task->gid;    /* 至少有一个组ID */
+    task->umask = UMASK_DEFAULT;
 }
 
 void task_free(task_t *task)
