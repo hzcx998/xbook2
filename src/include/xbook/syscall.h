@@ -146,6 +146,9 @@ typedef void * syscall_t;
 #define SYS_umask 166
 #define SYS_prctl 167
 
+#define SYS_adjtimex 171
+#define SYS_sysinfo 179
+
 #define SYSCALL_NR 1100
 #else
 enum syscall_num {

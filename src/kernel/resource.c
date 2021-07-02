@@ -1,4 +1,5 @@
 #include <sys/resource.h>
+#include <sys/sysinfo.h>
 #include <xbook/safety.h>
 #include <xbook/schedule.h>
 #include <errno.h>
@@ -71,4 +72,34 @@ int sys_prlimit(pid_t pid, int resource, const struct rlimit *new_limit,
             return err;
     }
     return 0;
+}
+
+static int do_sysinfo(struct sysinfo *info)
+{
+    info->uptime = TICKS_to_MSEC(systicks) / 1000;
+    info->loads[0] = 0;
+    info->loads[1] = 0;
+    info->loads[2] = 0;
+    info->totalram = mem_get_total_page_nr() * PAGE_SIZE;
+    info->freeram = mem_get_free_page_nr() * PAGE_SIZE;
+    info->sharedram = 0;
+    info->bufferram = 0;
+    info->totalswap = 0;
+    info->freeswap = 0;
+    info->procs = task_total_number();
+    info->totalhigh = 0;
+    info->freehigh = 0;
+    info->mem_unit = 1; /* 1 byte for each unit */
+    return 0;   
+}
+
+int sys_sysinfo(struct sysinfo *info)
+{
+    struct sysinfo _info;
+    int err = do_sysinfo(&_info);
+    if (err < 0)
+        return err;
+    if (mem_copy_to_user(info, &_info, sizeof(struct sysinfo)) < 0)
+        return -EFAULT;
+    return 0;   
 }

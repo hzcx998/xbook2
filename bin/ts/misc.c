@@ -40,7 +40,7 @@ int test_misc(int argc, char *argv[])
     printf("%s: %s: 0: %d\n", $(prctl), $(PR_SET_PDEATHSIG), prctl(PR_SET_PDEATHSIG, 0));
     printf("%s: %s: 1: %d\n", $(prctl), $(PR_SET_PDEATHSIG), prctl(PR_SET_PDEATHSIG, 1));
     printf("%s: %s: 0: %d\n", $(prctl), $(PR_SET_PDEATHSIG), prctl(PR_SET_PDEATHSIG, 0));
-    
+
     if (!fork()) {
         printf("child %s: %s: SIGTERM: %d\n", $(prctl), $(PR_SET_PDEATHSIG), prctl(PR_SET_PDEATHSIG, SIGTERM));
         printf("child %s: %s: %d\n", $(prctl), $(PR_GET_PDEATHSIG), prctl(PR_GET_PDEATHSIG));

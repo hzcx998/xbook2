@@ -1,4 +1,5 @@
 #include <sys/time.h>
+#include <sys/timex.h>
 #include <xbook/walltime.h>
 #include <arch/time.h>
 #include <xbook/clock.h>
@@ -171,4 +172,9 @@ clock_t sys_times(struct tms *buf)
         mem_copy_to_user(buf, &_buf, sizeof(struct tms));
     }
     return sys_get_ticks();
+}
+
+int sys_adjtimex(struct timex *buf)
+{
+    return -ENOSYS;
 }

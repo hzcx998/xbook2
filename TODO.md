@@ -98,7 +98,6 @@
 [ok] __NR_times 153
 [ok] __NR_uname 160
 [ok] __NR_sethostname 161
-
 [ok] __NR_getrlimit 163
 [ok] __NR_setrlimit 164
 [ok] __NR_prlimit64 261
@@ -106,6 +105,7 @@
 [ok] __NR_prctl 167             : 使用到的参数：PR_SET_NO_NEW_PRIVS，PR_SET_PDEATHSIG
 [ok] __NR_gettimeofday 169
 [ok] __NR_getcwd 17
-[no] __NR_adjtimex 171
+[ok] __NR_adjtimex 171
+[ok] __NR_sysinfo 179
 ...
 ```

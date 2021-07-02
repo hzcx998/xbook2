@@ -23,6 +23,8 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/timex.h>
+#include <sys/sysinfo.h>
 #include <dirent.h>
 
 syscall_t syscalls[SYSCALL_NR];
@@ -150,6 +152,8 @@ void syscall_init()
 
     syscalls[SYS_umask] = sys_umask;
     syscalls[SYS_prctl] = sys_prctl;
+    syscalls[SYS_adjtimex] = sys_adjtimex;
+    syscalls[SYS_sysinfo] = sys_sysinfo;
 
     #else
     syscalls[SYS_EXIT] = sys_exit;

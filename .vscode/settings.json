@@ -217,6 +217,8 @@
         "uid.h": "c",
         "iterator": "c",
         "utsname.h": "c",
-        "resource.h": "c"
+        "resource.h": "c",
+        "timex.h": "c",
+        "times.h": "c"
     }
 }

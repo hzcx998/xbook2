@@ -147,6 +147,19 @@ task_t *task_find_by_pid(pid_t pid)
     return NULL;
 }
 
+unsigned int task_total_number()
+{
+    unsigned int count = 0;
+    task_t *task;
+    unsigned long flags;
+    interrupt_save_and_disable(flags);
+    list_for_each_owner(task, &task_global_list, global_list) {
+        count++;
+    }
+    interrupt_restore_state(flags);
+    return count;
+}
+
 int task_is_child(pid_t pid, pid_t child_pid)
 {
     task_t *child = task_find_by_pid(child_pid);

@@ -493,3 +493,13 @@ int prctl(int op, ...)
 	va_end(ap);
 	return syscall(SYS_prctl, op, x[0], x[1], x[2], x[3]);
 }
+
+int adjtimex(struct timex *buf)
+{
+	return syscall(SYS_adjtimex, buf);
+}
+
+int sysinfo(struct sysinfo *info)
+{
+	return syscall(SYS_sysinfo, info);
+}

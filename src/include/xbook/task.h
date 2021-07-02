@@ -267,4 +267,6 @@ int task_stack_build_when_forking(task_t *child);
 
 unsigned long syscall_dispatch(trap_frame_t *frame);
 
+unsigned int task_total_number();
+
 #endif   /* _XBOOK_TASK_H */
