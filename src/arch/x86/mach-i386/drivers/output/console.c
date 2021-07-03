@@ -180,7 +180,6 @@ static void flush(device_extension_t *ext)
     // 计算光标位置，并设置
 #ifdef KERN_VBE_MODE
     uga_outchar(ext->x, ext->y, UGA_CUR_CODE);
-    uga_outchar(ext->x+1, ext->y, ' ');
 #endif /* KERN_VBE_MODE */
     set_cursor(ext->original_addr + ext->y * SCREEN_WIDTH + ext->x);
     set_video_start_addr(ext->original_addr);
@@ -252,6 +251,19 @@ static void console_scroll(device_extension_t *ext, int direction)
         --ext->y;
     }
 
+#ifdef KERN_VBE_MODE
+    int x, y;
+    vram = (unsigned char *)(V_MEM_BASE + ext->original_addr);
+    for (i = 0, y = 0; y < SCREEN_HEIGHT - 1; ++y) {
+        for (x = 0; x < SCREEN_WIDTH; ++x, i += 2) {
+            uga_outchar(x, y, vram[i]);
+        }
+    }
+    for (x = 0; x < SCREEN_WIDTH; ++x) {
+        uga_outchar(x, y, 0);
+    }
+#endif /* #ifdef KERN_VBE_MODE */
+
     flush(ext);
 }
 
@@ -272,15 +284,18 @@ static void vga_outchar(device_extension_t *ext, unsigned char ch)
         *vram = COLOR_DEFAULT;
 
 #ifdef KERN_VBE_MODE
-        uga_outchar(ext->x, ext->y, ' ');
-#endif /* KERN_VBE_MODE */
+        uga_outchar(ext->x, ext->y, 0);
+#endif /* #ifdef KERN_VBE_MODE */
 
         ext->x = 0;
         ext->y++;
-
     break;
     case '\b':
         if (ext->x >= 0 && ext->y >= 0) {
+#ifdef KERN_VBE_MODE
+            uga_outchar(ext->x, ext->y, 0);
+#endif /* #ifdef KERN_VBE_MODE */
+
             ext->x--;
 
             // 调整为上一行尾
