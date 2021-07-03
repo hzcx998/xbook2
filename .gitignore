@@ -65,7 +65,6 @@ develop/image/
 develop/local/
 
 develop/rom/bin/
-develop/rom/boot/
 develop/rom/sbin/
 develop/rom/acct/
 develop/bochs/
