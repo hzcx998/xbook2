@@ -989,6 +989,19 @@ ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg)
     return -1;
 }
 
+int device_notify_to(char *devname, int tag, void *param)
+{
+    driver_object_t *drvobj;
+
+    list_for_each_owner (drvobj, &driver_list_head, list) {
+        if (!strcmp(devname, drvobj->name.text)) {
+            if (drvobj->device_be_notify_callback != NULL) {
+                drvobj->device_be_notify_callback(drvobj, tag, param);
+            }
+        }
+    }
+}
+
 int io_uninstall_driver(char *drvname)
 {
     driver_object_t *drvobj;

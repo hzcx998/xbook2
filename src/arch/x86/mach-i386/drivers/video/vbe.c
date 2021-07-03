@@ -17,7 +17,7 @@
 // #define DEBUG_DRV
 
 /* 将显存映射到内核，在内核态也可以操作显存 */
-#define MAP_VRAM_TO_KERN    0
+#define MAP_VRAM_TO_KERN    1
 
 #include <drivers/vbe.h>
 
@@ -192,6 +192,11 @@ static iostatus_t vbe_enter(driver_object_t *driver)
             DRV_NAME, __func__);
         return status;
     }
+    device_notify_to("vga-console", 0, (void*[]) {
+        extension->vir_base_addr,
+        &extension->mode_info->xResolution,
+        &extension->mode_info->yResolution,
+    });
 #ifdef DEBUG_DRV
     keprint(PRINT_DEBUG "%s: %s: " "video ram size: %x bytes\n", 
         DRV_NAME, __func__, video_ram_size);

@@ -6,6 +6,9 @@
 // ARDS信息地址，loader中读取通过BIOS读取信息放到该内存中
 #define ARDS_NR_ADDR    (KERN_BASE_VIR_ADDR + 0x000001000)
 #define ARDS_START_ADDR (KERN_BASE_VIR_ADDR + 0x00001004)
+#ifdef GRUB2
+#define GRUB2_READ_MEMORY_BYTES_ADDR (KERN_BASE_VIR_ADDR + 0x000001000)
+#endif /* GRUB2 */
 
 #define ARDS_MAX_NR 12 //最大有12个ards结构
 
@@ -17,17 +20,12 @@ struct ards_struct {
 	unsigned int type;          //该结构的类型(1可以被系统使用)
 };
 
-#ifdef GRUB2
-// from: arch/x86/boot/multiboot2/setup.c
-extern unsigned long grub2_read_memory_bytes;
-#endif /* GRUB2 */
-
 unsigned int phy_mem_get_size_from_hardware()
 {
 	unsigned int totalSize = 0;
 
 #ifdef GRUB2
-	totalSize = (unsigned int)grub2_read_memory_bytes;
+	totalSize = *((unsigned int *) GRUB2_READ_MEMORY_BYTES_ADDR);
 #else
 	unsigned int ards_num =  *((unsigned int *) ARDS_NR_ADDR);
 

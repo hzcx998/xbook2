@@ -196,6 +196,9 @@ typedef struct _driver_object
     list_t device_list;                 /* 驱动下的设备构成的链表 */
     struct drver_extension *drver_extension; /* 驱动扩展 */
     string_t name;                      /* 名字 */
+
+    void(*device_be_notify_callback)(struct _driver_object *driver, int tag, void *param);
+
     /* 驱动控制函数 */
     driver_func_t driver_enter;
     driver_func_t driver_exit;
@@ -265,6 +268,7 @@ ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg);
 int device_incref(handle_t handle);
 int device_decref(handle_t handle);
 void *device_mmap(handle_t handle, size_t length, int flags);
+int device_notify_to(char *devname, int tag, void *param);
 
 void dump_device_object(device_object_t *device);
 int device_probe_unused(const char *name, char *buf, size_t buflen);

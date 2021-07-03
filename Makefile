@@ -93,6 +93,10 @@ export KERN_MODULE_NET
 KERN_LIVECD_MODE ?= n
 export KERN_LIVECD_MODE
 
+# is vbe mode? (y/n)
+KERN_VBE_MODE ?= y
+export KERN_VBE_MODE
+
 DUMP_FILE	?= $(KERNEL_ELF)
 DUMP_FLAGS	?= 
 

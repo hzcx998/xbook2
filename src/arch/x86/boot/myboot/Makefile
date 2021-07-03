@@ -11,7 +11,11 @@ $(obj)/boot.bin: $(src)/boot.asm
 
 $(obj)/loader.bin: $(src)/loader.asm
 	@echo [LOADER.BIN] $@
-	@$(AS)  -f bin -I $(obj)/ -o $@ $<
+ifeq ($(KERN_VBE_MODE),y)
+	@$(AS) -f bin -DKERN_VBE_MODE -I $(obj)/ -o $@ $<
+else
+	@$(AS) -f bin -I $(obj)/ -o $@ $<
+endif
 
 X_ASFLAGS	:= $(ENV_AFLAGS) -I $(obj)/
 X_CFLAGS    := $(ENV_CFLAGS)

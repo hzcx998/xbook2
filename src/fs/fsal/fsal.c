@@ -10,11 +10,11 @@
 #include <sys/dir.h>
 #include <sys/stat.h>
 #include <stdio.h>
-#include <cpio.h>
 
 #ifdef GRUB2
 #include <arch/module.h>
 #include <arch/page.h>
+#include <cpio.h>
 #endif /* GRUB2 */
 
 #include <xbook/memalloc.h>
@@ -86,7 +86,9 @@ static void cpio_extract_from_memory(void *archive, const char* dir) {
     int dir_len = strlen(dir);
 
     cpio_info(archive, &info);
-    path = (char*)mem_alloc(sizeof(char) * (info.max_path_sz + dir_len + 1));
+    if ((path = (char*)mem_alloc(sizeof(char) * (info.max_path_sz + dir_len + 1))) == NULL) {
+        return;
+    }
 
     for (i = 0; i < info.file_count; ++i) {
         file_buf = cpio_get_entry(archive, i, (const char**)&filename, &file_sz);
@@ -100,7 +102,7 @@ static void cpio_extract_from_memory(void *archive, const char* dir) {
             kfile_write(extract_file, file_buf, file_sz);
             kfile_close(extract_file);
         }
-    } keprint("\n");
+    }
 
     mem_free(path);
 }
@@ -116,25 +118,15 @@ int fsal_disk_mount_init()
 #endif /* CONFIG_LIVECD */
 #ifdef GRUB2
     if (fsif.mount("/dev/ram0", ROOT_DIR_PATH, "fat32", MT_REMKFS) > -1) {
-        int i;
-        struct modules_info_block *modules_info;
         void *initrd_buf = NULL;
 
-        keprint("fsal : mount device initrd to path %s success.\n" ROOT_DIR_PATH);
-        modules_info = (struct modules_info_block *)(KERN_BASE_VIR_ADDR + MODULE_INFO_ADDR);
-
-        for (i = 0; i < modules_info->modules_num; ++i) {
-            if (modules_info->modules[i].type == MODULE_INITRD) {
-                initrd_buf = (void*)(KERN_BASE_VIR_ADDR + modules_info->modules[i].start);
-                break;
-            }
-        }
-
-        if (initrd_buf == NULL) {
+        if ((initrd_buf = module_info_find(KERN_BASE_VIR_ADDR, MODULE_INITRD)) == NULL) {
             goto fail;
         }
 
         cpio_extract_from_memory(initrd_buf, "/");
+
+        keprint("fsal : mount device initrd to path " ROOT_DIR_PATH " success.\n");
 
         return 0;
     }

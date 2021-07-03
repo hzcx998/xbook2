@@ -16,18 +16,20 @@
  */
 
 #include <arch/module.h>
+#include <cpio.h>
 #include <drivers/vbe.h>
 #include <string.h>
 
 #include "multiboot2.h"
 
-static void init_module(struct multiboot_tag *tag);
-static void init_memory(struct multiboot_tag *tag);
-static void init_vbe(struct multiboot_tag *tag);
-static void init_framebuffer(struct multiboot_tag *tag);
+static inline void init_module(struct multiboot_tag *tag);
+static inline void init_memory(struct multiboot_tag *tag);
+#ifdef KERN_VBE_MODE
+static inline void init_vbe(struct multiboot_tag *tag);
+static inline void init_framebuffer(struct multiboot_tag *tag);
 
-// global data
-unsigned long grub2_read_memory_bytes = 0;
+static inline void bootres_show();
+#endif /* KERN_VBE_MODE */
 
 int setup_entry(unsigned long magic, unsigned long addr)
 {
@@ -48,14 +50,20 @@ int setup_entry(unsigned long magic, unsigned long addr)
         case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
             init_memory(tag);
         break;
+#ifdef KERN_VBE_MODE
         case MULTIBOOT_TAG_TYPE_VBE:
             init_vbe(tag);
         break;
         case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
             init_framebuffer(tag);
         break;
+#endif /* KERN_VBE_MODE */
         }
     }
+
+#ifdef KERN_VBE_MODE
+    bootres_show();
+#endif /* KERN_VBE_MODE */
 
     return 0;
 }
@@ -90,9 +98,11 @@ static void init_module(struct multiboot_tag *tag) {
 static void init_memory(struct multiboot_tag *tag) {
     unsigned long mem_upper = ((struct multiboot_tag_basic_meminfo *)tag)->mem_upper;
     unsigned long mem_lower = ((struct multiboot_tag_basic_meminfo *)tag)->mem_lower;
-    // 0x100000 = 1MB
-    grub2_read_memory_bytes = ((mem_upper - mem_lower) << 10) + 0x100000;
+    // 0x000001000 defined in src/arch/x86/mach-i386/mm/ards.c, 0x100000 = 1MB
+    *((unsigned int *)0x000001000) = ((mem_upper - mem_lower) << 10) + 0x100000;
 }
+
+#ifdef KERN_VBE_MODE
 
 static void init_vbe(struct multiboot_tag *tag)
 {
@@ -120,3 +130,54 @@ static void init_framebuffer(struct multiboot_tag *tag)
     // mode_info->modeAttributes = ;
     mode_info->bytesPerScanLine = framebuffer_tag->common.framebuffer_pitch;
 }
+
+#define GREY16(color) ((color & 0xf8) << 8 | (color & 0xfc) << 3 | color >> 3)
+
+static inline void bootres_show()
+{
+    unsigned char* file_buf = NULL;
+    unsigned long file_sz;
+    int i, w, h, y, x, limit_x;
+    int count, color;
+    struct vbe_mode_info_block *mode_info = (struct vbe_mode_info_block *)VBE_BASE_MODE_ADDR;
+
+    file_buf = cpio_get_file(module_info_find(0, MODULE_INITRD), "boot/bootres.img", &file_sz);
+    if (file_buf == NULL) {
+        return;
+    }
+
+    i = 0;
+    y = mode_info->yResolution / 6;
+    w = file_buf[i++];
+    x = (mode_info->xResolution - w) >> 1;
+    limit_x = x + w;
+    h = file_buf[i++] + y;
+    for (; y < h; ++y) {
+        while (x < limit_x) {
+            count = file_buf[i++];
+            color = file_buf[i++];
+            for (; count > 0; --count, ++x) {
+                ((unsigned short *)mode_info->phyBasePtr)[y * mode_info->xResolution + x] = GREY16(color);
+            }
+        }
+        x -= w;
+    }
+
+    y = mode_info->yResolution - mode_info->yResolution / 6;
+    w = file_buf[i++];
+    x = (mode_info->xResolution - w) >> 1;
+    limit_x = x + w;
+    h = file_buf[i++] + y;
+    for (; y < h; ++y) {
+        while (x < limit_x) {
+            count = file_buf[i++];
+            color = file_buf[i++];
+            for (; count > 0; --count, ++x) {
+                ((unsigned short *)mode_info->phyBasePtr)[y * mode_info->xResolution + x] = GREY16(color);
+            }
+        }
+        x -= w;
+    }
+}
+
+#endif /* KERN_VBE_MODE */
