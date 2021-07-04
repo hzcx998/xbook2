@@ -107,5 +107,97 @@
 [ok] __NR_getcwd 17
 [ok] __NR_adjtimex 171
 [ok] __NR_sysinfo 179
+
+# 可以只实现接口，不是先具体内容
+[no] li a7,186 	 __NR_msgget 186
+[no] li a7,187 	 __NR_msgctl 187
+[no] li a7,190 	 __NR_semget 190
+[no] li a7,191 	 __NR_semctl 191
+[no] li a7,193 	 __NR_semop 193
+[no] li a7,194 	 __NR_shmget 194
+[no] li a7,195 	 __NR_shmctl 195
+[no] li a7,196 	 __NR_shmat 196
+[no] li a7,197 	 __NR_shmdt 197
+[no] li a7,198 	 __NR_socket 198
+[no] li a7,199 	 __NR_socketpair 199
+[no] li a7,200 	 __NR_bind 200
+[no] li a7,201 	 __NR_listen 201
+[no] li a7,204 	 __NR_getsockname 204
+[no] li a7,205 	 __NR_getpeername 205
+[no] li a7,208 	 __NR_setsockopt 208
+[no] li a7,209 	 __NR_getsockopt 209
+[no] li a7,210 	 __NR_shutdown 210
+[no] li a7,90 	 __NR_capget 90
+[no] li a7,91 	 __NR_capset 91
+
+## 需要实现接口以及内容
+[ok] li a7,213 	 __NR_readahead 213
+[ok] li a7,214 	 __NR_brk 214
+
+[no] li a7,215 	 __NR_munmap 215
+[no] li a7,216 	 __NR_mremap 216
+[no] li a7,220 	 __NR_clone 220
+[no] li a7,221 	 __NR_execve 221
+[no] li a7,222 	 __NR3264_mmap 222
+[no] li a7,224 	 __NR_swapon 224
+[no] li a7,225 	 __NR_swapoff 225
+[no] li a7,226 	 __NR_mprotect 226
+[no] li a7,228 	 __NR_mlock 228
+[no] li a7,229 	 __NR_munlock 229
+[no] li a7,23 	 __NR_dup 23
+[no] li a7,233 	 __NR_madvise 233
+[no] li a7,24 	 __NR_dup3 24
+[no] li a7,25 	 __NR3264_fcntl 25
+[no] li a7,260 	 __NR_wait4 260
+[no] li a7,261 	 __NR_prlimit64 261
+[no] li a7,266 	 __NR_clock_adjtime 266
+[no] li a7,267 	 __NR_syncfs 267
+[no] li a7,268 	 __NR_setns 268
+[no] li a7,276 	 __NR_renameat2 276
+[no] li a7,29 	 __NR_ioctl 29
+[no] li a7,32 	 __NR_flock 32
+[no] li a7,33 	 __NR_mknodat 33
+[no] li a7,34 	 __NR_mkdirat 34
+[no] li a7,35 	 __NR_unlinkat 35
+[no] li a7,36 	 __NR_symlinkat 36
+[no] li a7,37 	 __NR_linkat 37
+[no] li a7,39 	 __NR_umount2 39
+[no] li a7,40 	 __NR_mount 40
+[no] li a7,41 	 __NR_pivot_root 41
+[no] li a7,43 	 __NR3264_statfs 43
+[no] li a7,46 	 __NR3264_ftruncate 46
+[no] li a7,47 	 __NR_fallocate 47
+[no] li a7,48 	 __NR_faccessat 48
+[no] li a7,49 	 __NR_chdir 49
+[no] li a7,5 	 __NR_setxattr 5
+[no] li a7,50 	 __NR_fchdir 50
+[no] li a7,51 	 __NR_chroot 51
+[no] li a7,52 	 __NR_fchmod 52
+[no] li a7,53 	 __NR_fchmodat 53
+[no] li a7,54 	 __NR_fchownat 54
+[no] li a7,55 	 __NR_fchown 55
+[no] li a7,56 	 __NR_openat 56
+[no] li a7,57 	 __NR_close 57
+[no] li a7,59 	 __NR_pipe2 59
+[no] li a7,6 	 __NR_lsetxattr 6
+[no] li a7,61 	 __NR_getdents64 61
+[no] li a7,62 	 __NR3264_lseek 62
+[no] li a7,63 	 __NR_read 63
+[no] li a7,64 	 __NR_write 64
+[no] li a7,65 	 __NR_readv 65
+[no] li a7,66 	 __NR_writev 66
+[no] li a7,71 	 __NR3264_sendfile 71
+[no] li a7,73 	 __NR_ppoll 73
+[no] li a7,78 	 __NR_readlinkat 78
+[no] li a7,79 	 __NR3264_fstatat 79
+[no] li a7,80 	 __NR3264_fstat 80
+[no] li a7,81 	 __NR_sync 81
+[no] li a7,88 	 __NR_utimensat 88
+[no] li a7,89 	 __NR_acct 89
+[no] li a7,92 	 __NR_personality 92
+[no] li a7,93 	 __NR_exit 93
+[no] li a7,94 	 __NR_exit_group 94
+[no] li a7,97 	 __NR_unshare 97
+[no] li a7,98 	 __NR_futex 98
 ...
 ```

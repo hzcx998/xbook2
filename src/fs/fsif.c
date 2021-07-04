@@ -1216,3 +1216,8 @@ mode_t sys_umask(mode_t mask)
     cur->umask = mask & 0777;
     return old;
 }
+
+ssize_t sys_readahead(int fd, off64_t *offset, size_t count)
+{
+    return -ENOSYS;
+}

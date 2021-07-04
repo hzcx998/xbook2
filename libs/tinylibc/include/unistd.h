@@ -76,4 +76,6 @@ pid_t getsid(pid_t pid);
 int sethostname(const char *name, size_t len);
 int gethostname(char *name, size_t len);
 
+ssize_t readahead(int fd, off_t pos, size_t len);
+
 #endif // __UNISTD_H__

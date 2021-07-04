@@ -148,6 +148,7 @@ typedef void * syscall_t;
 
 #define SYS_adjtimex 171
 #define SYS_sysinfo 179
+#define SYS_readahead 213
 
 #define SYSCALL_NR 1100
 #else

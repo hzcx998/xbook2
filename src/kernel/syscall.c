@@ -154,6 +154,7 @@ void syscall_init()
     syscalls[SYS_prctl] = sys_prctl;
     syscalls[SYS_adjtimex] = sys_adjtimex;
     syscalls[SYS_sysinfo] = sys_sysinfo;
+    syscalls[SYS_readahead] = sys_readahead;
 
     #else
     syscalls[SYS_EXIT] = sys_exit;
