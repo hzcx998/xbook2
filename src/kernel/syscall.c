@@ -155,7 +155,15 @@ void syscall_init()
     syscalls[SYS_adjtimex] = sys_adjtimex;
     syscalls[SYS_sysinfo] = sys_sysinfo;
     syscalls[SYS_readahead] = sys_readahead;
+    syscalls[SYS_swapon] = sys_swapon;
+    syscalls[SYS_swapoff] = sys_swapoff;
 
+    syscalls[SYS_mprotect] = sys_mprotect;
+    syscalls[SYS_mlock] = sys_mlock;
+    syscalls[SYS_munlock] = sys_munlock;
+    syscalls[SYS_madvise] = sys_madvise;
+    
+    syscalls[SYS_clock_adjtime] = sys_clock_adjtime;
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

@@ -41,5 +41,6 @@ typedef void task_func_t(void *);
 
 typedef long int socklen_t;
 typedef long long off64_t;
+typedef void *caddr_t;
 
 #endif  /* _XBOOK_TYPES_H */

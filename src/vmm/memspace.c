@@ -2,6 +2,7 @@
 #include <xbook/task.h>
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
+#include <errno.h>
 
 // #define DEBUG_MEM_SPACE
 
@@ -342,4 +343,24 @@ the_end:
 int sys_munmap(unsigned long addr, unsigned long len)
 {
     return mem_space_unmmap(addr, len);
+}
+
+int sys_mprotect(void *addr, size_t len, int prot)
+{
+    return -ENOSYS;
+}
+
+int sys_mlock(const void *addr, size_t len)
+{
+    return -ENOSYS;
+}
+
+int sys_munlock(const void *addr, size_t len)
+{
+    return -ENOSYS;
+}
+
+int sys_madvise(caddr_t addr, size_t len, int advice)
+{
+    return -ENOSYS;
 }

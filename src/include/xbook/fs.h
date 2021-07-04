@@ -89,6 +89,9 @@ ssize_t sys_flistxattr(int filedes, char *list, size_t size);
 mode_t sys_umask(mode_t mask);
 ssize_t sys_readahead(int fd, off64_t *offset, size_t count);
 
+int sys_swapon(const char *path, int flags);
+int sys_swapoff(const char *path);
+
 // special for kernel
 int kfile_open(const char *path, int flags);
 int kfile_read(int fd, void *buffer, size_t nbytes);

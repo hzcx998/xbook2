@@ -178,3 +178,8 @@ int sys_adjtimex(struct timex *buf)
 {
     return -ENOSYS;
 }
+
+int sys_clock_adjtime (clockid_t clock_id, struct timex *utx)
+{
+    return -ENOSYS;
+}

@@ -160,5 +160,9 @@ void *mem_space_mmap_viraddr2(vmm_t *vmm, unsigned long addr, unsigned long vadd
 int mem_space_unmmap2(vmm_t *vmm, unsigned long addr, unsigned long len);
 int do_mem_space_unmap2(vmm_t *vmm, unsigned long addr, unsigned long len);
 
+int sys_mprotect(void *addr, size_t len, int prot);
+int sys_mlock(const void *addr, size_t len);
+int sys_munlock(const void *addr, size_t len);
+int sys_madvise(caddr_t addr, size_t len, int advice);
 
 #endif /* _XBOOK_MEMSPACE_H */

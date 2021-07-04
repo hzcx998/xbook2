@@ -137,20 +137,19 @@
 [no] li a7,216 	 __NR_mremap 216, # 测试案例中并没有使用
 [ok] li a7,220 	 __NR_clone 220
 [ok] li a7,221 	 __NR_execve 221
+[ok] li a7,222 	 __NR3264_mmap 222
+[ok] li a7,224 	 __NR_swapon 224
+[ok] li a7,225 	 __NR_swapoff 225
+[ok] li a7,226 	 __NR_mprotect 226
+[ok] li a7,228 	 __NR_mlock 228
+[ok] li a7,229 	 __NR_munlock 229
+[ok] li a7,233 	 __NR_madvise 233
+[ok] li a7,23 	 __NR_dup 23
+[ok] li a7,24 	 __NR_dup3 24
+[ok] li a7,25 	 __NR3264_fcntl 25
+[ok] li a7,260 	 __NR_wait4 260
+[ok] li a7,266 	 __NR_clock_adjtime 266
 
-[no] li a7,222 	 __NR3264_mmap 222
-[no] li a7,224 	 __NR_swapon 224
-[no] li a7,225 	 __NR_swapoff 225
-[no] li a7,226 	 __NR_mprotect 226
-[no] li a7,228 	 __NR_mlock 228
-[no] li a7,229 	 __NR_munlock 229
-[no] li a7,23 	 __NR_dup 23
-[no] li a7,233 	 __NR_madvise 233
-[no] li a7,24 	 __NR_dup3 24
-[no] li a7,25 	 __NR3264_fcntl 25
-[no] li a7,260 	 __NR_wait4 260
-[no] li a7,261 	 __NR_prlimit64 261
-[no] li a7,266 	 __NR_clock_adjtime 266
 [no] li a7,267 	 __NR_syncfs 267
 [no] li a7,268 	 __NR_setns 268
 [no] li a7,276 	 __NR_renameat2 276

@@ -19,5 +19,6 @@ struct timex {
 };
 
 int sys_adjtimex(struct timex *buf);
+int sys_clock_adjtime(clockid_t clock_id, struct timex *utx);
 
 #endif  /* _SYS_TIMEX_H */

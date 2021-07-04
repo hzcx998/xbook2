@@ -178,4 +178,14 @@ typedef long syscall_arg_t;
 #define SYS_sysinfo 179
 #define SYS_readahead 213
 
+#define SYS_swapon 224
+#define SYS_swapoff 225
+
+#define SYS_mprotect 226
+#define SYS_mlock 228
+#define SYS_munlock 229
+#define SYS_madvise 233
+
+#define SYS_clock_adjtime 266
+
 #endif

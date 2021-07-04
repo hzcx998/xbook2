@@ -1221,3 +1221,13 @@ ssize_t sys_readahead(int fd, off64_t *offset, size_t count)
 {
     return -ENOSYS;
 }
+
+int sys_swapon(const char *path, int flags)
+{
+	return -ENOSYS;
+}
+
+int sys_swapoff(const char *path)
+{
+	return -ENOSYS;
+}

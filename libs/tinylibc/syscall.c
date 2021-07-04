@@ -499,6 +499,11 @@ int adjtimex(struct timex *buf)
 	return syscall(SYS_adjtimex, buf);
 }
 
+int clock_adjtime(clockid_t clock_id, struct timex *utx)
+{
+	return syscall(SYS_clock_adjtime, clock_id, utx);
+}
+
 int sysinfo(struct sysinfo *info)
 {
 	return syscall(SYS_sysinfo, info);
@@ -507,4 +512,14 @@ int sysinfo(struct sysinfo *info)
 ssize_t readahead(int fd, off_t pos, size_t len)
 {
 	return syscall(SYS_readahead, fd, __SYSCALL_LL_O(pos), len);
+}
+
+int swapon(const char *path, int flags)
+{
+	return syscall(SYS_swapon, path, flags);
+}
+
+int swapoff(const char *path)
+{
+	return syscall(SYS_swapoff, path);
 }
