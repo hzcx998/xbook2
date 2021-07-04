@@ -133,11 +133,11 @@
 ## 需要实现接口以及内容
 [ok] li a7,213 	 __NR_readahead 213
 [ok] li a7,214 	 __NR_brk 214
+[ok] li a7,215 	 __NR_munmap 215
+[no] li a7,216 	 __NR_mremap 216, # 测试案例中并没有使用
+[ok] li a7,220 	 __NR_clone 220
+[ok] li a7,221 	 __NR_execve 221
 
-[no] li a7,215 	 __NR_munmap 215
-[no] li a7,216 	 __NR_mremap 216
-[no] li a7,220 	 __NR_clone 220
-[no] li a7,221 	 __NR_execve 221
 [no] li a7,222 	 __NR3264_mmap 222
 [no] li a7,224 	 __NR_swapon 224
 [no] li a7,225 	 __NR_swapoff 225

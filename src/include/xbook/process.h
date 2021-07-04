@@ -41,7 +41,7 @@ long sys_clone(unsigned long clone_flags,
 pid_t sys_waitpid(pid_t pid, int *status, int options);
 pid_t kewaitpid(pid_t pid, int *status, int options);
 int sys_execve(const char *pathname, const char *argv[], const char *envp[]);
-int proc_execve(const char *pathname, const char *argv[], const char *envp[]);
+int proc_execve(const char *pathname, const char *argv[], const char *envp[], const char *origin_envp[]);
 void sys_exit(int status);
 unsigned long sys_sleep(unsigned long second);
 long sys_usleep(struct timeval *inv, struct timeval *outv);

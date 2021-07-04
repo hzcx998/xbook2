@@ -524,7 +524,7 @@ void proc_entry(void* arg)
     const char *pathname = (const char *) arg;
     task_t *cur = task_current;
     
-    proc_execve(pathname, (const char **)cur->vmm->argv, (const char **)cur->vmm->envp);
+    proc_execve(pathname, (const char **)cur->vmm->argv, (const char **)cur->vmm->envp, NULL);
     
     /* rease proc resource */
     proc_release(cur);

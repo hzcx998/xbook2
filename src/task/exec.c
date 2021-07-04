@@ -184,7 +184,7 @@ free_task_arg:
     return -1;   
 }
 
-int proc_execve(const char *pathname, const char *argv[], const char *envp[])
+int proc_execve(const char *pathname, const char *argv[], const char *envp[], const char *origin_envp[])
 {
     if (pathname == NULL)
         return -1;
@@ -220,7 +220,7 @@ int proc_execve(const char *pathname, const char *argv[], const char *envp[])
             }
         }
     } else {
-        if (envp) {
+        if (origin_envp) {
             char **env = (char **) envp;
             char *q;
             while (*env) {
@@ -280,9 +280,8 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
     if (envp) {
         if (proc_copy_arg_from_user((char **)_envp, (char **)envp) < 0) {
             errprintln("[exec] proc_copy_arg_from_user for envp failed!");
-            proc_free_arg(_argv);
             return -ENOMEM;
         }
     }
-    return proc_execve((const char *)path, (const char **)_argv, (const char **)_envp);
+    return proc_execve((const char *)path, (const char **)_argv, (const char **)_envp, envp);
 }
