@@ -21,11 +21,12 @@ SECTIONS {
 		*(.exit.text)
     }
 
-    .initcall ALIGN(8) :
+    ..initcall ALIGN(8) :
 	{
 		PROVIDE(__initcall_start = .);
 		KEEP(*(.initcall_0.text))
         KEEP(*(.initcall_1.text))
+        KEEP(*(.initcall_2.text))
 		PROVIDE(__initcall_end = .);
 	}
 
@@ -34,8 +35,10 @@ SECTIONS {
 		PROVIDE(__exitcall_start = .);
 		KEEP(*(.exitcall_0.text))
 		KEEP(*(.exitcall_1.text))
+		KEEP(*(.exitcall_2.text))
 		PROVIDE(__exitcall_end = .);
 	}
+
     
     /* data segment */
     .data : {

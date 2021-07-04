@@ -253,4 +253,4 @@ static __init void vbe_driver_entry(void)
     }
 }
 
-driver_initcall(vbe_driver_entry);
+notify_driver_initcall(vbe_driver_entry);

@@ -21,11 +21,13 @@ typedef void (*exitcall_t)(void);
 	static const exitcall_t __exitcall_##fn##id \
 	__attribute__((__used__, __section__(".exitcall_" level ".text"))) = fn
 
-#define driver_initcall(fn)		__define_initcall("0", fn, 0)
-#define filter_initcall(fn)		__define_initcall("1", fn, 1)
+#define driver_initcall(fn)		        __define_initcall("0", fn, 0)
+#define notify_driver_initcall(fn)		__define_initcall("1", fn, 1)
+#define filter_initcall(fn)		        __define_initcall("2", fn, 2)
 
-#define driver_exitcall(fn)		__define_exitcall("0", fn, 0)
-#define filter_exitcall(fn)		__define_exitcall("1", fn, 1)
+#define driver_exitcall(fn)		        __define_exitcall("0", fn, 0)
+#define notify_driver_exitcall(fn)		__define_exitcall("1", fn, 1)
+#define filter_exitcall(fn)		        __define_exitcall("2", fn, 2)
 
 void initcalls_exec(void);
 void exitcalls_exec(void);
