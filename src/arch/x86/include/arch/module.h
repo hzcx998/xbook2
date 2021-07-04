@@ -8,7 +8,7 @@
 #define MAX_MODULES_NUM 1
 #define MAX_MODULES_SIZE (1 * MB)
 
-enum {
+enum module_type {
 	// Unknown type
 	MODULE_UNKNOWN = 0,
 	// Initrd image type
@@ -28,9 +28,24 @@ struct modules_info_block {
 
 static inline void module_info_init()
 {
-   struct modules_info_block *modules_info = (struct modules_info_block *)MODULE_INFO_ADDR;
-   modules_info->modules_num = 0;
-   modules_info->modules_size = 0;
+	struct modules_info_block *modules_info = (struct modules_info_block *)MODULE_INFO_ADDR;
+	modules_info->modules_num = 0;
+	modules_info->modules_size = 0;
+}
+
+static inline void *module_info_find(unsigned long base_addr, enum module_type type)
+{
+	int i;
+	struct modules_info_block *modules_info;
+	modules_info = (struct modules_info_block *)(base_addr + MODULE_INFO_ADDR);
+
+	for (i = 0; i < modules_info->modules_num; ++i) {
+		if (modules_info->modules[i].type == type) {
+			return (void*)(base_addr + modules_info->modules[i].start);
+		}
+	}
+
+	return (void*)0;
 }
 
 #endif /* _X86_MODULE_H */

@@ -21,23 +21,15 @@
 # the size of stack is 16KB
 #define STACK_SIZE 0x4000
 
-# 启动图形模式
-// #define CONFIG_GRAPHIC_ENABLE
-
-#ifndef FRAMEBUFFER_WIDTH
+#ifdef KERN_VBE_MODE
 #define FRAMEBUFFER_WIDTH 1024
-#endif /* FRAMEBUFFER_WIDTH */
-#ifndef FRAMEBUFFER_HEIGHT
 #define FRAMEBUFFER_HEIGHT 768
-#endif /* FRAMEBUFFER_HEIGHT */
-#ifndef FRAMEBUFFER_BPP
 #define FRAMEBUFFER_BPP 16
-#endif /* FRAMEBUFFER_BPP */
+#endif /* KERN_VBE_MODE */
 
 .code32
 
 .extern setup_entry, kernel_start
-.extern unsigned long grub2_read_memory_bytes
 
 .text
 .globl start, _start
@@ -55,7 +47,7 @@ multiboot_header:
     .long -(MULTIBOOT2_HEADER_MAGIC + MULTIBOOT_ARCHITECTURE_I386 + (multiboot_header_end - multiboot_header))
     # insert optional multiboot tags here
 
-#ifdef CONFIG_GRAPHIC_ENABLE
+#ifdef KERN_VBE_MODE
     .align 8
     tag_framebuffer:
         .short MULTIBOOT_HEADER_TAG_FRAMEBUFFER
@@ -65,7 +57,7 @@ multiboot_header:
         .long  FRAMEBUFFER_HEIGHT   # screen height
         .long  FRAMEBUFFER_BPP      # bit per pixel
     tag_framebuffer_end:
-#endif /* CONFIG_GRAPHIC_ENABLE */
+#endif /* KERN_VBE_MODE */
 
     # required end tag
     .align 8
@@ -85,9 +77,6 @@ multiboot_entry:
     pushl %ebx
     # push the magic value
     pushl %eax
-
-    # setup.c -> unsigned long grub2_read_memory_bytes
-    movl $1, grub2_read_memory_bytes
 
     # jump to setup_entry
     call setup_entry

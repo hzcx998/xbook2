@@ -2,11 +2,6 @@
 %include "const.inc"
 %include "config.inc"
 
-; 配置图形模式
-;%define CONFIG_GRAPHIC
-; 启动图形模式
-;%define CONFIG_GRAPHIC_ENABLE
-
 org 0x90000
 [bits 16]
 align 16
@@ -42,7 +37,7 @@ entry:
     %endif
 	call get_memory_info
 
-    %ifdef CONFIG_GRAPHIC
+    %ifdef KERN_VBE_MODE
     call get_vbe_info
     %endif
 
@@ -244,7 +239,7 @@ get_memory_info:
 
 	ret 
 
-%ifdef CONFIG_GRAPHIC
+%ifdef KERN_VBE_MODE
 
 ; 使用的分辨率
 ;VBE_MODE	EQU	VMODE_800_600_32
@@ -290,7 +285,7 @@ get_vbe_info:
 	cmp	ax, 0x004f	    ;ax=0x004f 指定的这种模式可以使用
 	jne	.vbe_error
 
-%ifdef CONFIG_GRAPHIC_ENABLE
+%ifdef KERN_VBE_MODE
     ;切换到指定的模式
 	mov	bx, VBE_MODE + 0x4000	;bx=模式号和属性
 	mov	ax, 0x4f02	            ;切换模式模式功能，指定ax=0x4f01
