@@ -918,7 +918,7 @@ static iostatus_t e1000_devctl(device_object_t* device, io_request_t* ioreq)
     unsigned int ctlcode = ioreq->parame.devctl.code;
     unsigned long arg = ioreq->parame.devctl.arg;
     e1000_extension_t* ext = (e1000_extension_t*)device->device_extension;
-    iostatus_t status;
+    iostatus_t status = IO_SUCCESS;;
     unsigned char* mac;
     int i;
 
@@ -928,7 +928,6 @@ static iostatus_t e1000_devctl(device_object_t* device, io_request_t* ioreq)
             for(i=0; i<6; i++) {
                 *mac++ = ext->hw.mac_addr[i];
             }
-            status = IO_SUCCESS;
             break;
         case NETIO_SETFLGS:
             ext->flags = *((unsigned long *) arg);
@@ -1770,4 +1769,4 @@ static __init void e1000_driver_entry(void)
     }
 }
 
-// driver_initcall(e1000_driver_entry);
+driver_initcall(e1000_driver_entry);

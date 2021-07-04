@@ -538,4 +538,4 @@ static __init void ps2mouse_driver_entry(void)
     }
 }
 
-// driver_initcall(ps2mouse_driver_entry);
+driver_initcall(ps2mouse_driver_entry);

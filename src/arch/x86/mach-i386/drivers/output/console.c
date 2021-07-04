@@ -78,6 +78,7 @@ typedef struct _device_extension {
     unsigned int screen_size;       /* 控制台占用的显存大小 */
     unsigned char color;            /* 字符的颜色 */
     unsigned int x, y;              /* 偏移坐标位置 */
+    spinlock_t outlock;             /* 输出时的锁 */
 } device_extension_t;
 
 #ifdef KERN_VBE_MODE
@@ -217,6 +218,33 @@ static void dump_console(device_extension_t *ext)
 }
 #endif /* DEBUG_CONSOLE */
 
+#ifdef KERN_VBE_MODE
+/**
+ * 由于vga文本模式只需要修改文字内容就可以滚动，但是字符模式则需要涉及到像素的位移，
+ * 图形模式肯定一定不能使用vram里面的数据，因为varm是固定80*25的，而图形可能是160*50，
+ * 那么就不能通过x，y获取到正确的数据。 
+ */
+static void uag_scroll()
+{
+    int x, y;
+    uint16_t *src, *dst;
+    for (y = 0; y < (SCREEN_HEIGHT - 1) * UGA_FONT_H; ++y) {
+        src = uga.addr + (y + UGA_FONT_H) * (SCREEN_WIDTH * UGA_FONT_W);
+        dst = uga.addr + y * (SCREEN_WIDTH * UGA_FONT_W);
+        for (x = 0; x < (SCREEN_WIDTH * UGA_FONT_W); ++x) {
+            dst[x] = src[x];
+        }
+    }
+    /* 最后一行置背景色 */
+    for (y = (SCREEN_HEIGHT - 1) * UGA_FONT_H; y < SCREEN_HEIGHT * UGA_FONT_H; ++y) {
+        dst = uga.addr + y * (SCREEN_WIDTH * UGA_FONT_W);
+        for (x = 0; x < (SCREEN_WIDTH * UGA_FONT_W); ++x) {
+            dst[x] = uga.clear;
+        }
+    }
+}
+#endif /* KERN_VBE_MODE */
+
 /**
  * console_scroll - 滚屏
  * @console: 控制台
@@ -227,43 +255,57 @@ static void console_scroll(device_extension_t *ext, int direction)
     // 指向显存
     unsigned char *vram = (unsigned char *)(V_MEM_BASE + ext->original_addr * 2);
     int i;
-
+    /* 这里的滚动是光标的滚动方向，不是文字的滚动方向，向上滚动表示光标向上滚动一行，但是光标位置没改变 */
     if (direction == SCREEN_UP) {
-        // 起始地址
+        /**
+         * 滚动前
+         * ###
+         * abc
+         * ###
+         * ---
+         * 滚动后
+         * ###
+         * ###
+         * abc
+         */
+        // 用上一行的文字来填充下一行的文字
         for (i = SCREEN_WIDTH * 2 * 24; i > SCREEN_WIDTH * 2; i -= 2) {
             vram[i] = vram[i - SCREEN_WIDTH * 2];
             vram[i + 1] = vram[i + 1 - SCREEN_WIDTH * 2];
         }
+        // 将第一行文字填充为0
         for (i = 0; i < SCREEN_WIDTH * 2; i += 2) {
             vram[i] = '\0';
             vram[i + 1] = COLOR_DEFAULT;
         }
     } else if (direction == SCREEN_DOWN) {
-        // 起始地址
+        /**
+         * 滚动前
+         * ###
+         * abc
+         * ###
+         * ---
+         * 滚动后
+         * abc
+         * ###
+         * ###
+         */
+        // 用下一行的文字来填充上一行的文字
         for (i = 0; i < SCREEN_WIDTH * 2 * 24; i += 2) {
             vram[i] = vram[i + SCREEN_WIDTH * 2];
             vram[i + 1] = vram[i + 1 + SCREEN_WIDTH * 2];
         }
+        // 将最后一行文字填充为0
         for (i = SCREEN_WIDTH * 2 * 24; i < SCREEN_WIDTH * 2 * 25; i += 2) {
             vram[i] = '\0';
             vram[i + 1] = COLOR_DEFAULT;
         }
         --ext->y;
     }
-
 #ifdef KERN_VBE_MODE
-    int x, y;
-    vram = (unsigned char *)(V_MEM_BASE + ext->original_addr);
-    for (i = 0, y = 0; y < SCREEN_HEIGHT - 1; ++y) {
-        for (x = 0; x < SCREEN_WIDTH; ++x, i += 2) {
-            uga_outchar(x, y, vram[i]);
-        }
-    }
-    for (x = 0; x < SCREEN_WIDTH; ++x) {
-        uga_outchar(x, y, 0);
-    }
+    uag_scroll();
 #endif /* #ifdef KERN_VBE_MODE */
-
+    
     flush(ext);
 }
 
@@ -458,7 +500,9 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
 
     uint8_t *buf = (uint8_t *)ioreq->system_buffer; 
     int i = len;
-
+    device_extension_t *devext = (device_extension_t *) device->device_extension;
+    unsigned long iflags;
+    spin_lock_irqsave(&devext->outlock, iflags);
 #ifdef DEBUG_DRV
     keprint(PRINT_DEBUG "console_write: %s\n", buf);
 #endif /* DEBUG_DRV */
@@ -471,6 +515,7 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
         --i;
         ++buf;
     }
+    spin_unlock_irqrestore(&devext->outlock, iflags);
 
     ioreq->io_status.status = IO_SUCCESS;
     ioreq->io_status.infomation = len;
@@ -588,6 +633,7 @@ static iostatus_t console_enter(driver_object_t *driver)
         /* 设置默认颜色 */
         devext->color = COLOR_DEFAULT;
 
+        spinlock_init(&devext->outlock);
 #ifdef KERN_VBE_MODE
         uga.addr = NULL;
         uga.enable = 0;

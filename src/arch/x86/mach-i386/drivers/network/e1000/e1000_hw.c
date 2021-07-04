@@ -2895,7 +2895,7 @@ e1000_phy_igp_get_info(struct e1000_hw *hw,
                        struct e1000_phy_info *phy_info)
 {
     int32_t ret_val;
-    uint16_t phy_data, polarity, min_length, max_length, average;
+    uint16_t phy_data, polarity = 0, min_length, max_length, average;
 
     DEBUGFUNC("e1000_phy_igp_get_info");
 
@@ -2969,7 +2969,7 @@ e1000_phy_m88_get_info(struct e1000_hw *hw,
                        struct e1000_phy_info *phy_info)
 {
     int32_t ret_val;
-    uint16_t phy_data, polarity;
+    uint16_t phy_data, polarity = 0;
 
     DEBUGFUNC("e1000_phy_m88_get_info");
 

@@ -192,11 +192,14 @@ static iostatus_t vbe_enter(driver_object_t *driver)
             DRV_NAME, __func__);
         return status;
     }
+#ifdef KERN_VBE_MODE
     device_notify_to("vga-console", 0, (void*[]) {
         extension->vir_base_addr,
         &extension->mode_info->xResolution,
         &extension->mode_info->yResolution,
     });
+#endif /* KERN_VBE_MODE */
+
 #ifdef DEBUG_DRV
     keprint(PRINT_DEBUG "%s: %s: " "video ram size: %x bytes\n", 
         DRV_NAME, __func__, video_ram_size);

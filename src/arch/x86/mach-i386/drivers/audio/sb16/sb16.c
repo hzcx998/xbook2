@@ -264,7 +264,7 @@ static iostatus_t sb16_close(device_object_t *device, io_request_t *ioreq)
 {
     iostatus_t status = IO_SUCCESS;
     
-    device_extension_t *extension = (device_extension_t *)device->device_extension;
+    //device_extension_t *extension = (device_extension_t *)device->device_extension;
     // TODO: 重置寄存器状态
     ioreq->io_status.status = status;
     ioreq->io_status.infomation = 0;

@@ -173,7 +173,7 @@ unsigned long syscall_dispatch(trap_frame_t *frame)
     cur->syscall_ticks_delta = sys_get_ticks();
     // TODO: call different func in different arch
     syscall_func_t func = (syscall_func_t)syscalls[frame->eax];
-    if (func == syscall_default) {
+    if (func == (syscall_func_t)syscall_default) {
         errprint("syscall nomber: %d\n", frame->eax);
     }
     unsigned long retval = func(frame->ebx, frame->ecx, frame->edx, frame->esi,
