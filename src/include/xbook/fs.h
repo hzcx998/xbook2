@@ -91,6 +91,10 @@ ssize_t sys_readahead(int fd, off64_t *offset, size_t count);
 
 int sys_swapon(const char *path, int flags);
 int sys_swapoff(const char *path);
+int sys_syncfs(int fd);
+int sys_setns(int fd, int nstype);
+int sys_renameat(int fromfd, const char *old, int tofd, const char *new);
+int sys_flock(int fd, int operation);
 
 // special for kernel
 int kfile_open(const char *path, int flags);

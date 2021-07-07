@@ -149,12 +149,12 @@
 [ok] li a7,25 	 __NR3264_fcntl 25
 [ok] li a7,260 	 __NR_wait4 260
 [ok] li a7,266 	 __NR_clock_adjtime 266
+[ok] li a7,267 	 __NR_syncfs 267
+[ok] li a7,268 	 __NR_setns 268
+[ok] li a7,276 	 __NR_renameat2 276
+[ok] li a7,29 	 __NR_ioctl 29
+[ok] li a7,32 	 __NR_flock 32
 
-[no] li a7,267 	 __NR_syncfs 267
-[no] li a7,268 	 __NR_setns 268
-[no] li a7,276 	 __NR_renameat2 276
-[no] li a7,29 	 __NR_ioctl 29
-[no] li a7,32 	 __NR_flock 32
 [no] li a7,33 	 __NR_mknodat 33
 [no] li a7,34 	 __NR_mkdirat 34
 [no] li a7,35 	 __NR_unlinkat 35

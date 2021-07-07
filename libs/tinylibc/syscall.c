@@ -523,3 +523,23 @@ int swapoff(const char *path)
 {
 	return syscall(SYS_swapoff, path);
 }
+
+int syncfs(int fd)
+{
+	return syscall(SYS_syncfs, fd);
+}
+
+int setns(int fd, int nstype)
+{
+	return syscall(SYS_setns, fd, nstype);
+}
+
+int renameat(int oldfd, const char *old, int newfd, const char *new)
+{
+	return syscall(SYS_renameat2, oldfd, old, newfd, new, 0);
+}
+
+int flock(int fd, int op)
+{
+	return syscall(SYS_flock, fd, op);
+}

@@ -164,6 +164,11 @@ void syscall_init()
     syscalls[SYS_madvise] = sys_madvise;
     
     syscalls[SYS_clock_adjtime] = sys_clock_adjtime;
+    syscalls[SYS_syncfs] = sys_syncfs;
+    syscalls[SYS_setns] = sys_setns;
+    syscalls[SYS_renameat2] = sys_renameat;
+    syscalls[SYS_flock] = sys_flock;
+
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

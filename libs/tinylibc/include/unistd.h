@@ -78,4 +78,9 @@ int gethostname(char *name, size_t len);
 
 ssize_t readahead(int fd, off_t pos, size_t len);
 
+int syncfs(int fd);
+int setns(int fd, int nstype);
+
+int renameat(int oldfd, const char *old, int newfd, const char *new);
+
 #endif // __UNISTD_H__

@@ -11,8 +11,8 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
-    {"time", test_time},
     {"file", test_file},
+    {"time", test_time},
     {"misc", test_misc},
     {"pid", test_pid},
     {"uid", test_uid},

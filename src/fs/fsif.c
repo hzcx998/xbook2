@@ -650,6 +650,21 @@ int sys_rmdir(const char *path)
     return fsif.rmdir((char *) abs_path);
 }
 
+static int do_rename(const char *source, const char *target)
+{
+    if (account_selfcheck_permission((char *)source, PERMISION_ATTR_FILE) < 0) {
+        return -EPERM;
+    }
+    if (account_selfcheck_permission((char *)target, PERMISION_ATTR_FILE) < 0) {
+        return -EPERM;
+    }
+    char abs_source[MAX_PATH] = {0};
+    build_path(source, abs_source);
+    char abs_target[MAX_PATH] = {0};
+    build_path(target, abs_target);
+    return fsif.rename((char *) abs_source, (char *) abs_target);
+}
+
 int sys_rename(const char *source, const char *target)
 {
     if (!source || !target)
@@ -660,17 +675,33 @@ int sys_rename(const char *source, const char *target)
     char _target[MAX_PATH] = {0};
     if (mem_copy_from_user_str(_target, (void *) target, MAX_PATH) < 0)
         return -EINVAL;
-    if (account_selfcheck_permission((char *)_source, PERMISION_ATTR_FILE) < 0) {
-        return -EPERM;
+    return do_rename(_source, _target);
+}
+
+int sys_renameat(int fromfd, const char *old, int tofd, const char *new)
+{
+    if (!old)
+        return -EINVAL;
+    char _old[MAX_PATH] = {0};
+    char _new[MAX_PATH] = {0};
+    if (mem_copy_from_user_str(_old, (void *)old, MAX_PATH) < 0) {
+        return -EINVAL;
     }
-    if (account_selfcheck_permission((char *)_target, PERMISION_ATTR_FILE) < 0) {
-        return -EPERM;
+    if (mem_copy_from_user_str(_new, (void *)new, MAX_PATH) < 0) {
+        return -EINVAL;
     }
-    char abs_source[MAX_PATH] = {0};
-    build_path(_source, abs_source);
-    char abs_target[MAX_PATH] = {0};
-    build_path(_target, abs_target);
-    return fsif.rename((char *) abs_source, (char *) abs_target);
+    if (_old[0] == '/' && _old[1] == '\0') {
+        dbgprintln("[fs] sys_renameat: can't rename root dir '/' directly");
+        return -EINVAL;
+    }
+    if (_new[0] == '/' && _new[1] == '\0') {
+        dbgprintln("[fs] sys_renameat: can't rename root dir '/' directly");
+        return -EINVAL;
+    }
+    if (fromfd == AT_FDCWD && tofd == AT_FDCWD) {    /* 在进程的cwd目录后面 */
+        return do_rename(_old, _new);
+    }
+    return -ENOSYS; /* 不支持这种功能 */
 }
 
 int sys_chdir(const char *path)
@@ -1228,6 +1259,21 @@ int sys_swapon(const char *path, int flags)
 }
 
 int sys_swapoff(const char *path)
+{
+	return -ENOSYS;
+}
+
+int sys_syncfs(int fd)
+{
+    return -ENOSYS;
+}
+
+int sys_setns(int fd, int nstype)
+{
+	return -ENOSYS;
+}
+
+int sys_flock(int fd, int operation)
 {
 	return -ENOSYS;
 }

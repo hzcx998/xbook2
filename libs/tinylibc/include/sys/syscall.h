@@ -187,5 +187,10 @@ typedef long syscall_arg_t;
 #define SYS_madvise 233
 
 #define SYS_clock_adjtime 266
+#define SYS_syncfs 267
+#define SYS_setns 268
+
+#define SYS_renameat2 276
+#define SYS_flock 32
 
 #endif
