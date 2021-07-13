@@ -70,8 +70,6 @@ develop/rom/acct/
 develop/bochs/
 
 !develop/rom/tmp/d.img
-develop/rom/busybox
-develop/rom/lua
 
 # linux fixdep
 libs/fixdep
