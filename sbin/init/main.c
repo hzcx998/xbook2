@@ -70,9 +70,8 @@ int main(int argc, char *argv[])
     char *_argv[3] = {"-s", "/bin/sh", NULL};
     exit(execv("/sbin/login", _argv));
     #else
-
-    exit(execve("/bin/sh", NULL, NULL));
+    char *_envp[3] = {"/bin", "/sbin", NULL};
+    exit(execve("/bin/sh", NULL, _envp));
     #endif
     return 0;
 }
-

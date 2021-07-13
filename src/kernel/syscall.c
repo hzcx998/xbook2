@@ -26,6 +26,7 @@
 #include <sys/timex.h>
 #include <sys/sysinfo.h>
 #include <dirent.h>
+#include <errno.h>
 
 syscall_t syscalls[SYSCALL_NR];
 
@@ -168,7 +169,11 @@ void syscall_init()
     syscalls[SYS_setns] = sys_setns;
     syscalls[SYS_renameat2] = sys_renameat;
     syscalls[SYS_flock] = sys_flock;
-
+    syscalls[SYS_mknodat] = sys_mknodat;
+    syscalls[SYS_symlinkat] = sys_symlinkat;
+    syscalls[SYS_linkat] = sys_linkat;
+    syscalls[SYS_fchmod] = sys_fchmod;
+    
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;
@@ -336,6 +341,9 @@ unsigned long syscall_dispatch(trap_frame_t *frame)
     #endif
     frame->a0 = retval;
     #endif
+    if (retval == (int) -ENOSYS) {
+        errprint("[syscall] no:%d not supported now!\n", retval);
+    }
     /* 结束统计时间 */
     cur->syscall_ticks_delta = sys_get_ticks() - cur->syscall_ticks_delta;
     cur->syscall_ticks += cur->syscall_ticks_delta;

@@ -3,6 +3,9 @@
 
 #include "stddef.h"
 
+extern char **_environ;
+#define environ _environ
+
 extern int __clone(int (*func)(void *), void *stack, int flags, void *arg, ...);
 
 int open(const char *, int);
@@ -82,5 +85,6 @@ int syncfs(int fd);
 int setns(int fd, int nstype);
 
 int renameat(int oldfd, const char *old, int newfd, const char *new);
+int fchmod(int fd, mode_t mode);
 
 #endif // __UNISTD_H__

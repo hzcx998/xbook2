@@ -543,3 +543,8 @@ int flock(int fd, int op)
 {
 	return syscall(SYS_flock, fd, op);
 }
+
+int fchmod(int fd, mode_t mode)
+{
+    
+}

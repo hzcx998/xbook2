@@ -1277,3 +1277,18 @@ int sys_flock(int fd, int operation)
 {
 	return -ENOSYS;
 }
+
+int sys_mknodat(int fd, const char *path, mode_t mode, dev_t dev)
+{
+	return -ENOSYS;
+}
+
+int sys_symlinkat(const char *existing, int fd, const char *new)
+{
+    return -ENOSYS;
+}
+
+int sys_linkat(int fd1, const char *existing, int fd2, const char *new, int flag)
+{
+	return -ENOSYS;
+}

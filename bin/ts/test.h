@@ -23,5 +23,6 @@ int test_uid(int argc, char *argv[]);
 int test_pid(int argc, char *argv[]);
 int test_misc(int argc, char *argv[]);
 int test_file(int argc, char *argv[]);
+int test_env(int argc, char *argv[]);
 
 #endif // _TEST_H

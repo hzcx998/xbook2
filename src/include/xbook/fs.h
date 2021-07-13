@@ -95,6 +95,9 @@ int sys_syncfs(int fd);
 int sys_setns(int fd, int nstype);
 int sys_renameat(int fromfd, const char *old, int tofd, const char *new);
 int sys_flock(int fd, int operation);
+int sys_mknodat(int fd, const char *path, mode_t mode, dev_t dev);
+int sys_symlinkat(const char *existing, int fd, const char *new);
+int sys_linkat(int fd1, const char *existing, int fd2, const char *new, int flag);
 
 // special for kernel
 int kfile_open(const char *path, int flags);

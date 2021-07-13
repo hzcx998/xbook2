@@ -164,6 +164,11 @@ typedef void * syscall_t;
 
 #define SYS_renameat2 276
 #define SYS_flock 32
+#define SYS_mknodat 33
+#define SYS_symlinkat 36
+#define SYS_linkat 37
+
+#define SYS_fchmod 52
 
 #define SYSCALL_NR 1100
 #else

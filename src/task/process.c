@@ -22,6 +22,7 @@
 #include <sys/pthread.h>
 #endif
 #include <sys/prctl.h>
+#include <errno.h>
 
 #define DEBUG_PROCESS 0
 

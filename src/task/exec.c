@@ -187,7 +187,7 @@ free_task_arg:
 int proc_execve(const char *pathname, const char *argv[], const char *envp[], const char *origin_envp[])
 {
     if (pathname == NULL)
-        return -1;
+        return -EINVAL;
     char *p = (char *) pathname;
     char newpath[MAX_PATH];
     memset(newpath, 0, MAX_PATH);
@@ -202,7 +202,7 @@ int proc_execve(const char *pathname, const char *argv[], const char *envp[], co
             }
             if (do_execute((const char *) p, name, argv, envp) < 0) {
                 keprint(PRINT_ERR "%s: path %s not executable!", __func__, newpath);
-                return -1;
+                return -EPERM;
             }
         }
     } else if ((*p == '.' && *(p+1) == '/') || (*p == '.' && *(p+1) == '.' && *(p+2) == '/')) {    /* 当前目录 */
@@ -216,7 +216,7 @@ int proc_execve(const char *pathname, const char *argv[], const char *envp[], co
                 pname =  newpath;
             if (do_execute((const char* )newpath, (char *)pname, argv, envp)) {
                 keprint(PRINT_ERR "%s: path %s not executable!", __func__, newpath);
-                return -1;
+                return -EPERM;
             }
         }
     } else {
@@ -249,11 +249,11 @@ int proc_execve(const char *pathname, const char *argv[], const char *envp[], co
         build_path(p, newpath);
         if (do_execute((const char* )newpath, (char *)newpath, argv, envp) < 0) {
             keprint(PRINT_ERR "%s: path %s not executable!", __func__, newpath);
-            return -1;
+            return -EPERM;
         }
     }
     keprint(PRINT_ERR "%s: path %s not exist or not executable!\n", __func__, pathname);
-    return -1;
+    return -EPERM;
 }
 
 int sys_execve(const char *pathname, const char *argv[], const char *envp[])
@@ -261,6 +261,7 @@ int sys_execve(const char *pathname, const char *argv[], const char *envp[])
     if (!pathname)
         return -EINVAL;
     if (task_current->flags & TASK_FLAG_NO_NEW_PRIVS) {  /* 不允许执行execve */
+        errprint("task %d no perm to do execute!\n", task_current->pid);
         return -EPERM;
     }
     /* 从用户态复制参数到内核 */

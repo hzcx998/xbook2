@@ -5,7 +5,7 @@
 
 /* ====SHELL CONFIG START ====*/
 // #define _HAS_EXECPTION
-// #define _HAS_ENVIRON
+#define _HAS_ENVIRON
 // #define _HAS_FPRINTF
 // #define _HAS_ACCOUNTNAME
 // #define _HAS_STRCAT

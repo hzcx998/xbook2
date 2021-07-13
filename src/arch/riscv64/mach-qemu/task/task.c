@@ -32,22 +32,27 @@ void task_stack_build(task_t *task, task_func_t *function, void *arg)
 /**
  * 将参数构建到栈中
  */
-static int build_arg_stack(vmm_t *vmm, unsigned long stackbase, unsigned long *_sp, char **argv)
+static int build_arg_stack(vmm_t *vmm, unsigned long stackbase, unsigned long *_sp, char **argv, int argv_argc, int total_argc)
 {
     unsigned long sp = *_sp;
     uint64_t argc;
     uint64_t ustack[MAX_TASK_STACK_ARG_NR + 1];
     // Push argument strings, prepare rest of stack in ustack.
-    for(argc = 0; argv[argc]; argc++) {
+    for(argc = 0; total_argc > 0; argc++) {
         if(argc >= MAX_TASK_STACK_ARG_NR)
             return -1;
-        sp -= strlen(argv[argc]) + 1;
-        sp -= sp % 16; // riscv sp must be 16-byte aligned
-        if(sp < stackbase)
-            return -1;
-        if(page_copy_out(vmm->page_storage, sp, argv[argc], strlen(argv[argc]) + 1) < 0)
-            return -1;
-        ustack[argc] = sp;
+        if (argv[argc]) {
+            sp -= strlen(argv[argc]) + 1;        
+            sp -= sp % 16; // riscv sp must be 16-byte aligned
+            if(sp < stackbase)
+                return -1;
+            if(page_copy_out(vmm->page_storage, sp, argv[argc], strlen(argv[argc]) + 1) < 0)
+                return -1;
+            ustack[argc] = sp;
+        } else {    // 0参数
+            ustack[argc] = 0;
+        }
+        --total_argc;
     }
     ustack[argc] = 0;
     // push the array of argv[] pointers.
@@ -57,19 +62,45 @@ static int build_arg_stack(vmm_t *vmm, unsigned long stackbase, unsigned long *_
         return -1;
     if(page_copy_out(vmm->page_storage, sp, (char *)ustack, (argc+1)*sizeof(uint64_t)) < 0)
         return -1;
-    
     // save argc
     sp -= sizeof(uint64_t);
-    if(page_copy_out(vmm->page_storage, sp, (char *)&argc, sizeof(uint64_t)) < 0)
+    if(page_copy_out(vmm->page_storage, sp, (char *)&argv_argc, sizeof(uint64_t)) < 0)
         return -1;
     // save sp as new value
     *_sp = sp;
     return 0;
 } 
 
-
 int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp)
 {
+    /* 先将2者组合到一个数组 */
+    uint64_t totalstack[MAX_TASK_STACK_ARG_NR + 1] = {0};
+    int argc = 0;
+    int i, j = 0;
+    for (i = 0; i < MAX_TASK_STACK_ARG_NR; i++) {
+        if (argv[i] != NULL) {
+            totalstack[j++] = argv[i];
+        } else {
+            break;
+        }
+    }
+    argc = j;
+    totalstack[j++] = NULL; // 中间预留一个0，因为环境和参数中间要间隔一个0
+    for (i = 0; i < MAX_TASK_STACK_ARG_NR; i++) {
+        if (envp[i] != NULL) {
+            totalstack[j++] = envp[i];
+        } else {
+            break;
+        }
+    }
+    if (j == argc + 1) {    /* 没有envp参数，总参数减1，就不处理环境参数了 */
+        --j;
+    }
+
+    if (j >= MAX_TASK_STACK_ARG_NR) {
+        errprint("task %d too many args\n", task->pid);
+        return -1;
+    }
     vmm->stack_end = USER_STACK_TOP;
     vmm->stack_start = vmm->stack_end - MEM_SPACE_STACK_SIZE_DEFAULT;
 
@@ -77,6 +108,7 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
         MEM_SPACE_MAP_FIXED | MEM_SPACE_MAP_STACK) == ((void *)-1)) {
         return -1;
     }
+
     /**
      * 参数布局：
      * --------*
@@ -89,7 +121,7 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
      */
     unsigned long arg_bottom = 0;
     arg_bottom = vmm->stack_end;
-    if (build_arg_stack(vmm, vmm->stack_end - PAGE_SIZE, &arg_bottom, argv) < 0) {
+    if (build_arg_stack(vmm, vmm->stack_end - PAGE_SIZE, &arg_bottom, totalstack, argc, j) < 0) {
         mem_space_unmmap2(vmm, vmm->stack_start, vmm->stack_end - vmm->stack_start);
         return -1;
     }
