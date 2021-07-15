@@ -539,7 +539,7 @@ void kern_do_idle(void *arg)
 
 
 /* 在内核中打开标准输入输出 */
-//#define STDIO_INKERN    
+#define STDIO_INKERN    
 #define STDIO_DEVICE    "/dev/con0"
 
 #ifdef CONFIG_TEST_MACHINE
@@ -738,7 +738,7 @@ void test_machine_thread(void *arg)
 }
 #else
 #if defined(CONFIG_NEWSYSCALL)
-#define USER_PROCESS_PATH  "/sbin/init"
+#define USER_PROCESS_PATH  "/bin/ts"
 #else
 #define USER_PROCESS_PATH  "/sbin/init"
 #endif

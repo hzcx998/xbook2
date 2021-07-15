@@ -306,6 +306,18 @@ int syscall_check(uint32_t callno)
     return 0;
 }
 
+void debug_syscall(trap_frame_t *frame)
+{
+    dbgprintln("[syscall] syscall number %d", frame->a7);
+    dbgprintln("arg0 %lx, %d", frame->a0, frame->a0);
+    dbgprintln("arg1 %lx, %d", frame->a1, frame->a1);
+    dbgprintln("arg2 %lx, %d", frame->a2, frame->a2);
+    dbgprintln("arg3 %lx, %d", frame->a3, frame->a3);
+    dbgprintln("arg4 %lx, %d", frame->a4, frame->a4);
+    dbgprintln("arg5 %lx, %d", frame->a5, frame->a5);
+    dbgprintln("arg6 %lx, %d", frame->a6, frame->a6);    
+}
+
 unsigned long syscall_dispatch(trap_frame_t *frame)
 {
     task_t *cur = task_current;
@@ -330,8 +342,7 @@ unsigned long syscall_dispatch(trap_frame_t *frame)
     a0-a1: retval
     */
     syscall_func_t func = (syscall_func_t)syscalls[frame->a7];
-    //dbgprintln("[syscall] syscall number %d", frame->a7);
-
+    //debug_syscall(frame);
     #if defined(CONFIG_NEWSYSCALL)
     retval = func(frame->a0, frame->a1, frame->a2,
                             frame->a3, frame->a4, frame->a5, frame);

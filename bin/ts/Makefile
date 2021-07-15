@@ -1,6 +1,6 @@
 #X_LIBS		+= libpthread.a
 
-X_CFLAGS	+= -O0
+X_CFLAGS	+= -std=gnu99 -O2 -Wall -Wextra
 
 NAME		:= ts
 SRC			+= *.c

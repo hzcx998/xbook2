@@ -1,5 +1,18 @@
-.section .text.entry
-.globl _start
+
+.section .sdata,"aw"
+.text
+.global _start
+.type _start ,%function
 _start:
-    mv a0, sp
-    tail __start_main
+.weak __global_pointer
+.hidden __global_pointer
+.option push
+.option norelax
+lla gp, __global_pointer
+.option pop
+mv a0, sp
+.weak _DYNAMIC
+.hidden _DYNAMIC
+lla a1, _DYNAMIC
+andi sp, sp, -16
+tail __start_main

@@ -219,6 +219,8 @@
         "utsname.h": "c",
         "resource.h": "c",
         "timex.h": "c",
-        "times.h": "c"
+        "times.h": "c",
+        "limits.h": "c",
+        "libc.h": "c"
     }
 }

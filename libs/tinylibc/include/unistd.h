@@ -3,8 +3,9 @@
 
 #include "stddef.h"
 
-extern char **_environ;
-#define environ _environ
+extern char **__environ;
+#define _environ __environ
+#define environ __environ
 
 extern int __clone(int (*func)(void *), void *stack, int flags, void *arg, ...);
 

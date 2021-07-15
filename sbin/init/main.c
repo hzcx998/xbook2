@@ -4,13 +4,16 @@
 
 // #define _HAS_LOGIN
 // #define _HAS_NETSERV
-#define _HAS_CONSOLE
+// #define _HAS_CONSOLE
+// #define _HAS_ENV
+
 //#define CONSOLE_DEV "/dev/tty0"
 #define CONSOLE_DEV "/dev/con0"
 
 int main(int argc, char *argv[])
 {
     /* 打开tty，用来进行基础地输入输出 */
+#ifdef _HAS_CONSOLE
     int tty0 = open(CONSOLE_DEV, O_RDONLY);
     if (tty0 < 0) {
         return -1;
@@ -26,6 +29,7 @@ int main(int argc, char *argv[])
         close(tty1);
         return -1;
     }
+#endif
     int i;
     for (i = 0; i < argc; i++) {
         if (argv[i]) {
@@ -70,8 +74,12 @@ int main(int argc, char *argv[])
     char *_argv[3] = {"-s", "/bin/sh", NULL};
     exit(execv("/sbin/login", _argv));
     #else
+    #ifdef _HAS_ENV
     char *_envp[3] = {"/bin", "/sbin", NULL};
     exit(execve("/bin/sh", NULL, _envp));
+    #else
+    exit(execve("/bin/sh", NULL, NULL));
+    #endif
     #endif
     return 0;
 }

@@ -29,6 +29,7 @@ void task_stack_build(task_t *task, task_func_t *function, void *arg)
     task->kthread_arg = arg;
 }
 
+
 /**
  * 将参数构建到栈中
  */
@@ -71,16 +72,24 @@ static int build_arg_stack(vmm_t *vmm, unsigned long stackbase, unsigned long *_
     return 0;
 } 
 
+#define DEBUG_ARGS
+
 int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp)
 {
     /* 先将2者组合到一个数组 */
-    uint64_t totalstack[MAX_TASK_STACK_ARG_NR + 1] = {0};
+    char *totalstack[MAX_TASK_STACK_ARG_NR + 1] = {0};
     int argc = 0;
     int i, j = 0;
     for (i = 0; i < MAX_TASK_STACK_ARG_NR; i++) {
         if (argv[i] != NULL) {
             totalstack[j++] = argv[i];
+#ifdef DEBUG_ARGS
+            dbgprint("[proc] argv[%d]=%s\n", i, argv[i]);
+#endif
         } else {
+            if (i == 0) {   /* 没有任何参数，不过还是需要至少保留一个参数 */
+                totalstack[j++] = NULL;
+            }
             break;
         }
     }
@@ -89,13 +98,39 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
     for (i = 0; i < MAX_TASK_STACK_ARG_NR; i++) {
         if (envp[i] != NULL) {
             totalstack[j++] = envp[i];
+#ifdef DEBUG_ARGS
+            dbgprint("[proc] envp[%d]=%s\n", i, envp[i]);
+#endif
         } else {
+            if (i == 0) {   /* 没有任何参数，不过还是需要至少保留一个参数 */
+                totalstack[j++] = NULL;
+            }
             break;
         }
     }
-    if (j == argc + 1) {    /* 没有envp参数，总参数减1，就不处理环境参数了 */
-        --j;
+    totalstack[j] = NULL;
+    /* 保留aux的位置，在env后面 */
+    totalstack[j++] = NULL;
+    totalstack[j] = NULL;
+
+    #if 0
+    /* special arg */
+    for (i = 0; i < MAX_TASK_STACK_ARG_NR; i++) {
+        totalstack[i] = NULL;
     }
+    totalstack[0] = "/ts";
+    totalstack[1] = NULL;
+    totalstack[2] = "/bin";
+    totalstack[3] = NULL;
+    totalstack[4] = 1;
+    totalstack[5] = NULL;
+    argc = 1;
+    j = 5;
+    #endif
+    
+#ifdef DEBUG_ARGS
+    dbgprint("task %d argc=%d, total=%d\n", task->pid, argc, j);
+#endif
 
     if (j >= MAX_TASK_STACK_ARG_NR) {
         errprint("task %d too many args\n", task->pid);
@@ -111,6 +146,8 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
 
     /**
      * 参数布局：
+     * --------*
+     * aux arg * # 不支持，只保留
      * --------*
      * env arg *
      * --------*

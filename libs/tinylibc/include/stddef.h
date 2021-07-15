@@ -144,4 +144,9 @@ struct linux_dirent64 {
 #define MAP_PRIVATE 0X02
 #define MAP_FAILED ((void *) -1)
 
+#define weak __attribute__((__weak__))
+#define hidden __attribute__((__visibility__("hidden")))
+#define weak_alias(old, new) \
+	extern __typeof(old) new __attribute__((__weak__, __alias__(#old)))
+
 #endif // __STDDEF_H__
