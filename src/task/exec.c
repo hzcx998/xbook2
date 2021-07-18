@@ -139,7 +139,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     assert(frame != NULL);
     #endif
     proc_trap_frame_init(cur);
-    if(process_frame_init(cur, new_vmm, frame, new_argv, new_envp) < 0){
+    if(process_frame_init(cur, new_vmm, frame, new_argv, new_envp, &elf_header) < 0){
         goto free_loaded_image;
     }
     if (old_vmm->argbuf) {

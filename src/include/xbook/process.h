@@ -48,7 +48,7 @@ long sys_usleep(struct timeval *inv, struct timeval *outv);
 int sys_nanosleep(struct timespec *req, struct timespec *rem);
 int sys_create_process(char **argv, char **envp, uint32_t flags);
 int sys_resume_process(pid_t pid);
-int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp);
+int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp, Elf64_Ehdr *elf_header);
 
 void proc_free_arg(char *arg[]);
 void proc_dump_arg(char *arg[]);

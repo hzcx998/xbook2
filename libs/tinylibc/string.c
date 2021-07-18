@@ -63,17 +63,17 @@ int strncmp(const char *_l, const char *_r, size_t n)
 size_t strlen(const char *s)
 {
     const char *a = s;
-    typedef size_t __attribute__((__may_alias__)) word;
-    const word *w;
-    for (; (uintptr_t)s % SS; s++)
-        if (!*s)
-            return s - a;
-    for (w = (const void *)s; !HASZERO(*w); w++)
-        ;
-    s = (const void *)w;
-    for (; *s; s++)
-        ;
-    return s - a;
+#if 0
+#ifdef __GNUC__
+	typedef size_t __attribute__((__may_alias__)) word;
+	const word *w;
+	for (; (uintptr_t)s % ALIGN; s++) if (!*s) return s-a;
+	for (w = (const void *)s; !HASZERO(*w); w++);
+	s = (const void *)w;
+#endif
+#endif
+	for (; *s; s++);
+	return s-a;
 }
 
 void *memchr(const void *src, int c, size_t n)

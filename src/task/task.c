@@ -738,12 +738,14 @@ void test_machine_thread(void *arg)
 }
 #else
 #if defined(CONFIG_NEWSYSCALL)
-#define USER_PROCESS_PATH  "/bin/ts"
+#define USER_PROCESS_PATH  "/sbin/init"
 #else
 #define USER_PROCESS_PATH  "/sbin/init"
 #endif
 static char *init_argv[2] = {USER_PROCESS_PATH, 0};
 #endif
+static char *init_envp[3] = {"/bin", "/sbin", 0};
+
 /**
  * 在初始化的最后调用，当前任务演变成"idle"任务，等待随时调动
  */
@@ -765,7 +767,7 @@ void task_start_user()
         panic("[task] start user: open stdin failed!");
     dbgprintln("[task] start user: stderr fd %d", fd);
     #endif
-    task_t *proc = process_create(init_argv, NULL, PROC_CREATE_INKERN);
+    task_t *proc = process_create(init_argv, init_envp, PROC_CREATE_INKERN);
     if (proc == NULL)
         panic("kernel start process failed! please check initsrv!\n");
     /*keprintln("fisrt process pid=%d ppid=%d pgid=%d tgid=%d", 

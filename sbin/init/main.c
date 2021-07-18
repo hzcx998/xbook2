@@ -30,13 +30,24 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
+    char *s = "hello";
+    printf("strlen %d\n", strlen(s));
+    printf("initd: start argc %d argv %p\n", argc, argv);
     int i;
     for (i = 0; i < argc; i++) {
         if (argv[i]) {
-            printf("initd: argv %d=%s\n", i, argv[i]);
+            printf("initd: argv %d=%p\n", i, argv[i]);
+            char *p = argv[i];
+            while (*p) {
+                printf("%x, ", p);
+                printf("%x\n", *p++);
+            }    
+            printf("#\n");
+            
+            printf("initd: argv %d=>len %d\n", i, strlen(argv[i]));
         }
     }
-    
+    printf("initd: fork\n");
     /* 创建一个子进程 */
     int pid = fork();
     if (pid < 0) {

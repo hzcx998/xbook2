@@ -1,9 +1,18 @@
 #include <unistd.h>
 #include <stddef.h>
+#include <sys/syscall.h>
 #include "libc.h"
 #include "elf.h"
+#include "poll.h"
 
-#define USE_MUSL_LIBC 1
+static void dummy(void) {}
+weak_alias(dummy, _init);
+weak_alias(dummy, _fini);
+
+extern weak hidden void (*const __init_array_start)(void), (*const __init_array_end)(void);
+
+static void dummy1(void *p) {}
+weak_alias(dummy1, __init_ssp);
 
 int main();
 int __libc_start_main(int (*)(), int, char **);
@@ -28,33 +37,31 @@ void __init_libc(char **envp, char *pn)
 	__hwcap = aux[AT_HWCAP];
 	if (aux[AT_SYSINFO]) __sysinfo = aux[AT_SYSINFO];
 	libc.page_size = aux[AT_PAGESZ];
-
 	if (!pn) pn = (void*)aux[AT_EXECFN];
 	if (!pn) pn = "";
 	__progname = __progname_full = pn;
 	for (i=0; pn[i]; i++) if (pn[i]=='/') __progname = pn+i+1;
-	//__init_tls(aux);
-	//__init_ssp((void *)aux[AT_RANDOM]);
-
+	__init_tls(aux);
+	__init_ssp((void *)aux[AT_RANDOM]);
+	if (aux[AT_UID]==aux[AT_EUID] && aux[AT_GID]==aux[AT_EGID]
+		&& !aux[AT_SECURE]) return;
 	if (aux[AT_UID]==aux[AT_EUID] && aux[AT_GID]==aux[AT_EGID]
 		&& !aux[AT_SECURE]) return;
 
-    #if 0
 	struct pollfd pfd[3] = { {.fd=0}, {.fd=1}, {.fd=2} };
 	int r =
 #ifdef SYS_poll
-	__syscall(SYS_poll, pfd, 3, 0);
+	syscall(SYS_poll, pfd, 3, 0);
 #else
-	__syscall(SYS_ppoll, pfd, 3, &(struct timespec){0}, 0, _NSIG/8);
+	syscall(SYS_ppoll, pfd, 3, &(struct timespec){0}, 0, _NSIG/8);
 #endif
-	if (r<0) a_crash();
+	#if 0
+    if (r<0) a_crash();
 	for (i=0; i<3; i++) if (pfd[i].revents&POLLNVAL)
 		if (__sys_open("/dev/null", O_RDWR)<0)
 			a_crash();
 	#endif
     libc.secure = 1;
-    printf("[!] init 2 [?]\n");
-
 }
 
 typedef int lsm2_fn(int (*)(int,char **,char **), int, char **);
@@ -73,7 +80,8 @@ int __libc_start_main(int (*main)(int,char **,char **), int argc, char **argv)
 	 * or thread pointer prior to its initialization above. */
 	lsm2_fn *stage2 = libc_start_main_stage2;
 	__asm__ ( "" : "+r"(stage2) : : "memory" );
-	return stage2(main, argc, argv);
+
+    return stage2(main, argc, argv);
 }
 
 void __libc_start_init(void)
@@ -90,28 +98,8 @@ static int libc_start_main_stage2(int (*main)(int,char **,char **), int argc, ch
 {
 	char **envp = argv+argc+1;
 	__libc_start_init();
-
+	
 	/* Pass control to the application */
 	exit(main(argc, argv, envp));
 	return 0;
-}
-
-int __start_main(long *p)
-{
-#if USE_MUSL_LIBC == 1
-	int argc = p[0];
-	char **argv = (void *)(p+1);
-	__libc_start_main(main, argc, argv);
-#else
-    int argc = p[0];
-	char **argv = (void *)(p+1);
-    __environ = argv + argc + 1;
-    char **envp = __environ;
-    int i;
-    for (i=0; envp[i]; i++) {
-        printf("[!] user envp[%d]=%s [?]\n", i, envp[i]);
-    }
-	exit(main(argc, argv));
-#endif
-    return 0;
 }

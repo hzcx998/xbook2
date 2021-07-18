@@ -15,4 +15,4 @@ mv a0, sp
 .hidden _DYNAMIC
 lla a1, _DYNAMIC
 andi sp, sp, -16
-tail __start_main
+tail _start_c

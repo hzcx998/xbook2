@@ -12,3 +12,4 @@ SRC	+= mutexqueue.c
 SRC	+= waitqueue.c
 SRC	+= mutexlock.c
 SRC	+= semaphore.c
+SRC	+= binformat.c
