@@ -157,7 +157,7 @@ ifeq ($(ENV_MACH),mach-qemu) # riscv64 qemu
 run: qemu
 else ifeq ($(ENV_MACH),mach-k210) # riscv64 k210
 # 写入串口启动
-run: all
+run: qemu
 	$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $(KERNEL_BIN)
 	$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(K210_BIN)
 	$(DD) if=$(KERNEL_BIN) of=$(K210_BIN) bs=128k seek=1
@@ -364,6 +364,8 @@ endif # ($(ENV_ARCH),x86)
 qemu: all
 	$(QEMU) $(QEMU_ARGUMENT)
 
+qemu2: 
+	$(QEMU) $(QEMU_ARGUMENT)
 
 # 调试配置：-S -gdb tcp::10001,ipv4
 qemudbg:

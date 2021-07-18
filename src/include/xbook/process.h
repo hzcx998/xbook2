@@ -58,5 +58,6 @@ void proc_set_stack_pointer(task_t *task, unsigned long sp);
 
 int sys_prctl(int option, unsigned long arg2, unsigned long arg3,
     unsigned long arg4, unsigned long arg5);
+void sys_exit_group(int status);
 
 #endif /* _XBOOK_PROCESS_H */

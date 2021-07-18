@@ -1,22 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 void exit_func1(void)
 {
-    printf("exit_func1!\n");
+    //putstr("exit_func1!\n");
 }
 
 void exit_func2(void)
 {
-    printf("exit_func2!\n");
+    //putstr("exit_func2!\n");
 }
 
 int main(int argc, char *argv[]) {
     int i; for (i = 0; i < argc; i++) {
-        printf("arg:%s\n", argv[i]);
+        //putstr("arg:%s\n", argv[i]);
     }
 
-    printf("hello, world!\n");
+    char *s = "hello, world!\n";
+    write(1, s, strlen(s));
+    
     atexit(exit_func1);
     atexit(exit_func2);
     return 0;

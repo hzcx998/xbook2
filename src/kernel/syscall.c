@@ -72,6 +72,7 @@ void syscall_init()
     syscalls[SYS_sched_yield] = sys_sched_yield;
     syscalls[SYS_clone] = sys_clone;
     syscalls[SYS_exit] = sys_exit;
+    syscalls[SYS_exit_group] = sys_exit_group;
     syscalls[SYS_wait4] = sys_waitpid;
     syscalls[SYS_execve] = sys_execve;
     syscalls[SYS_times] = sys_times;
@@ -342,7 +343,7 @@ unsigned long syscall_dispatch(trap_frame_t *frame)
     a0-a1: retval
     */
     syscall_func_t func = (syscall_func_t)syscalls[frame->a7];
-    //debug_syscall(frame);
+    debug_syscall(frame);
     #if defined(CONFIG_NEWSYSCALL)
     retval = func(frame->a0, frame->a1, frame->a2,
                             frame->a3, frame->a4, frame->a5, frame);

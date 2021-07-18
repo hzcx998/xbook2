@@ -46,5 +46,9 @@ MODULE      +=  init
 MODULE      +=  login
 MODULE      +=  netserv
 else ifeq ($(ENV_ARCH), riscv64)
+ifeq ($(ENV_LIBC),xlibc)
 MODULE      +=  init
+else ifeq ($(ENV_LIBC), tinylibc)
+else
+endif
 endif

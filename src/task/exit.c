@@ -68,3 +68,8 @@ void sys_exit(int status)
         task_block(TASK_ZOMBIE); 
     }
 }
+
+void sys_exit_group(int status)
+{
+    sys_exit(status);
+}

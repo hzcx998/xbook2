@@ -56,7 +56,8 @@ ifeq ($(ENV_ARCH), x86)
 	CFLAGS		+= -D__XLIBC__
 else ifeq ($(ENV_ARCH), riscv64)
 #ENV_LIBC	:= xlibc
-ENV_LIBC	:= tinylibc
+#ENV_LIBC	:= tinylibc
+ENV_LIBC	:= musl
 
 	ENV_LD		:=  $(CROSS_COMPILE)ld 
 	ENV_AS		:= $(CROSS_COMPILE)gcc -x assembler-with-cpp
@@ -79,6 +80,9 @@ ifeq ($(ENV_LIBC),xlibc)
 else ifeq ($(ENV_LIBC),tinylibc)
 	ENV_USER_LD_SCRIPT	:= -T ../libs/tinylibc/arch/riscv/user.ld
 	CFLAGS		+= -D__TINYLIBC__
+else ifeq ($(ENV_LIBC),musl)
+	ENV_USER_LD_SCRIPT	:= -T ../libs/musl/user.ld
+	CFLAGS		+= -D__MUSLLIBC__
 endif
 
 endif 

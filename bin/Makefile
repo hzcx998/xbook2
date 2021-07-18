@@ -28,6 +28,9 @@ X_LIBDIRS	:= 	$(LIBS_DIR)/xcrt \
 else ifeq ($(ENV_LIBC),tinylibc)
 X_INCDIRS	:= 	$(LIBS_DIR)/tinylibc/include
 X_LIBDIRS	:= 	$(LIBS_DIR)/tinylibc
+else ifeq ($(ENV_LIBC),musl)
+X_INCDIRS	:= 	$(LIBS_DIR)/musl/include
+X_LIBDIRS	:= 	$(LIBS_DIR)/musl/lib
 endif
 
 #X_INCDIRS	+=	$(LIBS_DIR)/sconf
@@ -39,6 +42,9 @@ ifeq ($(ENV_LIBC),xlibc)
 X_LIBS		:= libxcrt.a libxlibc.a
 else ifeq ($(ENV_LIBC),tinylibc)
 X_LIBS		:= libtinylibc.a
+else ifeq ($(ENV_LIBC),musl)
+X_LIBS		:= crt1.o crti.o crtn.o libc.a libcrypt.a libdl.a libm.a libpthread.a
+X_LIBS		+= libresolv.a librt.a libutil.a libxnet.a
 endif
 
 AS			:=	$(ENV_AS)
@@ -113,5 +119,7 @@ MODULE      +=  uname
 MODULE      +=  cat
 MODULE      +=  ls
 MODULE      +=  ts
+else ifeq ($(ENV_LIBC),musl)
+MODULE      +=  hello
 endif
 endif 

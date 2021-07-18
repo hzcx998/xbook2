@@ -130,4 +130,6 @@ bin/losetup/losetup
 bin/test_echo/test_echo
 bin/ts/ts
 
+!libs/musl/lib/*
+
 # ====xbook2 kernel ignore end====
