@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 
     char *s = "hello, world!\n";
     write(1, s, strlen(s));
-    
+    printf("hello, word!\n");
     atexit(exit_func1);
     atexit(exit_func2);
     return 0;

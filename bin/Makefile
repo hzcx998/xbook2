@@ -45,6 +45,7 @@ X_LIBS		:= libtinylibc.a
 else ifeq ($(ENV_LIBC),musl)
 X_LIBS		:= crt1.o crti.o crtn.o libc.a libcrypt.a libdl.a libm.a libpthread.a
 X_LIBS		+= libresolv.a librt.a libutil.a libxnet.a
+X_LIBS		+= libgcc.a
 endif
 
 AS			:=	$(ENV_AS)

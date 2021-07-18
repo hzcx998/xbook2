@@ -61,7 +61,9 @@ ENV_LIBC	:= musl
 
 	ENV_LD		:=  $(CROSS_COMPILE)ld 
 	ENV_AS		:= $(CROSS_COMPILE)gcc -x assembler-with-cpp
-	MCFLAGS		:= -march=rv64imafdc -mabi=lp64d -mcmodel=medany
+#	MCFLAGS		:= -march=rv64imafdc -mabi=lp64d -mcmodel=medany
+	MCFLAGS		:= -march=rv64imafc -mabi=lp64f -mcmodel=medany
+
 	ENV_AFLAGS	:= -ffunction-sections -fdata-sections -ffreestanding -std=gnu99 
 	CFLAGS		+= -fno-omit-frame-pointer
 	CFLAGS		+= -O0 -g -ggdb
