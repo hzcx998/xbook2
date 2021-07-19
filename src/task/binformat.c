@@ -13,9 +13,7 @@
 int bin_program_copy_string2stack(bin_program_t *bin, char *strs[])
 {
     int i = bin->stack_top;
-    dbgprint("bin_program_copy_string2stack: stack top %d\n", i);
     for (; strs[i]; i++) {
-        dbgprint("bin_program_copy_string2stack: arg %d=> %s\n", i, strs[i]);
         if (i > MAX_TASK_STACK_ARG_NR)
             return -1;
         bin->sp -= strlen(strs[i]) + 1;
@@ -27,13 +25,9 @@ int bin_program_copy_string2stack(bin_program_t *bin, char *strs[])
             return -1;
         bin->ustack[i] = bin->sp;
     }
-    dbgprint("bin_program_copy_string2stack: end copy arg top %d\n", i);
-
     bin->ustack[i] = 0;
     int c = i - bin->stack_top;
-    dbgprint("bin_program_copy_string2stack: end copy args %d\n", c);
     bin->stack_top = i + 1;
-    dbgprint("bin_program_copy_string2stack: final arg top %d\n", bin->stack_top);
     return c;
 }
 

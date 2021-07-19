@@ -128,14 +128,14 @@ static int build_arg_stack2(vmm_t *vmm, unsigned long stackbase, unsigned long *
     *_sp = sp;
     return 0;
 } 
-#define DEBUG_ARGS
+// #define DEBUG_ARGS
 
 static uint64_t create_user_stack(bin_program_t *bin_program, Elf64_Ehdr *elf)
 {
     int index = bin_program->argc + bin_program->envc + 2;
-    dbgprint("create_user_stack: argc %d, envp %d index %d\n", bin_program->argc, bin_program->envc, index);
+    //dbgprint("create_user_stack: argc %d, envp %d index %d\n", bin_program->argc, bin_program->envc, index);
 
-    uint64_t filename = bin_program_copy_string(bin_program, "./busybox");
+    uint64_t filename = bin_program_copy_string(bin_program, "./name");
 #define NEW_AUX_ENT(id, val)                                                   \
 do {                                                                         \
     bin_program->ustack[index++] = id;                                         \
@@ -254,7 +254,7 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
     bin_prog.stackbase = vmm->stack_start;
     bin_prog.pagetable = vmm->page_storage;
     bin_prog.ustack = ustack;
-
+    #ifdef DEBUG_ARGS
     int i;
     for (i = 0; argv[i]; i++) {
         dbgprint("argv %d=>%p:%s\n", i, argv[i], argv[i] == NULL ? "null": argv[i]);
@@ -262,22 +262,13 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
     for (i = 0; envp[i]; i++) {
         dbgprint("envp %d=>%p:%s\n", i, envp[i], envp[i] == NULL ? "null": envp[i]);
     }
-    uint64_t *mergestack[MAX_TASK_STACK_ARG_NR + 1];
     dbgprint("argv %p envp %p\n", argv, envp);
+    #endif
+    uint64_t *mergestack[MAX_TASK_STACK_ARG_NR + 1];
     merge_args(mergestack, argv, envp);
-
     bin_prog.argc = bin_program_copy_string2stack(&bin_prog, mergestack);
-    if (bin_prog.argc < 0) {
-        errprint("copy argv failed!\n");
-    }
     bin_prog.envc = bin_program_copy_string2stack(&bin_prog, mergestack);
-    if (bin_prog.envc < 0) {
-        errprint("copy envp failed!\n");
-    }
-    int err = create_user_stack(&bin_prog, elf_header);
-    if (err < 0) {
-        errprint("create_user_stack!\n");
-    }
+    create_user_stack(&bin_prog, elf_header);
     
     sp = bin_prog.sp;
 
@@ -285,7 +276,7 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
     frame->ra = 0;
     frame->sp = sp;
 
-    #if 0
+    #ifdef DEBUG_ARGS
     unsigned long arg_bottom = 0;
     arg_bottom = vmm->stack_end - 32;
     if (build_arg_stack(vmm, vmm->stack_end - PAGE_SIZE, &arg_bottom, totalstack, argc, j) < 0) {

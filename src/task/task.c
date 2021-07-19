@@ -738,7 +738,7 @@ void test_machine_thread(void *arg)
 }
 #else
 #if defined(CONFIG_NEWSYSCALL)
-#define USER_PROCESS_PATH  "/bin/hello"
+#define USER_PROCESS_PATH  "/busybox"
 #else
 #define USER_PROCESS_PATH  "/sbin/init"
 #endif
