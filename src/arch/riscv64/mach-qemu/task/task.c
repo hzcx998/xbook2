@@ -64,7 +64,7 @@ static int build_arg_stack(vmm_t *vmm, unsigned long stackbase, unsigned long *_
     *_sp = sp;
     return 0;
 } 
-
+#if 0
 /**
  * 将参数构建到栈中
  */
@@ -128,6 +128,7 @@ static int build_arg_stack2(vmm_t *vmm, unsigned long stackbase, unsigned long *
     *_sp = sp;
     return 0;
 } 
+#endif
 // #define DEBUG_ARGS
 
 static uint64_t create_user_stack(bin_program_t *bin_program, Elf64_Ehdr *elf)
@@ -264,7 +265,7 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
     }
     dbgprint("argv %p envp %p\n", argv, envp);
     #endif
-    uint64_t *mergestack[MAX_TASK_STACK_ARG_NR + 1];
+    char *mergestack[MAX_TASK_STACK_ARG_NR + 1];
     merge_args(mergestack, argv, envp);
     bin_prog.argc = bin_program_copy_string2stack(&bin_prog, mergestack);
     bin_prog.envc = bin_program_copy_string2stack(&bin_prog, mergestack);

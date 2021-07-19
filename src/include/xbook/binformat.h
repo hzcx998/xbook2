@@ -69,5 +69,6 @@ typedef struct bin_program {
 
 void bin_program_init(bin_program_t *bin);
 int bin_program_copy_string2stack(bin_program_t *bin, char *strs[]);
+uint64_t bin_program_copy_string(bin_program_t *bin, const char *s);
 
 #endif   /* _XBOOK_BINFORMAT_H */
