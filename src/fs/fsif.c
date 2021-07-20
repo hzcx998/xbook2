@@ -1292,3 +1292,29 @@ int sys_linkat(int fd1, const char *existing, int fd2, const char *new, int flag
 {
 	return -ENOSYS;
 }
+
+ssize_t sys_readv(int fd, const struct iovec *iov, int iovcnt)
+{
+    return 0;
+}
+
+ssize_t sys_writev(int fd, const struct iovec *iov, int iovcnt)
+{
+    if (!iov || iovcnt <= 0 || iovcnt >= IOVEC_NR_MAX)
+        return -EINVAL;
+    
+    struct iovec kiov[IOVEC_NR_MAX];
+    if (mem_copy_from_user(kiov, iov, sizeof(struct iovec) * iovcnt) < 0)
+        return -EFAULT;
+
+    ssize_t len = 0; 
+    int i;
+    for (i = 0; i < iovcnt; i++) {
+        ssize_t err = sys_write(fd, kiov[i].iov_base, kiov[i].iov_len);
+        if (err <= 0) {
+            return err;
+        }
+        len += err;
+    }
+    return len;
+}

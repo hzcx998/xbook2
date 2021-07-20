@@ -122,5 +122,6 @@ MODULE      +=  ls
 MODULE      +=  ts
 else ifeq ($(ENV_LIBC),musl)
 MODULE      +=  hello
+MODULE      +=  sh
 endif
 endif 

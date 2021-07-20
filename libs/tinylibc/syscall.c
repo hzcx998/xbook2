@@ -7,6 +7,7 @@
 #include <sys/reboot.h>
 #include <sys/utsname.h>
 #include <sys/syscall.h>
+#include <sys/uio.h>
 
 int open(const char *path, int flags)
 {
@@ -547,4 +548,14 @@ int flock(int fd, int op)
 int fchmod(int fd, mode_t mode)
 {
     
+}
+
+ssize_t writev(int fd, const struct iovec *iov, int iovcnt)
+{
+	return syscall(SYS_writev, fd, iov, iovcnt);
+}
+
+ssize_t readv(int fd, const struct iovec *iov, int iovcnt)
+{
+	return syscall(SYS_readv, fd, iov, iovcnt);
 }

@@ -1,5 +1,6 @@
 #include "test.h"
 #include <sys/stat.h>
+#include <sys/uio.h>
 
 int test_file(int argc, char *argv[])
 {
@@ -13,5 +14,18 @@ int test_file(int argc, char *argv[])
     printf("%s: %d\n", $(renameat), renameat(AT_FDCWD, "/bin/ts", AT_FDCWD, "/bin/ts2"));
     printf("%s: %d\n", $(fchmod), fchmod(0, 0606));
     
+    char *str0 = "hello ";
+    char *str1 = "world\n";
+    struct iovec iov[2];
+    ssize_t nwritten;
+
+    iov[0].iov_base = str0;
+    iov[0].iov_len = strlen(str0);
+    iov[1].iov_base = str1;
+    iov[1].iov_len = strlen(str1);
+
+    nwritten = writev(1, iov, 2);
+    printf("%s: %d\n", $(writev), nwritten);
+
     return 0;
 }

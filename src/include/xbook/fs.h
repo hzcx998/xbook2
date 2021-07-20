@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <types.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 #include <xbook/spinlock.h>
 #include <xbook/fsal.h>
 #include <xbook/memspace.h>
@@ -98,6 +99,9 @@ int sys_flock(int fd, int operation);
 int sys_mknodat(int fd, const char *path, mode_t mode, dev_t dev);
 int sys_symlinkat(const char *existing, int fd, const char *new);
 int sys_linkat(int fd1, const char *existing, int fd2, const char *new, int flag);
+
+ssize_t sys_readv(int fd, const struct iovec *iov, int iovcnt);
+ssize_t sys_writev(int fd, const struct iovec *iov, int iovcnt);
 
 // special for kernel
 int kfile_open(const char *path, int flags);

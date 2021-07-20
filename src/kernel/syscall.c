@@ -175,6 +175,9 @@ void syscall_init()
     syscalls[SYS_linkat] = sys_linkat;
     syscalls[SYS_fchmod] = sys_fchmod;
     
+    syscalls[SYS_readv] = sys_readv;
+    syscalls[SYS_writev] = sys_writev;
+
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;
@@ -343,7 +346,7 @@ unsigned long syscall_dispatch(trap_frame_t *frame)
     a0-a1: retval
     */
     syscall_func_t func = (syscall_func_t)syscalls[frame->a7];
-    debug_syscall(frame);
+    // debug_syscall(frame);
     #if defined(CONFIG_NEWSYSCALL)
     retval = func(frame->a0, frame->a1, frame->a2,
                             frame->a3, frame->a4, frame->a5, frame);

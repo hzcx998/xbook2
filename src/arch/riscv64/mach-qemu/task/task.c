@@ -151,7 +151,10 @@ do {                                                                         \
     NEW_AUX_ENT(0x2b, 0);
     NEW_AUX_ENT(0x2c, 0);
     NEW_AUX_ENT(0x2d, 0);
+#if 0
 
+    dbgprint("AT_PHDR: %p, AT_PHENT: %d, AT_PHNUM: %d, AT_PAGESZ: %x, AT_ENTRY: %p\n",
+        elf->e_phoff, sizeof(Elf64_Phdr), elf->e_phnum, 0x1000, elf->e_entry);
     NEW_AUX_ENT(AT_PHDR, elf->e_phoff);               // 3
     NEW_AUX_ENT(AT_PHENT, sizeof(Elf64_Phdr));  // 4
     NEW_AUX_ENT(AT_PHNUM, elf->e_phnum);              // 5
@@ -167,6 +170,23 @@ do {                                                                         \
     NEW_AUX_ENT(AT_CLKTCK, 64);                     // 17
     NEW_AUX_ENT(AT_EXECFN, filename);               // 31
     NEW_AUX_ENT(0, 0);
+#else
+    NEW_AUX_ENT(AT_PHDR, 0);               // 3
+    NEW_AUX_ENT(AT_PHENT, 0);  // 4
+    NEW_AUX_ENT(AT_PHNUM, 0);              // 5
+    NEW_AUX_ENT(AT_PAGESZ, 0);                 // 6
+    NEW_AUX_ENT(AT_BASE, 0);                        // 7
+    NEW_AUX_ENT(AT_FLAGS, 0);                       // 8
+    NEW_AUX_ENT(AT_ENTRY, 0);              // 9
+    NEW_AUX_ENT(AT_UID, 0);                         // 11
+    NEW_AUX_ENT(AT_EUID, 0);                        // 12
+    NEW_AUX_ENT(AT_GID, 0);                         // 13
+    NEW_AUX_ENT(AT_EGID, 0);                        // 14
+    NEW_AUX_ENT(AT_HWCAP, 0);                  // 16
+    NEW_AUX_ENT(AT_CLKTCK, 0);                     // 17
+    NEW_AUX_ENT(AT_EXECFN, 0);               // 31
+    NEW_AUX_ENT(0, 0);
+#endif
     #undef NEW_AUX_ENT
     bin_program->sp -= sizeof(uint64_t) * index;
     if (page_copy_out(bin_program->pagetable, bin_program->sp,
@@ -265,7 +285,7 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
     }
     dbgprint("argv %p envp %p\n", argv, envp);
     #endif
-    char *mergestack[MAX_TASK_STACK_ARG_NR + 1];
+    uint64_t *mergestack[MAX_TASK_STACK_ARG_NR + 1];
     merge_args(mergestack, argv, envp);
     bin_prog.argc = bin_program_copy_string2stack(&bin_prog, mergestack);
     bin_prog.envc = bin_program_copy_string2stack(&bin_prog, mergestack);

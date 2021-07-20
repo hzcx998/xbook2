@@ -1,9 +1,12 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stddef.h>
-#ifndef __TINYLIBC__ 
+
+#ifdef __XLIBLIBC__
 #include <ctype.h>
 #include <sys/ioctl.h>
 #include <sys/exception.h>
@@ -12,6 +15,10 @@
 #endif
 
 #include "sh.h"
+
+#if defined(__XLIBLIBC__) || defined(__MUSLLIBC__)
+#include <sys/wait.h>
+#endif
 
 /* 宏定义 */
 #ifndef MAX_PATH
