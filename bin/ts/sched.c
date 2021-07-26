@@ -4,6 +4,7 @@
 
 int test_sched(int argc, char *argv[])
 {
+    #ifndef __MUSLLIBC__
     cpu_set_t set;
     CPU_ZERO(&set);
     int err = sched_getaffinity(0, sizeof(set), &set);
@@ -33,7 +34,7 @@ int test_sched(int argc, char *argv[])
             printf("this thread %d is running processor : %d\n", i,i);
         }
     }
-
+    #endif
     printf("sched_get_priority_max: SCHED_FIFO %d\n", sched_get_priority_max(SCHED_FIFO));
     printf("sched_get_priority_max: SCHED_RR %d\n", sched_get_priority_max(SCHED_RR));
     printf("sched_get_priority_max: SCHED_OTHER %d\n", sched_get_priority_max(SCHED_OTHER));

@@ -5,7 +5,7 @@
 // #define _HAS_LOGIN
 // #define _HAS_NETSERV
 // #define _HAS_CONSOLE
-// #define _HAS_ENV
+#define _HAS_ENV
 
 //#define CONSOLE_DEV "/dev/tty0"
 #define CONSOLE_DEV "/dev/con0"
@@ -30,9 +30,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
-    char *s = "hello";
-    printf("strlen %d\n", strlen(s));
-    printf("initd: start argc %d argv %p\n", argc, argv);
+    #if 0
     int i;
     for (i = 0; i < argc; i++) {
         if (argv[i]) {
@@ -47,7 +45,8 @@ int main(int argc, char *argv[])
             printf("initd: argv %d=>len %d\n", i, strlen(argv[i]));
         }
     }
-    printf("initd: fork\n");
+    #endif
+    fflush(stdout);
     /* 创建一个子进程 */
     int pid = fork();
     if (pid < 0) {

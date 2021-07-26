@@ -124,8 +124,8 @@ int proc_load_image32(vmm_t *vmm, Elf32_Ehdr *elf_header, int fd)
     Elf32_Off prog_header_off = elf_header->e_phoff;
     Elf32_Half prog_header_size = elf_header->e_phentsize;
     Elf32_Off prog_end;
-    unsigned long grog_idx = 0;
-    while (grog_idx < elf_header->e_phnum) {
+    unsigned long phdr_idx = 0;
+    while (phdr_idx < elf_header->e_phnum) {
         memset(&prog_header, 0, prog_header_size);
         kfile_lseek(fd, prog_header_off, SEEK_SET);
         if (kfile_read(fd, (void *)&prog_header, prog_header_size) != prog_header_size) {
@@ -175,7 +175,7 @@ int proc_load_image32(vmm_t *vmm, Elf32_Ehdr *elf_header, int fd)
             }
         }
         prog_header_off += prog_header_size;
-        grog_idx++;
+        phdr_idx++;
     }
     return 0;
 }
@@ -186,8 +186,8 @@ int proc_load_image64(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
     Elf64_Off prog_header_off = elf_header->e_phoff;
     Elf64_Half prog_header_size = elf_header->e_phentsize;
     Elf64_Off prog_end;
-    unsigned long grog_idx = 0;
-    while (grog_idx < elf_header->e_phnum) {
+    unsigned long phdr_idx = 0;
+    while (phdr_idx < elf_header->e_phnum) {
         memset(&prog_header, 0, prog_header_size);
         kfile_lseek(fd, prog_header_off, SEEK_SET);
         if (kfile_read(fd, (void *)&prog_header, prog_header_size) != prog_header_size) {
@@ -237,11 +237,23 @@ int proc_load_image64(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
             }
         }
         prog_header_off += prog_header_size;
-        grog_idx++;
+        phdr_idx++;
     }
     return 0;
 }
 
+int proc_load_phdr(Elf64_Ehdr *elf_header, int fd, Elf64_Phdr *elf_phdr)
+{
+    Elf64_Off prog_header_off = elf_header->e_phoff;
+    Elf64_Half prog_header_size = elf_header->e_phentsize * elf_header->e_phnum;
+    
+    memset(elf_phdr, 0, prog_header_size);
+    kfile_lseek(fd, prog_header_off, SEEK_SET);
+    if (kfile_read(fd, (void *)elf_phdr, prog_header_size) != prog_header_size) {
+        return -1;
+    }
+    return 0;
+}
 
 int proc_load_image64_ext(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
 {
@@ -249,8 +261,8 @@ int proc_load_image64_ext(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
     Elf64_Off prog_header_off = elf_header->e_phoff;
     Elf64_Half prog_header_size = elf_header->e_phentsize;
     Elf64_Off prog_end;
-    unsigned long grog_idx = 0;
-    while (grog_idx < elf_header->e_phnum) {
+    unsigned long phdr_idx = 0;
+    while (phdr_idx < elf_header->e_phnum) {
         memset(&prog_header, 0, prog_header_size);
         kfile_lseek(fd, prog_header_off, SEEK_SET);
         if (kfile_read(fd, (void *)&prog_header, prog_header_size) != prog_header_size) {
@@ -303,7 +315,7 @@ int proc_load_image64_ext(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
             }
         }
         prog_header_off += prog_header_size;
-        grog_idx++;
+        phdr_idx++;
     }
     return 0;
 }

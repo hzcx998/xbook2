@@ -4,7 +4,7 @@
 #include <xbook/schedule.h>
 #include <errno.h>
 
-// #define DEBUG_MEM_SPACE
+#define DEBUG_MEM_BRK
 
 void mem_space_dump(vmm_t *vmm)
 {
@@ -133,10 +133,14 @@ void *do_mem_space_map(vmm_t *vmm, unsigned long addr, unsigned long paddr,
 void *do_mem_space_map_viraddr(vmm_t *vmm, unsigned long addr, unsigned long vaddr, 
     unsigned long len, unsigned long prot, unsigned long flags)
 {
-    if (vmm == NULL || !prot) {
-        keprint(PRINT_ERR "do_mem_space_map: failed!\n");
+    if (vmm == NULL) {
+        keprint(PRINT_ERR "do_mem_space_map: failed with vmm null!\n");
         return (void *)-1;
     }
+    /*if (!prot) {
+        keprint(PRINT_ERR "do_mem_space_map: failed with prot zero!\n");
+        return (void *)-1;
+    }*/
     len = PAGE_ALIGN(len);
     if (!len) {
         keprint(PRINT_ERR "do_mem_space_map: len is zero!\n");
@@ -287,7 +291,7 @@ unsigned long sys_brk(unsigned long heap)
     unsigned long ret;
     unsigned long old_heap, new_heap;
     vmm_t *vmm = task_current->vmm;
-#ifdef DEBUG_MEM_SPACE    
+#ifdef DEBUG_MEM_BRK    
     keprint(PRINT_DEBUG "%s: task %s pid %d vmm heap start %x end %x new %x\n", 
         __func__, task_current->name, task_current->pid, vmm->heap_start, vmm->heap_end, heap);
 #endif
@@ -316,7 +320,7 @@ unsigned long sys_brk(unsigned long heap)
     if ((find = mem_space_find_intersection(vmm, old_heap, new_heap + PAGE_SIZE))) {
         keprint(PRINT_ERR "%s: space intersection! old=%x, new=%x, end=%x\n",
             __func__, old_heap, new_heap, new_heap + PAGE_SIZE);
-#ifdef DEBUG_MEM_SPACE   
+#ifdef DEBUG_MEM_BRK   
         keprint(PRINT_ERR "%s: find: start=%x, end=%x\n",
             __func__, find->start, find->end);
 
@@ -330,7 +334,7 @@ unsigned long sys_brk(unsigned long heap)
         goto the_end;
     }
 set_heap:
-#ifdef DEBUG_MEM_SPACE   
+#ifdef DEBUG_MEM_BRK   
     keprint(PRINT_DEBUG "sys_brk: set new heap %x old is %x\n",
         heap, vmm->heap_end);
 #endif

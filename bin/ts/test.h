@@ -9,10 +9,12 @@
 #include <signal.h>
 #include <sched.h>
 #include <time.h>
+#include <fcntl.h>
 #include <sys/syscall.h>
 
 #define $(func) #func
 
+int test_mmap(int argc, char *argv[]);
 int oscamp_signal(int argc, char *argv[]);
 int test_sched(int argc, char *argv[]);
 int test_time(int argc, char *argv[]);
@@ -24,5 +26,6 @@ int test_pid(int argc, char *argv[]);
 int test_misc(int argc, char *argv[]);
 int test_file(int argc, char *argv[]);
 int test_env(int argc, char *argv[]);
+int test_mem(int argc, char *argv[]);
 
 #endif // _TEST_H

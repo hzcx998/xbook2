@@ -11,8 +11,10 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
-    {"file", test_file},
+    {"mem", test_mem},
     {"env", test_env},
+    {"mmap", test_mmap},
+    {"file", test_file},
     {"time", test_time},
     {"misc", test_misc},
     {"pid", test_pid},

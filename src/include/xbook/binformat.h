@@ -5,23 +5,7 @@
 #define _XBOOK_BINFORMAT_H
 
 #include <stdint.h>
-
-//  3:10040
-//  4:38
-//  5:6
-//  6:1000
-//  7:0
-//  8:0
-//  9:1059c
-// 11:0
-// 12:0
-// 13:0
-// 14:0
-// 16:112d
-// 17:64
-// 23:0
-// 25:
-// 31:./binname
+#include <stddef.h>
 
 /* Symbolic values for the entries in the auxiliary table
    put on the initial stack */
@@ -45,14 +29,14 @@
 #define AT_CLKTCK 17   /* frequency at which times() increments */
 /* AT_* values 18 through 22 are reserved */
 #define AT_SECURE 23 /* secure mode boolean */
-#define AT_BASE_PLATFORM                                                       \
-  24 /* string identifying real platform, may differ from AT_PLATFORM. */
+#define AT_BASE_PLATFORM 24 /* string identifying real platform, may differ from AT_PLATFORM. */
 #define AT_RANDOM 25 /* address of 16 random bytes */
+#define AT_HWCAP2 26	/* extension of AT_HWCAP */
 
 #define AT_EXECFN 31 /* filename of program */
 
-#define AT_VECTOR_SIZE_BASE 19 /* NEW_AUX_ENT entries in auxiliary table */
-/* number of "#define AT_.*" above, minus {AT_NULL, AT_IGNORE, AT_NOTELF} */
+#define AT_VECTOR_SIZE_BASE 20 /* NEW_AUX_ENT entries in auxiliary table */
+  /* number of "#define AT_.*" above, minus {AT_NULL, AT_IGNORE, AT_NOTELF} */
 
 // const int kElfInfoNum = 30;
 
@@ -70,5 +54,6 @@ typedef struct bin_program {
 void bin_program_init(bin_program_t *bin);
 int bin_program_copy_string2stack(bin_program_t *bin, char *strs[]);
 uint64_t bin_program_copy_string(bin_program_t *bin, const char *s);
+uint64_t bin_program_copy_nbytes(bin_program_t *bin, char *buf, size_t len);
 
 #endif   /* _XBOOK_BINFORMAT_H */

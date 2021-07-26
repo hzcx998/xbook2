@@ -19,4 +19,5 @@ MODULE		+= sconf
 #MODULE		+= uview
 else ifeq ($(ENV_LIBC),tinylibc)
 MODULE		:= tinylibc
+else ifeq ($(ENV_LIBC),musl)
 endif

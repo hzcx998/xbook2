@@ -83,6 +83,7 @@ void page_init();
 void page_enable();
 
 int do_map_pages(pgdir_t pgdir, uint64_t va, uint64_t size, uint64_t pa, int perm);
+int do_map_pages_safe(pgdir_t pgdir, uint64_t va, uint64_t size, uint64_t pa, int perm);
 void do_unmap_pages(pgdir_t pgdir, uint64_t va, uint64_t npages, int do_free);
 void kern_mmap_early(uint64_t va, uint64_t pa, uint64_t sz, int perm);
 

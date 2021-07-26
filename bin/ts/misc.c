@@ -1,7 +1,10 @@
+#define _GNU_SOURCE
+
 #include "test.h"
 #include <sys/utsname.h>
 #include <sys/resource.h>
 #include <sys/prctl.h>
+
 extern char **_environ;
 int test_misc(int argc, char *argv[])
 {

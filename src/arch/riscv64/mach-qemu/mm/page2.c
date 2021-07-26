@@ -158,7 +158,7 @@ int page_map_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len, u
                 interrupt_restore_state(flags);
                 return -1;
             }
-            retval = do_map_pages(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
+            retval = do_map_pages_safe(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
             if (retval < 0) {
                 do_unmap_pages(pgdir, start & PAGE_MASK, pages, 1);
                 goto final;

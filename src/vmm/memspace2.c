@@ -2,16 +2,23 @@
 #include <xbook/task.h>
 #include <xbook/debug.h>
 #include <xbook/schedule.h>
+#include <xbook/safety.h>
 
 // #define DEBUG_MEM_SPACE
 
 void *do_mem_space_map2(vmm_t *vmm, unsigned long addr, unsigned long paddr, 
     unsigned long len, unsigned long prot, unsigned long flags)
 {
-    if (vmm == NULL || !prot) {
-        keprint(PRINT_ERR "do_mem_space_map: failed!\n");
+    if (vmm == NULL) {
+        keprint(PRINT_ERR "do_mem_space_map: failed with vmm null!\n");
         return (void *)-1;
     }
+    #if 0
+    if (!prot) {
+        keprint(PRINT_ERR "do_mem_space_map: failed with prot zero!\n");
+        return (void *)-1;
+    }
+    #endif
     len = PAGE_ALIGN(len);
     if (!len) {
         keprint(PRINT_ERR "do_mem_space_map: len is zero!\n");
@@ -52,9 +59,8 @@ void *do_mem_space_map2(vmm_t *vmm, unsigned long addr, unsigned long paddr,
     if (flags & MEM_SPACE_MAP_SHARED) {
         page_map_addr_fixed2(vmm->page_storage, addr, paddr, len, prot);
     } else {
-        page_map_addr_safe2(vmm->page_storage, addr, len, prot); 
+        page_map_addr_safe2(vmm->page_storage, addr, len, prot);
     }
-    //keprint(PRINT_ERR "do_mem_space_map: addr %x.\n", addr);
     return (void *) addr;
 }
 

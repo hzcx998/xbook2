@@ -116,7 +116,6 @@ pte_t *page_walk(pgdir_t pgdir, uint64_t va, int alloc)
     return &pgdir[PX(0, va)];
 }
 
-
 // add a mapping to the kernel page table.
 // only used when booting.
 // does not flush TLB or enable paging.
@@ -144,8 +143,9 @@ int do_map_pages(pgdir_t pgdir, uint64_t va, uint64_t size, uint64_t pa, int per
     for (;;) {
         if ((pte = page_walk(pgdir, a, 1)) == NULL)
             return -1;
-        if (*pte & PAGE_ATTR_PRESENT)
+        if (*pte & PAGE_ATTR_PRESENT) {
             panic("do_map_pages: remap: va=%lx pa=%lx\n", a, pa);
+        }
         *pte = PA2PTE(pa) | perm | PAGE_ATTR_PRESENT;
         if (a == last)
             break;
@@ -155,6 +155,32 @@ int do_map_pages(pgdir_t pgdir, uint64_t va, uint64_t size, uint64_t pa, int per
     return 0;
 }
 
+// Create PTEs for virtual addresses starting at va that refer to
+// physical addresses starting at pa. va and size might not
+// be page-aligned. Returns 0 on success, -1 if page_walk() couldn't
+// allocate a needed page-table page.
+// if page no exist then map
+int do_map_pages_safe(pgdir_t pgdir, uint64_t va, uint64_t size, uint64_t pa, int perm)
+{
+    uint64_t a, last;
+    pte_t *pte;
+
+    a = PAGE_ROUNDDOWN(va);
+    last = PAGE_ROUNDDOWN(va + size - 1);
+    //dbgprint("do_map_pages: [start=%lx end=%lx]\n", a, last);
+    for (;;) {
+        if ((pte = page_walk(pgdir, a, 1)) == NULL)
+            return -1;
+        if (!(*pte & PAGE_ATTR_PRESENT)) {
+            *pte = PA2PTE(pa) | perm | PAGE_ATTR_PRESENT;
+        }
+        if (a == last)
+            break;
+        a += PAGE_SIZE;
+        pa += PAGE_SIZE;
+    }
+    return 0;
+}
 // Remove npages of mappings starting from va. va must be
 // page-aligned. The mappings must exist.
 // Optionally free the physical memory.
@@ -466,7 +492,7 @@ int page_map_addr_safe(unsigned long start, unsigned long len, unsigned long pro
                 interrupt_restore_state(flags);
                 return -1;
             }
-            retval = do_map_pages(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
+            retval = do_map_pages_safe(pgdir, vaddr, PAGE_SIZE, page_addr, attr);
             if (retval < 0) {
                 do_unmap_pages(pgdir, start & PAGE_MASK, pages, 1);
                 goto final;

@@ -345,9 +345,15 @@ int sys_lseek(int fd, off_t offset, int whence)
 #if defined(CONFIG_NEWSYSCALL)
 void *sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
+    dbgprint("sys_mmap: addr=%p len=%x prot=%x flags=%x fd=%d off=%x\n",
+        addr, length, prot, flags, fd, offset);
     if (!length) {
         errprintln("[fs] sys_mmap: length zero!");
         return MAP_FAILED;
+    }
+    if (fd < 0) {   // 内存做映射
+        vmm_dump(task_current->vmm);
+        return mem_space_mmap2(task_current->vmm, (unsigned long)addr, 0, length, PROT_USER | prot, flags);
     }
     file_fd_t *ffd = fd_local_to_file(fd);
     if (FILE_FD_IS_BAD(ffd))
@@ -1295,7 +1301,23 @@ int sys_linkat(int fd1, const char *existing, int fd2, const char *new, int flag
 
 ssize_t sys_readv(int fd, const struct iovec *iov, int iovcnt)
 {
-    return 0;
+    if (!iov || iovcnt <= 0 || iovcnt >= IOVEC_NR_MAX)
+        return -EINVAL;
+    
+    struct iovec kiov[IOVEC_NR_MAX];
+    if (mem_copy_from_user(kiov, (void *)iov, sizeof(struct iovec) * iovcnt) < 0)
+        return -EFAULT;
+
+    ssize_t len = 0; 
+    int i;
+    for (i = 0; i < iovcnt; i++) {
+        ssize_t err = sys_readv(fd, kiov[i].iov_base, kiov[i].iov_len);
+        if (err <= 0) {
+            return err;
+        }
+        len += err;
+    }
+    return len;
 }
 
 ssize_t sys_writev(int fd, const struct iovec *iov, int iovcnt)
@@ -1304,7 +1326,7 @@ ssize_t sys_writev(int fd, const struct iovec *iov, int iovcnt)
         return -EINVAL;
     
     struct iovec kiov[IOVEC_NR_MAX];
-    if (mem_copy_from_user(kiov, iov, sizeof(struct iovec) * iovcnt) < 0)
+    if (mem_copy_from_user(kiov, (void *)iov, sizeof(struct iovec) * iovcnt) < 0)
         return -EFAULT;
 
     ssize_t len = 0; 

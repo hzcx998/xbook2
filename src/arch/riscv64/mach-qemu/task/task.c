@@ -130,11 +130,91 @@ static int build_arg_stack2(vmm_t *vmm, unsigned long stackbase, unsigned long *
 } 
 #endif
 // #define DEBUG_ARGS
+#define ELF_HWCAP	(0)
 
+static void get_random_bytes(char *buf, size_t len)
+{
+    clock_t t = sys_get_ticks();
+    int i;
+    for (i = 0; i < len; i++) {
+        buf[i] = ((t >> (i % 16)) & 0xff) + 1 * i;
+    }
+}
+	
+
+#if 1
+static uint64_t create_user_stack(bin_program_t *bin_program, Elf64_Ehdr *elf, Elf64_Phdr *elf_phdr)
+{
+    int index = bin_program->argc + bin_program->envc + 2;
+    
+    uint64_t filename = bin_program_copy_string(bin_program, "./name");
+    if ((long)filename == -1)
+        return -1;
+
+    unsigned char k_rand_bytes[16];
+	get_random_bytes(k_rand_bytes, sizeof(k_rand_bytes));
+    uint64_t u_rand_bytes = bin_program_copy_nbytes(bin_program, k_rand_bytes, sizeof(k_rand_bytes));
+    if ((long)u_rand_bytes == -1)
+        return -1;
+
+    uint64_t u_elf_phdr = bin_program_copy_nbytes(bin_program, elf_phdr, elf->e_phentsize * elf->e_phnum);
+    if ((long)u_elf_phdr == -1)
+        return -1;
+
+#define NEW_AUX_ENT(id, val)                                                   \
+do {                                                                         \
+    bin_program->ustack[index++] = id;                                         \
+    bin_program->ustack[index++] = val;                                        \
+} while (0)
+
+    dbgprint("AT_PHDR: %p, AT_PHENT: %d, AT_PHNUM: %d, AT_PAGESZ: %x, AT_ENTRY: %p\n",
+        elf->e_phoff, sizeof(Elf64_Phdr), elf->e_phnum, 0x1000, elf->e_entry);
+    
+    NEW_AUX_ENT(AT_HWCAP, ELF_HWCAP);
+	NEW_AUX_ENT(AT_PAGESZ, PAGE_SIZE);
+	NEW_AUX_ENT(AT_CLKTCK, HZ);
+	NEW_AUX_ENT(AT_PHDR, u_elf_phdr);
+	NEW_AUX_ENT(AT_PHENT, sizeof(Elf64_Phdr));
+	NEW_AUX_ENT(AT_PHNUM, elf->e_phnum);
+	NEW_AUX_ENT(AT_BASE, 0);
+	
+    NEW_AUX_ENT(AT_FLAGS, 0);
+	NEW_AUX_ENT(AT_ENTRY, elf->e_entry);
+	NEW_AUX_ENT(AT_UID, 0);
+	NEW_AUX_ENT(AT_EUID, 0);
+	NEW_AUX_ENT(AT_GID, 0);
+	NEW_AUX_ENT(AT_EGID, 0);
+	NEW_AUX_ENT(AT_SECURE, 0);
+	NEW_AUX_ENT(AT_RANDOM, (unsigned long)u_rand_bytes);
+
+    NEW_AUX_ENT(AT_EXECFN, filename);
+    NEW_AUX_ENT(AT_PLATFORM, NULL);
+
+    NEW_AUX_ENT(AT_BASE_PLATFORM, NULL);
+    NEW_AUX_ENT(AT_EXECFD, 3);  /* 3 is free */
+    NEW_AUX_ENT(AT_NULL, NULL);
+
+    #undef NEW_AUX_ENT
+
+    dbgprint("index: %d\n", index);
+
+    bin_program->sp -= sizeof(uint64_t) * index;
+    if (page_copy_out(bin_program->pagetable, bin_program->sp,
+                (char *)bin_program->ustack, sizeof(uint64_t) * index)) {
+        return -1;
+    }
+
+    uint64_t argc = bin_program->argc;
+    bin_program->sp -= sizeof(uint64_t);
+    page_copy_out(bin_program->pagetable, bin_program->sp, (char *)&argc,
+            sizeof(uint64_t));
+    return 0;
+}
+
+#else
 static uint64_t create_user_stack(bin_program_t *bin_program, Elf64_Ehdr *elf)
 {
     int index = bin_program->argc + bin_program->envc + 2;
-    //dbgprint("create_user_stack: argc %d, envp %d index %d\n", bin_program->argc, bin_program->envc, index);
 
     uint64_t filename = bin_program_copy_string(bin_program, "./name");
 #define NEW_AUX_ENT(id, val)                                                   \
@@ -151,13 +231,15 @@ do {                                                                         \
     NEW_AUX_ENT(0x2b, 0);
     NEW_AUX_ENT(0x2c, 0);
     NEW_AUX_ENT(0x2d, 0);
-#if 0
+#if 1
 
     dbgprint("AT_PHDR: %p, AT_PHENT: %d, AT_PHNUM: %d, AT_PAGESZ: %x, AT_ENTRY: %p\n",
         elf->e_phoff, sizeof(Elf64_Phdr), elf->e_phnum, 0x1000, elf->e_entry);
     NEW_AUX_ENT(AT_PHDR, elf->e_phoff);               // 3
-    NEW_AUX_ENT(AT_PHENT, sizeof(Elf64_Phdr));  // 4
-    NEW_AUX_ENT(AT_PHNUM, elf->e_phnum);              // 5
+    //NEW_AUX_ENT(AT_PHENT, sizeof(Elf64_Phdr));  // 4
+    NEW_AUX_ENT(AT_PHENT, 0);  // 4
+    //NEW_AUX_ENT(AT_PHNUM, elf->e_phnum);              // 5
+    NEW_AUX_ENT(AT_PHNUM, 0);              // 5
     NEW_AUX_ENT(AT_PAGESZ, 0x1000);                 // 6
     NEW_AUX_ENT(AT_BASE, 0);                        // 7
     NEW_AUX_ENT(AT_FLAGS, 0);                       // 8
@@ -174,7 +256,7 @@ do {                                                                         \
     NEW_AUX_ENT(AT_PHDR, 0);               // 3
     NEW_AUX_ENT(AT_PHENT, 0);  // 4
     NEW_AUX_ENT(AT_PHNUM, 0);              // 5
-    NEW_AUX_ENT(AT_PAGESZ, 0);                 // 6
+    NEW_AUX_ENT(AT_PAGESZ, 0x1000);                 // 6
     NEW_AUX_ENT(AT_BASE, 0);                        // 7
     NEW_AUX_ENT(AT_FLAGS, 0);                       // 8
     NEW_AUX_ENT(AT_ENTRY, 0);              // 9
@@ -183,8 +265,8 @@ do {                                                                         \
     NEW_AUX_ENT(AT_GID, 0);                         // 13
     NEW_AUX_ENT(AT_EGID, 0);                        // 14
     NEW_AUX_ENT(AT_HWCAP, 0);                  // 16
-    NEW_AUX_ENT(AT_CLKTCK, 0);                     // 17
-    NEW_AUX_ENT(AT_EXECFN, 0);               // 31
+    NEW_AUX_ENT(AT_CLKTCK, 100);                     // 17
+    NEW_AUX_ENT(AT_EXECFN, filename);               // 31
     NEW_AUX_ENT(0, 0);
 #endif
     #undef NEW_AUX_ENT
@@ -199,6 +281,7 @@ do {                                                                         \
             sizeof(uint64_t));
     return 0;
 }
+#endif
 
 static int merge_args(char *args[], char *argv[], char *envp[])
 {
@@ -240,7 +323,8 @@ static int merge_args(char *args[], char *argv[], char *envp[])
     return j;
 }
 
-int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp, Elf64_Ehdr *elf_header)
+int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp, 
+    Elf64_Ehdr *elf_header, Elf64_Phdr *elf_phdr)
 {
     vmm->stack_end = USER_STACK_TOP;
     vmm->stack_start = vmm->stack_end - MEM_SPACE_STACK_SIZE_DEFAULT;
@@ -286,18 +370,32 @@ int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **arg
     dbgprint("argv %p envp %p\n", argv, envp);
     #endif
     uint64_t *mergestack[MAX_TASK_STACK_ARG_NR + 1];
-    merge_args(mergestack, argv, envp);
-    bin_prog.argc = bin_program_copy_string2stack(&bin_prog, mergestack);
-    bin_prog.envc = bin_program_copy_string2stack(&bin_prog, mergestack);
-    create_user_stack(&bin_prog, elf_header);
+    merge_args((char **)mergestack, argv, envp);
     
+    bin_prog.argc = bin_program_copy_string2stack(&bin_prog, (char **)mergestack);
+    if (bin_prog.argc < 0)
+        return -1;
+    
+    bin_prog.envc = bin_program_copy_string2stack(&bin_prog, (char **)mergestack);
+    if (bin_prog.envc < 0)
+        return -1;
+
+    if (create_user_stack(&bin_prog, elf_header, elf_phdr) < 0)
+        return -1;
+    
+    #ifdef DEBUG_ARGS
+    for (i = 0; i < bin_prog.argc + bin_prog.envc + 1; i++) {
+        dbgprint("bin prog: arg %d=>%p\n", i, bin_prog.ustack[i]);
+    }
+    #endif
+
     sp = bin_prog.sp;
 
     frame->a1 = sp;
     frame->ra = 0;
     frame->sp = sp;
 
-    #ifdef DEBUG_ARGS
+    #if 0
     unsigned long arg_bottom = 0;
     arg_bottom = vmm->stack_end - 32;
     if (build_arg_stack(vmm, vmm->stack_end - PAGE_SIZE, &arg_bottom, totalstack, argc, j) < 0) {

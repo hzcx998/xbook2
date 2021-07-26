@@ -27,7 +27,8 @@ static void user_signal()
     act.sa_handler = user_signal_handler;
     sigfillset(&act.sa_mask);
     act.sa_restorer = __restore_rt;
-    int err = rt_sigaction(SIGALRM, &act, &oact, sizeof(struct sigaction));
+    
+    int err = syscall(SYS_rt_sigaction, SIGALRM, &act, &oact, sizeof(struct sigaction));
     printf("err: %d\n", err);
     printf("old set: %x %x %x\n", oact.sa_flags, oact.sa_handler, oact.sa_restorer);
     alarm(1);
@@ -55,7 +56,7 @@ static void itimer_signal()
     act.sa_handler = alarm_handler;
     sigfillset(&act.sa_mask);
     act.sa_restorer = __restore_rt;
-    int err = rt_sigaction(SIGALRM, &act, &oact, sizeof(struct sigaction));
+    int err = syscall(SYS_rt_sigaction, SIGALRM, &act, &oact, sizeof(struct sigaction));
     printf("err: %d\n", err);
 
     struct itimerval new_itimer, old_itimer;

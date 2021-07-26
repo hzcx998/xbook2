@@ -40,6 +40,15 @@ uint64_t bin_program_copy_string(bin_program_t *bin, const char *s)
     return bin->sp;
 }
 
+uint64_t bin_program_copy_nbytes(bin_program_t *bin, char *buf, size_t len)
+{
+    bin->sp -= len + 1;
+    bin->sp -= bin->sp % 16;
+    if (page_copy_out(bin->pagetable, bin->sp, (char *)buf, len + 1) < 0)
+        return -1;
+    return bin->sp;
+}
+
 /**
  * @brief 将一个8字节的值推入栈中
  *

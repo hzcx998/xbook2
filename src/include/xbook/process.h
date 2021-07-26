@@ -48,7 +48,8 @@ long sys_usleep(struct timeval *inv, struct timeval *outv);
 int sys_nanosleep(struct timespec *req, struct timespec *rem);
 int sys_create_process(char **argv, char **envp, uint32_t flags);
 int sys_resume_process(pid_t pid);
-int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp, Elf64_Ehdr *elf_header);
+int process_frame_init(task_t *task, vmm_t *vmm, trap_frame_t *frame, char **argv, char **envp, 
+    Elf64_Ehdr *elf_header, Elf64_Phdr *elf_phdr);
 
 void proc_free_arg(char *arg[]);
 void proc_dump_arg(char *arg[]);
@@ -59,5 +60,7 @@ void proc_set_stack_pointer(task_t *task, unsigned long sp);
 int sys_prctl(int option, unsigned long arg2, unsigned long arg3,
     unsigned long arg4, unsigned long arg5);
 void sys_exit_group(int status);
+
+int proc_load_phdr(Elf64_Ehdr *elf_header, int fd, Elf64_Phdr *elf_phdr);
 
 #endif /* _XBOOK_PROCESS_H */

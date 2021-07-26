@@ -120,16 +120,28 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     proc_close_other_threads(cur);
     interrupt_restore_state(flags);
     
+    Elf64_Phdr *elf_phdr = mem_alloc(elf_header.e_phnum * elf_header.e_shentsize);
+    if (!elf_phdr) {
+        errprint("sys_exec_file: alloc memory for elf phdr failed!\n");
+        goto free_tmp_arg;
+    }
+
+    if (proc_load_phdr(&elf_header, fd, elf_phdr) < 0) {
+        errprint("sys_exec_file: load elf phdr failed!\n");
+        goto free_elf_phdr;
+    }
+
     #ifdef CONFIG_32BIT     /* 32位 elf 头解析 */
     if (proc_load_image32(cur->vmm, &elf_header, fd) < 0) {
         keprint(PRINT_ERR "sys_exec_file: load_image failed!\n");
-        goto free_tmp_arg;
+        goto free_elf_phdr;
     }
     #else
     if (proc_load_image64_ext(new_vmm, &elf_header, fd) < 0) {
         keprint(PRINT_ERR "sys_exec_file: load_image failed!\n");
-        goto free_tmp_arg;
+        goto free_elf_phdr;
     }
+    
     #endif
     #ifdef TASK_TRAPFRAME_ON_KSTACK
     trap_frame_t *frame = (trap_frame_t *)\
@@ -139,7 +151,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     assert(frame != NULL);
     #endif
     proc_trap_frame_init(cur);
-    if(process_frame_init(cur, new_vmm, frame, new_argv, new_envp, &elf_header) < 0){
+    if(process_frame_init(cur, new_vmm, frame, new_argv, new_envp, &elf_header, elf_phdr) < 0){
         goto free_loaded_image;
     }
     if (old_vmm->argbuf) {
@@ -148,6 +160,7 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
         if (tmp_arg)
             mem_free(tmp_arg);
     }
+    mem_free(elf_phdr);
     /* FIXME: 释放堆栈会导致exec出错，需要修复这个问题 */
     vmm_unmap_space(old_vmm, VMM_NO_STACK | VMM_NO_HEAP);
     vmm_release_space(old_vmm);
@@ -160,9 +173,13 @@ static int do_execute(const char *pathname, char *name, const char *argv[], cons
     user_set_entry_point(frame, (unsigned long)elf_header.e_entry);
     memset(cur->name, 0, MAX_TASK_NAMELEN);
     strcpy(cur->name, tmp_name);
+    
     kernel_switch_to_user(frame);
+    /* should never be here */
 free_loaded_image:
     sys_exit(-1);
+free_elf_phdr:
+    mem_free(elf_phdr);
 free_tmp_arg:
     if (tmp_arg) {
         mem_free(tmp_arg);
