@@ -37,11 +37,7 @@ X86_GRUB_MODULES = \
 	video_cirrus video_colors video_fb videoinfo xzio datehook \
 	loadbios appleldr crc efi_gop efi_uga lsefi lsefimmap lsefisystab
 
-.PHONY: efi iso
-
-all: efi iso
-
-efi:
+all:
 	rm -rf ./efi/boot
 	mkdir -p ./efi/boot
 	grub-mkimage \
@@ -58,8 +54,6 @@ efi:
 		-o $(EFI64_FILE) \
 		-O x86_64-efi \
 		$(X86_GRUB_MODULES)
-
-iso:
 	rm -f -r $(ISO_DIR)
 	mkdir -p $(ISO_DIR)
 	dd if=/dev/zero of=$(ISO_DIR)/$(EFI_BOOT) bs=512 count=8192

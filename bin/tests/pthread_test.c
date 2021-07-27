@@ -19,7 +19,7 @@ void *thread_entry(void *arg)
     }
 }
 
-int pthread_test(int argc, char *argv[])
+int pthread_test1(int argc, char *argv[])
 {
     pthread_mutex_init(&mutex, NULL);
     pthread_t thread;
@@ -42,5 +42,38 @@ int pthread_test(int argc, char *argv[])
     void *status;
     pthread_join(thread, &status);
     printf("thread exit with %x!\n", status);
+    return 0;
+}
+
+
+#define N 1000
+int testnum = 0;
+sem_t sp;
+
+void* func1(void * p)
+{
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYCHRONOUS, NULL); //取消类型为立即取消
+    sem_post(&sp);
+    for(;;){
+        testnum += 1;
+    }
+}
+
+int pthread_test(int argc, char *argv[])
+{
+    pthread_t p1, p2;
+    printf("maintid: %ld\n", pthread_self());
+    sem_init(&sp, 0, 0);
+    pthread_create(&p1, NULL, func1, NULL);
+    int i;
+    sem_wait(&sp);
+    sleep(1);
+    pthread_cancel(p1);
+    // for(i = 1; i <= N; ++i){
+    //     if(pthread_cancel(p1) == 3)
+    //         break;
+    // }
+    pthread_join(p1, NULL);
+    printf("final number:%d\n", testnum);
     return 0;
 }
