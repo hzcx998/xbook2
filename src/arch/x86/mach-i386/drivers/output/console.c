@@ -87,17 +87,45 @@ typedef struct _device_extension {
 #define UGA_CUR_CODE 219
 
 static struct {
-    unsigned short *addr;       /* 显存映射到内核的虚拟地址 */
+    unsigned char *addr;       /* 显存映射到内核的虚拟地址 */
     unsigned short x_sz, y_sz;
-    unsigned short fill, clear;
+    unsigned int fill, clear;
     unsigned char *fonts;
     unsigned char enable;
+    unsigned char bpp;  /* bits per pixel */
+    void (*out_pixel)(int, int, uint32_t);
 } uga;
 
-#define RGB16(r, g, b) ((r & 0xf8) << 8 | (g & 0xfc) << 3 | b >> 3)
+#define CON_ARGB_SUB(a, r, g, b) (((a) << 24) | ((r) << 16) | ((g) << 8) | (b)) 
+#define CON_ARGB(a, r, g, b)     CON_ARGB_SUB((a) & 0xff, (r)  & 0xff, (g) & 0xff, (b) & 0xff)
+#define CON_RGB(r, g, b)         CON_ARGB(255, r, g, b)
+
+static void screen_out_pixel16(int x, int y, uint32_t color)
+{
+    uint32_t  r, g, b;
+    b = color&0xF8;
+    g = color&0xFC00;
+    r = color&0xF80000;
+    *((short*)((uga.addr) + 2*((SCREEN_WIDTH)*y+x))) = 
+        (short)((b>>3)|(g>>5)|(r>>8));
+}
+
+static void screen_out_pixel24(int x, int y, uint32_t color)
+{
+    *((uga.addr) + 3*((SCREEN_WIDTH) * y + x) + 0) = color & 0xFF;
+    *((uga.addr) + 3*((SCREEN_WIDTH) * y + x) + 1) = (color & 0xFF00) >> 8;
+    *((uga.addr) + 3*((SCREEN_WIDTH) * y + x) + 2) = (color & 0xFF0000) >> 16;
+}
+
+static void screen_out_pixel32(int x, int y, uint32_t color)
+{
+    *((unsigned int*)((uga.addr) + 4 * ((SCREEN_WIDTH) * y + x))) = (unsigned int)color;
+}
 
 static void uga_outchar(unsigned short x, unsigned short y, unsigned char ch) {
     if (uga.enable) {
+        if (uga.out_pixel == NULL)
+            return;
         unsigned int fx = x * UGA_FONT_W;
         unsigned int fy = y * UGA_FONT_H;
         unsigned int fex = fx + UGA_FONT_W;
@@ -108,9 +136,9 @@ static void uga_outchar(unsigned short x, unsigned short y, unsigned char ch) {
             fy *= UGA_FONT_W;
             for (; fx < fex; ++fx) {
                 if (uga.fonts[fi] >> (fex - fx) & 1) {
-                    uga.addr[fy * SCREEN_WIDTH + fx] = uga.fill;
+                    uga.out_pixel(fx, fy, uga.fill);
                 } else {
-                    uga.addr[fy * SCREEN_WIDTH + fx] = uga.clear;
+                    uga.out_pixel(fx, fy, uga.clear);
                 }
             }
             fy /= UGA_FONT_W;
@@ -121,14 +149,13 @@ static void uga_outchar(unsigned short x, unsigned short y, unsigned char ch) {
 
 static void uga_clean() {
     if (uga.enable) {
-        unsigned int size = uga.x_sz * uga.y_sz;
+        unsigned int size = uga.x_sz * uga.y_sz * uga.bpp / 8;
         for (; size > 0; --size) {
-            uga.addr[size] = 0x0000;
+            uga.addr[size] = 0x00;
         }
     }
 }
-#endif /* KERN_VBE_MODE */
-
+#else
 static unsigned short get_cursor()
 {
     unsigned short pos_low, pos_high;   // 设置光标位置的高位的低位
@@ -141,6 +168,7 @@ static unsigned short get_cursor()
 
     return (pos_high << 8 | pos_low);   // 返回合成后的值
 }
+#endif /* KERN_VBE_MODE */
 
 static void set_cursor(unsigned short cursor)
 {
@@ -227,18 +255,19 @@ static void dump_console(device_extension_t *ext)
 static void uag_scroll()
 {
     int x, y;
-    uint16_t *src, *dst;
+    uint8_t *src, *dst;
+    uint8_t byte = uga.bpp / 8;   
     for (y = 0; y < (SCREEN_HEIGHT - 1) * UGA_FONT_H; ++y) {
-        src = uga.addr + (y + UGA_FONT_H) * (SCREEN_WIDTH * UGA_FONT_W);
-        dst = uga.addr + y * (SCREEN_WIDTH * UGA_FONT_W);
-        for (x = 0; x < (SCREEN_WIDTH * UGA_FONT_W); ++x) {
+        src = uga.addr + ((y + UGA_FONT_H) * (SCREEN_WIDTH * UGA_FONT_W)) * byte;
+        dst = uga.addr + (y * (SCREEN_WIDTH * UGA_FONT_W)) * byte;
+        for (x = 0; x < (SCREEN_WIDTH * UGA_FONT_W) * byte; ++x) {
             dst[x] = src[x];
         }
     }
     /* 最后一行置背景色 */
     for (y = (SCREEN_HEIGHT - 1) * UGA_FONT_H; y < SCREEN_HEIGHT * UGA_FONT_H; ++y) {
-        dst = uga.addr + y * (SCREEN_WIDTH * UGA_FONT_W);
-        for (x = 0; x < (SCREEN_WIDTH * UGA_FONT_W); ++x) {
+        dst = uga.addr + (y * (SCREEN_WIDTH * UGA_FONT_W)) * byte;
+        for (x = 0; x < (SCREEN_WIDTH * UGA_FONT_W) * byte; ++x) {
             dst[x] = uga.clear;
         }
     }
@@ -570,9 +599,25 @@ iostatus_t console_devctl(device_object_t *device, io_request_t *ioreq)
 static void device_be_notify(driver_object_t *driver, int tag, void *param) {
     if (tag == 0) {
         unsigned long file_sz;
-        uga.addr = (unsigned short *)(*((void **)param));
+        uga.addr = (unsigned char *)(*((void **)param));
         uga.x_sz = *(unsigned short *)(*((void **)param+1));
         uga.y_sz = *(unsigned short *)(*((void **)param+2));
+        uga.bpp = *(unsigned char *)(*((void **)param+3));
+
+        switch (uga.bpp) {
+        case 16:
+            uga.out_pixel = screen_out_pixel16;
+            break;
+        case 24:
+            uga.out_pixel = screen_out_pixel24;
+            break;
+        case 32:
+            uga.out_pixel = screen_out_pixel32;
+            break;
+        default:
+            uga.out_pixel = NULL;
+            break;
+        }
 
         uga.fonts = cpio_get_file(
             module_info_find(KERN_BASE_VIR_ADDR, MODULE_INITRD), "boot/uga.img", &file_sz);
@@ -581,10 +626,12 @@ static void device_be_notify(driver_object_t *driver, int tag, void *param) {
             return;
         }
 
-        uga.fill = RGB16(168, 168, 168);
-        uga.clear = 0x0000;
+        uga.fill = CON_RGB(168, 168, 168);
+        uga.clear = CON_RGB(0, 0, 0);
         SCREEN_WIDTH = uga.x_sz / UGA_FONT_W;
         SCREEN_HEIGHT = uga.y_sz / UGA_FONT_H;
+
+        // memset(uga.addr, 0x5a, 0x10000);
         uga.enable = 1;
     } else if (tag == 1 && uga.fonts != NULL) {
         uga.enable = *(unsigned char*)param;
@@ -642,9 +689,14 @@ static iostatus_t console_enter(driver_object_t *driver)
         // 默认在左上角
         if (id == 0) {
             // 继承现有位置
+#ifdef KERN_VBE_MODE
+            devext->x = 0;
+            devext->y = 0;
+#else
             unsigned short cursor = get_cursor();
             devext->x = cursor % SCREEN_WIDTH;
             devext->y = cursor / SCREEN_WIDTH;
+#endif
         } else {
             // 默认左上角位置
             devext->x = 0;

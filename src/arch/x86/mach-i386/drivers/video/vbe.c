@@ -197,6 +197,7 @@ static iostatus_t vbe_enter(driver_object_t *driver)
         extension->vir_base_addr,
         &extension->mode_info->xResolution,
         &extension->mode_info->yResolution,
+        &extension->mode_info->bitsPerPixel
     });
 #endif /* KERN_VBE_MODE */
 
