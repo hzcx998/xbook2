@@ -11,6 +11,11 @@ void debug_putchar(char ch)
 #ifdef X86_SERIAL_HW
     serial_hardware_putchar(ch);
 #endif
+
+#ifdef X86_UGA_HW
+    extern void uga_hardware_putchar(char ch);
+    uga_hardware_putchar(ch);
+#endif  /* X86_UGA_HW */
 }
 
 void arch_debug_init()

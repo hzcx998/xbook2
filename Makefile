@@ -90,7 +90,7 @@ KERN_MODULE_NET	?= n
 export KERN_MODULE_NET
 
 # is livecd mode? (y/n)
-KERN_LIVECD_MODE ?= n
+KERN_LIVECD_MODE ?= y
 export KERN_LIVECD_MODE
 
 # is vbe mode? (y/n)

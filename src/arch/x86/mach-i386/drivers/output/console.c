@@ -37,7 +37,7 @@
 #define V_MEM_BASE      VGA_VRAM    /* base of color video memory */
 #define V_MEM_SIZE      0x8000      /* 32K: B8000H -> BFFFFH */
 
-#define COLOR_DEFAULT   (MAKE_COLOR(TEXT_BLACK, TEXT_WHITE))
+#define VGA_COLOR_DEFAULT   (MAKE_COLOR(TEXT_BLACK, TEXT_WHITE))
 
 /*
  *  颜色生成方法
@@ -86,6 +86,8 @@ typedef struct _device_extension {
 #define UGA_FONT_H 16
 #define UGA_CUR_CODE 219
 
+#define UGA_DBG_Y 20
+
 static struct {
     unsigned char *addr;       /* 显存映射到内核的虚拟地址 */
     unsigned short x_sz, y_sz;
@@ -94,11 +96,28 @@ static struct {
     unsigned char enable;
     unsigned char bpp;  /* bits per pixel */
     void (*out_pixel)(int, int, uint32_t);
+    /* debug support */
+    uint32_t dbg_x, dbg_y;
+    int dbg_esc_step;   
+    unsigned int dbg_color;          /* 调试输出的颜色 */
+    unsigned int dbg_ready_color;          /* 准备设置成的颜色 */
 } uga;
 
-#define CON_ARGB_SUB(a, r, g, b) (((a) << 24) | ((r) << 16) | ((g) << 8) | (b)) 
-#define CON_ARGB(a, r, g, b)     CON_ARGB_SUB((a) & 0xff, (r)  & 0xff, (g) & 0xff, (b) & 0xff)
-#define CON_RGB(r, g, b)         CON_ARGB(255, r, g, b)
+#define UGA_ARGB_SUB(a, r, g, b) (((a) << 24) | ((r) << 16) | ((g) << 8) | (b)) 
+#define UGA_ARGB(a, r, g, b)     UGA_ARGB_SUB((a) & 0xff, (r)  & 0xff, (g) & 0xff, (b) & 0xff)
+#define UGA_RGB(r, g, b)         UGA_ARGB(255, r, g, b)
+
+#define UGA_RED        UGA_RGB(255, 0, 0)
+#define UGA_GREEN      UGA_RGB(0, 255, 0)
+#define UGA_BLUE       UGA_RGB(0, 0, 255)
+#define UGA_WHITE      UGA_RGB(255, 255, 255)
+#define UGA_BLACK      UGA_RGB(0, 0, 0)
+#define UGA_GRAY       UGA_RGB(195, 195, 195)
+#define UGA_LEAD       UGA_RGB(127, 127, 127)
+#define UGA_YELLOW     UGA_RGB(255, 255, 0)
+#define UGA_NONE       UGA_ARGB(0, 0, 0, 0)
+
+#define UGA_COLOR_DEFAULT  UGA_GREEN
 
 static void screen_out_pixel16(int x, int y, uint32_t color)
 {
@@ -122,7 +141,7 @@ static void screen_out_pixel32(int x, int y, uint32_t color)
     *((unsigned int*)((uga.addr) + 4 * ((SCREEN_WIDTH) * y + x))) = (unsigned int)color;
 }
 
-static void uga_outchar(unsigned short x, unsigned short y, unsigned char ch) {
+static void uga_outchar(unsigned short x, unsigned short y, unsigned char ch, uint32_t color) {
     if (uga.enable) {
         if (uga.out_pixel == NULL)
             return;
@@ -136,7 +155,7 @@ static void uga_outchar(unsigned short x, unsigned short y, unsigned char ch) {
             fy *= UGA_FONT_W;
             for (; fx < fex; ++fx) {
                 if (uga.fonts[fi] >> (fex - fx) & 1) {
-                    uga.out_pixel(fx, fy, uga.fill);
+                    uga.out_pixel(fx, fy, color);
                 } else {
                     uga.out_pixel(fx, fy, uga.clear);
                 }
@@ -208,7 +227,7 @@ static void flush(device_extension_t *ext)
 {
     // 计算光标位置，并设置
 #ifdef KERN_VBE_MODE
-    uga_outchar(ext->x, ext->y, UGA_CUR_CODE);
+    uga_outchar(ext->x, ext->y, UGA_CUR_CODE, uga.fill);
 #endif /* KERN_VBE_MODE */
     set_cursor(ext->original_addr + ext->y * SCREEN_WIDTH + ext->x);
     set_video_start_addr(ext->original_addr);
@@ -226,7 +245,7 @@ static void console_clean(device_extension_t *ext)
 
     for (i = ext->screen_size * 2; i > 0; i -= 2) {
         *vram++ = '\0';             // 所有字符都置0
-        *vram++ = COLOR_DEFAULT;    // 颜色设置为黑白
+        *vram++ = VGA_COLOR_DEFAULT;    // 颜色设置为黑白
     }
     ext->x = ext->y = 0;
 
@@ -272,6 +291,112 @@ static void uag_scroll()
         }
     }
 }
+
+void uga_hardware_putchar(char ch)
+{
+    if ('0' < ch && ch <= '9') {
+        if (uga.dbg_esc_step == 5) {
+            char _ch = ch - '0';
+            switch (_ch)
+            {
+            case 1:
+                uga.dbg_ready_color = UGA_RED;
+                uga.dbg_esc_step++;
+                return;
+            case 2:
+                uga.dbg_ready_color = UGA_GREEN;
+                uga.dbg_esc_step++;
+                return;
+            case 3:
+                uga.dbg_ready_color = UGA_YELLOW;
+                uga.dbg_esc_step++;
+                return;
+            case 4:
+                uga.dbg_ready_color = UGA_BLUE;
+                uga.dbg_esc_step++;
+                return;
+            case 5:
+                uga.dbg_ready_color = UGA_LEAD;
+                uga.dbg_esc_step++;
+                return;
+            case 7:
+                uga.dbg_ready_color = UGA_WHITE;
+                uga.dbg_esc_step++;
+                return;
+            default:
+                break;
+            }
+        }
+    }
+    
+    switch(ch){
+        case '\e': // break start
+            uga.dbg_esc_step++;
+            break;
+        case '\r':
+            break;
+		case '\n':
+            uga_outchar(uga.dbg_x, uga.dbg_y, ' ', uga.dbg_color);
+            uga.dbg_x = 0;
+            uga.dbg_y++;
+			break;
+		case '\b':
+            if (uga.dbg_x >= 0 && uga.dbg_y >= 0) {
+                uga.dbg_x--;
+                if (uga.dbg_x < 0) {
+                    uga.dbg_x = SCREEN_WIDTH - 1;
+                    uga.dbg_y--;
+                    if (uga.dbg_y < 0)
+                        uga.dbg_y = 0;
+                }
+                uga_outchar(uga.dbg_x, uga.dbg_y, ' ', uga.dbg_color);
+            }
+			break;
+        case '[':
+            if (uga.dbg_esc_step == 1) {
+                uga.dbg_esc_step++;
+                break;
+            }
+        case '0':
+            if (uga.dbg_esc_step == 2) {
+                uga.dbg_esc_step++;
+                break;
+            }
+        case ';':
+            if (uga.dbg_esc_step == 3) {
+                uga.dbg_esc_step++;
+                break;
+            }
+        case 'm':
+            if (uga.dbg_esc_step == 3) {
+                uga.dbg_esc_step = 0;
+                uga.dbg_color = UGA_COLOR_DEFAULT;
+                break;
+            } else if (uga.dbg_esc_step == 6) {
+                uga.dbg_esc_step = 0;
+                uga.dbg_color = uga.dbg_ready_color;
+                break;
+            }
+        case '3':
+            if (uga.dbg_esc_step == 4) {
+                uga.dbg_esc_step++;
+                break;
+            }
+        default: 
+            uga_outchar(uga.dbg_x, uga.dbg_y, ch, uga.dbg_color);
+            uga.dbg_x++;
+            if (uga.dbg_x > SCREEN_WIDTH - 1) {
+                uga.dbg_x = 0;
+                uga.dbg_y++;
+            }
+			break;
+	}
+    if (uga.dbg_y > SCREEN_HEIGHT - 1) {
+        uag_scroll();
+        uga.dbg_y--;
+    }
+}
+
 #endif /* KERN_VBE_MODE */
 
 /**
@@ -305,7 +430,7 @@ static void console_scroll(device_extension_t *ext, int direction)
         // 将第一行文字填充为0
         for (i = 0; i < SCREEN_WIDTH * 2; i += 2) {
             vram[i] = '\0';
-            vram[i + 1] = COLOR_DEFAULT;
+            vram[i + 1] = VGA_COLOR_DEFAULT;
         }
     } else if (direction == SCREEN_DOWN) {
         /**
@@ -327,7 +452,7 @@ static void console_scroll(device_extension_t *ext, int direction)
         // 将最后一行文字填充为0
         for (i = SCREEN_WIDTH * 2 * 24; i < SCREEN_WIDTH * 2 * 25; i += 2) {
             vram[i] = '\0';
-            vram[i + 1] = COLOR_DEFAULT;
+            vram[i + 1] = VGA_COLOR_DEFAULT;
         }
         --ext->y;
     }
@@ -352,10 +477,10 @@ static void vga_outchar(device_extension_t *ext, unsigned char ch)
     case '\n':
         // 如果是回车，那还是要把回车写进去
         *vram++ = '\0';
-        *vram = COLOR_DEFAULT;
+        *vram = VGA_COLOR_DEFAULT;
 
 #ifdef KERN_VBE_MODE
-        uga_outchar(ext->x, ext->y, 0);
+        uga_outchar(ext->x, ext->y, 0, uga.fill);
 #endif /* #ifdef KERN_VBE_MODE */
 
         ext->x = 0;
@@ -364,7 +489,7 @@ static void vga_outchar(device_extension_t *ext, unsigned char ch)
     case '\b':
         if (ext->x >= 0 && ext->y >= 0) {
 #ifdef KERN_VBE_MODE
-            uga_outchar(ext->x, ext->y, 0);
+            uga_outchar(ext->x, ext->y, 0, uga.fill);
 #endif /* #ifdef KERN_VBE_MODE */
 
             ext->x--;
@@ -380,7 +505,7 @@ static void vga_outchar(device_extension_t *ext, unsigned char ch)
             }
 
             *(vram-2) = '\0';
-            *(vram-1) = COLOR_DEFAULT;
+            *(vram-1) = VGA_COLOR_DEFAULT;
         }
     break;
     case '\r':
@@ -398,7 +523,7 @@ static void vga_outchar(device_extension_t *ext, unsigned char ch)
         *vram = ext->color;
 
 #ifdef KERN_VBE_MODE
-        uga_outchar(ext->x, ext->y, ch);
+        uga_outchar(ext->x, ext->y, ch, uga.fill);
 #endif /* #ifdef KERN_VBE_MODE */
 
         ++ext->x;
@@ -626,8 +751,8 @@ static void device_be_notify(driver_object_t *driver, int tag, void *param) {
             return;
         }
 
-        uga.fill = CON_RGB(168, 168, 168);
-        uga.clear = CON_RGB(0, 0, 0);
+        uga.fill = UGA_RGB(168, 168, 168);
+        uga.clear = UGA_RGB(0, 0, 0);
         SCREEN_WIDTH = uga.x_sz / UGA_FONT_W;
         SCREEN_HEIGHT = uga.y_sz / UGA_FONT_H;
 
@@ -678,12 +803,17 @@ static iostatus_t console_enter(driver_object_t *driver)
         devext->original_addr = id * SCREEN_SIZE;
         
         /* 设置默认颜色 */
-        devext->color = COLOR_DEFAULT;
+        devext->color = VGA_COLOR_DEFAULT;
 
         spinlock_init(&devext->outlock);
 #ifdef KERN_VBE_MODE
         uga.addr = NULL;
         uga.enable = 0;
+        uga.dbg_x = 0;
+        uga.dbg_y = UGA_DBG_Y;
+        uga.dbg_esc_step = 0;
+        uga.dbg_color = UGA_COLOR_DEFAULT;
+        uga.dbg_ready_color = uga.dbg_color;
 #endif /* KERN_VBE_MODE */
 
         // 默认在左上角
