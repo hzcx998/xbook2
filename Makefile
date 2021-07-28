@@ -81,7 +81,7 @@ SETUP_BIN	= $(ARCH)/boot/myboot/setup.bin
 export BOOT_MODE ?= $(BOOT_GRUB2_MODE)
 
 # is efi mode? (y/n)
-EFI_BOOT_MODE ?= y
+EFI_BOOT_MODE ?= n
 # is qemu fat fs? (y/n)
 QEMU_FAT_FS ?= n
 
@@ -90,12 +90,15 @@ KERN_MODULE_NET	?= n
 export KERN_MODULE_NET
 
 # is livecd mode? (y/n)
-KERN_LIVECD_MODE ?= y
+KERN_LIVECD_MODE ?= n
 export KERN_LIVECD_MODE
 
 # is vbe mode? (y/n)
 KERN_VBE_MODE ?= y
 export KERN_VBE_MODE
+
+# qemu config sound? (y/n)
+QEMU_SOUND ?= n
 
 DUMP_FILE	?= $(KERNEL_ELF)
 DUMP_FLAGS	?= 
@@ -217,12 +220,13 @@ QEMU_ARGUMENT := -m 512m $(QEMU_KVM) \
 		-name "XBOOK Development Platform for x86" \
 		-rtc base=localtime \
 		-boot a \
-		-serial stdio \
-		-device sb16 \
+		-serial stdio
+
+ifeq ($(QEMU_SOUND),y)
+QEMU_ARGUMENT += -device sb16 \
 		-device AC97 \
 		-device intel-hda -device hda-duplex
-# 		-usbdevice mouse \
-# 		-usbdevice keyboard
+endif
 
 ifeq ($(KERN_LIVECD_MODE),n)
 QEMU_ARGUMENT += -drive id=disk0,file=$(HDA_IMG),format=raw,if=none \
