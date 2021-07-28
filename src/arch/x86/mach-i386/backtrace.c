@@ -1,4 +1,4 @@
-#include <arch/memory.h>
+#include <xbook/debug.h>
 
 int backtrace(void **buffer, int size)
 {
@@ -16,4 +16,17 @@ int backtrace(void **buffer, int size)
         n++;
     }
     return n;
+}
+
+void print_backtrace(void)
+{
+    void *buf[BACKTRACE_CNT] = {0};
+    int cnt = backtrace(buf, BACKTRACE_CNT);
+    dbgprint("[!] Call backtrace:\n");
+    int i;
+    for (i = 0; i < cnt; i++)
+    {
+        dbgprint("%d: call %p\n", i, buf[i]);
+    }
+    dbgprint("[!] Call backtrace done.\n");
 }

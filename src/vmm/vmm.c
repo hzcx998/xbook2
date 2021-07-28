@@ -153,8 +153,9 @@ int vmm_unmap_space(vmm_t *vmm)
     mem_space_t *space = (mem_space_t *)vmm->mem_space_head;
     while (space != NULL) {
         /* 堆栈和代码数据的映射和解除映射有所不同，需要单独处理 */
-        if ((space->flags & MEM_SPACE_MAP_STACK) || (space->flags & MEM_SPACE_MAP_HEAP)) {
-            page_unmap_addr(space->start, space->end - space->start);
+        if ((space->flags & MEM_SPACE_MAP_STACK)) {
+            /* FIXME: 在物理机上面执行地址取消映射就会崩溃 */
+            // page_unmap_addr(space->start, space->end - space->start, 0);
         } else {
             page_unmap_addr_safe(space->start, space->end - space->start, space->flags & MEM_SPACE_MAP_SHARED);
         }

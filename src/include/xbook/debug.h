@@ -40,4 +40,8 @@ void panic(const char *fmt, ...);
 void log_dump_value(unsigned long val);
 void log_dump_buffer(void *buffer, unsigned long len, char factor);
 
+#define BACKTRACE_CNT   10
+int backtrace(void **buffer, int size);
+void print_backtrace(void);
+
 #endif   /*_XBOOK_DEBUG_H*/

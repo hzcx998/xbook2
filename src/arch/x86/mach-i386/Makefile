@@ -5,6 +5,7 @@ endif
 SRC	+= entry.asm
 SRC	+= arch.c
 SRC	+= debug.c
+SRC	+= backtrace.c
 SRC	+= cpu/*.c cpu/*.asm
 SRC	+= hardware/*.c
 SRC	+= interrupt/*.c interrupt/*.asm

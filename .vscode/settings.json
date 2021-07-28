@@ -205,6 +205,7 @@
         "sockioif.h": "c",
         "if_arp.h": "c",
         "if_ether.h": "c",
-        "sizes.h": "c"
+        "sizes.h": "c",
+        "execinfo.h": "c"
     }
 }

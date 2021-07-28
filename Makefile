@@ -81,7 +81,7 @@ SETUP_BIN	= $(ARCH)/boot/myboot/setup.bin
 export BOOT_MODE ?= $(BOOT_GRUB2_MODE)
 
 # is efi mode? (y/n)
-EFI_BOOT_MODE ?= n
+EFI_BOOT_MODE ?= y
 # is qemu fat fs? (y/n)
 QEMU_FAT_FS ?= n
 
@@ -90,7 +90,7 @@ KERN_MODULE_NET	?= n
 export KERN_MODULE_NET
 
 # is livecd mode? (y/n)
-KERN_LIVECD_MODE ?= n
+KERN_LIVECD_MODE ?= y
 export KERN_LIVECD_MODE
 
 # is vbe mode? (y/n)

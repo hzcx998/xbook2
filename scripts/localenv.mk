@@ -1,6 +1,11 @@
 # env var
 
-ENV_CFLAGS	:= -march=i386 -fno-builtin -Wall -Wunused -fno-PIE -m32 -std=gnu99 -O3 -fno-stack-protector
+
+
+ENV_CFLAGS	:= -march=i386 -fno-builtin -Wall -Wunused -fno-PIE -m32 -std=gnu99 -fno-stack-protector
+ENV_CFLAGS += -O3 
+#ENV_CFLAGS += -O0 
+
 # kernel name & version
 ENV_CFLAGS	+= -DKERNEL_NAME=\"xbook2\" -DKERNEL_VERSION=\"0.1.9\"
 
