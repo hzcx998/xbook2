@@ -32,6 +32,8 @@ char *sh_environment[4] = {
     NULL
 };
 
+static void sh_strip_blank(char *cmd);
+
 int main(int argc, char *argv[])
 {
     /* 尝试解析单个命令参数 */
@@ -89,7 +91,11 @@ int main(int argc, char *argv[])
 		if(cmd_line[0] == 0){
 			continue;
 		}
-
+        /* 去掉左右两边的空格 */
+        sh_strip_blank(cmd_line);
+        if(cmd_line[0] == 0){
+			continue;
+		}
         /* 解析成参数 */
         argc = -1;
         argc = cmd_parse(cmd_line, cmd_argv, ' ');
@@ -126,6 +132,37 @@ void update_cwdcache()
 void print_prompt()
 {
 	printf("%s ", cwd_cache);
+}
+
+/*去除字符串右边空格*/ 
+static void strrtrim(char *str) 
+{ 
+    char *p = str + strlen(str) - 1; 
+    while (*p == ' ') {
+        *p = '\0'; 
+        p--; 
+    }
+}
+ 
+/*去除字符串左边空格*/ 
+static void strtrim(char *str) 
+{
+    char *p = str;    
+    while (*p == ' ') {
+        p++; 
+    }
+    while(*p != '\0') { 
+        *str = *p; 
+        str++; 
+        p++; 
+    }
+    *str =  '\0'; 
+}
+
+static void sh_strip_blank(char *cmd)
+{
+    strtrim(cmd);
+    strrtrim(cmd);
 }
 
 /**
