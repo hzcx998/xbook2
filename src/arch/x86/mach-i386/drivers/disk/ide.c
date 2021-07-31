@@ -1452,5 +1452,6 @@ static __init void ide_driver_entry(void)
         keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
-
+#ifndef CONFIG_LIVECD
 driver_initcall(ide_driver_entry);
+#endif

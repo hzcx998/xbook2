@@ -3,8 +3,11 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
-// #define _HAS_LOGIN
+#define _HAS_LOGIN
 // #define _HAS_NETSERV
+
+#define SHELL_PATH "/bin"
+#define SHELL_NAME "bash"
 
 int main(int argc, char *argv[])
 {
@@ -56,10 +59,10 @@ int main(int argc, char *argv[])
     setpgrp();
     tcsetpgrp(STDIN_FILENO, getpgrp());
     #ifdef _HAS_LOGIN
-    char *_argv[3] = {"-s", "/bin/sh", NULL};
+    char *_argv[3] = {"-s", SHELL_PATH "/" SHELL_NAME, NULL};
     exit(execv("/sbin/login", _argv));
     #else
-    exit(execv("/bin/sh", NULL));
+    exit(execv(SHELL_PATH "/" SHELL_NAME, NULL));
     #endif
     return 0;
 }

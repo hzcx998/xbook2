@@ -55,6 +55,7 @@ int main(int argc, char *argv[])
     char *shellpath = NULL;
     char pwdbuf[32 + 1] = {0};
     char namebuf[32 + 1] = {0};
+    printf("Notice: default name is 'root', password is '1234' :)\n");
     while ((p = argv[i])) {
         if (*p == '-' && (p+1)) {
             if (*(p+1) == 'u') { // -u
@@ -124,6 +125,7 @@ int main(int argc, char *argv[])
             while (!pwdbuf[0]) {    
                 printf("password: ");
                 readline(pwdbuf, 32);
+                printf("\n");
             }
             ioctl(STDIN_FILENO, TIOCSFLGS, &oldflgs);
             printf("\n");

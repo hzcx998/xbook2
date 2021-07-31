@@ -1,0 +1,7 @@
+This is an open source operating system kernel xbook2,
+its open source agreement is MIT, 
+you can use it to learn or as a daily hobby!
+Welcome to visit our official website: 
+www.book-os.org
+
+Just have fun! :)
