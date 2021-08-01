@@ -151,20 +151,20 @@ static uint64_t create_user_stack(bin_program_t *bin_program, Elf64_Ehdr *elf, E
     if ((long)filename == -1)
         return -1;
 
-    unsigned char k_rand_bytes[16];
+    char k_rand_bytes[16];
 	get_random_bytes(k_rand_bytes, sizeof(k_rand_bytes));
     uint64_t u_rand_bytes = bin_program_copy_nbytes(bin_program, k_rand_bytes, sizeof(k_rand_bytes));
     if ((long)u_rand_bytes == -1)
         return -1;
 
-    uint64_t u_elf_phdr = bin_program_copy_nbytes(bin_program, elf_phdr, elf->e_phentsize * elf->e_phnum);
+    uint64_t u_elf_phdr = bin_program_copy_nbytes(bin_program, (char *)elf_phdr, elf->e_phentsize * elf->e_phnum);
     if ((long)u_elf_phdr == -1)
         return -1;
 
 #define NEW_AUX_ENT(id, val)                                                   \
 do {                                                                         \
-    bin_program->ustack[index++] = id;                                         \
-    bin_program->ustack[index++] = val;                                        \
+    bin_program->ustack[index++] = (id);                                         \
+    bin_program->ustack[index++] = (uint64_t)(val);                                        \
 } while (0)
 
     dbgprint("AT_PHDR: %p, AT_PHENT: %d, AT_PHNUM: %d, AT_PAGESZ: %x, AT_ENTRY: %p\n",
