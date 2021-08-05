@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <types.h>
+#include <stddef.h>
 #include <netinet/in.h>
 
 #ifdef __cplusplus

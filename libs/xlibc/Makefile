@@ -2,8 +2,9 @@
 X_ASFLAGS	:= -I xlibc/include
 X_INCDIRS	:= xlibc/include
 
+
 SRC			:= arch/riscv64/*.S
-SRC			:= arch/riscv64/*.c
+SRC			+= arch/riscv64/*.c
 SRC			+= syslib/
 SRC			+= unistd/
 SRC			+= stdio/
@@ -14,9 +15,9 @@ SRC			+= ctype/
 SRC			+= malloc/
 SRC			+= environ/
 SRC			+= math/
+SRC			+= math/riscv64/*.S
 SRC			+= time/
-
-
+SRC			+= locale/
 
 # ====x86====
 #X_ASFLAGS	:= -f elf -I xlibc/include

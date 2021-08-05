@@ -39,7 +39,7 @@ endif
 endif 
 
 ifeq ($(ENV_LIBC),xlibc)
-X_LIBS		:= libxcrt.a libxlibc.a
+X_LIBS		:= libxcrt.a libxlibc.a libgcc.a 
 else ifeq ($(ENV_LIBC),tinylibc)
 X_LIBS		:= libtinylibc.a
 else ifeq ($(ENV_LIBC),musl)
@@ -113,6 +113,7 @@ MODULE      +=  mount
 MODULE      +=  mkfs
 MODULE      +=  unmount
 MODULE      +=  test_echo
+MODULE      +=  lua
 else ifeq ($(ENV_LIBC),tinylibc)
 MODULE      +=  sh
 MODULE      +=  echo

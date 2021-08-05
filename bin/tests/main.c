@@ -9,6 +9,7 @@ typedef struct {
 } testfunc_t;
 
 testfunc_t test_table[] = {
+    {"mem", mem_test},
     {"execve", execve_test},
     {"mount", mount_test},
     {"yiled", yield_test},

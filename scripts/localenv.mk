@@ -55,9 +55,9 @@ ifeq ($(ENV_ARCH), x86)
 	CFLAGS		+= -D__X86__
 	CFLAGS		+= -D__XLIBC__
 else ifeq ($(ENV_ARCH), riscv64)
-#ENV_LIBC	:= xlibc
+ENV_LIBC	:= xlibc
 #ENV_LIBC	:= tinylibc
-ENV_LIBC	:= musl
+#ENV_LIBC	:= musl
 
 	ENV_LD		:=  $(CROSS_COMPILE)ld 
 	ENV_AS		:= $(CROSS_COMPILE)gcc -x assembler-with-cpp
@@ -91,10 +91,10 @@ endif
 
 ENV_AFLAGS	+= $(MCFLAGS)
 
-ENV_CFLAGS	:=$(MCFLAGS)
+ENV_CFLAGS	:= $(MCFLAGS)
 ENV_CFLAGS	+= $(CFLAGS)
 ENV_CFLAGS	+= -Wall -Wunused 
 ENV_CFLAGS	+= -fno-builtin -fno-stack-protector -fno-strict-aliasing -nostdlib -nostdinc
 
 # kernel name & version
-ENV_CFLAGS	+= -DKERNEL_NAME=\"xbook2\" -DKERNEL_VERSION=\"0.1.9\"
+ENV_CFLAGS	+= -DKERNEL_NAME=\"xbook2\" -DKERNEL_VERSION=\"0.2.0\"

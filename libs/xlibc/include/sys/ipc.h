@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <types.h>
+#include <stddef.h>
 
 /* IPC local flags */
 #define IPC_CREAT   0x01        /* create a ipc */

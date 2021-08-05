@@ -101,5 +101,6 @@ int chdir_test(int argc, char* argv[]);
 int clone_test(int argc, char* argv[]);
 int fork_test(int argc, char* argv[]);
 int close_test(int argc, char* argv[]);
+int mem_test(int argc, char *argv[]);
 
 #endif // _TEST_H

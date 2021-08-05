@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <types.h>
+#include <stddef.h>
 #include <sys/time.h>
 
 struct tm {
