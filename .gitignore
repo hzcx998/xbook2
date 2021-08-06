@@ -133,4 +133,6 @@ bin/lua/lua
 
 !libs/musl/lib/*
 
+!libs/xlibc/arch/riscv64/libgcc.a
+
 # ====xbook2 kernel ignore end====

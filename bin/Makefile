@@ -24,7 +24,9 @@ X_LDFLAGS	:= $(ENV_LDFLAGS) $(ENV_USER_LD_SCRIPT)
 ifeq ($(ENV_LIBC),xlibc)
 X_INCDIRS	:= 	$(LIBS_DIR)/xlibc/include
 X_LIBDIRS	:= 	$(LIBS_DIR)/xcrt \
-				$(LIBS_DIR)/xlibc
+				$(LIBS_DIR)/xlibc \
+				$(LIBS_DIR)/xlibc/arch/riscv64
+				
 else ifeq ($(ENV_LIBC),tinylibc)
 X_INCDIRS	:= 	$(LIBS_DIR)/tinylibc/include
 X_LIBDIRS	:= 	$(LIBS_DIR)/tinylibc

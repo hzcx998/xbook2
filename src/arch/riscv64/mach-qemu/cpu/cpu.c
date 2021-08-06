@@ -29,6 +29,9 @@ void cpu_init()
     for (i = 0; i < CPU_NR_MAX; i++) {
         cpu_attached_list[i] = i;
     }
+
+    /* Enable FPU and accelerator if present */
+    sstatus_write(sstatus_read() | SSTATUS_FS | SSTATUS_XS);
 }
 
 /* TODO: make udelay better */

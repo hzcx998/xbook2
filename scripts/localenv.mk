@@ -8,9 +8,9 @@ ENV_REMOTE_TEST	:=no
 # 默认的CROSS_COMPILE和PLATFORM
 #CROSS_COMPILE 	?= 
 #PLATFORM		?=
-CROSS_COMPILE 	?= riscv-none-embed-
+#CROSS_COMPILE 	?= riscv-none-embed-
 #CROSS_COMPILE 	?= riscv64-linux-gnu-
-#CROSS_COMPILE 	?= riscv64-unknown-elf-
+CROSS_COMPILE 	?= riscv64-unknown-elf-
 PLATFORM		?= riscv64-qemu
 
 # 如果是远程测试，就需要强制使用对应的编译环境以及开发平台 
@@ -61,8 +61,9 @@ ENV_LIBC	:= xlibc
 
 	ENV_LD		:=  $(CROSS_COMPILE)ld 
 	ENV_AS		:= $(CROSS_COMPILE)gcc -x assembler-with-cpp
-#	MCFLAGS		:= -march=rv64imafdc -mabi=lp64d -mcmodel=medany
-	MCFLAGS		:= -march=rv64imafc -mabi=lp64f -mcmodel=medany
+#	MCFLAGS		:= -march=rv64ima -mabi=lp64 -mcmodel=medany
+	MCFLAGS		:= -march=rv64imafdc -mabi=lp64d -mcmodel=medany
+#	MCFLAGS		:= -march=rv64imaf -mabi=lp64f -mcmodel=medany
 
 	ENV_AFLAGS	:= -ffunction-sections -fdata-sections -ffreestanding -std=gnu99 
 	CFLAGS		+= -fno-omit-frame-pointer
@@ -90,11 +91,13 @@ endif
 endif 
 
 ENV_AFLAGS	+= $(MCFLAGS)
+#ENV_AFLAGS	+= -D__riscv_float_abi_soft
 
 ENV_CFLAGS	:= $(MCFLAGS)
 ENV_CFLAGS	+= $(CFLAGS)
 ENV_CFLAGS	+= -Wall -Wunused 
 ENV_CFLAGS	+= -fno-builtin -fno-stack-protector -fno-strict-aliasing -nostdlib -nostdinc
+#ENV_CFLAGS	+= -D__riscv_float_abi_soft
 
 # kernel name & version
 ENV_CFLAGS	+= -DKERNEL_NAME=\"xbook2\" -DKERNEL_VERSION=\"0.2.0\"

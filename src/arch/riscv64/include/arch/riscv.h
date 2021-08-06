@@ -54,6 +54,8 @@ static inline void mepc_write(uint64 x)
 #define SSTATUS_UPIE (1L << 4) // User Previous Interrupt Enable
 #define SSTATUS_SIE (1L << 1)  // Supervisor Interrupt Enable
 #define SSTATUS_UIE (1L << 0)  // User Interrupt Enable
+#define SSTATUS_FS (1L << 13)  // Float support
+#define SSTATUS_XS (1L << 14)  // Accelerator support
 
 static inline uint64 sstatus_read()
 {

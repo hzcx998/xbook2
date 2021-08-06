@@ -10,10 +10,13 @@
 
 extern char trampoline[], uservec[], userret[];
 
+extern void task_register_init();
+
 static void kernel_thread_entry()
 {
     task_t *cur = task_current;
     interrupt_enable();  /* 在启动前需要打开中断，避免启动后不能产生时钟中断调度 */
+    task_register_init();
     cur->kthread_entry(cur->kthread_arg);
     // 如果函数返回了，那么就需要调用线程退出
     kern_thread_exit(0);
@@ -167,9 +170,11 @@ do {                                                                         \
     bin_program->ustack[index++] = (uint64_t)(val);                                        \
 } while (0)
 
+    /*
     dbgprint("AT_PHDR: %p, AT_PHENT: %d, AT_PHNUM: %d, AT_PAGESZ: %x, AT_ENTRY: %p\n",
         elf->e_phoff, sizeof(Elf64_Phdr), elf->e_phnum, 0x1000, elf->e_entry);
-    
+    */
+
     NEW_AUX_ENT(AT_HWCAP, ELF_HWCAP);
 	NEW_AUX_ENT(AT_PAGESZ, PAGE_SIZE);
 	NEW_AUX_ENT(AT_CLKTCK, HZ);

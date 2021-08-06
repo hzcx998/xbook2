@@ -52,7 +52,7 @@ ifeq ($(OS),Windows_NT)
 else
 	SUDO		:= sudo
 # use fatfs tools for making image
-	USE_FATFS	:= no
+	USE_FATFS	:= yes
 endif
 
 ifeq ($(ENV_ARCH),x86) # x86-i386
@@ -347,7 +347,7 @@ else ifeq ($(ENV_ARCH),riscv64)
 ifndef CPUS
 CPUS := 2
 endif # CPUS
-QEMU_ARGUMENT	+= 	-m 6M
+QEMU_ARGUMENT	+= 	-m 32M
 QEMU_ARGUMENT	+= 	-machine virt
 QEMU_ARGUMENT	+= 	-kernel $(KERNEL_ELF)
 QEMU_ARGUMENT	+= 	-nographic

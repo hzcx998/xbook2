@@ -4,7 +4,7 @@
 #include <xbook/schedule.h>
 #include <errno.h>
 
-#define DEBUG_MEM_BRK
+// #define DEBUG_MEM_BRK
 
 void mem_space_dump(vmm_t *vmm)
 {

@@ -1,6 +1,6 @@
 # ====riscv64====
-X_ASFLAGS	:= -I xlibc/include
-X_INCDIRS	:= xlibc/include
+X_ASFLAGS	+= -I xlibc/include
+X_INCDIRS	+= xlibc/include
 
 
 SRC			:= arch/riscv64/*.S
