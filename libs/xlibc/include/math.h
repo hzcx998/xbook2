@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
+#include <stddef.h>
 #include <float.h>
 #include <endian.h>
 #include <limits.h>

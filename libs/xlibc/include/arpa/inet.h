@@ -3,13 +3,22 @@
 #define _XLIBC_ARPA_INET_H
 
 #include <stdint.h>
-#include <types.h>
+#include <sys/types.h>
 #include <stddef.h>
 #include <netinet/in.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef signed char				s8_t;
+typedef unsigned char			u8_t;
+typedef signed short			s16_t;
+typedef unsigned short			u16_t;
+typedef signed int				s32_t;
+typedef unsigned int			u32_t;
+typedef signed long long		s64_t;
+typedef unsigned long long		u64_t;
 
 /** For compatibility with BSD code */
 struct in_addr {

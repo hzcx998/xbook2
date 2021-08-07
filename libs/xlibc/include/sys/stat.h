@@ -7,7 +7,7 @@ extern "C" {
 
 #include <stddef.h>
 #include <stdint.h>
-#include <types.h>
+#include <sys/types.h>
 /*
  * st_mode flags
  */
@@ -58,18 +58,18 @@ typedef struct stat {
 } stat_t;
 
 struct kstat {
-        uint64 st_dev;
-        uint64 st_ino;
+        uint64_t st_dev;
+        uint64_t st_ino;
         mode_t st_mode;
-        uint32 st_nlink;
-        uint32 st_uid;
-        uint32 st_gid;
-        uint64 st_rdev;
+        uint32_t st_nlink;
+        uint32_t st_uid;
+        uint32_t st_gid;
+        uint64_t st_rdev;
         unsigned long __pad;
         off_t st_size;
-        uint32 st_blksize;
+        uint32_t st_blksize;
         int __pad2;
-        uint64 st_blocks;
+        uint64_t st_blocks;
         long st_atime_sec;
         long st_atime_nsec;
         long st_mtime_sec;

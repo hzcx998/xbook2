@@ -5,13 +5,13 @@
 extern "C" {
 #endif
 
-#include <types.h>
+#include <sys/types.h>
 #include <string.h>
 #include <math.h>
 
-static inline __attribute__((always_inline)) int fls64(u64_t x)
+static inline __attribute__((always_inline)) int fls64(uint64_t x)
 {
-	u32_t h = x >> 32;
+	uint32_t h = x >> 32;
 	if (h)
 		return fls(h) + 32;
 	return fls(x);
@@ -24,12 +24,12 @@ static inline __attribute__((always_inline)) unsigned fls_long(unsigned long l)
 	return fls64(l);
 }
 
-static inline __attribute__((const)) int __ilog2_u32(u32_t n)
+static inline __attribute__((const)) int __ilog2_u32(uint32_t n)
 {
 	return fls(n) - 1;
 }
 
-static inline __attribute__((const)) int __ilog2_u64(u64_t n)
+static inline __attribute__((const)) int __ilog2_u64(uint64_t n)
 {
 	return fls64(n) - 1;
 }

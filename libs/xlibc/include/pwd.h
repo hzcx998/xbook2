@@ -1,7 +1,7 @@
 #ifndef _PWD_H
 #define _PWD_H
 
-#include <types.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {

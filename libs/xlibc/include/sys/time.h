@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include "walltime.h"
-#include <types.h>
+#include <sys/types.h>
 
 #define CLOCK_REALTIME            0 /*系统统当前时间，从1970年1.1日算起*/
 #define CLOCK_MONOTONIC           1 /*系统的启动时间，不能被设置*/

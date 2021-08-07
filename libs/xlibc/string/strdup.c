@@ -2,7 +2,7 @@
  * libc/string/strdup.c
  */
 
-#include <types.h>
+#include <sys/types.h>
 #include <stddef.h>
 #include <malloc.h>
 #include <string.h>

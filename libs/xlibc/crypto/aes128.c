@@ -2,7 +2,7 @@
  * libc/crypto/aes128.c
  */
 
-#include <types.h>
+#include <sys/types.h>
 #include <stdint.h>
 #include <string.h>
 #include <aes128.h>

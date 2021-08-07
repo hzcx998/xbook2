@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <types.h>
+#include <sys/types.h>
 
 #define MAP_FILE 0
 #define MAP_FIXED       0x10       /* 映射固定位置 */

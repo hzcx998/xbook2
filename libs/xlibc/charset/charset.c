@@ -2,7 +2,7 @@
  * libc/charset/charset.c
  */
 
-#include <types.h>
+#include <sys/types.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>

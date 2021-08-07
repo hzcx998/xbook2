@@ -2,7 +2,7 @@
  * libc/string/memchr.c
  */
 
-#include <types.h>
+#include <sys/types.h>
 #include <stddef.h>
 #include <string.h>
 

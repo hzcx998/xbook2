@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <types.h>
+#include <sys/types.h>
 #include <stddef.h>
 #include <sys/time.h>
 

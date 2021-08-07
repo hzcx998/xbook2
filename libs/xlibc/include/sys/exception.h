@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <types.h>
+#include <sys/types.h>
 #include <stdint.h>
 
 enum exception_code {

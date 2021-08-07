@@ -5,27 +5,27 @@
 extern "C" {
 #endif
 
-#include <types.h>
+#include <sys/types.h>
 #include <stdint.h>
 #include <stddef.h>
 
 char* itoa(char ** ps, int val, int base);
 char *itoa16_align(char * str, int num);
 
-void *memset(void* src, uint8_t value, uint32_t size);
-void *memcpy(void* _dst, const void* _src, uint32_t size);
+void *memset(void* src, unsigned char value, size_t size);
+void *memcpy(void* _dst, const void* _src, size_t size);
 int memcmp(const void * s1, const void *s2, int n);
-void *memset16(void* src, uint16_t value, uint32_t size);
-void *memset32(void* src, uint32_t value, uint32_t size);
-void* memmove(void* dst,const void* src,uint32_t count);
+void *memset16(void* src, unsigned short value, size_t size);
+void *memset32(void* src, unsigned int value, size_t size);
+void* memmove(void* dst,const void* src, size_t count);
 void * memchr(const void * s, int c, size_t n);
 
 #define bzero(str, n) memset(str, 0, n) 
 #define bcopy(s, d, n) ((void) memcpy ((d), (s), (n)))
 
 char* strcpy(char* _dst, const char* _src);
-uint32_t strlen(const char* str);
-int8_t strcmp (const char *a, const char *b); 
+int strlen(const char* str);
+int strcmp (const char *a, const char *b); 
 char *strchr(const char *s,int c);
 char* strrchr(const char* str, int c);
 char* strcat(char* strDest , const char* strSrc);

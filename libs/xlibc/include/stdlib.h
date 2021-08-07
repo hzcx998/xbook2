@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include "stddef.h"
-#include "types.h"
+#include <sys/types.h>
 #include "malloc.h"
 #include "exit.h"
 #include "stdint.h"

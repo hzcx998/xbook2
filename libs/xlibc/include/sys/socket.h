@@ -1,7 +1,7 @@
 #ifndef _SYS_SOCKET_H
 #define _SYS_SOCKET_H
 
-#include <types.h>
+#include <sys/types.h>
 #include <stdint.h>
 #include <arpa/inet.h>
 #include <arpa/ip_addr.h>

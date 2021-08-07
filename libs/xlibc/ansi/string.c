@@ -34,9 +34,9 @@ char* itoa(char ** ps, int val, int base)
 	return *ps;
 }
 
-void *memset(void* src, uint8_t value, uint32_t size) 
+void *memset(void* src, unsigned char value, size_t size) 
 {
-	uint8_t* s = (uint8_t*)src;
+	unsigned char* s = (unsigned char*)src;
 	while (size > 0){
 		*s++ = value;
 		--size;
@@ -44,28 +44,28 @@ void *memset(void* src, uint8_t value, uint32_t size)
 	return src;
 }
 
-void *memset16(void* src, uint16_t value, uint32_t size) 
+void *memset16(void* src, unsigned short value, size_t size) 
 {
-	uint16_t* s = (uint16_t*)src;
+	unsigned short* s = (unsigned short*)src;
 	while (size-- > 0){
 		*s++ = value;
 	}
 	return src;
 }
 
-void *memset32(void* src, uint32_t value, uint32_t size) 
+void *memset32(void* src, unsigned int value, size_t size) 
 {
-	uint32_t* s = (uint32_t*)src;
+	unsigned int* s = (unsigned int*)src;
 	while (size-- > 0){
 		*s++ = value;
 	}
 	return src;
 }
 
-void *memcpy(void* _dst, const void* _src, uint32_t size) {
+void *memcpy(void* _dst, const void* _src, size_t size) {
  
-   uint8_t* dst = _dst;
-   const uint8_t* src = _src;
+   unsigned char* dst = _dst;
+   const unsigned char* src = _src;
    while (size-- > 0)
       *dst++ = *src++;
     return _dst;
@@ -86,7 +86,7 @@ char* strncpy(char* _dst, const char* _src, int n)
    return r;
 }
 
-uint32_t strlen(const char* str) {
+int strlen(const char* str) {
     if (!str)
         return 0;
    const char* p = str;
@@ -94,7 +94,7 @@ uint32_t strlen(const char* str) {
    return (p - str - 1);
 }
 
-int8_t strcmp (const char* a, const char* b) {
+int strcmp (const char* a, const char* b) {
   
    while (*a != 0 && *a == *b) {
       a++;
@@ -200,31 +200,6 @@ char *strchr(const char *s, int c)
         s++;
     }
     return NULL;
-}
-
-void* memmove(void* dst,const void* src,uint32_t count)
-{
-    char* tmpdst = (char*)dst;
-    char* tmpsrc = (char*)src;
-
-    if (tmpdst <= tmpsrc || tmpdst >= tmpsrc + count)
-    {
-        while(count--)
-        {
-            *tmpdst++ = *tmpsrc++; 
-        }
-    }
-    else
-    {
-        tmpdst = tmpdst + count - 1;
-        tmpsrc = tmpsrc + count - 1;
-        while(count--)
-        {
-            *tmpdst-- = *tmpsrc--;
-        }
-    }
-
-    return dst; 
 }
 
 char *itoa16_align(char * str, int num)
@@ -340,6 +315,27 @@ const char *strpbrk(const char *str1, const char *str2)
 return NULL;
 }
 
-/*
- *本文件大部分都是从网上搜索到的代码，如有侵权，请联系我。
- */
+void* memmove(void* dst,const void* src, size_t count)
+{
+    char* tmpdst = (char*)dst;
+    char* tmpsrc = (char*)src;
+
+    if (tmpdst <= tmpsrc || tmpdst >= tmpsrc + count)
+    {
+        while(count--)
+        {
+            *tmpdst++ = *tmpsrc++; 
+        }
+    }
+    else
+    {
+        tmpdst = tmpdst + count - 1;
+        tmpsrc = tmpsrc + count - 1;
+        while(count--)
+        {
+            *tmpdst-- = *tmpsrc--;
+        }
+    }
+
+    return dst; 
+}

@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <types.h>
+#include <sys/types.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <sizes.h>

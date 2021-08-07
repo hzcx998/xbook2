@@ -2,7 +2,7 @@
  * libc/string/strcasecmp.c
  */
 
-#include <types.h>
+#include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
 
