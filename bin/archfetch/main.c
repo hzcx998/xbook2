@@ -8,7 +8,7 @@
 
 #define CPU_DEV "/dev/cpu0"
 
-void print_logo(char *);
+void print_logo(char **logo);
 void print_uname();
 void print_cpuinfo();
 void print_mem();
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void print_logo(char *logo)
+void print_logo(char **logo)
 {
     int logo_length = sizeof(xbook2_logo) / sizeof(xbook2_logo[0]); // strlen(xbook2_logo)
     int i;

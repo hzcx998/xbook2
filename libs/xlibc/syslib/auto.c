@@ -7,6 +7,10 @@ char **_environ;
 
 /* 退出之前需要执行的回调函数 */
 extern void __atexit_callback();
+extern void __atexit_init();
+extern void __stdio_init();
+extern void __malloc_init();
+extern void __brk_init();
 
 /**
  * _enter_preload - 进入预先加载
@@ -19,8 +23,13 @@ void _enter_preload(int argc, char *const argv[], char *const envp[])
 {
     /* 设置environ全局变量 */
     _environ = (char **)envp;
-    /* 设置C语言的环境变量 */
     
+    __atexit_init();
+
+    __stdio_init();
+
+    __malloc_init();
+    __brk_init();
 }
 
 /**

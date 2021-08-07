@@ -66,4 +66,5 @@ int pipe_test2(int argc, char *argv[])
 	exit(0);
     }
     TEST_END(__func__);
+    return 0;
 }

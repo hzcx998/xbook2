@@ -218,32 +218,32 @@ static inline long __syscall6(long n, long a, long b, long c, long d, long e, lo
 
 /* 进行宏定义 */
 #define syscall0(type, num) \
-        (type) __syscall0((unsigned long ) num)
+        (type) __syscall0((long ) num)
 
 #define syscall1(type, num, arg0) \
-        (type) __syscall1((unsigned long ) (num), (unsigned long ) arg0)
+        (type) __syscall1((long ) (num), (long ) arg0)
 
 #define syscall2(type, num, arg0, arg1) \
-        (type) __syscall2((unsigned long ) (num), (unsigned long ) arg0,\
-        (unsigned long ) arg1)
+        (type) __syscall2((long ) (num), (long ) arg0,\
+        (long ) arg1)
 
 #define syscall3(type, num, arg0, arg1, arg2) \
-        (type) __syscall3((unsigned long ) (num), (unsigned long ) arg0,\
-        (unsigned long ) arg1, (unsigned long ) arg2)
+        (type) __syscall3((long ) (num), (long ) arg0,\
+        (long ) arg1, (long ) arg2)
 
 #define syscall4(type, num, arg0, arg1, arg2, arg3) \
-        (type) __syscall4((unsigned long ) (num), (unsigned long ) arg0,\
-        (unsigned long ) arg1, (unsigned long ) arg2, (unsigned long ) arg3)
+        (type) __syscall4((long ) (num), (long ) arg0,\
+        (long ) arg1, (long ) arg2, (long ) arg3)
 
 #define syscall5(type, num, arg0, arg1, arg2, arg3, arg4) \
-        (type) __syscall5((unsigned long ) (num), (unsigned long ) arg0,\
-        (unsigned long ) arg1, (unsigned long ) arg2, (unsigned long ) arg3,\
-        (unsigned long ) arg4)
+        (type) __syscall5((long ) (num), (long ) arg0,\
+        (long ) arg1, (long ) arg2, (long ) arg3,\
+        (long ) arg4)
 
 #define syscall6(type, num, arg0, arg1, arg2, arg3, arg4, arg5) \
-        (type) __syscall6((unsigned long ) (num), (unsigned long ) arg0,\
-        (unsigned long ) arg1, (unsigned long ) arg2, (unsigned long ) arg3,\
-        (unsigned long ) arg4, (unsigned long ) arg5)
+        (type) __syscall6((long ) (num), (long ) arg0,\
+        (long ) arg1, (long ) arg2, (long ) arg3,\
+        (long ) arg4, (long ) arg5)
 
 #ifdef __cplusplus
 }

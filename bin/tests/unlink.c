@@ -31,6 +31,7 @@ static int test_unlink()
     // It's Ok if you don't delete the inode and data blocks.
 
     TEST_END(__func__);
+    return 0;
 }
 
 int unlink_test(int argc, char* argv[])

@@ -52,4 +52,5 @@ int sleep_test2(int argc, char *argv[])
 		printf("sleep error.\n");
 	}
 	TEST_END(__func__);
+    return 0;
 }

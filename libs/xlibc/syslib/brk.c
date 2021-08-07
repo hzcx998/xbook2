@@ -8,6 +8,11 @@
 /* This must be initialized data because commons can't have aliases.  */
 static void *__curbrk = NULL;
 
+void __brk_init()
+{
+	__curbrk = NULL;
+}
+
 /**
  * __brk - 设置断点值
  * @addr: 设置的地址
@@ -19,7 +24,7 @@ int __brk(void *addr)
   	void *newbrk;
 
 	/* 保存新的brk值 */
-	__curbrk = newbrk = (void *) brk(addr);
+	__curbrk = newbrk = (void *)((int *)brk(addr));
 	
     //printf("__brk: %x\n", __curbrk);
 	/* 检测执行后的结果 */
@@ -60,9 +65,9 @@ void *sbrk(int increment)
 
 	/* If brk not right or __brk failed, return -1. */
   	if ((increment > 0 ?
-    	((uint32_t) oldbrk + (uint32_t) increment < (uint32_t) oldbrk) :
-       	((int32_t)oldbrk < -((int32_t)increment))) ||
-      	__brk ((void *)((int32_t)oldbrk + (int32_t)increment)) < 0)
+    	((size_t) oldbrk + (size_t) increment < (size_t) oldbrk) :
+       	((ssize_t)oldbrk < -((ssize_t)increment))) ||
+      	__brk ((void *)((ssize_t)oldbrk + (ssize_t)increment)) < 0)
     	return (void *) -1;
 	
 	// printf("__sbrk: %x\n", oldbrk);

@@ -10,6 +10,13 @@ static FILE * __stdin = NULL;
 static FILE * __stdout = NULL;
 static FILE * __stderr = NULL;
 
+void __stdio_init()
+{
+	__stdin = NULL;
+	__stdout = NULL;
+	__stderr = NULL;
+}
+
 static ssize_t __tty_stdin_read(FILE * f, unsigned char * buf, size_t size)
 {
 	return read(0, (void *) buf, size);

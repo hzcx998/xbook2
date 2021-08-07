@@ -1,12 +1,6 @@
 #include "test.h"
 
-struct tms              
-{                     
-	long tms_utime;  
-	long tms_stime;  
-	long tms_cutime; 
-	long tms_cstime; 
-};
+#include <sys/times.h>
 
 struct tms mytimes;
 

@@ -2,21 +2,13 @@
 #define _RISCV64_FPU_H
 
 #include <string.h>
+#include <xbook/debug.h>
 #include "riscv.h"
 
+#define FLOAT_REGISTER_NR   32
+
 typedef struct  {
-    double fs0;
-    double fs1;
-    double fs2;
-    double fs3;
-    double fs4;
-    double fs5;
-    double fs6;
-    double fs7;
-    double fs8;
-    double fs9;
-    double fs10;
-    double fs11;
+    double fs[FLOAT_REGISTER_NR];
 } fpu_storage_t;
 
 typedef struct  {

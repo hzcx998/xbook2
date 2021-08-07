@@ -60,6 +60,13 @@ extern int __brk(void *addr);
  */
 static void *_bottom, *_top, *_empty;
 
+void __malloc_init()
+{
+	_bottom = NULL;
+	_top = NULL;
+	_empty = NULL;
+}
+
 static int grow(size_t len)
 {
   register char *p;

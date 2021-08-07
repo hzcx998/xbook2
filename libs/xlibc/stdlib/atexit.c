@@ -37,3 +37,11 @@ void __atexit_callback()
         }
     }
 }
+
+void __atexit_init()
+{
+    int i;
+    for (i = 0; i < __ATEXIT_FUNC_NR; i++) {
+        __at_exit_func_table[i] = NULL;
+    }
+}

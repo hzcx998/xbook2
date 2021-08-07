@@ -6,7 +6,7 @@ int getdents_test(int argc, char* argv[])
     TEST_START(__func__);
     int fd, nread;
     struct linux_dirent64 *dirp64;
-    dirp64 = buf;
+    dirp64 = (struct linux_dirent64 *)buf;
     //fd = open(".", O_DIRECTORY);
     fd = open(".", O_RDONLY);
     printf("open fd:%d\n", fd);
@@ -48,7 +48,7 @@ int getdents_test2(int argc, char* argv[])
         handle_error("open");
 
     for (;;) {
-        nread = getdents(fd, buf, BUF_SIZE);
+        nread = getdents(fd, (struct linux_dirent64 *)buf, BUF_SIZE);
         if (nread == -1)
             handle_error("getdents");
 
@@ -75,4 +75,5 @@ int getdents_test2(int argc, char* argv[])
     }
 
     exit(EXIT_SUCCESS);
+    return 0;
 }
