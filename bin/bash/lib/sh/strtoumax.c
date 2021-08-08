@@ -59,6 +59,7 @@ extern unsigned long long strtoull PARAMS((const char *, char **, int));
 #undef strtoumax
 #endif
 
+#if !defined(HAVE_STRTOIMAX)
 uintmax_t
 strtoumax (ptr, endptr, base)
      const char *ptr;
@@ -78,6 +79,7 @@ strtoumax (ptr, endptr, base)
 
   return (strtoul (ptr, endptr, base));
 }
+#endif
 
 #ifdef TESTING
 # include <stdio.h>

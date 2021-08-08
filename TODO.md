@@ -214,3 +214,8 @@
 * 测试mmap系统调用功能。
 # 2021年7月26
 * 即使aux能用后，还是不能用malloc。根据malloc调用回调相关内容，来发现bug。
+# 2021年8月9
+* lua pass
+* lmbench no pass
+* busybox no pass
+* bash no pass

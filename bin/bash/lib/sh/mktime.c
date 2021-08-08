@@ -167,6 +167,7 @@ ydhms_tm_diff (year, yday, hour, min, sec, tp)
 	  + (sec - tp->tm_sec));
 }
 
+#if !defined(HAVE_STRTOIMAX)
 
 static time_t localtime_offset;
 
@@ -184,6 +185,7 @@ mktime (tp)
 
   return __mktime_internal (tp, my_localtime_r, &localtime_offset);
 }
+#endif
 
 /* Convert *TP to a time_t value, inverting
    the monotonic and mostly-unit-linear conversion function CONVERT.

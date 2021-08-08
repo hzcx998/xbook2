@@ -10,3 +10,8 @@ struct environ_t __xenviron = {
 	.prev = &__xenviron,
 	.next = &__xenviron,
 };
+
+void __environ_init()
+{
+
+}

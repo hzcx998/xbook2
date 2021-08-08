@@ -23,6 +23,7 @@ SRC			+= select/
 SRC			+= passwd/
 SRC			+= regex/
 SRC			+= network/
+SRC			+= termios/
 
 # ====x86====
 #X_ASFLAGS	:= -f elf -I xlibc/include

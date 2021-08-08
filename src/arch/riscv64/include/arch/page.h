@@ -103,5 +103,6 @@ int page_map_addr_safe2(pgdir_t pgdir, unsigned long start, unsigned long len, u
 
 int page_copy_out(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len);
 int page_copy_in(pgdir_t pgdir, char *dst, uint64_t srcva, uint64_t len);
+int page_set(void *pgdir, uint64_t dstva, unsigned char val, uint64_t len);
 
 #endif  /* _RISCV64_PAGE_H */

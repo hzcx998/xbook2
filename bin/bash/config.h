@@ -582,7 +582,7 @@
 /* #undef HAVE_ARC4RANDOM */
 
 /* Define if you have the asprintf function.  */
-/*#define HAVE_ASPRINTF 1 */
+#define HAVE_ASPRINTF 1
 
 /* Define if you have the bcopy function.  */
 /* #define HAVE_BCOPY 1 */
@@ -852,7 +852,7 @@
 #define HAVE_SNPRINTF 1
 
 /* Define if you have the strcasecmp function.  */
-/* #define HAVE_STRCASECMP 1 */
+#define HAVE_STRCASECMP 1
 
 /* Define if you have the strcasestr function.  */
 // #define HAVE_STRCASESTR 1

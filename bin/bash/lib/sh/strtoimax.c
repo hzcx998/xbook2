@@ -59,6 +59,7 @@ extern long long strtoll PARAMS((const char *, char **, int));
 #undef strtoimax
 #endif
 
+#if !defined(HAVE_STRTOIMAX)
 intmax_t
 strtoimax (ptr, endptr, base)
      const char *ptr;
@@ -78,6 +79,7 @@ strtoimax (ptr, endptr, base)
 
   return (strtol (ptr, endptr, base));
 }
+#endif 
 
 #ifdef TESTING
 # include <stdio.h>

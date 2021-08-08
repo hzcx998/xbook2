@@ -36,7 +36,6 @@ size_t strspn(const char *s, const char *accept);
 const char *strpbrk(const char *str1, const char *str2);
 int strcoll(const char *str1, const char *str2);
 char * strdup(const char * s);
-int strcasecmp(const char * s1, const char * s2);
 
 char *strchrnul(const char *, int);
 

@@ -4,7 +4,7 @@
 
 #include <sys/types.h>
 #include <ctype.h>
-#include <string.h>
+#include <strings.h>
 
 /*
  * Compare two strings ignoring case

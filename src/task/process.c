@@ -279,11 +279,10 @@ int proc_load_image64_ext(vmm_t *vmm, Elf64_Ehdr *elf_header, int fd)
             }
             /* 如果内存大小比文件大小大，就要清0 */
             if (prog_header.p_memsz > prog_header.p_filesz) {
-                /* TODO: 将bss段置0 */
-                #if 0
-                memset((void *)(unsigned long)(prog_header.p_vaddr + prog_header.p_filesz), 0,
-                    prog_header.p_memsz - prog_header.p_filesz);
-                #endif
+                /* 将bss段置0 */
+                uint64_t bss_start = (uint64_t )(prog_header.p_vaddr + prog_header.p_filesz);
+                uint64_t bss_len = prog_header.p_memsz - prog_header.p_filesz;
+                page_set(vmm->page_storage, bss_start, 0, bss_len);
             }
             prog_end = prog_header.p_vaddr + prog_header.p_memsz;
             

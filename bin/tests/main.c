@@ -54,6 +54,7 @@ testfunc_t test_table[] = {
     //{"pthread", pthread_test},
     {"file", file_test},
     {"file2", file_test2},
+    {"file3", file_test3},
     {"perm", perm_test},
     /*{"socket", socket_test},
     {"socket2", socket_test2},

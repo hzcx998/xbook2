@@ -11,6 +11,7 @@ extern void __atexit_init();
 extern void __stdio_init();
 extern void __malloc_init();
 extern void __brk_init();
+extern void __environ_init();
 
 /**
  * _enter_preload - 进入预先加载
@@ -30,6 +31,7 @@ void _enter_preload(int argc, char *const argv[], char *const envp[])
 
     __malloc_init();
     __brk_init();
+    __environ_init();
 }
 
 /**

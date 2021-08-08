@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#if !defined(HAVE_STRDUP)
 /* Duplicate S, returning an identical malloc'd string.  */
 char *
 strdup (s)
@@ -40,3 +41,4 @@ strdup (s)
   memcpy (new, s, len);
   return ((char *)new);
 }
+#endif

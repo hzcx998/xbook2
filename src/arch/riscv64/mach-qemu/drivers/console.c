@@ -153,10 +153,25 @@ iostatus_t console_write(device_object_t *device, io_request_t *ioreq)
 iostatus_t console_devctl(device_object_t *device, io_request_t *ioreq)
 {
     unsigned int ctlcode = ioreq->parame.devctl.code;
-    //unsigned long arg = ioreq->parame.devctl.arg;
+    unsigned long arg = ioreq->parame.devctl.arg;
     iostatus_t status = IO_SUCCESS;
     int infomation = 0;
     switch (ctlcode) {
+    case TIOCNAME:
+        {
+            char devname[24] = {0};
+            sprintf(devname, "/dev/%s", device->name.text);  
+            if (mem_copy_to_user((char *)arg, devname, strlen(devname) + 1) < 0)
+                status = IO_FAILED;
+        }
+        break;
+    case TIOCISTTY:
+        {
+            unsigned long istty = 1;
+            if (mem_copy_to_user((unsigned long *)arg, &istty, sizeof(unsigned long)) < 0)
+                status = IO_FAILED;
+        }
+        break;
     default:
         status = IO_FAILED;
         break;

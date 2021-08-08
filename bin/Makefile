@@ -116,6 +116,8 @@ MODULE      +=  mkfs
 MODULE      +=  unmount
 MODULE      +=  test_echo
 MODULE      +=  lua
+MODULE      +=  env
+MODULE      +=  bash
 else ifeq ($(ENV_LIBC),tinylibc)
 MODULE      +=  sh
 MODULE      +=  echo

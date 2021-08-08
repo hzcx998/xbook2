@@ -44,13 +44,19 @@ int mem_copy_from_user(void *dest, void *src, unsigned long nbytes)
 
 int mem_copy_to_user(void *dest, void *src, unsigned long nbytes)
 {
-    if (safety_check_range(dest, nbytes) < 0)
+    if (safety_check_range(dest, nbytes) < 0) {
+        errprint("range\n");    
         return -1;
-    if (!page_writable((unsigned long) dest, nbytes))
-        return -1;  
+    }
+    if (!page_writable((unsigned long) dest, nbytes)) {
+        errprint("write\n");    
+        return -1;          
+    }
     if (dest && src) {
-        if (do_copy_to_user(dest, src, nbytes) < 0)
+        if (do_copy_to_user(dest, src, nbytes) < 0) {
+            errprint("do copy: dest=%p src=%p size=%x\n", dest, src, nbytes);        
             return -1;
+        }
     }
     return 0;
 }

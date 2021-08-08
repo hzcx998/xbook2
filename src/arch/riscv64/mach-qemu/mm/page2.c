@@ -198,6 +198,26 @@ page_copy_out(pgdir_t pgdir, uint64_t dstva, char *src, uint64_t len)
   return 0;
 }
 
+int page_set(void *pgdir, uint64_t dstva, unsigned char val, uint64_t len)
+{
+  uint64_t n, va0, *pa0;
+
+  while(len > 0){
+    va0 = PAGE_ROUNDDOWN(dstva);
+    pa0 = user_walk_addr((pgdir_t)pgdir, va0);
+    if(pa0 == NULL)
+      return -1;
+    n = PAGE_SIZE - (dstva - va0);
+    if(n > len)
+      n = len;
+    memset((void *)((uint64_t)pa0 + (dstva - va0)), val, n);
+
+    len -= n;
+    dstva = va0 + PAGE_SIZE;
+  }
+  return 0;
+}
+
 // Copy from user to kernel.
 // Copy len bytes to dst from virtual address srcva in a given page table.
 // Return 0 on success, -1 on error.

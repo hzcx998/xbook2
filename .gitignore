@@ -130,7 +130,7 @@ bin/losetup/losetup
 bin/test_echo/test_echo
 bin/ts/ts
 bin/lua/lua
-busybox
+bin/env/env
 
 !libs/musl/lib/*
 
