@@ -22,18 +22,6 @@ int strncmp (const char * s1, const char * s2, int n)
 	return( *s1 - *s2 );
 }
 
-char* itoa(char ** ps, int val, int base)
-{
-	int m = val % base;
-	int q = val / base;
-	if (q) {
-		itoa(ps, q, base);
-	}
-	*(*ps)++ = (m < 10) ? (m + '0') : (m - 10 + 'A');
-
-	return *ps;
-}
-
 void *memset(void* src, unsigned char value, size_t size) 
 {
 	unsigned char* s = (unsigned char*)src;
@@ -200,29 +188,6 @@ char *strchr(const char *s, int c)
         s++;
     }
     return NULL;
-}
-
-char *itoa16_align(char * str, int num)
-{
-	char *	p = str;
-	char	ch;
-	int	i;
-	//为0
-	if(num == 0){
-		*p++ = '0';
-	}
-	else{	//4位4位的分解出来
-		for(i=28;i>=0;i-=4){		//从最高得4位开始
-			ch = (num >> i) & 0xF;	//取得4位
-			ch += '0';			//大于0就+'0'变成ASICA的数字
-			if(ch > '9'){		//大于9就加上7变成ASICA的字母
-				ch += 7;		
-			}
-			*p++ = ch;			//指针地址上记录下来。
-		}
-	}
-	*p = 0;							//最后在指针地址后加个0用于字符串结束
-	return str;
 }
 
 /**

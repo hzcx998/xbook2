@@ -1,6 +1,6 @@
 # ====riscv64====
 X_ASFLAGS	+= -I xlibc/include
-X_INCDIRS	+= xlibc/include 
+X_INCDIRS	+= xlibc/include pthread/include 
 
 
 SRC			:= arch/riscv64/*.S
@@ -18,6 +18,11 @@ SRC			+= math/
 SRC			+= math/riscv64/*.S
 SRC			+= time/
 SRC			+= locale/
+SRC			+= misc/
+SRC			+= select/
+SRC			+= passwd/
+SRC			+= regex/
+SRC			+= network/
 
 # ====x86====
 #X_ASFLAGS	:= -f elf -I xlibc/include
@@ -31,4 +36,4 @@ SRC			+= locale/
 #SRC			+= gcc/*.c termios/*.c
 
 TARGET_TYPE	:= static
-NAME		:= xlibc
+NAME		:= c

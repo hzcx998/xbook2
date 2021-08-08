@@ -297,6 +297,15 @@ void syscall_init()
     syscalls[SYS_CLONE] = sys_clone;
     syscalls[SYS_GETDENTS64] = sys_getdents;
     syscalls[SYS_UNAME] = sys_uname;
+    syscalls[SYS_GETPRIORITY] = sys_getpriority;
+    syscalls[SYS_SETPRIORITY] = sys_setpriority;
+    
+    syscalls[SYS_GETRLIMIT] = sys_getrlimit;
+    syscalls[SYS_SETRLIMIT] = sys_setrlimit;
+    syscalls[SYS_PRLIMIT64] = sys_prlimit;
+
+    syscalls[SYS_SYMLINKAT] = sys_symlinkat;
+    syscalls[SYS_LINKAT] = sys_linkat;
     #endif 
 }
 

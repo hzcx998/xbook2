@@ -24,7 +24,7 @@ void _exit(int status)
  *          2. pid = 0: current process is B
  *          3. pid < 0: fork failed
  */
-pid_t fork()
+pid_t fork(void)
 {
     return syscall0(pid_t, SYS_FORK); /* return a pid (int type) */
 }
@@ -66,17 +66,17 @@ int waitpid(pid_t pid, int *status, int options)
     return syscall3(int, SYS_WAITPID, pid, status, options);
 }
 
-pid_t getpid()
+pid_t getpid(void)
 {
     return syscall0(pid_t, SYS_GETPID); /* return a pid (int type) */
 }
 
-pid_t getppid()
+pid_t getppid(void)
 {
     return syscall0(pid_t, SYS_GETPPID); /* return a pid (int type) */
 }
 
-pid_t gettid()
+pid_t gettid(void)
 {
     return syscall0(pid_t, SYS_GETTID); /* return a pid (int type) */
 }
@@ -95,7 +95,7 @@ unsigned long sleep(unsigned long second)
  * sched_yield - 让出cpu
  * 
  */
-void sched_yield()
+void sched_yield(void)
 {
     syscall0(int, SYS_SCHED_YIELD);
 }

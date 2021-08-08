@@ -45,7 +45,7 @@ struct timespec {
 
 int gettimeofday(struct timeval *tv, struct timezone *tz);
 int clock_gettime(clockid_t clockid, struct timespec *ts);
-clock_t getticks();
+clock_t getticks(void);
 unsigned long alarm(unsigned long second);
 void mdelay(time_t msec);
 

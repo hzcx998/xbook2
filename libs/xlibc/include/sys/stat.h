@@ -18,6 +18,7 @@ extern "C" {
 #define         S_IFCHR 0020000 /* character special 字符设备文件*/
 #define         S_IFIFO 0010000 /* fifo */
 #define         S_IFNAM 0050000 /* special named file */
+#define         S_IFSOCK 0140000
 #if !defined(_M_XOUT)
 #define         S_IFLNK 0120000 /* symbolic link 链接文件*/
 #endif /* !defined(_M_XOUT) */
@@ -30,16 +31,29 @@ extern "C" {
 #if !defined(_M_XOUT)
 #define         S_ISLNK(m)      (((m) & S_IFMT) == S_IFLNK)
 #endif /* !defined(_M_XOUT) */
+
+#ifndef S_IRUSR
+#define S_ISUID 04000
+#define S_ISGID 02000
+#define S_ISVTX 01000
+#define S_IRUSR 0400
+#define S_IWUSR 0200
+#define S_IXUSR 0100
+#define S_IRWXU 0700
+#define S_IRGRP 0040
+#define S_IWGRP 0020
+#define S_IXGRP 0010
+#define S_IRWXG 0070
+#define S_IROTH 0004
+#define S_IWOTH 0002
+#define S_IXOTH 0001
+#define S_IRWXO 0007
+#endif
+
 #define         S_IREAD 0x04     //文件所有者具可读取权限
 #define         S_IWRITE 0x02    //文件所有者具可写入权限
 #define         S_IEXEC 0x01     //文件所有者具可执行权限
-
-/* FIXME: supported __S_ISUID and __S_ISGID  in kernel. */
-#define	__S_ISUID	04000	/* Set user ID on execution.  */
-#define	__S_ISGID	02000	/* Set group ID on execution.  */
-
-#define	S_ISUID __S_ISUID	/* Set user ID on execution.  */
-#define	S_ISGID	__S_ISGID	/* Set group ID on execution.  */
+#define         S_IRWXU 0700
 
 typedef struct stat {
     mode_t     st_mode;       //文件访问权限
@@ -81,6 +95,7 @@ struct kstat {
 
 int stat(const char *path, struct stat *buf);
 int fstat(int fd, struct kstat *buf);
+int lstat(const char *restrict path, struct stat *restrict buf);
 
 int chmod(const char *path, mode_t mode);
 int fchmod(int fd, mode_t mode);

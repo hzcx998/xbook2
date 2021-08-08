@@ -49,6 +49,8 @@ typedef unsigned short wchar_t;
 
 typedef long int ptrdiff_t;
 
+typedef int id_t;
+
 /*
  *这里是define类型的
  */
@@ -131,13 +133,6 @@ __buildin_expect((x), 0)表示x的值为假的可能性更大.
 
 /* 除后下舍 */
 #define DIV_ROUND_DOWN(X, STEP) ((X) / (STEP))
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif
-
-/* file at */
-#define AT_FDCWD -100
 
 #ifdef __cplusplus
 }

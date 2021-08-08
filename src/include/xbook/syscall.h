@@ -288,6 +288,13 @@ enum syscall_num {
     SYS_CLONE,    
     SYS_GETDENTS64,
     SYS_UNAME,
+    SYS_GETPRIORITY,
+    SYS_SETPRIORITY,
+    SYS_GETRLIMIT,
+    SYS_SETRLIMIT,
+    SYS_PRLIMIT64,
+    SYS_SYMLINKAT,
+    SYS_LINKAT,
     SYSCALL_NR,
 };
 #endif

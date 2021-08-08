@@ -15,6 +15,9 @@ extern "C" {
 #if 1
 #define MAP_PRIVATE     0x00       /* 映射成私有，NOTE: 内核未实现该功能 */
 #define MAP_SHARED      0x80       /* 映射成共享内存 */
+
+#define MAP_ANON       0x20
+#define MAP_ANONYMOUS  MAP_ANON
 #else   /* oscomp */
 #define MAP_SHARED 0x01
 #define MAP_PRIVATE 0X02

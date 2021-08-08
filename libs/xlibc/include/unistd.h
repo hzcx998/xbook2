@@ -41,6 +41,8 @@ int read(int fd, void *buffer, size_t nbytes);
 int write(int fd, const void *buffer, size_t nbytes);
 int lseek(int fd, off_t offset, int whence);
 int access(const char *filenpath, int mode);
+int link(const char *existing, const char *new);
+int symlink(const char *, const char *);
 int unlink(const char *path);
 int ftruncate(int fd, off_t offset);
 int fsync(int fd);

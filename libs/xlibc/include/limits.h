@@ -1,20 +1,6 @@
 #ifndef _XLIBC_LIMITS_H
 #define _XLIBC_LIMITS_H
 
-/***
-*limits.h - implementation dependent values
-*
-*       Copyright (c) Microsoft Corporation.  All rights reserved.
-*
-*Purpose:
-*       Contains defines for a number of implementation dependent values
-*       which are commonly used in C programs.
-*       [ANSI]
-*
-*       [Public]
-*
-****/
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -73,15 +59,6 @@ extern "C" {
 /* maximum unsigned 64 bit value */
 #define _UI64_MAX     0xffffffffffffffffui64
 
-#if _INTEGRAL_MAX_BITS >= 128
-/* minimum signed 128 bit value */
-#define _I128_MIN   (-170141183460469231731687303715884105727i128 - 1)
-/* maximum signed 128 bit value */
-#define _I128_MAX     170141183460469231731687303715884105727i128
-/* maximum unsigned 128 bit value */
-#define _UI128_MAX    0xffffffffffffffffffffffffffffffffui128
-#endif  /* _INTEGRAL_MAX_BITS >= 128 */
-
 #ifndef SIZE_MAX
 #ifdef _WIN64
 #define SIZE_MAX _UI64_MAX
@@ -94,11 +71,22 @@ extern "C" {
 #define SSIZE_MAX INT_MAX
 #endif  /* SIZE_MAX */
 
-#if __STDC_WANT_SECURE_LIB__
-#ifndef RSIZE_MAX
-#define RSIZE_MAX    (SIZE_MAX >> 1)
-#endif  /* RSIZE_MAX */
-#endif  /* __STDC_WANT_SECURE_LIB__ */
+#ifndef NAME_MAX
+#define NAME_MAX 255
+#endif
+
+#define PATH_MAX 4096
+/* Arbitrary numbers... */
+
+#define BC_BASE_MAX 99
+#define BC_DIM_MAX 2048
+#define BC_SCALE_MAX 99
+#define BC_STRING_MAX 1000
+#define CHARCLASS_NAME_MAX 14
+#define COLL_WEIGHTS_MAX 2
+#define EXPR_NEST_MAX 32
+#define LINE_MAX 4096
+#define RE_DUP_MAX 255
 
 #ifdef __cplusplus
 }

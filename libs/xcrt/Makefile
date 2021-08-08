@@ -2,4 +2,4 @@
 SRC			+= riscv64/*.S
 
 TARGET_TYPE	:= static
-NAME		:= xcrt
+NAME		:= crt

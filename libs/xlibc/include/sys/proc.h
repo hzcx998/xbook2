@@ -25,15 +25,15 @@ typedef struct _tstate {
 } tstate_t;
 
 /* process */
-pid_t fork();
+pid_t fork(void);
 void _exit(int status);
 int wait(int *status);
 int waitpid(pid_t pid, int *status, int options);
-pid_t getpid();
-pid_t getppid();
-pid_t gettid();
+pid_t getpid(void);
+pid_t getppid(void);
+pid_t gettid(void);
 unsigned long sleep(unsigned long second);
-void sched_yield();
+void sched_yield(void);
 int tstate(tstate_t *ts, int *idx);
 int getver(char *buf, int len);
 int create_process(char *const argv[], char *const envp[], unsigned int flags);

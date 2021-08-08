@@ -119,6 +119,13 @@ enum syscall_num {
     SYS_CLONE,
     SYS_GETDENTS64,
     SYS_UNAME,
+    SYS_GETPRIORITY,
+    SYS_SETPRIORITY,
+    SYS_GETRLIMIT,
+    SYS_SETRLIMIT,
+    SYS_PRLIMIT64,
+    SYS_SYMLINKAT,
+    SYS_LINKAT,
     SYSCALL_NR,
 };
 
@@ -244,6 +251,31 @@ static inline long __syscall6(long n, long a, long b, long c, long d, long e, lo
         (type) __syscall6((long ) (num), (long ) arg0,\
         (long ) arg1, (long ) arg2, (long ) arg3,\
         (long ) arg4, (long ) arg5)
+
+
+#ifndef __scc
+#define __scc(X) ((long)(X))
+typedef long syscall_arg_t;
+#endif
+
+#define __syscall1(n, a) __syscall1(n, __scc(a))
+#define __syscall2(n, a, b) __syscall2(n, __scc(a), __scc(b))
+#define __syscall3(n, a, b, c) __syscall3(n, __scc(a), __scc(b), __scc(c))
+#define __syscall4(n, a, b, c, d) __syscall4(n, __scc(a), __scc(b), __scc(c), __scc(d))
+#define __syscall5(n, a, b, c, d, e) __syscall5(n, __scc(a), __scc(b), __scc(c), __scc(d), __scc(e))
+#define __syscall6(n, a, b, c, d, e, f) __syscall6(n, __scc(a), __scc(b), __scc(c), __scc(d), __scc(e), __scc(f))
+
+#define __SYSCALL_NARGS_X(a, b, c, d, e, f, g, h, n, ...) n
+#define __SYSCALL_NARGS(...) __SYSCALL_NARGS_X(__VA_ARGS__, 7, 6, 5, 4, 3, 2, 1, 0, )
+#define __SYSCALL_CONCAT_X(a, b) a##b
+#define __SYSCALL_CONCAT(a, b) __SYSCALL_CONCAT_X(a, b)
+#define __SYSCALL_DISP(b, ...)                        \
+    __SYSCALL_CONCAT(b, __SYSCALL_NARGS(__VA_ARGS__)) \
+    (__VA_ARGS__)
+
+#define __syscall(...) __SYSCALL_DISP(__syscall, __VA_ARGS__)
+#define syscall(...) __syscall(__VA_ARGS__)
+
 
 #ifdef __cplusplus
 }

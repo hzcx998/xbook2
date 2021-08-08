@@ -1,38 +1,18 @@
 #ifndef _LIB_STDINT_H
 #define _LIB_STDINT_H
 
+#if defined(__RISCV64__)  
+#undef __WORDSIZE
+#define __WORDSIZE 64
+#else
+#undef __WORDSIZE
+#define __WORDSIZE 32
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*
-typedef unsigned long long uint64_t;
-typedef signed long long int64_t;
-typedef unsigned int    uint32_t;
-typedef signed int      int32_t;
-typedef unsigned short  uint16_t;
-typedef signed short    int16_t;
-typedef unsigned char   uint8_t;
-typedef signed char     int8_t;
-#if 1
-typedef unsigned long long  uint64;
-typedef signed long long int64;
-typedef unsigned int    uint32;
-typedef signed int      int32;
-typedef unsigned short  uint16;
-typedef signed short    int16;
-typedef unsigned char   uint8;
-typedef signed char     int8;
-#endif
-typedef unsigned long long u64;
-typedef signed long long s64;
-typedef unsigned int    u32;
-typedef signed int      s32;
-typedef unsigned short  u16;
-typedef signed short    s16;
-typedef unsigned char   u8;
-typedef signed char     s8;
-*/
-typedef int intptr_t;
+
 #if 0
 typedef unsigned int	UINT;	/* int must be 16-bit or 32-bit */
 typedef unsigned char	BYTE;	/* char must be 8-bit */
@@ -41,12 +21,6 @@ typedef unsigned long	DWORD;	/* 32-bit unsigned integer */
 typedef WORD			WCHAR;	/* UTF-16 character type */
 #endif
 
-typedef long long          intmax_t;
-typedef unsigned long long uintmax_t;
-
-
- 
- 
 /* Types for `void *' pointers. */
 #if __WORDSIZE == 64
 # ifndef __intptr_t_defined

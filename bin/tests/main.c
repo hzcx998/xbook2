@@ -86,13 +86,13 @@ int main(int argc, char *argv[])
     } else if (argc == 2) {
         char *p = argv[1];
         int i;
-        for (i = 0; i < ARRAY_SIZE(test_table); i++)
+        for (i = 0; i < _ARRAY_SIZE(test_table); i++)
             if (!strcmp(p, test_table[i].name)) {
                 retval = test_table[i].func(argc, argv);
                 printf("\ntest %s demo done.\n", test_table[i].name);
                 break;
             }
-        if (i >= ARRAY_SIZE(test_table))
+        if (i >= _ARRAY_SIZE(test_table))
             printf("test %s demo not found!\n", p);
     }    
     return retval;

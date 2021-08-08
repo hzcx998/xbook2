@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-extern int main();
+extern int main(int argc, char *argv[]);
 extern void _enter_preload(int argc, char *const argv[], char *const envp[]);
 
 int __start_main(long *p)

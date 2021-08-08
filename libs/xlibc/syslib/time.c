@@ -23,7 +23,7 @@ unsigned long walltime(walltime_t *wt)
 /**
  * getticks - 获取内核运行时钟数
  */
-clock_t getticks()
+clock_t getticks(void)
 {
     return syscall0(clock_t, SYS_GETTICKS);
 }

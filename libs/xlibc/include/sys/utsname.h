@@ -1,5 +1,11 @@
-#ifndef _SYS_UNAME_H
-#define _SYS_UNAME_H
+#ifndef __SYS_UTSNAME_H__
+#define __SYS_UTSNAME_H__
+
+#include <stddef.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct utsname {
 	char sysname[65];
@@ -12,4 +18,8 @@ struct utsname {
 
 int uname(struct utsname *buf);
 
-#endif   /* _SYS_UNAME_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif //__SYS_UTSNAME_H__

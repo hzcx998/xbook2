@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
+#include <stddef.h>
 
 typedef uint32_t in_addr_t;
 

@@ -24,6 +24,7 @@ typedef struct dirent {
     uint32_t d_date;        /* 日期 */
     mode_t d_attr;          /* 属性 */
     char d_name[DIR_NAME_LEN]; /* 名字 */
+    unsigned char d_type;
 } dirent_t;
 
 typedef struct _dirdes {

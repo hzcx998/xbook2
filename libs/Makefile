@@ -13,6 +13,7 @@ export AS LD
 ifeq ($(ENV_LIBC),xlibc)
 MODULE		:= xcrt
 MODULE		+= xlibc
+MODULE		+= librt
 MODULE		+= sconf
 #MODULE		+= xlibcpp
 #MODULE		+= pthread

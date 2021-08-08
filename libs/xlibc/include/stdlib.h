@@ -27,9 +27,9 @@ ldiv_t ldiv(long num, long den);
 lldiv_t lldiv(long long num, long long den);
 
 void srand(unsigned long seed);
-int rand();
+int rand(void);
 
-int random();
+int random(void);
 void srandom(unsigned long seed);
 
 void qsort( void  * base, size_t n_elements, size_t el_size,

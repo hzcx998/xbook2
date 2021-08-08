@@ -40,6 +40,11 @@ extern "C" {
 #define SIG_UNUSED_ (SIGQUIT + 1)
 #define NSIG        SIG_UNUSED_
 
+/* below not used */
+#define SIGXCPU   24
+#define SIGXFSZ   25
+#define SIGUSR2   12
+
 #define IS_BAD_SIGNAL(signo) \
     (signo < 1 || signo >= NSIG)
 
@@ -67,6 +72,8 @@ struct sigaction {
 #define SIG_BLOCK   1 //在阻塞信号集中加上给定的信号集
 #define SIG_UNBLOCK 2 //从阻塞信号集中删除指定的信号集
 #define SIG_SETMASK 3 //设置阻塞信号集(信号屏蔽码)
+
+#define SA_RESTART    0x10000000    /* 需要实现 */
 
 static inline int kill(pid_t pid, int signo)
 {

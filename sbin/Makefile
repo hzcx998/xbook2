@@ -37,7 +37,7 @@ endif
 endif
 
 ifeq ($(ENV_LIBC),xlibc)
-X_LIBS		:= libxcrt.a libxlibc.a libgcc.a 
+X_LIBS		:= libcrt.a libc.a libgcc.a 
 else ifeq ($(ENV_LIBC),tinylibc)
 X_LIBS		:= libtinylibc.a
 else ifeq ($(ENV_LIBC),musl)

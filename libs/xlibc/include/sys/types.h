@@ -42,6 +42,9 @@ typedef long long   loff_t;
 typedef char   bool_t;
 
 typedef void *caddr_t;
+typedef unsigned long regoff_t;
+
+typedef uint32_t socklen_t;
 
 /* Types for `void *' pointers.  */
 #if __WORDSIZE == 64
@@ -57,6 +60,8 @@ typedef int			intptr_t;
 # endif
 typedef unsigned int		uintptr_t;
 #endif
+
+typedef unsigned short sa_family_t;
 
 #ifdef __cplusplus
 }

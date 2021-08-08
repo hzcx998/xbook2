@@ -9,9 +9,6 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 
-char* itoa(char ** ps, int val, int base);
-char *itoa16_align(char * str, int num);
-
 void *memset(void* src, unsigned char value, size_t size);
 void *memcpy(void* _dst, const void* _src, size_t size);
 int memcmp(const void * s1, const void *s2, int n);
@@ -40,6 +37,8 @@ const char *strpbrk(const char *str1, const char *str2);
 int strcoll(const char *str1, const char *str2);
 char * strdup(const char * s);
 int strcasecmp(const char * s1, const char * s2);
+
+char *strchrnul(const char *, int);
 
 #if defined(__X86__)
 /*

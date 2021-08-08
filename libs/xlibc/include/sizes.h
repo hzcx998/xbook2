@@ -33,8 +33,8 @@ extern "C" {
 #define SZ_1G				(0x40000000)
 #define SZ_2G				(0x80000000)
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array)	( sizeof(array) / sizeof((array)[0]) )
+#ifndef _ARRAY_SIZE
+#define _ARRAY_SIZE(array)	( sizeof(array) / sizeof((array)[0]) )
 #endif
 
 #ifdef __cplusplus

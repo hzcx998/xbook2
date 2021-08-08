@@ -221,6 +221,8 @@
         "timex.h": "c",
         "times.h": "c",
         "limits.h": "c",
-        "libc.h": "c"
+        "libc.h": "c",
+        "libgen.h": "c",
+        "syslog.h": "c"
     }
 }

@@ -1,5 +1,5 @@
 #include <sys/syscall.h>
-#include <sys/uname.h>
+#include <sys/utsname.h>
 
 int uname(struct utsname *buf)
 {
