@@ -13,6 +13,7 @@ void *calloc(int num, size_t size);
 void *malloc(size_t size);
 void *realloc(void *oldp, size_t size);
 void *memalign (size_t boundary, size_t size);
+void *valloc (size_t);
 
 #ifdef __cplusplus
 }

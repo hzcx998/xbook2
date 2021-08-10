@@ -20,6 +20,7 @@
 #include <sys/ipc.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <fcntl.h>
 
 // #define DEBUG_FSIF
@@ -1339,4 +1340,15 @@ ssize_t sys_writev(int fd, const struct iovec *iov, int iovcnt)
         len += err;
     }
     return len;
+}
+
+
+int sys_select(int n, fd_set *restrict rfds, fd_set *restrict wfds, fd_set *restrict efds, struct timeval *restrict tv)
+{
+    return -ENOSYS;
+}
+
+void sys_sync(void)
+{
+
 }

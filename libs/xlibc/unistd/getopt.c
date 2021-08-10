@@ -108,6 +108,24 @@ static const char noarg[] = "option doesn't take an argument -- %.*s";
 static const char illoptchar[] = "unknown option -- %c";
 static const char illoptstring[] = "unknown option -- %s";
  
+void __getopt_init()
+{
+		
+#ifdef REPLACE_GETOPT
+	opterr = 1;		/* if error message should be printed */
+	optind = 1;		/* index into parent argv vector */
+	optopt = '?';		/* character checked for validity */
+	optarg = NULL;		/* argument associated with option */
+#endif
+	optreset;		/* reset getopt */
+	
+	place = EMSG; /* option letter processing */
+	
+	/* XXX: set optreset to 1 rather than these two */
+	nonopt_start = -1; /* first non option argument (for permute) */
+	nonopt_end = -1;   /* first option after non options (for permute) */
+}
+
 /*
  * Compute the greatest common divisor of a and b.
  */

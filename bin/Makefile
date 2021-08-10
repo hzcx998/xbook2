@@ -117,7 +117,7 @@ MODULE      +=  unmount
 MODULE      +=  test_echo
 MODULE      +=  lua
 MODULE      +=  env
-MODULE      +=  bash
+MODULE      +=  lmbench
 else ifeq ($(ENV_LIBC),tinylibc)
 MODULE      +=  sh
 MODULE      +=  echo

@@ -62,6 +62,7 @@ typedef unsigned int		uintptr_t;
 #endif
 
 typedef unsigned short sa_family_t;
+typedef int64_t suseconds_t;
 
 #ifdef __cplusplus
 }

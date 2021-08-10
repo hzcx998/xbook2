@@ -26,11 +26,12 @@ div_t div(int num, int den);
 ldiv_t ldiv(long num, long den);
 lldiv_t lldiv(long long num, long long den);
 
-void srand(unsigned long seed);
-int rand(void);
+int rand (void);
+void srand (unsigned);
+int rand_r (unsigned *);
 
-int random(void);
-void srandom(unsigned long seed);
+long int random (void);
+void srandom (unsigned int);
 
 void qsort( void  * base, size_t n_elements, size_t el_size,
     int  (* compare ) (void const *, void const *) );
@@ -64,6 +65,18 @@ char *realpath(const char *path, char *resolved_path);
 void* bsearch (const void* key, const void* base,
     size_t num, size_t size,
     int (*compar)(const void*,const void*));
+
+
+double drand48 (void);
+double erand48 (unsigned short [3]);
+long int lrand48 (void);
+long int nrand48 (unsigned short [3]);
+long mrand48 (void);
+long jrand48 (unsigned short [3]);
+void srand48 (long);
+unsigned short *seed48 (unsigned short [3]);
+void lcong48 (unsigned short [7]);
+char *__randname(char *);
 
 #ifdef __cplusplus
 }

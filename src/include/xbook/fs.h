@@ -102,6 +102,7 @@ int sys_linkat(int fd1, const char *existing, int fd2, const char *new, int flag
 
 ssize_t sys_readv(int fd, const struct iovec *iov, int iovcnt);
 ssize_t sys_writev(int fd, const struct iovec *iov, int iovcnt);
+void sys_sync(void);
 
 // special for kernel
 int kfile_open(const char *path, int flags);

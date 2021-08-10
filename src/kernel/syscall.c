@@ -25,6 +25,7 @@
 #include <sys/resource.h>
 #include <sys/timex.h>
 #include <sys/sysinfo.h>
+#include <sys/select.h>
 #include <dirent.h>
 #include <errno.h>
 
@@ -306,6 +307,16 @@ void syscall_init()
 
     syscalls[SYS_SYMLINKAT] = sys_symlinkat;
     syscalls[SYS_LINKAT] = sys_linkat;
+    syscalls[SYS_GETITIMER] = sys_getitimer;
+    syscalls[SYS_SETITIMER] = sys_setitimer;
+    syscalls[SYS_NANOSLEEP] = sys_nanosleep;
+    syscalls[SYS_SELECT] = sys_select;
+    syscalls[SYS_SCHED_GET_PRIORITY_MAX] = sys_sched_get_priority_max;
+    syscalls[SYS_SCHED_GET_PRIORITY_MIN] = sys_sched_get_priority_min;
+    syscalls[SYS_SYNC] = sys_sync;
+
+    syscalls[SYS_MPROTECT] = sys_mprotect;
+    syscalls[SYS_MSYNC] = sys_msync;
     #endif 
 }
 

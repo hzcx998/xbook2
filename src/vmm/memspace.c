@@ -368,3 +368,8 @@ int sys_madvise(caddr_t addr, size_t len, int advice)
 {
     return -ENOSYS;
 }
+
+int sys_msync(void *start, size_t len, int flags)
+{
+    return -ENOSYS;
+}

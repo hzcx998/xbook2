@@ -32,8 +32,15 @@ extern "C" {
 #define PROT_USER        0x10      /* page in user */
 #define PROT_REMAP       0x20      /* page remap */
 
+#define MS_ASYNC       1
+#define MS_INVALIDATE  2
+#define MS_SYNC        4
+
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 int munmap(void *addr, size_t length);
+
+int mprotect (void *, size_t, int);
+int msync (void *, size_t, int);
 
 #ifdef __cplusplus
 }

@@ -223,6 +223,8 @@
         "limits.h": "c",
         "libc.h": "c",
         "libgen.h": "c",
-        "syslog.h": "c"
+        "syslog.h": "c",
+        "bench.h": "c",
+        "sysinfo.h": "c"
     }
 }

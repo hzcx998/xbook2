@@ -130,6 +130,8 @@ long sysconf(int name);
 #define getmaxchild()   sysconf(_SC_CHILD_MAX)
 #define getdtablesize() sysconf(_SC_OPEN_MAX)
 
+int getpagesize(void);
+void sync(void);
 
 #include <sys/proc.h>
 #include <getopt.h>

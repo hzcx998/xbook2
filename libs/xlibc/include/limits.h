@@ -88,6 +88,8 @@ extern "C" {
 #define LINE_MAX 4096
 #define RE_DUP_MAX 255
 
+#define PAGE_SIZE 4096
+
 #ifdef __cplusplus
 }
 #endif

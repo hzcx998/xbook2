@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <sys/types.h>
 
 #ifndef F_DUPFD
 #define F_DUPFD 0
@@ -27,6 +28,20 @@ extern "C" {
 #ifndef F_SETFL
 #define F_SETFL 4
 #endif
+
+#if __LONG_MAX == 0x7fffffffL
+#define F_GETLK 12
+#define F_SETLK 13
+#define F_SETLKW 14
+#else
+#define F_GETLK 5
+#define F_SETLK 6
+#define F_SETLKW 7
+#endif
+
+#define F_RDLCK 0
+#define F_WRLCK 1
+#define F_UNLCK 2
 
 #ifndef FD_NCLOEXEC
 #define FD_NCLOEXEC    0
@@ -61,7 +76,30 @@ extern "C" {
 #define AT_SYMLINK_FOLLOW 0x400
 #define AT_EACCESS 0x200
 
+struct flock {
+	short l_type;
+	short l_whence;
+	off_t l_start;
+	off_t l_len;
+	pid_t l_pid;
+};
+
 int fcntl(int fd, int cmd, ...);
+int creat(const char *, mode_t);
+
+#if defined(_LARGEFILE64_SOURCE) || defined(_GNU_SOURCE)
+#define F_GETLK64 F_GETLK
+#define F_SETLK64 F_SETLK
+#define F_SETLKW64 F_SETLKW
+#define flock64 flock
+#define open64 open
+#define openat64 openat
+#define creat64 creat
+#define lockf64 lockf
+#define posix_fadvise64 posix_fadvise
+#define posix_fallocate64 posix_fallocate
+#define off64_t off_t
+#endif
 
 #ifdef __cplusplus
 }

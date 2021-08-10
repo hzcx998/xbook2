@@ -17,8 +17,8 @@ void *memset32(void* src, unsigned int value, size_t size);
 void* memmove(void* dst,const void* src, size_t count);
 void * memchr(const void * s, int c, size_t n);
 
-#define bzero(str, n) memset(str, 0, n) 
-#define bcopy(s, d, n) ((void) memcpy ((d), (s), (n)))
+// #define bzero(str, n) memset(str, 0, n) 
+// #define bcopy(s, d, n) ((void) memcpy ((d), (s), (n)))
 
 char* strcpy(char* _dst, const char* _src);
 int strlen(const char* str);

@@ -164,5 +164,6 @@ int sys_mprotect(void *addr, size_t len, int prot);
 int sys_mlock(const void *addr, size_t len);
 int sys_munlock(const void *addr, size_t len);
 int sys_madvise(caddr_t addr, size_t len, int advice);
+int sys_msync(void *start, size_t len, int flags);
 
 #endif /* _XBOOK_MEMSPACE_H */

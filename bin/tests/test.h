@@ -56,7 +56,7 @@ int dup2_test(int argc, char* argv[]);
 int dup_test(int argc, char* argv[]);
 int pipe_test(int argc, char *argv[]);
 int shm_test(int argc, char *argv[]);
-int xlibc_test(int argc,char *argv[]);
+//int xlibc_test(int argc,char *argv[]);
 int math_test(int argc, char *argv[]);
 
 int pty_test(int argc, char *argv[]);

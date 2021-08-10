@@ -28,7 +28,7 @@ struct mntent *getmntent_r(FILE *f, struct mntent *mnt, char *linebuf, int bufle
 
 	do {
 		if (use_internal) {
-			getline(&internal_buf, &internal_bufsize, f);
+			//getline(&internal_buf, &internal_bufsize, f);
 			linebuf = internal_buf;
 		} else {
 			fgets(linebuf, buflen, f);

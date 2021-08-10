@@ -131,6 +131,7 @@ bin/test_echo/test_echo
 bin/ts/ts
 bin/lua/lua
 bin/env/env
+bin/lmbench/lmbench
 
 !libs/musl/lib/*
 

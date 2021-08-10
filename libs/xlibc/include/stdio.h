@@ -149,6 +149,12 @@ FILE * __stdio_get_stdin(void);
 FILE * __stdio_get_stdout(void);
 FILE * __stdio_get_stderr(void);
 
+#if defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) \
+ || defined(_BSD_SOURCE)
+#define P_tmpdir "/tmp"
+char *tempnam(const char *, const char *);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

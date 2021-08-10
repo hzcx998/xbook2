@@ -25,6 +25,7 @@ struct tm {
 	const char * __tm_zone;
 };
 
+int nanosleep (const struct timespec *, struct timespec *);
 clock_t clock(void);
 time_t time(time_t * t);
 time_t mktime(struct tm * tm);

@@ -44,7 +44,7 @@ testfunc_t test_table[] = {
     {"port_comm3", port_comm_test3},
     {"pipe", pipe_test},
     {"shm", shm_test},
-    {"xlibc", xlibc_test},
+    //{"xlibc", xlibc_test},
     {"math", math_test},
     {"pyt", pty_test},
     {"sleep", sleep_test},
