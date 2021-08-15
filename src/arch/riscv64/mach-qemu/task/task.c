@@ -201,8 +201,6 @@ do {                                                                         \
 
     #undef NEW_AUX_ENT
 
-    dbgprint("index: %d\n", index);
-
     bin_program->sp -= sizeof(uint64_t) * index;
     if (page_copy_out(bin_program->pagetable, bin_program->sp,
                 (char *)bin_program->ustack, sizeof(uint64_t) * index)) {
