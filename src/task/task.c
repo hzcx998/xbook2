@@ -570,9 +570,9 @@ static void do_one_test(char *argv[])
 
 // #define TEST_MACHINE_LOAD_FILE
 
-// #define TEST_MACHINE_SINGLE_TEST
+#define TEST_MACHINE_SINGLE_TEST
 #if 1
-#define TEST_MACHINE_SINGLE_TEST_NAME   TEST_PROGRAM_PATH"uname"
+#define TEST_MACHINE_SINGLE_TEST_NAME   TEST_PROGRAM_PATH"busybox"
 #else
 #define TEST_MACHINE_SINGLE_TEST_NAME   "/bin/utests"
 #endif
