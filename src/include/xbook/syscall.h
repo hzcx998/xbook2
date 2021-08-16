@@ -171,6 +171,8 @@ typedef void * syscall_t;
 
 #define SYS_fchmod 52
 
+#define SYS_tstate 1000
+
 #define SYSCALL_NR 1100
 #else
 enum syscall_num {

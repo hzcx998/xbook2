@@ -8,6 +8,7 @@
 #include <sys/utsname.h>
 #include <sys/syscall.h>
 #include <sys/uio.h>
+#include <sys/proc.h>
 
 int open(const char *path, int flags)
 {
@@ -558,4 +559,9 @@ ssize_t writev(int fd, const struct iovec *iov, int iovcnt)
 ssize_t readv(int fd, const struct iovec *iov, int iovcnt)
 {
 	return syscall(SYS_readv, fd, iov, iovcnt);
+}
+
+int tstate(tstate_t *ts, int *idx)
+{
+    return syscall(SYS_tstate, ts, idx);
 }

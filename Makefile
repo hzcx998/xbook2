@@ -122,7 +122,7 @@ KERNEL_ELF 	= $(KERNSRC)/kernel.elf
 KERNEL_BIN 	= $(KERNSRC)/kernel.bin
 
 DUMP_FILE	?= $(KERNEL_ELF)
-DUMP_FLAG	?= 
+DUMP_FLAG	?= -S
 
 $(warning $(ENV_MACH))
 $(warning $(ENV_ARCH))

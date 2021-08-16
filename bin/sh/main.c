@@ -199,7 +199,7 @@ void update_cwdcache()
 void print_prompt()
 {
 	printf("%s ", cwd_cache);
-    fflush(stdout);
+    //fflush(stdout);
 }
 
 /**
@@ -452,11 +452,11 @@ int cmd_parse(char * cmd_str, char **argv, char token)
 
 void print_logo()
 {
-    fflush(stdout);
+    //fflush(stdout);
     printf("\r\n");
     printf("+----------------------------------------------------+\n");
     printf("| Welcome to xbook2 kernel!                          |\n");
     printf("| All rights reserved by xbook2 kernel develop Team. |\n");
     printf("+----------------------------------------------------+\n");
-    fflush(stdout);
+    //fflush(stdout);
 }

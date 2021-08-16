@@ -18,11 +18,11 @@
 #ifndef QEMU
 #define BOOT_MEM_SIZE                   0x20000     // 128KB
 #else
-#define BOOT_MEM_SIZE                   0x60000     // 64KB
+#define BOOT_MEM_SIZE                   0x10000     // 64KB
 #endif
 
 /* 物理内存最高地址 */
-#define PHYSIC_MEM_SIZE                 0x1000000    // 16MB
+#define PHYSIC_MEM_SIZE                 0x600000    // 6MB
 #define PHYSIC_MEM_TOP                  (RUSTSBI_MEM_ADDR + PHYSIC_MEM_SIZE)
 
 /* 内核虚拟地址偏移，内核的所有 */

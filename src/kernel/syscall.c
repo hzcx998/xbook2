@@ -179,6 +179,9 @@ void syscall_init()
     syscalls[SYS_readv] = sys_readv;
     syscalls[SYS_writev] = sys_writev;
 
+    syscalls[SYS_tstate] = sys_tstate;
+
+
     #else
     syscalls[SYS_EXIT] = sys_exit;
     syscalls[SYS_FORK] = sys_fork;

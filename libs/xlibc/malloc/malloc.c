@@ -32,7 +32,7 @@
 #endif
 #define	PTRSIZE		((int) sizeof(void *))
 #define Align(x,a)	(((x) + (a - 1)) & ~(a - 1))
-#define NextSlot(p)	(* (void **) ((p) - PTRSIZE))
+#define NextSlot(p)	(* (void **) ((unsigned char *)(p) - PTRSIZE))
 #define NextFree(p)	(* (void **) (p))
 
 #ifdef DEBUG

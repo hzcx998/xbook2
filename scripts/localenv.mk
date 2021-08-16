@@ -55,8 +55,8 @@ ifeq ($(ENV_ARCH), x86)
 	CFLAGS		+= -D__X86__
 	CFLAGS		+= -D__XLIBC__
 else ifeq ($(ENV_ARCH), riscv64)
-ENV_LIBC	:= xlibc
-#ENV_LIBC	:= tinylibc
+#ENV_LIBC	:= xlibc
+ENV_LIBC	:= tinylibc
 #ENV_LIBC	:= musl
 
 	ENV_LD		:=  $(CROSS_COMPILE)ld 
@@ -71,9 +71,8 @@ ENV_LIBC	:= xlibc
 	CFLAGS 		+= -MD
 	CFLAGS 		+= -ffreestanding -fno-common
 	CFLAGS 		+= -mno-relax
-	CFLAGS		+= -std=gnu99
 	ifeq ($(ENV_MACH), mach-qemu)
-	CFLAGS 		+= -D QEMU
+	CFLAGS 		+= -DQEMU
 	endif
 	CFLAGS		+= -DCONFIG_64BIT
 	CFLAGS		+= -D__RISCV64__

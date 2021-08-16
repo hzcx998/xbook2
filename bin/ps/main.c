@@ -37,11 +37,11 @@ int main(int argc, char **argv)
                 printf("Note: If no arguments, only print user process.\n");
                 return 0;
             default:
-                fprintf(stderr,"ps: unknown option!\n");
+                printf("ps: unknown option!\n");
                 return -1;
             }
         } else {
-            fprintf(stderr,"ps: unknown argument!\n");
+            printf("ps: unknown argument!\n");
             return -1;
         }
     }

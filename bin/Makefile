@@ -124,7 +124,8 @@ MODULE      +=  echo
 MODULE      +=  uname
 MODULE      +=  cat
 MODULE      +=  ls
-MODULE      +=  ts
+#MODULE      +=  ps
+#MODULE      +=  ts
 else ifeq ($(ENV_LIBC),musl)
 MODULE      +=  hello
 MODULE      +=  sh

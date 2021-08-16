@@ -199,4 +199,6 @@ typedef long syscall_arg_t;
 
 #define SYS_fchmod 52
 
+#define SYS_tstate 1000
+
 #endif

@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
         }
     }
     #endif
-    fflush(stdout);
+    //fflush(stdout);
     /* 创建一个子进程 */
     int pid = fork();
     if (pid < 0) {
