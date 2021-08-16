@@ -52,7 +52,7 @@ ifeq ($(OS),Windows_NT)
 else
 	SUDO		:= sudo
 # use fatfs tools for making image
-	USE_FATFS	:= yes
+	USE_FATFS	:= no
 endif
 
 ifeq ($(ENV_ARCH),x86) # x86-i386
