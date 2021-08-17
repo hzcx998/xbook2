@@ -55,7 +55,11 @@ PTHREAD线程库
 注意！由于在开发riscv64时修改了内核代码，没有对x86进行适配，所以目前x86不能使用。
 
 开发文档:  
+[xbook2内核文档](https://www.book-os.org/doc/xbook2/programing-manual/base/base.html)  
+
 [riscv64架构for k210](doc/arch/riscv64-k210.md)  
+
+**[2021操作系统大赛总决赛文档](doc/oscomp2021.md)**  
 
 联系方式：
 开源官网：www.book-os.org  
