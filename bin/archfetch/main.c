@@ -23,7 +23,7 @@ char *xbook2_logo[] = {"      _                 _    ____  ",
 
 int main(int argc, char *argv[])
 {
-    print_logo(xbook2_logo);
+    print_logo((char*)xbook2_logo);
     printf("+----------------------------------------------------+\n");
     print_uname();
     print_cpuinfo();
