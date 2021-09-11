@@ -38,7 +38,7 @@ DSTATUS disk_status (
 {
     if (pdrv >= FF_VOLUMES)
         return STA_NOINIT;
-	DSTATUS stat = 0;
+    DSTATUS stat = 0;
     return stat;
 }
 
@@ -74,7 +74,7 @@ DRESULT disk_read (
     if (pdrv >= FF_VOLUMES)
         return RES_PARERR;
 
-	DRESULT res = RES_OK;
+    DRESULT res = RES_OK;
     if (diskman.read(fatfs_drv_map[pdrv], sector, (void *) buff, count * FF_MIN_SS) < 0) {
         res = RES_ERROR;
     }
@@ -122,7 +122,7 @@ DRESULT disk_ioctl (
     if (pdrv >= FF_VOLUMES)
         return RES_PARERR;
 	
-	DRESULT res;
+    DRESULT res;
     switch(cmd)
     {
     case CTRL_SYNC:
