@@ -228,13 +228,18 @@ QEMU_ARGUMENT += -device sb16 \
 		-device intel-hda -device hda-duplex
 endif
 
+DISK_AHCI = y
 ifeq ($(KERN_LIVECD_MODE),n)
+ifeq ($(DISK_AHCI),y)
 QEMU_ARGUMENT += -drive id=disk0,file=$(HDA_IMG),format=raw,if=none \
 		-drive id=disk1,file=$(HDB_IMG),format=raw,if=none \
 		-device ahci,id=ahci \
 		-device ide-hd,drive=disk0,bus=ahci.0 \
 		-device ide-hd,drive=disk1,bus=ahci.1
-endif
+else
+QEMU_ARGUMENT += -hda $(HDA_IMG) -hdb $(HDB_IMG)
+endif # DISK_AHCI
+endif # KERN_LIVECD_MODE
 
 ifeq ($(KERN_MODULE_NET),y)
 QEMU_ARGUMENT += -net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no
