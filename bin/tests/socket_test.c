@@ -275,7 +275,7 @@ int socket_ifconfig1(int argc, char *argv[])
 
 static unsigned char *get_if_mac(const char *dev)
 {
-    int sfd, ret, saved_errno, i;
+    int sfd, ret, saved_errno;
     unsigned char *mac_addr;
     struct ifreq ifr;
 

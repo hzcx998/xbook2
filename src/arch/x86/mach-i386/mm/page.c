@@ -189,7 +189,7 @@ int page_map_addr_fixed(unsigned long start, unsigned long addr, unsigned long l
     else
         attr |= PAGE_ATTR_READ;
 
-	unsigned long pages = addr;
+    unsigned long pages = addr;
     unsigned long end = first + len;
     while (first < end) {
         if (prot & PROT_REMAP) {

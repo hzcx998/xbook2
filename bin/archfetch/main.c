@@ -14,11 +14,11 @@ void print_cpuinfo();
 void print_mem();
 
 // figlet xbook2
-char *xbook2_logo[] = {"      _                 _    ____  ",
-                       "__  _| |__   ___   ___ | | _|___ \\ ",
-                       "\\ \\/ / '_ \\ / _ \\ / _ \\| |/ / __) |",
-                       " >  <| |_) | (_) | (_) |   < / __/ ",
-                       "/_/\\_\\_.__/ \\___/ \\___/|_|\\_\\_____|"};
+char *xbook2_logo = "      _                 _    ____  \n"
+                    "__  _| |__   ___   ___ | | _|___ \\ \n"
+                    "\\ \\/ / '_ \\ / _ \\ / _ \\| |/ / __) |\n"
+                    " >  <| |_) | (_) | (_) |   < / __/ \n"
+                    "/_/\\_\\_.__/ \\___/ \\___/|_|\\_\\_____|";
 
 
 int main(int argc, char *argv[])
@@ -34,12 +34,7 @@ int main(int argc, char *argv[])
 
 void print_logo(char *logo)
 {
-    int logo_length = sizeof(xbook2_logo) / sizeof(xbook2_logo[0]); // strlen(xbook2_logo)
-    int i;
-    for (i = 0; i < logo_length; i++)
-    {
-        printf("%s\n", xbook2_logo[i]);
-    }
+	puts(logo);
 }
 
 void print_uname()

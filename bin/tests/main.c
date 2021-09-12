@@ -37,7 +37,7 @@ testfunc_t test_table[] = {
     {"signal", signal_test},
     {"proc", proc_test},
     {"port_comm", port_comm_test},
-    {"file", file_test3},
+    {"file3", file_test3},
     {"fcntl", fcntl_test},
     {"tty", tty_test},
     {"id", id_test},
@@ -45,6 +45,7 @@ testfunc_t test_table[] = {
     {"backtrace2", backtrace_test2},
     {"loop", loop_test},
     {"sound", sound_test},
+    {"file5", file_test5},
 };
 
 int main(int argc, char *argv[])

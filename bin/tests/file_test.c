@@ -94,3 +94,12 @@ int file_test4(int argc, char *argv[])
     close(fd);
     return 0;
 }
+
+/*      Pass in a invalid file describer and see what will happen :)    */
+int file_test5(int argc, char *argv[])
+{
+    char buff[16];
+    if (read(13,buff,15) < 0)
+        return 0;
+    return EXIT_FAILURE;
+}

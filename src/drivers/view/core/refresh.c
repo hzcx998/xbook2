@@ -26,11 +26,11 @@ void view_refresh_map(int left, int top, int right, int buttom, int z0)
 
     if (left < 0)
         left = 0;
-	if (top < 0)
+    if (top < 0)
         top = 0;
-	if (right > view_screen.width)
+    if (right > view_screen.width)
         right = view_screen.width;
-	if (buttom > view_screen.height)
+    if (buttom > view_screen.height)
         buttom = view_screen.height;
     
     view_t *view;
@@ -436,11 +436,11 @@ void view_refresh_by_z(int left, int top, int right, int buttom, int z0, int z1)
 
     if (left < 0)
         left = 0;
-	if (top < 0)
+    if (top < 0)
         top = 0;
-	if (right > view_screen.width)
+    if (right > view_screen.width)
         right = view_screen.width;
-	if (buttom > view_screen.height)
+    if (buttom > view_screen.height)
         buttom = view_screen.height;
     view_t *view;
     unsigned long iflags;
