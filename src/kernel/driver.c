@@ -596,8 +596,8 @@ void io_complete_request(io_request_t *ioreq)
 
 static int io_complete_check(io_request_t *ioreq, iostatus_t status)
 {
-    if (status == IO_SUCCESS) {
-        if (ioreq->io_status.status == IO_SUCCESS && 
+    if (IO_STATUS_MASK(status) == IO_SUCCESS) {
+        if (IO_STATUS_MASK(ioreq->io_status.status) == IO_SUCCESS && 
             ioreq->flags & IOREQ_COMPLETION) {
             return 0;
         }
@@ -881,6 +881,7 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         return -1;
     }
     int len;
+    ssize_t err;
     iostatus_t status = IO_SUCCESS;
     io_request_t *ioreq = NULL;
     ioreq = io_build_sync_request(IOREQ_READ, devobj, buffer, length, offset, NULL);
@@ -906,12 +907,21 @@ ssize_t device_read(handle_t handle, void *buffer, size_t length, off_t offset)
         io_request_free((ioreq));
         return len;
     }
+    else
+    {
+        err = IO_ERRNO_MASK(status);
+        if (!err) {   /* not write errno */
+            err = -EPERM;
+        } else {
+            err = -err; /* -errno */
+        }
+    }
 #ifdef DRIVER_FRAMEWROK_DEBUG
     keprint(PRINT_ERR "device_read: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
     io_request_free(ioreq);
-    return -1;
+    return err;
 }
 
 ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset)
@@ -928,6 +938,8 @@ ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset)
 
     iostatus_t status = IO_SUCCESS;
     io_request_t *ioreq = NULL;
+    ssize_t err;
+
     ioreq = io_build_sync_request(IOREQ_WRITE, devobj, buffer, length, offset, NULL);
     if (ioreq == NULL) {
         keprint(PRINT_ERR "device_write: alloc io request packet failed!\n");
@@ -945,12 +957,21 @@ ssize_t device_write(handle_t handle, void *buffer, size_t length, off_t offset)
         io_request_free((ioreq));
         return len;
     }
+    else
+    {
+        err = IO_ERRNO_MASK(status);
+        if (!err) {   /* not write errno */
+            err = -EPERM;
+        } else {
+            err = -err; /* -errno */
+        }
+    }
 #ifdef DRIVER_FRAMEWROK_DEBUG
     keprint(PRINT_ERR "device_write: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
     io_request_free(ioreq);
-    return -1;
+    return err;
 }
 
 ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg)
@@ -967,6 +988,8 @@ ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg)
 
     iostatus_t status = IO_SUCCESS;
     io_request_t *ioreq = NULL;
+    ssize_t err;
+
     ioreq = io_build_sync_request(IOREQ_DEVCTL, devobj, NULL, 0, 0, NULL);
     if (ioreq == NULL) {
         keprint(PRINT_ERR "device_devctl: alloc io request packet failed!\n");
@@ -981,12 +1004,21 @@ ssize_t device_devctl(handle_t handle, unsigned int code, unsigned long arg)
         io_request_free((ioreq));
         return infomation;
     }
+    else
+    {
+        err = IO_ERRNO_MASK(status);
+        if (!err) {   /* not write errno */
+            err = -EPERM;
+        } else {
+            err = -err; /* -errno */
+        }
+    }
 #ifdef DRIVER_FRAMEWROK_DEBUG
     keprint(PRINT_ERR "device_devctl: do dispatch failed!\n");
 #endif
 /* rollback_ioreq */
     io_request_free(ioreq);
-    return -1;
+    return err;
 }
 
 int device_notify_to(char *devname, int tag, void *param)

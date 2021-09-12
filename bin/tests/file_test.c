@@ -103,3 +103,21 @@ int file_test5(int argc, char *argv[])
         return 0;
     return EXIT_FAILURE;
 }
+
+int file_test6(int argc, char *argv[])
+{
+    int fd = open("/dev/ram0", O_RDWR);
+    if (fd < 0)
+    {
+        printf("open file failed!\n");
+        return -1;
+    }
+
+    int err;
+    if ((err = ioctl(fd, 0X1234, NULL)) < 0)
+    {
+        printf("ioctl failed with errno %d, erron:%d, str:%s\n", err, errno, strerror(errno));
+    }
+    close(fd);
+    return 0;
+}

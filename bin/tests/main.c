@@ -46,6 +46,7 @@ testfunc_t test_table[] = {
     {"loop", loop_test},
     {"sound", sound_test},
     {"file5", file_test5},
+    {"file6", file_test6},
 };
 
 int main(int argc, char *argv[])

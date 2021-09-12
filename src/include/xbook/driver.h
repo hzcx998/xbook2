@@ -25,6 +25,10 @@
 #define IO_NOWAIT              (1 << 2)    /* 不需要等待 */
 #define IO_KERNEL              (1 << 3)    /* 内核IO */
 
+#define IO_STATUS_MASK(status) ((status) & 0xffff)
+#define IO_ERRNO(err)          (((err) & 0xffff) << 16)             
+#define IO_ERRNO_MASK(status)  (((status) >> 16) & 0xffff)             
+
 /* 系统可以打开的设备数量，可以根据设备数调节 */
 #define DEVICE_HANDLE_NR        32
 

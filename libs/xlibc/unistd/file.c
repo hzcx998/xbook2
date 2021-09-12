@@ -38,21 +38,39 @@ int read(int fd, void *buffer, size_t nbytes)
 {
     if (fd < 0)
         return -1;
-    return syscall3(int, SYS_READ, fd, buffer, nbytes);
+    int err = syscall3(int, SYS_READ, fd, buffer, nbytes);
+    if (err < 0)
+    {
+        _set_errno(-err);
+        err = -1;
+    }
+    return err;
 }
 
 int write(int fd, const void *buffer, size_t nbytes)
 {
     if (fd < 0)
         return -1;
-    return syscall3(int, SYS_WRITE, fd, buffer, nbytes);
+    int err = syscall3(int, SYS_WRITE, fd, buffer, nbytes);
+    if (err < 0)
+    {
+        _set_errno(-err);
+        err = -1;
+    }
+    return err;
 }
 
 int ioctl(int fd, int cmd, void *arg)
 {
     if (fd < 0)
         return -1;
-    return syscall3(int, SYS_IOCTL, fd, cmd, arg);
+    int err = syscall3(int, SYS_IOCTL, fd, cmd, arg);
+    if (err < 0)
+    {
+        _set_errno(-err);
+        err = -1;
+    }
+    return err;
 }
 
 int fcntl(int fd, int cmd, ...)

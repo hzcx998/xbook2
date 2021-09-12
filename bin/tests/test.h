@@ -74,4 +74,6 @@ int socket_test4(int argc, char *argv[]);
 int sound_test(int argc, char *argv[]);
 
 int file_test5(int argc,char *argv[]);
+int file_test6(int argc, char *argv[]);
+
 #endif // _TEST_H

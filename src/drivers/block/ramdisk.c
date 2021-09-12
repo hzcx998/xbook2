@@ -41,7 +41,7 @@ iostatus_t ramdisk_read(device_object_t *device, io_request_t *ioreq)
     unsigned long length = ioreq->parame.read.length;
     /* 判断越界 */
     if (off + (length / SECTOR_SIZE)  >= extension->sectors) {
-		status = IO_FAILED;
+		status = IO_FAILED | IO_ERRNO(EINVAL);
 #ifdef DEBUG_DRV
         keprint(PRINT_DEBUG "ramdisk_read: read disk offset=%d counts=%d failed!\n",
             off, (length / SECTOR_SIZE));
@@ -82,7 +82,7 @@ iostatus_t ramdisk_write(device_object_t *device, io_request_t *ioreq)
         keprint(PRINT_DEBUG "ramdisk_write: write disk offset=%d counts=%d failed!\n",
             off, (length / SECTOR_SIZE));
 #endif
-		status = IO_FAILED;
+		status = IO_FAILED | IO_ERRNO(EINVAL);
 	} else {
 
 		/* 进行磁盘写入 */
@@ -132,7 +132,7 @@ iostatus_t ramdisk_devctl(device_object_t *device, io_request_t *ioreq)
     case DISKIO_GETOFF:
         *((unsigned long *) arg) = extension->rwoffset;
     default:
-        status = IO_FAILED;
+        status = IO_FAILED | IO_ERRNO(EINVAL);
         break;
     }
     ioreq->io_status.status = status;
