@@ -219,7 +219,7 @@ int copy_file_to_custom(char *host_path, char *custom_path)
     fseek(fp, 0, SEEK_SET);
     void *buf = malloc(filesz + 1);
     if (buf == NULL) {
-        printf("fatfs: error: malloc for file buf about %s bytes failed!\n", filesz);
+        printf("fatfs: error: malloc for file buf about %d bytes failed!\n", filesz);
         f_close(&fil);
         fclose(fp);
         return -1;

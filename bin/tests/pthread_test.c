@@ -61,11 +61,10 @@ void* func1(void * p)
 
 int pthread_test(int argc, char *argv[])
 {
-    pthread_t p1, p2;
+    pthread_t p1;
     printf("maintid: %ld\n", pthread_self());
     sem_init(&sp, 0, 0);
     pthread_create(&p1, NULL, func1, NULL);
-    int i;
     sem_wait(&sp);
     sleep(1);
     pthread_cancel(p1);

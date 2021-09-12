@@ -94,7 +94,7 @@ typedef struct {
 } file_man_t;
 
 #define FILE_FD_IS_BAD(ffd) (!ffd || (ffd->handle < 0) || \
-        (!ffd->flags) || (!ffd->fsal < 0))
+        (!ffd->flags) || (!ffd->fsal))
 
 
 #endif  /* _XBOOK_FSAL_CORE_H */
