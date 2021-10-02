@@ -85,7 +85,7 @@ multiboot_entry:
     popl %eax
     cmpl $-1, %eax
     je setup_fail
-
+    
     # print "Multiboot End!" in protected mode
     movl $0x2f752f4d, 0xb8000
     movl $0x2f742f6c, 0xb8004

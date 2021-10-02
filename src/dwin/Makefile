@@ -1,0 +1,2 @@
+SRC	+= *.c
+SRC	+= hal/

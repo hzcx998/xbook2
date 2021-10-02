@@ -23,6 +23,8 @@
 #include <xbook/net.h>
 #endif
 
+#include <dwin/dwin.h>
+
 int kernel_main(void)
 {
     keprint(PRINT_INFO "welcome to xbook kernel.\n");
@@ -50,7 +52,8 @@ int kernel_main(void)
     #endif
     account_manager_init();
     port_comm_init();
-    //spin("test");
+    dwin_init();
+    spin("test");
     task_start_user();
     return 0;    
 }

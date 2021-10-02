@@ -206,6 +206,9 @@
         "if_arp.h": "c",
         "if_ether.h": "c",
         "sizes.h": "c",
-        "execinfo.h": "c"
+        "execinfo.h": "c",
+        "cpio.h": "c",
+        "hal.h": "c",
+        "dwin.h": "c"
     }
 }

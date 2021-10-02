@@ -82,7 +82,7 @@ void assertion_failure(char *exp, char *file, char *baseFile, int line)
 void spin(char * functionName)
 {
 	keprint(PRINT_NOTICE "spinning in %s", functionName);
-	interrupt_disable();
+	// interrupt_disable();
 	while(1){
 		cpu_idle();
 	}

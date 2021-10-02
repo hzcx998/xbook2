@@ -34,7 +34,7 @@ LD			:=  $(ENV_LD)
 export AS LD
 export ARCH
 
-SRC			:= $(ARCH)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/
+SRC			:= $(ARCH)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/ dwin/
 
 ifeq ($(KERN_MODULE_NET),y)
 SRC			+= net/
