@@ -53,7 +53,6 @@ int kernel_main(void)
     account_manager_init();
     port_comm_init();
     dwin_init();
-    spin("test");
     task_start_user();
     return 0;    
 }

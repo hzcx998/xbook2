@@ -209,6 +209,7 @@
         "execinfo.h": "c",
         "cpio.h": "c",
         "hal.h": "c",
-        "dwin.h": "c"
+        "dwin.h": "c",
+        "objects.h": "c"
     }
 }
