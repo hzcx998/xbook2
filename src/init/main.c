@@ -19,6 +19,7 @@
 #include <xbook/mutexqueue.h>
 #include <xbook/account.h>
 #include <xbook/portcomm.h>
+#include <xbook/disk.h>
 #ifdef CONFIG_NET
 #include <xbook/net.h>
 #endif
@@ -42,6 +43,7 @@ int kernel_main(void)
     clock_init();
     timers_init();
     interrupt_enable();
+    disk_init();
     driver_framewrok_init();
     initcalls_exec();
     file_system_init();

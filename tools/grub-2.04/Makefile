@@ -21,6 +21,7 @@ EFI_BOOT      = efi.img
 INITRD_PATH   = $(ISO_DIR)/$(BOOT_DIR)
 INITRD_IMG    = initrd.img
 INITRD_CONF   = initrd.cfg
+ROOTFS_IMG    = $(ISO_DIR)/$(OS_NAME)/rootfs.img
 
 X86_GRUB_MODULES = \
 	affs afs all_video bitmap bitmap_scale elf eval ntfs \
@@ -70,7 +71,9 @@ all:
 	mkdir -p $(ISO_DIR)/$(OS_NAME)
 	cp $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/$(BOOT_DIR)/$(KERNEL)
 	cd $(BUILD_DIR)/../develop/rom/ && \
-  	sed 's/\r//g' ../$(INITRD_CONF) | cpio -o -H newc > ../../tools/grub-2.04/$(INITRD_PATH)/$(INITRD_IMG)
+		sed 's/\r//g' ../$(INITRD_CONF) | cpio -o -H newc > ../../tools/grub-2.04/$(INITRD_PATH)/$(INITRD_IMG)
+	cd $(BUILD_DIR)/../develop/rom/ && \
+		find . | cpio -o -H newc > ../../tools/grub-2.04/$(ROOTFS_IMG)
 	$(MKISOFS) \
 		-graft-points \
 		-input-charset utf8 \

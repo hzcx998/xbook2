@@ -22,4 +22,21 @@ void ioport_write_bytes(unsigned short port, void* buf, unsigned int n);
 #define io_read     ioport_read_bytes
 #define io_write    ioport_write_bytes
 
+static inline void outportw(unsigned short _port, unsigned short _data)
+{
+    __asm__ volatile ("cli");
+    __asm__ volatile ("outw %1, %0"::"dN"(_port), "a"(_data));
+    __asm__ volatile ("sti");
+}
+
+static inline unsigned short inportw(unsigned short _port)
+{
+	unsigned short rv;
+    __asm__ volatile ("cli");
+    __asm__ volatile ("inw %1, %0":"=a"(rv):"dN"(_port));
+    __asm__ volatile ("sti");
+
+    return rv;
+}
+
 #endif  /* _X86_IO_H */

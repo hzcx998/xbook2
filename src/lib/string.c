@@ -366,6 +366,39 @@ const char *strpbrk(const char *str1, const char *str2)
 return NULL;
 }
 
+char *strdup(const char *s)
+{
+    size_t len = strlen(s) + 1;
+    char *p;
+
+    if (!(p = (char *)mem_alloc(len)))
+    {
+        return 0;
+    }
+
+    return memcpy(p, s, len);
+}
+
+char *strndup(const char *s, size_t n)
+{
+    size_t len = strlen(s);
+    char *p;
+
+    if (len > n)
+    {
+        len = n;
+    }
+
+    if (!(p = (char *)mem_alloc(len + 1)))
+    {
+        return 0;
+    }
+
+    memcpy(p, s, len);
+    p[len] = '\0';
+
+    return p;
+}
 
 void *memset(void* src, uint8_t value, uint32_t size) 
 {
@@ -395,12 +428,16 @@ void *memset32(void* src, uint32_t value, uint32_t size)
 	return src;
 }
 
-void memcpy(const void* dst, const void* src, uint32_t size)
+void *memcpy(const void* dst, const void* src, uint32_t size)
 {
     uint8_t *_dst = (uint8_t *)dst;
     uint8_t *_src = (uint8_t *)src;
     while (size-- > 0)
+    {
         *_dst++ = *_src++;
+    }
+
+    return (void *)dst;
 }
 
 int memcmp(const void * s1, const void *s2, int n)
