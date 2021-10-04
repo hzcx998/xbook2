@@ -49,7 +49,7 @@ void dwin_thread_init(struct dwin_thread *thread);
 
 int dwin_lcd_map(struct dwin_lcd *lcd);
 int dwin_lcd_unmap(struct dwin_lcd *lcd);
-
 void dwin_lcd_draw_rect(struct dwin_lcd *lcd, int x, int y, int w, int h, unsigned int color);
+void dwin_lcd_demo(struct dwin_lcd *lcd);
 
 #endif   /* _DWIN_OBJECTS_H */

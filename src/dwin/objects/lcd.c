@@ -85,6 +85,7 @@ int dwin_lcd_map(struct dwin_lcd *lcd)
         }
         return -1;
     }
+    
     return 0;
 }
 
@@ -111,4 +112,23 @@ void dwin_lcd_draw_rect(struct dwin_lcd *lcd, int x, int y, int w, int h, unsign
             lcd->out_pixel(lcd, x + i, y + j, color);
         }
     }
+}
+
+
+void dwin_lcd_demo(struct dwin_lcd *lcd)
+{
+    dwin_lcd_draw_rect(lcd, 0, 0, 
+        lcd->width,
+        lcd->height,
+        0xFFFF0000);
+    
+    dwin_lcd_draw_rect(lcd, 100, 100, 
+        lcd->width / 2,
+        lcd->height / 2,
+        0xFF00FF00);
+
+    dwin_lcd_draw_rect(lcd, 200, 200, 
+        lcd->width / 4,
+        lcd->height / 4,
+        0xFF0000FF);
 }

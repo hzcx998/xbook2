@@ -210,6 +210,8 @@
         "cpio.h": "c",
         "hal.h": "c",
         "dwin.h": "c",
-        "objects.h": "c"
+        "objects.h": "c",
+        "workstation.h": "c",
+        "dwin_config.h": "c"
     }
 }

@@ -1,5 +1,7 @@
 #include <dwin/dwin.h>
 #include <dwin/hal.h>
+#include <dwin/workstation.h>
+#include <dwin/layer.h>
 
 void dwin_thread(void *arg)
 {
@@ -22,21 +24,11 @@ void dwin_init(void)
         dwin_log(DWIN_TAG"init failed\n");
         return;
     }
-    
-    dwin_lcd_draw_rect(&dwin_hal->lcd->parent, 0, 0, 
-        dwin_hal->lcd->parent.width,
-        dwin_hal->lcd->parent.height,
-        0xFFFF0000);
-    
-    dwin_lcd_draw_rect(&dwin_hal->lcd->parent, 100, 100, 
-        dwin_hal->lcd->parent.width / 2,
-        dwin_hal->lcd->parent.height / 2,
-        0xFF00FF00);
+    dwin_lcd_demo(&dwin_hal->lcd->parent);
 
-    dwin_lcd_draw_rect(&dwin_hal->lcd->parent, 200, 200, 
-        dwin_hal->lcd->parent.width / 4,
-        dwin_hal->lcd->parent.height / 4,
-        0xFF0000FF);
+    dwin_workstation_init(dwin_hal->lcd->parent.width, dwin_hal->lcd->parent.height);
+    dwin_layer_init();
+
 
     /* init messagequeue */
 
