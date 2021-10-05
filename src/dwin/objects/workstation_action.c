@@ -26,7 +26,7 @@ void dwin_workstation_mouse_layer_init(dwin_workstation_t *station)
     dwin_layer_t *layer;
     layer = dwin_layer_create(DWIN_WORKSTATION_MOUSE_W, DWIN_WORKSTATION_MOUSE_H);
     dwin_assert(layer != NULL);
-    dwin_layer_change_priority(layer, DWIN_LAYER_PRIO_DESKTOP);
+    dwin_layer_change_priority(layer, DWIN_LAYER_PRIO_TOPEST);
     
     dwin_layer_draw_rect(layer, 0, 0, layer->width, layer->height, 0xff808080);
 

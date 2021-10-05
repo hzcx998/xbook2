@@ -176,37 +176,36 @@ void dwin_layer_test2(void)
     /* window 0 100, 200, w/2, h/2 */
     dwin_layer_t *ly3 = dwin_layer_create(dwin_current_workstation->width / 2, dwin_current_workstation->height / 2);
     dwin_assert(ly3 != NULL);
-    // dwin_layer_change_priority(ly3, DWIN_LAYER_PRIO_WINDOW);
+    dwin_layer_change_priority(ly3, DWIN_LAYER_PRIO_WINDOW);
     dwin_workstation_add_layer(dwin_current_workstation, ly3);    
 
     dwin_layer_draw_rect(ly3, 0, 0, ly3->width, ly3->height, 0xff00ff00);
 
-    dwin_layer_zorder(ly3, 0);
+    dwin_layer_zorder(ly3, 1);
     dwin_layer_move(ly3, 100, 200);
 
     /* window 1 200, 300, w/2, h/2 */
     ly3 = dwin_layer_create(dwin_current_workstation->width / 2, dwin_current_workstation->height / 2);
     dwin_assert(ly3 != NULL);
-    // dwin_layer_change_priority(ly3, DWIN_LAYER_PRIO_WINDOW);
+    dwin_layer_change_priority(ly3, DWIN_LAYER_PRIO_WINDOW);
     dwin_workstation_add_layer(dwin_current_workstation, ly3);   
 
     dwin_layer_draw_rect(ly3, 0, 0, ly3->width, ly3->height, 0xff0000ff);
 
-    dwin_layer_zorder(ly3, 1);
+    dwin_layer_zorder(ly3, 2);
     dwin_layer_move(ly3, 200, 300);
 
-#if 0
     /* panel 1 200, 300, 100, 200 */
     ly3 = dwin_layer_create(100, 200);
     dwin_assert(ly3 != NULL);
-    dwin_layer_change_priority(ly3, DWIN_LAYER_PRIO_WINDOW);
+    dwin_layer_change_priority(ly3, DWIN_LAYER_PRIO_PANEL);
     dwin_workstation_add_layer(dwin_current_workstation, ly3);    
 
     dwin_layer_draw_rect(ly3, 0, 0, ly3->width, ly3->height, 0xffff0000);
 
-    dwin_layer_zorder(ly3, 2);
+    dwin_layer_zorder(ly3, 0);
     dwin_layer_move(ly3, 200, 200);
-#endif
+
 }
 
 void dwin_layer_init(void)
@@ -215,8 +214,9 @@ void dwin_layer_init(void)
 
     dwin_workstation_idle_layer_init(dwin_current_workstation);
 
+    dwin_workstation_mouse_layer_init(dwin_current_workstation);
+
     // dwin_layer_test();
     dwin_layer_test2();
 
-    dwin_workstation_mouse_layer_init(dwin_current_workstation);
 }

@@ -16,12 +16,12 @@
 enum dwin_layer_priority
 {
     DWIN_LAYER_PRIO_DESKTOP = 0,
-    DWIN_LAYER_PRIO_NR,
     DWIN_LAYER_PRIO_WINDOW,
     DWIN_LAYER_PRIO_PANEL,
     DWIN_LAYER_PRIO_WINDOW_HIGH,
     DWIN_LAYER_PRIO_PANEL_HIGH,
-    DWIN_LAYER_PRIO_TOPEST
+    DWIN_LAYER_PRIO_TOPEST,
+    DWIN_LAYER_PRIO_NR,
 };
 typedef enum dwin_layer_priority dwin_layer_priority_t; 
 
@@ -31,8 +31,8 @@ struct dwin_layer
     list_t global_list;
     uint8_t *buffer;
     uint32_t id;
-    uint32_t width;
-    uint32_t height;
+    int width;
+    int height;
     int x;
     int y;
     int z;

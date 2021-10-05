@@ -5,7 +5,7 @@
 
 static void mouse_motion(struct dwin_mouse *mouse)
 {
-    dwin_log("mouse motion: %d,%d\n", mouse->x, mouse->y);
+    // dwin_log("mouse motion: %d,%d\n", mouse->x, mouse->y);
     dwin_layer_move(dwin_current_workstation->mouse_layer, mouse->x, mouse->y);
 }
 
