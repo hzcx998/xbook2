@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "dir.h": "c",
-        "stat.h": "c",
-        "dirent.h": "c"
-    }
-}
