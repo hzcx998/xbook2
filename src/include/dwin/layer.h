@@ -2,6 +2,7 @@
 #define _DWIN_LAYER_H
 
 #include <dwin/dwin_config.h>
+#include <dwin/buffer.h>
 
 /* max number of layers */
 #define DWIN_LAYER_NR   128
@@ -57,5 +58,10 @@ int dwin_layer_resize(dwin_layer_t *layer, int x, int y, uint32_t width, uint32_
 int dwin_layer_change_priority(dwin_layer_t *layer, dwin_layer_priority_t priority);
 
 int dwin_layer_draw_rect(dwin_layer_t *layer, int x, int y, uint32_t w, uint32_t h, uint32_t color);
+
+#define dwin_layer_putpixel(layer, x, y, color) ((uint32_t *)(layer)->buffer)[(y) * (layer)->width + (x)] = (color)
+
+void dwin_layer_bitblt(dwin_layer_t *layer, int x, int y,
+        struct dwin_buffer *buf, dwin_rect_t *rect);
 
 #endif   /* _DWIN_LAYER_H */

@@ -170,7 +170,6 @@ void dwin_layer_test(void)
     dbgprint("test done\n");
 }
 
-
 void dwin_layer_test2(void)
 {
     /* window 0 100, 200, w/2, h/2 */
@@ -203,9 +202,49 @@ void dwin_layer_test2(void)
 
     dwin_layer_draw_rect(ly3, 0, 0, ly3->width, ly3->height, 0xffff0000);
 
+    dwin_buffer_t buf;
+    dwin_buffer_init(&buf, 32, 32, dwin_malloc(32 * 32 * DWIN_LAYER_BPP));
+
+    int i, j;
+    for (j = 0; j < 32; j++)
+    {
+        for (i = 0; i < 32; i++)
+        {    
+            dwin_buffer_putpixel(&buf, i, j, 0xff000000 | (i * j * 0x101010) );
+        }
+    }
+
+    dwin_layer_bitblt(ly3, 0, 0, &buf, NULL);
+
     dwin_layer_zorder(ly3, 0);
     dwin_layer_move(ly3, 200, 200);
+}
 
+void dwin_layer_scroll(void)
+{
+    dwin_layer_t *l0 = dwin_layer_create(dwin_current_workstation->width / 2, dwin_current_workstation->height / 2);
+    dwin_assert(l0 != NULL);
+    dwin_layer_change_priority(l0, DWIN_LAYER_PRIO_WINDOW);
+    dwin_workstation_add_layer(dwin_current_workstation, l0);    
+    dwin_layer_draw_rect(l0, 0, 0, l0->width, l0->height, 0xfff0f0f0);
+    dwin_layer_move(l0, 200, 200);
+    dwin_layer_zorder(l0, 0);
+
+    int priority = DWIN_LAYER_PRIO_PANEL;
+    while (1)
+    {
+        dwin_layer_change_priority(l0, priority);
+        dwin_layer_zorder(l0, priority);
+
+        dwin_layer_draw_rect(l0, 0, 0, l0->width, l0->height, 0xff000000 | (priority * 0X101010 ));
+        dwin_layer_move(l0, 200, 200);
+
+        priority++;
+        if (priority >= DWIN_LAYER_PRIO_NR)
+            priority = DWIN_LAYER_PRIO_DESKTOP;
+
+        dbgprint("priority:%d\n", priority);
+    }
 }
 
 void dwin_layer_init(void)
@@ -219,4 +258,5 @@ void dwin_layer_init(void)
     // dwin_layer_test();
     dwin_layer_test2();
 
+    // dwin_layer_scroll();
 }

@@ -24,8 +24,8 @@
 
 /* memory */
 #include <xbook/memalloc.h> // memory
-#define dwin_malloc(sz) mem_alloc(sz);
-#define dwin_free(sz) mem_free(sz);
+#define dwin_malloc(sz) mem_alloc(sz)
+#define dwin_free(sz) mem_free(sz)
 
 /* lock for global variable */
 #include <arch/interrupt.h> // interrupt enable&disable

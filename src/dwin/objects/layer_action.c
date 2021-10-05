@@ -357,3 +357,59 @@ int dwin_layer_draw_rect(dwin_layer_t *layer, int x, int y, uint32_t w, uint32_t
     }
     return 0;
 }
+
+void dwin_layer_bitblt(dwin_layer_t *layer, int x, int y, 
+        struct dwin_buffer *buf, dwin_rect_t *rect)
+{
+    if (layer == NULL || !buf)
+        return;
+    if (layer->buffer == NULL)
+        return;
+
+    int bx;
+    int by;
+    int width;
+    int height;
+
+    if (rect == NULL)
+    {
+        bx = 0;
+        by = 0;
+        width = buf->width;
+        height = buf->width;
+    }
+    else
+    {
+        bx = rect->x;
+        by = rect->y;
+        width = rect->w;
+        height = rect->h;
+    }
+
+    if (width > buf->width)
+        width = buf->width;
+    if (height > buf->height)
+        height = buf->height;
+    /* 宽度剪裁 */
+    int w = dwin_min(width, buf->width - bx);
+    int h = dwin_min(height, buf->height - by);
+    if (w <= 0 || h <= 0)
+        return;
+    
+    uint32_t color;
+    int vy, by2;
+    int vx, bx2;
+    /* 右下位置剪裁 */
+    int vy2 = min((y + h), layer->height);
+    int vx2 = min((x + w), layer->width);
+    for (vy = y, by2 = by; vy < vy2; vy++, by2++)
+    {
+        for (vx = x, bx2 = bx; vx < vx2; vx++, bx2++)
+        {
+            color = dwin_buffer_getpixel(buf, bx2, by2);
+            if (((color >> 24) & 0xff)) {
+                dwin_layer_putpixel(layer, vx, vy, color);
+            }
+        }
+    }
+}

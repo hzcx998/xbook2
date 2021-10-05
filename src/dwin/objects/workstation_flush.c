@@ -30,89 +30,10 @@ static void flush_map(dwin_workstation_t *station, int left, int top, int right,
     
     dwin_critical_t crit;
     dwin_enter_critical(crit);
-    
-    /* 刷新所有比当前优先级都低的图层的id */
-    int lv = 0;
-    for (; lv < priority; lv++)
-    {
-        list_for_each_owner (layer, &station->priority_list_head[lv], list)
-        {
-            layer_left = left - layer->x;
-            layer_top = top - layer->y;
-            layer_right = right - layer->x;
-            layer_buttom = buttom - layer->y;
-            if (layer_left < 0)
-            {
-                layer_left = 0;
-            }
-            if (layer_top < 0)
-            {
-                layer_top = 0;
-            }
-            if (layer_right > layer->width)
-            {
-                layer_right = layer->width;
-            } 
-            if (layer_buttom > layer->height)
-            {
-                layer_buttom = layer->height;
-            }
 
-            colors = (uint32_t *)layer->buffer;
-            /* 进入循环前进行位置预判，然后调整位置 */
-            // layer_top
-            screen_y = layer->y + layer_top;
-            if (screen_y < 0)
-            {
-                layer_top += -screen_y;
-            }
-            if (screen_y >= station->height)
-            {
-                continue;
-            }
-            // layer_buttom
-            screen_y = layer->y + layer_buttom;
-            if (screen_y >= station->height)
-            {
-                layer_buttom -= screen_y - station->height;
-            }
-
-            // layer_left
-            screen_x = layer->x + layer_left;
-            if (screen_x < 0)
-            {
-                layer_left += -screen_x;
-            }
-            if (screen_x >= station->width)
-            {
-                continue;
-            }
-            // layer_right
-            screen_x = layer->x + layer_right;
-            if (screen_x < 0)
-            {
-                layer_right -= screen_x - station->width;
-            }
-            
-            for(layer_y = layer_top; layer_y < layer_buttom; layer_y++)
-            {
-                screen_y = layer->y + layer_y;
-                src = &((uint32_t *) colors)[layer_y * layer->width]; 
-                map = &station->id_map[(screen_y * station->width + layer->x)];
-                for(layer_x = layer_left; layer_x < layer_right; layer_x++)
-                {
-                    /* 不是全透明的，就把视图标识写入到映射表中 */
-                    if ((src[layer_x] >> 24) & 0xff)
-                    {
-                        map[layer_x] = layer->id;
-                    }
-                }
-            }
-        }
-    }
-
+    int lv;
     /* 刷新所有优先级>=当前优先级，如果优先级相等，则刷新Z >= 参考Z0的图层的id */
-    for (lv = priority; lv < DWIN_LAYER_PRIO_NR; lv++)
+    for (lv = 0; lv < DWIN_LAYER_PRIO_NR; lv++)
     {
         list_for_each_owner (layer, &station->priority_list_head[lv], list)
         {
@@ -376,50 +297,32 @@ static void flush_by_z(dwin_workstation_t *workstation, int left, int top, int r
     dwin_critical_t crit;
     dwin_enter_critical(crit);
 
+    /* 刷新当前优先级指定深度的图层，包括更低优先级的所有图层 */
     int lv = 0;
-    for (; lv < priority; lv++)
+    for (; lv <= priority; lv++)
     {
         list_for_each_owner (layer, &workstation->priority_list_head[lv], list)
         {
-            view_left = left - layer->x;
-            view_top = top - layer->y;
-            view_right = right - layer->x;
-            view_buttom = buttom - layer->y;
-            if (view_left < 0)
-                view_left = 0;
-            if (view_top < 0)
-                view_top = 0;
-            if (view_right > layer->width) 
-                view_right = layer->width;
-            if (view_buttom > layer->height)
-                view_buttom = layer->height;
-            
-            workstation->flush_bits(layer, view_left, view_top, view_right, view_buttom);
+            if ((priority == lv && (layer->z >= z0 && layer->z <= z1)) || priority != lv)
+            {
+                view_left = left - layer->x;
+                view_top = top - layer->y;
+                view_right = right - layer->x;
+                view_buttom = buttom - layer->y;
+                if (view_left < 0)
+                    view_left = 0;
+                if (view_top < 0)
+                    view_top = 0;
+                if (view_right > layer->width) 
+                    view_right = layer->width;
+                if (view_buttom > layer->height)
+                    view_buttom = layer->height;
+                
+                workstation->flush_bits(layer, view_left, view_top, view_right, view_buttom);
+            }
         }
     }
     
-    /* 刷新当前优先级的指定深度的图层 */
-    list_for_each_owner (layer, &workstation->priority_list_head[priority], list)
-    {
-        /* 全部图层都要进行计算 */
-        if (layer->z >= z0 && layer->z <= z1)
-        {
-            view_left = left - layer->x;
-            view_top = top - layer->y;
-            view_right = right - layer->x;
-            view_buttom = buttom - layer->y;
-            if (view_left < 0)
-                view_left = 0;
-            if (view_top < 0)
-                view_top = 0;
-            if (view_right > layer->width) 
-                view_right = layer->width;
-            if (view_buttom > layer->height)
-                view_buttom = layer->height;
-            
-            workstation->flush_bits(layer, view_left, view_top, view_right, view_buttom);
-        }
-    }
     dwin_leave_critical(crit);
 }
 
