@@ -102,7 +102,7 @@ httpserver_thread(void *arg)
 void
 httpserver_init()
 {
-  sys_thread_new("http_server_netconn", httpserver_thread, NULL, DEFAULT_THREAD_STACKSIZE, TCPIP_THREAD_PRIO + 1);
+  sys_thread_new("http_server_netconn", httpserver_thread, NULL, DEFAULT_THREAD_STACKSIZE, TCPIP_THREAD_PRIO);
 }
 
 #endif /* LWIP_NETCONN*/

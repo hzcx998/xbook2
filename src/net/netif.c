@@ -40,9 +40,9 @@ void lwip_init_task(void)
     IP4_ADDR(&gateway, 0,0,0,0);
     IP4_ADDR(&netmask, 0,0,0,0);
 #else
-    IP4_ADDR(&ipaddr, 192,168,0,105);
-    IP4_ADDR(&gateway, 192,168,0,1);
-    IP4_ADDR(&netmask, 255,255,0, 0);
+    IP4_ADDR(&ipaddr, NETIF_IP0, NETIF_IP1, NETIF_IP2, NETIF_IP3);
+    IP4_ADDR(&gateway, NETIF_GW0, NETIF_GW1, NETIF_GW2, NETIF_GW3);
+    IP4_ADDR(&netmask, NETIF_MASK0, NETIF_MASK1, NETIF_MASK2, NETIF_MASK3);
 #endif
 
 #if NO_SYS == 1
@@ -54,7 +54,14 @@ void lwip_init_task(void)
     netif_set_up(&lwip_netif);
 
 #if LWIP_DHCP == 1
-    dhcp_start(&lwip_netif);
+    if (dhcp_start(&lwip_netif) != 0)
+    {
+        errprint("[net] start DHCP error!\n");
+    }
+    else
+    {
+        infoprint("[net] start DHCP success\n");
+    }
 #endif
 }
 
@@ -63,7 +70,7 @@ int net_interface_add(net_interface_t *netif)
     if (!netif)
         return -1;
     spin_lock(&netif_spin_lock);
-    list_add(&netif->list, &netif_list_head);
+    list_add_tail(&netif->list, &netif_list_head);
     spin_unlock(&netif_spin_lock);
     return 0;
 }
@@ -285,6 +292,37 @@ void net_interface_dump()
         }
         dbgprint(">\n");
 
+    }
+    spin_unlock(&netif_spin_lock);
+}
+
+void net_interface_hook(net_interface_t *netif)
+{
+    if (netif->extension == NULL)
+        return;
+
+    struct netif *phy = (struct netif *)netif->extension;
+
+#if LWIP_DHCP == 1
+    if (netif->dhcp_success_flags == 0 && phy->dhcp->state == DHCP_BOUND)
+    {
+        dbgprint("dhcp bound success!\n");
+        netif->ip_addr = phy->ip_addr;
+        netif->gateway = phy->gw;
+        netif->netmask = phy->netmask;
+        
+        netif->dhcp_success_flags = 1;
+    }
+#endif
+
+}
+
+void net_interface_poll(void)
+{
+    net_interface_t *netif;
+    spin_lock(&netif_spin_lock);
+    list_for_each_owner (netif, &netif_list_head, list) {
+        net_interface_hook(netif);
     }
     spin_unlock(&netif_spin_lock);
 }

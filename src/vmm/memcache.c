@@ -277,6 +277,15 @@ void *mem_alloc(size_t size)
     return p;
 }
 
+void *mem_alloc_align(size_t size, int align)
+{
+	void *p = mem_alloc(size);
+    if (p == NULL)
+        return p;
+    void *q = (void *)((unsigned long)p & (~(align - 1)));
+    return q;
+}
+
 static void mem_cache_do_free(mem_cache_t *cache, void *object)
 {
 	mem_group_t *group;

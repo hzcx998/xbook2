@@ -21,6 +21,7 @@ void netin_kthread(void *arg)
         /* 检测输入，如果没有收到数据就会阻塞。 */
         network_interface_input();
         task_yield();
+        net_interface_poll();
     }
 }
 

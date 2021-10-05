@@ -1167,6 +1167,7 @@ static iostatus_t ahci_enter(driver_object_t *driver)
         return status;
 	}
     
+    keprint(PRINT_INFO "[ahci]: irqno %d\n", ahci_int);
     if (irq_register(ahci_int, ahci_handler, IRQF_SHARED, "ahci", "ahci driver", (void *)driver) < 0) {
 		keprint(PRINT_ERR "[ahci]: register interrupt failed!\n");
 		/* 需要取消内存映射以及关闭ahci总线 */

@@ -32,13 +32,15 @@ int do_socket_close(int sock);
 #define NETIF_TYPE_LWIP
 
 /* 网络接口 */
-typedef struct {
+typedef struct net_interface {
     list_t list;
     /** IP address configuration in network byte order */
     ip_addr_t ip_addr;
     ip_addr_t broad_addr;
     ip_addr_t netmask;
     ip_addr_t gateway;
+
+    int dhcp_success_flags;
 
     uint32_t mtu;
     /** number of bytes used in hwaddr */
@@ -76,6 +78,9 @@ void net_interface_set_flags(net_interface_t *netif, int flags);
 void net_interface_set_broad_addr(net_interface_t *netif, ip_addr_t *addr);
 void net_interface_set_netmask(net_interface_t *netif, ip_addr_t *addr);
 void net_interface_set_mtu(net_interface_t *netif, int mtu);
+
+void net_interface_poll(void);
+
 #endif
 
 #endif  /* _XBOOK_NETIF_H */

@@ -86,8 +86,14 @@ EFI_BOOT_MODE ?= n
 QEMU_FAT_FS ?= n
 
 # has net module? (y/n)
-KERN_MODULE_NET	?= n
+KERN_MODULE_NET	?= y
 export KERN_MODULE_NET
+
+# netcard name: rtl8139/pcnet/e1000
+QEMU_NETCARD_NAME	?=pcnet
+
+# netcard type: tap/user
+QEMU_NET_MODE ?=user
 
 # is livecd mode? (y/n)
 KERN_LIVECD_MODE ?= n
@@ -242,7 +248,14 @@ endif # DISK_AHCI
 endif # KERN_LIVECD_MODE
 
 ifeq ($(KERN_MODULE_NET),y)
-QEMU_ARGUMENT += -net nic,model=rtl8139 -net tap,ifname=tap0,script=no,downscript=no
+	QEMU_ARGUMENT += -net nic,model=$(QEMU_NETCARD_NAME)
+
+ifeq ($(QEMU_NET_MODE),tap)
+	QEMU_ARGUMENT += -net tap,ifname=tap0,script=no,downscript=no 
+else
+	QEMU_ARGUMENT += -net user
+endif
+
 endif
 
 ifeq ($(BOOT_MODE),$(BOOT_LEGACY_MODE))

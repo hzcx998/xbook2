@@ -109,10 +109,13 @@ low_level_init(struct netif *netif)
         return;
     }
     u8_t mac_addr[ETHARP_HWADDR_LEN] = {0};
-#if 1
+
     drv_netcard.ioctl(ethernetif->netsolt, NETIO_GETMAC, &mac_addr[0]);
     dbgprint("mac: %x %x %x %x %x %x\n", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-#endif
+
+    int flags = DEV_NOWAIT;
+    drv_netcard.ioctl(ethernetif->netsolt, NETIO_SETFLGS, &flags);
+
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 

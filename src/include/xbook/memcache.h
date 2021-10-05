@@ -77,6 +77,9 @@ void *mem_alloc(size_t size);
 void mem_free(void *object);
 int ksharink();
 
+void *mem_alloc_align(size_t size, int align);
+#define mem_free_align(ptr) mem_free(ptr)
+
 int mem_cache_init(mem_cache_t *cache, char *name, size_t size, flags_t flags);
 void *mem_cache_alloc_object(mem_cache_t *cache);
 void mem_cache_free_object(mem_cache_t *cache, void *object);
