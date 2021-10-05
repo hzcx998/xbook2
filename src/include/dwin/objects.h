@@ -44,6 +44,7 @@ struct dwin_thread
 
 void dwin_keyboard_init(struct dwin_keyboard *keyboard);
 void dwin_mouse_init(struct dwin_mouse *mouse);
+
 void dwin_lcd_init(struct dwin_lcd *lcd);
 void dwin_thread_init(struct dwin_thread *thread);
 

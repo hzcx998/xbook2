@@ -6,20 +6,26 @@ dwin_workstation_t *dwin_current_workstation;
 
 void dwin_workstation_init(uint32_t width, uint32_t height)
 {
-    int i;
+    int i, j;
     for (i = 0; i < DWIN_WORKSTATION_NR; i++)
     {
         dwin_workstations[i].depth = i;
         dwin_workstations[i].width = width;
         dwin_workstations[i].height = height;
-        dwin_workstations[i].topz = -1;
-
-        list_init(&dwin_workstations[i].show_list_head);
+        dwin_workstations[i].idle_layer = NULL;
+        dwin_workstations[i].mouse_layer = NULL;
+        /* init priority list */
+        for (j = 0; j < DWIN_LAYER_PRIO_NR; j++)
+        {
+            list_init(&dwin_workstations[i].priority_list_head[j]);
+            dwin_workstations[i].priority_topz[j] = -1;
+        }
         list_init(&dwin_workstations[i].global_list_head);
         dwin_workstation_init_flush(&dwin_workstations[i]);
     }
     /* default select 0 */
     dwin_current_workstation = &dwin_workstations[0];
+    
 }
 
 dwin_workstation_t *dwin_workstation_switch(int idx)
@@ -50,7 +56,21 @@ int dwin_workstation_is_layer_shown(dwin_workstation_t *station, dwin_layer_t *l
 {
     dwin_critical_t crit;
     dwin_enter_critical(crit);
-    int found = list_find(&layer->list, &station->show_list_head);
+    
+    dwin_layer_t *target;
+    int found = 0;
+    int lv = 0;
+    for (; lv < DWIN_LAYER_PRIO_NR; lv++)
+    {
+        list_for_each_owner (target, &station->priority_list_head[lv], list)
+        {
+            if (target == layer)
+            {
+                found = 1;
+                break;
+            }
+        }
+    }
     dwin_leave_critical(crit);
     return found;
 }

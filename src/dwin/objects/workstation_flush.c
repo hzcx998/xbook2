@@ -3,7 +3,11 @@
 #include <dwin/hal.h>
 #include <dwin/workstation.h>
 
-static void flush_map(dwin_workstation_t *station, int left, int top, int right, int buttom, int z0)
+
+/**
+ * priority: 要刷新的图层的参考优先级
+ */
+static void flush_map(dwin_workstation_t *station, int left, int top, int right, int buttom, int z0, int priority)
 {
     int layer_left, layer_top, layer_right, layer_buttom; // 视图内部坐标位置
     int screen_x, screen_y;
@@ -26,80 +30,84 @@ static void flush_map(dwin_workstation_t *station, int left, int top, int right,
     
     dwin_critical_t crit;
     dwin_enter_critical(crit);
-
-    /* 刷新高度为[z0-top]区间的视图 */
-    list_for_each_owner (layer, &station->show_list_head, list)
+    
+    /* 低优先级的图层都刷新 */
+    int lv = 0;
+    for (; lv < DWIN_LAYER_PRIO_NR; lv++)
     {
-        if (layer->z >= z0)
+        list_for_each_owner (layer, &station->priority_list_head[lv], list)
         {
-            layer_left = left - layer->x;
-            layer_top = top - layer->y;
-            layer_right = right - layer->x;
-            layer_buttom = buttom - layer->y;
-            if (layer_left < 0)
+            if (layer->z >= z0)
             {
-                layer_left = 0;
-            }
-            if (layer_top < 0)
-            {
-                layer_top = 0;
-            }
-            if (layer_right > layer->width)
-            {
-                layer_right = layer->width;
-            } 
-            if (layer_buttom > layer->height)
-            {
-                layer_buttom = layer->height;
-            }
-
-            colors = (uint32_t *)layer->buffer;
-            /* 进入循环前进行位置预判，然后调整位置 */
-            // layer_top
-            screen_y = layer->y + layer_top;
-            if (screen_y < 0)
-            {
-                layer_top += -screen_y;
-            }
-            if (screen_y >= station->height)
-            {
-                continue;
-            }
-            // layer_buttom
-            screen_y = layer->y + layer_buttom;
-            if (screen_y >= station->height)
-            {
-                layer_buttom -= screen_y - station->height;
-            }
-
-            // layer_left
-            screen_x = layer->x + layer_left;
-            if (screen_x < 0)
-            {
-                layer_left += -screen_x;
-            }
-            if (screen_x >= station->width)
-            {
-                continue;
-            }
-            // layer_right
-            screen_x = layer->x + layer_right;
-            if (screen_x < 0)
-            {
-                layer_right -= screen_x - station->width;
-            }
-            
-            for(layer_y = layer_top; layer_y < layer_buttom; layer_y++)
-            {
-                screen_y = layer->y + layer_y;
-                src = &((uint32_t *) colors)[layer_y * layer->width]; 
-                map = &station->id_map[(screen_y * station->width + layer->x)];
-                for(layer_x = layer_left; layer_x < layer_right; layer_x++)
+                layer_left = left - layer->x;
+                layer_top = top - layer->y;
+                layer_right = right - layer->x;
+                layer_buttom = buttom - layer->y;
+                if (layer_left < 0)
                 {
-                    /* 不是全透明的，就把视图标识写入到映射表中 */
-                    if ((src[layer_x] >> 24) & 0xff)
+                    layer_left = 0;
+                }
+                if (layer_top < 0)
+                {
+                    layer_top = 0;
+                }
+                if (layer_right > layer->width)
+                {
+                    layer_right = layer->width;
+                } 
+                if (layer_buttom > layer->height)
+                {
+                    layer_buttom = layer->height;
+                }
+
+                colors = (uint32_t *)layer->buffer;
+                /* 进入循环前进行位置预判，然后调整位置 */
+                // layer_top
+                screen_y = layer->y + layer_top;
+                if (screen_y < 0)
+                {
+                    layer_top += -screen_y;
+                }
+                if (screen_y >= station->height)
+                {
+                    continue;
+                }
+                // layer_buttom
+                screen_y = layer->y + layer_buttom;
+                if (screen_y >= station->height)
+                {
+                    layer_buttom -= screen_y - station->height;
+                }
+
+                // layer_left
+                screen_x = layer->x + layer_left;
+                if (screen_x < 0)
+                {
+                    layer_left += -screen_x;
+                }
+                if (screen_x >= station->width)
+                {
+                    continue;
+                }
+                // layer_right
+                screen_x = layer->x + layer_right;
+                if (screen_x < 0)
+                {
+                    layer_right -= screen_x - station->width;
+                }
+                
+                for(layer_y = layer_top; layer_y < layer_buttom; layer_y++)
+                {
+                    screen_y = layer->y + layer_y;
+                    src = &((uint32_t *) colors)[layer_y * layer->width]; 
+                    map = &station->id_map[(screen_y * station->width + layer->x)];
+                    for(layer_x = layer_left; layer_x < layer_right; layer_x++)
                     {
-                        map[layer_x] = layer->z;
+                        /* 不是全透明的，就把视图标识写入到映射表中 */
+                        if ((src[layer_x] >> 24) & 0xff)
+                        {
+                            map[layer_x] = layer->id;
+                        }
                     }
                 }
             }
@@ -130,8 +138,8 @@ static inline void flush_bits32(dwin_layer_t *layer, int layer_left, int layer_t
 
         for (layer_x = layer_left; layer_x < layer_right; layer_x++)
         {
-            /* 照着map中的z进行刷新 */
-            if (map[layer_x] == layer->z)
+            /* 照着map中的id进行刷新 */
+            if (map[layer_x] == layer->id)
             {
                 /* 获取图层中的颜色 */
                 dst[layer_x] = src[layer_x];
@@ -162,8 +170,8 @@ static inline void flush_bits24(dwin_layer_t *layer, int layer_left, int layer_t
         
         for (layer_x = layer_left; layer_x < layer_right; layer_x++)
         {
-            /* 照着map中的z进行刷新 */
-            if (map[layer_x] == layer->z)
+            /* 照着map中的id进行刷新 */
+            if (map[layer_x] == layer->id)
             {
                 /* 获取图层中的颜色 */
                 dst[layer_x * 3 + 0] = src[layer_x] & 0xFF;
@@ -195,8 +203,9 @@ static inline void flush_bits16(dwin_layer_t *layer, int layer_left, int layer_t
         
         for (layer_x = layer_left; layer_x < layer_right; layer_x++)
         {
-            /* 照着map中的z进行刷新 */
-            if (map[layer_x] == layer->z) {
+            /* 照着map中的id进行刷新 */
+            if (map[layer_x] == layer->id)
+            {
                 /* 获取图层中的颜色 */
                 dst[layer_x] = (uint16_t)((src[layer_x] &0xF8) >> 3) | ((src[layer_x] &0xFC00) >> 5) | ((src[layer_x] &0xF80000) >> 8);
             }
@@ -226,8 +235,8 @@ static inline void flush_bits15(dwin_layer_t *layer, int layer_left, int layer_t
         for (layer_x = layer_left; layer_x < layer_right; layer_x++)
         {
             
-            /* 照着map中的z进行刷新 */
-            if (map[layer_x] == layer->z)
+            /* 照着map中的id进行刷新 */
+            if (map[layer_x] == layer->id)
             {
                 /* 获取图层中的颜色 */
                 dst[layer_x] = (uint16_t)((src[layer_x] &0xF8) >> 3) | ((src[layer_x] &0xF800) >> 6) | ((src[layer_x] &0xF80000) >> 9);
@@ -257,8 +266,8 @@ static inline void flush_bits8(dwin_layer_t *layer, int layer_left, int layer_to
         
         for (layer_x = layer_left; layer_x < layer_right; layer_x++)
         {
-            /* 照着map中的z进行刷新 */
-            if (map[layer_x] == layer->z)
+            /* 照着map中的id进行刷新 */
+            if (map[layer_x] == layer->id)
             {
                 /* 获取图层中的颜色 */
                 dst[layer_x] = (uint8_t)((src[layer_x] &0xC0) >> 6) | ((src[layer_x] &0xE000) >> 11) | ((src[layer_x] &0xE00000) >> 16);
@@ -267,7 +276,10 @@ static inline void flush_bits8(dwin_layer_t *layer, int layer_left, int layer_to
     }
 }
 
-static void flush_by_z(dwin_workstation_t *workstation, int left, int top, int right, int buttom, int z0, int z1)
+/**
+ * priority: 要刷新的图层的参考优先级
+ */
+static void flush_by_z(dwin_workstation_t *workstation, int left, int top, int right, int buttom, int z0, int z1, int priority)
 {
     int view_left, view_top, view_right, view_buttom;
 
@@ -285,25 +297,29 @@ static void flush_by_z(dwin_workstation_t *workstation, int left, int top, int r
     dwin_critical_t crit;
     dwin_enter_critical(crit);
 
-    list_for_each_owner (layer, &workstation->show_list_head, list)
+    int lv = 0;
+    for (; lv < DWIN_LAYER_PRIO_NR; lv++)
     {
-        /* 全部图层都要进行计算 */
-        if (layer->z >= z0 && layer->z <= z1)
+        list_for_each_owner (layer, &workstation->priority_list_head[lv], list)
         {
-            view_left = left - layer->x;
-            view_top = top - layer->y;
-            view_right = right - layer->x;
-            view_buttom = buttom - layer->y;
-            if (view_left < 0)
-                view_left = 0;
-            if (view_top < 0)
-                view_top = 0;
-            if (view_right > layer->width) 
-                view_right = layer->width;
-            if (view_buttom > layer->height)
-                view_buttom = layer->height;
-            
-            workstation->flush_bits(layer, view_left, view_top, view_right, view_buttom);
+            /* 全部图层都要进行计算 */
+            if (layer->z >= z0 && layer->z <= z1)
+            {
+                view_left = left - layer->x;
+                view_top = top - layer->y;
+                view_right = right - layer->x;
+                view_buttom = buttom - layer->y;
+                if (view_left < 0)
+                    view_left = 0;
+                if (view_top < 0)
+                    view_top = 0;
+                if (view_right > layer->width) 
+                    view_right = layer->width;
+                if (view_buttom > layer->height)
+                    view_buttom = layer->height;
+                
+                workstation->flush_bits(layer, view_left, view_top, view_right, view_buttom);
+            }
         }
     }
 

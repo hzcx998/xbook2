@@ -12,25 +12,30 @@
  */
 #define DWIN_WORKSTATION_NR 4
 
+#define DWIN_WORKSTATION_MOUSE_W 32
+#define DWIN_WORKSTATION_MOUSE_H 32
+
 typedef uint16_t dwin_layer_id_map_t;
 
 struct dwin_workstation
 {
     list_t global_list_head;
-    list_t show_list_head;
+    list_t priority_list_head[DWIN_LAYER_PRIO_NR];  /* priority layer */
+    int priority_topz[DWIN_LAYER_PRIO_NR];   /* topest Z */
+
+    dwin_layer_t *idle_layer;
+    dwin_layer_t *mouse_layer;
+
     int depth;          /* depth of per workstation */
     uint32_t width;     /* workstation width size */
     uint32_t height;    /* workstation height size */
 
-    int topz;   /* topest Z */
-
     dwin_layer_id_map_t *id_map;   /* layer id map */
 
     /* flush layer function */
-    void (*flush_bits) (dwin_layer_t *, int, int, int, int);    
-    
-    void (*flush_map) (struct dwin_workstation *, int, int, int, int, int);  
-    void (*flush_z) (struct dwin_workstation *, int, int, int, int, int, int);  
+    void (*flush_bits) (dwin_layer_t *, int, int, int, int);
+    void (*flush_map) (struct dwin_workstation *, int, int, int, int, int, int);  
+    void (*flush_z) (struct dwin_workstation *, int, int, int, int, int, int, int);  
 };
 typedef struct dwin_workstation dwin_workstation_t;
 
@@ -48,7 +53,7 @@ int dwin_workstation_del_layer(dwin_workstation_t *station, dwin_layer_t *layer)
 
 dwin_workstation_t *dwin_workstation_get_by_depth(int depth);
 
-void dwin_workstation_zorder_layer(dwin_workstation_t *station, dwin_layer_t *layer, int z);
-int dwin_workstation_move_layer(dwin_workstation_t *station, dwin_layer_t *layer, int x, int y);
+void dwin_workstation_idle_layer_init(dwin_workstation_t *station);
+void dwin_workstation_mouse_layer_init(dwin_workstation_t *station);
 
 #endif   /* _DWIN_WORKSTATION_H */

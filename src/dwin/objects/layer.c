@@ -2,6 +2,7 @@
 #include <dwin/dwin.h>
 #include <dwin/layer.h>
 #include <dwin/workstation.h>
+#include <dwin/hal.h>
 
 dwin_layer_t *dwin_layer_create(uint32_t width, uint32_t height)
 {
@@ -24,9 +25,9 @@ dwin_layer_t *dwin_layer_create(uint32_t width, uint32_t height)
     layer->width = width;
     layer->height = height;
     layer->workstation = NULL;
+    layer->priority = DWIN_LAYER_PRIO_DESKTOP;
 
     layer->id = dwin_layer_alloc_id();
-
     if (layer->id == -1)
     {
         dwin_free(layer->buffer);
@@ -132,12 +133,90 @@ void dwin_layer_test(void)
 
     dwin_layer_flush(ly2, 0, 0, ly2->width, ly2->height);
 
+#if 0
     dwin_assert(dwin_layer_delete(ly) == 0);
     dwin_assert(dwin_layer_delete(ly2) == 0);
+#endif
+
+    dwin_layer_t *ly3 = dwin_layer_create(dwin_current_workstation->width / 2, dwin_current_workstation->height / 2);
+    dwin_assert(ly3 != NULL);
+    dwin_layer_change_priority(ly3, DWIN_LAYER_PRIO_WINDOW);
+    dwin_workstation_add_layer(dwin_current_workstation, ly3);    
+    memset(ly3->buffer, 0x20, ly3->width * ly3->height * DWIN_LAYER_BPP);
+
+    dwin_layer_zorder(ly3, 0);
+    dwin_layer_move(ly3, 100, 200);
+
+    dwin_layer_t *ly4 = dwin_layer_create(dwin_current_workstation->width / 4, dwin_current_workstation->height / 4);
+    dwin_assert(ly4 != NULL);
+    dwin_workstation_add_layer(dwin_current_workstation, ly4);    
+
+    memset(ly4->buffer, 0xA0, ly4->width * ly4->height * DWIN_LAYER_BPP);
+
+    dwin_layer_zorder(ly4, 1);
+
+    dwin_layer_change_priority(ly4, DWIN_LAYER_PRIO_WINDOW);
+    dwin_layer_move(ly4, 100, 200);
+
+    ly4 = dwin_layer_create(dwin_current_workstation->width / 4, dwin_current_workstation->height / 4);
+    dwin_assert(ly4 != NULL);
+    dwin_workstation_add_layer(dwin_current_workstation, ly4);    
+
+    memset(ly4->buffer, 0xff, ly4->width * ly4->height * DWIN_LAYER_BPP);
+
+    dwin_layer_zorder(ly4, 10);
+
+    dwin_layer_move(ly4, 100, 200);
+    dbgprint("test done\n");
+}
+
+
+void dwin_layer_test2(void)
+{
+    /* window 0 100, 200, w/2, h/2 */
+    dwin_layer_t *ly3 = dwin_layer_create(dwin_current_workstation->width / 2, dwin_current_workstation->height / 2);
+    dwin_assert(ly3 != NULL);
+    // dwin_layer_change_priority(ly3, DWIN_LAYER_PRIO_WINDOW);
+    dwin_workstation_add_layer(dwin_current_workstation, ly3);    
+
+    dwin_layer_draw_rect(ly3, 0, 0, ly3->width, ly3->height, 0xff00ff00);
+
+    dwin_layer_zorder(ly3, 0);
+    dwin_layer_move(ly3, 100, 200);
+
+    /* window 1 200, 300, w/2, h/2 */
+    ly3 = dwin_layer_create(dwin_current_workstation->width / 2, dwin_current_workstation->height / 2);
+    dwin_assert(ly3 != NULL);
+    // dwin_layer_change_priority(ly3, DWIN_LAYER_PRIO_WINDOW);
+    dwin_workstation_add_layer(dwin_current_workstation, ly3);   
+
+    dwin_layer_draw_rect(ly3, 0, 0, ly3->width, ly3->height, 0xff0000ff);
+
+    dwin_layer_zorder(ly3, 1);
+    dwin_layer_move(ly3, 200, 300);
+
+#if 0
+    /* panel 1 200, 300, 100, 200 */
+    ly3 = dwin_layer_create(100, 200);
+    dwin_assert(ly3 != NULL);
+    dwin_layer_change_priority(ly3, DWIN_LAYER_PRIO_WINDOW);
+    dwin_workstation_add_layer(dwin_current_workstation, ly3);    
+
+    dwin_layer_draw_rect(ly3, 0, 0, ly3->width, ly3->height, 0xffff0000);
+
+    dwin_layer_zorder(ly3, 2);
+    dwin_layer_move(ly3, 200, 200);
+#endif
 }
 
 void dwin_layer_init(void)
 {
     dwin_layer_id_init();
-    dwin_layer_test();
+
+    dwin_workstation_idle_layer_init(dwin_current_workstation);
+
+    // dwin_layer_test();
+    dwin_layer_test2();
+
+    dwin_workstation_mouse_layer_init(dwin_current_workstation);
 }

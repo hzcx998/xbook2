@@ -9,9 +9,9 @@ void dwin_layer_flush(dwin_layer_t *layer, int left, int top, int right, int but
     if (layer->z >= 0)
     {
         station->flush_map(station, layer->x + left, layer->y + top, layer->x + right,
-                            layer->y + buttom, layer->z);
+                            layer->y + buttom, layer->z, layer->priority);
         station->flush_z(station, layer->x + left, layer->y + top, layer->x + right,
-                            layer->y + buttom, layer->z, layer->z);
+                            layer->y + buttom, layer->z, layer->z, layer->priority);
     }
 }
 
@@ -20,10 +20,11 @@ static void adjust_by_z(dwin_workstation_t *station, dwin_layer_t *layer, int z)
     dwin_layer_t *tmp;
     dwin_layer_t *old_layer = NULL;
     int old_z = layer->z;
+    int lv = layer->priority;
 
-    if (z > station->topz)
+    if (z > station->priority_topz[lv])
     {
-        z = station->topz;
+        z = station->priority_topz[lv];
     }
     
     dwin_critical_t crit;
@@ -31,10 +32,10 @@ static void adjust_by_z(dwin_workstation_t *station, dwin_layer_t *layer, int z)
 
     /* 先从链表中移除 */
     list_del_init(&layer->list);
-    if (z == station->topz)
+    if (z == station->priority_topz[lv])
     {
         /* 其它图层降低高度 */
-        list_for_each_owner (tmp, &station->show_list_head, list)
+        list_for_each_owner (tmp, &station->priority_list_head[lv], list)
         {
             if (tmp->z > layer->z)
             {
@@ -42,18 +43,18 @@ static void adjust_by_z(dwin_workstation_t *station, dwin_layer_t *layer, int z)
             }
         }
         layer->z = z;
-        list_add_tail(&layer->list, &station->show_list_head);
-            
+        list_add_tail(&layer->list, &station->priority_list_head[lv]);
+
         dwin_leave_critical(crit);
         
         /* 刷新新图层[z, z] */
-        station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
-        station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
+        station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, lv);
+        station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z, lv);
     } else {    /* 不是最高图层，那么就和其它图层交换 */
         
         if (z > layer->z) { /* 如果新高度比原来的高度高 */
             /* 把位于旧图层高度和新图层高度之间（不包括旧图层，但包括新图层高度）的图层下降1层 */
-            list_for_each_owner (tmp, &station->show_list_head, list) {
+            list_for_each_owner (tmp, &station->priority_list_head[lv], list) {
                 if (tmp->z > layer->z && tmp->z <= z) {
                     if (tmp->z == z) {
                         old_layer = tmp;
@@ -68,11 +69,11 @@ static void adjust_by_z(dwin_workstation_t *station, dwin_layer_t *layer, int z)
             dwin_leave_critical(crit);
 
             /* 刷新新图层[z, z] */
-            station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
-            station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
+            station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, lv);
+            station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z, lv);
         } else if (z < layer->z) { /* 如果新高度比原来的高度低 */
             /* 把位于旧图层高度和新图层高度之间（不包括旧图层，但包括新图层高度）的图层上升1层 */
-            list_for_each_owner (tmp, &station->show_list_head, list) {
+            list_for_each_owner (tmp, &station->priority_list_head[lv], list) {
                 if (tmp->z < layer->z && tmp->z >= z) {
                     if (tmp->z == z) {  /* 记录原来为与新图层这个位置的图层 */
                         old_layer = tmp;
@@ -87,8 +88,8 @@ static void adjust_by_z(dwin_workstation_t *station, dwin_layer_t *layer, int z)
             dwin_leave_critical(crit);
         
             /* 刷新新图层[z + 1, old z] */
-            station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z + 1);
-            station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z + 1, old_z);
+            station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z + 1, lv);
+            station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z + 1, old_z, lv);
         }
     }
 }
@@ -96,15 +97,16 @@ static void adjust_by_z(dwin_workstation_t *station, dwin_layer_t *layer, int z)
 static void hiden_by_z(dwin_workstation_t *station, dwin_layer_t *layer, int z)
 {
     int old_z = layer->z;
+    int lv = layer->priority;
 
     dwin_critical_t crit;
     dwin_enter_critical(crit);
 
     list_del_init(&layer->list);
-    if (station->topz > old_z) {  /* 旧图层必须在顶图层下面 */
+    if (station->priority_topz[lv] > old_z) {  /* 旧图层必须在顶图层下面 */
         /* 把位于当前图层后面的图层的高度都向下降1 */
         dwin_layer_t *tmp;
-        list_for_each_owner (tmp, &station->show_list_head, list) {
+        list_for_each_owner (tmp, &station->priority_list_head[lv], list) {
             if (tmp->z > layer->z)
             {
                 tmp->z--;
@@ -112,50 +114,51 @@ static void hiden_by_z(dwin_workstation_t *station, dwin_layer_t *layer, int z)
         }   
     }
     /* 由于隐藏了一个图层，那么，图层顶层的高度就需要减1 */
-    station->topz--;
+    station->priority_topz[lv]--;
     layer->z = -1;  /* 隐藏图层后，高度变为-1 */
 
     dwin_leave_critical(crit);
         
     /* 刷新图层, [0, layer->z - 1] */
-    station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, 0);
-    station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, 0, old_z - 1);
+    station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, 0, lv);
+    station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, 0, old_z - 1, lv);
 }
 
 static void show_by_z(dwin_workstation_t *station, dwin_layer_t *layer, int z)
 {
     dwin_layer_t *tmp;
     dwin_layer_t *old_layer = NULL;
-    
+    int lv = layer->priority;
+
     dwin_critical_t crit;
     dwin_enter_critical(crit);
 
-    if (z > station->topz)
+    if (z > station->priority_topz[lv])
     {
-        station->topz++;
-        z = station->topz;
+        station->priority_topz[lv]++;
+        z = station->priority_topz[lv];
     }
     else
     {
-        station->topz++;
+        station->priority_topz[lv]++;
     }
     
     /* 如果新高度就是最高的图层，就直接插入到图层队列末尾 */
-    if (z == station->topz)
+    if (z == station->priority_topz[lv])
     {
         layer->z = z;
-        list_add_tail(&layer->list, &station->show_list_head);
+        list_add_tail(&layer->list, &station->priority_list_head[lv]);
         
         dwin_leave_critical(crit);
     
         /* 刷新新图层[z, z] */
-        station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
-        station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
+        station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, lv);
+        station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z, lv);
     }
     else
     {
         /* 查找和当前图层一样高度的图层 */
-        list_for_each_owner(tmp, &station->show_list_head, list) {
+        list_for_each_owner(tmp, &station->priority_list_head[lv], list) {
             if (tmp->z == z) {
                 old_layer = tmp;
                 break;
@@ -164,7 +167,7 @@ static void show_by_z(dwin_workstation_t *station, dwin_layer_t *layer, int z)
         tmp = NULL;
         dwin_assert(old_layer);
         /* 把后面的图层的高度都+1 */
-        list_for_each_owner(tmp, &station->show_list_head, list) {
+        list_for_each_owner(tmp, &station->priority_list_head[lv], list) {
             if (tmp->z >= old_layer->z) { 
                 tmp->z++;
             }
@@ -176,8 +179,8 @@ static void show_by_z(dwin_workstation_t *station, dwin_layer_t *layer, int z)
         dwin_leave_critical(crit);
 
         /* 刷新新图层[z, z] */
-        station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z);
-        station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z);
+        station->flush_map(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, lv);
+        station->flush_z(station, layer->x, layer->y, layer->x + layer->width, layer->y + layer->height, z, z, lv);
     }
 }
 
@@ -233,7 +236,6 @@ void dwin_layer_zorder(dwin_layer_t *layer, int z)
     }
 }
 
-
 int dwin_layer_move(dwin_layer_t *layer, int x, int y)
 {
     if (layer == NULL)
@@ -258,8 +260,8 @@ int dwin_layer_move(dwin_layer_t *layer, int x, int y)
         y0 = dwin_min(old_y, y);
         x1 = dwin_max(old_x + layer->width, x + layer->width);
         y1 = dwin_max(old_y + layer->height, y + layer->height);
-        station->flush_map(station, x0, y0, x1, y1, 0);
-        station->flush_z(station, x0, y0, x1, y1, 0, layer->z);
+        station->flush_map(station, x0, y0, x1, y1, 0, layer->priority);
+        station->flush_z(station, x0, y0, x1, y1, 0, layer->z, layer->priority);
     }
 
     return 0;
@@ -315,5 +317,43 @@ int dwin_layer_resize(dwin_layer_t *layer, int x, int y, uint32_t width, uint32_
     
     dwin_leave_critical(crit);
 
+    return 0;
+}
+
+int dwin_layer_change_priority(dwin_layer_t *layer, dwin_layer_priority_t priority)
+{
+    if (layer == NULL || priority >= DWIN_LAYER_PRIO_NR)
+    {
+        return -1;
+    }
+    
+    int old_z = layer->z;
+    /* on the wrokstation, hide layer first */
+    if (layer->workstation)
+    {
+        dwin_layer_zorder(layer, -1);
+    }
+
+    layer->priority = priority;
+    
+    /* restore z order */
+    if (layer->workstation)
+    {
+        dwin_layer_zorder(layer, old_z);
+    }
+    return 0;
+}
+
+int dwin_layer_draw_rect(dwin_layer_t *layer, int x, int y, uint32_t w, uint32_t h, uint32_t color)
+{
+    int i, j;
+    uint32_t *p = (uint32_t *)layer->buffer;
+    for (j = 0; j < h; j++)
+    {
+        for (i = 0; i < w; i++)
+        {
+            p[(y + j) * layer->width + (x + i)] = color;
+        }
+    }
     return 0;
 }
