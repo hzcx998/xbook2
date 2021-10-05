@@ -26,3 +26,4 @@ export AS LD
 MODULE      +=  init
 MODULE      +=  login
 MODULE      +=  netserv
+MODULE      +=  grootfs

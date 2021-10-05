@@ -40,9 +40,11 @@ int string_new(string_t *string, char *text, unsigned int maxlen);
 void string_copy(string_t *string, char *text);
 void string_empty(string_t *string);
 void string_del(string_t *string);
+char *strdup(const char *s);
+char *strndup(const char *s, size_t n);
 
 void *memset(void* src, unsigned char value, unsigned int size);
-void memcpy(const void* dst, const void* src, uint32_t size);
+void *memcpy(const void* dst, const void* src, uint32_t size);
 int memcmp(const void * s1, const void *s2, int n);
 void *memset16(void* src, unsigned short value, unsigned int size);
 void *memset32(void* src, unsigned int value, unsigned int size);
