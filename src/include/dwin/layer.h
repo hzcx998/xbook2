@@ -26,12 +26,15 @@ enum dwin_layer_priority
 };
 typedef enum dwin_layer_priority dwin_layer_priority_t; 
 
+#define DWIN_LAYER_FLAG_NOMSG   1   /* layer no message */
+
 struct dwin_layer
 {
     list_t list;
     list_t global_list;
     uint8_t *buffer;
     uint32_t id;
+    uint32_t flags;
     int width;
     int height;
     int x;
@@ -56,6 +59,9 @@ void dwin_layer_zorder(dwin_layer_t *layer, int z);
 int dwin_layer_move(dwin_layer_t *layer, int x, int y);
 int dwin_layer_resize(dwin_layer_t *layer, int x, int y, uint32_t width, uint32_t height);
 int dwin_layer_change_priority(dwin_layer_t *layer, dwin_layer_priority_t priority);
+
+int dwin_layer_add_flags(dwin_layer_t *layer, uint32_t flags);
+int dwin_layer_del_flags(dwin_layer_t *layer, uint32_t flags);
 
 int dwin_layer_draw_rect(dwin_layer_t *layer, int x, int y, uint32_t w, uint32_t h, uint32_t color);
 

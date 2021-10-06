@@ -14,6 +14,9 @@ void dwin_workstation_init(uint32_t width, uint32_t height)
         dwin_workstations[i].height = height;
         dwin_workstations[i].idle_layer = NULL;
         dwin_workstations[i].mouse_layer = NULL;
+        dwin_workstations[i].hover_layer = NULL;
+        dwin_workstations[i].focus_layer = NULL;
+        
         /* init priority list */
         for (j = 0; j < DWIN_LAYER_PRIO_NR; j++)
         {

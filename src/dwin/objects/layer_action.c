@@ -413,3 +413,23 @@ void dwin_layer_bitblt(dwin_layer_t *layer, int x, int y,
         }
     }
 }
+
+int dwin_layer_add_flags(dwin_layer_t *layer, uint32_t flags)
+{
+    if (layer == NULL)
+    {
+        return -1;
+    }
+    layer->flags |= flags;
+    return 0;
+}
+
+int dwin_layer_del_flags(dwin_layer_t *layer, uint32_t flags)
+{
+    if (layer == NULL)
+    {
+        return -1;
+    }
+    layer->flags &= ~flags;
+    return 0;
+}

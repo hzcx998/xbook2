@@ -24,7 +24,6 @@ struct dwin_mouse
     int x, y;
     int local_x, local_y;
     int click_x, click_y;
-    int view_off_x, view_off_y;
 };
 
 struct dwin_lcd

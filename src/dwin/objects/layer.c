@@ -26,6 +26,7 @@ dwin_layer_t *dwin_layer_create(uint32_t width, uint32_t height)
     layer->height = height;
     layer->workstation = NULL;
     layer->priority = DWIN_LAYER_PRIO_DESKTOP;
+    layer->flags = 0;
 
     layer->id = dwin_layer_alloc_id();
     if (layer->id == -1)

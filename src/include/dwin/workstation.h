@@ -26,6 +26,9 @@ struct dwin_workstation
     dwin_layer_t *idle_layer;
     dwin_layer_t *mouse_layer;
 
+    dwin_layer_t *hover_layer;  /* hover layer */
+    dwin_layer_t *focus_layer;  /* focus layer */
+    
     int depth;          /* depth of per workstation */
     uint32_t width;     /* workstation width size */
     uint32_t height;    /* workstation height size */
@@ -55,5 +58,11 @@ dwin_workstation_t *dwin_workstation_get_by_depth(int depth);
 
 void dwin_workstation_idle_layer_init(dwin_workstation_t *station);
 void dwin_workstation_mouse_layer_init(dwin_workstation_t *station);
+
+dwin_layer_t *dwin_workstation_get_lowest_layer(dwin_workstation_t *station);
+dwin_layer_t *dwin_workstation_get_topest_layer(dwin_workstation_t *station);
+
+void dwin_workstation_switch_hover_layer(dwin_workstation_t *station, dwin_layer_t *layer);
+void dwin_workstation_switch_focus_layer(dwin_workstation_t *station, dwin_layer_t *layer);
 
 #endif   /* _DWIN_WORKSTATION_H */
