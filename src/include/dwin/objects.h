@@ -5,6 +5,19 @@
 #ifndef _DWIN_OBJECTS_H
 #define _DWIN_OBJECTS_H
 
+#define DWIN_KMOD_SHIFT_L    0x01
+#define DWIN_KMOD_SHIFT_R    0x02
+#define DWIN_KMOD_SHIFT      (DWIN_KMOD_SHIFT_L | DWIN_KMOD_SHIFT_R)
+#define DWIN_KMOD_CTRL_L     0x04
+#define DWIN_KMOD_CTRL_R     0x08
+#define DWIN_KMOD_CTRL       (DWIN_KMOD_CTRL_L | DWIN_KMOD_CTRL_R)
+#define DWIN_KMOD_ALT_L      0x10
+#define DWIN_KMOD_ALT_R      0x20
+#define DWIN_KMOD_ALT        (DWIN_KMOD_ALT_L | DWIN_KMOD_ALT_R)
+#define DWIN_KMOD_PAD	     0x40
+#define DWIN_KMOD_NUM	     0x80
+#define DWIN_KMOD_CAPS	     0x100
+
 struct dwin_keyboard 
 {
     int handle;
@@ -38,7 +51,14 @@ struct dwin_lcd
 
 struct dwin_thread
 {
-    int reserved;
+    void *object;
+};
+
+struct dwin_msgpool
+{
+    void *object;   /* message pool object */
+    int msgsz;
+    int msgcnt;
 };
 
 void dwin_keyboard_init(struct dwin_keyboard *keyboard);
@@ -46,6 +66,8 @@ void dwin_mouse_init(struct dwin_mouse *mouse);
 
 void dwin_lcd_init(struct dwin_lcd *lcd);
 void dwin_thread_init(struct dwin_thread *thread);
+
+void dwin_msgpool_init(struct dwin_msgpool *msgpool);
 
 int dwin_lcd_map(struct dwin_lcd *lcd);
 int dwin_lcd_unmap(struct dwin_lcd *lcd);

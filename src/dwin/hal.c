@@ -50,8 +50,6 @@ int dwin_hal_register(struct dwin_hal *hal)
             }
         }
     }
-
-    dwin_thread_init(&hal->thread->parent);
     
     dwin_hal = hal;
 

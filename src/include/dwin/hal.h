@@ -36,9 +36,17 @@ struct dwin_hal_lcd
 
 struct dwin_hal_thread 
 {
-    struct dwin_thread parent;
-    int (*start)(struct dwin_thread *, void (*)(void *), void *);
+    struct dwin_thread * (*start)(void (*)(void *), void *);
     int (*stop)(struct dwin_thread *, void *);
+    void *extension;
+};
+
+struct dwin_hal_msgpool 
+{
+    struct dwin_msgpool * (*create)(int, int);
+    int (*destroy)(struct dwin_msgpool *);
+    int (*send)(struct dwin_msgpool *, void *, int);
+    int (*recv)(struct dwin_msgpool *, void *, int);
     void *extension;
 };
 
@@ -48,6 +56,7 @@ struct dwin_hal
     struct dwin_hal_mouse *mouse;
     struct dwin_hal_lcd *lcd;
     struct dwin_hal_thread *thread;
+    struct dwin_hal_msgpool *msgpool;
 
     void *extension;
 };

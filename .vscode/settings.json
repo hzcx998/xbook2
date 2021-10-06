@@ -212,6 +212,8 @@
         "dwin.h": "c",
         "objects.h": "c",
         "workstation.h": "c",
-        "dwin_config.h": "c"
+        "dwin_config.h": "c",
+        "buffer.h": "c",
+        "message.h": "c"
     }
 }

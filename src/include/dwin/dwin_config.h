@@ -35,7 +35,8 @@ typedef unsigned long dwin_critical_t;
 
 /* TODO: add list config */
 
-
+/* input key */
+#include <sys/input.h>
 
 #endif
 

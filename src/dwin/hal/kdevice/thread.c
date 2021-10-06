@@ -5,24 +5,40 @@
 #include <xbook/task.h>
 #include <xbook/schedule.h>
 
-static int thread_start(struct dwin_thread *thread, void (*entry)(void *), void *arg)
+static struct dwin_thread *start(void (*entry)(void *), void *arg)
 {
+    struct dwin_thread *thread = mem_alloc(sizeof(struct dwin_thread));
+    if (thread == NULL)
+    {
+        return NULL;
+    }
+
     task_t *task = task_create(DWIN_THREAD_NAME, TASK_PRIO_LEVEL_NORMAL, entry, arg);
     if (task == NULL)
     {
-        return -1;
+        mem_free(thread);
+        return NULL;
     }
-    return 0;
+    thread->object = thread;
+    return thread;
 }
 
-static int thread_stop(struct dwin_thread *thread, void *arg)
+static int stop(struct dwin_thread *thread, void *arg)
 {
-    task_exit((int)arg);    
+    if (thread->object == NULL)
+    {
+        return -1;
+    }
+    
+    thread->object = NULL;
+    mem_free(thread);
+
+    task_exit((int)arg);
     return 0;
 }
 
 struct dwin_hal_thread __kdevice_thread_hal = {
-    .start = thread_start,
-    .stop = thread_stop,
+    .start = start,
+    .stop = stop,
     .extension = NULL,
 };

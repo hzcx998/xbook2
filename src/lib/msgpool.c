@@ -46,9 +46,8 @@ int msgpool_put(msgpool_t *pool, void *buf, size_t size)
         
     mutex_lock(&pool->mutex);
     if (msgpool_full(pool)) {
-        wait_queue_add(&pool->waiters, task_current);
         mutex_unlock(&pool->mutex);
-        task_block(TASK_BLOCKED);
+        task_yield();
         mutex_lock(&pool->mutex);
     }
     memcpy(pool->head, buf, min(pool->msgsz, size));   /* copy data */
@@ -79,9 +78,11 @@ int msgpool_try_put(msgpool_t *pool, void *buf, size_t size)
     if (pool->head >= pool->msgbuf + pool->msgmaxcnt * pool->msgsz)
         pool->head = pool->msgbuf;
     pool->msgcount++;
+    
+    mutex_unlock(&pool->mutex);
+
     if (wait_queue_length(&pool->waiters) > 0)
         wait_queue_wakeup(&pool->waiters);     /* wake up */
-    mutex_unlock(&pool->mutex);
     return 0;
 }
 
@@ -90,10 +91,9 @@ int msgpool_get(msgpool_t *pool, void *buf, msgpool_get_func_t callback)
     if (!pool)
         return -1;
     mutex_lock(&pool->mutex);
-    if (msgpool_empty(pool)) {
-        wait_queue_add(&pool->waiters, task_current);
+    while (msgpool_empty(pool)) {
         mutex_unlock(&pool->mutex);
-        task_block(TASK_BLOCKED);
+        task_yield();
         mutex_lock(&pool->mutex);
     }
     if (buf) { /* 有buf才复制 */

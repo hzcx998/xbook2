@@ -7,7 +7,7 @@
 void dwin_workstation_idle_layer_init(dwin_workstation_t *station)
 {
     dwin_layer_t *layer;
-    layer = dwin_layer_create(station->width, station->height);
+    layer = dwin_layer_create(station->width, station->height, 0);
     dwin_assert(layer != NULL);
     dwin_layer_change_priority(layer, DWIN_LAYER_PRIO_DESKTOP);
 
@@ -24,10 +24,9 @@ void dwin_workstation_idle_layer_init(dwin_workstation_t *station)
 void dwin_workstation_mouse_layer_init(dwin_workstation_t *station)
 {
     dwin_layer_t *layer;
-    layer = dwin_layer_create(DWIN_WORKSTATION_MOUSE_W, DWIN_WORKSTATION_MOUSE_H);
+    layer = dwin_layer_create(DWIN_WORKSTATION_MOUSE_W, DWIN_WORKSTATION_MOUSE_H, DWIN_LAYER_FLAG_NOMSG);
     dwin_assert(layer != NULL);
     dwin_layer_change_priority(layer, DWIN_LAYER_PRIO_TOPEST);
-    dwin_layer_add_flags(layer, DWIN_LAYER_FLAG_NOMSG);
     dwin_layer_draw_rect(layer, 0, 0, layer->width, layer->height, 0xff808080);
 
     dwin_workstation_add_layer(station, layer);
@@ -43,27 +42,81 @@ void dwin_workstation_mouse_layer_init(dwin_workstation_t *station)
 dwin_layer_t *dwin_workstation_get_lowest_layer(dwin_workstation_t *station)
 {
     dwin_layer_t *layer;
+
+    dwin_critical_t crit;
+    dwin_enter_critical(crit);
+
     int lv;
     for (lv = DWIN_LAYER_PRIO_DESKTOP; lv <= DWIN_LAYER_PRIO_TOPEST; lv++)
     {
         list_for_each_owner (layer, &station->priority_list_head[lv], list)
         {
+            dwin_leave_critical(crit);
             return layer;
         }
     }
+    
+    dwin_leave_critical(crit);
     return NULL;
 }
 
 dwin_layer_t *dwin_workstation_get_topest_layer(dwin_workstation_t *station)
 {
     dwin_layer_t *layer;
+
+    dwin_critical_t crit;
+    dwin_enter_critical(crit);
+
     int lv;
     for (lv = DWIN_LAYER_PRIO_TOPEST; lv >= DWIN_LAYER_PRIO_DESKTOP; lv--)
     {
-        list_for_each_owner_reverse(layer, &station->priority_list_head[lv], list)
-        {
+        list_for_each_owner_reverse (layer, &station->priority_list_head[lv], list)
+        {    
+            dwin_leave_critical(crit);
             return layer;
         }
+    }
+    
+    dwin_leave_critical(crit);
+    return NULL;
+}
+
+dwin_layer_t *dwin_workstation_get_lowest_layer_priority(dwin_workstation_t *station, int priority)
+{
+    if (priority >= DWIN_LAYER_PRIO_DESKTOP && priority <= DWIN_LAYER_PRIO_TOPEST)
+    {
+        dwin_layer_t *layer;
+        
+        dwin_critical_t crit;
+        dwin_enter_critical(crit);
+
+        list_for_each_owner (layer, &station->priority_list_head[priority], list)
+        {        
+            dwin_leave_critical(crit);
+            return layer;
+        }
+        
+        dwin_leave_critical(crit);
+    }
+    return NULL;
+}
+
+dwin_layer_t *dwin_workstation_get_topest_layer_priority(dwin_workstation_t *station, int priority)
+{
+    if (priority >= DWIN_LAYER_PRIO_DESKTOP && priority <= DWIN_LAYER_PRIO_TOPEST)
+    {
+        dwin_layer_t *layer;
+
+        dwin_critical_t crit;
+        dwin_enter_critical(crit);
+
+        list_for_each_owner_reverse (layer, &station->priority_list_head[priority], list)
+        {        
+            dwin_leave_critical(crit);
+            return layer;
+        }
+
+        dwin_leave_critical(crit);
     }
     return NULL;
 }

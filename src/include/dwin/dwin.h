@@ -7,6 +7,8 @@
 
 #include <dwin/dwin_config.h>
 
+#define DWIN_NOBLOCK    0x01
+
 void dwin_init(void);
 
 #endif   /* _DWIN_H */

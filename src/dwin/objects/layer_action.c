@@ -2,6 +2,7 @@
 #include <dwin/dwin.h>
 #include <dwin/layer.h>
 #include <dwin/workstation.h>
+#include <dwin/hal.h>
 
 void dwin_layer_flush(dwin_layer_t *layer, int left, int top, int right, int buttom)
 {
@@ -432,4 +433,30 @@ int dwin_layer_del_flags(dwin_layer_t *layer, uint32_t flags)
     }
     layer->flags &= ~flags;
     return 0;
+}
+
+int dwin_layer_recv_message(dwin_layer_t *layer, void *msg, int flags)
+{
+    if (layer == NULL)
+    {
+        return -1;
+    }
+    if (layer->msgpool == NULL)
+    {
+        return -1;
+    }
+    return dwin_hal->msgpool->recv(layer->msgpool, msg, flags);
+}
+
+int dwin_layer_send_message(dwin_layer_t *layer, void *msg, int flags)
+{
+    if (layer == NULL)
+    {
+        return -1;
+    }
+    if (layer->msgpool == NULL)
+    {
+        return -1;
+    }
+    return dwin_hal->msgpool->send(layer->msgpool, msg, flags);
 }

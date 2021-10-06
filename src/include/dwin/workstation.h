@@ -62,6 +62,9 @@ void dwin_workstation_mouse_layer_init(dwin_workstation_t *station);
 dwin_layer_t *dwin_workstation_get_lowest_layer(dwin_workstation_t *station);
 dwin_layer_t *dwin_workstation_get_topest_layer(dwin_workstation_t *station);
 
+dwin_layer_t *dwin_workstation_get_lowest_layer_priority(dwin_workstation_t *station, int priority);
+dwin_layer_t *dwin_workstation_get_topest_layer_priority(dwin_workstation_t *station, int priority);
+
 void dwin_workstation_switch_hover_layer(dwin_workstation_t *station, dwin_layer_t *layer);
 void dwin_workstation_switch_focus_layer(dwin_workstation_t *station, dwin_layer_t *layer);
 
