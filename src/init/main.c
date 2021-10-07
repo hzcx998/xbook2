@@ -23,7 +23,9 @@
 #include <xbook/net.h>
 #endif
 
+#ifdef CONFIG_DWIN
 #include <dwin/dwin.h>
+#endif
 
 int kernel_main(void)
 {
@@ -47,12 +49,14 @@ int kernel_main(void)
     driver_framewrok_init();
     initcalls_exec();
     file_system_init();
-    #ifdef CONFIG_NET
+#ifdef CONFIG_NET
     network_init();
-    #endif
+#endif
     account_manager_init();
     port_comm_init();
+#ifdef CONFIG_DWIN
     dwin_init();
+#endif
     task_start_user();
     return 0;    
 }

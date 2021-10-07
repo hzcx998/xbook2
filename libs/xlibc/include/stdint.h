@@ -95,6 +95,10 @@ typedef unsigned long long int uintmax_t;
 # define UINT32_MAX     (4294967295U)
 # define UINT64_MAX     (__UINT64_C(18446744073709551615))
 
+/* Values to test for integral types holding `void *' pointer.  */
+#  define INTPTR_MIN            (-2147483647-1)
+#  define INTPTR_MAX            (2147483647)
+#  define UINTPTR_MAX           (4294967295U)
 
 #ifdef __cplusplus
 }

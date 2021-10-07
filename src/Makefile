@@ -22,6 +22,10 @@ X_CFLAGS	+= -DCONFIG_NET
 # X_CFLAGS	+= -DCONFIG_NETREMOTE
 endif
 
+ifeq ($(KERN_MODULE_DWIN),y)
+X_CFLAGS	+= -DCONFIG_DWIN
+endif
+
 ifeq ($(KERN_LIVECD_MODE),y)
 X_CFLAGS	+= -DCONFIG_LIVECD
 endif
@@ -34,12 +38,15 @@ LD			:=  $(ENV_LD)
 export AS LD
 export ARCH
 
-SRC			:= $(ARCH)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/ dwin/
+SRC			:= $(ARCH)/ init/ ipc/ task/ vmm/ lib/ kernel/ fs/ drivers/
 
 ifeq ($(KERN_MODULE_NET),y)
 SRC			+= net/
 endif
 
+ifeq ($(KERN_MODULE_DWIN),y)
+SRC			+= dwin/
+endif
 
 NAME		:= kernel.elf
 

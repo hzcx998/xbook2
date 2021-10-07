@@ -214,6 +214,7 @@
         "workstation.h": "c",
         "dwin_config.h": "c",
         "buffer.h": "c",
-        "message.h": "c"
+        "message.h": "c",
+        "client.h": "c"
     }
 }

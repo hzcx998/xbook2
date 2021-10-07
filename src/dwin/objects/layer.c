@@ -196,7 +196,7 @@ void dwin_layer_init(void)
 
     dwin_workstation_mouse_layer_init(dwin_current_workstation);
 
-    dwin_layer_test();
+    // dwin_layer_test();
 
     // dwin_layer_scroll();
 }

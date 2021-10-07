@@ -32,6 +32,8 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
+#include <xbook/config.h>
+
 #define NO_SYS                     0
 #define LWIP_SOCKET               (NO_SYS==0)
 #define LWIP_NETCONN              (NO_SYS==0)
@@ -46,7 +48,9 @@
 
 #define LWIP_DNS    1
 
+#ifdef CONFIG_NET_DHCP
 #define LWIP_DHCP    1
+#endif
 
 #define LWIP_ARP 1
 #define DHCP_DOES_ARP_CHECK 0

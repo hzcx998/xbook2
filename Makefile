@@ -86,8 +86,12 @@ EFI_BOOT_MODE ?= n
 QEMU_FAT_FS ?= n
 
 # has net module? (y/n)
-KERN_MODULE_NET	?= y
+KERN_MODULE_NET	?= n
 export KERN_MODULE_NET
+
+# has dwin module? (y/n)
+KERN_MODULE_DWIN	?= n
+export KERN_MODULE_DWIN
 
 # netcard name: rtl8139/pcnet/e1000
 QEMU_NETCARD_NAME	?=pcnet

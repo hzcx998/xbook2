@@ -53,12 +53,12 @@ static iostatus_t view_open(device_object_t *device, io_request_t *ioreq)
         int type = (flags >> 26) & 0x1f;
         extension->view = view_create(0, 0, width, height, type);
         if (extension->view == NULL) {
+            errprint("view driver: view create failed!\n");
             status = IO_FAILED;
             goto end_open;
         }
         view_env_send_to_monitor(extension->view, VIEW_MSG_CREATE, 0);
     }
-
 end_open:
     ioreq->io_status.status = status;
     io_complete_request(ioreq);
@@ -509,6 +509,7 @@ static iostatus_t view_driver_enter(driver_object_t *driver)
         extension->view = NULL;
         extension->flags = 0;
     }
+    dbgprint("view driver init done\n");
     return status;
 }
 

@@ -38,6 +38,9 @@ typedef unsigned long dwin_critical_t;
 /* input key */
 #include <sys/input.h>
 
+/* errno */
+#include <errno.h>
+
 #endif
 
 #define dwin_max(a,b)    (((a) > (b)) ? (a) : (b))
