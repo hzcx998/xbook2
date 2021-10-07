@@ -286,6 +286,35 @@ void *mem_alloc_align(size_t size, int align)
     return q;
 }
 
+void *mem_zalloc(size_t size)
+{
+    void *ret = mem_alloc(size);
+
+    if (!ret)
+    {
+        return NULL;
+    }
+
+    return memset(ret, 0, size);
+}
+
+void *mem_realloc(void *ptr, size_t size)
+{
+    void *ret = mem_alloc(size);
+
+    if (!ret)
+    {
+        return NULL;
+    }
+
+    if (ptr)
+    {
+        memcpy((char*)ret, (char*)ptr, size);
+        mem_free(ptr);
+    }
+    return ret;
+}
+
 static void mem_cache_do_free(mem_cache_t *cache, void *object)
 {
 	mem_group_t *group;

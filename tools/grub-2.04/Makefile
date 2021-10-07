@@ -7,6 +7,7 @@ OS_ISO_NAME = $(OS_NAME).iso
 
 #MKISOFS    = mkisofs
 MKISOFS     = genisoimage
+MCOPY      	= mtools -c mcopy
 
 BOOT_DIR      = boot
 GRUB_DIR      = $(BOOT_DIR)/grub
@@ -21,6 +22,7 @@ EFI_BOOT      = efi.img
 INITRD_PATH   = $(ISO_DIR)/$(BOOT_DIR)
 INITRD_IMG    = initrd.img
 INITRD_CONF   = initrd.cfg
+ROOTFS_IMG    = $(ISO_DIR)/$(OS_NAME)/rootfs.img
 
 X86_GRUB_MODULES = \
 	affs afs all_video bitmap bitmap_scale elf eval ntfs \
@@ -60,8 +62,8 @@ all:
 	mkfs.msdos -F 12 $(ISO_DIR)/$(EFI_BOOT)
 	mmd -i $(ISO_DIR)/$(EFI_BOOT) ::efi
 	mmd -i $(ISO_DIR)/$(EFI_BOOT) ::efi/boot
-	mcopy -i $(ISO_DIR)/$(EFI_BOOT) $(EFI32_FILE) ::$(EFI32_FILE)
-	mcopy -i $(ISO_DIR)/$(EFI_BOOT) $(EFI64_FILE) ::$(EFI64_FILE)
+	$(MCOPY) -i $(ISO_DIR)/$(EFI_BOOT) $(EFI32_FILE) ::$(EFI32_FILE)
+	$(MCOPY) -i $(ISO_DIR)/$(EFI_BOOT) $(EFI64_FILE) ::$(EFI64_FILE)
 	echo "multiboot2 /$(BOOT_DIR)/$(KERNEL)" > $(MENU_CONF)
 	echo "module2 /$(BOOT_DIR)/$(INITRD_IMG) 'initrd'" >> $(MENU_CONF)
 	echo "boot" >> $(MENU_CONF)
@@ -70,7 +72,9 @@ all:
 	mkdir -p $(ISO_DIR)/$(OS_NAME)
 	cp $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/$(BOOT_DIR)/$(KERNEL)
 	cd $(BUILD_DIR)/../develop/rom/ && \
-  	sed 's/\r//g' ../$(INITRD_CONF) | cpio -o -H newc > ../../tools/grub-2.04/$(INITRD_PATH)/$(INITRD_IMG)
+		sed 's/\r//g' ../$(INITRD_CONF) | cpio -o -H newc > ../../tools/grub-2.04/$(INITRD_PATH)/$(INITRD_IMG)
+	cd $(BUILD_DIR)/../develop/rom/ && \
+		find . | cpio -o -H newc > ../../tools/grub-2.04/$(ROOTFS_IMG)
 	$(MKISOFS) \
 		-graft-points \
 		-input-charset utf8 \

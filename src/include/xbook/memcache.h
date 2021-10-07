@@ -74,6 +74,8 @@ typedef struct {
 int mem_caches_init();
 
 void *mem_alloc(size_t size);
+void *mem_realloc(void *ptr, size_t size);
+void *mem_zalloc(size_t size);
 void mem_free(void *object);
 int ksharink();
 

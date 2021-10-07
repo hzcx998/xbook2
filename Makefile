@@ -5,16 +5,8 @@ all:
 # tools
 MAKE		= make
 TOOL_DIR	= tools
-FATFS_DIR	= $(TOOL_DIR)/fatfs
 GRUB_DIR	= $(TOOL_DIR)/grub-2.04
 BIOS_FW_DIR	= $(TOOL_DIR)/bios_fw
-
-# System environment variable.
-ifeq ($(OS),Windows_NT)
-	FATFS_BIN		:= fatfs
-else
-	FATFS_BIN		:= $(FATFS_DIR)/fatfs
-endif
 
 TRUNC		= truncate
 RM			= rm
@@ -22,6 +14,8 @@ DD			= dd
 MKDIR		= mkdir
 OBJDUMP		= objdump
 GDB			= gdb
+MKFS		= mkfs.msdos
+MCOPY		= mtools -c mcopy
 
 # virtual machine
 QEMU 		= qemu-system-i386
@@ -129,7 +123,8 @@ ifeq ($(BOOT_MODE),$(BOOT_GRUB2_MODE))
 endif
 endif
 ifeq ($(QEMU_FAT_FS),n)
-	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
+	$(MKFS) -F 12 $(FS_DISK)
+	$(MCOPY) -i $(FS_DISK) -/ $(ROM_DIR)/* ::./
 endif
 
 # run启动虚拟机
@@ -150,24 +145,17 @@ build:
 	$(TRUNC) -s $(FLOPPYA_SZ) $(FLOPPYA_IMG)
 	$(TRUNC) -s $(HDA_SZ) $(HDA_IMG)
 	$(TRUNC) -s $(HDB_SZ) $(HDB_IMG)
-ifeq ($(OS),Windows_NT)
-else
-	$(MAKE) -s -C $(FATFS_DIR)
-endif
 	$(MAKE) -s -C $(LIBS_DIR)
 	$(MAKE) -s -C $(SBIN_DIR)
 	$(MAKE) -s -C $(BIN_DIR)
 ifeq ($(QEMU_FAT_FS),n)
-	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
+	$(MKFS) -F 12 $(FS_DISK)
+	$(MCOPY) -i $(FS_DISK) -/ $(ROM_DIR)/* ::./
 endif
 
 # 清理环境。
 debuild:
 	$(MAKE) -s -C $(KERNSRC) clean
-ifeq ($(OS),Windows_NT)
-else
-	$(MAKE) -s -C $(FATFS_DIR) clean
-endif
 	$(MAKE) -s -C $(LIBS_DIR) clean
 	$(MAKE) -s -C $(SBIN_DIR) clean
 	$(MAKE) -s -C $(BIN_DIR) clean
