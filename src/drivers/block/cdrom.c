@@ -37,7 +37,11 @@ iostatus_t cdrom_read(device_object_t *device, io_request_t *ioreq)
 
     len = ioreq->parame.read.length;
 
-    disk_read_sector(&extension->disk, off, len / extension->disk.sector_size, ioreq->system_buffer);
+    if (disk_read_sector(&extension->disk, off, len / extension->disk.sector_size, ioreq->system_buffer) < 0)
+    {
+        status = IO_FAILED;
+        len = -1; 
+    }
 
     ioreq->io_status.infomation = len;
     ioreq->io_status.status = status;
