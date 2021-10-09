@@ -50,6 +50,7 @@ int kernel_main(void)
     disk_init();
     driver_framewrok_init();
     initcalls_exec();
+    drivers_print_mini();
     file_system_init();
 #ifdef CONFIG_NET
     network_init();

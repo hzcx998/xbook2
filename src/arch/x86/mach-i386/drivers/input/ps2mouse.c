@@ -13,8 +13,8 @@
 
 #define DEV_NAME "mouse"
 
-// #define DEBUG_PS2MOUSE
-// #define DEBUG_PS2MOUSE_EVBUF
+//#define DEBUG_PS2MOUSE
+//#define DEBUG_PS2MOUSE_EVBUF
 
 #define I8042_BUFFER 0x60
 #define I8042_STATUS 0x64
@@ -239,12 +239,15 @@ static void ps2mouse_commit_packet(device_extension_t *devext) {
 static int mouse_handler(irqno_t irq, void *data)
 {
     device_extension_t *devext = (device_extension_t *) data;
-	/* 先从硬件获取按键数据 */
+    /* 先从硬件获取按键数据 */
     while (1)
     {
         uint8_t status = in8(I8042_STATUS);
         if (!(((status & I8042_WHICH_BUFFER) == I8042_MOUSE_BUFFER) && (status & I8042_BUFFER_FULL)))
+        {
+            // dbgprint("PS2Mouse: full!\n");            
             return -1;
+        }
 
         uint8_t data = in8(I8042_BUFFER);
         devext->data[devext->data_state] = data;
@@ -264,7 +267,7 @@ static int mouse_handler(irqno_t irq, void *data)
             if (devext->has_wheel) {
                 ++devext->data_state;
                 break;
-            }
+            }  
             ps2mouse_commit_packet(devext);
             break;
         case 3:
@@ -493,6 +496,15 @@ static iostatus_t mouse_enter(driver_object_t *driver)
 
     devext->button_record = 0;
     devext->flags = 0;
+    devext->has_wheel = false;
+    devext->device_present = false;
+    devext->data_state = 0;
+    int i;
+    for (i = 0; i < 4; i++)
+    {
+        devext->data[i] = 0;
+    }
+
     ps2mouse_initialize(devext);
 
     if (!devext->device_present) {  /* device not exist! */

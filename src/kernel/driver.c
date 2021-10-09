@@ -22,6 +22,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <arch/config.h>
 
 // #define DRIVER_FRAMEWROK_DEBUG
 
@@ -1545,4 +1546,13 @@ void driver_framewrok_init()
     devfs_fsal.state = fsal_devfs_state;
 
     devfs_fsal.extention  = NULL;
+
+#ifdef X86_UGA_HW
+    /* console init first */
+    extern void console_driver_entry(void);
+    console_driver_entry();
+    /* vbe init after console */
+    extern void vbe_driver_entry(void);
+    vbe_driver_entry();
+#endif
 }

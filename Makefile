@@ -123,7 +123,7 @@ ifeq ($(BOOT_MODE),$(BOOT_GRUB2_MODE))
 endif
 endif
 ifeq ($(QEMU_FAT_FS),n)
-	$(MKFS) -F 12 $(FS_DISK)
+	$(MKFS) -F 32 $(FS_DISK)
 	$(MCOPY) -i $(FS_DISK) -/ $(ROM_DIR)/* ::./
 endif
 
@@ -149,7 +149,7 @@ build:
 	$(MAKE) -s -C $(SBIN_DIR)
 	$(MAKE) -s -C $(BIN_DIR)
 ifeq ($(QEMU_FAT_FS),n)
-	$(MKFS) -F 12 $(FS_DISK)
+	$(MKFS) -F 32 $(FS_DISK)
 	$(MCOPY) -i $(FS_DISK) -/ $(ROM_DIR)/* ::./
 endif
 
@@ -226,7 +226,7 @@ QEMU_ARGUMENT += -device sb16 \
 		-device intel-hda -device hda-duplex
 endif
 
-DISK_AHCI = y
+DISK_AHCI = n
 ifeq ($(KERN_LIVECD_MODE),n)
 ifeq ($(DISK_AHCI),y)
 QEMU_ARGUMENT += -drive id=disk0,file=$(HDA_IMG),format=raw,if=none \
@@ -235,7 +235,7 @@ QEMU_ARGUMENT += -drive id=disk0,file=$(HDA_IMG),format=raw,if=none \
 		-device ide-hd,drive=disk0,bus=ahci.0 \
 		-device ide-hd,drive=disk1,bus=ahci.1
 else
-QEMU_ARGUMENT += -hda $(HDA_IMG) -hdb $(HDB_IMG)
+#QEMU_ARGUMENT += -hda $(HDA_IMG) -hdb $(HDB_IMG)
 endif # DISK_AHCI
 endif # KERN_LIVECD_MODE
 

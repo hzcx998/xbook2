@@ -149,7 +149,6 @@ static iostatus_t ramdisk_enter(driver_object_t *driver)
 
     /* 初始化一些其它内容 */
     status = io_create_device(driver, sizeof(device_extension_t), DEV_NAME, DEVICE_TYPE_VIRTUAL_DISK, &devobj);
-
     if (status != IO_SUCCESS) {
         keprint(PRINT_ERR "ramdisk_enter: create device failed!\n");
         return status;

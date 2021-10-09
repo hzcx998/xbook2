@@ -8,6 +8,7 @@
 #include <arch/io.h>
 #include <arch/interrupt.h>
 #include <sys/ioctl.h>
+#include <arch/config.h>
 
 #define DRV_NAME "vbe-graph"
 #define DRV_VERSION "0.1"
@@ -250,11 +251,16 @@ iostatus_t vbe_driver_func(driver_object_t *driver)
     return status;
 }
 
-static __init void vbe_driver_entry(void)
+#ifndef X86_UGA_HW
+static __init
+#endif
+void vbe_driver_entry(void)
 {
     if (driver_object_create(vbe_driver_func) < 0) {
         keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 
+#ifndef X86_UGA_HW
 notify_driver_initcall(vbe_driver_entry);
+#endif

@@ -881,11 +881,16 @@ iostatus_t console_driver_func(driver_object_t *driver)
     return status;
 }
 
-static __init void console_driver_entry(void)
+#ifndef X86_UGA_HW
+static __init 
+#endif
+void console_driver_entry(void)
 {
     if (driver_object_create(console_driver_func) < 0) {
         keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
 
+#ifndef X86_UGA_HW
 driver_initcall(console_driver_entry);
+#endif
