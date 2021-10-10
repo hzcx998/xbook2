@@ -246,6 +246,8 @@ int view_mouse_init()
     view_mouse.click_x = view_mouse.click_y = 0;
     view_mouse.state = VIEW_MOUSE_NORMAL;
 
+    view_mouse.flags = 0;
+
     // 创建状态位图
     int i;
     for (i = 0; i < VIEW_MOUSE_STATE_NR; i++) {

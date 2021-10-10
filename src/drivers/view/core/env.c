@@ -466,6 +466,8 @@ int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
     if (view_region_valid(&view->resize_region)) {
         /* 不在区域里面才能调整大小 */
         if (!view_region_in_range(&view->resize_region, lcmx, lcmy)) {
+            view_mouse.flags |= VIEW_MOUSE_FLAG_RESIZE_READY;
+
             if (view_msg_get_id(msg) == VIEW_MSG_MOUSE_LBTN_DOWN) {
                 resize_view = view;
                 view_mouse.click_x = msg->data0;
@@ -504,6 +506,14 @@ int view_env_do_resize(view_t *view, view_msg_t *msg, int lcmx, int lcmy)
                     view_mouse.click_x = -1;
                     view_mouse.click_y = -1;
                 }
+            }
+            
+            /* 虽然不在调整大小区域内，但是有可能是在工作区也有这些鼠标状态，此时
+            则也不需要改变状态。也就是只有当第一次从调整区域离开时才需要改变状态。 */
+            if (view_mouse.flags & VIEW_MOUSE_FLAG_RESIZE_READY)
+            {
+                view_mouse.flags &= ~VIEW_MOUSE_FLAG_RESIZE_READY;
+                view_mouse_set_state(VIEW_MOUSE_NORMAL);
             }
         }
     }

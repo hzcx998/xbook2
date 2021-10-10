@@ -33,6 +33,9 @@ typedef struct {
 
 #define VIEW_MOUSE_SIZE 32
 
+/* 准备执行resize操作 */
+#define VIEW_MOUSE_FLAG_RESIZE_READY 0X01
+
 typedef struct {
     void (*motion)(void);
     void (*button_down)(int);
@@ -43,6 +46,7 @@ typedef struct {
     int click_x, click_y;
     int view_off_x, view_off_y;
     int handle;
+    int flags;
     view_t *view;
     view_mouse_state_t state;
 
