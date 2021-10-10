@@ -25,6 +25,58 @@ extern "C" {
 # define PDP_ENDIAN	__PDP_ENDIAN
 # define BYTE_ORDER	__BYTE_ORDER
 
+#include <bits/byteswap.h>
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+
+#ifndef htole16
+#define htole16(x) (x)
+#endif
+#ifndef htole32
+#define htole32(x) (x)
+#endif
+#ifndef htole64
+#define htole64(x) (x)
+#endif
+
+#ifndef le16toh
+#define le16toh(x) (x)
+#endif
+
+#ifndef le32toh
+#define le32toh(x) (x)
+#endif
+
+#ifndef le64toh
+#define le64toh(x) (x)
+#endif
+
+#else /* __BYTE_ORDER */
+
+#ifndef htole16
+#define htole16(x) __bswap_16(x)
+#endif
+#ifndef htole32
+#define htole32(x) __bswap_32(x)
+#endif
+#ifndef htole64
+#define htole64(x) __bswap_64(x)
+#endif
+
+#ifndef le16toh
+#define le16toh(x) __bswap_16(x)
+#endif
+
+#ifndef le32toh
+#define le32toh(x) __bswap_32(x)
+#endif
+
+#ifndef le64toh
+#define le64toh(x) __bswap_64(x)
+#endif
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif
