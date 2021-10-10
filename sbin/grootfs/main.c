@@ -48,7 +48,7 @@ static inline void print_process()
     printf("%c", PROCESS_STR[i++]);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
     int status = 0;
     int i;
@@ -59,11 +59,22 @@ int main(void)
     uint8_t* file_buf;
     uint8_t *rootfs_gz_buff = NULL;
     struct cpio_info info;
+    int mem_sz = ROOTFS_GZ_SIZE;
 
 #if USING_GZ
     int rootfs_fd;
     gzFile rootfs_gz;
 #endif
+
+    if (argc > 1)
+    {
+        mem_sz = atoi(argv[1]);
+        if (mem_sz > 0 && mem_sz <= 256)
+        {
+            mem_sz *= MB;
+        }
+    }
+    printf("grootfs: alloc memory %d MB\n", mem_sz / MB);
 
     if ((cdrom_dev = open(CDROM_DEV, O_RDWR)) < 0)
     {
@@ -79,14 +90,14 @@ int main(void)
         goto end;
     }
 
-    if ((rootfs_gz_buff = malloc(ROOTFS_GZ_SIZE)) == NULL)
+    if ((rootfs_gz_buff = malloc(mem_sz)) == NULL)
     {
         status = -1;
-        printf("no memory (%dMB) enough\n", ROOTFS_GZ_SIZE / MB);
+        printf("no memory (%dMB) enough\n", mem_sz / MB);
         goto end;
     }
 
-    memset(rootfs_gz_buff, 0, ROOTFS_GZ_SIZE);
+    memset(rootfs_gz_buff, 0, mem_sz);
 
     if (!iso9660_read(ROOTFS_IMG, (char *)rootfs_gz_buff))
     {
