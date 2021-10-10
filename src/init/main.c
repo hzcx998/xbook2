@@ -47,10 +47,13 @@ int kernel_main(void)
     clock_init();
     timers_init();
     interrupt_enable();
-    disk_init();
     driver_framewrok_init();
+    disk_init();
     initcalls_exec();
+#ifdef CONFIG_DEVICE_TEST
     drivers_print_mini();
+    while (1);
+#endif
     file_system_init();
 #ifdef CONFIG_NET
     network_init();

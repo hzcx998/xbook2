@@ -79,8 +79,11 @@ EFI_BOOT_MODE ?= n
 # is qemu fat fs? (y/n)
 QEMU_FAT_FS ?= n
 
+# is qemu ahci disk driver? (y/n)
+QEMU_DISK_AHCI = y
+
 # has net module? (y/n)
-KERN_MODULE_NET	?= n
+KERN_MODULE_NET	?= y
 export KERN_MODULE_NET
 
 # has dwin module? (y/n)
@@ -226,18 +229,15 @@ QEMU_ARGUMENT += -device sb16 \
 		-device intel-hda -device hda-duplex
 endif
 
-DISK_AHCI = n
-ifeq ($(KERN_LIVECD_MODE),n)
-ifeq ($(DISK_AHCI),y)
+ifeq ($(QEMU_DISK_AHCI),y)
 QEMU_ARGUMENT += -drive id=disk0,file=$(HDA_IMG),format=raw,if=none \
 		-drive id=disk1,file=$(HDB_IMG),format=raw,if=none \
 		-device ahci,id=ahci \
 		-device ide-hd,drive=disk0,bus=ahci.0 \
 		-device ide-hd,drive=disk1,bus=ahci.1
 else
-#QEMU_ARGUMENT += -hda $(HDA_IMG) -hdb $(HDB_IMG)
-endif # DISK_AHCI
-endif # KERN_LIVECD_MODE
+QEMU_ARGUMENT += -hda $(HDA_IMG) -hdb $(HDB_IMG)
+endif # QEMU_DISK_AHCI
 
 ifeq ($(KERN_MODULE_NET),y)
 	QEMU_ARGUMENT += -net nic,model=$(QEMU_NETCARD_NAME)

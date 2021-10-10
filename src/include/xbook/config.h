@@ -14,10 +14,13 @@
 /* auto select timezone */
 /* #define CONFIG_TIMEZONE_AUTO */
 
+/* test device info */
+// #define CONFIG_DEVICE_TEST
+
 /* net config */
 #ifdef CONFIG_NET
 
-// #define CONFIG_NET_DHCP 
+#define CONFIG_NET_DHCP 
 
 /* ip */
 #define NETIF_IP0 192

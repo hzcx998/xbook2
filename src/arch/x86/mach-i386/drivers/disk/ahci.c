@@ -785,7 +785,7 @@ int ahci_initialize_device(struct hba_memory *abar, device_extension_t *dev)
     #ifdef DEBUG_AHCI
     dbgprint("[AHCI]: step1: port %d sata status %x control %x.\n", dev->idx, 
         port->sata_status, port->sata_control);
-    #endif        
+    #endif
     /* start reset sata */
 	port->sata_control |= 1;
 	mdelay(20);
@@ -889,6 +889,7 @@ int ahci_probe_ports(driver_object_t *driver, struct hba_memory *abar)
 		if(pi & 1) {
 			uint32_t type = ahci_check_type(&abar->ports[i]);
 			if(type == AHCI_DEV_SATA) { /* SATA device */
+#ifndef CONFIG_LIVECD
                 #ifdef DEBUG_AHCI
 				keprint(PRINT_DEBUG "[ahci]: detected SATA device on port %d\n", i);
                 #endif
@@ -909,6 +910,9 @@ int ahci_probe_ports(driver_object_t *driver, struct hba_memory *abar)
 				} else {
 					keprint(PRINT_ERR "[ahci]: failed to initialize device %d, disabling port\n", i);
                 }
+#else
+                keprint(PRINT_WARING "[ahci]: not support SATA device on port %d now!\n", i);
+#endif
             } else if(type == AHCI_DEV_SATAPI) { /* SATA device */
                 keprint(PRINT_WARING "[ahci]: not support SATAPI device on port %d now!\n", i);
             } else if(type == AHCI_DEV_PM) { /* SATA device */
@@ -1239,6 +1243,4 @@ static __init void ahci_driver_entry(void)
         keprint(PRINT_ERR "[driver]: %s create driver failed!\n", __func__);
     }
 }
-#ifndef CONFIG_LIVECD
 driver_initcall(ahci_driver_entry);
-#endif

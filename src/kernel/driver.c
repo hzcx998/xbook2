@@ -212,7 +212,6 @@ int driver_object_create(driver_func_t func)
         mem_free(drvobj);
         return -1;
     }
-
     unsigned long flags;        
     spin_lock_irqsave(&driver_lock, flags);
     assert(!list_find(&drvobj->list, &driver_list_head));

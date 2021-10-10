@@ -92,21 +92,24 @@ static iostatus_t cdrom_enter(driver_object_t *driver)
     if (status != IO_SUCCESS)
     {
         keprint(PRINT_ERR "cdrom_enter: create device failed!\n");
+        io_delete_device(devobj);
         return status;
     }
 
     extension = (device_extension_t *)devobj->device_extension;
     extension->disk.name = DEV_NAME;
     extension->rwoffset = 0;
-
-    if (disk_match(&extension->disk))
+    
+    if (disk_match(&extension->disk) < 0)
     {
+        keprint(PRINT_ERR "cdrom_enter: not found cdrom!\n");
         status = IO_FAILED;
+        io_delete_device(devobj);
+        return status;
     }
 
     /* neither io mode */
     devobj->flags = DO_BUFFERED_IO;
-
     return status;
 }
 
