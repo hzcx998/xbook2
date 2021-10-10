@@ -35,13 +35,14 @@ static inline void print_process()
 {
     static unsigned char i = 0;
 
-    if (i > sizeof(PROCESS_STR) - 1)
-    {
-        i = 0;
-    }
-    else if (i != 0)
+    if (i != 0)
     {
         printf("\b");
+    }
+
+    if (i >= sizeof(PROCESS_STR) - 1)
+    {
+        i = 0;
     }
 
     printf("%c", PROCESS_STR[i++]);
@@ -94,7 +95,7 @@ int main(void)
         goto end;
     }
 
-    printf("\b\nunpacking `" ROOTFS_IMG "'...\n");
+    printf("\b\nunpacking `" ROOTFS_IMG "'...");
 
 #if USING_GZ
     if ((rootfs_fd = open(ROOTFS_GZ, O_CREAT | O_RDWR)) < 0)
@@ -125,6 +126,8 @@ int main(void)
         file_buf = cpio_get_entry(rootfs_gz_buff, i, (const char**)&filename, &file_sz);
         strcpy(path, ROOT_PATH);
         strcpy(path + ROOT_PATH_LEN - 1, filename);
+        
+        print_process();
 
         if (file_sz == 0)
         {
@@ -137,6 +140,8 @@ int main(void)
             close(extract_fd);
         }
     }
+
+    printf("\b\n");
 
     free(path);
 

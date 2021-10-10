@@ -101,6 +101,7 @@ recycle
 sbin/init/init
 sbin/login/login
 sbin/netserv/netserv
+sbin/grootfs/grootfs
 
 # /bin
 bin/cat/cat
@@ -140,6 +141,5 @@ bin/httpd/httpd
 bin/ping/ping
 bin/telnet/telnet
 bin/ifconfig/ifconfig
-bin/grootfs/grootfs
 
 # ====xbook2 kernel ignore end====
