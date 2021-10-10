@@ -30,7 +30,7 @@ static void mouse_motion(void)
 
 static void mouse_wheel(int wheel)
 {
-    keprint("mouse wheel: %d\n", wheel);
+    // keprint("mouse wheel: %d\n", wheel);
     int id = (wheel == 0) ? VIEW_MSG_MOUSE_WHEEL_UP : VIEW_MSG_MOUSE_WHEEL_DOWN;
     view_msg_t msg;
     view_msg_header(&msg, id, VIEW_TARGET_NONE);
