@@ -140,5 +140,6 @@ bin/httpd/httpd
 bin/ping/ping
 bin/telnet/telnet
 bin/ifconfig/ifconfig
+bin/grootfs/grootfs
 
 # ====xbook2 kernel ignore end====

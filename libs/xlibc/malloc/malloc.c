@@ -117,6 +117,8 @@ malloc(size_t size)
 			NextFree(prev) = NextFree(p);
 		else
 			_empty = NextFree(p);
+        /* clear data */
+        memset(p, 0, size);
 		return p;
 	}
 	if (grow(len) == 0)
