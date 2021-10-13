@@ -86,41 +86,8 @@ int find_signal_in_table(char *name)
     return 0;
 }
 
-#define D(v) printf("%s:%d\n", #v, v)
-
-static void dump(void)
-{
-    D(SIGINT);
-    D(SIGILL);
-    D(SIGTRAP);
-    D(SIGABRT);
-    D(SIGBUS);
-    D(SIGFPE);
-    D(SIGKILL);
-    D(SIGUSR1);
-    D(SIGSEGV);
-    D(SIGPIPE);
-    D(SIGALRM);
-    D(SIGTERM);
-    D(SIGSTKFLT);
-    D(SIGCHLD);
-    D(SIGCONT);
-    D(SIGSTOP);
-    D(SIGTSTP);
-    D(SIGTTIN);
-    D(SIGTTOU);
-    D(SIGSYS);
-    D(SIGIO);
-    D(SIGHUP);
-    D(SIGWINCH);
-    D(SIGVTALRM);
-    D(SIGPROF);
-    D(SIGQUIT);
-}
-
 int main(int argc, char *argv[])
 {
-    dump();
 	if(argc < 2){
 		printf("\nusage: kill [-l | -signo | -signame] [pid]\n");
         return 0;
