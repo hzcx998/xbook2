@@ -60,3 +60,4 @@ MODULE      +=  httpd
 MODULE      +=  ping
 MODULE      +=  telnet
 MODULE      +=  ifconfig
+MODULE      +=  kill

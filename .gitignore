@@ -141,5 +141,6 @@ bin/httpd/httpd
 bin/ping/ping
 bin/telnet/telnet
 bin/ifconfig/ifconfig
+bin/kill/kill
 
 # ====xbook2 kernel ignore end====
