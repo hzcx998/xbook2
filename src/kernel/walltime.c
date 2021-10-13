@@ -154,31 +154,47 @@ void walltime_printf()
 	keprint(PRINT_INFO "week day:%d %s year day:%d\n", walltime.week_day, week_day[walltime.week_day], walltime.year_day);
 }
 
+void walltime_sync(void)
+{
+    //用一个循环让秒相等
+    walltime.year      = time_get_year();
+    walltime.month     = time_get_month();
+    walltime.day       = time_get_day();
+    walltime.hour      = time_get_hour();
+    walltime.minute    =  time_get_minute();
+    walltime.second    = time_get_second();
+	
+    walltime.week_day = walltime_get_week_day(walltime.year, walltime.month, walltime.day);
+    walltime.year_day = walltime_get_year_days();
+	
+    /* 转换成本地时间 */
+    /* 自动转换时区 */
+#ifdef CONFIG_TIMEZONE_AUTO
+    if(walltime.hour >= 16){
+        walltime.hour -= 16;
+    }else{
+        walltime.hour += 8;
+    }
+#endif /* CONFIG_TIMEZONE_AUTO */
+}
+
+static void sync_timer_handler(struct timer_struct *tmr, void *arg)
+{
+    walltime_sync();
+} 
+
 void walltime_init()
 {
     /* 初始化系统时间 */
-    //用一个循环让秒相等
-	do{
-		walltime.year      = time_get_year();
-		walltime.month     = time_get_month();
-		walltime.day       = time_get_day();
-		walltime.hour      = time_get_hour();
-		walltime.minute    =  time_get_minute();
-		walltime.second    = time_get_second();
-		
-		/* 转换成本地时间 */
-		/* 自动转换时区 */
-#ifdef CONFIG_TIMEZONE_AUTO
-        if(walltime.hour >= 16){
-			walltime.hour -= 16;
-		}else{
-			walltime.hour += 8;
-		}
-#endif /* CONFIG_TIMEZONE_AUTO */
-	}while(walltime.second != time_get_second());
-
-    walltime.week_day = walltime_get_week_day(walltime.year, walltime.month, walltime.day);
-    walltime.year_day = walltime_get_year_days();
+    walltime_sync();
 
     walltime_printf();
+
+    /* init update walltime clock */
+    timer_t *sync_timer = timer_alloc();
+    assert(sync_timer != NULL);
+    /* 1s to update */
+    timer_init(sync_timer, HZ, NULL, sync_timer_handler);
+    timer_add_period(sync_timer);
+    timer_add(sync_timer);
 }

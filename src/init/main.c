@@ -40,12 +40,12 @@ int kernel_main(void)
     msg_queue_init();
     sem_init();
     fifo_init();
-    walltime_init();
     schedule_init();
     tasks_init();
     mutex_queue_init();
     clock_init();
     timers_init();
+    walltime_init();
     interrupt_enable();
     driver_framewrok_init();
     disk_init();

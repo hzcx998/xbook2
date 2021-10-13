@@ -39,10 +39,12 @@ void timer_init(
     timer_callback_t callback)
 {
     list_init(&timer->list);
+    timer->timeval = timeout;
     timer->timeout = timer_ticks + timeout;
     timer->arg = arg;
     timer->id = timer_id_next++;
     timer->callback = callback;
+    timer->flags = 0;
 }
 
 void timer_add(timer_t *timer)
@@ -128,9 +130,28 @@ int timer_cancel(timer_t *timer)
     return retval;
 }
 
+void timer_add_period(timer_t *timer)
+{
+    timer->flags |= TIMER_PERIOD;
+}
+
+void timer_del_period(timer_t *timer)
+{
+    timer->flags &= ~TIMER_PERIOD;
+}
+
 static void timer_do_action(timer_t *timer)
 {
-    list_del(&timer->list);
+    if (!(timer->flags & TIMER_PERIOD))
+    {
+        /* 不是周期定时才删除定时器 */
+        list_del(&timer->list);
+    }
+    else
+    {
+        /* 不删除定时器，并更新定时器超时值 */
+        timer->timeout = timer_ticks + timer->timeval;
+    }
     timer->callback(timer, timer->arg);
 }
 
@@ -148,6 +169,13 @@ void timer_update_ticks()
             break;
         }
         timer_do_action(timer); // time out
+    }
+
+    /* 寻找超时最小的定时器超时值 */
+    list_for_each_owner (timer, &timer_list_head, list) {
+        if (timer->timeout > timer_ticks) {
+            break;
+        }
     }
     minim_timeout_val = timer->timeout;
     interrupt_restore_state(flags);
