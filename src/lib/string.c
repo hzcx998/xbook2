@@ -231,7 +231,7 @@ char *strncat(char *dst, const char *src, int n)
 	while(n && (*dst++ = *src++) != '\0'){
 		n--;
 	}
-	dst = '\0';
+	*dst = '\0';
 	return ret;
 }
 

@@ -215,6 +215,7 @@
         "dwin_config.h": "c",
         "buffer.h": "c",
         "message.h": "c",
-        "client.h": "c"
+        "client.h": "c",
+        "pic.h": "c"
     }
 }
