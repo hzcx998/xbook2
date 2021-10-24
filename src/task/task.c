@@ -542,208 +542,10 @@ void kern_do_idle(void *arg)
 #define STDIO_INKERN    
 #define STDIO_DEVICE    "/dev/con0"
 
-#ifdef CONFIG_TEST_MACHINE
-
-// #define TEST_MACHINE_DEBUG
-#define TEST_PROGRAM_PATH   ""
-#define TEST_MACHINE_PREFIX "[test machine] "
-
-static void do_one_test(char *argv[])
-{
-    /* 启动应用程序 */
-    task_t *proc = process_create(argv, NULL, PROC_CREATE_INKERN);
-    if (proc == NULL)
-        panic(TEST_MACHINE_PREFIX"kernel start process failed! please check initsrv!\n");
-    #ifdef TEST_MACHINE_DEBUG
-    dbgprintln(TEST_MACHINE_PREFIX"create process %d ok", proc->pid);
-    #endif
-    /* 等待子进程结束 */
-    int status = 0;
-    int _pid;
-    _pid = kewaitpid(-1, &status, 0);    /* wait any child exit */
-    if (_pid > 0) {
-        #ifdef TEST_MACHINE_DEBUG
-        infoprint(TEST_MACHINE_PREFIX"process[%d] exit with status %d.\n", _pid, status);
-        #endif
-    }
-}
-
-// #define TEST_MACHINE_LOAD_FILE
-
-#define TEST_MACHINE_SINGLE_TEST
-#if 1
-#define TEST_MACHINE_SINGLE_TEST_NAME   TEST_PROGRAM_PATH"busybox"
-#else
-#define TEST_MACHINE_SINGLE_TEST_NAME   "/bin/utests"
-#endif
-
-#include <dirent.h>
-
-#ifdef TEST_MACHINE_LOAD_FILE
-/**
- * 加载文件式执行
-*/
-static void test_machine_load_files()
-{
-    dirent_t de;
-    int dir = fsif.opendir(TEST_PROGRAM_PATH);
-    if (dir >= 0) {
-        while (1) {
-            if (fsif.readdir(dir, &de) < 0)
-                break;
-            if (de.d_attr & DE_DIR) {
-                #ifdef TEST_MACHINE_DEBUG
-                dbgprintln(TEST_MACHINE_PREFIX"dir %s/%s\n", TEST_PROGRAM_PATH, de.d_name);
-                #endif
-            } else {
-                char path[128] = {0};
-                strcpy(path, TEST_PROGRAM_PATH);
-                strcat(path, "/");
-                strcat(path, de.d_name);
-                #ifdef TEST_MACHINE_DEBUG
-                dbgprintln(TEST_MACHINE_PREFIX"file: %s", path);
-                #endif
-                char *test_argv[MAX_TASK_STACK_ARG_NR] = {0,};
-                memset(test_argv, 0, sizeof(test_argv));
-                /* 如果需要传入特殊参数，需要在此进行特殊处理 */
-                test_argv[0] = path;
-                if (!strcmp(de.d_name, "mount") || !strcmp(de.d_name, "umount")) {
-                    test_argv[1] = "/dev/sda";
-                    test_argv[2] = "/mnt";
-                    test_argv[3] = 0;
-                } else {
-                    test_argv[1] = 0;
-                }
-                do_one_test(test_argv);
-            }
-        }
-        fsif.closedir(dir);
-    }
-}
-#else
-static char *bin_name_talbe[] = {
-    "brk",
-    "chdir",
-    "clone",
-    "close",
-    "dup2",
-    "dup",
-    "execve",
-    "exit",
-    "fork",
-    "fstat",
-    "getcwd",
-    "getdents",
-    "getpid",
-    "getppid",
-    "gettimeofday",
-    "mkdir_",
-    "mmap",
-    "mount",
-    "munmap",
-    "openat",
-    "open",
-    "pipe",
-    "read",
-    "sleep",
-    "times",
-    "umount",
-    "uname",
-    "unlink",
-    "wait",
-    "waitpid",
-    "write",
-    "yield",
-    NULL
-};
-
-/**
- * 通过加载名字方式执行
- */
-static void test_machine_load_names()
-{
-    int i = 0;
-    char *name = bin_name_talbe[i];
-    while (name != NULL) {
-        char path[128] = {0};
-        strcpy(path, TEST_PROGRAM_PATH);
-        strcat(path, "/");
-        strcat(path, name);
-        #ifdef TEST_MACHINE_DEBUG
-        keprint(TEST_MACHINE_PREFIX"file: %s", path);
-        #endif
-        char *test_argv[MAX_TASK_STACK_ARG_NR] = {0,};
-        memset(test_argv, 0, sizeof(test_argv));
-        /* 如果需要传入特殊参数，需要在此进行特殊处理 */
-        test_argv[0] = path;
-        #if 0
-        if (!strcmp(name, "mount") || !strcmp(name, "umount")) {
-            test_argv[1] = "/dev/sda";
-            test_argv[2] = "/mnt";
-            test_argv[3] = 0;
-        } else {
-            test_argv[1] = 0;
-        }
-        #else
-        test_argv[1] = 0;
-        #endif
-        do_one_test(test_argv);
-        i++;
-        name = bin_name_talbe[i];
-    }
-}
-#endif
-/* 测试机线程 */
-void test_machine_thread(void *arg)
-{
-    dbgprintln(TEST_MACHINE_PREFIX"start...");
-    /* 打开标准输入输出 */
-    int fd = __sys_open(STDIO_DEVICE, 0);
-    if (fd < 0)
-        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
-    #ifdef TEST_MACHINE_DEBUG
-    dbgprintln(TEST_MACHINE_PREFIX"start user: stdin fd %d", fd);
-    #endif
-    fd = __sys_open(STDIO_DEVICE, 0);
-    if (fd < 0)
-        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
-    #ifdef TEST_MACHINE_DEBUG
-    dbgprintln(TEST_MACHINE_PREFIX"start user: stdout fd %d", fd);
-    #endif
-    fd = __sys_open(STDIO_DEVICE, 0);
-    if (fd < 0)
-        panic(TEST_MACHINE_PREFIX"start user: open stdin failed!");
-    
-    #ifdef TEST_MACHINE_DEBUG
-    dbgprintln(TEST_MACHINE_PREFIX"start user: stderr fd %d", fd);
-    #endif
-    #ifdef TEST_MACHINE_SINGLE_TEST
-    char *test_argv[MAX_TASK_STACK_ARG_NR] = {0,};
-    test_argv[0] = TEST_MACHINE_SINGLE_TEST_NAME;
-    do_one_test(test_argv);
-    #else
-    #ifdef TEST_MACHINE_LOAD_FILE
-    test_machine_load_files();
-    #else
-    test_machine_load_names();
-    #endif
-    #endif
-    #ifdef TEST_MACHINE_DEBUG
-    dbgprintln(TEST_MACHINE_PREFIX"test all programs done.");
-    #endif
-    while (1) {
-        cpu_idle();
-        schedule();
-    }
-}
-#else
-#if defined(CONFIG_NEWSYSCALL)
 #define USER_PROCESS_PATH  "/sbin/init"
-#else
-#define USER_PROCESS_PATH  "/sbin/init"
-#endif
+
 static char *init_argv[2] = {USER_PROCESS_PATH, 0};
-#endif
+
 static char *init_envp[3] = {"/bin", "/sbin", 0};
 
 /**
@@ -752,7 +554,6 @@ static char *init_envp[3] = {"/bin", "/sbin", 0};
 void task_start_user()
 {
     keprint(PRINT_DEBUG "[task]: start user process.\n");
-    #ifndef CONFIG_TEST_MACHINE
     #ifdef STDIO_INKERN    
     int fd = __sys_open(STDIO_DEVICE, 0);
     if (fd < 0)
@@ -776,13 +577,7 @@ void task_start_user()
     /* 设置进程组和会话ID */
     proc->pgid = proc->pid;
     proc->sid = proc->pgid;
-    #else
-    /* 启动测试机线程 */
-    task_t *test_thread = kern_thread_start("test_machine", TASK_PRIO_LEVEL_LOW, test_machine_thread, NULL);
-    assert(test_thread != NULL);
-    if (test_thread == NULL)
-        panic("start test machine failed!");
-    #endif
+
     sched_unit_t *su = sched_get_cur_unit();
 	unsigned long flags;
     interrupt_save_and_disable(flags);

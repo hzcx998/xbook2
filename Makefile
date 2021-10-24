@@ -106,11 +106,7 @@ else ifeq ($(ENV_MACH),mach-k210) # riscv64 k210
 	HDA_IMG		= $(IMAGE_DIR)/c.img
 	FS_DISK		= $(HDA_IMG)
 
-ifeq ($(ENV_REMOTE_TEST),yes)
-	K210_BIN 	= ./k210.bin
-else
 	K210_BIN 	= $(KERNSRC)/k210.bin
-endif
 	K210_ASM 	= $(KERNSRC)/k210.asm.dump
 	K210_SERIALPORT := /dev/ttyUSB0
 
@@ -130,13 +126,6 @@ $(warning $(ENV_ARCH))
 # 参数
 .PHONY: all kernel build debuild qemu qemudbg user user_clean dump k210bin
 
-# remote test for k210
-ifeq ($(ENV_REMOTE_TEST),yes)
-all: kernimg
-	$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $(KERNEL_BIN)
-	$(OBJCOPY) $(RUSTSBI) --strip-all -O binary $(K210_BIN)
-	$(DD) if=$(KERNEL_BIN) of=$(K210_BIN) bs=128k seek=1
-else
 all : kernimg
 ifeq ($(USE_FATFS),yes)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
@@ -145,7 +134,6 @@ else
 	@$(SUDO) mount $(FS_DISK) $(MOUNT_DIR)
 	@$(SUDO) $(CP) -r $(ROM_DIR)/* $(MOUNT_DIR)
 	@$(SUDO) umount $(MOUNT_DIR)
-endif
 endif
 
 ifeq ($(ENV_ARCH),x86) # x86-i386
@@ -178,9 +166,6 @@ kernel:
 
 clean:
 	@$(MAKE) -s -C $(KERNSRC) clean
-ifeq ($(ENV_REMOTE_TEST),yes)
-	-$(RM) $(K210_BIN)
-endif
 
 kernimg: kernel
 ifeq ($(ENV_ARCH),x86)
@@ -201,10 +186,9 @@ endif # ($(ENV_ARCH),riscv64)
 
 # 构建环境。镜像>工具>环境>rom
 build: buildimg
-ifeq ($(ENV_REMOTE_TEST),no)
 	-$(MKDIR) $(ROM_DIR)/bin
 	-$(MKDIR) $(ROM_DIR)/sbin
-endif
+
 ifeq ($(OS),Windows_NT)
 else
 	$(MAKE) -s -C  $(FATFS_DIR)
@@ -214,11 +198,10 @@ ifeq ($(ENV_ARCH),x86)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
 else ifeq ($(ENV_ARCH),riscv64)
-ifeq ($(ENV_REMOTE_TEST),no)
 	$(MAKE) -s -C  $(LIBS_DIR)
 	$(MAKE) -s -C  $(SBIN_DIR)
 	$(MAKE) -s -C  $(BIN_DIR)
-endif
+
 endif # ($(ENV_ARCH),riscv64)
 ifeq ($(USE_FATFS),yes)
 	$(FATFS_BIN) $(FS_DISK) $(ROM_DIR) 0
